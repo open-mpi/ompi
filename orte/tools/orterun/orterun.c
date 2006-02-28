@@ -35,6 +35,9 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
+#ifdef HAVE_LIBGEN_H 
+#include <libgen.h>
+#endif
 
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
@@ -227,6 +230,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
+    { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Prefix where Open MPI is installed on remote nodes" },
+    
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -1084,8 +1091,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     cmd_line_made = true;
     opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "rawmap", 2,
                             "Hidden / internal parameter -- users should not use this!");
-    opal_cmd_line_make_opt3(&cmd_line, '\0', NULL, "prefix", 1,
-                            "Prefix-directory for orted");
     rc = opal_cmd_line_parse(&cmd_line, true, new_argc, new_argv);
     opal_argv_free(new_argv);
     new_argv = NULL;
@@ -1169,26 +1174,45 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         app->user_specified_cwd = false;
     }
 
-    /* Did the user specify a specific prefix for this app_context_t */
-    if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
+    /* Did the user specify a specific prefix for this app_context_t
+       or provide an absolute path name to argv[0]? */
+    if (opal_cmd_line_is_taken(&cmd_line, "prefix") ||
+        '/' == argv[0][0]) {
         size_t param_len;
 
-        param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
-        /*
-         * "Parse" the param, aka remove superfluous path_sep "/".
-         */
-        param_len = strlen(param);
-        while (0 == strcmp (OMPI_PATH_SEP, &(param[param_len-1]))) {
-            param[param_len-1] = '\0';
-            param_len--;
-            if (0 == param_len) {
-                opal_show_help("help-orterun.txt", "orterun:empty-prefix",
-                                true, orterun_basename, orterun_basename);
-                return ORTE_ERR_FATAL;
+        /* If they specified an absolute path, strip off the
+           /bin/<exec_name>" and leave just the prefix */
+        if ('/' == argv[0][0]) {
+            param = strdup(dirname(argv[0]));
+            /* Quick sanity check to ensure we got
+               something/bin/<exec_name> and that the installation
+               tree is at least more or less what we expect it to
+               be */
+            if (0 == strcmp("bin", basename(param))) {
+                param = dirname(param);
+            } else {
+                free(param);
+                param = NULL;
             }
+        } else {
+            param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
         }
 
-        app->prefix_dir = strdup(param);
+        if (NULL != param) {
+            /* "Parse" the param, aka remove superfluous path_sep "/". */
+            param_len = strlen(param);
+            while (0 == strcmp (OMPI_PATH_SEP, &(param[param_len-1]))) {
+                param[param_len-1] = '\0';
+                param_len--;
+                if (0 == param_len) {
+                    opal_show_help("help-orterun.txt", "orterun:empty-prefix",
+                                   true, orterun_basename, orterun_basename);
+                    return ORTE_ERR_FATAL;
+                }
+            }
+
+            app->prefix_dir = strdup(param);
+        }
     }
 
     /* Did the user request any mappings?  They were all converted to
