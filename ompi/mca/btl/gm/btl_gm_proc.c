@@ -102,7 +102,7 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_gm_proc_t* gm_proc = NULL;
     size_t size;
-    int rc;
+    int rc, i;
 
     /* Check if we have already created a GM proc
      * structure for this ompi process */
@@ -148,6 +148,11 @@ mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
         OBJ_RELEASE(gm_proc);
         return NULL;
     }
+
+    for (i = 0 ; i < gm_proc->proc_addr_count; ++i) {
+        MCA_BTL_GM_ADDR_NTOH(gm_proc->proc_addrs[i]);
+    }
+
     return gm_proc;
 }
 

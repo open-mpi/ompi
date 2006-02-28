@@ -25,6 +25,11 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_gm_frag.h"
 #include "btl_gm.h"
+
+#ifdef HAVE_ARPA_INET_H
+#include <arpa/inet.h>
+#endif
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -43,7 +48,26 @@ struct mca_btl_gm_addr_t {
     unsigned int port_id;
 };
 typedef struct mca_btl_gm_addr_t mca_btl_gm_addr_t;
-                                                                                                                
+
+#if GM_API_VERSION > 0x200
+#define MCA_BTL_GM_ADDR_HTON(addr) \
+    addr.global_id = htonl(addr.global_id); \
+    addr.node_id = htonl(addr.node_id); \
+    addr.port_id = htonl(addr.port_id);
+
+#define MCA_BTL_GM_ADDR_NTOH(addr) \
+    addr.global_id = ntohl(addr.global_id); \
+    addr.node_id = ntohl(addr.node_id); \
+    addr.port_id = ntohl(addr.port_id);
+#else
+#define MCA_BTL_GM_ADDR_HTON(addr) \
+    addr.node_id = htonl(addr.node_id); \
+    addr.port_id = htonl(addr.port_id);
+
+#define MCA_BTL_GM_ADDR_NTOH(addr) \
+    addr.node_id = ntohl(addr.node_id); \
+    addr.port_id = ntohl(addr.port_id);
+#endif
 
 /**
  * An abstraction that represents a connection to a endpoint process.

@@ -422,6 +422,7 @@ mca_btl_gm_modex_send(void)
         for (i = 0; i < mca_btl_gm_component.gm_num_btls; i++) {
             mca_btl_gm_module_t *btl = mca_btl_gm_component.gm_btls[i];
             addrs[i] = btl->gm_addr;
+            MCA_BTL_GM_ADDR_HTON(addrs[i]);
         }
     }
     rc = mca_pml_base_modex_send (&mca_btl_gm_component.super.btl_version, addrs, size);
