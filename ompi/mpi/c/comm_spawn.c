@@ -63,10 +63,6 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-        if ( NULL == array_of_errcodes ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
-        }
         if (NULL == info || ompi_info_is_freed(info)) {
           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                         FUNC_NAME);
