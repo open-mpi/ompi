@@ -1180,9 +1180,12 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         '/' == argv[0][0]) {
         size_t param_len;
 
-        /* If they specified an absolute path, strip off the
-           /bin/<exec_name>" and leave just the prefix */
-        if ('/' == argv[0][0]) {
+        /* The --prefix option takes precedence over /path/to/orterun */
+        if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
+            param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
+        } else {
+            /* If they specified an absolute path, strip off the
+               /bin/<exec_name>" and leave just the prefix */
             param = strdup(dirname(argv[0]));
             /* Quick sanity check to ensure we got
                something/bin/<exec_name> and that the installation
@@ -1194,8 +1197,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 free(param);
                 param = NULL;
             }
-        } else {
-            param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
         }
 
         if (NULL != param) {
