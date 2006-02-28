@@ -149,7 +149,10 @@ static void mca_pml_dr_recv_request_matched(
     mca_pml_dr_recv_frag_t* frag;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
-
+    
+    mca_pml_dr_comm_proc_t* comm_proc = recvreq->req_recv.req_base.req_comm->c_pml_comm->procs + 
+        recvreq->req_recv.req_base.req_peer;
+    
     /* if this hasn't been initialized yet - this is a synchronous send */
     if(NULL == proc) {
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
@@ -185,6 +188,9 @@ static void mca_pml_dr_recv_request_matched(
         mca_bml_base_free(bml_btl, des);
         goto retry;
     }
+
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); 
+    
     return;
 
     /* queue request to retry later */
@@ -211,7 +217,11 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
-
+    
+    
+    mca_pml_dr_comm_proc_t* comm_proc = recvreq->req_recv.req_base.req_comm->c_pml_comm->procs + 
+        recvreq->req_recv.req_base.req_peer;
+    
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
     
@@ -240,6 +250,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     if(rc != OMPI_SUCCESS) {
         mca_bml_base_free(bml_btl, des);
     }
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); 
 }
 
 

@@ -89,7 +89,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 
 OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
-static inline bool mac_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
+static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
     mca_pml_dr_acked_item_t* item = (mca_pml_dr_acked_item_t*) proc->acked_vfrags_ptr;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     while(true) { 
@@ -110,7 +110,7 @@ static inline bool mac_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* proc
     }
 }
 
-static inline void mac_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
+static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
     mca_pml_dr_acked_item_t* item = (mca_pml_dr_acked_item_t*) proc->acked_vfrags_ptr;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     mca_pml_dr_acked_item_t *new_item, *next_item, *prev_item;
