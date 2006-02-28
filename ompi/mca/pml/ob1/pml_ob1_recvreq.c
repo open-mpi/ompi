@@ -265,9 +265,10 @@ static void mca_pml_ob1_recv_request_ack(
     ack->hdr_dst_req.pval = recvreq;
     ack->hdr_rdma_offset = recvreq->req_rdma_offset;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     ack->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -275,6 +276,7 @@ static void mca_pml_ob1_recv_request_ack(
         ack->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_ACK_HDR_HTON(*ack);
     }
+#endif
 #endif
 
     /* initialize descriptor */
@@ -364,9 +366,10 @@ static void mca_pml_ob1_rget_completion(
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
     hdr->hdr_des = frag->rdma_hdr.hdr_rget.hdr_des;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -375,7 +378,7 @@ static void mca_pml_ob1_rget_completion(
         MCA_PML_OB1_FIN_HDR_HTON(*hdr);
     }
 #endif
-                                                                                                            
+#endif                                                                                                            
     /* queue request */
     rc = mca_bml_base_send(
         bml_btl,
@@ -741,15 +744,19 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 hdr->hdr_seg_cnt = dst->des_dst_cnt;
                 memcpy(hdr->hdr_segs, dst->des_dst, dst->des_dst_cnt * sizeof(mca_btl_base_segment_t));
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
                 hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
                 /* if we are little endian and the remote side is big endian,
                    we're responsible for making sure the data is in network byte
                    order */
-                if (recvreq->req_recv.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-                    /* BWB - FIX ME - TIM, what do we do here? */
-                }
+                /* RDMA is currently disabled by bml if arch doesn't
+                   match, so this shouldn't be needed.  here to make sure
+                   we remember if we ever change the bml. */
+                assert(0 == (recvreq->req_recv.req_base.req_proc->proc_arch & 
+                             OMPI_ARCH_ISBIGENDIAN));
+#endif
 #endif
 
                 /* update request state */

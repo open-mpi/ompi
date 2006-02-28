@@ -94,7 +94,10 @@ void mca_pml_ob1_recv_frag_callback(
     case MCA_PML_OB1_HDR_TYPE_RGET:
         {
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            /* BWB - FIX ME - Tim, what do I do with rget? */
+            /* RDMA is currently disabled by bml if arch doesn't
+               match, so this shouldn't be needed.  here to make sure
+               we remember if we ever change the bml. */
+            assert(0 == (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO));
 #endif
             mca_pml_ob1_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             break;
@@ -131,7 +134,10 @@ void mca_pml_ob1_recv_frag_callback(
         {
             mca_pml_ob1_send_request_t* sendreq;
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            /* BWB - FIX ME - Tim, what do I do with rdma headers? */
+            /* RDMA is currently disabled by bml if arch doesn't
+               match, so this shouldn't be needed.  here to make sure
+               we remember if we ever change the bml. */
+            assert(0 == (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO));
 #endif
             sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_rdma.hdr_req.pval;

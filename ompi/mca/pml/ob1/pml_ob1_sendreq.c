@@ -337,9 +337,10 @@ int mca_pml_ob1_send_request_start_buffered(
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -347,6 +348,7 @@ int mca_pml_ob1_send_request_start_buffered(
         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
     }
+#endif
 #endif
 
     /* update lengths */
@@ -450,9 +452,10 @@ int mca_pml_ob1_send_request_start_copy(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -460,6 +463,7 @@ int mca_pml_ob1_send_request_start_copy(
         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_MATCH_HDR_HTON(hdr->hdr_match);
     }
+#endif
 #endif
 
     /* update lengths */
@@ -522,9 +526,10 @@ int mca_pml_ob1_send_request_start_prepare(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -532,6 +537,7 @@ int mca_pml_ob1_send_request_start_prepare(
         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_MATCH_HDR_HTON(hdr->hdr_match);
     }
+#endif
 #endif
 
     /* short message */
@@ -616,16 +622,19 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_rget.hdr_des.pval = src;
          hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
          hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
          /* if we are little endian and the remote side is big endian,
             we're responsible for making sure the data is in network byte
             order */
-         if (sendreq->req_send.req_base.req_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-             /* BWB - FIX ME - Ask Tim what we are supposed to do in this case */
-             return OMPI_ERR_NOT_SUPPORTED;
-         }
+         /* RDMA is currently disabled by bml if arch doesn't
+            match, so this shouldn't be needed.  here to make sure
+            we remember if we ever change the bml. */
+         assert(0 == (sendreq->req_send.req_base.req_proc->proc_arch & 
+                             OMPI_ARCH_ISBIGENDIAN));
+#endif
 #endif
 
          for(i=0; i<src->des_src_cnt; i++)
@@ -655,9 +664,10 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
          hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
          hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
          /* if we are little endian and the remote side is big endian,
             we're responsible for making sure the data is in network byte
             order */
@@ -665,6 +675,7 @@ int mca_pml_ob1_send_request_start_rdma(
              hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
              MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
          }
+#endif
 #endif
 
          /* update lengths with number of bytes actually packed */
@@ -736,9 +747,10 @@ int mca_pml_ob1_send_request_start_rndv(
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -746,6 +758,7 @@ int mca_pml_ob1_send_request_start_rndv(
         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_RNDV_HDR_HTON(hdr->hdr_rndv);
     }
+#endif
 #endif
 
     /* first fragment of a long message */
@@ -870,9 +883,10 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 hdr->hdr_src_req.pval = sendreq;
                 hdr->hdr_dst_req = sendreq->req_recv;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
                 hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
                 /* if we are little endian and the remote side is big endian,
                    we're responsible for making sure the data is in network byte
                    order */
@@ -880,6 +894,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
                     MCA_PML_OB1_FRAG_HDR_HTON(*hdr);
                 }
+#endif
 #endif
 
                 /* update state */
@@ -983,9 +998,10 @@ static void mca_pml_ob1_put_completion(
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
     hdr->hdr_des = frag->rdma_hdr.hdr_rdma.hdr_des;
 
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
     hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
-#elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#else
     /* if we are little endian and the remote side is big endian,
        we're responsible for making sure the data is in network byte
        order */
@@ -993,6 +1009,7 @@ static void mca_pml_ob1_put_completion(
         hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
         MCA_PML_OB1_FIN_HDR_HTON(*hdr);
     }
+#endif
 #endif
 
     /* queue request */
