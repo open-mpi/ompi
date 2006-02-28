@@ -22,7 +22,10 @@
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
 
-
+OBJ_CLASS_INSTANCE(mca_pml_dr_acked_item_t, 
+                   opal_list_item_t, 
+                   NULL, 
+                   NULL);
 
 static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
 {
