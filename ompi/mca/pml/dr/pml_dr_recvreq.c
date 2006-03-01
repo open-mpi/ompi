@@ -139,7 +139,8 @@ static void mca_pml_dr_ctl_completion(
 
 static void mca_pml_dr_recv_request_matched(
     mca_pml_dr_recv_request_t* recvreq,
-    mca_pml_dr_rendezvous_hdr_t* hdr, 
+    mca_pml_dr_match_hdr_t* hdr, 
+    uint8_t flags, 
     uint8_t mask)
 {
     ompi_proc_t* proc = recvreq->req_proc;
@@ -156,7 +157,7 @@ static void mca_pml_dr_recv_request_matched(
     /* if this hasn't been initialized yet - this is a synchronous send */
     if(NULL == proc) {
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
-                recvreq->req_recv.req_base.req_comm, hdr->hdr_match.hdr_src);
+                recvreq->req_recv.req_base.req_comm, hdr->hdr_src);
         proc = recvreq->req_proc = ompi_proc;
     }
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
@@ -171,10 +172,10 @@ static void mca_pml_dr_recv_request_matched(
     /* fill out header */
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
-    ack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_MATCH;
-    ack->hdr_vid = hdr->hdr_match.hdr_vid;
+    ack->hdr_common.hdr_flags = flags;
+    ack->hdr_vid = hdr->hdr_vid;
     ack->hdr_vmask = mask;
-    ack->hdr_src_req = hdr->hdr_match.hdr_src_req;
+    ack->hdr_src_req = hdr->hdr_src_req;
     assert(ack->hdr_src_req.pval);
     ack->hdr_dst_req.pval = recvreq;
     ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
@@ -189,18 +190,19 @@ static void mca_pml_dr_recv_request_matched(
         goto retry;
     }
 
-    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); 
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid);
     
     return;
 
     /* queue request to retry later */
 retry:
     MCA_PML_DR_RECV_FRAG_ALLOC(frag,rc);
-    frag->hdr.hdr_rndv = *hdr;
+    frag->hdr.hdr_match = *hdr;
     frag->num_segments = 0;
     frag->request = recvreq;
     opal_list_append(&mca_pml_dr.acks_pending, (opal_list_item_t*)frag);
 }
+
 
 
 /*
@@ -235,7 +237,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
 
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
-    ack->hdr_common.hdr_flags = 0;
+    ack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_VFRAG;
     ack->hdr_vid = vfrag->vf_id;
     ack->hdr_vmask = vfrag->vf_ack;
     ack->hdr_src_req = recvreq->req_vfrag0.vf_send;
@@ -250,7 +252,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     if(rc != OMPI_SUCCESS) {
         mca_bml_base_free(bml_btl, des);
     }
-    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); 
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid);
 }
 
 
@@ -293,6 +295,7 @@ void mca_pml_dr_recv_request_progress(
                 bytes_received,
                 bytes_delivered,
                 csum);
+           
             break;
 
         case MCA_PML_DR_HDR_TYPE_RNDV:
@@ -315,9 +318,10 @@ void mca_pml_dr_recv_request_progress(
             if(csum != hdr->hdr_match.hdr_csum) { 
                 assert(0); 
             }
-
-            mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_rndv,
-                                            (csum == hdr->hdr_match.hdr_csum));
+            
+            mca_pml_dr_recv_request_matched(recvreq, &hdr->hdr_match,
+                                            MCA_PML_DR_HDR_FLAGS_RNDV, 
+                                            csum == hdr->hdr_match.hdr_csum ? 1 : 0);
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:

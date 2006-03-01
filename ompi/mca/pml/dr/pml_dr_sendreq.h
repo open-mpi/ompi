@@ -39,7 +39,6 @@
 extern "C" {
 #endif
 
-
 struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
     /* ompi_proc_t* req_proc;  */
@@ -60,9 +59,7 @@ struct mca_pml_dr_send_request_t {
     opal_list_t         req_pending;
     opal_list_t         req_retrans;
     opal_mutex_t        req_mutex;
-    size_t              req_num_acks;
-    size_t              req_num_vfrags;
-    
+    mca_btl_base_descriptor_t* descriptor; /* descriptor for first frag, retransmission */
     
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
@@ -146,8 +143,6 @@ do {                                                                            
     sendreq->req_endpoint = endpoint;                                                     \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
-    sendreq->req_num_acks = 0;                                                            \
-    sendreq->req_num_vfrags = 0;                                                          \
                                                                                           \
     /* select a btl */                                                                    \
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
@@ -161,48 +156,7 @@ do {                                                                            
             rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);              \
             break;                                                                        \
         default:                                                                          \
-            if(size == 0) {                                                               \
-                mca_btl_base_descriptor_t* descriptor;                                    \
-                mca_btl_base_segment_t* segment;                                          \
-                mca_pml_dr_hdr_t* hdr;                                                    \
-                /* allocate a descriptor */                                               \
-                MCA_PML_DR_DES_ALLOC(bml_btl, descriptor, sizeof(mca_pml_dr_match_hdr_t));        \
-                if(NULL == descriptor) {                                                          \
-                    return OMPI_ERR_OUT_OF_RESOURCE;                                              \
-                }                                                                                 \
-                segment = descriptor->des_src;                                                    \
-                /* setup vfrag */                                                                 \
-                sendreq->req_vfrag0.vf_size = 0;                                                  \
-                                                                                                  \
-                /* build hdr */                                                                   \
-                hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;                                  \
-                hdr->hdr_common.hdr_flags = 0;                                                    \
-                hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_MATCH;                             \
-                hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;        \
-                hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;          \
-                hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                      \
-                hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;                 \
-                hdr->hdr_match.hdr_src_req.pval = sendreq;                                        \
-                hdr->hdr_match.hdr_vid = sendreq->req_vfrag0.vf_id;                               \
-                hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));        \
-                                                                                                  \
-                /* short message */                                                               \
-                descriptor->des_cbfunc = mca_pml_dr_match_completion_cache;                       \
-                descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                              \
-                descriptor->des_cbdata = sendreq;                                                 \
-                                                                                                  \
-                /* request is complete at mpi level */                                            \
-                OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-                MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                                    \
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
-                                                                                                  \
-                /* send */                                                                        \
-                rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);                     \
-                if(OMPI_SUCCESS != rc) {                                                          \
-                    mca_bml_base_free(bml_btl, descriptor );                                      \
-                }                                                                                 \
-                                                                                                  \
-            } else if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                         \
+           if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                         \
                 rc = mca_pml_dr_send_request_start_prepare(sendreq, bml_btl, size);   \
             } else {                                                                  \
                 rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);      \
@@ -282,9 +236,7 @@ do {                                                                            
     /* has an acknowledgment been received */                                             \
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
         OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-        if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {          \
-            MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);                                \
-        } else {                                                                          \
+        if(sendreq->req_send.req_bytes_packed - sendreq->req_send_offset) {               \
             schedule = true;                                                              \
         }                                                                                 \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
@@ -405,16 +357,9 @@ do {                                                                      \
  * Update bytes delivered on request based on supplied descriptor
  */
 
-#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, descriptor, hdrlen)    \
+#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, vfrag, hdrlen)         \
 do {                                                                                \
-   size_t i;                                                                        \
-   mca_btl_base_segment_t* segments = descriptor->des_src;                          \
-                                                                                    \
-   for(i=0; i<descriptor->des_src_cnt; i++) {                                       \
-       sendreq->req_bytes_delivered += segments[i].seg_len;                         \
-   }                                                                                \
-   sendreq->req_bytes_delivered -= hdrlen;                                          \
-                                                                                    \
+   sendreq->req_bytes_delivered += vfrag->vf_size;     \
 } while(0)
                                                                                                                           
 /*
