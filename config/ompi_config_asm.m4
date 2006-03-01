@@ -804,7 +804,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
             OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
             ;;
 
-        mips-*)
+        mips-*|mpis64-*)
             # Should really find some way to make sure that we are on
             # a MIPS III machine (r4000 and later)
             ompi_cv_asm_arch="MIPS"
