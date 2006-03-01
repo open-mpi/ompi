@@ -36,11 +36,11 @@
 #define MCA_PML_DR_HDR_TYPE_ACK       3
 #define MCA_PML_DR_HDR_TYPE_FRAG      4
 
-#define MCA_PML_DR_HDR_FLAGS_ACK      1  /* is an ack required */
-#define MCA_PML_DR_HDR_FLAGS_NBO      2  /* is the hdr in network byte order */
+#define MCA_PML_DR_HDR_FLAGS_NBO      1  /* is the hdr in network byte order */
+#define MCA_PML_DR_HDR_FLAGS_VFRAG    2
 #define MCA_PML_DR_HDR_FLAGS_MATCH    4  /* is the ack in response to a match */
-
-
+#define MCA_PML_DR_HDR_FLAGS_RNDV     8  /* is the ack in response to a rndv */
+#define MCA_PML_DR_HDR_FLAGS_BUFFERED 16
 /**
  * Common hdr attributes - must be first element in each hdr type 
  */
