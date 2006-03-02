@@ -39,9 +39,9 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 
 #define OMPI_DDT_LB_UB_CONT( _count, _disp, _old_lb, _old_ub, _old_extent, _new_lb, _new_ub ) \
 { \
-    if( 0 == count ) { \
+    if( 0 == _count ) { \
         _new_lb = (_old_lb) + (_disp); \
-         _new_ub = (_old_ub) + (_disp); \
+        _new_ub = (_old_ub) + (_disp); \
     } else { \
         long lower, upper; \
         upper = (_disp) + (_old_extent) * ((_count) - 1); \

@@ -43,6 +43,9 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
     /* TODO: if the data was commited update the opt_desc field */
     if( 0 != oldType->opt_desc.used ) {
         pdt->opt_desc.desc = malloc( oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
+        /*
+         * Yes, the pdt->opt_desc.length is just the opt_desc.used of the old Type.
+         */
         pdt->opt_desc.length = oldType->opt_desc.used;
         pdt->opt_desc.used = oldType->opt_desc.used;
         memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
