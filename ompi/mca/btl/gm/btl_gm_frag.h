@@ -115,19 +115,17 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
         (opal_list_item_t*)(frag)); \
 }
 
+
+/* called with mca_btl_gm_component.gm_lock held */
                                                                                                        
 #define MCA_BTL_GM_FRAG_POST(btl,frag) \
 do { \
     if(opal_list_get_size(&btl->gm_repost) < (size_t)btl->gm_num_repost) { \
-        OPAL_THREAD_LOCK(&btl->gm_lock);  \
         opal_list_append(&btl->gm_repost, (opal_list_item_t*)frag); \
-        OPAL_THREAD_UNLOCK(&btl->gm_lock);  \
     } else { \
-        OPAL_THREAD_LOCK(&btl->gm_lock);  \
         do { \
             gm_provide_receive_buffer(btl->port, frag->hdr, frag->size, frag->priority); \
         } while (NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_repost)));  \
-        OPAL_THREAD_UNLOCK(&btl->gm_lock);  \
     } \
 } while(0) 
 

@@ -101,8 +101,8 @@ static mca_btl_gm_proc_t* mca_btl_gm_proc_lookup_ompi(ompi_proc_t* ompi_proc)
 mca_btl_gm_proc_t* mca_btl_gm_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_gm_proc_t* gm_proc = NULL;
-    size_t size;
-    int rc, i;
+    size_t i, size;
+    int rc;
 
     /* Check if we have already created a GM proc
      * structure for this ompi process */

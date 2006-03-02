@@ -107,7 +107,10 @@ struct mca_btl_gm_module_t {
     opal_list_t gm_pending; /**< list of pending send descriptors */
     opal_list_t gm_repost; /**< list of pending fragments */
     opal_list_t gm_mru_reg; /**< list of most recently used registrations */
-    opal_mutex_t gm_lock;
+
+#if OMPI_ENABLE_PROGRESS_THREADS
+    opal_thread_t gm_thread;
+#endif
 }; 
 typedef struct mca_btl_gm_module_t mca_btl_gm_module_t;
 extern mca_btl_gm_module_t mca_btl_gm_module;
@@ -318,20 +321,31 @@ extern mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
  * Acquire a send token - queue the fragment if none available
  */
 
+#define MCA_BTL_GM_ACQUIRE_TOKEN_NL(btl, frag)                                                  \
+do {                                                                                            \
+    /* queue the descriptor if there are no send tokens */                                      \
+    if(OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {                                \
+        opal_list_append(&gm_btl->gm_pending, (opal_list_item_t*)frag);                         \
+        OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);                                      \
+        return OMPI_SUCCESS;                                                                    \
+    }                                                                                           \
+} while (0)                                                                                     \
+
+
 #define MCA_BTL_GM_ACQUIRE_TOKEN(btl, frag)                                                     \
 do {                                                                                            \
     /* queue the descriptor if there are no send tokens */                                      \
     if(OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, -1) < 0) {                                \
-        OPAL_THREAD_LOCK(&gm_btl->gm_lock);                                                     \
         opal_list_append(&gm_btl->gm_pending, (opal_list_item_t*)frag);                         \
-        OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);                                                   \
         OPAL_THREAD_ADD32(&gm_btl->gm_num_send_tokens, 1);                                      \
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);                                      \
         return OMPI_SUCCESS;                                                                    \
     }                                                                                           \
 } while (0)                                                                                     \
 
 /**
  * Return send token and dequeue and pending fragments 
+ * mca_btl_gm_component.gm_lock is already held.
  */
 
 #define MCA_BTL_GM_RETURN_TOKEN(btl)                                                            \
@@ -339,19 +353,17 @@ do {                                                                            
    OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );                                            \
    if(opal_list_get_size(&btl->gm_pending)) {                                                   \
        mca_btl_gm_frag_t* frag;                                                                 \
-       OPAL_THREAD_LOCK(&btl->gm_lock);                                                         \
        frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&btl->gm_pending);                     \
-       OPAL_THREAD_UNLOCK(&btl->gm_lock);                                                       \
        if(NULL != frag) {                                                                       \
            switch(frag->type) {                                                                 \
            case MCA_BTL_GM_SEND:                                                                \
-               mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);       \
+               mca_btl_gm_send_nl(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);    \
                break;                                                                           \
            case MCA_BTL_GM_PUT:                                                                 \
-               mca_btl_gm_put(&btl->super, frag->endpoint, &frag->base);                        \
+               mca_btl_gm_put_nl(&btl->super, frag->endpoint, &frag->base);                     \
                break;                                                                           \
            case MCA_BTL_GM_GET:                                                                 \
-               mca_btl_gm_get(&btl->super, frag->endpoint, &frag->base);                        \
+               mca_btl_gm_get_nl(&btl->super, frag->endpoint, &frag->base);                     \
                break;                                                                           \
            }                                                                                    \
        }                                                                                        \

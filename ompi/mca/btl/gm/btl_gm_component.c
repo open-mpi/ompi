@@ -25,6 +25,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/request/request.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -39,6 +40,12 @@
 #include "btl_gm_endpoint.h"
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
+
+
+#if OMPI_ENABLE_PROGRESS_THREADS
+static void* mca_btl_gm_progress_thread( opal_object_t* arg );
+#endif
+
 
 mca_btl_gm_component_t mca_btl_gm_component = {
     {
@@ -214,7 +221,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_repost, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_mru_reg, opal_list_t);
-    OBJ_CONSTRUCT(&btl->gm_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&btl->gm_thread, opal_thread_t);
                                                                                                   
     /* query nic tokens */
     btl->gm_num_send_tokens = gm_num_send_tokens (btl->port);
@@ -304,6 +311,16 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         opal_output (0, "[%s:%d] unable to allow remote memory access", __FILE__, __LINE__);
         return OMPI_ERROR;
     }
+
+#if OMPI_ENABLE_PROGRESS_THREADS
+    /* start progress thread */
+    btl->gm_thread.t_run = mca_btl_gm_progress_thread;
+    btl->gm_thread.t_arg = btl;
+    if(OPAL_SUCCESS != (rc = opal_thread_start(&btl->gm_thread))) {
+        opal_output (0, "[%s:%d] unable to create progress thread, retval=%d", __FILE__, __LINE__, rc);
+        return rc;
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -324,7 +341,7 @@ static int mca_btl_gm_discover( void )
     char  global_id[GM_MAX_HOST_NAME_LEN];
 #endif  /* GM_API_VERSION > 0x200 */
     int rc;
-
+    
     for( board_no = 0; board_no < mca_btl_gm_component.gm_max_boards; board_no++ ) {
         mca_btl_gm_module_t *btl;
 
@@ -446,11 +463,14 @@ mca_btl_gm_component_init (int *num_btl_modules,
     mca_btl_base_module_t **btls;
     *num_btl_modules = 0;
 
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
     /* try to initialize GM */
     if( GM_SUCCESS != gm_init() ) {
         opal_output( 0, "[%s:%d] error in initializing the gm library\n", __FILE__, __LINE__ );
         mca_btl_gm_component.gm_num_btls = 0;
         mca_btl_gm_modex_send();
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
 
@@ -458,6 +478,7 @@ mca_btl_gm_component_init (int *num_btl_modules,
     mca_btl_gm_component.gm_btls = malloc( mca_btl_gm_component.gm_max_btls * sizeof (mca_btl_gm_module_t *));
     if (NULL == mca_btl_gm_component.gm_btls) {
         opal_output( 0, "[%s:%d] out of resources.", __FILE__, __LINE__ );
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
 
@@ -466,17 +487,20 @@ mca_btl_gm_component_init (int *num_btl_modules,
         mca_btl_base_error_no_nics("Myrinet/GM", "NIC");
         mca_btl_gm_component.gm_num_btls = 0;
         mca_btl_gm_modex_send();
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
     if (mca_btl_gm_component.gm_num_btls == 0) {
         mca_btl_base_error_no_nics("Myrinet/GM", "NIC");
         mca_btl_gm_component.gm_num_btls = 0;
         mca_btl_gm_modex_send();
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
 
     /* publish GM parameters with the MCA framework */
     if (OMPI_SUCCESS != mca_btl_gm_modex_send()) {
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
 
@@ -484,12 +508,14 @@ mca_btl_gm_component_init (int *num_btl_modules,
     btls = (mca_btl_base_module_t**) malloc (
                 mca_btl_gm_component.gm_num_btls * sizeof(mca_btl_base_module_t *));
     if (NULL == btls) {
+        OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
         return NULL;
     }
 
     memcpy(btls, mca_btl_gm_component.gm_btls,
            mca_btl_gm_component.gm_num_btls * sizeof(mca_btl_gm_module_t *));
     *num_btl_modules = mca_btl_gm_component.gm_num_btls;
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return btls;
 }
                                                                                                                 
@@ -511,12 +537,10 @@ int mca_btl_gm_component_progress()
         return OMPI_SUCCESS;
     }
 
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     for( i = 0; i < mca_btl_gm_component.gm_num_btls; ) {
         mca_btl_gm_module_t* btl = mca_btl_gm_component.gm_btls[i];
         gm_recv_event_t* event = gm_receive(btl->port);
-        unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
-        mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
-        mca_btl_base_header_t* hdr;
 
         /* If there are no receive events just skip the function call */
         switch(gm_ntohc(event->recv.type)) {
@@ -525,12 +549,18 @@ int mca_btl_gm_component_progress()
             case GM_FAST_HIGH_RECV_EVENT:
             case GM_FAST_HIGH_PEER_RECV_EVENT:
                 {
+                unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 mca_btl_base_recv_reg_t* reg;
-                hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
+
+                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
                 MCA_BTL_GM_FRAG_POST(btl,frag);
                 count++;
                 break;
@@ -540,12 +570,18 @@ int mca_btl_gm_component_progress()
             case GM_HIGH_RECV_EVENT:
             case GM_HIGH_PEER_RECV_EVENT:
                 {
+                unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
                 mca_btl_base_recv_reg_t* reg;
-                hdr = (mca_btl_base_header_t*)buffer;
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
+
+                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
                 reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
                 MCA_BTL_GM_FRAG_POST(btl,frag);
                 count++;
                 break;
@@ -558,7 +594,90 @@ int mca_btl_gm_component_progress()
                 break;
         }
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     OPAL_THREAD_ADD32(&inprogress, -1);
     return count;
 }
 
+
+#if OMPI_ENABLE_PROGRESS_THREADS
+static void* mca_btl_gm_progress_thread( opal_object_t* arg )
+{
+    opal_thread_t* thread = (opal_thread_t*)arg;
+    mca_btl_gm_module_t* btl = thread->t_arg;
+
+    /* This thread enter in a cancel enabled state */
+    pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
+    pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+    while(1) {
+        gm_recv_event_t* event;
+
+        /* dont process events while the app is in the library */
+        while(opal_progress_threads()) {
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+            while(opal_progress_threads())
+               sched_yield();
+            usleep(100); /* give app a chance to re-enter library */
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+        }
+
+        /* otherwise processes any pending events */
+        event = gm_blocking_receive_no_spin(btl->port);
+        switch(gm_ntohc(event->recv.type)) {
+            case GM_FAST_RECV_EVENT:
+            case GM_FAST_PEER_RECV_EVENT:
+            case GM_FAST_HIGH_RECV_EVENT:
+            case GM_FAST_HIGH_PEER_RECV_EVENT:
+                {
+                unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
+                mca_btl_base_recv_reg_t* reg;
+                frag->segment.seg_addr.pval = (hdr+1);
+                frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
+                reg = &btl->gm_reg[hdr->tag];
+
+                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+                reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
+                MCA_BTL_GM_FRAG_POST(btl,frag);
+                break;
+                }
+            case GM_RECV_EVENT:
+            case GM_PEER_RECV_EVENT:
+            case GM_HIGH_RECV_EVENT:
+            case GM_HIGH_PEER_RECV_EVENT:
+                {
+                unsigned char* buffer = (unsigned char*)gm_ntohp(event->recv.buffer);
+                mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
+                mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
+                mca_btl_base_recv_reg_t* reg;
+                frag->segment.seg_addr.pval = (hdr+1);
+                frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
+                reg = &btl->gm_reg[hdr->tag];
+
+                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+                reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+
+                MCA_BTL_GM_FRAG_POST(btl,frag);
+                break;
+                }
+            case _GM_SLEEP_EVENT:
+                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+                gm_unknown(btl->port, event);
+                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+                break;
+            default:
+                gm_unknown(btl->port, event);
+                break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+    return PTHREAD_CANCELED;
+}
+#endif
+                                                                                                                                       

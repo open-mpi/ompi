@@ -88,6 +88,11 @@ int mca_pml_ob1_recv(void *addr,
 
     MCA_PML_OB1_RECV_REQUEST_START(recvreq);
     if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
+#if OMPI_ENABLE_PROGRESS_THREADS
+        if(opal_progress_spin(&recvreq->req_recv.req_base.req_ompi.req_complete)) {
+            goto finished;
+        }
+#endif
         /* give up and sleep until completion */
         if (opal_using_threads()) {
             opal_mutex_lock(&ompi_request_lock);
@@ -103,6 +108,10 @@ int mca_pml_ob1_recv(void *addr,
             ompi_request_waiting--;
         }
     }
+
+#if OMPI_ENABLE_PROGRESS_THREADS
+finished:
+#endif
 
     if (NULL != status) {  /* return status */
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
