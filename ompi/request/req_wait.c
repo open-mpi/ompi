@@ -20,7 +20,43 @@
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
 
-int ompi_request_poll_iterations = 20000;
+
+int ompi_request_wait(
+    ompi_request_t ** req_ptr,
+    ompi_status_public_t * status)
+{
+    ompi_request_t *req = *req_ptr;
+    if(req->req_complete == false) {
+                                                                                                      
+#if OMPI_ENABLE_PROGRESS_THREADS
+        /* poll for completion */
+        if(opal_progress_spin(&req->req_complete))
+            goto finished;
+#endif
+
+        /* give up and sleep until completion */
+        OPAL_THREAD_LOCK(&ompi_request_lock);
+        ompi_request_waiting++;
+        while (req->req_complete == false) {
+            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+        }
+        ompi_request_waiting--;
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    }
+                                                                                                      
+#if OMPI_ENABLE_PROGRESS_THREADS
+finished:
+#endif
+                                                                                                      
+    /* return status */
+    if (MPI_STATUS_IGNORE != status) {
+        *status = req->req_status;
+    }
+                                                                                                      
+    /* return request to pool */
+    return req->req_fini(req_ptr);
+}
+
 
 int ompi_request_wait_any(
     size_t count,
@@ -39,8 +75,8 @@ int ompi_request_wait_any(
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     /* poll for completion */
-    opal_atomic_mb();
-    for (c = 0; completed < 0 && c < ompi_request_poll_iterations; c++) {
+    OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
+    for (c = 0; completed < 0 && c < opal_progress_spin_count; c++) {
         rptr = requests;
         num_requests_null_inactive = 0;
         for (i = 0; i < count; i++, rptr++) {
@@ -58,9 +94,13 @@ int ompi_request_wait_any(
                 goto finished;
             }
         }
-        if( num_requests_null_inactive == count )
+        if( num_requests_null_inactive == count ) {
+            OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
             goto finished;
+        }
+        opal_progress();
     }
+    OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
 #endif
 
     /* give up and sleep until completion */

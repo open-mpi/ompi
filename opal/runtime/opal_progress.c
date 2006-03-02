@@ -40,6 +40,11 @@ static const opal_timer_t opal_progress_default_tick_rate = 10000; /* 10ms */
 static const int opal_progress_default_tick_rate = 10000; /* 10k calls to opal_progress */
 #endif
 
+volatile int32_t opal_progress_thread_count = 0;
+int opal_progress_spin_count = 10000;
+                                                                                                          
+
+
 /*
  * Local variables
  */

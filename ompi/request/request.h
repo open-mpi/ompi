@@ -140,6 +140,7 @@ typedef struct ompi_request_t ompi_request_t;
 OMPI_DECLSPEC extern ompi_pointer_array_t  ompi_request_f_to_c_table;
 OMPI_DECLSPEC extern size_t                ompi_request_waiting;
 OMPI_DECLSPEC extern size_t                ompi_request_completed;
+OMPI_DECLSPEC extern int32_t               ompi_request_poll;
 OMPI_DECLSPEC extern opal_mutex_t          ompi_request_lock;
 OMPI_DECLSPEC extern opal_condition_t      ompi_request_cond;
 OMPI_DECLSPEC extern ompi_request_t        ompi_request_null;
@@ -286,31 +287,9 @@ OMPI_DECLSPEC int ompi_request_test_all(
  *
  */
 
-static inline int ompi_request_wait(
+int ompi_request_wait(
     ompi_request_t ** req_ptr,
-    ompi_status_public_t * status)
-{
-    ompi_request_t *req = *req_ptr;
-    if(req->req_complete == false) {
-        /* give up and sleep until completion */
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        ompi_request_waiting++;
-        while (req->req_complete == false) {
-            opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-        }
-        ompi_request_waiting--;
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    }
-
-    /* return status */
-    if (MPI_STATUS_IGNORE != status) {
-        *status = req->req_status;
-    }
-
-    /* return request to pool */
-    return req->req_fini(req_ptr);
-}
-
+    ompi_status_public_t * status);
 
 /**
  * Wait (blocking-mode) for one of N requests to complete.

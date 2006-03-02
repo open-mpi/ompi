@@ -27,6 +27,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+#include "opal/threads/mutex.h"
 
 /**
  * Initialize the progress engine
@@ -89,7 +90,6 @@ OMPI_DECLSPEC extern void opal_progress(void);
 
 typedef int (*opal_progress_callback_t)(void);
 
-
 /**
  * Register an event to be progressed
  */
@@ -111,6 +111,36 @@ OMPI_DECLSPEC int opal_progress_event_increment(void);
  * Decrease count of MPI users of the event library
  */   
 OMPI_DECLSPEC int opal_progress_event_decrement(void);
+
+
+/**
+ * Progress until flag is true or poll iterations completed
+ */
+
+extern volatile int32_t opal_progress_thread_count;
+extern int opal_progress_spin_count;
+
+
+static inline bool opal_progress_threads(void) 
+{ 
+    return (opal_progress_thread_count > 0); 
+}
+
+
+static inline bool opal_progress_spin(volatile bool* complete)
+{
+    int32_t c;
+    OPAL_THREAD_ADD32(&opal_progress_thread_count,1);
+    for (c = 0; c < opal_progress_spin_count; c++) {
+        if (true == *complete) {
+             OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+             return true;
+        }
+        opal_progress();
+    }
+    OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+}
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -33,6 +33,28 @@
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/proc/proc.h"
 
+
+/**
+ * Non-locking versions of public interfaces.
+ */
+
+static int mca_btl_gm_send_nl( 
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* des, 
+    mca_btl_base_tag_t tag);
+
+static int mca_btl_gm_get_nl( 
+    mca_btl_base_module_t* btl,
+    mca_btl_base_endpoint_t* endpoint,
+    mca_btl_base_descriptor_t* des);
+
+static int mca_btl_gm_put_nl( 
+    mca_btl_base_module_t* btl,
+    mca_btl_base_endpoint_t* endpoint,
+    mca_btl_base_descriptor_t* des);
+
+
 mca_btl_gm_module_t mca_btl_gm_module = {
     {
         &mca_btl_gm_component.super,
@@ -53,9 +75,15 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_free, 
         mca_btl_gm_prepare_src,
         mca_btl_gm_prepare_dst,
+#if OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS
         mca_btl_gm_send,
         mca_btl_gm_put,
-        NULL /* get */ 
+        mca_btl_gm_get
+#else
+        mca_btl_gm_send_nl,
+        mca_btl_gm_put_nl,
+        mca_btl_gm_get_nl
+#endif
     }
 };
 
@@ -438,7 +466,8 @@ static void mca_btl_gm_drop_callback( struct gm_port* port, void* context, gm_st
 }
 
 /**
- * Callback on send completion and/or error
+ * Callback on send completion and/or error.
+ * Called with mca_btl_gm_component.gm_lock held.
  */
 
 static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_status_t status )
@@ -461,18 +490,20 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             );
 
             /* retry the failed fragment */
-            mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+            mca_btl_gm_send_nl(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             break;
         case GM_SEND_DROPPED:
             /* release the send token */
             OPAL_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
 
             /* retry the dropped fragment */
-            mca_btl_gm_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
+            mca_btl_gm_send_nl(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);
             break;
         case GM_SUCCESS:
             /* call the completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -486,9 +517,75 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 
             /* call the completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             break;
     }
+}
+
+
+/**
+ * Initiate an asynchronous send. Do NOT acquire gm lock, must already be held,
+ * or in an unthreaded environment.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transfered
+ * @param tag (IN)         The tag value used to notify the peer.
+ */
+
+
+static int mca_btl_gm_send_nl( 
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    struct mca_btl_base_descriptor_t* des, 
+    mca_btl_base_tag_t tag)
+{
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl;
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
+
+    frag->btl = gm_btl;
+    frag->endpoint = endpoint; 
+    frag->hdr->tag = tag;
+    frag->type = MCA_BTL_GM_SEND;
+
+    /* queue the descriptor if there are no send tokens */
+    MCA_BTL_GM_ACQUIRE_TOKEN_NL(gm_btl, frag);
+
+    /* post the send descriptor */
+    if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&  
+       frag->size == mca_btl_gm_component.gm_eager_frag_size) {
+        gm_send_with_callback(
+            gm_btl->port,
+            frag->hdr,
+            mca_btl_gm_component.gm_eager_frag_size,
+            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+            GM_HIGH_PRIORITY,
+            endpoint->endpoint_addr.node_id,
+            endpoint->endpoint_addr.port_id,
+            mca_btl_gm_send_callback,
+            frag);
+    } else {
+        gm_send_with_callback(
+            gm_btl->port,
+            frag->hdr,
+            mca_btl_gm_component.gm_max_frag_size,
+            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+            GM_LOW_PRIORITY,
+            endpoint->endpoint_addr.node_id,
+            endpoint->endpoint_addr.port_id,
+            mca_btl_gm_send_callback,
+            frag);
+    }
+
+    if(opal_list_get_size(&gm_btl->gm_repost)) {
+        mca_btl_gm_frag_t* frag;
+        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
+            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
+        }
+    }
+    return OMPI_SUCCESS;
 }
 
 
@@ -517,6 +614,7 @@ int mca_btl_gm_send(
     frag->type = MCA_BTL_GM_SEND;
 
     /* queue the descriptor if there are no send tokens */
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     MCA_BTL_GM_ACQUIRE_TOKEN(gm_btl, frag);
     
     /* post the send descriptor */
@@ -547,19 +645,19 @@ int mca_btl_gm_send(
 
     if(opal_list_get_size(&gm_btl->gm_repost)) {
         mca_btl_gm_frag_t* frag;
-        OPAL_THREAD_LOCK(&gm_btl->gm_lock);
         while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
             gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
         }
-        OPAL_THREAD_UNLOCK(&gm_btl->gm_lock);
     }
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return OMPI_SUCCESS;
 }
 
 
 
 /**
- * Callback on put completion and/or error
+ * Callback on put completion and/or error.
+ * Called with mca_btl_gm_component.gm_lock held.
  */
 
 static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_status_t status )
@@ -573,6 +671,7 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
         case GM_SEND_TIMED_OUT:
         case GM_TIMED_OUT:
             /* drop all sends to this destination port */
+
             gm_drop_sends(
                 btl->port,
                 (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ? GM_HIGH_PRIORITY : GM_LOW_PRIORITY,
@@ -583,18 +682,20 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             );
 
             /* retry the failed fragment */
-            mca_btl_gm_put(&btl->super, frag->endpoint, &frag->base);
+            mca_btl_gm_put_nl(&btl->super, frag->endpoint, &frag->base);
             break;
         case GM_SEND_DROPPED:
             /* release the send token */
             OPAL_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
 
             /* retry the dropped fragment */
-            mca_btl_gm_put(&btl->super, frag->endpoint, &frag->base);
+            mca_btl_gm_put_nl(&btl->super, frag->endpoint, &frag->base);
             break;
         case GM_SUCCESS:
             /* call completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -607,9 +708,52 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 
             /* call the completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             break;
     }
+}
+
+
+/**
+ * Initiate an asynchronous put. Do not acquire lock.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
+ */
+
+static int mca_btl_gm_put_nl( 
+    mca_btl_base_module_t* btl,
+    mca_btl_base_endpoint_t* endpoint,
+    mca_btl_base_descriptor_t* des)
+{
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl;
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) des; 
+
+    frag->btl = gm_btl;
+    frag->endpoint = endpoint;
+    frag->type = MCA_BTL_GM_PUT;
+
+    /* queue the descriptor if there are no send tokens */
+    MCA_BTL_GM_ACQUIRE_TOKEN_NL(gm_btl, frag);
+
+    /* post the put descriptor */
+    gm_put(gm_btl->port,
+        des->des_src->seg_addr.pval,
+        des->des_dst->seg_addr.lval,
+        des->des_src->seg_len,
+        GM_LOW_PRIORITY,
+        endpoint->endpoint_addr.node_id,
+        endpoint->endpoint_addr.port_id,
+        mca_btl_gm_put_callback,
+        frag);
+    return OMPI_SUCCESS; 
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
 }
 
 
@@ -635,6 +779,7 @@ int mca_btl_gm_put(
     frag->type = MCA_BTL_GM_PUT;
 
     /* queue the descriptor if there are no send tokens */
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     MCA_BTL_GM_ACQUIRE_TOKEN(gm_btl, frag);
 
     /* post the put descriptor */
@@ -647,6 +792,7 @@ int mca_btl_gm_put(
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_put_callback,
         frag);
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return OMPI_SUCCESS; 
 #else
     return OMPI_ERR_NOT_IMPLEMENTED;
@@ -656,7 +802,8 @@ int mca_btl_gm_put(
 
 
 /**
- * Callback on get completion and/or error
+ * Callback on get completion and/or error. 
+ * Called with mca_btl_gm_component.gm_lock held.
  */
 
 static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_status_t status )
@@ -680,18 +827,20 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             );
 
             /* retry the failed fragment */
-            mca_btl_gm_get(&btl->super, frag->endpoint, &frag->base);
+            mca_btl_gm_get_nl(&btl->super, frag->endpoint, &frag->base);
             break;
         case GM_SEND_DROPPED:
             /* release the send token */
             OPAL_THREAD_ADD32(&btl->gm_num_send_tokens, 1);
 
             /* retry the dropped fragment */
-            mca_btl_gm_get(&btl->super, frag->endpoint, &frag->base);
+            mca_btl_gm_get_nl(&btl->super, frag->endpoint, &frag->base);
             break;
         case GM_SUCCESS:
             /* call completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 
             /* return the send token and deque pending fragments */
             MCA_BTL_GM_RETURN_TOKEN(btl);
@@ -704,11 +853,54 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
             OPAL_THREAD_ADD32( &btl->gm_num_send_tokens, 1 );
 
             /* call the completion callback */
+            OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
             frag->base.des_cbfunc(&btl->super, frag->endpoint, &frag->base, OMPI_ERROR);
+            OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
             break;
     }
 }
 
+
+/**
+ * Initiate an asynchronous get. No locking.
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
+ *
+ */
+
+static int mca_btl_gm_get_nl( 
+    mca_btl_base_module_t* btl,
+    mca_btl_base_endpoint_t* endpoint,
+    mca_btl_base_descriptor_t* des)
+{
+#if OMPI_MCA_BTL_GM_HAVE_RDMA_GET
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl;
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*) des; 
+
+    frag->btl = gm_btl;
+    frag->endpoint = endpoint;
+    frag->type = MCA_BTL_GM_GET;
+
+    /* queue the descriptor if there are no send tokens */
+    MCA_BTL_GM_ACQUIRE_TOKEN_NL(gm_btl, frag);
+
+    /* post get put descriptor */
+    gm_get(gm_btl->port,
+        des->des_dst->seg_addr.lval,
+        des->des_src->seg_addr.pval,
+        des->des_src->seg_len,
+        GM_LOW_PRIORITY,
+        endpoint->endpoint_addr.node_id,
+        endpoint->endpoint_addr.port_id,
+        mca_btl_gm_get_callback,
+        frag);
+    return OMPI_SUCCESS; 
+#else
+    return OMPI_ERR_NOT_IMPLEMENTED;
+#endif
+}
 
 
 /**
@@ -734,6 +926,7 @@ int mca_btl_gm_get(
     frag->type = MCA_BTL_GM_GET;
 
     /* queue the descriptor if there are no send tokens */
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     MCA_BTL_GM_ACQUIRE_TOKEN(gm_btl, frag);
 
     /* post get put descriptor */
@@ -746,6 +939,7 @@ int mca_btl_gm_get(
         endpoint->endpoint_addr.port_id,
         mca_btl_gm_get_callback,
         frag);
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return OMPI_SUCCESS; 
 #else
     return OMPI_ERR_NOT_IMPLEMENTED;
@@ -782,7 +976,6 @@ int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
     }
 #endif
 
-    OBJ_DESTRUCT(&gm_btl->gm_lock);
     OBJ_DESTRUCT(&gm_btl->gm_frag_eager);
     OBJ_DESTRUCT(&gm_btl->gm_frag_max);
     OBJ_DESTRUCT(&gm_btl->gm_frag_user);
