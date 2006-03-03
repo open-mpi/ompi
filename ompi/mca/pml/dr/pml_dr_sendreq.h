@@ -236,7 +236,7 @@ do {                                                                            
     /* has an acknowledgment been received */                                             \
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
         OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-        if(sendreq->req_send.req_bytes_packed - sendreq->req_send_offset) {               \
+        if(sendreq->req_bytes_delivered !=  sendreq->req_send.req_bytes_packed) {         \
             schedule = true;                                                              \
         }                                                                                 \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
