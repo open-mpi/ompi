@@ -145,9 +145,7 @@ void mca_pml_dr_match_completion_free(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
-
+    
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -176,7 +174,6 @@ static void mca_pml_dr_rndv_completion(
     int status)
 {
     mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -815,42 +812,34 @@ void mca_pml_dr_send_request_acked(
     mca_pml_dr_ack_hdr_t* ack)
 {
     mca_pml_dr_vfrag_t* vfrag; 
-    mca_btl_base_descriptor_t* descriptor;
     assert(sendreq);
-    descriptor = sendreq->descriptor;
     
     MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq, ack, vfrag);
     /* MCA_PML_DR_VFRAG_ACK_STOP(vfrag); */
     
     if(ack->hdr_common.hdr_flags & MCA_PML_DR_HDR_FLAGS_BUFFERED) { 
         if((ack->hdr_vmask & vfrag->vf_mask) == vfrag->vf_mask) { 
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-            mca_bml_base_free( (mca_bml_base_btl_t*) descriptor->des_context, descriptor ); 
-            sendreq->descriptor = NULL;
-            MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,
-                                                        vfrag,
-                                                        sizeof(mca_pml_dr_rendezvous_hdr_t));
-            
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            if(sendreq->descriptor) {
+                mca_bml_base_free( (mca_bml_base_btl_t*) sendreq->descriptor->des_context, sendreq->descriptor );
+                sendreq->descriptor = NULL;
+            }
+
         } else { 
             assert(0); 
         }
     } else if(ack->hdr_common.hdr_flags & MCA_PML_DR_HDR_FLAGS_RNDV) {
         if((ack->hdr_vmask & vfrag->vf_mask) == vfrag->vf_mask) { 
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(sendreq->descriptor) { 
-                mca_bml_base_free( (mca_bml_base_btl_t*) descriptor->des_context, descriptor ); 
-                sendreq->descriptor = NULL;
-                MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,
-                                                            vfrag,
-                                                            sizeof(mca_pml_dr_rendezvous_hdr_t));
-            
-            }
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
-            
             sendreq->req_vfrag0.vf_recv = ack->hdr_dst_req;
-            /* we know that we have more data, otherwise it would have been 
-               an MCA_PML_DR_HDR_FLAGS_MATCH */ 
+            if(sendreq->descriptor) { 
+                mca_bml_base_free( (mca_bml_base_btl_t*) sendreq->descriptor->des_context, sendreq->descriptor ); 
+                sendreq->descriptor = NULL;
+            }
+            OPAL_THREAD_LOCK(&ompi_request_lock);
+            MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq,
+                                                        vfrag,
+                                                        sizeof(mca_pml_dr_rendezvous_hdr_t));
+            
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
             if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed){
                 MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
             } else { 
@@ -869,7 +858,7 @@ void mca_pml_dr_send_request_acked(
         }
     } else if(ack->hdr_common.hdr_flags & MCA_PML_DR_HDR_FLAGS_MATCH) { 
         if((ack->hdr_vmask & vfrag->vf_mask) == vfrag->vf_mask) { 
-            mca_bml_base_free( (mca_bml_base_btl_t*) descriptor->des_context, descriptor ); 
+            mca_bml_base_free( (mca_bml_base_btl_t*) sendreq->descriptor->des_context, sendreq->descriptor ); 
             sendreq->descriptor = NULL;
             
             OPAL_THREAD_LOCK(&ompi_request_lock);

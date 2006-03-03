@@ -262,7 +262,7 @@ MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des,  \
 #define DO8(buf,i)  DO4(buf,i); DO4(buf,i+4);
 #define DO16(buf)   DO8(buf,0); DO8(buf,8);
 
-#define COMPUTE_SPECIFIC_CHECKSUM( DATA, LENGTH, ADLER32) \
+#define COMPUTE_SPECIFIC_CHECKSUM( DATA, LENGTH, ADLER32 ) \
 do { \
     uint8_t *_data = (DATA);   /* Pointer to the data to be summed */ \
     size_t _len = (LENGTH);    /* Length in bytes */ \

@@ -560,24 +560,27 @@ MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl);
     if(match != NULL) {
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
     } else if (hdr->hdr_common.hdr_type == MCA_PML_DR_HDR_TYPE_MATCH) { 
-        COMPUTE_SPECIFIC_CHECKSUM(segments->seg_addr.pval + 
-                                  sizeof(mca_pml_dr_match_hdr_t), 
+        COMPUTE_SPECIFIC_CHECKSUM((void*) (segments->seg_addr.lval + 
+                                           sizeof(mca_pml_dr_match_hdr_t)), 
                                   segments->seg_len - sizeof(mca_pml_dr_match_hdr_t), 
                                   csum);
+        assert(csum == hdr->hdr_csum);
+        
         mca_pml_dr_recv_frag_unmatched_ack(hdr, 
                                            ompi_proc, 
                                            MCA_PML_DR_HDR_FLAGS_MATCH,
                                            csum == hdr->hdr_csum ? 1 : 0);
         
     } else { 
-        COMPUTE_SPECIFIC_CHECKSUM(segments->seg_addr.pval + 
-                                  sizeof(mca_pml_dr_rendezvous_hdr_t), 
+        COMPUTE_SPECIFIC_CHECKSUM((void*) (segments->seg_addr.lval + 
+                                           sizeof(mca_pml_dr_rendezvous_hdr_t)), 
                                   segments->seg_len - sizeof(mca_pml_dr_rendezvous_hdr_t), 
                                   csum);
+        assert(csum == hdr->hdr_csum);
         mca_pml_dr_recv_frag_unmatched_ack(hdr,
                                            ompi_proc, 
                                            MCA_PML_DR_HDR_FLAGS_BUFFERED, 
-                                           csum == hdr->hdr_csum ? : 0);
+                                           csum == hdr->hdr_csum ? 1 : 0);
     }
     
     if(additional_match) {
