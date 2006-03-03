@@ -217,6 +217,8 @@ OMPI_DECLSPEC int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
                                          int32_t ci, int32_t ** i,
                                          int32_t ca, long* a,
                                          int32_t cd, ompi_datatype_t** d,int32_t type);
+OMPI_DECLSPEC int32_t ompi_ddt_copy_args( const ompi_datatype_t* source_data,
+                                          ompi_datatype_t* dest_data );
 OMPI_DECLSPEC int32_t ompi_ddt_release_args( ompi_datatype_t* pData );
 
 /*
