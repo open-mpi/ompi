@@ -179,10 +179,6 @@ ompi_communicator_t *ompi_comm_allocate ( int local_size, int remote_size )
 
     /* fill in the inscribing hyper-cube dimensions */
     new_comm->c_cube_dim = opal_cube_dim(local_size);
-    if ( OMPI_ERROR == new_comm->c_cube_dim ) {
-        OBJ_RELEASE(new_comm);
-        new_comm = NULL;
-    }
 
     return new_comm;
 }
@@ -383,7 +379,7 @@ static void ompi_comm_destruct(ompi_communicator_t* comm)
         OBJ_RELEASE ( comm->c_remote_group );
         comm->c_remote_group = NULL;
     }
-    
+
     if (NULL != comm->error_handler) {
         OBJ_RELEASE ( comm->error_handler );
         comm->error_handler = NULL;
