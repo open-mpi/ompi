@@ -1,7 +1,6 @@
 #! /bin/sh
-# -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -15455,8 +15454,39 @@ echo "  integer, dimension(*), intent(out) :: array_of_errcodes"
 echo "  integer, intent(out) :: ierr"
 echo "end subroutine ${proc}"
 echo
-echo "end interface ${procedure}"
+
+# Now we have an interface function to explicitly match the
+# combinations of MPI_ARGVS_NULL.  The rationale is not obvious...
+
+# The SPAWN_MULTIPLE interface has a nice compile-time check to ensure
+# that the "count" parameter matches the dimension of the other
+# parameters.  If the constant MPI_ARGVS_NULL is a character array of
+# some kind, there is no guarantee that the count value provided by
+# the application will match the dimension of MPI_ARGVS_NULL, which
+# could therefore result in a[n erroneous] compile-time error.  As
+# such, it is simpler to just make MPI_ARGVS_NULL a wholly different
+# type (e.g., integer) that matches an entirely different interface
+# function.
+
+# ARGVS_NULL variant
+proc="${procedure}AN"
+echo "subroutine ${proc}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
+        root, comm, intercomm, array_of_errcodes, ierr)"
+echo "  use mpi_kinds"
+echo "  integer, intent(in) :: count"
+echo "  character(len=*), dimension(*), intent(in) :: array_of_commands"
+echo "  integer, intent(in) :: array_of_argv"
+echo "  integer, dimension(*), intent(in) :: array_of_maxprocs"
+echo "  integer, dimension(*), intent(in) :: array_of_info"
+echo "  integer, intent(in) :: root"
+echo "  integer, intent(in) :: comm"
+echo "  integer, intent(out) :: intercomm"
+echo "  integer, dimension(*), intent(out) :: array_of_errcodes"
+echo "  integer, intent(out) :: ierr"
+echo "end subroutine ${proc}"
 echo
+
+echo "end interface ${procedure}"
 echo
 
 echo "Finished generating Fortran 90 interface functions" >&2
