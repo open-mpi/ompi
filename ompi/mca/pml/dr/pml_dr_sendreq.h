@@ -56,9 +56,7 @@ struct mca_pml_dr_send_request_t {
 
     mca_pml_dr_vfrag_t* req_vfrag;
     mca_pml_dr_vfrag_t  req_vfrag0;
-    opal_list_t         req_pending;
     opal_list_t         req_retrans;
-    opal_mutex_t        req_mutex;
     mca_btl_base_descriptor_t* descriptor; /* descriptor for first frag, retransmission */
     
 };
@@ -142,6 +140,8 @@ do {                                                                            
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->send_sequence,1);  \
     sendreq->req_endpoint = endpoint;                                                     \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
+    sendreq->req_vfrag0.vf_ack = 0;                                                       \
+    sendreq->req_vfrag0.vf_mask_processed = 0;                                            \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
                                                                                           \
     /* select a btl */                                                                    \
@@ -155,8 +155,11 @@ do {                                                                            
         case MCA_PML_BASE_SEND_BUFFERED:                                                  \
             rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);              \
             break;                                                                        \
+        case MCA_PML_BASE_SEND_COMPLETE:                                                  \
+            rc = mca_pml_dr_send_request_start_prepare(sendreq, bml_btl, size);           \
+            break;                                                                        \
         default:                                                                          \
-           if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                         \
+            if (bml_btl->btl_flags & MCA_BTL_FLAGS_SEND_INPLACE) {                        \
                 rc = mca_pml_dr_send_request_start_prepare(sendreq, bml_btl, size);   \
             } else {                                                                  \
                 rc = mca_pml_dr_send_request_start_copy(sendreq, bml_btl, size);      \
@@ -224,31 +227,6 @@ do {                                                                            
 
 
 /*
- * Advance a pending send request. Note that the initial descriptor must complete
- * and the acknowledment received before the request can complete or be scheduled.
- * However, these events may occur in either order.
- */
-
-#define MCA_PML_DR_SEND_REQUEST_ADVANCE(sendreq)                                          \
-do {                                                                                      \
-    bool schedule = false;                                                                \
-                                                                                          \
-    /* has an acknowledgment been received */                                             \
-    if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                                  \
-        OPAL_THREAD_LOCK(&ompi_request_lock);                                             \
-        if(sendreq->req_bytes_delivered !=  sendreq->req_send.req_bytes_packed) {         \
-            schedule = true;                                                              \
-        }                                                                                 \
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);                                           \
-    }                                                                                     \
-                                                                                          \
-    /* additional data to schedule */                                                     \
-    if(schedule == true) {                                                                \
-        mca_pml_dr_send_request_schedule(sendreq);                                        \
-    }                                                                                     \
-} while (0)
-
-/*
  * Release resources associated with a request
  */
 
@@ -291,46 +269,17 @@ do {                                                                            
         vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);                \
     }                                                                                   \
                                                                                         \
-    vfrag->vf_mask_processed = 0;                                                       \
     vfrag->vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                                \
-    vfrag->vf_ack = 0;                                                                  \
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
+    vfrag->vf_ack = 0;                                                                  \
     vfrag->vf_idx = 0;                                                                  \
+    vfrag->vf_mask_processed = 0;                                                       \
     vfrag->vf_max_send_size = max_send_size;                                            \
-    opal_list_append(&sendreq->req_pending, (opal_list_item_t*)vfrag);                  \
+    vfrag->vf_send.pval = sendreq;                                                      \
     sendreq->req_vfrag = vfrag;                                                         \
 } while(0)
 
 
-/*
- *
- */
-                                                                                                             
-#define MCA_PML_DR_SEND_REQUEST_VFRAG_PENDING(sendreq,hdr,vfrag)                \
-do {                                                                            \
-   if ((hdr)->hdr_vid == (sendreq)->req_vfrag0.vf_id) {                         \
-       vfrag = &(sendreq)->req_vfrag0;                                          \
-   } else if((sendreq)->req_vfrag->vf_id == (hdr)->hdr_vid) {                   \
-       vfrag = (sendreq)->req_vfrag;                                            \
-       opal_list_remove_item(&(sendreq)->req_pending,(opal_list_item_t*)vfrag); \
-   } else {                                                                     \
-       opal_list_item_t* item;                                                  \
-       vfrag = NULL;                                                            \
-       OPAL_THREAD_LOCK(&(sendreq)->req_mutex);                                 \
-       for(item =  opal_list_get_first(&(sendreq)->req_pending);                \
-           item != opal_list_get_end(&(sendreq)->req_pending);                  \
-           item =  opal_list_get_next(item)) {                                  \
-           mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                  \
-           if(vf->vf_id == (hdr)->hdr_vid) {                                    \
-               opal_list_remove_item(&(sendreq)->req_pending,item);             \
-               vfrag = vf;                                                      \
-               break;                                                           \
-           }                                                                    \
-       }                                                                        \
-       OPAL_THREAD_UNLOCK(&(sendreq)->req_mutex);                               \
-   }                                                                            \
-} while(0)
-                                                                                                             
 /*
  *
  */
@@ -339,7 +288,6 @@ do {                                                                            
 do {                                                                      \
    opal_list_item_t* item;                                                \
    vfrag = NULL;                                                          \
-   OPAL_THREAD_LOCK(&(sendreq)->req_mutex);                               \
    for(item =  opal_list_get_first(&(sendreq)->req_retrans);              \
        item != opal_list_get_end(&(sendreq)->req_retrans);                \
        item =  opal_list_get_next(item)) {                                \
@@ -349,7 +297,6 @@ do {                                                                      \
            break;                                                         \
        }                                                                  \
    }                                                                      \
-   OPAL_THREAD_UNLOCK(&(sendreq)->req_mutex);                             \
 } while(0)
                                                                                                              
 
@@ -418,35 +365,19 @@ int mca_pml_dr_send_request_reschedule(
     mca_pml_dr_vfrag_t* vfrag);
 
 /**
- *  Acknowledgment of vfrag 
+ *  Acknowledgment of vfrags
  */
-void mca_pml_dr_send_request_acked(
-    mca_pml_dr_send_request_t* sendreq,
+void mca_pml_dr_send_request_match_ack(
+    mca_btl_base_module_t* btl,
     mca_pml_dr_ack_hdr_t*);
 
-void mca_pml_dr_send_request_nacked(
-    mca_pml_dr_send_request_t* sendreq,
+void mca_pml_dr_send_request_rndv_ack(
+    mca_btl_base_module_t* btl,
     mca_pml_dr_ack_hdr_t*);
 
-/**
- *  Completion callback on match header
- *  Cache descriptor.
- */
-void mca_pml_dr_match_completion_cache(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status);
-
-/**
- *  Completion callback on match header
- *  Free descriptor.
- */
-void mca_pml_dr_match_completion_free(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* descriptor,
-    int status);
+void mca_pml_dr_send_request_frag_ack(
+    mca_btl_base_module_t* btl,
+    mca_pml_dr_ack_hdr_t*);
 
  
 #if defined(c_plusplus) || defined(__cplusplus)

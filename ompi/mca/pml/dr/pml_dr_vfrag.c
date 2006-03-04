@@ -19,8 +19,8 @@
 #include "ompi_config.h"
 #include "pml_dr_vfrag.h"
 #include "pml_dr_sendreq.h"
-void mca_pml_dr_send_request_wdog_timeout(int fd, short event, void* vfrag); 
-void mca_pml_dr_send_request_ack_timeout(int fd, short event, void* vfrag);
+void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* vfrag); 
+void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
 
 static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
 {
@@ -38,8 +38,8 @@ static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
     vfrag->tv_wdog.tv_usec = mca_pml_dr.timer_wdog_usec;
     vfrag->tv_ack.tv_sec = mca_pml_dr.timer_ack_usec;
     vfrag->tv_ack.tv_usec = mca_pml_dr.timer_ack_usec;
-    opal_evtimer_set(&vfrag->ev_wdog, mca_pml_dr_send_request_wdog_timeout, (void*) vfrag);
-    opal_evtimer_set(&vfrag->ev_ack, mca_pml_dr_send_request_ack_timeout, (void*) vfrag);
+    opal_evtimer_set(&vfrag->ev_wdog, mca_pml_dr_vfrag_wdog_timeout, (void*) vfrag);
+    opal_evtimer_set(&vfrag->ev_ack, mca_pml_dr_vfrag_ack_timeout, (void*) vfrag);
 }
 
 
@@ -60,30 +60,29 @@ OBJ_CLASS_INSTANCE(
 /** 
  * The wdog timer expired, better do something about it, like resend the current part of the vfrag 
  */
-void mca_pml_dr_send_request_wdog_timeout(int fd, short event, void* data) {
+void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
+{
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = vfrag->sendreq;
-    OPAL_THREAD_LOCK(&sendreq->req_mutex);
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     vfrag->vf_idx = 0;
-    opal_list_remove_item(&sendreq->req_pending, (opal_list_item_t*)vfrag);
     opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
-    OPAL_THREAD_UNLOCK(&sendreq->req_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     mca_pml_dr_send_request_schedule(sendreq);
 }
 
 /** 
  * The ack timer expired, better do something about it, like resend the entire vfrag? 
  */
-void mca_pml_dr_send_request_ack_timeout(int fd, short event, void* data) { 
-    mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = vfrag->sendreq;
+void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) { 
+    mca_pml_dr_vfrag_t* vfrag = data;
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
     /* reset it all, so it will all retransmit */
     vfrag->vf_ack = vfrag->vf_mask_processed = 0; 
-    OPAL_THREAD_LOCK(&sendreq->req_mutex);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     vfrag->vf_idx = 0;
-    opal_list_remove_item(&sendreq->req_pending, (opal_list_item_t*)vfrag);
     opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
-    OPAL_THREAD_UNLOCK(&sendreq->req_mutex);
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     mca_pml_dr_send_request_schedule(sendreq);
 }
 

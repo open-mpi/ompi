@@ -43,8 +43,8 @@ struct mca_pml_dr_vfrag_t {
     uint64_t   vf_ack;
     uint64_t   vf_mask;
     uint64_t   vf_mask_processed;
-    struct mca_pml_dr_send_request_t* sendreq;
     struct mca_bml_base_btl_t* bml_btl;
+
     /* we need a timer for the vfrag for: 
        1) a watchdog timer for local completion of the current 
           operation
