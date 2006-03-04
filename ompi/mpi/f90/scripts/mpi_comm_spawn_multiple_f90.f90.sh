@@ -33,5 +33,4 @@ end subroutine ${proc}
 EOF
 }
 
-output MPI_Comm_spawn_multiple
 output MPI_Comm_spawn_multiple MPI_Comm_spawn_multipleAN
