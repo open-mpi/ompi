@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -48,7 +48,12 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1"; then
-        CFLAGS="$CFLAGS -g"
+        if test "$GCC" = yes; then
+            CFLAGS="$CFLAGS -g3"
+        else
+            CFLAGS="$CFLAGS -g"
+        fi
+
         OMPI_UNIQ(CFLAGS)
         AC_MSG_WARN([-g has been added to CFLAGS (--enable-debug)])
     fi
