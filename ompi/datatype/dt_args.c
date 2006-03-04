@@ -332,7 +332,7 @@ int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
     return OMPI_SUCCESS;
 }
 
-size_t ompi_ddt_pack_description_length( ompi_datatype_t* datatype )
+size_t ompi_ddt_pack_description_length( const ompi_datatype_t* datatype )
 {
     if( datatype->flags & DT_FLAG_PREDEFINED ) {
         return sizeof(int) * 2;
