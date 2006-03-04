@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -127,6 +127,8 @@ enum {
 
   OMPI_OP_TYPE_LOGICAL,
   /**< Logical */
+  OMPI_OP_TYPE_BOOL,
+  /**< Bool */
 
   OMPI_OP_TYPE_COMPLEX,
   /**< Complex */
