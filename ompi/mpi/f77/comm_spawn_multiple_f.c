@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -95,7 +95,7 @@ void mpi_comm_spawn_multiple_f(MPI_Fint *count, char *array_commands,
 
     /* It's allowed to have no argv */
 
-    if (OMPI_IS_FORTRAN_ARGV_NULL(array_argv)) {
+    if (OMPI_IS_FORTRAN_ARGVS_NULL(array_argv)) {
         c_array_argv = MPI_ARGVS_NULL;
     } else {
 	ompi_fortran_multiple_argvs_f2c(OMPI_FINT_2_INT(*count), array_argv, 
