@@ -35,6 +35,8 @@ version 1.0.
 1.0.2
 -----
 
+- Added MPI_BOOL to the intrinsic reduction operations MPI_LAND,
+  MPI_LOR, MPI_LXOR.  Thanks to Andy Selle for pointing this out to us.
 - Fixed TCP BTL network matching logic during MPI_INIT; in some cases
   on multi-NIC nodes, a NIC could get paired with a NIC on another
   network (typically resulting in deadlock).  Thanks to Ken Mighell

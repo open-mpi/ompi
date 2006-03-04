@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -202,13 +202,18 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 /** Fortran logical *****************************************************/
 
 #if OMPI_HAVE_FORTRAN_LOGICAL
-#define LOGICAL(name) \
+#define FORTRAN_LOGICAL(name) \
   { ompi_mpi_op_##name##_fortran_logical }  /* OMPI_OP_TYPE_LOGICAL */
 #else
-#define LOGICAL(name) { NULL }
+#define FORTRAN_LOGICAL(name) { NULL }
 #endif
+#define LOGICAL(name) \
+  FORTRAN_LOGICAL(name), \
+  { ompi_mpi_op_##name##_bool }  /* OMPI_OP_TYPE_BOOL */
+
 #define LOGICAL_NULL \
-  { NULL }  /* OMPI_OP_TYPE_LOGICAL */
+  { NULL },  /* OMPI_OP_TYPE_LOGICAL */ \
+  { NULL }   /* OMPI_OP_TYPE_BOOL */
 
 /** Fortran complex *****************************************************/
 
@@ -605,6 +610,7 @@ int ompi_op_init(void)
   ompi_op_ddt_map[DT_COMPLEX_FLOAT] = OMPI_OP_TYPE_COMPLEX;
   ompi_op_ddt_map[DT_COMPLEX_DOUBLE] = OMPI_OP_TYPE_DOUBLE_COMPLEX;
   ompi_op_ddt_map[DT_LOGIC] = OMPI_OP_TYPE_LOGICAL;
+  ompi_op_ddt_map[DT_CXX_BOOL] = OMPI_OP_TYPE_BOOL;
   ompi_op_ddt_map[DT_FLOAT_INT] = OMPI_OP_TYPE_FLOAT_INT;
   ompi_op_ddt_map[DT_DOUBLE_INT] = OMPI_OP_TYPE_DOUBLE_INT;
   ompi_op_ddt_map[DT_LONG_INT] = OMPI_OP_TYPE_LONG_INT;

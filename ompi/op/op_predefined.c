@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -404,6 +404,8 @@ FUNC_FUNC(land, unsigned_long_long, unsigned long long)
 #if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(land, fortran_logical, ompi_fortran_logical_t)
 #endif
+/* C++ bool */
+FUNC_FUNC(land, bool, bool)
 
 /*************************************************************************
  * Logical OR
@@ -427,6 +429,8 @@ FUNC_FUNC(lor, unsigned_long_long, unsigned long long)
 #if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(lor, fortran_logical, ompi_fortran_logical_t)
 #endif
+/* C++ bool */
+FUNC_FUNC(lor, bool, bool)
 
 /*************************************************************************
  * Logical XOR
@@ -450,6 +454,8 @@ FUNC_FUNC(lxor, unsigned_long_long, unsigned long long)
 #if OMPI_HAVE_FORTRAN_LOGICAL
 FUNC_FUNC(lxor, fortran_logical, ompi_fortran_logical_t)
 #endif
+/* C++ bool */
+FUNC_FUNC(lxor, bool, bool)
 
 /*************************************************************************
  * Bitwise AND
