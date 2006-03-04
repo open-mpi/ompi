@@ -39,7 +39,7 @@ OMPI_GENERATE_F77_BINDINGS (OMPI_TEST_FORTRAN_CONSTANTS,
                             ompi_test_fortran_constants_,
                             ompi_test_fortran_constants__,
                             ompi_test_fortran_constants_f,
-                            (char *bottom, char *in_place, char *argv, char *argvs, char *status, char *statuses, MPI_Fint *flag)
+                            (char *bottom, char *in_place, char *argv, char *argvs, char *status, char *statuses, MPI_Fint *flag),
                             (bottom, in_place, argv, argvs, status, statuses, flag) )
 #endif
 
