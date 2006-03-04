@@ -1,6 +1,6 @@
 # -*- makefile -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -201,6 +201,7 @@ nodist_libmpi_f90_a_SOURCES = \
      mpi_bsend_init_f90.f90 \
      mpi_buffer_attach_f90.f90 \
      mpi_buffer_detach_f90.f90 \
+     mpi_comm_spawn_multiple_f90.f90 \
      mpi_file_iread_f90.f90 \
      mpi_file_iread_at_f90.f90 \
      mpi_file_iread_shared_f90.f90 \

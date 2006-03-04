@@ -27,6 +27,9 @@ version 1.0.
   Several Fortran 77 and Fortran 90 tests need to be pre-seeded with
   results from a config.cache-like file.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
+- Fix various MPI F90 interface functions and constant types to match.
+  Thanks to Michael Kluskens for pointing out the problems to us.
+
 
 
 1.0.2
