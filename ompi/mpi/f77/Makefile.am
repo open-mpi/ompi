@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -15,8 +15,6 @@
 # 
 # $HEADER$
 #
-
-
 
 SUBDIRS = profile
 
@@ -66,7 +64,8 @@ headers = \
 libmpi_f77_la_SOURCES   = \
         constants_f.c \
         attr_fn_f.c \
-        strings.c
+        strings.c \
+        test_constants_f.c
 
 #
 # libmpi_c_mpi.la is only built in some cases (see above)
