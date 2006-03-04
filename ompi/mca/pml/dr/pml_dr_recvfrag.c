@@ -52,10 +52,10 @@ OBJ_CLASS_INSTANCE(
 );
 
 static void mca_pml_dr_recv_frag_unmatched_ack(
-                                     mca_pml_dr_match_hdr_t* hdr, 
-                                     ompi_proc_t* ompi_proc, 
-                                     uint8_t flags, 
-                                     uint8_t mask); 
+    mca_pml_dr_match_hdr_t* hdr, 
+    ompi_proc_t* ompi_proc, 
+    uint8_t flags, 
+    uint8_t mask); 
 
 /*
  * Release resources.
@@ -99,6 +99,15 @@ void mca_pml_dr_recv_frag_callback(
             mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             break;
         }
+    case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
+        {
+            if(hdr->hdr_common.hdr_csum != (uint16_t) opal_csum(hdr, sizeof(mca_pml_dr_ack_hdr_t))) { 
+                assert(0);
+                return; 
+            }
+            mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
+            break;
+        }
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
             if(hdr->hdr_common.hdr_csum != (uint16_t) opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t))) { 
@@ -108,17 +117,13 @@ void mca_pml_dr_recv_frag_callback(
             mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             break;
         }
-    case MCA_PML_DR_HDR_TYPE_ACK:
+    case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
         {
-            mca_pml_dr_send_request_t* sendreq; 
             if(hdr->hdr_common.hdr_csum != (uint16_t) opal_csum(hdr, sizeof(mca_pml_dr_ack_hdr_t))) { 
                 assert(0);
                 return; 
             }
-            sendreq = (mca_pml_dr_send_request_t*)
-                hdr->hdr_ack.hdr_src_req.pval;
-            
-            mca_pml_dr_send_request_acked(sendreq, &hdr->hdr_ack);
+            mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
             break;
         }
     case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -128,10 +133,17 @@ void mca_pml_dr_recv_frag_callback(
                 assert(0);
                 return; 
             }
-            recvreq = (mca_pml_dr_recv_request_t*)
-                hdr->hdr_frag.hdr_dst_req.pval;
-            
+            recvreq = hdr->hdr_frag.hdr_dst_ptr.pval;
             mca_pml_dr_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
+            break;
+        }
+    case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
+        {
+            if(hdr->hdr_common.hdr_csum != (uint16_t) opal_csum(hdr, sizeof(mca_pml_dr_ack_hdr_t))) { 
+                assert(0);
+                return; 
+            }
+            mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
             break;
         }
     default:
@@ -523,8 +535,7 @@ rematch:
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return rc;
             }
-            
-MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl);
+            MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl);
             opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag );
         }
 
@@ -559,30 +570,17 @@ MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl);
     /* release matching lock before processing fragment */
     if(match != NULL) {
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
-    } else if (hdr->hdr_common.hdr_type == MCA_PML_DR_HDR_TYPE_MATCH) { 
-        COMPUTE_SPECIFIC_CHECKSUM((void*) (segments->seg_addr.lval + 
-                                           sizeof(mca_pml_dr_match_hdr_t)), 
-                                  segments->seg_len - sizeof(mca_pml_dr_match_hdr_t), 
-                                  csum);
+    } else {
+        size_t hdr_size = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);
+        COMPUTE_SPECIFIC_CHECKSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
+                                  segments->seg_len - hdr_size, csum);
         assert(csum == hdr->hdr_csum);
-        
         mca_pml_dr_recv_frag_unmatched_ack(hdr, 
                                            ompi_proc, 
-                                           MCA_PML_DR_HDR_FLAGS_MATCH,
-                                           csum == hdr->hdr_csum ? 1 : 0);
-        
-    } else { 
-        COMPUTE_SPECIFIC_CHECKSUM((void*) (segments->seg_addr.lval + 
-                                           sizeof(mca_pml_dr_rendezvous_hdr_t)), 
-                                  segments->seg_len - sizeof(mca_pml_dr_rendezvous_hdr_t), 
-                                  csum);
-        assert(csum == hdr->hdr_csum);
-        mca_pml_dr_recv_frag_unmatched_ack(hdr,
-                                           ompi_proc, 
-                                           MCA_PML_DR_HDR_FLAGS_BUFFERED, 
+                                           hdr->hdr_common.hdr_type,
                                            csum == hdr->hdr_csum ? 1 : 0);
     }
-    
+
     if(additional_match) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {
@@ -597,10 +595,10 @@ MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl);
 
 
 static void mca_pml_dr_recv_frag_unmatched_ack(
-                                     mca_pml_dr_match_hdr_t* hdr, 
-                                     ompi_proc_t* ompi_proc, 
-                                     uint8_t flags, 
-                                     uint8_t mask)
+    mca_pml_dr_match_hdr_t* hdr, 
+    ompi_proc_t* ompi_proc, 
+    uint8_t type, 
+    uint8_t mask)
     {
     mca_bml_base_endpoint_t* bml_endpoint = NULL; 
     mca_btl_base_descriptor_t* des;
@@ -620,13 +618,13 @@ static void mca_pml_dr_recv_frag_unmatched_ack(
 
     /* fill out header */
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
-    ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
-    ack->hdr_common.hdr_flags = flags;
+    ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK | type;
+    ack->hdr_common.hdr_flags = 0;
     ack->hdr_vid = hdr->hdr_vid;
     ack->hdr_vmask = mask;
-    ack->hdr_src_req = hdr->hdr_src_req;
-    assert(ack->hdr_src_req.pval);
-    ack->hdr_dst_req.pval = NULL;
+    ack->hdr_src_ptr = hdr->hdr_src_ptr;
+    assert(ack->hdr_src_ptr.pval);
+    ack->hdr_dst_ptr.pval = NULL;
     ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
     
     /* initialize descriptor */
@@ -829,9 +827,9 @@ void mca_pml_dr_recv_frag_ack(mca_pml_dr_recv_frag_t* frag)
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_vmask = 1;
     ack->hdr_vid = frag->hdr.hdr_match.hdr_vid;
-    ack->hdr_src_req = frag->hdr.hdr_match.hdr_src_req;
-    assert(ack->hdr_src_req.pval);
-    ack->hdr_dst_req.pval = NULL;
+    ack->hdr_src_ptr = frag->hdr.hdr_match.hdr_src_ptr;
+    assert(ack->hdr_src_ptr.pval);
+    ack->hdr_dst_ptr.pval = NULL;
     ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
     
     /* initialize descriptor */

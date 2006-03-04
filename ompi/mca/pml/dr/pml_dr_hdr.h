@@ -31,19 +31,22 @@
 
 #include "opal/types.h"
 
-#define MCA_PML_DR_HDR_TYPE_MATCH     1
-#define MCA_PML_DR_HDR_TYPE_RNDV      2
-#define MCA_PML_DR_HDR_TYPE_ACK       3
-#define MCA_PML_DR_HDR_TYPE_FRAG      4
+#define MCA_PML_DR_HDR_TYPE_MATCH     0x01
+#define MCA_PML_DR_HDR_TYPE_RNDV      0x02
+#define MCA_PML_DR_HDR_TYPE_FRAG      0x04
+#define MCA_PML_DR_HDR_TYPE_ACK       0x80
 
-#define MCA_PML_DR_HDR_FLAGS_NBO      1  /* is the hdr in network byte order */
-#define MCA_PML_DR_HDR_FLAGS_VFRAG    2
-#define MCA_PML_DR_HDR_FLAGS_MATCH    4  /* is the ack in response to a match */
-#define MCA_PML_DR_HDR_FLAGS_RNDV     8  /* is the ack in response to a rndv */
-#define MCA_PML_DR_HDR_FLAGS_BUFFERED 16
+#define MCA_PML_DR_HDR_TYPE_MATCH_ACK (MCA_PML_DR_HDR_TYPE_ACK | MCA_PML_DR_HDR_TYPE_MATCH)
+#define MCA_PML_DR_HDR_TYPE_RNDV_ACK  (MCA_PML_DR_HDR_TYPE_ACK | MCA_PML_DR_HDR_TYPE_RNDV)
+#define MCA_PML_DR_HDR_TYPE_FRAG_ACK  (MCA_PML_DR_HDR_TYPE_ACK | MCA_PML_DR_HDR_TYPE_FRAG)
+
+#define MCA_PML_DR_HDR_FLAGS_NBO       1  /* is the hdr in network byte order */
+#define MCA_PML_DR_HDR_FLAGS_MATCHED   2
+
 /**
  * Common hdr attributes - must be first element in each hdr type 
  */
+
 struct mca_pml_dr_common_hdr_t {
     uint8_t hdr_type;  /**< type of envelope */
     uint8_t hdr_flags; /**< flags indicating how fragment should be processed */
@@ -66,7 +69,7 @@ struct mca_pml_dr_match_hdr_t {
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint32_t hdr_csum;                     /**< checksum over data */
-    ompi_ptr_t hdr_src_req;                /**< pointer to source request - returned in ack */
+    ompi_ptr_t hdr_src_ptr;                /**< pointer to source vfrag - returned in ack */
 };
 typedef struct mca_pml_dr_match_hdr_t mca_pml_dr_match_hdr_t;
 
@@ -121,8 +124,8 @@ struct mca_pml_dr_frag_hdr_t {
     uint16_t hdr_frag_idx;                 /**< bit index of this frag w/in vfrag */
     uint32_t hdr_frag_csum;                /**< checksum over data */
     uint64_t hdr_frag_offset;              /**< absolute offset of this fragment */
-    ompi_ptr_t hdr_src_req;                /**< pointer to source req */
-    ompi_ptr_t hdr_dst_req;                /**< pointer to receive req */
+    ompi_ptr_t hdr_src_ptr;              /**< pointer to source vfrag */
+    ompi_ptr_t hdr_dst_ptr;                /**< pointer to receive req */
 };
 typedef struct mca_pml_dr_frag_hdr_t mca_pml_dr_frag_hdr_t;
 
@@ -147,8 +150,8 @@ struct mca_pml_dr_ack_hdr_t {
     mca_pml_dr_common_hdr_t hdr_common;       /**< common attributes */
     uint32_t   hdr_vid;                       /**< virtual fragment id */
     uint64_t   hdr_vmask;                     /**< acknowledged frags */
-    ompi_ptr_t hdr_src_req;                   /**< source request */
-    ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
+    ompi_ptr_t hdr_src_ptr;                   /**< source vfrag */
+    ompi_ptr_t hdr_dst_ptr;                   /**< matched receive request */
 };
 typedef struct mca_pml_dr_ack_hdr_t mca_pml_dr_ack_hdr_t;
 
@@ -176,5 +179,24 @@ union mca_pml_dr_hdr_t {
 };
 typedef union mca_pml_dr_hdr_t mca_pml_dr_hdr_t;
 
+
+static inline size_t mca_pml_dr_hdr_size(uint8_t type) 
+{
+    switch(type) {
+        case MCA_PML_DR_HDR_TYPE_MATCH:
+            return sizeof(mca_pml_dr_match_hdr_t);
+        case MCA_PML_DR_HDR_TYPE_RNDV:
+            return sizeof(mca_pml_dr_rendezvous_hdr_t);
+        case MCA_PML_DR_HDR_TYPE_FRAG:
+            return sizeof(mca_pml_dr_frag_hdr_t);
+        case MCA_PML_DR_HDR_TYPE_ACK:
+        case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
+        case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
+        case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
+            return sizeof(mca_pml_dr_ack_hdr_t);
+        default:
+            assert(0);
+    }
+}
 
 #endif
