@@ -137,11 +137,11 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
                                           size_t* max_data,
                                           int32_t* freeAfter )
 {
-    dt_stack_t* pStack;         /* pointer to the position on the stack */
-    uint32_t pos_desc;          /* actual position in the description of the derived datatype */
-    uint32_t count_desc;        /* the number of items already done in the actual pos_desc */
-    uint16_t type;              /* type at current position */
-    size_t total_unpacked = 0;  /* total size unpacked this time */
+    dt_stack_t* pStack;                /* pointer to the position on the stack */
+    uint32_t pos_desc;                 /* actual position in the description of the derived datatype */
+    uint32_t count_desc;               /* the number of items already done in the actual pos_desc */
+    uint16_t type = DT_MAX_PREDEFINED; /* type at current position */
+    size_t total_unpacked = 0;         /* total size unpacked this time */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
@@ -256,6 +256,7 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
                                             packed_buffer, user_memory_base, iov_len_local );
                 if( 0 != count_desc ) {  /* completed */
                     type = pElem->elem.common.type;
+                    assert (type < DT_MAX_PREDEFINED);
                     required_space = ompi_ddt_basicDatatypes[type]->size;
                     goto complete_loop;
                 }
@@ -269,6 +270,7 @@ int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
             /* We have some partial data here. Let's copy it into the convertor
              * and keep it hot until the next round.
              */
+            assert (type < DT_MAX_PREDEFINED);
             assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
             memcpy( pConvertor->pending, packed_buffer, iov_len_local );
             DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );

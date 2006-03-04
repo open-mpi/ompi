@@ -224,7 +224,7 @@ OMPI_DECLSPEC int32_t ompi_ddt_release_args( ompi_datatype_t* pData );
 /*
  *
  */
-OMPI_DECLSPEC size_t ompi_ddt_pack_description_length( ompi_datatype_t* datatype );
+OMPI_DECLSPEC size_t ompi_ddt_pack_description_length( const ompi_datatype_t* datatype );
 
 /*
  *
