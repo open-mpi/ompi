@@ -15438,7 +15438,7 @@ procedure='MPI_Comm_spawn_multiple'
 
 echo "interface ${procedure}"
 echo
-proc="${procedure}"
+proc="${procedure}N"
 echo "subroutine ${proc}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)"
 echo "  use mpi_kinds"
