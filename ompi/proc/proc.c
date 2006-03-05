@@ -1,13 +1,13 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -105,7 +105,7 @@ int ompi_proc_init(void)
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
     /* get all peers in this job */
-    if(OMPI_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
+    if(ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
         opal_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
         return rc;
     }
@@ -332,7 +332,7 @@ int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize, orte_buffe
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     for (i=0; i<proclistsize; i++) {
         int rc = orte_dss.pack(buf, &(proclist[i]->proc_name), 1, ORTE_NAME);
-        if(rc != OMPI_SUCCESS) {
+        if(rc != ORTE_SUCCESS) {
             OPAL_THREAD_UNLOCK(&ompi_proc_lock);
             return rc;
         }
@@ -393,6 +393,7 @@ static int setup_registry_callback(void)
     /* find the job segment on the registry */
     if (ORTE_SUCCESS !=
         (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 
@@ -442,6 +443,7 @@ CLEANUP:
     free(sub_name);
     free(keys[0]);
     free(keys[1]);
+    free(keys[2]);
 
     return rc;
 }
