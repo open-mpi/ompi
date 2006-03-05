@@ -35,6 +35,7 @@ int mca_base_close(void)
     /* Close down the component repository */
 
     mca_base_component_repository_finalize();
+    opal_output_close (0);
   }
   mca_base_opened = false;
 
