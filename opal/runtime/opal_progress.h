@@ -139,6 +139,7 @@ static inline bool opal_progress_spin(volatile bool* complete)
         opal_progress();
     }
     OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
+    return false;
 }
 
 
