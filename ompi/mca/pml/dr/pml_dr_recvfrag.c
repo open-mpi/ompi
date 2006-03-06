@@ -27,6 +27,8 @@
 #include "opal/util/crc.h"
 #include "ompi/constants.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 #include "ompi/mca/pml/pml.h"
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
@@ -455,7 +457,7 @@ bool mca_pml_dr_recv_frag_match(
     opal_list_t additional_matches;
     ompi_proc_t* ompi_proc;
     int rc;
-    uint32_t csum = 0;
+    uint32_t csum = 1;
     /* communicator pointer */
     comm_ptr=ompi_comm_lookup(hdr->hdr_ctx);
     comm=(mca_pml_dr_comm_t *)comm_ptr->c_pml_comm;
@@ -797,48 +799,4 @@ rematch:
     return match_made;
 }
 
-
-/**
- * Generate an acknowledgement to the request
- */
-
-void mca_pml_dr_recv_frag_ack(mca_pml_dr_recv_frag_t* frag)
-{
-
-    mca_pml_dr_ack_hdr_t* ack;
-    mca_btl_base_descriptor_t* des;
-    mca_bml_base_endpoint_t* bml_endpoint;
-    mca_bml_base_btl_t* bml_btl;
-    int rc;
-
-    /* lookup btl */
-    bml_endpoint = (mca_bml_base_endpoint_t*)frag->proc->proc_pml;
-    bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
-
-    /* allocate descriptor */
-    MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
-    if(NULL == des) {
-        return;
-    }
-
-    /* fill out header */
-    ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
-    ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK;
-    ack->hdr_common.hdr_flags = 0;
-    ack->hdr_vmask = 1;
-    ack->hdr_vid = frag->hdr.hdr_match.hdr_vid;
-    ack->hdr_src_ptr = frag->hdr.hdr_match.hdr_src_ptr;
-    assert(ack->hdr_src_ptr.pval);
-    ack->hdr_dst_ptr.pval = NULL;
-    ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
-    
-    /* initialize descriptor */
-    des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    des->des_cbfunc = mca_pml_dr_ctl_completion;
-
-    rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
-    if(rc != OMPI_SUCCESS) {
-        mca_bml_base_free(bml_btl, des);
-    }
-}
 

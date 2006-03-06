@@ -261,7 +261,7 @@ void mca_pml_dr_recv_request_progress(
     size_t data_offset = 0;
     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
     size_t i;
-    uint32_t csum = 0;
+    uint32_t csum = 1;
     uint64_t bit;
     mca_pml_dr_vfrag_t* vfrag;
     
