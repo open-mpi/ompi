@@ -251,6 +251,9 @@ static void mca_pml_dr_frag_completion(
         /* are we done with this request ? */
         if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
+        } else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
+               opal_list_get_size(&sendreq->req_retrans)) {
+            schedule = true;
         }
  
     } else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
@@ -852,6 +855,7 @@ void mca_pml_dr_send_request_match_ack(
         /* do NOT complete message until matched at peer */
         if (ack->hdr_common.hdr_flags & MCA_PML_DR_HDR_FLAGS_MATCHED) {
             /* update statistics */
+            assert(sendreq->req_bytes_delivered == 0);
             sendreq->req_bytes_delivered = vfrag->vf_size;
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
