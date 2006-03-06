@@ -86,8 +86,6 @@ do {                                                            \
                segs[i].seg_addr.pval,                           \
                segs[i].seg_len);                                \
     }                                                           \
-    mca_pml_dr_recv_frag_ack(frag);                             \
-                                                                \
 } while(0)
 
 
@@ -133,14 +131,6 @@ OMPI_DECLSPEC bool mca_pml_dr_recv_frag_match(
     mca_pml_dr_match_hdr_t *hdr,
     mca_btl_base_segment_t* segments,
     size_t num_segments);
-
-/**
- * Generate an acknowledgment for an unexpected/out-of-order fragment
- */
-
-OMPI_DECLSPEC void mca_pml_dr_recv_frag_ack(
-    mca_pml_dr_recv_frag_t* frag);
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

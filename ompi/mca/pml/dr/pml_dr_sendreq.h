@@ -205,6 +205,7 @@ do {                                                                            
 #define MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq)                                     \
 do {                                                                                      \
     /* request completed at pml level */                                                  \
+    assert((sendreq)->req_send.req_base.req_pml_complete == false);                       \
     (sendreq)->req_send.req_base.req_pml_complete = true;                                 \
                                                                                           \
     /* user has already released the request so simply free it */                         \

@@ -248,7 +248,7 @@ do {                                                                            
         csum = request->req_recv.req_convertor.checksum;                          \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
-        csum = 0;                                                                 \
+        csum = MCA_PML_DR_CSUM_ZERO;                                              \
     }                                                                             \
 } while (0)
 
