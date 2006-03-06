@@ -38,7 +38,8 @@ int MPI_Testsome(int incount, MPI_Request requests[],
                  MPI_Status statuses[]) 
 {
     int rc, index, completed;
-    ompi_status_public_t status;
+    ompi_status_public_t *pstatus;
+
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -50,16 +51,19 @@ int MPI_Testsome(int incount, MPI_Request requests[],
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
+    if( MPI_STATUSES_IGNORE != statuses ) {
+        pstatus = statuses;
+    } else {
+        pstatus = MPI_STATUS_IGNORE;
+    }
     /* optimize this in the future */
-    rc = ompi_request_test_any(incount, requests, &index, &completed, &status);
-    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    rc = ompi_request_test_any(incount, requests, &index, &completed, pstatus);
     if(completed) {
         *outcount = (index == MPI_UNDEFINED) ? MPI_UNDEFINED : 1;
         indices[0] = index;
-        statuses[0] = status;
     } else {
         *outcount = 0;
     }
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 
