@@ -197,6 +197,7 @@ static inline size_t mca_pml_dr_hdr_size(uint8_t type)
         default:
             assert(0);
     }
+    return 0;
 }
 
 #endif
