@@ -89,14 +89,14 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 
 OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
-static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
-    mca_pml_dr_acked_item_t* item = (mca_pml_dr_acked_item_t*) proc->acked_vfrags_ptr;
+static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_acked_item_t** current, int32_t vfrag_id) { 
+    mca_pml_dr_acked_item_t* item = *current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     while(true) { 
         if(NULL == item) { 
             return false;
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id) { 
-            proc->acked_vfrags_ptr = (opal_list_item_t*) item;
+            *current = (mca_pml_dr_acked_item_t*) item;
             return true; 
         } else if(vfrag_id > item->vfrag_id_high && direction != -1) { 
             direction = 1; 
@@ -110,29 +110,29 @@ static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* proc
     }
 }
 
-static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, int32_t vfrag_id) { 
-    mca_pml_dr_acked_item_t* item = (mca_pml_dr_acked_item_t*) proc->acked_vfrags_ptr;
+static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags, 
+                                                  mca_pml_dr_acked_item_t** current, 
+                                                  int32_t vfrag_id) { 
+    mca_pml_dr_acked_item_t* item = *current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     mca_pml_dr_acked_item_t *new_item, *next_item, *prev_item;
     while(true) { 
-        if(NULL == item && 
-           (direction == 0 || direction == 1)) { 
-            
+        if( item == NULL || item == (mca_pml_dr_acked_item_t*) &acked_vfrags->opal_list_tail )  { 
             new_item = OBJ_NEW(mca_pml_dr_acked_item_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
-            opal_list_append(&proc->acked_vfrags, (opal_list_item_t*) new_item);
-            proc->acked_vfrags_ptr = (opal_list_item_t*) new_item;
+            opal_list_append(acked_vfrags, (opal_list_item_t*) new_item);
+            *current = (mca_pml_dr_acked_item_t*) new_item;
             return;
-        } else if (NULL == item && direction == -1) { 
+        } else if( item == (mca_pml_dr_acked_item_t*) &acked_vfrags->opal_list_head ) { 
             new_item = OBJ_NEW(mca_pml_dr_acked_item_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
-            opal_list_prepend(&proc->acked_vfrags, (opal_list_item_t*) new_item); 
-            proc->acked_vfrags_ptr = (opal_list_item_t*) new_item;
+            opal_list_prepend(acked_vfrags, (opal_list_item_t*) new_item); 
+            *current = (mca_pml_dr_acked_item_t*) new_item;
             return; 
             
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id ) { 
 
-            proc->acked_vfrags_ptr = (opal_list_item_t*) item;
+            *current = (mca_pml_dr_acked_item_t*) item;
             return; 
 
         } else if((item->vfrag_id_high + 1) == vfrag_id) { 
@@ -141,12 +141,12 @@ static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, 
             /* try to consolidate */ 
             if(next_item && next_item->vfrag_id_low == (vfrag_id+1)) { 
                 item->vfrag_id_high = next_item->vfrag_id_high;
-                opal_list_remove_item(&proc->acked_vfrags, (opal_list_item_t*) next_item);
+                opal_list_remove_item(acked_vfrags, (opal_list_item_t*) next_item);
                 OBJ_RELEASE(next_item);
             } else { 
                 item->vfrag_id_high = vfrag_id;
             }    
-            proc->acked_vfrags_ptr = (opal_list_item_t*) item;
+            *current = (mca_pml_dr_acked_item_t*) item;
             return; 
             
         } else if((item->vfrag_id_low - 1) == vfrag_id) { 
@@ -155,12 +155,12 @@ static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, 
             /* try to consolidate */
             if(prev_item && prev_item->vfrag_id_high == (vfrag_id-1)) {  
                 item->vfrag_id_low = prev_item->vfrag_id_low;
-                opal_list_remove_item(&proc->acked_vfrags, (opal_list_item_t*) prev_item);
+                opal_list_remove_item(acked_vfrags, (opal_list_item_t*) prev_item);
                 OBJ_RELEASE(prev_item);
             } else { 
                 item->vfrag_id_low = vfrag_id; 
             }
-            proc->acked_vfrags_ptr = (opal_list_item_t*) item;
+            *current = (mca_pml_dr_acked_item_t*) item;
             return; 
             
         } else if(vfrag_id > item->vfrag_id_high ) { 
@@ -169,10 +169,10 @@ static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, 
                 new_item = OBJ_NEW(mca_pml_dr_acked_item_t);
                 new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
                 /* insert new_item directly before item */
-                opal_list_insert_pos(&proc->acked_vfrags, 
+                opal_list_insert_pos(acked_vfrags, 
                                      (opal_list_item_t*) item, 
                                      (opal_list_item_t*) new_item); 
-                proc->acked_vfrags_ptr = (opal_list_item_t*) new_item;
+                *current = (mca_pml_dr_acked_item_t*) new_item;
                 return;
             } else { 
                 direction = 1;
@@ -184,13 +184,13 @@ static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* proc, 
                 new_item = OBJ_NEW(mca_pml_dr_acked_item_t); 
                 next_item = (mca_pml_dr_acked_item_t*) opal_list_get_next(item);
                 if(NULL == next_item) { 
-                    opal_list_append(&proc->acked_vfrags, (opal_list_item_t*) new_item);
+                    opal_list_append(acked_vfrags, (opal_list_item_t*) new_item);
                 } else { 
-                    opal_list_insert_pos(&proc->acked_vfrags, 
+                    opal_list_insert_pos(acked_vfrags, 
                                          (opal_list_item_t*) next_item, 
                                          (opal_list_item_t*) new_item); 
                 }
-                proc->acked_vfrags_ptr = (opal_list_item_t*) new_item;
+                *current = (mca_pml_dr_acked_item_t*) new_item;
                 return;
             } else { 
                 direction = -1;

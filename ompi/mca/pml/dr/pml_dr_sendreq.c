@@ -883,7 +883,7 @@ void mca_pml_dr_send_request_rndv_ack(
     OPAL_THREAD_LOCK(&ompi_request_lock);
 
     /* need to retransmit? */
-    if(ack->hdr_vmask & vfrag->vf_mask != vfrag->vf_mask) {
+    if((ack->hdr_vmask & vfrag->vf_mask) != vfrag->vf_mask) {
 
         mca_bml_base_btl_t* bml_btl = sendreq->descriptor->des_context;
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
