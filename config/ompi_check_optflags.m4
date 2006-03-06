@@ -34,6 +34,9 @@ co_found=0
 for co_word in $co_arg; do
     case $co_word in
     -g)    co_found=1 ;;
+    -g1)   co_found=1 ;;
+    -g2)   co_found=1 ;;
+    -g3)   co_found=1 ;;
     +K0)   co_found=1 ;;
     +K1)   co_found=1 ;;
     +K2)   co_found=1 ;;
