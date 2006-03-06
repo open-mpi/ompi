@@ -39,9 +39,8 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
                  MPI_Status *statuses) 
 {
-    int index;
-    int rc;
-    MPI_Status status;
+    int index, rc;
+    MPI_Status *pstatus;
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
@@ -52,18 +51,19 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
+    if( MPI_STATUSES_IGNORE != statuses ) {
+        pstatus = statuses;
+    } else {
+        pstatus = MPI_STATUS_IGNORE;
+    }
     /* optimize this in the future */
-    rc = ompi_request_wait_any( incount, requests, &index, &status );
-    OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
-    if( MPI_UNDEFINED ==index ) {
+    rc = ompi_request_wait_any( incount, requests, &index, pstatus );
+    if( MPI_UNDEFINED == index ) {
        *outcount = MPI_UNDEFINED;
     } else {
        *outcount = 1;
        indices[0] = index;
-       if( MPI_STATUSES_IGNORE != statuses ) {
-          statuses[0] = status;
-       }
     }
-    return MPI_SUCCESS;
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 
