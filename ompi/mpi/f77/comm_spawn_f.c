@@ -95,7 +95,7 @@ void mpi_comm_spawn_f(char *command, char *argv, MPI_Fint *maxprocs,
         ompi_fortran_argv_f2c(argv, argv_len, &c_argv);
     }
 
-    *ierr = OMPI_INT_2_FINT(MPI_Comm_spawn(command, c_argv, 
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_spawn(c_command, c_argv, 
 					   OMPI_FINT_2_INT(*maxprocs),
 					   c_info,
 					   OMPI_FINT_2_INT(*root),
