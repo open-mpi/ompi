@@ -1097,11 +1097,11 @@ ompi_show_subtitle "Compiler flags"
 # source directories, however.
 #
 if test "$OMPI_TOP_BUILDDIR" != "$OMPI_TOP_SRCDIR"; then
-    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'"$CPPFLAGS"
-    CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'"$CXXCPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CPPFLAGS"
+    CXXCPPFLAGS='-I$(top_srcdir) -I$(top_builddir) -I$(top_srcdir)/opal/include -I$(top_srcdir)/orte/include -I$(top_srcdir)/ompi/include'" $CXXCPPFLAGS"
 else
-    CPPFLAGS='-I$(top_srcdir)'"$CPPFLAGS"
-    CXXCPPFLAGS='-I$(top_srcdir)'"$CXXCPPFLAGS"
+    CPPFLAGS='-I$(top_srcdir)'" $CPPFLAGS"
+    CXXCPPFLAGS='-I$(top_srcdir)'" $CXXCPPFLAGS"
 fi
 
 #
