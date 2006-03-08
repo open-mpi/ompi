@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -125,7 +125,8 @@
 /* Logical */
 
 #define OMPI_OP_HANDLER_LOGICAL(name) \
-  void ompi_mpi_op_##name##_fortran_logical OMPI_OP_PROTO;
+  void ompi_mpi_op_##name##_fortran_logical OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_bool OMPI_OP_PROTO;
 
 /* Complex */
 
