@@ -48,7 +48,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1"; then
-        if test "$GCC" = yes; then
+        if test "$ompi_c_vendor" = "gnu"; then
             CFLAGS="$CFLAGS -g3"
         else
             CFLAGS="$CFLAGS -g"
