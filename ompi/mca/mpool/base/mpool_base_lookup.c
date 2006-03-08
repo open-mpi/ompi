@@ -27,10 +27,10 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
-#if HAVE_MALLOPT == 1
+#if defined(HAVE_MALLOPT)
 #include <malloc.h>
 extern int mca_mpool_base_disable_sbrk;
-#endif
+#endif  /* defined(HAVE_MALLOPT) */
 
 
 extern int mca_mpool_base_use_mem_hooks;
@@ -90,18 +90,18 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
     opal_list_append(&mca_mpool_base_modules, (opal_list_item_t*) sm); 
     /* on the very first creation of a module we init the memory callback*/ 
     if(opal_list_get_size(&mca_mpool_base_modules) == 1) { 
-      if(mca_mpool_base_use_mem_hooks &&
-	 0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
-          opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
-          OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
-      }
+        if(mca_mpool_base_use_mem_hooks &&
+	       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+              opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+              OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
+        }
 
-#if HAVE_MALLOPT == 1
-      else if(mca_mpool_base_disable_sbrk) { 
-	mallopt(M_TRIM_THRESHOLD, -1); 
-	mallopt(M_MMAP_MAX, 0);
-      }
-#endif
+#if defined(HAVE_MALLOPT)
+        else if(mca_mpool_base_disable_sbrk) { 
+            mallopt(M_TRIM_THRESHOLD, -1); 
+            mallopt(M_MMAP_MAX, 0);
+        }
+#endif  /* defined(HAVE_MALLOPT) */
     }
     return module; 
 }
