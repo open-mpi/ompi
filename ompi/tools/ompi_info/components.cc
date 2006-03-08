@@ -231,7 +231,7 @@ void ompi_info::open_components()
   component_map["io"] = &mca_io_base_components_opened;
 
   mca_rcache_base_open();
-  component_map["rcache"] = &mca_bml_base_components_available;
+  component_map["rcache"] = &mca_rcache_base_components;
 
   mca_mpool_base_open();
   component_map["mpool"] = &mca_mpool_base_components;
