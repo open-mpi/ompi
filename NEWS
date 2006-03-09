@@ -35,6 +35,8 @@ version 1.0.
 1.0.2
 -----
 
+- Added MPI_UNSIGNED_CHAR and MPI_SIGNED_CHAR to the allowed reduction
+  types.
 - Fix a segv in variable-length message displays on Opterons running
   Solaris.  Thanks to Pierre Valiron for reporting the issue.
 - Added MPI_BOOL to the intrinsic reduction operations MPI_LAND,
