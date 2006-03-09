@@ -72,9 +72,16 @@ enum {
 
 /**
  * Corresponding to the types that we can reduce over.  See
- * MPI-1:4.9.2, p114-115.
+ * MPI-1:4.9.2, p114-115 and
+ * MPI-2:4.15, p76-77
  */
 enum {
+  OMPI_OP_TYPE_CHAR,
+  /**< C integer: char */
+  OMPI_OP_TYPE_UNSIGNED_CHAR,
+  /**< C integer: unsigned char */
+  OMPI_OP_TYPE_SIGNED_CHAR,
+  /**< C integer: signed char */
   OMPI_OP_TYPE_INT,
   /**< C integer: int */
   OMPI_OP_TYPE_LONG,
