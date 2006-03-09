@@ -24,13 +24,14 @@
 #include "datatype/datatype_internal.h"
 
 typedef struct __dt_args {
-   int create_type;
-   int ci;
-   int ca;
-   int cd;
-   int* i;
-   MPI_Aint* a;
-   MPI_Datatype* d;
+    int ref_count;
+    int create_type;
+    int ci;
+    int ca;
+    int cd;
+    int* i;
+    MPI_Aint* a;
+    MPI_Datatype* d;
 } ompi_ddt_args_t;
 
 #define ALLOC_ARGS(PDATA, IC, AC, DC)					\
@@ -55,6 +56,7 @@ typedef struct __dt_args {
         }                                                               \
         if( pArgs->cd == 0 ) pArgs->d = NULL;				\
         else pArgs->d = (MPI_Datatype*)buf;                             \
+        pArgs->ref_count = 1;                                           \
         (PDATA)->args = (void*)pArgs;					\
     } while(0)
 
@@ -271,6 +273,20 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
     return MPI_SUCCESS;
 }
 
+int32_t ompi_ddt_copy_args( const ompi_datatype_t* source_data,
+                            ompi_datatype_t* dest_data )
+{
+    ompi_ddt_args_t* pArgs = source_data->args;
+    
+    /* If required then increase the reference count of the arguments. This avoid us
+     * to make one more copy for a read only piece of memory.
+     */
+    assert( NULL != source_data->args );
+    pArgs->ref_count++;
+    dest_data->args = pArgs;
+    return MPI_SUCCESS;
+}
+
 /* In the dt_add function we increase the reference count for all datatypes
  * (except for the predefined ones) that get added to another datatype. This
  * insure that they cannot get released until all the references to them
@@ -281,12 +297,19 @@ int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
     int i;
     ompi_ddt_args_t* pArgs = pData->args;
 
-    for( i = 0; i < pArgs->cd; i++ ) {
-        if( !(pArgs->d[i]->flags & DT_FLAG_PREDEFINED) ) {
-            OBJ_RELEASE( pArgs->d[i] );
+    assert( 0 < pArgs->ref_count );
+    pArgs->ref_count--;
+    if( 0 == pArgs->ref_count ) {
+        /* There are some duplicated datatypes around that have a pointer to this
+         * args. We will release them only when the last datatype will dissapear.
+         */
+        for( i = 0; i < pArgs->cd; i++ ) {
+            if( !(pArgs->d[i]->flags & DT_FLAG_PREDEFINED) ) {
+                OBJ_RELEASE( pArgs->d[i] );
+            }
         }
+        free( pData->args );
     }
-    free( pData->args );
     pData->args = NULL;
 
     return OMPI_SUCCESS;

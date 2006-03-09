@@ -74,6 +74,7 @@ int MPI_Type_get_contents(MPI_Datatype mtype,
                 OMPI_ERRHANDLER_RETURN( MPI_ERR_INTERN, MPI_COMM_WORLD,
                                         MPI_ERR_INTERN, FUNC_NAME );
             }
+            ompi_ddt_copy_args( array_of_datatypes[i], newtype );
             array_of_datatypes[i] = newtype;
         }
     }
