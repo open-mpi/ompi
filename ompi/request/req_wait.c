@@ -91,6 +91,7 @@ int ompi_request_wait_any(
             }
             if (true == request->req_complete) {
                 completed = i;
+                OPAL_THREAD_ADD32(&opal_progress_thread_count,-1);
                 goto finished;
             }
         }
