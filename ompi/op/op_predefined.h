@@ -30,6 +30,8 @@
 /* C integer */
 
 #define OMPI_OP_HANDLER_C_INTEGER_INTRINSIC(name) \
+  void ompi_mpi_op_##name##_signed_char OMPI_OP_PROTO; \
+  void ompi_mpi_op_##name##_unsigned_char OMPI_OP_PROTO; \
   void ompi_mpi_op_##name##_int OMPI_OP_PROTO; \
   void ompi_mpi_op_##name##_long OMPI_OP_PROTO; \
   void ompi_mpi_op_##name##_short OMPI_OP_PROTO; \
