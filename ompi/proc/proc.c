@@ -459,7 +459,7 @@ CLEANUP:
 static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     size_t i, j, k;
-    char *str;
+    char *str = NULL;
     uint32_t arch = 0, *ui32;
     bool found_name, found_arch;
     orte_ns_cmp_bitmask_t mask;
@@ -533,6 +533,10 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                 }
             }
         }
+    }
+
+    if (NULL != str) {
+        free(str);
     }
 
     /* unlock */
