@@ -171,10 +171,15 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
         return 0;
     }
 #endif
+#if OMPI_HAVE_THREAD_SUPPORT
+    array->arr_index = (array->arr_index +1) % array->arr_size;
+    bml_btl = &array->bml_btls[array->arr_index];
+#else
     bml_btl = &array->bml_btls[array->arr_index++];
     if(array->arr_index == array->arr_size) {
         array->arr_index = 0;
     }
+#endif
     return bml_btl;
 }
 
