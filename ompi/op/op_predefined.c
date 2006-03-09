@@ -132,6 +132,8 @@
 #undef current_func
 #define current_func(a, b) ((a) > (b) ? (a) : (b))
 /* C integer */
+FUNC_FUNC(max, signed_char, signed char)
+FUNC_FUNC(max, unsigned_char, unsigned char)
 FUNC_FUNC(max, int, int)
 FUNC_FUNC(max, long, long)
 FUNC_FUNC(max, short, short)
@@ -190,6 +192,8 @@ FUNC_FUNC(max, fortran_real16, ompi_fortran_real16_t)
 #undef current_func
 #define current_func(a, b) ((a) < (b) ? (a) : (b))
 /* C integer */
+FUNC_FUNC(min, signed_char, signed char)
+FUNC_FUNC(min, unsigned_char, unsigned char)
 FUNC_FUNC(min, int, int)
 FUNC_FUNC(min, long, long)
 FUNC_FUNC(min, short, short)
@@ -245,6 +249,8 @@ FUNC_FUNC(min, fortran_real16, ompi_fortran_real16_t)
  *************************************************************************/
 
 /* C integer */
+OP_FUNC(sum, signed_char, signed char, +=)
+OP_FUNC(sum, unsigned_char, unsigned char, +=)
 OP_FUNC(sum, int, int, +=)
 OP_FUNC(sum, long, long, +=)
 OP_FUNC(sum, short, short, +=)
@@ -316,6 +322,8 @@ COMPLEX_OP_FUNC_SUM(fortran_complex32, ompi_fortran_complex32_t)
  *************************************************************************/
 
 /* C integer */
+OP_FUNC(prod, signed_char, signed char, *=)
+OP_FUNC(prod, unsigned_char, unsigned char, *=)
 OP_FUNC(prod, int, int, *=)
 OP_FUNC(prod, long, long, *=)
 OP_FUNC(prod, short, short, *=)
@@ -389,6 +397,8 @@ COMPLEX_OP_FUNC_PROD(fortran_complex32, ompi_fortran_complex32_t)
 #undef current_func
 #define current_func(a, b) ((a) && (b))
 /* C integer */
+FUNC_FUNC(land, unsigned_char, unsigned char)
+FUNC_FUNC(land, signed_char, signed char)
 FUNC_FUNC(land, int, int)
 FUNC_FUNC(land, long, long)
 FUNC_FUNC(land, short, short)
@@ -414,6 +424,8 @@ FUNC_FUNC(land, bool, bool)
 #undef current_func
 #define current_func(a, b) ((a) || (b))
 /* C integer */
+FUNC_FUNC(lor, unsigned_char, unsigned char)
+FUNC_FUNC(lor, signed_char, signed char)
 FUNC_FUNC(lor, int, int)
 FUNC_FUNC(lor, long, long)
 FUNC_FUNC(lor, short, short)
@@ -439,6 +451,8 @@ FUNC_FUNC(lor, bool, bool)
 #undef current_func
 #define current_func(a, b) ((a ? 1 : 0) ^ (b ? 1: 0))
 /* C integer */
+FUNC_FUNC(lxor, unsigned_char, unsigned char)
+FUNC_FUNC(lxor, signed_char, signed char)
 FUNC_FUNC(lxor, int, int)
 FUNC_FUNC(lxor, long, long)
 FUNC_FUNC(lxor, short, short)
@@ -464,6 +478,8 @@ FUNC_FUNC(lxor, bool, bool)
 #undef current_func
 #define current_func(a, b) ((a) & (b))
 /* C integer */
+FUNC_FUNC(band, unsigned_char, unsigned char)
+FUNC_FUNC(band, signed_char, signed char)
 FUNC_FUNC(band, int, int)
 FUNC_FUNC(band, long, long)
 FUNC_FUNC(band, short, short)
@@ -504,6 +520,8 @@ FUNC_FUNC(band, byte, char)
 #undef current_func
 #define current_func(a, b) ((a) | (b))
 /* C integer */
+FUNC_FUNC(bor, unsigned_char, unsigned char)
+FUNC_FUNC(bor, signed_char, signed char)
 FUNC_FUNC(bor, int, int)
 FUNC_FUNC(bor, long, long)
 FUNC_FUNC(bor, short, short)
@@ -544,6 +562,8 @@ FUNC_FUNC(bor, byte, char)
 #undef current_func
 #define current_func(a, b) ((a) ^ (b))
 /* C integer */
+FUNC_FUNC(bxor, unsigned_char, unsigned char)
+FUNC_FUNC(bxor, signed_char, signed char)
 FUNC_FUNC(bxor, int, int)
 FUNC_FUNC(bxor, long, long)
 FUNC_FUNC(bxor, short, short)

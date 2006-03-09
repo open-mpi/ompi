@@ -78,6 +78,8 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 #endif
 
 #define C_INTEGER(name) \
+  { ompi_mpi_op_##name##_unsigned_char },  /* OMPI_OP_TYPE_UNSIGNED_CHAR */ \
+  { ompi_mpi_op_##name##_signed_char },    /* OMPI_OP_TYPE_SIGNED_CHAR */ \
   { ompi_mpi_op_##name##_int },            /* OMPI_OP_TYPE_INT */ \
   { ompi_mpi_op_##name##_long },           /* OMPI_OP_TYPE_LONG */ \
   { ompi_mpi_op_##name##_short },          /* OMPI_OP_TYPE_SHORT */ \
@@ -86,6 +88,8 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { ompi_mpi_op_##name##_unsigned_long },  /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
   C_INTEGER_LONG_LONG(name)
 #define C_INTEGER_NULL \
+  { NULL }, /* OMPI_OP_TYPE_UNSIGNED_CHAR */ \
+  { NULL }, /* OMPI_OP_TYPE_SIGNED_CHAR */ \
   { NULL }, /* OMPI_OP_TYPE_INT */ \
   { NULL }, /* OMPI_OP_TYPE_LONG */ \
   { NULL }, /* OMPI_OP_TYPE_SHORT */ \
@@ -594,6 +598,8 @@ int ompi_op_init(void)
     ompi_op_ddt_map[i] = -1;
   }
 
+  ompi_op_ddt_map[DT_UNSIGNED_CHAR] = OMPI_OP_TYPE_UNSIGNED_CHAR;
+  ompi_op_ddt_map[DT_SIGNED_CHAR] = OMPI_OP_TYPE_SIGNED_CHAR;
   ompi_op_ddt_map[DT_BYTE] = OMPI_OP_TYPE_BYTE;
   ompi_op_ddt_map[DT_SHORT] = OMPI_OP_TYPE_SHORT;
   ompi_op_ddt_map[DT_UNSIGNED_SHORT] = OMPI_OP_TYPE_UNSIGNED_SHORT;
