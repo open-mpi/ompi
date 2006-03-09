@@ -191,6 +191,18 @@ int opal_asprintf(char **ptr, const char *fmt, ...)
 int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
 {
     int length;
+    va_list ap2;
+
+    /* va_list might have pointer to internal state and using
+       it twice is a bad idea.  So make a copy for the second
+       use.  Copy order taken from Autoconf docs. */
+#if OMPI_HAVE_VA_COPY
+  va_copy(ap2, ap);
+#elif OMPI_HAVE_UNDERSCORE_VA_COPY
+  __va_copy(ap2, ap;
+#else
+  memcpy (&ap2, &ap, sizeof(va_list));
+#endif
 
     /* guess the size */
     length = guess_strlen(fmt, ap);
@@ -203,7 +215,8 @@ int opal_vasprintf(char **ptr, const char *fmt, va_list ap)
     }
 
     /* fill the buffer */
-    length = vsprintf(*ptr, fmt, ap);
+    length = vsprintf(*ptr, fmt, ap2);
+    va_end(ap2);
 
     /* realloc */
     *ptr = (char*) realloc(*ptr, (size_t) length + 1);
