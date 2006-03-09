@@ -49,36 +49,43 @@ ompi_group_t ompi_mpi_group_null;
 ompi_group_t *ompi_group_allocate(int group_size)
 {
     /* local variables */
-    ompi_group_t *new_group;
+    ompi_group_t * new_group = NULL;
+
+    assert (group_size >= 0);
 
     /* create new group group element */
     new_group = OBJ_NEW(ompi_group_t);
-    if (new_group) {
-        if (OMPI_ERROR == new_group->grp_f_to_c_index) {
-            OBJ_RELEASE(new_group);
-            new_group = NULL;
-        } else {
-            /* allocate array of (ompi_proc_t *)'s, one for each
-             *   process in the group */
-            new_group->grp_proc_pointers = (struct ompi_proc_t **)
-                malloc(sizeof(struct ompi_proc_t *) * group_size);
-            if (0 < group_size) {
-                /* non-empty group */
-                if (!new_group->grp_proc_pointers) {
-                    /* grp_proc_pointers allocation failed */
-                    free(new_group);
-                    new_group = NULL;
-                }
-            }
 
-            /* set the group size */
-            new_group->grp_proc_count = group_size;
+    if (NULL == new_group)
+      goto error_exit;
 
-            /* initialize our rank to MPI_UNDEFINED */
-            new_group->grp_my_rank    = MPI_UNDEFINED;
-        }
+    if (OMPI_ERROR == new_group->grp_f_to_c_index) {
+        OBJ_RELEASE (new_group);
+        new_group = NULL;
+        goto error_exit;
     }
 
+    /*
+     * Allocate array of (ompi_proc_t *)'s, one for each
+     * process in the group.
+     */
+    new_group->grp_proc_pointers = (struct ompi_proc_t **)
+        malloc(sizeof(struct ompi_proc_t *) * group_size);
+
+    if (NULL == new_group->grp_proc_pointers) {
+        /* grp_proc_pointers allocation failed */
+        OBJ_RELEASE (new_group);
+        new_group = NULL;
+        goto error_exit;
+    }
+
+    /* set the group size */
+    new_group->grp_proc_count = group_size;
+
+    /* initialize our rank to MPI_UNDEFINED */
+    new_group->grp_my_rank    = MPI_UNDEFINED;
+
+error_exit:
     /* return */
     return new_group;
 }
