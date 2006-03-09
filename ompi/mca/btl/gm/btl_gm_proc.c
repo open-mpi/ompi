@@ -174,6 +174,7 @@ int mca_btl_gm_proc_insert(
     gm_endpoint->endpoint_proc = gm_proc;
     gm_endpoint->endpoint_addr = gm_proc->proc_addrs[gm_proc->proc_endpoint_count];
 
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
 #if GM_API_VERSION > 0x200
     if (GM_SUCCESS != gm_global_id_to_node_id(
         gm_btl->port,
@@ -198,6 +199,7 @@ int mca_btl_gm_proc_insert(
         return OMPI_ERROR;
     }
 #endif  /* GM_API_VERSION > 0x200 */
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
 
     gm_proc->proc_endpoints[gm_proc->proc_endpoint_count] = gm_endpoint;
     gm_proc->proc_endpoint_count++;
