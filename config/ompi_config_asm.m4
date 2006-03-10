@@ -523,35 +523,41 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    case $host in
-        *-aix*)
-            # the AIX compilers and linkers really don't do gcc 
-            # inline assembly right - disable for now.
-            asm_result="no (AIX)"
-            ;;
-        *)
-            if test ! "$assembly" = "" ; then
-                AC_RUN_IFELSE(AC_LANG_PROGRAM([[
+    if test "$ompi_cv_c_compiler_vendor" = "portland group" ; then
+        # PGI seems to have some issues with our inline assembly.
+        # Disable for now.
+        asm_result="no (Portland Group)"
+    else
+        case $host in
+            *-aix*)
+                # the AIX compilers and linkers really don't do gcc 
+                # inline assembly right - disable for now.
+                asm_result="no (AIX)"
+                ;;
+            *)
+                if test ! "$assembly" = "" ; then
+                        AC_RUN_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
                     [asm_result="yes"], [asm_result="no"], 
                     [asm_result="unknown"])
-            else
-                assembly="test skipped - assuming no"
-            fi
-            ;;
-    esac
+                else
+                    assembly="test skipped - assuming no"
+                fi
+                ;;
+        esac
 
-    # if we're cross compiling, just try to compile and figure good enough
-    if test "$asm_result" = "unknown" ; then
-        AC_LINK_IFELSE(AC_LANG_PROGRAM([[
+        # if we're cross compiling, just try to compile and figure good enough
+        if test "$asm_result" = "unknown" ; then
+            AC_LINK_IFELSE(AC_LANG_PROGRAM([[
 AC_INCLUDES_DEFAULT]],
 [[int ret = 1;
 __asm__ __volatile__ ($assembly);
 return ret;]]),
             [asm_result="yes"], [asm_result="no"])
+        fi
     fi
 
     AC_MSG_RESULT([$asm_result])
