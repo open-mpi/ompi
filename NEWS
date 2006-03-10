@@ -35,6 +35,8 @@ version 1.0.
 1.0.2
 -----
 
+- Disable inline assembly for PGI compilers to avoid compiler errors.
+  Thanks to Troy Telford for bringing this to our attention.
 - Added MPI_UNSIGNED_CHAR and MPI_SIGNED_CHAR to the allowed reduction
   types.
 - Fix a segv in variable-length message displays on Opterons running
