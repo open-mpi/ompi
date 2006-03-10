@@ -1,6 +1,6 @@
 ! -*- fortran -*-
 !
-! Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+! Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 !                         University Research and Technology
 !                         Corporation.  All rights reserved.
 ! Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -165,9 +165,18 @@
 !
 ! global variables
 !
-       double complex MPI_BOTTOM, MPI_IN_PLACE, MPI_ARGV_NULL
-       double complex MPI_ARGVS_NULL, MPI_ERRCODES_IGNORE
-       double complex MPI_STATUS_IGNORE, MPI_STATUSES_IGNORE
+       double complex MPI_BOTTOM, MPI_IN_PLACE
+       character MPI_ARGV_NULL(1)
+!     MPI_ARGVS_NULL must not be a character array so that we can match
+!     an appropriate F90 MPI bindings interface function; see comments
+!     in mpi-f90-interfaces.h for a full explanation.
+       integer MPI_ARGVS_NULL
+!     These must be integer arrays so that we can match the proper
+!     prototypes in the F90 MPI bindings.
+       integer MPI_ERRCODES_IGNORE(1)
+       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
+       integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE)
+
        common/mpi_fortran_bottom/MPI_BOTTOM
        common/mpi_fortran_in_place/MPI_IN_PLACE
        common/mpi_fortran_argv_null/MPI_ARGV_NULL
