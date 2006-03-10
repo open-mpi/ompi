@@ -76,8 +76,6 @@ enum {
  * MPI-2:4.15, p76-77
  */
 enum {
-  OMPI_OP_TYPE_CHAR,
-  /**< C integer: char */
   OMPI_OP_TYPE_UNSIGNED_CHAR,
   /**< C integer: unsigned char */
   OMPI_OP_TYPE_SIGNED_CHAR,

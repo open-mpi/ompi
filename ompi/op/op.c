@@ -59,7 +59,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
  * are put into the intrinsict ompi_op_t's in the middle of this
  * file.  The order of these function names is critical, and must be
  * the same as the OMPI_OP_TYPE_* enums in op.h (i.e., the enum's
- * starting with OMPI_OP_TYPE_INT -- at the time of this writing,
+ * starting with OMPI_OP_TYPE_UNSIGNED_CHAR -- at the time of this writing,
  * this is op.h:78).
  */
 
