@@ -33,11 +33,6 @@ ompi_osc_pt2pt_sendreq_alloc_init(ompi_osc_pt2pt_req_type_t req_type,
 {
     int ret;
 
-    /* shortcut 0 count case */
-    if (0 == origin_count || 0 == target_count) {
-            return OMPI_SUCCESS;
-    }
-
     /* allocate a sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc(module, target,
                                        sendreq);

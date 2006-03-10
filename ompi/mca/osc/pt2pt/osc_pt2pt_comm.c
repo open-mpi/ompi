@@ -61,6 +61,11 @@ ompi_osc_pt2pt_module_accumulate(void *origin_addr, int origin_count,
         return MPI_ERR_UNSUPPORTED_OPERATION;
     }
 
+    /* shortcut 0 count case */
+    if (0 == origin_count || 0 == target_count) {
+            return OMPI_SUCCESS;
+    }
+
     /* create sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc_init(OMPI_OSC_PT2PT_ACC,
                                             origin_addr,
@@ -102,6 +107,11 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
                           OMPI_WIN_EXPOSE_EPOCH);
     }
 
+    /* shortcut 0 count case */
+    if (0 == origin_count || 0 == target_count) {
+            return OMPI_SUCCESS;
+    }
+
     /* create sendreq */
     ret = ompi_osc_pt2pt_sendreq_alloc_init(OMPI_OSC_PT2PT_GET,
                                             origin_addr,
@@ -135,6 +145,11 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
         /* well, we're definitely in an access epoch now */
         ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
                           OMPI_WIN_EXPOSE_EPOCH);
+    }
+
+    /* shortcut 0 count case */
+    if (0 == origin_count || 0 == target_count) {
+            return OMPI_SUCCESS;
     }
 
     /* create sendreq */
