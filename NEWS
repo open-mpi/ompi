@@ -35,6 +35,9 @@ version 1.0.
 1.0.2
 -----
 
+- Enable pty support for standard I/O forwarding on platforms that
+  have ptys but do not have openpty().  Thanks to Pierre Valiron for
+  bringing this to our attention.
 - Disable inline assembly for PGI compilers to avoid compiler errors.
   Thanks to Troy Telford for bringing this to our attention.
 - Added MPI_UNSIGNED_CHAR and MPI_SIGNED_CHAR to the allowed reduction
