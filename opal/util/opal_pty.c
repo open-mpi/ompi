@@ -15,7 +15,6 @@
  * 
  * $HEADER$
  */
-
 /*-
  * Copyright (c) 1990, 1993
  *      The Regents of the University of California.  All rights reserved.
@@ -75,7 +74,15 @@
 #ifdef HAVE_STRING_H
 # include <string.h>
 #endif
+#ifdef HAVE_GRP_H
 #include <grp.h>
+#endif
+#ifdef HAVE_PTY_H
+#include <pty.h>
+#endif
+#ifdef HAVE_UTMP_H
+#include <utmp.h>
+#endif
 
 #ifdef HAVE_PTSNAME
 # include <stdlib.h>
@@ -84,54 +91,40 @@
 # endif
 #endif
 
+#ifdef HAVE_UTIL_H
+#include <util.h>
+#endif
+
+#include "opal/util/opal_pty.h"
+
+/* The only public interface is openpty - all others are to support
+   openpty() */
+
+#ifdef __WINDOWS__
+
+/* yeah, let's assume for the moment that ptys don't work on windows */
+
+int opal_openpty(int *amaster, int *aslave, char *name, 
+                 struct termios *termp, struct winsize *winp)
+{
+    return -1;
+}
+
+
+#elif defined(HAVE_OPENPTY)
+
+int opal_openpty(int *amaster, int *aslave, char *name, 
+                 struct termios *termp, struct winsize *winp)
+{
+    return openpty(amaster, aslave, name, termp, winp);
+}
+
+#else
+
+/* implement openpty in terms of ptym_open and ptys_open */
 
 static int ptym_open(char *pts_name);
 static int ptys_open(int fdm, char *pts_name);
-
-
-int opal_forkpty(int *amaster, char *name, struct termios *termp,
-                 struct winsize *winp)
-{
-    int master, slave;
-    pid_t pid;
-
-    if (opal_openpty(&master, &slave, name, termp, winp) < 0) {
-        return -1;
-    }
-
-    pid = fork();
-    if (pid < 0) {              /* error */
-        return -1;
-    } else if (pid > 0) {       /* parent */
-        *amaster = master;
-        close(slave);
-    } else {                    /* child */
-        close(master);
-        opal_login_tty(slave);
-        return 0;
-    }
-
-    return pid;
-}
-
-
-int opal_login_tty(int fd)
-{
-    setsid(2);
-#ifdef TIOCSCTTY
-    if (ioctl(fd, TIOCSCTTY, (char *) NULL) == -1) {
-        return (-1);
-    }
-#endif
-    dup2(fd, 0);
-    dup2(fd, 1);
-    dup2(fd, 2);
-    if (fd > 2) {
-        close(fd);
-    }
-    return 0;
-}
-
 
 int opal_openpty(int *amaster, int *aslave, char *name,
                  struct termios *termp, struct winsize *winp)
@@ -276,3 +269,5 @@ static int ptys_open(int fdm, char *pts_name)
     return fds;
 #endif
 }
+
+#endif /* #ifdef HAVE_OPENPTY */

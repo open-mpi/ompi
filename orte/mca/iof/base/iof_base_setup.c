@@ -57,6 +57,7 @@
 
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
+#include "opal/util/opal_pty.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/ns.h"
@@ -67,16 +68,16 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
     int ret;
 
     /* first check to make sure we can do ptys */
-#if (! defined(HAVE_OPENPTY)) || (OMPI_ENABLE_PTY_SUPPORT == 0)
+#if !OMPI_ENABLE_PTY_SUPPORT
     opts->usepty = 0;
 #endif
 
     fflush(stdout);
 
-#if defined(HAVE_OPENPTY) && OMPI_ENABLE_PTY_SUPPORT
+#if OMPI_ENABLE_PTY_SUPPORT
     if (opts->usepty) {
-        ret = openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
-                      NULL, NULL, NULL);
+        ret = opal_openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
+                           NULL, NULL, NULL);
     } else {
         ret = -1;
     }
