@@ -293,7 +293,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     /* fill in window information */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
     if (!want_locks(info)) {
-        opal_output(0, "disabling locks on new window");
         win->w_flags |= OMPI_WIN_NO_LOCKS;
     }
 
