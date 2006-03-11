@@ -205,11 +205,7 @@ static int orte_pls_fork_proc(
 
     /* should pull this information from MPIRUN instead of going with
        default */
-#if (! defined(HAVE_OPENPTY)) || (OMPI_ENABLE_PTY_SUPPORT == 0)
-    opts.usepty = 0;
-#else
     opts.usepty = OMPI_ENABLE_PTY_SUPPORT;
-#endif
 
     /* BWB - Fix post beta.  Should setup stdin in orterun and
        make part of the app_context */

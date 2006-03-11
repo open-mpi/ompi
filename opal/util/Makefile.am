@@ -47,6 +47,7 @@ headers = \
         path.h \
         pow2.h \
         printf.h \
+	opal_pty.h \
         qsort.h \
         show_help.h \
         show_help_lex.h \
@@ -75,6 +76,7 @@ libopalutil_la_SOURCES = \
         path.c \
         pow2.c \
         printf.c \
+	opal_pty.c \
         qsort.c \
         show_help.c \
         show_help_lex.l \
