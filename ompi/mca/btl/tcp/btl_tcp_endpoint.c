@@ -14,10 +14,15 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
  */
 
-
 #include "ompi_config.h"
+
 #include <stdlib.h>
 #include <string.h>
 #ifdef HAVE_UNISTD_H
@@ -45,6 +50,7 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif  /* HAVE_TIME_H */
+
 #include "ompi/types.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp.h"
@@ -103,12 +109,6 @@ OBJ_CLASS_INSTANCE(
     mca_btl_tcp_endpoint_construct, 
     mca_btl_tcp_endpoint_destruct);
 
-
-#define IMPORTANT_WINDOWS_COMMENT() \
-            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
-               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
-               not conflict with other error codes that are returned by these functions \
-               under UNIX/Linux environments */
 
 static void mca_btl_tcp_endpoint_construct(mca_btl_base_endpoint_t* btl_endpoint);
 static void mca_btl_tcp_endpoint_destruct(mca_btl_base_endpoint_t* btl_endpoint);
@@ -254,7 +254,6 @@ static int mca_btl_tcp_endpoint_send_blocking(mca_btl_base_endpoint_t* btl_endpo
     while(cnt < size) {
         int retval = send(btl_endpoint->endpoint_sd, (const char *)ptr+cnt, size-cnt, 0);
         if(retval < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("send() failed with errno=%d",ompi_socket_errno));
                 mca_btl_tcp_endpoint_close(btl_endpoint);
@@ -412,7 +411,6 @@ static int mca_btl_tcp_endpoint_recv_blocking(mca_btl_base_endpoint_t* btl_endpo
 
         /* socket is non-blocking so handle errors */
         if(retval < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
                 BTL_ERROR(("recv() failed with errno=%d",ompi_socket_errno));
                 mca_btl_tcp_endpoint_close(btl_endpoint);
@@ -525,7 +523,6 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
     endpoint_addr.sin_port = btl_endpoint->endpoint_addr->addr_port;
     if(connect(btl_endpoint->endpoint_sd, (struct sockaddr*)&endpoint_addr, sizeof(endpoint_addr)) < 0) {
         /* non-blocking so wait for completion */
-        IMPORTANT_WINDOWS_COMMENT();
         if(ompi_socket_errno == EINPROGRESS || ompi_socket_errno == EWOULDBLOCK) {
             btl_endpoint->endpoint_state = MCA_BTL_TCP_CONNECTING;
             opal_event_add(&btl_endpoint->endpoint_send_event, 0);
@@ -567,7 +564,6 @@ static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_e
         mca_btl_tcp_endpoint_close(btl_endpoint);
         return;
     }
-    IMPORTANT_WINDOWS_COMMENT();
     if(so_error == EINPROGRESS || so_error == EWOULDBLOCK) {
         opal_event_add(&btl_endpoint->endpoint_send_event, 0);
         return;

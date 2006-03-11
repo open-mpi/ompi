@@ -14,7 +14,13 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
  */
+
 #include "orte_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

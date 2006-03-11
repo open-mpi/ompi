@@ -1,3 +1,26 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
+ */
+
 #include "ompi_config.h"
 
 #ifdef HAVE_SYS_TYPES_H

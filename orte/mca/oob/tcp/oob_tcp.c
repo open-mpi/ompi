@@ -14,6 +14,11 @@
  * Additional copyrights may follow
  *
  * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
  */
 
 #include "orte_config.h"
@@ -42,12 +47,6 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "ompi/constants.h"
-
-#define IMPORTANT_WINDOWS_COMMENT() \
-            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
-               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
-               not conflict with other error codes that are returned by these functions \
-               under UNIX/Linux environments */
 
 /*
  * Data structure for accepting connections.
@@ -259,7 +258,6 @@ static void mca_oob_tcp_accept(void)
 
         sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno == EINTR)
                 continue;
             if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)
@@ -370,7 +368,6 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
     while(cnt < sizeof(mca_oob_tcp_hdr_t)) {
         int retval = send(sd, (char *)ptr+cnt, sizeof(mca_oob_tcp_hdr_t)-cnt, 0);
         if(retval < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
