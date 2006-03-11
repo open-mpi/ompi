@@ -14,9 +14,15 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
  */
 
 #include "ompi_config.h"
+
 #include "orte/orte_socket_errno.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -58,13 +64,6 @@
 #include "btl_tcp_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/datatype/convertor.h" 
-
-
-#define IMPORTANT_WINDOWS_COMMENT() \
-            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
-               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
-               not conflict with other error codes that are returned by these functions \
-               under UNIX/Linux environments */
 
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
@@ -557,7 +556,6 @@ static void mca_btl_tcp_component_accept(void)
         mca_btl_tcp_event_t *event;
         int sd = accept(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno == EINTR)
                 continue;
             if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)

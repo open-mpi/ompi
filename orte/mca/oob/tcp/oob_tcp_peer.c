@@ -14,7 +14,13 @@
  * Additional copyrights may follow
  * 
  * $HEADER$
+ *
+ * In windows, many of the socket functions return an EWOULDBLOCK
+ * instead of \ things like EAGAIN, EINPROGRESS, etc. It has been
+ * verified that this will \ not conflict with other error codes that
+ * are returned by these functions \ under UNIX/Linux environments 
  */
+
 #include "orte_config.h"
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -47,12 +53,6 @@
 
 #include "oob_tcp.h"
 #include "oob_tcp_peer.h"
-
-#define IMPORTANT_WINDOWS_COMMENT() \
-            /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
-               things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
-               not conflict with other error codes that are returned by these functions \
-               under UNIX/Linux environments */
 
 static int  mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer);
 static int  mca_oob_tcp_peer_event_init(mca_oob_tcp_peer_t* peer);
@@ -345,7 +345,6 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
         /* start the connect - will likely fail with EINPROGRESS */
         if(connect(peer->peer_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
             /* non-blocking so wait for completion */
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno == EINPROGRESS || ompi_socket_errno == EWOULDBLOCK) {
                 opal_event_add(&peer->peer_send_event, 0);
                 /* Waiting for completion in the middle of the list ?! Let's just hope we try with the
@@ -611,7 +610,6 @@ static int mca_oob_tcp_peer_recv_blocking(mca_oob_tcp_peer_t* peer, void* data, 
 
         /* socket is non-blocking so handle errors */
         if(retval < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_blocking: recv() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
@@ -638,7 +636,6 @@ static int mca_oob_tcp_peer_send_blocking(mca_oob_tcp_peer_t* peer, void* data, 
     while(cnt < size) {
         int retval = send(peer->peer_sd, (char *)ptr+cnt, size-cnt, 0);
         if(retval < 0) {
-            IMPORTANT_WINDOWS_COMMENT();
             if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_send_blocking: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
