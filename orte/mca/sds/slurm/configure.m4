@@ -17,5 +17,21 @@
 # $HEADER$
 #
 
-PARAM_INIT_FILE=sds_slurm_component.c
-PARAM_CONFIG_FILES="Makefile"
+# MCA_sds_slurm_CONFIG([action-if-found], [action-if-not-found])
+# -----------------------------------------------------------
+AC_DEFUN([MCA_sds_slurm_CONFIG],[
+    OMPI_CHECK_SLURM([sds_slurm], [sds_slurm_good=1], [sds_slurm_good=0])
+         
+    # if check worked, set wrapper flags if so.  
+    # Evaluate succeed / fail
+    AS_IF([test "$sds_slurm_good" = "1"],
+          [sds_slurm_WRAPPER_EXTRA_LDFLAGS="$sds_slurm_LDFLAGS"
+           sds_slurm_WRAPPER_EXTRA_LIBS="$sds_slurm_LIBS"
+           $1],
+          [$2])
+
+    # set build flags to use in makefile
+    AC_SUBST([sds_slurm_CPPFLAGS])
+    AC_SUBST([sds_slurm_LDFLAGS])
+    AC_SUBST([sds_slurm_LIBS])
+])dnl
