@@ -20,9 +20,7 @@
 # (by default)
 
 AM_CPPFLAGS = \
-	$(OPAL_LTDL_CPPFLAGS) \
-        -DOMPI_PKGLIBDIR=\"$(pkglibdir)\" \
-        -DOMPI_SYSCONFDIR=\"$(sysconfdir)\"
+	$(OPAL_LTDL_CPPFLAGS)
 
 noinst_LTLIBRARIES = libmca_base.la
 

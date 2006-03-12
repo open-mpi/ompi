@@ -32,7 +32,6 @@ component_noinst = libmca_rds_hostfile.la
 component_install =
 endif
 
-AM_CPPFLAGS = -I$(top_builddir)/src -DORTE_SYSCONFDIR="\"$(sysconfdir)\""
 AM_LFLAGS = -Porte_rds_hostfile_
 LEX_OUTPUT_ROOT = lex.orte_rds_hostfile_
 

@@ -59,7 +59,14 @@ ompi_show_subtitle "Checking versions"
 
 # Get the version of OMPI that we are installing
 
-OMPI_GET_VERSION([$srcdir/VERSION], OMPI)
+OMPI_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
+                  [ompi/include/ompi/version.h])
+
+OMPI_SAVE_VERSION([ORTE], [Open Open Run-Time Environment], [$srcdir/VERSION],
+                  [orte/include/orte/version.h])
+
+OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
+                  [opal/include/opal/version.h])
 
 # override/fixup the version numbers set by AC_INIT, since on
 # developer builds, there's no good way to know what the version is
@@ -67,102 +74,14 @@ OMPI_GET_VERSION([$srcdir/VERSION], OMPI)
 # (ie, no svn r numbers) for the version set in AC_INIT.  This will
 # always match reality because we add the VERSION file (the only way
 # to change the major.minor.release{greek}) into the configure
-# dependencies.
-PACKAGE_VERSION="$OMPI_VERSION"
+# dependencies.  PACKAGE_VERSION the AC_DEFINE doesn't change once set
+# the first time -- AC_INIT's input (so it doesn't have an r number in
+# it).  PACKAGE_VERSION the AC_SUBST can be rewritten along the way,
+# and we'd like it to have the r number in it so that it shows up in
+# the tarball name, so it is set to the full version here.
+PACKAGE_VERSION="$OPAL_VERSION"
 PACKAGE_STRING="${PACKAGE_NAME} ${PACKAGE_VERSION}"
 VERSION="${PACKAGE_VERSION}"
-
-AC_SUBST(OMPI_MAJOR_VERSION)
-AC_SUBST(OMPI_MINOR_VERSION)
-AC_SUBST(OMPI_RELEASE_VERSION)
-AC_SUBST(OMPI_GREEK_VERSION)
-AC_SUBST(OMPI_WANT_SVN)
-AC_SUBST(OMPI_SVN_R)
-AC_SUBST(OMPI_VERSION)
-
-AC_DEFINE_UNQUOTED(OMPI_MAJOR_VERSION, $OMPI_MAJOR_VERSION,
-    [Major release number of Open MPI])
-AC_DEFINE_UNQUOTED(OMPI_MINOR_VERSION, $OMPI_MINOR_VERSION,
-    [Minor release number of Open MPI])
-AC_DEFINE_UNQUOTED(OMPI_RELEASE_VERSION, $OMPI_RELEASE_VERSION,
-    [Release release number of Open MPI])
-AC_DEFINE_UNQUOTED(OMPI_GREEK_VERSION, "$OMPI_GREEK_VERSION",
-    [Greek - alpha, beta, etc -  release number of Open MPI])
-AC_DEFINE_UNQUOTED(OMPI_VERSION, "$OMPI_RELEASE_VERSION",
-    [Complete release number of Open MPI])
-
-# JMS: For the moment, cheat and have ORTE and OPAL version numbers be
-# the same.  Someday, they will be 3rd part import packages and have
-# their own version numbers
-
-ORTE_MAJOR_VERSION="$OMPI_MAJOR_VERSION"
-ORTE_MINOR_VERSION="$OMPI_MINOR_VERSION"
-ORTE_RELEASE_VERSION="$OMPI_RELEASE_VERSION"
-ORTE_GREEK_VERSION="$OMPI_GREEK_VERSION"
-ORTE_WANT_SVN="$OMPI_WANT_SVN"
-ORTE_SVN_R="$OMPI_SVN_R"
-ORTE_VERSION="$OMPI_VERSION"
-
-AC_SUBST(ORTE_MAJOR_VERSION)
-AC_SUBST(ORTE_MINOR_VERSION)
-AC_SUBST(ORTE_RELEASE_VERSION)
-AC_SUBST(ORTE_GREEK_VERSION)
-AC_SUBST(ORTE_WANT_SVN)
-AC_SUBST(ORTE_SVN_R)
-AC_SUBST(ORTE_VERSION)
-
-AC_DEFINE_UNQUOTED(ORTE_MAJOR_VERSION, $ORTE_MAJOR_VERSION,
-    [Major release number of Open RTE])
-AC_DEFINE_UNQUOTED(ORTE_MINOR_VERSION, $ORTE_MINOR_VERSION,
-    [Minro release number of Open RTE])
-AC_DEFINE_UNQUOTED(ORTE_RELEASE_VERSION, $ORTE_RELEASE_VERSION,
-    [Release release number of Open RTE])
-AC_DEFINE_UNQUOTED(ORTE_GREEK_VERSION, "$ORTE_GREEK_VERSION",
-    [Greek - alpha, beta, etc -  release number of Open RTE])
-AC_DEFINE_UNQUOTED(ORTE_VERSION, "$ORTE_RELEASE_VERSION",
-    [Complete release number of Open RTE])
-
-OPAL_MAJOR_VERSION="$OMPI_MAJOR_VERSION"
-OPAL_MINOR_VERSION="$OMPI_MINOR_VERSION"
-OPAL_RELEASE_VERSION="$OMPI_RELEASE_VERSION"
-OPAL_GREEK_VERSION="$OMPI_GREEK_VERSION"
-OPAL_WANT_SVN="$OMPI_WANT_SVN"
-OPAL_SVN_R="$OMPI_SVN_R"
-OPAL_VERSION="$OMPI_VERSION"
-
-AC_SUBST(OPAL_MAJOR_VERSION)
-AC_SUBST(OPAL_MINOR_VERSION)
-AC_SUBST(OPAL_RELEASE_VERSION)
-AC_SUBST(OPAL_GREEK_VERSION)
-AC_SUBST(OPAL_WANT_SVN)
-AC_SUBST(OPAL_SVN_R)
-AC_SUBST(OPAL_VERSION)
-
-AC_DEFINE_UNQUOTED(OPAL_MAJOR_VERSION, $OPAL_MAJOR_VERSION,
-    [Major release number of OPAL])
-AC_DEFINE_UNQUOTED(OPAL_MINOR_VERSION, $OPAL_MINOR_VERSION,
-    [Minor release number of OPAL])
-AC_DEFINE_UNQUOTED(OPAL_RELEASE_VERSION, $OPAL_RELEASE_VERSION,
-    [Release release number of OPAL])
-AC_DEFINE_UNQUOTED(OPAL_GREEK_VERSION, "$OPAL_GREEK_VERSION",
-    [Greek - alpha, beta, etc - release number of OPAL])
-AC_DEFINE_UNQUOTED(OPAL_VERSION, "$OPAL_RELEASE_VERSION",
-    [Complete release number of OPAL])
-
-AC_MSG_CHECKING([Open MPI version])
-AC_MSG_RESULT([$OMPI_VERSION])
-AC_MSG_CHECKING([Open MPI Subversion repository version])
-AC_MSG_RESULT([$OMPI_SVN_R])
-
-AC_MSG_CHECKING([Open Run-Time Environment (ORTE) version])
-AC_MSG_RESULT([$ORTE_VERSION])
-AC_MSG_CHECKING([ORTE Subversion repository version])
-AC_MSG_RESULT([$ORTE_SVN_R])
-
-AC_MSG_CHECKING([Open Portable Access Layer (OPAL) version])
-AC_MSG_RESULT([$OPAL_VERSION])
-AC_MSG_CHECKING([OPAL Subversion repository version])
-AC_MSG_RESULT([$OPAL_SVN_R])
 
 ompi_show_subtitle "Initialization, setup"
 
@@ -1150,6 +1069,8 @@ OMPI_SETUP_WRAPPER_FINAL
 ############################################################################
 
 ompi_show_subtitle "Final output" 
+
+OMPI_INSTALL_DIRS(opal/include/opal/install_dirs.h)
 
 AM_CONFIG_HEADER([opal/include/opal_config.h orte/include/orte_config.h ompi/include/ompi_config.h ompi/include/mpi.h])
 AC_CONFIG_FILES([

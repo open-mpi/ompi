@@ -41,6 +41,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#include "opal/opal/install_dirs.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
@@ -558,7 +559,7 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     } else {
         orted_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
         if(NULL == orted_path) {
-            asprintf(&orted_path, "%s/%s", ORTE_BINDIR,
+            asprintf(&orted_path, "%s/%s", OPAL_BINDIR,
                      mca_pls_bproc_component.orted);
             if (0 != stat(orted_path, &buf)) {
                 char *path = getenv("PATH");
@@ -567,7 +568,7 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
                 }
                 opal_show_help("help-pls-bproc.txt", "no-orted", true,
                                mca_pls_bproc_component.orted,
-                               mca_pls_bproc_component.orted, path, ORTE_BINDIR);
+                               mca_pls_bproc_component.orted, path, OPAL_BINDIR);
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;

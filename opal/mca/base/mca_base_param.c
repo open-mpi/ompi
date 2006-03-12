@@ -22,6 +22,7 @@
 #include <string.h>
 #include <stdlib.h>
 
+#include "opal/install_dirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
@@ -140,7 +141,7 @@ int mca_base_param_init(void)
 
         asprintf(&files,
                  "~/.openmpi/mca-params.conf:%s/openmpi-mca-params.conf",
-                 OMPI_SYSCONFDIR);
+                 OPAL_SYSCONFDIR);
         id = mca_base_param_reg_string_name("mca", "param_files",
                                             "Path for MCA configuration files containing default parameter values",
                                             false, false, files, &new_files);

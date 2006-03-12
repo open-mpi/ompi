@@ -17,12 +17,6 @@
 #
 
 AM_CPPFLAGS = \
-            -DOMPI_PREFIX="\"$(prefix)\"" \
-            -DOMPI_BINDIR="\"$(bindir)\"" \
-            -DOMPI_LIBDIR="\"$(libdir)\"" \
-            -DOMPI_INCDIR="\"$(includedir)\"" \
-            -DOMPI_PKGLIBDIR="\"$(pkglibdir)\"" \
-            -DOMPI_SYSCONFDIR="\"$(sysconfdir)\"" \
             -DOMPI_CONFIGURE_USER="\"@OMPI_CONFIGURE_USER@\"" \
             -DOMPI_CONFIGURE_HOST="\"@OMPI_CONFIGURE_HOST@\"" \
             -DOMPI_CONFIGURE_DATE="\"@OMPI_CONFIGURE_DATE@\"" \
@@ -40,13 +34,7 @@ AM_CPPFLAGS = \
             -DOMPI_CC_ABSOLUTE="\"@OMPI_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\"" \
             -DOMPI_F77_ABSOLUTE="\"@OMPI_F77_ABSOLUTE@\"" \
-            -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\"" \
-            -DOMPI_WANT_SVN=\"@OMPI_WANT_SVN@\" \
-            -DOMPI_SVN_R=\"@OMPI_SVN_R@\" \
-            -DORTE_WANT_SVN=\"@ORTE_WANT_SVN@\" \
-            -DORTE_SVN_R=\"@ORTE_SVN_R@\" \
-            -DOPAL_WANT_SVN=\"@OPAL_WANT_SVN@\" \
-            -DOPAL_SVN_R=\"@OPAL_SVN_R@\"
+            -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\""
 
 dist_pkgdata_DATA = help-ompi_info.txt
 

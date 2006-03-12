@@ -36,6 +36,7 @@
 #endif
 #include <errno.h>
 
+#include "opal/install_dirs.h"
 #include "opal/class/opal_object.h"
 #include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
@@ -232,7 +233,7 @@ int main(int argc, char *argv[])
 
   if (!acted) {
     ompi_info::show_ompi_version(ver_full);
-    ompi_info::show_path(path_prefix, OMPI_PREFIX);
+    ompi_info::show_path(path_prefix, OPAL_PREFIX);
     ompi_info::do_arch(cmd_line);
     ompi_info::do_config(false);
     ompi_info::open_components();

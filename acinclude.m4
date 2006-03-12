@@ -87,6 +87,8 @@ m4_include(config/ompi_setup_f90.m4)
 m4_include(config/ompi_setup_libevent.m4)
 m4_include(config/ompi_setup_wrappers.m4)
 m4_include(config/ompi_make_stripped_flags.m4)
+m4_include(config/ompi_install_dirs.m4)
+m4_include(config/ompi_save_version.m4)
 
 m4_include(config/ompi_check_pthread_pids.m4)
 m4_include(config/ompi_config_pthreads.m4)

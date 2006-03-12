@@ -23,3 +23,6 @@ headers += \
 	ompi/constants.h \
 	ompi/types.h \
 	ompi/totalview.h
+
+nodist_headers += \
+	ompi/version.h

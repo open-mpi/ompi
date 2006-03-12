@@ -27,6 +27,7 @@
 #include <unistd.h>
 #endif
 
+#include "opal/install_dirs.h"
 #include "opal/util/output.h"
 #include "opal/util/printf.h"
 #include "opal/mca/mca.h"
@@ -65,7 +66,7 @@ int mca_base_open(void)
 
   /* Register some params */
 
-  asprintf(&value, "%s:~/.openmpi/components", OMPI_PKGLIBDIR);
+  asprintf(&value, "%s:~/.openmpi/components", OPAL_PKGLIBDIR);
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",
                                    "Path where to look for Open MPI and ORTE components", 

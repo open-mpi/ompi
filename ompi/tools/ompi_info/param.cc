@@ -32,6 +32,7 @@
 #include <netdb.h>
 #endif
 
+#include "opal/install_dirs.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
@@ -253,29 +254,29 @@ void ompi_info::do_path(bool want_all, opal_cmd_line_t *cmd_line)
   string scope;
 
   if (want_all) {
-    show_path(path_prefix, OMPI_PREFIX);
-    show_path(path_bindir, OMPI_BINDIR);
-    show_path(path_libdir, OMPI_LIBDIR);
-    show_path(path_incdir, OMPI_INCDIR);
-    show_path(path_pkglibdir, OMPI_PKGLIBDIR);
-    show_path(path_sysconfdir, OMPI_SYSCONFDIR);
+    show_path(path_prefix, OPAL_PREFIX);
+    show_path(path_bindir, OPAL_BINDIR);
+    show_path(path_libdir, OPAL_LIBDIR);
+    show_path(path_incdir, OPAL_INCLUDEDIR);
+    show_path(path_pkglibdir, OPAL_PKGLIBDIR);
+    show_path(path_sysconfdir, OPAL_SYSCONFDIR);
   } else {
     count = opal_cmd_line_get_ninsts(cmd_line, "path");
     for (i = 0; i < count; ++i) {
       scope = opal_cmd_line_get_param(cmd_line, "path", i, 0);
 
       if (path_prefix == scope)
-        show_path(path_prefix, OMPI_PREFIX);
+        show_path(path_prefix, OPAL_PREFIX);
       else if (path_bindir == scope)
-        show_path(path_bindir, OMPI_BINDIR);
+        show_path(path_bindir, OPAL_BINDIR);
       else if (path_libdir == scope)
-        show_path(path_libdir, OMPI_LIBDIR);
+        show_path(path_libdir, OPAL_LIBDIR);
       else if (path_incdir == scope)
-        show_path(path_incdir, OMPI_INCDIR);
+        show_path(path_incdir, OPAL_INCLUDEDIR);
       else if (path_pkglibdir == scope)
-        show_path(path_pkglibdir, OMPI_PKGLIBDIR);
+        show_path(path_pkglibdir, OPAL_PKGLIBDIR);
       else if (path_sysconfdir == scope)
-        show_path(path_sysconfdir, OMPI_SYSCONFDIR);
+        show_path(path_sysconfdir, OPAL_SYSCONFDIR);
       else {
           char *usage = opal_cmd_line_get_usage_msg(cmd_line);
           opal_show_help("help-ompi_info.txt", "usage", true, usage);
