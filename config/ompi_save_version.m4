@@ -50,19 +50,5 @@ AC_DEFUN([OMPI_SAVE_VERSION], [
     AC_DEFINE_UNQUOTED($1[_VERSION], ["$]$1[_RELEASE_VERSION"],
         [Complete release number of ]$2)
 
-    AC_CONFIG_FILES([$4.tmp:$4.in])
-    AC_CONFIG_COMMANDS([$1-versions], [
-        if test -f "$4" ; then
-            diff "$4" "$4.tmp" > /dev/null 2>&1
-            if test "$?" != "0" ; then
-               cp "$4.tmp" "$4"
-               echo "config.status: regenerating $4"
-            else
-               echo "config.status: $4 unchanged"
-            fi
-        else
-            cp "$4.tmp" "$4"
-            echo "config.status: creating $4"
-        fi
-        rm "$4.tmp"])
+    AC_CONFIG_FILES([$4])
 ])dnl

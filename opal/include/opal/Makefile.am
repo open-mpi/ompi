@@ -27,3 +27,9 @@ nodist_headers += \
 	opal/version.h
 
 include opal/sys/Makefile.am
+
+opal/install_dirs.h: $(top_builddir)/config.status $(srcdir)/opal/install_dirs.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
+
+opal/version.h: $(top_builddir)/config.status $(srcdir)/opal/version.h.in
+	cd $(top_builddir) && $(SHELL) ./config.status $(subdir)/$@
