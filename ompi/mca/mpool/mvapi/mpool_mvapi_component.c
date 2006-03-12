@@ -20,9 +20,9 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "mpool_mvapi.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
+#include "mpool_mvapi.h"
 
 /*
  * Local functions
