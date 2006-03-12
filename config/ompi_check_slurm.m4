@@ -25,8 +25,19 @@ AC_DEFUN([OMPI_CHECK_SLURM],[
                 [AC_HELP_STRING([--with-slurm],
                                 [Build SLURM scheduler component (default: yes)])])
 
-    if test "with_slurm" = "no" ; then
+    if test "$with_slurm" = "no" ; then
         ompi_check_slurm_happy="no"
+    elif test "$with_slurm" = "" ; then
+        # unless user asked, only build slurm component on
+        # linux systems.
+        case $host in
+            *-linux*|*-aix*)
+                ompi_check_slurm_happy="yes"
+                ;;
+            *)
+                ompi_check_slurm_happy="no"
+                ;;
+        esac
     else 
         ompi_check_slurm_happy="yes"
     fi
