@@ -62,7 +62,7 @@ ompi_show_subtitle "Checking versions"
 OMPI_SAVE_VERSION([OMPI], [Open MPI], [$srcdir/VERSION],
                   [ompi/include/ompi/version.h])
 
-OMPI_SAVE_VERSION([ORTE], [Open Open Run-Time Environment], [$srcdir/VERSION],
+OMPI_SAVE_VERSION([ORTE], [Open Run-Time Environment], [$srcdir/VERSION],
                   [orte/include/orte/version.h])
 
 OMPI_SAVE_VERSION([OPAL], [Open Portable Access Layer], [$srcdir/VERSION],
