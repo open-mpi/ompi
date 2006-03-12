@@ -17,9 +17,9 @@
 # $HEADER$
 #
 
-headers = orte_config.h
-
-nodist_headers = 
+headers =
+nodist_headers = \
+	orte_config.h
 
 if WANT_INSTALL_HEADERS 
 ortedir = $(includedir)/openmpi
@@ -27,6 +27,8 @@ nobase_dist_orte_HEADERS = $(headers)
 nobase_nodist_orte_HEADERS = $(nodist_headers)
 else
 ortedir = $(includedir)
+nobase_dist_noinst_HEADERS = $(headers)
+nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif
 
 include orte/Makefile.am

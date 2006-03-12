@@ -63,19 +63,5 @@ AC_DEFUN([OMPI_INSTALL_DIRS], [
 
     exec_prefix="$ompi_exec_prefix_save"
 
-    AC_CONFIG_FILES([$1.tmp:$1.in])
-    AC_CONFIG_COMMANDS([install-dirs], [
-        if test -f "$1" ; then
-            diff "$1" "$1.tmp" > /dev/null 2>&1
-            if test "$?" != "0" ; then
-               cp "$1.tmp" "$1"
-               echo "config.status: regenerating $1"
-            else
-               echo "config.status: $1 unchanged"
-            fi
-        else
-            cp "$1.tmp" "$1"
-            echo "config.status: creating $1"
-        fi
-        rm "$1.tmp"])
+    AC_CONFIG_FILES([$1])
 ])dnl

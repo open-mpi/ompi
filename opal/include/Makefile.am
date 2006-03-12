@@ -16,28 +16,20 @@
 # $HEADER$
 #
 
-
-dist_noinst_HEADERS = \
+headers = \
 	opal_config_bottom.h \
 	opal_stdint.h
-
-nodist_noinst_HEADERS = \
+nodist_headers = \
 	opal_config.h
-
-headers = 
-nodist_headers =
 
 if WANT_INSTALL_HEADERS 
 opaldir = $(includedir)/openmpi
-
-nobase_dist_opal_HEADERS = \
-	$(headers) \
-	$(dist_noinst_HEADERS)
-nobase_nodist_opal_HEADERS = \
-	$(nodist_headers) \
-	$(nodist_noinst_HEADERS)
+nobase_dist_opal_HEADERS = $(headers)
+nobase_nodist_opal_HEADERS = $(nodist_headers)
 else
 opaldir = $(includedir)
+nobase_dist_noinst_HEADERS = $(headers)
+nobase_nodist_noinst_HEADERS = $(nodist_headers)
 endif
 
 include opal/Makefile.am
