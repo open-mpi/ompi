@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
-
 SUBDIRS = \
 	include \
 	$(MCA_orte_FRAMEWORKS_SUBDIRS) \

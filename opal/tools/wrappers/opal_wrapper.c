@@ -39,6 +39,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#include "opal/install_dirs.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
@@ -93,7 +94,7 @@ data_callback(const char *key, const char *value)
 
         for (i = 0 ; i < opal_argv_count(values) ; ++i) {
             char *line;
-            asprintf(&line, "-I%s%s%s", OPAL_INCDIR, OMPI_PATH_SEP, values[i]);
+            asprintf(&line, "-I%s%s%s", OPAL_INCLUDEDIR, OMPI_PATH_SEP, values[i]);
             opal_argv_append_nosize(&data.preproc_flags, line);
             free(line);
         }
@@ -157,9 +158,9 @@ data_init(const char *appname)
     data.req_file = NULL;
 
     /* load the default -I<incdir> and -L<libdir> */
-    if (0 != strcmp(OPAL_INCDIR, "/usr/include")) {
+    if (0 != strcmp(OPAL_INCLUDEDIR, "/usr/include")) {
         char *line;
-        asprintf(&line, "-I%s", OPAL_INCDIR);
+        asprintf(&line, "-I%s", OPAL_INCLUDEDIR);
         opal_argv_append_nosize(&data.preproc_flags, line);
         free(line);
     }

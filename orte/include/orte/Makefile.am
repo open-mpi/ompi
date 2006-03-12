@@ -23,3 +23,6 @@ headers += \
 	orte/orte_constants.h \
 	orte/orte_types.h \
 	orte/orte_socket_errno.h
+
+nodist_headers += \
+	orte/version.h

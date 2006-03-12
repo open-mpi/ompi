@@ -22,6 +22,7 @@
 #include <string.h>
 #include <locale.h>
 
+#include "opal/install_dirs.h"
 #include "opal/util/show_help.h"
 #include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
@@ -102,11 +103,11 @@ static int open_file(const char *base, const char *topic)
     /* Try to open the file.  If we can't find it, try it with a .txt
        extension. */
 
-    asprintf(&filename, "%s/%s", OMPI_PKGDATADIR, base);
+    asprintf(&filename, "%s/%s", OPAL_PKGDATADIR, base);
     opal_show_help_yyin = fopen(filename, "r");
     free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.txt", OMPI_PKGDATADIR, base);
+        asprintf(&filename, "%s/%s.txt", OPAL_PKGDATADIR, base);
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }
@@ -121,11 +122,11 @@ static int open_file(const char *base, const char *topic)
     /* Do we have a file matching that locale?  If not, open the
        default language (because we know that we have that one) */
 
-    asprintf(&filename, "%s/%s.%s", OMPI_PKGDATADIR, base, lang);
+    asprintf(&filename, "%s/%s.%s", OPAL_PKGDATADIR, base, lang);
     opal_show_help_yyin = fopen(filename, "r");
     free(filename);
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s.%s", OMPI_PKGDATADIR, 
+        asprintf(&filename, "%s/%s.%s", OPAL_PKGDATADIR, 
                  base, default_language);
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
@@ -134,7 +135,7 @@ static int open_file(const char *base, const char *topic)
     /* If we still couldn't find it, try with no extension */
 
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s", OMPI_PKGDATADIR, base);
+        asprintf(&filename, "%s/%s", OPAL_PKGDATADIR, base);
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }

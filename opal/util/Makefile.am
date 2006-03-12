@@ -18,7 +18,6 @@
 
 SUBDIRS = keyval
 
-AM_CPPFLAGS = -DOMPI_PKGDATADIR=\"$(pkgdatadir)\"
 AM_LFLAGS = -Popal_show_help_yy
 LEX_OUTPUT_ROOT = lex.opal_show_help_yy
 

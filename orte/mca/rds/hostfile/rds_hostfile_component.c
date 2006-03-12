@@ -17,6 +17,8 @@
  */
 
 #include "orte_config.h"
+
+#include "opal/install_dirs.h"
 #include "orte/orte_constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -69,7 +71,7 @@ orte_rds_hostfile_component_t mca_rds_hostfile_component = {
   */
 static int orte_rds_hostfile_open(void)
 {
-    char *path = opal_os_path(false, ORTE_SYSCONFDIR, "openmpi-default-hostfile", NULL);
+    char *path = opal_os_path(false, OPAL_SYSCONFDIR, "openmpi-default-hostfile", NULL);
     OBJ_CONSTRUCT(&mca_rds_hostfile_component.lock, opal_mutex_t);
 
     mca_base_param_reg_int(&mca_rds_hostfile_component.super.rds_version, "debug",

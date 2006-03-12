@@ -54,6 +54,7 @@
 #include <pwd.h>
 #endif
 
+#include "opal/install_dirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
 #include "opal/util/if.h"
@@ -255,14 +256,14 @@ static int orte_pls_rsh_fill_exec_path ( char ** exec_path)
 {
     struct stat buf;
 
-    asprintf(exec_path, "%s/orted", OMPI_BINDIR);
+    asprintf(exec_path, "%s/orted", OPAL_BINDIR);
     if (0 != stat(*exec_path, &buf)) {
         char *path = getenv("PATH");
         if (NULL == path) {
             path = ("PATH is empty!");
         }
         opal_show_help("help-pls-rsh.txt", "no-local-orted",
-                        true, path, OMPI_BINDIR);
+                        true, path, OPAL_BINDIR);
         return ORTE_ERR_NOT_FOUND;
     }
    return ORTE_SUCCESS;

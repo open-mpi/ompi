@@ -888,21 +888,21 @@ AC_DEFUN([MCA_SETUP_DIRECT_CALL],[
     MCA_WRITE_DIRECT_CALL_HEADER($1, $2)
 ])
 AC_DEFUN([MCA_WRITE_DIRECT_CALL_HEADER],[
-    AC_CONFIG_FILES($2/mca/$1/$1_direct_call.h.template)
+    AC_CONFIG_FILES($2/mca/$1/$1_direct_call.h.tmp:$2/mca/$1/$1_direct_call.h.in)
     AC_CONFIG_COMMANDS($1-direct,
 [if test -f "$2/mca/$1/$1_direct_call"; then
-  diff "$2/mca/$1/$1_direct_call.h" "$2/mca/$1/$1_direct_call.h.template" > /dev/null 2>&1
+  diff "$2/mca/$1/$1_direct_call.h" "$2/mca/$1/$1_direct_call.h.tmp" > /dev/null 2>&1
   if test "$?" != "0"; then
-    cp "$2/mca/$1/$1_direct_call.h.template" "$2/mca/$1/$1_direct_call.h"
+    cp "$2/mca/$1/$1_direct_call.h.tmp" "$2/mca/$1/$1_direct_call.h"
     echo "config.status: regenerating $2/mca/$1/$1_direct_call.h"
   else
     echo "config.status: $2/mca/$1/$1_direct_call.h unchanged"
   fi
 else
-  cp "$2/mca/$1/$1_direct_call.h.template" "$2/mca/$1/$1_direct_call.h"
+  cp "$2/mca/$1/$1_direct_call.h.tmp" "$2/mca/$1/$1_direct_call.h"
   echo "config.status: creating $2/mca/$1/$1_direct_call.h"
 fi
-rm $2/mca/$1/$1_direct_call.h.template])
+rm $2/mca/$1/$1_direct_call.h.tmp])
 ])
 
 

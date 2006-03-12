@@ -37,6 +37,7 @@ dnl
 m4_define([OMPI_GET_VERSION],[
     : ${ompi_ver_need_svn=1}
     : ${srcdir=.}
+    : ${svnversion_result=-1}
 
     dnl quote eval to suppress macro expansion with non-GNU m4
     if test -f "$1"; then
@@ -64,7 +65,10 @@ m4_define([OMPI_GET_VERSION],[
         $2_BASE_VERSION=$$2_VERSION
 
         if test $$2_WANT_SVN -eq 1 && test $ompi_ver_need_svn -eq 1 ; then
-            if test $$2_SVN_R -eq -1 ; then
+            if test "$svnversion_result" != "-1" ; then
+                $2_SVN_R=$svnversion_result
+            fi
+            if test "$$2_SVN_R" = "-1" ; then
                 m4_ifdef([AC_MSG_CHECKING],
                          [AC_MSG_CHECKING([for SVN version])])
                 if test -d "$srcdir/.svn" ; then
@@ -73,6 +77,7 @@ m4_define([OMPI_GET_VERSION],[
                     if test $? -ne 0 ; then
                         $2_SVN_R=svn`date '+%m%d%Y'` 
                     fi
+                    svnversion_result="$$2_SVN_R"
                 else
                     $2_SVN_R=svn`date '+%m%d%Y'`
                 fi

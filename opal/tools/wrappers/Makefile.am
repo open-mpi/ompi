@@ -23,11 +23,6 @@ nodist_pkgdata_DATA = \
 dist_pkgdata_DATA = \
 	help-opal-wrapper.txt
 
-AM_CPPFLAGS = \
-            -DOPAL_LIBDIR="\"$(libdir)\"" \
-            -DOPAL_INCDIR="\"$(includedir)\"" \
-            -DOPAL_PKGDATADIR="\"$(pkgdatadir)\""
-
 bin_PROGRAMS = opal_wrapper
 
 opal_wrapper_SOURCES = \
