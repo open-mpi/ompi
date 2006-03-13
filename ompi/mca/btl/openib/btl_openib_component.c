@@ -128,6 +128,8 @@ int mca_btl_openib_component_open(void)
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_procs, opal_list_t);
 
     /* register IB component parameters */
+    mca_btl_openib_param_register_int ("max_btls", "maximum number of HCAs/ports to use", 
+                                      4, &mca_btl_openib_component.ib_max_btls);
     mca_btl_openib_param_register_int ("free_list_num", "intial size of free lists", 
                                        8, &mca_btl_openib_component.ib_free_list_num);
     mca_btl_openib_param_register_int ("free_list_max", "maximum size of free lists",
@@ -352,7 +354,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     OBJ_CONSTRUCT(&mca_btl_openib_component.ib_lock, opal_mutex_t);
 
 
-    for(i = 0; i < num_devs; i++){  
+    for(i = 0; i < num_devs 
+            && mca_btl_openib_component.ib_num_btls < mca_btl_openib_component.ib_max_btls; i++){  
         struct ibv_device_attr ib_dev_attr; 
         struct ibv_context* ib_dev_context;
  
@@ -397,7 +400,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                  openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
 
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
-                 mca_btl_openib_component.ib_num_btls ++; 
+                 if(++mca_btl_openib_component.ib_num_btls >= mca_btl_openib_component.ib_max_btls)
+                     break;
                  
             } 
             else{
