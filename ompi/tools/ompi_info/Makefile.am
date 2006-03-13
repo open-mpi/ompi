@@ -41,11 +41,11 @@ AM_CPPFLAGS = \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\"" \
             -DOMPI_F77_ABSOLUTE="\"@OMPI_F77_ABSOLUTE@\"" \
             -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\"" \
-            -DOMPI_WANT_SVN=\"@OMPI_WANT_SVN@\" \
+            -DOMPI_WANT_SVN=@OMPI_WANT_SVN@ \
             -DOMPI_SVN_R=\"@OMPI_SVN_R@\" \
-            -DORTE_WANT_SVN=\"@ORTE_WANT_SVN@\" \
+            -DORTE_WANT_SVN=@ORTE_WANT_SVN@ \
             -DORTE_SVN_R=\"@ORTE_SVN_R@\" \
-            -DOPAL_WANT_SVN=\"@OPAL_WANT_SVN@\" \
+            -DOPAL_WANT_SVN=@OPAL_WANT_SVN@ \
             -DOPAL_SVN_R=\"@OPAL_SVN_R@\"
 
 dist_pkgdata_DATA = help-ompi_info.txt
