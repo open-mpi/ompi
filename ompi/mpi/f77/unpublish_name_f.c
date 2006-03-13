@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_UNPUBLISH_NAME = mpi_unpublish_name_f
@@ -31,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPUBLISH_NAME,
                            pmpi_unpublish_name_,
                            pmpi_unpublish_name__,
                            pmpi_unpublish_name_f,
-                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr),
-                           (service_name, info, port_name, ierr) )
+                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
+                           (service_name, info, port_name, ierr, service_name_len, port_name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
                            mpi_unpublish_name_,
                            mpi_unpublish_name__,
                            mpi_unpublish_name_f,
-                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr),
-                           (service_name, info, port_name, ierr) )
+                           (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len),
+                           (service_name, info, port_name, ierr, service_name_len, port_name_len) )
 #endif
 
 
@@ -58,12 +59,20 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPUBLISH_NAME,
 #endif
 
 void mpi_unpublish_name_f(char *service_name, MPI_Fint *info,
-			  char *port_name, MPI_Fint *ierr)
+			  char *port_name, MPI_Fint *ierr, 
+			  int service_name_len, int port_name_len)
 {
     MPI_Info c_info;
+    char *c_service_name;
+    char *c_port_name;
 
     c_info = MPI_Info_f2c(*info);
+    ompi_fortran_string_f2c(service_name, service_name_len, &c_service_name);
+    ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Unpublish_name(service_name, c_info, 
-						port_name));
+    *ierr = OMPI_INT_2_FINT(MPI_Unpublish_name(c_service_name, c_info, 
+					       c_port_name));
+    free ( c_service_name);
+    free ( c_port_name);
+
 }
