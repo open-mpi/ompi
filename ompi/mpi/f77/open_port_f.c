@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_OPEN_PORT = mpi_open_port_f
@@ -31,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_OPEN_PORT,
                            pmpi_open_port_,
                            pmpi_open_port__,
                            pmpi_open_port_f,
-                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr),
-                           (info, port_name, ierr) )
+                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (info, port_name, ierr, port_name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
                            mpi_open_port_,
                            mpi_open_port__,
                            mpi_open_port_f,
-                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr),
-                           (info, port_name, ierr) )
+                           (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (info, port_name, ierr, port_name_len) )
 #endif
 
 
@@ -57,11 +58,16 @@ OMPI_GENERATE_F77_BINDINGS (MPI_OPEN_PORT,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr)
+void mpi_open_port_f(MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len)
 {
     MPI_Info c_info;
+    char c_port_name[MPI_MAX_PORT_NAME];
 
     c_info = MPI_Info_f2c(*info);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Open_port(c_info, port_name));
+    *ierr = OMPI_INT_2_FINT(MPI_Open_port(c_info, c_port_name));
+
+    if ( MPI_SUCCESS == OMPI_FINT_2_INT (*ierr )) {
+	ompi_fortran_string_c2f(c_port_name, port_name, port_name_len );
+    }
 }

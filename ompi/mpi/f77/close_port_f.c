@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_CLOSE_PORT = mpi_close_port_f
@@ -31,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_CLOSE_PORT,
                            pmpi_close_port_,
                            pmpi_close_port__,
                            pmpi_close_port_f,
-                           (char *port_name, MPI_Fint *ierr),
-                           (port_name, ierr) )
+                           (char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (port_name, ierr, port_name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
                            mpi_close_port_,
                            mpi_close_port__,
                            mpi_close_port_f,
-                           (char *port_name, MPI_Fint *ierr),
-                           (port_name, ierr) )
+                           (char *port_name, MPI_Fint *ierr, int port_name_len),
+                           (port_name, ierr, port_name_len) )
 #endif
 
 
@@ -57,7 +58,11 @@ OMPI_GENERATE_F77_BINDINGS (MPI_CLOSE_PORT,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_close_port_f(char *port_name, MPI_Fint *ierr)
+void mpi_close_port_f(char *port_name, MPI_Fint *ierr, int port_name_len)
 {
-    *ierr = OMPI_INT_2_FINT(MPI_Close_port(port_name));
+    char *c_port_name;
+
+    ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
+    *ierr = OMPI_INT_2_FINT(MPI_Close_port(c_port_name));
+    free ( c_port_name);
 }

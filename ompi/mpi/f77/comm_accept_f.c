@@ -19,6 +19,7 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_COMM_ACCEPT = mpi_comm_accept_f
@@ -31,8 +32,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_COMM_ACCEPT,
                            pmpi_comm_accept_,
                            pmpi_comm_accept__,
                            pmpi_comm_accept_f,
-                           (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr),
-                           (port_name, info, root, comm, newcomm, ierr) )
+                           (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len),
+                           (port_name, info, root, comm, newcomm, ierr, port_name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +49,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
                            mpi_comm_accept_,
                            mpi_comm_accept__,
                            mpi_comm_accept_f,
-                           (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr),
-                           (port_name, info, root, comm, newcomm, ierr) )
+                           (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len),
+                           (port_name, info, root, comm, newcomm, ierr, port_name_len) )
 #endif
 
 
@@ -58,18 +59,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_COMM_ACCEPT,
 #endif
 
 void mpi_comm_accept_f(char *port_name, MPI_Fint *info, MPI_Fint *root, 
-		       MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr)
+		       MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, 
+		       int port_name_len)
 {
     MPI_Comm c_comm, c_new_comm;
     MPI_Info c_info;
+    char *c_port_name;
 
     c_comm = MPI_Comm_f2c(*comm);
     c_info = MPI_Info_f2c(*info);
+    ompi_fortran_string_f2c(port_name, port_name_len, &c_port_name);
 
-    *ierr = OMPI_INT_2_FINT(MPI_Comm_accept(port_name, c_info, 
+
+    *ierr = OMPI_INT_2_FINT(MPI_Comm_accept(c_port_name, c_info, 
 					    OMPI_FINT_2_INT(*root), 
 					    c_comm, &c_new_comm));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *newcomm = MPI_Comm_c2f(c_new_comm);
     }
+    free ( c_port_name );
 }
