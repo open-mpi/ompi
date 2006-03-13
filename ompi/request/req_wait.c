@@ -250,10 +250,11 @@ int ompi_request_wait_all(
             request = *rptr;
             if(request == MPI_REQUEST_NULL ||
                request->req_state == OMPI_REQUEST_INACTIVE) {
-                rc = request->req_fini(rptr);
-                if (rc != OMPI_SUCCESS)
-                    return rc;
+               continue;
             }
+            rc = request->req_fini(rptr);
+            if (rc != OMPI_SUCCESS)
+                return rc;
             rptr++;
         }
     }
