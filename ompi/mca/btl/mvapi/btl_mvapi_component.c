@@ -209,7 +209,7 @@ int mca_btl_mvapi_component_open(void)
                                      1024*1024, (int*) &mca_btl_mvapi_module.super.btl_min_rdma_size);
     mca_btl_mvapi_param_register_int("max_rdma_size", "maximium rdma size", 
                                      1024*1024, (int*) &mca_btl_mvapi_module.super.btl_max_rdma_size); 
-    mca_btl_mvapi_param_register_int("flags", "BTL flags, SEND=0, PUT=1, GET=2", 
+    mca_btl_mvapi_param_register_int("flags", "BTL flags, SEND=1, PUT=2, GET=4", 
                                      MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET, (int*) &mca_btl_mvapi_module.super.btl_flags); 
     mca_btl_mvapi_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect", 
                                       800, (int*) &mca_btl_mvapi_module.super.btl_bandwidth); 
