@@ -197,11 +197,16 @@ int ompi_request_wait_all(
     } else {
         /* free request if required */
         rptr = requests;
-        for (i = 0; i < count; i++) {
+        for (i = 0; i < count; i++; rptr++) {
             int rc;
             request = *rptr;
+            if(request == MPI_REQUEST_NULL ||
+               request->req_state == OMPI_REQUEST_INACTIVE) {
+               continue;
+            }
             rc = request->req_fini(rptr);
-            rptr++;
+            if (rc != OMPI_SUCCESS)
+                return rc;
         }
     }
     return OMPI_SUCCESS;
