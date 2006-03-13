@@ -53,6 +53,7 @@ ompi_win_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_win_null, ompi_win_t);
     ompi_mpi_win_null.w_flags = OMPI_WIN_INVALID;
     ompi_mpi_win_null.w_group = &ompi_mpi_group_null;
+    OBJ_RETAIN(&ompi_mpi_group_null);
     ompi_win_set_name(&ompi_mpi_win_null, "MPI_WIN_NULL");
     ompi_pointer_array_set_item(&ompi_mpi_windows, 0, &ompi_mpi_win_null);
 
