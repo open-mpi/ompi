@@ -200,10 +200,6 @@ int ompi_request_wait_all(
         for (i = 0; i < count; i++, rptr++) {
             int rc;
             request = *rptr;
-            if(request == MPI_REQUEST_NULL ||
-               request->req_state == OMPI_REQUEST_INACTIVE) {
-               continue;
-            }
             rc = request->req_fini(rptr);
             if (rc != OMPI_SUCCESS)
                 return rc;
