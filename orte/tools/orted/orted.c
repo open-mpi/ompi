@@ -352,7 +352,7 @@ int main(int argc, char *argv[])
         }
 
         /* setup callback on jobid */
-        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_STAGE_GATE_TERMINATION);
+        ret = orte_rmgr_base_proc_stage_gate_subscribe(orted_globals.bootproxy, job_state_callback, NULL, ORTE_STAGE_GATE_ALL);
         if(ORTE_SUCCESS != ret) {
             ORTE_ERROR_LOG(ret);
             return ret;
