@@ -197,7 +197,7 @@ int ompi_request_wait_all(
     } else {
         /* free request if required */
         rptr = requests;
-        for (i = 0; i < count; i++; rptr++) {
+        for (i = 0; i < count; i++, rptr++) {
             int rc;
             request = *rptr;
             if(request == MPI_REQUEST_NULL ||
