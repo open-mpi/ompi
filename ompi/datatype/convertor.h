@@ -94,6 +94,8 @@ struct ompi_convertor_t {
     uint32_t                      stack_pos;    /**< the actual position on the stack */
     size_t                        bConverted;   /**< # of bytes already converted */
     uint32_t                      checksum;     /**< checksum computed by pack/unpack operation */
+    uint32_t                      csum_ui1;     /**< partial checksum computed by pack/unpack operation */
+    uint32_t                      csum_ui2;     /**< partial checksum computed by pack/unpack operation */
     char                          pending[16];  /**< bytes pending from the last conversion */
     uint32_t                      pending_length; /**< # bytes pending ... */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */

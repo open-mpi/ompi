@@ -234,7 +234,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
                 for( i = 0; i < last_count; i++ ) {
                     OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, end_loop->size,
                                                 pConv->pBaseBuf, pData, pConv->count );
-                    MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, end_loop->size );
+                    MEMCPY_CSUM( pDestBuf, pConv->pBaseBuf + lastDisp, end_loop->size, pConv );
                     pDestBuf += end_loop->size;  /* size of the contiguous data */
                     lastDisp += pElems[pos_desc].loop.extent;
                 }
@@ -268,7 +268,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
             }
             OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
                                         pConv->pBaseBuf, pData, pConv->count );
-            MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, last_count );
+            MEMCPY_CSUM( pDestBuf, pConv->pBaseBuf + lastDisp, last_count, pConv );
             bConverted += last_blength;
             space -= last_blength;
             pDestBuf += last_blength;
@@ -281,7 +281,7 @@ int ompi_convertor_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
     if( last_count != 0 ) {  /* save the internal state */
         OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_count,
                                     pConv->pBaseBuf, pData, pConv->count );
-        MEMCPY( pDestBuf, pConv->pBaseBuf + lastDisp, last_count );
+        MEMCPY_CSUM( pDestBuf, pConv->pBaseBuf + lastDisp, last_count, pConv );
         bConverted += last_count;
         lastDisp += last_count;
     }
@@ -363,6 +363,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                 saveLength = 0;
                                 iov_pos++;
                                 space_on_iovec = 0;
+                                COMPUTE_CSUM( iov[iov_pos].iov_base, iov[iov_pos].iov_len, pConv );
                                 /* let's go out of here */
                             } else {
                                 uint32_t copy_length = saveLength;
@@ -373,7 +374,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                                             pConv->pBaseBuf, pData, pConv->count );
                                 DO_DEBUG( opal_output( 0, "1. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                        copy_length, bConverted, space_on_iovec, pConv->bConverted ); );
-                                MEMCPY( destination, source, copy_length );
+                                MEMCPY_CSUM( destination, source, copy_length, pConv );
                                 source += copy_length;
                                 destination += copy_length;
                                 bConverted += copy_length;
@@ -433,7 +434,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                                 pConv->pBaseBuf, pData, pConv->count );
                     DO_DEBUG (opal_output( 0, "2. memcpy( %p, %p, %ld )\n", destination, pConv->pBaseBuf + lastDisp,
                                            end_loop->size ); );
-                    MEMCPY( destination, pConv->pBaseBuf + lastDisp, end_loop->size );
+                    MEMCPY_CSUM( destination, pConv->pBaseBuf + lastDisp, end_loop->size, pConv );
                     lastDisp += pElems[pos_desc].loop.extent;
                     destination += end_loop->size;
                 }
@@ -516,7 +517,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                                     pConv->pBaseBuf, pData, pConv->count );
                         DO_DEBUG( opal_output( 0, "3. memcpy( %p, %p, %ld ) bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                                saveLength, bConverted, space_on_iovec, pConv->bConverted ); );
-                        MEMCPY( destination, source, saveLength );
+                        MEMCPY_CSUM( destination, source, saveLength, pConv );
                         destination += saveLength;
                         /* update the pack counters values */
                         bConverted += saveLength;
@@ -531,7 +532,7 @@ int ompi_convertor_pack_no_conversion( ompi_convertor_t* pConv,
                                                 pConv->pBaseBuf, pData, pConv->count );
                     DO_DEBUG( opal_output( 0, "4. memcpy( %p, %p, %ld )  bConverted %ld space %ld pConv->bConverted %ld\n", destination, source,
                                            space_on_iovec, bConverted, space_on_iovec, pConv->bConverted ); );
-                    MEMCPY( destination, source, space_on_iovec );
+                    MEMCPY_CSUM( destination, source, space_on_iovec, pConv );
                     /* let's prepare for the next round. As I keep trace of the amount that I still
                      * have to pack, the next time when I came here, I'll try to append something.
                      * If I already fill-up the amount of data required by the upper level, I will
@@ -609,21 +610,16 @@ ompi_convertor_pack_no_conv_contig( ompi_convertor_t* pConv,
                        + pStack[0].disp + pStack[1].disp);
         if( iov[iov_count].iov_base == NULL ) {
             iov[iov_count].iov_base = source_base;
+            COMPUTE_CSUM( iov[iov_count].iov_base, iov[iov_count].iov_len, pConv );
         } else {
             /* contiguous data just memcpy the smallest data in the user buffer */
             OMPI_DDT_SAFEGUARD_POINTER( source_base, iov[iov_count].iov_len,
                                         pConv->pBaseBuf, pConv->pDesc, pConv->count );
-            MEMCPY( iov[iov_count].iov_base, source_base, iov[iov_count].iov_len);
+            MEMCPY_CSUM( iov[iov_count].iov_base, source_base, iov[iov_count].iov_len, pConv );
         }
         length -= iov[iov_count].iov_len;
         pConv->bConverted += iov[iov_count].iov_len;
         pStack[0].disp += iov[iov_count].iov_len;
-        /* We compute the checksum if we have to. But we will store the temporary
-         * values in the a and b variables, and only at the end take in account the
-         * value of the convertor checksum.
-         */
-        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
-                                   pConv->checksum );
     }
 
     /* update the return value */
@@ -679,6 +675,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                     total_bytes_converted += pStack[1].count;
                     pStack[1].disp  = 0;  /* reset it for the next round */
                     pStack[1].count = pData->size;
+                    COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
                 }
                 *out_size = iov_count + index;
                 pConv->bConverted += total_bytes_converted;
@@ -697,11 +694,13 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
                         iov[index].iov_len = max_allowed;
                         max_allowed = 0;
                         printf( "%s:%d Possible problem here\n", __FILE__, __LINE__ );
+                        COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
                         break;
                     } else {
                         iov[index].iov_base = user_memory;
                         iov[index].iov_len = pData->size;
                         user_memory += extent;
+                        COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
                     }
                     max_allowed -= iov[index].iov_len;
                     total_bytes_converted += iov[index].iov_len;
@@ -733,7 +732,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             if( done != 0 ) {  /* still some data to copy from the last time */
                 done = pData->size - done;
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, done, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( packed_buffer, user_memory, done );
+                MEMCPY_CSUM( packed_buffer, user_memory, done, pConv );
                 packed_buffer += done;
                 max_allowed -= done;
                 i++;  /* just to compute the correct source pointer */
@@ -744,7 +743,7 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf, pData, pConv->count );
-                MEMCPY( packed_buffer, user_memory, pData->size );
+                MEMCPY_CSUM( packed_buffer, user_memory, pData->size, pConv );
                 packed_buffer+= pData->size;
                 user_memory += extent;
             }
@@ -757,12 +756,6 @@ ompi_convertor_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
          * it's supposed to be useless from now.
          */
         user_memory = pConv->pBaseBuf + pStack[0].disp;
-        /* We compute the checksum if we have to. But we will store the temporary
-         * values in the a and b variables, and only at the end take in account the
-         * value of the convertor checksum.
-         */
-        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
-                                   pConv->checksum );
     }
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;

@@ -251,6 +251,7 @@ do { \
     memcpy( (DST), (SRC), (BLENGTH) ); \
 } while (0)
 
+
 #if OMPI_ENABLE_DEBUG
 OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,
                                                                const void* initial_ptr,
@@ -291,7 +292,33 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 /* Please set it to one if you want data checksum. The current implementation
  * use ADLER32 algorithm.
  */
+
 #define OMPI_REQUIRE_DATA_VALIDATION 0
+#include "opal/util/crc.h"
+
+#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
+do { \
+    /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
+    (CONVERTOR)->checksum += opal_bcopy_uicsum_partial( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
+} while (0)
+
+#define COMPUTE_CSUM( SRC, BLENGTH, CONVERTOR ) \
+do { \
+    /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
+    (CONVERTOR)->checksum += opal_uicsum_partial( (SRC), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
+} while (0)
+
+#else
+
+#define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
+do { \
+    /*opal_output( 0, "memcpy dest = %p src = %p length = %d\n", (void*)(DST), (void*)(SRC), (int)(BLENGTH) ); */\
+    memcpy( (DST), (SRC), (BLENGTH) ); \
+} while (0)
+
+#define COMPUTE_CSUM( SRC, BLENGTH, CONVERTOR )
+
+#endif
 
 /* ADLER_NMAX is the largest n such that 255n(n+1)/2 + (n+1)(BASE-1) <= 2^32-1 */
 #define ADLER_NMAX 5551
