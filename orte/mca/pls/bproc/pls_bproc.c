@@ -41,7 +41,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "opal/opal/install_dirs.h"
+#include "opal/install_dirs.h"
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
