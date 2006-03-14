@@ -39,9 +39,7 @@ static const char FUNC_NAME[] = "MPI_Group_excl";
 int MPI_Group_excl(MPI_Group group, int n, int *ranks,
                    MPI_Group *new_group) 
 {
-
-    ompi_group_t *group_pointer;
-    group_pointer = (ompi_group_t *)group;
+    ompi_group_t *group_pointer = (ompi_group_t *)group;
     int i, err, group_size;
 
     group_size = ompi_group_size ( group_pointer);
