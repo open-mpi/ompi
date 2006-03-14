@@ -225,6 +225,9 @@ static void mca_pml_dr_frag_completion(
     OPAL_THREAD_LOCK(&ompi_request_lock);
     bit = ((uint64_t)1 << hdr->hdr_frag_idx); 
     vfrag->vf_mask_processed |= bit;
+
+    /* update pipeline depth */
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
     
     /* when we have local completion of the entire vfrag 
        we stop the local wdog timers and set our ack timer 
@@ -232,33 +235,27 @@ static void mca_pml_dr_frag_completion(
     */
     if(vfrag->vf_mask_processed == vfrag->vf_mask) {
         MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
-        /* MCA_PML_DR_VFRAG_ACK_START(vfrag); */
+        /* has the vfrag already been acked */
+        if(vfrag->vf_ack == vfrag->vf_mask) {
+
+            /* check to see if we need to schedule the remainder of the message */
+            sendreq->req_bytes_delivered += vfrag->vf_size;
+
+            /* return this vfrag */
+            MCA_PML_DR_VFRAG_RETURN(vfrag);
+
+        } else {
+            /* MCA_PML_DR_VFRAG_ACK_START(vfrag); */
+        }
     } else { 
         MCA_PML_DR_VFRAG_WDOG_RESET(vfrag);
     }
 
-    /* update pipeline depth */
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
-
-    /* has the vfrag already been acked */
-    if(vfrag->vf_ack == vfrag->vf_mask) {
-
-        /* check to see if we need to schedule the remainder of the message */
-        sendreq->req_bytes_delivered += vfrag->vf_size;
-
-        /* return this vfrag */
-        MCA_PML_DR_VFRAG_RETURN(vfrag);
-
-        /* are we done with this request ? */
-        if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
-            MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
-        } else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
-               opal_list_get_size(&sendreq->req_retrans)) {
-            schedule = true;
-        }
- 
-    } else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
-               opal_list_get_size(&sendreq->req_retrans)) {
+    /* are we done with this request ? */
+    if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+        MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
+    }  else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
+           opal_list_get_size(&sendreq->req_retrans)) {
         schedule = true;
     }
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
