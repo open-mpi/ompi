@@ -225,13 +225,8 @@ typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
     
 OMPI_COMP_EXPORT OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
-
-
-static inline  void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, size_t size) { 
-    *des = bml_btl->btl_alloc(bml_btl->btl, size);                                         
-    if((*des) != NULL) { 
-        (*des)->des_context = (void*) bml_btl;
-    }
+static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, size_t size) { 
+    *des = bml_btl->btl_alloc(bml_btl->btl, size);
 }
 
 static inline void mca_bml_base_free(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t* des) { 
