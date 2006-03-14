@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -159,6 +160,19 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
  * Abstracting MPI_Group_free, since it is required by some internal functions...
  */
 int ompi_group_free (ompi_group_t **group);
+
+/**
+ *  Prototypes for the group back-end functions. Argument lists are similar to the according 
+ *  C MPI functions.
+ */
+int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2, ompi_group_t **new_group); 
+int ompi_group_incl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group);
+int ompi_group_excl(ompi_group_t* group, int n, int *ranks, ompi_group_t **new_group);
+int ompi_group_range_incl(ompi_group_t* group, int n_triplets, int ranges[][3],ompi_group_t **new_group);
+int ompi_group_range_excl(ompi_group_t* group, int n_triplets, int ranges[][3],ompi_group_t **new_group);
+int ompi_group_intersection(ompi_group_t* group1,ompi_group_t* group2,ompi_group_t **new_group); 
+int ompi_group_difference(ompi_group_t* group1, ompi_group_t* group2,ompi_group_t **new_group);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
