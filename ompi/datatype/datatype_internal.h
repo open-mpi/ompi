@@ -294,6 +294,8 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
  */
 
 #define OMPI_REQUIRE_DATA_VALIDATION 0
+
+#if OMPI_REQUIRE_DATA_VALIDATION
 #include "opal/util/crc.h"
 
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
