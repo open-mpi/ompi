@@ -86,6 +86,9 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     size_t* max_data, int32_t* freeAfter )
 {
     pConv->checksum = 1;
+    pConv->csum_ui1 = 0;
+    pConv->csum_ui2 = 0;
+
     /* protect against over packing data */
     if( pConv->flags & CONVERTOR_COMPLETED ) {
         iov[0].iov_len = 0;
@@ -107,6 +110,9 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       size_t* max_data, int32_t* freeAfter )
 {
     pConv->checksum = 1;
+    pConv->csum_ui1 = 0;
+    pConv->csum_ui2 = 0;
+
     /* protect against over unpacking data */
     if( pConv->flags & CONVERTOR_COMPLETED ) {
         iov[0].iov_len = 0;

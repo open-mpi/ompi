@@ -78,7 +78,7 @@ static inline void pack_predefined_data( ompi_convertor_t* CONVERTOR,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "pack 1. memcpy( %p, %p, %ld ) => space %d\n",
                                *(DESTINATION), _source, _copy_blength, *(SPACE) ); );
-        MEMCPY( *(DESTINATION), _source, _copy_blength );
+        MEMCPY_CSUM( *(DESTINATION), _source, _copy_blength, (CONVERTOR) );
         _source        += _copy_blength;
         *(DESTINATION) += _copy_blength;
     } else {
@@ -88,7 +88,7 @@ static inline void pack_predefined_data( ompi_convertor_t* CONVERTOR,
                                         (CONVERTOR)->pDesc, (CONVERTOR)->count );
             DO_DEBUG( opal_output( 0, "pack 2. memcpy( %p, %p, %ld ) => space %d\n",
                                    *(DESTINATION), _source, _copy_blength, *(SPACE) - (_i * _copy_blength) ); );
-            MEMCPY( *(DESTINATION), _source, _copy_blength );
+            MEMCPY_CSUM( *(DESTINATION), _source, _copy_blength, (CONVERTOR) );
             *(DESTINATION) += _copy_blength;
             _source        += _elem->extent;
         }
@@ -119,7 +119,7 @@ static inline void pack_contiguous_loop( ompi_convertor_t* CONVERTOR,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );
         DO_DEBUG( opal_output( 0, "pack 3. memcpy( %p, %p, %ld ) => space %ld\n",
                                *(DESTINATION), _source, _end_loop->size, *(SPACE) - _i * _end_loop->size ); );
-        MEMCPY( *(DESTINATION), _source, _end_loop->size );
+        MEMCPY_CSUM( *(DESTINATION), _source, _end_loop->size, (CONVERTOR) );
         *(DESTINATION) += _end_loop->size;
         _source        += _loop->extent;
     }
@@ -265,12 +265,6 @@ int ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_packed += iov[iov_count].iov_len;
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
-        /* We compute the checksum if we have to. But we will store the temporary
-         * values in the a and b variables, and only at the end take in account the
-         * value of the convertor checksum.
-         */
-        COMPUTE_SPECIFIC_CHECKSUM( iov[iov_count].iov_base, iov[iov_count].iov_len,
-                                   pConvertor->checksum );
     }
     *max_data = total_packed;
     *out_size = iov_count;
