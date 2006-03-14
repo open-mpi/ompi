@@ -267,7 +267,10 @@ do {                                                                            
         size_t mod = size % max_send_size;                                              \
         vfrag->vf_len = div + (mod ? 1 : 0);                                            \
         vfrag->vf_size = size;                                                          \
-        vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);                \
+        if(vfrag->vf_len == 64)                                                         \
+            vfrag->vf_mask = ~(uint64_t)0;                                              \
+        else                                                                            \
+            vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);            \
     }                                                                                   \
                                                                                         \
     vfrag->vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                                \
