@@ -43,7 +43,6 @@ mca_io_base_module_1_0_0_t mca_io_romio_module = {
 
     /* Finalize, free, cancel */
 
-    mca_io_romio_request_fini,
     mca_io_romio_request_free,
     mca_io_romio_request_cancel,
 

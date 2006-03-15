@@ -103,16 +103,14 @@ int mca_pml_ob1_send(void *buf,
     
     MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
-        MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
+        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
         return rc;
     }
 
     if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
 #if OMPI_ENABLE_PROGRESS_THREADS
         if(opal_progress_spin(&sendreq->req_send.req_base.req_ompi.req_complete)) {
-            opal_mutex_lock(&ompi_request_lock);
-            MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
-            opal_mutex_unlock(&ompi_request_lock);
+            ompi_request_free( (ompi_request_t**)&sendreq );
             return OMPI_SUCCESS;
         }
 #endif
@@ -124,16 +122,16 @@ int mca_pml_ob1_send(void *buf,
             while (sendreq->req_send.req_base.req_ompi.req_complete == false)
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
-            MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
             opal_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
             while (sendreq->req_send.req_base.req_ompi.req_complete == false)
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
-            MCA_PML_OB1_SEND_REQUEST_FREE( sendreq );
         }
     }
-    return OMPI_SUCCESS;
+    rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
+    ompi_request_free( (ompi_request_t**)&sendreq );
+    return rc;
 }
 

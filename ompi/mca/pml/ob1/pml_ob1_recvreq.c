@@ -29,32 +29,25 @@
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/datatype/dt_arch.h"                                                                                                               
+#include "ompi/datatype/dt_arch.h"
 
 static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     mca_pml_ob1_recv_request_t* request, mca_pml_ob1_comm_proc_t* proc);
 
 
-static int mca_pml_ob1_recv_request_fini(struct ompi_request_t** request)
+static inline int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_ob1_recv_request_t* recvreq = *(mca_pml_ob1_recv_request_t**)request; 
-    if(recvreq->req_recv.req_base.req_persistent) {
-       if(recvreq->req_recv.req_base.req_free_called) { 
-           MCA_PML_OB1_RECV_REQUEST_FREE(recvreq);
-           *request = MPI_REQUEST_NULL;
-       } else {
-           recvreq->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
-       }
-    } else {
-        MCA_PML_OB1_RECV_REQUEST_FREE(recvreq);
-        *request = MPI_REQUEST_NULL;
-    }
-    return OMPI_SUCCESS;
-}
 
-static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
-{
-    MCA_PML_OB1_RECV_REQUEST_FREE( *(mca_pml_ob1_recv_request_t**)request );
+    assert( false == recvreq->req_recv.req_base.req_free_called );
+
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    recvreq->req_recv.req_base.req_free_called = true;
+    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 } 
@@ -94,9 +87,9 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
 static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* request)
 {
     request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    request->req_recv.req_base.req_ompi.req_fini = mca_pml_ob1_recv_request_fini;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_ob1_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_ob1_recv_request_cancel;
+    request->req_rdma_cnt = 0;
 }
 
 static void mca_pml_ob1_recv_request_destruct(mca_pml_ob1_recv_request_t* request)
@@ -147,14 +140,7 @@ static void mca_pml_ob1_put_completion(
     /* check completion status */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
         >= recvreq->req_recv.req_bytes_packed ) {
-        /* initialize request status */
-        recvreq->req_recv.req_base.req_pml_complete = true;
-        recvreq->req_recv.req_base.req_ompi.req_status._count = 
-            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
-             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
@@ -303,14 +289,13 @@ retry:
 /**
  * Return resources used by the RDMA
  */
-                                                                                                            
+
 static void mca_pml_ob1_fin_completion(
     mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* des,
     int status)
 {
-                                                                                                            
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
     MCA_PML_OB1_RDMA_FRAG_RETURN(frag);
@@ -335,18 +320,6 @@ static void mca_pml_ob1_rget_completion(
     mca_btl_base_descriptor_t *fin;
     int rc;
    
-    /* is receive request complete */
-    if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)
-        == recvreq->req_recv.req_bytes_packed ) {
-        recvreq->req_recv.req_base.req_ompi.req_status._count = 
-            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
-             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
-        recvreq->req_recv.req_base.req_pml_complete = true;
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    }
-
     /* return descriptor */
     mca_bml_base_free(bml_btl, des); 
 
@@ -359,7 +332,7 @@ static void mca_pml_ob1_rget_completion(
     fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
     fin->des_cbfunc = mca_pml_ob1_fin_completion;
     fin->des_cbdata = frag;
-                                                                                                            
+
     /* fill in header */
     hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_src->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
@@ -378,13 +351,18 @@ static void mca_pml_ob1_rget_completion(
         MCA_PML_OB1_FIN_HDR_HTON(*hdr);
     }
 #endif
-#endif                                                                                                            
+#endif
+    /* is receive request complete */
+    if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)
+        == recvreq->req_recv.req_bytes_packed ) {
+        MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
+    }
+
     /* queue request */
-    rc = mca_bml_base_send(
-        bml_btl,
-        fin,
-        MCA_BTL_TAG_PML
-        );
+    rc = mca_bml_base_send( bml_btl,
+                            fin,
+                            MCA_BTL_TAG_PML
+                            );
     if(OMPI_SUCCESS != rc) {
         opal_output(0, "[%s:%d] unable to queue fin", __FILE__,__LINE__);
         orte_errmgr.abort();
@@ -549,14 +527,7 @@ void mca_pml_ob1_recv_request_progress(
     /* check completion status */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
         >= recvreq->req_recv.req_bytes_packed ) {
-        /* initialize request status */
-        recvreq->req_recv.req_base.req_ompi.req_status._count =
-            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?
-             recvreq->req_bytes_received : recvreq->req_bytes_delivered);
-        recvreq->req_recv.req_base.req_pml_complete = true;
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
     } else if (recvreq->req_rdma_offset < recvreq->req_recv.req_bytes_packed) {
         /* schedule additional rdma operations */
         mca_pml_ob1_recv_request_schedule(recvreq);
@@ -595,11 +566,9 @@ void mca_pml_ob1_recv_request_matched_probe(
     /* set completion status */
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
-    recvreq->req_recv.req_base.req_ompi.req_status._count = bytes_packed;
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_recv.req_base.req_pml_complete = true; 
-    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    recvreq->req_bytes_received = bytes_packed;
+    recvreq->req_bytes_delivered = bytes_packed;
+    MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE( recvreq );
 }
 
 

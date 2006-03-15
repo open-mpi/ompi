@@ -81,26 +81,23 @@ do {                                                               \
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_INIT(                             \
-    request,                                                       \
-    addr,                                                          \
-    count,                                                         \
-    datatype,                                                      \
-    src,                                                           \
-    tag,                                                           \
-    comm,                                                          \
-    persistent)                                                    \
-do {                                                               \
-    (request)->req_rdma_cnt = 0;                                   \
-    MCA_PML_BASE_RECV_REQUEST_INIT(                                \
-        &(request)->req_recv,                                      \
-        addr,                                                      \
-        count,                                                     \
-        datatype,                                                  \
-        src,                                                       \
-        tag,                                                       \
-        comm,                                                      \
-        persistent);                                               \
+#define MCA_PML_OB1_RECV_REQUEST_INIT( request,                     \
+                                       addr,                        \
+                                       count,                       \
+                                       datatype,                    \
+                                       src,                         \
+                                       tag,                         \
+                                       comm,                        \
+                                       persistent)                  \
+do {                                                                \
+    MCA_PML_BASE_RECV_REQUEST_INIT( &(request)->req_recv,           \
+                                    addr,                           \
+                                    count,                          \
+                                    datatype,                       \
+                                    src,                            \
+                                    tag,                            \
+                                    comm,                           \
+                                    persistent);                    \
 } while(0)
 
 /**
@@ -108,29 +105,43 @@ do {                                                               \
  *
  *  @param request (IN)  Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq)                                     \
-do {                                                                                 \
-    size_t r;                                                                        \
-    for(r=0; r<recvreq->req_rdma_cnt; r++) {                                         \
-        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;       \
-        if(NULL != btl_reg) {                                                        \
-            btl_reg->mpool->mpool_release(btl_reg->mpool, btl_reg);                  \
-        }                                                                            \
-    }                                                                                \
-    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                            \
-    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_requests, (opal_list_item_t*)(recvreq)); \
+#define MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE(recvreq)                                 \
+do {                                                                                   \
+    size_t r;                                                                          \
+                                                                                       \
+    assert( false == recvreq->req_recv.req_base.req_pml_complete );                    \
+                                                                                       \
+    for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                                     \
+        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;         \
+        if( NULL != btl_reg ) {                                                        \
+            btl_reg->mpool->mpool_release( btl_reg->mpool, btl_reg );                  \
+        }                                                                              \
+    }                                                                                  \
+    recvreq->req_rdma_cnt = 0;                                                         \
+                                                                                       \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
+                                                                                       \
+    if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                                    \
+    } else {                                                                           \
+        /* initialize request status */                                                \
+        recvreq->req_recv.req_base.req_pml_complete = true;                            \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                        \
+            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?              \
+             recvreq->req_bytes_received : recvreq->req_bytes_delivered);              \
+        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );   \
+    }                                                                                  \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                            \
 } while(0)
 
 /*
  *  Free the PML receive request
  */
-#define MCA_PML_OB1_RECV_REQUEST_FREE(recvreq) \
+#define MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq) \
 { \
-    mca_pml_base_request_t* pml_request = (mca_pml_base_request_t*)(recvreq); \
-    pml_request->req_free_called = true; \
-    if( pml_request->req_pml_complete == true) { \
-        MCA_PML_OB1_RECV_REQUEST_RETURN((recvreq)); \
-    } \
+    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);  \
+    OMPI_FREE_LIST_RETURN( &mca_pml_ob1.recv_requests,     \
+                           (opal_list_item_t*)(recvreq));  \
 }
 
 /**
@@ -140,7 +151,7 @@ do {                                                                            
  * @param request (IN)   Request to match.
  */
 void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request);
-                                                                                                                                 
+
 /**
  * Attempt to match the request against the unexpected fragment list
  * for a specific source rank.
@@ -166,7 +177,6 @@ do {                                                                            
     (request)->req_bytes_delivered = 0;                                           \
     (request)->req_lock = 0;                                                      \
     (request)->req_pipeline_depth = 0;                                            \
-    (request)->req_rdma_cnt = 0;                                                  \
     (request)->req_rdma_idx = 0;                                                  \
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \

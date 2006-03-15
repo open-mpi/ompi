@@ -34,34 +34,26 @@
 #include "ompi/mca/bml/base/base.h"
 
 
-static int mca_pml_dr_send_request_fini(struct ompi_request_t** request)
+/*
+ * The free call mark the final stage in a request life-cycle. Starting from this
+ * point the request is completed at both PML and user level, and can be used
+ * for others p2p communications. Therefore, in the case of the DR PML it should
+ * be added to the free request list.
+ */
+static inline int mca_pml_dr_send_request_free(struct ompi_request_t** request)
 {
-    mca_pml_dr_send_request_t* sendreq = *(mca_pml_dr_send_request_t**)(request); 
-    if(sendreq->req_send.req_base.req_persistent) {
-       if(sendreq->req_send.req_base.req_free_called) {
-           MCA_PML_DR_FREE(request);
-       } else {
-           sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
-           /* rewind convertor */ 
-           if(sendreq->req_send.req_bytes_packed) {
-               size_t offset = 0;
-               ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
-           }
-           /* if buffered send - release any resources */
-           if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-               sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-               mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-           }
-       }
-    } else {
-        MCA_PML_DR_FREE(request);
-    }
-    return OMPI_SUCCESS;
-}
+    mca_pml_dr_send_request_t* sendreq = *(mca_pml_dr_send_request_t**)request;
 
-static int mca_pml_dr_send_request_free(struct ompi_request_t** request)
-{
-    MCA_PML_DR_FREE(request);
+    assert( false == sendreq->req_send.req_base.req_free_called );
+
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    sendreq->req_send.req_base.req_free_called = true;
+    if( true == sendreq->req_send.req_base.req_pml_complete ) {
+        MCA_PML_DR_SEND_REQUEST_RETURN( sendreq );
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
 
@@ -73,7 +65,6 @@ static int mca_pml_dr_send_request_cancel(struct ompi_request_t* request, int co
 
 static void mca_pml_dr_send_request_construct(mca_pml_dr_send_request_t* req)
 {
-    
     OBJ_CONSTRUCT(&req->req_vfrag0, mca_pml_dr_vfrag_t);
     OBJ_CONSTRUCT(&req->req_retrans, opal_list_t);
 
@@ -84,10 +75,8 @@ static void mca_pml_dr_send_request_construct(mca_pml_dr_send_request_t* req)
     req->req_vfrag0.vf_mask_processed = 0;
     req->req_vfrag0.vf_send.pval = req;
     req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
-    req->req_send.req_base.req_ompi.req_fini = mca_pml_dr_send_request_fini;
     req->req_send.req_base.req_ompi.req_free = mca_pml_dr_send_request_free;
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_dr_send_request_cancel;
-    
 }
 
 static void mca_pml_dr_send_request_destruct(mca_pml_dr_send_request_t* req)

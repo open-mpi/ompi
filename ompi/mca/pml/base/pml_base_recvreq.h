@@ -66,7 +66,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     OBJ_RETAIN(comm);                                                    \
     OBJ_RETAIN(datatype);                                                \
                                                                          \
-    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                    \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);        \
     (request)->req_bytes_packed = 0;                                     \
     (request)->req_base.req_sequence = 0;                                \
     (request)->req_base.req_addr = addr;                                 \
@@ -76,7 +76,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_base.req_tag = tag;                                   \
     (request)->req_base.req_comm = comm;                                 \
     (request)->req_base.req_proc = NULL;                                 \
-    (request)->req_base.req_persistent = persistent;                     \
     (request)->req_base.req_pml_complete = (persistent ? true : false);  \
     (request)->req_base.req_free_called = false;                         \
 }

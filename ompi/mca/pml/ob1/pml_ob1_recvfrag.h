@@ -58,7 +58,7 @@ do {                                                            \
 } while(0)
 
 
-#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr,segs,cnt,btl)      \
+#define MCA_PML_OB1_RECV_FRAG_INIT(frag, hdr, segs, cnt, btl )  \
 do {                                                            \
     size_t i;                                                   \
     mca_btl_base_segment_t* macro_segments = frag->segments;    \

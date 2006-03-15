@@ -64,7 +64,6 @@ typedef struct mca_io_romio_data_t mca_io_romio_data_t;
  */
 
 int mca_io_romio_progress(void);
-int mca_io_romio_request_fini(ompi_request_t **req);
 int mca_io_romio_request_free(ompi_request_t **req);
 int mca_io_romio_request_cancel(ompi_request_t *req, int flag);
 

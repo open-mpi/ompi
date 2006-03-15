@@ -289,7 +289,7 @@ static int progress()
              * here
              */
             if (ioreq->free_called) {
-                ret = ioreq->super.req_fini((ompi_request_t**) &ioreq);
+                ret = ompi_request_free((ompi_request_t**) &ioreq);
                 if (OMPI_SUCCESS != ret) {
                     OPAL_THREAD_UNLOCK(&mca_io_romio_mutex);
                     return ret;

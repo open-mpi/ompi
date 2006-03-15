@@ -106,6 +106,37 @@ do {                                                               \
 } while(0)
 
 /**
+ *  Mark a recv request complete.
+ *
+ *  @param request (IN)  Receive request.
+ */
+
+#define MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq)                                  \
+do {                                                                                   \
+    assert( false == recvreq->req_recv.req_base.req_pml_complete );                    \
+                                                                                       \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
+    /* initialize request status */                                                    \
+    recvreq->req_recv.req_base.req_pml_complete = true;                                \
+    recvreq->req_recv.req_base.req_ompi.req_status._count =                            \
+        (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?                  \
+         recvreq->req_bytes_received : recvreq->req_bytes_delivered);                  \
+    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );       \
+                                                                                       \
+    if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
+        MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );                                     \
+    } else {                                                                           \
+        if(recvreq->req_recv.req_base.req_ompi.req_persistent) {                       \
+            if( !recvreq->req_recv.req_base.req_free_called ) {                        \
+                recvreq->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
+            }                                                                          \
+        }                                                                              \
+    }                                                                                  \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                            \
+} while(0)
+
+
+/**
  *  Return a recv request to the modules free list.
  *
  *  @param request (IN)  Receive request.
@@ -133,7 +164,7 @@ do {                                                                            
  * @param request (IN)   Request to match.
  */
 void mca_pml_dr_recv_request_match_wild(mca_pml_dr_recv_request_t* request);
-                                                                                                                                 
+
 /**
  * Attempt to match the request against the unexpected fragment list
  * for a specific source rank.

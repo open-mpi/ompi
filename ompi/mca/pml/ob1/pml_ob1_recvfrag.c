@@ -68,7 +68,7 @@ void mca_pml_ob1_recv_frag_callback(
     if(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) {
         return;
     }
-                                                                                                                      
+
     /* hdr_type and hdr_flags are uint8_t, so no endian problems */
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_OB1_HDR_TYPE_MATCH:
