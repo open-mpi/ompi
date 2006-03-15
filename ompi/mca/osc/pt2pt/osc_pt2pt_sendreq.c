@@ -66,7 +66,6 @@ ompi_osc_pt2pt_sendreq_alloc_init(ompi_osc_pt2pt_req_type_t req_type,
 static void ompi_osc_pt2pt_sendreq_construct(ompi_osc_pt2pt_sendreq_t *req)
 {
     req->super.req_type = OMPI_REQUEST_WIN;
-    req->super.req_fini = NULL;
     req->super.req_free = NULL;
     req->super.req_cancel = NULL;
     OBJ_CONSTRUCT(&(req->req_origin_convertor), ompi_convertor_t);

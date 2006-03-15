@@ -117,7 +117,6 @@ finished:
         *status = recvreq->req_recv.req_base.req_ompi.req_status;
     }
     rc = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
-    MCA_PML_OB1_RECV_REQUEST_RETURN(recvreq);
+    ompi_request_free( (ompi_request_t**)&recvreq );
     return rc;
 }
-

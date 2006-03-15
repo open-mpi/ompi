@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,8 +26,9 @@ int ompi_request_wait(
     ompi_status_public_t * status)
 {
     ompi_request_t *req = *req_ptr;
+
     if(req->req_complete == false) {
-                                                                                                      
+
 #if OMPI_ENABLE_PROGRESS_THREADS
         /* poll for completion */
         if(opal_progress_spin(&req->req_complete))
@@ -43,18 +44,25 @@ int ompi_request_wait(
         ompi_request_waiting--;
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
-                                                                                                      
+
 #if OMPI_ENABLE_PROGRESS_THREADS
 finished:
 #endif
-                                                                                                      
+
     /* return status */
-    if (MPI_STATUS_IGNORE != status) {
+    if( MPI_STATUS_IGNORE != status ) {
         *status = req->req_status;
     }
-                                                                                                      
+    if( req->req_state == OMPI_REQUEST_INACTIVE ) {
+        return OMPI_SUCCESS;
+    }
+    if( req->req_persistent ) {
+        req->req_state = OMPI_REQUEST_INACTIVE;
+        return OMPI_SUCCESS;
+    }
+
     /* return request to pool */
-    return req->req_fini(req_ptr);
+    return ompi_request_free(req_ptr);
 }
 
 
@@ -144,13 +152,17 @@ finished:
             *status = ompi_status_empty;
         }
     } else {
-
+        assert( true == request->req_complete );
         /* return status */
         if (MPI_STATUS_IGNORE != status) {
             *status = request->req_status;
         }
-        /* return request to pool */
-        rc = request->req_fini(rptr);
+        if( request->req_persistent ) {
+            request->req_state = OMPI_REQUEST_INACTIVE;
+        } else {
+            /* return request to pool */
+            rc = ompi_request_free(rptr);
+        }
         *index = completed;
     }
     return rc;
@@ -165,6 +177,7 @@ int ompi_request_wait_all(
     size_t completed = 0, i;
     ompi_request_t **rptr;
     ompi_request_t *request;
+    int mpi_error = OMPI_SUCCESS;
 
     rptr = requests;
     for (i = 0; i < count; i++) {
@@ -205,7 +218,7 @@ int ompi_request_wait_all(
             size_t start = ompi_request_completed;
             size_t pending = count - completed;
             /*
-             * wait until at least pending requests complete 
+             * wait until at least pending requests complete
              */
             while (pending > ompi_request_completed - start) {
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
@@ -225,38 +238,48 @@ int ompi_request_wait_all(
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
+    rptr = requests;
     if (MPI_STATUSES_IGNORE != statuses) {
         /* fill out status and free request if required */
-        rptr = requests;
-        for (i = 0; i < count; i++) {
-            int rc;
+        for( i = 0; i < count; i++, rptr++ ) {
             request = *rptr;
-            if(request == MPI_REQUEST_NULL ||
-               request->req_state == OMPI_REQUEST_INACTIVE) {
+            assert( true == request->req_complete );
+            if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 statuses[i] = ompi_status_empty;
             } else {
                 statuses[i] = request->req_status;
-                rc = request->req_fini(rptr);
-                if (rc != OMPI_SUCCESS)
-                    return rc;
             }
-            rptr++;
+            if( request->req_persistent ) {
+                request->req_state = OMPI_REQUEST_INACTIVE;
+            } else {
+	        (void)ompi_request_free(rptr);
+            }
+            if( statuses[i].MPI_ERROR != OMPI_SUCCESS) {
+                mpi_error = OMPI_ERR_IN_ERRNO;
+            }
         }
     } else {
         /* free request if required */
-        rptr = requests;
-        for (i = 0; i < count; i++, rptr++) {
+        for( i = 0; i < count; i++, rptr++ ) {
             int rc;
             request = *rptr;
-            if(request == MPI_REQUEST_NULL ||
-               request->req_state == OMPI_REQUEST_INACTIVE) {
-               continue;
+
+            assert( true == request->req_complete );
+            if( request->req_state == OMPI_REQUEST_INACTIVE ) {
+                rc = ompi_status_empty.MPI_ERROR;
+            } else {
+	        rc = request->req_status.MPI_ERROR;
             }
-            rc = request->req_fini(rptr);
-            if (rc != OMPI_SUCCESS)
-                return rc;
-        }
+            if( request->req_persistent ) {
+                request->req_state = OMPI_REQUEST_INACTIVE;
+            } else {
+	        (void)ompi_request_free(rptr);
+            }
+            if( rc != OMPI_SUCCESS) {
+	        mpi_error = rc;
+            }
+	}
     }
-    return OMPI_SUCCESS;
+    return mpi_error;
 }
 

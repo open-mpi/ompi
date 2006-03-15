@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,41 +35,25 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/datatype/dt_arch.h"
 
-                                                                                                         
-static int mca_pml_ob1_send_request_fini(struct ompi_request_t** request)
+/*
+ * The free call mark the final stage in a request life-cycle. Starting from this
+ * point the request is completed at both PML and user level, and can be used
+ * for others p2p communications. Therefore, in the case of the OB1 PML it should
+ * be added to the free request list.
+ */
+static inline int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 {
-    mca_pml_ob1_send_request_t* sendreq = *(mca_pml_ob1_send_request_t**)(request); 
+    mca_pml_ob1_send_request_t* sendreq = *(mca_pml_ob1_send_request_t**)request;
+    
+    assert( false == sendreq->req_send.req_base.req_free_called );
+
     OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(sendreq->req_send.req_base.req_persistent) {
-       if(sendreq->req_send.req_base.req_free_called) {
-           MCA_PML_OB1_SEND_REQUEST_FREE(sendreq);
-           *request = MPI_REQUEST_NULL;
-       } else {
-           sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
-           /* rewind convertor */
-           if(sendreq->req_send.req_bytes_packed) {
-               size_t offset = 0;
-               ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
-           }
-           /* if buffered send - release any resources */
-           if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&
-               sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {
-               mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);
-           }
-       }
-    } else {
-        MCA_PML_OB1_SEND_REQUEST_FREE(sendreq);
-        *request = MPI_REQUEST_NULL;
+    sendreq->req_send.req_base.req_free_called = true;
+    if( true == sendreq->req_send.req_base.req_pml_complete ) {
+        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
     }
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    return OMPI_SUCCESS;
-}
 
-static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
-{
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_OB1_SEND_REQUEST_FREE( *(mca_pml_ob1_send_request_t**)request );
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
     *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
@@ -83,9 +67,9 @@ static int mca_pml_ob1_send_request_cancel(struct ompi_request_t* request, int c
 static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
 {
     req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
-    req->req_send.req_base.req_ompi.req_fini = mca_pml_ob1_send_request_fini;
     req->req_send.req_base.req_ompi.req_free = mca_pml_ob1_send_request_free;
     req->req_send.req_base.req_ompi.req_cancel = mca_pml_ob1_send_request_cancel;
+    req->req_rdma_cnt = 0;
 }
 
 static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
@@ -100,7 +84,8 @@ OBJ_CLASS_INSTANCE(
     mca_pml_ob1_send_request_destruct);
 
 /**
- * Completion of a short message - nothing left to schedule.
+ * Completion of a short message - nothing left to schedule. Note that this
+ * function is only called for 0 sized messages.
  */
 
 void mca_pml_ob1_match_completion_cache(
@@ -123,9 +108,7 @@ void mca_pml_ob1_match_completion_cache(
     MCA_BML_BASE_BTL_DES_RETURN( bml_btl, descriptor ); 
 
     /* signal request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 /**
@@ -152,9 +135,7 @@ void mca_pml_ob1_match_completion_free(
     mca_bml_base_free( bml_btl, descriptor ); 
 
     /* signal request completion */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
 
 /*
@@ -215,9 +196,7 @@ static void mca_pml_ob1_rget_completion(
                                         0, req_bytes_delivered );
     if( OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered, req_bytes_delivered )
         == sendreq->req_send.req_bytes_packed ) {
-        OPAL_THREAD_LOCK(&ompi_request_lock);
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
 
     /* release resources */
@@ -273,9 +252,7 @@ static void mca_pml_ob1_frag_completion(
         req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
     /*if( OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered, req_bytes_delivered )
         == sendreq->req_send.req_bytes_packed) {*/
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq); 
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     } else {
         mca_pml_ob1_send_request_schedule(sendreq);
     }
@@ -389,7 +366,10 @@ int mca_pml_ob1_send_request_start_buffered(
             sendreq->req_send.req_datatype,
             sendreq->req_send.req_count,
             sendreq->req_send.req_addr);
-
+#if 0
+    ompi_convertor_set_position( &sendreq->req_send.req_convertor, 
+                                 &sendreq->req_send_offset );
+#endif
     /* request is complete at mpi level */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
@@ -406,7 +386,8 @@ int mca_pml_ob1_send_request_start_buffered(
 
 /**
  *  BTL requires "specially" allocated memory. Request a segment that
- *  is used for initial hdr and any eager data.
+ *  is used for initial hdr and any eager data. This is used only from
+ *  the _START macro.
  */
 
 int mca_pml_ob1_send_request_start_copy(
@@ -495,7 +476,7 @@ int mca_pml_ob1_send_request_start_copy(
 
 /**
  *  BTL can send directly from user buffer so allow the BTL
- *  to prepare the segment list.
+ *  to prepare the segment list. Start sending a small message.
  */
 
 int mca_pml_ob1_send_request_start_prepare(
@@ -510,7 +491,7 @@ int mca_pml_ob1_send_request_start_prepare(
 
     /* prepare descriptor */
     mca_bml_base_prepare_src(
-            bml_btl, 
+            bml_btl,
             NULL,
             &sendreq->req_send.req_convertor,
             sizeof(mca_pml_ob1_match_hdr_t),
@@ -518,7 +499,7 @@ int mca_pml_ob1_send_request_start_prepare(
             &descriptor);
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
-    } 
+    }
     segment = descriptor->des_src;
 
     /* build match header */
@@ -546,7 +527,7 @@ int mca_pml_ob1_send_request_start_prepare(
 
     /* short message */
     descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
-       
+
     /* update lengths */
     sendreq->req_send_offset = size;
     sendreq->req_rdma_offset = size;
@@ -816,13 +797,12 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 
                 if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_min_send_size) {
                     size = bytes_remaining;
-
-                /* otherwise attempt to give the BTL a percentage of the message
-                 * based on a weighting factor. for simplicity calculate this as
-                 * a percentage of the overall message length (regardless of amount
-                 * previously assigned)
-                 */
                 } else {
+                    /* otherwise attempt to give the BTL a percentage of the message
+                     * based on a weighting factor. for simplicity calculate this as
+                     * a percentage of the overall message length (regardless of amount
+                     * previously assigned)
+                     */
                     size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                 } 
 
@@ -830,7 +810,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 if (bml_btl->btl_max_send_size != 0 && 
                     size > bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
                     size = bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
-
+#if defined(GEORGE_HAVE_TO_MAKE_SURE_THAT_WE_DONT_NEED_IT)
                     /* very expensive - however for buffered sends we need to send on a 
                      * boundary that the receiver will be able to unpack completely
                      * using the native datatype
@@ -854,13 +834,13 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                         OBJ_DESTRUCT( &convertor );
                         size = position - sendreq->req_send_offset;
                     }
+#endif
                 }
-                
                 
                 /* pack into a descriptor */
                 ompi_convertor_set_position(&sendreq->req_send.req_convertor, 
                                             &sendreq->req_send_offset);
-                
+
                 mca_bml_base_prepare_src(
                                          bml_btl, 
                                          NULL, 
@@ -971,14 +951,6 @@ static void mca_pml_ob1_put_completion(
         orte_errmgr.abort();
     }
 
-    /* check for request completion */
-    if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
-        >= sendreq->req_send.req_bytes_packed) {
-        OPAL_THREAD_LOCK(&ompi_request_lock);
-        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
-        OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    }
-
     /* allocate descriptor for fin control message - note that
      * the rdma descriptor cannot be reused as it points directly
      * at the user buffer
@@ -1033,6 +1005,13 @@ static void mca_pml_ob1_put_completion(
             ORTE_ERROR_LOG(rc);
             orte_errmgr.abort();
         }
+        goto cleanup;
+    }
+
+    /* check for request completion */
+    if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
+        >= sendreq->req_send.req_bytes_packed) {
+        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     }
 
 cleanup:

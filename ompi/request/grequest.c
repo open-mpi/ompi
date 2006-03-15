@@ -44,14 +44,12 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
 
 static void ompi_grequest_construct(ompi_grequest_t* greq)
 {
-    OMPI_REQUEST_INIT(&greq->greq_base);
-    greq->greq_base.req_fini     = ompi_grequest_free;
+    OMPI_REQUEST_INIT(&greq->greq_base, false);
     greq->greq_base.req_free     = ompi_grequest_free;
     greq->greq_base.req_cancel   = ompi_grequest_cancel;
     greq->greq_base.req_type = OMPI_REQUEST_GEN;
 }
-                                                                                                                         
-                                                                                                                         
+
 static void ompi_grequest_destruct(ompi_grequest_t* greq)
 {
     OMPI_REQUEST_FINI(&greq->greq_base);

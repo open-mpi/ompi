@@ -29,31 +29,26 @@
 #include "pml_dr_sendreq.h"
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
-                                                                                                               
+
 static mca_pml_dr_recv_frag_t* mca_pml_dr_recv_request_match_specific_proc(
     mca_pml_dr_recv_request_t* request, mca_pml_dr_comm_proc_t* proc);
 
 
-static int mca_pml_dr_recv_request_fini(struct ompi_request_t** request)
+static inline int mca_pml_dr_recv_request_free(struct ompi_request_t** request)
 {
-    mca_pml_dr_recv_request_t* recvreq = *(mca_pml_dr_recv_request_t**)request; 
-    if(recvreq->req_recv.req_base.req_persistent) {
-       if(recvreq->req_recv.req_base.req_free_called) { 
-           MCA_PML_DR_FREE(request);
-       } else {
-           recvreq->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; 
-       }
-    } else {
-        MCA_PML_DR_FREE(request);
+    mca_pml_dr_recv_request_t* recvreq = *(mca_pml_dr_recv_request_t**)request;
+    assert( false == recvreq->req_recv.req_base.req_free_called );
+
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    recvreq->req_recv.req_base.req_free_called = true;
+    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+        MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );
     }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    *request = MPI_REQUEST_NULL;
     return OMPI_SUCCESS;
 }
-
-static int mca_pml_dr_recv_request_free(struct ompi_request_t** request)
-{
-    MCA_PML_DR_FREE(request);
-    return OMPI_SUCCESS;
-} 
 
 static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, int complete)
 {
@@ -63,7 +58,7 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
     if( true == ompi_request->req_complete ) { /* way to late to cancel this one */
        return OMPI_SUCCESS;
     }
-    
+
     /* The rest should be protected behind the match logic lock */
     OPAL_THREAD_LOCK(&comm->matching_lock);
     if( OMPI_ANY_TAG == ompi_request->req_status.MPI_TAG ) { /* the match has not been already done */
@@ -75,19 +70,14 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
        }
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-    
+
     OPAL_THREAD_LOCK(&ompi_request_lock);
     ompi_request->req_status._cancelled = true;
-    ompi_request->req_complete = true;  /* mark it as completed so all the test/wait  functions
-                                    * on this particular request will finish */
-    /* Now we have a problem if we are in a multi-threaded environment. We should
-     * broadcast the condition on the request in order to allow the other threads
-     * to complete their test/wait functions.
+    /* This macro will set the req_complete to true so the MPI Test/Wait* functions
+     * on this request will be able to complete. As the status is marked as
+     * cancelled the cancel state will be detected.
      */
-    ompi_request_completed++;
-    if(ompi_request_waiting) {
-       opal_condition_broadcast(&ompi_request_cond);
-    }
+    MCA_PML_BASE_REQUEST_MPI_COMPLETE(ompi_request);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return OMPI_SUCCESS;
 }
@@ -95,7 +85,6 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
 static void mca_pml_dr_recv_request_construct(mca_pml_dr_recv_request_t* request)
 {
     request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
-    request->req_recv.req_base.req_ompi.req_fini = mca_pml_dr_recv_request_fini;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_dr_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_dr_recv_request_cancel;
     OBJ_CONSTRUCT(&request->req_vfrag0, mca_pml_dr_vfrag_t);
@@ -358,16 +347,7 @@ void mca_pml_dr_recv_request_progress(
     recvreq->req_bytes_received += bytes_received;
     recvreq->req_bytes_delivered += bytes_delivered;
     if (recvreq->req_bytes_received >= recvreq->req_recv.req_bytes_packed) {
-
-        /* initialize request status */
-        recvreq->req_recv.req_base.req_ompi.req_status._count = recvreq->req_bytes_delivered;
-        recvreq->req_recv.req_base.req_pml_complete = true; 
-        recvreq->req_recv.req_base.req_ompi.req_complete = true;
-
-        ompi_request_completed++;
-        if(ompi_request_waiting) {
-            opal_condition_broadcast(&ompi_request_cond);
-        }
+        MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq);
     } 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 }
@@ -401,19 +381,8 @@ void mca_pml_dr_recv_request_matched_probe(
             break;
     }
 
-    /* check completion status */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
-    recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_match.hdr_src;
-    recvreq->req_recv.req_base.req_ompi.req_status._count = bytes_packed;
-    recvreq->req_recv.req_base.req_pml_complete = true; 
-    recvreq->req_recv.req_base.req_ompi.req_complete = true;
-
-    ompi_request_completed++;
-    if(ompi_request_waiting) {
-        opal_condition_broadcast(&ompi_request_cond);
-    }
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+    /* mark probe request completed */
+    MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq);
 }
 
 /*

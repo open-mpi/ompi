@@ -80,7 +80,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       OBJ_RETAIN(comm);                                                   \
       OBJ_RETAIN(datatype);                                               \
                                                                           \
-      OMPI_REQUEST_INIT(&(request)->req_base.req_ompi);                   \
+      OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
       (request)->req_addr = addr;                                         \
       (request)->req_count = count;                                       \
       (request)->req_datatype = datatype;                                 \
@@ -92,7 +92,6 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       (request)->req_base.req_tag = (int32_t)tag;                         \
       (request)->req_base.req_comm = comm;                                \
       /* (request)->req_base.req_proc is set on request allocation */     \
-      (request)->req_base.req_persistent = persistent;                    \
       (request)->req_base.req_pml_complete = (persistent ? true : false); \
       (request)->req_base.req_free_called = false;                        \
       (request)->req_base.req_ompi.req_status._cancelled = 0;             \

@@ -34,8 +34,7 @@ ompi_status_public_t             ompi_status_empty;
 
 static void ompi_request_construct(ompi_request_t* req)
 {
-    OMPI_REQUEST_INIT(req);
-    req->req_fini = NULL;
+    OMPI_REQUEST_INIT(req, false);
     req->req_free = NULL;
     req->req_cancel = NULL;
     req->req_f_to_c_index = MPI_UNDEFINED;
@@ -43,7 +42,8 @@ static void ompi_request_construct(ompi_request_t* req)
 
 static void ompi_request_destruct(ompi_request_t* req)
 {
-    OMPI_REQUEST_FINI(req);
+    assert( MPI_UNDEFINED == req->req_f_to_c_index );
+    assert( OMPI_REQUEST_INVALID == req->req_state );
 }
 
 static int ompi_request_null_free(ompi_request_t** request)
@@ -87,7 +87,6 @@ int ompi_request_init(void)
     ompi_request_null.req_state = OMPI_REQUEST_INACTIVE;
     ompi_request_null.req_complete = true;
     ompi_request_null.req_type = OMPI_REQUEST_NULL;
-    ompi_request_null.req_fini = ompi_request_null_free;
     ompi_request_null.req_free = ompi_request_null_free;
     ompi_request_null.req_cancel = ompi_request_null_cancel;
     ompi_request_null.req_f_to_c_index = 
@@ -104,7 +103,7 @@ int ompi_request_init(void)
      * The main difference to ompi_request_null is
      * req_state being OMPI_REQUEST_ACTIVE, so that MPI_Waitall
      * does not set the status to ompi_status_empty and the different
-     * req_fini and req_free function, which resets the
+     * req_free function, which resets the
      * request to MPI_REQUEST_NULL.
      * The req_cancel function need not be changed.
      */
@@ -117,7 +116,6 @@ int ompi_request_init(void)
     ompi_request_empty.req_state = OMPI_REQUEST_ACTIVE;
     ompi_request_empty.req_complete = true;
     ompi_request_empty.req_type = OMPI_REQUEST_NULL;
-    ompi_request_empty.req_fini = ompi_request_empty_free;
     ompi_request_empty.req_free = ompi_request_empty_free;
     ompi_request_empty.req_cancel = ompi_request_null_cancel;
     ompi_request_empty.req_f_to_c_index =
@@ -139,10 +137,13 @@ int ompi_request_init(void)
 
 int ompi_request_finalize(void)
 {
-    OBJ_DESTRUCT(&ompi_request_null);
-    OBJ_DESTRUCT(&ompi_request_cond);
-    OBJ_DESTRUCT(&ompi_request_lock);
-    OBJ_DESTRUCT(&ompi_request_f_to_c_table);
+    OMPI_REQUEST_FINI( &ompi_request_null );
+    OBJ_DESTRUCT( &ompi_request_null );
+    OMPI_REQUEST_FINI( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_empty );
+    OBJ_DESTRUCT( &ompi_request_cond );
+    OBJ_DESTRUCT( &ompi_request_lock );
+    OBJ_DESTRUCT( &ompi_request_f_to_c_table );
     return OMPI_SUCCESS;
 }
 

@@ -108,6 +108,13 @@ int mca_pml_dr_send(void *buf,
     }
 
     if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
+#if OMPI_ENABLE_PROGRESS_THREADS
+        if(opal_progress_spin(&sendreq->req_send.req_base.req_ompi.req_complete)) {
+            ompi_request_free( (ompi_request_t**)&sendreq );
+            return OMPI_SUCCESS;
+        }
+#endif
+                                                                                                    
         /* give up and sleep until completion */
         if (opal_using_threads()) {
             opal_mutex_lock(&ompi_request_lock);
@@ -125,7 +132,8 @@ int mca_pml_dr_send(void *buf,
     }
 
     /* return request to pool */
-    MCA_PML_DR_FREE((ompi_request_t **) & sendreq);
-    return OMPI_SUCCESS;
+    rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
+    ompi_request_free((ompi_request_t **) & sendreq);
+    return rc;
 }
 

@@ -350,10 +350,6 @@ struct mca_io_base_module_1_0_0_t {
 
     mca_io_base_module_request_once_finalize_fn_t io_module_request_once_finalize;
 
-    /** Finalize a request (per usage) */
-
-    ompi_request_free_fn_t io_module_request_fini;
-
     /** Free a request (per usage) */
 
     ompi_request_free_fn_t io_module_request_free;

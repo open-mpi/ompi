@@ -164,9 +164,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
             (*req)->req_file = file;
             (*req)->req_ver = file->f_io_version;
             (*req)->free_called = false;
-            (*req)->super.req_fini =
-                file->f_io_selected_module.v1_0_0.io_module_request_fini;
-            (*req)->super.req_free = 
+            (*req)->super.req_free =
                 file->f_io_selected_module.v1_0_0.io_module_request_free;
             (*req)->super.req_cancel =
                 file->f_io_selected_module.v1_0_0.io_module_request_cancel;
@@ -195,7 +193,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 
     /* Initialize the request */
 
-    OMPI_REQUEST_INIT(&((*req)->super));
+    OMPI_REQUEST_INIT(&((*req)->super), false);
 
     /* All done */
 

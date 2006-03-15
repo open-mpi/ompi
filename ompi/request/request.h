@@ -29,7 +29,7 @@
 #include "ompi/class/ompi_pointer_array.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/condition.h"
-                                                                                                                            
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -88,8 +88,8 @@ struct ompi_request_t {
     ompi_status_public_t req_status;           /**< Completion status */
     volatile bool req_complete;                /**< Flag indicating wether request has completed */
     volatile ompi_request_state_t req_state;   /**< enum indicate state of the request */
+    bool req_persistent;                       /**< flag indicating if the this is a persistent request */
     int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
-    ompi_request_free_fn_t req_fini;           /**< Called by test/wait */
     ompi_request_free_fn_t req_free;           /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */
 };
@@ -106,11 +106,11 @@ typedef struct ompi_request_t ompi_request_t;
  * performance path (since requests may be re-used, it is possible
  * that we will have to initialize a request multiple times).
  */
-#define OMPI_REQUEST_INIT(request) \
-    do { \
+#define OMPI_REQUEST_INIT(request, persistent)        \
+    do {                                              \
         (request)->req_state = OMPI_REQUEST_INACTIVE; \
-        (request)->req_complete = false; \
-        (request)->req_f_to_c_index = MPI_UNDEFINED; \
+        (request)->req_complete = false;              \
+        (request)->req_persistent = (persistent);     \
     } while (0); 
 
 /**
@@ -122,17 +122,21 @@ typedef struct ompi_request_t ompi_request_t;
  * When finalizing a request, if MPI_Request_f2c() was previously
  * invoked on that request, then this request was added to the f2c
  * table, and we need to remove it 
+ *
+ * This function should be called only from the MPI layer. It should
+ * never be called from the PML. It take care of the upper level clean-up.
+ * When the user call MPI_Request_free we should release all MPI level
+ * ressources, so we have to call this function too.
  */
-
-#define OMPI_REQUEST_FINI(request) \
-    do { \
-        (request)->req_state = OMPI_REQUEST_INVALID; \
-        if (MPI_UNDEFINED != (request)->req_f_to_c_index) { \
-            ompi_pointer_array_set_item(&ompi_request_f_to_c_table, \
-                                        (request)->req_f_to_c_index, NULL); \
-            (request)->req_f_to_c_index = MPI_UNDEFINED; \
-        } \
-    } while (0); 
+#define OMPI_REQUEST_FINI(request)                                      \
+do {                                                                    \
+    (request)->req_state = OMPI_REQUEST_INVALID;                        \
+    if (MPI_UNDEFINED != (request)->req_f_to_c_index) {                 \
+        ompi_pointer_array_set_item(&ompi_request_f_to_c_table,         \
+                                    (request)->req_f_to_c_index, NULL); \
+        (request)->req_f_to_c_index = MPI_UNDEFINED;                    \
+    }                                                                   \
+} while (0); 
 
 /**
  * Globals used for tracking requests and request completion.
@@ -205,34 +209,35 @@ static inline int ompi_request_free(ompi_request_t** request)
  */
 
 
-static inline int ompi_request_test(
-    ompi_request_t ** rptr,
-    int *completed,
-    ompi_status_public_t * status)
+static inline int ompi_request_test( ompi_request_t ** rptr,
+                                     int *completed,
+                                     ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
     opal_atomic_mb();
-    if (request == MPI_REQUEST_NULL ||
-        request->req_state == OMPI_REQUEST_INACTIVE) {
+    if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
             *status = ompi_status_empty;
         }
         return OMPI_SUCCESS;
     }
-    else if (request->req_complete) {
+    if (request->req_complete) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
             *status = request->req_status;
         }
-        return request->req_fini(rptr);
-    } else {
-        *completed = false;
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-        opal_progress();
-#endif
-        return OMPI_SUCCESS;
+        if( request->req_persistent ) {
+            request->req_state = OMPI_REQUEST_INACTIVE;
+            return OMPI_SUCCESS;
+        }
+        return ompi_request_free(rptr);
     }
+    *completed = false;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    opal_progress();
+#endif
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -249,13 +254,13 @@ static inline int ompi_request_test(
  * request handle at index set to NULL.
  */
 
-int ompi_request_test_any(
+OMPI_DECLSPEC int ompi_request_test_any(
     size_t count,
     ompi_request_t ** requests,
     int *index,
     int *completed,
     ompi_status_public_t * status);
- 
+
 /**
  * Non-blocking test for request completion.
  *
