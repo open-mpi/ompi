@@ -451,17 +451,29 @@ dnl operations (on a long long).
 dnl
 dnl #################################################################
 AC_DEFUN([OMPI_CHECK_POWERPC_64BIT],[
-    AC_MSG_CHECKING([for 64-bit PowerPC assembly support])
-    ppc64_result=0
-    if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
-        ldarx_asm="        ldarx r1,r1,r1";
-    else
-        ldarx_asm="        ldarx 1,1,1";
+    if test "$ac_cv_sizeof_long" != "4" ; then
+        # this function should only be called in the 32 bit case
+        AC_MSG_ERROR([CHECK_POWERPC_64BIT called on 64 bit platform.  Internal error.])
     fi
-    OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+    AC_MSG_CHECKING([for 64-bit PowerPC assembly support])
+        case $host in
+            *-darwin*)
+                ppc64_result=0
+                if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
+                   ldarx_asm="        ldarx r1,r1,r1";
+                else
+                   ldarx_asm="        ldarx 1,1,1";
+                fi
+                OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
         $ldarx_asm],
                     [ppc64_result=1],
                     [ppc64_result=0])
+            ;;
+            *)
+                ppc64_result=0
+            ;;
+        esac
+
     if test "$ppc64_result" = "1" ; then
         AC_MSG_RESULT([yes])
         ifelse([$1],,:,[$1])
