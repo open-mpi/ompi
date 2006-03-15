@@ -53,6 +53,7 @@ endif
 
 SUBDIRS = \
 	include \
+	datatype \
         debuggers \
 	etc \
         mpi \
@@ -74,6 +75,7 @@ DIST_SUBDIRS = \
 lib_LTLIBRARIES = libmpi.la
 libmpi_la_SOURCES =
 libmpi_la_LIBADD = \
+	datatype/libdatatype.la \
         debuggers/libdebuggers.la \
         mpi/c/libmpi_c.la \
 	$(c_mpi_lib) \
@@ -105,7 +107,6 @@ include class/Makefile.am
 
 include attribute/Makefile.am
 include communicator/Makefile.am
-include datatype/Makefile.am
 include errhandler/Makefile.am
 include file/Makefile.am
 include group/Makefile.am

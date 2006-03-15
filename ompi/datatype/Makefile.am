@@ -17,36 +17,51 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from ompi/Makefile.am
+headers = \
+	datatype.h \
+	datatype_internal.h \
+	dt_arch.h \
+	convertor.h
 
-headers += \
-	datatype/datatype.h \
-	datatype/datatype_internal.h \
-	datatype/dt_arch.h \
-	datatype/convertor.h
+noinst_LTLIBRARIES = \
+        libdatatype.la 
 
-libmpi_la_SOURCES += \
-	datatype/dt_add.c \
-	datatype/dt_create.c \
-	datatype/dt_create_array.c \
-	datatype/dt_create_dup.c \
-	datatype/dt_create_indexed.c \
-	datatype/dt_create_struct.c \
-	datatype/dt_create_vector.c \
-	datatype/dt_destroy.c \
-	datatype/dt_module.c \
-	datatype/dt_optimize.c \
-	datatype/dt_pack.c \
-	datatype/dt_sndrcv.c \
-	datatype/dt_unpack.c \
-	datatype/fake_stack.c \
-	datatype/dt_args.c \
-	datatype/dt_arch.c \
-	datatype/dt_copy.c \
-	datatype/dt_external32.c \
-	datatype/dt_match_size.c \
-	datatype/convertor.c \
-	datatype/new_pack.c \
-	datatype/new_unpack.c \
-	datatype/new_position.c
+#        libdatatype_reliable.la
 
+# these sources will be compiled with the normal CFLAGS only
+libdatatype_la_SOURCES = \
+	dt_add.c \
+	dt_create.c \
+	dt_create_array.c \
+	dt_create_dup.c \
+	dt_create_indexed.c \
+	dt_create_struct.c \
+	dt_create_vector.c \
+	dt_destroy.c \
+	dt_module.c \
+	dt_optimize.c \
+	dt_pack.c \
+	dt_sndrcv.c \
+	dt_unpack.c \
+	fake_stack.c \
+	dt_args.c \
+	dt_arch.c \
+	dt_copy.c \
+	dt_external32.c \
+	dt_match_size.c \
+	convertor.c \
+	new_pack.c \
+	new_unpack.c \
+	new_position.c
+
+# these sources will be compiled with the special -D
+#libdatatype_reliable_la_SOURCES =
+#libdatatype_reliable_la_CFLAGS = -DGEORGES_SPECIAL_FLAG=1 $(AM_CFLAGS)
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+ompidir = $(includedir)/openmpi/ompi/datatype
+ompi_HEADERS = $(headers)
+else
+ompidir = $(includedir)
+endif
