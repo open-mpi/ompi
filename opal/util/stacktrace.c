@@ -287,7 +287,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #endif
     }
 
-    write(1, print_buffer, size);
+    write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
     fflush(stderr);
 
 #ifdef HAVE_BACKTRACE
@@ -300,7 +300,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     }
 #endif
 
-    write(1, eof_msg, sizeof(eof_msg));
+    write(fileno(stderr), eof_msg, sizeof(eof_msg));
     fflush(stderr);
 }
 
