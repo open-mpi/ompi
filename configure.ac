@@ -1112,6 +1112,7 @@ AC_CONFIG_FILES([
     ompi/include/Makefile
     ompi/include/mpif.h
 
+    ompi/datatype/Makefile
     ompi/debuggers/Makefile
 
     ompi/mpi/Makefile
