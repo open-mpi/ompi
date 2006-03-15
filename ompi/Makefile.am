@@ -64,6 +64,7 @@ SUBDIRS = \
 
 DIST_SUBDIRS = \
 	include \
+	datatype \
 	debuggers \
 	etc \
 	mpi \
