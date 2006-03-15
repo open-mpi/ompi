@@ -65,10 +65,8 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
 int ompi_group_union (ompi_group_t* group1, ompi_group_t* group2, ompi_group_t **new_group) 
 {
     /* local variables */
-    int new_group_size, proc1, proc2, found_in_group,additional=0;
+    int new_group_size, proc1, proc2, found_in_group;
     int my_group_rank, cnt;
-    int *rank1,*rank2;
-    int i;
     ompi_group_t *group1_pointer, *group2_pointer, *new_group_pointer;
     ompi_proc_t *proc1_pointer, *proc2_pointer, *my_proc_pointer = NULL;
 
