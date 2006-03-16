@@ -26,6 +26,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/datatype_checksum.h"
 
 ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {

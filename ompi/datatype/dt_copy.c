@@ -21,6 +21,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/datatype_checksum.h"
 
 #ifdef HAVE_ALLOCA_H
 #include <alloca.h>
@@ -121,12 +122,6 @@ static inline void copy_contiguous_loop( const dt_elem_desc_t* ELEM,
 #define COPY_CONTIGUOUS_LOOP( ELEM, DATATYPE, SOURCE_BASE, TOTAL_COUNT, COUNT, SOURCE, DESTINATION, SPACE ) \
     copy_contiguous_loop( (ELEM), (DATATYPE), (SOURCE_BASE), (TOTAL_COUNT), \
                           (COUNT), (SOURCE), (DESTINATION), &(SPACE) )
-
-#define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER ) \
-    do {                                                                \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                       \
-        (COUNTER) = (ELEMENT)->elem.count;                              \
-    } while (0)
 
 int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t count,
                                         char* destination_base, char* source_base )

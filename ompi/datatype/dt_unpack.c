@@ -27,6 +27,8 @@
 #endif
 #include <stdlib.h>
 
+#include "ompi/datatype/datatype_checksum.h"
+
 void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                           const union dt_elem_desc* pDesc, const char* name )
 {

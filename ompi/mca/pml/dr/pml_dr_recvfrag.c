@@ -29,6 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/datatype_checksum.h"
 #include "ompi/mca/pml/pml.h"
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
@@ -56,7 +57,7 @@ OBJ_CLASS_INSTANCE(
 /*
  * Release resources.
  */
-                                                                                                                              
+
 static void mca_pml_dr_ctl_completion(
     mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
@@ -71,7 +72,7 @@ static void mca_pml_dr_ctl_completion(
 /**
  *  Callback from BTL on receive.
  */
-                                                                                                                      
+
 void mca_pml_dr_recv_frag_callback(
                                     mca_btl_base_module_t* btl, 
                                     mca_btl_base_tag_t tag,
@@ -86,7 +87,7 @@ void mca_pml_dr_recv_frag_callback(
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
         return;
     }
-                                                                                                                      
+
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {

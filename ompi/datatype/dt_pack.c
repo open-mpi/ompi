@@ -29,6 +29,7 @@
 #include <stdlib.h>
 
 #define DO_DEBUG(INST)
+#include "ompi/datatype/datatype_checksum.h"
 
 #if OMPI_ENABLE_DEBUG
 int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actual_ptr, int length,

@@ -34,7 +34,6 @@ int mca_pml_dr_isend_init(void *buf,
                            ompi_request_t ** request)
 {
     int rc;
-    
     mca_pml_dr_send_request_t *sendreq = NULL;
     MCA_PML_DR_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
@@ -66,7 +65,7 @@ int mca_pml_dr_isend(void *buf,
     MCA_PML_DR_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
-    
+
     MCA_PML_DR_SEND_REQUEST_INIT(sendreq,
                                    buf,
                                    count,
@@ -93,14 +92,14 @@ int mca_pml_dr_send(void *buf,
     MCA_PML_DR_SEND_REQUEST_ALLOC(comm, dst, sendreq, rc);
     if (rc != OMPI_SUCCESS)
         return rc;
-    
+
     MCA_PML_DR_SEND_REQUEST_INIT(sendreq,
                                   buf,
                                   count,
                                   datatype,
                                   dst, tag,
                                   comm, sendmode, false);
-    
+
     MCA_PML_DR_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
         MCA_PML_DR_FREE((ompi_request_t **) & sendreq);
@@ -114,7 +113,7 @@ int mca_pml_dr_send(void *buf,
             return OMPI_SUCCESS;
         }
 #endif
-                                                                                                    
+
         /* give up and sleep until completion */
         if (opal_using_threads()) {
             opal_mutex_lock(&ompi_request_lock);
