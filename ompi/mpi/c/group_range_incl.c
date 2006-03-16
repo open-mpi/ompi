@@ -39,10 +39,10 @@ static const char FUNC_NAME[] = "MPI_Group_range_incl";
 int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
                          MPI_Group *new_group) 
 {
-    int err, i;
+    int err, i,index;
     int group_size;
+    int *elements_int_list;
 
-    group_size = ompi_group_size ( group);
     /* can't act on NULL group */
     if( MPI_PARAM_CHECK ) {
 	OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -50,6 +50,16 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
 	if ( (MPI_GROUP_NULL == group) || (NULL == group) ) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_GROUP,
 					  FUNC_NAME);
+	}
+
+	group_size = ompi_group_size ( group);
+	elements_int_list =
+	    (int *) malloc(sizeof(int) * group_size);
+	if (NULL == elements_int_list) {
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+	}
+	for (i = 0; i < group_size; i++) {
+	    elements_int_list[i] = -1;
 	}
 
 	for ( i=0; i < n_triplets; i++) {
@@ -65,15 +75,52 @@ int MPI_Group_range_incl(MPI_Group group, int n_triplets, int ranges[][3],
 		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
 					      FUNC_NAME);
 	    }
-	    if ( (ranges[i][0] < ranges[i][1]) && (ranges[i][2] < 0)) {
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
-					      FUNC_NAME);
+	    if ( (ranges[i][0] < ranges[i][1]) ){
+	        if( (ranges[i][2] < 0) ) {
+		    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+						FUNC_NAME);
+		}
+		/* positive stride */
+		index = ranges[i][0];
+		while (index <= ranges[i][1]) {
+		    /* make sure rank has not already been selected */
+		    if (elements_int_list[index] != -1) {
+		        free(elements_int_list);
+			return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+						  FUNC_NAME);
+		    }
+		    index += ranges[i][2];
+		}                   /* end while loop */
 	    }
-	    if ( (ranges[i][0] > ranges[i][1]) && (ranges[i][2] > 0) ){
-		return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+	    if ( (ranges[i][0] > ranges[i][1])) {
+	        if ( (ranges[i][2] > 0) ){
+		    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+						FUNC_NAME);
+		}
+		/* negative stride */
+		index = ranges[i][0];
+		while (index >= ranges[i][1]) {
+		    /* make sure rank has not already been selected */
+		    if (elements_int_list[index] != -1) {
+                        free(elements_int_list);
+			return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
+						FUNC_NAME);
+		    }
+		    index += ranges[i][2];
+		}                   /* end while loop */
+	    }
+	    else {                /* first_rank == last_rank */
+
+	        index = ranges[i][0];
+	        if (elements_int_list[index] != -1) {
+                    free(elements_int_list);
+		    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_RANK, 
 					      FUNC_NAME);
+	        }
 	    }
 	}
+
+	free ( elements_int_list);
     }
 
    err = ompi_group_range_incl ( group, n_triplets, ranges, new_group );
