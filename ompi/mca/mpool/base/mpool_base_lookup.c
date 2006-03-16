@@ -93,6 +93,7 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
         if(mca_mpool_base_use_mem_hooks &&
 	       0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
               opal_mem_hooks_register_release(mca_mpool_base_mem_cb, NULL);
+              OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
         }
 
 #if defined(HAVE_MALLOPT)
@@ -102,7 +103,6 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
         }
 #endif  /* defined(HAVE_MALLOPT) */
     }
-    OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
     return module; 
 }
 

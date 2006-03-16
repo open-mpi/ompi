@@ -52,7 +52,6 @@ uint32_t mca_mpool_base_page_size_log;
 opal_list_t mca_mpool_base_components;
 opal_list_t mca_mpool_base_modules;
 
-
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
