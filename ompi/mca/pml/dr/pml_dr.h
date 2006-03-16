@@ -34,6 +34,7 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -251,6 +252,5 @@ extern int mca_pml_dr_start(
 MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des,  \
    sizeof(mca_pml_dr_hdr_t) + (sizeof(mca_btl_base_segment_t) << 4), size)
 
-#define MCA_PML_DR_CSUM_ZERO 1
 #endif
 
