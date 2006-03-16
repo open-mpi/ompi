@@ -15,9 +15,6 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- */
 #ifndef MCA_MPOOL_UDAPL_H
 #define MCA_MPOOL_UDAPL_H
 
@@ -34,17 +31,12 @@ extern "C" {
 #endif
 
 
-/*#define MCA_MPOOL_GM_HAVE_REGISTER*/
-
 struct mca_mpool_udapl_component_t {
     mca_mpool_base_component_t super;
     char* rcache_name; 
 };
-
 typedef struct mca_mpool_udapl_component_t mca_mpool_udapl_component_t;
-
 OMPI_COMP_EXPORT extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
-
 
 
 struct mca_mpool_base_resources_t {
@@ -153,18 +145,4 @@ void* mca_common_udapl_segment_alloc(
 }
 #endif
 #endif
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 

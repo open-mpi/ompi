@@ -33,7 +33,7 @@ uint64_t mca_mpool_udapl_mem_registered;
  */ 
 void mca_mpool_udapl_module_init(mca_mpool_udapl_module_t* mpool)
 {
-    opal_output(0, "mpool_udapl_module_init\n");
+    OPAL_OUTPUT((0, "mpool_udapl_module_init\n"));
 
     mpool->super.mpool_component = &mca_mpool_udapl_component.super; 
     mpool->super.mpool_base = NULL; /* no base .. */ 
@@ -63,9 +63,9 @@ void* mca_mpool_udapl_alloc(
     uint32_t flags, 
     mca_mpool_base_registration_t** registration)
 {
-    void *addr = malloc(size+align);
+    void* addr = malloc(size+align);
 
-    opal_output(0, "mpool_udapl_alloc\n");
+    OPAL_OUTPUT((0, "mpool_udapl_alloc\n"));
 
     /* TODO - align addr to dat_optimal_alignment */
     if(NULL == addr)
@@ -84,7 +84,7 @@ void* mca_mpool_udapl_alloc(
  */ 
 int mca_mpool_udapl_register(
     mca_mpool_base_module_t* mpool, 
-    void *addr, 
+    void* addr, 
     size_t size, 
     uint32_t flags, 
     mca_mpool_base_registration_t** registration)
@@ -96,7 +96,7 @@ int mca_mpool_udapl_register(
     DAT_VADDR dat_addr;
     int rc;
 
-    opal_output(0, "mpool_udapl_register\n");
+    OPAL_OUTPUT((0, "mpool_udapl_register\n"));
 
     udapl_mpool = (mca_mpool_udapl_module_t*)mpool;
     reg = OBJ_NEW(mca_mpool_udapl_registration_t);
@@ -122,7 +122,7 @@ int mca_mpool_udapl_register(
             &reg->rmr_context, &dat_size, &dat_addr);
     if(DAT_SUCCESS != rc) {
         /* TODO - bring in error reporting function from the BTL */
-        opal_output(0, "mpool_udapl_register failed: %d\n", rc);
+        OPAL_OUTPUT((0, "mpool_udapl_register failed: %d\n", rc));
         OBJ_RELEASE(reg);
 
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -151,7 +151,7 @@ int mca_mpool_udapl_deregister(mca_mpool_base_module_t* mpool,
 {
     int rc;
 
-    opal_output(0, "mpool_udapl_deregister\n");
+    OPAL_OUTPUT((0, "mpool_udapl_deregister\n"));
 
     if(reg->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, 
@@ -159,7 +159,7 @@ int mca_mpool_udapl_deregister(mca_mpool_base_module_t* mpool,
                                      reg->flags); 
     }
     if((rc = mca_mpool_udapl_release(mpool, reg)) != OMPI_SUCCESS) { 
-        opal_output(0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc);
+        OPAL_OUTPUT((0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc));
         assert(0);
         return OMPI_ERR_OUT_OF_RESOURCE;
 
@@ -178,7 +178,7 @@ void* mca_mpool_udapl_realloc(
 {
     void *new_addr = mca_mpool_udapl_alloc(mpool,size,0, (*registration)->flags, registration);
 
-    opal_output(0, "mpool_udapl_realloc\n");
+    OPAL_OUTPUT((0, "mpool_udapl_realloc\n"));
 
     if(new_addr == NULL) {
         return NULL;
@@ -194,7 +194,7 @@ void* mca_mpool_udapl_realloc(
 void mca_mpool_udapl_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    opal_output(0, "mpool_udapl_free\n");
+    OPAL_OUTPUT((0, "mpool_udapl_free\n"));
 
     mpool->mpool_deregister(mpool, registration);
     free(addr);
@@ -205,9 +205,9 @@ int mca_mpool_udapl_find(
     void* addr, 
     size_t size, 
     ompi_pointer_array_t *regs,
-    uint32_t *cnt)
+    uint32_t* cnt)
 {
-    opal_output(0, "mpool_udapl_find\n");
+    OPAL_OUTPUT((0, "mpool_udapl_find\n"));
 
     return mpool->rcache->rcache_find(mpool->rcache, 
                                       addr, 
@@ -222,7 +222,7 @@ int mca_mpool_udapl_release(
 {
     mca_mpool_udapl_module_t * mpool_udapl = (mca_mpool_udapl_module_t*) mpool; 
 
-    opal_output(0, "mpool_udapl_release\n");
+    OPAL_OUTPUT((0, "mpool_udapl_release\n"));
 
     if(0 == OPAL_THREAD_ADD32(&reg->ref_count, -1)) {
         mca_mpool_udapl_registration_t *udapl_reg =
@@ -231,15 +231,14 @@ int mca_mpool_udapl_release(
         
         if(DAT_SUCCESS != rc) {
             /* TODO - use error reporting function from the BTL */
-            opal_output(0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc); 
+            OPAL_OUTPUT((0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc)); 
             return OMPI_ERROR;
         }
 
-        /* opal_output(0,"deregistering udapl memory\n"); */
         OBJ_RELEASE(reg);
     }
     else { 
-        /* opal_output(0, "release says ref_count is %d\n", reg->ref_count);  */
+        /* OPAL_OUTPUT((0, "release says ref_count is %d\n", reg->ref_count));  */
     }
     
     return OMPI_SUCCESS; 
@@ -249,7 +248,7 @@ int mca_mpool_udapl_retain(
     struct mca_mpool_base_module_t* mpool, 
     mca_mpool_base_registration_t* registration)
 {
-    opal_output(0, "mpool_udapl_retain\n");
+    OPAL_OUTPUT((0, "mpool_udapl_retain\n"));
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }

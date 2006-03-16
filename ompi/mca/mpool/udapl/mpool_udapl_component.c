@@ -64,6 +64,9 @@ mca_mpool_udapl_component_t mca_mpool_udapl_component = {
 };
 
 
+/**
+  * udapl_registration_t constructor/destructor
+  */
 static void mca_mpool_udapl_registration_constructor(mca_mpool_udapl_registration_t *registration)
 {
     registration->base_reg.base = NULL; 
@@ -73,9 +76,11 @@ static void mca_mpool_udapl_registration_constructor(mca_mpool_udapl_registratio
 
 static void mca_mpool_udapl_registration_destructor(mca_mpool_udapl_registration_t *registration)
 {
+#ifdef OMPI_ENABLE_DEBUG
     registration->base_reg.base = NULL; 
     registration->base_reg.bound = NULL; 
     registration->base_reg.flags = 0;
+#endif
 }
 
 OBJ_CLASS_INSTANCE(mca_mpool_udapl_registration_t,
@@ -84,38 +89,35 @@ OBJ_CLASS_INSTANCE(mca_mpool_udapl_registration_t,
                    mca_mpool_udapl_registration_destructor);
 
 
-
-
 /**
-  * component open/close/init function
+  * component open/init functions
   */
 static int mca_mpool_udapl_open(void)
 {
-    opal_output(0, "mpool_udapl_open\n");
+    OPAL_OUTPUT((0, "mpool_udapl_open\n"));
     return OMPI_SUCCESS;
 }
 
 
-/* Allocates a segment of memory and registers with uDAPL, user_out returns the memory handle. */ 
 static mca_mpool_base_module_t* mca_mpool_udapl_init(
      struct mca_mpool_base_resources_t* resources)
 {
     mca_mpool_udapl_module_t* udapl_mpool; 
 
-    opal_output(0, "mpool_udapl_init\n");
+    OPAL_OUTPUT((0, "mpool_udapl_init\n"));
 
     mca_base_param_reg_string(&mca_mpool_udapl_component.super.mpool_version, 
-                              "rcache_name", 
-                              "The name of the registration cache the mpool should use", 
-                              false, 
-                              false, 
-                              "rb", 
-                              &(mca_mpool_udapl_component.rcache_name)); 
+            "rcache_name", "The name of the registration cache the mpool should use",
+            false, false, "rb", &(mca_mpool_udapl_component.rcache_name)); 
 
     udapl_mpool = (mca_mpool_udapl_module_t*)malloc(sizeof(mca_mpool_udapl_module_t)); 
+    if(NULL == udapl_mpool) {
+        return NULL;
+    }
+
     mca_mpool_udapl_module_init(udapl_mpool); 
     udapl_mpool->udapl_res = *resources;
+
     return &udapl_mpool->super;
 }
-
 
