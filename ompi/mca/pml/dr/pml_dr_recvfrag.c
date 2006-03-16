@@ -132,8 +132,8 @@ void mca_pml_dr_recv_frag_callback(
                 return;
             }
             hdr_size = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);
-            COMPUTE_SPECIFIC_CHECKSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
-                                      segments->seg_len - hdr_size, csum);
+            csum = OMPI_CSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
+                                      segments->seg_len - hdr_size);
             if(csum != hdr->hdr_match.hdr_csum) { 
                 /* drop it on the floor */
                 assert(0);
@@ -593,8 +593,8 @@ rematch:
             mca_pml_dr_recv_frag_t* frag;
             /*  nack immediately  if need be */
             hdr_size = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);
-            COMPUTE_SPECIFIC_CHECKSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
-                                      segments->seg_len - hdr_size, csum);
+            csum = OMPI_CSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
+                                      segments->seg_len - hdr_size);
             if(csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_send_ack(ompi_proc, 
                                               &hdr->hdr_common,
@@ -631,8 +631,8 @@ rematch:
 
         mca_pml_dr_recv_frag_t* frag;
         hdr_size = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);
-        COMPUTE_SPECIFIC_CHECKSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
-                                  segments->seg_len - hdr_size, csum);
+        csum = OMPI_CSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
+                                  segments->seg_len - hdr_size);
         if(csum != hdr->hdr_csum) { 
             mca_pml_dr_recv_frag_send_ack(ompi_proc, 
                                           &hdr->hdr_common, 
