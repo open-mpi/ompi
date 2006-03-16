@@ -20,6 +20,7 @@
 
 #include "ompi/class/ompi_free_list.h"
 #include "opal/sys/cache.h"
+#include "opal/util/output.h"
 
 
 static void ompi_free_list_construct(ompi_free_list_t* fl);
@@ -60,6 +61,14 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
 static void ompi_free_list_destruct(ompi_free_list_t* fl)
 {
     opal_list_item_t *item;
+
+#if OMPI_ENABLE_DEBUG
+    if(opal_list_get_size(&fl->super) != fl->fl_num_allocated) {
+        opal_output(0, "ompi_free_list: %d allocated %d returned: %s:%d\n",
+            fl->fl_num_allocated, opal_list_get_size(&fl->super),
+            fl->super.super.cls_init_file_name, fl->super.super.cls_init_lineno);
+    }
+#endif
 
     while (NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
         /* destruct the item (we constructed it), then free the memory chunk */
