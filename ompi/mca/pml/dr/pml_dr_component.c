@@ -95,10 +95,19 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("timer_wdog_sec", 1);
     mca_pml_dr.timer_wdog_usec = 
         mca_pml_dr_param_register_int("timer_wdog_usec", 0);
+    mca_pml_dr.timer_wdog_multiplier = 
+        mca_pml_dr_param_register_int("timer_wdog_multiplier", 2);
+    mca_pml_dr.timer_wdog_multiplier = 
+        mca_pml_dr_param_register_int("timer_wdog_max_count", 10);
+    
     mca_pml_dr.timer_ack_sec = 
         mca_pml_dr_param_register_int("timer_ack_sec", 1);
     mca_pml_dr.timer_ack_usec = 
         mca_pml_dr_param_register_int("timer_ack_usec", 0);
+    mca_pml_dr.timer_ack_multiplier = 
+        mca_pml_dr_param_register_int("timer_ack_multiplier", 2);
+    mca_pml_dr.timer_wdog_multiplier = 
+        mca_pml_dr_param_register_int("timer_ack_max_count", 10);
     
     OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
                                                                                                             

@@ -74,8 +74,13 @@ struct mca_pml_dr_t {
 
     int timer_wdog_sec;
     int timer_wdog_usec;
+    int timer_wdog_multiplier;
+    int timer_wdog_max_count;
+
     int timer_ack_sec;
     int timer_ack_usec;
+    int timer_ack_multiplier;
+    int timer_ack_max_count;
     
 };
 typedef struct mca_pml_dr_t mca_pml_dr_t; 
