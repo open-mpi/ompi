@@ -25,8 +25,13 @@ version 1.0.
 
 - Fix LinuxPPC assembly issues.  Thanks to Julian Seward for reporting 
   the problem.
+- Enable pty support for standard I/O forwarding on platforms that
+  have ptys but do not have openpty().  Thanks to Pierre Valiron for
+  bringing this to our attention.
 - Disable inline assembly for PGI compilers to avoid compiler errors.
   Thanks to Troy Telford for bringing this to our attention.
+- Added MPI_UNSIGNED_CHAR and MPI_SIGNED_CHAR to the allowed reduction
+  types.
 - Fix a segv in variable-length message displays on Opterons running
   Solaris.  Thanks to Pierre Valiron for reporting the issue.
 - Added MPI_BOOL to the intrinsic reduction operations MPI_LAND,
@@ -91,6 +96,7 @@ version 1.0.
 - Update to GNU Libtool 1.5.22.
 - Fix error in configure script when setting CCAS to ias (the Intel
   assembler).
+- Added missing MPI::Intercomm collectives.
 - Fixed MPI_IN_PLACE handling for Fortran collectives.
 - Fixed some more C++ const_cast<> issues.  Thanks for Martin Audet
   (again) for bringing this to our attention.
