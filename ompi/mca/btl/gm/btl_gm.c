@@ -951,34 +951,27 @@ int mca_btl_gm_get(
  * Cleanup/release module resources.
  */
 
+#if OMPI_ENABLE_PROGRESS_THREADS
+static void mca_btl_gm_alarm(void* arg) {}
+#endif
+
 int mca_btl_gm_finalize(struct mca_btl_base_module_t* btl)
 {
     mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
-
-#if 0
-    if(gm_btl->gm_frag_eager.fl_num_allocated != 
-       gm_btl->gm_frag_eager.super.opal_list_length){ 
-        opal_output(0, "btl gm_frag_eager: %d allocated %d returned \n", 
-                    gm_btl->gm_frag_eager.fl_num_allocated, 
-                    gm_btl->gm_frag_eager.super.opal_list_length); 
-    }
-    if(gm_btl->gm_frag_max.fl_num_allocated != 
-      gm_btl->gm_frag_max.super.opal_list_length) { 
-        opal_output(0, "btl gm_frag_max: %d allocated %d returned \n", 
-                    gm_btl->gm_frag_max.fl_num_allocated, 
-                    gm_btl->gm_frag_max.super.opal_list_length); 
-    }
-    if(gm_btl->gm_frag_user.fl_num_allocated != 
-       gm_btl->gm_frag_user.super.opal_list_length){ 
-        opal_output(0, "btl gm_frag_user: %d allocated %d returned \n", 
-                    gm_btl->gm_frag_user.fl_num_allocated, 
-                    gm_btl->gm_frag_user.super.opal_list_length); 
-    }
+#if OMPI_ENABLE_PROGRESS_THREADS
+    gm_alarm_t alarm;
+    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+    gm_btl->gm_progress = false;
+    gm_initialize_alarm(&alarm);
+    gm_set_alarm(gm_btl->port, &alarm, 10, mca_btl_gm_alarm, NULL);
+    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+    opal_thread_join(&gm_btl->gm_thread, NULL);
 #endif
 
     OBJ_DESTRUCT(&gm_btl->gm_frag_eager);
     OBJ_DESTRUCT(&gm_btl->gm_frag_max);
     OBJ_DESTRUCT(&gm_btl->gm_frag_user);
+    gm_close(gm_btl->port);
     free(gm_btl);
     return OMPI_SUCCESS;
 }

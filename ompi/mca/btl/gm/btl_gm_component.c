@@ -316,6 +316,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     /* start progress thread */
+    btl->gm_progress = true;
     btl->gm_thread.t_run = mca_btl_gm_progress_thread;
     btl->gm_thread.t_arg = btl;
     if(OPAL_SUCCESS != (rc = opal_thread_start(&btl->gm_thread))) {
@@ -613,7 +614,7 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
     pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
 
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-    while(1) {
+    while(btl->gm_progress) {
         gm_recv_event_t* event;
 
         /* dont process events while the app is in the library */
