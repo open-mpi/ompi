@@ -21,9 +21,14 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
 
+/*
+ * As the new type has the same commit state as the old one, I have to copy the fake
+ * DT_END_LOOP from the description (both normal and optimized).
+ */
 int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-    ompi_datatype_t* pdt = ompi_ddt_create( oldType->desc.used );
+    int32_t desc_length = oldType->desc.used + 1;  /* +1 because of the fake DT_END_LOOP entry */
+    ompi_datatype_t* pdt = ompi_ddt_create( desc_length );
     void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
     int32_t old_index = pdt->d_f_to_c_index;
 
@@ -37,18 +42,19 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
        the top level (specifically, MPI_TYPE_DUP). */
     pdt->d_keyhash = NULL;
 
-    memcpy( pdt->desc.desc, oldType->desc.desc, sizeof(dt_elem_desc_t) * oldType->desc.used );
+    memcpy( pdt->desc.desc, oldType->desc.desc, sizeof(dt_elem_desc_t) * desc_length );
     pdt->id  = 0;
     pdt->args = NULL;
     /* TODO: if the data was commited update the opt_desc field */
     if( 0 != oldType->opt_desc.used ) {
-        pdt->opt_desc.desc = malloc( oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
+        desc_length = pdt->opt_desc.used + 1;
+        pdt->opt_desc.desc = malloc( desc_length * sizeof(dt_elem_desc_t) );
         /*
          * Yes, the pdt->opt_desc.length is just the opt_desc.used of the old Type.
          */
         pdt->opt_desc.length = oldType->opt_desc.used;
         pdt->opt_desc.used = oldType->opt_desc.used;
-        memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, oldType->opt_desc.used * sizeof(dt_elem_desc_t) );
+        memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, desc_length * sizeof(dt_elem_desc_t) );
     }
     *newType = pdt;
     return OMPI_SUCCESS;
