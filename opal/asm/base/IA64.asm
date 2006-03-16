@@ -103,9 +103,7 @@ opal_atomic_cmpset_rel_64:
 opal_sys_timer_get_cycles:
         .prologue
         .body
-#APP
         mov r8=ar.itc
-#NO_APP
         br.ret.sptk.many b0
         ;;
         .endp opal_sys_timer_get_cycles#
