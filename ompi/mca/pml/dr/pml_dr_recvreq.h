@@ -345,6 +345,7 @@ do {                                                                          \
                (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
                (vfrag)->vf_ack = 0;                                           \
                (vfrag)->vf_mask_processed = 0;                                \
+               (vfrag)->vf_send_cnt = 1;                                      \
                if((hdr)->hdr_vlen == 64) {                                    \
                    (vfrag)->vf_mask = ~(uint64_t)0;                           \
                } else {                                                       \

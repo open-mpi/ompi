@@ -37,6 +37,7 @@ struct mca_pml_dr_vfrag_t {
     uint32_t   vf_id;
     uint16_t   vf_idx;
     uint16_t   vf_len;
+    uint8_t    vf_send_cnt;
     size_t     vf_offset;
     size_t     vf_size;
     size_t     vf_max_send_size;
@@ -75,7 +76,7 @@ do {                                                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, (opal_list_item_t*)vfrag);   \
 } while(0)
 
-#if 0
+#if 1
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
@@ -85,6 +86,12 @@ do {                                                                       \
 #define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)                                 \
 do {                                                                       \
     opal_event_del(&vfrag->ev_wdog);                                       \
+    vfrag->tv_wdog.tv_sec =                                                \
+          mca_pml_dr.timer_wdog_sec * mca_pml_dr.timer_wdog_multiplier  *  \
+          vfrag->vf_send_cnt;                                              \
+    vfrag->tv_wdog.tv_usec =                                               \
+          mca_pml_dr.timer_wdog_usec * mca_pml_dr.timer_wdog_multiplier  * \
+          vfrag->vf_send_cnt;                                              \
     opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
 } while(0)                                                                          
 
@@ -96,7 +103,14 @@ do {                                                                       \
 
 #define MCA_PML_DR_VFRAG_ACK_START(vfrag)                                  \
 do {                                                                       \
-    opal_event_add(&vfrag->ev_ack, &vfrag->tv_ack);                        \
+    (vfrag)->tv_ack.tv_sec =                                                 \
+          mca_pml_dr.timer_ack_sec * mca_pml_dr.timer_ack_multiplier  *    \
+          (vfrag)->vf_send_cnt;                                              \
+    (vfrag)->tv_ack.tv_usec =                                                \
+          mca_pml_dr.timer_ack_usec * mca_pml_dr.timer_ack_multiplier  *   \
+          (vfrag)->vf_send_cnt;                                              \
+    opal_event_add(&(vfrag)->ev_ack, &(vfrag)->tv_ack);                        \
+                                                                           \
 } while(0)                                                                          
 
 #define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)                                   \
@@ -108,7 +122,7 @@ do {                                                                       \
 
 #endif
 
-#if 1
+#if 0
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)
 #define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)
