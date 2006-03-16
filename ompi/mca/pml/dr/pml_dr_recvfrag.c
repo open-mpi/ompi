@@ -574,8 +574,7 @@ rematch:
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
     } else {
         size_t hdr_size = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);
-        COMPUTE_SPECIFIC_CHECKSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size),
-                                  segments->seg_len - hdr_size, csum);
+        csum = OMPI_CSUM((void*)((unsigned char*)segments->seg_addr.pval + hdr_size), segments->seg_len - hdr_size);
         assert(csum == hdr->hdr_csum);
         mca_pml_dr_recv_frag_unmatched_ack(hdr, 
                                            ompi_proc, 
