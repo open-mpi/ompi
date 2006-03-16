@@ -144,9 +144,9 @@ static int ompi_socket_send (int fd, char *buf, int len )
 #endif
             else {
                 /* Another error occured */
-                fprintf (stderr,"read_socket: error while reading from socket" 
+                fprintf (stderr,"ompi_socket_send: error while writing to socket" 
                          " error:%s", strerror (errno) );
-                return ( OMPI_ERROR);
+                return MPI_ERR_OTHER;
 	    }
 	}
         num      -= a;
@@ -155,8 +155,8 @@ static int ompi_socket_send (int fd, char *buf, int len )
     
 
   if ( num < 0 )  {
-      fprintf (stderr, "read_socket: more data read then available");
-      ret = OMPI_ERROR;
+      fprintf (stderr, "ompi_socket_send: more data written then available");
+      ret = MPI_ERR_INTERN;
   }
     
   return ret;
@@ -168,7 +168,7 @@ static int ompi_socket_recv (int fd, char *buf, int len )
     size_t s_num;
     ssize_t a;
     char *c_ptr;
-    int ret = OMPI_SUCCESS;
+    int ret = MPI_SUCCESS;
     
     num      = len;
     c_ptr      = buf;
@@ -193,21 +193,19 @@ static int ompi_socket_recv (int fd, char *buf, int len )
 #endif
             else {
                 /* Another error occured */
-                fprintf (stderr,"read_socket: error while reading from socket" 
+                fprintf (stderr,"ompi_socket_recv: error while reading from socket" 
                          " error:%s", strerror (errno) );
-                return ( OMPI_ERROR);
+                return MPI_ERR_OTHER;
 	    }
 	}
         num    -= a;
         c_ptr  += a;
     }   while ( num > 0 );
-    
 
   if ( num < 0 )  {
-      fprintf (stderr, "read_socket: more data read then available");
-      ret = OMPI_ERROR;
+      fprintf (stderr, "ompi_socket_recv: more data read then available");
+      ret = MPI_ERR_INTERN;
   }
-    
 
   return ret;
 }

@@ -52,5 +52,5 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
         ompi_ddt_type_size( datatype, &size );
         status->_count = count * size;
     }
-    return OMPI_SUCCESS;
+    return MPI_SUCCESS;
 }
