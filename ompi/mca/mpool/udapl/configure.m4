@@ -32,10 +32,10 @@ AC_DEFUN([MCA_mpool_udapl_CONFIG],[
            $1],
           [$2])
 
-    # Borrowed from MVAPI BTL - a data structure in the uDAPL headers
+    # A data structure in the uDAPL headers
     # is not fully ISO C.  Remove -pedantic to silence a warning.
-    btl_udapl_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
-    AS_IF([test "$btl_udapl_CFLAGS" != "$CFLAGS" -a "$btl_udapl_happy" = "yes"],
+    mpool_udapl_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
+    AS_IF([test "$mpool_udapl_CFLAGS" != "$CFLAGS" -a "$mpool_udapl_happy" = "yes"],
           [AC_MSG_WARN([Removed -pedantic from CFLAGS for
 uDAPL component because the uDAPL headers are not fully ISO C])])
 

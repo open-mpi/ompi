@@ -16,10 +16,8 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
 
-
-
+CFLAGS = $(mpool_udapl_CFLAGS)
 AM_CPPFLAGS = $(mpool_udapl_CPPFLAGS)
 
 sources = \
