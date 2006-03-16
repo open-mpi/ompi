@@ -537,6 +537,7 @@ int32_t ompi_ddt_init( void )
     MOOG(wchar);
     MOOG(char);
     MOOG(unsigned_char);
+    MOOG(signed_char);
     MOOG(short);
     MOOG(unsigned_short);
     MOOG(int);
