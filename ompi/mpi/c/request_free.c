@@ -36,16 +36,17 @@ static const char FUNC_NAME[] = "MPI_Request_free";
 int MPI_Request_free(MPI_Request *request) 
 {
     int rc;
-    if (MPI_PARAM_CHECK) {
-      OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-      if( request == NULL ) {
-        rc = OMPI_ERR_BAD_PARAM;
-        goto error_return;
-      }
-    }
-    rc = ompi_request_free(request);
 
-error_return:
+    if (MPI_PARAM_CHECK) {
+        rc = MPI_SUCCESS;
+        OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == request) {
+            rc = MPI_ERR_REQUEST;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    rc = ompi_request_free(request);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

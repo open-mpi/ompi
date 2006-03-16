@@ -16,7 +16,6 @@
  * $HEADER$
  */
 #include "ompi_config.h"
-#include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/datatype/datatype.h"
@@ -37,19 +36,18 @@ static const char FUNC_NAME[] = "MPI_Sendrecv_replace";
 
 int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
                          int dest, int sendtag, int source, int recvtag,
-                         MPI_Comm comm, MPI_Status *status) 
+                         MPI_Comm comm, MPI_Status *status)
 
 {
     int rc;
+
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        OMPI_CHECK_DATATYPE_FOR_RECV(rc, datatype, count);
+
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
-        } else if (count < 0) {
-            rc = MPI_ERR_COUNT;
-        } else if (datatype == MPI_DATATYPE_NULL) {
-            rc = MPI_ERR_TYPE;
         } else if (dest != MPI_PROC_NULL && ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
         } else if (sendtag < 0 || sendtag > mca_pml.pml_max_tag) {
@@ -125,4 +123,3 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         return MPI_SUCCESS;
     }
 }
-

@@ -48,7 +48,7 @@ int MPI_Start(MPI_Request *request)
     case OMPI_REQUEST_PML:
         return MCA_PML_CALL(start(1, request));
     default:
-        return OMPI_SUCCESS;
+        return MPI_SUCCESS;
     }
 }
 

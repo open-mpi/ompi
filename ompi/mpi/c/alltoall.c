@@ -65,7 +65,7 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
        we don't need to do anything */
 
     if (0 == sendcount) {
-        return OMPI_SUCCESS;
+        return MPI_SUCCESS;
     }
 
     /* Invoke the coll component to perform the back-end operation */
