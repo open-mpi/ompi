@@ -565,6 +565,7 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_char,                 /* DT_CHAR                */
    (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */
    (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */
+   (conversion_fct_t)copy_char,                 /* DT_SIGNED_CHAR       */
    (conversion_fct_t)copy_char,                 /* DT_BYTE                */
    (conversion_fct_t)copy_short,                /* DT_SHORT               */
    (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
