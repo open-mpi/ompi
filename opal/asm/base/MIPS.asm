@@ -7,32 +7,25 @@ START_FILE
 
 	ALIGN(8)
 LEAF(opal_atomic_mb)
- #APP
 	sync
- #NO_APP
 	j	ra
 END(opal_atomic_mb)
 
 	
 	ALIGN(8)
 LEAF(opal_atomic_rmb)
- #APP
 	sync
- #NO_APP
 	j	ra
 END(opal_atomic_rmb)
 	
 	
 LEAF(opal_atomic_wmb)
- #APP
 	sync
- #NO_APP
 	j	ra
 END(opal_atomic_wmb)
 
 
 LEAF(opal_atomic_cmpset_32)
- #APP
 	.set noreorder        
 retry1:                
 	ll     $3, 0($4)         
@@ -43,7 +36,6 @@ retry1:
 done1:                 
 	.set reorder          
 
- #NO_APP
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
@@ -51,7 +43,6 @@ END(opal_atomic_cmpset_32)
 
 
 LEAF(opal_atomic_cmpset_acq_32)
- #APP
 	.set noreorder        
 retry2:                
 	ll     $3, 0($4)         
@@ -63,7 +54,6 @@ done2:
 	sync
 	.set reorder          
 
- #NO_APP
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
@@ -71,7 +61,6 @@ END(opal_atomic_cmpset_acq_32)
 
 	
 LEAF(opal_atomic_cmpset_rel_32)
- #APP
 	.set noreorder        
 	sync
 retry3:                
@@ -83,7 +72,6 @@ retry3:
 done3:                 
 	.set reorder          
 
- #NO_APP
 	xor	$3,$3,$5
 	j	ra
 	sltu	$2,$3,1
@@ -91,7 +79,6 @@ END(opal_atomic_cmpset_rel_32)
 	
 	
 LEAF(opal_atomic_cmpset_64)
- #APP
 		.set noreorder        
 retry4:                
 	lld    $3, 0($4)         
@@ -102,7 +89,6 @@ retry4:
 done4:                 
 	.set reorder          
 
- #NO_APP
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
@@ -110,7 +96,6 @@ END(opal_atomic_cmpset_64)
 
 
 LEAF(opal_atomic_cmpset_acq_64)
- #APP
 	.set noreorder        
 retry5:                
 	lld    $3, 0($4)         
@@ -121,7 +106,6 @@ retry5:
 done5:                 
 	.set reorder          
 	sync
- #NO_APP
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
@@ -129,7 +113,6 @@ END(opal_atomic_cmpset_acq_64)
 
 
 LEAF(opal_atomic_cmpset_rel_64)
- #APP
 	.set noreorder        
 	sync
 retry6:                
@@ -141,7 +124,6 @@ retry6:
 done6:                 
 	.set reorder          
 
- #NO_APP
 	xor	$4,$3,$5
 	j	ra
 	sltu	$3,$4,1
