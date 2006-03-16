@@ -293,7 +293,7 @@ static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
  * use ADLER32 algorithm.
  */
 
-#define OMPI_REQUIRE_DATA_VALIDATION 1
+#define OMPI_REQUIRE_DATA_VALIDATION 0
 
 #if OMPI_REQUIRE_DATA_VALIDATION
 #include "opal/util/crc.h"
