@@ -110,6 +110,7 @@ struct mca_btl_gm_module_t {
 
 #if OMPI_ENABLE_PROGRESS_THREADS
     opal_thread_t gm_thread;
+    bool gm_progress;
 #endif
 }; 
 typedef struct mca_btl_gm_module_t mca_btl_gm_module_t;
