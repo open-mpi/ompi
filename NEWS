@@ -35,6 +35,7 @@ version 1.0.
 1.0.2
 -----
 
+- Fix handling of strings in several of the Fortran 77 bindings.
 - Fix LinuxPPC assembly issues.  Thanks to Julian Seward for reporting 
   the problem.
 - Enable pty support for standard I/O forwarding on platforms that
