@@ -66,7 +66,7 @@ mca_coll_basic_scatter_intra(void *sbuf, int scount,
 
     /* I am the root, loop sending data. */
 
-    err = ompi_ddt_get_extent(rdtype, &lb, &incr);
+    err = ompi_ddt_get_extent(sdtype, &lb, &incr);
     if (OMPI_SUCCESS != err) {
         return OMPI_ERROR;
     }
@@ -136,7 +136,7 @@ mca_coll_basic_scatter_inter(void *sbuf, int scount,
                                 comm, MPI_STATUS_IGNORE));
     } else {
         /* I am the root, loop sending data. */
-        err = ompi_ddt_get_extent(rdtype, &lb, &incr);
+        err = ompi_ddt_get_extent(sdtype, &lb, &incr);
         if (OMPI_SUCCESS != err) {
             return OMPI_ERROR;
         }
