@@ -51,6 +51,10 @@ struct mca_pml_dr_common_hdr_t {
     uint8_t hdr_type;  /**< type of envelope */
     uint8_t hdr_flags; /**< flags indicating how fragment should be processed */
     uint16_t hdr_csum; /**< checksum over header */
+    int32_t hdr_dst; /**< destination rank */
+    int32_t hdr_src;                       /**< rank of sender */
+    uint16_t hdr_ctx;                      /**< communicator index */
+    uint32_t hdr_vid;                      /**< vfrag id */
 };
 typedef struct mca_pml_dr_common_hdr_t mca_pml_dr_common_hdr_t;
 
@@ -63,10 +67,8 @@ typedef struct mca_pml_dr_common_hdr_t mca_pml_dr_common_hdr_t;
  */
 struct mca_pml_dr_match_hdr_t {
     mca_pml_dr_common_hdr_t hdr_common;    /**< common attributes */
-    uint32_t hdr_vid;                      /**< vfrag id */
-    uint16_t hdr_ctx;                      /**< communicator index */
+    
     uint16_t hdr_seq;                      /**< message sequence number */
-    int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint32_t hdr_csum;                     /**< checksum over data */
     ompi_ptr_t hdr_src_ptr;                /**< pointer to source vfrag - returned in ack */
@@ -119,7 +121,6 @@ typedef struct mca_pml_dr_rendezvous_hdr_t mca_pml_dr_rendezvous_hdr_t;
  */
 struct mca_pml_dr_frag_hdr_t {
     mca_pml_dr_common_hdr_t hdr_common;    /**< common attributes */
-    uint32_t hdr_vid;                      /**< virtual frag id */
     uint16_t hdr_vlen;                     /**< length of entire vfrag */
     uint16_t hdr_frag_idx;                 /**< bit index of this frag w/in vfrag */
     uint32_t hdr_frag_csum;                /**< checksum over data */
@@ -148,7 +149,6 @@ typedef struct mca_pml_dr_frag_hdr_t mca_pml_dr_frag_hdr_t;
 
 struct mca_pml_dr_ack_hdr_t {
     mca_pml_dr_common_hdr_t hdr_common;       /**< common attributes */
-    uint32_t   hdr_vid;                       /**< virtual fragment id */
     uint64_t   hdr_vmask;                     /**< acknowledged frags */
     ompi_ptr_t hdr_src_ptr;                   /**< source vfrag */
     ompi_ptr_t hdr_dst_ptr;                   /**< matched receive request */

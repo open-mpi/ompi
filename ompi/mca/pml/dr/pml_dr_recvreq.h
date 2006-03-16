@@ -199,7 +199,7 @@ do {                                                                            
     (request)->req_recv.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;    \
     (request)->req_recv.req_base.req_ompi.req_status._cancelled = 0;              \
                                                                                   \
-    /* attempt to match posted recv */                                            \
+    /* attempt to match unexpected recv */                                        \
     if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
         mca_pml_dr_recv_request_match_wild(request);                              \
     } else {                                                                      \
@@ -217,11 +217,12 @@ do {                                                                            
     hdr)                                                                             \
 do {                                                                                 \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;    \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =                    \
+                                                       (hdr)->hdr_common.hdr_src;    \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
         ompi_proc_t *proc =                                                          \
             ompi_comm_peer_lookup(                                                   \
-                (request)->req_recv.req_base.req_comm, (hdr)->hdr_src);              \
+                (request)->req_recv.req_base.req_comm, (hdr)->hdr_common.hdr_src);   \
                                                                                      \
         (request)->req_proc = proc;                                                  \
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
@@ -317,7 +318,7 @@ void mca_pml_dr_recv_request_schedule(
 
 #define MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq,hdr,vfrag)               \
 do {                                                                          \
-   if((recvreq)->req_vfrag->vf_id == (hdr)->hdr_vid) {                        \
+   if((recvreq)->req_vfrag->vf_id == (hdr)->hdr_common.hdr_vid) {             \
        vfrag = (recvreq)->req_vfrag;                                          \
    } else if ((hdr)->hdr_frag_offset == 0) {                                  \
        vfrag = &(recvreq)->req_vfrag0;                                        \
@@ -331,7 +332,7 @@ do {                                                                          \
            item != opal_list_get_end(&(recvreq)->req_vfrags);                 \
            item =  opal_list_get_next(item)) {                                \
            mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                \
-           if(vf->vf_id == (hdr)->hdr_vid) {                                  \
+           if(vf->vf_id == (hdr)->hdr_common.hdr_vid) {                       \
                vfrag = vf;                                                    \
                break;                                                         \
            }                                                                  \
@@ -339,7 +340,7 @@ do {                                                                          \
        if(NULL == vfrag) {                                                    \
            MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);                                  \
            if(NULL != vfrag) {                                                \
-               (vfrag)->vf_id = (hdr)->hdr_vid;                               \
+               (vfrag)->vf_id = (hdr)->hdr_common.hdr_vid;                    \
                (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
                (vfrag)->vf_ack = 0;                                           \
                (vfrag)->vf_mask_processed = 0;                                \

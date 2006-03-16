@@ -136,10 +136,13 @@ static void mca_pml_dr_recv_request_ack(
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
     
+    mca_pml_dr_comm_proc_t* comm_proc = recvreq->req_recv.req_base.req_comm->c_pml_comm->procs +
+        recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
+    
     /* if this hasn't been initialized yet - this is a synchronous send */
     if(NULL == proc) {
         ompi_proc_t *ompi_proc = ompi_comm_peer_lookup(
-                recvreq->req_recv.req_base.req_comm, hdr->hdr_src);
+                recvreq->req_recv.req_base.req_comm, hdr->hdr_common.hdr_src);
         proc = recvreq->req_proc = ompi_proc;
     }
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
@@ -155,7 +158,10 @@ static void mca_pml_dr_recv_request_ack(
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK | hdr->hdr_common.hdr_type;
     ack->hdr_common.hdr_flags = MCA_PML_DR_HDR_FLAGS_MATCHED;
-    ack->hdr_vid = hdr->hdr_vid;
+    ack->hdr_common.hdr_dst = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;;
+    ack->hdr_common.hdr_src = recvreq->req_recv.req_base.req_comm->c_my_rank;
+    ack->hdr_common.hdr_ctx = recvreq->req_recv.req_base.req_comm->c_contextid;
+    ack->hdr_common.hdr_vid = hdr->hdr_common.hdr_vid;
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr = hdr->hdr_src_ptr;
     assert(ack->hdr_src_ptr.pval);
@@ -171,8 +177,9 @@ static void mca_pml_dr_recv_request_ack(
         mca_bml_base_free(bml_btl, des);
         goto retry;
     }
-
-    /* mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); */
+    
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_common.hdr_vid);
+    
     return;
 
     /* queue request to retry later */
@@ -201,9 +208,12 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
+    mca_pml_dr_comm_proc_t* comm_proc = recvreq->req_recv.req_base.req_comm->c_pml_comm->procs + 
+        recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
     
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
+    
     
     /* allocate descriptor */
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
@@ -215,7 +225,10 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_FRAG_ACK;
     ack->hdr_common.hdr_flags = 0;
-    ack->hdr_vid = vfrag->vf_id;
+    ack->hdr_common.hdr_vid = vfrag->vf_id;
+    ack->hdr_common.hdr_dst = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;;
+    ack->hdr_common.hdr_src = recvreq->req_recv.req_base.req_comm->c_my_rank;
+    ack->hdr_common.hdr_ctx = recvreq->req_recv.req_base.req_comm->c_contextid;
     ack->hdr_vmask = vfrag->vf_ack;
     ack->hdr_src_ptr = hdr->hdr_src_ptr;
     ack->hdr_dst_ptr.pval = recvreq;
@@ -229,77 +242,103 @@ static void mca_pml_dr_recv_request_vfrag_ack(
     if(rc != OMPI_SUCCESS) {
         mca_bml_base_free(bml_btl, des);
     }
-    /* mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_vid); */
-}
+    mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_common.hdr_vid);
+ }
 
+ /*
+  * Update the recv request status to reflect the number of bytes
+  * received and actually delivered to the application. 
+  */
 
+ void mca_pml_dr_recv_request_progress(
+     mca_pml_dr_recv_request_t* recvreq,
+     mca_btl_base_module_t* btl,
+     mca_btl_base_segment_t* segments,
+     size_t num_segments)
+ {
+     size_t bytes_received = 0;
+     size_t bytes_delivered = 0;
+     size_t data_offset = 0;
+     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
+     size_t i;
+     uint32_t csum = 1;
+     uint64_t bit;
+     mca_pml_dr_vfrag_t* vfrag;
+     mca_pml_dr_comm_proc_t* comm_proc; 
 
-/*
- * Update the recv request status to reflect the number of bytes
- * received and actually delivered to the application. 
- */
+     comm_proc =  recvreq->req_recv.req_base.req_comm->c_pml_comm->procs +
+         recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
 
-void mca_pml_dr_recv_request_progress(
-    mca_pml_dr_recv_request_t* recvreq,
-    mca_btl_base_module_t* btl,
-    mca_btl_base_segment_t* segments,
-    size_t num_segments)
-{
-    size_t bytes_received = 0;
-    size_t bytes_delivered = 0;
-    size_t data_offset = 0;
-    mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
-    size_t i;
-    uint32_t csum = 1;
-    uint64_t bit;
-    mca_pml_dr_vfrag_t* vfrag;
-    
-    for(i=0; i<num_segments; i++)
-        bytes_received += segments[i].seg_len;
+     for(i=0; i<num_segments; i++)
+         bytes_received += segments[i].seg_len;
 
-    switch(hdr->hdr_common.hdr_type) {
-        case MCA_PML_DR_HDR_TYPE_MATCH:
+     switch(hdr->hdr_common.hdr_type) {
+         case MCA_PML_DR_HDR_TYPE_MATCH:
 
-            bytes_received -= sizeof(mca_pml_dr_match_hdr_t);
-            recvreq->req_recv.req_bytes_packed = bytes_received;
-            recvreq->req_vfrag0.vf_send = hdr->hdr_match.hdr_src_ptr;
-            MCA_PML_DR_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
-            MCA_PML_DR_RECV_REQUEST_UNPACK(
-                recvreq,
-                segments,
-                num_segments,
-                sizeof(mca_pml_dr_match_hdr_t),
-                data_offset,
-                bytes_received,
-                bytes_delivered,
-                csum);
-            if(csum != hdr->hdr_match.hdr_csum) { 
-                assert(0); 
+             bytes_received -= sizeof(mca_pml_dr_match_hdr_t);
+             recvreq->req_recv.req_bytes_packed = bytes_received;
+             recvreq->req_vfrag0.vf_send = hdr->hdr_match.hdr_src_ptr;
+             MCA_PML_DR_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
+             MCA_PML_DR_RECV_REQUEST_UNPACK(
+                 recvreq,
+                 segments,
+                 num_segments,
+                 sizeof(mca_pml_dr_match_hdr_t),
+                 data_offset,
+                 bytes_received,
+                 bytes_delivered,
+                 csum);
+             if(csum != hdr->hdr_match.hdr_csum) { 
+                 /* failed the csum, put the request 
+                    back on the list for matching later
+                    at retransmission */
+                 if(recvreq->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
+                     mca_pml_dr_recv_request_match_wild(recvreq);
+                 } else {
+                     mca_pml_dr_recv_request_match_specific(recvreq);
+                 }
+                 mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc, 
+                                               &hdr->hdr_common,
+                                               hdr->hdr_match.hdr_src_ptr,
+                                               0);
+                 assert(0);
+                 return;
+             }
+             mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 1);
+             break;
+
+         case MCA_PML_DR_HDR_TYPE_RNDV:
+
+             bytes_received -= sizeof(mca_pml_dr_rendezvous_hdr_t);
+             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
+             recvreq->req_vfrag0.vf_send = hdr->hdr_match.hdr_src_ptr;
+             MCA_PML_DR_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
+             MCA_PML_DR_RECV_REQUEST_UNPACK(
+                 recvreq,
+                 segments,
+                 num_segments,
+                 sizeof(mca_pml_dr_rendezvous_hdr_t),
+                 data_offset,
+                 bytes_received,
+                 bytes_delivered,
+                 csum);
+             if(csum != hdr->hdr_match.hdr_csum) { 
+                 /* failed the csum, put the request 
+                    back on the list for matching later
+                    at retransmission */
+                 if(recvreq->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
+                    mca_pml_dr_recv_request_match_wild(recvreq);
+                } else {
+                    mca_pml_dr_recv_request_match_specific(recvreq);
+                }
+                mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc, 
+                                              &hdr->hdr_common,
+                                              hdr->hdr_match.hdr_src_ptr,
+                                              0);
+                assert(0);
+                return;
             }
-            mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 
-                csum == hdr->hdr_match.hdr_csum ? 1 : 0);
-            break;
-
-        case MCA_PML_DR_HDR_TYPE_RNDV:
-
-            bytes_received -= sizeof(mca_pml_dr_rendezvous_hdr_t);
-            recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-            recvreq->req_vfrag0.vf_send = hdr->hdr_match.hdr_src_ptr;
-            MCA_PML_DR_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
-            MCA_PML_DR_RECV_REQUEST_UNPACK(
-                recvreq,
-                segments,
-                num_segments,
-                sizeof(mca_pml_dr_rendezvous_hdr_t),
-                data_offset,
-                bytes_received,
-                bytes_delivered,
-                csum);
-            if(csum != hdr->hdr_match.hdr_csum) { 
-                assert(0); 
-            }
-            mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 
-                csum == hdr->hdr_match.hdr_csum ? 1 : 0);
+            mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 1);
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -380,6 +419,20 @@ void mca_pml_dr_recv_request_matched_probe(
             bytes_packed = hdr->hdr_rndv.hdr_msg_length;
             break;
     }
+
+    /* check completion status */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
+    recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_common.hdr_src;
+    recvreq->req_recv.req_base.req_ompi.req_status._count = bytes_packed;
+    recvreq->req_recv.req_base.req_pml_complete = true; 
+    recvreq->req_recv.req_base.req_ompi.req_complete = true;
+
+    ompi_request_completed++;
+    if(ompi_request_waiting) {
+        opal_condition_broadcast(&ompi_request_cond);
+    }
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* mark probe request completed */
     MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq);

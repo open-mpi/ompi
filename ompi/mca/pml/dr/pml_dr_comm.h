@@ -31,6 +31,16 @@ extern "C" {
 #endif
 
 
+struct mca_pml_dr_acked_item_t{ 
+    opal_list_item_t super; 
+    int32_t vfrag_id_high;
+    int32_t vfrag_id_low;
+}; 
+typedef struct mca_pml_dr_acked_item_t mca_pml_dr_acked_item_t;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_acked_item_t);
+
+
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
@@ -45,18 +55,9 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
     opal_list_t acked_vfrags;      /**< list of vfrags id's that have been acked */
-    opal_list_item_t* acked_vfrags_ptr; /**< a pointer to the last place we were in the list */
+    mca_pml_dr_acked_item_t* acked_vfrags_current; /**< a pointer to the last place we were in the list */
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
-
-struct mca_pml_dr_acked_item_t{ 
-    opal_list_item_t super; 
-    int32_t vfrag_id_high;
-    int32_t vfrag_id_low;
-}; 
-typedef struct mca_pml_dr_acked_item_t mca_pml_dr_acked_item_t;
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_acked_item_t);
 
 /**
  *  Cached on ompi_communicator_t to hold queues/state
@@ -89,14 +90,14 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
 
 OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
 
-static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_acked_item_t** current, int32_t vfrag_id) { 
-    mca_pml_dr_acked_item_t* item = *current;
+static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_comm_proc_t* dr_comm_proc, int32_t vfrag_id) { 
+    mca_pml_dr_acked_item_t* item = dr_comm_proc->acked_vfrags_current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     while(true) { 
         if(NULL == item) { 
             return false;
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id) { 
-            *current = (mca_pml_dr_acked_item_t*) item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) item;
             return true; 
         } else if(vfrag_id > item->vfrag_id_high && direction != -1) { 
             direction = 1; 
@@ -110,10 +111,10 @@ static inline bool mca_pml_dr_comm_proc_check_acked(mca_pml_dr_acked_item_t** cu
     }
 }
 
-static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags, 
-                                                  mca_pml_dr_acked_item_t** current, 
+static inline void mca_pml_dr_comm_proc_set_acked(mca_pml_dr_comm_proc_t* dr_comm_proc, 
                                                   int32_t vfrag_id) { 
-    mca_pml_dr_acked_item_t* item = *current;
+    opal_list_t* acked_vfrags = &dr_comm_proc->acked_vfrags; 
+    mca_pml_dr_acked_item_t* item = dr_comm_proc->acked_vfrags_current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     mca_pml_dr_acked_item_t *new_item, *next_item, *prev_item;
     while(true) { 
@@ -121,18 +122,18 @@ static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags,
             new_item = OBJ_NEW(mca_pml_dr_acked_item_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
             opal_list_append(acked_vfrags, (opal_list_item_t*) new_item);
-            *current = (mca_pml_dr_acked_item_t*) new_item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) new_item;
             return;
         } else if( item == (mca_pml_dr_acked_item_t*) &acked_vfrags->opal_list_head ) { 
             new_item = OBJ_NEW(mca_pml_dr_acked_item_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
             opal_list_prepend(acked_vfrags, (opal_list_item_t*) new_item); 
-            *current = (mca_pml_dr_acked_item_t*) new_item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) new_item;
             return; 
             
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id ) { 
 
-            *current = (mca_pml_dr_acked_item_t*) item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) item;
             return; 
 
         } else if((item->vfrag_id_high + 1) == vfrag_id) { 
@@ -146,7 +147,7 @@ static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags,
             } else { 
                 item->vfrag_id_high = vfrag_id;
             }    
-            *current = (mca_pml_dr_acked_item_t*) item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) item;
             return; 
             
         } else if((item->vfrag_id_low - 1) == vfrag_id) { 
@@ -160,7 +161,7 @@ static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags,
             } else { 
                 item->vfrag_id_low = vfrag_id; 
             }
-            *current = (mca_pml_dr_acked_item_t*) item;
+            dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) item;
             return; 
             
         } else if(vfrag_id > item->vfrag_id_high ) { 
@@ -172,7 +173,7 @@ static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags,
                 opal_list_insert_pos(acked_vfrags, 
                                      (opal_list_item_t*) item, 
                                      (opal_list_item_t*) new_item); 
-                *current = (mca_pml_dr_acked_item_t*) new_item;
+                dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) new_item;
                 return;
             } else { 
                 direction = 1;
@@ -190,7 +191,7 @@ static inline void mca_pml_dr_comm_proc_set_acked(opal_list_t* acked_vfrags,
                                          (opal_list_item_t*) next_item, 
                                          (opal_list_item_t*) new_item); 
                 }
-                *current = (mca_pml_dr_acked_item_t*) new_item;
+                dr_comm_proc->acked_vfrags_current = (mca_pml_dr_acked_item_t*) new_item;
                 return;
             } else { 
                 direction = -1;
