@@ -85,11 +85,11 @@ PN(void, mpi_cart_rank, MPI_CART_RANK, (MPI_Fint *comm, MPI_Fint *coords, MPI_Fi
 PN(void, mpi_cart_shift, MPI_CART_SHIFT, (MPI_Fint *comm, MPI_Fint *direction, MPI_Fint *disp, MPI_Fint *rank_source, MPI_Fint *rank_dest, MPI_Fint *ierr));
 PN(void, mpi_cart_sub, MPI_CART_SUB, (MPI_Fint *comm, MPI_Flogical *remain_dims, MPI_Fint *new_comm, MPI_Fint *ierr));
 PN(void, mpi_cartdim_get, MPI_CARTDIM_GET, (MPI_Fint *comm, MPI_Fint *ndims, MPI_Fint *ierr));
-PN(void, mpi_close_port, MPI_CLOSE_PORT, (char *port_name, MPI_Fint *ierr));
-PN(void, mpi_comm_accept, MPI_COMM_ACCEPT, (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN(void, mpi_close_port, MPI_CLOSE_PORT, (char *port_name, MPI_Fint *ierr, int port_name_len));
+PN(void, mpi_comm_accept, MPI_COMM_ACCEPT, (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len));
 PN(void, mpi_comm_call_errhandler, MPI_COMM_CALL_ERRHANDLER, (MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN(void, mpi_comm_compare, MPI_COMM_COMPARE, (MPI_Fint *comm1, MPI_Fint *comm2, MPI_Fint *result, MPI_Fint *ierr));
-PN(void, mpi_comm_connect, MPI_COMM_CONNECT, (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr));
+PN(void, mpi_comm_connect, MPI_COMM_CONNECT, (char *port_name, MPI_Fint *info, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *newcomm, MPI_Fint *ierr, int port_name_len));
 PN(void, mpi_comm_create_errhandler, MPI_COMM_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_comm_create_keyval, MPI_COMM_CREATE_KEYVAL, (ompi_mpi2_fortran_copy_attr_function* comm_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* comm_delete_attr_fn, MPI_Fint *comm_keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
 PN(void, mpi_comm_create, MPI_COMM_CREATE, (MPI_Fint *comm, MPI_Fint *group, MPI_Fint *newcomm, MPI_Fint *ierr));
@@ -232,9 +232,9 @@ PN(void, mpi_issend, MPI_ISSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype
 PN(void, mpi_is_thread_main, MPI_IS_THREAD_MAIN, (MPI_Flogical *flag, MPI_Fint *ierr));
 PN(void, mpi_keyval_create, MPI_KEYVAL_CREATE, (ompi_mpi1_fortran_copy_attr_function* copy_fn, ompi_mpi1_fortran_delete_attr_function* delete_fn, MPI_Fint *keyval, MPI_Fint *extra_state, MPI_Fint *ierr));
 PN(void, mpi_keyval_free, MPI_KEYVAL_FREE, (MPI_Fint *keyval, MPI_Fint *ierr));
-PN(void, mpi_lookup_name, MPI_LOOKUP_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr));
+PN(void, mpi_lookup_name, MPI_LOOKUP_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
 PN(void, mpi_op_create, MPI_OP_CREATE, (ompi_op_fortran_handler_fn_t* function, MPI_Flogical *commute, MPI_Fint *op, MPI_Fint *ierr));
-PN(void, mpi_open_port, MPI_OPEN_PORT, (MPI_Fint *info, char *port_name, MPI_Fint *ierr));
+PN(void, mpi_open_port, MPI_OPEN_PORT, (MPI_Fint *info, char *port_name, MPI_Fint *ierr, int port_name_len));
 PN(void, mpi_op_free, MPI_OP_FREE, (MPI_Fint *op, MPI_Fint *ierr));
 PN(void, mpi_pack_external, MPI_PACK_EXTERNAL, (char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr));
 PN(void, mpi_pack_external_size, MPI_PACK_EXTERNAL_SIZE, (char *datarep, MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *size, MPI_Fint *ierr));
@@ -242,7 +242,7 @@ PN(void, mpi_pack, MPI_PACK, (char *inbuf, MPI_Fint *incount, MPI_Fint *datatype
 PN(void, mpi_pack_size, MPI_PACK_SIZE, (MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *size, MPI_Fint *ierr));
 PN(void, mpi_pcontrol, MPI_PCONTROL, (MPI_Fint *level));
 PN(void, mpi_probe, MPI_PROBE, (MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
-PN(void, mpi_publish_name, MPI_PUBLISH_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr));
+PN(void, mpi_publish_name, MPI_PUBLISH_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
 PN(void, mpi_put, MPI_PUT, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr));
 PN(void, mpi_query_thread, MPI_QUERY_THREAD, (MPI_Fint *provided, MPI_Fint *ierr));
 PN(void, mpi_recv_init, MPI_RECV_INIT, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
@@ -309,7 +309,7 @@ PN(void, mpi_type_struct, MPI_TYPE_STRUCT, (MPI_Fint *count, MPI_Fint *array_of_
 PN(void, mpi_type_ub, MPI_TYPE_UB, (MPI_Fint *mtype, MPI_Fint *ub, MPI_Fint *ierr));
 PN(void, mpi_type_vector, MPI_TYPE_VECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN(void, mpi_unpack, MPI_UNPACK, (char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *comm, MPI_Fint *ierr));
-PN(void, mpi_unpublish_name, MPI_UNPUBLISH_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr));
+PN(void, mpi_unpublish_name, MPI_UNPUBLISH_NAME, (char *service_name, MPI_Fint *info, char *port_name, MPI_Fint *ierr, int service_name_len, int port_name_len));
 PN(void, mpi_unpack_external, MPI_UNPACK_EXTERNAL, (char *datarep, char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr));
 PN(void, mpi_waitall, MPI_WAITALL, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *array_of_statuses, MPI_Fint *ierr));
 PN(void, mpi_waitany, MPI_WAITANY, (MPI_Fint *count, MPI_Fint *array_of_requests, MPI_Fint *index, MPI_Fint *status, MPI_Fint *ierr));
