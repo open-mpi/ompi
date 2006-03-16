@@ -109,6 +109,11 @@ struct ompi_osc_pt2pt_module_t {
     /* an array of <sizeof(p2p_comm)> ints, each containing the value
        1. */
     int *p2p_fence_coll_counts;
+    /* an array of <sizeof(p2p_comm)> shorts, for use in experimenting
+       with different synchronization costs */
+    short *p2p_fence_coll_results;
+
+    enum { OSC_SYNC_REDUCE_SCATTER, OSC_SYNC_ALLREDUCE, OSC_SYNC_ALLTOALL } p2p_fence_sync_type;
 
     /* ********************* PWSC data ************************ */
 
@@ -163,9 +168,6 @@ extern "C" {
 /*
  * Component functions 
  */
-int ompi_osc_pt2pt_component_open(void);
-
-int ompi_osc_pt2pt_component_close(void);
 
 int ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                                  bool enable_mpi_threads);

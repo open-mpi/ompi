@@ -112,16 +112,51 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
         ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
 
-        /* find out how much data everyone is going to send us.  Need
-           to have the lock during this period so that we have a sane
-           view of the number of sendreqs */
-        ret = P2P_MODULE(win)->p2p_comm->
-            c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
-                                       &incoming_reqs,
-                                       P2P_MODULE(win)->p2p_fence_coll_counts,
-                                       MPI_SHORT,
-                                       MPI_SUM,
-                                       P2P_MODULE(win)->p2p_comm);
+        switch (P2P_MODULE(win)->p2p_fence_sync_type) {
+
+            /* find out how much data everyone is going to send us.  Need
+               to have the lock during this period so that we have a sane
+               view of the number of sendreqs */
+        case OSC_SYNC_REDUCE_SCATTER:
+            ret = P2P_MODULE(win)->p2p_comm->
+                c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
+                                           &incoming_reqs,
+                                           P2P_MODULE(win)->p2p_fence_coll_counts,
+                                           MPI_SHORT,
+                                           MPI_SUM,
+                                           P2P_MODULE(win)->p2p_comm);
+            break;
+
+        case OSC_SYNC_ALLREDUCE:
+            ret = P2P_MODULE(win)->p2p_comm->
+                c_coll.coll_allreduce(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
+                                      P2P_MODULE(win)->p2p_fence_coll_results,
+                                      ompi_comm_size(P2P_MODULE(win)->p2p_comm),
+                                      MPI_SHORT,
+                                      MPI_SUM,
+                                      P2P_MODULE(win)->p2p_comm);
+            incoming_reqs = P2P_MODULE(win)->
+                p2p_fence_coll_results[P2P_MODULE(win)->p2p_comm->c_my_rank];
+            break;
+
+        case OSC_SYNC_ALLTOALL:            
+            ret = P2P_MODULE(win)->p2p_comm->
+                c_coll.coll_alltoall(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
+                                     1,
+                                     MPI_SHORT,
+                                     P2P_MODULE(win)->p2p_fence_coll_results,
+                                     1,
+                                     MPI_SHORT,
+                                     P2P_MODULE(win)->p2p_comm);
+            incoming_reqs = 0;
+            for (i = 0 ; i < ompi_comm_size(P2P_MODULE(win)->p2p_comm) ; ++i) {
+                incoming_reqs += P2P_MODULE(win)->p2p_fence_coll_results[i];
+            }
+            break;
+        default:
+            assert(0 == 1);
+        }
+
         if (OMPI_SUCCESS != ret) {
             /* put the stupid data back for the user.  This is not
                cheap, but the user lost his data if we don't. */
