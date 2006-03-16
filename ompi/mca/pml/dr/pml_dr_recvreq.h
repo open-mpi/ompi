@@ -24,6 +24,7 @@
 #include "ompi_config.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
+#include "ompi/datatype/datatype_checksum.h"
 
 #include "pml_dr.h"
 #include "pml_dr_proc.h"
