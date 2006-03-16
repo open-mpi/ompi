@@ -85,7 +85,7 @@ inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     size_t* max_data, int32_t* freeAfter )
 {
-    pConv->checksum = 1;
+    pConv->checksum = OMPI_CSUM_ZERO;
     pConv->csum_ui1 = 0;
     pConv->csum_ui2 = 0;
 
@@ -109,7 +109,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       struct iovec* iov, uint32_t* out_size,
                                       size_t* max_data, int32_t* freeAfter )
 {
-    pConv->checksum = 1;
+    pConv->checksum = OMPI_CSUM_ZERO;
     pConv->csum_ui1 = 0;
     pConv->csum_ui2 = 0;
 
