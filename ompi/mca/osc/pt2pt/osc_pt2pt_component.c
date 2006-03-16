@@ -34,6 +34,8 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/datatype/dt_arch.h"
 
+static int ompi_osc_pt2pt_component_open(void);
+
 ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
     { /* ompi_osc_base_component_t */
         { /* ompi_base_component_t */
@@ -42,7 +44,7 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
             1,
             0,
             0,
-            NULL,
+            ompi_osc_pt2pt_component_open,
             NULL
         },
         { /* mca_base_component_data */
@@ -109,6 +111,20 @@ want_locks(ompi_info_t *info)
     if (OMPI_SUCCESS != ret) return true;
 
     return !no_locks;
+}
+
+static int fence_sync_index;
+
+static int
+ompi_osc_pt2pt_component_open(void)
+{
+    fence_sync_index = 
+        mca_base_param_reg_string(&mca_osc_pt2pt_component.super.osc_version,
+                                  "fence_sync_method",
+                                  "How to synchronize fence: reduce_scatter, allreduce, alltoall",
+                                  false, false, "reduce_scatter", NULL);
+
+    return OMPI_SUCCESS;
 }
 
 
@@ -195,6 +211,8 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 {
     ompi_osc_pt2pt_module_t *module;
     int ret, i;
+    char *sync_string;
+
     /* create module structure */
     module = malloc(sizeof(ompi_osc_pt2pt_module_t));
     if (NULL == module) return OMPI_ERROR;
@@ -271,6 +289,35 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     }
     for (i = 0 ; i < ompi_comm_size(module->p2p_comm) ; ++i) {
         module->p2p_fence_coll_counts[i] = 1;
+    }
+
+    module->p2p_fence_coll_results = malloc(sizeof(int) * 
+                                            ompi_comm_size(module->p2p_comm));
+    if (NULL == module->p2p_fence_coll_counts) {
+        free(module->p2p_fence_coll_counts);
+        free(module->p2p_copy_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_long_msgs);
+        free(module->p2p_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return ret;
+    }
+
+    /* figure out what sync method to use */
+    mca_base_param_lookup_string(fence_sync_index, &sync_string);
+    if (0 == strcmp(sync_string, "reduce_scatter")) {
+        module->p2p_fence_sync_type = OSC_SYNC_REDUCE_SCATTER;
+    } else if (0 == strcmp(sync_string, "allreduce")) {
+        module->p2p_fence_sync_type = OSC_SYNC_ALLREDUCE;
+    } else if (0 == strcmp(sync_string, "alltoall")) {
+        module->p2p_fence_sync_type = OSC_SYNC_ALLTOALL;
+    } else {
+        opal_output(0, "invalid value for fence_sync_method parameter: %s\n", sync_string);
+        return OMPI_ERROR;
     }
 
     /* pwsc data */
