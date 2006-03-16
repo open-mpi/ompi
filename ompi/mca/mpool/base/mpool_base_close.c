@@ -34,6 +34,12 @@ int mca_mpool_base_close(void)
 {
   opal_list_item_t *item;
   mca_mpool_base_selected_module_t *sm;
+  int32_t modules_length;
+
+  /* Need the initial length in order to know if some of the initializations
+   * are done in the open function.
+   */
+  modules_length = opal_list_get_size(&mca_mpool_base_modules);
 
   /* Finalize all the mpool components and free their list items */
 
@@ -60,11 +66,11 @@ int mca_mpool_base_close(void)
                             &mca_mpool_base_components, NULL);
 
   /* deregister memory free callback */
-  if(mca_mpool_base_use_mem_hooks && 
+  if( (modules_length > 0) && mca_mpool_base_use_mem_hooks && 
      0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
       opal_mem_hooks_unregister_release(mca_mpool_base_mem_cb);
+      OBJ_DESTRUCT(&mca_mpool_base_mem_cb_array);
   }
-  OBJ_DESTRUCT(&mca_mpool_base_mem_cb_array);
   /* All done */
 
   return OMPI_SUCCESS;
