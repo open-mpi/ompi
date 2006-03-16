@@ -298,11 +298,6 @@ int ompi_group_range_incl(ompi_group_t* group, int n_triplets, int ranges[][3],
             /* positive stride */
             index = first_rank;
             while (index <= last_rank) {
-                /* make sure rank has not already been selected */
-                if (elements_int_list[index] != -1) {
-                    free(elements_int_list);
-		    return MPI_ERR_RANK;
-                }
                 elements_int_list[index] = new_group_size;
                 index += stride;
                 new_group_size++;
@@ -312,11 +307,6 @@ int ompi_group_range_incl(ompi_group_t* group, int n_triplets, int ranges[][3],
             /* negative stride */
             index = first_rank;
             while (index >= last_rank) {
-                /* make sure rank has not already been selected */
-                if (elements_int_list[index] != -1) {
-                    free(elements_int_list);
-		    return MPI_ERR_RANK;
-                }
                 elements_int_list[index] = new_group_size;
                 index += stride;
                 new_group_size++;
@@ -325,10 +315,6 @@ int ompi_group_range_incl(ompi_group_t* group, int n_triplets, int ranges[][3],
         } else {                /* first_rank == last_rank */
 
             index = first_rank;
-            if (elements_int_list[index] != -1) {
-                free(elements_int_list);
-		return MPI_ERR_RANK;
-            }
             elements_int_list[index] = new_group_size;
             new_group_size++;
         }
@@ -406,11 +392,6 @@ int ompi_group_range_excl(ompi_group_t* group, int n_triplets, int ranges[][3],
         if (first_rank < last_rank) {
             /* positive stride */
             for (index = first_rank; index <= last_rank; index += stride) {
-                /* make sure rank has not already been selected */
-                if (elements_int_list[index] != -1) {
-                    free(elements_int_list);
-		    return MPI_ERR_RANK;
-                }
                 elements_int_list[index] = new_group_size;
                 new_group_size++;
             }
@@ -418,11 +399,6 @@ int ompi_group_range_excl(ompi_group_t* group, int n_triplets, int ranges[][3],
         } else if (first_rank > last_rank) {
             /* negative stride */
             for (index = first_rank; index >= last_rank; index += stride) {
-                /* make sure rank has not already been selected */
-                if (elements_int_list[index] != -1) {
-                    free(elements_int_list);
-		    return MPI_ERR_RANK;
-                }
                 elements_int_list[index] = new_group_size;
                 new_group_size++;
             }
@@ -430,10 +406,6 @@ int ompi_group_range_excl(ompi_group_t* group, int n_triplets, int ranges[][3],
         } else {
             /* first_rank == last_rank */
             index = first_rank;
-            if (elements_int_list[index] != -1) {
-                free(elements_int_list);
-		return MPI_ERR_RANK;
-            }
             elements_int_list[index] = new_group_size;
             new_group_size++;
         }
