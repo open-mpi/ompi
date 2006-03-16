@@ -36,7 +36,7 @@ static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
     OBJ_CONSTRUCT(&proc->acked_vfrags, opal_list_t);
-    proc->acked_vfrags_ptr = NULL;
+    proc->acked_vfrags_current = NULL;
 }
 
 
@@ -99,6 +99,7 @@ int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_c
         dr_comm->procs[i].ompi_proc = ompi_comm->c_remote_group->grp_proc_pointers[i];
     }
     dr_comm->num_procs = size;
+    
     return OMPI_SUCCESS;
 }
 

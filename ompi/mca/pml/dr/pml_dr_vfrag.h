@@ -76,6 +76,7 @@ do {                                                                       \
 } while(0)
 
 #if 0
+
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
     opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
@@ -103,6 +104,7 @@ do {                                                                       \
    opal_event_del(&vfrag->ev_ack);                                         \
                                                                            \
 } while(0)
+
 
 #endif
 
