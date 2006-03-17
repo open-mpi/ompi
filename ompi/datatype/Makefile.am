@@ -56,7 +56,7 @@ libdatatype_la_SOURCES = \
 	dt_external32.c \
 	dt_match_size.c \
 	convertor.c position.c \
-	datatype_memcpy.c copy_functions.c get_count.c
+	copy_functions.c get_count.c
 
 libdatatype_la_LIBADD = libdatatype_reliable.la
 
