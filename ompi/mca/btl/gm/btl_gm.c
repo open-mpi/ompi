@@ -78,12 +78,13 @@ mca_btl_gm_module_t mca_btl_gm_module = {
 #if OMPI_ENABLE_MPI_THREADS || OMPI_ENABLE_PROGRESS_THREADS
         mca_btl_gm_send,
         mca_btl_gm_put,
-        mca_btl_gm_get
+        mca_btl_gm_get,
 #else
         mca_btl_gm_send_nl,
         mca_btl_gm_put_nl,
-        mca_btl_gm_get_nl
+        mca_btl_gm_get_nl,
 #endif
+        mca_btl_base_dump
     }
 };
 

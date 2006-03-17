@@ -59,7 +59,8 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_prepare_dst,
         mca_btl_openib_send,
         mca_btl_openib_put,
-        mca_btl_openib_get /* get */ 
+        mca_btl_openib_get,
+        mca_btl_base_dump
     }
 };
 

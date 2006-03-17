@@ -64,7 +64,8 @@ mca_btl_base_module_t mca_btl_self = {
     mca_btl_self_prepare_dst,
     mca_btl_self_send, 
     mca_btl_self_rdma,  /* put */
-    mca_btl_self_rdma   /* get */
+    mca_btl_self_rdma,
+    mca_btl_base_dump
 };
 
 
