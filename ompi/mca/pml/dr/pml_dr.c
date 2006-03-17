@@ -52,6 +52,7 @@ mca_pml_dr_t mca_pml_dr = {
     mca_pml_dr_iprobe,
     mca_pml_dr_probe,
     mca_pml_dr_start,
+    mca_pml_dr_dump,
     32768,
     INT_MAX
     }
@@ -171,5 +172,11 @@ int mca_pml_dr_component_fini(void)
 {
     /* FIX */
     return OMPI_SUCCESS;
+}
+
+void mca_pml_dr_dump(
+    struct ompi_communicator_t* comm,
+    int verbose)
+{
 }
 

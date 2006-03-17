@@ -80,40 +80,46 @@ do {                                                                 \
     }                                                                \
 } while (0)
 
-#define MCA_PML_DR_RECV_FRAG_ALLOC(frag,rc)                     \
-do {                                                            \
-    opal_list_item_t* item;                                     \
-    OMPI_FREE_LIST_WAIT(&mca_pml_dr.recv_frags, item, rc);      \
-    frag = (mca_pml_dr_recv_frag_t*)item;                       \
+#define MCA_PML_DR_RECV_FRAG_ALLOC(frag,rc)                          \
+do {                                                                 \
+    opal_list_item_t* item;                                          \
+    OMPI_FREE_LIST_WAIT(&mca_pml_dr.recv_frags, item, rc);           \
+    frag = (mca_pml_dr_recv_frag_t*)item;                            \
 } while(0)
 
 
-#define MCA_PML_DR_RECV_FRAG_INIT(frag,oproc,hdr,segs,cnt,btl)  \
-do {                                                            \
-    size_t i;                                                   \
-    mca_btl_base_segment_t* macro_segments = frag->segments;    \
-    mca_pml_dr_buffer_t** buffers = frag->buffers;              \
-                                                                \
-    /* init recv_frag */                                        \
-    frag->btl = btl;                                            \
-    frag->hdr = *(mca_pml_dr_hdr_t*)hdr;                        \
-    frag->num_segments = cnt;                                   \
-    frag->csum = 0;                                             \
-    frag->proc = oproc;                                         \
-                                                                \
-    /* copy over data */                                        \
-    for(i=0; i<cnt; i++) {                                      \
-        opal_list_item_t* item;                                 \
-        mca_pml_dr_buffer_t* buff;                              \
-        OMPI_FREE_LIST_WAIT(&mca_pml_dr.buffers, item, rc);     \
-        buff = (mca_pml_dr_buffer_t*)item;                      \
-        buffers[i] = buff;                                      \
-        macro_segments[i].seg_addr.pval = buff->addr;           \
-        macro_segments[i].seg_len = segs[i].seg_len;            \
-        memcpy(buff->addr,                                      \
-               segs[i].seg_addr.pval,                           \
-               segs[i].seg_len);                                \
-    }                                                           \
+#define MCA_PML_DR_RECV_FRAG_INIT(frag,oproc,hdr,segs,cnt,btl,csum)  \
+do {                                                                 \
+    size_t i;                                                        \
+    uint32_t ui1 = 0;                                                \
+    uint32_t ui2 = 0;                                                \
+    mca_btl_base_segment_t* macro_segments = frag->segments;         \
+    mca_pml_dr_buffer_t** buffers = frag->buffers;                   \
+                                                                     \
+    /* init recv_frag */                                             \
+    frag->btl = btl;                                                 \
+    frag->hdr = *(mca_pml_dr_hdr_t*)hdr;                             \
+    frag->num_segments = cnt;                                        \
+    frag->csum = 0;                                                  \
+    frag->proc = oproc;                                              \
+                                                                     \
+    /* copy over data */                                             \
+    for(i=0; i<cnt; i++) {                                           \
+        opal_list_item_t* item;                                      \
+        mca_pml_dr_buffer_t* buff;                                   \
+        OMPI_FREE_LIST_WAIT(&mca_pml_dr.buffers, item, rc);          \
+        buff = (mca_pml_dr_buffer_t*)item;                           \
+        buffers[i] = buff;                                           \
+        macro_segments[i].seg_addr.pval = buff->addr;                \
+        macro_segments[i].seg_len = segs[i].seg_len;                 \
+        csum += OPAL_CSUM_BCOPY_PARTIAL(                             \
+               segs[i].seg_addr.pval,                                \
+               buff->addr,                                           \
+               segs[i].seg_len,                                      \
+               segs[i].seg_len,                                      \
+               &ui1,                                                 \
+               &ui2);                                                \
+    }                                                                \
 } while(0)
 
 

@@ -24,7 +24,6 @@
 #include "ompi_config.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
-#include "ompi/datatype/datatype_checksum.h"
 
 #include "pml_dr.h"
 #include "pml_dr_proc.h"
@@ -230,6 +229,7 @@ do {                                                                            
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
+                                         CONVERTOR_WITH_CHECKSUM,                    \
                                          &(request)->req_recv.req_convertor );       \
     } else {                                                                         \
         (request)->req_proc = NULL;                                                  \
@@ -281,7 +281,7 @@ do {                                                                            
         csum = request->req_recv.req_convertor.checksum;                          \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
-        csum = OMPI_CSUM_ZERO;                                                    \
+        csum = OPAL_CSUM_ZERO;                                                    \
     }                                                                             \
 } while (0)
 

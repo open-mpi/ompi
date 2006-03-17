@@ -86,27 +86,53 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 }
 
 
-#define MCA_PML_DR_SEND_REQUEST_INIT(                                      \
-    sendreq,                                                               \
-    buf,                                                                   \
-    count,                                                                 \
-    datatype,                                                              \
-    dst,                                                                   \
-    tag,                                                                   \
-    comm,                                                                  \
-    sendmode,                                                              \
-    persistent)                                                            \
-{                                                                          \
-    MCA_PML_BASE_SEND_REQUEST_INIT(&sendreq->req_send,                     \
-        buf,                                                               \
-        count,                                                             \
-        datatype,                                                          \
-        dst,                                                               \
-        tag,                                                               \
-        comm,                                                              \
-        sendmode,                                                          \
-        persistent);                                                       \
-}
+#define MCA_PML_DR_SEND_REQUEST_INIT(                                               \
+    sendreq,                                                                        \
+    addr,                                                                           \
+    count,                                                                          \
+    datatype,                                                                       \
+    peer,                                                                           \
+    tag,                                                                            \
+    comm,                                                                           \
+    sendmode,                                                                       \
+    persistent)                                                                     \
+do {                                                                                \
+    /* increment reference counts */                                                \
+    OBJ_RETAIN(comm);                                                               \
+    OBJ_RETAIN(datatype);                                                           \
+                                                                                    \
+    OMPI_REQUEST_INIT(&(sendreq)->req_send.req_base.req_ompi, persistent);          \
+    (sendreq)->req_send.req_addr = addr;                                            \
+    (sendreq)->req_send.req_count = count;                                          \
+    (sendreq)->req_send.req_datatype = datatype;                                    \
+    (sendreq)->req_send.req_send_mode = sendmode;                                   \
+    (sendreq)->req_send.req_base.req_addr = addr;                                   \
+    (sendreq)->req_send.req_base.req_count = count;                                 \
+    (sendreq)->req_send.req_base.req_datatype = datatype;                           \
+    (sendreq)->req_send.req_base.req_peer = (int32_t)peer;                          \
+    (sendreq)->req_send.req_base.req_tag = (int32_t)tag;                            \
+    (sendreq)->req_send.req_base.req_comm = comm;                                   \
+    (sendreq)->req_send.req_base.req_pml_complete = (persistent ? true : false);    \
+    (sendreq)->req_send.req_base.req_free_called = false;                           \
+    (sendreq)->req_send.req_base.req_ompi.req_status._cancelled = 0;                \
+                                                                                    \
+    /* initialize datatype convertor for this request */                            \
+    if(count > 0) {                                                                 \
+        /* We will create a convertor specialized for the        */                 \
+        /* remote architecture and prepared with the datatype.   */                 \
+        ompi_convertor_copy_and_prepare_for_send(                                   \
+                            (sendreq)->req_send.req_base.req_proc->proc_convertor,  \
+                            (sendreq)->req_send.req_base.req_datatype,              \
+                            (sendreq)->req_send.req_base.req_count,                 \
+                            (sendreq)->req_send.req_base.req_addr,                  \
+                            CONVERTOR_WITH_CHECKSUM,                                \
+                            &(sendreq)->req_send.req_convertor );                   \
+        ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
+                                       &((sendreq)->req_send.req_bytes_packed) );   \
+    } else {                                                                        \
+         (sendreq)->req_send.req_bytes_packed = 0;                                  \
+    }                                                                               \
+} while(0)
 
 
 /**

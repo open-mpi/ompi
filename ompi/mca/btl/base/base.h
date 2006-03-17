@@ -57,7 +57,10 @@ OBJ_CLASS_DECLARATION(mca_btl_base_selected_module_t);
 OMPI_DECLSPEC  int mca_btl_base_open(void);
 OMPI_DECLSPEC  int mca_btl_base_select(bool enable_progress_threads, bool enable_mpi_threads);
 OMPI_DECLSPEC  int mca_btl_base_close(void);
-OMPI_DECLSPEC  void mca_btl_base_dump(mca_btl_base_module_t*);
+OMPI_DECLSPEC  void mca_btl_base_dump(
+    struct mca_btl_base_module_t*,
+    struct mca_btl_base_endpoint_t*,
+    int verbose);
 
 
 

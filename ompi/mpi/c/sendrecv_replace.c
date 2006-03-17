@@ -81,7 +81,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         /* initialize convertor to unpack recv buffer */
         OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor, datatype,
-                                                  count, buf, &convertor );
+                                                  count, buf, 0, &convertor );
 
         /* setup a buffer for recv */
         ompi_convertor_get_packed_size( &convertor, &packed_size );

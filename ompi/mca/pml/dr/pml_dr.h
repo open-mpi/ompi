@@ -25,8 +25,9 @@
 #include "ompi_config.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
-#include "ompi/class/ompi_free_list.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/crc.h"
+#include "ompi/class/ompi_free_list.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/pml_base_request.h"
@@ -34,7 +35,6 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
-#include "ompi/datatype/datatype_internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -209,6 +209,11 @@ extern int mca_pml_dr_recv(
     int tag,
     struct ompi_communicator_t* comm,
     ompi_status_public_t* status
+);
+
+extern void mca_pml_dr_dump(
+    struct ompi_communicator_t* comm,
+    int verbose
 );
 
 extern int mca_pml_dr_progress(void);

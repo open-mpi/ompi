@@ -123,6 +123,7 @@ ompi_osc_pt2pt_sendreq_init_origin(ompi_osc_pt2pt_sendreq_t *sendreq,
                                                  origin_dt,
                                                  origin_count,
                                                  origin_addr,
+                                                 0,
                                                  &(sendreq->req_origin_convertor));
         ompi_convertor_get_packed_size(&sendreq->req_origin_convertor,
                                        &sendreq->req_origin_bytes_packed);
@@ -131,6 +132,7 @@ ompi_osc_pt2pt_sendreq_init_origin(ompi_osc_pt2pt_sendreq_t *sendreq,
                                                  origin_dt,
                                                  origin_count,
                                                  origin_addr,
+                                                 0,
                                                  &(sendreq->req_origin_convertor));
         ompi_convertor_get_packed_size(&sendreq->req_origin_convertor,
                                        &sendreq->req_origin_bytes_packed);        

@@ -200,6 +200,11 @@ extern int mca_pml_ob1_recv(
     ompi_status_public_t* status
 );
 
+extern void mca_pml_ob1_dump(
+    struct ompi_communicator_t* comm,
+    int verbose
+);
+
 extern int mca_pml_ob1_progress(void);
 
 extern int mca_pml_ob1_start(

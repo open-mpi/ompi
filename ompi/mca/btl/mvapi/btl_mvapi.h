@@ -488,6 +488,17 @@ extern void mca_btl_mvapi_send_frag_return(
 );
 
 
+/*
+ * Dump state of btl/queues
+ */
+                                                                                                            
+extern void mca_btl_mvapi_dump(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    int verbose
+);
+
+
 int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t* mvapi_btl); 
 
 

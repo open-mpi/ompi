@@ -49,7 +49,7 @@ int MPI_Pack_external_size(char *datarep, int incount,
     }
     /* the resulting convertor will be set to the position ZERO */
     ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              datatype, incount, NULL, &local_convertor );
+                                              datatype, incount, NULL, 0, &local_convertor );
 
     ompi_convertor_get_packed_size( &local_convertor, &length );
     *size = (MPI_Aint)length;

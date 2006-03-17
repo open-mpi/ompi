@@ -105,6 +105,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                             (request)->req_base.req_datatype,             \
                             (request)->req_base.req_count,                \
                             (request)->req_base.req_addr,                 \
+                            0,                                            \
                             &(request)->req_convertor );                  \
          ompi_convertor_get_packed_size( &(request)->req_convertor,       \
                                          &((request)->req_bytes_packed) );\

@@ -829,6 +829,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                             sendreq->req_send.req_base.req_datatype,
                             sendreq->req_send.req_base.req_count,
                             sendreq->req_send.req_base.req_addr,
+                            0,
                             &convertor);
                         ompi_convertor_set_position(&convertor, &position);
                         OBJ_DESTRUCT( &convertor );

@@ -53,6 +53,7 @@ mca_pml_ob1_t mca_pml_ob1 = {
     mca_pml_ob1_iprobe,
     mca_pml_ob1_probe,
     mca_pml_ob1_start,
+    mca_pml_ob1_dump,
     32768,
     INT_MAX
     }
@@ -174,5 +175,31 @@ int mca_pml_ob1_component_fini(void)
 {
     /* FIX */
     return OMPI_SUCCESS;
+}
+
+/*
+ * diagnostics
+ */
+
+void mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
+{
+    struct mca_pml_comm_t* pml_comm = comm->c_pml_comm;
+    size_t i;
+
+    /* iterate through all procs on communicator */
+    for(i=0; i<pml_comm->num_procs; i++) {
+        mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
+        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_ompi->proc_pml;
+        size_t n;
+
+        opal_output(0, "[Rank %d]\n", i);
+        /* dump all receive queues */
+
+        /* dump all btls */
+        for(n=0; n<ep->btl_eager.arr_size; n++) {
+            mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[i];
+            bml_btl->btl->btl_dump(bml_btl->btl, bml_btl->btl_endpoint, verbose);
+        }
+    }
 }
 

@@ -508,6 +508,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
                                                  datatype,
                                                  header->hdr_target_count,
                                                  target,
+                                                 0,
                                                  &convertor);
         iov.iov_len = header->hdr_msg_length;
         iov.iov_base = inbuf;

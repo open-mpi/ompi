@@ -61,6 +61,7 @@ ompi_osc_pt2pt_process_op(ompi_osc_pt2pt_module_t *module,
                                                  datatype,
                                                  header->hdr_target_count,
                                                  target_buffer,
+                                                 0,
                                                  &convertor);
 
         /* short circuit the reduction operation MPI_REPLACE - it just

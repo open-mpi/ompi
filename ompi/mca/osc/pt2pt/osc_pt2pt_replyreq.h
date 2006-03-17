@@ -104,6 +104,7 @@ ompi_osc_pt2pt_replyreq_init_target(ompi_osc_pt2pt_replyreq_t *replyreq,
                                              target_dt,
                                              target_count,
                                              target_addr,
+                                             0,
                                              &(replyreq->rep_target_convertor));
     ompi_convertor_get_packed_size(&replyreq->rep_target_convertor,
                                    &replyreq->rep_target_bytes_packed);

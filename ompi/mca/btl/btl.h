@@ -489,7 +489,9 @@ typedef int (*mca_btl_base_module_get_fn_t)(
  */
 
 typedef void (*mca_btl_base_module_dump_fn_t)(
-    struct mca_btl_base_module_t* btl
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    int verbose
 );
 
 
