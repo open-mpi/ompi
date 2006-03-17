@@ -43,21 +43,19 @@ libdatatype_la_SOURCES = \
 	dt_destroy.c \
 	dt_module.c \
 	dt_optimize.c \
-	dt_pack.c \
+	datatype_pack.c datatype_unpack.c \
 	dt_sndrcv.c \
-	dt_unpack.c \
 	fake_stack.c \
 	dt_args.c \
 	dt_arch.c \
 	dt_copy.c \
 	dt_external32.c \
 	dt_match_size.c \
-	convertor.c \
-	new_position.c \
+	convertor.c position.c \
 	datatype_memcpy.c copy_functions.c get_count.c
 
 # these sources will be compiled with the special -D
-libdatatype_reliable_la_SOURCES = dt_pack.c dt_unpack.c
+libdatatype_reliable_la_SOURCES = datatype_pack.c datatype_unpack.c
 libdatatype_reliable_la_CFLAGS = -DCHECKSUM $(AM_CFLAGS)
 
 # Conditionally install the header files
