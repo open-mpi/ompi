@@ -54,7 +54,8 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
         mca_btl_mx_put,
-        NULL /* get */ 
+        NULL, /* get */ 
+        mca_btl_base_dump 
     }
 };
 

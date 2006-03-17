@@ -55,7 +55,8 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         mca_btl_tcp_prepare_dst,
         mca_btl_tcp_send,
         mca_btl_tcp_put,
-        NULL /* get */ 
+        NULL, /* get */ 
+        mca_btl_base_dump
     }
 };
 

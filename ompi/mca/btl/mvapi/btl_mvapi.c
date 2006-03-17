@@ -59,7 +59,8 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
         mca_btl_mvapi_prepare_dst,
         mca_btl_mvapi_send,
         mca_btl_mvapi_put,
-        mca_btl_mvapi_get
+        mca_btl_mvapi_get,
+        mca_btl_mvapi_dump
     }
 };
 
@@ -845,4 +846,16 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
     
     
     return OMPI_SUCCESS;
+}
+
+
+/*
+ * Dump state of btl/queues
+ */
+
+void mca_btl_mvapi_dump(mca_btl_base_module_t* btl)
+{
+    mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*)btl;
+
+
 }

@@ -105,7 +105,8 @@ mca_btl_sm_t mca_btl_sm[2] = {
         NULL,
         mca_btl_sm_send, 
         NULL,  /* put */
-        NULL   /* get */
+        NULL,  /* get */
+        mca_btl_base_dump
         }
     },
     {
@@ -129,8 +130,9 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_prepare_src,
         NULL,
         mca_btl_sm_send,  
+        NULL, /* put function */
         NULL, /* get function */
-        NULL  /* put function */
+        mca_btl_base_dump
         }
     }
 };

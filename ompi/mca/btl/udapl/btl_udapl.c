@@ -56,7 +56,8 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         NULL, /* prepare_dst */
         mca_btl_udapl_send,
         NULL, /* put */
-        NULL /* get */ 
+        NULL, /* get */ 
+        mca_btl_base_dump
     }
 };
 

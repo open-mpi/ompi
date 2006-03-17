@@ -21,6 +21,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "base.h"
 #include "btl_base_error.h"
 #include "opal/util/show_help.h"
 #include "orte/util/sys_info.h"
@@ -62,4 +63,9 @@ void mca_btl_base_error_no_nics(const char* transport,
                    true, procid, transport, orte_system_info.nodename,
                    nic_name);
     free(procid);
+}
+
+
+void mca_btl_base_dump(mca_btl_base_module_t* btl)
+{
 }
