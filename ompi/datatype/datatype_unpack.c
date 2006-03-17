@@ -23,7 +23,7 @@
 #include "ompi/datatype/datatype_internal.h"
 
 #if OMPI_ENABLE_DEBUG
-int ompi_unpack_debug = 0;
+extern int ompi_unpack_debug;
 #define DO_DEBUG(INST)  if( ompi_unpack_debug ) { INST }
 #else
 #define DO_DEBUG(INST)

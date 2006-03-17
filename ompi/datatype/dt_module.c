@@ -23,10 +23,10 @@
 
 #if OMPI_ENABLE_DEBUG
 #include "opal/mca/base/mca_base_param.h"
-extern int ompi_unpack_debug;
-extern int ompi_pack_debug;
-extern int ompi_copy_debug;
-extern int ompi_position_debug;
+int ompi_unpack_debug   = 0;
+int ompi_pack_debug     = 0;
+int ompi_copy_debug     = 0;
+int ompi_position_debug = 0;
 #endif  /* OMPI_ENABLE_DEBUG */
 
 extern size_t ompi_datatype_memcpy_block_size;

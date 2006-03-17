@@ -368,14 +368,21 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 
     convertor->flags      |= CONVERTOR_RECV;
     convertor->memAlloc_fn = NULL;
-    convertor->fAdvance    = ompi_unpack_general;     /* TODO: just stop complaining */
-    convertor->fAdvance    = ompi_unpack_homogeneous; /* default behaviour */
-    convertor->fAdvance    = ompi_generic_simple_unpack;
 
-    /* TODO: work only on homogeneous architectures */
-    if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
-        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-        convertor->fAdvance = ompi_unpack_homogeneous_contig;
+    if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
+        if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
+            assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+            convertor->fAdvance = ompi_unpack_homogeneous_contig_checksum;
+        } else {
+            convertor->fAdvance = ompi_generic_simple_unpack_checksum;
+        }
+    } else {
+        if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
+            assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+            convertor->fAdvance = ompi_unpack_homogeneous_contig;
+        } else {
+            convertor->fAdvance = ompi_generic_simple_unpack;
+        }
     }
     return OMPI_SUCCESS;
 }
@@ -393,22 +400,31 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 
     convertor->flags            |= CONVERTOR_SEND;
     convertor->memAlloc_fn       = NULL;
-    /* Just to avoid complaint from the compiler */
-    convertor->fAdvance = ompi_pack_general;
-    convertor->fAdvance = ompi_pack_homogeneous_with_memcpy;
-    convertor->fAdvance = ompi_pack_no_conversion;
-    convertor->fAdvance = ompi_generic_simple_pack;
-
-    if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-        if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
-            convertor->fAdvance = ompi_pack_no_conv_contig;
-	else if( 1 >= convertor->count )  /* gaps or no gaps */
-            convertor->fAdvance = ompi_pack_no_conv_contig;
-        else
-            convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps;
+    if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
+        if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
+            assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
+                convertor->fAdvance = ompi_pack_no_conv_contig_checksum;
+            else if( 1 >= convertor->count )  /* gaps or no gaps */
+                convertor->fAdvance = ompi_pack_no_conv_contig_checksum;
+            else
+                convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps_checksum;
+        } else {
+            convertor->fAdvance = ompi_generic_simple_pack_checksum;
+        }
+    } else {
+        if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
+            assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
+                convertor->fAdvance = ompi_pack_no_conv_contig;
+            else if( 1 >= convertor->count )  /* gaps or no gaps */
+                convertor->fAdvance = ompi_pack_no_conv_contig;
+            else
+                convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps;
+        } else {
+            convertor->fAdvance = ompi_generic_simple_pack;
+        }
     }
-
     return OMPI_SUCCESS;
 }
 

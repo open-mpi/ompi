@@ -29,7 +29,7 @@
 #include <stdlib.h>
 
 #if OMPI_ENABLE_DEBUG
-int32_t ompi_position_debug = 0;
+extern int ompi_position_debug;
 #define DO_DEBUG(INST)  if( ompi_position_debug ) { INST }
 #else
 #define DO_DEBUG(INST)
