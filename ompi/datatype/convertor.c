@@ -27,6 +27,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/datatype_checksum.h"
+#include "ompi/datatype/datatype_prototypes.h"
 
 ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {
@@ -326,32 +327,6 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
 
     return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
 }
-
-/*
- * All the conversion functions (pack and unpack) we have. For each
- * function there are 2 versions: one without checksum (using memcpy)
- * and one with checksum.
- */
-extern convertor_advance_fct_t ompi_unpack_general;
-extern convertor_advance_fct_t ompi_unpack_general_checksum;
-extern convertor_advance_fct_t ompi_unpack_homogeneous;
-extern convertor_advance_fct_t ompi_unpack_homogeneous_checksum;
-extern convertor_advance_fct_t ompi_generic_simple_unpack;
-extern convertor_advance_fct_t ompi_generic_simple_unpack_checksum;
-extern convertor_advance_fct_t ompi_unpack_homogeneous_contig;
-extern convertor_advance_fct_t ompi_unpack_homogeneous_contig_checksum;
-extern convertor_advance_fct_t ompi_pack_general;
-extern convertor_advance_fct_t ompi_pack_general_checksum;
-extern convertor_advance_fct_t ompi_pack_homogeneous_with_memcpy;
-extern convertor_advance_fct_t ompi_pack_homogeneous_with_memcpy_checksum;
-extern convertor_advance_fct_t ompi_pack_no_conversion;
-extern convertor_advance_fct_t ompi_pack_no_conversion_checksum;
-extern convertor_advance_fct_t ompi_generic_simple_pack;
-extern convertor_advance_fct_t ompi_generic_simple_pack_checksum;
-extern convertor_advance_fct_t ompi_pack_no_conv_contig;
-extern convertor_advance_fct_t ompi_pack_no_conv_contig_checksum;
-extern convertor_advance_fct_t ompi_pack_no_conv_contig_with_gaps;
-extern convertor_advance_fct_t ompi_pack_no_conv_contig_with_gaps_checksum;
 
 int32_t
 ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,

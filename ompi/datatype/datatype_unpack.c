@@ -31,6 +31,7 @@ extern int ompi_unpack_debug;
 
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_unpack.h"
+#include "ompi/datatype/datatype_prototypes.h"
 
 #if defined(CHECKSUM)
 #define ompi_unpack_general_function            ompi_unpack_general_checksum
@@ -43,30 +44,6 @@ extern int ompi_unpack_debug;
 #define ompi_unpack_homogeneous_contig_function ompi_unpack_homogeneous_contig
 #define ompi_generic_simple_unpack_function     ompi_generic_simple_unpack
 #endif  /* defined(CHECKSUM) */
-
-int32_t
-ompi_unpack_general_function( ompi_convertor_t* pConvertor,
-                              struct iovec* iov,
-                              uint32_t* out_size,
-                              size_t* max_data,
-                              int32_t* freeAfter );
-int32_t
-ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
-                                  struct iovec* iov,
-                                  uint32_t* out_size,
-                                  size_t* max_data,
-                                  int32_t* freeAfter );
-int32_t
-ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
-                                         struct iovec* iov,
-                                         uint32_t* out_size,
-                                         size_t* max_data,
-                                         int32_t* freeAfter );
-int32_t
-ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
-                                     struct iovec* iov, uint32_t* out_size,
-                                     size_t* max_data,
-                                     int32_t* freeAfter );
 
 /*
  *  Remember that the first item in the stack (ie. position 0) is the number

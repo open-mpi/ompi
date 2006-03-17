@@ -31,6 +31,7 @@ extern int ompi_pack_debug;
 
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_pack.h"
+#include "ompi/datatype/datatype_prototypes.h"
 
 #if defined(CHECKSUM)
 #define ompi_pack_general_function                  ompi_pack_general_checksum
@@ -48,41 +49,6 @@ extern int ompi_pack_debug;
 #define ompi_generic_simple_pack_function ompi_generic_simple_pack
 #endif  /* defined(CHECKSUM) */
 
-
-int32_t
-ompi_pack_general_function( ompi_convertor_t* pConvertor,
-                            struct iovec* iov, uint32_t* out_size,
-                            size_t* max_data,
-                            int32_t* freeAfter );
-int32_t
-ompi_pack_homogeneous_with_memcpy_function( ompi_convertor_t* pConv,
-                                            struct iovec* iov,
-                                            uint32_t* out_size,
-                                            size_t* max_data,
-                                            int* freeAfter );
-int32_t
-ompi_pack_no_conversion_function( ompi_convertor_t* pConv,
-                                  struct iovec* iov,
-                                  uint32_t *out_size,
-                                  size_t* max_data,
-                                  int* freeAfter );
-int32_t
-ompi_pack_no_conv_contig_function( ompi_convertor_t* pConv,
-                                   struct iovec* iov,
-                                   uint32_t* out_size,
-                                   size_t* max_data,
-                                   int* freeAfter );
-int32_t
-ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
-                                             struct iovec* iov,
-                                             uint32_t* out_size,
-                                             size_t* max_data,
-                                             int* freeAfter );
-int32_t
-ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
-                                   struct iovec* iov, uint32_t* out_size,
-                                   size_t* max_data,
-                                   int32_t* freeAfter );
 
 int32_t
 ompi_pack_general_function( ompi_convertor_t* pConvertor,
