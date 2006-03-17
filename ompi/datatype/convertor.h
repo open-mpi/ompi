@@ -44,6 +44,7 @@ extern "C" {
 #define CONVERTOR_SEND             0x00040000
 #define CONVERTOR_HOMOGENEOUS      0x00080000
 #define CONVERTOR_CLONE            0x00100000
+#define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_TYPE_MASK        0x00FF0000
 #define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
@@ -58,8 +59,8 @@ typedef int32_t (*conversion_fct_t)( uint32_t count,
 
 typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
-                                            struct iovec* pInputv,
-                                            uint32_t* inputCount,
+                                            struct iovec* iov,
+                                            uint32_t* out_size,
                                             size_t* max_data,
                                             int32_t* freeAfter );
 typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
@@ -280,24 +281,6 @@ ompi_convertor_clone_with_position( const ompi_convertor_t* source,
 OMPI_DECLSPEC void ompi_convertor_dump( ompi_convertor_t* convertor );
 OMPI_DECLSPEC void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
                                         const union dt_elem_desc* pDesc, const char* name );
-
-/*
- *
- */
-OMPI_DECLSPEC int
-ompi_convertor_generic_simple_pack( ompi_convertor_t* pConvertor,
-                                    struct iovec* iov, uint32_t* out_size,
-                                    size_t* max_data,
-                                    int32_t* freeAfter );
-    
-/*
- *
- */
-OMPI_DECLSPEC int
-ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
-                                      struct iovec* iov, uint32_t* out_size,
-                                      size_t* max_data,
-                                      int32_t* freeAfter );
 
 /*
  *

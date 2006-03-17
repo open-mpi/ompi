@@ -23,18 +23,6 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-#include <stdlib.h>
-
-#if OMPI_ENABLE_DEBUG
-int ompi_unpack_debug = 0;
-#define DO_DEBUG(INST)  if( ompi_unpack_debug ) { INST }
-#else
-#define DO_DEBUG(INST)
-#endif  /* OMPI_ENABLE_DEBUG */
-
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_unpack.h"
 
@@ -48,11 +36,11 @@ int ompi_unpack_debug = 0;
  *   contiguous but with a gap in the begining or at the end.
  * - the DT_CONTIGUOUS flag for the type DT_END_LOOP is meaningless.
  */
-
-int ompi_convertor_generic_simple_unpack( ompi_convertor_t* pConvertor,
-                                          struct iovec* iov, uint32_t* out_size,
-                                          size_t* max_data,
-                                          int32_t* freeAfter )
+int32_t
+ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
+                                     struct iovec* iov, uint32_t* out_size,
+                                     size_t* max_data,
+                                     int32_t* freeAfter )
 {
     dt_stack_t* pStack;                /* pointer to the position on the stack */
     uint32_t pos_desc;                 /* actual position in the description of the derived datatype */

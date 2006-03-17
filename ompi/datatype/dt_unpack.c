@@ -22,30 +22,51 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
 
-#ifdef HAVE_ALLOCA_H
-#include <alloca.h>
-#endif
-#include <stdlib.h>
+#if OMPI_ENABLE_DEBUG
+int ompi_unpack_debug = 0;
+#define DO_DEBUG(INST)  if( ompi_unpack_debug ) { INST }
+#else
+#define DO_DEBUG(INST)
+#endif  /* OMPI_ENABLE_DEBUG */
 
 #include "ompi/datatype/datatype_checksum.h"
+#include "ompi/datatype/datatype_unpack.h"
 
-void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
-                          const union dt_elem_desc* pDesc, const char* name )
-{
-    opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
-    for( ; stack_pos >= 0; stack_pos-- ) {
-        opal_output( 0, "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
-                     pStack[stack_pos].count, pStack[stack_pos].disp, pStack[stack_pos].end_loop );
-        if( pStack->index != -1 )
-            opal_output( 0, "\t[desc count %d disp %ld extent %d]\n",
-                         pDesc[pStack[stack_pos].index].elem.count,
-                         pDesc[pStack[stack_pos].index].elem.disp,
-                         pDesc[pStack[stack_pos].index].elem.extent );
-        else
-            opal_output( 0, "\n" );
-    }
-    opal_output( 0, "\n" );
-}
+#if defined(CHECKSUM)
+#define ompi_unpack_general_function            ompi_unpack_general_checksum
+#define ompi_unpack_homogeneous_function        ompi_unpack_homogeneous_checksum
+#define ompi_unpack_homogeneous_contig_function ompi_unpack_homogeneous_contig_checksum
+#define ompi_generic_simple_unpack_function     ompi_generic_simple_unpack_checksum
+#else
+#define ompi_unpack_general_function            ompi_unpack_general
+#define ompi_unpack_homogeneous_function        ompi_unpack_homogeneous
+#define ompi_unpack_homogeneous_contig_function ompi_unpack_homogeneous_contig
+#define ompi_generic_simple_unpack_function     ompi_generic_simple_unpack
+#endif  /* defined(CHECKSUM) */
+
+int32_t
+ompi_unpack_general_function( ompi_convertor_t* pConvertor,
+                              struct iovec* iov,
+                              uint32_t* out_size,
+                              size_t* max_data,
+                              int32_t* freeAfter );
+int32_t
+ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
+                                  struct iovec* iov,
+                                  uint32_t* out_size,
+                                  size_t* max_data,
+                                  int32_t* freeAfter );
+int32_t
+ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
+                                         struct iovec* iov,
+                                         uint32_t* out_size,
+                                         size_t* max_data,
+                                         int32_t* freeAfter );
+int32_t
+ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
+                                     struct iovec* iov, uint32_t* out_size,
+                                     size_t* max_data,
+                                     int32_t* freeAfter );
 
 /*
  *  Remember that the first item in the stack (ie. position 0) is the number
@@ -59,11 +80,12 @@ void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
-					  struct iovec* iov,
-					  uint32_t* out_size,
-					  size_t* max_data,
-					  int32_t* freeAfter )
+int32_t
+ompi_unpack_general_function( ompi_convertor_t* pConvertor,
+                              struct iovec* iov,
+                              uint32_t* out_size,
+                              size_t* max_data,
+                              int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
     uint32_t pos_desc;     /* actual position in the description of the derived datatype */
@@ -173,11 +195,12 @@ static int ompi_convertor_unpack_general( ompi_convertor_t* pConvertor,
     return 0;
 }
 
-static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
-					      struct iovec* iov,
-					      uint32_t* out_size,
-					      size_t* max_data,
-					      int32_t* freeAfter )
+int32_t
+ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
+                                  struct iovec* iov,
+                                  uint32_t* out_size,
+                                  size_t* max_data,
+                                  int32_t* freeAfter )
 {
     dt_stack_t* pStack;    /* pointer to the position on the stack */
     uint32_t pos_desc;     /* actual position in the description of the derived datatype */
@@ -321,11 +344,12 @@ static int ompi_convertor_unpack_homogeneous( ompi_convertor_t* pConv,
     return 0;
 }
 
-static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
-						     struct iovec* iov,
-						     uint32_t* out_size,
-						     size_t* max_data,
-						     int32_t* freeAfter )
+int32_t
+ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
+                                         struct iovec* iov,
+                                         uint32_t* out_size,
+                                         size_t* max_data,
+                                         int32_t* freeAfter )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
     char *user_memory, *packed_buffer;
@@ -402,369 +426,175 @@ static int ompi_convertor_unpack_homogeneous_contig( ompi_convertor_t* pConv,
     return 0;
 }
 
-/* 
- * This function is used to copy data from one buffer to another.  The assumption
- *     is that the number of bytes per element to copy at the source and destination 
- *     are the same.
- *   count - number of instances of a given data-type to copy
- *   from - point to the source buffer
- *   to - pointer to the destination buffer
- *   from_len - length of source buffer (in bytes)
- *   to_len - length of destination buffer (in bytes)
- *   from_extent - extent of the source data type (in bytes)
- *   to_extent - extent of the destination data type (in bytes)
- *   
- * Return value: Number of elements of type TYPE copied
+/* The pack/unpack functions need a cleanup. I have to create a proper interface to access
+ * all basic functionalities, hence using them as basic blocks for all conversion functions.
+ *
+ * But first let's make some global assumptions:
+ * - a datatype (with the flag DT_DATA set) will have the contiguous flags set if and only if
+ *   the data is really contiguous (extent equal with size)
+ * - for the DT_LOOP type the DT_CONTIGUOUS flag set means that the content of the loop is
+ *   contiguous but with a gap in the begining or at the end.
+ * - the DT_CONTIGUOUS flag for the type DT_END_LOOP is meaningless.
  */
-#define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
-static int copy_##TYPENAME( uint32_t count,                             \
-                            char* from, uint32_t from_len, long from_extent, \
-                            char* to, uint32_t to_len, long to_extent ) \
-{                                                                       \
-    uint32_t i;                                                         \
-    uint32_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */      \
-    uint32_t local_TYPE_size = (COUNT) * sizeof(TYPE);                  \
-                                                                        \
-    /* make sure the remote buffer is large enough to hold the data */  \
-    if( (remote_TYPE_size * count) > from_len ) {                       \
-        count = from_len / remote_TYPE_size;                            \
-        if( (count * remote_TYPE_size) != from_len ) {                  \
-            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
-                  from_len - (count * remote_TYPE_size) );              \
-        }                                                               \
-        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPE, count, from, from_len, to, to_len );               \
-    } else                                                              \
-        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPE, count, from, from_len, to, to_len );               \
-                                                                        \
-    if( (from_extent == (long)local_TYPE_size) &&                       \
-        (to_extent == (long)remote_TYPE_size) ) {                       \
-        /* copy of contigous data at both source and destination */     \
-        MEMCPY( to, from, count * local_TYPE_size );                    \
-    } else {                                                            \
-        /* source or destination are non-contigous */                   \
-        for( i = 0; i < count; i++ ) {                                  \
-            MEMCPY( to, from, local_TYPE_size );                        \
-            to += to_extent;                                            \
-            from += from_extent;                                        \
-        }                                                               \
-    }                                                                   \
-    return count;                                                       \
-}
-
-/* 
- * This function is used to copy data from one buffer to another.  The assumption
- *     is that the number of bytes per element to copy at the source and destination 
- *     are the same.
- *   count - number of instances of a given data-type to copy
- *   from - point to the source buffer
- *   to - pointer to the destination buffer
- *   from_len - length of source buffer (in bytes)
- *   to_len - length of destination buffer (in bytes)
- *   from_extent - extent of the source data type (in bytes)
- *   to_extent - extent of the destination data type (in bytes)
- *   
- * Return value: Number of elements of type TYPE copied
- */
-#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
-static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
-                                      char* from, uint32_t from_len, long from_extent, \
-                                      char* to, uint32_t to_len, long to_extent) \
-{                                                                       \
-    uint32_t i;                                                         \
-    uint32_t remote_TYPE_size = (COUNT); /* TODO */                     \
-    uint32_t local_TYPE_size = (COUNT);                                 \
-                                                                        \
-    if( (remote_TYPE_size * count) > from_len ) {                       \
-        count = from_len / remote_TYPE_size;                            \
-        if( (count * remote_TYPE_size) != from_len ) {                  \
-            DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
-                  from_len - (count * remote_TYPE_size) );              \
-        }                                                               \
-        DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );           \
-    } else                                                              \
-        DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
-              #TYPENAME, count, from, from_len, to, to_len );           \
-                                                                        \
-    if( (from_extent == (long)local_TYPE_size) &&                       \
-        (to_extent == (long)remote_TYPE_size) ) {                       \
-        MEMCPY( to, from, count * local_TYPE_size );                    \
-    } else {                                                            \
-        for( i = 0; i < count; i++ ) {                                  \
-            MEMCPY( to, from, local_TYPE_size );                        \
-            to += to_extent;                                            \
-            from += from_extent;                                        \
-        }                                                               \
-    }                                                                   \
-    return count;                                                       \
-}
-
-/* set up copy functions for the basic C MPI data types */
-COPY_TYPE( char, char, 1 )
-COPY_TYPE( short, short, 1 )
-COPY_TYPE( int, int, 1 )
-COPY_TYPE( float, float, 1 )
-COPY_TYPE( long, long, 1 )
-COPY_TYPE( double, double, 1 )
-COPY_TYPE( long_long, long long, 1 )
-COPY_TYPE( long_double, long double, 1 )
-COPY_TYPE( complex_float, ompi_complex_float_t, 1 )
-COPY_TYPE( complex_double, ompi_complex_double_t, 1 )
-COPY_TYPE( complex_long_double, ompi_complex_long_double_t, 1 )
-COPY_TYPE( wchar, wchar_t, 1 )
-COPY_TYPE( 2int, int, 2 )
-COPY_TYPE( 2float, float, 2 )
-COPY_TYPE( 2double, double, 2 )
-COPY_TYPE( 2complex_float, ompi_complex_float_t, 2 )
-COPY_TYPE( 2complex_double, ompi_complex_double_t, 2 )
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 1 || SIZEOF_BOOL == 1
-#define REQUIRE_COPY_BYTES_1 1
-#else
-#define REQUIRE_COPY_BYTES_1 0
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 2 || SIZEOF_BOOL == 2
-#define REQUIRE_COPY_BYTES_2 1
-#else
-#define REQUIRE_COPY_BYTES_2 0
-#endif
-
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 4 || SIZEOF_BOOL == 4
-#define REQUIRE_COPY_BYTES_4 1
-#else
-#define REQUIRE_COPY_BYTES_4 0
-#endif
-
-#if (SIZEOF_FLOAT + SIZEOF_INT) == 8 || (SIZEOF_LONG + SIZEOF_INT) == 8 || SIZEOF_BOOL == 8
-#define REQUIRE_COPY_BYTES_8 1
-#else
-#define REQUIRE_COPY_BYTES_8 0
-#endif
-
-#if (SIZEOF_DOUBLE + SIZEOF_INT) == 12 || (SIZEOF_LONG + SIZEOF_INT) == 12
-#define REQUIRE_COPY_BYTES_12 1
-#else
-#define REQUIRE_COPY_BYTES_12 0
-#endif
-
-#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
-#define REQUIRE_COPY_BYTES_16 1
-#else
-#define REQUIRE_COPY_BYTES_16 0
-#endif
-
-#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 20
-#define REQUIRE_COPY_BYTES_20 1
-#else
-#define REQUIRE_COPY_BYTES_20 0
-#endif
-
-#if REQUIRE_COPY_BYTES_1
-COPY_CONTIGUOUS_BYTES( bytes, 1 )
-#endif  /* REQUIRE_COPY_BYTES_1 */
-#if REQUIRE_COPY_BYTES_2
-COPY_CONTIGUOUS_BYTES( bytes, 2 )
-#endif  /* REQUIRE_COPY_BYTES_2 */
-#if REQUIRE_COPY_BYTES_4
-COPY_CONTIGUOUS_BYTES( bytes, 4 )
-#endif  /* REQUIRE_COPY_BYTES_4 */
-#if REQUIRE_COPY_BYTES_8
-COPY_CONTIGUOUS_BYTES( bytes, 8 )
-#endif  /* REQUIRE_COPY_BYTES_8 */
-#if REQUIRE_COPY_BYTES_12
-COPY_CONTIGUOUS_BYTES( bytes, 12 )
-#endif  /* REQUIRE_COPY_BYTES_12 */
-#if REQUIRE_COPY_BYTES_16
-COPY_CONTIGUOUS_BYTES( bytes, 16 )
-#endif  /* REQUIRE_COPY_BYTES_16 */
-#if REQUIRE_COPY_BYTES_20
-COPY_CONTIGUOUS_BYTES( bytes, 20 )
-#endif  /* REQUIRE_COPY_BYTES_20 */
-
-/* table of predefined copy functions - one for each MPI type */
-conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
-   (conversion_fct_t)NULL,                      /* DT_LOOP                */
-   (conversion_fct_t)NULL,                      /* DT_END_LOOP            */
-   (conversion_fct_t)NULL,                      /* DT_LB                  */
-   (conversion_fct_t)NULL,                      /* DT_UB                  */
-   (conversion_fct_t)copy_char,                 /* DT_CHAR                */
-   (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */
-   (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */
-   (conversion_fct_t)copy_char,                 /* DT_BYTE                */
-   (conversion_fct_t)copy_short,                /* DT_SHORT               */
-   (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
-   (conversion_fct_t)copy_int,                  /* DT_INT                 */
-   (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */
-   (conversion_fct_t)copy_long,                 /* DT_LONG                */
-   (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */
-   (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */
-   (conversion_fct_t)copy_float,                /* DT_FLOAT               */
-   (conversion_fct_t)copy_double,               /* DT_DOUBLE              */
-   (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */
-   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */
-   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */
-   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */
-   (conversion_fct_t)NULL,                      /* DT_PACKED              */
-#if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
-   (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
-#elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
-   (conversion_fct_t)copy_bytes_4,              /* DT_LOGIC               */
-#elif 1 /* always, some compiler complain if there is not value */
-   NULL,                                        /* DT_LOGIC               */
-#endif
-#if (SIZEOF_FLOAT + SIZEOF_INT) == 8
-   (conversion_fct_t)copy_bytes_8,              /* DT_FLOAT_INT           */
-#else
-#error Complete me please
-#endif
-#if (SIZEOF_DOUBLE + SIZEOF_INT) == 12
-   (conversion_fct_t)copy_bytes_12,             /* DT_DOUBLE_INT          */
-#else
-#error Complete me please
-#endif
-#if (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 12
-   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_DOUBLE_INT     */
-#elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 16
-   (conversion_fct_t)copy_bytes_16,             /* DT_LONG_DOUBLE_INT     */
-#elif (SIZEOF_LONG_DOUBLE + SIZEOF_INT) == 20
-   (conversion_fct_t)copy_bytes_20,             /* DT_LONG_DOUBLE_INT     */
-#else
-#error Complete me please
-#endif
-#if (SIZEOF_LONG + SIZEOF_INT) == 8
-   (conversion_fct_t)copy_bytes_8,              /* DT_LONG_INT            */
-#elif (SIZEOF_LONG + SIZEOF_INT) == 12
-   (conversion_fct_t)copy_bytes_12,             /* DT_LONG_INT            */
-#else
-#error Complete me please
-#endif
-   (conversion_fct_t)copy_2int,                 /* DT_2INT                */
-   (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */
-   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */
-   (conversion_fct_t)copy_float,                /* DT_REAL                */
-   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */
-   (conversion_fct_t)copy_2float,               /* DT_2REAL               */
-   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */
-   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */
-   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */
-   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */
-   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */
-#if SIZEOF_BOOL == 1
-   (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == 4
-   (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == 8
-   (conversion_fct_t)copy_bytes_8,              /* DT_CXX_BOOL            */
-#else
-#error Complete me please
-#endif
-   (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */
-};
-
-extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-
 int32_t
-ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
-                                 const struct ompi_datatype_t* datatype,
-                                 int32_t count,
-                                 const void* pUserBuf )
+ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
+                                     struct iovec* iov, uint32_t* out_size,
+                                     size_t* max_data,
+                                     int32_t* freeAfter )
 {
-    /* Here I should check that the data is not overlapping */
+    dt_stack_t* pStack;                /* pointer to the position on the stack */
+    uint32_t pos_desc;                 /* actual position in the description of the derived datatype */
+    uint32_t count_desc;               /* the number of items already done in the actual pos_desc */
+    uint16_t type = DT_MAX_PREDEFINED; /* type at current position */
+    size_t total_unpacked = 0;         /* total size unpacked this time */
+    dt_elem_desc_t* description;
+    dt_elem_desc_t* pElem;
+    const ompi_datatype_t *pData = pConvertor->pDesc;
+    char *user_memory_base, *packed_buffer;
+    uint32_t iov_len_local, iov_count, required_space = 0;
 
-    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
-                                                count, pUserBuf ) ) {
-        return OMPI_ERROR;
-    }
+    DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
+                           (void*)pConvertor, iov[0].iov_base, (size_t)iov[0].iov_len, *out_size ); );
 
-    convertor->flags      |= CONVERTOR_RECV;
-    convertor->memAlloc_fn = NULL;
-    convertor->fAdvance    = ompi_convertor_unpack_general;     /* TODO: just stop complaining */
-    convertor->fAdvance    = ompi_convertor_unpack_homogeneous; /* default behaviour */
-    convertor->fAdvance    = ompi_convertor_generic_simple_unpack;
+    description = pConvertor->use_desc->desc;
 
-    /* TODO: work only on homogeneous architectures */
-    if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
-        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-        convertor->fAdvance = ompi_convertor_unpack_homogeneous_contig;
-    }
-    return OMPI_SUCCESS;
-}
-
-/* Get the number of elements from the data associated with this convertor that can be
- * retrieved from a recevied buffer with the size iSize.
- * To spped-up this function you should use it with a iSize == to the modulo
- * of the original size and the size of the data.
- * This function should be called with a initialized clean convertor.
- * Return value:
- *   positive = number of basic elements inside
- *   negative = some error occurs
- */
-int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSize )
-{
-    dt_stack_t* pStack;   /* pointer to the position on the stack */
-    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
-    int rc, nbElems = 0;
-    int stack_pos = 0;
-    dt_elem_desc_t* pElems;
-
-    /* Normally the size should be less or equal to the size of the datatype.
-     * This function does not support a iSize bigger than the size of the datatype.
+    /* For the first step we have to add both displacement to the source. After in the
+     * main while loop we will set back the source_base to the correct value. This is
+     * due to the fact that the convertor can stop in the middle of a data with a count
      */
-    assert( (uint32_t)iSize <= datatype->size );
-    DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
-    pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
-    pStack->count    = 1;
-    pStack->index    = -1;
-    pStack->disp     = 0;
-    pElems           = datatype->desc.desc;
-    pStack->end_loop = datatype->desc.used;
-    pos_desc         = 0;
+    user_memory_base = pConvertor->pBaseBuf;
+    pStack = pConvertor->pStack + pConvertor->stack_pos;
+    pos_desc          = pStack->index;
+    user_memory_base += pStack->disp;
+    count_desc        = pStack->count;
+    pStack--;
+    pConvertor->stack_pos--;
+    pElem = &(description[pos_desc]); 
+    user_memory_base += pStack->disp;
 
-    while( 1 ) {  /* loop forever the exit conditionis on the last section */
-        if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
-            if( --(pStack->count) == 0 ) { /* end of loop */
-                stack_pos--;
-                pStack--;
-                if( stack_pos == -1 )
-                    return nbElems;  /* completed */
+    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
+                           "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                           pos_desc, count_desc, user_memory_base - pConvertor->pBaseBuf,
+                           pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
+
+    for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+        if( required_space > ((*max_data) - total_unpacked) )
+            break;  /* do not pack over the boundaries even if there are more iovecs */
+
+        packed_buffer = iov[iov_count].iov_base;
+        iov_len_local = iov[iov_count].iov_len;
+        if( 0 != pConvertor->pending_length ) {
+            uint32_t element_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+            uint32_t missing_length = element_length - pConvertor->pending_length;
+
+            assert( pElem->elem.common.flags & DT_FLAG_DATA );
+            memcpy( pConvertor->pending + pConvertor->pending_length, packed_buffer, missing_length );
+            packed_buffer = pConvertor->pending;
+            DO_DEBUG( opal_output( 0, "unpack pending from the last unpack %d out of %d bytes\n",
+                                   pConvertor->pending_length, ompi_ddt_basicDatatypes[pElem->elem.common.type]->size ); );
+            UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                        packed_buffer, user_memory_base, element_length );
+            if( 0 == count_desc ) {
+                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
-            if( pStack->index == -1 ) {
-                pStack->disp += (datatype->ub - datatype->lb);
-            } else {
-                assert( DT_LOOP == pElems[pStack->index].elem.common.type );
-                pStack->disp += pElems[pStack->index].loop.extent;
-            }
-            pos_desc = pStack->index + 1;
-            continue;
+            assert( 0 == element_length );
+            packed_buffer = (char*)iov[iov_count].iov_base + missing_length;
+            iov_len_local -= missing_length;
+            pConvertor->pending_length = 0;  /* nothing more inside */
         }
-        if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
-            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
-            do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops,
-                            0, pos_desc + loop->items );
+        while( 1 ) {
+            if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
+                DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
+                if( --(pStack->count) == 0 ) { /* end of loop */
+                    if( pConvertor->stack_pos == 0 ) {
+                        /* we lie about the size of the next element in order to
+                         * make sure we exit the main loop.
+                         */
+                        required_space = 0xffffffff;
+                        pConvertor->flags |= CONVERTOR_COMPLETED;
+                        goto complete_loop;  /* completed */
+                    }
+                    pConvertor->stack_pos--;
+                    pStack--;
+                    pos_desc++;
+                } else {
+                    pos_desc = pStack->index + 1;
+                    if( pStack->index == -1 ) {
+                        pStack->disp += (pData->ub - pData->lb);
+                    } else {
+                        assert( DT_LOOP == description[pStack->index].loop.common.type );
+                        pStack->disp += description[pStack->index].loop.extent;
+                    }
+                }
+                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+                DO_DEBUG( opal_output( 0, "unpack new_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+                                       pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
+            }
+            if( DT_LOOP == pElem->elem.common.type ) {
+                long local_disp = (long)user_memory_base;
+                if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
+                    UNPACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc, 
+                                            packed_buffer, user_memory_base, iov_len_local );
+                    if( 0 == count_desc ) {  /* completed */
+                        pos_desc += pElem->loop.items + 1;
+                        goto update_loop_description;
+                    }
+                    /* Save the stack with the correct last_count value. */
+                }
+                local_disp = (long)user_memory_base - local_disp;
+                PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
+                            pStack->disp + local_disp, pos_desc + pElem->elem.disp + 1);
                 pos_desc++;
-            } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
-            DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
-            continue;
-        }
-        while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
-            /* now here we have a basic datatype */
-            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
-            rc = pElems[pos_desc].elem.count * basic_type->size;
-            if( rc >= iSize ) {
-                rc = iSize / basic_type->size;
-                nbElems += rc;
-                iSize -= rc * basic_type->size;
-                return (iSize == 0 ? nbElems : -1);
+            update_loop_description:  /* update the current state */
+                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+                DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
+                continue;
             }
-            nbElems += pElems[pos_desc].elem.count;
-            iSize -= rc;
-            pos_desc++;  /* advance to the next data */
+            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                            packed_buffer, user_memory_base, iov_len_local );
+                if( 0 != count_desc ) {  /* completed */
+                    type = pElem->elem.common.type;
+                    assert (type < DT_MAX_PREDEFINED);
+                    required_space = ompi_ddt_basicDatatypes[type]->size;
+                    goto complete_loop;
+                }
+                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                pos_desc++;  /* advance to the next data */
+                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            }
         }
+    complete_loop:
+        if( !(pConvertor->flags & CONVERTOR_COMPLETED) && (0 != iov_len_local) ) {
+            /* We have some partial data here. Let's copy it into the convertor
+             * and keep it hot until the next round.
+             */
+            assert (type < DT_MAX_PREDEFINED);
+            assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
+            memcpy( pConvertor->pending, packed_buffer, iov_len_local );
+            DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
+            pConvertor->pending_length = iov_len_local;
+            iov_len_local = 0;
+        }
+        iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
+        total_unpacked += iov[iov_count].iov_len;
+        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
     }
+    *max_data = total_unpacked;
+    *out_size = iov_count;
+    if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
+        /* I complete an element, next step I should go to the next one */
+        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
+                    user_memory_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
+        DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                               pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
+        return 0;
+    }
+    return 1;
 }
