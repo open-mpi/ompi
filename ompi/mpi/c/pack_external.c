@@ -58,7 +58,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* The resulting convertor will be set to the position zero */
     ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              datatype, incount, inbuf, &local_convertor );
+                                              datatype, incount, inbuf, 0, &local_convertor );
 
     /* Check for truncation */
     ompi_convertor_get_packed_size( &local_convertor, &size );

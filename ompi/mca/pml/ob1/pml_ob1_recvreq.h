@@ -213,6 +213,7 @@ do {                                                                            
                          (request)->req_recv.req_base.req_datatype,                \
                          (request)->req_recv.req_base.req_count,                   \
                          (request)->req_recv.req_base.req_addr,                    \
+                         0,                                                        \
                          &(request)->req_recv.req_convertor );                     \
         ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
                                           &(request)->req_bytes_delivered );       \

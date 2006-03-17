@@ -66,6 +66,9 @@ void mca_btl_base_error_no_nics(const char* transport,
 }
 
 
-void mca_btl_base_dump(mca_btl_base_module_t* btl)
+void mca_btl_base_dump(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    int verbose)
 {
 }

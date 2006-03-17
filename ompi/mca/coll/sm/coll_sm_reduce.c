@@ -227,6 +227,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                                                                 dtype,
                                                                 segment_ddt_count, 
                                                                 reduce_temp_buffer,
+                                                                0,
                                                                 &convertor))) {
                 free(free_buffer);
                 return ret;
@@ -426,6 +427,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                                                       dtype,
                                                       count, 
                                                       sbuf,
+                                                      0,
                                                       &convertor))) {
             return ret;
         }

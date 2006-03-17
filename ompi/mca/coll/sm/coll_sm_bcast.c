@@ -100,6 +100,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                                                       datatype,
                                                       count, 
                                                       buff,
+                                                      0,
                                                       &convertor))) {
             return ret;
         }
@@ -158,6 +159,7 @@ int mca_coll_sm_bcast_intra(void *buff, int count,
                                                       datatype,
                                                       count, 
                                                       buff,
+                                                      0,
                                                       &convertor))) {
             return ret;
         }

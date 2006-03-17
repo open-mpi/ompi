@@ -443,6 +443,18 @@ typedef int (*mca_pml_base_module_null_fn_t)(
     struct ompi_request_t** request
 );
 
+/**
+ * Diagnostics function.
+ *
+ * @param request (IN)    Communicator
+ * @return                OMPI_SUCCESS or failure status.
+ *
+ */
+typedef int (*mca_pml_base_module_dump_fn_t)(
+    struct ompi_communicator_t* comm,
+    int verbose
+);
+
 
 /**
  *  PML instance.
@@ -468,6 +480,9 @@ struct mca_pml_base_module_1_0_0_t {
     mca_pml_base_module_iprobe_fn_t       pml_iprobe;
     mca_pml_base_module_probe_fn_t        pml_probe;
     mca_pml_base_module_start_fn_t        pml_start;
+
+    /* diagnostics */
+    mca_pml_base_module_dump_fn_t         pml_dump;
 
     /* maximum constant sizes */
     int                                   pml_max_contextid;

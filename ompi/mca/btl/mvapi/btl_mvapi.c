@@ -853,7 +853,10 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
  * Dump state of btl/queues
  */
 
-void mca_btl_mvapi_dump(mca_btl_base_module_t* btl)
+void mca_btl_mvapi_dump(
+    struct mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* endpoint,
+    int verbose)
 {
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*)btl;
 

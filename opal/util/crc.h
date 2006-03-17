@@ -22,6 +22,15 @@
 #define CRC_POLYNOMIAL ((unsigned int)0x04c11db7)
 #define CRC_INITIAL_REGISTER ((unsigned int)0xffffffff)
 
+
+#define OPAL_CSUM( SRC, LEN )  opal_uicsum( SRC, LEN )
+#define OPAL_CSUM_PARTIAL( SRC, LEN, UI1, UI2 ) \
+    opal_uicsum_partial( SRC, LEN, UI1, UI2 )
+#define OPAL_CSUM_BCOPY_PARTIAL( SRC, DST, LEN1, LEN2, UI1, UI2 ) \
+    opal_bcopy_uicsum_partial( SRC, DST, LEN1, LEN2, UI1, UI2 )
+#define OPAL_CSUM_ZERO  0
+
+
 unsigned long
 opal_bcopy_csum_partial(
     const void *  source,

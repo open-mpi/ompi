@@ -30,6 +30,32 @@
 #include "ompi/mca/bml/base/base.h" 
 #include "orte/mca/errmgr/errmgr.h"
 
+
+#define MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum)                \
+if(csum != hdr->hdr_match.hdr_csum) {                                \
+    /* failed the csum, put the request back on the list for         \
+     * matching later on retransmission                              \
+     */                                                              \
+    if(recvreq->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {     \
+        mca_pml_dr_recv_request_match_wild(recvreq);                 \
+    } else {                                                         \
+        mca_pml_dr_recv_request_match_specific(recvreq);             \
+    }                                                                \
+    mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc,              \
+        &hdr->hdr_common,                                            \
+        hdr->hdr_match.hdr_src_ptr,                                  \
+        0);                                                          \
+    opal_output(0, "%s:%d: [rank %d -> rank %d] "                    \
+        "data checksum failed 0x%08x != 0x%08x\n",                   \
+        __FILE__, __LINE__,                                          \
+        hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst,            \
+        csum, hdr->hdr_match.hdr_csum);                              \
+    bytes_received = bytes_delivered = 0;                            \
+} else {                                                             \
+    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 1);        \
+}
+
+
 static mca_pml_dr_recv_frag_t* mca_pml_dr_recv_request_match_specific_proc(
     mca_pml_dr_recv_request_t* request, mca_pml_dr_comm_proc_t* proc);
 
@@ -288,23 +314,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             if(csum != hdr->hdr_match.hdr_csum) { 
-                 /* failed the csum, put the request 
-                    back on the list for matching later
-                    at retransmission */
-                 if(recvreq->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
-                     mca_pml_dr_recv_request_match_wild(recvreq);
-                 } else {
-                     mca_pml_dr_recv_request_match_specific(recvreq);
-                 }
-                 mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc, 
-                                               &hdr->hdr_common,
-                                               hdr->hdr_match.hdr_src_ptr,
-                                               0);
-                 assert(0);
-                 return;
-             }
-             mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 1);
+             MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum);
              break;
 
          case MCA_PML_DR_HDR_TYPE_RNDV:
@@ -322,23 +332,7 @@ static void mca_pml_dr_recv_request_vfrag_ack(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             if(csum != hdr->hdr_match.hdr_csum) { 
-                 /* failed the csum, put the request 
-                    back on the list for matching later
-                    at retransmission */
-                 if(recvreq->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {
-                    mca_pml_dr_recv_request_match_wild(recvreq);
-                } else {
-                    mca_pml_dr_recv_request_match_specific(recvreq);
-                }
-                mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc, 
-                                              &hdr->hdr_common,
-                                              hdr->hdr_match.hdr_src_ptr,
-                                              0);
-                assert(0);
-                return;
-            }
-            mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_match, 1);
+            MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum);
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:

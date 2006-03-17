@@ -429,7 +429,7 @@ int mca_pml_dr_send_request_start_copy(
     hdr->hdr_common.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OMPI_CSUM_ZERO;
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO;
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
@@ -499,7 +499,7 @@ int mca_pml_dr_send_request_start_prepare(
     hdr->hdr_common.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OMPI_CSUM_ZERO; 
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO; 
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
@@ -573,7 +573,7 @@ int mca_pml_dr_send_request_start_rndv(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
-    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OMPI_CSUM_ZERO;
+    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));
