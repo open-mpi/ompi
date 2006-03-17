@@ -1,0 +1,93 @@
+/* -*- Mode: C; c-basic-offset:4 ; -*- */
+/*
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+#include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/datatype_internal.h"
+
+#ifdef HAVE_ALLOCA_H
+#include <alloca.h>
+#endif
+
+/* Get the number of elements from the data-type that can be
+ * retrieved from a received buffer with the size iSize.
+ * To speed-up this function you should use it with a iSize == to the modulo
+ * of the original size and the size of the data.
+ * Return value:
+ *   positive = number of basic elements inside
+ *   negative = some error occurs
+ */
+int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSize )
+{
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
+    int rc, nbElems = 0;
+    int stack_pos = 0;
+    dt_elem_desc_t* pElems;
+
+    /* Normally the size should be less or equal to the size of the datatype.
+     * This function does not support a iSize bigger than the size of the datatype.
+     */
+    assert( (uint32_t)iSize <= datatype->size );
+    DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
+    pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
+    pStack->count    = 1;
+    pStack->index    = -1;
+    pStack->disp     = 0;
+    pElems           = datatype->desc.desc;
+    pStack->end_loop = datatype->desc.used;
+    pos_desc         = 0;
+
+    while( 1 ) {  /* loop forever the exit condition is on the last DT_END_LOOP */
+        if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
+            if( --(pStack->count) == 0 ) { /* end of loop */
+                stack_pos--;
+                pStack--;
+                if( stack_pos == -1 )
+                    return nbElems;  /* completed */
+            }
+            if( pStack->index == -1 ) {
+                pStack->disp += (datatype->ub - datatype->lb);
+            } else {
+                assert( DT_LOOP == pElems[pStack->index].elem.common.type );
+                pStack->disp += pElems[pStack->index].loop.extent;
+            }
+            pos_desc = pStack->index + 1;
+            continue;
+        }
+        if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
+            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
+            do {
+                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops,
+                            0, pos_desc + loop->items );
+                pos_desc++;
+            } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
+            DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
+            continue;
+        }
+        while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
+            rc = pElems[pos_desc].elem.count * basic_type->size;
+            if( rc >= iSize ) {
+                rc = iSize / basic_type->size;
+                nbElems += rc;
+                iSize -= rc * basic_type->size;
+                return (iSize == 0 ? nbElems : -1);
+            }
+            nbElems += pElems[pos_desc].elem.count;
+            iSize -= rc;
+            pos_desc++;  /* advance to the next data */
+        }
+    }
+}

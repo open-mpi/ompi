@@ -28,9 +28,8 @@ headers = \
 	convertor.h
 
 noinst_LTLIBRARIES = \
-        libdatatype.la 
-
-#        libdatatype_reliable.la
+        libdatatype.la \
+        libdatatype_reliable.la
 
 # these sources will be compiled with the normal CFLAGS only
 libdatatype_la_SOURCES = \
@@ -54,13 +53,12 @@ libdatatype_la_SOURCES = \
 	dt_external32.c \
 	dt_match_size.c \
 	convertor.c \
-	new_pack.c \
-	new_unpack.c \
-	new_position.c
+	new_position.c \
+	datatype_memcpy.c copy_functions.c get_count.c
 
 # these sources will be compiled with the special -D
-#libdatatype_reliable_la_SOURCES =
-#libdatatype_reliable_la_CFLAGS = -DGEORGES_SPECIAL_FLAG=1 $(AM_CFLAGS)
+libdatatype_reliable_la_SOURCES = dt_pack.c dt_unpack.c
+libdatatype_reliable_la_CFLAGS = -DCHECKSUM $(AM_CFLAGS)
 
 # Conditionally install the header files
 if WANT_INSTALL_HEADERS

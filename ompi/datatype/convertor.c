@@ -328,6 +328,91 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
 }
 
 /*
+ * All the conversion functions (pack and unpack) we have. For each
+ * function there are 2 versions: one without checksum (using memcpy)
+ * and one with checksum.
+ */
+extern convertor_advance_fct_t ompi_unpack_general;
+extern convertor_advance_fct_t ompi_unpack_general_checksum;
+extern convertor_advance_fct_t ompi_unpack_homogeneous;
+extern convertor_advance_fct_t ompi_unpack_homogeneous_checksum;
+extern convertor_advance_fct_t ompi_generic_simple_unpack;
+extern convertor_advance_fct_t ompi_generic_simple_unpack_checksum;
+extern convertor_advance_fct_t ompi_unpack_homogeneous_contig;
+extern convertor_advance_fct_t ompi_unpack_homogeneous_contig_checksum;
+extern convertor_advance_fct_t ompi_pack_general;
+extern convertor_advance_fct_t ompi_pack_general_checksum;
+extern convertor_advance_fct_t ompi_pack_homogeneous_with_memcpy;
+extern convertor_advance_fct_t ompi_pack_homogeneous_with_memcpy_checksum;
+extern convertor_advance_fct_t ompi_pack_no_conversion;
+extern convertor_advance_fct_t ompi_pack_no_conversion_checksum;
+extern convertor_advance_fct_t ompi_generic_simple_pack;
+extern convertor_advance_fct_t ompi_generic_simple_pack_checksum;
+extern convertor_advance_fct_t ompi_pack_no_conv_contig;
+extern convertor_advance_fct_t ompi_pack_no_conv_contig_checksum;
+extern convertor_advance_fct_t ompi_pack_no_conv_contig_with_gaps;
+extern convertor_advance_fct_t ompi_pack_no_conv_contig_with_gaps_checksum;
+
+int32_t
+ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
+                                 const struct ompi_datatype_t* datatype,
+                                 int32_t count,
+                                 const void* pUserBuf )
+{
+    /* Here I should check that the data is not overlapping */
+
+    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
+                                                count, pUserBuf ) ) {
+        return OMPI_ERROR;
+    }
+
+    convertor->flags      |= CONVERTOR_RECV;
+    convertor->memAlloc_fn = NULL;
+    convertor->fAdvance    = ompi_unpack_general;     /* TODO: just stop complaining */
+    convertor->fAdvance    = ompi_unpack_homogeneous; /* default behaviour */
+    convertor->fAdvance    = ompi_generic_simple_unpack;
+
+    /* TODO: work only on homogeneous architectures */
+    if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
+        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+        convertor->fAdvance = ompi_unpack_homogeneous_contig;
+    }
+    return OMPI_SUCCESS;
+}
+
+int32_t
+ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
+                                 const struct ompi_datatype_t* datatype,
+                                 int32_t count,
+                                 const void* pUserBuf )
+{
+    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
+                                                count, pUserBuf ) ) {
+        return OMPI_ERROR;
+    }
+
+    convertor->flags            |= CONVERTOR_SEND;
+    convertor->memAlloc_fn       = NULL;
+    /* Just to avoid complaint from the compiler */
+    convertor->fAdvance = ompi_pack_general;
+    convertor->fAdvance = ompi_pack_homogeneous_with_memcpy;
+    convertor->fAdvance = ompi_pack_no_conversion;
+    convertor->fAdvance = ompi_generic_simple_pack;
+
+    if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
+        assert( convertor->flags & DT_FLAG_CONTIGUOUS );
+        if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
+            convertor->fAdvance = ompi_pack_no_conv_contig;
+	else if( 1 >= convertor->count )  /* gaps or no gaps */
+            convertor->fAdvance = ompi_pack_no_conv_contig;
+        else
+            convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/*
  * These functions can be used in order to create an IDENTICAL copy of one convertor. In this
  * context IDENTICAL means that the datatype and count and all other properties of the basic
  * convertor get replicated on this new convertor. However, the references to the datatype
@@ -384,4 +469,22 @@ void ompi_convertor_dump( ompi_convertor_t* convertor )
     printf( "Actual stack representation\n" );
     ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,
                          convertor->pDesc->desc.desc, convertor->pDesc->name );
+}
+
+void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
+                          const union dt_elem_desc* pDesc, const char* name )
+{
+    opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
+    for( ; stack_pos >= 0; stack_pos-- ) {
+        opal_output( 0, "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
+                     pStack[stack_pos].count, pStack[stack_pos].disp, pStack[stack_pos].end_loop );
+        if( pStack->index != -1 )
+            opal_output( 0, "\t[desc count %d disp %ld extent %d]\n",
+                         pDesc[pStack[stack_pos].index].elem.count,
+                         pDesc[pStack[stack_pos].index].elem.disp,
+                         pDesc[pStack[stack_pos].index].elem.extent );
+        else
+            opal_output( 0, "\n" );
+    }
+    opal_output( 0, "\n" );
 }
