@@ -334,6 +334,13 @@ extern int mca_btl_mvapi_finalize(
     struct mca_btl_base_module_t* btl
 );
 
+/**
+ * Diagnostic function for the BTL's queues.
+ * 
+ * @param btl  BTL instance.
+ */
+
+extern void mca_btl_mvapi_dump( struct mca_btl_base_module_t* btl );
 
 /**
  * PML->BTL notification of change in the process list.
