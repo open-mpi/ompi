@@ -207,6 +207,7 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_char,                 /* DT_CHAR                */
    (conversion_fct_t)copy_char,                 /* DT_CHARACTER           */
    (conversion_fct_t)copy_char,                 /* DT_UNSIGNED_CHAR       */
+   (conversion_fct_t)copy_char,                 /* DT_SIGNED_CHAR       */
    (conversion_fct_t)copy_char,                 /* DT_BYTE                */
    (conversion_fct_t)copy_short,                /* DT_SHORT               */
    (conversion_fct_t)copy_short,                /* DT_UNSIGNED_SHORT      */
@@ -220,10 +221,17 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_float,                /* DT_FLOAT               */
    (conversion_fct_t)copy_double,               /* DT_DOUBLE              */
    (conversion_fct_t)copy_long_double,          /* DT_LONG_DOUBLE         */
-   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */
-   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */
-   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */
    (conversion_fct_t)NULL,                      /* DT_PACKED              */
+   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */
+#if SIZEOF_BOOL == 1
+   (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
+#elif SIZEOF_BOOL == 4
+   (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
+#elif SIZEOF_BOOL == 8
+   (conversion_fct_t)copy_bytes_8,              /* DT_CXX_BOOL            */
+#else
+#error Complete me please
+#endif
 #if OMPI_SIZEOF_FORTRAN_LOGICAL == 1
    (conversion_fct_t)copy_bytes_1,              /* DT_LOGIC               */
 #elif OMPI_SIZEOF_FORTRAN_LOGICAL == 4
@@ -231,6 +239,18 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #elif 1 /* always, some compiler complain if there is not value */
    NULL,                                        /* DT_LOGIC               */
 #endif
+   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */
+   (conversion_fct_t)copy_float,                /* DT_REAL                */
+   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */
+   (conversion_fct_t)copy_complex_float,        /* DT_COMPLEX_FLOAT       */
+   (conversion_fct_t)copy_complex_double,       /* DT_COMPLEX_DOUBLE      */
+   (conversion_fct_t)copy_complex_long_double,  /* DT_COMPLEX_LONG_DOUBLE */
+   (conversion_fct_t)copy_2int,                 /* DT_2INT                */
+   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */
+   (conversion_fct_t)copy_2float,               /* DT_2REAL               */
+   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */
+   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */
+   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */
 #if (SIZEOF_FLOAT + SIZEOF_INT) == 8
    (conversion_fct_t)copy_bytes_8,              /* DT_FLOAT_INT           */
 #else
@@ -257,25 +277,6 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
 #else
 #error Complete me please
 #endif
-   (conversion_fct_t)copy_2int,                 /* DT_2INT                */
    (conversion_fct_t)NULL,                      /* DT_SHORT_INT           */
-   (conversion_fct_t)copy_int,                  /* DT_INTEGER             */
-   (conversion_fct_t)copy_float,                /* DT_REAL                */
-   (conversion_fct_t)copy_double,               /* DT_DBLPREC             */
-   (conversion_fct_t)copy_2float,               /* DT_2REAL               */
-   (conversion_fct_t)copy_2double,              /* DT_2DBLPREC            */
-   (conversion_fct_t)copy_2int,                 /* DT_2INTEGER            */
-   (conversion_fct_t)copy_wchar,                /* DT_WCHAR               */
-   (conversion_fct_t)copy_2complex_float,       /* DT_2COMPLEX            */
-   (conversion_fct_t)copy_2complex_double,      /* DT_2DOUBLE_COMPLEX     */
-#if SIZEOF_BOOL == 1
-   (conversion_fct_t)copy_bytes_1,              /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == 4
-   (conversion_fct_t)copy_bytes_4,              /* DT_CXX_BOOL            */
-#elif SIZEOF_BOOL == 8
-   (conversion_fct_t)copy_bytes_8,              /* DT_CXX_BOOL            */
-#else
-#error Complete me please
-#endif
    (conversion_fct_t)NULL,                      /* DT_UNAVAILABLE         */
 };
