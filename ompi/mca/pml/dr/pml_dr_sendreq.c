@@ -428,7 +428,7 @@ int mca_pml_dr_send_request_start_copy(
             return rc;
         }
     }
-    assert(sendreq->req_send.req_convertor.checksum);
+
     /* build match header */
     hdr = (mca_pml_dr_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
