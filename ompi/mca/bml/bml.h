@@ -250,10 +250,10 @@ typedef struct mca_bml_base_context_t mca_bml_base_context_t;
 
 
 static inline void mca_bml_base_completion(
-    struct mca_btl_base_module_t*,
-    struct mca_btl_base_endpoint_t*,
-    struct mca_btl_base_descriptor_t*,
-    int status)
+                                           struct mca_btl_base_module_t* btl,
+                                           struct mca_btl_base_endpoint_t* ep,
+                                           struct mca_btl_base_descriptor_t* des,
+                                           int status)
 {
     mca_bml_base_context_t* ctx = des->des_cbdata;
     /* restore original state */
