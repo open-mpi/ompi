@@ -20,6 +20,7 @@
 headers = \
 	datatype.h \
 	datatype_internal.h \
+	datatype_prototypes.h \
 	datatype_pack.h \
 	datatype_unpack.h \
 	datatype_checksum.h \
