@@ -255,7 +255,7 @@ static inline void mca_bml_base_completion(
                                            struct mca_btl_base_descriptor_t* des,
                                            int status)
 {
-    mca_bml_base_context_t* ctx = des->des_cbdata;
+    mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) des->des_cbdata;
     /* restore original state */
     ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
     des->des_cbdata = ctx->cbdata;
@@ -273,16 +273,17 @@ static inline int mca_bml_base_send(
 { 
     static int count;
     if(count <= 0) {
-        count = ((1000.0 * rand())/(RAND_MAX+1.0));
+        count = (int) ((1000.0 * rand())/(RAND_MAX+1.0));
         if(count % 2) {
             /* local completion - network "drops" packet */
             des->des_cbfunc(bml_btl->btl, bml_btl->btl_endpoint, des, OMPI_SUCCESS);
             return OMPI_SUCCESS;
         } else {
             /* corrupt data */
-            mca_bml_base_context_t* ctx = malloc(sizeof(mca_bml_base_context_t));
+            mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
+                malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
-                ctx->index = (des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0);
+                ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
                 ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
