@@ -112,13 +112,28 @@ do {                                                                 \
         buffers[i] = buff;                                           \
         macro_segments[i].seg_addr.pval = buff->addr;                \
         macro_segments[i].seg_len = segs[i].seg_len;                 \
-        csum += OPAL_CSUM_BCOPY_PARTIAL(                             \
-               segs[i].seg_addr.pval,                                \
+        if(i == 0) {                                                 \
+            size_t hdr_len = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type); \
+            memcpy(                                                  \
                buff->addr,                                           \
-               segs[i].seg_len,                                      \
-               segs[i].seg_len,                                      \
-               &ui1,                                                 \
-               &ui2);                                                \
+               segs[i].seg_addr.pval,                                \
+               hdr_len);                                             \
+            csum += OPAL_CSUM_BCOPY_PARTIAL(                         \
+                   ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,  \
+                   ((unsigned char*)buff->addr)+hdr_len,             \
+                   segs[i].seg_len-hdr_len,                          \
+                   segs[i].seg_len-hdr_len,                          \
+                   &ui1,                                             \
+                   &ui2);                                            \
+        } else {                                                     \
+            csum += OPAL_CSUM_BCOPY_PARTIAL(                         \
+                   segs[i].seg_addr.pval,                            \
+                   buff->addr,                                       \
+                   segs[i].seg_len,                                  \
+                   segs[i].seg_len,                                  \
+                   &ui1,                                             \
+                   &ui2);                                            \
+        }                                                            \
     }                                                                \
 } while(0)
 
