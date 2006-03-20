@@ -351,6 +351,12 @@ do {                                                                  \
 #define MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag)                \
 do {                                                                 \
     mca_bml_base_btl_t* bml_btl = sendreq->descriptor->des_context;  \
+    vfrag->vf_retry_cnt ++;                                          \
+    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) {      \
+        opal_output(0, "%s:%d,%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);  \
+        orte_errmgr.abort();                                         \
+    }                                                                \
+                                                                     \
     opal_output(0, "%s:%d:%s, retransmitting\n", __FILE__, __LINE__, __func__); \
     assert(sendreq->descriptor->des_src != NULL);                    \
     vfrag->vf_idx = 1;                                               \

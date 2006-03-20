@@ -69,9 +69,8 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
     OPAL_THREAD_LOCK(&ompi_request_lock);
-    vfrag->vf_retry_cnt++;
     if(vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) { 
-        opal_output(0, "wdog retry count exceeded! %s:%d FATAL", __FILE__, __LINE__);
+        opal_output(0, "%s:%d:%s, wdog retry count exceeded!  FATAL", __FILE__, __LINE__, __func__);
         orte_errmgr.abort();
     }
     vfrag->vf_idx = 1;
@@ -90,7 +89,6 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
     OPAL_THREAD_LOCK(&ompi_request_lock);
-    vfrag->vf_retry_cnt++;
     if(vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) { 
         opal_output(0, "%s:%d: maximum ack retry count exceeded: FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
