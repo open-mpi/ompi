@@ -529,6 +529,12 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                         if (0 == strcmp(str, orte_system_info.nodename)) {
                             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
                         }
+                        /* if arch is different than mine, create a new convertor for this proc */
+                        if (proc->proc_arch != ompi_mpi_local_arch) {
+                            OBJ_RELEASE(proc->proc_convertor);
+                            proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+                        }
+
                     }
                 }
             }
