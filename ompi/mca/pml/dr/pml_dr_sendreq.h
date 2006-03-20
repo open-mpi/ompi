@@ -167,6 +167,8 @@ do {                                                                            
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
     sendreq->req_vfrag0.vf_ack = 0;                                                       \
     sendreq->req_vfrag0.vf_mask_processed = 0;                                            \
+    sendreq->req_vfrag0.vf_retrans = 0;                                                   \
+    sendreq->req_vfrag0.vf_retry_cnt = 0;                                                  \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
                                                                                           \
     /* select a btl */                                                                    \
@@ -307,29 +309,11 @@ do {                                                                            
     vfrag->vf_ack = 0;                                                                  \
     vfrag->vf_idx = 0;                                                                  \
     vfrag->vf_mask_processed = 0;                                                       \
+    vfrag->vf_retrans = 0;                                                              \
+    vfrag->vf_retry_cnt = 0;                                                            \
     vfrag->vf_max_send_size = max_send_size;                                            \
     vfrag->vf_send.pval = sendreq;                                                      \
     sendreq->req_vfrag = vfrag;                                                         \
-} while(0)
-
-
-/*
- *
- */
-
-#define MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq,hdr,vfrag)          \
-do {                                                                      \
-   opal_list_item_t* item;                                                \
-   vfrag = NULL;                                                          \
-   for(item =  opal_list_get_first(&(sendreq)->req_retrans);              \
-       item != opal_list_get_end(&(sendreq)->req_retrans);                \
-       item =  opal_list_get_next(item)) {                                \
-       mca_pml_dr_vfrag_t* vf = (mca_pml_dr_vfrag_t*)item;                \
-       if(vf->vf_id == (hdr)->hdr_vid) {                                  \
-           vfrag = vf;                                                    \
-           break;                                                         \
-       }                                                                  \
-   }                                                                      \
 } while(0)
 
 /*
@@ -360,6 +344,23 @@ do {                                                                  \
 } while (0)
 
 
+/*
+ * Requeue first fragment of message for retransmission 
+ */
+
+#define MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag)                \
+do {                                                                 \
+    mca_bml_base_btl_t* bml_btl = sendreq->descriptor->des_context;  \
+    opal_output(0, "%s:%d:%s, retransmitting\n", __FILE__, __LINE__, __func__); \
+    assert(sendreq->descriptor->des_src != NULL);                    \
+    vfrag->vf_idx = 1;                                               \
+    vfrag->vf_mask_processed = 0;                                    \
+    vfrag->vf_ack = 0;                                               \
+    vfrag->vf_retrans = 0;                                           \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                          \
+    MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
+    mca_bml_base_send(bml_btl, sendreq->descriptor, MCA_BTL_TAG_PML);\
+} while(0)        
 /**
  *  Start the specified request
  */
