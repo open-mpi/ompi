@@ -211,7 +211,7 @@ extern int mca_pml_dr_recv(
     ompi_status_public_t* status
 );
 
-extern void mca_pml_dr_dump(
+extern int mca_pml_dr_dump(
     struct ompi_communicator_t* comm,
     int verbose
 );

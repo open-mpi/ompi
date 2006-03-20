@@ -181,7 +181,7 @@ int mca_pml_ob1_component_fini(void)
  * diagnostics
  */
 
-void mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
+int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 {
     struct mca_pml_comm_t* pml_comm = comm->c_pml_comm;
     size_t i;
@@ -201,5 +201,6 @@ void mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
             bml_btl->btl->btl_dump(bml_btl->btl, bml_btl->btl_endpoint, verbose);
         }
     }
+    return OMPI_SUCCESS;
 }
 

@@ -174,9 +174,10 @@ int mca_pml_dr_component_fini(void)
     return OMPI_SUCCESS;
 }
 
-void mca_pml_dr_dump(
+int mca_pml_dr_dump(
     struct ompi_communicator_t* comm,
     int verbose)
 {
+    return OMPI_SUCCESS;
 }
 
