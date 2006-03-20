@@ -107,7 +107,7 @@ void mca_pml_dr_recv_frag_callback(
             if(false == duplicate) { 
                 mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             } else {
-                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n"));
+                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n", __FILE__, __LINE__));
             }
             break;
         }
@@ -163,6 +163,7 @@ void mca_pml_dr_recv_frag_callback(
             break;
         }
     default:
+        OPAL_OUTPUT((0, "%s:%d: dropping unknown header type\n"));
         return; /* drop it on the floor.. */
         break;
     }
@@ -596,7 +597,7 @@ rematch:
                                           hdr->hdr_src_ptr,
                                           0);
             opal_output(0, "%s:%d: corrupted data 0x%08x != 0x%08x\n", 
-                __FILE__, __LINE__, csum, hdr->hdr_csum);
+                        __FILE__, __LINE__, csum, hdr->hdr_csum);
             MCA_PML_DR_RECV_FRAG_RETURN(frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return false;
