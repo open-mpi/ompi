@@ -56,10 +56,14 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_num_mru;
     size_t  udapl_evd_qlen;
     int32_t udapl_num_repost;
+    int32_t udapl_timeout;      /**< connection timeout, in microseconds */
     int     udapl_debug;        /**< turn on debug output */
 
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
+
+    DAT_CONN_QUAL udapl_port_low;   /**< first port for binding service point */
+    DAT_CONN_QUAL udapl_port_high;  /**< last port for binding service point */
 
     int udapl_free_list_num;   /**< initial size of free lists */
     int udapl_free_list_max;   /**< maximum size of free lists */
@@ -84,11 +88,12 @@ struct mca_btl_udapl_module_t {
     mca_btl_base_recv_reg_t udapl_reg[256]; 
     mca_btl_udapl_addr_t udapl_addr;
 
-    /* interface handle and protection zone */
+    /* uDAPL interface and other handles */
     DAT_IA_HANDLE udapl_ia;
     DAT_PZ_HANDLE udapl_pz;
+    DAT_PSP_HANDLE udapl_psp;
 
-    /* event dispatchers - default, data transfer, connection negotiation */
+    /* event dispatchers - async, data transfer, connection negotiation */
     DAT_EVD_HANDLE udapl_evd_async;
     DAT_EVD_HANDLE udapl_evd_dto;
     DAT_EVD_HANDLE udapl_evd_conn;
@@ -141,6 +146,7 @@ extern mca_btl_base_module_t** mca_btl_udapl_component_init(
 /**
  * uDAPL component progress.
  */
+
 extern int mca_btl_udapl_component_progress(void);
 
 

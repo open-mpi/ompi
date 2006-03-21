@@ -29,15 +29,26 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/udapl/mpool_udapl.h"
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h"
 #include "btl_udapl_endpoint.h" 
+#include "btl_udapl_proc.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "ompi/datatype/convertor.h" 
 #include "btl_udapl_endpoint.h"
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
+
+
+/*
+ * Local functions
+ */
+
+static int mca_btl_udapl_finish_connect(mca_btl_udapl_module_t* btl,
+                                        mca_btl_udapl_frag_t* frag,
+                                        DAT_EP_HANDLE endpoint);
 
 mca_btl_udapl_component_t mca_btl_udapl_component = {
     {
@@ -160,6 +171,12 @@ int mca_btl_udapl_component_open(void)
         mca_btl_udapl_param_register_int("num_repost", 4);
     mca_btl_udapl_component.udapl_num_mru = 
         mca_btl_udapl_param_register_int("num_mru", 64);
+    mca_btl_udapl_component.udapl_port_low = 
+        mca_btl_udapl_param_register_int("port_low", 45000);
+    mca_btl_udapl_component.udapl_port_high = 
+        mca_btl_udapl_param_register_int("port_high", 47000);
+    mca_btl_udapl_component.udapl_timeout = 
+        mca_btl_udapl_param_register_int("timeout", 10000000);
 
     /* register uDAPL module parameters */
     mca_btl_udapl_module.super.btl_exclusivity =
@@ -177,7 +194,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_module.super.btl_bandwidth  = 
         mca_btl_udapl_param_register_int("bandwidth", 225); 
 
-    /* TODO - computer udapl_eager_frag_size and udapl_max_frag_size */
+    /* cmpute udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =
             mca_btl_udapl_module.super.btl_eager_limit;
     mca_btl_udapl_component.udapl_max_frag_size =
@@ -220,9 +237,6 @@ mca_btl_udapl_modex_send(void)
 
     size = sizeof(mca_btl_udapl_addr_t) *
             mca_btl_udapl_component.udapl_num_btls;
-
-    OPAL_OUTPUT((0, "udapl_modex_send %d addrs %d bytes\n",
-            mca_btl_udapl_component.udapl_num_btls, size));
 
     if (0 != size) {
         addrs = (mca_btl_udapl_addr_t *)malloc(size);
@@ -299,8 +313,6 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         /* initialize this BTL */
         /* TODO - make use of the thread-safety info in datinfo also */
         if(OMPI_SUCCESS != mca_btl_udapl_init(datinfo[i].ia_name, btl)) {
-            opal_output(0, "udapl module init for %s failed\n",
-                    datinfo[i].ia_name);
             free(btl);
             continue;
         }
@@ -345,19 +357,101 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 }
 
 
+static int mca_btl_udapl_finish_connect(mca_btl_udapl_module_t* btl,
+                                        mca_btl_udapl_frag_t* frag,
+                                        DAT_EP_HANDLE endpoint)
+{
+    mca_btl_udapl_proc_t* proc;
+    mca_btl_base_endpoint_t* ep;
+    mca_btl_udapl_addr_t* addr;
+    size_t i;
+
+    addr = (mca_btl_udapl_addr_t*)frag->hdr;
+
+    OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
+    for(proc = (mca_btl_udapl_proc_t*)
+                opal_list_get_first(&mca_btl_udapl_component.udapl_procs);
+            proc != (mca_btl_udapl_proc_t*)
+                opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
+            proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
+    
+        for(i = 0; i < proc->proc_endpoint_count; i++) {
+            ep = proc->proc_endpoints[i];
+    
+            /* Does this endpoint match? */
+            if(ep->endpoint_btl == btl &&
+                    !memcmp(addr, &ep->endpoint_addr,
+                        sizeof(mca_btl_udapl_addr_t))) {
+                ep->endpoint_ep = endpoint;
+                OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
+                OPAL_OUTPUT((0, "btl_udapl matched endpoint! HAPPY DANCE!!!\n"));
+                return OMPI_SUCCESS;
+            }
+        }
+    }
+
+    /* If this point is reached, no matching endpoint was found */
+    OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
+    OPAL_OUTPUT((0, "btl_udapl ERROR could not match endpoint\n"));
+    return OMPI_ERROR;
+}
+
+
+static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
+                                        DAT_CR_HANDLE cr_handle)
+{
+    mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
+    DAT_EP_HANDLE endpoint;
+    int rc;
+
+    rc = dat_ep_create(btl->udapl_ia, btl->udapl_pz,
+            btl->udapl_evd_dto, btl->udapl_evd_dto,
+            btl->udapl_evd_conn, NULL, &endpoint);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_ep_create");
+        return OMPI_ERROR;
+    }
+
+    rc = dat_cr_accept(cr_handle, endpoint, 0, NULL);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_cr_accept");
+        return OMPI_ERROR;
+    }
+
+    /* Post a receive to get the address data */
+    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
+            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
+
+    memcpy(frag->hdr, &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
+    frag->endpoint = NULL;
+    frag->type = MCA_BTL_UDAPL_CONN_RECV;
+    cookie.as_ptr = frag;
+
+    rc = dat_ep_post_recv(endpoint, 1,
+            &((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet,
+            cookie, DAT_COMPLETION_DEFAULT_FLAG);
+    if(DAT_SUCCESS != rc) {
+        mca_btl_udapl_error(rc, "dat_ep_post_send");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
 /*
  *  uDAPL component progress.
  */
 
-
 int mca_btl_udapl_component_progress()
 {
     mca_btl_udapl_module_t* btl;
+    mca_btl_udapl_frag_t* frag;
     static int32_t inprogress = 0;
     DAT_EVENT event;
     int count = 0;
     size_t i;
-    int rc;
 
     /* prevent deadlock - only one thread should be 'progressing' at a time */
     if(OPAL_THREAD_ADD32(&inprogress, 1) > 1) {
@@ -365,8 +459,6 @@ int mca_btl_udapl_component_progress()
         return OMPI_SUCCESS;
     }
 
-    OPAL_OUTPUT((0, "udapl_component_progress\n"));
-    
     /* check for work to do on each uDAPL btl */
     for(i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
         btl = mca_btl_udapl_component.udapl_btls[i];
@@ -375,35 +467,93 @@ int mca_btl_udapl_component_progress()
         /* Check DTO EVD */
         while(DAT_SUCCESS ==
                 dat_evd_dequeue(btl->udapl_evd_dto, &event)) {
+            DAT_DTO_COMPLETION_EVENT_DATA* dto;
+
             switch(event.event_number) {
                 case DAT_DTO_COMPLETION_EVENT:
+                    OPAL_OUTPUT((0, "btl_udapl DTO completion\n"));
+                    /* questions to answer:
+                       should i use separate endpoints for eager/max frags?
+                        i need to do this if i only want to post recv's for
+                        the exact eager/max size, and uDAPL won't just pick
+                        a large enough buffer
+
+                        how about just worrying about eager frags for now?
+                       */
+                    dto = &event.event_data.dto_completion_event_data;
+
+                    /* Was the DTO successful? */
+                    if(DAT_DTO_SUCCESS != dto->status) {
+                        OPAL_OUTPUT((0,
+                                "btl_udapl DTO error %d\n", dto->status));
+                        break;
+                    }
+
+                    frag = dto->user_cookie.as_ptr;
+
+                    switch(frag->type) {
+                    case MCA_BTL_UDAPL_SEND:
+                        /* TODO - write me */
+                        break;
+                    case MCA_BTL_UDAPL_CONN_SEND:
+                        /* Set the endpoint state to connected */
+                        OPAL_OUTPUT((0,
+                                "btl_udapl SEND SIDE CONNECT COMPLETED!!\n"));
+                        frag->endpoint->endpoint_state =
+                                MCA_BTL_UDAPL_CONNECTED;
+
+                        /* TODO - fire off any queued sends */
+
+                        /* Retire the fragment */
+                        MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
+                        break;
+                    case MCA_BTL_UDAPL_CONN_RECV:
+                        /* Just got the address data we need for completing
+                           a new connection - match endpoints */
+                        mca_btl_udapl_finish_connect(btl, frag, dto->ep_handle);
+                        
+                        /* Retire the fragment */
+                        MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
+                        break;
+#ifdef OMPI_ENABLE_DEBUG
+                    default:
+                        OPAL_OUTPUT((0, "WARNING unknown frag type: %d\n",
+                                    frag->type));
+#endif
+                    }
                     count++;
                     break;
+#ifdef OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown dto event: %d\n",
                             event.event_number));
+#endif
             }
         }
 
         /* Check connection EVD */
         while(DAT_SUCCESS ==
                 dat_evd_dequeue(btl->udapl_evd_conn, &event)) {
+
             switch(event.event_number) {
                 case DAT_CONNECTION_REQUEST_EVENT:
                     /* Accept a new connection */
-                    rc = dat_cr_accept(
-                            event.event_data.cr_arrival_event_data.cr_handle,
-                            DAT_HANDLE_NULL, 0, NULL);
-                    if(DAT_SUCCESS != rc) {
-                        mca_btl_udapl_error(rc, "dat_cr_accept");
-                    }
+                    OPAL_OUTPUT((0, "btl_udapl accepting connection\n"));
 
+                    mca_btl_udapl_accept_connect(btl,
+                            event.event_data.cr_arrival_event_data.cr_handle);
                     count++;
                     break;
                 case DAT_CONNECTION_EVENT_ESTABLISHED:
-                    /* TODO - at this point we have a uDPAL enpoint in
-                       event.event_data.connect_event_data.ep_handle,
-                       need to figure out how to tie back into the BTL */
+                    OPAL_OUTPUT((0, "btl_udapl connection established\n"));
+
+                    /* Both the client and server side of a connection generate
+                       this event */
+                    /* Really shouldn't do anything here, as we won't have the
+                       address data we need to match a uDAPL EP to a BTL EP.
+                       Connections are finished when DTOs are completed for
+                       the address transfer */
+                    
                     count++;
                     break;
                 case DAT_CONNECTION_EVENT_PEER_REJECTED:
@@ -412,11 +562,17 @@ int mca_btl_udapl_component_progress()
                 case DAT_CONNECTION_EVENT_DISCONNECTED:
                 case DAT_CONNECTION_EVENT_BROKEN:
                 case DAT_CONNECTION_EVENT_TIMED_OUT:
+                    /* handle this case specially? if we have finite timeout,
+                       we might want to try connecting again here. */
                 case DAT_CONNECTION_EVENT_UNREACHABLE:
+                    /* Need to set the BTL endpoint to MCA_BTL_UDAPL_FAILED
+                       See dat_ep_connect documentation pdf pg 198 */
                     break;
+#ifdef OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown conn event: %d\n",
                             event.event_number));
+#endif
             }
         }
 
@@ -430,9 +586,11 @@ int mca_btl_udapl_component_progress()
                 case DAT_ASYNC_ERROR_TIMED_OUT:
                 case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
                     break;
+#ifdef OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown async event: %d\n",
                             event.event_number));
+#endif
             }
         }
     }

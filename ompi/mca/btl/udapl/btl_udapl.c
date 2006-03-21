@@ -30,9 +30,9 @@
 #include "ompi/datatype/convertor.h" 
 #include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
-/*#include "ompi/mca/mpool/mpool.h"*/
 #include "ompi/mca/mpool/udapl/mpool_udapl.h"
 #include "ompi/proc/proc.h"
+
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {
     {
@@ -67,9 +67,10 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
  */
 
 int
-mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
+mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
 {
     mca_mpool_base_resources_t res;
+    DAT_CONN_QUAL port;
     DAT_IA_ATTR attr;
     DAT_RETURN rc;
 
@@ -86,7 +87,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
     rc = dat_pz_create(btl->udapl_ia, &btl->udapl_pz);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_pz_create");
-        return OMPI_ERROR;
+        goto failure;
     }
 
     /* query to get address information */
@@ -95,8 +96,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
             DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, DAT_IA_FIELD_NONE, NULL);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_ia_query");
-        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
-        return OMPI_ERROR;
+        goto failure;
     }
 
     memcpy(&btl->udapl_addr.addr, attr.ia_address_ptr, sizeof(DAT_SOCK_ADDR));
@@ -107,8 +107,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
             DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_evd_create (dto)");
-        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
-        return OMPI_ERROR;
+        goto failure;
     }
 
     rc = dat_evd_create(btl->udapl_ia,
@@ -116,10 +115,31 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
             DAT_EVD_CR_FLAG | DAT_EVD_CONNECTION_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_evd_create (conn)");
-        dat_evd_free(btl->udapl_evd_dto);
-        dat_ia_close(btl->udapl_ia, DAT_CLOSE_GRACEFUL_FLAG);
-        return OMPI_ERROR;
+        goto failure;
     }
+
+    /* create our public service point */
+    /* We have to specify a port, so we go through a range until we
+       find a port that works */
+    for(port = mca_btl_udapl_component.udapl_port_low;
+            port <= mca_btl_udapl_component.udapl_port_high; port++) {
+
+        rc = dat_psp_create(btl->udapl_ia, port, btl->udapl_evd_conn,
+                DAT_PSP_CONSUMER_FLAG, &btl->udapl_psp);
+        if(DAT_SUCCESS == rc) {
+            break;
+        } else if(DAT_CONN_QUAL_IN_USE != rc) {
+            mca_btl_udapl_error(rc, "dat_psp_create");
+            goto failure;
+        }
+    }
+
+    if(port == mca_btl_udapl_component.udapl_port_high) {
+        goto failure;
+    }
+
+    /* Save the port with the address information */
+    btl->udapl_addr.port = port;
 
     /* initialize the memory pool */
     res.udapl_ia = btl->udapl_ia;
@@ -165,22 +185,13 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t * btl)
           mca_btl_udapl_component.udapl_free_list_inc,
           NULL);
 
-    ompi_free_list_init(&btl->udapl_frag_recv,
-          sizeof(mca_btl_udapl_frag_recv_t),
-          OBJ_CLASS(mca_btl_udapl_frag_recv_t),
-          mca_btl_udapl_component.udapl_free_list_num,
-          mca_btl_udapl_component.udapl_free_list_max,
-          mca_btl_udapl_component.udapl_free_list_inc,
-          btl->super.btl_mpool);
-
-    /* Connections are done lazily - the process doing the send acts as a client
-       when initiating the connect.  progress should always be checking for
-       incoming connections, and establishing them when they arrive.  When
-       connection is established, recv's are posted. */
-
     /* TODO - post receives */
     /* TODO - can I always use SRQ, or just on new enough uDAPLs? */
     return OMPI_SUCCESS;
+
+failure:
+    dat_ia_close(btl->udapl_ia, DAT_CLOSE_ABRUPT_FLAG);
+    return OMPI_ERROR;
 }
 
 
@@ -243,12 +254,12 @@ int mca_btl_udapl_add_procs(
         /*
          * Check to make sure that the peer has at least as many interface 
          * addresses exported as we are trying to use. If not, then 
-         * don't bind this PTL instance to the proc.
+         * don't bind this BTL instance to the proc.
          */
 
         OPAL_THREAD_LOCK(&udapl_proc->proc_lock);
 
-        /* The btl_proc datastructure is shared by all uDAPL PTL
+        /* The btl_proc datastructure is shared by all uDAPL BTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
@@ -265,10 +276,12 @@ int mca_btl_udapl_add_procs(
             OPAL_THREAD_UNLOCK(&udapl_proc->proc_lock);
             continue;
         }
+
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&udapl_proc->proc_lock);
         peers[i] = udapl_endpoint;
     }
+
     return OMPI_SUCCESS;
 }
 
@@ -323,14 +336,22 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
-            size : btl->btl_eager_limit ; 
+            size : btl->btl_eager_limit; 
     } else { 
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_max_send_size ? 
-            size : btl->btl_max_send_size ; 
+            size : btl->btl_max_send_size; 
     }
-    
+
+    /* TODO - this the right place for this? */
+    if(OMPI_SUCCESS != mca_mpool_udapl_register(btl->btl_mpool,
+                frag->segment.seg_addr.pval, size, 0, &frag->registration)) {
+        /* TODO - handle this fully */
+        return NULL;
+    }
+
+    frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
@@ -416,9 +437,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         /* bump reference count as so that the registration
          * doesn't go away when the operation completes
          */
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
-                (mca_mpool_base_registration_t*) registration);
-        
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, registration);
         frag->registration = registration;
 
     /*
@@ -615,16 +634,7 @@ int mca_btl_udapl_send(
     frag->hdr->tag = tag;
     frag->type = MCA_BTL_UDAPL_SEND;
 
-    /* Check if we are connected to this peer.
-       Should be three states we care about -
-        connected, connecting, disconnected.
-       If no connection exists, request the connection and queue the send.
-       If a connection is pending, queue the send
-       If the connection is established, fire off the send.
-       need to consider locking around the connection state and queue.
-     */
-
-    return OMPI_SUCCESS; 
+    return mca_btl_udapl_endpoint_send(endpoint, frag);
 }
 
 
