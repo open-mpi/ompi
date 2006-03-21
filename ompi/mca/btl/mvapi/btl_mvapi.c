@@ -852,7 +852,7 @@ int mca_btl_mvapi_module_init(mca_btl_mvapi_module_t *mvapi_btl)
 /*
  * Dump state of btl/queues
  */
-
+/*#include "orte/mca/ns/ns_types.h"*/
 void mca_btl_mvapi_dump(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
@@ -860,5 +860,43 @@ void mca_btl_mvapi_dump(
 {
     mca_btl_mvapi_module_t* mvapi_btl = (mca_btl_mvapi_module_t*)btl;
 
+    if( NULL == endpoint ) {
+        opal_output( 0, "No endpoint for this peer\n" );
+        return;
+    }
+    opal_output( 0, "endpoint with processor (%lu.%lu.%lu)\n", 
+                 ORTE_NAME_ARGS( &(endpoint->endpoint_proc->proc_ompi->proc_name) ) );
+    opal_output( 0, "endpoint state: %s\n",
+                 (endpoint->endpoint_state == MCA_BTL_IB_CONNECTING ? "connecting" :
+                  (endpoint->endpoint_state == MCA_BTL_IB_CONNECT_ACK ? "waiting ack" :
+                   (endpoint->endpoint_state == MCA_BTL_IB_WAITING_ACK ? "waiting final ack" :
+                    (endpoint->endpoint_state == MCA_BTL_IB_CONNECTED ? "connected" :
+                     (endpoint->endpoint_state == MCA_BTL_IB_CLOSED ? "closed" :
+                      (endpoint->endpoint_state == MCA_BTL_IB_FAILED ? "failed" : "unknown")))))));
 
+    opal_output( 0, "pending send frags: %d\n", opal_list_get_size(&endpoint->pending_send_frags) );
+    opal_output( 0, "pending frags hp : %d\n", opal_list_get_size(&endpoint->pending_frags_hp) );
+    opal_output( 0, "pending frags lp : %d\n", opal_list_get_size(&endpoint->pending_frags_lp) );
+#ifdef VAPI_FEATURE_SRQ
+    if( mca_btl_mvapi_component.use_srq ) {
+        opal_output( 0, "mvapi_btl->srd_posted_hp %d\n", mvapi_btl->srd_posted_hp );
+        opal_output( 0, "mvapi_btl->srd_posted_lp %d\n", mvapi_btl->srd_posted_lp );
+        opal_output( 0, "mvapi_btl->sd_tokens_hp %d\n", mvapi_btl->sd_tokens_hp );
+        opal_output( 0, "mvapi_btl->sd_tokens_lp %d\n", mvapi_btl->sd_tokens_lp );
+    } else {
+#endif  /* VAPI_FEATURE_SRQ */
+        opal_output( 0, "sd_tokens_hp %d\n", endpoint->sd_tokens_hp );
+        opal_output( 0, "sd_tokens_lp %d\n", endpoint->sd_tokens_lp );
+        opal_output( 0, "get_tokens %d\n", endpoint->get_tokens );
+        opal_output( 0, "rd_posted_hp %d\n", endpoint->rd_posted_hp );
+        opal_output( 0, "rd_posted_lp %d\n", endpoint->rd_posted_lp );
+        opal_output( 0, "rd_credits_hp %d\n", endpoint->rd_credits_hp );
+        opal_output( 0, "rd_credits_lp %d\n", endpoint->rd_credits_lp );
+        opal_output( 0, "sd_credits_hp %d\n", endpoint->sd_credits_hp );
+        opal_output( 0, "sd_credits_lp %d\n", endpoint->sd_credits_lp );
+#ifdef VAPI_FEATURE_SRQ
+    }
+#endif  /* VAPI_FEATURE_SRQ */
+    opal_output( 0, "sd_wqe_hp %d\n", endpoint->sd_wqe_hp );
+    opal_output( 0, "sd_wqe_lp %d\n", endpoint->sd_wqe_lp );
 }
