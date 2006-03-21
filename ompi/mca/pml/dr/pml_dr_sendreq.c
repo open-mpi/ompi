@@ -106,6 +106,12 @@ static void mca_pml_dr_match_completion(
     mca_pml_dr_send_request_t* sendreq = descriptor->des_cbdata;
     mca_pml_dr_vfrag_t* vfrag = &sendreq->req_vfrag0;
 
+    if(descriptor != sendreq->descriptor) {
+        /* only the cached descriptor needs to hang around 
+           for retransmission */
+        mca_bml_base_free(descriptor->des_context, descriptor);
+    }
+    
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -135,7 +141,7 @@ static void mca_pml_dr_match_completion(
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     } else if(vfrag->vf_retrans) { 
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
-        MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
+        MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
     }
 }
 
@@ -153,6 +159,12 @@ static void mca_pml_dr_rndv_completion(
     mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
     mca_pml_dr_vfrag_t* vfrag = &sendreq->req_vfrag0;
     bool schedule = false;
+
+    if(descriptor != sendreq->descriptor) {
+        /* only the cached descriptor needs to hang around 
+           for retransmission */
+        mca_bml_base_free(descriptor->des_context, descriptor);
+    }
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -191,7 +203,7 @@ static void mca_pml_dr_rndv_completion(
     /* negative ack - need to retransmit? */
     } else if(vfrag->vf_retrans) {
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
-        MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
+        MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
     }
 
     /* check for pending requests */
@@ -852,7 +864,7 @@ void mca_pml_dr_send_request_match_ack(
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
-            MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
+            MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
         } else { 
             /* if already have local completion free descriptor and complete message */
             /* return descriptor */
@@ -907,7 +919,8 @@ void mca_pml_dr_send_request_rndv_ack(
 
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
-            MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
+            /* got a NACK, resend eager data! */
+            MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
         } else { 
             /* return descriptor of first fragment */
             if(NULL != sendreq->descriptor) {

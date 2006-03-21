@@ -96,12 +96,9 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
 
     if(0 == vfrag->vf_offset) { /* this is the first part of the message
                                    that we need to resend */
-        MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
+        MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
     } else { 
-        vfrag->vf_idx = 0;                                    
-        vfrag->vf_mask_processed = 0;
-        vfrag->vf_ack = 0;                                           
-        vfrag->vf_retrans = 0; 
+        MCA_PML_DR_VFRAG_RESET(vfrag);
         opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
         mca_pml_dr_send_request_schedule(sendreq);
