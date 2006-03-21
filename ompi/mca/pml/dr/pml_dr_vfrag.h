@@ -77,6 +77,13 @@ do {                                                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, (opal_list_item_t*)vfrag);   \
 } while(0)
 
+#define MCA_PML_DR_VFRAG_RESET(vfrag)                                      \
+do {                                                                       \
+    vfrag->vf_idx = 0;                                                     \
+    vfrag->vf_mask_processed = 0;                                          \
+    vfrag->vf_ack = 0;                                                     \
+    vfrag->vf_retrans = 0;                                                 \
+} while(0)
 #if 1
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \

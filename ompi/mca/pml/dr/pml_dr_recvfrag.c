@@ -121,9 +121,24 @@ void mca_pml_dr_recv_frag_callback(
         {
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_rendezvous_hdr_t);
             MCA_PML_DR_RECV_FRAG_CHECK_DUP(hdr, duplicate);
-            if(false == duplicate) {
-                mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+                        
+            if(!duplicate) { 
+                if(hdr->hdr_rndv.hdr_msg_length && segments->seg_len) { 
+                    /* no eager data on nonzero length message, this is a probe! 
+                       we haven't seen the eager data, so nack and force retransmission*/
+                    ompi_communicator_t *comm_ptr = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);
+                    mca_pml_dr_comm_t *comm = (mca_pml_dr_comm_t*) comm_ptr->c_pml_comm;
+                    mca_pml_dr_comm_proc_t *proc = comm->procs + hdr->hdr_common.hdr_src;
+                    mca_pml_dr_recv_frag_send_ack(proc->ompi_proc,
+                                              &hdr->hdr_common,
+                                                  hdr->hdr_match.hdr_src_ptr,
+                                              0);
+                    OPAL_OUTPUT((0, "%s:%d: nacking PROBE, haven't seen EAGER data yet!\n", __FILE__, __LINE__));
+                } else { 
+                    mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+                }
             } else {
+                /* must check the the pending receive list! */
                 OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n", __FILE__, __LINE__));
             }
             break;
@@ -611,14 +626,6 @@ rematch:
     if(match != NULL) {
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
     } 
-    else { 
-        /* no need to csum, if it wasn't matched and 
-           csum failed, we already nack'd it */
-        mca_pml_dr_recv_frag_send_ack(ompi_proc, 
-                                      &hdr->hdr_common, 
-                                      hdr->hdr_src_ptr,
-                                      1);
-    }
     if(additional_match) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {

@@ -350,25 +350,78 @@ do {                                                                  \
  * Requeue first fragment of message for retransmission 
  */
 
-#define MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag)                \
+#define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)          \
 do {                                                                 \
-    mca_bml_base_btl_t* bml_btl = sendreq->descriptor->des_context;  \
+    mca_bml_base_endpoint_t* endpoint =                                                   \
+                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
+    mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
+    mca_btl_base_descriptor_t *des_old, *des_new;                    \
     vfrag->vf_retry_cnt ++;                                          \
-    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) {      \
+    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) {      \
         opal_output(0, "%s:%d,%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);  \
         orte_errmgr.abort();                                         \
     }                                                                \
                                                                      \
-    opal_output(0, "%s:%d:%s, retransmitting\n", __FILE__, __LINE__, __func__); \
+    opal_output(0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__); \
     assert(sendreq->descriptor->des_src != NULL);                    \
-    vfrag->vf_idx = 0;                                               \
-    vfrag->vf_mask_processed = 0;                                    \
-    vfrag->vf_ack = 0;                                               \
-    vfrag->vf_retrans = 0;                                           \
+    MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
+    des_old = sendreq->descriptor;                                   \
+    mca_bml_base_alloc(bml_btl, &des_new, des_old->des_src->seg_len);\
+    memcpy(des_new->des_src->seg_addr.pval, \
+           des_old->des_src->seg_addr.pval, \
+           des_old->des_src->seg_len);                               \
+    des_new->des_flags = des_old->des_flags;                         \
+    des_new->des_cbdata = des_old->des_cbdata;                       \
+    des_new->des_cbfunc = des_old->des_cbfunc;                       \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                          \
     MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
-    mca_bml_base_send(bml_btl, sendreq->descriptor, MCA_BTL_TAG_PML);\
+    mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
 } while(0)        
+
+/*
+ * Requeue first fragment of message for retransmission 
+ */
+
+#define MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag)           \
+do {                                                                 \
+    mca_bml_base_endpoint_t* endpoint =                                                   \
+                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
+    mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
+    mca_btl_base_descriptor_t *des_old, *des_new;                    \
+    mca_pml_dr_hdr_t *hdr;                                           \
+    vfrag->vf_retry_cnt ++;                                          \
+    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) {      \
+        opal_output(0, "%s:%d,%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);  \
+        orte_errmgr.abort();                                         \
+    }                                                                \
+                                                                     \
+    opal_output(0, "%s:%d:%s, (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
+    assert(sendreq->descriptor->des_src != NULL);                    \
+    MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
+    mca_bml_base_alloc(bml_btl, &des_new,                            \
+                       sizeof(mca_pml_dr_rendezvous_hdr_t));         \
+    /* build hdr */                                                  \
+    hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
+    hdr->hdr_common.hdr_flags = 0;                                   \
+    hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_RNDV;             \
+    hdr->hdr_common.hdr_dst = sendreq->req_send.req_base.req_peer;   \
+    hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid; \
+    hdr->hdr_common.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;   \
+    hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                \
+    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;           \
+    hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;                     \
+    hdr->hdr_match.hdr_csum = OPAL_CSUM_ZERO;                                   \
+    hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;                       \
+    hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;          \
+    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)); \
+    des_new->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                               \
+    des_new->des_cbdata = sendreq;                                                  \
+    des_new->des_cbfunc = mca_pml_dr_rndv_completion;                               \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                          \
+    MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
+    mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
+} while(0)        
+
 /**
  *  Start the specified request
  */
