@@ -53,6 +53,7 @@ struct mca_pml_dr_send_request_t {
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
     size_t req_send_offset;
+    bool   req_matched;
 
     mca_pml_dr_vfrag_t* req_vfrag;
     mca_pml_dr_vfrag_t  req_vfrag0;
@@ -158,6 +159,7 @@ do {                                                                            
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_state = 0;                                                               \
     sendreq->req_send_offset = 0;                                                         \
+    sendreq->req_matched = false;                                                         \
     sendreq->req_send.req_base.req_pml_complete = false;                                  \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
@@ -168,7 +170,7 @@ do {                                                                            
     sendreq->req_vfrag0.vf_ack = 0;                                                       \
     sendreq->req_vfrag0.vf_mask_processed = 0;                                            \
     sendreq->req_vfrag0.vf_retrans = 0;                                                   \
-    sendreq->req_vfrag0.vf_retry_cnt = 0;                                                  \
+    sendreq->req_vfrag0.vf_retry_cnt = 0;                                                 \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
                                                                                           \
     /* select a btl */                                                                    \
@@ -359,7 +361,7 @@ do {                                                                 \
                                                                      \
     opal_output(0, "%s:%d:%s, retransmitting\n", __FILE__, __LINE__, __func__); \
     assert(sendreq->descriptor->des_src != NULL);                    \
-    vfrag->vf_idx = 1;                                               \
+    vfrag->vf_idx = 0;                                               \
     vfrag->vf_mask_processed = 0;                                    \
     vfrag->vf_ack = 0;                                               \
     vfrag->vf_retrans = 0;                                           \

@@ -124,7 +124,7 @@ void mca_pml_dr_recv_frag_callback(
             if(false == duplicate) {
                 mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
             } else {
-                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n"));
+                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n", __FILE__, __LINE__));
             }
             break;
         }
@@ -676,7 +676,6 @@ void mca_pml_dr_recv_frag_send_ack(
         mca_bml_base_free(bml_btl, des);
         goto retry;
     }
-
     return;
 
     /* queue request to retry later */
