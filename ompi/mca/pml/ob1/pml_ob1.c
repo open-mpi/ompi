@@ -197,7 +197,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 
         /* dump all btls */
         for(n=0; n<ep->btl_eager.arr_size; n++) {
-            mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[i];
+            mca_bml_base_btl_t* bml_btl = &ep->btl_eager.bml_btls[n];
             bml_btl->btl->btl_dump(bml_btl->btl, bml_btl->btl_endpoint, verbose);
         }
     }
