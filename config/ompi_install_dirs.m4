@@ -26,11 +26,12 @@
 # someone changed the prefix.
 AC_DEFUN([OMPI_INSTALL_DIRS], [
     ompi_exec_prefix_save="$exec_prefix"
+    ompi_prefix_save="$prefix"
 
     # need to temporarily expand this out as almost exactly as it will
     # be done later so that NONE doesn't show up in the
-    # exec_prefix-based variables.  We don't use '${prefix}' because
-    # we don't want to have to double evaluate those variables.
+    # {exec_}prefix-based variables.
+    test "x$prefix" = xNONE && prefix=$ac_default_prefix
     test "x$exec_prefix" = xNONE && exec_prefix="$prefix"
 
     OPAL_PREFIX="$prefix"
@@ -61,6 +62,7 @@ AC_DEFUN([OMPI_INSTALL_DIRS], [
     AC_SUBST(OPAL_INFODIR)
     AC_SUBST(OPAL_MANDIR)
 
+    prefix="$ompi_prefix_save"
     exec_prefix="$ompi_exec_prefix_save"
 
     AC_CONFIG_FILES([$1])
