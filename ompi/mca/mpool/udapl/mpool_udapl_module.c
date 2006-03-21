@@ -137,8 +137,6 @@ int mca_mpool_udapl_register(
     }
     
     *registration = &reg->base_reg;
-    opal_output(0,"registered memory from %p to %p\n",
-            reg->base_reg.base, reg->base_reg.bound);
     return OMPI_SUCCESS; 
 }
 
