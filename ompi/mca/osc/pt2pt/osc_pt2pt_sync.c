@@ -90,7 +90,7 @@ int
 ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 {
     short incoming_reqs;
-    int ret, i;
+    int ret = OMPI_SUCCESS, i;
 
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
         int num_pending;
