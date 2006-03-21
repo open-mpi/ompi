@@ -205,7 +205,6 @@ static void mca_pml_dr_recv_request_ack(
     }
     
     mca_pml_dr_comm_proc_set_acked(comm_proc, ack->hdr_common.hdr_vid);
-    
     return;
 
     /* queue request to retry later */

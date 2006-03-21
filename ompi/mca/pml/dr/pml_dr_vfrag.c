@@ -73,7 +73,7 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
         opal_output(0, "%s:%d:%s, wdog retry count exceeded!  FATAL", __FILE__, __LINE__, __func__);
         orte_errmgr.abort();
     }
-    vfrag->vf_idx = 1;
+    vfrag->vf_idx = 0;
     vfrag->vf_mask_processed = 0;
     vfrag->vf_ack = 0;
     vfrag->vf_retrans = 0;
@@ -93,11 +93,12 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
         opal_output(0, "%s:%d: maximum ack retry count exceeded: FATAL", __FILE__, __LINE__);
         orte_errmgr.abort();
     }
+
     if(0 == vfrag->vf_offset) { /* this is the first part of the message
                                    that we need to resend */
         MCA_PML_DR_SEND_REQUEST_RETRY(sendreq, vfrag);
     } else { 
-        vfrag->vf_idx = 1;                                    
+        vfrag->vf_idx = 0;                                    
         vfrag->vf_mask_processed = 0;
         vfrag->vf_ack = 0;                                           
         vfrag->vf_retrans = 0; 
