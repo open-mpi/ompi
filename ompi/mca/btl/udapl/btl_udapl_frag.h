@@ -22,7 +22,6 @@
 
 #define MCA_BTL_UDAPL_FRAG_ALIGN (8)
 #include "ompi_config.h"
-#include "btl_udapl.h" 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -32,6 +31,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t);
 
 typedef enum {
     MCA_BTL_UDAPL_SEND,
+    MCA_BTL_UDAPL_CONN_SEND,
+    MCA_BTL_UDAPL_CONN_RECV,
     MCA_BTL_UDAPL_PUT,
     MCA_BTL_UDAPL_GET
 } mca_btl_udapl_frag_type_t;
@@ -67,10 +68,6 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_max_t);
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_user_t; 
     
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_user_t); 
-
-typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_recv_t; 
-    
-OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_recv_t); 
 
 
 /*

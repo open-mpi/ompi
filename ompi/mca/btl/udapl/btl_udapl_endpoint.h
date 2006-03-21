@@ -34,6 +34,7 @@ extern "C" {
  * Structure used to publish uDAPL id information to peers.
  */
 struct mca_btl_udapl_addr_t {
+    DAT_CONN_QUAL port;
     DAT_SOCK_ADDR addr;
 };
 typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
@@ -56,7 +57,7 @@ typedef enum {
  * An instance of mca_btl_base_endpoint_t is associated w/ each process
  * and BTL pair at startup. However, connections to the endpoint
  * are established dynamically on an as-needed basis:
- */
+*/
 
 struct mca_btl_base_endpoint_t {
     opal_list_item_t            super;
@@ -70,16 +71,29 @@ struct mca_btl_base_endpoint_t {
     mca_btl_udapl_endpoint_state_t endpoint_state;
     /**< current state of the endpoint connection */
 
-    opal_list_t pending_frags;
+    opal_list_t endpoint_frags;
     /**< pending send frags on this endpoint */
 
+    opal_mutex_t endpoint_send_lock;
+    /**< lock for concurrent access to endpoint state */
+
+    opal_mutex_t endpoint_recv_lock;
+    /**< lock for concurrent access to endpoint state */
+
     mca_btl_udapl_addr_t endpoint_addr;
+
+    DAT_EP_HANDLE endpoint_ep;
+    /**< uDAPL endpoint handle */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_udapl_endpoint_t;
 
 OBJ_CLASS_DECLARATION(mca_btl_udapl_endpoint_t);
+
+
+int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
+                                mca_btl_udapl_frag_t* frag);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

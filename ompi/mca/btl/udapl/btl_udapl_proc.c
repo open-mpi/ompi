@@ -38,11 +38,13 @@ void mca_btl_udapl_proc_construct(mca_btl_udapl_proc_t* proc)
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
+
     /* add to list of all proc instance */
     OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
     opal_list_append(&mca_btl_udapl_component.udapl_procs, &proc->super);
     OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
 }
+
 
 /*
  * Cleanup uDAPL proc instance
@@ -169,8 +171,6 @@ int mca_btl_udapl_proc_insert(
     /* insert into endpoint array */
     if(udapl_proc->proc_endpoint_count > udapl_proc->proc_addr_count)
         return OMPI_ERR_OUT_OF_RESOURCE;
-
-    opal_output(0, "udapl_proc_insert\n");
 
     udapl_endpoint->endpoint_proc = udapl_proc;
     udapl_endpoint->endpoint_addr =
