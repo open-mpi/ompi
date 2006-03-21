@@ -382,10 +382,6 @@ int mca_btl_sm_component_progress(void)
             case MCA_BTL_SM_FRAG_ACK:
             {
                 /* completion callback */
-                frag->base.des_src = frag->base.des_dst;
-                frag->base.des_src_cnt = frag->base.des_dst_cnt;
-                frag->base.des_dst = NULL;
-                frag->base.des_dst_cnt = 0;
                 frag->base.des_cbfunc(&mca_btl_sm[0].super, frag->endpoint, &frag->base, frag->rc);
                 break;
             }
@@ -393,10 +389,6 @@ int mca_btl_sm_component_progress(void)
             {
                 /* recv upcall */
                 mca_btl_sm_recv_reg_t* reg = mca_btl_sm[0].sm_reg + frag->tag;
-                frag->base.des_dst = frag->base.des_src;
-                frag->base.des_dst_cnt = frag->base.des_src_cnt;
-                frag->base.des_src = NULL;
-                frag->base.des_src_cnt = 0;
                 reg->cbfunc(&mca_btl_sm[0].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
@@ -475,9 +467,7 @@ int mca_btl_sm_component_progress(void)
                 frag->base.des_src->seg_addr.pval =
                     ((unsigned char*)frag->base.des_src->seg_addr.pval +
                      mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_src_cnt = frag->base.des_dst_cnt;
-                frag->base.des_dst = NULL;
-                frag->base.des_dst_cnt = 0;
+                frag->base.des_dst = frag->base.des_src;
                 frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, frag->rc);
                 break;
             }
@@ -490,9 +480,7 @@ int mca_btl_sm_component_progress(void)
                 frag->base.des_dst->seg_addr.pval = 
                     ((unsigned char*)frag->base.des_dst->seg_addr.pval +
                     mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_dst_cnt = frag->base.des_src_cnt;
-                frag->base.des_src = NULL;
-                frag->base.des_src_cnt = 0;
+                frag->base.des_src = frag->base.des_dst;
                 reg->cbfunc(&mca_btl_sm[1].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;
                 MCA_BTL_SM_FIFO_WRITE( mca_btl_sm_component.sm_peers[peer_smp_rank],
