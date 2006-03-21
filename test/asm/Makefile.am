@@ -82,7 +82,7 @@ atomic_cmpset_noinline_LDADD = $(top_builddir)/opal/asm/libasm.la $(libs)
 ######################################################################
 
 
-clean-local:
+maintainer-clean-local:
 	rm -f atomic_barrier_noinline.c \
 	atomic_spinlock_noinline.c \
 	atomic_math_noinline.c \
