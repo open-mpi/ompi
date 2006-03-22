@@ -536,12 +536,14 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    if test "$ompi_cv_c_compiler_vendor" = "portland group" ; then
-        # PGI seems to have some issues with our inline assembly.
-        # Disable for now.
-        asm_result="no (Portland Group)"
-    else
-        case $host in
+    AC_COMPILE_IFELSE([#ifdef __PGI
+#error "symbol __PGI defined"
+choke me
+#endif],
+        [# PGI seems to have some issues with our inline assembly.
+         # Disable for now.
+         asm_result="no (Portland Group)"],
+        [case $host in
             *-aix*)
                 # the AIX compilers and linkers really don't do gcc 
                 # inline assembly right - disable for now.
@@ -570,8 +572,7 @@ AC_INCLUDES_DEFAULT]],
 __asm__ __volatile__ ($assembly);
 return ret;]]),
             [asm_result="yes"], [asm_result="no"])
-        fi
-    fi
+        fi])
 
     AC_MSG_RESULT([$asm_result])
 
