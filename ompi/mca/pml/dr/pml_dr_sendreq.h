@@ -53,7 +53,6 @@ struct mca_pml_dr_send_request_t {
     size_t req_pipeline_depth;
     size_t req_bytes_delivered;
     size_t req_send_offset;
-    bool   req_matched;
 
     mca_pml_dr_vfrag_t* req_vfrag;
     mca_pml_dr_vfrag_t  req_vfrag0;
@@ -159,18 +158,14 @@ do {                                                                            
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_state = 0;                                                               \
     sendreq->req_send_offset = 0;                                                         \
-    sendreq->req_matched = false;                                                         \
     sendreq->req_send.req_base.req_pml_complete = false;                                  \
     sendreq->req_send.req_base.req_ompi.req_complete = false;                             \
     sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                  \
     sendreq->req_send.req_base.req_ompi.req_status._cancelled = 0;                        \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->send_sequence,1);  \
     sendreq->req_endpoint = endpoint;                                                     \
+    MCA_PML_DR_VFRAG_INIT(&sendreq->req_vfrag0);                                          \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
-    sendreq->req_vfrag0.vf_ack = 0;                                                       \
-    sendreq->req_vfrag0.vf_mask_processed = 0;                                            \
-    sendreq->req_vfrag0.vf_retrans = 0;                                                   \
-    sendreq->req_vfrag0.vf_retry_cnt = 0;                                                 \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
                                                                                           \
     /* select a btl */                                                                    \
@@ -219,9 +214,6 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                      \
         (sendreq)->req_send.req_bytes_packed;                                     \
-   if( (sendreq)->req_send.req_base.req_ompi.req_persistent ) {                   \
-       (sendreq)->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE;   \
-   }                                                                              \
    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) ); \
 } while(0)
 
@@ -362,7 +354,7 @@ do {                                                                 \
         orte_errmgr.abort();                                         \
     }                                                                \
                                                                      \
-    opal_output(0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__); \
+    OPAL_OUTPUT((0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__)); \
     assert(sendreq->descriptor->des_src != NULL);                    \
     MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
     des_old = sendreq->descriptor;                                   \
@@ -400,6 +392,7 @@ do {                                                                 \
     MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
     mca_bml_base_alloc(bml_btl, &des_new,                            \
                        sizeof(mca_pml_dr_rendezvous_hdr_t));         \
+    des_old = sendreq->descriptor;                                   \
     /* build hdr */                                                  \
     hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
     hdr->hdr_common.hdr_flags = 0;                                   \
@@ -414,12 +407,12 @@ do {                                                                 \
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;                       \
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;          \
     hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)); \
-    des_new->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;                               \
-    des_new->des_cbdata = sendreq;                                                  \
-    des_new->des_cbfunc = mca_pml_dr_rndv_completion;                               \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                          \
-    MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
-    mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
+    des_new->des_flags = des_old->des_flags;                                    \
+    des_new->des_cbdata = des_old->des_cbdata;                                  \
+    des_new->des_cbfunc = des_old->des_cbfunc;                                  \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                     \
+    MCA_PML_DR_VFRAG_ACK_START(vfrag);                                          \
+    mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);                       \
 } while(0)        
 
 /**

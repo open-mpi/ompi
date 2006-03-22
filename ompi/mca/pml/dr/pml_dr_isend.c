@@ -102,7 +102,7 @@ int mca_pml_dr_send(void *buf,
 
     MCA_PML_DR_SEND_REQUEST_START(sendreq, rc);
     if (rc != OMPI_SUCCESS) {
-        MCA_PML_DR_FREE((ompi_request_t **) & sendreq);
+        ompi_request_free((ompi_request_t **) & sendreq);
         return rc;
     }
 
