@@ -68,6 +68,7 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    opal_output(0, "%s:%d:%s, wdog timeout!", __FILE__, __LINE__, __func__);
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) { 
         opal_output(0, "%s:%d:%s, wdog retry count exceeded!  FATAL", __FILE__, __LINE__, __func__);
@@ -85,6 +86,7 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) { 
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    opal_output(0, "%s:%d:%s, ack timeout!", __FILE__, __LINE__, __func__);
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) { 
         opal_output(0, "%s:%d: maximum ack retry count exceeded: FATAL", __FILE__, __LINE__);
@@ -94,9 +96,9 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
     if(0 == vfrag->vf_offset) { /* this is the first part of the message
                                    that we need to resend */
       if(vfrag->vf_rndv) { 
-	MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
+          MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
       } else { 
-	MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
+          MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
       }
       
     } else { 

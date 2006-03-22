@@ -72,7 +72,7 @@ static void mca_pml_dr_send_request_construct(mca_pml_dr_send_request_t* req)
     req->req_vfrag0.vf_idx = 0;
     req->req_vfrag0.vf_ack = 0;
     req->req_vfrag0.vf_mask = 1;
-    req->req_vfrag0.vf_mask_processed = 0;
+    req->req_vfrag0.vf_mask_pending = 0;
     req->req_vfrag0.vf_send.pval = req;
     req->req_send.req_base.req_type = MCA_PML_REQUEST_SEND;
     req->req_send.req_base.req_ompi.req_free = mca_pml_dr_send_request_free;
@@ -122,8 +122,7 @@ static void mca_pml_dr_match_completion(
     OPAL_THREAD_LOCK(&ompi_request_lock);
 
     /* local completion */
-    assert(vfrag->vf_mask_processed == 0);
-    vfrag->vf_mask_processed |= 0x1;
+    vfrag->vf_mask_pending = 0;
 
     /* been acked? */
     if(vfrag->vf_ack == vfrag->vf_mask) {
@@ -176,7 +175,7 @@ static void mca_pml_dr_rndv_completion(
     OPAL_THREAD_LOCK(&ompi_request_lock);
 
     /* local completion */
-    vfrag->vf_mask_processed |= 0x1;
+    vfrag->vf_mask_pending = 0;
     
     /* positive ack? */
     if(vfrag->vf_ack == vfrag->vf_mask) {
@@ -188,7 +187,6 @@ static void mca_pml_dr_rndv_completion(
 
         /* matched at peer? */
         if(NULL != sendreq->req_vfrag0.vf_recv.pval) {
-            sendreq->req_bytes_delivered = vfrag->vf_size;
             if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed){
                 MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
             } else {
@@ -238,28 +236,30 @@ static void mca_pml_dr_frag_completion(
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     bit = ((uint64_t)1 << hdr->hdr_frag_idx); 
-    vfrag->vf_mask_processed |= bit;
+    vfrag->vf_mask_pending &= ~bit;
 
-    /* update pipeline depth */
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
-    
     /* when we have local completion of the entire vfrag 
        we stop the local wdog timers and set our ack timer 
        as the peer should be sending us an ack for the vfrag
     */
-    if(vfrag->vf_mask_processed == vfrag->vf_mask) {
+    if(vfrag->vf_mask_pending == 0) { 
+        
         MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
         /* has the vfrag already been acked */
         if(vfrag->vf_ack == vfrag->vf_mask) {
 
-            /* check to see if we need to schedule the remainder of the message */
             sendreq->req_bytes_delivered += vfrag->vf_size;
             assert(sendreq->req_bytes_delivered <= sendreq->req_send.req_bytes_packed);
 
+            /* is this vfrag in the process of being retransmitted */
+            if(vfrag->vf_idx != vfrag->vf_len) {
+                opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+            } 
+            
             /* return this vfrag */
             MCA_PML_DR_VFRAG_RETURN(vfrag);
 
-        } else {
+        } else if (vfrag->vf_idx == vfrag->vf_len) {
             MCA_PML_DR_VFRAG_ACK_START(vfrag);
         }
     } else { 
@@ -267,7 +267,8 @@ static void mca_pml_dr_frag_completion(
     }
 
     /* are we done with this request ? */
-    if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+    if(OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1) == 0 && 
+       sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
         MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
     }  else if (sendreq->req_send_offset < sendreq->req_send.req_bytes_packed ||
                 opal_list_get_size(&sendreq->req_retrans)) {
@@ -720,11 +721,16 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 hdr->hdr_src_ptr.pval = vfrag;
                 hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
                 hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));
-
+                
+                assert(hdr->hdr_frag_offset < sendreq->req_send.req_bytes_packed);
+                
+                vfrag->vf_mask_pending |= (1 << vfrag->vf_idx); 
+                
                 /* update state */
                 vfrag->vf_idx++;
-		        vfrag->vf_rndv = false;
-
+                vfrag->vf_rndv = false;
+                
+                        
                 sendreq->req_send_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
@@ -761,7 +767,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                  */
                 while(vfrag->vf_idx < vfrag->vf_len && 
                       sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
-                    if(((1 << vfrag->vf_idx) & vfrag->vf_mask_processed) == 0) {
+                    if(((1 << vfrag->vf_idx) & vfrag->vf_mask) == 0) {
                         mca_bml_base_btl_t* bml_btl = vfrag->bml_btl; 
                         mca_pml_dr_frag_hdr_t* hdr;
                         mca_btl_base_descriptor_t* des;
@@ -808,12 +814,13 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         hdr->hdr_vlen = vfrag->vf_len;
                         hdr->hdr_frag_idx = vfrag->vf_idx;
                         hdr->hdr_frag_csum = sendreq->req_send.req_convertor.checksum; 
-                        hdr->hdr_frag_offset = sendreq->req_send_offset;
+                        hdr->hdr_frag_offset = offset_in_msg;
                         hdr->hdr_src_ptr.pval = vfrag;
                         hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
                         hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));
-			
-			            vfrag->vf_rndv = false;
+                        
+                        vfrag->vf_mask_pending |= (1 << vfrag->vf_idx); 
+                        vfrag->vf_rndv = false;
                         /* update state */
                         OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
@@ -865,7 +872,7 @@ void mca_pml_dr_send_request_match_ack(
     assert(vfrag->vf_ack == 0);
  
     vfrag->vf_ack = ack->hdr_vmask & vfrag->vf_mask;
-    if ((vfrag->vf_mask_processed & vfrag->vf_mask) == vfrag->vf_mask) {
+    if (vfrag->vf_mask_pending  == 0) {
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
@@ -880,6 +887,8 @@ void mca_pml_dr_send_request_match_ack(
             
             /* update statistics */
             sendreq->req_bytes_delivered = vfrag->vf_size;
+            /* stash the vfid for duplicate acks.. */
+            mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
             OPAL_THREAD_UNLOCK(&ompi_request_lock); 
         }
@@ -913,7 +922,7 @@ void mca_pml_dr_send_request_rndv_ack(
     vfrag->vf_ack = ack->hdr_vmask & vfrag->vf_mask;
 
     /* local completion? */
-    if ((vfrag->vf_mask_processed & vfrag->vf_mask) == vfrag->vf_mask) {
+    if (vfrag->vf_mask_pending == 0) { 
         bool schedule = false;
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
 
@@ -937,23 +946,31 @@ void mca_pml_dr_send_request_rndv_ack(
                 sendreq->req_send_offset = ack->hdr_vlen;
                 schedule = true;
             } 
-            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            /* stash the vfid for duplicate acks.. */
+            mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
         
+            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+            
             if(schedule) {
                 mca_pml_dr_send_request_schedule(sendreq);
             }
+            
         }
 
     /* wait for local completion */
     } else {
-
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
             vfrag->vf_retrans = vfrag->vf_mask;
         } else { 
             /* may need this to schedule rest of the message */
+            if(sendreq->req_send.req_bytes_packed > 0) { 
+                MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
+                printf("blah");
+            }
             vfrag->vf_recv = ack->hdr_dst_ptr;
             sendreq->req_send_offset = ack->hdr_vlen;
+            sendreq->req_bytes_delivered = ack->hdr_vlen;
         }
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
     }
@@ -980,18 +997,23 @@ void mca_pml_dr_send_request_frag_ack(
     if((vfrag->vf_ack & vfrag->vf_mask) != vfrag->vf_mask) {
         
         /* reset local completion flags to only those that have been successfully acked */
-        vfrag->vf_mask_processed  = vfrag->vf_ack;
+        vfrag->vf_mask  = ~vfrag->vf_ack;
         vfrag->vf_idx = 0;
+        vfrag->vf_mask_pending = 0;
         opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
         schedule = true;
         
     /* acked and local completion */
-    } else if (vfrag->vf_mask_processed == vfrag->vf_mask) {
+    } else if (vfrag->vf_mask_pending == 0 
+               && vfrag->vf_idx == vfrag->vf_len) {
 
         /* update statistics */
         sendreq->req_bytes_delivered += vfrag->vf_size;
         assert(sendreq->req_bytes_delivered <= sendreq->req_send.req_bytes_packed);
 
+        /* stash the vfid for duplicate acks.. */
+        mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+        
         /* return vfrag */
         MCA_PML_DR_VFRAG_RETURN(vfrag);
             

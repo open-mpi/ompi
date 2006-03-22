@@ -43,7 +43,7 @@ struct mca_pml_dr_vfrag_t {
     size_t     vf_max_send_size;
     uint64_t   vf_ack;
     uint64_t   vf_mask;
-    uint64_t   vf_mask_processed;
+    uint64_t   vf_mask_pending;
     uint64_t   vf_retrans;
     bool       vf_rndv;
     struct mca_bml_base_btl_t* bml_btl;
@@ -88,7 +88,7 @@ do {                                                                       \
 #define MCA_PML_DR_VFRAG_RESET(vfrag)                                      \
 do {                                                                       \
     (vfrag)->vf_idx = 0;                                                   \
-    (vfrag)->vf_mask_processed = 0;                                        \
+    (vfrag)->vf_mask_pending = 0;                                          \
     (vfrag)->vf_ack = 0;                                                   \
     (vfrag)->vf_retrans = 0;                                               \
 } while(0)

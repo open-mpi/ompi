@@ -255,34 +255,41 @@ void mca_pml_dr_recv_request_progress(
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
-            bytes_received -= sizeof(mca_pml_dr_frag_hdr_t);
-            data_offset = hdr->hdr_frag.hdr_frag_offset;
-            MCA_PML_DR_RECV_REQUEST_UNPACK(
-                recvreq,
-                segments,
-                num_segments,
-                sizeof(mca_pml_dr_frag_hdr_t),
-                data_offset,
-                bytes_received,
-                bytes_delivered,
-                csum);
-            
             bit = ((uint64_t)1 << hdr->hdr_frag.hdr_frag_idx); 
             MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq, &hdr->hdr_frag, vfrag);
-
+            if(vfrag->vf_ack & bit) { 
+                /* duplicate, nothing to do */ 
+                return;
+            }
+            bytes_received -= sizeof(mca_pml_dr_frag_hdr_t);
+            data_offset = hdr->hdr_frag.hdr_frag_offset;
+            
+            MCA_PML_DR_RECV_REQUEST_UNPACK(
+                                           recvreq,
+                                           segments,
+                                           num_segments,
+                                           sizeof(mca_pml_dr_frag_hdr_t),
+                                           data_offset,
+                                           bytes_received,
+                                           bytes_delivered,
+                                           csum);
+            
+            
             /* update the mask to show that this vfrag was received, 
              * note that it might still fail the checksum though 
              */
-            vfrag->vf_mask_processed |= bit;
+            vfrag->vf_mask_pending |= bit;
             if(csum == hdr->hdr_frag.hdr_frag_csum) { 
                 /* this part of the vfrag passed the checksum, 
                    mark it so that we ack it after receiving the 
                    entire vfrag */
                 vfrag->vf_ack |= bit;
-                if((vfrag->vf_mask_processed & vfrag->vf_mask) == vfrag->vf_mask) { 
+                if((vfrag->vf_mask_pending & vfrag->vf_mask) == vfrag->vf_mask) { 
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
-                    mca_pml_dr_comm_proc_set_vid(recvreq->req_proc, vfrag->vf_id);
+                    mca_pml_dr_comm_proc_set_vid(&recvreq->req_proc->seq_recvs, vfrag->vf_id);
+                    OPAL_OUTPUT((0, "%s:%d ACKING VFRAG vf_ack says %08x bytes_received %d\n",
+                                 __FILE__,__LINE__, vfrag->vf_ack, recvreq->req_bytes_received));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_frag.hdr_src_ptr, vfrag->vf_size, vfrag->vf_mask);
                 }
