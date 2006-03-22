@@ -68,7 +68,6 @@ struct mca_bml_base_context_t {
     size_t index;
     mca_btl_base_completion_fn_t cbfunc;
     void* cbdata;
-    uint32_t csum;
 };
 typedef struct mca_bml_base_context_t mca_bml_base_context_t;
 
@@ -84,13 +83,6 @@ static void mca_bml_base_completion(
     ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
     des->des_cbdata = ctx->cbdata;
     des->des_cbfunc = ctx->cbfunc;
-    csum = OPAL_CSUM(des->des_src[0].seg_addr.pval, des->des_src[0].seg_len);
-    assert(csum == ctx->csum);
-    if(ctx->index == 40) { 
-        unsigned char temp = ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index];
-        opal_output(0, "in completion, before %d, after %d\n", ~temp, temp);
-    }
-    
     free(ctx);
     /* invoke original callback */
     des->des_cbfunc(btl,ep,des,status);
@@ -114,21 +106,12 @@ int mca_bml_base_send(
             mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
-                ctx->csum = OPAL_CSUM(des->des_src[0].seg_addr.pval, des->des_src[0].seg_len);
                 ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
-                if(des->des_src[0].seg_len > 40 ) { 
-                    unsigned char temp;
-                    ctx->index =  40;
-                    temp =  ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index];
-                    opal_output(0, "corrupting index 40, before %d, after %d\n",  temp, ~temp);
-                    
-                }
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
                 ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
                 des->des_cbdata = ctx;
                 des->des_cbfunc = mca_bml_base_completion;
-               
             }
         }
     }
