@@ -465,7 +465,10 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
             uint32_t missing_length = element_length - pConvertor->pending_length;
 
             assert( pElem->elem.common.flags & DT_FLAG_DATA );
-            memcpy( pConvertor->pending + pConvertor->pending_length, packed_buffer, missing_length );
+#if defined(CHECKSUM)
+            pConvertor->checksum -= OPAL_CSUM(pConvertor->pending, pConvertor->pending_length);
+#endif
+            memcpy(pConvertor->pending + pConvertor->pending_length, packed_buffer, missing_length);
             packed_buffer = pConvertor->pending;
             DO_DEBUG( opal_output( 0, "unpack pending from the last unpack %d out of %d bytes\n",
                                    pConvertor->pending_length, ompi_ddt_basicDatatypes[pElem->elem.common.type]->size ); );
@@ -554,7 +557,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
              */
             assert (type < DT_MAX_PREDEFINED);
             assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
-            memcpy( pConvertor->pending, packed_buffer, iov_len_local );
+            MEMCPY_CSUM( pConvertor->pending, packed_buffer, iov_len_local, pConvertor );
             DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
             pConvertor->pending_length = iov_len_local;
             iov_len_local = 0;
