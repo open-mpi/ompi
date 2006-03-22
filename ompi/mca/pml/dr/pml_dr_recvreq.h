@@ -374,7 +374,7 @@ do {                                                                          \
                (vfrag)->vf_id = (hdr)->hdr_common.hdr_vid;                    \
                (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
                (vfrag)->vf_ack = 0;                                           \
-               (vfrag)->vf_mask_processed = 0;                                \
+               (vfrag)->vf_mask_pending = 0;                                  \
                (vfrag)->vf_retrans = 0;                                       \
                (vfrag)->vf_retry_cnt = 0;                                     \
                if((hdr)->hdr_vlen == 64) {                                    \

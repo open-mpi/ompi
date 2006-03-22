@@ -41,7 +41,7 @@ extern "C" {
 
 struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
-    /* ompi_proc_t* req_proc;  */
+    mca_pml_dr_comm_proc_t* req_proc;
     mca_bml_base_endpoint_t* req_endpoint;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_state;
@@ -58,6 +58,7 @@ struct mca_pml_dr_send_request_t {
     mca_pml_dr_vfrag_t  req_vfrag0;
     opal_list_t         req_retrans;
     mca_btl_base_descriptor_t* descriptor; /* descriptor for first frag, retransmission */
+    
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
 
@@ -138,7 +139,7 @@ do {                                                                            
 /**
  * Start a send request. 
  */
-
+    
 #define MCA_PML_DR_SEND_REQUEST_START(sendreq, rc)                                        \
 do {                                                                                      \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;            \
@@ -164,6 +165,7 @@ do {                                                                            
     sendreq->req_send.req_base.req_ompi.req_status._cancelled = 0;                        \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(&proc->send_sequence,1);  \
     sendreq->req_endpoint = endpoint;                                                     \
+    sendreq->req_proc = proc;                                                             \
     MCA_PML_DR_VFRAG_INIT(&sendreq->req_vfrag0);                                          \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
@@ -302,7 +304,7 @@ do {                                                                            
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
     vfrag->vf_ack = 0;                                                                  \
     vfrag->vf_idx = 0;                                                                  \
-    vfrag->vf_mask_processed = 0;                                                       \
+    vfrag->vf_mask_pending = 0;                                                         \
     vfrag->vf_retrans = 0;                                                              \
     vfrag->vf_retry_cnt = 0;                                                            \
     vfrag->vf_max_send_size = max_send_size;                                            \

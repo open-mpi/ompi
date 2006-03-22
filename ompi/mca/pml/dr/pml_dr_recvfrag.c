@@ -120,7 +120,7 @@ void mca_pml_dr_recv_frag_callback(
             MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
 
             OPAL_THREAD_LOCK(&comm->c_matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
                 OPAL_OUTPUT((0, "%s:%d: acking duplicate match\n", __FILE__, __LINE__));
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
@@ -136,7 +136,10 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
         {
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+                mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
+            }
             break;
         }
     case MCA_PML_DR_HDR_TYPE_RNDV:
@@ -145,15 +148,17 @@ void mca_pml_dr_recv_frag_callback(
             MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
 
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 /* ack only if this has been matched */
                 mca_pml_dr_recv_request_t* recvreq = 
                     mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
                 OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
                 if(NULL != recvreq) {
-                    OPAL_OUTPUT((0, "%s:%d: acking duplicate rendezvous\n", __FILE__, __LINE__));
+                    OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous\n", __FILE__, __LINE__));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
+                } else { 
+                    OPAL_OUTPUT((0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
                 }
             } else {
                 OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
@@ -163,8 +168,12 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
         {
+            
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+                mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
+            }
             break;
         }
     case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -174,7 +183,7 @@ void mca_pml_dr_recv_frag_callback(
             MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
 
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
                 OPAL_OUTPUT((0, "%s:%d: acking duplicate fragment\n", __FILE__, __LINE__));
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
@@ -192,7 +201,10 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
         {
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+                mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
+            }
             break;
         }
     default:
@@ -627,7 +639,7 @@ rematch:
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
     }
 
-    mca_pml_dr_comm_proc_set_vid(proc, hdr->hdr_common.hdr_vid);
+    mca_pml_dr_comm_proc_set_vid(&proc->seq_recvs, hdr->hdr_common.hdr_vid);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
     /* release matching lock before processing fragment */

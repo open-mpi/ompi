@@ -40,6 +40,14 @@ typedef struct mca_pml_dr_range_t mca_pml_dr_range_t;
 
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_range_t);
 
+struct mca_pml_dr_seq_tracker_t{ 
+    opal_list_t vfrag_ids;         /**< list of vfrags id's that have been seen */
+    mca_pml_dr_range_t* vfrag_ids_current; /**< a pointer to the last place we were in the list */
+
+}; 
+typedef struct mca_pml_dr_seq_tracker_t mca_pml_dr_seq_tracker_t; 
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_seq_tracker_t);
 
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
@@ -55,12 +63,12 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
     opal_list_t matched_receives;  /**< list of in-progress matched receives */
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
-    opal_list_t vfrag_ids;         /**< list of vfrags id's that have been seen */
-    mca_pml_dr_range_t* vfrag_ids_current; /**< a pointer to the last place we were in the list */
+    mca_pml_dr_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
+    mca_pml_dr_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
 
-/**
+    /**
  *  Cached on ompi_communicator_t to hold queues/state
  *  used by the PML<->PTL interface for matching logic. 
  */
@@ -97,18 +105,18 @@ OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_c
  */
 
 static inline bool mca_pml_dr_comm_proc_check_duplicate(
-    mca_pml_dr_comm_proc_t* dr_proc, 
+    mca_pml_dr_seq_tracker_t* seq_tracker, 
     uint32_t vfrag_id) 
 { 
     mca_pml_dr_range_t* item;
     int8_t direction = 0; /* 1 is next, -1 is previous */
 
-    item = dr_proc->vfrag_ids_current;
+    item = seq_tracker->vfrag_ids_current;
     while(true) { 
         if(NULL == item) { 
             return false;
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id) { 
-            dr_proc->vfrag_ids_current = (mca_pml_dr_range_t*) item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
             return true; 
         } else if(vfrag_id > item->vfrag_id_high && direction != -1) { 
             direction = 1; 
@@ -126,10 +134,11 @@ static inline bool mca_pml_dr_comm_proc_check_duplicate(
 /*
  * Must be called w/ matching lock held
  */
-static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_proc, uint32_t vfrag_id) 
+static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_seq_tracker_t* seq_tracker, 
+                                                uint32_t vfrag_id) 
 { 
-    opal_list_t* vfrag_ids = &dr_comm_proc->vfrag_ids; 
-    mca_pml_dr_range_t* item = dr_comm_proc->vfrag_ids_current;
+    opal_list_t* vfrag_ids = &seq_tracker->vfrag_ids; 
+    mca_pml_dr_range_t* item = seq_tracker->vfrag_ids_current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     mca_pml_dr_range_t *new_item, *next_item, *prev_item;
     while(true) { 
@@ -137,18 +146,18 @@ static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_
             new_item = OBJ_NEW(mca_pml_dr_range_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
             opal_list_append(vfrag_ids, (opal_list_item_t*) new_item);
-            dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
             return;
         } else if( item == (mca_pml_dr_range_t*) &vfrag_ids->opal_list_head ) { 
             new_item = OBJ_NEW(mca_pml_dr_range_t);
             new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
             opal_list_prepend(vfrag_ids, (opal_list_item_t*) new_item); 
-            dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
             return; 
             
         } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id ) { 
 
-            dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
             return; 
 
         } else if((item->vfrag_id_high + 1) == vfrag_id) { 
@@ -162,7 +171,7 @@ static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_
             } else { 
                 item->vfrag_id_high = vfrag_id;
             }    
-            dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
             return; 
             
         } else if((item->vfrag_id_low - 1) == vfrag_id) { 
@@ -176,7 +185,7 @@ static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_
             } else { 
                 item->vfrag_id_low = vfrag_id; 
             }
-            dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) item;
+            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
             return; 
             
         } else if(vfrag_id > item->vfrag_id_high ) { 
@@ -188,7 +197,7 @@ static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_
                 opal_list_insert_pos(vfrag_ids, 
                                      (opal_list_item_t*) item, 
                                      (opal_list_item_t*) new_item); 
-                dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
+                seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
                 return;
             } else { 
                 direction = 1;
@@ -206,7 +215,7 @@ static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_comm_proc_t* dr_comm_
                                          (opal_list_item_t*) next_item, 
                                          (opal_list_item_t*) new_item); 
                 }
-                dr_comm_proc->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
+                seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
                 return;
             } else { 
                 direction = -1;
