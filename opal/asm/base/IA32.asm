@@ -31,11 +31,9 @@ START_FUNC(opal_atomic_cmpset_32)
 	movl    8(%ebp), %edx
 	movl    16(%ebp), %ecx
 	movl    12(%ebp), %eax
-#APP
 	lock; cmpxchgl %ecx,(%edx)
 	sete     %dl
 
-#NO_APP
 	movzbl  %dl, %eax
 	leave
 	ret
@@ -63,14 +61,12 @@ START_FUNC(opal_atomic_cmpset_64)
 	movl	-32(%ebp), %esi
 	movl	-28(%ebp), %ecx
 	movl	%ebx, %eax
-#APP
 	push %ebx            
 	movl %esi, %ebx        
 	lock; cmpxchg8b (%edi)
 	sete %dl               
 	pop %ebx             
 	
-#NO_APP
 	movzbl	%dl, %eax
 	movl	-12(%ebp), %ebx
 	movl	-8(%ebp), %esi
@@ -86,9 +82,7 @@ START_FUNC(opal_atomic_add_32)
         movl    %esp, %ebp
         movl    8(%ebp), %eax
         movl    12(%ebp), %edx
-#APP
         lock; addl %edx,(%eax)
-#NO_APP
         movl    (%eax), %eax
         leave
         ret
@@ -100,9 +94,7 @@ START_FUNC(opal_atomic_sub_32)
         movl    %esp, %ebp
         movl    8(%ebp), %eax
         movl    12(%ebp), %edx
-#APP
         lock; subl %edx,(%eax)
-#NO_APP
         movl    (%eax), %eax
         leave
         ret
@@ -112,9 +104,7 @@ END_FUNC(opal_atomic_sub_32)
 START_FUNC(opal_sys_timer_get_cycles)
         pushl   %ebp
         movl    %esp, %ebp
-#APP
         rdtsc
-#NO_APP
         popl    %ebp
         ret
 END_FUNC(opal_sys_timer_get_cycles)
