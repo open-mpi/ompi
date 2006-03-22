@@ -45,6 +45,7 @@ struct mca_pml_dr_vfrag_t {
     uint64_t   vf_mask;
     uint64_t   vf_mask_processed;
     uint64_t   vf_retrans;
+    bool       vf_rndv;
     struct mca_bml_base_btl_t* bml_btl;
 
     /* we need a timer for the vfrag for: 
@@ -77,14 +78,20 @@ do {                                                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, (opal_list_item_t*)vfrag);   \
 } while(0)
 
+#define MCA_PML_DR_VFRAG_INIT(vfrag)                                       \
+do {                                                                       \
+    MCA_PML_DR_VFRAG_RESET(vfrag);                                         \
+    (vfrag)->vf_retry_cnt = 0;                                             \
+    (vfrag)->vf_recv.pval = NULL;                                          \
+} while(0)
+
 #define MCA_PML_DR_VFRAG_RESET(vfrag)                                      \
 do {                                                                       \
-    vfrag->vf_idx = 0;                                                     \
-    vfrag->vf_mask_processed = 0;                                          \
-    vfrag->vf_ack = 0;                                                     \
-    vfrag->vf_retrans = 0;                                                 \
+    (vfrag)->vf_idx = 0;                                                   \
+    (vfrag)->vf_mask_processed = 0;                                        \
+    (vfrag)->vf_ack = 0;                                                   \
+    (vfrag)->vf_retrans = 0;                                               \
 } while(0)
-#if 1
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
@@ -131,18 +138,6 @@ do {                                                                       \
                                                                            \
 } while(0)
 
-
-#endif
-
-#if 0
-
-#define MCA_PML_DR_VFRAG_WDOG_START(vfrag)
-#define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)
-#define MCA_PML_DR_VFRAG_WDOG_STOP(vfrag)
-#define MCA_PML_DR_VFRAG_ACK_START(vfrag)
-#define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)
-
-#endif 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

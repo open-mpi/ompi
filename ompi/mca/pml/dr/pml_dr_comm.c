@@ -22,7 +22,7 @@
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
 
-OBJ_CLASS_INSTANCE(mca_pml_dr_acked_item_t, 
+OBJ_CLASS_INSTANCE(mca_pml_dr_range_t, 
                    opal_list_item_t, 
                    NULL, 
                    NULL);
@@ -34,15 +34,17 @@ static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
     proc->send_sequence = 0;
     OBJ_CONSTRUCT(&proc->frags_cant_match, opal_list_t);
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
+    OBJ_CONSTRUCT(&proc->matched_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
-    OBJ_CONSTRUCT(&proc->acked_vfrags, opal_list_t);
-    proc->acked_vfrags_current = NULL;
+    OBJ_CONSTRUCT(&proc->vfrag_ids, opal_list_t);
+    proc->vfrag_ids_current = NULL;
 }
 
 
 static void mca_pml_dr_comm_proc_destruct(mca_pml_dr_comm_proc_t* proc)
 {
     OBJ_DESTRUCT(&proc->frags_cant_match);
+    OBJ_DESTRUCT(&proc->matched_receives);
     OBJ_DESTRUCT(&proc->specific_receives);
     OBJ_DESTRUCT(&proc->unexpected_frags);
 }

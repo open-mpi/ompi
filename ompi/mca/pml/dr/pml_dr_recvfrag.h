@@ -49,36 +49,8 @@ struct mca_pml_dr_recv_frag_t {
 };
 typedef struct mca_pml_dr_recv_frag_t mca_pml_dr_recv_frag_t;
 
-
-void mca_pml_dr_recv_frag_send_ack(ompi_proc_t* ompi_proc, 
-                                   mca_pml_dr_common_hdr_t* hdr,
-                                   ompi_ptr_t src_ptr,
-                                   uint64_t mask); 
-
-
-
-
 OBJ_CLASS_DECLARATION(mca_pml_dr_recv_frag_t);
 
-#define MCA_PML_DR_RECV_FRAG_CHECK_DUP(hdr, dup)                     \
-do {                                                                 \
-    ompi_communicator_t *comm_ptr;                                   \
-    mca_pml_dr_comm_t *comm;                                         \
-    mca_pml_dr_comm_proc_t *proc;                                    \
-    comm_ptr = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);            \
-    comm = (mca_pml_dr_comm_t*) comm_ptr->c_pml_comm;                \
-    proc = comm->procs + hdr->hdr_common.hdr_src;                    \
-    if(mca_pml_dr_comm_proc_check_acked(proc,                        \
-                                        hdr->hdr_common.hdr_vid)) {  \
-        mca_pml_dr_recv_frag_send_ack(proc->ompi_proc,               \
-                                      &hdr->hdr_common,              \
-                                      hdr->hdr_match.hdr_src_ptr,    \
-                                      1);                            \
-        dup = true;                                                  \
-    } else {                                                         \
-        dup = false;                                                 \
-    }                                                                \
-} while (0)
 
 #define MCA_PML_DR_RECV_FRAG_ALLOC(frag,rc)                          \
 do {                                                                 \
@@ -156,6 +128,16 @@ do {                                                            \
 
 
 /**
+ *  Generate an ack to the peer.
+ */
+
+void mca_pml_dr_recv_frag_ack(
+    mca_bml_base_endpoint_t* endpoint,
+    mca_pml_dr_common_hdr_t* hdr,
+    void* src_ptr,
+    uint64_t mask); 
+
+/**
  *  Callback from BTL on receipt of a recv_frag.
  */
 
@@ -164,7 +146,7 @@ OMPI_DECLSPEC void mca_pml_dr_recv_frag_callback(
     mca_btl_base_tag_t tag,
     mca_btl_base_descriptor_t* descriptor,
     void* cbdata);
-                                                                                                               
+
 /**
  * Match incoming recv_frags against posted receives.  
  * Supports out of order delivery.
@@ -176,6 +158,8 @@ OMPI_DECLSPEC void mca_pml_dr_recv_frag_callback(
  * @return                          OMPI_SUCCESS or error status on failure.
  */
 OMPI_DECLSPEC bool mca_pml_dr_recv_frag_match(
+    mca_pml_dr_comm_t* comm,
+    mca_pml_dr_comm_proc_t* proc,
     mca_btl_base_module_t* btl, 
     mca_pml_dr_match_hdr_t *hdr,
     mca_btl_base_segment_t* segments,

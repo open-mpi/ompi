@@ -26,8 +26,10 @@
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 #include "pml_dr.h"
+#include "pml_dr_hdr.h"
 #include "pml_dr_proc.h"
 #include "pml_dr_vfrag.h"
+#include "pml_dr_comm.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -36,20 +38,19 @@ extern "C" {
 
 struct mca_pml_dr_recv_request_t {
     mca_pml_base_recv_request_t req_recv;
-    struct ompi_proc_t *req_proc;
-#if OMPI_HAVE_THREAD_SUPPORT
-    volatile int32_t req_lock;
-#else
-    int32_t req_lock;
-#endif
-    size_t       req_pipeline_depth;
-    size_t       req_bytes_received;
-    size_t       req_bytes_delivered;
+    size_t  req_bytes_received;
+    size_t  req_bytes_delivered;
+    bool    req_acked;
 
+    /* filled in after match */
+    struct mca_pml_dr_comm_proc_t* req_proc;
+    struct mca_bml_base_endpoint_t* req_endpoint;
+    opal_mutex_t* req_mutex;
+
+    /* vfrag state */
     mca_pml_dr_vfrag_t *req_vfrag;
     mca_pml_dr_vfrag_t req_vfrag0;
     opal_list_t  req_vfrags;
-    opal_mutex_t req_mutex;
 };
 typedef struct mca_pml_dr_recv_request_t mca_pml_dr_recv_request_t;
 
@@ -125,12 +126,6 @@ do {                                                                            
                                                                                        \
     if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
         MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );                                     \
-    } else {                                                                           \
-        if(recvreq->req_recv.req_base.req_ompi.req_persistent) {                       \
-            if( !recvreq->req_recv.req_base.req_free_called ) {                        \
-                recvreq->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_INACTIVE; \
-            }                                                                          \
-        }                                                                              \
     }                                                                                  \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                                            \
 } while(0)
@@ -144,13 +139,12 @@ do {                                                                            
 #define MCA_PML_DR_RECV_REQUEST_RETURN(recvreq)                                     \
 do {                                                                                \
     opal_list_item_t* item;                                                         \
-                                                                                    \
-    /* return vfrags */                                                             \
-    OPAL_THREAD_LOCK(&(recvreq)->req_mutex);                                        \
+    OPAL_THREAD_LOCK((recvreq)->req_mutex);                                         \
+    opal_list_remove_item(&(recvreq)->req_proc->matched_receives, (opal_list_item_t*)(recvreq)); \
     while(NULL != (item = opal_list_remove_first(&(recvreq)->req_vfrags))) {        \
         OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, item);                            \
     }                                                                               \
-    OPAL_THREAD_UNLOCK(&(recvreq)->req_mutex);                                      \
+    OPAL_THREAD_UNLOCK((recvreq)->req_mutex);                                       \
                                                                                     \
     /* decrement reference counts */                                                \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                           \
@@ -173,6 +167,17 @@ void mca_pml_dr_recv_request_match_wild(mca_pml_dr_recv_request_t* request);
  */
 void mca_pml_dr_recv_request_match_specific(mca_pml_dr_recv_request_t* request);
 
+
+/**
+ * Ack a matched request.
+ */
+void mca_pml_dr_recv_request_ack(
+    mca_pml_dr_recv_request_t* recvreq,
+    mca_pml_dr_common_hdr_t* hdr,
+    ompi_ptr_t src_ptr,
+    size_t vlen,
+    uint64_t vmask);
+
 /**
  * Start an initialized request.
  *
@@ -184,8 +189,7 @@ do {                                                                            
     /* init/re-init the request */                                                \
     (request)->req_bytes_received = 0;                                            \
     (request)->req_bytes_delivered = 0;                                           \
-    (request)->req_lock = 0;                                                      \
-    (request)->req_pipeline_depth = 0;                                            \
+    (request)->req_acked = false;                                                 \
     (request)->req_recv.req_base.req_pml_complete = false;                        \
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
@@ -209,30 +213,36 @@ do {                                                                            
 
 
 /**
- *
+ * Initialize request when match is made
  */
 
-#define MCA_PML_DR_RECV_REQUEST_MATCHED(                                             \
-    request,                                                                         \
-    hdr)                                                                             \
+#define MCA_PML_DR_RECV_REQUEST_MATCHED(request,comm,proc,hdr)                       \
 do {                                                                                 \
+    (request)->req_mutex = &comm->matching_lock;                                     \
+    (request)->req_proc = proc;                                                      \
+    (request)->req_endpoint = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml;   \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =                    \
                                                        (hdr)->hdr_common.hdr_src;    \
+    opal_list_append(&proc->matched_receives, (opal_list_item_t*)request);           \
+} while(0)
+
+
+/**
+ * Setup convertor if message length is non-zero
+ */
+
+#define MCA_PML_DR_RECV_REQUEST_BYTES_PACKED(request, bytes_packed)                  \
+do {                                                                                 \
+    (request)->req_recv.req_bytes_packed = bytes_packed;                             \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
-        ompi_proc_t *proc =                                                          \
-            ompi_comm_peer_lookup(                                                   \
-                (request)->req_recv.req_base.req_comm, (hdr)->hdr_common.hdr_src);   \
-                                                                                     \
-        (request)->req_proc = proc;                                                  \
+        ompi_proc_t *proc = (request)->req_proc->ompi_proc;                          \
         ompi_convertor_copy_and_prepare_for_recv( proc->proc_convertor,              \
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
                                          CONVERTOR_WITH_CHECKSUM,                    \
                                          &(request)->req_recv.req_convertor );       \
-    } else {                                                                         \
-        (request)->req_proc = NULL;                                                  \
     }                                                                                \
 } while (0)
 
@@ -312,6 +322,26 @@ void mca_pml_dr_recv_request_matched_probe(
 
 void mca_pml_dr_recv_request_schedule(
     mca_pml_dr_recv_request_t* req);
+
+/**
+ *  Look for matched receive.
+ *  Must be called w/ matching lock held.
+ */
+                                                                                                            
+static inline struct mca_pml_dr_recv_request_t* mca_pml_dr_comm_proc_check_matched(
+    mca_pml_dr_comm_proc_t* dr_proc,
+    uint32_t vfrag_id)
+{
+    opal_list_item_t* item;
+    for(item  = opal_list_get_first(&dr_proc->matched_receives);
+        item != opal_list_get_end(&dr_proc->matched_receives);
+        item  = opal_list_get_next(item)) {
+        struct mca_pml_dr_recv_request_t* recvreq = (struct mca_pml_dr_recv_request_t*)item;
+        if(recvreq->req_vfrag->vf_id == vfrag_id)
+            return recvreq;
+    }
+    return NULL;
+}
 
 /*
  *

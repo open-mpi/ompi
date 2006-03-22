@@ -41,15 +41,28 @@
 do {                                                                                           \
     uint16_t csum = opal_csum(hdr, sizeof(type));                                              \
     if(hdr->hdr_common.hdr_csum != csum) {                                                     \
-        opal_output(0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                   \
-            __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum);                               \
+        OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  \
+            __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              \
         return;                                                                                \
     }                                                                                          \
     if(hdr->hdr_common.hdr_dst != (ompi_comm_lookup(hdr->hdr_common.hdr_ctx))->c_my_rank ) {   \
-        opal_output(0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                    \
-            __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst);             \
+        OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   \
+            __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            \
         return;                                                                                \
     }                                                                                          \
+} while (0)
+
+
+#define MCA_PML_DR_COMM_PROC_LOOKUP(hdr, comm, proc)                                           \
+do {                                                                                           \
+    ompi_communicator_t* comm_ptr=ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                   \
+    if(NULL == comm_ptr) {                                                                     \
+        OPAL_OUTPUT((0, "%s:%d: invalid communicator: %d\n",                                   \
+            __FILE__,__LINE__,hdr->hdr_common.hdr_ctx));                                       \
+        return;                                                                                \
+    }                                                                                          \
+    comm = (mca_pml_dr_comm_t*)comm_ptr->c_pml_comm;                                           \
+    proc = comm->procs + hdr->hdr_common.hdr_src;                                              \
 } while (0)
 
 
@@ -94,7 +107,8 @@ void mca_pml_dr_recv_frag_callback(
 {
     mca_btl_base_segment_t* segments = des->des_dst;
     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
-    bool duplicate = false;
+    mca_pml_dr_comm_t *comm;
+    mca_pml_dr_comm_proc_t *proc;
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
         return;
     }
@@ -103,11 +117,19 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_match_hdr_t);
-            MCA_PML_DR_RECV_FRAG_CHECK_DUP(hdr, duplicate);
-            if(false == duplicate) { 
-                mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+
+            OPAL_THREAD_LOCK(&comm->c_matching_lock);
+            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                OPAL_OUTPUT((0, "%s:%d: acking duplicate match\n", __FILE__, __LINE__));
+                mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
+                                         &hdr->hdr_common,
+                                         hdr->hdr_match.hdr_src_ptr.pval,
+                                         1);
             } else {
-                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n", __FILE__, __LINE__));
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
             }
             break;
         }
@@ -120,26 +142,22 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_rendezvous_hdr_t);
-            MCA_PML_DR_RECV_FRAG_CHECK_DUP(hdr, duplicate);
-                        
-            if(!duplicate) { 
-                if(hdr->hdr_rndv.hdr_msg_length && segments->seg_len) { 
-                    /* no eager data on nonzero length message, this is a probe! 
-                       we haven't seen the eager data, so nack and force retransmission*/
-                    ompi_communicator_t *comm_ptr = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);
-                    mca_pml_dr_comm_t *comm = (mca_pml_dr_comm_t*) comm_ptr->c_pml_comm;
-                    mca_pml_dr_comm_proc_t *proc = comm->procs + hdr->hdr_common.hdr_src;
-                    mca_pml_dr_recv_frag_send_ack(proc->ompi_proc,
-                                              &hdr->hdr_common,
-                                                  hdr->hdr_match.hdr_src_ptr,
-                                              0);
-                    OPAL_OUTPUT((0, "%s:%d: nacking PROBE, haven't seen EAGER data yet!\n", __FILE__, __LINE__));
-                } else { 
-                    mca_pml_dr_recv_frag_match(btl, &hdr->hdr_match, segments,des->des_dst_cnt);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+
+            OPAL_THREAD_LOCK(&comm->matching_lock);
+            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+                /* ack only if this has been matched */
+                mca_pml_dr_recv_request_t* recvreq = 
+                    mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                if(NULL != recvreq) {
+                    OPAL_OUTPUT((0, "%s:%d: acking duplicate rendezvous\n", __FILE__, __LINE__));
+                    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
+                        hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
                 }
             } else {
-                /* must check the the pending receive list! */
-                OPAL_OUTPUT((0, "%s:%d: dropping duplicate fragment\n", __FILE__, __LINE__));
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
             }
             break;
         }
@@ -152,20 +170,20 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_FRAG:
         {
             mca_pml_dr_recv_request_t* recvreq;
-            mca_pml_dr_comm_proc_t* comm_proc; 
-            
             MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_frag_hdr_t);
-            recvreq = hdr->hdr_frag.hdr_dst_ptr.pval;
-            comm_proc =  recvreq->req_recv.req_base.req_comm->c_pml_comm->procs +
-                recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;
-            
-            if(mca_pml_dr_comm_proc_check_acked(comm_proc,
-                                                hdr->hdr_common.hdr_vid)) {
-                mca_pml_dr_recv_frag_send_ack(comm_proc->ompi_proc,
-                                              &hdr->hdr_common,
-                                              hdr->hdr_frag.hdr_src_ptr,
-                                              ~(uint64_t) 0);
+            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc);
+
+            OPAL_THREAD_LOCK(&comm->matching_lock);
+            if(mca_pml_dr_comm_proc_check_duplicate(proc, hdr->hdr_common.hdr_vid)) {
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                OPAL_OUTPUT((0, "%s:%d: acking duplicate fragment\n", __FILE__, __LINE__));
+                mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
+                                         &hdr->hdr_common,
+                                         hdr->hdr_frag.hdr_src_ptr.pval,
+                                         ~(uint64_t) 0);
             } else {
+                OPAL_THREAD_UNLOCK(&comm->c_matching_lock);
+                recvreq = hdr->hdr_frag.hdr_dst_ptr.pval;
                 mca_pml_dr_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             }
             break;
@@ -178,8 +196,7 @@ void mca_pml_dr_recv_frag_callback(
             break;
         }
     default:
-        OPAL_OUTPUT((0, "%s:%d: dropping unknown header type\n"));
-        return; /* drop it on the floor.. */
+        OPAL_OUTPUT((0, "%s:%d: dropping unknown header type\n", __FILE__,__LINE__));
         break;
     }
 }
@@ -472,31 +489,24 @@ static bool mca_pml_dr_check_cantmatch_for_match(
  *   - this routine may be called simultaneously by more than one thread
  */
 bool mca_pml_dr_recv_frag_match(
-                                mca_btl_base_module_t *btl, 
-                                mca_pml_dr_match_hdr_t *hdr,
-                                mca_btl_base_segment_t* segments,
-                                size_t num_segments)
+    mca_pml_dr_comm_t* comm,
+    mca_pml_dr_comm_proc_t *proc,
+    mca_btl_base_module_t *btl, 
+    mca_pml_dr_match_hdr_t *hdr,
+    mca_btl_base_segment_t* segments,
+    size_t num_segments)
 {
     /* local variables */
     uint16_t next_msg_seq_expected, frag_msg_seq;
-    ompi_communicator_t *comm_ptr;
     mca_pml_dr_recv_request_t *match = NULL;
-    mca_pml_dr_comm_t *comm;
-    mca_pml_dr_comm_proc_t *proc;
     bool additional_match=false;
     opal_list_t additional_matches;
-    ompi_proc_t* ompi_proc;
+    ompi_proc_t* ompi_proc = proc->ompi_proc;
     int rc;
     uint32_t csum = OPAL_CSUM_ZERO;
 
-    /* communicator pointer */
-    comm_ptr=ompi_comm_lookup(hdr->hdr_common.hdr_ctx);
-    comm=(mca_pml_dr_comm_t *)comm_ptr->c_pml_comm;
-
     /* source sequence number */
     frag_msg_seq = hdr->hdr_seq;
-    proc = comm->procs + hdr->hdr_common.hdr_src;
-    ompi_proc = proc->ompi_proc;
 
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
@@ -550,6 +560,7 @@ rematch:
             /*
              * update delivered sequence number information, if needed.
              */
+            MCA_PML_DR_RECV_REQUEST_MATCHED(match,comm,proc,hdr);
             if( (match->req_recv.req_base.req_type == MCA_PML_REQUEST_PROBE) ) {
 
                 /* complete the probe */
@@ -568,14 +579,12 @@ rematch:
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return rc;
             }
-            MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl,csum);
+            MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
             if(csum != hdr->hdr_csum) { 
-                mca_pml_dr_recv_frag_send_ack(ompi_proc, 
-                                              &hdr->hdr_common,
-                                              hdr->hdr_src_ptr,
-                                              0);
-                opal_output(0, "%s:%d: corrupted data 0x%08x != 0x%08x\n", 
-                    __FILE__, __LINE__, csum, hdr->hdr_csum);
+                mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
+                    &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0);
+                OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
+                    __FILE__, __LINE__, csum, hdr->hdr_csum));
                 MCA_PML_DR_RECV_FRAG_RETURN(frag);
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return false;
@@ -605,27 +614,33 @@ rematch:
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return rc;
         }
-        MCA_PML_DR_RECV_FRAG_INIT(frag,proc->ompi_proc,hdr,segments,num_segments,btl,csum);
+        MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
         if(csum != hdr->hdr_csum) { 
-            mca_pml_dr_recv_frag_send_ack(ompi_proc, 
-                                          &hdr->hdr_common,
-                                          hdr->hdr_src_ptr,
-                                          0);
-            opal_output(0, "%s:%d: corrupted data 0x%08x != 0x%08x\n", 
-                        __FILE__, __LINE__, csum, hdr->hdr_csum);
+            mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
+                                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0);
+            OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
+                        __FILE__, __LINE__, csum, hdr->hdr_csum));
             MCA_PML_DR_RECV_FRAG_RETURN(frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return false;
         }
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
     }
-    OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
+    mca_pml_dr_comm_proc_set_vid(proc, hdr->hdr_common.hdr_vid);
+    OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
     /* release matching lock before processing fragment */
     if(match != NULL) {
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
     } 
+
+    /* if buffered a short message - go ahead and ack */
+    else if (hdr->hdr_common.hdr_type == MCA_PML_DR_HDR_TYPE_MATCH) { 
+        mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
+                                 &hdr->hdr_common, hdr->hdr_src_ptr.pval, 1);
+    }
+
     if(additional_match) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {
@@ -639,21 +654,18 @@ rematch:
 
 
 
-void mca_pml_dr_recv_frag_send_ack(
-                                   ompi_proc_t* ompi_proc, 
-                                   mca_pml_dr_common_hdr_t* hdr,
-                                   ompi_ptr_t src_ptr,
-                                   uint64_t mask)
+void mca_pml_dr_recv_frag_ack(
+    mca_bml_base_endpoint_t* endpoint,
+    mca_pml_dr_common_hdr_t* hdr,
+    void *src_ptr,
+    uint64_t mask)
     {
-    mca_bml_base_endpoint_t* bml_endpoint = NULL; 
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_recv_frag_t* frag;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
-    
-    bml_endpoint = (mca_bml_base_endpoint_t*) ompi_proc->proc_pml; 
-    bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_eager);
+    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     
     /* allocate descriptor */
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
@@ -668,8 +680,9 @@ void mca_pml_dr_recv_frag_send_ack(
     ack->hdr_common.hdr_dst = hdr->hdr_src;
     ack->hdr_common.hdr_vid = hdr->hdr_vid;
     ack->hdr_common.hdr_ctx = hdr->hdr_ctx;
+    ack->hdr_vlen = 0;
     ack->hdr_vmask = mask;
-    ack->hdr_src_ptr = src_ptr;
+    ack->hdr_src_ptr.pval = src_ptr;
     assert(ack->hdr_src_ptr.pval);
     ack->hdr_dst_ptr.pval = NULL;
     ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
@@ -810,6 +823,8 @@ rematch:
                         /* associate the receive descriptor with the fragment
                          * descriptor */
                         frag->request=match;
+                        match->req_proc = proc;
+                        match->req_endpoint = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml;
 
                         /* add this fragment descriptor to the list of
                          * descriptors to be processed later

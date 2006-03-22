@@ -41,7 +41,6 @@
 #define MCA_PML_DR_HDR_TYPE_FRAG_ACK  (MCA_PML_DR_HDR_TYPE_ACK | MCA_PML_DR_HDR_TYPE_FRAG)
 
 #define MCA_PML_DR_HDR_FLAGS_NBO       1  /* is the hdr in network byte order */
-#define MCA_PML_DR_HDR_FLAGS_MATCHED   2
 
 /**
  * Common hdr attributes - must be first element in each hdr type 
@@ -149,6 +148,7 @@ typedef struct mca_pml_dr_frag_hdr_t mca_pml_dr_frag_hdr_t;
 
 struct mca_pml_dr_ack_hdr_t {
     mca_pml_dr_common_hdr_t hdr_common;       /**< common attributes */
+    uint32_t   hdr_vlen;                      /**< total bytes received in vfrag */
     uint64_t   hdr_vmask;                     /**< acknowledged frags */
     ompi_ptr_t hdr_src_ptr;                   /**< source vfrag */
     ompi_ptr_t hdr_dst_ptr;                   /**< matched receive request */
