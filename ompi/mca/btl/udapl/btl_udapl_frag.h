@@ -48,6 +48,7 @@ struct mca_btl_udapl_frag_t {
     struct mca_btl_udapl_module_t* btl;
     struct mca_btl_base_endpoint_t *endpoint; 
     struct mca_mpool_base_registration_t* registration;
+    DAT_LMR_TRIPLET triplet;
     
     mca_btl_base_header_t *hdr;
     size_t size; 
@@ -58,15 +59,12 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t);
 
 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_eager_t; 
-    
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_t); 
 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_max_t; 
-    
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_max_t); 
 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_user_t; 
-    
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_user_t); 
 
 

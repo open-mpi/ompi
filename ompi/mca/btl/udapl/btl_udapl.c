@@ -344,13 +344,12 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
             size : btl->btl_max_send_size; 
     }
 
-    /* TODO - this the right place for this? */
-    if(OMPI_SUCCESS != mca_mpool_udapl_register(btl->btl_mpool,
-                frag->segment.seg_addr.pval, size, 0, &frag->registration)) {
-        /* TODO - handle this fully */
-        return NULL;
-    }
-
+    /* Set up the LMR triplet from the frag segment */
+    /* Note that this triplet defines a sub-region of a registered LMR */
+    frag->triplet.lmr_context = frag->segment.seg_key.key32[0];
+    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->triplet.segment_length = frag->segment.seg_len;
+    
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
