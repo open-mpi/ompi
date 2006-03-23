@@ -34,6 +34,7 @@ static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
     OBJ_CONSTRUCT(&proc->seq_sends, ompi_seq_tracker_t);
     OBJ_CONSTRUCT(&proc->seq_recvs, ompi_seq_tracker_t);
+    OBJ_CONSTRUCT(&proc->seq_recvs_matched, ompi_seq_tracker_t);
 }
 
 
@@ -45,6 +46,7 @@ static void mca_pml_dr_comm_proc_destruct(mca_pml_dr_comm_proc_t* proc)
     OBJ_DESTRUCT(&proc->unexpected_frags);
     OBJ_DESTRUCT(&proc->seq_sends);
     OBJ_DESTRUCT(&proc->seq_recvs);
+    OBJ_DESTRUCT(&proc->seq_recvs_matched);
 }
 
 
