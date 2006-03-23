@@ -329,10 +329,10 @@ do {                                                                  \
     /* advance pending requests */                                    \
     while(opal_list_get_size(&mca_pml_dr.send_pending)) {             \
         mca_pml_dr_send_request_t* sendreq;                           \
-        OPAL_THREAD_LOCK(&mca_pml_dr.lock);                           \
+        OPAL_THREAD_LOCK(&ompi_request_lock);                         \
         sendreq = (mca_pml_dr_send_request_t*)                        \
             opal_list_remove_first(&mca_pml_dr.send_pending);         \
-        OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);                         \
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);                       \
         if(NULL == sendreq)                                           \
             break;                                                    \
         mca_pml_dr_send_request_schedule(sendreq);                    \
@@ -346,8 +346,7 @@ do {                                                                  \
 
 #define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)          \
 do {                                                                 \
-    mca_bml_base_endpoint_t* endpoint =                                                   \
-                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
+    mca_bml_base_endpoint_t* endpoint = sendreq->req_endpoint;       \
     mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     vfrag->vf_retry_cnt ++;                                          \
@@ -367,7 +366,6 @@ do {                                                                 \
     des_new->des_flags = des_old->des_flags;                         \
     des_new->des_cbdata = des_old->des_cbdata;                       \
     des_new->des_cbfunc = des_old->des_cbfunc;                       \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                          \
     MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
     mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
 } while(0)        
@@ -378,8 +376,7 @@ do {                                                                 \
 
 #define MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag)           \
 do {                                                                 \
-    mca_bml_base_endpoint_t* endpoint =                                                   \
-                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
+    mca_bml_base_endpoint_t* endpoint = sendreq->req_endpoint;       \
     mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \

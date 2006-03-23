@@ -108,8 +108,6 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("timer_ack_multiplier", 2);
     mca_pml_dr.timer_ack_max_count = 
         mca_pml_dr_param_register_int("timer_ack_max_count", 10);
-    
-    OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
                                                                                                             
     /* requests */
     OBJ_CONSTRUCT(&mca_pml_dr.send_requests, ompi_free_list_t);
@@ -177,7 +175,6 @@ int mca_pml_dr_component_close(void)
     OBJ_DESTRUCT(&mca_pml_dr.recv_requests);
     OBJ_DESTRUCT(&mca_pml_dr.recv_frags);
     OBJ_DESTRUCT(&mca_pml_dr.buffers);
-    OBJ_DESTRUCT(&mca_pml_dr.lock);
     return OMPI_SUCCESS;
 }
 

@@ -288,8 +288,6 @@ void mca_pml_dr_recv_request_progress(
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
                     mca_pml_dr_comm_proc_set_vid(&recvreq->req_proc->seq_recvs, vfrag->vf_id);
-                    OPAL_OUTPUT((0, "%s:%d ACKING VFRAG vf_ack says %08x bytes_received %d\n",
-                                 __FILE__,__LINE__, vfrag->vf_ack, recvreq->req_bytes_received));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_frag.hdr_src_ptr, vfrag->vf_size, vfrag->vf_mask);
                 }
