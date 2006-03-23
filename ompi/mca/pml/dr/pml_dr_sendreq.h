@@ -358,6 +358,7 @@ do {                                                                 \
     OPAL_OUTPUT((0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__)); \
     assert(sendreq->descriptor->des_src != NULL);                    \
     MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
+    vfrag->vf_mask_pending = 1;                                      \
     des_old = sendreq->descriptor;                                   \
     mca_bml_base_alloc(bml_btl, &des_new, des_old->des_src->seg_len);\
     memcpy(des_new->des_src->seg_addr.pval, \
@@ -389,6 +390,7 @@ do {                                                                 \
     opal_output(0, "%s:%d:%s, (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
     assert(sendreq->descriptor->des_src != NULL);                    \
     MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
+    vfrag->vf_mask_pending = 1;                                      \
     mca_bml_base_alloc(bml_btl, &des_new,                            \
                        sizeof(mca_pml_dr_rendezvous_hdr_t));         \
     des_old = sendreq->descriptor;                                   \
