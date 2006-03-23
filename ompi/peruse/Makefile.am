@@ -14,10 +14,13 @@
 
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
-headers += peruse/peruse_internal.h \
-        peruse/peruse.h
+headers += peruse/peruse-internal.h
+
+if WANT_PERUSE
+# do NOT want this nobase - we want the peruse stripped off...
+include_HEADERS += peruse/peruse.h
 
 libmpi_la_SOURCES += \
         peruse/peruse.c \
 	peruse/peruse_module.c
-
+endif

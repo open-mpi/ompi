@@ -91,6 +91,7 @@ libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
+include_HEADERS =
 nobase_ompi_HEADERS = 
 dist_pkgdata_DATA =
 libmpi_la_SOURCES += $(headers)
@@ -113,9 +114,7 @@ include file/Makefile.am
 include group/Makefile.am
 include info/Makefile.am
 include op/Makefile.am
-if WANT_PERUSE
 include peruse/Makefile.am
-endif
 include proc/Makefile.am
 include request/Makefile.am
 include runtime/Makefile.am
