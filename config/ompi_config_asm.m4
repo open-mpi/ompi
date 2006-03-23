@@ -536,8 +536,8 @@ AC_DEFUN([OMPI_CHECK_INLINE_C_GCC],[
 
     AC_MSG_CHECKING([if $CC supports GCC inline assembly])
 
-    AC_COMPILE_IFELSE([#ifdef __PGI
-#error "symbol __PGI defined"
+    AC_COMPILE_IFELSE([#ifndef __PGI
+#error "symbol __PGI not defined"
 choke me
 #endif],
         [# PGI seems to have some issues with our inline assembly.
