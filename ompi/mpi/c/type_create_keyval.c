@@ -46,16 +46,16 @@ int MPI_Type_create_keyval(MPI_Type_copy_attr_function *type_copy_attr_fn,
 	if ((NULL == type_copy_attr_fn) || (NULL == type_delete_attr_fn) ||
 	    (NULL == type_keyval)) {
 	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,
-					 MPI_ERR_ARG, 
-					 FUNC_NAME);
+                                          MPI_ERR_ARG, 
+                                          FUNC_NAME);
 	}
     }
 	
-    copy_fn.attr_datatype_copy_fn = type_copy_attr_fn;
+    copy_fn.attr_datatype_copy_fn = (MPI_Type_internal_copy_attr_function*)type_copy_attr_fn;
     del_fn.attr_datatype_delete_fn = type_delete_attr_fn;
 
     ret = ompi_attr_create_keyval(TYPE_ATTR, copy_fn, del_fn,
-				 type_keyval, extra_state, 0);
+                                  type_keyval, extra_state, 0);
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD, ret, FUNC_NAME);
 }
 

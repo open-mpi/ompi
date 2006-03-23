@@ -241,7 +241,7 @@
    Ick.
  */
 
-#define DELETE_ATTR_CALLBACKS(type, attribute, keyval_obj) \
+#define DELETE_ATTR_CALLBACKS(type, attribute, keyval_obj, object) \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
@@ -289,7 +289,7 @@
 /* See the big, long comment above from DELETE_ATTR_CALLBACKS -- most of
    that text applies here, too. */
 
-#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, out_attr) \
+#define COPY_ATTR_CALLBACKS(type, old_object, keyval_obj, in_attr, new_object, out_attr) \
     if (0 != (keyval_obj->attr_flag & OMPI_KEYVAL_F77)) { \
         MPI_Fint f_key = OMPI_INT_2_FINT(key); \
         MPI_Fint f_err; \
@@ -332,7 +332,7 @@
         in = translate_to_c(in_attr); \
         if ((err = (*((keyval_obj->copy_attr_fn).attr_##type##_copy_fn)) \
               ((ompi_##type##_t *)old_object, key, keyval_obj->extra_state, \
-               in, &out, &flag)) != MPI_SUCCESS) { \
+               in, &out, &flag, (ompi_##type##_t *)(new_object))) != MPI_SUCCESS) { \
             OPAL_THREAD_UNLOCK(&alock); \
             return err; \
         } \
@@ -645,15 +645,15 @@ int ompi_attr_delete(ompi_attribute_type_t type, void *object,
     if (OMPI_SUCCESS == ret) {
 	switch (type) {
         case COMM_ATTR:
-            DELETE_ATTR_CALLBACKS(communicator, attr, key_item);
+            DELETE_ATTR_CALLBACKS(communicator, attr, key_item, object);
             break;
 		
         case WIN_ATTR:
-            DELETE_ATTR_CALLBACKS(win, attr, key_item);
+            DELETE_ATTR_CALLBACKS(win, attr, key_item, object);
             break;
 		
         case TYPE_ATTR:
-            DELETE_ATTR_CALLBACKS(datatype, attr, key_item);
+            DELETE_ATTR_CALLBACKS(datatype, attr, key_item, object);
             break;
 		
         default:
@@ -857,19 +857,19 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
         case COMM_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(communicator, old_object, hash_value, 
-                                old_attr, new_attr);
+                                old_attr, new_object, new_attr);
             break;
 	    
         case TYPE_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(datatype, old_object, hash_value, 
-                                old_attr, new_attr);
+                                old_attr, new_object, new_attr);
             break;
 
         case WIN_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(win, old_object, hash_value, 
-                                old_attr, new_attr);
+                                old_attr, new_object, new_attr);
             break;
         }
 
@@ -1024,15 +1024,15 @@ static int set_value(ompi_attribute_type_t type, void *object,
     if (OMPI_SUCCESS == ret)  {
 	switch (type) {
 	case COMM_ATTR:
-	    DELETE_ATTR_CALLBACKS(communicator, old_attr, key_item);
+	    DELETE_ATTR_CALLBACKS(communicator, old_attr, key_item, object);
 	    break;
 
 	case WIN_ATTR:
-	    DELETE_ATTR_CALLBACKS(win, old_attr, key_item);
+	    DELETE_ATTR_CALLBACKS(win, old_attr, key_item, object);
 	    break;
 
 	case TYPE_ATTR:
-	    DELETE_ATTR_CALLBACKS(datatype, old_attr, key_item);
+	    DELETE_ATTR_CALLBACKS(datatype, old_attr, key_item, object);
 	    break;
 
 	default:
