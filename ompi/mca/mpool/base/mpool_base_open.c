@@ -60,7 +60,10 @@ int mca_mpool_base_open(void)
 {
     /* Open up all available components - and populate the
        mca_mpool_base_components list */
-
+    
+    int use_mem_hooks;
+    int disable_sbrk;
+    
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
                                &mca_mpool_base_components, true)) {
@@ -77,21 +80,43 @@ int mca_mpool_base_open(void)
      * however if leave_pinned is set we force this to be enabled
      */
     mca_base_param_reg_int_name("mpool", 
-                              "use_mem_hooks", 
-                              "use memory hooks for deregistering freed memory",
-                              false, 
-                              false, 
-                              0,
-                              &mca_mpool_base_use_mem_hooks); 
-        
+                                "base_use_mem_hooks", 
+                                "use memory hooks for deregistering freed memory",
+                                false, 
+                                false, 
+                                0,
+                                &mca_mpool_base_use_mem_hooks); 
+    
+    mca_base_param_reg_int_name("mpool", 
+                                "use_mem_hooks", 
+                                "(deprecated, use mpool_base_use_mem_hooks)",
+                                false, 
+                                false, 
+                                0,
+                                &use_mem_hooks); 
+    
+    mca_mpool_base_use_mem_hooks = use_mem_hooks || mca_mpool_base_use_mem_hooks;
+
+    
 #if defined(HAVE_MALLOPT)
     mca_base_param_reg_int_name("mpool", 
-                                "disable_sbrk", 
+                                "base_disable_sbrk", 
                                 "use mallopt to override calling sbrk (doesn't return memory to OS!)",
                                 false, 
                                 false, 
                                 0,
-                                &mca_mpool_base_disable_sbrk); 
+                                &mca_mpool_base_disable_sbrk);
+
+    mca_base_param_reg_int_name("mpool", 
+                                "disable_sbrk", 
+                                "(deprecated, use mca_mpool_base_disable_sbrk)",
+                                false, 
+                                false, 
+                                0,
+                                &disable_sbrk);
+    
+    mca_mpool_base_disable_sbrk = disable_sbrk || mca_mpool_base_disable_sbrk;
+
 #endif
 
     /* force mem hooks if leave_pinned or leave_pinned_pipeline is enabled */
