@@ -20,4 +20,7 @@
 
 # support needs to be first for dependencies
 SUBDIRS = support asm class dss mca memory threads util
+if WANT_PERUSE
+SUBDIRS += peruse
+endif
 DIST_SUBDIRS = runtime $(SUBDIRS)
