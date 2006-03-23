@@ -58,9 +58,6 @@ struct mca_pml_dr_t {
     time_t tout_ack;
     time_t tout_watch_dog;
 
-    /* lock queue access */
-    opal_mutex_t lock;
-
     /* pending lists */
     opal_list_t send_pending;
     opal_list_t acks_pending;
