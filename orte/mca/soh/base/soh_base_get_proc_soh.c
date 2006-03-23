@@ -72,6 +72,21 @@ int orte_soh_base_get_proc_soh(orte_proc_state_t *state,
         goto CLEANUP;
     }
 
+    /** there should be one - and only one - value returned. if cnt is anything else,
+     * we have a problem
+     */
+    if (1 != cnt) {
+        if (0 == cnt) {  /** check for special case - didn't find the process container */
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            rc = ORTE_ERR_NOT_FOUND;
+            goto CLEANUP;
+        }
+        /** if not 0, then we have too many - report that */
+        ORTE_ERROR_LOG(ORTE_ERR_INDETERMINATE_STATE_INFO);
+        rc = ORTE_ERR_INDETERMINATE_STATE_INFO;
+        goto CLEANUP;
+    }
+
     for (i=0; i < cnt; i++) {
         keyvals = values[i]->keyvals;
         if (NULL != keyvals) {
@@ -97,10 +112,22 @@ int orte_soh_base_get_proc_soh(orte_proc_state_t *state,
 
     /* see if we found everything */
     if (!found1 || !found2) {
-        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
-        rc = ORTE_ERR_GPR_DATA_CORRUPT;
+        if (found1) { /** we found the proc state, so we are missing the exit status */
+            ORTE_ERROR_LOG(ORTE_ERR_PROC_EXIT_STATUS_MISSING);
+            rc = ORTE_ERR_PROC_EXIT_STATUS_MISSING;
+            goto CLEANUP;
+        }
+        if (found2) { /** missing the proc state */
+            ORTE_ERROR_LOG(ORTE_ERR_PROC_STATE_MISSING);
+            rc = ORTE_ERR_PROC_STATE_MISSING;
+            goto CLEANUP;
+        }
+        /** if we get here, then we are missing them both! report that too */
+        ORTE_ERROR_LOG(ORTE_ERR_PROC_EXIT_STATUS_MISSING);
+        ORTE_ERROR_LOG(ORTE_ERR_PROC_STATE_MISSING);
+        rc = ORTE_ERR_PROC_STATE_MISSING; /** pick one to return */
     }
-    
+
 CLEANUP:
     for (i=0; i < 3; i++) {
         if (NULL != keys[i]) free(keys[i]);

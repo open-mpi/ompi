@@ -94,6 +94,15 @@ orte_err2str(int errnum)
     case ORTE_ERR_OPERATION_UNSUPPORTED:
         retval = "Requested operation is not supported on referenced data type";
         break;
+    case ORTE_ERR_PROC_STATE_MISSING:
+        retval = "The process state information is missing on the registry";
+        break;
+    case ORTE_ERR_PROC_EXIT_STATUS_MISSING:
+        retval = "The process exit status is missing on the registry";
+        break;
+    case ORTE_ERR_INDETERMINATE_STATE_INFO:
+        retval = "Request for state returned multiple responses";
+        break;
     default:
         retval = NULL;
     }
