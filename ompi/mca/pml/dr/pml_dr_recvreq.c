@@ -278,13 +278,13 @@ void mca_pml_dr_recv_request_progress(
             /* update the mask to show that this vfrag was received, 
              * note that it might still fail the checksum though 
              */
-            vfrag->vf_mask_pending |= bit;
+            vfrag->vf_pending |= bit;
             if(csum == hdr->hdr_frag.hdr_frag_csum) { 
                 /* this part of the vfrag passed the checksum, 
                    mark it so that we ack it after receiving the 
                    entire vfrag */
                 vfrag->vf_ack |= bit;
-                if((vfrag->vf_mask_pending & vfrag->vf_mask) == vfrag->vf_mask) { 
+                if((vfrag->vf_pending & vfrag->vf_mask) == vfrag->vf_mask) { 
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
                     ompi_seq_tracker_insert(&recvreq->req_proc->seq_recvs, vfrag->vf_id);

@@ -372,12 +372,9 @@ do {                                                                          \
        if(NULL == vfrag) {                                                    \
            MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);                                  \
            if(NULL != vfrag) {                                                \
+               MCA_PML_DR_VFRAG_INIT(vfrag);                                  \
                (vfrag)->vf_id = (hdr)->hdr_common.hdr_vid;                    \
                (vfrag)->vf_len = (hdr)->hdr_vlen;                             \
-               (vfrag)->vf_ack = 0;                                           \
-               (vfrag)->vf_mask_pending = 0;                                  \
-               (vfrag)->vf_retrans = 0;                                       \
-               (vfrag)->vf_retry_cnt = 0;                                     \
                if((hdr)->hdr_vlen == 64) {                                    \
                    (vfrag)->vf_mask = ~(uint64_t)0;                           \
                } else {                                                       \

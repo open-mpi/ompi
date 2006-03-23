@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#define MCA_PML_DR_VFRAG_NACKED  0x01
+#define MCA_PML_DR_VFRAG_RNDV    0x02
 
 struct mca_pml_dr_vfrag_t {
     opal_list_item_t super;
@@ -43,9 +45,8 @@ struct mca_pml_dr_vfrag_t {
     size_t     vf_max_send_size;
     uint64_t   vf_ack;
     uint64_t   vf_mask;
-    uint64_t   vf_mask_pending;
-    uint64_t   vf_retrans;
-    bool       vf_rndv;
+    uint64_t   vf_pending;
+    uint32_t   vf_state;
     struct mca_bml_base_btl_t* bml_btl;
 
     /* we need a timer for the vfrag for: 
@@ -83,14 +84,15 @@ do {                                                                       \
     MCA_PML_DR_VFRAG_RESET(vfrag);                                         \
     (vfrag)->vf_retry_cnt = 0;                                             \
     (vfrag)->vf_recv.pval = NULL;                                          \
+    (vfrag)->vf_state = 0;                                                 \
+    (vfrag)->vf_pending = 0;                                               \
 } while(0)
 
 #define MCA_PML_DR_VFRAG_RESET(vfrag)                                      \
 do {                                                                       \
     (vfrag)->vf_idx = 0;                                                   \
-    (vfrag)->vf_mask_pending = 0;                                          \
     (vfrag)->vf_ack = 0;                                                   \
-    (vfrag)->vf_retrans = 0;                                               \
+    (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                         \
 } while(0)
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
