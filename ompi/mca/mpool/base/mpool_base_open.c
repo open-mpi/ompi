@@ -77,7 +77,7 @@ int mca_mpool_base_open(void)
      * check for use_mem_hooks (for diagnostics/testing) 
      * however if leave_pinned is set we force this to be enabled
      */
-    mca_base_param_reg_int_name("mpool_base", 
+    mca_base_param_reg_int_name("mpool", 
                               "use_mem_hooks", 
                               "use memory hooks for deregistering freed memory",
                               false, 

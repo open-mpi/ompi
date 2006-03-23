@@ -22,7 +22,9 @@
 
 #include <stdlib.h>
 #include <sys/mman.h>
+#ifndef __USE_GNU
 #define __USE_GNU
+#endif
 #include <dlfcn.h>
 
 static int (*realmunmap)(void*, size_t);
