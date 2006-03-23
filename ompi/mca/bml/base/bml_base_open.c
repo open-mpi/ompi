@@ -30,6 +30,7 @@ opal_list_t mca_bml_base_components_available;
 
 #if OMPI_ENABLE_DEBUG_RELIABILITY
 double mca_bml_base_error_rate;
+int    mca_bml_base_error_count;
 #endif
 
 int mca_bml_base_open( void ) { 
@@ -59,6 +60,11 @@ int mca_bml_base_open( void ) {
             struct timeval tv;
             gettimeofday(&tv, NULL);
             srand(getpid() * tv.tv_usec);
+        }
+
+        /* initialize count */
+        if(mca_bml_base_error_rate > 0) {
+            mca_bml_base_error_count = (int) ((mca_bml_base_error_rate * rand())/(RAND_MAX+1.0));
         }
     } while (0);
 #endif
