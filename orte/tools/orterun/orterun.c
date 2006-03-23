@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif  /* HAVE_SYS_WAIT_H */
-#ifdef HAVE_LIBGEN_H 
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
 
@@ -233,7 +233,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
-    
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -842,6 +842,9 @@ static int parse_locals(int argc, char* argv[])
 
                 app = OBJ_NEW(orte_app_context_t);
                 rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
+                /** keep track of the number of apps - point this app_context to that index */
+                app->idx = app_num;
+                app_num++;
                 if (ORTE_SUCCESS != rc) {
                     /* Assume that the error message has already been
                        printed; no need to cleanup -- we can just
@@ -869,6 +872,8 @@ static int parse_locals(int argc, char* argv[])
     if (opal_argv_count(temp_argv) > 1) {
         app = OBJ_NEW(orte_app_context_t);
         rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
+        app->idx = app_num;
+        app_num++;
         if (ORTE_SUCCESS != rc) {
             /* Assume that the error message has already been printed;
                no need to cleanup -- we can just exit */
