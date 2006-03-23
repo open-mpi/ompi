@@ -29,6 +29,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/mca/pml/pml.h"
+#include "ompi/class/ompi_seq_tracker.h"
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
 #include "pml_dr_recvfrag.h"
@@ -121,7 +122,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
+            if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 OPAL_OUTPUT((0, "%s:%d: acking duplicate match\n", __FILE__, __LINE__));
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
@@ -141,7 +142,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+            if(!ompi_seq_tracker_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
             } else {
@@ -156,7 +157,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
+            if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 /* ack only if the vfrag has been matched */
                 mca_pml_dr_recv_request_t* recvreq = 
                     mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
@@ -181,7 +182,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+            if(!ompi_seq_tracker_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
             } else {
@@ -197,7 +198,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(mca_pml_dr_comm_proc_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
+            if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 OPAL_OUTPUT((0, "%s:%d: acking duplicate fragment\n", __FILE__, __LINE__));
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
@@ -219,7 +220,7 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!mca_pml_dr_comm_proc_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
+            if(!ompi_seq_tracker_check_duplicate(&proc->seq_sends, hdr->hdr_common.hdr_vid)) {
                 OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
             } else {
@@ -659,7 +660,7 @@ rematch:
         opal_list_append(&proc->frags_cant_match, (opal_list_item_t *)frag);
     }
 
-    mca_pml_dr_comm_proc_set_vid(&proc->seq_recvs, hdr->hdr_common.hdr_vid);
+    ompi_seq_tracker_insert(&proc->seq_recvs, hdr->hdr_common.hdr_vid);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
     /* release matching lock before processing fragment */

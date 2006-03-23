@@ -24,30 +24,13 @@
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
 #include "opal/class/opal_list.h"
+#include "ompi/class/ompi_seq_tracker.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
 
-
-struct mca_pml_dr_range_t{ 
-    opal_list_item_t super; 
-    uint32_t vfrag_id_high;
-    uint32_t vfrag_id_low;
-}; 
-typedef struct mca_pml_dr_range_t mca_pml_dr_range_t;
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_range_t);
-
-struct mca_pml_dr_seq_tracker_t{ 
-    opal_list_t vfrag_ids;         /**< list of vfrags id's that have been seen */
-    mca_pml_dr_range_t* vfrag_ids_current; /**< a pointer to the last place we were in the list */
-
-}; 
-typedef struct mca_pml_dr_seq_tracker_t mca_pml_dr_seq_tracker_t; 
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_seq_tracker_t);
 
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
@@ -63,8 +46,8 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
     opal_list_t matched_receives;  /**< list of in-progress matched receives */
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
-    mca_pml_dr_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
-    mca_pml_dr_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
+    ompi_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
+    ompi_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
 
@@ -98,134 +81,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_dr_comm_t);
  */
 
 OMPI_DECLSPEC extern int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_comm);
-
-/**
- *  Look for duplicate sequence number in current range.
- *  Must be called w/ matching lock held.
- */
-
-static inline bool mca_pml_dr_comm_proc_check_duplicate(
-    mca_pml_dr_seq_tracker_t* seq_tracker, 
-    uint32_t vfrag_id) 
-{ 
-    mca_pml_dr_range_t* item;
-    int8_t direction = 0; /* 1 is next, -1 is previous */
-
-    item = seq_tracker->vfrag_ids_current;
-    while(true) { 
-        if(NULL == item) { 
-            return false;
-        } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id) { 
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
-            return true; 
-        } else if(vfrag_id > item->vfrag_id_high && direction != -1) { 
-            direction = 1; 
-            item = (mca_pml_dr_range_t*) opal_list_get_next(item); 
-        } else if(vfrag_id < item->vfrag_id_low && direction != 1) { 
-            direction = -1;
-            item = (mca_pml_dr_range_t*) opal_list_get_prev(item); 
-        } else { 
-            return false;
-        }
-    }
-}
-
-
-/*
- * Must be called w/ matching lock held
- */
-static inline void mca_pml_dr_comm_proc_set_vid(mca_pml_dr_seq_tracker_t* seq_tracker, 
-                                                uint32_t vfrag_id) 
-{ 
-    opal_list_t* vfrag_ids = &seq_tracker->vfrag_ids; 
-    mca_pml_dr_range_t* item = seq_tracker->vfrag_ids_current;
-    int8_t direction = 0; /* 1 is next, -1 is previous */
-    mca_pml_dr_range_t *new_item, *next_item, *prev_item;
-    while(true) { 
-        if( item == NULL || item == (mca_pml_dr_range_t*) &vfrag_ids->opal_list_tail )  { 
-            new_item = OBJ_NEW(mca_pml_dr_range_t);
-            new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
-            opal_list_append(vfrag_ids, (opal_list_item_t*) new_item);
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
-            return;
-        } else if( item == (mca_pml_dr_range_t*) &vfrag_ids->opal_list_head ) { 
-            new_item = OBJ_NEW(mca_pml_dr_range_t);
-            new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
-            opal_list_prepend(vfrag_ids, (opal_list_item_t*) new_item); 
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
-            return; 
-            
-        } else if(item->vfrag_id_high >= vfrag_id && item->vfrag_id_low <= vfrag_id ) { 
-
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
-            return; 
-
-        } else if((item->vfrag_id_high + 1) == vfrag_id) { 
-            
-            next_item = (mca_pml_dr_range_t*) opal_list_get_next(item); 
-            /* try to consolidate */ 
-            if(next_item && next_item->vfrag_id_low == (vfrag_id+1)) { 
-                item->vfrag_id_high = next_item->vfrag_id_high;
-                opal_list_remove_item(vfrag_ids, (opal_list_item_t*) next_item);
-                OBJ_RELEASE(next_item);
-            } else { 
-                item->vfrag_id_high = vfrag_id;
-            }    
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
-            return; 
-            
-        } else if((item->vfrag_id_low - 1) == vfrag_id) { 
-            
-            prev_item = (mca_pml_dr_range_t*) opal_list_get_prev(item);
-            /* try to consolidate */
-            if(prev_item && prev_item->vfrag_id_high == (vfrag_id-1)) {  
-                item->vfrag_id_low = prev_item->vfrag_id_low;
-                opal_list_remove_item(vfrag_ids, (opal_list_item_t*) prev_item);
-                OBJ_RELEASE(prev_item);
-            } else { 
-                item->vfrag_id_low = vfrag_id; 
-            }
-            seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) item;
-            return; 
-            
-        } else if(vfrag_id > item->vfrag_id_high ) { 
-            if(direction == -1) { 
-                /* we have gone back in the list, and we went one item too far */ 
-                new_item = OBJ_NEW(mca_pml_dr_range_t);
-                new_item->vfrag_id_low = new_item->vfrag_id_high = vfrag_id; 
-                /* insert new_item directly before item */
-                opal_list_insert_pos(vfrag_ids, 
-                                     (opal_list_item_t*) item, 
-                                     (opal_list_item_t*) new_item); 
-                seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
-                return;
-            } else { 
-                direction = 1;
-                item = (mca_pml_dr_range_t*) opal_list_get_next(item);
-            }
-        } else if(vfrag_id < item->vfrag_id_low) { 
-            if(direction == 1) { 
-                /* we have gone forward in the list, and we went one item too far */ 
-                new_item = OBJ_NEW(mca_pml_dr_range_t); 
-                next_item = (mca_pml_dr_range_t*) opal_list_get_next(item);
-                if(NULL == next_item) { 
-                    opal_list_append(vfrag_ids, (opal_list_item_t*) new_item);
-                } else { 
-                    opal_list_insert_pos(vfrag_ids, 
-                                         (opal_list_item_t*) next_item, 
-                                         (opal_list_item_t*) new_item); 
-                }
-                seq_tracker->vfrag_ids_current = (mca_pml_dr_range_t*) new_item;
-                return;
-            } else { 
-                direction = -1;
-                item = (mca_pml_dr_range_t*) opal_list_get_prev(item); 
-            }
-        } else { 
-            return;
-        }
-    }
-}
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

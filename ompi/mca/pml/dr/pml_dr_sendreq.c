@@ -24,6 +24,7 @@
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/class/ompi_seq_tracker.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_dr.h"
@@ -135,7 +136,7 @@ static void mca_pml_dr_match_completion(
 
         /* update statistics and complete */
         sendreq->req_bytes_delivered = sendreq->req_send.req_bytes_packed;
-        mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+        ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
         MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
 
     /* on negative ack need to retransmit */
@@ -189,7 +190,7 @@ static void mca_pml_dr_rndv_completion(
         }
 
         /* update statistics and complete */
-        mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+        ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
         if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
         } else {
@@ -257,7 +258,7 @@ static void mca_pml_dr_frag_completion(
             } 
 
             /* record vfrag id to drop duplicate acks */
-            mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+            ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
 
             /* return this vfrag */
             MCA_PML_DR_VFRAG_RETURN(vfrag);
@@ -893,7 +894,7 @@ void mca_pml_dr_send_request_match_ack(
             
             /* update statistics */
             sendreq->req_bytes_delivered = vfrag->vf_size;
-            mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+            ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
 
@@ -952,7 +953,7 @@ void mca_pml_dr_send_request_rndv_ack(
                 schedule = true;
             } 
             /* stash the vfrag id for duplicate acks.. */
-            mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+            ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
             
             if(schedule) {
@@ -994,7 +995,6 @@ void mca_pml_dr_send_request_frag_ack(
 
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
-        
         vfrag->vf_idx = 0;
         vfrag->vf_mask_pending = 0;
         opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
@@ -1008,7 +1008,7 @@ void mca_pml_dr_send_request_frag_ack(
         assert(sendreq->req_bytes_delivered <= sendreq->req_send.req_bytes_packed);
 
         /* stash the vfid for duplicate acks.. */
-        mca_pml_dr_comm_proc_set_vid(&sendreq->req_proc->seq_sends, vfrag->vf_id);
+        ompi_seq_tracker_insert(&sendreq->req_proc->seq_sends, vfrag->vf_id);
         /* return vfrag */
         MCA_PML_DR_VFRAG_RETURN(vfrag);
             

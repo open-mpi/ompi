@@ -287,7 +287,7 @@ void mca_pml_dr_recv_request_progress(
                 if((vfrag->vf_mask_pending & vfrag->vf_mask) == vfrag->vf_mask) { 
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
-                    mca_pml_dr_comm_proc_set_vid(&recvreq->req_proc->seq_recvs, vfrag->vf_id);
+                    ompi_seq_tracker_insert(&recvreq->req_proc->seq_recvs, vfrag->vf_id);
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_frag.hdr_src_ptr, vfrag->vf_size, vfrag->vf_mask);
                 }
