@@ -96,8 +96,7 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1_param_register_int("send_pipeline_depth", 3);
     mca_pml_ob1.recv_pipeline_depth =
         mca_pml_ob1_param_register_int("recv_pipeline_depth", 4);
-    mca_pml_ob1.leave_pinned_pipeline =
-        mca_pml_ob1_param_register_int("leave_pinned_pipeline", 0);
+  
     
     OBJ_CONSTRUCT(&mca_pml_ob1.lock, opal_mutex_t);
                                                                                                             
@@ -155,6 +154,16 @@ int mca_pml_ob1_component_open(void)
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
     mca_pml_ob1.leave_pinned = value; 
+    
+    mca_base_param_register_int("mpi", NULL, "leave_pinned_pipeline", "leave_pinned_pipeline", 0); 
+    param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline"); 
+    mca_base_param_lookup_int(param, &value); 
+    mca_pml_ob1.leave_pinned_pipeline = value; 
+
+    if(mca_pml_ob1.leave_pinned_pipeline && mca_pml_ob1.leave_pinned) { 
+        mca_pml_ob1.leave_pinned_pipeline = 0;
+        opal_output(0, "WARNING: Cannot set both mpi_leave_pinned and mpi_leave_pinned_pipeline, defaulting to mpi_leave_pinned ONLY\n");
+    }
     mca_pml_ob1.enabled = false; 
     return mca_bml_base_open(); 
     
