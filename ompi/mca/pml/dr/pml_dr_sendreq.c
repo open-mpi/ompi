@@ -995,7 +995,6 @@ void mca_pml_dr_send_request_frag_ack(
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
         
-        /* reset retransmit mask to indicate 
         vfrag->vf_idx = 0;
         vfrag->vf_mask_pending = 0;
         opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
