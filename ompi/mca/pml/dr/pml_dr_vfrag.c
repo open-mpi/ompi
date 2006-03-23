@@ -36,8 +36,8 @@ static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
     vfrag->vf_max_send_size = 0;
     vfrag->vf_ack = 0;
     vfrag->vf_mask = 0;
-    vfrag->vf_retrans = 0;
     vfrag->vf_retry_cnt = 0;
+    vfrag->vf_state = 0;
     vfrag->tv_wdog.tv_sec = mca_pml_dr.timer_wdog_sec;
     vfrag->tv_wdog.tv_usec = mca_pml_dr.timer_wdog_usec;
     vfrag->tv_ack.tv_sec = mca_pml_dr.timer_ack_usec;
@@ -95,7 +95,7 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
 
     if(0 == vfrag->vf_offset) { /* this is the first part of the message
                                    that we need to resend */
-      if(vfrag->vf_rndv) { 
+      if(vfrag->vf_state & MCA_PML_DR_VFRAG_RNDV) { 
           MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
       } else { 
           MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
