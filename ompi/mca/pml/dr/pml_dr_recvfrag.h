@@ -135,7 +135,8 @@ void mca_pml_dr_recv_frag_ack(
     mca_bml_base_endpoint_t* endpoint,
     mca_pml_dr_common_hdr_t* hdr,
     void* src_ptr,
-    uint64_t mask); 
+    uint64_t mask, 
+    uint16_t len); 
 
 /**
  *  Callback from BTL on receipt of a recv_frag.

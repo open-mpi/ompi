@@ -128,7 +128,7 @@ void mca_pml_dr_recv_frag_callback(
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
                                          &hdr->hdr_common,
                                          hdr->hdr_match.hdr_src_ptr.pval,
-                                         1);
+                                         1, 0);
             } else {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
@@ -172,7 +172,7 @@ void mca_pml_dr_recv_frag_callback(
                         mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*) proc->ompi_proc->proc_pml, 
                                                  &hdr->hdr_common, 
                                                  hdr->hdr_match.hdr_src_ptr.pval, 
-                                                 ~(uint64_t) 0);
+                                                 ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
                     } else { 
                         OPAL_OUTPUT((0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
                     }
@@ -212,7 +212,7 @@ void mca_pml_dr_recv_frag_callback(
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml,
                                          &hdr->hdr_common,
                                          hdr->hdr_frag.hdr_src_ptr.pval,
-                                         ~(uint64_t) 0);
+                                         ~(uint64_t) 0, 0);
             } else {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 recvreq = hdr->hdr_frag.hdr_dst_ptr.pval;
@@ -623,7 +623,7 @@ rematch:
             MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
             if(csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
-                    &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0);
+                    &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
                 OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
                     __FILE__, __LINE__, csum, hdr->hdr_csum));
                 MCA_PML_DR_RECV_FRAG_RETURN(frag);
@@ -658,7 +658,7 @@ rematch:
         MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
         if(csum != hdr->hdr_csum) { 
             mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
-                                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0);
+                                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
             OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
                         __FILE__, __LINE__, csum, hdr->hdr_csum));
             MCA_PML_DR_RECV_FRAG_RETURN(frag);
@@ -670,7 +670,7 @@ rematch:
 
     ompi_seq_tracker_insert(&proc->seq_recvs, hdr->hdr_common.hdr_vid);
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
-
+    
     /* release matching lock before processing fragment */
     if(match != NULL) {
         mca_pml_dr_recv_request_progress(match,btl,segments,num_segments);
@@ -679,7 +679,7 @@ rematch:
     /* if buffered a short message - go ahead and ack */
     else if (hdr->hdr_common.hdr_type == MCA_PML_DR_HDR_TYPE_MATCH) { 
         mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
-                                 &hdr->hdr_common, hdr->hdr_src_ptr.pval, 1);
+                                 &hdr->hdr_common, hdr->hdr_src_ptr.pval, 1, 0);
     }
 
     if(additional_match) {
@@ -699,7 +699,8 @@ void mca_pml_dr_recv_frag_ack(
     mca_bml_base_endpoint_t* endpoint,
     mca_pml_dr_common_hdr_t* hdr,
     void *src_ptr,
-    uint64_t mask)
+    uint64_t mask, 
+    uint16_t len)
     {
     ompi_communicator_t* comm = ompi_comm_lookup(hdr->hdr_ctx);
     mca_btl_base_descriptor_t* des;
@@ -723,7 +724,7 @@ void mca_pml_dr_recv_frag_ack(
     ack->hdr_common.hdr_dst = hdr->hdr_src;
     ack->hdr_common.hdr_vid = hdr->hdr_vid;
     ack->hdr_common.hdr_ctx = hdr->hdr_ctx;
-    ack->hdr_vlen = 0;
+    ack->hdr_vlen = len;
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr.pval = src_ptr;
     assert(ack->hdr_src_ptr.pval);
