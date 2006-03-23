@@ -936,6 +936,7 @@ void mca_pml_dr_send_request_rndv_ack(
                 MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
             } else { 
                 vfrag->vf_recv = ack->hdr_dst_ptr;
+                vfrag->vf_state = 0;
                 sendreq->req_send_offset = ack->hdr_vlen;
                 schedule = true;
             } 
@@ -956,6 +957,7 @@ void mca_pml_dr_send_request_rndv_ack(
         } else { 
             /* will need this to schedule rest of the message */
             vfrag->vf_recv = ack->hdr_dst_ptr;
+            vfrag->vf_state = 0;
             sendreq->req_send_offset = ack->hdr_vlen;
             sendreq->req_bytes_delivered = ack->hdr_vlen;
         }
