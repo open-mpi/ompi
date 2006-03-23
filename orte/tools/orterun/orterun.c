@@ -824,7 +824,7 @@ static int parse_locals(int argc, char* argv[])
     temp_argc = 0;
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
-    orte_pointer_array_init(&apps_pa, 1, argc + 1, 2);
+    orte_pointer_array_init(&apps_pa, 1, INT_MAX, 2);
 
     /* NOTE: This bogus env variable is necessary in the calls to
        create_app(), below.  See comment immediately before the
@@ -839,7 +839,6 @@ static int parse_locals(int argc, char* argv[])
                     opal_argv_free(env);
                     env = NULL;
                 }
-
                 app = OBJ_NEW(orte_app_context_t);
                 rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
                 /** keep track of the number of apps - point this app_context to that index */
@@ -1304,7 +1303,7 @@ static int parse_appfile(char *filename, char ***env)
     size_t i, len;
     FILE *fp;
     char line[BUFSIZ];
-    int rc, argc;
+    int rc, argc, app_num;
     char **argv;
     orte_app_context_t *app;
     bool blank, made_app;
@@ -1323,6 +1322,7 @@ static int parse_appfile(char *filename, char ***env)
     /* Read in line by line */
 
     line[sizeof(line) - 1] = '\0';
+    app_num = 0;
     do {
 
         /* We need a bogus argv[0] (because when argv comes in from
@@ -1402,6 +1402,8 @@ static int parse_appfile(char *filename, char ***env)
             }
 
             rc = create_app(argc, argv, &app, &made_app, &tmp_env);
+            app->idx = app_num;
+            app_num++;
             if (ORTE_SUCCESS != rc) {
                 /* Assume that the error message has already been
                    printed; no need to cleanup -- we can just exit */
