@@ -41,7 +41,7 @@ AC_DEFUN([MCA_ptl_mx_CONFIG],[
         LIBS="$LIBS $ptl_mx_LIBS"
 
         AC_MSG_CHECKING([for a MX version with mx_register_match_callback])
-        AC_TRY_COMPILE([#include <myriexpress.h>],
+        AC_TRY_LINK([#include <myriexpress.h>],
              [mx_register_match_callback(0, 0, 0);],
              [ptl_mx_happy="yes"],
              [ptl_mx_happy="no"])

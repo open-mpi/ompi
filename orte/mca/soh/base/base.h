@@ -108,7 +108,6 @@ int orte_soh_base_unpack_job_state(orte_buffer_t *buffer, void *dest,
  */
 
 OMPI_DECLSPEC extern int orte_soh_base_output;
-OMPI_DECLSPEC extern orte_soh_base_module_t orte_soh;  /* holds selected module's function pointers */
 OMPI_DECLSPEC extern bool orte_soh_base_selected;
 
 typedef struct orte_soh_base_t {
