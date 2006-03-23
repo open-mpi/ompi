@@ -125,12 +125,12 @@ int mca_mpool_udapl_find(
     
 int mca_mpool_udapl_release(
                             struct mca_mpool_base_module_t* mpool, 
-                            mca_mpool_base_registration_t* registraion
+                            mca_mpool_base_registration_t* registration
                             ); 
 
 int mca_mpool_udapl_retain(
                             struct mca_mpool_base_module_t* mpool, 
-                            mca_mpool_base_registration_t* registraion
+                            mca_mpool_base_registration_t* registration
                             ); 
 
 

@@ -366,7 +366,8 @@ static int mca_btl_udapl_finish_connect(mca_btl_udapl_module_t* btl,
     mca_btl_udapl_addr_t* addr;
     size_t i;
 
-    addr = (mca_btl_udapl_addr_t*)frag->hdr;
+    /*addr = (mca_btl_udapl_addr_t*)frag->hdr;*/
+    addr = (mca_btl_udapl_addr_t*)frag->segment.seg_addr.pval;
 
     OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
     for(proc = (mca_btl_udapl_proc_t*)
@@ -401,7 +402,6 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
                                         DAT_CR_HANDLE cr_handle)
 {
     mca_btl_udapl_frag_t* frag;
-    DAT_DTO_COOKIE cookie;
     DAT_EP_HANDLE endpoint;
     int rc;
 
@@ -423,14 +423,11 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
     frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
             (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
 
-    memcpy(frag->hdr, &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
     frag->endpoint = NULL;
     frag->type = MCA_BTL_UDAPL_CONN_RECV;
-    cookie.as_ptr = frag;
 
-    rc = dat_ep_post_recv(endpoint, 1,
-            &((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet,
-            cookie, DAT_COMPLETION_DEFAULT_FLAG);
+    rc = dat_ep_post_recv(endpoint, 1, &frag->triplet,
+            (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_ep_post_send");
         return OMPI_ERROR;
@@ -481,6 +478,7 @@ int mca_btl_udapl_component_progress()
                         how about just worrying about eager frags for now?
                        */
                     dto = &event.event_data.dto_completion_event_data;
+                    OPAL_OUTPUT((0, "DTO transferred %d bytes\n", dto->transfered_length));
 
                     /* Was the DTO successful? */
                     if(DAT_DTO_SUCCESS != dto->status) {

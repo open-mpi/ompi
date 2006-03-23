@@ -132,11 +132,6 @@ mca_btl_udapl_proc_t* mca_btl_udapl_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    if(mca_btl_udapl_component.udapl_debug) {
-        opal_output(0, "udapl_proc_create got %d addrs\n",
-               size / sizeof(mca_btl_udapl_addr_t));
-    }
-
     if((size % sizeof(mca_btl_udapl_addr_t)) != 0) {
         opal_output(0, "[%s:%d] invalid udapl address for peer [%d,%d,%d]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));

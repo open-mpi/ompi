@@ -73,7 +73,6 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
 {
     mca_btl_udapl_module_t* btl = endpoint->endpoint_btl;
     mca_btl_udapl_frag_t* frag;
-    DAT_DTO_COOKIE cookie;
     int rc;
 
     /* Create a new uDAPL endpoint and start the connection process */
@@ -94,25 +93,22 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     }
 
     /* Send our local address data over this EP */
-    /* Can't use btl_udapl_send here, the send will just get queued */
+    /* Can't use btl_udapl_send here, will start an infinite loop! */
     frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
             (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
 
-    memcpy(frag->hdr, &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
+    memcpy(frag->segment.seg_addr.pval,
+            &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
     frag->endpoint = endpoint;
     frag->type = MCA_BTL_UDAPL_CONN_SEND;
-    cookie.as_ptr = frag;
 
     /* Do the actual send now.. */
-    OPAL_OUTPUT((0, "posting send!\n"));
-    rc = dat_ep_post_send(endpoint->endpoint_ep, 1,
-            &((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet,
-            cookie, DAT_COMPLETION_DEFAULT_FLAG);
+    rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
+            (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
         mca_btl_udapl_error(rc, "dat_ep_post_send");
         goto failure;
     }
-    OPAL_OUTPUT((0, "after post send\n"));
 
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTING;
     return OMPI_SUCCESS;
