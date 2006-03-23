@@ -64,6 +64,8 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
 
 #if OMPI_ENABLE_DEBUG_RELIABILITY
 
+extern double mca_bml_base_error_rate;
+
 struct mca_bml_base_context_t {
     size_t index;
     mca_btl_base_completion_fn_t cbfunc;
@@ -78,7 +80,6 @@ static void mca_bml_base_completion(
                                     int status)
 {
     mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) des->des_cbdata;
-    uint32_t csum;
     /* restore original state */
     ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
     des->des_cbdata = ctx->cbdata;
@@ -95,8 +96,8 @@ int mca_bml_base_send(
 { 
     static int count;
     des->des_context = bml_btl;
-    if(count <= 0) {
-        count = (int) ((1000.0 * rand())/(RAND_MAX+1.0));
+    if(count <= 0 && mca_bml_base_error_rate > 0) {
+        count = (int) ((mca_bml_base_error_rate * rand())/(RAND_MAX+1.0));
         if(count % 2) {
             /* local completion - network "drops" packet */
             opal_output(0, "dropping data\n");
@@ -106,14 +107,9 @@ int mca_bml_base_send(
             /* corrupt data */
             mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
                 malloc(sizeof(mca_bml_base_context_t));
-            opal_output(0, "corrupting data\n");
             if(NULL != ctx) {
+                opal_output(0, "corrupting data\n");
                 ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
-                if(des->des_src[0].seg_len > 40 ) { 
-                    unsigned char temp;
-                    ctx->index =  40;
-                    temp =  ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index];
-                }                
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
                 ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
