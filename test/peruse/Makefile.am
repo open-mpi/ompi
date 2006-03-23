@@ -16,10 +16,11 @@
 # $HEADER$
 #
 
-
-
-check_PROGRAMS = \
-	mpi_peruse
+if WANT_PERUSE
+check_PROGRAMS = mpi_peruse
+else
+check_PROGRAMS =
+endif
 
 TESTS = \
 	$(check_PROGRAMS)
