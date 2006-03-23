@@ -776,7 +776,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                  */
                 while(vfrag->vf_idx < vfrag->vf_len && 
                       sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
-                    if(((uint64_t)1 << vfrag->vf_idx) & vfrag->vf_retrans) {
+                    if(((uint64_t)1 << vfrag->vf_idx) & ~vfrag->vf_ack) {
                         mca_bml_base_btl_t* bml_btl = vfrag->bml_btl; 
                         mca_pml_dr_frag_hdr_t* hdr;
                         mca_btl_base_descriptor_t* des;
@@ -995,8 +995,7 @@ void mca_pml_dr_send_request_frag_ack(
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
         
-        /* reset local completion flags to only those that have been successfully acked */
-        vfrag->vf_retrans = ~vfrag->vf_ack;
+        /* reset retransmit mask to indicate 
         vfrag->vf_idx = 0;
         vfrag->vf_mask_pending = 0;
         opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
