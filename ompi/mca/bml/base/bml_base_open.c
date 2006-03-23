@@ -19,6 +19,7 @@
 
 #include "ompi_config.h"
 #include <stdio.h>
+#include <unistd.h>
 #include "ompi/mca/bml/bml.h" 
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/mca/btl/base/base.h"
@@ -27,6 +28,9 @@
 
 opal_list_t mca_bml_base_components_available;
 
+#if OMPI_ENABLE_DEBUG_RELIABILITY
+double mca_bml_base_error_rate;
+#endif
 
 int mca_bml_base_open( void ) { 
     
@@ -36,6 +40,28 @@ int mca_bml_base_open( void ) {
                                 true)) {  
         return OMPI_ERROR; 
     }
+
+#if OMPI_ENABLE_DEBUG_RELIABILITY
+    do {
+        int param, value;
+
+        mca_base_param_register_int("bml", NULL, "error_rate", "error_rate", 0);
+        param = mca_base_param_find("bml", NULL, "error_rate");
+        mca_base_param_lookup_int(param, &value);
+        mca_bml_base_error_rate = value;
+
+        mca_base_param_register_int("bml", NULL, "srand", "srand", 1);
+        param = mca_base_param_find("bml", NULL, "srand");
+        mca_base_param_lookup_int(param, &value);
+
+        /* seed random number generator */
+        if(value) {
+            struct timeval tv;
+            gettimeofday(&tv, NULL);
+            srand(getpid() * tv.tv_usec);
+        }
+    } while (0);
+#endif
     return mca_btl_base_open(); 
 }
 
