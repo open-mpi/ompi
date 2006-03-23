@@ -22,27 +22,6 @@
 #include "pml_dr.h"
 #include "pml_dr_comm.h"
 
-OBJ_CLASS_INSTANCE(mca_pml_dr_range_t, 
-                   opal_list_item_t, 
-                   NULL, 
-                   NULL);
-
-
-static void mca_pml_dr_seq_tracker_construct(mca_pml_dr_seq_tracker_t* seq_tracker) { 
-    OBJ_CONSTRUCT(&seq_tracker->vfrag_ids, opal_list_t);
-    seq_tracker->vfrag_ids_current = NULL;
-}
-
-
-static void mca_pml_dr_seq_tracker_destruct(mca_pml_dr_seq_tracker_t* seq_tracker) { 
-    OBJ_DESTRUCT(&seq_tracker->vfrag_ids);
-}
-
-OBJ_CLASS_INSTANCE(
-                   mca_pml_dr_seq_tracker_t,
-                   opal_object_t,
-                   mca_pml_dr_seq_tracker_construct,
-                   mca_pml_dr_seq_tracker_destruct);
 
 static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
 {
@@ -53,8 +32,8 @@ static void mca_pml_dr_comm_proc_construct(mca_pml_dr_comm_proc_t* proc)
     OBJ_CONSTRUCT(&proc->specific_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->matched_receives, opal_list_t);
     OBJ_CONSTRUCT(&proc->unexpected_frags, opal_list_t);
-    OBJ_CONSTRUCT(&proc->seq_sends, mca_pml_dr_seq_tracker_t);
-    OBJ_CONSTRUCT(&proc->seq_recvs, mca_pml_dr_seq_tracker_t);
+    OBJ_CONSTRUCT(&proc->seq_sends, ompi_seq_tracker_t);
+    OBJ_CONSTRUCT(&proc->seq_recvs, ompi_seq_tracker_t);
 }
 
 
