@@ -169,9 +169,10 @@ void mca_pml_dr_recv_frag_callback(
                 } else { 
                     if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
                         OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous from sequence tracker\n", __FILE__, __LINE__));
-                        mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
-                                                    hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
-                        
+                        mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*) proc->ompi_proc->proc_pml, 
+                                                 &hdr->hdr_common, 
+                                                 hdr->hdr_frag.hdr_src_ptr.pval, 
+                                                 ~(uint64_t) 0);
                     } else { 
                         OPAL_OUTPUT((0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
                     }
