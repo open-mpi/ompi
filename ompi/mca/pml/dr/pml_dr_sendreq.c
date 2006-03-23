@@ -644,6 +644,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
      * the scheduling logic once for every call.
     */
     
+    assert(sendreq->req_vfrag0.vf_recv.pval != NULL);
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
     if(OPAL_THREAD_ADD32(&sendreq->req_lock,1) == 1) {
         do {
@@ -931,7 +932,7 @@ void mca_pml_dr_send_request_rndv_ack(
 
             /* done? */
             sendreq->req_bytes_delivered = ack->hdr_vlen;
-            if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed){
+            if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
                 MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
             } else { 
                 vfrag->vf_recv = ack->hdr_dst_ptr;

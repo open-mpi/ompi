@@ -224,6 +224,7 @@ do {                                                                            
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =                    \
                                                        (hdr)->hdr_common.hdr_src;    \
+    (request)->req_vfrag0.vf_id = (hdr)->hdr_common.hdr_vid;                         \
     opal_list_append(&proc->matched_receives, (opal_list_item_t*)request);           \
     ompi_seq_tracker_insert(&proc->seq_recvs_matched, (hdr)->hdr_common.hdr_vid);    \
 } while(0)
@@ -338,7 +339,7 @@ static inline struct mca_pml_dr_recv_request_t* mca_pml_dr_comm_proc_check_match
         item != opal_list_get_end(&dr_proc->matched_receives);
         item  = opal_list_get_next(item)) {
         struct mca_pml_dr_recv_request_t* recvreq = (struct mca_pml_dr_recv_request_t*)item;
-        if(recvreq->req_vfrag->vf_id == vfrag_id)
+        if(recvreq->req_vfrag0.vf_id == vfrag_id)
             return recvreq;
     }
     return NULL;
