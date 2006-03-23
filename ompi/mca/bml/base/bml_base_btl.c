@@ -65,6 +65,7 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
 #if OMPI_ENABLE_DEBUG_RELIABILITY
 
 extern double mca_bml_base_error_rate;
+extern int    mca_bml_base_error_count;
 
 struct mca_bml_base_context_t {
     size_t index;
@@ -96,11 +97,11 @@ int mca_bml_base_send(
 { 
     static int count;
     des->des_context = bml_btl;
-    if(count <= 0 && mca_bml_base_error_rate > 0) {
-        count = (int) ((mca_bml_base_error_rate * rand())/(RAND_MAX+1.0));
-        if(count % 2) {
+    if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate > 0) {
+        mca_bml_base_error_count = (int) ((mca_bml_base_error_rate * rand())/(RAND_MAX+1.0));
+        if(mca_bml_base_error_count % 2) {
             /* local completion - network "drops" packet */
-            opal_output(0, "dropping data\n");
+            opal_output(0, "%s:%d: dropping data\n", __FILE__, __LINE__);
             des->des_cbfunc(bml_btl->btl, bml_btl->btl_endpoint, des, OMPI_SUCCESS);
             return OMPI_SUCCESS;
         } else {
@@ -108,7 +109,7 @@ int mca_bml_base_send(
             mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) 
                 malloc(sizeof(mca_bml_base_context_t));
             if(NULL != ctx) {
-                opal_output(0, "corrupting data\n");
+                opal_output(0, "%s:%d: corrupting data\n", __FILE__, __LINE__);
                 ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
@@ -118,7 +119,7 @@ int mca_bml_base_send(
             }
         }
     }
-    count--;
+    mca_bml_base_error_count--;
     des->des_context = (void*) bml_btl; 
     return bml_btl->btl_send(
                              bml_btl->btl,
