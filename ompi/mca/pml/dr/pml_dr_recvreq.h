@@ -225,6 +225,7 @@ do {                                                                            
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =                    \
                                                        (hdr)->hdr_common.hdr_src;    \
     opal_list_append(&proc->matched_receives, (opal_list_item_t*)request);           \
+    ompi_seq_tracker_insert(&proc->seq_recvs_matched, (hdr)->hdr_common.hdr_vid);    \
 } while(0)
 
 

@@ -48,6 +48,7 @@ struct mca_pml_dr_comm_proc_t {
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
     ompi_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
     ompi_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
+    ompi_seq_tracker_t seq_recvs_matched; /**< Tracks the received vfrags that have been matched */ 
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
 

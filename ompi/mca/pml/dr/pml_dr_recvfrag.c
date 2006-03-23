@@ -157,17 +157,24 @@ void mca_pml_dr_recv_frag_callback(
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)) {
+            if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs, hdr->hdr_common.hdr_vid)){ 
                 /* ack only if the vfrag has been matched */
                 mca_pml_dr_recv_request_t* recvreq = 
                     mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 if(NULL != recvreq) {
-                    OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous\n", __FILE__, __LINE__));
+                    OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous from pending matched\n", __FILE__, __LINE__));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
                 } else { 
-                    OPAL_OUTPUT((0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
+                    if(ompi_seq_tracker_check_duplicate(&proc->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
+                        OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous from sequence tracker\n", __FILE__, __LINE__));
+                        mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
+                                                    hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
+                        
+                    } else { 
+                        OPAL_OUTPUT((0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
+                    }
                 }
             } else {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
