@@ -113,6 +113,9 @@ include file/Makefile.am
 include group/Makefile.am
 include info/Makefile.am
 include op/Makefile.am
+if WANT_PERUSE
+include peruse/Makefile.am
+endif
 include proc/Makefile.am
 include request/Makefile.am
 include runtime/Makefile.am
