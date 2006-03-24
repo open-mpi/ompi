@@ -290,6 +290,7 @@ do {                                                                            
             &max_data,                                                            \
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
+        if(bytes_received && !bytes_delivered) assert(0);                         \
         csum = request->req_recv.req_convertor.checksum;                          \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \

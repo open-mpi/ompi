@@ -316,6 +316,7 @@ do {                                                                            
 do {                                                                          \
     vfrag->vf_idx = 0;                                                        \
     vfrag->vf_state = 0;                                                      \
+    opal_output(0, "queuing vfrag for retrans!\n");                           \
     opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)vfrag);      \
 } while(0)
 
