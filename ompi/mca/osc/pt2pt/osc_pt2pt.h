@@ -105,6 +105,8 @@ struct ompi_osc_pt2pt_module_t {
     opal_list_t p2p_copy_pending_sendreqs;
     short *p2p_copy_num_pending_sendreqs;
 
+    bool p2p_eager_send;
+
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(p2p_comm)> ints, each containing the value
        1. */

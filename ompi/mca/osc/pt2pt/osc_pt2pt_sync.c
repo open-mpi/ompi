@@ -66,9 +66,6 @@ ompi_osc_pt2pt_flip_sendreqs(ompi_osc_pt2pt_module_t *module)
     short *tmp;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
-    /* user has not promised nothing has happened - need to make
-       sure we've done all our requests */
-    module->p2p_num_pending_out = 0;
 
     tmp = module->p2p_copy_num_pending_sendreqs;
     module->p2p_copy_num_pending_sendreqs = 
@@ -202,7 +199,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
         }
 
         /* now we know how many things we're waiting for - wait for them... */
-        while (0 != P2P_MODULE(win)->p2p_num_pending_in ||
+        while (P2P_MODULE(win)->p2p_num_pending_in > 0 ||
                0 != P2P_MODULE(win)->p2p_num_pending_out) {
             ompi_osc_pt2pt_progress(P2P_MODULE(win));
         }
