@@ -85,35 +85,50 @@ void ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                           mca_btl_base_descriptor_t *descriptor,
                                           void *cbdata);
 
+/* look up parameters for configuring this window.  The code first
+   looks in the info structure passed by the user, then through mca
+   parameters. */
 static bool
-want_locks(ompi_info_t *info)
+check_config_value_bool(char *key, ompi_info_t *info)
 {
-    char *val;
-    int vallen, ret, flag;
-    bool no_locks;
+    char *value_string;
+    int value_len, ret, flag, param;
+    bool result;
 
-    ret = ompi_info_get_valuelen(info, "no_locks", &vallen, &flag);
-    if (OMPI_SUCCESS != ret)  return true;
-    if (flag == 0) return true;
-    vallen++;
+    ret = ompi_info_get_valuelen(info, key, &value_len, &flag);
+    if (OMPI_SUCCESS != ret) goto info_not_found;
+    if (flag == 0) goto info_not_found;
+    value_len++;
 
-    val = malloc(sizeof(char) * vallen);
-    if (NULL == val) return true;
+    value_string = malloc(sizeof(char) * value_len);
+    if (NULL == value_string) goto info_not_found;
 
-    ret = ompi_info_get(info, "no_locks", vallen, val, &flag);
+    ret = ompi_info_get(info, key, value_len, value_string, &flag);
     if (OMPI_SUCCESS != ret) {
-        free(val);
-        return true;
+        free(value_string);
+        goto info_not_found;
     }
     assert(flag != 0);
-    ret = ompi_info_value_to_bool(val, &no_locks);
-    free(val);
-    if (OMPI_SUCCESS != ret) return true;
+    ret = ompi_info_value_to_bool(value_string, &result);
+    free(value_string);
+    if (OMPI_SUCCESS != ret) goto info_not_found;
+    return result;
 
-    return !no_locks;
+ info_not_found:
+    param = mca_base_param_find("osc", "pt2pt", key);
+    if (param == OPAL_ERROR) return false;
+
+    ret = mca_base_param_lookup_int(param, &flag);
+    if (OMPI_SUCCESS != ret) return false;
+
+    result = flag;
+
+    return result;
 }
 
+
 static int fence_sync_index;
+
 
 static int
 ompi_osc_pt2pt_component_open(void)
@@ -123,6 +138,19 @@ ompi_osc_pt2pt_component_open(void)
                                   "fence_sync_method",
                                   "How to synchronize fence: reduce_scatter, allreduce, alltoall",
                                   false, false, "reduce_scatter", NULL);
+
+        mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
+                               "eager_send",
+                               "Attempt to start data movement during communication call, "
+                               "instead of at synchrnoization time.  "
+                               "Info key of same name overrides this value, "
+                               "if info key given.",
+                               false, false, 0, NULL);
+
+        mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
+                               "no_locks",
+                               "Enable optimizations available only if MPI_LOCK is not used.",
+                               false, false, 0, NULL);
 
     return OMPI_SUCCESS;
 }
@@ -272,6 +300,8 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     memset(module->p2p_num_pending_sendreqs, 0, 
            sizeof(short) * ompi_comm_size(module->p2p_comm));
 
+    module->p2p_eager_send = check_config_value_bool("eager_send", info);
+
     /* fence data */
     module->p2p_fence_coll_counts = malloc(sizeof(int) * 
                                            ompi_comm_size(module->p2p_comm));
@@ -339,7 +369,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     /* fill in window information */
     win->w_osc_module = (ompi_osc_base_module_t*) module;
-    if (!want_locks(info)) {
+    if (check_config_value_bool("no_locks", info)) {
         win->w_flags |= OMPI_WIN_NO_LOCKS;
     }
 
@@ -350,6 +380,14 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
                                ompi_osc_pt2pt_component_fragment_cb,
                                NULL);
+
+
+    if (module->p2p_eager_send) {
+        /* need to barrier if eager sending or we can receive before the
+           other side has been fully setup, causing much gnashing of
+           teeth. */
+        module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
+    }
 
     return ret;
 }

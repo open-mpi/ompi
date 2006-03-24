@@ -21,6 +21,8 @@
 
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
+#include "osc_pt2pt_header.h"
+#include "osc_pt2pt_data_move.h"
 
 static int
 enqueue_sendreq(ompi_osc_pt2pt_module_t *module,
@@ -125,8 +127,26 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* enqueue sendreq */
-    ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+    /* if we're doing fence synchronization, try to actively send
+       right now */
+    if (P2P_MODULE(win)->p2p_eager_send &&
+        (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
+        OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), 1);
+
+        ret  = ompi_osc_pt2pt_sendreq_send(P2P_MODULE(win), sendreq);
+
+        if (OMPI_SUCCESS == ret) {
+            OPAL_THREAD_LOCK(&(module->p2p_lock));
+            P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
+            OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+        } else {
+            OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
+            ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        }
+    } else {
+        /* enqueue sendreq */
+        ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+    }
 
     return ret;
 }
@@ -165,8 +185,26 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
                                             &sendreq);
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* enqueue sendreq */
-    ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+    /* if we're doing fence synchronization, try to actively send
+       right now */
+    if (P2P_MODULE(win)->p2p_eager_send && 
+        (OMPI_WIN_FENCE & ompi_win_get_mode(win))) {
+        OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), 1);
+
+        ret  = ompi_osc_pt2pt_sendreq_send(P2P_MODULE(win), sendreq);
+
+        if (OMPI_SUCCESS == ret) {
+            OPAL_THREAD_LOCK(&(module->p2p_lock));
+            P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
+            OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+        } else {
+            OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
+            ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+        }
+    } else {
+        /* enqueue sendreq */
+        ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
+    }
 
     return ret;
 }
