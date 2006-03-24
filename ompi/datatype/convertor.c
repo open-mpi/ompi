@@ -227,6 +227,10 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         *position = convertor->bConverted;
         return OMPI_SUCCESS;
     }
+
+    /* Remove the completed flag if it's already set */
+    convertor->flags &= !CONVERTOR_COMPLETED;
+
     /*
      * If we plan to rollback the convertor then first we have to set it
      * at the beginning.
