@@ -175,7 +175,7 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
 
             /* send a terminate message to the bootproxy on each node
 	       */
-	       if (ORTE_SUCCESS != (rc = orte_dss.get(&name, keyval->value, ORTE_NAME))) {
+	       if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&name, keyval->value, ORTE_NAME))) {
 	           ORTE_ERROR_LOG(rc);
 	           OBJ_RELEASE(cmd);
 	           continue;
