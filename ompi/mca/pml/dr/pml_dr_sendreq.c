@@ -639,9 +639,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
      * of the number of times the routine has been called and run through
      * the scheduling logic once for every call.
     */
-    
-    assert(sendreq->req_vfrag0.vf_recv.pval != NULL);
+        
     mca_bml_base_endpoint_t* bml_endpoint = sendreq->req_endpoint;
+    assert(sendreq->req_vfrag0.vf_recv.pval != NULL);
     if(OPAL_THREAD_ADD32(&sendreq->req_lock,1) == 1) {
         do {
             /* allocate remaining bytes to BTLs */
@@ -656,12 +656,12 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 size_t size = bytes_remaining;
 
                 /* offset tells us how much of the vfrag has been scheduled */
-                size_t offset = sendreq->req_send_offset - vfrag->vf_offset;
+                size_t bytes_sent = sendreq->req_send_offset - vfrag->vf_offset;
                 int rc;
 
                 /* do we need to allocate a new vfrag 
                    (we scheduled all the vfrag already) */
-                if(vfrag->vf_size == offset) {
+                if(vfrag->vf_size == bytes_sent) {
                     bml_btl = mca_bml_base_btl_array_get_next(&bml_endpoint->btl_send); 
                     MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);
                     if(NULL == vfrag) {
@@ -673,7 +673,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq,bml_endpoint,bytes_remaining,vfrag);
                     MCA_PML_DR_VFRAG_WDOG_START(vfrag);
                     vfrag->bml_btl = bml_btl;
-                    offset = 0;
+                    bytes_sent = 0;
                     
                 } else {  /* always schedule the vfrag accross the same btl */
                     bml_btl = vfrag->bml_btl;
@@ -683,8 +683,8 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 if (size > vfrag->vf_max_send_size) {
                     size = vfrag->vf_max_send_size;
                 }
-                if (size > vfrag->vf_size - offset) {
-                    size = vfrag->vf_size - offset;
+                if (size > vfrag->vf_size - bytes_sent) {
+                    size = vfrag->vf_size - bytes_sent;
                 }
 
                 /* pack into a descriptor */
@@ -933,6 +933,8 @@ void mca_pml_dr_send_request_rndv_ack(
             } else {
                 /* start scheduling with a new vfrag */
                 vfrag->vf_recv = ack->hdr_dst_ptr;
+/*                 vfrag->vf_state = 0; */
+/*                 sendreq->req_send_offset = ack->hdr_vlen; */
                 vfrag->vf_state = 0;
                 vfrag->vf_size = ack->hdr_vlen;
                 schedule = true;
@@ -984,7 +986,7 @@ void mca_pml_dr_send_request_frag_ack(
 
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
-
+        opal_output(0, "got a vfrag NACK, retransmitting %x\n", ~vfrag->vf_ack);
         MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq,vfrag);
         schedule = true;
 
