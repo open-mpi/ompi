@@ -35,7 +35,7 @@ static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
     vfrag->vf_size = 0;
     vfrag->vf_max_send_size = 0;
     vfrag->vf_ack = 0;
-    vfrag->vf_mask = 0;
+    vfrag->vf_mask = 1;
     vfrag->vf_retry_cnt = 0;
     vfrag->vf_state = 0;
     vfrag->tv_wdog.tv_sec = mca_pml_dr.timer_wdog_sec;
@@ -68,14 +68,26 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
-    opal_output(0, "%s:%d:%s, wdog timeout!", __FILE__, __LINE__, __func__);
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) { 
-        opal_output(0, "%s:%d:%s, wdog retry count exceeded!  FATAL", __FILE__, __LINE__, __func__);
+
+    OPAL_OUTPUT((0, "%s:%d:%s: wdog timeout!", __FILE__, __LINE__, __func__));
+    if(++vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) {
+        opal_output(0, "%s:%d:%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);
         orte_errmgr.abort();
     }
-    MCA_PML_DR_VFRAG_RESET(vfrag);
-    opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+    /* back off watchdog timer */
+    vfrag->tv_wdog.tv_sec = 
+          mca_pml_dr.timer_wdog_sec + 
+          mca_pml_dr.timer_wdog_sec * mca_pml_dr.timer_wdog_multiplier  * 
+          vfrag->vf_retry_cnt;
+    vfrag->tv_wdog.tv_usec =
+          mca_pml_dr.timer_wdog_usec +
+          mca_pml_dr.timer_wdog_usec * mca_pml_dr.timer_wdog_multiplier  *
+          vfrag->vf_retry_cnt;
+    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
+
+    /* retransmit vfrag */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     mca_pml_dr_send_request_schedule(sendreq);
 }
@@ -86,25 +98,25 @@ void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) { 
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
-    opal_output(0, "%s:%d:%s, ack timeout!", __FILE__, __LINE__, __func__);
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    if(vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) { 
-        opal_output(0, "%s:%d: maximum ack retry count exceeded: FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
-    }
+    opal_output(0, "%s:%d:%s: ack timeout!", __FILE__, __LINE__, __func__);
 
-    if(0 == vfrag->vf_offset) { /* this is the first part of the message
-                                   that we need to resend */
-      if(vfrag->vf_state & MCA_PML_DR_VFRAG_RNDV) { 
-          MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
-      } else { 
-          MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
-      }
-      
-    } else { 
-        MCA_PML_DR_VFRAG_RESET(vfrag);
-        opal_list_append(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+
+    /* first frag within send request */
+    if(vfrag == &sendreq->req_vfrag0) {
+        MCA_PML_DR_VFRAG_ACK_START(vfrag);
+        if(vfrag->vf_state & MCA_PML_DR_VFRAG_RNDV) { 
+            MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
+        } else { 
+            MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
+        }
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* reschedule unacked portion of vfrag */
+    } else { 
+        MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag);
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        MCA_PML_DR_VFRAG_WDOG_START(vfrag);
         mca_pml_dr_send_request_schedule(sendreq);
     }
 }

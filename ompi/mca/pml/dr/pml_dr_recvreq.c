@@ -111,11 +111,15 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
 
 static void mca_pml_dr_recv_request_construct(mca_pml_dr_recv_request_t* request)
 {
+    OBJ_CONSTRUCT(&request->req_vfrag0, mca_pml_dr_vfrag_t);
+    OBJ_CONSTRUCT(&request->req_vfrags, opal_list_t);
+
+    request->req_vfrag0.vf_len = 1;
+    request->req_vfrag0.vf_mask = 1;
+    request->req_vfrag0.vf_recv.pval = request;
     request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_dr_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_dr_recv_request_cancel;
-    OBJ_CONSTRUCT(&request->req_vfrag0, mca_pml_dr_vfrag_t);
-    OBJ_CONSTRUCT(&request->req_vfrags, opal_list_t);
 }
 
 static void mca_pml_dr_recv_request_destruct(mca_pml_dr_recv_request_t* request)
@@ -273,7 +277,6 @@ void mca_pml_dr_recv_request_progress(
                                            bytes_received,
                                            bytes_delivered,
                                            csum);
-            
             
             /* update the mask to show that this vfrag was received, 
              * note that it might still fail the checksum though 

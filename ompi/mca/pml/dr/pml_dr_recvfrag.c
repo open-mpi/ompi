@@ -877,6 +877,7 @@ rematch:
                             match_made = true;
                             OBJ_CONSTRUCT(additional_matches, opal_list_t);
                         }
+                        MCA_PML_DR_RECV_REQUEST_MATCHED(match,comm,proc,&frag->hdr.hdr_match);
                         opal_list_append(additional_matches, (opal_list_item_t *)frag);
                     }
 
