@@ -26,11 +26,11 @@ AC_DEFUN([OMPI_F77_CHECK_LOGICAL_ARRAY],[
              # Fortran module
              cat > conftestf.f <<EOF
         program check_logical_array
-        external CHECK
+        external check
         logical l(2)
         l(1)=.FALSE.
         l(2)=.TRUE.
-        CALL CHECK(l)
+        CALL check(l)
         end
 EOF
 
