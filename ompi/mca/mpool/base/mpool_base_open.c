@@ -62,7 +62,9 @@ int mca_mpool_base_open(void)
        mca_mpool_base_components list */
     
     int use_mem_hooks;
+#if defined(HAVE_MALLOPT)
     int disable_sbrk;
+#endif  /* defined(HAVE_MALLOPT) */
     
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
