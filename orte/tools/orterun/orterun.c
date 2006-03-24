@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -824,6 +825,11 @@ static int parse_locals(int argc, char* argv[])
     temp_argc = 0;
     temp_argv = NULL;
     opal_argv_append(&temp_argc, &temp_argv, argv[0]);
+    /* Make the max size of the array be INT_MAX because we may be
+       parsing an app file, in which case we don't know how many
+       entries there will be.  The max size of an orte_pointer_array
+       is only a safety net; it only initially allocates block_size
+       entries (2, in this case) */
     orte_pointer_array_init(&apps_pa, 1, INT_MAX, 2);
 
     /* NOTE: This bogus env variable is necessary in the calls to

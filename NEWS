@@ -35,6 +35,8 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed a problem with handling long mpirun app files.  Thanks to Ravi
+  Manumachu for identifying the problem.
 - Fix handling of strings in several of the Fortran 77 bindings.
 - Fix LinuxPPC assembly issues.  Thanks to Julian Seward for reporting 
   the problem.
