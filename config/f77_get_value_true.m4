@@ -76,7 +76,7 @@ EOF
       program main
       logical value
       value=.TRUE.
-      CALL PRINT(value)
+      CALL print(value)
       end
 EOF
 

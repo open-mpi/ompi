@@ -27,11 +27,11 @@ AC_DEFUN([OMPI_F77_GET_ALIGNMENT],[
         # Fortran module
         cat > conftestf.f <<EOF
       program falign
-      external ALIGN
+      external align
       $1  w,x,y,z
       CHARACTER a,b,c
       common /foo/a,w,b,x,y,c,z
-      call ALIGN(w,x,y,z)
+      call align(w,x,y,z)
       end
 EOF
 

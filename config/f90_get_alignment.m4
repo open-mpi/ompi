@@ -31,9 +31,9 @@ program f90align
     character a
     $1 :: x
   end type
-  external ALIGN
+  external align
   type(TestAlign) :: a
-  call ALIGN(a%a, a%x)
+  call align(a%a, a%x)
 end program
 EOF
 

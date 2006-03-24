@@ -27,9 +27,9 @@ AC_DEFUN([OMPI_F90_GET_SIZEOF],[
          # Fortran module
          cat > conftestf.f90 <<EOF
 program fsize
-   external SIZE
+   external size
    $1 :: x(2)
-   call SIZE(x(1),x(2))
+   call size(x(1),x(2))
 end program
 EOF
 

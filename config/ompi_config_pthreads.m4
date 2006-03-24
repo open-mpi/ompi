@@ -56,7 +56,7 @@ OMPI_F77_MAKE_C_FUNCTION([ompi_ac_thread_fn], [pthreadtest])
 # Fortran module
 cat > conftestf.f <<EOF
       program fpthread
-      call PTHREADTEST
+      call pthreadtest
       end
 EOF
 
