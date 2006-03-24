@@ -353,8 +353,6 @@ static inline struct mca_pml_dr_recv_request_t* mca_pml_dr_comm_proc_check_match
 do {                                                                          \
    if((recvreq)->req_vfrag->vf_id == (hdr)->hdr_common.hdr_vid) {             \
        vfrag = (recvreq)->req_vfrag;                                          \
-   } else if ((hdr)->hdr_frag_offset == 0) {                                  \
-       vfrag = &(recvreq)->req_vfrag0;                                        \
    } else {                                                                   \
        opal_list_item_t* item;                                                \
        int rc;                                                                \

@@ -81,7 +81,8 @@ do {                                                                       \
 
 #define MCA_PML_DR_VFRAG_INIT(vfrag)                                       \
 do {                                                                       \
-    MCA_PML_DR_VFRAG_RESET(vfrag);                                         \
+    (vfrag)->vf_idx = 0;                                                   \
+    (vfrag)->vf_ack = 0;                                                   \
     (vfrag)->vf_retry_cnt = 0;                                             \
     (vfrag)->vf_recv.pval = NULL;                                          \
     (vfrag)->vf_state = 0;                                                 \
@@ -91,34 +92,34 @@ do {                                                                       \
 #define MCA_PML_DR_VFRAG_RESET(vfrag)                                      \
 do {                                                                       \
     (vfrag)->vf_idx = 0;                                                   \
-    (vfrag)->vf_ack = 0;                                                   \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                         \
 } while(0)
+
+
+/*
+ * Watchdog Timer
+ */ 
 
 #define MCA_PML_DR_VFRAG_WDOG_START(vfrag)                                 \
 do {                                                                       \
     opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
 } while(0)                                                                          
 
-#define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)                                 \
-do {                                                                       \
-    opal_event_del(&vfrag->ev_wdog);                                       \
-    vfrag->tv_wdog.tv_sec =                                                \
-          mca_pml_dr.timer_wdog_sec +                                      \
-          mca_pml_dr.timer_wdog_sec * mca_pml_dr.timer_wdog_multiplier  *  \
-          vfrag->vf_retry_cnt;                                             \
-    vfrag->tv_wdog.tv_usec =                                               \
-          mca_pml_dr.timer_wdog_usec +                                     \
-          mca_pml_dr.timer_wdog_usec * mca_pml_dr.timer_wdog_multiplier  * \
-          vfrag->vf_retry_cnt;                                             \
-    opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
-} while(0)                                                                          
-
 #define MCA_PML_DR_VFRAG_WDOG_STOP(vfrag)                                  \
 do {                                                                       \
    opal_event_del(&vfrag->ev_wdog);                                        \
-                                                                           \
 } while(0)
+
+#define MCA_PML_DR_VFRAG_WDOG_RESET(vfrag)                                 \
+do {                                                                       \
+    opal_event_del(&vfrag->ev_wdog);                                       \
+    opal_event_add(&vfrag->ev_wdog, &vfrag->tv_wdog);                      \
+} while(0)                                                                          
+
+
+/*
+ * Ack Timer
+ */
 
 #define MCA_PML_DR_VFRAG_ACK_START(vfrag)                                  \
 do {                                                                       \
@@ -131,14 +132,18 @@ do {                                                                       \
           mca_pml_dr.timer_ack_usec * mca_pml_dr.timer_ack_multiplier  *   \
           (vfrag)->vf_retry_cnt;                                           \
     opal_event_add(&(vfrag)->ev_ack, &(vfrag)->tv_ack);                    \
-                                                                           \
 } while(0)                                                                          
 
 #define MCA_PML_DR_VFRAG_ACK_STOP(vfrag)                                   \
 do {                                                                       \
    opal_event_del(&vfrag->ev_ack);                                         \
-                                                                           \
 } while(0)
+
+#define MCA_PML_DR_VFRAG_ACK_RESET(vfrag)                                  \
+do {                                                                       \
+    MCA_PML_DR_VFRAG_ACK_STOP(vfrag);                                      \
+    MCA_PML_DR_VFRAG_ACK_START(vfrag);                                     \
+} while(0)                                                                          
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

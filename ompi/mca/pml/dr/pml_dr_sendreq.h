@@ -157,8 +157,6 @@ do {                                                                            
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
     MCA_PML_DR_VFRAG_INIT(&sendreq->req_vfrag0);                                          \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
-    sendreq->req_vfrag0.vf_max_send_size = endpoint->btl_max_send_size -                  \
-        sizeof(mca_pml_dr_frag_hdr_t);                                                    \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
     sendreq->req_endpoint = endpoint;                                                     \
     sendreq->req_proc = proc;                                                             \
@@ -311,12 +309,23 @@ do {                                                                            
 } while(0)
 
 /*
+ * Reschedule unacked fragments
+ */
+
+#define MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag)                 \
+do {                                                                          \
+    vfrag->vf_idx = 0;                                                        \
+    vfrag->vf_state = 0;                                                      \
+    opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)vfrag);      \
+} while(0)
+
+/*
  * Update bytes delivered on request based on supplied descriptor
  */
 
-#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, vfrag, hdrlen)         \
-do {                                                                                \
-   sendreq->req_bytes_delivered += vfrag->vf_size;     \
+#define MCA_PML_DR_SEND_REQUEST_SET_BYTES_DELIVERED(sendreq, vfrag, hdrlen)   \
+do {                                                                          \
+   sendreq->req_bytes_delivered += vfrag->vf_size;                            \
 } while(0)
 /*
  * Attempt to process any pending requests
@@ -365,7 +374,6 @@ do {                                                                 \
     des_new->des_flags = des_old->des_flags;                         \
     des_new->des_cbdata = des_old->des_cbdata;                       \
     des_new->des_cbfunc = des_old->des_cbfunc;                       \
-    MCA_PML_DR_VFRAG_ACK_START(vfrag);                               \
     mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
 } while(0)        
 
@@ -409,7 +417,6 @@ do {                                                                 \
     des_new->des_flags = des_old->des_flags;                                    \
     des_new->des_cbdata = des_old->des_cbdata;                                  \
     des_new->des_cbfunc = des_old->des_cbfunc;                                  \
-    MCA_PML_DR_VFRAG_ACK_START(vfrag);                                          \
     mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);                       \
 } while(0)        
 
