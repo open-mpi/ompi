@@ -839,11 +839,9 @@ static int parse_locals(int argc, char* argv[])
                     opal_argv_free(env);
                     env = NULL;
                 }
-                app = OBJ_NEW(orte_app_context_t);
+                app = NULL;
                 rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
                 /** keep track of the number of apps - point this app_context to that index */
-                app->idx = app_num;
-                app_num++;
                 if (ORTE_SUCCESS != rc) {
                     /* Assume that the error message has already been
                        printed; no need to cleanup -- we can just
@@ -852,9 +850,9 @@ static int parse_locals(int argc, char* argv[])
                 }
                 if (made_app) {
                     size_t dummy;
+                    app->idx = app_num;
+                    ++app_num;
                     orte_pointer_array_add(&dummy, apps_pa, app);
-                } else {
-                    OBJ_RELEASE(app);
                 }
 
                 /* Reset the temps */
@@ -869,10 +867,8 @@ static int parse_locals(int argc, char* argv[])
     }
 
     if (opal_argv_count(temp_argv) > 1) {
-        app = OBJ_NEW(orte_app_context_t);
+        app = NULL;
         rc = create_app(temp_argc, temp_argv, &app, &made_app, &env);
-        app->idx = app_num;
-        app_num++;
         if (ORTE_SUCCESS != rc) {
             /* Assume that the error message has already been printed;
                no need to cleanup -- we can just exit */
@@ -880,9 +876,9 @@ static int parse_locals(int argc, char* argv[])
         }
         if (made_app) {
             size_t dummy;
+            app->idx = app_num;
+            ++app_num;
             orte_pointer_array_add(&dummy, apps_pa, app);
-        } else {
-            OBJ_RELEASE(app);
         }
     }
     if (NULL != env) {
@@ -1402,8 +1398,6 @@ static int parse_appfile(char *filename, char ***env)
             }
 
             rc = create_app(argc, argv, &app, &made_app, &tmp_env);
-            app->idx = app_num;
-            app_num++;
             if (ORTE_SUCCESS != rc) {
                 /* Assume that the error message has already been
                    printed; no need to cleanup -- we can just exit */
@@ -1414,6 +1408,8 @@ static int parse_appfile(char *filename, char ***env)
             }
             if (made_app) {
                 size_t dummy;
+                app->idx = app_num;
+                ++app_num;
                 orte_pointer_array_add(&dummy, apps_pa, app);
             }
         }
