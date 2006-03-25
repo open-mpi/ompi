@@ -92,7 +92,7 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
             to_1 = (TYPE1*) to; from_1 = (TYPE1*) from;                 \
             ompi_dt_swap_bytes(to_1, from_1, sizeof(TYPE1));            \
             to_2 = (TYPE2*) (to_1 + 1); from_2 = (TYPE2*) (from_1 + 1); \
-            ompi_dt_move_bytes(to_2, from_2, sizeof(TYPE2));            \
+            ompi_dt_swap_bytes(to_2, from_2, sizeof(TYPE2));            \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
