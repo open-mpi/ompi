@@ -23,6 +23,12 @@ version 1.0.
 1.1
 ---
 
+- Add support for running jobs in heterogeneous environments.
+  Currently supports environments with different endianness and
+  different representations of C++ bool and Fortran LOGICAL.
+  Mismatched sizes for other datatypes is not supported.
+- Open MPI now includes an implementation of the MPI-2 One-Sided
+  Communications specification.
 - Open MPI is now configurable in cross-compilation environments.
   Several Fortran 77 and Fortran 90 tests need to be pre-seeded with
   results from a config.cache-like file.
