@@ -31,9 +31,10 @@
  * Return value: Number of elements of type TYPE copied
  */
 #define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
-static int copy_##TYPENAME( uint32_t count,                             \
+static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
                             char* from, uint32_t from_len, long from_extent, \
-                            char* to, uint32_t to_len, long to_extent ) \
+                            char* to, uint32_t to_len, long to_extent,  \
+                            uint32_t *advance)                          \
 {                                                                       \
     uint32_t i;                                                         \
     uint32_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */      \
@@ -64,6 +65,7 @@ static int copy_##TYPENAME( uint32_t count,                             \
             from += from_extent;                                        \
         }                                                               \
     }                                                                   \
+    *advance = count * from_extent;                                     \
     return count;                                                       \
 }
 
@@ -82,9 +84,10 @@ static int copy_##TYPENAME( uint32_t count,                             \
  * Return value: Number of elements of type TYPE copied
  */
 #define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
-static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
+static int copy_##TYPENAME##_##COUNT( ompi_convertor_t *pConvertor, uint32_t count, \
                                       char* from, uint32_t from_len, long from_extent, \
-                                      char* to, uint32_t to_len, long to_extent) \
+                                      char* to, uint32_t to_len, long to_extent, \
+                                      uint32_t *advance)                \
 {                                                                       \
     uint32_t i;                                                         \
     uint32_t remote_TYPE_size = (COUNT); /* TODO */                     \
@@ -112,6 +115,7 @@ static int copy_##TYPENAME##_##COUNT( uint32_t count,                   \
             from += from_extent;                                        \
         }                                                               \
     }                                                                   \
+    *advance = count * from_extent;                                     \
     return count;                                                       \
 }
 

@@ -349,6 +349,12 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     convertor->memAlloc_fn = NULL;
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (convertor->remoteArch != ompi_mpi_local_arch) {
+            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+            convertor->fAdvance = ompi_unpack_general_checksum;
+        } else
+#endif
         if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
             convertor->fAdvance = ompi_unpack_homogeneous_contig_checksum;
@@ -356,6 +362,12 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
             convertor->fAdvance = ompi_generic_simple_unpack_checksum;
         }
     } else {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (convertor->remoteArch != ompi_mpi_local_arch) {
+            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+            convertor->fAdvance = ompi_unpack_general;
+        } else
+#endif
         if( convertor->pDesc->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
             convertor->fAdvance = ompi_unpack_homogeneous_contig;

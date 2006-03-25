@@ -26,6 +26,24 @@ int32_t ompi_arch_compute_local_id( uint32_t *me )
     if( 8 == sizeof(long) )
         ompi_arch_setmask( me, OMPI_ARCH_LONGIS64 );
 
+    /* sizeof bool */
+    if (1 == sizeof(bool) ) {
+        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS8);
+    } else if (2 == sizeof(bool)) {
+        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS16);
+    } else if (4 == sizeof(bool)) {
+        ompi_arch_setmask( me, OMPI_ARCH_BOOLIS32);
+    }
+
+    /* sizeof fortran logical */
+    if (1 == sizeof(ompi_fortran_logical_t) ) {
+        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS8);
+    } else if (2 == sizeof(ompi_fortran_logical_t)) {
+        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS16);
+    } else if (4 == sizeof(ompi_fortran_logical_t)) {
+        ompi_arch_setmask( me, OMPI_ARCH_LOGICALIS32);
+    }
+
     /* Initialize the information regarding the long double */
     if( 12 == sizeof(long double) )
         ompi_arch_setmask( me, OMPI_ARCH_LONGDOUBLEIS96 );
