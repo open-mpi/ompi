@@ -53,11 +53,13 @@ extern "C" {
 #define CONVERTOR_COMPLETED        0x08000000
 #define CONVERTOR_COMPUTE_CRC      0x10000000
 
-typedef int32_t (*conversion_fct_t)( uint32_t count,
-                                     const void* from, uint32_t from_len, long from_extent,
-                                     void* to, uint32_t to_length, long to_extent );
-
 typedef struct ompi_convertor_t ompi_convertor_t;
+
+typedef int32_t (*conversion_fct_t)( ompi_convertor_t* pConvertor, uint32_t count,
+                                     const void* from, uint32_t from_len, long from_extent,
+                                     void* to, uint32_t to_length, long to_extent, 
+                                     uint32_t *advance );
+
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             struct iovec* iov,
                                             uint32_t* out_size,
@@ -109,6 +111,7 @@ OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_local_convertor;
 OMPI_DECLSPEC extern uint32_t          ompi_mpi_local_arch;
 
 extern conversion_fct_t ompi_ddt_copy_functions[];
+extern conversion_fct_t ompi_ddt_heterogeneous_copy_functions[];
 
 /*
  *

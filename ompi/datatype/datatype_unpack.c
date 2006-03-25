@@ -131,11 +131,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
             while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 type = pElems[pos_desc].elem.common.type;
-                rc = pConvertor->pFunctions[type]( count_desc,
+                rc = pConvertor->pFunctions[type]( pConvertor, count_desc,
                                                    pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
                                                    pConvertor->pBaseBuf + pStack->disp + disp_desc,
-                                                   oCount, pElems[pos_desc].elem.extent );
-                advance = rc * ompi_ddt_basicDatatypes[type]->size;
+                                                   oCount, pElems[pos_desc].elem.extent, &advance );
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;

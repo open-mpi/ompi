@@ -137,11 +137,10 @@ ompi_pack_general_function( ompi_convertor_t* pConvertor,
             while( pElem[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 type = pElem[pos_desc].elem.common.type;
-                rc = pConvertor->pFunctions[type]( count_desc,
+                rc = pConvertor->pFunctions[type]( pConvertor, count_desc,
                                                    pOutput + pStack->disp + disp_desc,
                                                    iCount, pElem[pos_desc].elem.extent,
-                                                   pInput, iCount, BASIC_DDT_FROM_ELEM(pElem[pos_desc])->size );
-                advance = rc * BASIC_DDT_FROM_ELEM(pElem[pos_desc])->size;
+                                                   pInput, iCount, BASIC_DDT_FROM_ELEM(pElem[pos_desc])->size, &advance );
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;

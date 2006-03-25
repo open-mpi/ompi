@@ -173,8 +173,8 @@
 ** 2. Byte:
 **   bits 1 & 2: length of long: 00 = 32, 01 = 64
 **   bits 3 & 4: lenght of long long (not used currently, set to 00).
-**   bits 5 & 6: reserved for later use. currently set to 00
-**   bits 7 & 8: reserved for later use. currently set to 00
+**   bits 5 & 6: length of C/C++ bool (00 = 8, 01 = 16, 10 = 32)
+**   bits 7 & 8: length of Fortran Logical (00 = 8, 01 = 16, 10 = 32)
 ** 3. Byte:
 **   bits 1 & 2: length of long double: 00=64, 01=96,10 = 128
 **   bits 3 & 4: no. of rel. bits in the exponent: 00 = 10, 01 = 14)
@@ -195,9 +195,25 @@
 #define OMPI_ARCH_HEADERMASK2     0x00000003 /* other end, needed for checks */
 #define OMPI_ARCH_UNUSEDMASK      0xfc000000 /* mark the unused fields */
 
+/* BYTE 1 */
 #define OMPI_ARCH_ISBIGENDIAN     0x00000008
-#define OMPI_ARCH_LONGIS64        0x00000200
-#define OMPI_ARCH_LONGLONGISxx    0x0000F000  /* the size of the long long */
+
+/* BYTE 2 */
+#define OMPI_ARCH_LONGISxx        0x0000c000  /* mask for sizeof long */
+#define OMPI_ARCH_LONGIS64        0x00001000
+#define OMPI_ARCH_LONGLONGISxx    0x00003000  /* mask for sizeof long long */
+
+#define OMPI_ARCH_BOOLISxx        0x00000c00  /* mask for sizeof bool */
+#define OMPI_ARCH_BOOLIS8         0x00000000  /* bool is 8 bits */
+#define OMPI_ARCH_BOOLIS16        0x00000400  /* bool is 16 bits */
+#define OMPI_ARCH_BOOLIS32        0x00000800  /* bool is 32 bits */
+
+#define OMPI_ARCH_LOGICALISxx     0x00000300  /* mask for sizeof Fortran logical */
+#define OMPI_ARCH_LOGICALIS8      0x00000000  /* logical is 8 bits */
+#define OMPI_ARCH_LOGICALIS16     0x00000100  /* logical is 16 bits */
+#define OMPI_ARCH_LOGICALIS32     0x00000200  /* logical is 32 bits */
+
+/* BYTE 3 */
 #define OMPI_ARCH_LONGDOUBLEIS96  0x00020000
 #define OMPI_ARCH_LONGDOUBLEIS128 0x00010000
 
