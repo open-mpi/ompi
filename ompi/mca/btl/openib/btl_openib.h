@@ -29,6 +29,7 @@
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
+#include "orte/class/orte_pointer_array.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -114,7 +115,10 @@ struct mca_btl_openib_component_t {
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
-
+    uint32_t use_eager_rdma;
+    uint32_t eager_rdma_threashold;
+    uint32_t eager_rdma_num;
+    uint32_t max_eager_rdma;
 
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
@@ -179,10 +183,11 @@ struct mca_btl_openib_module_t {
     opal_list_t                 pending_frags_lp; 
     /**< list of pending low priority frags */ 
 
-
+    size_t eager_rdma_frag_size; /**< length of eager frag */
+    orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
+    uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
-
 struct mca_btl_openib_frag_t; 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 

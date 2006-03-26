@@ -25,9 +25,11 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_openib_frag.h"
 #include "btl_openib.h"
+#include "btl_openib_eager_rdma.h"
 #include <errno.h> 
 #include <string.h> 
 #include "ompi/mca/btl/base/btl_base_error.h"
+#include "ompi/mca/mpool/openib/mpool_openib.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -161,6 +163,13 @@ struct mca_btl_base_endpoint_t {
     int32_t sd_wqe_lp;      /**< number of available send wqe entries */
 
     uint16_t subnet; /**< subnet of this endpoint*/
+
+    uint32_t eager_recv_count; /**< number of eager received */
+    mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;
+    /**< info about remote RDMA buffer */
+    mca_btl_openib_eager_rdma_local_t eager_rdma_local;
+    /**< info about local RDMA buffer */
+    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -171,7 +180,7 @@ int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_openib_post_recv(void);
 void mca_btl_openib_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
 void mca_btl_openib_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
-
+void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
     
 #define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, \
                                              additional) \
