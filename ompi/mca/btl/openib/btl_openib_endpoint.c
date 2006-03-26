@@ -263,6 +263,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 		    sizeof(mca_btl_openib_eager_rdma_remote_t));
     memset (&endpoint->eager_rdma_local, 0,
 		    sizeof(mca_btl_openib_eager_rdma_local_t));
+    OBJ_CONSTRUCT(&endpoint->eager_rdma_local.lock, opal_mutex_t);
 
     endpoint->rem_info.rem_qp_num_hp = 0; 
     endpoint->rem_info.rem_qp_num_lp = 0; 
@@ -1219,17 +1220,17 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     char *buf;
     int i;
 
+    OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
     if (endpoint->eager_rdma_local.base.pval)
-        return;
+        goto unlock_rdma_local;
 
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
     buf = openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
             openib_btl->eager_rdma_frag_size * 
             mca_btl_openib_component.eager_rdma_num, 0, 0,
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)
-       goto unlock;
+       goto unlock_rdma_local;
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
@@ -1239,6 +1240,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         ((mca_btl_openib_frag_t*)item)->endpoint = endpoint;
     }
 
+    OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);
     if(orte_pointer_array_add (&endpoint->eager_rdma_index,
                 openib_btl->eager_rdma_buffers, endpoint) < 0)
 	   goto cleanup;
@@ -1246,8 +1248,9 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     endpoint->eager_rdma_local.base.pval = buf;
     openib_btl->eager_rdma_buffers_count++;
     if (mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
-        OBJ_CONSTRUCT(&endpoint->eager_rdma_local.lock, opal_mutex_t);
-        goto unlock;
+        OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
+        OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+        return;
     }
 
     openib_btl->eager_rdma_buffers_count--;
@@ -1256,8 +1259,9 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             endpoint->eager_rdma_index, NULL);
 
 cleanup:
+    OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
     openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
             buf, (mca_mpool_base_registration_t*)eager_rdma->reg);
-unlock:
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+unlock_rdma_local:
+    OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
 }

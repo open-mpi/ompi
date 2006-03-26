@@ -183,6 +183,7 @@ struct mca_btl_openib_module_t {
     opal_list_t                 pending_frags_lp; 
     /**< list of pending low priority frags */ 
 
+    opal_mutex_t eager_rdma_lock;
     size_t eager_rdma_frag_size; /**< length of eager frag */
     orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
     uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
