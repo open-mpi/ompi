@@ -579,7 +579,8 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.max_eager_rdma, 
                 0);
         openib_btl->eager_rdma_buffers_count = 0;
-
+        OBJ_CONSTRUCT(&openib_btl->eager_rdma_lock, opal_mutex_t); 
+        
         /* Initialize the rd_desc_post array for posting of rr*/ 
         openib_btl->rd_desc_post = (struct ibv_recv_wr *) 
             malloc(((mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv) * sizeof(struct ibv_recv_wr))); 
@@ -723,9 +724,9 @@ int mca_btl_openib_component_progress()
          *   note that low priority messages are only processed one per progress call. 
          */
 
-        OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+        OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);
         c = openib_btl->eager_rdma_buffers_count;
-        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+        OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
 
         for(j = 0; j < c; j++) {
             endpoint = 
