@@ -96,6 +96,9 @@ static void mca_btl_openib_recv_frag_eager_constructor(mca_btl_openib_frag_t* fr
 {
     frag->size = mca_btl_openib_component.eager_limit; 
     mca_btl_openib_recv_frag_common_constructor(frag); 
+    frag->ftr = (mca_btl_openib_footer_t*)((char*)frag->segment.seg_addr.pval 
+		    + frag->size);
+    MCA_BTL_OPENIB_RDMA_MAKE_REMOTE(frag->ftr);
 }
 
 static void mca_btl_openib_send_frag_frag_constructor(mca_btl_openib_frag_t* frag) 

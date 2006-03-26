@@ -35,9 +35,37 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);
 struct mca_btl_openib_header_t {
     mca_btl_base_tag_t tag;
     int16_t credits;
+    int16_t rdma_credits;
 };
 typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 
+struct mca_btl_openib_footer_t {
+#ifdef OMPI_ENABLE_DEBUG
+    uint32_t seq;
+#endif
+    union {
+        uint32_t size;
+        uint8_t buf[4];
+    } u;
+};
+typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
+
+typedef enum {
+    MCA_BTL_OPENIB_CONTROL_NOOP,
+    MCA_BTL_OPENIB_CONTROL_RDMA
+} mca_btl_openib_control_t;
+
+struct mca_btl_openib_control_header_t {
+    mca_btl_openib_control_t type;
+};
+typedef struct mca_btl_openib_control_header_t mca_btl_openib_control_header_t;
+
+struct mca_btl_openib_eager_rdma_header_t {
+	mca_btl_openib_control_header_t control;
+	ompi_ptr_t rdma_start;
+	uint64_t rkey;
+};
+typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
 /**
  * IB send fragment derived type.
@@ -55,6 +83,7 @@ struct mca_btl_openib_frag_t {
     struct ibv_sge sg_entry;  
     struct ibv_mr *mr; 
     mca_btl_openib_header_t *hdr;
+    mca_btl_openib_footer_t *ftr;
     mca_mpool_openib_registration_t * openib_reg; 
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
