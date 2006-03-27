@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -194,7 +194,7 @@ mca_pml_base_module_t* mca_pml_dr_component_init(int* priority,
     
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, enable_mpi_threads)) 
         return NULL; 
-    
+    mca_pml_dr.super.pml_progress = mca_bml.bml_progress;
     return &mca_pml_dr.super;
 }
 

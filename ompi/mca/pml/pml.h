@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -78,7 +78,6 @@ struct mca_pml_proc_t {
     opal_list_item_t super;
     struct ompi_proc_t *proc_ompi;    /**< back-pointer to ompi_proc_t */
     opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
-    int proc_flags;                   /**< prefered method of accessing this peer */
 };
 typedef struct mca_pml_proc_t mca_pml_proc_t; 
 
