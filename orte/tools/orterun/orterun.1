@@ -316,6 +316,69 @@ nodes.
 .
 .
 .
+.SS Specifying Hosts
+.
+Hosts can be specified in a number of ways. The most common of which is in a
+'hostfile' or 'machinefile'. If our hostfile contain the following information:
+.
+.
+
+   \fBshell$\fP cat my-hostfile
+   node00 slots=2
+   node01 slots=2
+   node02 slots=2
+
+.
+.
+.TP
+mpirun --hostfile my-hostfile -np 3 a.out
+This will run one copy of the executable
+.I a.out
+on hosts node00,node01, and node02.
+.
+.
+.PP
+Another method for specifying hosts is directly on the command line. Here can
+can include and exclude hosts from the set of hosts to run on. For example:
+.
+.
+.TP
+mpirun -np 3 --host a a.out
+Runs three copies of the executable
+.I a.out
+on host a.
+.
+.
+.TP
+mpirun -np 3 --host a,b,c a.out
+Runs one copy of the executable
+.I a.out
+on hosts a, b, and c.
+.
+.
+.TP
+mpirun -np 3 --hostfile my-hostfile --host node00 a.out
+Runs three copies of the executable
+.I a.out
+on host node00.
+.
+.
+.TP
+mpirun -np 3 --hostfile my-hostfile --host node10 a.out
+This will prompt an error since node10 is not in my-hostfile; mpirun will
+abort.
+.
+.
+.TP
+shell$ mpirun -np 1 --host a hostname : -np 2 --host b,c uptime
+Runs one copy of the executable
+.I hostname
+on host a. And runs one copy of the executable
+.I uptime
+on hosts b and c.
+.
+.
+.
 .SS Application Context or Executable Program?
 .
 To distinguish the two different forms, \fImpirun\fP
