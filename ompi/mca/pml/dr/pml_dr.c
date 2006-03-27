@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  *
@@ -179,5 +179,18 @@ int mca_pml_dr_dump(
     int verbose)
 {
     return OMPI_SUCCESS;
+}
+
+/**
+ *
+ */
+
+void mca_pml_dr_del_btl(mca_btl_base_module_t* btl)
+{
+    /* remove this btl from the set used for forwarding */
+    mca_bml.bml_del_btl(btl);
+
+    /* publish this failure to all other peers */
+    
 }
 
