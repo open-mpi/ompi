@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -27,14 +27,11 @@
 
 static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
 {
-    ep->btl_proc = NULL;
     ep->btl_rdma_offset = 0;
     ep->btl_max_send_size = 0;
-    ep->btl_flags = 0;
     ep->btl_rdma_size = 0;
     ep->btl_rdma_align = 0;
 
-    OBJ_CONSTRUCT(&ep->btl_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ep->btl_eager, mca_bml_base_btl_array_t);
     OBJ_CONSTRUCT(&ep->btl_send,  mca_bml_base_btl_array_t);
     OBJ_CONSTRUCT(&ep->btl_rdma,  mca_bml_base_btl_array_t);
@@ -43,7 +40,6 @@ static void mca_bml_base_endpoint_construct(mca_bml_base_endpoint_t* ep)
 
 static void mca_bml_base_endpoint_destruct(mca_bml_base_endpoint_t* ep)
 {
-    OBJ_DESTRUCT(&ep->btl_lock);
     OBJ_DESTRUCT(&ep->btl_eager);
     OBJ_DESTRUCT(&ep->btl_send);
     OBJ_DESTRUCT(&ep->btl_rdma);

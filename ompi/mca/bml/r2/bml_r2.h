@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -82,6 +82,10 @@ int mca_bml_r2_del_procs(
                          size_t nprocs, 
                          struct ompi_proc_t** procs
                          ); 
+
+int mca_bml_r2_add_btl( mca_btl_base_module_t* btl );
+
+int mca_bml_r2_del_btl( mca_btl_base_module_t* btl );
 
 int mca_bml_r2_register( 
                         mca_btl_base_tag_t tag, 

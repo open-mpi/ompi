@@ -7,7 +7,7 @@
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -211,9 +211,6 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
  */
 struct mca_bml_base_endpoint_t {
     mca_pml_proc_t           super;
-    struct ompi_proc_t       *btl_proc;         /**< back-pointer to ompi_proc_t */
-    opal_mutex_t             btl_lock;          /**< lock to protect against concurrent access */
-    int                      btl_flags;         /**< prefered method of accessing this peer */
     size_t                   btl_rdma_offset;   /**< max of min rdma size for available rmda btls */
     size_t                   btl_max_send_size; /**< min of max send size for available send btls */
     size_t                   btl_rdma_size;     /**< max of min rdma size for available rmda btls */
@@ -451,7 +448,6 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
 /**
  * PML->BML notification of change in the process list. 
  *
- * @param bml (IN)            BML module
  * @param nprocs (IN)         Number of processes
  * @param procs (IN)          Set of processes
  * @param endpoint (OUT)      Set of (optional) mca_bml_base_endpoint_t structures by BML.
@@ -482,10 +478,8 @@ typedef int (*mca_bml_base_module_add_procs_fn_t)(
 /**
  * Notification of change to the process list.
  *
- * @param bml (IN)     BML module
  * @param nprocs (IN)  Number of processes
  * @param proc (IN)    Set of processes
- * @param peer (IN)    Set of peer addressing information.
  * @return             Status indicating if cleanup was successful
  *
  * When the process list changes, the PML notifies the BML of the
@@ -496,6 +490,28 @@ typedef int (*mca_bml_base_module_del_procs_fn_t)(
                                                   size_t nprocs,
                                                   struct ompi_proc_t** procs
                                                   );
+
+/**
+ * Notification of change to the btl list.
+ *
+ * @param bml (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ *
+ * On recovery of a btl, add it to the set of forwarding
+ * entries used by the BML.
+ */
+typedef int (*mca_bml_base_module_add_btl_fn_t)( struct mca_btl_base_module_t* );
+
+/**
+ * Notification of change to the btl list.
+ *
+ * @param bml (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ *
+ * On failure of a btl, remove it from the set of forwarding
+ * entries used by the BML.
+ */
+typedef int (*mca_bml_base_module_del_btl_fn_t)( struct mca_btl_base_module_t* );
 
 /**
  * Callback function that is called asynchronously on receipt
@@ -544,6 +560,8 @@ struct mca_bml_base_module_t {
     /* BML function table */
     mca_bml_base_module_add_procs_fn_t   bml_add_procs;
     mca_bml_base_module_del_procs_fn_t   bml_del_procs;
+    mca_bml_base_module_add_btl_fn_t     bml_add_btl;
+    mca_bml_base_module_del_btl_fn_t     bml_del_btl;
     mca_bml_base_module_register_fn_t    bml_register;
     mca_bml_base_module_finalize_fn_t    bml_finalize;
 
