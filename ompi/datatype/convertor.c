@@ -28,6 +28,12 @@
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/datatype_checksum.h"
 #include "ompi/datatype/datatype_prototypes.h"
+#include "ompi/datatype/convertor_internal.h"
+#include "ompi/datatype/dt_arch.h"
+
+extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
+extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
+                                                         int starting_point, const int* sizes );
 
 ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 {
@@ -40,11 +46,11 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
     return convertor;
 }
 
-/* The cleanup function will release the reference to the datatype and put the convertor in
- * exactly the same state as after a call to ompi_convertor_construct. Therefore, all PML
- * can call OBJ_DESTRUCT on the request's convertors without having to call OBJ_CONSTRUCT
- * everytime they grab a new one from the cache. The OBJ_CONSTRUCT on the convertor should
- * be called only on the first creation of a request (not when extracted from the cache).
+/* The cleanup function will put the convertor in exactly the same state as after a call
+ * to ompi_convertor_construct. Therefore, all PML can call OBJ_DESTRUCT on the request's
+ * convertors without having to call OBJ_CONSTRUCT everytime they grab a new one from the
+ * cache. The OBJ_CONSTRUCT on the convertor should be called only on the first creation
+ * of a request (not when extracted from the cache).
  */
 inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 {
@@ -75,6 +81,81 @@ static void ompi_convertor_destruct( ompi_convertor_t* convertor )
 
 OBJ_CLASS_INSTANCE(ompi_convertor_t, opal_object_t, ompi_convertor_construct, ompi_convertor_destruct );
 
+static ompi_convertor_master_t* ompi_convertor_master_list = NULL;
+
+ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_arch )
+{
+    ompi_convertor_master_t* master = ompi_convertor_master_list;
+    int i;
+    int32_t* remote_sizes;
+
+    while( NULL != master ) {
+        if( master->remote_arch == remote_arch )
+            break;
+        master = master->next;
+    }
+    if( NULL != master )
+        return master;
+    /* Create a new convertor matching the specified architecture and add it to the
+     * master convertor list.
+     */
+    master = (ompi_convertor_master_t*)malloc( sizeof(ompi_convertor_master_t) );
+    master->next = ompi_convertor_master_list;
+    ompi_convertor_master_list = master;
+    master->remote_arch = remote_arch;
+
+    /* Most of the sizes will be identical, so for now just make a copy of
+     * the local ones.
+     */
+    remote_sizes = (int32_t*)master->remote_sizes;
+
+    for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
+        remote_sizes[i] = ompi_ddt_local_sizes[i];
+    }
+    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_BOOLIS8 ) ) {
+        remote_sizes[DT_CXX_BOOL] = 1;
+    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS16 ) ) {
+        remote_sizes[DT_CXX_BOOL] = 2;
+    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS32 ) ) {
+        remote_sizes[DT_CXX_BOOL] = 4;
+    } else {
+        opal_output( 0, "Unknown sizeof(bool) for the remote architecture\n" );
+    }
+    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LONGIS64 ) ) {
+        remote_sizes[DT_LONG]               = 8;
+        remote_sizes[DT_UNSIGNED_LONG]      = 8;
+        remote_sizes[DT_LONG_LONG]          = 8;
+        remote_sizes[DT_LONG_LONG_INT]      = 8;
+        remote_sizes[DT_UNSIGNED_LONG_LONG] = 8;
+    }
+    if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS8 ) ) {
+        remote_sizes[DT_LOGIC] = 1;
+    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS16 ) ) {
+        remote_sizes[DT_LOGIC] = 2;
+    } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS32 ) ) {
+        remote_sizes[DT_LOGIC] = 4;
+    } else {
+        remote_sizes[DT_LOGIC] = 0;
+        opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
+    }
+    return master;
+}
+
+#define OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( CONVERTOR, IOV, OUT, MAX_DATA ) \
+    do {                                                                \
+        (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                         \
+        (CONVERTOR)->csum_ui1 = 0;                                      \
+        (CONVERTOR)->csum_ui2 = 0;                                      \
+                                                                        \
+        /* protect against over packing data */                         \
+        if( (CONVERTOR)->flags & CONVERTOR_COMPLETED ) {                \
+            (IOV)[0].iov_len = 0;                                       \
+            *(OUT) = 0;                                                 \
+            *(MAX_DATA) = 0;                                            \
+            return 1;  /* nothing to do */                              \
+        }                                                               \
+        assert( (CONVERTOR)->bConverted < (CONVERTOR)->local_size );    \
+    } while(0)
 
 /* 
  * Return 0 if everything went OK and if there is still room before the complete
@@ -82,27 +163,16 @@ OBJ_CLASS_INSTANCE(ompi_convertor_t, opal_object_t, ompi_convertor_construct, om
  *        1 if everything went fine and the data was completly converted
  *       -1 something wrong occurs.
  */
-#include "ompi/communicator/communicator.h"
-inline int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
-                                    struct iovec* iov, uint32_t* out_size,
-                                    size_t* max_data, int32_t* freeAfter )
+int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
+                             struct iovec* iov, uint32_t* out_size,
+                             size_t* max_data, int32_t* freeAfter )
 {
-    pConv->checksum = OPAL_CSUM_ZERO;
-    pConv->csum_ui1 = 0;
-    pConv->csum_ui2 = 0;
+    OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    /* protect against over packing data */
-    if( pConv->flags & CONVERTOR_COMPLETED ) {
-        iov[0].iov_len = 0;
-        *out_size = 0;
-        *max_data = 0;
-        return 1;  /* nothing to do */
-    }
-    assert( pConv->bConverted < pConv->local_size );
-
-    /* We dont allocate any memory. The packing function should allocate it
-     * if it need. If it's possible to find iovec in the derived datatype
-     * description then we dont have to allocate any memory.
+    /* There is no specific memory allocation. If the convertor notice that some memory
+     * is required in order to perform the operation (depend on the way the convertor
+     * was configured) it will call the attached function to get some memory. Any failure
+     * of this function will stop the conversion process.
      */
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
@@ -111,19 +181,8 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       struct iovec* iov, uint32_t* out_size,
                                       size_t* max_data, int32_t* freeAfter )
 {
-    pConv->checksum = OPAL_CSUM_ZERO;
-    pConv->csum_ui1 = 0;
-    pConv->csum_ui2 = 0;
+    OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    /* protect against over unpacking data */
-    if( pConv->flags & CONVERTOR_COMPLETED ) {
-        iov[0].iov_len = 0;
-        out_size = 0;
-        *max_data = 0;
-        return 1;  /* nothing to do */
-    }
-
-    assert( pConv->bConverted < pConv->local_size );
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 
@@ -207,10 +266,6 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     }
     return OMPI_SUCCESS;
 }
-
-extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
-extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
-                                                         int starting_point, const int* sizes );
 
 int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
                                              size_t* position )
