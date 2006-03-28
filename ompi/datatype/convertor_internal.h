@@ -23,6 +23,17 @@ typedef struct ompi_convertor_master_t {
     const int32_t                   remote_sizes[DT_MAX_PREDEFINED];
 } ompi_convertor_master_t;
 
+/*
+ * Find or create a new master convertor based on a specific architecture. The master
+ * convertor hold all informations related to a defined architecture, such as the sizes
+ * of the predefined data-types, the conversion functions, ...
+ */
 ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_arch );
+
+/*
+ * Destroy all pending master convertors. This function is usually called when we
+ * shutdown the data-type engine, once all convertors have been destroyed.
+ */
+void ompi_convertor_destroy_masters( void );
 
 #endif  /* CONVERTOR_INTERNAL_HAS_BEEN_INCLUDED */

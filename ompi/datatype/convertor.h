@@ -67,6 +67,9 @@ typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             int32_t* freeAfter );
 typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 
+/* The master convertor struct (defined in convertor_internal.h) */
+struct ompi_convertor_master_t;
+
 typedef struct dt_stack {
     int16_t index;    /**< index in the element description */
     int16_t type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
@@ -92,6 +95,7 @@ struct ompi_convertor_t {
     convertor_advance_fct_t       fAdvance;     /**< pointer to the pack/unpack functions */
     memalloc_fct_t                memAlloc_fn;  /**< pointer to the memory allocation function */
     void*                         memAlloc_userdata;  /**< user data for the malloc function */
+    struct ompi_convertor_master_t* master;     /* the master convertor */
     conversion_fct_t*             pFunctions;   /**< the convertor functions pointer */
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
