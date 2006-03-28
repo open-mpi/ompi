@@ -55,6 +55,9 @@ struct mca_pml_dr_t {
     size_t send_pipeline_depth;
     bool enabled;
 
+    /* lock queue accesses */
+    opal_mutex_t lock;
+
     time_t tout_ack;
     time_t tout_watch_dog;
 
