@@ -75,8 +75,9 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
-            assert(rc >= 0);
+            opal_progress();
+            /*rc = opal_event_loop(OPAL_EVLOOP_ONCE);
+            assert(rc >= 0);*/
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
            opal_condition_wait(&msg->msg_condition, &msg->msg_lock);
@@ -87,7 +88,8 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false)
-        opal_event_loop(OPAL_EVLOOP_ONCE);
+        opal_progress();
+        /*(void)opal_event_loop(OPAL_EVLOOP_ONCE);*/
 #endif
 
     /* return status */
@@ -119,8 +121,9 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
-            assert(rc >= 0);
+            opal_progress();
+            /*rc = opal_event_loop(OPAL_EVLOOP_ONCE);
+            assert(rc >= 0);*/
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
            opal_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
@@ -133,7 +136,8 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     while(msg->msg_complete == false &&
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
-        opal_event_loop(OPAL_EVLOOP_ONCE);
+        /*(void)opal_event_loop(OPAL_EVLOOP_ONCE);*/
+        opal_progress();
         gettimeofday(&tv,NULL);
     }
 #endif

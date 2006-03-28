@@ -34,6 +34,7 @@
 #include "orte/mca/ns/ns_types.h"
 #include "oob_tcp_msg.h"
 #include "oob_tcp_addr.h"
+#include "opal/event/event.h"
 
 /**
  * the state of the connection
