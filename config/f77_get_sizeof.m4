@@ -53,6 +53,7 @@ void $ompi_ac_size_fn(char *a, char *b)
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
     fprintf(f, "%d\n", diff);
+    fclose(f);
 }
 #ifdef __cplusplus
 }
@@ -70,7 +71,10 @@ EOF
          AS_IF([test "$cross_compiling" = "yes"],
              [AC_MSG_ERROR([Can not determine size of $1 when cross-compiling])],
              [OMPI_LOG_COMMAND([./conftest],
-                 [AS_VAR_SET(type_var, [`cat conftestval`])],
+                 [AS_IF([test -f conftestval],
+                      [AS_VAR_SET(type_var, [`cat conftestval`])],
+                      [OMPI_LOG_MSG([conftestval not found.], 1)
+                       AC_MSG_ERROR([Could not determine size of $1])])],
                  [AC_MSG_ERROR([Could not determine size of $1])])])
 
         unset happy ompi_conftest_h
