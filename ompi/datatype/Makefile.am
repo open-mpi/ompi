@@ -26,7 +26,8 @@ headers = \
 	datatype_checksum.h \
 	datatype_memcpy.h \
 	dt_arch.h \
-	convertor.h
+	convertor.h \
+    convertor_internal.h
 
 noinst_LTLIBRARIES = \
         libdatatype_reliable.la \
