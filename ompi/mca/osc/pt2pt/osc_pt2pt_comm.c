@@ -136,9 +136,9 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
         ret  = ompi_osc_pt2pt_sendreq_send(P2P_MODULE(win), sendreq);
 
         if (OMPI_SUCCESS == ret) {
-            OPAL_THREAD_LOCK(&(module->p2p_lock));
+            OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
             P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
-            OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+            OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
         } else {
             OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
             ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
@@ -194,9 +194,9 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
         ret  = ompi_osc_pt2pt_sendreq_send(P2P_MODULE(win), sendreq);
 
         if (OMPI_SUCCESS == ret) {
-            OPAL_THREAD_LOCK(&(module->p2p_lock));
+            OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
             P2P_MODULE(win)->p2p_num_pending_sendreqs[sendreq->req_target_rank]++;
-            OPAL_THREAD_UNLOCK(&(module->p2p_lock));
+            OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
         } else {
             OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
             ret = enqueue_sendreq(P2P_MODULE(win), sendreq);
