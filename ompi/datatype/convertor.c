@@ -35,17 +35,6 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
-ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
-{
-    ompi_convertor_t* convertor = OBJ_NEW(ompi_convertor_t);
-
-    convertor->remoteArch = remote_arch;
-    convertor->pFunctions = ompi_ddt_copy_functions;
-    convertor->stack_pos  = 0;
-
-    return convertor;
-}
-
 /* The cleanup function will put the convertor in exactly the same state as after a call
  * to ompi_convertor_construct. Therefore, all PML can call OBJ_DESTRUCT on the request's
  * convertors without having to call OBJ_CONSTRUCT everytime they grab a new one from the
@@ -83,6 +72,18 @@ OBJ_CLASS_INSTANCE(ompi_convertor_t, opal_object_t, ompi_convertor_construct, om
 
 static ompi_convertor_master_t* ompi_convertor_master_list = NULL;
 
+void ompi_convertor_destroy_masters( void )
+{
+    ompi_convertor_master_t* master = ompi_convertor_master_list;
+
+    while( NULL != master ) {
+        ompi_convertor_master_list = master->next;
+        master->next = NULL;
+        free( master );
+        master = ompi_convertor_master_list;
+    }
+}
+
 ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_arch )
 {
     ompi_convertor_master_t* master = ompi_convertor_master_list;
@@ -91,11 +92,9 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
 
     while( NULL != master ) {
         if( master->remote_arch == remote_arch )
-            break;
+            return master;
         master = master->next;
     }
-    if( NULL != master )
-        return master;
     /* Create a new convertor matching the specified architecture and add it to the
      * master convertor list.
      */
@@ -105,13 +104,15 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     master->remote_arch = remote_arch;
 
     /* Most of the sizes will be identical, so for now just make a copy of
-     * the local ones.
+     * the local ones. As master->remote_sizes is defined as being an array of
+     * consts we have to manually cast it before using it for writing purposes.
      */
     remote_sizes = (int32_t*)master->remote_sizes;
 
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         remote_sizes[i] = ompi_ddt_local_sizes[i];
     }
+    /* Find out the remote bool size */
     if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_BOOLIS8 ) ) {
         remote_sizes[DT_CXX_BOOL] = 1;
     } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS16 ) ) {
@@ -121,6 +122,7 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     } else {
         opal_output( 0, "Unknown sizeof(bool) for the remote architecture\n" );
     }
+    /* check the length of the long */
     if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LONGIS64 ) ) {
         remote_sizes[DT_LONG]               = 8;
         remote_sizes[DT_UNSIGNED_LONG]      = 8;
@@ -128,6 +130,10 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
         remote_sizes[DT_LONG_LONG_INT]      = 8;
         remote_sizes[DT_UNSIGNED_LONG_LONG] = 8;
     }
+    /* find out the remote logical size. It can happens that the size will be
+     * unknown (if Fortran is not supported on the remote library). If this is
+     * the case, just let the remote logical size to match the local size.
+     */
     if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS8 ) ) {
         remote_sizes[DT_LOGIC] = 1;
     } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS16 ) ) {
@@ -135,10 +141,24 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     } else if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LOGICALIS32 ) ) {
         remote_sizes[DT_LOGIC] = 4;
     } else {
-        remote_sizes[DT_LOGIC] = 0;
         opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
     }
+    /* We're done so far, return th mater convertor */
     return master;
+}
+
+ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
+{
+    ompi_convertor_t* convertor = OBJ_NEW(ompi_convertor_t);
+    ompi_convertor_master_t* master;
+
+    master = ompi_convertor_find_or_create_master( remote_arch );
+
+    convertor->remoteArch = remote_arch;
+    convertor->pFunctions = ompi_ddt_copy_functions;
+    convertor->stack_pos  = 0;
+
+    return convertor;
 }
 
 #define OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( CONVERTOR, IOV, OUT, MAX_DATA ) \

@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/convertor_internal.h"
 
 #if OMPI_ENABLE_DEBUG
 #include "opal/mca/base/mca_base_param.h"
@@ -596,6 +597,9 @@ int32_t ompi_ddt_finalize( void )
 
     /* release the local convertors (external32 and local) */
     ompi_ddt_default_convertors_fini();
+
+    /* clear all master convertors */
+    ompi_convertor_destroy_masters();
 
     return OMPI_SUCCESS;
 }
