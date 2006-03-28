@@ -154,6 +154,9 @@ int mca_pml_dr_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
+
+    OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
+
     mca_pml_dr.enabled = false; 
     return mca_bml_base_open(); 
     
