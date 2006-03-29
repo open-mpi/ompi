@@ -189,6 +189,10 @@ base as of this writing (27 Feb 2006):
   eliminate the extra overhead of software MPI message matching where
   possible.
 
+- The Portland Group compilers seem to have a signed/unsigned casting
+  problem that prevents some of the Intel MPI test suite from
+  completing properly.  The problem has been reported to PGI.
+
 ===========================================================================
 
 Building Open MPI
