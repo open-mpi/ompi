@@ -2,7 +2,7 @@
 .\" Man page for ORTE's orterun command
 .\" 
 .\" .TH name     section center-footer   left-footer  center-header
-.TH     ORTERUN  1       "March 2006" "Open MPI"   "OPEN MPI COMMANDS"
+.TH     MPIRUN  1       "March 2006" "Open MPI"   "OPEN MPI COMMANDS"
 .\" **************************
 .\"    Name Section
 .\" **************************
@@ -20,7 +20,7 @@ other.  Using any of the names will result in exactly identical behavior.
 .SH SYNOPSIS
 .
 .PP
-Single Proceess Multiple Data (SPMD) Model:
+Single Process Multiple Data (SPMD) Model:
 
 .B mpirun 
 .R [ options ] 
@@ -75,7 +75,7 @@ details.
 .\"    Indent 10 chacters from start of first column to start of second column
 .TP 10
 .B <args>
-Pass these runtime arguments to every new process.  These must always
+Pass these run-time arguments to every new process.  These must always
 be the last arguments to \fImpirun\fP. If an app context file is used,
 \fI<args>\fP will be ignored.
 .
@@ -148,7 +148,7 @@ List of hosts on which to invoke processes.
 .TP
 .B -hostfile\fR,\fP --hostfile \fR<hostfile>\fP
 Provide a hostfile to use. 
-JJH - Should have man page for how to format a hostfile properly.
+.\" JJH - Should have man page for how to format a hostfile properly.
 .
 .
 .TP
@@ -170,12 +170,12 @@ Synonym for \fI-np\fP.
 .B -np \fR<#>\fP
 Run this many copies of the program on the given nodes.  This option
 indicates that the specified file is an executable program and not an
-application contex.
+application context.
 .
 .
 .TP
 .B -nw\fR,\fP --nw
-Launch the processes and do not wair for their completion. mpirun will
+Launch the processes and do not wait for their completion. mpirun will
 complete as soon as successful launch occurs.
 .
 .
@@ -212,7 +212,7 @@ Change to the directory <dir> before the user's program executes.
 See the "Current Working Directory" section for notes on relative paths.
 .B Note:
 If the \fI-wd\fP option appears both on the command line and in an
-application context, the context will take precendence over the command line.
+application context, the context will take precedence over the command line.
 .
 .
 .TP
@@ -227,7 +227,7 @@ then use \fI-x\fP to export (not define) them.
 .
 .
 .P
-The follwing options are useful for developers; they are not generally
+The following options are useful for developers; they are not generally
 useful to most ORTE and/or MPI users:
 .
 .TP
@@ -272,7 +272,7 @@ This file essentially contains multiple \fImpirun\fP command lines, less the
 command name itself.  The ability to specify different options for different
 instantiations of a program is another reason to use an application context.
 .PP
-Extended command line arguments allow for the description of the applicaiton
+Extended command line arguments allow for the description of the application
 layout on the command line using colons (\fI:\fP) to separate the specification
 of programs and arguments. Some options are globally set across all specified
 programs (e.g. --hostfile), while others are specific to a single program
@@ -598,5 +598,5 @@ mpirun does not indicate the exit status of the ranks.
 .\"    See Also Section
 .\" **************************
 .
-.SH SEE ALSO
-orted(1)
+.\" .SH SEE ALSO
+.\" orted(1)
