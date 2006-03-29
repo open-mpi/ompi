@@ -103,9 +103,14 @@ int mca_bml_base_send(
         if(mca_bml_base_error_count < mca_bml_base_error_rate_floor) { 
             mca_bml_base_error_count = mca_bml_base_error_rate_floor;
         }
+        /* if(mca_bml_base_error_count % 3) {  */
+/*             /\* no local completion - network 'hangs' *\/  */
+/*             opal_output(0, "%s:%d: dropping dat, NO local completion\n", __FILE__, __LINE__);  */
+/*             return OMPI_SUCCESS;  */
+/*         } else */ 
         if(mca_bml_base_error_count % 2) {
             /* local completion - network "drops" packet */
-            opal_output(0, "%s:%d: dropping data\n", __FILE__, __LINE__);
+            opal_output(0, "%s:%d: dropping data, with local completion\n", __FILE__, __LINE__);
             des->des_cbfunc(bml_btl->btl, bml_btl->btl_endpoint, des, OMPI_SUCCESS);
             return OMPI_SUCCESS;
         } else {
