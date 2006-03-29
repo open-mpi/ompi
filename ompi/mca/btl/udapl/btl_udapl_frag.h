@@ -30,16 +30,17 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t);
 
 
 typedef enum {
-    MCA_BTL_UDAPL_SEND,
     MCA_BTL_UDAPL_CONN_SEND,
     MCA_BTL_UDAPL_CONN_RECV,
+    MCA_BTL_UDAPL_SEND,
+    MCA_BTL_UDAPL_RECV,
     MCA_BTL_UDAPL_PUT,
     MCA_BTL_UDAPL_GET
 } mca_btl_udapl_frag_type_t;
 
 
 /**
- * uDAPL send fragment derived type.
+ * uDAPL fragment derived type.
  */
 struct mca_btl_udapl_frag_t {
     mca_btl_base_descriptor_t base; 
@@ -115,7 +116,7 @@ OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_user_t);
         (opal_list_item_t*)(frag)); \
 }
 
-                                                                                                       
+
 #define MCA_BTL_UDAPL_FRAG_POST(btl,frag) \
 do { \
     if(opal_list_get_size(&btl->udapl_repost) < (size_t)btl->udapl_num_repost) { \
@@ -130,7 +131,6 @@ do { \
         OPAL_THREAD_UNLOCK(&btl->udapl_lock);  \
     } \
 } while(0) 
-
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

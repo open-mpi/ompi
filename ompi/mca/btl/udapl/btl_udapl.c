@@ -310,7 +310,7 @@ int mca_btl_udapl_register(
     udapl_btl->udapl_reg[tag].cbfunc = cbfunc; 
     udapl_btl->udapl_reg[tag].cbdata = cbdata; 
 
-    OPAL_OUTPUT((0, "udapl_register\n"));
+    OPAL_OUTPUT((0, "udapl_register %d %p\n", tag, cbfunc));
     return OMPI_SUCCESS;
 }
 
@@ -331,7 +331,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     int rc;
 
     OPAL_OUTPUT((0, "udapl_alloc\n"));
-    
+
+    /* TODO - note we allocate 'size' but we also have the header */
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
@@ -347,8 +348,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     /* Set up the LMR triplet from the frag segment */
     /* Note that this triplet defines a sub-region of a registered LMR */
     frag->triplet.lmr_context = frag->segment.seg_key.key32[0];
-    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
-    frag->triplet.segment_length = frag->segment.seg_len;
+    frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
+    frag->triplet.segment_length = frag->segment.seg_len + sizeof(mca_btl_base_header_t);
     
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
@@ -626,7 +627,7 @@ int mca_btl_udapl_send(
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
-    OPAL_OUTPUT((0, "udapl_send\n"));
+    OPAL_OUTPUT((0, "udapl_send %d\n", tag));
     
     frag->btl = udapl_btl;
     frag->endpoint = endpoint;
