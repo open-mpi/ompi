@@ -100,6 +100,20 @@ base as of this writing (27 Feb 2006):
   Tests with later versions show that this has been fixed (e.g.,
   v6.0-5).
 
+- The Portland Group compilers require the "-Msignextend" compiler
+  flag to extend the sign bit when converting from a shorter to longer
+  integer.  This is is different than other compilers (such as GNU).
+  When compiling Open MPI with the Portland compiler suite, the
+  following flags should be passed to Open MPI's configure script:
+
+  shell$ ./configure CFLAGS=-Msignextend CXXFLAGS=-signextent \
+	--with-wrapper-cflags=-Msignextend \
+	--with-wrapper-cxxflags=-Msignextend ...
+
+  This will both compile Open MPI with the proper compile flags and
+  also automatically add "-Msignextend" when the C and C++ MPI wrapper
+  compilers are used to compile user MPI applications.
+
 - Open MPI will build bindings suitable for all common forms of
   Fortran 77 compiler symbol mangling on platforms that support it
   (e.g., Linux).  On platforms that do not support weak symbols (e.g.,
@@ -188,10 +202,6 @@ base as of this writing (27 Feb 2006):
   will support hardware matching on networks that provide it, and will
   eliminate the extra overhead of software MPI message matching where
   possible.
-
-- The Portland Group compilers seem to have a signed/unsigned casting
-  problem that prevents some of the Intel MPI test suite from
-  completing properly.  The problem has been reported to PGI.
 
 ===========================================================================
 
