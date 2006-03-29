@@ -63,6 +63,13 @@ static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_wait(&c->c_cond, &m->m_lock_pthread);
 #else
+        if (c->c_signaled) {
+            c->c_waiting--;
+            opal_mutex_unlock(m);
+            opal_progress();
+            opal_mutex_lock(m);
+            return 0;
+        }
         while (c->c_signaled == 0) {
             opal_mutex_unlock(m);
             opal_progress();
@@ -135,7 +142,7 @@ static inline int opal_condition_signal(opal_condition_t *c)
 
 static inline int opal_condition_broadcast(opal_condition_t *c)
 {
-    c->c_signaled += c->c_waiting;
+    c->c_signaled = c->c_waiting;
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
     if(opal_using_threads()) {
         if( 1 == c->c_waiting ) {
