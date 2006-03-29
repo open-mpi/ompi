@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -262,7 +262,11 @@ static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
 
 static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
-    orte_rmgr_cb_fn_t cbfunc = (orte_rmgr_cb_fn_t)cbdata;
+    orte_rmgr_cb_fn_t cbfunc;
+    union {
+        orte_rmgr_cb_fn_t func;
+        void * ptr;
+    } cbfunc_union;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
@@ -270,6 +274,12 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     int rc;
 
     OPAL_TRACE(1);
+
+    /* stupid ISO C forbids conversion of object pointer to function
+       pointer.  So we do this, which is the same thing, but without
+       the warning from GCC */
+    cbfunc_union.ptr = cbdata;
+    cbfunc = cbfunc_union.func;
 
     /* we made sure in the subscriptions that at least one
      * value is always returned
@@ -398,7 +408,19 @@ static int orte_rmgr_proxy_spawn(
      */
 
     if(NULL != cbfunc) {
-        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, (void*)cbfunc, cb_conditions);
+        union {
+            orte_rmgr_cb_fn_t func;
+            void * ptr;
+        } cbfunc_union;
+        void *cbdata;
+
+        /* stupid ISO C forbids conversion of object pointer to function
+           pointer.  So we do this, which is the same thing, but without
+           the warning from GCC */
+        cbfunc_union.func = cbfunc;
+        cbdata = cbfunc_union.ptr;
+
+        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, cbdata, cb_conditions);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
