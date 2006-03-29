@@ -35,7 +35,8 @@ static const char FUNC_NAME[] = "MPI_Recv";
 int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
              int tag, MPI_Comm comm, MPI_Status *status) 
 {
-    int rc;
+    int rc = MPI_SUCCESS;
+
     if (MPI_PROC_NULL == source) {
         if (MPI_STATUS_IGNORE != status) {
             status->MPI_SOURCE = MPI_PROC_NULL;
@@ -47,10 +48,10 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
     }
 
     if ( MPI_PARAM_CHECK ) {
-        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, type, count);
-
+        OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
+        
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
@@ -58,6 +59,7 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
         } else if (source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
         }
+        
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
 

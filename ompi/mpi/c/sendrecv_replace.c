@@ -39,7 +39,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
                          MPI_Comm comm, MPI_Status *status)
 
 {
-    int rc;
+    int rc = MPI_SUCCESS;
 
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;

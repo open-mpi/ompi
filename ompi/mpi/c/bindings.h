@@ -27,6 +27,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 /* If compiling in the profile directory, then we don't have weak
    symbols and therefore we need the defines to map from MPI->PMPI.
    NOTE: pragma weak stuff is handled on a file-by-file basis; it
@@ -36,7 +37,7 @@ extern "C" {
 /* This variable is actually in src/mpi/runtime/ompi_mpi_init.c, but it
    is used by every MPI function. */
 
-OMPI_DECLSPEC extern bool ompi_mpi_param_check;
+    OMPI_DECLSPEC extern bool ompi_mpi_param_check;
 
 /* These macros have to be used to check the corectness of the datatype depending on the
  * operations that we have to do with them. They can be used on all functions, not only
@@ -44,36 +45,56 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
  * responsability to do it.
  */
 #define OMPI_CHECK_DATATYPE_FOR_SEND( RC, DDT, COUNT )                  \
-   do {                                                                 \
-      (RC) = MPI_SUCCESS;                                               \
-      if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
-      else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                      \
-      else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
-      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
-   } while (0)
+    do {                                                                \
+        /* (RC) = MPI_SUCCESS; */                                       \
+        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
+        else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;   \
+        else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;       \
+    } while (0)
 
-#define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT ) \
-   do {                                                                 \
-      (RC) = MPI_SUCCESS;                                               \
-      if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
-      else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                      \
-      else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
-      /* XXX Fix flags else if( ompi_ddt_is_overlapped((DDT)) ) (RC) = MPI_ERR_TYPE; */    \
-      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
-   } while (0)
-
+#define OMPI_CHECK_DATATYPE_FOR_RECV( RC, DDT, COUNT )                  \
+    do {                                                                \
+        /* (RC) = MPI_SUCCESS; */                                        \
+        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
+        else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;   \
+        /* XXX Fix flags else if( ompi_ddt_is_overlapped((DDT)) ) (RC) = MPI_ERR_TYPE; */ \
+        else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;       \
+    } while (0)
+    
 #define OMPI_CHECK_DATATYPE_FOR_ONE_SIDED( RC, DDT, COUNT )             \
-   do {                                                                 \
-      (RC) = MPI_SUCCESS;                                               \
-      if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
-      else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                      \
-      else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;     \
-      else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE;   \
-      else if( !ompi_ddt_is_acceptable_for_one_sided((DDT)) ) (RC) = MPI_ERR_TYPE; \
-      else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;         \
-   } while(0)
+    do {                                                                \
+        /*(RC) = MPI_SUCCESS; */                                        \
+        if( NULL == (DDT) || MPI_DATATYPE_NULL == (DDT) ) (RC) = MPI_ERR_TYPE; \
+        else if( (COUNT) < 0 ) (RC) = MPI_ERR_COUNT;                    \
+        else if( !ompi_ddt_is_committed((DDT)) ) (RC) = MPI_ERR_TYPE;   \
+        else if( ompi_ddt_is_overerlapped((DDT)) ) (RC) = MPI_ERR_TYPE; \
+        else if( !ompi_ddt_is_acceptable_for_one_sided((DDT)) ) (RC) = MPI_ERR_TYPE; \
+        else if( !ompi_ddt_is_valid((DDT)) ) (RC) = MPI_ERR_TYPE;       \
+    } while(0)
 
+
+/* This macro has to be used to check the correctness of the user buffer depending on the datatype. 
+ * This macro expects that the DDT parameter is a valid pointer to an ompi datatype object.
+ */
+#define OMPI_CHECK_USER_BUFFER(RC, BUFFER, DDT, COUNT)                  \
+    do {                                                                \
+        if ( NULL == (BUFFER) && 0 < (COUNT) && MPI_SUCCESS == (RC) ) { \
+            if ( (DDT)->flags & DT_FLAG_PREDEFINED ) {                  \
+                (RC) = MPI_ERR_BUFFER;                                  \
+            } else {                                                    \
+                unsigned long size = 0;                                 \
+                ompi_ddt_get_size((DDT), &size);                        \
+                if ( size ) {                                           \
+                    (RC) = MPI_ERR_BUFFER;                              \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+    } while (0)
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
 #endif /* OMPI_C_BINDINGS_H */
