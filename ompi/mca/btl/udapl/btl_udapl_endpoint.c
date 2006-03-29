@@ -36,6 +36,7 @@
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint);
 
  
+/* TODO - do we need to pass the endpoint? It's in the frag */
 int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                 mca_btl_udapl_frag_t* frag)
 {
@@ -45,6 +46,13 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
     switch(endpoint->endpoint_state) {
         case MCA_BTL_UDAPL_CONNECTED:
             /* just send it already.. */
+            rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
+                    (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+            if(DAT_SUCCESS != rc) {
+                mca_btl_udapl_error(rc, "dat_ep_post_send");
+                rc = OMPI_ERROR;
+            }
+
             break;
         case MCA_BTL_UDAPL_CLOSED:
             /* Initiate a new connection, add this send to a queue */

@@ -104,8 +104,8 @@ struct mca_btl_udapl_module_t {
     ompi_free_list_t udapl_frag_user;
     ompi_free_list_t udapl_frag_recv;
 
-    opal_list_t udapl_pending;  /**< list of pending send descriptors */
-    opal_list_t udapl_repost;   /**< list of pending fragments */
+    opal_list_t udapl_pending;  /**< list of pending send fragments */
+    opal_list_t udapl_repost;   /**< list of pending recv fragments */
     opal_list_t udapl_mru_reg;  /**< list of most recently used registrations */
     opal_mutex_t udapl_lock;    /* lock for accessing module state */
 }; 
