@@ -31,32 +31,32 @@
 #include "orte/dss/dss_internal.h"
 
 
-#define UNPACK_SIZE_MISMATCH(unpack_type)      \
+#define UNPACK_SIZE_MISMATCH(unpack_type, remote_type, ret)      \
     do { \
         switch(remote_type) { \
         case ORTE_UINT8: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, ORTE_UINT8); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, remote_type); \
             break; \
         case ORTE_INT8: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, ORTE_INT8); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, remote_type); \
             break; \
         case ORTE_UINT16: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, ORTE_UINT16); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, remote_type); \
             break; \
         case ORTE_INT16: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, ORTE_INT16); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, remote_type); \
             break; \
         case ORTE_UINT32: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, ORTE_UINT32); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, remote_type); \
             break; \
         case ORTE_INT32: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, ORTE_INT32); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, remote_type); \
             break; \
         case ORTE_UINT64: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, ORTE_UINT64); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, remote_type); \
             break; \
         case ORTE_INT64: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, ORTE_INT64); \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, remote_type); \
             break; \
         default: \
             ret = ORTE_ERR_NOT_FOUND; \
@@ -64,6 +64,9 @@
         } \
     } while (0)
 
+/* NOTE: do not need to deal with endianness here, as the unpacking of
+   the underling sender-side type will do that for us.  Repeat: the
+   data in tmpbuf[] is already in host byte order. */
 #define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)   \
     do { \
         size_t i; \
@@ -210,7 +213,7 @@ int orte_dss_unpack_bool(orte_buffer_t *buffer, void *dest,
         }
     } else {
         /* slow path - types are different sizes */
-        UNPACK_SIZE_MISMATCH(bool);
+        UNPACK_SIZE_MISMATCH(bool, remote_type, ret);
     }
 
     return ret;
@@ -240,7 +243,7 @@ int orte_dss_unpack_int(orte_buffer_t *buffer, void *dest,
         }
     } else {
         /* slow path - types are different sizes */
-        UNPACK_SIZE_MISMATCH(int);
+        UNPACK_SIZE_MISMATCH(int, remote_type, ret);
     }
 
     return ret;
@@ -270,7 +273,7 @@ int orte_dss_unpack_sizet(orte_buffer_t *buffer, void *dest,
         }
     } else {
         /* slow path - types are different sizes */
-        UNPACK_SIZE_MISMATCH(size_t);
+        UNPACK_SIZE_MISMATCH(size_t, remote_type, ret);
     }
 
     return ret;
@@ -300,7 +303,7 @@ int orte_dss_unpack_pid(orte_buffer_t *buffer, void *dest,
         }
     } else {
         /* slow path - types are different sizes */
-        UNPACK_SIZE_MISMATCH(pid_t);
+        UNPACK_SIZE_MISMATCH(pid_t, remote_type, ret);
     }
 
     return ret;
@@ -403,22 +406,19 @@ int orte_dss_unpack_int64(orte_buffer_t *buffer, void *dest,
                           size_t *num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *desttmp = (uint32_t*) dest;
+    uint64_t tmp, *desttmp = (uint64_t*) dest;
 
    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_int64 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
-    if (orte_dss_too_small(buffer, 2*(*num_vals)*sizeof(tmp))) {
+    if (orte_dss_too_small(buffer, (*num_vals)*sizeof(tmp))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
     /* unpack the data */
-    for (i = 0; i < (2 * (*num_vals)); i += 2) {
+    for (i = 0; i < (*num_vals); ++i) {
         memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
-        desttmp[i] = ntohl(tmp);
-        buffer->unpack_ptr += sizeof(tmp);
-        memcpy( &(tmp), buffer->unpack_ptr, sizeof(tmp) );
-        desttmp[i+1] = ntohl(tmp);
+        desttmp[i] = ntoh64(tmp);
         buffer->unpack_ptr += sizeof(tmp);
     }
 
