@@ -35,13 +35,13 @@ static const char FUNC_NAME[] = "MPI_Bsend";
 
 int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Comm comm) 
 {
-    int rc;
+    int rc = MPI_SUCCESS;
+
     if (dest == MPI_PROC_NULL) {
         return MPI_SUCCESS;
     }
    
     if ( MPI_PARAM_CHECK ) {
-        int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
@@ -53,6 +53,9 @@ int MPI_Bsend(void *buf, int count, MPI_Datatype type, int dest, int tag, MPI_Co
             rc = MPI_ERR_TAG;
         } else if (ompi_comm_peer_invalid(comm, dest)) {
             rc = MPI_ERR_RANK;
+        } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
+            OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }

@@ -36,14 +36,14 @@ static const char FUNC_NAME[] = "MPI_Issend";
 int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
                int tag, MPI_Comm comm, MPI_Request *request) 
 {
-    int rc;
+    int rc = MPI_SUCCESS;
+
     if (dest == MPI_PROC_NULL) {
         *request = &ompi_request_empty;
         return MPI_SUCCESS;
     }
 
     if ( MPI_PARAM_CHECK ) {
-        rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
@@ -57,10 +57,13 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
+        } else {
+            OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
+            OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
-
+    
     rc = MCA_PML_CALL(isend(buf,count,type,dest,tag,
                             MCA_PML_BASE_SEND_SYNCHRONOUS,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);
