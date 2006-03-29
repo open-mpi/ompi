@@ -278,9 +278,9 @@ int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
                         size_t num_vals, orte_data_type_t type)
 {
     size_t i;
-    uint32_t tmp, *srctmp = (uint32_t*) src;
+    uint64_t tmp, *srctmp = (uint64_t*) src;
     char *dst;
-    size_t bytes_packed = num_vals * sizeof(tmp) * 2;
+    size_t bytes_packed = num_vals * sizeof(tmp);
 
     OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_pack_int64 * %d\n", num_vals ) );
     /* check to see if buffer needs extending */
@@ -289,11 +289,8 @@ int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    for (i = 0; i < 2*num_vals; i += 2) {
-        tmp = htonl(srctmp[i]);
-        memcpy(dst, &tmp, sizeof(tmp));
-        dst += sizeof(tmp);
-        tmp = htonl(srctmp[i+1]);
+    for (i = 0; i < num_vals; ++i) {
+        tmp = hton64(srctmp[i]);
         memcpy(dst, &tmp, sizeof(tmp));
         dst += sizeof(tmp);
     }
