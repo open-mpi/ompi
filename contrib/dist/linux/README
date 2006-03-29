@@ -25,80 +25,79 @@ one or more RPMs from this tarball:
 2. "All in one" RPM, where all of Open MPI is put into a single RPM.
 3. "Multiple" RPM, where Open MPI is split into several sub-package
    RPMs:
+   - openmpi-runtime
    - openmpi-devel
-   - openmpi-docs
-   - openmpi-mca-general
+   - openmpi-docs (not currently generated because we have no docs; to
+     be rectified soon!)
 
-The prefix, target architecture, compilers, and choice of RPM(s) to
-build are all currently hard-coded in the beginning of the buildrpm.sh
-script.
+The prefix, target architecture, and choice of RPM(s) to build are all
+currently hard-coded in the beginning of the buildrpm.sh script.
 
 Alternatively, you can build directly from the openmpi.spec spec file
-directly.  The following options are permissable on the "rpmbuild"
-command line via the --define option:
+or SRPM directly.  The following options are permissable on the
+"rpmbuild" command line via the --define option:
 
-- lanl: 0 or 1
+- lanl: 0 or 1 (default: 0)
   A shortcut for several Los Alamos-specific options (see specfile for
-  current list of values -- look for "%if %{lanl}").
+  current list of values -- look for "%if %{lanl}").  
 
-- install_in_opt: 0 or 1
+- install_in_opt: 0 or 1 (default: 0)
   If 1, use a prefix of /opt/openmpi/<version>-<release>.
 
-- install_env_scripts: 0 or 1
+- install_env_scripts: 0 or 1 (default: 0)
   If 1, install the modulefile or profile.d scripts.
 
-- install_modulefile: 0 or 1
+- install_modulefile: 0 or 1 (default: 0)
   If 1 and if install_in_opt is 1, then install a modulefile in
   %{modulefile_path}/%{modulefile_subdir}/%{modulefile_name}
 
-- modulefile_path: string
+- modulefile_path: string (default: "/etc/modulefiles")
   Defaults to /etc/modulefiles
 
-- modulefile_subdir: string
+- modulefile_subdir: string (default: "openmpi")
   Defaults to openmpi
 
-- modulefile_name: string
+- modulefile_name: string (default: "%{version}-${release}")
   Defaults to %{version}-%{release}
 
-- modules_rpm_name: string
-  Name of the environment modules RPM to "require".  Defaults to
-  "modules".
+- modules_rpm_name: string ("modules")
+  Name of the environment modules RPM to "require".
 
-- build_debug_package: 0 or 1
-  If 1, builds a corresponding debug package.
+- build_debuginfo_rpm: 0 or 1 (default: 0)
+  If 1, builds a corresponding debuginfo rpm.
 
-- _prefix (etc.): string
+- _prefix (etc.): string (default: supplied by rpmbuild)
   Prefix directory (all other standard names are also supported, such
   as _libdir, _sysconfdir, _includedir, etc.).
 
-- configure_options: string
+- configure_options: string (default: "")
   String to pass directly to the ./configure script.
 
-- _packager: string
+- _packager: string (default: supplied by rpmbuild)
   Name of the packager
 
-- _vendor: string
+- _vendor: string (default: supplied by rpmbuild)
   Name of the vendor
 
-- cflags: string
+- cflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   CFLAGS value to use
 
-- cxxflags: string
+- cxxflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   CXXFLAGS value to use
 
-- f77flags: string
+- f77flags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   F77FLAGS value to use
 
-- fcflags: string
+- fcflags: string (default: supplied by rpmbuild: $RPM_OPT_FLAGS)
   F90FLAGS value to use
 
-- mflags: string
+- mflags: string (default: "")
   Flags to pass to the "make" [default] target during %build
 
-- mflags_install: string
+- mflags_install: string (default: "")
   Flags to pass to the "make install" target during %install
 
-- build_all_in_one_rpm: 0 or 1
+- build_all_in_one_rpm: 0 or 1 (default: 1)
   If 1 (the default), make a single RPM that contains all of the Open
   MPI software.  If 0, build multiple sub-package RPMs to split up the
   Open MPI code into separate functional areas.  See the spec file for
