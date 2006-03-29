@@ -31,6 +31,7 @@
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "pml_dr_recvfrag.h"
+#include "pml_dr_endpoint.h"
 #include "ompi/mca/bml/base/base.h" 
 
 
@@ -154,7 +155,7 @@ int mca_pml_dr_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
-
+    OBJ_CONSTRUCT(&mca_pml_dr.procs, ompi_pointer_array_t);
     OBJ_CONSTRUCT(&mca_pml_dr.lock, opal_mutex_t);
 
     mca_pml_dr.enabled = false; 
@@ -193,11 +194,17 @@ mca_pml_base_module_t* mca_pml_dr_component_init(int* priority,
         opal_output(0, "mca_pml_dr_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
-
     
-    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, enable_mpi_threads)) 
+    
+    if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
+                                          enable_mpi_threads, 
+                                          OBJ_CLASS(mca_pml_dr_endpoint_t)
+                                          )) {
         return NULL; 
+    }
+    
     mca_pml_dr.super.pml_progress = mca_bml.bml_progress;
+
     return &mca_pml_dr.super;
 }
 

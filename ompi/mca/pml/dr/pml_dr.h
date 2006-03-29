@@ -33,6 +33,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
+#include "ompi/class/ompi_pointer_array.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
 
@@ -71,7 +72,13 @@ struct mca_pml_dr_t {
     ompi_free_list_t recv_frags;
     ompi_free_list_t vfrags;
     ompi_free_list_t buffers;
-
+    
+    /* proc pointer array */
+    ompi_pointer_array_t procs;
+    
+    /* my 'global' rank */ 
+    int32_t my_rank;
+    
     int timer_wdog_sec;
     int timer_wdog_usec;
     int timer_wdog_multiplier;

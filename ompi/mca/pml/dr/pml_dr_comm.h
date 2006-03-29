@@ -27,6 +27,7 @@
 #include "ompi/class/ompi_seq_tracker.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
+#include "pml_dr_endpoint.h"
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -35,7 +36,6 @@ extern "C" {
 struct mca_pml_dr_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-    uint32_t vfrag_id;             /**< virtual fragment identifier */
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else
@@ -46,9 +46,8 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
     opal_list_t matched_receives;  /**< list of in-progress matched receives */
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
-    ompi_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
-    ompi_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
-    ompi_seq_tracker_t seq_recvs_matched; /**< Tracks the received vfrags that have been matched */ 
+    mca_pml_dr_endpoint_t* endpoint; /**< back pointer to the endpoint */
+    int32_t comm_rank;               /**< rank in the communicator */
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;
 
@@ -65,6 +64,7 @@ struct mca_pml_comm_t {
 #endif
     opal_mutex_t matching_lock;   /**< matching lock */
     opal_list_t wild_receives;    /**< queue of unmatched wild (source process not specified) receives */
+    ompi_pointer_array_t sparse_procs;   /**< sparse array, allows lookup of comm_proc using a global rank */  
     mca_pml_dr_comm_proc_t* procs;
     size_t num_procs;
 };

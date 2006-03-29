@@ -207,7 +207,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
 
 /**
  *  Structure associated w/ ompi_proc_t that contains the set
- *  of BTLs used to reach a destinationation
+ *  of BTLs used to reach a destination
  */
 struct mca_bml_base_endpoint_t {
     mca_pml_proc_t           super;
@@ -398,7 +398,8 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
 typedef struct mca_bml_base_module_t* (*mca_bml_base_component_init_fn_t)(
                                                                           int* priority,
                                                                           bool enable_progress_threads,
-                                                                          bool enable_mpi_threads
+                                                                          bool enable_mpi_threads, 
+                                                                          opal_class_t* endpoint_class
                                                                           );
 
 /**

@@ -29,7 +29,8 @@
 opal_list_t mca_bml_base_components_available;
 
 #if OMPI_ENABLE_DEBUG_RELIABILITY
-double mca_bml_base_error_rate;
+double mca_bml_base_error_rate_floor;
+double mca_bml_base_error_rate_ceiling;
 int    mca_bml_base_error_count;
 #endif
 
@@ -45,11 +46,17 @@ int mca_bml_base_open( void ) {
 #if OMPI_ENABLE_DEBUG_RELIABILITY
     do {
         int param, value;
-
-        mca_base_param_register_int("bml", NULL, "error_rate", "error_rate", 0);
-        param = mca_base_param_find("bml", NULL, "error_rate");
+        
+        mca_base_param_register_int("bml", NULL, "error_rate_floor", "error_rate_floor", 0);
+        param = mca_base_param_find("bml", NULL, "error_rate_floor");
         mca_base_param_lookup_int(param, &value);
-        mca_bml_base_error_rate = value;
+        mca_bml_base_error_rate_floor = value;
+
+        mca_base_param_register_int("bml", NULL, "error_rate_ceiling", "error_rate_ceiling", 0);
+        param = mca_base_param_find("bml", NULL, "error_rate_ceiling");
+        mca_base_param_lookup_int(param, &value);
+        mca_bml_base_error_rate_ceiling = value;
+
 
         mca_base_param_register_int("bml", NULL, "srand", "srand", 1);
         param = mca_base_param_find("bml", NULL, "srand");
@@ -63,8 +70,9 @@ int mca_bml_base_open( void ) {
         }
 
         /* initialize count */
-        if(mca_bml_base_error_rate > 0) {
-            mca_bml_base_error_count = (int) ((mca_bml_base_error_rate * rand())/(RAND_MAX+1.0));
+        if(mca_bml_base_error_rate_ceiling > 0 
+           && mca_bml_base_error_rate_floor <= mca_bml_base_error_rate_ceiling) {
+            mca_bml_base_error_count = (int) ((mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));
         }
     } while (0);
 #endif

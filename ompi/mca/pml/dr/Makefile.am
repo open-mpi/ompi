@@ -24,6 +24,8 @@ dr_sources  = \
 	pml_dr_comm.h \
 	pml_dr_component.c \
 	pml_dr_component.h \
+	pml_dr_endpoint.c \
+	pml_dr_endpoint.h \
 	pml_dr_hdr.h \
 	pml_dr_iprobe.c \
 	pml_dr_irecv.c \

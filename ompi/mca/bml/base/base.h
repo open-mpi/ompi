@@ -49,7 +49,9 @@ OBJ_CLASS_DECLARATION(mca_bml_base_selected_module_t);
  */
 
 OMPI_DECLSPEC  int mca_bml_base_open(void);
-OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads, bool enable_mpi_threads);
+OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads, 
+                                     bool enable_mpi_threads, 
+                                     opal_class_t* endpoint_class);
 OMPI_DECLSPEC  int mca_bml_base_close(void);
 
 

@@ -41,7 +41,7 @@ if(csum != hdr->hdr_match.hdr_csum) {                                \
     } else {                                                         \
         mca_pml_dr_recv_request_match_specific(recvreq);             \
     }                                                                \
-    mca_pml_dr_recv_frag_ack(recvreq->req_endpoint,                  \
+    mca_pml_dr_recv_frag_ack(&recvreq->req_endpoint->base,           \
         &hdr->hdr_common,                                            \
         hdr->hdr_match.hdr_src_ptr.pval,                             \
         0, 0);                                                       \
@@ -53,7 +53,7 @@ if(csum != hdr->hdr_match.hdr_csum) {                                \
     bytes_received = bytes_delivered = 0;                            \
 } else if (recvreq->req_acked == false) {                            \
         mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common,       \
-        hdr->hdr_match.hdr_src_ptr, bytes_received, 1);              \
+                     hdr->hdr_match.hdr_src_ptr, bytes_received, 1); \
 }
 
 
@@ -92,8 +92,8 @@ static int mca_pml_dr_recv_request_cancel(struct ompi_request_t* ompi_request, i
        if( request->req_recv.req_base.req_peer == OMPI_ANY_SOURCE ) {
           opal_list_remove_item( &comm->wild_receives, (opal_list_item_t*)request );
        } else {
-          mca_pml_dr_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
-          opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
+           mca_pml_dr_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
+           opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
        }
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
@@ -167,7 +167,7 @@ void mca_pml_dr_recv_request_ack(
     int rc;
     
     /* allocate descriptor */
-    bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->btl_eager);
+    bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->base.btl_eager);
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
     if(NULL == des) {
         return;
@@ -177,8 +177,8 @@ void mca_pml_dr_recv_request_ack(
     ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK | hdr->hdr_type;
     ack->hdr_common.hdr_flags = 0;
-    ack->hdr_common.hdr_dst = recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE;;
-    ack->hdr_common.hdr_src = recvreq->req_recv.req_base.req_comm->c_my_rank;
+    ack->hdr_common.hdr_dst = recvreq->req_endpoint->dst;
+    ack->hdr_common.hdr_src = recvreq->req_endpoint->src;
     ack->hdr_common.hdr_ctx = recvreq->req_recv.req_base.req_comm->c_contextid;
     ack->hdr_common.hdr_vid = hdr->hdr_vid;
     ack->hdr_vlen = vlen;
@@ -255,7 +255,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_received,
                  bytes_delivered,
                  csum);
-            MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
+             MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -290,7 +290,7 @@ void mca_pml_dr_recv_request_progress(
                 if((vfrag->vf_pending & vfrag->vf_mask) == vfrag->vf_mask) { 
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
-                    ompi_seq_tracker_insert(&recvreq->req_proc->seq_recvs, vfrag->vf_id);
+                    ompi_seq_tracker_insert(&recvreq->req_endpoint->seq_recvs, vfrag->vf_id);
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_frag.hdr_src_ptr, vfrag->vf_size, vfrag->vf_mask);
                 }
@@ -347,7 +347,7 @@ void mca_pml_dr_recv_request_matched_probe(
     /* check completion status */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
-    recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = hdr->hdr_common.hdr_src;
+    recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = recvreq->req_proc->comm_rank;
     recvreq->req_recv.req_base.req_ompi.req_status._count = bytes_packed;
     recvreq->req_recv.req_base.req_pml_complete = true; 
     recvreq->req_recv.req_base.req_ompi.req_complete = true;
