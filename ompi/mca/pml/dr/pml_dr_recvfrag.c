@@ -720,8 +720,8 @@ void mca_pml_dr_recv_frag_ack(
     void *src_ptr,
     uint64_t mask, 
     uint16_t len)
-    {
-    ompi_communicator_t* comm = ompi_comm_lookup(hdr->hdr_ctx);
+{
+    
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_recv_frag_t* frag;

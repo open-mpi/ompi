@@ -275,7 +275,6 @@ do {                                                                            
 
 #define MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq, endpoint, size, vfrag)              \
 do {                                                                                    \
-    mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;          \
     size_t max_send_size = endpoint->base.btl_max_send_size -                           \
                              sizeof(mca_pml_dr_frag_hdr_t);                             \
     size_t div = size / max_send_size;                                                  \
@@ -303,7 +302,7 @@ do {                                                                            
         else                                                                            \
             vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);            \
     }                                                                                   \
-    vfrag->vf_id = OPAL_THREAD_ADD32(&endpoint->vfrag_seq,1);                                \
+    vfrag->vf_id = OPAL_THREAD_ADD32(&endpoint->vfrag_seq,1);                           \
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
     vfrag->vf_max_send_size = max_send_size;                                            \
     vfrag->vf_send.pval = sendreq;                                                      \
