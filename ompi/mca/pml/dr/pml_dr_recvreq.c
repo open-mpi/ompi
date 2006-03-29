@@ -262,7 +262,12 @@ void mca_pml_dr_recv_request_progress(
             bit = ((uint64_t)1 << hdr->hdr_frag.hdr_frag_idx); 
             MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq, &hdr->hdr_frag, vfrag);
             if(vfrag->vf_ack & bit) { 
-                /* duplicate, nothing to do */ 
+                if(vfrag->vf_ack == vfrag->vf_mask) { 
+                    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
+                                                hdr->hdr_frag.hdr_src_ptr, 
+                                                vfrag->vf_size, 
+                                                vfrag->vf_mask);
+                }
                 return;
             }
             bytes_received -= sizeof(mca_pml_dr_frag_hdr_t);

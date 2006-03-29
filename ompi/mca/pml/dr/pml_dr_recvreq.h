@@ -114,9 +114,17 @@ do {                                                               \
 
 #define MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq)                                  \
 do {                                                                                   \
+    opal_list_item_t* item;                                                            \
     assert( false == recvreq->req_recv.req_base.req_pml_complete );                    \
+    OPAL_THREAD_LOCK((recvreq)->req_mutex);                                            \
+    while(NULL != (item = opal_list_remove_first(&(recvreq)->req_vfrags))) {           \
+        OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, item);                               \
+    }                                                                                  \
+    OPAL_THREAD_UNLOCK((recvreq)->req_mutex);                                          \
                                                                                        \
     OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
+    opal_list_remove_item(&(recvreq)->req_proc->matched_receives, (opal_list_item_t*)(recvreq)); \
+                                                                                       \
     /* initialize request status */                                                    \
     recvreq->req_recv.req_base.req_pml_complete = true;                                \
     recvreq->req_recv.req_base.req_ompi.req_status._count =                            \
@@ -138,14 +146,6 @@ do {                                                                            
  */
 #define MCA_PML_DR_RECV_REQUEST_RETURN(recvreq)                                     \
 do {                                                                                \
-    opal_list_item_t* item;                                                         \
-    OPAL_THREAD_LOCK((recvreq)->req_mutex);                                         \
-    opal_list_remove_item(&(recvreq)->req_proc->matched_receives, (opal_list_item_t*)(recvreq)); \
-    while(NULL != (item = opal_list_remove_first(&(recvreq)->req_vfrags))) {        \
-        OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, item);                            \
-    }                                                                               \
-    OPAL_THREAD_UNLOCK((recvreq)->req_mutex);                                       \
-                                                                                    \
     /* decrement reference counts */                                                \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                           \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_requests, (opal_list_item_t*)(recvreq)); \
@@ -194,6 +194,8 @@ do {                                                                            
     (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
     (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
     (request)->req_vfrag = &(request)->req_vfrag0;                                \
+    (request)->req_proc = NULL;                                                   \
+    (request)->req_endpoint = NULL;                                               \
                                                                                   \
     /* always set the req_status.MPI_TAG to ANY_TAG before starting the           \
      * request. This field is used if cancelled to find out if the request        \
@@ -283,6 +285,7 @@ do {                                                                            
         ompi_convertor_set_position(                                              \
             &(request->req_recv.req_convertor),                                   \
             &data_offset);                                                        \
+        assert((request->req_recv.req_convertor.flags & CONVERTOR_COMPLETED) == 0); \
         ompi_convertor_unpack(                                                    \
             &(request)->req_recv.req_convertor,                                   \
             iov,                                                                  \

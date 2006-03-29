@@ -25,6 +25,7 @@ static void mca_pml_dr_endpoint_construct(mca_pml_dr_endpoint_t* ep)
     OBJ_CONSTRUCT(&ep->seq_sends, ompi_seq_tracker_t);
     OBJ_CONSTRUCT(&ep->seq_recvs, ompi_seq_tracker_t);
     OBJ_CONSTRUCT(&ep->seq_recvs_matched, ompi_seq_tracker_t);
+    ep->vfrag_seq = 0;
 }
 
 
