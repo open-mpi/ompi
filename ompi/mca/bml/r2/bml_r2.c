@@ -248,7 +248,8 @@ int mca_bml_r2_add_procs(
                     
                     
                     /* allocate bml specific proc data */
-                    bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
+                    bml_endpoint = (mca_bml_base_endpoint_t*) 
+                        opal_obj_new(mca_bml_r2.endpoint_class);
                     if (NULL == bml_endpoint) {
                         opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
                         free(btl_endpoints);

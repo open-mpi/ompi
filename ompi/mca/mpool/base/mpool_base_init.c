@@ -31,8 +31,6 @@ OBJ_CLASS_INSTANCE(mca_mpool_base_selected_module_t, opal_list_item_t, NULL, NUL
 static bool mca_mpool_enable_progress_threads = true;
 static bool mca_mpool_enable_mpi_threads = true;
          
-OBJ_CLASS_INSTANCE(mca_mpool_base_chunk_t, opal_list_item_t, NULL, NULL);
-
 /**
  * Function for weeding out mpool modules that don't want to run.
  *

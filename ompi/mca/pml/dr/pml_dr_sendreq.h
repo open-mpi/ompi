@@ -33,6 +33,7 @@
 #include "pml_dr_comm.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_vfrag.h"
+#include "pml_dr_endpoint.h"
 #include "opal/event/event.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -42,7 +43,7 @@ extern "C" {
 struct mca_pml_dr_send_request_t {
     mca_pml_base_send_request_t req_send;
     mca_pml_dr_comm_proc_t* req_proc;
-    mca_bml_base_endpoint_t* req_endpoint;
+    mca_pml_dr_endpoint_t* req_endpoint;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t req_state;
     volatile int32_t req_lock;
@@ -143,9 +144,10 @@ do {                                                                            
 #define MCA_PML_DR_SEND_REQUEST_START(sendreq, rc)                                        \
 do {                                                                                      \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;            \
-    mca_pml_dr_comm_proc_t* proc = comm->procs + sendreq->req_send.req_base.req_peer;     \
-    mca_bml_base_endpoint_t* endpoint =                                                   \
-                 (mca_bml_base_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; \
+    mca_pml_dr_endpoint_t* endpoint =                                                     \
+                 (mca_pml_dr_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml;   \
+    mca_pml_dr_comm_proc_t* proc =                                                        \
+                 comm->procs + sendreq->req_send.req_base.req_peer;                       \
     mca_bml_base_btl_t* bml_btl;                                                          \
     size_t size = sendreq->req_send.req_bytes_packed;                                     \
     size_t eager_limit;                                                                   \
@@ -154,9 +156,9 @@ do {                                                                            
         break;                                                                            \
     }                                                                                     \
                                                                                           \
-    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                      \
+    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);                 \
     MCA_PML_DR_VFRAG_INIT(&sendreq->req_vfrag0);                                          \
-    sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                     \
+    sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&endpoint->vfrag_seq,1);                \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
     sendreq->req_endpoint = endpoint;                                                     \
     sendreq->req_proc = proc;                                                             \
@@ -274,8 +276,8 @@ do {                                                                            
 #define MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq, endpoint, size, vfrag)              \
 do {                                                                                    \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;          \
-    mca_pml_dr_comm_proc_t* proc = comm->procs + sendreq->req_send.req_base.req_peer;   \
-    size_t max_send_size = endpoint->btl_max_send_size - sizeof(mca_pml_dr_frag_hdr_t); \
+    size_t max_send_size = endpoint->base.btl_max_send_size -                           \
+                             sizeof(mca_pml_dr_frag_hdr_t);                             \
     size_t div = size / max_send_size;                                                  \
                                                                                         \
     MCA_PML_DR_VFRAG_INIT(vfrag);                                                       \
@@ -301,7 +303,7 @@ do {                                                                            
         else                                                                            \
             vfrag->vf_mask = (((uint64_t)1 << vfrag->vf_len) - (uint64_t)1);            \
     }                                                                                   \
-    vfrag->vf_id = OPAL_THREAD_ADD32(&proc->vfrag_id,1);                                \
+    vfrag->vf_id = OPAL_THREAD_ADD32(&endpoint->vfrag_seq,1);                                \
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
     vfrag->vf_max_send_size = max_send_size;                                            \
     vfrag->vf_send.pval = sendreq;                                                      \
@@ -354,8 +356,9 @@ do {                                                                  \
 
 #define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)          \
 do {                                                                 \
-    mca_bml_base_endpoint_t* endpoint = sendreq->req_endpoint;       \
-    mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
+    mca_pml_dr_endpoint_t* endpoint = sendreq->req_endpoint;         \
+    mca_bml_base_btl_t* bml_btl =                                    \
+      mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);    \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
                                                                      \
     if(++vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) {     \
@@ -384,8 +387,9 @@ do {                                                                 \
 
 #define MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag)           \
 do {                                                                 \
-    mca_bml_base_endpoint_t* endpoint = sendreq->req_endpoint;       \
-    mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager); \
+    mca_pml_dr_endpoint_t* endpoint = sendreq->req_endpoint;         \
+    mca_bml_base_btl_t* bml_btl =                                    \
+        mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);  \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \
                                                                      \
@@ -405,9 +409,9 @@ do {                                                                 \
     hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
     hdr->hdr_common.hdr_flags = 0;                                   \
     hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_RNDV;             \
-    hdr->hdr_common.hdr_dst = sendreq->req_send.req_base.req_peer;   \
+    hdr->hdr_common.hdr_dst = endpoint->dst;                         \
     hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid; \
-    hdr->hdr_common.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;   \
+    hdr->hdr_common.hdr_src = endpoint->src;                                    \
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                \
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;           \
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;                     \

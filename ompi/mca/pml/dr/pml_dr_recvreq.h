@@ -44,7 +44,7 @@ struct mca_pml_dr_recv_request_t {
 
     /* filled in after match */
     struct mca_pml_dr_comm_proc_t* req_proc;
-    struct mca_bml_base_endpoint_t* req_endpoint;
+    struct mca_pml_dr_endpoint_t* req_endpoint;
     opal_mutex_t* req_mutex;
 
     /* vfrag state */
@@ -220,13 +220,13 @@ do {                                                                            
 do {                                                                                 \
     (request)->req_mutex = &comm->matching_lock;                                     \
     (request)->req_proc = proc;                                                      \
-    (request)->req_endpoint = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_pml;   \
+    (request)->req_endpoint = (mca_pml_dr_endpoint_t*)proc->ompi_proc->proc_pml;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;       \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =                    \
-                                                       (hdr)->hdr_common.hdr_src;    \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE =  proc->comm_rank;  \
     (request)->req_vfrag0.vf_id = (hdr)->hdr_common.hdr_vid;                         \
     opal_list_append(&proc->matched_receives, (opal_list_item_t*)request);           \
-    ompi_seq_tracker_insert(&proc->seq_recvs_matched, (hdr)->hdr_common.hdr_vid);    \
+    ompi_seq_tracker_insert(&request->req_endpoint->seq_recvs_matched,               \
+                           (hdr)->hdr_common.hdr_vid);                               \
 } while(0)
 
 

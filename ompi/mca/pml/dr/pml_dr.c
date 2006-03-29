@@ -1,3 +1,4 @@
+
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -34,6 +35,7 @@
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
+#include "orte/mca/ns/ns.h"
 
 mca_pml_dr_t mca_pml_dr = {
     {
@@ -111,8 +113,9 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     ompi_bitmap_t reachable;
-    struct mca_bml_base_endpoint_t ** bml_endpoints = NULL;
+    struct mca_pml_dr_endpoint_t ** endpoints = NULL;
     int rc;
+    size_t i;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
@@ -122,16 +125,16 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    bml_endpoints = (struct mca_bml_base_endpoint_t **) malloc ( nprocs *
-		     sizeof(struct mca_bml_base_endpoint_t*));
-    if ( NULL == bml_endpoints ) {
+    endpoints = (struct mca_pml_dr_endpoint_t **) malloc ( nprocs *
+                    sizeof(struct mca_pml_dr_endpoint_t*));
+    if ( NULL == endpoints ) {
 	return OMPI_ERR_OUT_OF_RESOURCE;
     }
-   
+    
     rc = mca_bml.bml_add_procs(
                                nprocs,
                                procs,
-                               bml_endpoints,
+                               (mca_bml_base_endpoint_t**) endpoints,
                                &reachable
                                );
     if(OMPI_SUCCESS != rc)
@@ -151,10 +154,28 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_dr.free_list_max,
                         mca_pml_dr.free_list_inc,
                         NULL);
-
-    if ( NULL != bml_endpoints ) {
-	free ( bml_endpoints) ;
+    for(i = 0; i < nprocs; i++) { 
+        int idx;
+        /* this won't work for comm spawn and other dynamic 
+           processes, but will work for initial job start */
+        idx = ompi_pointer_array_add(&mca_pml_dr.procs, 
+                                     (void*) endpoints[i]);
+        if(orte_ns.compare(ORTE_NS_CMP_ALL, 
+                           orte_process_info.my_name,  
+                           &endpoints[i]->base.super.proc_ompi->proc_name) == 0) { 
+            mca_pml_dr.my_rank = idx;
+        }
+        endpoints[i]->local = endpoints[i]->dst = idx;
     }
+        
+    for(i = 0; i < nprocs; i++) { 
+        endpoints[i]->src = mca_pml_dr.my_rank;
+    }
+    
+    /* no longer need this */
+    if ( NULL != endpoints ) {
+	free ( endpoints) ;
+    } 
     return rc;
 }
 

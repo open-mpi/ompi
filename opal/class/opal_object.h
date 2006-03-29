@@ -163,6 +163,7 @@ struct opal_class_t {
                                     /**< array of parent class constructors */
     opal_destruct_t *cls_destruct_array;
                                     /**< array of parent class destructors */
+    size_t cls_sizeof;              /**< size of an object instance */
 };
 
 /**
@@ -207,7 +208,8 @@ struct opal_object_t {
         OBJ_CLASS(PARENT),                                              \
         (opal_construct_t) CONSTRUCTOR,                                 \
         (opal_destruct_t) DESTRUCTOR,                                   \
-        0, 0, NULL, NULL                                                \
+        0, 0, NULL, NULL,                                               \
+        sizeof(NAME)                                                    \
     }
 
 
@@ -229,20 +231,20 @@ struct opal_object_t {
  * @param type          Type (class) of the object
  * @return              Pointer to the object 
  */
-static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls);
+static inline opal_object_t *opal_obj_new(opal_class_t * cls);
 #if OMPI_ENABLE_DEBUG
-static inline opal_object_t *opal_obj_new_debug(size_t obj_size, opal_class_t* type, const char* file, int line)
+static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* file, int line)
 {
-    opal_object_t* object = opal_obj_new(obj_size, type);
+    opal_object_t* object = opal_obj_new(type);
     object->cls_init_file_name = file;
     object->cls_init_lineno = line;
     return object;
 }
 #define OBJ_NEW(type)                                   \
-    ((type *)opal_obj_new_debug(sizeof(type), OBJ_CLASS(type), __FILE__, __LINE__))
+    ((type *)opal_obj_new_debug(OBJ_CLASS(type), __FILE__, __LINE__))
 #else
 #define OBJ_NEW(type)                                   \
-    ((type *) opal_obj_new(sizeof(type), OBJ_CLASS(type)))
+    ((type *) opal_obj_new(OBJ_CLASS(type)))
 #endif  /* OMPI_ENABLE_DEBUG */
 
 /**
@@ -416,13 +418,12 @@ static inline void opal_obj_run_destructors(opal_object_t * object)
  * @param cls           Pointer to the class descriptor of this object
  * @return              Pointer to the object 
  */
-static inline opal_object_t *opal_obj_new(size_t size, opal_class_t * cls)
+static inline opal_object_t *opal_obj_new(opal_class_t * cls)
 {
     opal_object_t *object;
+    assert(cls->cls_sizeof >= sizeof(opal_object_t));
 
-    assert(size >= sizeof(opal_object_t));
-
-    object = (opal_object_t *) malloc(size);
+    object = (opal_object_t *) malloc(cls->cls_sizeof);
     if (0 == cls->cls_initialized) {
         opal_class_initialize(cls);
     }
