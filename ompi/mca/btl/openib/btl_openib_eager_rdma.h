@@ -43,10 +43,8 @@ struct mca_btl_openib_eager_rdma_remote_t {
 };
 typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remote_t;
 
-#define MCA_BTL_OPENIB_RDMA_FRAG(F)                           \
-            ((F)->endpoint &&                                 \
-             (F)->endpoint->eager_rdma_local.reg &&           \
-             (F)->mr == (F)->endpoint->eager_rdma_local.reg->mr)
+#define MCA_BTL_OPENIB_RDMA_FRAG(F) \
+    ((F)->type == MCA_BTL_OPENIB_FRAG_EAGER_RDMA)
 
 #define EAGER_RDMA_BUFFER_REMOTE (0)
 #define EAGER_RDMA_BUFFER_LOCAL (0xff)

@@ -653,10 +653,8 @@ int mca_btl_openib_handle_incoming_hp(
     /* repost receive descriptors */
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     if(mca_btl_openib_component.use_srq) { 
-        if (!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
-            OPAL_THREAD_ADD32((int32_t*) &openib_btl->srd_posted_hp, -1); 
-            MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0); 
-        }
+        OPAL_THREAD_ADD32((int32_t*) &openib_btl->srd_posted_hp, -1); 
+        MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0); 
     } else { 
 #endif
         if (!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {

@@ -1238,6 +1238,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         item->user_data = endpoint->eager_rdma_local.reg;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_eager_t);
         ((mca_btl_openib_frag_t*)item)->endpoint = endpoint;
+        ((mca_btl_openib_frag_t*)item)->type = MCA_BTL_OPENIB_FRAG_EAGER_RDMA;
     }
 
     OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);

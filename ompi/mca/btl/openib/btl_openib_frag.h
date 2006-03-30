@@ -67,6 +67,14 @@ struct mca_btl_openib_eager_rdma_header_t {
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
+enum mca_btl_openib_frag_type_t {
+    MCA_BTL_OPENIB_FRAG_EAGER,
+    MCA_BTL_OPENIB_FRAG_MAX,
+    MCA_BTL_OPENIB_FRAG_FRAG,
+    MCA_BTL_OPENIB_FRAG_EAGER_RDMA
+};
+typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
+
 /**
  * IB send fragment derived type.
  */
@@ -75,7 +83,8 @@ struct mca_btl_openib_frag_t {
     mca_btl_base_segment_t segment; 
     struct mca_btl_base_endpoint_t *endpoint; 
     size_t size; 
-    int rc; 
+    int rc;
+    mca_btl_openib_frag_type_t type; 
     union{ 
         struct ibv_recv_wr rd_desc; 
         struct ibv_send_wr sr_desc; 
