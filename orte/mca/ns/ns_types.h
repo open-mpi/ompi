@@ -43,9 +43,9 @@
 #include "opal/class/opal_list.h"
 
 #define ORTE_NAME_ARGS(n) \
-    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->cellid), \
-    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->jobid), \
-    (unsigned long) ((NULL == n) ? -1 : (ssize_t)(n)->vpid)
+    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->cellid), \
+    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->jobid), \
+    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->vpid)
 
 
 /*
@@ -61,9 +61,9 @@
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX SIZE_MAX
-#define ORTE_JOBID_MAX  SIZE_MAX
-#define ORTE_VPID_MAX   SIZE_MAX
+#define ORTE_CELLID_MAX (1 << 31)
+#define ORTE_JOBID_MAX  (1 << 31)
+#define ORTE_VPID_MAX   (1 << 31)
 
 /*
  * general typedefs & structures
@@ -73,9 +73,9 @@
  * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
  * uses of it if these types change to be larger than (unsigned long)!
  */
-typedef size_t orte_jobid_t;
-typedef size_t orte_cellid_t;
-typedef size_t orte_vpid_t;
+typedef uint32_t orte_jobid_t;
+typedef uint32_t orte_cellid_t;
+typedef uint32_t orte_vpid_t;
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 typedef uint8_t orte_ns_cmd_flag_t;
 
@@ -88,30 +88,6 @@ typedef struct orte_process_name_t orte_process_name_t;
 
 extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
-
-#if SIZEOF_SIZE_T == 8
-
-/**
- * Convert process name from host to network byte order.
- *
- * @param name
- */
-#define OMPI_PROCESS_NAME_HTON(n) \
-    n.cellid = hton64(n.cellid); \
-    n.jobid = hton64(n.jobid); \
-    n.vpid = hton64(n.vpid);  
-
-/**
- * Convert process name from network to host byte order.
- *
- * @param name
- */
-#define OMPI_PROCESS_NAME_NTOH(n) \
-    n.cellid = ntoh64(n.cellid); \
-    n.jobid = ntoh64(n.jobid); \
-    n.vpid = ntoh64(n.vpid); 
-
-#else
 
 /**
  * Convert process name from host to network byte order.
@@ -132,8 +108,6 @@ extern orte_process_name_t orte_name_all;
     n.cellid = ntohl(n.cellid); \
     n.jobid = ntohl(n.jobid); \
     n.vpid = ntohl(n.vpid);  
-
-#endif
 
 
 /** List of names for general use

@@ -155,7 +155,8 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j, count, index;
+    orte_cellid_t j;
+    size_t i, count, index;
     orte_ns_proxy_cell_info_t **cell, *new_cell;
     int rc, ret=ORTE_SUCCESS;
 
@@ -819,7 +820,8 @@ int orte_ns_proxy_dump_cells(int output_id)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j;
+    size_t i;
+    orte_cellid_t j;
     orte_ns_proxy_cell_info_t **ptr;
     int rc;
 

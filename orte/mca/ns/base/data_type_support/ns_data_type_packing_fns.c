@@ -128,7 +128,7 @@ int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, DSS_TYPE_SIZE_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -145,7 +145,7 @@ int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, DSS_TYPE_SIZE_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -162,7 +162,7 @@ int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, DSS_TYPE_SIZE_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
         ORTE_ERROR_LOG(ret);
     }
 
