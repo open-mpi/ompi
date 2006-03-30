@@ -133,7 +133,7 @@ AC_DEFUN([_OMPI_CHECK_COMPILER_VENDOR], [
 
     # Cray C/C++
     AS_IF([test "$ompi_check_compiler_vendor_result" = "unknown"],
-          [OMPI_IFDEF_IFELSE([_CRAY_C], 
+          [OMPI_IFDEF_IFELSE([_CRAYC], 
                [ompi_check_compiler_vendor_result="cray"])])
 
     # Diab C/C++
