@@ -38,28 +38,28 @@
 #include "pml_dr_hdr.h"
 
 
-#define MCA_PML_DR_HDR_VALIDATE(hdr, type)                                                     \
+#define MCA_PML_DR_HDR_VALIDATE(hdr, type, comm, proc, ep)                                     \
 do {                                                                                           \
-    ompi_communicator_t* comm = NULL;                                                          \
+    ompi_communicator_t* ompi_comm;                                                            \
     uint16_t csum = opal_csum(hdr, sizeof(type));                                              \
     if(hdr->hdr_common.hdr_csum != csum) {                                                     \
         OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  \
             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              \
         return;                                                                                \
     }                                                                                          \
-    comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                          \
-    if(NULL == comm ) {                                                                        \
-        mca_pml_dr_endpoint_t* ep;                                                             \
-        OPAL_OUTPUT((0, "%s:%d: communicator not found\n",                                     \
-            __FILE__, __LINE__));                                                              \
-        ep = ompi_pointer_array_get_item(&mca_pml_dr.procs,                                    \
-                                       hdr->hdr_common.hdr_src);                               \
-        if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {\
-            mca_pml_dr_recv_frag_ack(&ep->base,                                                \
-                                     &hdr->hdr_common,                                         \
-                                     hdr->hdr_match.hdr_src_ptr.pval,                          \
-                                     1, 0);                                                    \
-        }                                                                                      \
+    ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              \
+    assert(ep != NULL);                                                                        \
+    if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {    \
+        mca_pml_dr_recv_frag_ack(&ep->base,                                                    \
+                                 &hdr->hdr_common,                                             \
+                                 hdr->hdr_match.hdr_src_ptr.pval,                              \
+                                 1, 0);                                                        \
+        return;                                                                                \
+    }                                                                                          \
+    ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     \
+    if(NULL == ompi_comm ) {                                                                   \
+        OPAL_OUTPUT((0, "%s:%d: invalid communicator %d\n",                                    \
+            __FILE__, __LINE__, hdr->hdr_common.hdr_ctx));                                     \
         return;                                                                                \
     }                                                                                          \
     if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       \
@@ -67,20 +67,11 @@ do {                                                                            
             __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            \
         return;                                                                                \
     }                                                                                          \
-} while (0)
-
-
-#define MCA_PML_DR_COMM_PROC_LOOKUP(hdr, comm, proc, ep)                                       \
-do {                                                                                           \
-    ompi_communicator_t* comm_ptr=ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                   \
-    if(NULL == comm_ptr) {                                                                     \
-        OPAL_OUTPUT((0, "%s:%d: invalid communicator: %d\n",                                   \
-            __FILE__,__LINE__,hdr->hdr_common.hdr_ctx));                                       \
-        return;                                                                                \
-    }                                                                                          \
-    comm = (mca_pml_dr_comm_t*)comm_ptr->c_pml_comm;                                           \
+    comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          \
+    assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        \
     proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          \
-    ep = proc->endpoint;                                                                       \
+    assert(proc != NULL);                                                                      \
+    assert(ep == proc->endpoint);                                                              \
 } while (0)
 
 
@@ -135,8 +126,7 @@ void mca_pml_dr_recv_frag_callback(
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_match_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_match_hdr_t, comm, proc, ep);
       
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
@@ -155,8 +145,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -170,8 +159,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_rendezvous_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_rendezvous_hdr_t, comm, proc, ep);
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
@@ -203,8 +191,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
@@ -219,8 +206,7 @@ void mca_pml_dr_recv_frag_callback(
     case MCA_PML_DR_HDR_TYPE_FRAG:
         {
             mca_pml_dr_recv_request_t* recvreq;
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_frag_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_frag_hdr_t, comm, proc, ep);
 
             /* seq_recvs protected by matching lock */
             OPAL_THREAD_LOCK(&comm->matching_lock);
@@ -241,8 +227,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t);
-            MCA_PML_DR_COMM_PROC_LOOKUP(hdr,comm,proc,ep);
+            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
 
             /* seq_sends protected by ompi_request lock*/
             OPAL_THREAD_LOCK(&ompi_request_lock);
