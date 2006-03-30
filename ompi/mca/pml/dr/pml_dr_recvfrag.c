@@ -36,11 +36,13 @@
 #include "pml_dr_recvreq.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_hdr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 
-#define MCA_PML_DR_HDR_VALIDATE(hdr, type, comm, proc, ep)                                     \
+    
+#define MCA_PML_DR_HDR_VALIDATE_ACK(hdr, type)                                                 \
 do {                                                                                           \
-    ompi_communicator_t* ompi_comm;                                                            \
+    mca_pml_dr_endpoint_t* ep;                                                                 \
     uint16_t csum = opal_csum(hdr, sizeof(type));                                              \
     if(hdr->hdr_common.hdr_csum != csum) {                                                     \
         OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  \
@@ -49,29 +51,9 @@ do {                                                                            
     }                                                                                          \
     ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              \
     assert(ep != NULL);                                                                        \
-    if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {    \
-        mca_pml_dr_recv_frag_ack(&ep->base,                                                    \
-                                 &hdr->hdr_common,                                             \
-                                 hdr->hdr_match.hdr_src_ptr.pval,                              \
-                                 1, 0);                                                        \
+    if(ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {            \
         return;                                                                                \
     }                                                                                          \
-    ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     \
-    if(NULL == ompi_comm ) {                                                                   \
-        OPAL_OUTPUT((0, "%s:%d: invalid communicator %d\n",                                    \
-            __FILE__, __LINE__, hdr->hdr_common.hdr_ctx));                                     \
-        return;                                                                                \
-    }                                                                                          \
-    if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       \
-        OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   \
-            __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            \
-        return;                                                                                \
-    }                                                                                          \
-    comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          \
-    assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        \
-    proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          \
-    assert(proc != NULL);                                                                      \
-    assert(ep == proc->endpoint);                                                              \
 } while (0)
 
 
@@ -119,6 +101,9 @@ void mca_pml_dr_recv_frag_callback(
     mca_pml_dr_comm_t *comm;
     mca_pml_dr_comm_proc_t *proc;
     mca_pml_dr_endpoint_t *ep;
+    ompi_communicator_t* ompi_comm;
+    uint16_t csum;
+    
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
         return;
     }
@@ -126,49 +111,91 @@ void mca_pml_dr_recv_frag_callback(
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_match_hdr_t, comm, proc, ep);
-      
-            /* seq_recvs protected by matching lock */
-            OPAL_THREAD_LOCK(&comm->matching_lock);
-            if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
-                OPAL_OUTPUT((0, "%s:%d: acking duplicate match\n", __FILE__, __LINE__));
-                mca_pml_dr_recv_frag_ack(&ep->base,
-                                         &hdr->hdr_common,
-                                         hdr->hdr_match.hdr_src_ptr.pval,
-                                         1, 0);
-            } else {
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
-                mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
-            }
+            
+            csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));                                              
+            if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                return;                                                                                
+            } 
+            if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
+                OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
+                return;                                                                                
+            } 
+            ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              
+            assert(ep != NULL);                                                                        
+            if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {    
+                mca_pml_dr_recv_frag_ack(&ep->base,                                                    
+                                         &hdr->hdr_common,                                             
+                                         hdr->hdr_match.hdr_src_ptr.pval,                              
+                                         1, 0);                                                        
+                return;                                                                                
+            } 
+            ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
+            if(NULL == ompi_comm ) {                                                                   
+                OPAL_OUTPUT((0, "%s:%d: invalid communicator %d\n",                                   
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_ctx));                                     
+                return;                                                                                
+            }                                                                                          
+            comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
+            assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
+            proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+            assert(proc != NULL);                                                                      
+            assert(ep == proc->endpoint);                                                              
+            mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
             break;
+        
         }
     case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
-
-            /* seq_sends protected by ompi_request lock*/
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-                mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
-            } else {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-            }
+            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
             break;
         }
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_rendezvous_hdr_t, comm, proc, ep);
-
+            csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));                                              
+                        
+            if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                return;                                                                                
+            } 
+            if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
+                OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
+                return;                                                                                
+            } 
+            ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              
+            assert(ep != NULL);                                                                        
+            
             /* seq_recvs protected by matching lock */
-            OPAL_THREAD_LOCK(&comm->matching_lock);
             if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)){ 
+                mca_pml_dr_recv_request_t* recvreq;
+                ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
+                if(NULL == ompi_comm) { 
+                    if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
+                        OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous from sequence tracker\n", __FILE__, __LINE__));
+                        mca_pml_dr_recv_frag_ack(&ep->base, 
+                                                 &hdr->hdr_common, 
+                                                 hdr->hdr_match.hdr_src_ptr.pval, 
+                                                 ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
+                    } else { 
+                        OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
+                        orte_errmgr.abort();
+                    }
+                }
+                comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
+                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
+                proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+                assert(proc != NULL);                                                                      
+                assert(ep == proc->endpoint);                                                              
+                
                 /* ack only if the vfrag has been matched */
-                mca_pml_dr_recv_request_t* recvreq = 
+                 recvreq = 
                     mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
-                if(NULL != recvreq) {
+                 if(NULL != recvreq) {
                     OPAL_OUTPUT((0, "%s:%d: acking duplicate matched rendezvous from pending matched\n", __FILE__, __LINE__));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                         hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
@@ -185,40 +212,64 @@ void mca_pml_dr_recv_frag_callback(
                 }
             } else {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
+                ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
+                if(NULL == ompi_comm) { 
+                    OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
+                    orte_errmgr.abort();
+                }
+                comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
+                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
+                proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+                assert(proc != NULL);                                                                      
+                assert(ep == proc->endpoint);                                                              
                 mca_pml_dr_recv_frag_match(comm,proc,btl,&hdr->hdr_match,segments,des->des_dst_cnt);
             }
             break;
         }
     case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
-
-            /* seq_sends protected by ompi_request lock*/
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-                mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
-            } else {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-            } 
+            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
             break;
         }
     case MCA_PML_DR_HDR_TYPE_FRAG:
         {
             mca_pml_dr_recv_request_t* recvreq;
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_frag_hdr_t, comm, proc, ep);
-
+            
+            csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));                                              
+                        
+            if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                return;                                                                                
+            } 
+            if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
+                OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
+                             __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
+                return;                                                                                
+            } 
+            ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              
+            assert(ep != NULL);                                                                        
+            
             /* seq_recvs protected by matching lock */
-            OPAL_THREAD_LOCK(&comm->matching_lock);
             if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 OPAL_OUTPUT((0, "%s:%d: acking duplicate fragment\n", __FILE__, __LINE__));
                 mca_pml_dr_recv_frag_ack(&ep->base,
                                          &hdr->hdr_common,
                                          hdr->hdr_frag.hdr_src_ptr.pval,
                                          ~(uint64_t) 0, 0);
             } else {
-                OPAL_THREAD_UNLOCK(&comm->matching_lock);
+                ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
+                if(NULL == ompi_comm) { 
+                    OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
+                    orte_errmgr.abort();
+                }
+                comm = (mca_pml_dr_comm_t*)ompi_comm->c_pml_comm;                                          
+                assert(hdr->hdr_common.hdr_src < ompi_pointer_array_get_size(&comm->sparse_procs));        
+                proc = ompi_pointer_array_get_item(&comm->sparse_procs, hdr->hdr_common.hdr_src);          
+                assert(proc != NULL);                                                                      
+                assert(ep == proc->endpoint); 
+                
                 recvreq = hdr->hdr_frag.hdr_dst_ptr.pval;
                 mca_pml_dr_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             }
@@ -227,16 +278,8 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE(hdr, mca_pml_dr_ack_hdr_t, comm, proc, ep);
-
-            /* seq_sends protected by ompi_request lock*/
-            OPAL_THREAD_LOCK(&ompi_request_lock);
-            if(!ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-                mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
-            } else {
-                OPAL_THREAD_UNLOCK(&ompi_request_lock);
-            }
+            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
             break;
         }
     default:
