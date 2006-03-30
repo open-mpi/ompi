@@ -86,7 +86,8 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
 int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
                                 char **site, char **resource)
 {
-    size_t i, j;
+    size_t i;
+    orte_cellid_t j;
     orte_ns_replica_cell_tracker_t **cell;
 
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
@@ -272,7 +273,8 @@ int orte_ns_replica_dump_cells(int output_id)
 
 int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
 {
-    size_t i, j;
+    size_t i;
+    orte_cellid_t j;
     orte_ns_replica_cell_tracker_t **cell;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
     int rc;
@@ -338,7 +340,8 @@ int orte_ns_replica_dump_jobs(int output_id)
 
 int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer)
 {
-    size_t i, j;
+    size_t i;
+    orte_cellid_t j;
     orte_ns_replica_jobid_tracker_t **ptr;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
     int rc;
