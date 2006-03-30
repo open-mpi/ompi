@@ -260,6 +260,23 @@ static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
     return ORTE_SUCCESS;
 }
 
+static void orte_rmgr_proxy_wireup_stdin(orte_jobid_t jobid)
+{
+    int rc;
+    orte_process_name_t* name;
+
+    OPAL_TRACE(1);
+
+    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, jobid, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_push(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDIN, 0))) {
+        ORTE_ERROR_LOG(rc);
+    }
+}
+
+
 static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
     orte_rmgr_cb_fn_t cbfunc;
@@ -343,6 +360,28 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     }
 }
 
+/**
+ * define a callback point for completing the wireup of the stdin for io forwarding
+ */
+static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *cbdata)
+{
+    orte_gpr_value_t **values;
+    orte_jobid_t jobid;
+    int rc;
+
+    OPAL_TRACE(1);
+
+    /* we made sure in the subscriptions that at least one
+    * value is always returned
+    * get the jobid from the segment name in the first value
+    */
+    values = (orte_gpr_value_t**)(data->values)->addr;
+    if (ORTE_SUCCESS != (rc = orte_schema.extract_jobid_from_segment_name(&jobid, values[0]->segment))) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+    orte_rmgr_proxy_wireup_stdin(jobid);
+}
 
 /*
  *  Shortcut for the multiple steps involved in spawning a new job.
@@ -403,6 +442,13 @@ static int orte_rmgr_proxy_spawn(
         return rc;
     }
 
+    /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
+    rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     /*
      * setup callback
      */
@@ -425,7 +471,6 @@ static int orte_rmgr_proxy_spawn(
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        cbfunc(*jobid, ORTE_PROC_STATE_INIT);
     }
 
     /*
