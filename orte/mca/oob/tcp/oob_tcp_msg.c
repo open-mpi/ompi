@@ -23,7 +23,7 @@
 #include "mca/ns/ns.h"
 #include "mca/oob/tcp/oob_tcp.h"
 #include "mca/oob/tcp/oob_tcp_msg.h"
-
+#include "opal/runtime/opal_progress.h"
 
 static void mca_oob_tcp_msg_construct(mca_oob_tcp_msg_t*);
 static void mca_oob_tcp_msg_destruct(mca_oob_tcp_msg_t*);
@@ -69,8 +69,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
-            assert(rc >= 0);
+            opal_progress();
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
            opal_condition_wait(&msg->msg_condition, &msg->msg_lock);
@@ -81,7 +80,7 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 #else
     /* wait for message to complete */
     while(msg->msg_complete == false)
-        opal_event_loop(OPAL_EVLOOP_ONCE);
+        opal_progress();
 #endif
 
     /* return status */
@@ -113,8 +112,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
-            assert(rc >= 0);
+            opal_progress();
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
            opal_condition_timedwait(&msg->msg_condition, &msg->msg_lock, abstime);
@@ -127,7 +125,7 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     while(msg->msg_complete == false &&
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
-        opal_event_loop(OPAL_EVLOOP_ONCE);
+        opal_progress();
         gettimeofday(&tv,NULL);
     }
 #endif
