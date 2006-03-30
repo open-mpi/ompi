@@ -78,7 +78,8 @@ static void mca_btl_mvapi_recv_frag_common_constructor(mca_btl_mvapi_frag_t* fra
 static void mca_btl_mvapi_send_frag_eager_constructor(mca_btl_mvapi_frag_t* frag) 
 { 
     
-    frag->size = mca_btl_mvapi_component.eager_limit;  
+    frag->size = mca_btl_mvapi_component.eager_limit;
+    frag->type = MCA_BTL_MVAPI_FRAG_EAGER;  
     mca_btl_mvapi_send_frag_common_constructor(frag); 
 }
 
@@ -86,13 +87,15 @@ static void mca_btl_mvapi_send_frag_eager_constructor(mca_btl_mvapi_frag_t* frag
 static void mca_btl_mvapi_send_frag_max_constructor(mca_btl_mvapi_frag_t* frag) 
 { 
     
-    frag->size = mca_btl_mvapi_component.max_send_size; 
+    frag->size = mca_btl_mvapi_component.max_send_size;
+    frag->type = MCA_BTL_MVAPI_FRAG_MAX; 
     mca_btl_mvapi_send_frag_common_constructor(frag); 
 }
 
 static void mca_btl_mvapi_recv_frag_max_constructor(mca_btl_mvapi_frag_t* frag) 
 {
-    frag->size = mca_btl_mvapi_component.max_send_size; 
+    frag->size = mca_btl_mvapi_component.max_send_size;
+    frag->type = MCA_BTL_MVAPI_FRAG_MAX; 
     mca_btl_mvapi_recv_frag_common_constructor(frag); 
     
 }
@@ -101,14 +104,18 @@ static void mca_btl_mvapi_recv_frag_max_constructor(mca_btl_mvapi_frag_t* frag)
 static void mca_btl_mvapi_recv_frag_eager_constructor(mca_btl_mvapi_frag_t* frag) 
 {
     frag->size = mca_btl_mvapi_component.eager_limit; 
+    frag->type = MCA_BTL_MVAPI_FRAG_EAGER;
     mca_btl_mvapi_recv_frag_common_constructor(frag); 
-    
+    frag->ftr = (mca_btl_mvapi_footer_t*)((char*)frag->segment.seg_addr.pval
+            + frag->size);
+    MCA_BTL_MVAPI_RDMA_MAKE_REMOTE(frag->ftr);
 }
 
 static void mca_btl_mvapi_send_frag_frag_constructor(mca_btl_mvapi_frag_t* frag) 
 { 
     
     frag->size = 0; 
+    frag->type = MCA_BTL_MVAPI_FRAG_FRAG;
     mca_btl_mvapi_send_frag_common_constructor(frag); 
 }
 
