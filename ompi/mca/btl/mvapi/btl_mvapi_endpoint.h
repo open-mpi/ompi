@@ -25,6 +25,8 @@
 #include "ompi/mca/btl/btl.h"
 #include "btl_mvapi_frag.h"
 #include "btl_mvapi.h"
+#include "btl_mvapi_eager_rdma.h"
+#include "ompi/mca/mpool/mvapi/mpool_mvapi.h"
 
 #include <vapi.h>
 #include <mtl_common.h>
@@ -148,9 +150,13 @@ struct mca_btl_base_endpoint_t {
     int32_t sd_wqe_lp;      /**< number of available low priority send wqe entries */
     
     uint32_t subnet; 
-#if 0
-    mca_btl_mvapi_rdma_buf_t   *rdma_buf;
-#endif
+
+    uint32_t eager_recv_count; /**< number of eager received */
+    mca_btl_mvapi_eager_rdma_remote_t eager_rdma_remote;
+    /**< info about remote RDMA buffer */
+    mca_btl_mvapi_eager_rdma_local_t eager_rdma_local;
+    /**< info about local RDMA buffer */
+    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -160,7 +166,7 @@ int  mca_btl_mvapi_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
 void mca_btl_mvapi_post_recv(void);
-
+void mca_btl_mvapi_endpoint_connect_eager_rdma(mca_btl_mvapi_endpoint_t*);
 
 #define MCA_BTL_MVAPI_ENDPOINT_POST_RR_HIGH(endpoint, \
                                              additional) \

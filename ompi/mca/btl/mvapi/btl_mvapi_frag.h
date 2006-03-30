@@ -37,9 +37,46 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t);
 struct mca_btl_mvapi_header_t {
     mca_btl_base_tag_t tag;
     int16_t credits;
+    int16_t rdma_credits;
 };
 typedef struct mca_btl_mvapi_header_t mca_btl_mvapi_header_t;
 
+struct mca_btl_mvapi_footer_t {
+#ifdef OMPI_ENABLE_DEBUG
+    uint32_t seq;
+#endif
+    union {
+        uint32_t size;
+        uint8_t buf[4];
+    } u;
+};
+typedef struct mca_btl_mvapi_footer_t mca_btl_mvapi_footer_t;
+
+typedef enum {
+    MCA_BTL_MVAPI_CONTROL_NOOP,
+    MCA_BTL_MVAPI_CONTROL_RDMA
+} mca_btl_mvapi_control_t;
+
+struct mca_btl_mvapi_control_header_t {
+    mca_btl_mvapi_control_t type;
+};
+typedef struct mca_btl_mvapi_control_header_t mca_btl_mvapi_control_header_t;
+
+struct mca_btl_mvapi_eager_rdma_header_t {
+   mca_btl_mvapi_control_header_t control;
+   ompi_ptr_t rdma_start;
+   uint64_t rkey;
+};
+typedef struct mca_btl_mvapi_eager_rdma_header_t mca_btl_mvapi_eager_rdma_header_t;
+
+
+enum mca_btl_mvapi_frag_type_t {
+    MCA_BTL_MVAPI_FRAG_EAGER,
+    MCA_BTL_MVAPI_FRAG_MAX,
+    MCA_BTL_MVAPI_FRAG_FRAG,
+    MCA_BTL_MVAPI_FRAG_EAGER_RDMA
+};
+typedef enum mca_btl_mvapi_frag_type_t mca_btl_mvapi_frag_type_t;
 
 /**
  * IB send fragment derived type.
@@ -50,13 +87,15 @@ struct mca_btl_mvapi_frag_t {
     struct mca_btl_base_endpoint_t *endpoint; 
     size_t size; 
     int rc; 
-    
+    mca_btl_mvapi_frag_type_t type;
+
     union{ 
         VAPI_rr_desc_t rr_desc; 
         VAPI_sr_desc_t sr_desc; 
     }; 
     VAPI_sg_lst_entry_t sg_entry;  
     mca_btl_mvapi_header_t *hdr;
+    mca_btl_mvapi_footer_t *ftr;
     mca_mpool_mvapi_registration_t * vapi_reg; 
 }; 
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_frag_t; 
