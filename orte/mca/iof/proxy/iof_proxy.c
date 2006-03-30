@@ -281,6 +281,6 @@ int orte_iof_proxy_unsubscribe(
         return rc;
   
     /* remove local callback */
-    return orte_iof_base_callback_delete(src_name,src_tag);
+    return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
 }
 
