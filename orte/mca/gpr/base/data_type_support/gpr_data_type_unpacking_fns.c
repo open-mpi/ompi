@@ -241,7 +241,7 @@ int orte_gpr_base_unpack_value(orte_buffer_t *buffer, void *dest,
 
         /* get the number of tokens */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(values[i]->num_tokens),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -264,7 +264,7 @@ int orte_gpr_base_unpack_value(orte_buffer_t *buffer, void *dest,
 
         /* get the number of keyval pairs */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(values[i]->cnt),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -334,7 +334,7 @@ int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
 
         /* get the number of values */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(subs[i]->cnt),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -408,7 +408,7 @@ int orte_gpr_base_unpack_trigger(orte_buffer_t *buffer, void *dest,
 
         /* get the number of values */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(trigs[i]->cnt),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -480,7 +480,7 @@ int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
 
         /* get the number of values */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(data[i]->cnt),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -561,7 +561,7 @@ int orte_gpr_base_unpack_notify_msg(orte_buffer_t *buffer, void *dest,
 
         /* get the number of datagrams */
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(msg[i]->cnt),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

@@ -47,7 +47,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
     for (i=0; i < num_vals; i++) {
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->idx)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(app_context[i]->idx)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -61,7 +61,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
         /* pack the number of processes */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->num_procs)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(app_context[i]->num_procs)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -119,7 +119,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
         /* Pack the map data */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                (void*)(&(app_context[i]->num_map)), 1, DSS_TYPE_SIZE_T))) {
+                (void*)(&(app_context[i]->num_map)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
