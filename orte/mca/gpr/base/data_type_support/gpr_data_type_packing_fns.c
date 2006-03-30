@@ -223,7 +223,7 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
 
         /* pack the number of tokens so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(values[i]->num_tokens)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(values[i]->num_tokens)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
@@ -239,7 +239,7 @@ int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
 
         /* pack the number of keyval pairs so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(values[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(values[i]->cnt)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return ORTE_ERROR;
         }
@@ -295,7 +295,7 @@ int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
 
         /* pack the number of values so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(subs[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(subs[i]->cnt)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -353,7 +353,7 @@ int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
 
         /* pack the number of values so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(trigs[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(trigs[i]->cnt)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -412,7 +412,7 @@ int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
 
         /* pack the number of values so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(data[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(data[i]->cnt)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -486,7 +486,7 @@ int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
 
         /* pack the number of datagrams so we can read it for unpacking */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(msg[i]->cnt)), 1, DSS_TYPE_SIZE_T))) {
+                        (void*)(&(msg[i]->cnt)), 1, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

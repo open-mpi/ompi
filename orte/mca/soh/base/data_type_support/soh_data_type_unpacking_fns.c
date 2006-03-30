@@ -36,7 +36,7 @@ int orte_soh_base_unpack_exit_code(orte_buffer_t *buffer, void *dest,
 {
     int rc;
 
-    if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
     }
 

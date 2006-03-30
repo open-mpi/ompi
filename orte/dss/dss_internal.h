@@ -43,6 +43,75 @@ extern "C" {
  */
 #define ORTE_DSS_DEFAULT_PAGE_SIZE  1
 
+
+/*
+ * Internal type corresponding to size_t.  Do not use this in
+ * interface calls - use ORTE_SIZE instead.
+ */
+#if SIZEOF_SIZE_T == 1
+#define DSS_TYPE_SIZE_T ORTE_UINT8
+#elif SIZEOF_SIZE_T == 2
+#define DSS_TYPE_SIZE_T ORTE_UINT16
+#elif SIZEOF_SIZE_T == 4
+#define DSS_TYPE_SIZE_T ORTE_UINT32
+#elif SIZEOF_SIZE_T == 8
+#define DSS_TYPE_SIZE_T ORTE_UINT64
+#else
+#error Unsupported size_t size!
+#endif
+
+/*
+ * Internal type corresponding to bool.  Do not use this in interface
+ * calls - use ORTE_BOOL instead.
+ */
+#if SIZEOF_BOOL == 1
+#define DSS_TYPE_BOOL ORTE_UINT8
+#elif SIZEOF_BOOL == 2
+#define DSS_TYPE_BOOL ORTE_UINT16
+#elif SIZEOF_BOOL == 4
+#define DSS_TYPE_BOOL ORTE_UINT32
+#elif SIZEOF_BOOL == 8
+#define DSS_TYPE_BOOL ORTE_UINT64
+#else
+#error Unsupported bool size!
+#endif
+
+/*
+ * Internal type corresponding to int and unsigned int.  Do not use
+ * this in interface calls - use ORTE_INT / ORTE_UINT instead.
+ */
+#if SIZEOF_INT == 1
+#define DSS_TYPE_INT ORTE_INT8
+#define DSS_TYPE_UINT ORTE_UINT8
+#elif SIZEOF_INT == 2
+#define DSS_TYPE_INT ORTE_INT16
+#define DSS_TYPE_UINT ORTE_UINT16
+#elif SIZEOF_INT == 4
+#define DSS_TYPE_INT ORTE_INT32
+#define DSS_TYPE_UINT ORTE_UINT32
+#elif SIZEOF_INT == 8
+#define DSS_TYPE_INT ORTE_INT64
+#define DSS_TYPE_UINT ORTE_UINT64
+#else
+#error Unsupported int size!
+#endif
+
+/*
+ * Internal type corresponding to pid_t.  Do not use this in interface
+ * calls - use ORTE_PID instead.
+ */
+#if SIZEOF_PID_T == 1
+#define DSS_TYPE_PID_T ORTE_UINT8
+#elif SIZEOF_PID_T == 2
+#define DSS_TYPE_PID_T ORTE_UINT16
+#elif SIZEOF_PID_T == 4
+#define DSS_TYPE_PID_T ORTE_UINT32
+#elif SIZEOF_PID_T == 8
+#define DSS_TYPE_PID_T ORTE_UINT64
+#else
+#error Unsupported pid_t size!
+#endif
+
 /**
  * Internal struct used for holding registered dss functions
  */

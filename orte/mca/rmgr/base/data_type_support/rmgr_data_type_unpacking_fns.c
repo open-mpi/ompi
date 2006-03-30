@@ -55,7 +55,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the app index number */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->idx),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -71,7 +71,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the number of processes */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_procs),
-                    &max_n, DSS_TYPE_SIZE_T))) {
+                    &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -147,7 +147,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* unpack the map data */
         max_n=1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_map),
-                   &max_n, DSS_TYPE_SIZE_T))) {
+                   &max_n, ORTE_SIZE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
