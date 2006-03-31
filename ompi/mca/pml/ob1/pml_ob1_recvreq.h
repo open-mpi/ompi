@@ -101,37 +101,52 @@ do {                                                                \
 } while(0)
 
 /**
+ * Mark the request as completed at MPI level for internal purposes.
+ *
+ *  @param recvreq (IN)  Receive request.
+ */
+#define MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq )                              \
+    do {                                                                              \
+       PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
+                                &(recvreq->req_recv.req_base), PERUSE_RECV );         \
+        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );  \
+    } while (0)
+
+/**
  *  Return a recv request to the modules free list.
  *
- *  @param request (IN)  Receive request.
+ *  @param recvreq (IN)  Receive request.
  */
-#define MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE(recvreq)                                 \
-do {                                                                                   \
-    size_t r;                                                                          \
-                                                                                       \
-    assert( false == recvreq->req_recv.req_base.req_pml_complete );                    \
-                                                                                       \
-    for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                                     \
-        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;         \
-        if( NULL != btl_reg ) {                                                        \
-            btl_reg->mpool->mpool_release( btl_reg->mpool, btl_reg );                  \
-        }                                                                              \
-    }                                                                                  \
-    recvreq->req_rdma_cnt = 0;                                                         \
-                                                                                       \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
-                                                                                       \
-    if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
-        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                                    \
-    } else {                                                                           \
-        /* initialize request status */                                                \
-        recvreq->req_recv.req_base.req_pml_complete = true;                            \
-        recvreq->req_recv.req_base.req_ompi.req_status._count =                        \
-            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?              \
-             recvreq->req_bytes_received : recvreq->req_bytes_delivered);              \
-        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );   \
-    }                                                                                  \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                            \
+#define MCA_PML_OB1_RECV_REQUEST_PML_COMPLETE(recvreq)                          \
+do {                                                                            \
+    size_t r;                                                                   \
+                                                                                \
+    assert( false == recvreq->req_recv.req_base.req_pml_complete );             \
+                                                                                \
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                          \
+                             &(recvreq->req_recv.req_base), PERUSE_RECV );      \
+                                                                                \
+    for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
+        mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \
+        if( NULL != btl_reg ) {                                                 \
+            btl_reg->mpool->mpool_release( btl_reg->mpool, btl_reg );           \
+        }                                                                       \
+    }                                                                           \
+    recvreq->req_rdma_cnt = 0;                                                  \
+                                                                                \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                                       \
+                                                                                \
+    if( true == recvreq->req_recv.req_base.req_free_called ) {                  \
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );                             \
+    } else {                                                                    \
+        /* initialize request status */                                         \
+        recvreq->req_recv.req_base.req_pml_complete = true;                     \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                 \
+            (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?       \
+             recvreq->req_bytes_received : recvreq->req_bytes_delivered);       \
+        MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq );                       \
+    }                                                                           \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                     \
 } while(0)
 
 /*
@@ -178,17 +193,8 @@ do {                                                                            
     (request)->req_lock = 0;                                                      \
     (request)->req_pipeline_depth = 0;                                            \
     (request)->req_rdma_idx = 0;                                                  \
-    (request)->req_recv.req_base.req_pml_complete = false;                        \
-    (request)->req_recv.req_base.req_ompi.req_complete = false;                   \
-    (request)->req_recv.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;        \
                                                                                   \
-    /* always set the req_status.MPI_TAG to ANY_TAG before starting the           \
-     * request. This field is used if cancelled to find out if the request        \
-     * has been matched or not.                                                   \
-     */                                                                           \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;      \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;    \
-    (request)->req_recv.req_base.req_ompi.req_status._cancelled = 0;              \
+    MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );                     \
                                                                                   \
     /* attempt to match posted recv */                                            \
     if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
@@ -207,6 +213,10 @@ do {                                                                            
 do {                                                                               \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
+                                                                                   \
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
+                             &((request)->req_recv.req_base), PERUSE_RECV );       \
+                                                                                   \
     if((request)->req_recv.req_bytes_packed != 0) {                                \
         ompi_convertor_copy_and_prepare_for_recv(                                  \
                          (request)->req_recv.req_base.req_proc->proc_convertor,    \
@@ -218,6 +228,8 @@ do {                                                                            
         ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
                                           &(request)->req_bytes_delivered );       \
     }                                                                              \
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                           \
+                             &(recvreq->req_recv.req_base), PERUSE_RECV);          \
 } while (0)
 
 

@@ -22,7 +22,7 @@
 #include "pml_ob1_proc.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
-
+#include "ompi/peruse/peruse-internal.h"
 
 int mca_pml_ob1_isend_init(void *buf,
                            size_t count,
@@ -130,6 +130,7 @@ int mca_pml_ob1_send(void *buf,
             ompi_request_waiting--;
         }
     }
+
     rc = sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&sendreq );
     return rc;

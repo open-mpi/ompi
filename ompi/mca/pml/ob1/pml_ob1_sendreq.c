@@ -52,6 +52,10 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
     if( true == sendreq->req_send.req_base.req_pml_complete ) {
         MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
     }
+
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
+                             &(sendreq->req_send.req_base), PERUSE_SEND );
+
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
@@ -97,6 +101,9 @@ void mca_pml_ob1_match_completion_cache(
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                             &(sendreq->req_send.req_base), PERUSE_SEND );
+
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -124,6 +131,9 @@ void mca_pml_ob1_match_completion_free(
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                             &(sendreq->req_send.req_base), PERUSE_SEND );
+
     /* check completion status */
     if(OMPI_SUCCESS != status) {
         /* TSW - FIX */
@@ -150,6 +160,9 @@ static void mca_pml_ob1_rndv_completion(
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
+
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                             &(sendreq->req_send.req_base), PERUSE_SEND );
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -208,7 +221,7 @@ static void mca_pml_ob1_rget_completion(
  * Completion of a control message - return resources.
  */
 
-static void mca_pml_ob1_ctl_completion(
+static void mca_pml_ob1_send_ctl_completion(
     mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* descriptor,
@@ -624,7 +637,15 @@ int mca_pml_ob1_send_request_start_rdma(
 
          for(i=0; i<src->des_src_cnt; i++)
              hdr->hdr_rget.hdr_segs[i] = src->des_src[i];
-         des->des_cbfunc = mca_pml_ob1_ctl_completion;
+         des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
+
+         /**
+          * Well, it's a get so we will not know when the peer get the data anyway.
+          * If we generate the PERUSE event here, at least we will know when do we
+          * sent the GET message ...
+          */
+         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                  &(sendreq->req_send.req_base), PERUSE_SEND );
 
       } else {
 
@@ -881,6 +902,13 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                 }
 #endif
 #endif
+
+#if OMPI_WANT_PERUSE
+                if( 0 != sendreq->req_send_offset ) {
+                    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                             &(sendreq->req_send.req_base), PERUSE_SEND );
+                }
+#endif  /* OMPI_WANT_PERUSE */
 
                 /* update state */
                 sendreq->req_send_offset += size;

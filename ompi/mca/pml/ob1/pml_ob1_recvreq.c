@@ -46,6 +46,10 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
     if( true == recvreq->req_recv.req_base.req_pml_complete ) {
         MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
     }
+
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
+                             &(recvreq->req_recv.req_base), PERUSE_RECV );
+
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     *request = MPI_REQUEST_NULL;
@@ -70,6 +74,8 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
           mca_pml_ob1_comm_proc_t* proc = comm->procs + request->req_recv.req_base.req_peer;
           opal_list_remove_item(&proc->specific_receives, (opal_list_item_t*)request);
        }
+       PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
+                                &(request->req_recv.req_base), PERUSE_RECV );
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     
@@ -79,7 +85,7 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
      * on this request will be able to complete. As the status is marked as
      * cancelled the cancel state will be detected.
      */
-    MCA_PML_BASE_REQUEST_MPI_COMPLETE(ompi_request);
+    MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE(request);
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
     return OMPI_SUCCESS;
 }
@@ -108,7 +114,7 @@ OBJ_CLASS_INSTANCE(
  * Release resources.
  */
 
-static void mca_pml_ob1_ctl_completion(
+static void mca_pml_ob1_recv_ctl_completion(
     mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* ep,
     struct mca_btl_base_descriptor_t* des,
@@ -267,7 +273,7 @@ static void mca_pml_ob1_recv_request_ack(
 
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    des->des_cbfunc = mca_pml_ob1_ctl_completion;
+    des->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
 
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
     if(rc != OMPI_SUCCESS) {
@@ -701,7 +707,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     break;
                 }
                 ctl->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-                ctl->des_cbfunc = mca_pml_ob1_ctl_completion;
+                ctl->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
                 
                 /* fill in rdma header */
                 hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
@@ -767,6 +773,12 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
    
     /* check for a specific match */
     OPAL_THREAD_LOCK(&comm->matching_lock);
+    /**
+     * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
+     * the cost of the request lock.
+     */
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
+                             &(request->req_recv.req_base), PERUSE_RECV );
 
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = comm->recv_sequence++;
@@ -774,7 +786,10 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
     if (opal_list_get_size(&proc->unexpected_frags) > 0 &&
         (frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
         OPAL_THREAD_UNLOCK(&comm->matching_lock);
-        
+
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
+                                 &(request->req_recv.req_base), PERUSE_RECV );
+
         if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
               (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
             mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
@@ -785,11 +800,18 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
         return; /* match found */
     }
 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
+                             &(request->req_recv.req_base), PERUSE_RECV );
+
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
     */
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         opal_list_append(&proc->specific_receives, (opal_list_item_t*)request);
+        if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
+                                     &(request->req_recv.req_base), PERUSE_RECV );
+        }
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 }
@@ -814,6 +836,12 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
      * process.
     */
     OPAL_THREAD_LOCK(&comm->matching_lock);
+    /**
+     * The laps of time between the ACTIVATE event and the SEARCH_UNEX one include
+     * the cost of the request lock.
+     */
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
+                             &(request->req_recv.req_base), PERUSE_RECV );
 
     /* assign sequence number */
     request->req_recv.req_base.req_sequence = comm->recv_sequence++;
@@ -831,6 +859,9 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
         if ((frag = mca_pml_ob1_recv_request_match_specific_proc(request, proc)) != NULL) {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
 
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
+                                     &(request->req_recv.req_base), PERUSE_RECV );
+
             if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
                   (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
                 mca_pml_ob1_recv_request_progress(request,frag->btl,frag->segments,frag->num_segments);
@@ -843,12 +874,25 @@ void mca_pml_ob1_recv_request_match_wild(mca_pml_ob1_recv_request_t* request)
         proc++;
     } 
 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_SEARCH_UNEX_Q_END,
+                             &(request->req_recv.req_base), PERUSE_RECV );
+
     /* We didn't find any matches.  Record this irecv so we can match to
      * it when the message comes in.
     */
  
-    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE)
+    if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) {
         opal_list_append(&comm->wild_receives, (opal_list_item_t*)request);
+        /**
+         * We don't want to generate this kind of event for MPI_Probe. Hopefully,
+         * the compiler will optimize out the empty if loop in the case where PERUSE
+         * support is not required by the user.
+         */
+        if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
+                                     &(request->req_recv.req_base), PERUSE_RECV );
+        }
+    }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
 }
 
@@ -897,9 +941,14 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     request->req_recv.req_base.req_proc = proc->proc_ompi;
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
+        PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
+                                request->req_recv.req_base.req_comm,
+                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV );
         opal_list_remove_item(unexpected_frags, (opal_list_item_t*)frag);
         frag->request = request;
     } 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_MATCH_UNEX,
+                             &(request->req_recv.req_base), PERUSE_RECV );
     return frag;
 }
 
