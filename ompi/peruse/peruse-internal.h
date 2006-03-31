@@ -69,9 +69,7 @@ int ompi_peruse_finalize (void);
  * Global macros
  */
 
-#define PERUSE_ENABLED 1          /* XXX */
-
-#ifdef OMPI_WANT_PERUSE
+#if OMPI_WANT_PERUSE
 #define PERUSE_TRACE_COMM_EVENT(event, base_req, op)                                   \
 do {                                                                                   \
     if( NULL != (base_req)->req_comm->c_peruse_handles ) {                             \
@@ -90,23 +88,23 @@ do {                                                                            
     }                                                                                  \
 } while(0)
 
-#define PERUSE_TRACE_MSG_EVENT(event, comm_ptr, hdr_peer, hdr_tag, op)                 \
-do {                                                                                   \
-    if( NULL != (comm_ptr)->c_peruse_handles ) {                                       \
-        ompi_peruse_handle_t * _ptr = (comm_ptr)->c_peruse_handles[(event)];           \
-        if (NULL != _ptr && _ptr->active) {                                            \
-            peruse_comm_spec_t _comm_spec;                                             \
-            _comm_spec.comm      = (ompi_communicator_t*) (comm_ptr);                  \
-            _comm_spec.buf       = NULL;                                               \
-            _comm_spec.count     = 0;                                                  \
-            _comm_spec.datatype  = MPI_DATATYPE_NULL;                                  \
-            _comm_spec.peer      = (hdr_peer);                                         \
-            _comm_spec.tag       = (hdr_tag);                                          \
-            _comm_spec.operation = (op);                                               \
-            _ptr->fn (_ptr, (MPI_Aint)/* unique_id */ 0, &_comm_spec, _ptr->param);    \
-        }                                                                              \
-    }                                                                                  \
-} while(0)
+#define PERUSE_TRACE_MSG_EVENT(event, comm_ptr, hdr_peer, hdr_tag, op)            \
+    do {                                                                          \
+        if( NULL != (comm_ptr)->c_peruse_handles ) {                              \
+            ompi_peruse_handle_t * _ptr = (comm_ptr)->c_peruse_handles[(event)];  \
+            if (NULL != _ptr && _ptr->active) {                                   \
+                peruse_comm_spec_t _comm_spec;                                    \
+                _comm_spec.comm      = (ompi_communicator_t*) (comm_ptr);         \
+                _comm_spec.buf       = NULL;                                      \
+                _comm_spec.count     = 0;                                         \
+                _comm_spec.datatype  = MPI_DATATYPE_NULL;                         \
+                _comm_spec.peer      = (hdr_peer);                                \
+                _comm_spec.tag       = (hdr_tag);                                 \
+                _comm_spec.operation = (op);                                      \
+                _ptr->fn (_ptr, (MPI_Aint)/*(unique_id)*/0, &_comm_spec, _ptr->param); \
+            }                                                                     \
+        }                                                                         \
+    } while(0)
 
 #else
 #define PERUSE_TRACE_COMM_EVENT(event, base_req, op)
