@@ -100,7 +100,15 @@
 /* The only public interface is openpty - all others are to support
    openpty() */
 
-#ifdef __WINDOWS__
+#if OMPI_ENABLE_PTY_SUPPORT == 0
+
+int opal_openpty(int *amaster, int *aslave, char *name,
+                 void *termp, void *winpp)
+{
+    return -1;
+}
+
+#elif defined(__WINDOWS__)
 
 /* yeah, let's assume for the moment that ptys don't work on windows */
 

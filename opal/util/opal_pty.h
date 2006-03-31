@@ -30,7 +30,16 @@
 # endif
 #endif
 
+#if OMPI_ENABLE_PTY_SUPPORT 
+
 int opal_openpty(int *amaster, int *aslave, char *name, 
                  struct termios *termp, struct winsize *winp);
+
+#else
+
+int opal_openpty(int *amaster, int *aslave, char *name,
+                 void *termp, void *winpp);
+
+#endif
 
 #endif /* OPAL_UTIL_PTY_H */
