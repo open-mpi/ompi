@@ -1,0 +1,20 @@
+# NOTE: This is not for use with MPIRUN, but for testing with the portals utcp
+# RTE, to closely match the real machine's setup.  You need a number of env
+# variables set for each process before you even *think* of starting to use
+# the results of this configure script.
+enable_f77=no
+enable_io_romio=no
+with_threads=posix
+enable_pretty_print_stacktrace=no
+enable_dlopen=no
+with_portals_config=utcp
+with_memory_manager=no
+enable_heterogeneous=no
+enable_mca_no_build=maffinity-first_use,maffinity-libnuma,paffinity-linux,timer-linux,gpr-proxy,gpr-replica,rml-oob,btl-sm,mpool-sm,btl-self,ns-proxy,rds-resfile,sds-env,sds-pipe,sds-seed,sds-singleton,coll-hierarch,coll-sm,pml-dr,btl-tcp,oob-tcp,ras-dash_host,ras-hostfile,ras-localhost,rds-hostfile,rds-resfile,rmaps-round_robin,rmgr-proxy,pls-fork,pls-rsh,common_sm
+with_memory_manager=no
+with_slurm=no
+with_bproc=no
+with_mvapi=no
+with_openib=no
+with_gm=no
+with_rml_cnos=utcp
