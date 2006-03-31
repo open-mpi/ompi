@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -88,6 +89,22 @@ OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
  */
 OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
 
+    /**
+     * Whether an MPI_ABORT should print out a stack trace or not.
+     */
+    OMPI_DECLSPEC bool ompi_mpi_abort_print_stack;
+
+    /**
+     * Whether  MPI_ABORT  should  print  out an  identifying  message
+     * (e.g., hostname  and PID)  and loop waiting  for a  debugger to
+     * attach.  The value of the integer is how many seconds to wait:
+     *
+     * 0 = do not print the message and do not loop
+     * negative value = print the message and loop forever
+     * positive value = print the message and delay for that many seconds
+     */
+    OMPI_DECLSPEC int ompi_mpi_abort_delay;
+
    /**
      * Register MCA parameters used by the MPI layer.
      *
@@ -97,6 +114,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      * global variables to the values obtained from the MCA system.
      */
 OMPI_DECLSPEC int ompi_mpi_register_params(void);
+
 
     /**
      * Display all MCA parameters used 
