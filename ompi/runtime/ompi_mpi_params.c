@@ -44,7 +44,7 @@ bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_paffinity_alone = false;
-bool ompi_mpi_abort_generate_stack_trace = false;
+bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 
 int ompi_mpi_register_params(void)
