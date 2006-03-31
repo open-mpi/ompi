@@ -19,7 +19,7 @@
 #include "ompi_config.h"
 #include "ompi/request/request.h"
 #include "pml_ob1_recvreq.h"
-
+#include "ompi/peruse/peruse-internal.h"
 
 int mca_pml_ob1_irecv_init(void *addr,
                            size_t count,

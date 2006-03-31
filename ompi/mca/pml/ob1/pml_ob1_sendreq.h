@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -144,10 +144,6 @@ do {                                                                            
     sendreq->req_bytes_delivered = 0;                                                          \
     sendreq->req_state = 0;                                                                    \
     sendreq->req_send_offset = 0;                                                              \
-    sendreq->req_send.req_base.req_pml_complete = false;                                       \
-    sendreq->req_send.req_base.req_ompi.req_complete = false;                                  \
-    sendreq->req_send.req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;                       \
-    sendreq->req_send.req_base.req_ompi.req_status._cancelled = 0;                             \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                               \
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);                    \
     sendreq->req_endpoint = endpoint;                                                          \
@@ -155,6 +151,8 @@ do {                                                                            
     /* select a btl */                                                                         \
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);                           \
     eager_limit = bml_btl->btl_eager_limit - sizeof(mca_pml_ob1_hdr_t);                        \
+                                                                                               \
+    MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );                                    \
                                                                                                \
     /* shortcut for zero byte */                                                               \
     if(size <= eager_limit) {                                                                  \
@@ -251,6 +249,10 @@ do {                                                                            
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                      \
         (sendreq)->req_send.req_bytes_packed;                                     \
    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) ); \
+                                                                                  \
+   PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
+                            &(sendreq->req_send.req_base), PERUSE_SEND);          \
+                                                                                  \
 } while(0)
 
 /*
@@ -266,6 +268,10 @@ do {                                                                            
         size_t r;                                                                       \
                                                                                         \
         assert( false == sendreq->req_send.req_base.req_pml_complete );                 \
+                                                                                        \
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                              \
+                                 &(sendreq->req_send.req_base),                         \
+                                 PERUSE_SEND );                                         \
                                                                                         \
         /* return mpool resources */                                                    \
         for( r = 0; r < sendreq->req_rdma_cnt; r++ ) {                                  \

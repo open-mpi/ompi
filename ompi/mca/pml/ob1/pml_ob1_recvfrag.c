@@ -33,9 +33,8 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_hdr.h"
-#include "ompi/datatype/dt_arch.h"                                                                                                               
-
-
+#include "ompi/datatype/dt_arch.h"
+#include "ompi/peruse/peruse-internal.h"
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_buffer_t,
@@ -310,6 +309,11 @@ do {  \
                 /* remove this recv from the wild receive queue */  \
                 opal_list_remove_item(&comm->wild_receives,  \
                         (opal_list_item_t *)wild_recv);  \
+\
+                PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
+                                         &(wild_recv->req_recv.req_base), \
+                                         PERUSE_RECV); \
+\
                 break;  \
             }  \
   \
@@ -351,6 +355,11 @@ do {  \
                 /* remove descriptor from specific receive list */  \
                 opal_list_remove_item(&(proc)->specific_receives,  \
                     (opal_list_item_t *)specific_recv);  \
+\
+                PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q, \
+                                         &(specific_recv->req_recv.req_base), \
+                                         PERUSE_RECV); \
+\
                 break; \
             }  \
   \
@@ -444,6 +453,15 @@ int mca_pml_ob1_recv_frag_match(
     frag_msg_seq = hdr->hdr_seq;
     proc = comm->procs + hdr->hdr_src;
 
+    /**
+     * We generate the MSG_ARRIVED event as soon as the PML is aware of a matching
+     * fragment arrival. Independing if it is received on the correct order or not.
+     * This will allow the tools to figure out if the messages are not received in the
+     * correct order (if multiple network interfaces).
+     */
+    PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_ARRIVED, comm_ptr,
+                            hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+
     /* get next expected message sequence number - if threaded
      * run, lock to make sure that if another thread is processing 
      * a frag from the same message a match is made only once.
@@ -465,6 +483,15 @@ int mca_pml_ob1_recv_frag_match(
 
         /* We're now expecting the next sequence number. */
         (proc->expected_sequence)++;
+
+        /**
+         * We generate the SEARCH_POSTED_QUEUE only when the message is received
+         * in the correct sequence. Otherwise, we delay the event generation until
+         * we reach the correct sequence number.
+         */
+        PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_SEARCH_POSTED_Q_BEGIN, comm_ptr,
+                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+
 rematch:
 
         /*
@@ -512,11 +539,25 @@ rematch:
             MCA_PML_OB1_RECV_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
+                /**
+                 * As we return from the match function, we should generate the expected event.
+                 */
+                PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
+                                        hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+
                 return rc;
             }
             MCA_PML_OB1_RECV_FRAG_INIT(frag,hdr,segments,num_segments,btl);
             opal_list_append( &proc->unexpected_frags, (opal_list_item_t *)frag );
         }
+
+        /**
+         * The match is over. We generate the SEARCH_POSTED_Q_END here, before going
+         * into the mca_pml_ob1_check_cantmatch_for_match so we can make a difference
+         * for the searching time for all messages.
+         */
+        PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_SEARCH_POSTED_Q_END, comm_ptr,
+                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
 
         /* 
          * Now that new message has arrived, check to see if
@@ -548,12 +589,18 @@ rematch:
 
     if(match != NULL) {
         mca_pml_ob1_recv_request_progress(match,btl,segments,num_segments);
+#if OMPI_WANT_PERUSE
+    } else {
+        PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_INSERT_IN_UNEX_Q, comm_ptr,
+                                hdr->hdr_src, hdr->hdr_tag, PERUSE_RECV);
+#endif  /* OMPI_WANT_PERUSE */
     } 
     if(additional_match) {
         opal_list_item_t* item;
         while(NULL != (item = opal_list_remove_first(&additional_matches))) {
             mca_pml_ob1_recv_frag_t* frag = (mca_pml_ob1_recv_frag_t*)item;
-            mca_pml_ob1_recv_request_progress(frag->request,frag->btl,frag->segments,frag->num_segments);
+            mca_pml_ob1_recv_request_progress( frag->request, frag->btl, frag->segments,
+                                               frag->num_segments );
             MCA_PML_OB1_RECV_FRAG_RETURN(frag);
         }
     }
