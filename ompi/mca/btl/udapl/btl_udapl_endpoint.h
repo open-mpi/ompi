@@ -92,8 +92,26 @@ typedef mca_btl_base_endpoint_t  mca_btl_udapl_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_btl_udapl_endpoint_t);
 
 
+/*
+ * Start sending data on an endpoint.
+ */
+
 int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                 mca_btl_udapl_frag_t* frag);
+
+/*
+ * Post queued sends.
+ */
+
+int mca_btl_udapl_endpoint_post_queue(mca_btl_udapl_endpoint_t* endpoint);
+
+/*
+ * Match a uDAPL endpoint to a BTL endpoint.
+ */
+
+int mca_btl_udapl_endpoint_match(struct mca_btl_udapl_module_t* btl,
+                                 mca_btl_udapl_addr_t* addr,
+                                 DAT_EP_HANDLE endpoint);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

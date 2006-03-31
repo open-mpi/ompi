@@ -29,40 +29,43 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
-    frag->registration = (mca_mpool_base_registration_t*)reg;
+    frag->base.des_flags = 0;
+
+    frag->registration = (mca_mpool_base_registration_t*)reg; 
+    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
+    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
 
     /* Don't understand why yet, but there are cases where reg is NULL -
        that is, this memory has not been registered.  So be careful not
        to dereference a NULL pointer. */
     if(NULL != reg) {
         /* Save the LMR context so we can set up LMR subset triplets later */
-        frag->segment.seg_key.key32[0] = reg->lmr_triplet.lmr_context;
+        frag->triplet.lmr_context = reg->lmr_triplet.lmr_context;
     }
 }
 
 static void mca_btl_udapl_frag_eager_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
-    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1);
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit - sizeof(mca_btl_base_header_t);
+    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit -
+        sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_udapl_component.udapl_eager_frag_size;  
     mca_btl_udapl_frag_common_constructor(frag); 
 }
 
 static void mca_btl_udapl_frag_max_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
-    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_max_send_size - sizeof(mca_btl_base_header_t);
+    frag->segment.seg_len = mca_btl_udapl_module.super.btl_max_send_size -
+        sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_udapl_component.udapl_max_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }
 
 static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag) 
 { 
+    mca_btl_udapl_frag_common_constructor(frag); 
+    frag->segment.seg_len = 0;
     frag->hdr = NULL;
     frag->size = 0; 
-    mca_btl_udapl_frag_common_constructor(frag); 
 }
 
 

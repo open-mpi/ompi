@@ -42,19 +42,10 @@
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 
-/*
- * Local functions
- */
-
-static int mca_btl_udapl_finish_connect(mca_btl_udapl_module_t* btl,
-                                        mca_btl_udapl_frag_t* frag,
-                                        DAT_EP_HANDLE endpoint);
-
 mca_btl_udapl_component_t mca_btl_udapl_component = {
     {
         /* First, the mca_base_component_t struct containing meta information
            about the component itself */
-
         {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
@@ -70,7 +61,6 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
         },
 
         /* Next the MCA v1.0.0 component meta data */
-
         {
             /* Whether the component is checkpointable or not */
 
@@ -87,16 +77,12 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
   * Report a uDAPL error - for debugging
   */
 
+#if OMPI_ENABLE_DEBUG
 void
 mca_btl_udapl_error(DAT_RETURN ret, char* str)
 {
     char* major;
     char* minor;
-
-    /* don't output anything if debug is not set */
-    if(0 == mca_btl_udapl_component.udapl_debug) {
-        return;
-    }
 
     if(DAT_SUCCESS != dat_strerror(ret,
             (const char**)&major, (const char**)&minor))
@@ -107,6 +93,7 @@ mca_btl_udapl_error(DAT_RETURN ret, char* str)
 
     OPAL_OUTPUT((0, "ERROR: %s %s %s\n", str, major, minor));
 }
+#endif
 
 
 /*
@@ -159,8 +146,6 @@ int mca_btl_udapl_component_open(void)
         mca_btl_udapl_param_register_int("free_list_max", -1);
     mca_btl_udapl_component.udapl_free_list_inc =
         mca_btl_udapl_param_register_int("free_list_inc", 8);
-    mca_btl_udapl_component.udapl_debug = 
-        mca_btl_udapl_param_register_int("debug", 1); 
     mca_btl_udapl_component.udapl_mpool_name =
         mca_btl_udapl_param_register_string("mpool", "udapl");
     mca_btl_udapl_component.udapl_max_btls = 
@@ -174,7 +159,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_component.udapl_port_low = 
         mca_btl_udapl_param_register_int("port_low", 45000);
     mca_btl_udapl_component.udapl_port_high = 
-        mca_btl_udapl_param_register_int("port_high", 47000);
+            mca_btl_udapl_param_register_int("port_high", 49000);
     mca_btl_udapl_component.udapl_timeout = 
         mca_btl_udapl_param_register_int("timeout", 10000000);
 
@@ -194,7 +179,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_module.super.btl_bandwidth  = 
         mca_btl_udapl_param_register_int("bandwidth", 225); 
 
-    /* cmpute udapl_eager_frag_size and udapl_max_frag_size */
+    /* compute udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =
             mca_btl_udapl_module.super.btl_eager_limit;
     mca_btl_udapl_component.udapl_max_frag_size =
@@ -239,17 +224,19 @@ mca_btl_udapl_modex_send(void)
             mca_btl_udapl_component.udapl_num_btls;
 
     if (0 != size) {
-        addrs = (mca_btl_udapl_addr_t *)malloc(size);
+        addrs = (mca_btl_udapl_addr_t*)malloc(size);
         if (NULL == addrs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         for (i = 0; i < mca_btl_udapl_component.udapl_num_btls; i++) {
-            mca_btl_udapl_module_t *btl = mca_btl_udapl_component.udapl_btls[i];
+            mca_btl_udapl_module_t* btl = mca_btl_udapl_component.udapl_btls[i];
             addrs[i] = btl->udapl_addr;
         }
     }
-    rc = mca_pml_base_modex_send (&mca_btl_udapl_component.super.btl_version, addrs, size);
+
+    rc = mca_pml_base_modex_send(
+            &mca_btl_udapl_component.super.btl_version, addrs, size);
     if (NULL != addrs) {
         free (addrs);
     }
@@ -357,83 +344,6 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 }
 
 
-static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint)
-{
-    mca_btl_udapl_frag_t* frag;
-    int rc;
-    int i;
-
-    /* TODO - only posting eager frags for now. */
-    for(i = 0; i < mca_btl_udapl_component.udapl_num_repost; i++) {
-        MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(endpoint->endpoint_btl, frag, rc);
-    
-        /* Set up the LMR triplet from the frag segment */
-        /* Note that this triplet defines a sub-region of a registered LMR */
-        frag->triplet.lmr_context = frag->segment.seg_key.key32[0];
-        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
-        frag->triplet.segment_length = frag->segment.seg_len + sizeof(mca_btl_base_header_t);
-    
-        frag->btl = endpoint->endpoint_btl;
-        frag->endpoint = endpoint;
-        frag->base.des_src = NULL;
-        frag->base.des_src_cnt = 0;
-        frag->base.des_dst = &frag->segment;
-        frag->base.des_dst_cnt = 1;
-        frag->base.des_flags = 0; 
-
-        frag->type = MCA_BTL_UDAPL_RECV;
-
-        rc = dat_ep_post_recv(endpoint->endpoint_ep, 1, &frag->triplet,
-                (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            mca_btl_udapl_error(rc, "dat_ep_post_recv");
-            return OMPI_ERROR;
-        }
-    }
-
-    return OMPI_SUCCESS;
-}
-
-
-static int mca_btl_udapl_finish_connect(mca_btl_udapl_module_t* btl,
-                                        mca_btl_udapl_frag_t* frag,
-                                        DAT_EP_HANDLE endpoint)
-{
-    mca_btl_udapl_proc_t* proc;
-    mca_btl_base_endpoint_t* ep;
-    mca_btl_udapl_addr_t* addr;
-    size_t i;
-
-    addr = (mca_btl_udapl_addr_t*)frag->segment.seg_addr.pval;
-
-    for(proc = (mca_btl_udapl_proc_t*)
-                opal_list_get_first(&mca_btl_udapl_component.udapl_procs);
-            proc != (mca_btl_udapl_proc_t*)
-                opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
-            proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
-    
-        for(i = 0; i < proc->proc_endpoint_count; i++) {
-            ep = proc->proc_endpoints[i];
-    
-            /* Does this endpoint match? */
-            if(ep->endpoint_btl == btl &&
-                    !memcmp(addr, &ep->endpoint_addr,
-                        sizeof(mca_btl_udapl_addr_t))) {
-                OPAL_OUTPUT((0, "btl_udapl matched endpoint! HAPPY DANCE!!\n"));
-                ep->endpoint_ep = endpoint;
-                ep->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
-                mca_btl_udapl_endpoint_post_recv(ep);
-                return OMPI_SUCCESS;
-            }
-        }
-    }
-
-    /* If this point is reached, no matching endpoint was found */
-    OPAL_OUTPUT((0, "btl_udapl ERROR could not match endpoint\n"));
-    return OMPI_ERROR;
-}
-
-
 static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
                                         DAT_CR_HANDLE cr_handle)
 {
@@ -445,13 +355,13 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
             btl->udapl_evd_dto, btl->udapl_evd_dto,
             btl->udapl_evd_conn, NULL, &endpoint);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_ep_create");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_create");
         return OMPI_ERROR;
     }
 
     rc = dat_cr_accept(cr_handle, endpoint, 0, NULL);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_cr_accept");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_cr_accept");
         return OMPI_ERROR;
     }
 
@@ -465,33 +375,11 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
     rc = dat_ep_post_recv(endpoint, 1, &frag->triplet,
             (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_ep_post_recv");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
         return OMPI_ERROR;
     }
 
     return OMPI_SUCCESS;
-}
-
-
-static int mca_btl_udapl_flush_send_queue(mca_btl_udapl_endpoint_t* endpoint)
-{
-    mca_btl_udapl_frag_t* frag;
-    int rc = OMPI_SUCCESS;
-
-    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
-    while(NULL != (frag = (mca_btl_udapl_frag_t*)
-            opal_list_remove_first(&endpoint->endpoint_frags))) {
-        rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
-                (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
-        if(DAT_SUCCESS != rc) {
-            mca_btl_udapl_error(rc, "dat_ep_post_send");
-            rc = OMPI_ERROR;
-            break;
-        }
-    }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
-
-    return rc;
 }
 
 
@@ -582,33 +470,28 @@ int mca_btl_udapl_component_progress()
                         OPAL_OUTPUT((0,
                                 "btl_udapl SEND SIDE CONNECT COMPLETED!!\n"));
                         frag->endpoint->endpoint_state =
-                                MCA_BTL_UDAPL_CONNECTED;
+                            MCA_BTL_UDAPL_CONNECTED;
 
-                        mca_btl_udapl_endpoint_post_recv(frag->endpoint);
-                        mca_btl_udapl_flush_send_queue(frag->endpoint);
+                        mca_btl_udapl_endpoint_post_queue(frag->endpoint);
 
                         MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
                         break;
                     case MCA_BTL_UDAPL_CONN_RECV:
                         /* Just got the address data we need for completing
                            a new connection - match endpoints */
-                        mca_btl_udapl_finish_connect(btl, frag, dto->ep_handle);
-                        
+                        mca_btl_udapl_endpoint_match(btl,
+                                frag->segment.seg_addr.pval, dto->ep_handle);
                         MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
                         break;
-#if OMPI_ENABLE_DEBUG
                     default:
                         OPAL_OUTPUT((0, "WARNING unknown frag type: %d\n",
                                     frag->type));
-#endif
                     }
                     count++;
                     break;
-#if OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown dto event: %d\n",
                             event.event_number));
-#endif
             }
         }
 
@@ -645,11 +528,9 @@ int mca_btl_udapl_component_progress()
                     /* Need to set the BTL endpoint to MCA_BTL_UDAPL_FAILED
                        See dat_ep_connect documentation pdf pg 198 */
                     break;
-#if OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown conn event: %d\n",
                             event.event_number));
-#endif
             }
         }
 
@@ -663,11 +544,9 @@ int mca_btl_udapl_component_progress()
                 case DAT_ASYNC_ERROR_TIMED_OUT:
                 case DAT_ASYNC_ERROR_PROVIDER_INTERNAL_ERROR:
                     break;
-#if OMPI_ENABLE_DEBUG
                 default:
                     OPAL_OUTPUT((0, "WARNING unknown async event: %d\n",
                             event.event_number));
-#endif
             }
         }
     }

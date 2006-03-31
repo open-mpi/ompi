@@ -57,7 +57,6 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_evd_qlen;
     int32_t udapl_num_repost;
     int32_t udapl_timeout;      /**< connection timeout, in microseconds */
-    int     udapl_debug;        /**< turn on debug output */
 
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
@@ -117,7 +116,16 @@ extern mca_btl_udapl_module_t mca_btl_udapl_module;
   * Report a uDAPL error - for debugging
   */
 
+#if OMPI_ENABLE_DEBUG
 extern void mca_btl_udapl_error(DAT_RETURN ret, char* str);
+
+#define MCA_BTL_UDAPL_ERROR(ret, str) \
+    mca_btl_udapl_error((ret), (str));
+
+#else
+#define MCA_BTL_UDAPL_ERROR(ret, str)
+#endif
+
 
 /**
  * Register uDAPL component parameters with the MCA framework
