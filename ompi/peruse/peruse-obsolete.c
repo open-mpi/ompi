@@ -154,6 +154,7 @@ int PERUSE_Query_environment (int * env_size, char *** env)
     return PERUSE_SUCCESS;
 }
 
+
 /* Query the scope of queue metrics - global or per communicator */
 int PERUSE_Query_queue_event_scope (int * scope)
 {
@@ -265,6 +266,8 @@ int PERUSE_Event_release (peruse_event_h * event_h)
     return PERUSE_SUCCESS;
 }
 
+
+#undef PERUSE_MPI_PARAM_CHECK
 #define PERUSE_MPI_PARAM_CHECK(obj_upper,obj_lower )                  \
     if (MPI_PARAM_CHECK) {                                            \
         if (PERUSE_EVENT_HANDLE_NULL == event_h ||                    \
@@ -301,6 +304,62 @@ int PERUSE_Event_comm_callback_set (
     return PERUSE_SUCCESS;
 }
 
+
+/* Set a new file callback */
+int PERUSE_Event_file_callback_set (
+        peruse_event_h            event_h,
+        peruse_file_callback_f *  callback_fn,
+        void *                    param)
+{
+    ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
+
+    PERUSE_MPI_PARAM_CHECK (FILE, file);
+
+    OPAL_THREAD_LOCK (&handle->lock);
+    handle->fn = (ompi_peruse_callback_f*) callback_fn;
+    handle->param = param;
+    OPAL_THREAD_UNLOCK (&handle->lock);
+
+    return PERUSE_SUCCESS;
+}
+
+/* Set a new win callback */
+ int PERUSE_Event_win_callback_set (
+        peruse_event_h            event_h,
+        peruse_win_callback_f *   callback_fn,
+        void *                    param)
+{
+    ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
+
+    PERUSE_MPI_PARAM_CHECK (WIN, win);
+
+    OPAL_THREAD_LOCK (&handle->lock);
+    handle->fn = (ompi_peruse_callback_f*) callback_fn;
+    handle->param = param;
+    OPAL_THREAD_UNLOCK (&handle->lock);
+
+    return PERUSE_SUCCESS;
+}
+
+#undef PERUSE_MPI_PARAM_CHECK
+#define PERUSE_MPI_PARAM_CHECK(obj_upper,obj_lower )                  \
+    if (MPI_PARAM_CHECK) {                                            \
+        if (PERUSE_EVENT_HANDLE_NULL == event_h ||                    \
+            ((ompi_peruse_handle_t*)event_h)->active ||               \
+            ((ompi_peruse_handle_t*)event_h)->type !=                 \
+                PERUSE_TYPE_ ## obj_upper)                            \
+            return PERUSE_ERR_EVENT_HANDLE;                           \
+                                                                      \
+        if (NULL == callback_fn || NULL == param)                     \
+            return PERUSE_ERR_PARAMETER;                              \
+        /*                                                            \
+         * XXX whethter the underlying MPI-object has been freed!??   \
+        if (ompi_ ## obj_lower ## _invalid (                          \
+              ((ompi_peruse_handle_t*)event_h)->obj_lower))           \
+            return PERUSE_ERR_MPI_OBJECT;                             \
+         */                                                           \
+    }                                                                 \
+
 /* Get the current comm callback */
 int PERUSE_Event_comm_callback_get (
         peruse_event_h            event_h,
@@ -313,6 +372,44 @@ int PERUSE_Event_comm_callback_get (
 
     OPAL_THREAD_LOCK (&handle->lock);
     *callback_fn = (peruse_comm_callback_f*) handle->fn;
+    *param = handle->param;
+    OPAL_THREAD_UNLOCK (&handle->lock);
+
+    return PERUSE_SUCCESS;
+}
+
+
+/* Get the current ile callback */
+int PERUSE_Event_file_callback_get (
+        peruse_event_h            event_h,
+        peruse_file_callback_f ** callback_fn,
+        void **                   param)
+{
+    ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
+
+    PERUSE_MPI_PARAM_CHECK (FILE, file);
+
+    OPAL_THREAD_LOCK (&handle->lock);
+    *callback_fn = (peruse_file_callback_f*) handle->fn;
+    *param = handle->param;
+    OPAL_THREAD_UNLOCK (&handle->lock);
+
+    return PERUSE_SUCCESS;
+}
+
+
+/* Get the current win callback */
+int PERUSE_Event_win_callback_get (
+        peruse_event_h            event_h,
+        peruse_win_callback_f **  callback_fn,
+        void **                   param)
+{
+    ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
+
+    PERUSE_MPI_PARAM_CHECK (WIN, win);
+
+    OPAL_THREAD_LOCK (&handle->lock);
+    *callback_fn = (peruse_win_callback_f*) handle->fn;
     *param = handle->param;
     OPAL_THREAD_UNLOCK (&handle->lock);
 
@@ -336,6 +433,7 @@ int PERUSE_Event_get (peruse_event_h event_h, int * event)
 
 
 /* Obtain MPI object associated with event handle */
+/* XXX Shouldn't we have 3 different functions to obtain a specific object Comm/File/Win */
 int PERUSE_Event_object_get (peruse_event_h event_h, void ** mpi_object)
 {
     ompi_peruse_handle_t * p = event_h;
