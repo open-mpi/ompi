@@ -92,7 +92,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
     /**
      * Whether an MPI_ABORT should print out a stack trace or not.
      */
-    OMPI_DECLSPEC bool ompi_mpi_abort_print_stack;
+    OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 
     /**
      * Whether  MPI_ABORT  should  print  out an  identifying  message
@@ -103,7 +103,7 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      * negative value = print the message and loop forever
      * positive value = print the message and delay for that many seconds
      */
-    OMPI_DECLSPEC int ompi_mpi_abort_delay;
+    OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
 
    /**
      * Register MCA parameters used by the MPI layer.
