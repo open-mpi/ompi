@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,6 +26,7 @@
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/peruse/peruse-internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -112,7 +113,24 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       } else {                                                            \
          (request)->req_bytes_packed = 0;                                 \
       }                                                                   \
+      PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                  \
+                               &(request)->req_base,                      \
+                               PERUSE_SEND);                              \
    }
+
+/**
+ * Mark the request as started from the PML base point of view.
+ *
+ *  @param request (IN)    The send request.
+ */
+
+#define MCA_PML_BASE_SEND_START( request )                    \
+    do {                                                      \
+        (request)->req_pml_complete = false;                  \
+        (request)->req_ompi.req_complete = false;             \
+        (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;  \
+        (request)->req_ompi.req_status._cancelled = 0;        \
+    } while (0)
 
 /**
  *  Release the ref counts on the communicator and datatype.
