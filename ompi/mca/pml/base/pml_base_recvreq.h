@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,6 +23,7 @@
 
 #include "ompi/mca/pml/base/pml_base_request.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/peruse/peruse-internal.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -78,7 +79,29 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_base.req_proc = NULL;                                 \
     (request)->req_base.req_pml_complete = (persistent ? true : false);  \
     (request)->req_base.req_free_called = false;                         \
+                                                                         \
+    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                   \
+                             &((request)->req_base),                     \
+                             PERUSE_RECV);                               \
 }
+/**
+ *
+ *
+ */
+#define MCA_PML_BASE_RECV_START( request )                                      \
+    do {                                                                        \
+        (request)->req_pml_complete = false;                                    \
+        (request)->req_ompi.req_complete = false;                               \
+        (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;                    \
+                                                                                \
+        /* always set the req_status.MPI_TAG to ANY_TAG before starting the     \
+         * request. This field is used if cancelled to find out if the request  \
+         * has been matched or not.                                             \
+         */                                                                     \
+        (request)->req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;                  \
+        (request)->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;                \
+        (request)->req_ompi.req_status._cancelled = 0;                          \
+    } while (0)
 
 /** 
  *  Return a receive request. Handle the release of the communicator and the
