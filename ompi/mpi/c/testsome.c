@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -43,10 +43,12 @@ int MPI_Testsome(int incount, MPI_Request requests[],
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (NULL == requests) {
-            rc = MPI_ERR_REQUEST;
-        } else if (NULL == indices) {
-            rc = MPI_ERR_ARG;
+        if( 0 != incount ) {
+            if( NULL == requests) {
+                rc = MPI_ERR_REQUEST;
+            } else if (NULL == indices) {
+                rc = MPI_ERR_ARG;
+            }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
