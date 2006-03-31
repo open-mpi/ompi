@@ -23,6 +23,13 @@ version 1.0.
 1.1
 ---
 
+- The PERUSE support is now available directly on the trunk. In order to
+  activate it add --enable-peruse to the configure options. All events
+  described in the PERUSE 2.0 draft are supported, plus one Open MPI
+  extension. PERUSE_COMM_REQ_XFER_CONTINUE allow to see how the data
+  is segmented internally, using multiple interfaces or the pipeline
+  engine. However, this version only support one event of each type
+  simultaneously attached to a communicator.
 - Add support for running jobs in heterogeneous environments.
   Currently supports environments with different endianness and
   different representations of C++ bool and Fortran LOGICAL.
