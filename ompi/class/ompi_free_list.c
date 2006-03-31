@@ -71,10 +71,12 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
 #endif
 
     if (NULL != fl->fl_mpool) {
+        ompi_free_list_memory_t *fl_mem;
+
         while (NULL != (item = opal_list_remove_first(&(fl->fl_allocations)))) {
             /* destruct the item (we constructed it), then free the memory chunk */
             OBJ_DESTRUCT(item);
-            ompi_free_list_memory_t *fl_mem = (ompi_free_list_memory_t*) item;
+            fl_mem = (ompi_free_list_memory_t*) item;
             fl->fl_mpool->mpool_free(fl->fl_mpool, item, fl_mem->registration);
         }
     } else {
