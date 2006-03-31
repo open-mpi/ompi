@@ -79,14 +79,14 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     rc = dat_ia_open(ia_name, mca_btl_udapl_component.udapl_evd_qlen,
             &btl->udapl_evd_async, &btl->udapl_ia);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_ia_open");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ia_open");
         return OMPI_ERROR;
     }
 
     /* create a protection zone */
     rc = dat_pz_create(btl->udapl_ia, &btl->udapl_pz);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_pz_create");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_pz_create");
         goto failure;
     }
 
@@ -95,7 +95,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_async,
             DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, DAT_IA_FIELD_NONE, NULL);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_ia_query");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ia_query");
         goto failure;
     }
 
@@ -106,7 +106,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
             mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_DTO_FLAG | DAT_EVD_RMR_BIND_FLAG, &btl->udapl_evd_dto);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_evd_create (dto)");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_evd_create (dto)");
         goto failure;
     }
 
@@ -114,7 +114,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
             mca_btl_udapl_component.udapl_evd_qlen, DAT_HANDLE_NULL,
             DAT_EVD_CR_FLAG | DAT_EVD_CONNECTION_FLAG, &btl->udapl_evd_conn);
     if(DAT_SUCCESS != rc) {
-        mca_btl_udapl_error(rc, "dat_evd_create (conn)");
+        MCA_BTL_UDAPL_ERROR(rc, "dat_evd_create (conn)");
         goto failure;
     }
 
@@ -129,7 +129,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
         if(DAT_SUCCESS == rc) {
             break;
         } else if(DAT_CONN_QUAL_IN_USE != rc) {
-            mca_btl_udapl_error(rc, "dat_psp_create");
+            MCA_BTL_UDAPL_ERROR(rc, "dat_psp_create");
             goto failure;
         }
     }
@@ -185,8 +185,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
           mca_btl_udapl_component.udapl_free_list_inc,
           NULL);
 
-    /* TODO - post receives */
-    /* TODO - can I always use SRQ, or just on new enough uDAPLs? */
+    /* TODO - Set up SRQ when it is supported */
     return OMPI_SUCCESS;
 
 failure:
@@ -222,7 +221,7 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
 }
 
 
-/**
+/*
  *
  */
 
@@ -285,6 +284,7 @@ int mca_btl_udapl_add_procs(
     return OMPI_SUCCESS;
 }
 
+
 int mca_btl_udapl_del_procs(struct mca_btl_base_module_t* btl, 
         size_t nprocs, 
         struct ompi_proc_t **procs, 
@@ -330,33 +330,31 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     mca_btl_udapl_frag_t* frag;
     int rc;
 
-    OPAL_OUTPUT((0, "udapl_alloc\n"));
+    OPAL_OUTPUT((0, "udapl_alloc %d\n", size));
 
-    /* TODO - note we allocate 'size' but we also have the header */
-    if(size <= btl->btl_eager_limit) { 
+    if(size <= btl->btl_eager_limit - sizeof(mca_btl_base_header_t)) { 
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
             size : btl->btl_eager_limit; 
-    } else { 
+    } else if(size <= btl->btl_max_send_size - sizeof(mca_btl_base_header_t) ) {
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_max_send_size ? 
             size : btl->btl_max_send_size; 
+    } else {
+        return NULL;
     }
 
     /* Set up the LMR triplet from the frag segment */
     /* Note that this triplet defines a sub-region of a registered LMR */
-    frag->triplet.lmr_context = frag->segment.seg_key.key32[0];
     frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
-    frag->triplet.segment_length = frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+    frag->triplet.segment_length =
+        frag->segment.seg_len + sizeof(mca_btl_base_header_t);
     
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0; 
     return &frag->base;
 }
 
@@ -624,16 +622,16 @@ int mca_btl_udapl_send(
     mca_btl_base_tag_t tag)
    
 {
-    mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
     OPAL_OUTPUT((0, "udapl_send %d\n", tag));
     
-    frag->btl = udapl_btl;
+    frag->btl = (mca_btl_udapl_module_t*)btl;
     frag->endpoint = endpoint;
     frag->hdr->tag = tag;
     frag->type = MCA_BTL_UDAPL_SEND;
 
+    /* TODO - will inlining this give worthwhile performance? */
     return mca_btl_udapl_endpoint_send(endpoint, frag);
 }
 
