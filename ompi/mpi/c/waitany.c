@@ -4,7 +4,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,7 +42,7 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
         int i;
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (requests == NULL) {
+        if( (NULL == requests) && (0 != count) ) {
             rc = MPI_ERR_REQUEST;
         }
         for (i = 0; i < count; i++) {
