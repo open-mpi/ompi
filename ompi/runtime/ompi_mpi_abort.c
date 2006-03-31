@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,16 +22,29 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_EXECINFO_H
+#include <execinfo.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
 
-#include "ompi/communicator/communicator.h"
+#include "opal/event/event.h"
 #include "opal/util/show_help.h"
 #include "orte/util/proc_info.h"
-#include "ompi/runtime/mpiruntime.h"
 #include "orte/runtime/runtime.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rmgr/rmgr.h"
+#include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
-#include "opal/event/event.h"
+#include "ompi/runtime/mpiruntime.h"
+#include "ompi/runtime/params.h"
 
 #if HAVE_SIGNAL_H
 #include <signal.h>
@@ -67,7 +81,9 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                bool kill_remote_of_intercomm)
 {
     orte_jobid_t my_jobid;
-    int ret=OMPI_SUCCESS;
+    int ret = OMPI_SUCCESS;
+    char hostname[MAXHOSTNAMELEN];
+    pid_t pid;
     
     /* Corner case: if we're being called as a result of the
        OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
@@ -76,6 +92,54 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     if (!ompi_mpi_initialized || ompi_mpi_finalized) {
         exit(errcode);
+    }
+
+    /* If we're going to print anything, get the hostname and PID of
+       this process */
+
+    if (ompi_mpi_abort_print_stack ||
+        0 != ompi_mpi_abort_delay) {
+        gethostname(hostname, sizeof(hostname));
+        pid = getpid();
+    }
+
+    /* Should we print a stack trace? */
+
+    if (ompi_mpi_abort_print_stack) {
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
+        int i;
+        int trace_size;
+        void *trace[32];
+        char **messages = (char **)NULL;
+
+        trace_size = backtrace(trace, 32);
+        messages = backtrace_symbols(trace, trace_size);
+
+        for (i = 0; i < trace_size; ++i) {
+            fprintf(stderr, "[%s:%d] [%d] func:%s\n", hostname, (int) pid, 
+                    i, messages[i]);
+            fflush(stderr);
+        }
+#endif
+    }
+
+    /* Should we wait for a while before aborting? */
+
+    if (0 != ompi_mpi_abort_delay) {
+        if (ompi_mpi_abort_delay < 0) {
+            fprintf(stderr ,"[%s:%d] Looping forever in MPI abort\n",
+                    hostname, (int) pid);
+            fflush(stderr);
+            while (1) { 
+                sleep(5); 
+            }
+        } else {
+            fprintf(stderr, "[%s:%d] Delaying for %d seconds in MPI_abort\n",
+                    hostname, (int) pid, ompi_mpi_abort_delay);
+            do {
+                sleep(1);
+            } while (--ompi_mpi_abort_delay > 0);
+        }
     }
 
     /* BWB - XXX - Should probably publish the error code somewhere */

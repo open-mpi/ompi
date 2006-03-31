@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -43,7 +44,8 @@ bool ompi_debug_no_free_handles = false;
 bool ompi_mpi_show_mca_params = false;
 char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_paffinity_alone = false;
-
+bool ompi_mpi_abort_generate_stack_trace = false;
+int ompi_mpi_abort_delay = 0;
 
 int ompi_mpi_register_params(void)
 {
@@ -135,6 +137,36 @@ int ompi_mpi_register_params(void)
                                 "If set, pin this process to the processor number indicated by the value",
                                 true, false, 
                                 -1, NULL);
+
+    /* MPI_ABORT controls */
+
+    mca_base_param_reg_int_name("mpi", "abort_delay",
+                                "If nonzero, print out an identifying message when MPI_ABORT is invoked (hostname, PID of the process that called MPI_ABORT) and delay for that many seconds before exiting (a negative delay value means to never abort).  This allows attaching of a debugger before quitting the job.",
+                                false, false, 
+                                ompi_mpi_abort_delay,
+                                &ompi_mpi_abort_delay);
+    
+    mca_base_param_reg_int_name("mpi", "abort_print_stack",
+                                "If nonzero, print out a stack trace when MPI_ABORT is invoked",
+                                false, 
+                                /* If we do not have stack trace
+                                   capability, make this a read-only
+                                   MCA param */
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
+                                false, 
+#else
+                                true,
+#endif
+                                (int) ompi_mpi_abort_print_stack,
+                                &value);
+#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
+    /* Only take the value if we have stack trace capability */
+    ompi_mpi_abort_print_stack = (bool) value;
+#else
+    /* If we do not have stack trace capability, ensure that this is
+       hard-coded to false */
+    ompi_mpi_abort_print_stack = false;
+#endif
 
     /* The ddt engine has a few parameters */
 
