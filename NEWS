@@ -23,6 +23,7 @@ version 1.0.
 1.1
 ---
 
+- Open MPI accept a count = 0 in all multiple completion MPI functions.
 - The PERUSE support is now available directly on the trunk. In order to
   activate it add --enable-peruse to the configure options. All events
   described in the PERUSE 2.0 draft are supported, plus one Open MPI

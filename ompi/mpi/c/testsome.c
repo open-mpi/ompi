@@ -61,8 +61,12 @@ int MPI_Testsome(int incount, MPI_Request requests[],
     /* optimize this in the future */
     rc = ompi_request_test_any(incount, requests, &index, &completed, pstatus);
     if(completed) {
-        *outcount = (index == MPI_UNDEFINED) ? MPI_UNDEFINED : 1;
-        indices[0] = index;
+        if( MPI_UNDEFINED == index ) {
+            *outcount = MPI_UNDEFINED;
+        } else {
+            *outcount = 1;
+            indices[0] = index;
+        }
     } else {
         *outcount = 0;
     }
