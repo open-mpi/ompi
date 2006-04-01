@@ -83,7 +83,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     orte_jobid_t my_jobid;
     int ret = OMPI_SUCCESS;
     char hostname[MAXHOSTNAMELEN];
-    pid_t pid;
+    pid_t pid = 0;
     
     /* Corner case: if we're being called as a result of the
        OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
