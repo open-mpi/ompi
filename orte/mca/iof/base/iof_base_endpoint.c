@@ -230,7 +230,7 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
 /* return true if we should read stdin from fd, false otherwise */
 static bool orte_iof_base_endpoint_stdin_check(int fd)
 {
-#if !defined(__WINDOWS__)
+#if !defined(__WINDOWS__) && defined(HAVE_TCGETPGRP)
     if( isatty(fd) && (getpgrp() != tcgetpgrp(fd)) ) {
         return false;
     }

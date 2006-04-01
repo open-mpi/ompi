@@ -1,4 +1,4 @@
-enable_f77=no
+enable_mpi_f77=no
 enable_io_romio=no
 enable_static=yes
 enable_shared=no
@@ -7,6 +7,9 @@ enable_pretty_print_stacktrace=no
 enable_dlopen=no
 with_portals_config=redstorm
 with_memory_manager=none
-enable_mca_no_build=maffinity-first_use,maffinity-libnuma,paffinity-linux,timer-linux,gpr-proxy,gpr-replica,pml-teg,pml-uniq,rml-oob,btl-sm,mpool-sm,btl-self,ptl-sm,ptl-self,ns-proxy,rds-resfile,sds-env,sds-seed,sds-singleton,ras-slurm,pls-slurm,pls-rsh
-with_memory_manager=no
+enable_mca_no_build=maffinity-first_use,maffinity-libnuma,paffinity-linux,timer-linux,gpr-proxy,gpr-replica,iof-svc,ns-proxy,oob-tcp,pls-rsh,ras-dash_host,ras-localhost,rds-hostfile,rds-resfile,rmaps-round_robin,rmgr-proxy,rmgr-urm,rml-oob,sds-env,sds-seed,sds-singleton,btl-sm,btl-self,coll-hierarch,coll-sm,common-sm,mpool-sm,pml-dr,pml-portals
 enable_heterogeneous=no
+enable_pty_support=no
+enable_mem_debug=no
+enable_mem_profile=no
+with_slurm=no
