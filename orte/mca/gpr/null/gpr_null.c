@@ -22,6 +22,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
+#include "orte/mca/gpr/base/base.h"
 
 
 static int
@@ -59,23 +60,6 @@ static int
 orte_gpr_null_cleanup_proc(orte_process_name_t * proc)
 {
   return ORTE_SUCCESS;
-}
-
-static int orte_gpr_null_create_value(orte_gpr_value_t **value,
-                               orte_gpr_addr_mode_t addr_mode,
-                               char *segment,
-                               size_t cnt,  /**< Number of keyval objects */
-                               size_t num_tokens)
-{
-    return ORTE_SUCCESS;
-}
-
-static int orte_gpr_null_create_keyval(orte_gpr_keyval_t **keyval,
-                                char *key,
-                                orte_data_type_t type,
-                                void *data)
-{
-    return ORTE_SUCCESS;
 }
 
 static int
@@ -387,8 +371,8 @@ orte_gpr_base_module_t orte_gpr_null_module = {
     orte_gpr_null_delete_segment_nb,
     orte_gpr_null_index_nb,
     /* GENERAL OPERATIONS */
-    orte_gpr_null_create_value,
-    orte_gpr_null_create_keyval,
+    orte_gpr_base_create_value,
+    orte_gpr_base_create_keyval,
     orte_gpr_null_preallocate_segment,
     orte_gpr_null_deliver_notify_msg,
     /* ARITHMETIC OPERATIONS */
