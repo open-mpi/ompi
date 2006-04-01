@@ -100,11 +100,17 @@ static void set_handler_default(int sig);
 static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout) 
 {
     time_t end;
+    pid_t ret;
 
     end = time(NULL) + timeout;
     while (time(NULL) < end) {
-        if (pid == waitpid(pid, NULL, WNOHANG)) {
+        ret = waitpid(pid, NULL, WNOHANG);
+        if (pid == ret) {
             /* It died -- return success */
+            return true;
+        } else if (-1 == pid && ECHILD == errno) {
+            /* The pid no longer exists, so we'll call this "good
+               enough for government work" */
             return true;
         }
 
