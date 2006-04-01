@@ -363,26 +363,20 @@ int mca_pml_ob1_send_request_start_buffered(
     iov.iov_base = (void*)(((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset);
     iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
 
-    if((rc = ompi_convertor_pack(
-            &sendreq->req_send.req_convertor,
-            &iov,
-            &iov_count,
-            &max_data,
-            &free_after)) < 0) {
-            mca_bml_base_free(bml_btl, descriptor);
-            return rc;
+    if((rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
+                                  &iov,
+                                  &iov_count,
+                                  &max_data,
+                                  &free_after)) < 0) {
+        mca_bml_base_free(bml_btl, descriptor);
+        return rc;
     }
 
     /* re-init convertor for packed data */
-    ompi_convertor_prepare_for_send(
-            &sendreq->req_send.req_convertor,
-            sendreq->req_send.req_datatype,
-            sendreq->req_send.req_count,
-            sendreq->req_send.req_addr);
-#if 0
-    ompi_convertor_set_position( &sendreq->req_send.req_convertor, 
-                                 &sendreq->req_send_offset );
-#endif
+    ompi_convertor_prepare_for_send( &sendreq->req_send.req_convertor,
+                                     sendreq->req_send.req_datatype,
+                                     sendreq->req_send.req_count,
+                                     sendreq->req_send.req_addr );
     /* request is complete at mpi level */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     MCA_PML_OB1_SEND_REQUEST_MPI_COMPLETE(sendreq);
