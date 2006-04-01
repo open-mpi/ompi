@@ -123,7 +123,7 @@
 #############################################################################
 
 Summary: A powerful implementaion of MPI
-Name: openmpi
+Name: %{?name:%{name}}%{!?name:openmpi}
 Version: $VERSION
 Release: 1
 License: BSD
@@ -213,7 +213,7 @@ This subpackage provides the documentation for Open MPI.
 #
 #############################################################################
 %prep
-%setup -q 
+%setup -q -n openmpi-%{version}
 
 #############################################################################
 #

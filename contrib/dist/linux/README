@@ -102,3 +102,7 @@ or SRPM directly.  The following options are permissable on the
   MPI software.  If 0, build multiple sub-package RPMs to split up the
   Open MPI code into separate functional areas.  See the spec file for
   the exact division and subpackage definitions.
+
+- name: string (default "openmpi")
+  If set, used as the name of the RPM (useful if you want to add a
+  compiler name -- or some other qualifier -- to the RPM name).
