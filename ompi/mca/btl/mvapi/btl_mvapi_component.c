@@ -199,11 +199,11 @@ int mca_btl_mvapi_component_open(void)
                                       8,  &mca_btl_mvapi_component.srq_sd_max); 
 
     mca_btl_mvapi_param_register_int("use_eager_rdma", "user RDMA for eager messages", 
-            0, &mca_btl_mvapi_component.use_eager_rdma);
+            0, (int*) &mca_btl_mvapi_component.use_eager_rdma);
     if (mca_btl_mvapi_component.use_srq)
         mca_btl_mvapi_component.use_eager_rdma = 0;
     mca_btl_mvapi_param_register_int("eager_rdma_threashold", "Open rdma channel for eager messages after this number of messages received from peer (zero to disable)",
-            100, &mca_btl_mvapi_component.eager_rdma_threashold);
+            100, (int*)&mca_btl_mvapi_component.eager_rdma_threashold);
     mca_btl_mvapi_param_register_int("max_eager_rdma", "Maximum number of eager RDMA connections",
             16, (int*)&mca_btl_mvapi_component.max_eager_rdma);
     mca_btl_mvapi_param_register_int("eager_rdma_num", "Number of RDMA buffers for eager messages",
@@ -594,6 +594,10 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     return btls;
 }
 
+static int mca_btl_mvapi_handle_incoming_hp(mca_btl_mvapi_module_t *,
+        mca_btl_mvapi_endpoint_t *,
+        mca_btl_mvapi_frag_t *, 
+        size_t);
 int mca_btl_mvapi_handle_incoming_hp(
         mca_btl_mvapi_module_t *mvapi_btl,
         mca_btl_mvapi_endpoint_t *endpoint,
@@ -698,7 +702,7 @@ int mca_btl_mvapi_handle_incoming_hp(
 int mca_btl_mvapi_component_progress( void )
 {
     uint32_t i, j, c;
-    int count = 0, ret;
+    int count = 0, hret;
     int32_t credits;
     
     mca_btl_mvapi_frag_t* frag;
@@ -741,11 +745,11 @@ int mca_btl_mvapi_component_progress( void )
                 frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + 
                     sizeof(mca_btl_mvapi_header_t);
                 
-                ret = mca_btl_mvapi_handle_incoming_hp(mvapi_btl,
+                hret = mca_btl_mvapi_handle_incoming_hp(mvapi_btl,
                         frag->endpoint, frag, 
                         size - sizeof(mca_btl_mvapi_footer_t));
-                if (ret != MPI_SUCCESS)
-                    return ret;
+                if (hret != MPI_SUCCESS)
+                    return hret;
                 count++;
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
@@ -825,10 +829,10 @@ int mca_btl_mvapi_component_progress( void )
             case VAPI_CQE_RQ_SEND_DATA:
                 /* process a RECV */
                 frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id;
-                ret = mca_btl_mvapi_handle_incoming_hp(mvapi_btl,
+                hret = mca_btl_mvapi_handle_incoming_hp(mvapi_btl,
                         frag->endpoint, frag, comp.byte_len);
-                if (ret != OMPI_SUCCESS)
-                    return ret;
+                if (hret != OMPI_SUCCESS)
+                    return hret;
                 count++;
                 break;
 
