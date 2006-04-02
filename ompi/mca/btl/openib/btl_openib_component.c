@@ -187,11 +187,11 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("srq_sd_max", "Maximum number of send descriptors posted. (SRQ)",
                                       8,  &mca_btl_openib_component.srq_sd_max);
     mca_btl_openib_param_register_int("use_eager_rdma", "user RDMA for eager messages", 
-                                      0, &mca_btl_openib_component.use_eager_rdma);
+                                      0, (int*) &mca_btl_openib_component.use_eager_rdma);
     if (mca_btl_openib_component.use_srq)
         mca_btl_openib_component.use_eager_rdma = 0;
     mca_btl_openib_param_register_int("eager_rdma_threashold", "Open rdma channel for eager messages after this number of messages received from peer", 
-                                      100, &mca_btl_openib_component.eager_rdma_threashold);
+                                      100, (int*) &mca_btl_openib_component.eager_rdma_threashold);
     mca_btl_openib_param_register_int("max_eager_rdma", "Maximum number of eager RDMA connections",
                                       16, (int*)&mca_btl_openib_component.max_eager_rdma);
     mca_btl_openib_param_register_int("eager_rdma_num", "Number of RDMA buffers for eager messages",
@@ -601,6 +601,10 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     return btls;
 }
 
+static int mca_btl_openib_handle_incoming_hp(mca_btl_openib_module_t *,
+        mca_btl_openib_endpoint_t *,
+        mca_btl_openib_frag_t *, 
+        size_t);
 int mca_btl_openib_handle_incoming_hp(
         mca_btl_openib_module_t *openib_btl,
         mca_btl_openib_endpoint_t *endpoint,
@@ -799,7 +803,7 @@ int mca_btl_openib_component_progress()
 
                 /* check to see if we need to progress any pending desciptors */
                 while (!opal_list_is_empty(&endpoint->pending_frags_hp) &&
-                        endpoint->sd_wqe_hp > 0 && (endpoint->sd_tokens_hp > 0 | endpoint->eager_rdma_remote.tokens > 0)) {
+                        endpoint->sd_wqe_hp > 0 && (endpoint->sd_tokens_hp > 0 || endpoint->eager_rdma_remote.tokens > 0)) {
                     opal_list_item_t *frag_item;
                     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
                     frag_item = opal_list_remove_first(&(endpoint->pending_frags_hp));
