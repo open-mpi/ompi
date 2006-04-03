@@ -24,7 +24,7 @@ AC_DEFUN([OMPI_CHECK_XCPU],[
                 [AC_HELP_STRING([--with-xcpu],
                                 [Path to xcpu installation])])
 
-    AS_IF([test ! -z "$with_xcpu" -a "$with_xcpu" = "no"],[$4], [ 
+    AS_IF([test "$with_xcpu" = "no"],[$3], [ 
         ompi_check_xcpu_save_CPPFLAGS="$CPPFLAGS"
         ompi_check_xcpu_save_LDFLAGS="$LDFLAGS"
         ompi_check_xcpu_save_LIBS="$LIBS"
@@ -49,15 +49,14 @@ AC_DEFUN([OMPI_CHECK_XCPU],[
         LDFLAGS="$ompi_check_xcpu_save_LDFLAGS"
         LIBS="$ompi_check_xcpu_save_LIBS"
 
-        AS_IF([test "$ompi_check_xcpu_works" != "no"], 
+        AS_IF([test "$ompi_check_xcpu_works" = "yes"], 
               [AS_IF([test ! -z "$with_xcpu" -a "$with_xcpu" != "yes"], 
                      [$1_CPPFLAGS="$$1_CPPFLAGS -I$with_xcpu/include"
                       $1_LDFLAGS="$$1_LDFLAGS -L$with_xcpu/lib"])
                $1_LIBS="$$1_LIBS -lxcpu"
-               AS_IF([test "$ompi_check_xcpu_works" = "yes"], [$2], [$3])], 
+               $2],
               [AS_IF([test ! -z "$with_xcpu"],
-                     [AC_MSG_ERROR([xcpu support requested but not found.  Perhaps
-you need to specify the location of the xcpu libraries.])])
-               $4])
+                     [AC_MSG_ERROR([xcpu support requested but not found.  Perhaps you need to specify the location of the xcpu libraries.])])
+               $3])
     ])
 ])

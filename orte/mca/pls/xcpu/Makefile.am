@@ -18,7 +18,7 @@
 
 #dist_pkgdata_DATA = help-pls-bproc.txt
 
-AM_CPPFLAGS = -I$(top_ompi_builddir)/src/include $(pls_xcpu_CPPFLAGS) -DORTE_BINDIR="\"$(bindir)\""
+AM_CPPFLAGS = $(pls_xcpu_CPPFLAGS)
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
