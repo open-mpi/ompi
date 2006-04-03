@@ -85,8 +85,11 @@ extern "C" {
                 (RC) = MPI_ERR_BUFFER;                                  \
             } else {                                                    \
                 unsigned long size = 0;                                 \
+                long true_lb       = 0;                                 \
+                long true_extended = 0;                                 \
                 ompi_ddt_get_size((DDT), &size);                        \
-                if ( size ) {                                           \
+                ompi_ddt_get_true_extent((DDT), &true_lb, &true_extended); \
+                if ( 0 < size && 0 == true_lb ) {                       \
                     (RC) = MPI_ERR_BUFFER;                              \
                 }                                                       \
             }                                                           \
