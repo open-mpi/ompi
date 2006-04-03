@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -214,6 +214,11 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
                                      ompi_status_public_t * status )
 {
     ompi_request_t *request = *rptr;
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    int do_it_once = 0;
+
+ recheck_request_status:
+#endif
     opal_atomic_mb();
     if( request->req_state == OMPI_REQUEST_INACTIVE ) {
         *completed = true;
@@ -233,10 +238,18 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
         }
         return ompi_request_free(rptr);
     }
-    *completed = false;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress();
+    if( 0 == do_it_once ) {
+        /**
+         * If we run the opal_progress then check the status of the request before
+         * leaving. We will call the opal_progress only once per call.
+         */
+        opal_progress();
+        do_it_once++;
+        goto recheck_request_status;
+    }
 #endif
+    *completed = false;
     return OMPI_SUCCESS;
 }
 
