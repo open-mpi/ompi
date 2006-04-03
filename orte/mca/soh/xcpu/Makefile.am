@@ -16,11 +16,6 @@
 # $HEADER$
 #
 
-
-
-headers = \
-	soh_xcpu.h
-
 if OMPI_BUILD_soh_xcpu_DSO
 component_noinst =
 component_install = mca_soh_xcpu.la
@@ -29,29 +24,20 @@ component_noinst = libmca_soh_xcpu.la
 component_install =
 endif
 
-# Conditionally install the header files
-
-if WANT_INSTALL_HEADERS
-ortedir = $(includedir)/openmpi/orte/mca/soh/xcpu
-orte_HEADERS = $(headers)
-else
-ortedir = $(includedir)
-endif
-
-host_SOURCES = \
+xcpu_SOURCES = \
     soh_xcpu.c \
     soh_xcpu.h \
     soh_xcpu_component.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_soh_xcpu_la_SOURCES = $(host_SOURCES)
+mca_soh_xcpu_la_SOURCES = $(xcpu_SOURCES)
 mca_soh_xcpu_la_LIBADD = \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
 mca_soh_xcpu_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_soh_xcpu_la_SOURCES = $(host_SOURCES)
+libmca_soh_xcpu_la_SOURCES = $(xcpu_SOURCES)
 libmca_soh_xcpu_la_LIBADD =
 libmca_soh_xcpu_la_LDFLAGS = -module -avoid-version
