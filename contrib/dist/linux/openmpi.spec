@@ -123,7 +123,7 @@
 #############################################################################
 
 Summary: A powerful implementaion of MPI
-Name: %{?name:%{name}}%{!?name:openmpi}
+Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
 Release: 1
 License: BSD
