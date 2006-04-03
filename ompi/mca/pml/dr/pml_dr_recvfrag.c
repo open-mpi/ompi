@@ -181,6 +181,7 @@ void mca_pml_dr_recv_frag_callback(
                                                  &hdr->hdr_common, 
                                                  hdr->hdr_match.hdr_src_ptr.pval, 
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
+                        return;
                     } else { 
                         OPAL_OUTPUT((0, "%s:%d: the world as we know it is bad\n", __FILE__, __LINE__));
                         orte_errmgr.abort();
