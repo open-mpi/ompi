@@ -231,6 +231,15 @@ static inline int ompi_request_test(
         *completed = false;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
         opal_progress();
+        /* see if our request finished, since we just progressed
+           things along */
+        if (request->req_complete) {
+            *completed = true;
+            if (MPI_STATUS_IGNORE != status) {
+                *status = request->req_status;
+            }
+            return request->req_fini(rptr);
+        }
 #endif
         return OMPI_SUCCESS;
     }
