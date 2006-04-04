@@ -203,7 +203,7 @@ int main(int argc, char *argv[])
 
   if (opal_cmd_line_is_taken(cmd_line, "pretty")) {
     ompi_info::pretty = true;
-  } else if (opal_cmd_line_is_taken(cmd_line, "parsable")) {
+  } else if (opal_cmd_line_is_taken(cmd_line, "parsable") || opal_cmd_line_is_taken(cmd_line, "parseable")) {
     ompi_info::pretty = false;
   }
 
