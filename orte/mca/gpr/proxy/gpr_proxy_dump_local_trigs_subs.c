@@ -45,50 +45,50 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_dump_local_triggers(int output_id)
+int orte_gpr_proxy_dump_local_triggers(void)
 {
     orte_gpr_proxy_trigger_t **trigs;
     size_t j, k;
     
-    opal_output(output_id, "DUMP OF LOCAL TRIGGERS for [%lu,%lu,%lu]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL TRIGGERS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
-    opal_output(output_id, "Number of triggers: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_trigs);
+    opal_output(orte_gpr_base_output, "Number of triggers: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_trigs);
 
     trigs = (orte_gpr_proxy_trigger_t**)(orte_gpr_proxy_globals.triggers)->addr;
     for (j=0, k=0; k < orte_gpr_proxy_globals.num_trigs &&
                    j < (orte_gpr_proxy_globals.triggers)->size; j++) {
         if (NULL != trigs[j]) {
             k++;
-            opal_output(output_id, "Data for trigger %lu", (unsigned long) trigs[j]->id);
+            opal_output(orte_gpr_base_output, "Data for trigger %lu", (unsigned long) trigs[j]->id);
             if (NULL == trigs[j]->name) {
-                opal_output(output_id, "\tNOT a named trigger");
+                opal_output(orte_gpr_base_output, "\tNOT a named trigger");
             } else {
-                opal_output(output_id, "\ttrigger name: %s", trigs[j]->name);
+                opal_output(orte_gpr_base_output, "\ttrigger name: %s", trigs[j]->name);
             }
         }
     }
     return ORTE_SUCCESS;    
 }
 
-int orte_gpr_proxy_dump_local_subscriptions(int output_id)
+int orte_gpr_proxy_dump_local_subscriptions(void)
 {
     orte_gpr_proxy_subscriber_t **subs;
     size_t j, k;
     
-    opal_output(output_id, "DUMP OF LOCAL SUBSCRIPTIONS for [%lu,%lu,%lu]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL SUBSCRIPTIONS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
-    opal_output(output_id, "Number of subscriptions: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_subs);
+    opal_output(orte_gpr_base_output, "Number of subscriptions: %lu\n", (unsigned long) orte_gpr_proxy_globals.num_subs);
 
     subs = (orte_gpr_proxy_subscriber_t**)(orte_gpr_proxy_globals.subscriptions)->addr;
     for (j=0, k=0; k < orte_gpr_proxy_globals.num_subs &&
                    j < (orte_gpr_proxy_globals.subscriptions)->size; j++) {
         if (NULL != subs[j]) {
             k++;
-            opal_output(output_id, "Data for subscription %lu", (unsigned long) subs[j]->id);
+            opal_output(orte_gpr_base_output, "Data for subscription %lu", (unsigned long) subs[j]->id);
             if (NULL == subs[j]->name) {
-                opal_output(output_id, "\tNOT a named subscription");
+                opal_output(orte_gpr_base_output, "\tNOT a named subscription");
             } else {
-                opal_output(output_id, "\tsubscription name: %s", subs[j]->name);
+                opal_output(orte_gpr_base_output, "\tsubscription name: %s", subs[j]->name);
             }
         }
     }

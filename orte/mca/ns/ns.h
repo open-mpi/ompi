@@ -599,13 +599,13 @@ typedef int (*orte_ns_base_module_get_job_peers_fn_t)(orte_process_name_t **proc
 /*
  * DIAGNOSTIC INTERFACES
  */
-typedef int (*orte_ns_base_module_dump_cells_fn_t)(int output_id);
+typedef int (*orte_ns_base_module_dump_cells_fn_t)(void);
 
-typedef int (*orte_ns_base_module_dump_jobs_fn_t)(int output_id);
+typedef int (*orte_ns_base_module_dump_jobs_fn_t)(void);
 
-typedef int (*orte_ns_base_module_dump_tags_fn_t)(int output_id);
+typedef int (*orte_ns_base_module_dump_tags_fn_t)(void);
 
-typedef int (*orte_ns_base_module_dump_datatypes_fn_t)(int output_id);
+typedef int (*orte_ns_base_module_dump_datatypes_fn_t)(void);
 
 
 /*

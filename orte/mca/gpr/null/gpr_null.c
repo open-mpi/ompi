@@ -174,69 +174,67 @@ orte_gpr_null_cancel_trigger(orte_gpr_trigger_id_t trig_number)
 }
 
 static int
-orte_gpr_null_dump_all(int output_id)
+orte_gpr_null_dump_all(void)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_segments(char *segment, int output_id)
+orte_gpr_null_dump_segments(char *segment)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
+orte_gpr_null_dump_triggers(orte_gpr_trigger_id_t start)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id)
+orte_gpr_null_dump_subscriptions(orte_gpr_subscription_id_t start)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_local_triggers(int output_id)
+orte_gpr_null_dump_local_triggers(void)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_local_subscriptions(int output_id)
+orte_gpr_null_dump_local_subscriptions(void)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_callbacks(int output_id)
+orte_gpr_null_dump_callbacks(void)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_notify_msg(orte_gpr_notify_message_t * msg,
-                     int output_id)
+orte_gpr_null_dump_notify_msg(orte_gpr_notify_message_t * msg)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_notify_data(orte_gpr_notify_data_t * data,
-                      int output_id)
+orte_gpr_null_dump_notify_data(orte_gpr_notify_data_t * data)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_value(orte_gpr_value_t * value, int output_id)
+orte_gpr_null_dump_value(orte_gpr_value_t * value)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_dump_segment_size(char *segment, int output_id)
+orte_gpr_null_dump_segment_size(char *segment)
 {
     return ORTE_SUCCESS;
 }
@@ -336,16 +334,14 @@ static int orte_gpr_null_deliver_notify_msg(orte_gpr_notify_message_t *msg)
 
 static int orte_gpr_null_dump_a_trigger(
                             char *name,
-                            orte_gpr_trigger_id_t id,
-                            int output_id)
+                            orte_gpr_trigger_id_t id)
 {
     return ORTE_SUCCESS;
 }
 
 static int orte_gpr_null_dump_a_subscription(
                             char *name,
-                            orte_gpr_subscription_id_t id,
-                            int output_id)
+                            orte_gpr_subscription_id_t id)
 {
     return ORTE_SUCCESS;
 }

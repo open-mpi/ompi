@@ -130,17 +130,23 @@ int orte_ns_base_open(void)
 {
     int param, value, rc;
     orte_data_type_t tmp;
+    opal_output_stream_t kill_prefix;
 
     /* Debugging / verbose output */
-
+    /** setup the structure to kill the blasted prefix that opal_output
+     * now defaults to including so the output can be legible again!
+     */
+    OBJ_CONSTRUCT(&kill_prefix, opal_output_stream_t);
+    kill_prefix.lds_want_stderr = true;
+    kill_prefix.lds_prefix = NULL;
+    
     param = mca_base_param_reg_int_name("ns_base", "verbose",
                                         "Verbosity level for the ns framework",
                                         false, false, 0, &value);
     if (value != 0) {
-        mca_ns_base_output = opal_output_open(NULL);
-    } else {
-        mca_ns_base_output = -1;
+        kill_prefix.lds_verbose_level = value;
     }
+    mca_ns_base_output = opal_output_open(&kill_prefix);
 
     /* register the base system types with the DPS */
     tmp = ORTE_NAME;

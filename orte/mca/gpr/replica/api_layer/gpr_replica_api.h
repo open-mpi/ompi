@@ -132,37 +132,35 @@ int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig);
 /*
  * Diagnostic functions
  */
-int orte_gpr_replica_dump_all(int output_id);
+int orte_gpr_replica_dump_all(void);
 
-int orte_gpr_replica_dump_segments(char *segment, int output_id);
+int orte_gpr_replica_dump_segments(char *segment);
 
-int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id);
+int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start);
 
-int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id);
+int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start);
 
 int orte_gpr_replica_dump_a_trigger(
                             char *name,
-                            orte_gpr_trigger_id_t id,
-                            int output_id);
+                            orte_gpr_trigger_id_t id);
 
 int orte_gpr_replica_dump_a_subscription(
                             char *name,
-                            orte_gpr_subscription_id_t id,
-                            int output_id);
+                            orte_gpr_subscription_id_t id);
 
-int orte_gpr_replica_dump_local_triggers(int output_id);
+int orte_gpr_replica_dump_local_triggers(void);
 
-int orte_gpr_replica_dump_local_subscriptions(int output_id);
+int orte_gpr_replica_dump_local_subscriptions(void);
 
-int orte_gpr_replica_dump_callbacks(int output_id);
+int orte_gpr_replica_dump_callbacks(void);
 
-int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id);
+int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg);
 
-int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_id);
+int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data);
 
-int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id);
+int orte_gpr_replica_dump_value(orte_gpr_value_t *value);
 
-int orte_gpr_replica_dump_segment_size(char *segment, int output_id);
+int orte_gpr_replica_dump_segment_size(char *segment);
 
 /*
  * General functions

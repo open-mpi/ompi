@@ -244,7 +244,9 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
                         char *name,
                         orte_gpr_subscription_id_t id);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_callbacks(orte_buffer_t *cmd);
-    OMPI_DECLSPEC int orte_gpr_base_print_dump(orte_buffer_t *buffer, int output_id);
+    
+    OMPI_DECLSPEC int orte_gpr_base_print_dump(orte_buffer_t *buffer);
+    
     OMPI_DECLSPEC int orte_gpr_base_dump_keyval_value(orte_buffer_t *buffer,
                         orte_gpr_keyval_t *iptr);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_segment_size(orte_buffer_t *cmd, char *segment);

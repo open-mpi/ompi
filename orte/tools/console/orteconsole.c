@@ -81,6 +81,28 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       &orte_console_globals.hostfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide a hostfile" },
 
+    { "orte", "debug", NULL, 'd', NULL, "debug-devel", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of OpenRTE" },
+    { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
+      NULL, OPAL_CMD_LINE_TYPE_INT,
+      "Enable debugging of any OpenRTE daemons used by this application" },
+    { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
+    { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Do not detach OpenRTE daemons used by this application" },
+    { "universe", NULL, NULL, '\0', NULL, "universe", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Set the universe name as username@hostname:universe_name for this application" },
+    { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
+      &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
+      "Set the root for the session directory tree for orterun ONLY" },
+    { "orte", "universe", "exist", '\0', NULL, NULL, (int)false,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Report error if universe does not already exist" },
+
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL,
@@ -178,8 +200,8 @@ orte_console_command_t console_commands[] = {
       "mpispawn -np <number of process> [ <-option name> [option argument] ] <process name>",
       "Spawn MPI process(es)" },
 
-    { "ps", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
-      orte_console_not_imp,
+    { "ps", NULL, 0, ORTE_CONSOLE_TYPE_STD,
+      orte_console_ps,
       "ps",
       "Display process(es) status" },
 
@@ -223,10 +245,10 @@ orte_console_command_t console_commands[] = {
       "vmname [name]",
       "Set or print the current virtual machine name" },
 
-    { "devel", NULL, 0, ORTE_CONSOLE_TYPE_HIDDEN,
-      orte_console_devel,
-      "devel [arg1 arg2]",
-      "Development Debugging function" },
+    { "dump", NULL, 0, ORTE_CONSOLE_TYPE_STD,
+      orte_console_dump,
+      "dump [arg1 arg2]",
+      "Dump registry data - [all, segment, triggers, subscriptions] [segment_name]" },
 
     /* End of list */
     { NULL, NULL, 0, ORTE_CONSOLE_TYPE_NULL,
@@ -288,13 +310,21 @@ int main(int argc, char *argv[])
      * up incorrect infrastructure that only a singleton would
      * require
      */
-    daemon_is_active = false;
+    daemon_is_active = true;
     if (ORTE_SUCCESS != (ret = orte_init(true)) ) {
-        opal_show_help("help-orteconsole.txt", "orteconsole:init-failure", false,
-                       "orte_init()", ret);
-        return ret;
+        if (ORTE_ERR_UNREACH == ret) {
+            opal_output(0, "Specified universe could not be reached - please ensure it has been started\n");
+            return ret;
+        } else {
+            opal_show_help("help-orteconsole.txt", "orteconsole:init-failure", false,
+                           "orte_init()", ret);
+            return ret;
+        }
     }
-
+    if (orte_process_info.seed) {
+        daemon_is_active = false;
+    }
+    
     /*
      * Work Loop
      */
@@ -414,9 +444,65 @@ static int orte_console_not_imp(orte_console_input_command_t input_command) {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int orte_console_devel(orte_console_input_command_t input_command) {
+static int orte_console_dump(orte_console_input_command_t input_command) {
+    int i, j;
+    
     if(daemon_is_active) {
-        orte_gpr.dump_segment(NULL, 0);
+        if (NULL == input_command.argv[1]) { /** default to dump_all */
+            orte_gpr.dump_all();
+        } else if (strcmp(input_command.argv[1], "segment") == 0) {
+            if (2 < input_command.argc) {  /** specific segment was requested */
+                for (i=2; i < input_command.argc; i++) orte_gpr.dump_segment(input_command.argv[i]);
+            } else { /** nothing specific - dump them all */
+                orte_gpr.dump_segment(NULL);
+            }
+        } else if (strcmp(input_command.argv[1], "trigger") == 0) {
+            if (2 < input_command.argc) {  /** specific trigger was requested */
+                j = strtol(input_command.argv[2], NULL, 10);
+                orte_gpr.dump_triggers(j);
+            } else { /** nothing specific - dump them all */
+                orte_gpr.dump_triggers(0);
+            }
+        } else if (strcmp(input_command.argv[1], "subs") == 0) {
+            if (2 < input_command.argc) {  /** specific subscription was requested */
+                j = strtol(input_command.argv[2], NULL, 10);
+                orte_gpr.dump_subscriptions(j);
+            } else { /** nothing specific - dump them all */
+                orte_gpr.dump_subscriptions(0);
+           }
+        } else if (strcmp(input_command.argv[1], "callbacks") == 0) {
+                orte_gpr.dump_callbacks();
+        } else if (strcmp(input_command.argv[1], "cells") == 0) {
+                orte_ns.dump_cells();
+        } else if (strcmp(input_command.argv[1], "jobs") == 0) {
+                orte_ns.dump_jobs();
+        } else if (strcmp(input_command.argv[1], "tags") == 0) {
+                orte_ns.dump_tags();
+        } else if (strcmp(input_command.argv[1], "datatypes") == 0) {
+                orte_ns.dump_datatypes();
+        } else {
+            /** let user know that this isn't recognized */
+            opal_output(0, "orteconsole: specified dump option not recognized\n");
+        }    
+    } else {
+        /** let user know that this isn't available */
+       opal_output(0, "orteconsole: no daemon is active - dump cannot be executed\n");
+    }
+
+    return ORTE_SUCCESS;
+}
+
+static int orte_console_ps(orte_console_input_command_t input_command) {
+    if(daemon_is_active) {
+        /** find the jobids in the system */
+        /** for each jobid, get its status and output the info */
+        /** no real way to do this right now - need the 2.0 interface
+         * so let's just punt for the moment 
+         */
+        orte_ns.dump_jobs();
+    } else {
+        /** let user know that this isn't available */
+       opal_output(0, "orteconsole: no daemon is active - ps cannot be executed\n");
     }
 
     return ORTE_SUCCESS;

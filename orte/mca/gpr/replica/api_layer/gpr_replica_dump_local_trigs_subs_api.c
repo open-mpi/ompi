@@ -35,60 +35,60 @@
 
 #include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
 
-int orte_gpr_replica_dump_local_triggers(int output_id)
+int orte_gpr_replica_dump_local_triggers(void)
 {
     orte_gpr_replica_local_trigger_t **trigs;
     size_t j, k;
     
-    opal_output(output_id, "DUMP OF LOCAL TRIGGERS for [%lu,%lu,%lu]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL TRIGGERS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
-    opal_output(output_id, "Number of triggers: %lu\n", (unsigned long) orte_gpr_replica_globals.num_local_trigs);
+    opal_output(orte_gpr_base_output, "Number of triggers: %lu\n", (unsigned long) orte_gpr_replica_globals.num_local_trigs);
 
     trigs = (orte_gpr_replica_local_trigger_t**)(orte_gpr_replica_globals.local_triggers)->addr;
     for (j=0, k=0; k < orte_gpr_replica_globals.num_local_trigs &&
                    j < (orte_gpr_replica_globals.local_triggers)->size; j++) {
         if (NULL != trigs[j]) {
             k++;
-            opal_output(output_id, "Data for trigger %lu", (unsigned long) trigs[j]->id);
+            opal_output(orte_gpr_base_output, "Data for trigger %lu", (unsigned long) trigs[j]->id);
             if (NULL == trigs[j]->name) {
-                opal_output(output_id, "\tNOT a named trigger");
+                opal_output(orte_gpr_base_output, "\tNOT a named trigger");
             } else {
-                opal_output(output_id, "\ttrigger name: %s", trigs[j]->name);
+                opal_output(orte_gpr_base_output, "\ttrigger name: %s", trigs[j]->name);
             }
             if (NULL == trigs[j]->callback) {
-                opal_output(output_id, "\tNULL callback");
+                opal_output(orte_gpr_base_output, "\tNULL callback");
             } else {
-                opal_output(output_id, "\tCallback %0x", trigs[j]->callback);
+                opal_output(orte_gpr_base_output, "\tCallback %0x", trigs[j]->callback);
             }
         }
     }
     return ORTE_SUCCESS;    
 }
 
-int orte_gpr_replica_dump_local_subscriptions(int output_id)
+int orte_gpr_replica_dump_local_subscriptions(void)
 {
     orte_gpr_replica_local_subscriber_t **subs;
     size_t j, k;
     
-    opal_output(output_id, "DUMP OF LOCAL SUBSCRIPTIONS for [%lu,%lu,%lu]\n",
+    opal_output(orte_gpr_base_output, "DUMP OF LOCAL SUBSCRIPTIONS for [%lu,%lu,%lu]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name));
-    opal_output(output_id, "Number of subscriptions: %lu\n", (unsigned long) orte_gpr_replica_globals.num_local_subs);
+    opal_output(orte_gpr_base_output, "Number of subscriptions: %lu\n", (unsigned long) orte_gpr_replica_globals.num_local_subs);
 
     subs = (orte_gpr_replica_local_subscriber_t**)(orte_gpr_replica_globals.local_subscriptions)->addr;
     for (j=0, k=0; k < orte_gpr_replica_globals.num_local_subs &&
                    j < (orte_gpr_replica_globals.local_subscriptions)->size; j++) {
         if (NULL != subs[j]) {
             k++;
-            opal_output(output_id, "Data for subscription %lu", (unsigned long) subs[j]->id);
+            opal_output(orte_gpr_base_output, "Data for subscription %lu", (unsigned long) subs[j]->id);
             if (NULL == subs[j]->name) {
-                opal_output(output_id, "\tNOT a named subscription");
+                opal_output(orte_gpr_base_output, "\tNOT a named subscription");
             } else {
-                opal_output(output_id, "\tsubscription name: %s", subs[j]->name);
+                opal_output(orte_gpr_base_output, "\tsubscription name: %s", subs[j]->name);
             }
             if (NULL == subs[j]->callback) {
-                opal_output(output_id, "\tNULL callback");
+                opal_output(orte_gpr_base_output, "\tNULL callback");
             } else {
-                opal_output(output_id, "\tCallback %0x", subs[j]->callback);
+                opal_output(orte_gpr_base_output, "\tCallback %0x", subs[j]->callback);
             }        }
     }
     return ORTE_SUCCESS;    

@@ -132,7 +132,7 @@ OMPI_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
 
 OMPI_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
 
-OMPI_DECLSPEC    int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id);
+OMPI_DECLSPEC    int orte_ns_base_print_dump(orte_buffer_t *buffer);
 
 
 /* not available functions */
@@ -165,10 +165,10 @@ OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
 OMPI_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
                                   size_t *num_procs, orte_jobid_t job);
 
-OMPI_DECLSPEC    int orte_ns_base_dump_cells_not_available(int output_id);
-OMPI_DECLSPEC    int orte_ns_base_dump_jobs_not_available(int output_id);
-OMPI_DECLSPEC    int orte_ns_base_dump_tags_not_available(int output_id);
-OMPI_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(int output_id);
+OMPI_DECLSPEC    int orte_ns_base_dump_cells_not_available(void);
+OMPI_DECLSPEC    int orte_ns_base_dump_jobs_not_available(void);
+OMPI_DECLSPEC    int orte_ns_base_dump_tags_not_available(void);
+OMPI_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(void);
 
 /* Base functions used everywhere */
 OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs,

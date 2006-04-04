@@ -125,28 +125,28 @@ int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
 }
 
 int
-orte_ns_base_dump_cells_not_available(int output_id)
+orte_ns_base_dump_cells_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
 
 int
-orte_ns_base_dump_jobs_not_available(int output_id)
+orte_ns_base_dump_jobs_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
 
 int
-orte_ns_base_dump_tags_not_available(int output_id)
+orte_ns_base_dump_tags_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
 }
 
 int
-orte_ns_base_dump_datatypes_not_available(int output_id)
+orte_ns_base_dump_datatypes_not_available(void)
 {
     ORTE_ERROR_LOG(ORTE_ERR_UNREACH);
     return ORTE_ERR_UNREACH;
@@ -654,7 +654,7 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
 /*
  * DIAGNOSTIC FUNCTIONS
  */
-int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id)
+int orte_ns_base_print_dump(orte_buffer_t *buffer)
 {
     char *line;
     size_t n;
@@ -668,7 +668,7 @@ int orte_ns_base_print_dump(orte_buffer_t *buffer, int output_id)
            ORTE_ERROR_LOG(rc);
            return rc;
        }
-       opal_output(output_id, "%s", line);
+       opal_output(mca_ns_base_output, "%s", line);
        free(line);
        n=1;
     }

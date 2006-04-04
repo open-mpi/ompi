@@ -36,14 +36,14 @@
 
 #include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"
 
-int orte_gpr_replica_dump_all(int output_id)
+int orte_gpr_replica_dump_all(void)
 {
     orte_buffer_t *buffer;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-	   opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_all: entered for output on %d",
-		    ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
+	   opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_all: entered",
+		    ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -59,7 +59,7 @@ int orte_gpr_replica_dump_all(int output_id)
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 
@@ -68,14 +68,14 @@ int orte_gpr_replica_dump_all(int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_segments(char *segment, int output_id)
+int orte_gpr_replica_dump_segments(char *segment)
 {
     orte_buffer_t *buffer;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_segments: entered for output on %d",
-         ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_segments: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -91,7 +91,7 @@ int orte_gpr_replica_dump_segments(char *segment, int output_id)
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 
@@ -100,14 +100,14 @@ int orte_gpr_replica_dump_segments(char *segment, int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
+int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start)
 {
     orte_buffer_t *buffer;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_triggers: entered for output on %d",
-         ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_triggers: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -123,7 +123,7 @@ int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 
@@ -132,7 +132,7 @@ int orte_gpr_replica_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id)
+int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start)
 {
     orte_buffer_t *buffer;
     int rc;
@@ -150,7 +150,7 @@ int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int ou
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 
@@ -161,8 +161,7 @@ int orte_gpr_replica_dump_subscriptions(orte_gpr_subscription_id_t start, int ou
 
 int orte_gpr_replica_dump_a_trigger(
                             char *name,
-                            orte_gpr_trigger_id_t id,
-                            int output_id)
+                            orte_gpr_trigger_id_t id)
 {
     orte_buffer_t buffer;
     orte_gpr_replica_trigger_t **trigs;
@@ -213,7 +212,7 @@ int orte_gpr_replica_dump_a_trigger(
     
 PROCESS:
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(&buffer, output_id);
+        orte_gpr_base_print_dump(&buffer);
     }
     OBJ_DESTRUCT(&buffer);
 
@@ -224,8 +223,7 @@ PROCESS:
 
 
 int orte_gpr_replica_dump_a_subscription(char *name,
-                            orte_gpr_subscription_id_t id,
-                            int output_id)
+                            orte_gpr_subscription_id_t id)
 {
     orte_buffer_t buffer;
     orte_gpr_replica_subscription_t **subs;
@@ -276,7 +274,7 @@ int orte_gpr_replica_dump_a_subscription(char *name,
     
 PROCESS:
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(&buffer, output_id);
+        orte_gpr_base_print_dump(&buffer);
     }
     OBJ_DESTRUCT(&buffer);
 
@@ -286,14 +284,14 @@ PROCESS:
 }
 
 
-int orte_gpr_replica_dump_callbacks(int output_id)
+int orte_gpr_replica_dump_callbacks(void)
 {
     orte_buffer_t *buffer;
     int rc;
 
     if (orte_gpr_replica_globals.debug) {
-      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_callbacks: entered for output on %d",
-         ORTE_NAME_ARGS(orte_process_info.my_name), output_id);
+      opal_output(0, "[%lu,%lu,%lu] gpr_replica_dump_callbacks: entered",
+         ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -309,7 +307,7 @@ int orte_gpr_replica_dump_callbacks(int output_id)
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 
@@ -318,7 +316,7 @@ int orte_gpr_replica_dump_callbacks(int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id)
+int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg)
 {
     orte_buffer_t *answer;
     int rc;
@@ -335,7 +333,7 @@ int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -344,7 +342,7 @@ int orte_gpr_replica_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_
 }
 
 
-int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
+int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data)
 {
     orte_buffer_t *answer;
     int rc;
@@ -361,7 +359,7 @@ int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_i
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -369,7 +367,7 @@ int orte_gpr_replica_dump_notify_data(orte_gpr_notify_data_t *data, int output_i
     return rc;
 }
 
-int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id)
+int orte_gpr_replica_dump_value(orte_gpr_value_t *value)
 {
     orte_buffer_t *answer;
     int rc;
@@ -386,7 +384,7 @@ int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id)
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -394,7 +392,7 @@ int orte_gpr_replica_dump_value(orte_gpr_value_t *value, int output_id)
     return rc;
 }
 
-int orte_gpr_replica_dump_segment_size(char *segment, int output_id)
+int orte_gpr_replica_dump_segment_size(char *segment)
 {
     orte_buffer_t *buffer;
     int rc;
@@ -412,7 +410,7 @@ int orte_gpr_replica_dump_segment_size(char *segment, int output_id)
     }
 
     if (ORTE_SUCCESS == rc) {
-        orte_gpr_base_print_dump(buffer, output_id);
+        orte_gpr_base_print_dump(buffer);
     }
     OBJ_RELEASE(buffer);
 

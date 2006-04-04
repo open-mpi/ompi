@@ -815,7 +815,7 @@ int orte_ns_proxy_create_my_name(void)
 /*
  * DIAGNOSTIC functions
  */
-int orte_ns_proxy_dump_cells(int output_id)
+int orte_ns_proxy_dump_cells(void)
 {
     orte_buffer_t cmd;
     orte_buffer_t answer;
@@ -854,21 +854,21 @@ int orte_ns_proxy_dump_cells(int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&answer);
         return rc;
     }
 
     /* dump local cell tracker */
-    opal_output(output_id, "\n\n[%lu,%lu,%lu] Dump of Local Cell Tracker\n",
+    opal_output(mca_ns_base_output, "\n\n[%lu,%lu,%lu] Dump of Local Cell Tracker\n",
         ORTE_NAME_ARGS(orte_process_info.my_name));
     ptr = (orte_ns_proxy_cell_info_t**)(orte_ns_proxy.cells)->addr;
     for (i=0, j=0; j < orte_ns_proxy.num_cells &&
                    i < (orte_ns_proxy.cells)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            opal_output(output_id, "Num: %lu\tCell: %lu\n",
+            opal_output(mca_ns_base_output, "Num: %lu\tCell: %lu\n",
                 (unsigned long)j, (unsigned long)ptr[i]->cellid);
         }
     }
@@ -877,7 +877,7 @@ int orte_ns_proxy_dump_cells(int output_id)
 }
 
 
-int orte_ns_proxy_dump_jobs(int output_id)
+int orte_ns_proxy_dump_jobs(void)
 {
     orte_buffer_t cmd;
     orte_buffer_t answer;
@@ -913,7 +913,7 @@ int orte_ns_proxy_dump_jobs(int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&answer);
         return rc;
@@ -923,7 +923,7 @@ int orte_ns_proxy_dump_jobs(int output_id)
 }
 
 
-int orte_ns_proxy_dump_tags(int output_id)
+int orte_ns_proxy_dump_tags(void)
 {
     orte_buffer_t cmd;
     orte_buffer_t answer;
@@ -961,21 +961,21 @@ int orte_ns_proxy_dump_tags(int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&answer);
         return rc;
     }
 
     /* dump local tag tracker */
-    opal_output(output_id, "\n\n[%lu,%lu,%lu] Dump of Local Tag Tracker\n",
+    opal_output(mca_ns_base_output, "\n\n[%lu,%lu,%lu] Dump of Local Tag Tracker\n",
         ORTE_NAME_ARGS(orte_process_info.my_name));
     ptr = (orte_ns_proxy_tagitem_t**)(orte_ns_proxy.tags)->addr;
     for (i=0, j=0; j < orte_ns_proxy.num_tags &&
                    i < (orte_ns_proxy.tags)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            opal_output(output_id, "Num: %lu\tTag: %lu\tTag name: %s\n",
+            opal_output(mca_ns_base_output, "Num: %lu\tTag: %lu\tTag name: %s\n",
                 (unsigned long)j, (unsigned long)ptr[i]->tag, ptr[i]->name);
         }
     }
@@ -984,7 +984,7 @@ int orte_ns_proxy_dump_tags(int output_id)
 }
 
 
-int orte_ns_proxy_dump_datatypes(int output_id)
+int orte_ns_proxy_dump_datatypes(void)
 {
     orte_buffer_t cmd;
     orte_buffer_t answer;
@@ -1022,21 +1022,21 @@ int orte_ns_proxy_dump_datatypes(int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&answer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&answer);
         return rc;
     }
 
     /* dump local datatype tracker */
-    opal_output(output_id, "\n\n[%lu,%lu,%lu] Dump of Local Datatype Tracker\n",
+    opal_output(mca_ns_base_output, "\n\n[%lu,%lu,%lu] Dump of Local Datatype Tracker\n",
         ORTE_NAME_ARGS(orte_process_info.my_name));
     ptr = (orte_ns_proxy_dti_t**)(orte_ns_proxy.dts)->addr;
     for (i=0, j=0; j < orte_ns_proxy.num_dts &&
                    i < (orte_ns_proxy.dts)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            opal_output(output_id, "Num: %lu\tDatatype id: %lu\tDatatype name: %s\n",
+            opal_output(mca_ns_base_output, "Num: %lu\tDatatype id: %lu\tDatatype name: %s\n",
                 (unsigned long)j, (unsigned long)ptr[i]->id, ptr[i]->name);
         }
     }
