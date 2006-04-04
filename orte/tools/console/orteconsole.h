@@ -93,7 +93,8 @@ static int orte_console_halt(orte_console_input_command_t);
 static int orte_console_contactinfo(orte_console_input_command_t);
 
 static int orte_console_not_imp(orte_console_input_command_t);
-static int orte_console_devel(orte_console_input_command_t);
+static int orte_console_dump(orte_console_input_command_t);
+static int orte_console_ps(orte_console_input_command_t);
 
 /*
  * Support Functions

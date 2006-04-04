@@ -158,16 +158,16 @@ int orte_ns_replica_get_job_peers(orte_process_name_t **procs,
 /*
  * Diagnostic functions
  */
-int orte_ns_replica_dump_cells(int output_id);
+int orte_ns_replica_dump_cells(void);
 int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer);
 
-int orte_ns_replica_dump_jobs(int output_id);
+int orte_ns_replica_dump_jobs(void);
 int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer);
 
-int orte_ns_replica_dump_tags(int output_id);
+int orte_ns_replica_dump_tags(void);
 int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer);
 
-int orte_ns_replica_dump_datatypes(int output_id);
+int orte_ns_replica_dump_datatypes(void);
 int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer);
 
 

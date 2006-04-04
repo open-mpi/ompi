@@ -35,7 +35,7 @@
 
 #include "orte/mca/gpr/base/base.h"
 
-int orte_gpr_base_print_dump(orte_buffer_t *buffer, int output_id)
+int orte_gpr_base_print_dump(orte_buffer_t *buffer)
 {
     char *line;
     size_t n;
@@ -49,7 +49,7 @@ int orte_gpr_base_print_dump(orte_buffer_t *buffer, int output_id)
            ORTE_ERROR_LOG(rc);
            return rc;
        }
-       opal_output(output_id, "%s", line);
+       opal_output(orte_gpr_base_output, "%s", line);
        free(line);
        n=1;
     }

@@ -250,7 +250,7 @@ PROCESS:
 /*
  * DIAGNOSTIC functions
  */
-int orte_ns_replica_dump_cells(int output_id)
+int orte_ns_replica_dump_cells(void)
 {
     orte_buffer_t buffer;
     int rc;
@@ -261,7 +261,7 @@ int orte_ns_replica_dump_cells(int output_id)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
@@ -316,7 +316,7 @@ int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
 }
 
 
-int orte_ns_replica_dump_jobs(int output_id)
+int orte_ns_replica_dump_jobs(void)
 {
     orte_buffer_t buffer;
     int rc;
@@ -328,7 +328,7 @@ int orte_ns_replica_dump_jobs(int output_id)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
@@ -377,7 +377,7 @@ int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer)
 }
 
 
-int orte_ns_replica_dump_tags(int output_id)
+int orte_ns_replica_dump_tags(void)
 {
     orte_buffer_t buffer;
     int rc;
@@ -388,7 +388,7 @@ int orte_ns_replica_dump_tags(int output_id)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;
@@ -436,7 +436,7 @@ int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer)
 }
 
 
-int orte_ns_replica_dump_datatypes(int output_id)
+int orte_ns_replica_dump_datatypes(void)
 {
     orte_buffer_t buffer;
     int rc;
@@ -447,7 +447,7 @@ int orte_ns_replica_dump_datatypes(int output_id)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_ns_base_print_dump(&buffer))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&buffer);
         return rc;

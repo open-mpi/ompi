@@ -47,7 +47,7 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_dump_all(int output_id)
+int orte_gpr_proxy_dump_all(void)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -100,7 +100,7 @@ int orte_gpr_proxy_dump_all(int output_id)
 	    return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -108,7 +108,7 @@ int orte_gpr_proxy_dump_all(int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_segments(char *segment, int output_id)
+int orte_gpr_proxy_dump_segments(char *segment)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -161,7 +161,7 @@ int orte_gpr_proxy_dump_segments(char *segment, int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -169,7 +169,7 @@ int orte_gpr_proxy_dump_segments(char *segment, int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
+int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -222,7 +222,7 @@ int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -230,7 +230,7 @@ int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start, int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start, int output_id)
+int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -283,7 +283,7 @@ int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start, int outp
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -292,8 +292,7 @@ int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start, int outp
 }
 
 int orte_gpr_proxy_dump_a_trigger(char *name,
-                            orte_gpr_trigger_id_t id,
-                            int output_id)
+                            orte_gpr_trigger_id_t id)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -346,7 +345,7 @@ int orte_gpr_proxy_dump_a_trigger(char *name,
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -356,8 +355,7 @@ int orte_gpr_proxy_dump_a_trigger(char *name,
 
 
 int orte_gpr_proxy_dump_a_subscription(char *name,
-                            orte_gpr_subscription_id_t id,
-                            int output_id)
+                            orte_gpr_subscription_id_t id)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -410,7 +408,7 @@ int orte_gpr_proxy_dump_a_subscription(char *name,
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -419,7 +417,7 @@ int orte_gpr_proxy_dump_a_subscription(char *name,
 }
 
 
-int orte_gpr_proxy_dump_callbacks(int output_id)
+int orte_gpr_proxy_dump_callbacks(void)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -472,7 +470,7 @@ int orte_gpr_proxy_dump_callbacks(int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -480,7 +478,7 @@ int orte_gpr_proxy_dump_callbacks(int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id)
+int orte_gpr_proxy_dump_notify_msg(orte_gpr_notify_message_t *msg)
 {
     orte_buffer_t *answer;
     int rc;
@@ -497,7 +495,7 @@ int orte_gpr_proxy_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -506,7 +504,7 @@ int orte_gpr_proxy_dump_notify_msg(orte_gpr_notify_message_t *msg, int output_id
 }
 
 
-int orte_gpr_proxy_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
+int orte_gpr_proxy_dump_notify_data(orte_gpr_notify_data_t *data)
 {
     orte_buffer_t *answer;
     int rc;
@@ -523,7 +521,7 @@ int orte_gpr_proxy_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -531,7 +529,7 @@ int orte_gpr_proxy_dump_notify_data(orte_gpr_notify_data_t *data, int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_value(orte_gpr_value_t *value, int output_id)
+int orte_gpr_proxy_dump_value(orte_gpr_value_t *value)
 {
     orte_buffer_t *answer;
     int rc;
@@ -548,7 +546,7 @@ int orte_gpr_proxy_dump_value(orte_gpr_value_t *value, int output_id)
        return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -556,7 +554,7 @@ int orte_gpr_proxy_dump_value(orte_gpr_value_t *value, int output_id)
     return rc;
 }
 
-int orte_gpr_proxy_dump_segment_size(char *segment, int output_id)
+int orte_gpr_proxy_dump_segment_size(char *segment)
 {
     orte_gpr_cmd_flag_t command;
     orte_buffer_t *cmd;
@@ -609,7 +607,7 @@ int orte_gpr_proxy_dump_segment_size(char *segment, int output_id)
         return ORTE_ERR_COMM_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer, output_id))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_print_dump(answer))) {
         ORTE_ERROR_LOG(rc);
     }
 

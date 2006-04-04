@@ -119,13 +119,13 @@ int orte_ns_proxy_create_my_name(void);
 /*
  * Diagnostic functions
  */
-int orte_ns_proxy_dump_cells(int output_id);
+int orte_ns_proxy_dump_cells(void);
 
-int orte_ns_proxy_dump_jobs(int output_id);
+int orte_ns_proxy_dump_jobs(void);
 
-int orte_ns_proxy_dump_tags(int output_id);
+int orte_ns_proxy_dump_tags(void);
 
-int orte_ns_proxy_dump_datatypes(int output_id);
+int orte_ns_proxy_dump_datatypes(void);
 
 
 

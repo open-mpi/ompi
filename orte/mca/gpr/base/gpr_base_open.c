@@ -299,20 +299,26 @@ int orte_gpr_base_open(void)
 {
     int param, value, rc, id;
     orte_data_type_t tmp;
+    opal_output_stream_t kill_prefix;
 
     OPAL_TRACE(5);
 
     /* Debugging / verbose output */
-
+    /** setup the structure to kill the blasted prefix that opal_output
+     * now defaults to including so the output can be legible again!
+     */
+    OBJ_CONSTRUCT(&kill_prefix, opal_output_stream_t);
+    kill_prefix.lds_want_stderr = true;
+    kill_prefix.lds_prefix = NULL;
+    
     param = mca_base_param_reg_int_name("gpr_base", "verbose",
                                         "Verbosity level for the gpr framework",
                                         false, false, 0, &value);
     if (value != 0) {
-        orte_gpr_base_output = opal_output_open(NULL);
-    } else {
-        orte_gpr_base_output = -1;
+        kill_prefix.lds_verbose_level = value;
     }
-
+    orte_gpr_base_output = opal_output_open(&kill_prefix);
+    
     id = mca_base_param_register_int("gpr", "base", "maxsize", NULL,
                                      ORTE_GPR_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);

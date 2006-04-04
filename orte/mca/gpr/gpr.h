@@ -569,41 +569,37 @@ typedef int (*orte_gpr_base_module_cancel_trigger_fn_t)(orte_gpr_trigger_id_t tr
  * orte_gpr.dump(output_id);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_dump_all_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_all_fn_t)(void);
 
-typedef int (*orte_gpr_base_module_dump_segment_fn_t)(char *segment, int output_id);
+typedef int (*orte_gpr_base_module_dump_segment_fn_t)(char *segment);
 
 typedef int (*orte_gpr_base_module_dump_triggers_fn_t)(
-                            orte_gpr_trigger_id_t tail,
-                            int output_id);
+                            orte_gpr_trigger_id_t tail);
 
 typedef int (*orte_gpr_base_module_dump_subscriptions_fn_t)(
-                            orte_gpr_subscription_id_t tail,
-                            int output_id);
+                            orte_gpr_subscription_id_t tail);
 
 typedef int (*orte_gpr_base_module_dump_a_trigger_fn_t)(
                             char *name,
-                            orte_gpr_trigger_id_t id,
-                            int output_id);
+                            orte_gpr_trigger_id_t id);
 
 typedef int (*orte_gpr_base_module_dump_a_subscription_fn_t)(
                             char *name,
-                            orte_gpr_subscription_id_t id,
-                            int output_id);
+                            orte_gpr_subscription_id_t id);
 
-typedef int (*orte_gpr_base_module_dump_local_triggers_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_local_triggers_fn_t)(void);
 
-typedef int (*orte_gpr_base_module_dump_local_subscriptions_fn_t)(int output_id);
+typedef int (*orte_gpr_base_module_dump_local_subscriptions_fn_t)(void);
 
-typedef int (*orte_gpr_base_module_dump_callbacks_fn_t) (int output_id);
+typedef int (*orte_gpr_base_module_dump_callbacks_fn_t) (void);
 
-typedef int (*orte_gpr_base_module_dump_notify_msg_fn_t)(orte_gpr_notify_message_t *msg, int output_id);
+typedef int (*orte_gpr_base_module_dump_notify_msg_fn_t)(orte_gpr_notify_message_t *msg);
 
-typedef int (*orte_gpr_base_module_dump_notify_data_fn_t)(orte_gpr_notify_data_t *data, int output_id);
+typedef int (*orte_gpr_base_module_dump_notify_data_fn_t)(orte_gpr_notify_data_t *data);
 
-typedef int (*orte_gpr_base_module_dump_value_fn_t)(orte_gpr_value_t *value, int output_id);
+typedef int (*orte_gpr_base_module_dump_value_fn_t)(orte_gpr_value_t *value);
 
-typedef int (*orte_gpr_base_module_dump_segment_size_fn_t)(char *segment, int output_id);
+typedef int (*orte_gpr_base_module_dump_segment_size_fn_t)(char *segment);
 
 /*
  * Increment value
