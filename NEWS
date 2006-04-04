@@ -23,7 +23,6 @@ version 1.0.
 1.1
 ---
 
-- Open MPI accept a count = 0 in all multiple completion MPI functions.
 - The PERUSE support is now available directly on the trunk. In order to
   activate it add --enable-peruse to the configure options. All events
   described in the PERUSE 2.0 draft are supported, plus one Open MPI
@@ -45,10 +44,12 @@ version 1.0.
   Thanks to Michael Kluskens for pointing out the problems to us.
 
 
-
 1.0.2
 -----
 
+- Fixed error when count = 0 was given for multiple completion MPI
+  functions (MPI_TESTSOME, MPI_TESTANY, MPI_TESTALL, MPI_WAITSOME,
+  MPI_WAITANY, MPI_WAITALL).
 - Fixed a problem with handling long mpirun app files.  Thanks to Ravi
   Manumachu for identifying the problem.
 - Fix handling of strings in several of the Fortran 77 bindings.
