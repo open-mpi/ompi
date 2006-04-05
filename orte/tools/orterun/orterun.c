@@ -230,7 +230,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
-    { "orte", "universe", "exist", '\0', NULL, NULL, (int)false,
+    { "orte", "universe", "exist", '\0', NULL, "exist", (int)false,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Report error if universe does not already exist" },
 
