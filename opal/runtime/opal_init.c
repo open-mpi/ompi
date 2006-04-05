@@ -28,6 +28,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/constants.h"
@@ -191,6 +192,15 @@ opal_init(void)
     /* open the processor affinity base */
     opal_paffinity_base_open();
     opal_paffinity_base_select();
+
+    /* the memcpy component should be one of the first who get
+     * loaded in order to make sure we ddo have all the available
+     * versions of memcpy correctly configured.
+     */
+    if( OPAL_SUCCESS != (ret = opal_memcpy_base_open()) ) {
+        error = "opal_memcpy_base_open";
+        goto return_error;
+    }
 
     /* open the memory manager components.  Memory hooks may be
        triggered before this (any time after mem_free_init(),
