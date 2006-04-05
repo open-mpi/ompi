@@ -30,6 +30,7 @@
 #include "opal/mca/base/base.h"
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
+#include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
@@ -85,6 +86,9 @@ opal_finalize(void)
 
     /* close the processor affinity base */
     opal_paffinity_base_close();
+
+    /* close the memcpy base */
+    opal_memcpy_base_close();
 
     /* finalize the mca */
     mca_base_close();
