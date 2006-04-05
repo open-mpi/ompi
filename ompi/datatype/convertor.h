@@ -78,6 +78,14 @@ typedef struct dt_stack {
     long    disp;     /**< actual displacement depending on the count field */
 } dt_stack_t;
 
+/**
+ *
+ */
+typedef struct {
+    char     data[16];
+    uint32_t length;
+} ompi_convertor_storage_t;
+
 #define DT_STATIC_STACK_SIZE   5
 
 struct ompi_convertor_t {
@@ -103,8 +111,7 @@ struct ompi_convertor_t {
     uint32_t                      checksum;     /**< checksum computed by pack/unpack operation */
     uint32_t                      csum_ui1;     /**< partial checksum computed by pack/unpack operation */
     uint32_t                      csum_ui2;     /**< partial checksum computed by pack/unpack operation */
-    char                          pending[16];  /**< bytes pending from the last conversion */
-    uint32_t                      pending_length; /**< # bytes pending ... */
+    ompi_convertor_storage_t      storage;      /**< pending data from the last conversion */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
@@ -124,6 +131,47 @@ static inline uint32_t
 ompi_convertor_get_checksum( ompi_convertor_t* convertor )
 {
     return convertor->checksum;
+}
+
+/**
+ * Export the partially converted data to an outside entity.
+ */
+static inline int32_t ompi_convertor_export_storage( const ompi_convertor_t* convertor,
+                                                     ompi_convertor_storage_t* storage )
+{
+    /* The storage has a meaning only for receive side. */
+    assert( convertor->flags & CONVERTOR_RECV );
+    storage->length = convertor->storage.length;
+    assert( storage->length < 16 );  /* that's the maximum data length */
+    if( 0 != convertor->storage.length ) {
+        memcpy( storage->data, convertor->storage.data, storage->length );
+    }
+    return storage->length;
+}
+
+/**
+ * Import partially unpacked data back in the convertor, in order to use it
+ * on the next unpack operation.
+ */
+static inline int32_t ompi_convertor_import_storage( ompi_convertor_t* convertor,
+                                                     const ompi_convertor_storage_t* storage )
+{
+    /* The storage has a meaning only for receive side. */
+    assert( convertor->flags & CONVERTOR_RECV );
+    convertor->storage.length = storage->length;
+    assert( storage->length < 16 );  /* that's the maximum data length */
+    if( 0 != storage->length ) {
+        memcpy( convertor->storage.data, storage->data, storage->length );
+    }
+    return storage->length;
+}
+
+/**
+ * Reset the pending data attached to the convertor by reseting the length.
+ */
+static inline void ompi_convertor_reset_storage( ompi_convertor_t* convertor )
+{
+    convertor->storage.length = 0;
 }
 
 /*
