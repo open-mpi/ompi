@@ -308,7 +308,7 @@
             } \
             out_attr->av_value = (void*) 0; \
             *out_attr->av_integer_pointer = out; \
-            flag = OMPI_FINT_2_INT(f_flag); \
+            flag = OMPI_LOGICAL_2_INT(f_flag); \
         } \
         /* MPI-2 Fortran-style */ \
         else { \
