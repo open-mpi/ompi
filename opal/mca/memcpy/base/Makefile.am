@@ -10,7 +10,8 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+        base/memcpy_base_default.h
 
 libmca_memcpy_la_SOURCES += \
         base/memcpy_base_close.c \
