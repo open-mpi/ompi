@@ -8,6 +8,7 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
+Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -47,9 +48,19 @@ version 1.0.
 1.0.2
 -----
 
+- Fixed assembly race condition on AMD64 platforms.
+- Fixed residual .TRUE. issue with copying MPI attributes set from
+  Fortran.
+- Remove unnecessary logic from Solaris pty I/O forwarding.  Thanks to
+  Francoise Roch for bringing this to our attention.
 - Fixed error when count = 0 was given for multiple completion MPI
   functions (MPI_TESTSOME, MPI_TESTANY, MPI_TESTALL, MPI_WAITSOME,
   MPI_WAITANY, MPI_WAITALL).
+- Better handling in MPI_ABORT for when peer processes have already
+  died, especially under some resource managers.
+- Random updates to README file, to include notes about the Portland
+  compilers.
+- Random, small threading fixes to prevent deadlock.
 - Fixed a problem with handling long mpirun app files.  Thanks to Ravi
   Manumachu for identifying the problem.
 - Fix handling of strings in several of the Fortran 77 bindings.
