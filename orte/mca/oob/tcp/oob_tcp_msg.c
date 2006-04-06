@@ -75,9 +75,8 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
         if(opal_event_progress_thread()) {
             int rc;
             OPAL_THREAD_UNLOCK(&msg->msg_lock);
-            opal_progress();
-            /*rc = opal_event_loop(OPAL_EVLOOP_ONCE);
-            assert(rc >= 0);*/
+            rc = opal_event_loop(OPAL_EVLOOP_ONCE);
+            assert(rc >= 0);
             OPAL_THREAD_LOCK(&msg->msg_lock);
         } else {
            opal_condition_wait(&msg->msg_condition, &msg->msg_lock);
@@ -89,7 +88,6 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
     /* wait for message to complete */
     while(msg->msg_complete == false)
         opal_progress();
-        /*(void)opal_event_loop(OPAL_EVLOOP_ONCE);*/
 #endif
 
     /* return status */
