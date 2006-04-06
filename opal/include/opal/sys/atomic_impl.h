@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -279,32 +279,47 @@ opal_atomic_sub_xx(volatile void* addr, int32_t value, size_t length)
    }
 }
 
-static inline int opal_atomic_add_pt(volatile void* addr, 
-                                            void* delta)
-{
 #if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+static inline int32_t opal_atomic_add_ptr( volatile void* addr, 
+                                           void* delta )
+{
     return opal_atomic_add_32((int32_t*) addr, (unsigned long) delta);
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_add_64((int64_t*) addr, (unsigned long) delta);
-#else
-    abort();
-    return 0;
-#endif
 }
-
-
-static inline int opal_atomic_sub_ptr(volatile void* addr, 
-                                             void* delta)
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+static inline int64_t opal_atomic_add_ptr( volatile void* addr, 
+                                           void* delta )
 {
-#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
-    return opal_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
-#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
-    return opal_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
+    return opal_atomic_add_64((int64_t*) addr, (unsigned long) delta);
+}
 #else
+static inline int32_t opal_atomic_add_ptr( volatile void* addr, 
+                                           void* delta )
+{
     abort();
     return 0;
-#endif
 }
+#endif
+
+#if SIZEOF_VOID_P == 4 && OPAL_HAVE_ATOMIC_CMPSET_32
+static inline int32_t opal_atomic_sub_ptr( volatile void* addr, 
+                                           void* delta )
+{
+    return opal_atomic_sub_32((int32_t*) addr, (unsigned long) delta);
+}
+#elif SIZEOF_VOID_P == 8 && OPAL_HAVE_ATOMIC_CMPSET_64
+static inline int64_t opal_atomic_sub_ptr( volatile void* addr, 
+                                           void* delta )
+{
+    return opal_atomic_sub_64((int64_t*) addr, (unsigned long) delta);
+}
+#else
+static inline int32_t opal_atomic_sub_ptr( volatile void* addr, 
+                                           void* delta )
+{
+    abort();
+    return 0;
+}
+#endif
 
 #endif /* OPAL_HAVE_ATOMIC_MATH_32 || OPAL_HAVE_ATOMIC_MATH_64 */
 
