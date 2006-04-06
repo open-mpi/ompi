@@ -80,7 +80,7 @@ static int orte_soh_xcpu_open(void)
     mca_soh_xcpu_component.debug =
         orte_soh_xcpu_param_register_int("debug", 0);
     mca_soh_xcpu_component.priority =
-        orte_soh_xcpu_param_register_int("priority", 1);
+        orte_soh_xcpu_param_register_int("priority", 100);
     /*fprintf(stdout, "soh_xcpu: open\n");*/
     return ORTE_SUCCESS;
 }
