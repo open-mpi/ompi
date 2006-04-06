@@ -81,12 +81,15 @@ static inline void opal_atomic_wmb(void)
 static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
                                         int32_t oldval, int32_t newval)
 {
-    unsigned long prev;
-    __asm__ __volatile__(SMPLOCK "cmpxchgl %1,%2"
-                         : "=a"(prev)
-                         : "q"(newval), "m"(*addr), "0"(oldval)
-                         : "cc", "memory");
-    return ((int32_t)prev == oldval);
+   unsigned char ret;
+   __asm__ __volatile (
+                       SMPLOCK "cmpxchgl %1,%2   \n\t"
+                               "sete     %0      \n\t"
+                       : "=qm" (ret)
+                       : "q"(newval), "m"(*((volatile long*)addr)), "a"(oldval)
+                       : "memory");
+
+   return (int)ret;
 }
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
@@ -99,15 +102,15 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
 static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
                                          int64_t oldval, int64_t newval)
 {
-   int64_t prev;
-    
+   unsigned char ret;
    __asm__ __volatile (
                        SMPLOCK "cmpxchgq %1,%2   \n\t"
-                       : "=a" (prev)
-                       : "q" (newval), "m" (*(addr)), "0"(oldval)
-                       : "cc", "memory");
-    
-   return (prev == oldval);
+                               "sete     %0      \n\t"
+                       : "=qm" (ret)
+                       : "q"(newval), "m"(*((volatile long*)addr)), "a"(oldval)
+                       : "memory");
+
+   return (int)ret;
 }
 
 #endif /* OMPI_GCC_INLINE_ASSEMBLY */
