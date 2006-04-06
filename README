@@ -38,7 +38,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (27 Feb 2006):
+base as of this writing (April 6, 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -162,6 +162,11 @@ base as of this writing (27 Feb 2006):
   release.
 
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
+  More thread testing has occurred at the head of development (i.e.,
+  the Subversion trunk), the results of which will be included in the
+  v1.1 series of Open MPI.  If you are looking for MPI_THREAD_MULTIPLE
+  support, the Open MPI Team suggests that you start using the 1.1 (or
+  later) series.
 
 - Asynchronous message passing progress support is not included in
   this release.
