@@ -27,8 +27,6 @@ version 1.0.
 - Fixed assembly race condition on AMD64 platforms.
 - Fixed residual .TRUE. issue with copying MPI attributes set from
   Fortran.
-- Remove unnecessary logic from Solaris pty I/O forwarding.  Thanks to
-  Francoise Roch for bringing this to our attention.
 - Fixed error when count = 0 was given for multiple completion MPI
   functions (MPI_TESTSOME, MPI_TESTANY, MPI_TESTALL, MPI_WAITSOME,
   MPI_WAITANY, MPI_WAITALL).
