@@ -38,17 +38,17 @@
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "opal/util/output.h"
 
-static int orte_soh_xcpu_get_proc_soh(orte_proc_state_t *, int *, orte_process_name_t *);
-static int orte_soh_xcpu_set_proc_soh(orte_process_name_t *, orte_proc_state_t, int);
 static int orte_soh_xcpu_begin_monitoring_job(orte_jobid_t);
 static int orte_soh_xcpu_finalize(void);
 
+#if 0
 static int update_registry(orte_jobid_t jobid, char *proc_name){
     orte_gpr_value_t *value;
     int rc;
     char *segment;
     orte_proc_state_t state;
     orte_job_state_t jstate;
+    
     orte_schema.get_job_segment_name(&segment, jobid);
     /*fprintf(stdout, "soh_xcpu: segment: %s\n", segment);*/
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
@@ -102,8 +102,10 @@ static int update_registry(orte_jobid_t jobid, char *proc_name){
     /*fprintf(stdout, "debug 4\n");*/
     OBJ_RELEASE(value);
     /*fprintf(stdout, "soh_xcpu: registry updated\n");*/
-    return rc;
+
+    return ORTE_SUCCESS;
 }
+#endif
         
 /*
 static int do_update(){
@@ -159,8 +161,8 @@ int orte_soh_xcpu_module_init(void)
 }
 */
 orte_soh_base_module_t orte_soh_xcpu_module = {
-    orte_soh_xcpu_get_proc_soh,
-    orte_soh_xcpu_set_proc_soh,
+    orte_soh_base_get_proc_soh,
+    orte_soh_base_set_proc_soh,
     orte_soh_base_get_node_soh_not_available,
     orte_soh_base_set_node_soh_not_available,
     orte_soh_base_get_job_soh,
@@ -169,25 +171,14 @@ orte_soh_base_module_t orte_soh_xcpu_module = {
     orte_soh_xcpu_finalize
 };
 
-static int orte_soh_xcpu_get_proc_soh(orte_proc_state_t *state, int *status, orte_process_name_t *proc)
-{
-    fprintf(stdout, "soh_xcpu: get_proc_soh\n");
-    return ORTE_SUCCESS;
-    return orte_soh_base_get_proc_soh(state, status, proc);
-}
-
-static int orte_soh_xcpu_set_proc_soh(orte_process_name_t *proc, orte_proc_state_t state, int status)
-{
-    fprintf(stdout, "soh_xcpu: set_proc_soh\n");
-    return ORTE_SUCCESS;
-    return orte_soh_base_set_proc_soh(proc, state, status);
-}
-
 /* begin monitoring right now only trying to update registry so
  * that mpirun can exit normally
  * pls_xcpu is waiting for all threads to finish before calling this function
  */
 static int orte_soh_xcpu_begin_monitoring_job(orte_jobid_t jobid){
+
+
+#if 0
     int rc, nprocs, i;
     opal_list_item_t *item, *temp;
     orte_rmaps_base_map_t* map;
@@ -219,10 +210,29 @@ static int orte_soh_xcpu_begin_monitoring_job(orte_jobid_t jobid){
                 
                 for (i = 0; i<nprocs; ++i) { 
                     /*fprintf(stdout, "%s\n", ((orte_rmaps_base_node_t*)temp)->node->node_name);*/
-                    update_registry(jobid, ((orte_rmaps_base_node_t*)temp)->node->node_name);
+                    update_registry(((orte_rmaps_base_node_t*)temp)->node->node_name);
                 }
             }
         }
+#endif
+
+    /** all you need to do is set the proc soh for all procs (not nodes) in the job */
+    int rc;
+    size_t num_procs, i;
+    orte_process_name_t *peers;
+    
+    if (ORTE_SUCCESS != (rc = orte_ns.get_job_peers(&peers, &num_procs, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    for (i=0; i < num_procs; i++) {
+    if (ORTE_SUCCESS != (rc = orte_soh_base_set_proc_soh(peers[i], ORTE_PROC_STATE_TERMINATED, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    free(peers);
+    
     return ORTE_SUCCESS;
 }
 
