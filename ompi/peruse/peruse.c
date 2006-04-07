@@ -1,14 +1,9 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,57 +28,41 @@ OMPI_DECLSPEC extern bool ompi_mpi_param_check;
  * Data
  */
 
-/*
- * This array has to match the array in peruse.h
- * and the PERUSE_events -array below.
+typedef struct {
+    const char* name;
+    const int   id;
+} peruse_event_associations_t;
+
+/**
+ * The associations between the peruse event name and id. This array
+ * should be ended by the tuple {NULL, PERUSE_CUSTOM_EVENT}.
  */
-const char * PERUSE_event_names[] = {
+static const peruse_event_associations_t PERUSE_events[] = {
     /* Point-to-point request events */
-    "PERUSE_COMM_REQ_ACTIVATE",
-    "PERUSE_COMM_REQ_MATCH_UNEX",
-    "PERUSE_COMM_REQ_INSERT_IN_POSTED_Q",
-    "PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q",
-    "PERUSE_COMM_REQ_XFER_BEGIN",
-    "PERUSE_COMM_REQ_XFER_CONTINUE",
-    "PERUSE_COMM_REQ_XFER_END",
-    "PERUSE_COMM_REQ_COMPLETE",
-    "PERUSE_COMM_REQ_NOTIFY",
-    "PERUSE_COMM_MSG_ARRIVED",
-    "PERUSE_COMM_MSG_INSERT_IN_UNEX_Q",
-    "PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q",
-    "PERUSE_COMM_MSG_MATCH_POSTED_REQ",
+    { "PERUSE_COMM_REQ_ACTIVATE", PERUSE_COMM_REQ_ACTIVATE },
+    { "PERUSE_COMM_REQ_ACTIVATE", PERUSE_COMM_REQ_ACTIVATE },
+    { "PERUSE_COMM_REQ_MATCH_UNEX", PERUSE_COMM_REQ_MATCH_UNEX },
+    { "PERUSE_COMM_REQ_INSERT_IN_POSTED_Q", PERUSE_COMM_REQ_INSERT_IN_POSTED_Q },
+    { "PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q", PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q },
+    { "PERUSE_COMM_REQ_XFER_BEGIN", PERUSE_COMM_REQ_XFER_BEGIN },
+    { "PERUSE_COMM_REQ_XFER_CONTINUE", PERUSE_COMM_REQ_XFER_CONTINUE },
+    { "PERUSE_COMM_REQ_XFER_END", PERUSE_COMM_REQ_XFER_END },
+    { "PERUSE_COMM_REQ_COMPLETE", PERUSE_COMM_REQ_COMPLETE },
+    { "PERUSE_COMM_REQ_NOTIFY", PERUSE_COMM_REQ_NOTIFY },
+    { "PERUSE_COMM_MSG_ARRIVED", PERUSE_COMM_MSG_ARRIVED },
+    { "PERUSE_COMM_MSG_INSERT_IN_UNEX_Q", PERUSE_COMM_MSG_INSERT_IN_UNEX_Q },
+    { "PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q", PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q },
+    { "PERUSE_COMM_MSG_MATCH_POSTED_REQ", PERUSE_COMM_MSG_MATCH_POSTED_REQ },
 
     /* Queue events*/
-    "PERUSE_COMM_SEARCH_POSTED_Q_BEGIN",
-    "PERUSE_COMM_SEARCH_POSTED_Q_END",
-    "PERUSE_COMM_SEARCH_UNEX_Q_BEGIN",    /* XXX Devation from 1.11 */
-    "PERUSE_COMM_SEARCH_UNEX_Q_END"
+    { "PERUSE_COMM_SEARCH_POSTED_Q_BEGIN", PERUSE_COMM_SEARCH_POSTED_Q_BEGIN },
+    { "PERUSE_COMM_SEARCH_POSTED_Q_END", PERUSE_COMM_SEARCH_POSTED_Q_END },
+    { "PERUSE_COMM_SEARCH_UNEX_Q_BEGIN", PERUSE_COMM_SEARCH_UNEX_Q_BEGIN },
+    { "PERUSE_COMM_SEARCH_UNEX_Q_END", PERUSE_COMM_SEARCH_UNEX_Q_END },
+    { NULL, PERUSE_CUSTOM_EVENT }
 };
 
-const int PERUSE_events[] = {
-    /* Point-to-point request events */
-    PERUSE_COMM_REQ_ACTIVATE,
-    PERUSE_COMM_REQ_MATCH_UNEX,
-    PERUSE_COMM_REQ_INSERT_IN_POSTED_Q,
-    PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
-    PERUSE_COMM_REQ_XFER_BEGIN,
-    PERUSE_COMM_REQ_XFER_CONTINUE,
-    PERUSE_COMM_REQ_XFER_END,
-    PERUSE_COMM_REQ_COMPLETE,
-    PERUSE_COMM_REQ_NOTIFY,
-    PERUSE_COMM_MSG_ARRIVED,
-    PERUSE_COMM_MSG_INSERT_IN_UNEX_Q,
-    PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,
-    PERUSE_COMM_MSG_MATCH_POSTED_REQ,
-
-    /* Queue events*/
-    PERUSE_COMM_SEARCH_POSTED_Q_BEGIN,
-    PERUSE_COMM_SEARCH_POSTED_Q_END,
-    PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,
-    PERUSE_COMM_SEARCH_UNEX_Q_END
-};
-
-const int PERUSE_num_events = (sizeof (PERUSE_events) / sizeof (PERUSE_events[0]));
+const int PERUSE_num_events = (sizeof(PERUSE_events) / sizeof(peruse_event_associations_t));
 
 /*
  * PERUSE user-callable function
@@ -96,10 +75,9 @@ int PERUSE_Init (void)
 
 
 /* Query all implemented events */
-int PERUSE_Query_supported_events (
-        int * num_supported,
-        char *** event_names,
-        int ** events)
+int PERUSE_Query_supported_events( int* num_supported,
+                                   char*** event_names,
+                                   int** events )
 {
     int i;
     *num_supported = PERUSE_num_events;
@@ -111,8 +89,8 @@ int PERUSE_Query_supported_events (
     *events = (int*) malloc (PERUSE_num_events * sizeof (int));
 
     for (i = 0; i < PERUSE_num_events; i++) {
-        (*event_names)[i] = strdup (PERUSE_event_names[i]);
-        (*events)[i] = PERUSE_events[i];
+        (*event_names)[i] = strdup (PERUSE_events[i].name);
+        (*events)[i] = PERUSE_events[i].id;
     }
 
     return PERUSE_SUCCESS;
@@ -120,35 +98,34 @@ int PERUSE_Query_supported_events (
 
 
 /* Query supported events */
-int PERUSE_Query_event (const char * event_name, int *event)
+int PERUSE_Query_event (const char* event_name, int* event)
 {
     int i;
-    for (i = 0; i < PERUSE_num_events; i++) {
-        if (!strcmp (event_name, PERUSE_event_names[i]))
-            break;
-    }
-    if (i == PERUSE_num_events)
-        return PERUSE_ERR_EVENT;
 
-    *event = PERUSE_events[i];
-    return PERUSE_SUCCESS;
+    for( i = 0; i < PERUSE_num_events; i++ ) {
+        if( !strcmp (event_name, PERUSE_events[i].name) ) {
+            *event = PERUSE_events[i].id;
+            return PERUSE_SUCCESS;
+        }
+    }
+    return PERUSE_ERR_EVENT;
 }
 
 
 /* Query event name */
-int PERUSE_Query_event_name (int event, char ** event_name)
+int PERUSE_Query_event_name (int event, char** event_name)
 {
     if (event < 0 || event > PERUSE_num_events ||
-        NULL == PERUSE_event_names[event])
+        NULL == PERUSE_events[event].name)
         return PERUSE_EVENT_INVALID;
 
-    *event_name = strdup (PERUSE_event_names[event]);
+    *event_name = strdup(PERUSE_events[event].name);
     return PERUSE_SUCCESS;
 }
 
 
 /* Get environment variables that affect MPI library behavior */
-int PERUSE_Query_environment (int * env_size, char *** env)
+int PERUSE_Query_environment( int * env_size, char *** env )
 {
     /* XXX tbd */
     return PERUSE_SUCCESS;
@@ -157,7 +134,7 @@ int PERUSE_Query_environment (int * env_size, char *** env)
 /* Query the scope of queue metrics - global or per communicator */
 int PERUSE_Query_queue_event_scope (int * scope)
 {
-    *scope = PERUSE_PER_COMM;   /* XXX; not yet realized */
+    *scope = PERUSE_PER_COMM;
 
     return PERUSE_SUCCESS;
 }
@@ -167,20 +144,19 @@ int PERUSE_Query_queue_event_scope (int * scope)
  * II. Events, objects initialization and manipulation
  */
 /* Initialize event associated with an MPI communicator */
-int PERUSE_Event_comm_register (
-        int                       event,
-        MPI_Comm                  comm,
-        peruse_comm_callback_f *  callback_fn,
-        void *                    param,
-        peruse_event_h *          event_h)
+int PERUSE_Event_comm_register( int                       event,
+                                MPI_Comm                  comm,
+                                peruse_comm_callback_f *  callback_fn,
+                                void *                    param,
+                                peruse_event_h *          event_h )
 {
     ompi_peruse_handle_t * handle;
     if (MPI_PARAM_CHECK) {
-        if (event < 0 || event > PERUSE_num_events ||
-            NULL == PERUSE_event_names[event])
+        if( (event < 0) || (event > PERUSE_num_events) ||
+            (NULL == PERUSE_events[event].name) )
             return PERUSE_ERR_EVENT;
 
-        if (MPI_COMM_NULL == comm || ompi_comm_invalid (comm))
+        if( (MPI_COMM_NULL == comm) || ompi_comm_invalid (comm) )
             return PERUSE_ERR_COMM;
 
         if (NULL == callback_fn)
@@ -284,10 +260,9 @@ int PERUSE_Event_release (peruse_event_h * event_h)
     }                                                                 \
 
 /* Set a new comm callback */
-int PERUSE_Event_comm_callback_set (
-        peruse_event_h            event_h,
-        peruse_comm_callback_f *  callback_fn,
-        void *                    param)
+int PERUSE_Event_comm_callback_set( peruse_event_h           event_h,
+                                    peruse_comm_callback_f*  callback_fn,
+                                    void*                    param )
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -302,10 +277,9 @@ int PERUSE_Event_comm_callback_set (
 }
 
 /* Get the current comm callback */
-int PERUSE_Event_comm_callback_get (
-        peruse_event_h            event_h,
-        peruse_comm_callback_f ** callback_fn,
-        void **                   param)
+int PERUSE_Event_comm_callback_get( peruse_event_h           event_h,
+                                    peruse_comm_callback_f** callback_fn,
+                                    void**                   param )
 {
     ompi_peruse_handle_t* handle = (ompi_peruse_handle_t*)event_h;
 
@@ -320,7 +294,7 @@ int PERUSE_Event_comm_callback_get (
 }
 
 /* Obtain event descriptor from an event handle (reverse lookup) */
-int PERUSE_Event_get (peruse_event_h event_h, int * event)
+int PERUSE_Event_get( peruse_event_h event_h, int* event )
 {
     if (MPI_PARAM_CHECK) {
         if (NULL == event_h)
@@ -336,9 +310,10 @@ int PERUSE_Event_get (peruse_event_h event_h, int * event)
 
 
 /* Obtain MPI object associated with event handle */
-int PERUSE_Event_object_get (peruse_event_h event_h, void ** mpi_object)
+int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
 {
-    ompi_peruse_handle_t * p = event_h;
+    ompi_peruse_handle_t* p = event_h;
+
     if (MPI_PARAM_CHECK) {
         if (NULL == event_h)
             return PERUSE_ERR_EVENT_HANDLE;
@@ -347,19 +322,11 @@ int PERUSE_Event_object_get (peruse_event_h event_h, void ** mpi_object)
             return PERUSE_ERR_PARAMETER;
     }
     switch (p->type) {
-        case PERUSE_TYPE_INVALID:
-            return PERUSE_ERR_GENERIC;
         case PERUSE_TYPE_COMM:
             *mpi_object = p->comm;
-            break;
-        case PERUSE_TYPE_FILE:
-            *mpi_object = p->file;
-            break;
-        case PERUSE_TYPE_WIN:
-            *mpi_object = p->win;
-            break;
+            return PERUSE_SUCCESS;
     }
-    return PERUSE_SUCCESS;
+    return PERUSE_ERR_GENERIC;
 }
 
 
