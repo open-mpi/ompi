@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ MPI_Fint MPI_Group_c2f(MPI_Group group)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if( (NULL == group) ) {
-            group = MPI_GROUP_NULL;
+            return OMPI_INT_2_FINT(-1);
         }
     }
 

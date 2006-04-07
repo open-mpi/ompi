@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,7 +45,7 @@ MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
 	/* not invoking an error handler */
     if (NULL == errhandler ||
         OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
-        errhandler = MPI_ERRHANDLER_NULL;
+            return OMPI_INT_2_FINT(-1);
     }
   }
 
