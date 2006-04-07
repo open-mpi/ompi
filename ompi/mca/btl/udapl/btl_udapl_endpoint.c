@@ -33,8 +33,13 @@
 #include "btl_udapl_frag.h"
 
 
+static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
+        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint);
 static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint);
+void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint);
+void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint, 
+        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 
  
 int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
@@ -58,6 +63,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
             /* Initiate a new connection, add this send to a queue */
             rc = mca_btl_udapl_start_connect(endpoint);
             if(OMPI_SUCCESS != rc) {
+                endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
                 break;
             }
 
@@ -77,11 +83,131 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 }
 
 
+static void mca_btl_udapl_endpoint_send_cb(int status, orte_process_name_t* endpoint, 
+        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
+{
+    OBJ_RELEASE(buffer);
+}
+
+
 static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
+{
+    mca_btl_udapl_addr_t* addr = &endpoint->endpoint_btl->udapl_addr;
+    orte_buffer_t* buf = OBJ_NEW(orte_buffer_t);
+    int rc;
+
+    if(NULL == buf) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* Pack our address information */
+    rc = orte_dss.pack(buf, &addr->port, 1, ORTE_UINT64);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buf, &addr->addr, sizeof(DAT_SOCK_ADDR), ORTE_UINT8);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* Send the buffer */
+    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid, buf,
+            ORTE_RML_TAG_DYNAMIC - 1, 0, mca_btl_udapl_endpoint_send_cb, NULL);
+    if(0 > rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTING;
+    return OMPI_SUCCESS;
+}
+
+
+void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint, 
+        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
+{
+    mca_btl_udapl_addr_t addr;
+    mca_btl_udapl_proc_t* proc;
+    mca_btl_base_endpoint_t* ep;
+    size_t cnt = 1;
+    size_t i;
+    int rc;
+
+    /* Unpack data */
+    rc = orte_dss.unpack(buffer, &addr.port, &cnt, ORTE_UINT64);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    cnt = sizeof(mca_btl_udapl_addr_t);
+    rc = orte_dss.unpack(buffer, &addr.addr, &cnt, ORTE_UINT8);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
+
+    /* Match the endpoint and handle it */
+    OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
+    for(proc = (mca_btl_udapl_proc_t*)
+                opal_list_get_first(&mca_btl_udapl_component.udapl_procs);
+            proc != (mca_btl_udapl_proc_t*)
+                opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
+            proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
+
+        if(0 == orte_ns.compare(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
+            for(i = 0; i < proc->proc_endpoint_count; i++) {
+                ep = proc->proc_endpoints[i];
+            
+                /* Does this endpoint match? */
+                if(!memcmp(&addr, &ep->endpoint_addr,
+                        sizeof(mca_btl_udapl_addr_t))) {
+                    OPAL_OUTPUT((0, "btl_udapl found endpoint!\n"));
+                    OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
+                    mca_btl_udapl_endpoint_connect(ep);
+                    return;
+                }
+            }
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
+}
+
+
+/*
+ * Set up OOB recv callback.
+ */
+
+void mca_btl_udapl_endpoint_post_oob_recv(void)
+{
+    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DYNAMIC-1,
+            ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
+}
+
+
+void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
 {
     mca_btl_udapl_module_t* btl = endpoint->endpoint_btl;
     mca_btl_udapl_frag_t* frag;
     int rc;
+
+    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+
+    /* Nasty test to prevent deadlock and unwanted connection attempts */
+    /* This right here is the whole point of using the ORTE/RML handshake */
+    if((MCA_BTL_UDAPL_CONNECTING == endpoint->endpoint_state &&
+            0 > orte_ns.compare(ORTE_NS_CMP_ALL,
+                    &endpoint->endpoint_proc->proc_guid,
+                    &ompi_proc_local()->proc_name)) ||
+            (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
+             MCA_BTL_UDAPL_CONNECTING != endpoint->endpoint_state)) {
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+        return;
+    }
 
     /* Create a new uDAPL endpoint and start the connection process */
     rc = dat_ep_create(btl->udapl_ia, btl->udapl_pz,
@@ -119,14 +245,16 @@ static int mca_btl_udapl_start_connect(mca_btl_base_endpoint_t* endpoint)
     }
 
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTING;
-    return OMPI_SUCCESS;
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    return;
 
 failure:
     dat_ep_free(endpoint->endpoint_ep);
 failure_create:
     endpoint->endpoint_ep = DAT_HANDLE_NULL;
     endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
-    return OMPI_ERROR;
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    return;
 }
 
 
@@ -140,6 +268,7 @@ int mca_btl_udapl_endpoint_post_queue(mca_btl_udapl_endpoint_t* endpoint)
     int rc = OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+    endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
     while(NULL != (frag = (mca_btl_udapl_frag_t*)
             opal_list_remove_first(&endpoint->endpoint_frags))) {
         rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
@@ -154,6 +283,7 @@ int mca_btl_udapl_endpoint_post_queue(mca_btl_udapl_endpoint_t* endpoint)
 
     return mca_btl_udapl_endpoint_post_recv(endpoint);
 }
+
 
 /*
  * Match a uDAPL endpoint to a BTL endpoint.
@@ -180,11 +310,10 @@ int mca_btl_udapl_endpoint_match(struct mca_btl_udapl_module_t* btl,
             /* Does this endpoint match? */
             if(ep->endpoint_btl == btl &&
                     !memcmp(addr, &ep->endpoint_addr,
-                        sizeof(mca_btl_udapl_addr_t))) {
+                            sizeof(mca_btl_udapl_addr_t))) {
                 OPAL_OUTPUT((0, "btl_udapl matched endpoint!\n"));
                 ep->endpoint_ep = endpoint;
-                ep->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
-                mca_btl_udapl_endpoint_post_recv(ep);
+                mca_btl_udapl_endpoint_post_queue(ep);
                 OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
                 return OMPI_SUCCESS;
             }
@@ -217,7 +346,7 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint)
         /* Note that this triplet defines a sub-region of a registered LMR */
         frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
         frag->triplet.segment_length =
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+            mca_btl_udapl_module.super.btl_eager_limit;
     
         frag->btl = endpoint->endpoint_btl;
         frag->endpoint = endpoint;

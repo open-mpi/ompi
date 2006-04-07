@@ -100,6 +100,12 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                 mca_btl_udapl_frag_t* frag);
 
 /*
+ * Set up OOB recv callback.
+ */
+
+void mca_btl_udapl_endpoint_post_oob_recv(void);
+
+/*
  * Post queued sends.
  */
 

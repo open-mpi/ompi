@@ -328,6 +328,9 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         return NULL;
     }
 
+    /* Post OOB receive */
+    mca_btl_udapl_endpoint_post_oob_recv();
+
     /* return array of BTLs */
     btls = (mca_btl_base_module_t**) malloc(sizeof(mca_btl_base_module_t *) *
             mca_btl_udapl_component.udapl_num_btls);
@@ -344,8 +347,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 }
 
 
-static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
-                                        DAT_CR_HANDLE cr_handle)
+static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl, DAT_CR_HANDLE cr_handle)
 {
     mca_btl_udapl_frag_t* frag;
     DAT_EP_HANDLE endpoint;
@@ -421,8 +423,6 @@ int mca_btl_udapl_component_progress()
                         a large enough buffer
                        */
                     dto = &event.event_data.dto_completion_event_data;
-                    OPAL_OUTPUT((0, "btl_udapl DTO transferred %d bytes\n",
-                                dto->transfered_length));
 
                     /* Was the DTO successful? */
                     if(DAT_DTO_SUCCESS != dto->status) {
@@ -435,7 +435,8 @@ int mca_btl_udapl_component_progress()
 
                     switch(frag->type) {
                     case MCA_BTL_UDAPL_SEND:
-                        OPAL_OUTPUT((0, "btl_udapl UDAPL_SEND"));
+                        OPAL_OUTPUT((0, "btl_udapl UDAPL_SEND %d",
+                                    dto->transfered_length));
 
                         frag->base.des_cbfunc(&btl->super, frag->endpoint,
                                 &frag->base, OMPI_SUCCESS);
@@ -446,7 +447,8 @@ int mca_btl_udapl_component_progress()
                         mca_btl_base_recv_reg_t* reg =
                                 &btl->udapl_reg[frag->hdr->tag];
 
-                        OPAL_OUTPUT((0, "btl_udapl UDAPL_RECV\n"));
+                        OPAL_OUTPUT((0, "btl_udapl UDAPL_RECV %d",
+                                    dto->transfered_length));
 
                         frag->segment.seg_addr.pval = frag->hdr + 1;
                         frag->segment.seg_len = dto->transfered_length -
@@ -460,6 +462,7 @@ int mca_btl_udapl_component_progress()
                         /* Repost the frag */
                         frag->segment.seg_addr.pval = frag->hdr;
                         frag->segment.seg_len = frag->size;
+
                         dat_ep_post_recv(frag->endpoint->endpoint_ep,
                                 1, &frag->triplet, (DAT_DTO_COOKIE)(void*)frag,
                                 DAT_COMPLETION_DEFAULT_FLAG);
@@ -467,11 +470,6 @@ int mca_btl_udapl_component_progress()
                     }
                     case MCA_BTL_UDAPL_CONN_SEND:
                         /* Client (send) side connection established */
-                        OPAL_OUTPUT((0,
-                                "btl_udapl SEND SIDE CONNECT COMPLETED!!\n"));
-                        frag->endpoint->endpoint_state =
-                            MCA_BTL_UDAPL_CONNECTED;
-
                         mca_btl_udapl_endpoint_post_queue(frag->endpoint);
 
                         MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);

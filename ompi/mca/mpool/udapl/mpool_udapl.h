@@ -62,6 +62,21 @@ typedef struct mca_mpool_udapl_registration_t mca_mpool_udapl_registration_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_udapl_registration_t);
 
 
+/**
+  * Report a uDAPL error - for debugging
+  */
+
+#if OMPI_ENABLE_DEBUG
+extern void mca_mpool_udapl_error(DAT_RETURN ret, char* str);
+
+#define MCA_MPOOL_UDAPL_ERROR(ret, str) \
+    mca_mpool_udapl_error((ret), (str));
+
+#else
+#define MCA_MPOOL_UDAPL_ERROR(ret, str)
+#endif
+
+
 /* 
  *  Initializes the mpool module. 
  */ 

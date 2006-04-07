@@ -65,8 +65,6 @@ void* mca_mpool_udapl_alloc(
 {
     void* addr = malloc(size+align);
 
-    OPAL_OUTPUT((0, "mpool_udapl_alloc\n"));
-
     /* TODO - align addr to dat_optimal_alignment */
     if(NULL == addr)
         return NULL;
@@ -121,8 +119,7 @@ int mca_mpool_udapl_register(
             &reg->lmr, &reg->lmr_triplet.lmr_context,
             &reg->rmr_context, &dat_size, &dat_addr);
     if(DAT_SUCCESS != rc) {
-        /* TODO - bring in error reporting function from the BTL */
-        OPAL_OUTPUT((0, "mpool_udapl_register failed: %d\n", rc));
+        MCA_MPOOL_UDAPL_ERROR(rc, "dat_lmr_create");
         OBJ_RELEASE(reg);
 
         return OMPI_ERR_OUT_OF_RESOURCE;
@@ -192,8 +189,6 @@ void* mca_mpool_udapl_realloc(
 void mca_mpool_udapl_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    OPAL_OUTPUT((0, "mpool_udapl_free\n"));
-
     mpool->mpool_deregister(mpool, registration);
     free(addr);
 }
@@ -218,27 +213,19 @@ int mca_mpool_udapl_release(
     struct mca_mpool_base_module_t* mpool, 
     mca_mpool_base_registration_t* reg)
 {
-    mca_mpool_udapl_module_t * mpool_udapl = (mca_mpool_udapl_module_t*) mpool; 
-
-    OPAL_OUTPUT((0, "mpool_udapl_release\n"));
-
     if(0 == OPAL_THREAD_ADD32(&reg->ref_count, -1)) {
         mca_mpool_udapl_registration_t *udapl_reg =
                 (mca_mpool_udapl_registration_t*)reg;
         int rc = dat_lmr_free(udapl_reg->lmr);
         
         if(DAT_SUCCESS != rc) {
-            /* TODO - use error reporting function from the BTL */
-            OPAL_OUTPUT((0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc)); 
+            MCA_MPOOL_UDAPL_ERROR(rc, "dat_lmr_free");
             return OMPI_ERROR;
         }
 
         OBJ_RELEASE(reg);
     }
-    else { 
-        /* OPAL_OUTPUT((0, "release says ref_count is %d\n", reg->ref_count));  */
-    }
-    
+
     return OMPI_SUCCESS; 
 }
 
