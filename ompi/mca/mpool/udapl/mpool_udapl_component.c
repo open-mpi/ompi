@@ -65,6 +65,29 @@ mca_mpool_udapl_component_t mca_mpool_udapl_component = {
 
 
 /**
+  * Report a uDAPL error - for debugging
+  */
+
+#if OMPI_ENABLE_DEBUG
+void
+mca_mpool_udapl_error(DAT_RETURN ret, char* str)
+{
+    char* major;
+    char* minor;
+
+    if(DAT_SUCCESS != dat_strerror(ret,
+            (const char**)&major, (const char**)&minor))
+    {
+        printf("dat_strerror failed! ret is %d\n", ret);
+        exit(-1);
+    }
+
+    OPAL_OUTPUT((0, "ERROR: %s %s %s\n", str, major, minor));
+}
+#endif
+
+
+/**
   * udapl_registration_t constructor/destructor
   */
 static void mca_mpool_udapl_registration_constructor(mca_mpool_udapl_registration_t *registration)

@@ -48,7 +48,7 @@ static void mca_btl_udapl_frag_eager_constructor(mca_btl_udapl_frag_t* frag)
 { 
     frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit -
         sizeof(mca_btl_base_header_t);
-    frag->size = mca_btl_udapl_component.udapl_eager_frag_size;  
+    frag->size = mca_btl_udapl_component.udapl_eager_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }
 
@@ -68,6 +68,23 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
     frag->size = 0; 
 }
 
+static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
+{
+#if OMPI_ENABLE_DEBUG
+    frag->hdr = NULL;
+    frag->size = 0; 
+    frag->registration = NULL; 
+    frag->segment.seg_len = 0;
+    frag->segment.seg_addr.pval = NULL; 
+    
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
+#endif
+}
+
 
 OBJ_CLASS_INSTANCE(
     mca_btl_udapl_frag_t, 
@@ -79,13 +96,13 @@ OBJ_CLASS_INSTANCE(
     mca_btl_udapl_frag_eager_t, 
     mca_btl_base_descriptor_t, 
     mca_btl_udapl_frag_eager_constructor, 
-    NULL); 
+    mca_btl_udapl_frag_common_destructor); 
 
 OBJ_CLASS_INSTANCE(
     mca_btl_udapl_frag_max_t, 
     mca_btl_base_descriptor_t, 
     mca_btl_udapl_frag_max_constructor, 
-    NULL); 
+    mca_btl_udapl_frag_common_destructor); 
 
 OBJ_CLASS_INSTANCE(
     mca_btl_udapl_frag_user_t, 

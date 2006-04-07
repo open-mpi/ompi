@@ -93,7 +93,7 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     /* query to get address information */
     /* TODO - we only get the address, but there's other useful stuff here */
     rc = dat_ia_query(btl->udapl_ia, &btl->udapl_evd_async,
-            DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, DAT_IA_FIELD_NONE, NULL);
+            DAT_IA_FIELD_IA_ADDRESS_PTR, &attr, 0, NULL);
     if(DAT_SUCCESS != rc) {
         MCA_BTL_UDAPL_ERROR(rc, "dat_ia_query");
         goto failure;
