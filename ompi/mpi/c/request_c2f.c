@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +40,7 @@ MPI_Fint MPI_Request_c2f(MPI_Request request)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (NULL == request) {
-            request = MPI_REQUEST_NULL;
+            return OMPI_INT_2_FINT(-1);
         }
     }
 
