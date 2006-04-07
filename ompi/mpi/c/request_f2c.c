@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,12 +42,13 @@ MPI_Request MPI_Request_f2c(MPI_Fint request)
     }
 
     /* Per MPI-2:4.12.4, do not invoke an error handler if we get an
-       invalid fortran handle */
+       invalid fortran handle.  If we get an invalid fortran handle,
+       return an invalid C handle. */
     
     if (request_index < 0 || 
         request_index >= 
         ompi_pointer_array_get_size(&ompi_request_f_to_c_table)) {
-        return MPI_REQUEST_NULL;
+        return NULL;
     }
 
     return ompi_pointer_array_get_item(&ompi_request_f_to_c_table,
