@@ -1,14 +1,9 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
- *                         University Research and Technology
- *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
- *                         All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -25,19 +20,10 @@
 #include "class/ompi_pointer_array.h"
 
 
-void ompi_peruse_handle_construct (ompi_peruse_handle_t* p);
-void ompi_peruse_handle_destruct (ompi_peruse_handle_t* p);
-
 static opal_list_t peruse_handle_list;
 static int ompi_peruse_initialized = 0;
 
-OBJ_CLASS_INSTANCE(
-    ompi_peruse_handle_t,
-    opal_list_item_t,
-    ompi_peruse_handle_construct,
-    ompi_peruse_handle_destruct);
-
-void ompi_peruse_handle_construct (ompi_peruse_handle_t* p)
+static void ompi_peruse_handle_construct (ompi_peruse_handle_t* p)
 {
     OBJ_CONSTRUCT (&(p->lock), opal_mutex_t);
     p->active = 0;
@@ -54,8 +40,7 @@ void ompi_peruse_handle_construct (ompi_peruse_handle_t* p)
     OPAL_THREAD_UNLOCK (&peruse_handle_list_lock);
 }
 
-
-void ompi_peruse_handle_destruct (ompi_peruse_handle_t* p)
+static void ompi_peruse_handle_destruct (ompi_peruse_handle_t* p)
 {
     OPAL_THREAD_LOCK (&peruse_handle_list_lock);
     opal_list_remove_item (&peruse_handle_list, (opal_list_item_t*)p);
@@ -63,6 +48,12 @@ void ompi_peruse_handle_destruct (ompi_peruse_handle_t* p)
 
     OBJ_DESTRUCT (&(p->lock));
 }
+
+OBJ_CLASS_INSTANCE(
+    ompi_peruse_handle_t,
+    opal_list_item_t,
+    ompi_peruse_handle_construct,
+    ompi_peruse_handle_destruct);
 
 
 int ompi_peruse_init (void)
