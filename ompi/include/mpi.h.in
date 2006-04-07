@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1745,12 +1745,13 @@ OMPI_DECLSPEC  double PMPI_Wtime(void);
 
 /*                                                                             
  * Conditional MPI 2 C++ bindings support.  Include if:
+ *   - The user does not explicitly request us to skip it (when a C++ compiler
+ *       is used to compile C code).
  *   - We want C++ bindings support
  *   - We are not building OMPI itself
  *   - We are using a C++ compiler
  */
-
-#if defined(OMPI_WANT_CXX_BINDINGS) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
+#if !defined(OMPI_SKIP_MPICXX) && OMPI_WANT_CXX_BINDINGS && !OMPI_BUILDING
 #if defined(__cplusplus) || defined(c_plusplus) 
 #include "ompi/mpi/cxx/mpicxx.h"
 #endif
