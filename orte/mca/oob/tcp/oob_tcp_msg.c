@@ -86,8 +86,26 @@ int mca_oob_tcp_msg_wait(mca_oob_tcp_msg_t* msg, int* rc)
 
 #else
     /* wait for message to complete */
-    while(msg->msg_complete == false)
+    while(msg->msg_complete == false) {
+        /* msg_wait() is used in the "barrier" at the completion of
+           MPI_FINALIZE, during which time BTLs may still need to
+           progress pending outgoing communication, so we need to
+           call opal_progress() here to make sure that communication
+           gets pushed out so others can enter finalize (and send us
+           the message we're here waiting for).  However, if we're
+           in a callback from the event library that was triggered
+           from a call to opal_progress(), opal_progress() will
+           think another thread is already progressing the event
+           engine (in the case of mpi threads enabled) and not
+           progress the engine, meaning we'll never receive our
+           message.  So we also need to progress the event library
+           expicitly.  We use EVLOOP_NONBLOCK so that we can
+           progress both the registered callbacks and the event
+           library, as EVLOOP_ONCE may block for a short period of
+           time. */
         opal_progress();
+        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
+    }
 #endif
 
     /* return status */
@@ -133,7 +151,9 @@ int mca_oob_tcp_msg_timedwait(mca_oob_tcp_msg_t* msg, int* rc, struct timespec* 
     while(msg->msg_complete == false &&
           ((uint32_t)tv.tv_sec <= secs ||
 	   ((uint32_t)tv.tv_sec == secs && (uint32_t)tv.tv_usec < usecs))) {
+        /* see comment in tcp_msg_wait, above */
         opal_progress();
+        opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         gettimeofday(&tv,NULL);
     }
 #endif
