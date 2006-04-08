@@ -124,7 +124,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t ib_static_rate; 
     uint32_t ib_src_path_bits; 
     uint32_t use_eager_rdma;
-    uint32_t eager_rdma_threashold;
+    uint32_t eager_rdma_threshold;
     uint32_t eager_rdma_num;
     uint32_t max_eager_rdma;
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
