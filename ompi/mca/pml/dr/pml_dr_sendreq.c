@@ -379,7 +379,9 @@ int mca_pml_dr_send_request_start_buffered(
     hdr->hdr_match.hdr_csum = csum;
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));
+    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)) :
+                                OPAL_CSUM_ZERO);
     
     /* re-init convertor for packed data */
     ompi_convertor_prepare_for_send(
@@ -457,10 +459,13 @@ int mca_pml_dr_send_request_start_copy(
     hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO;
+    hdr->hdr_match.hdr_csum = (size > 0 && mca_pml_dr.enable_csum ? 
+                               sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO);
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
-    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
+    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t)) :
+                                OPAL_CSUM_ZERO);
     
     /* vfrag status */
     sendreq->req_vfrag0.vf_size = max_data;
@@ -526,10 +531,13 @@ int mca_pml_dr_send_request_start_prepare(
     hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO; 
+    hdr->hdr_match.hdr_csum = (size > 0 && mca_pml_dr.enable_csum ? 
+                               sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO); 
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
-    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));
+    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t)) :
+                                OPAL_CSUM_ZERO);
 
     /* short message */
     descriptor->des_cbfunc = mca_pml_dr_match_completion;
@@ -604,7 +612,10 @@ int mca_pml_dr_send_request_start_rndv(
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));
+    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)) :
+                                OPAL_CSUM_ZERO);
+    
 
     /* first fragment of a long message */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -717,11 +728,13 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
                 hdr->hdr_vlen = vfrag->vf_len;
                 hdr->hdr_frag_idx = vfrag->vf_idx;
-                hdr->hdr_frag_csum =  sendreq->req_send.req_convertor.checksum;
+                hdr->hdr_frag_csum =  (mca_pml_dr.enable_csum ? 
+                                       sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO);
                 hdr->hdr_frag_offset = sendreq->req_send_offset;
                 hdr->hdr_src_ptr.pval = vfrag;
                 hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
-                hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));
+                hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                            opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)): OPAL_CSUM_ZERO);
                 
                 assert(hdr->hdr_frag_offset < sendreq->req_send.req_bytes_packed);
                 
@@ -810,7 +823,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         hdr->hdr_frag_offset = offset_in_msg;
                         hdr->hdr_src_ptr.pval = vfrag;
                         hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
-                        hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));
+                        hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                                    opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)) : 
+                                                    OPAL_CSUM_ZERO);
                         
                         OPAL_THREAD_ADD64(&vfrag->vf_pending, 1);
                         OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);

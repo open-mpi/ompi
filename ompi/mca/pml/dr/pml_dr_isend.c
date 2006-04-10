@@ -40,11 +40,11 @@ int mca_pml_dr_isend_init(void *buf,
         return rc;
 
     MCA_PML_DR_SEND_REQUEST_INIT(sendreq,
-                                   buf,
-                                   count,
-                                   datatype,
-                                   dst, tag,
-                                   comm, sendmode, true);
+                                 buf,
+                                 count,
+                                 datatype,
+                                 dst, tag,
+                                 comm, sendmode, true);
 
     *request = (ompi_request_t *) sendreq;
     return OMPI_SUCCESS;

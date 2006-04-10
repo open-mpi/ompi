@@ -88,7 +88,9 @@ struct mca_pml_dr_t {
     int timer_ack_usec;
     int timer_ack_multiplier;
     int timer_ack_max_count;
-    
+
+    /* enable/disable csum */ 
+    int enable_csum;
 };
 typedef struct mca_pml_dr_t mca_pml_dr_t; 
 
