@@ -43,11 +43,13 @@
 #define MCA_PML_DR_HDR_VALIDATE_ACK(hdr, type)                                                 \
 do {                                                                                           \
     mca_pml_dr_endpoint_t* ep;                                                                 \
-    uint16_t csum = opal_csum(hdr, sizeof(type));                                              \
-    if(hdr->hdr_common.hdr_csum != csum) {                                                     \
-        OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  \
-            __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              \
-        return;                                                                                \
+    if(mca_pml_dr.enable_csum) {                                                               \
+        uint16_t csum = opal_csum(hdr, sizeof(type));                                          \
+        if(hdr->hdr_common.hdr_csum != csum) {                                                 \
+            OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",              \
+                __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                          \
+            return;                                                                            \
+        }                                                                                      \
     }                                                                                          \
     ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              \
     assert(ep != NULL);                                                                        \
@@ -111,13 +113,14 @@ void mca_pml_dr_recv_frag_callback(
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
-            
-            csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));                                              
-            if(hdr->hdr_common.hdr_csum != csum) {                                                     
-                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
-                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
-                return;                                                                                
-            } 
+            if(mca_pml_dr.enable_csum) { 
+                csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));                                              
+                if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                    OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                                 __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                    return;                                                                                
+                } 
+            }
             if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
                 OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
                              __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
@@ -155,13 +158,15 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
-            csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));                                              
-                        
-            if(hdr->hdr_common.hdr_csum != csum) {                                                     
-                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
-                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
-                return;                                                                                
-            } 
+            if(mca_pml_dr.enable_csum) { 
+                csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));                                              
+                
+                if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                    OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                                 __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                    return;                                                                                
+                } 
+            }
             if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
                 OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
                              __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
@@ -237,13 +242,14 @@ void mca_pml_dr_recv_frag_callback(
         {
             mca_pml_dr_recv_request_t* recvreq;
             
-            csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));                                              
-                        
-            if(hdr->hdr_common.hdr_csum != csum) {                                                     
-                OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
-                             __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
-                return;                                                                                
-            } 
+            if(mca_pml_dr.enable_csum) { 
+                csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));                                              
+                if(hdr->hdr_common.hdr_csum != csum) {                                                     
+                    OPAL_OUTPUT((0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
+                                 __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                    return;                                                                                
+                } 
+            }
             if(hdr->hdr_common.hdr_dst != mca_pml_dr.my_rank ) {                                       
                 OPAL_OUTPUT((0, "%s:%d: misdelivered packet [rank %d -> rank %d]\n",                   
                              __FILE__, __LINE__, hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst));            
@@ -669,11 +675,11 @@ rematch:
                 return rc;
             }
             MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
-            if(csum != hdr->hdr_csum) { 
+            if(mca_pml_dr.enable_csum && csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
                 OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
-                    __FILE__, __LINE__, csum, hdr->hdr_csum));
+                             __FILE__, __LINE__, csum, hdr->hdr_csum));
                 MCA_PML_DR_RECV_FRAG_RETURN(frag);
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return false;
@@ -704,11 +710,11 @@ rematch:
             return rc;
         }
         MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
-        if(csum != hdr->hdr_csum) { 
+        if(mca_pml_dr.enable_csum && csum != hdr->hdr_csum) { 
             mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
                                      &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
             OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
-                        __FILE__, __LINE__, csum, hdr->hdr_csum));
+                         __FILE__, __LINE__, csum, hdr->hdr_csum));
             MCA_PML_DR_RECV_FRAG_RETURN(frag);
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
             return false;
@@ -777,7 +783,9 @@ void mca_pml_dr_recv_frag_ack(
     ack->hdr_src_ptr.pval = src_ptr;
     assert(ack->hdr_src_ptr.pval);
     ack->hdr_dst_ptr.pval = NULL;
-    ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
+    ack->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
+                                OPAL_CSUM_ZERO);
     
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;

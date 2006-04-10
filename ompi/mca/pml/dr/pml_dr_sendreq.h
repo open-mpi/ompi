@@ -127,7 +127,7 @@ do {                                                                            
                             (sendreq)->req_send.req_base.req_datatype,              \
                             (sendreq)->req_send.req_base.req_count,                 \
                             (sendreq)->req_send.req_base.req_addr,                  \
-                            CONVERTOR_WITH_CHECKSUM,                                \
+                            (mca_pml_dr.enable_csum ? CONVERTOR_WITH_CHECKSUM: 0),  \
                             &(sendreq)->req_send.req_convertor );                   \
         ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
@@ -417,7 +417,8 @@ do {                                                                 \
     hdr->hdr_match.hdr_csum = OPAL_CSUM_ZERO;                                   \
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;                       \
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;          \
-    hdr->hdr_common.hdr_csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)); \
+    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ?                        \
+          opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)): OPAL_CSUM_ZERO); \
     des_new->des_flags = des_old->des_flags;                                    \
     des_new->des_cbdata = des_old->des_cbdata;                                  \
     des_new->des_cbfunc = des_old->des_cbfunc;                                  \

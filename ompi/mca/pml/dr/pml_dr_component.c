@@ -109,7 +109,11 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("timer_ack_multiplier", 2);
     mca_pml_dr.timer_ack_max_count = 
         mca_pml_dr_param_register_int("timer_ack_max_count", 10);
-                                                                                                            
+    
+    /* default is to csum all data */
+    mca_pml_dr.enable_csum = 
+        mca_pml_dr_param_register_int("enable_csum", 1);
+    
     /* requests */
     OBJ_CONSTRUCT(&mca_pml_dr.send_requests, ompi_free_list_t);
     ompi_free_list_init(

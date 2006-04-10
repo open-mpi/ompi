@@ -90,21 +90,36 @@ do {                                                                 \
                buff->addr,                                           \
                segs[i].seg_addr.pval,                                \
                hdr_len);                                             \
-            csum += OPAL_CSUM_BCOPY_PARTIAL(                         \
-                   ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,  \
-                   ((unsigned char*)buff->addr)+hdr_len,             \
-                   segs[i].seg_len-hdr_len,                          \
-                   segs[i].seg_len-hdr_len,                          \
-                   &ui1,                                             \
-                   &ui2);                                            \
+            if(mca_pml_dr.enable_csum) {                             \
+                     csum += OPAL_CSUM_BCOPY_PARTIAL(                \
+                     ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,\
+                     ((unsigned char*)buff->addr)+hdr_len,           \
+                     segs[i].seg_len-hdr_len,                        \
+                     segs[i].seg_len-hdr_len,                        \
+                     &ui1,                                           \
+                     &ui2);                                          \
+            } else {                                                 \
+                     memcpy(((unsigned char*) buff->addr)+hdr_len,   \
+                      ((unsigned char*) segs[i].seg_addr.pval)+hdr_len, \
+                      segs[i].seg_len-hdr_len);                      \
+               csum = OPAL_CSUM_ZERO;                                \
+           }                                                         \
         } else {                                                     \
-            csum += OPAL_CSUM_BCOPY_PARTIAL(                         \
+            if(mca_pml_dr.enable_csum) {                             \
+                csum += OPAL_CSUM_BCOPY_PARTIAL(                     \
                    segs[i].seg_addr.pval,                            \
                    buff->addr,                                       \
                    segs[i].seg_len,                                  \
                    segs[i].seg_len,                                  \
                    &ui1,                                             \
                    &ui2);                                            \
+            } else {                                                 \
+                memcpy(                                              \
+                   buff->addr,                                       \
+                   segs[i].seg_addr.pval,                            \
+                   segs[i].seg_len);                                 \
+               csum = OPAL_CSUM_ZERO;                                \
+           }                                                         \
         }                                                            \
     }                                                                \
 } while(0)

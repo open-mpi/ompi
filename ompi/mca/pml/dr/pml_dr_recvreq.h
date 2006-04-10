@@ -245,7 +245,7 @@ do {                                                                            
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
-                                         CONVERTOR_WITH_CHECKSUM,                    \
+                                         (mca_pml_dr.enable_csum ? CONVERTOR_WITH_CHECKSUM: 0),  \
                                          &(request)->req_recv.req_convertor );       \
     }                                                                                \
 } while (0)
@@ -294,7 +294,8 @@ do {                                                                            
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
         if(bytes_received && !bytes_delivered) assert(0);                         \
-        csum = request->req_recv.req_convertor.checksum;                          \
+        csum = (mca_pml_dr.enable_csum ?                                          \
+                  request->req_recv.req_convertor.checksum : OPAL_CSUM_ZERO);     \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
         csum = OPAL_CSUM_ZERO;                                                    \

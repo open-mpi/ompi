@@ -32,7 +32,7 @@
 
 
 #define MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received) \
-if(csum != hdr->hdr_match.hdr_csum) {                                \
+if(mca_pml_dr.enable_csum && csum != hdr->hdr_match.hdr_csum) {      \
     /* failed the csum, put the request back on the list for         \
      * matching later on retransmission                              \
      */                                                              \
@@ -185,7 +185,9 @@ void mca_pml_dr_recv_request_ack(
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr = src_ptr;
     ack->hdr_dst_ptr.pval = recvreq;
-    ack->hdr_common.hdr_csum = opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t));
+    ack->hdr_common.hdr_csum = (mca_pml_dr.enable_csum? 
+                                opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
+                                OPAL_CSUM_ZERO);
 
     /* initialize descriptor */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
@@ -287,7 +289,7 @@ void mca_pml_dr_recv_request_progress(
              * note that it might still fail the checksum though 
              */
             vfrag->vf_pending |= bit;
-            if(csum == hdr->hdr_frag.hdr_frag_csum) { 
+            if(!mca_pml_dr.enable_csum || csum == hdr->hdr_frag.hdr_frag_csum) { 
                 /* this part of the vfrag passed the checksum, 
                    mark it so that we ack it after receiving the 
                    entire vfrag */
