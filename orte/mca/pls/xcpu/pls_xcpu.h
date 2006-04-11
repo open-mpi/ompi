@@ -1,5 +1,5 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -11,17 +11,17 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  *
  */
 /**
  * @file:
- * Header file for the xcpu launcher. This will use xcpu to launch jobs on 
- * the list of nodes that it will get from RAS (resource allocation 
+ * Header file for the xcpu launcher. This will use xcpu to launch jobs on
+ * the list of nodes that it will get from RAS (resource allocation
  * system (slurm??)
  * -# pls_xcpu is called by orterun. It reads the ompi registry and launch
  *    the binary on the nodes specified in the registry.
@@ -67,15 +67,15 @@ int orte_pls_xcpu_finalize(void);
  */
 struct orte_pls_xcpu_component_t {
     orte_pls_base_component_t super;/*base_class this is needed others below this are not*/
-    
+
     /* most of the memebrs below are going to get removed from this structure
      * and so are their registrations from open() function
      */
     bool done_launching;  /* Is true if we are done launching the user's app. */
     int debug;            /* If greater than 0 print debugging information */
     int num_procs;        /* The number of processes that are running */
-    int priority;         /* The priority of this component. This will be returned if 
-                           * we determine that xcpu is available and running on this node, 
+    int priority;         /* The priority of this component. This will be returned if
+                           * we determine that xcpu is available and running on this node,
                            */
     int terminate_sig;    /* The signal that gets sent to a process to kill it. */
     size_t num_daemons;   /* The number of daemons that are currently running. */
@@ -91,11 +91,11 @@ struct orte_pls_xcpu_component_t {
  */
 typedef struct orte_pls_xcpu_component_t orte_pls_xcpu_component_t;
 
-struct tid_stack {
+struct orte_pls_xcpu_tid_stack {
     int tid;
-    struct tid_stack *next;
+    struct orte_pls_xcpu_tid_stack *next;
 };
-typedef struct tid_stack tid_stack;
+typedef struct orte_pls_xcpu_tid_stack orte_pls_xcpu_tid_stack;
 
 ORTE_DECLSPEC extern orte_pls_xcpu_component_t mca_pls_xcpu_component;
 ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_xcpu_module; /* this is defined in pls_xcpu.c file */
