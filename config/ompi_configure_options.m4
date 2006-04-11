@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -182,6 +183,48 @@ if test "$OMPI_WANT_F90_BINDINGS" = "1" -a -z "$enable_mpi_f90" -a -d .svn; then
 fi
 #################### Early development override ####################
 
+AC_MSG_CHECKING([desired Fortran 90 bindings "size"])
+AC_ARG_WITH(mpi-f90-size,
+    AC_HELP_STRING([--with-mpi-f90-size=SIZE],
+                   [specify the types of functions in the Fortran 90 MPI module, where size is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type)]))
+
+if test "$OMPI_WANT_F90_BINDINGS" = "0"; then
+    AC_MSG_RESULT([disabled (Fortran 90 bindings disabled)])
+elif test "$with_mpi_f90_size" = "no"; then
+    OMPI_WANT_F90_BINDINGS=0
+    AC_MSG_RESULT([disabling F90 MPI module (used specified)])
+else
+    # Default value
+    if test "$with_mpi_f90_size" = ""; then
+        with_mpi_f90_size=small
+    fi
+
+    # Check for each of the sizes
+    if test "$with_mpi_f90_size" = "trivial"; then
+        OMPI_F90_BUILD_SIZE=trivial
+    elif test "$with_mpi_f90_size" = "small"; then
+        OMPI_F90_BUILD_SIZE=small
+    elif test "$with_mpi_f90_size" = "medium"; then
+        OMPI_F90_BUILD_SIZE=medium
+    elif test "$with_mpi_f90_size" = "large"; then
+        OMPI_F90_BUILD_SIZE=large
+    else
+        AC_MSG_RESULT([Unrecognized size: $with_mpi_f90_size])
+        AC_MSG_ERROR([Cannot continue])
+    fi
+fi
+
+AM_CONDITIONAL([OMPI_WANT_BUILD_F90_TRIVIAL], 
+               [test "$OMPI_F90_BUILD_SIZE" = "trivial"])
+AM_CONDITIONAL([OMPI_WANT_BUILD_F90_SMALL], 
+               [test "$OMPI_F90_BUILD_SIZE" = "small"])
+AM_CONDITIONAL([OMPI_WANT_BUILD_F90_MEDIUM], 
+               [test "$OMPI_F90_BUILD_SIZE" = "medium"])
+AM_CONDITIONAL([OMPI_WANT_BUILD_F90_LARGE], 
+               [test "$OMPI_F90_BUILD_SIZE" = "large"])
+
+AC_SUBST(OMPI_F90_BUILD_SIZE)
+AC_MSG_RESULT([$OMPI_F90_BUILD_SIZE])
 
 #
 # MPI profiling

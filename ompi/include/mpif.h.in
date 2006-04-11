@@ -73,9 +73,10 @@
 !
 ! kind parameters
 !
-       integer MPI_OFFSET_KIND, MPI_ADDRESS_KIND
-       parameter (MPI_OFFSET_KIND=@OMPI_MPI_OFFSET_KIND@)
+       integer MPI_OFFSET_KIND, MPI_ADDRESS_KIND, MPI_INTEGER_KIND
+       parameter (MPI_INTEGER_KIND=@OMPI_MPI_INTEGER_KIND@)
        parameter (MPI_ADDRESS_KIND=@OMPI_MPI_ADDRESS_KIND@)
+       parameter (MPI_OFFSET_KIND=@OMPI_MPI_OFFSET_KIND@)
 !
 ! misc. constants
 !

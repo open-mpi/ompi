@@ -18,7 +18,7 @@
 
 module mpi
 
-  use mpi_kinds
+  include "mpif.h"
 
 ! This file is generated, and is *huge*.  Its size is directly related
 ! to the --with-f90-max-array-dim configure parameter.

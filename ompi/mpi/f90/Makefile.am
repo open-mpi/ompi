@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -31,13 +32,11 @@
 #                                 |                         |
 #                                \|/                        |
 #                    generates mpi-f90-interfaces.h         |
-#                      /                                    |
-# mpi_kinds.f90  --------> generates mpi_kinds module       |
-#                    /      (exact filename unknown)        |
-#                   \/       /                    \         |
-#  mpi-f90-interfaces.h     /                      \        |
-#                 |        /                        \       |
-#                \|/      \/                        \/     \|/
+#                    /                                      |
+#                   \/                                      |
+#  mpi-f90-interfaces.h                                     |
+#                 |                                         |
+#                \|/                                       \|/
 #            used by mpi.f90                 used by mpi_*.f90
 #           /        |                               |
 #          /        \|/                             \|/
@@ -49,16 +48,9 @@
 # Once you understand this diagram, this Makefile is much more clear.
 # 
 
-
-
 SUBDIRS = scripts
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include $(OMPI_FC_MODULE_FLAG).
-
-# We have to EXTRA_DIST mpi_kinds.f90 because there is no explicit
-# Automake rule to compile this file.
-
-EXTRA_DIST = mpi_kinds.f90
 
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary
@@ -82,10 +74,6 @@ EXTRA_DIST = mpi_kinds.f90
 lib_LIBRARIES =
 if OMPI_WANT_F90_BINDINGS
 
-# We have to build this before the other ones.
-
-BUILT_SOURCES = mpi_kinds.ompi_module
-
 # Add the f90 library to the list of libraries to build
 
 lib_LIBRARIES += libmpi_f90.a
@@ -97,22 +85,6 @@ mpi-f90-interfaces.h: fortran_kinds.sh
 
 CLEANFILES += mpi-f90-interfaces.h
 
-# SIDENOTE: We currently have code in mpi-f90-interfaces.h.sh to
-# generate interface declarations for all the "two buffer" functions
-# (e.g., MPI_Reduce).  This actually creates a problem for most
-# compilers, because it results in an exponential explosion of
-# functions generated -- most compilers will segv (particularly with
-# --with-f90-mcx-array-dim values of >2).  But this code is useful,
-# and I don't want to delete it (yes, we could get it back from SVN
-# history, but I don't want to re-integrate it) -- f90 compilers *may*
-# someday be able to handle this (i.e., our *code* is not wrong -- the
-# *compilers* are wrong).  So I'm simply adding a hard-coded value
-# here to disable the interface generation stuff in the script; it can
-# be made a condition (e.g., via configure test or --enable option, or
-# somesuch) later if necessary.
-
-WANT_2BUFFER_FUNCTIONS=0
-
 # Run scripts to generate the f90 source files.  We only need to
 # generate the .f90 files once, so the "test" checks to see if the
 # file exists before running the script.  However, the
@@ -121,23 +93,10 @@ WANT_2BUFFER_FUNCTIONS=0
 # and changes the value fortran_kinds.sh (which is taken care of by
 # the mpi-f90-interfaces.h dependency on fortran_kinds.sh, above).
 
-mpi-f90-interfaces.h:
+mpi-f90-interfaces.h: $(srcdir)/scripts/mpi-f90-interfaces.h.sh
 	@ p="`pwd`"; \
-	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p $(WANT_2BUFFER_FUNCTIONS) \> $@; \
-	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p $(WANT_2BUFFER_FUNCTIONS) > $@
-
-# Ensure that the mpi_kinds F90 module is generated before compiling
-# any of the sources (because many/all of these sources "use
-# mpi_kinds").  We unfortunately can't know ahead of time the exact
-# filename of the generated F90 module file (because F90 compilers
-# have not standardized on the output filename format), so we have to
-# add our own explicit dependency to compile the module.  :-(
-
-$(libmpi_f90_a_SOURCES) $(nodist_libmpi_f90_a_SOURCES): mpi_kinds.ompi_module
-
-mpi_kinds.ompi_module: mpi_kinds.f90 
-	$(FCCOMPILE) -c $(FCFLAGS_f90) $<
-	@ touch mpi_kinds.ompi_module
+	echo $(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p \> $@; \
+	$(srcdir)/scripts/mpi-f90-interfaces.h.sh $$p > $@
 
 # Unbelievably, some versions of sh (cough cough Solaris 9 cough
 # cough) actually seem to internally perform a "cd" into a
@@ -148,12 +107,10 @@ mpi_kinds.ompi_module: mpi_kinds.f90
 # So we have to pass in the pwd to the scripts so that they know where
 # some_script is.
 
-$(nodist_libmpi_f90_a_SOURCES):
-	@ if test ! -r $@ -o "$@" = "mpi-f90-interfaces.h"; then \
-	    p="`pwd`"; \
-	    echo $(srcdir)/scripts/$@.sh $$p \> $@; \
-	    $(srcdir)/scripts/$@.sh $$p > $@ ; \
-	fi
+$(nodist_libmpi_f90_a_SOURCES): fortran_kinds.sh
+	@ p="`pwd`"; \
+	echo $(srcdir)/scripts/$@.sh $$p \> $@; \
+	$(srcdir)/scripts/$@.sh $$p > $@ ;
 
 # Automake doesn't know how to do F90 dependency analysis, so manually
 # list this here (i.e., "mpi-f90-interfaces.h" is included in
@@ -187,15 +144,16 @@ lib_LIBRARIES +=
 endif
 
 # mpi.f90 is the only f90 source file directly in libmpif90 that gets
-# distributed (mpi_kinds.f90 is also distributed, but it's only
-# indirectly included in libmpif90 -- via "use mpi_kinds").
+# distributed.  This file is always in the library, regardless of the
+# size that we're building.
 
 libmpi_f90_a_SOURCES = mpi.f90
 
 # These files are all generated by scripts in the scripts/ directory.
 
-nodist_libmpi_f90_a_SOURCES = \
+medium_sources = \
      mpi_address_f90.f90 \
+     mpi_accumulate_f90.f90 \
      mpi_bcast_f90.f90 \
      mpi_bsend_f90.f90 \
      mpi_bsend_init_f90.f90 \
@@ -232,11 +190,13 @@ nodist_libmpi_f90_a_SOURCES = \
      mpi_file_write_ordered_begin_f90.f90 \
      mpi_file_write_ordered_end_f90.f90 \
      mpi_file_write_shared_f90.f90 \
+     mpi_get_f90.f90 \
      mpi_ibsend_f90.f90 \
      mpi_irecv_f90.f90 \
      mpi_irsend_f90.f90 \
      mpi_isend_f90.f90 \
      mpi_issend_f90.f90 \
+     mpi_put_f90.f90 \
      mpi_recv_f90.f90 \
      mpi_recv_init_f90.f90 \
      mpi_rsend_f90.f90 \
@@ -246,11 +206,39 @@ nodist_libmpi_f90_a_SOURCES = \
      mpi_sendrecv_replace_f90.f90 \
      mpi_ssend_f90.f90 \
      mpi_ssend_init_f90.f90 \
-     mpi_accumulate_f90.f90 \
-     mpi_get_f90.f90 \
-     mpi_put_f90.f90 \
      mpi_win_create_f90.f90
 
+large_sources = \
+     mpi_allgather_f90.f90 \
+     mpi_allgatherv_f90.f90 \
+     mpi_allreduce_f90.f90 \
+     mpi_alltoall_f90.f90 \
+     mpi_alltoallv_f90.f90 \
+     mpi_alltoallw_f90.f90 \
+     mpi_exscan_f90.f90 \
+     mpi_gather_f90.f90 \
+     mpi_gatherv_f90.f90 \
+     mpi_pack_f90.f90 \
+     mpi_pack_external_f90.f90 \
+     mpi_reduce_f90.f90 \
+     mpi_reduce_scatter_f90.f90 \
+     mpi_scan_f90.f90 \
+     mpi_scatter_f90.f90 \
+     mpi_scatterv_f90.f90 \
+     mpi_sendrecv_f90.f90 \
+     mpi_unpack_f90.f90 \
+     mpi_unpack_external_f90.f90
+
+# The rest of the files that are in the library depend on which size
+# we're building.
+
+nodist_libmpi_f90_a_SOURCES =
+if OMPI_WANT_BUILD_F90_MEDIUM
+nodist_libmpi_f90_a_SOURCES += $(medium_sources)
+endif
+if OMPI_WANT_BUILD_F90_LARGE
+nodist_libmpi_f90_a_SOURCES += $(medium_sources) $(large_sources)
+endif
 
 #
 # Clean up all F90 module files and all generated files

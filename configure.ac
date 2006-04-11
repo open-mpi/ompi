@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -482,18 +483,12 @@ OMPI_SETUP_F90
 OMPI_F90_FIND_MODULE_INCLUDE_FLAG
 
 # Look for all the types
-OMPI_F90_LKINDS=""
 OMPI_F90_IKINDS=""
 OMPI_F90_RKINDS=""
 OMPI_F90_CKINDS=""
 
 # LOGICAL and friends
 OMPI_F90_CHECK([LOGICAL])
-OMPI_F90_CHECK([LOGICAL*1], [1])
-OMPI_F90_CHECK([LOGICAL*2], [2])
-OMPI_F90_CHECK([LOGICAL*4], [4])
-OMPI_F90_CHECK([LOGICAL*8], [8])
-OMPI_F90_CHECK([LOGICAL*16], [16])
 
 # INTEGER and friends
 OMPI_F90_CHECK([INTEGER])
@@ -517,27 +512,25 @@ OMPI_F90_CHECK([COMPLEX*16], [16])
 OMPI_F90_CHECK([COMPLEX*32], [32])
 OMPI_F90_CHECK([DOUBLE COMPLEX])
 
-# The OMPI_F90_CKINDS list represents the overall size of the complex
-# types -- not the size of the REAL's that make them up.  For the
-# scripts in ompi/mpi/f90/scripts/*, variables are expressed in terms
-# of the REAL's that make up the COMPLEX variables, so we need to cut
-# all the sizes here in half.
-new_sizes=
-for size in $OMPI_F90_CKINDS; do
-    new_size=`expr $size / 2`
-    new_sizes="$new_sizes $new_size"
-done
-OMPI_F90_CKINDS=$new_sizes
-unset new_size new_sizes
-
-AC_SUBST(OMPI_F90_LKINDS)
 AC_SUBST(OMPI_F90_IKINDS)
 AC_SUBST(OMPI_F90_RKINDS)
 AC_SUBST(OMPI_F90_CKINDS)
 
-# get kind value for Fortran MPI_OFFSET_KIND (corresponding to INTEGER*8)
-OMPI_F90_GET_INT_KIND(MPI_OFFSET_KIND, 18, OMPI_MPI_OFFSET_KIND)
-AC_SUBST(OMPI_MPI_OFFSET_KIND)
+# get kind value for Fortran MPI_INTEGER_KIND (corresponding to
+# whatever is the same size as a F77 INTEGER -- for the
+# most-likely-will-never-occur case where F77 INTEGER is smaller than
+# an F90 INTEGER; see MPI-2 4.12.6.5
+if test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "2"; then
+    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 4, OMPI_MPI_INTEGER_KIND)
+elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "4"; then
+    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 9, OMPI_MPI_INTEGER_KIND)
+elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "8"; then
+    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 18, OMPI_MPI_INTEGER_KIND)
+elif test "$OMPI_SIZEOF_FORTRAN_INTEGER" = "16"; then
+    OMPI_F90_GET_INT_KIND(MPI_INTEGER_KIND, 19, OMPI_MPI_INTEGER_KIND)
+    AC_MSG_ERROR([Cannot support Fortran MPI_INTEGER_KIND!])
+fi
+AC_SUBST(OMPI_MPI_INTEGER_KIND)
 
 # get kind value for Fortran MPI_ADDRESS_KIND (corresponding to
 # whatever is big enough to hold (void*))
@@ -553,6 +546,10 @@ else
     AC_MSG_ERROR([Cannot support Fortran MPI_ADDRESS_KIND!])
 fi
 AC_SUBST(OMPI_MPI_ADDRESS_KIND)
+
+# get kind value for Fortran MPI_OFFSET_KIND (corresponding to INTEGER*8)
+OMPI_F90_GET_INT_KIND(MPI_OFFSET_KIND, 18, OMPI_MPI_OFFSET_KIND)
+AC_SUBST(OMPI_MPI_OFFSET_KIND)
 
 # checkpoint results
 AC_CACHE_SAVE
