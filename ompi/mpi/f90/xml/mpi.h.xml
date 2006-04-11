@@ -1,5 +1,4 @@
 <?xml version="1.0"?>
-<!DOCTYPE library SYSTEM "mapping.dtd">
 <!--
  Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
                          University Research and Technology
@@ -219,7 +218,7 @@
       <arg name="address" intent="out">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Aint" >
+            <type kind="usertype" usertype="default_integer" >
             </type>
           </indirect>
         </type>
@@ -236,7 +235,7 @@
       -  METHOD: int MPI_Allgather(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allgather" kind="No_F90" template="yes">
+    <method name="MPI_Allgather" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -299,7 +298,7 @@
       -  METHOD: int MPI_Allgatherv(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allgatherv" kind="No_F90" template="yes">
+    <method name="MPI_Allgatherv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -413,7 +412,7 @@
       -  METHOD: int MPI_Allreduce(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Allreduce" kind="No_F90" template="yes">
+    <method name="MPI_Allreduce" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -470,7 +469,7 @@
       -  METHOD: int MPI_Alltoall(void *, int, MPI_Datatype, void *, int, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoall" kind="No_F90" template="yes">
+    <method name="MPI_Alltoall" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -533,7 +532,7 @@
       -  METHOD: int MPI_Alltoallv(void *, int *, int *, MPI_Datatype, void *, int *, int *, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoallv" kind="No_F90" template="yes">
+    <method name="MPI_Alltoallv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -624,7 +623,7 @@
       -  METHOD: int MPI_Alltoallw(void *, int *, int *, MPI_Datatype *, void *, int *, int *, MPI_Datatype *, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Alltoallw" kind="No_F90" template="yes">
+    <method name="MPI_Alltoallw" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -2352,7 +2351,7 @@
       -  METHOD: int MPI_Exscan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Exscan" kind="No_F90" template="yes">
+    <method name="MPI_Exscan" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -4648,7 +4647,7 @@
       -  METHOD: int MPI_Gather(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Gather" kind="No_F90" template="yes">
+    <method name="MPI_Gather" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -4717,7 +4716,7 @@
       -  METHOD: int MPI_Gatherv(void *, int, MPI_Datatype, void *, int *, int *, MPI_Datatype, int, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Gatherv" kind="No_F90" template="yes">
+    <method name="MPI_Gatherv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -6834,7 +6833,7 @@
       -  METHOD: int MPI_Pack(void *, int, MPI_Datatype, void *, int, int *, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Pack" kind="No_F90" template="yes">
+    <method name="MPI_Pack" kind="final" template="yes">
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
@@ -6901,7 +6900,7 @@
       -  METHOD: int MPI_Pack_external(char *, void *, int, MPI_Datatype, void *, MPI_Aint, MPI_Aint *) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Pack_external" kind="No_F90" template="yes">
+    <method name="MPI_Pack_external" kind="final" template="yes">
 
       <!-- ARGUMENT : datarep -->
       <arg name="datarep" intent="in">
@@ -7325,7 +7324,7 @@
       -  METHOD: int MPI_Reduce(void *, void *, int, MPI_Datatype, MPI_Op, int, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Reduce" kind="No_F90" template="yes">
+    <method name="MPI_Reduce" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -7388,7 +7387,7 @@
       -  METHOD: int MPI_Reduce_scatter(void *, void *, int *, MPI_Datatype, MPI_Op, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Reduce_scatter" kind="No_F90" template="yes">
+    <method name="MPI_Reduce_scatter" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -7696,7 +7695,7 @@
       -  METHOD: int MPI_Scan(void *, void *, int, MPI_Datatype, MPI_Op, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scan" kind="No_F90" template="yes">
+    <method name="MPI_Scan" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -7753,7 +7752,7 @@
       -  METHOD: int MPI_Scatter(void *, int, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scatter" kind="No_F90" template="yes">
+    <method name="MPI_Scatter" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -7822,7 +7821,7 @@
       -  METHOD: int MPI_Scatterv(void *, int *, int *, MPI_Datatype, void *, int, MPI_Datatype, int, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Scatterv" kind="No_F90" template="yes">
+    <method name="MPI_Scatterv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -8019,7 +8018,7 @@
       -  METHOD: int MPI_Sendrecv(void *, int, MPI_Datatype, int, int, void *, int, MPI_Datatype, int, int, MPI_Comm, MPI_Status *) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Sendrecv" kind="No_F90" template="yes">
+    <method name="MPI_Sendrecv" kind="final" template="yes">
 
       <!-- ARGUMENT : sendbuf -->
       <arg name="sendbuf" intent="in">
@@ -9405,7 +9404,7 @@
       <arg name="extent" intent="out">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Aint" >
+            <type kind="usertype" usertype="default_integer" >
             </type>
           </indirect>
         </type>
@@ -9774,7 +9773,7 @@
       <arg name="array_of_displacements" intent="in">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Aint"/>
+            <type kind="usertype" usertype="default_integer"/>
             <dimension extent="*"/>
           </array>
         </type>
@@ -9822,7 +9821,7 @@
 
       <!-- ARGUMENT : stride -->
       <arg name="stride" intent="in">
-        <type kind="usertype" usertype="MPI_Aint" >
+        <type kind="usertype" usertype="default_integer" >
         </type>
       </arg>
 
@@ -9918,7 +9917,7 @@
       <arg name="lb" intent="out">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Aint" >
+            <type kind="usertype" usertype="default_integer" >
             </type>
           </indirect>
         </type>
@@ -10080,7 +10079,7 @@
       <arg name="array_of_displacements" intent="in">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Aint"/>
+            <type kind="usertype" usertype="default_integer"/>
             <dimension extent="*"/>
           </array>
         </type>
@@ -10128,7 +10127,7 @@
       <arg name="ub" intent="out">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
-            <type kind="usertype" usertype="MPI_Aint" >
+            <type kind="usertype" usertype="default_integer" >
             </type>
           </indirect>
         </type>
@@ -10191,7 +10190,7 @@
       -  METHOD: int MPI_Unpack(void *, int, int *, void *, int, MPI_Datatype, MPI_Comm) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Unpack" kind="No_F90" template="yes">
+    <method name="MPI_Unpack" kind="final" template="yes">
 
       <!-- ARGUMENT : inbuf -->
       <arg name="inbuf" intent="in">
@@ -10258,7 +10257,7 @@
       -  METHOD: int MPI_Unpack_external(char *, void *, MPI_Aint, MPI_Aint *, void *, int, MPI_Datatype) C
       -  WARNING, this method has two choice arguments.
       -->
-    <method name="MPI_Unpack_external" kind="No_F90" template="yes">
+    <method name="MPI_Unpack_external" kind="final" template="yes">
 
       <!-- ARGUMENT : datarep -->
       <arg name="datarep" intent="in">

@@ -59,7 +59,7 @@ PN(void, mpi_accumulate, MPI_ACCUMULATE, (char *origin_addr, MPI_Fint *origin_co
 PN(void, mpi_add_error_class, MPI_ADD_ERROR_CLASS, (MPI_Fint *errorclass, MPI_Fint *ierr));
 PN(void, mpi_add_error_code, MPI_ADD_ERROR_CODE, (MPI_Fint *errorclass, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN(void, mpi_add_error_string, MPI_ADD_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *ierr, int l));
-PN(void, mpi_address, MPI_ADDRESS, (char *location, MPI_Aint *address, MPI_Fint *ierr));
+PN(void, mpi_address, MPI_ADDRESS, (char *location, MPI_Fint *address, MPI_Fint *ierr));
 PN(void, mpi_allgather, MPI_ALLGATHER, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcount, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN(void, mpi_allgatherv, MPI_ALLGATHERV, (char *sendbuf, MPI_Fint *sendcount, MPI_Fint *sendtype, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *displs, MPI_Fint *recvtype, MPI_Fint *comm, MPI_Fint *ierr));
 PN(void, mpi_alloc_mem, MPI_ALLOC_MEM, (MPI_Fint *size, MPI_Fint *info, char *baseptr, MPI_Fint *ierr));

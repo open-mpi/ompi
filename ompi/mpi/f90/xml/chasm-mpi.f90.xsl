@@ -1,19 +1,12 @@
-<!-- LANL:license
+<!--
  ...........................................................................
- - This SOFTWARE has been authored by an employee or employees of the
- - University of California, operator of the Los Alamos National Laboratory
- - under Contract No. W-7405-ENG-36 with the U.S. Department of Energy.
- - The U.S. Government has rights to use, reproduce, and distribute this
- - SOFTWARE.  The public may copy, distribute, prepare derivative works and
- - publicly display this SOFTWARE without charge, provided that this Notice
- - and any statement of authorship are reproduced on all copies.  Neither
- - the Government nor the University makes any warranty, express or implied,
- - or assumes any liability or responsibility for the use of this SOFTWARE.
- - If SOFTWARE is modified to produce derivative works, such modified
- - SOFTWARE should be clearly marked, so as not to confuse it with the
- - version available from LANL.
- ...........................................................................
- - LANL:license
+ Copyright (c) 2004-2006 The Regents of the University of California.
+                         All rights reserved.
+ $COPYRIGHT$
+ 
+ Additional copyrights may follow
+ 
+ $HEADER$
  ...........................................................................
  -->
 
@@ -32,6 +25,8 @@
 <xsl:output method="text"/>
 
 <!-- global variables -->
+
+<xsl:param name="test_function" select="unknown_function"/>
 
 <xsl:variable name="filename">
   <xsl:call-template name="lower-case">
@@ -64,13 +59,41 @@
 
   <!-- define C bridging functions -->
 
-  <xsl:for-each select="library/scope">
-    <xsl:call-template name="defineFunctions"/>
-  </xsl:for-each>
+  <xsl:apply-templates select="/library/scope/method[@name=$test_function]"/>
 
   <xsl:call-template name="closeFile">
     <xsl:with-param name="filename" select="$filename"/>
   </xsl:call-template>
+</xsl:template>
+
+
+<!--
+  - method level: define program to call Fortran procedures>
+  -->
+<xsl:template match="method">
+  <xsl:param name="module" select="../@name"/>
+  <xsl:value-of select="$nl"/>
+
+  <xsl:if test="@template = 'yes'">
+    <xsl:if test="@kind != 'No_F90'">
+
+      <xsl:value-of select="$nl"/>
+      <xsl:text>procedure='</xsl:text>
+      <xsl:value-of select="@name"/>
+      <xsl:text>'</xsl:text>
+      <xsl:value-of select="$nl"/>
+      <xsl:value-of select="$nl"/>
+
+      <xsl:call-template name="defineArrayFunctionBody"/>
+
+      <xsl:text>echo</xsl:text>
+      <xsl:value-of select="$nl"/>
+       <xsl:text>echo</xsl:text>
+      <xsl:value-of select="$nl"/>
+      <xsl:value-of select="$nl"/>
+
+    </xsl:if>
+  </xsl:if>
 </xsl:template>
 
 
@@ -437,9 +460,7 @@ do
     echo "end subroutine ${proc}"
     echo
   done
-  echo
 done
-echo
 </xsl:text>
 
 </xsl:template>
@@ -593,7 +614,7 @@ echo
           <xsl:text>integer(kind=MPI_OFFSET_KIND)</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Status'">
-          <xsl:text>integer(MPI_STATUS_SIZE)</xsl:text>
+          <xsl:text>integer, dimension(MPI_STATUS_SIZE)</xsl:text>
         </xsl:when>
         <xsl:otherwise>
           <xsl:param name="prefix" select="substring-before(@usertype, '_')"/>
@@ -622,7 +643,6 @@ echo
   <xsl:value-of select="$nl"/>
   <xsl:value-of select="$nl"/>
   <xsl:text>. fortran_kinds.sh</xsl:text>
-  <xsl:value-of select="$nl"/>
 </xsl:template>
 
 

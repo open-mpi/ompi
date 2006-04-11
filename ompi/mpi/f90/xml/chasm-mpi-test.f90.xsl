@@ -1,19 +1,12 @@
-<!-- LANL:license
+<!--
  ...........................................................................
- - This SOFTWARE has been authored by an employee or employees of the
- - University of California, operator of the Los Alamos National Laboratory
- - under Contract No. W-7405-ENG-36 with the U.S. Department of Energy.
- - The U.S. Government has rights to use, reproduce, and distribute this
- - SOFTWARE.  The public may copy, distribute, prepare derivative works and
- - publicly display this SOFTWARE without charge, provided that this Notice
- - and any statement of authorship are reproduced on all copies.  Neither
- - the Government nor the University makes any warranty, express or implied,
- - or assumes any liability or responsibility for the use of this SOFTWARE.
- - If SOFTWARE is modified to produce derivative works, such modified
- - SOFTWARE should be clearly marked, so as not to confuse it with the
- - version available from LANL.
- ...........................................................................
- - LANL:license
+ Copyright (c) 2004-2006 The Regents of the University of California.
+                         All rights reserved.
+ $COPYRIGHT$
+ 
+ Additional copyrights may follow
+ 
+ $HEADER$
  ...........................................................................
  -->
 
@@ -33,7 +26,7 @@
 
 <!-- global variables -->
 
-<xsl:param name="test_function" select="unkown_function"/>
+<xsl:param name="test_function" select="unknown_function"/>
 
 
 <!--
@@ -51,14 +44,14 @@
   -->
 <xsl:template match="method">
 
-    <xsl:choose>
-      <xsl:when test="@template = 'yes'">
-        <xsl:call-template name="defineArrayFunctionBody"/>
-      </xsl:when>
-      <xsl:otherwise>
-        <xsl:call-template name="defineFunctionBody"/>
-      </xsl:otherwise>
-    </xsl:choose>
+  <xsl:choose>
+    <xsl:when test="@template = 'yes'">
+      <xsl:call-template name="defineArrayFunctionBody"/>
+    </xsl:when>
+    <xsl:otherwise>
+      <xsl:call-template name="defineFunctionBody"/>
+    </xsl:otherwise>
+  </xsl:choose>
 
 </xsl:template>
 
@@ -88,31 +81,6 @@
   - defineArrayFunctionBody
   -->
 <xsl:template name="defineArrayFunctionBody">
-
-<xsl:text>
-for rank in $ranks
-do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
-
-</xsl:text>
-
-    <xsl:text>  for kind in $ikinds</xsl:text>
-    <xsl:value-of select="$nl"/>
-    <xsl:text>  do</xsl:text>
-    <xsl:value-of select="$nl"/>
-    <xsl:text>    proc="${procedure}${rank}DI${kind}"</xsl:text>
-    <xsl:value-of select="$nl"/>
-    <xsl:text>    echo "subroutine ${proc}(</xsl:text>
-    <xsl:call-template name="arg-list"/> <xsl:text>)"</xsl:text>
-    <xsl:value-of select="$nl"/>
-    <xsl:text>    echo "  use mpi_kinds"</xsl:text>
-    <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="'    '"/>
     </xsl:call-template>
@@ -210,8 +178,17 @@ echo
   <xsl:param name="ws" select="'  '"/>
 
   <xsl:for-each select="type[1]">
-    <xsl:value-of select="$ws"/>
-    <xsl:call-template name="decl-type-spec"/>
+    <xsl:choose>
+      <xsl:when test="@idl = 'choice'">
+        <xsl:call-template name="type-decl-stmt-choice">
+          <xsl:with-param name="arg" select="../@name"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:otherwise>
+        <xsl:value-of select="$ws"/>
+        <xsl:call-template name="decl-type-spec"/>
+      </xsl:otherwise>
+    </xsl:choose>
   </xsl:for-each>
   <xsl:value-of select="concat(' :: ', @name)"/>
   <xsl:for-each select="type[1]">
@@ -228,6 +205,16 @@ echo
 <xsl:template name="decl-type-spec">
 
   <xsl:choose>
+
+    <!-- idl types (annotate xml to specify what this type is) -->
+
+    <xsl:when test="@idl = 'MPI_Aint'">
+      <xsl:text>integer(kind=MPI_ADDRESS_KIND)</xsl:text>
+    </xsl:when>
+
+    <xsl:when test="@idl = 'MPI_Fint'">
+      <xsl:text>integer</xsl:text>
+    </xsl:when>
 
     <!-- C++ types -->
 
@@ -299,7 +286,7 @@ echo
           <xsl:text>integer(kind=MPI_OFFSET_KIND)</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Status'">
-          <xsl:text>integer(MPI_STATUS_SIZE)</xsl:text>
+          <xsl:text>integer, dimension(MPI_STATUS_SIZE)</xsl:text>
         </xsl:when>
         <xsl:when test="@usertype = 'MPI_Comm_errhandler_fn'">
           <xsl:text>external</xsl:text>
@@ -375,11 +362,46 @@ echo
 
 
 <!--
+  - type-decl-stmt-choice <type>
+  -->
+<xsl:template name="type-decl-stmt-choice">
+  <xsl:param name="arg"/>
+
+  <xsl:text>  integer(kind=MPI_INTEGER4_KIND), dimension(8) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>1DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>2DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,1,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>3DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,1,1,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>4DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,1,1,1,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>5DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,1,1,1,1,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>6DI4
+  integer(kind=MPI_INTEGER4_KIND), dimension(2,1,1,1,1,1,4) :: </xsl:text>
+  <xsl:value-of select="$arg"/> <xsl:text>7DI4</xsl:text>
+  <xsl:value-of select="$nl"/>
+
+</xsl:template>
+
+
+<!--
   - type-spec-assign-val <type>
   -->
 <xsl:template name="type-spec-assign-val">
 
   <xsl:choose>
+
+    <!-- idl types (annotate xml to specify what this type is) -->
+
+    <xsl:when test="@idl = 'MPI_Aint'">
+      <xsl:text> = MPI_AINT_VAL</xsl:text>
+    </xsl:when>
+
+    <xsl:when test="@idl = 'MPI_Fint'">
+      <xsl:text> = INT_VAL</xsl:text>
+    </xsl:when>
 
     <!-- C++ types -->
 
