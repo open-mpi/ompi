@@ -86,7 +86,7 @@ int lrx(int argc, char **argv);
 /** provide a local function to release the function stack
  * required by xcpu
  */
-static void orte_pls_xcpu_free_stack(tid_stack *s){
+static void orte_pls_xcpu_free_stack(orte_pls_xcpu_tid_stack *s){
     if(s){
         orte_pls_xcpu_free_stack(s->next);
         free(s);
@@ -103,16 +103,16 @@ static void orte_pls_xcpu_free_stack(tid_stack *s){
 static int orte_pls_xcpu_setup_env(char ***env)
 {
     char *uri, *param;
-
+    int rc;
     /** the append_nosize utility is kind enough to do whatever allocation is necessary
      * to start the argv array if it doesn't already exist, so we can just start "appending"
      * information to it
      */
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, "--universe"))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--universe"))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, orte_universe_info.name))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, orte_universe_info.name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -126,19 +126,19 @@ static int orte_pls_xcpu_setup_env(char ***env)
     }
     asprintf(&param, "\"%s\"", uri);
     free(uri);
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, "--nsreplica"))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--nsreplica"))) {
         ORTE_ERROR_LOG(rc);
         free(param);
         return rc;
     }
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, param))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, param))) {
         ORTE_ERROR_LOG(rc);
         free(param);
         return rc;
     }
     free(param);
     /** do the same for the gpr */
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, "--gprreplica"))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--gprreplica"))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -149,12 +149,13 @@ static int orte_pls_xcpu_setup_env(char ***env)
     }
     asprintf(&param, "\"%s\"", uri);
     free(uri);
-    if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(env, param))) {
+    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, param))) {
         ORTE_ERROR_LOG(rc);
         free(param);
         return rc;
     }
     free(param);
+    return rc;
 }
 
 
@@ -166,15 +167,17 @@ static int orte_pls_xcpu_setup_env(char ***env)
  */
 int orte_pls_xcpu_launch(orte_jobid_t jobid){
     opal_list_t mapping;
-    char **base_argv, **app_argv;
+    const orte_process_name_t* name;
+    char **base_argv, **app_argv, **base_env=NULL, *param;
     char *header[] = {
         "dummy",
         NULL,
         NULL};
     int nprocs=0, argc;
-    int rc, i=0;
+    int rc, i=0, proc_id=0;
     orte_pls_xcpu_tid_stack *t_stack, *temp_stack;
-    opal_list_item_t *item, *temp;
+    opal_list_item_t *item;
+    orte_rmaps_base_proc_t *temp;
     orte_rmaps_base_map_t* map;
     orte_rmaps_base_node_t *node;
     orte_rmaps_base_proc_t *proc;
@@ -229,7 +232,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
         map = (orte_rmaps_base_map_t*) item;
 
         /** augment the map's argv with our base environment */
-        argc = opal_argv_len(map->app->argv);
+        argc = opal_argv_count(map->app->argv);
         opal_argv_insert(&(map->app->argv), argc, base_env);
 
         /** xcpu requires an argv format that has a dummy filler in the
@@ -249,9 +252,14 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
          * arguments to xcpu_launch or do we want to launch then one
          * by one, by providing only one node-name and binary at a time?
          */
-        for(temp = opal_list_get_first(&map->procs);
-            temp != opal_list_get_end(&map->procs);
+        proc_id=0;
+        /*for(temp = opal_list_get_first(&map->procs[0]);
+            temp != opal_list_get_end(&map->procs[0]);
             temp = opal_list_get_next(temp)){
+        */
+        while(proc_id<map->num_procs){
+            temp=map->procs[proc_id];
+            proc_id++;
             proc = (orte_rmaps_base_proc_t*)temp;
             node = proc->proc_node;
 
@@ -269,15 +277,16 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             map->app->argv[1] = strdup(node->node->node_name);
 
             /** now add the process name to the argv */
-            if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(&(map->app->argv), "--name"))) {
+            if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(&(map->app->argv), "--name"))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
+            name=&(proc->proc_name);
             if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&param, name))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (OPAL_SUCCESS != (rc = int opal_argv_append_nosize(&(map->app->argv), param))) {
+            if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(&(map->app->argv), param))) {
                 ORTE_ERROR_LOG(rc);
                 free(param);
                 return rc;
@@ -285,7 +294,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             free(param);
 
             /** the launcher wants to know how long the argv array is - get that now */
-            argc = opal_argv_len(map->app->argv);
+            argc = opal_argv_count(map->app->argv);
 
             /** add this process to the stack so we can track it */
             temp_stack=(orte_pls_xcpu_tid_stack*)malloc(sizeof(orte_pls_xcpu_tid_stack));
@@ -293,6 +302,13 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             t_stack=temp_stack;
 
             /** launch the process */
+   /*         i=0;
+            while(i<argc){
+                printf("%s ", (map->app->argv)[i]);
+                i++;
+            }
+            printf("\n");
+ */               
             t_stack->tid=lrx(argc, map->app->argv);
 
             /** cleanup the app's argv. Only the last two locations need to be deleted
