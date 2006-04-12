@@ -69,6 +69,11 @@
 #include "pls_xcpu.h"
 
 /**
+ * Our current evironment
+ */
+extern char **environ;
+
+/**
  * Initialization of the xcpu module with all the needed function pointers
  */
 orte_pls_base_module_t orte_pls_xcpu_module = {
@@ -95,67 +100,74 @@ static void orte_pls_xcpu_free_stack(orte_pls_xcpu_tid_stack *s){
 
 /** provide a function to setup the environment for the remote
  * processes. We need to ensure that the remote processes know
- * their OpenRTE name, their gpr and ns replicas, the universe
+ * their gpr and ns replicas, the universe
  * to which they belong, etc. - otherwise, they may run, but they
  * will never actually join the rest of the job. This function
  * creates the common environment for all the processes.
+ *
+ * @param env a pointer to the environment to setup
  */
 static int orte_pls_xcpu_setup_env(char ***env)
 {
-    char *uri, *param;
+    char ** merged;
+    char * var;
+    char * param;
     int rc;
-    /** the append_nosize utility is kind enough to do whatever allocation is necessary
-     * to start the argv array if it doesn't already exist, so we can just start "appending"
-     * information to it
-     */
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--universe"))) {
+    int num_env;
+
+    num_env = opal_argv_count(*env);
+    /** append mca parameters to our environment */
+    if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, &num_env, false))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
     }
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, orte_universe_info.name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    /** Since we may be doing this anywhere, we always check to see if we are
-     * the replica, or if we need to link this process to somewhere else
-     */
-    if (NULL != orte_process_info.ns_replica_uri) {
-        uri = strdup(orte_process_info.ns_replica_uri);
+
+    /** ns replica contact info */
+    if (NULL != orte_process_info.ns_replica) {
+        param = strdup(orte_process_info.ns_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        param = orte_rml.get_uri();
     }
-    asprintf(&param, "\"%s\"", uri);
-    free(uri);
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--nsreplica"))) {
-        ORTE_ERROR_LOG(rc);
-        free(param);
-        return rc;
-    }
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, param))) {
-        ORTE_ERROR_LOG(rc);
-        free(param);
-        return rc;
-    }
-    free(param);
-    /** do the same for the gpr */
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, "--gprreplica"))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (NULL != orte_process_info.gpr_replica_uri) {
-        uri = strdup(orte_process_info.gpr_replica_uri);
+    var = mca_base_param_environ_variable("ns","replica","uri");
+    opal_setenv(var, param, true, env);
+    free(var);
+    var = mca_base_param_environ_variable("ns","replica","uri");
+    opal_setenv(var, param, true, env);
+    free(var);
+
+    /** make sure the frontend hostname does not get pushed out to the backend */
+    var = mca_base_param_environ_variable("orte", "base", "nodename");
+    opal_unsetenv(var, env);
+    free(var);
+    opal_unsetenv("HOSTNAME", env);
+
+    /** gpr replica contact info */
+    if (NULL != orte_process_info.gpr_replica) {
+        param = strdup(orte_process_info.gpr_replica_uri);
     } else {
-        uri = orte_rml.get_uri();
+        param = orte_rml.get_uri();
     }
-    asprintf(&param, "\"%s\"", uri);
-    free(uri);
-    if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(env, param))) {
-        ORTE_ERROR_LOG(rc);
-        free(param);
-        return rc;
-    }
+    var = mca_base_param_environ_variable("gpr","replica","uri");
+    opal_setenv(var, param, true, env);
     free(param);
-    return rc;
+    free(var);
+
+    /** universe name */
+    var = mca_base_param_environ_variable("universe", NULL, NULL);
+    asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
+              orte_universe_info.host, orte_universe_info.name);
+    opal_setenv(var, param, true, env);
+    free(param);
+    free(var);
+
+    /** merge in environment */
+    merged = opal_environ_merge(*env, environ);
+    opal_argv_free(*env);
+    *env = merged;
+
+    /** make sure hostname doesn't get pushed to backend node */
+    opal_unsetenv("HOSTNAME", env);
+
+    return ORTE_SUCCESS;
 }
 
 
@@ -167,17 +179,16 @@ static int orte_pls_xcpu_setup_env(char ***env)
  */
 int orte_pls_xcpu_launch(orte_jobid_t jobid){
     opal_list_t mapping;
-    const orte_process_name_t* name;
-    char **base_argv, **app_argv, **base_env=NULL, *param;
+    char *param, *var;
     char *header[] = {
         "dummy",
         NULL,
         NULL};
-    int nprocs=0, argc;
-    int rc, i=0, proc_id=0;
+    int argc;
+    int rc;
+    size_t nprocs=0, proc_id=0;
     orte_pls_xcpu_tid_stack *t_stack, *temp_stack;
     opal_list_item_t *item;
-    orte_rmaps_base_proc_t *temp;
     orte_rmaps_base_map_t* map;
     orte_rmaps_base_node_t *node;
     orte_rmaps_base_proc_t *proc;
@@ -201,23 +212,6 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
         return rc;
     }
 
-    /** since it is possible that each node could be executing a different application,
-     * we cannot just do a mass launch - that would only be supported in the special
-     * case of all the application processes being identical. Instead, we are going to
-     * step our way through the list, launching each process individually. For each node,
-     * however, we need to have an argv array that fully describes the respective
-     * command line options -- *including* all those required by OpenRTE and Open MPI
-     * to interconnect the processes to the rest of the job.
-     *
-     * First, therefore, let's construct an argv that contains all the OpenRTE and
-     * Open MPI required information. We will later "merge" this into the argv for
-     * each application prior to launch.
-     */
-    if (ORTE_SUCCESS != (rc = orte_pls_xcpu_setup_env(&base_env))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     /** we have to do the following so that we can use the opal_argv utilities
      * to properly insert the header into the app's argv
      */
@@ -231,10 +225,6 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
          item =  opal_list_get_next(item)) {
         map = (orte_rmaps_base_map_t*) item;
 
-        /** augment the map's argv with our base environment */
-        argc = opal_argv_count(map->app->argv);
-        opal_argv_insert(&(map->app->argv), argc, base_env);
-
         /** xcpu requires an argv format that has a dummy filler in the
          * first location, followed by the node name, and then the standard
          * argv array we've all come to know and love (i.e., the application
@@ -246,21 +236,16 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
          */
         opal_argv_insert(&(map->app->argv), 0, header);
 
-        /** Loop through each process in the map and launch it */
 
-        /* now here.. do we want to pass all node-names and binary as
-         * arguments to xcpu_launch or do we want to launch then one
-         * by one, by providing only one node-name and binary at a time?
+        /** since it is possible that each node could be executing a different application,
+         * we cannot just do a mass launch - that would only be supported in the special
+         * case of all the application processes being identical. Instead, we are going to
+         * step our way through the list, launching each process individually.
          */
-        proc_id=0;
-        /*for(temp = opal_list_get_first(&map->procs[0]);
-            temp != opal_list_get_end(&map->procs[0]);
-            temp = opal_list_get_next(temp)){
-        */
-        while(proc_id<map->num_procs){
-            temp=map->procs[proc_id];
+       proc_id=0;
+        while (proc_id < map->num_procs){
             proc_id++;
-            proc = (orte_rmaps_base_proc_t*)temp;
+            proc = (orte_rmaps_base_proc_t*)(map->procs[proc_id]);
             node = proc->proc_node;
 
             /** each proc_t entry contains the application to be executed,
@@ -276,21 +261,26 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             if (NULL != map->app->argv[1]) free(map->app->argv[1]);
             map->app->argv[1] = strdup(node->node->node_name);
 
-            /** now add the process name to the argv */
-            if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(&(map->app->argv), "--name"))) {
+            /** we also need to pass the proper environment to the remote
+             * process so it knows its universe, gpr and ns replicas, etc. Since this
+             * can be specified by the user for each app, we have to do this
+             * each time.
+             */
+            if (ORTE_SUCCESS != (rc = orte_pls_xcpu_setup_env(&map->app->env))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            name=&(proc->proc_name);
-            if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&param, name))) {
+
+            /** now add the process name to the environment so we can
+             * retrieve it on the other end
+             */
+            if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&param, &(proc->proc_name)))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (OPAL_SUCCESS != (rc = opal_argv_append_nosize(&(map->app->argv), param))) {
-                ORTE_ERROR_LOG(rc);
-                free(param);
-                return rc;
-            }
+            var = mca_base_param_environ_variable("ns", "nds", "name");
+            opal_setenv(var, param, true, &(map->app->env));
+            free(var);
             free(param);
 
             /** the launcher wants to know how long the argv array is - get that now */
@@ -308,16 +298,11 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
                 i++;
             }
             printf("\n");
- */               
+ */
             t_stack->tid=lrx(argc, map->app->argv);
-
-            /** cleanup the app's argv. Only the last two locations need to be deleted
-             * since everything else is common to all the applications (we let the
-             * node name location be handled as above)
-             */
-            opal_argv_delete(&argc, &(map->app->argv), argc-2, 2);
         }
     }
+
     /** wait for all threads that have launched processes on remote nodes */
     temp_stack=t_stack;
     while(t_stack){
@@ -328,7 +313,6 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
 
     /** cleanup local storage */
     orte_pls_xcpu_free_stack(temp_stack);
-    opal_argv_free(base_env);
     OBJ_DESTRUCT(&mapping);
 
     /** launch complete */
