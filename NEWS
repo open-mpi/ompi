@@ -24,6 +24,9 @@ version 1.0.
 1.1
 ---
 
+- Fixed MPI_COMM_SELF attributes to free properly at the beginning of
+  MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
+  attention.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
   being included in mpi.h. It allows the user to compile C code with a CXX
   compiler without including the CXX bindings.

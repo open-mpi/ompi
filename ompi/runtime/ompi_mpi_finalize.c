@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,6 +64,17 @@
 int ompi_mpi_finalize(void)
 {
     int ret;
+
+    /* Delete attributes on MPI_COMM_SELF per MPI-2:4.8.  Must be done
+       before anything else in FINALIZE, and ensure that MPI_FINALIZED
+       still returns false. */
+
+    if (NULL != ompi_mpi_comm_self.c_keyhash) {
+        ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_self,
+                             ompi_mpi_comm_self.c_keyhash);
+        OBJ_RELEASE(ompi_mpi_comm_self.c_keyhash);
+        ompi_mpi_comm_self.c_keyhash = NULL;
+    }
 
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
