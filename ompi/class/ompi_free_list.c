@@ -29,7 +29,7 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl);
 
 opal_class_t ompi_free_list_t_class = {
     "ompi_free_list_t", 
-    OBJ_CLASS(opal_list_t),
+    OBJ_CLASS(opal_atomic_lifo_t),
     (opal_construct_t)ompi_free_list_construct, 
     (opal_destruct_t)ompi_free_list_destruct
 };
@@ -160,7 +160,7 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
 
-            opal_list_append(&(flist->super), &(item->super));
+            opal_atomic_lifo_push(&(flist->super), &(item->super));
             ptr += flist->fl_elem_size;
         }
     } else {
@@ -169,14 +169,11 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
             item->user_data = user_out; 
 
             OBJ_CONSTRUCT(&item->super, opal_list_item_t); 
-        
-            opal_list_append(&(flist->super), &(item->super));
+
+            opal_atomic_lifo_push(&(flist->super), &(item->super));
             ptr += flist->fl_elem_size;
         }
     }
     flist->fl_num_allocated += num_elements;
     return OMPI_SUCCESS;
 }
-
-
-
