@@ -84,7 +84,7 @@ orte_pls_base_module_t orte_pls_xcpu_module = {
 };
 
 /** include a prototype for the xcpu launch function */
-int lrx(int argc, char **argv);
+int lrx(int argc, char **argv ,char **env);
 
 /**   LOCAL SUPPORT FUNCTIONS   **/
 
@@ -186,6 +186,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
         NULL};
     int argc;
     int rc;
+    int i;
     size_t nprocs=0, proc_id=0;
     orte_pls_xcpu_tid_stack *t_stack, *temp_stack;
     opal_list_item_t *item;
@@ -244,9 +245,9 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
          */
        proc_id=0;
         while (proc_id < map->num_procs){
-            proc_id++;
             proc = (orte_rmaps_base_proc_t*)(map->procs[proc_id]);
             node = proc->proc_node;
+            proc_id++;
 
             /** each proc_t entry contains the application to be executed,
              * the node upon which it is to be executed, and its OpenRTE
@@ -292,14 +293,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             t_stack=temp_stack;
 
             /** launch the process */
-   /*         i=0;
-            while(i<argc){
-                printf("%s ", (map->app->argv)[i]);
-                i++;
-            }
-            printf("\n");
- */
-            t_stack->tid=lrx(argc, map->app->argv);
+            t_stack->tid=lrx(argc, map->app->argv, map->app->env);
         }
     }
 
