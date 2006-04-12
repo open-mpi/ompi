@@ -20,7 +20,7 @@
 #define OMPI_FREE_LIST_H
 
 #include "ompi_config.h"
-#include "opal/class/opal_list.h"
+#include "opal/class/opal_atomic_lifo.h"
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
@@ -35,7 +35,7 @@ struct mca_mem_pool_t;
 
 struct ompi_free_list_t
 {
-    opal_list_t super;
+    opal_atomic_lifo_t super;
     size_t fl_max_to_alloc;
     size_t fl_num_allocated;
     size_t fl_num_per_alloc;
@@ -95,18 +95,18 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
 #define OMPI_FREE_LIST_GET(fl, item, rc) \
 { \
     if(opal_using_threads()) { \
-        opal_mutex_lock(&((fl)->fl_lock)); \
-        item = opal_list_remove_first(&((fl)->super)); \
+        item = opal_atomic_lifo_pop(&((fl)->super)); \
         if(NULL == item) { \
+            opal_mutex_lock(&((fl)->fl_lock)); \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item = opal_list_remove_first(&((fl)->super)); \
+            opal_mutex_unlock(&((fl)->fl_lock)); \
+            item = opal_atomic_lifo_pop(&((fl)->super)); \
         } \
-        opal_mutex_unlock(&((fl)->fl_lock)); \
     } else { \
-        item = opal_list_remove_first(&((fl)->super)); \
+        item = opal_atomic_lifo_pop(&((fl)->super)); \
         if(NULL == item) { \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item = opal_list_remove_first(&((fl)->super)); \
+            item = opal_atomic_lifo_pop(&((fl)->super)); \
         } \
     }  \
     rc = (NULL == item) ?  OMPI_ERR_TEMP_OUT_OF_RESOURCE : OMPI_SUCCESS; \
@@ -124,26 +124,38 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
  * been reached. In this case the caller is blocked until an item
  * is returned to the list.
  */
- 
 
 #define OMPI_FREE_LIST_WAIT(fl, item, rc)                                  \
-{                                                                          \
-    OPAL_THREAD_LOCK(&((fl)->fl_lock));                                    \
-    item = opal_list_remove_first(&((fl)->super));                         \
-    while(NULL == item) {                                                  \
-        if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {              \
-            (fl)->fl_num_waiting++;                                        \
-            opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));  \
-            (fl)->fl_num_waiting--;                                        \
-        } else {                                                           \
-            ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);             \
-        }                                                                  \
-        item = opal_list_remove_first(&((fl)->super));                     \
-    }                                                                      \
-    OPAL_THREAD_UNLOCK(&((fl)->fl_lock));                                  \
-    rc = (NULL == item) ?  OMPI_ERR_OUT_OF_RESOURCE : OMPI_SUCCESS;        \
-} 
+    rc = __ompi_free_list_wait( (fl), (ompi_free_list_item_t**)&(item) )
 
+static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
+                                         ompi_free_list_item_t** item )
+{
+    *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
+    while( NULL == *item ) {
+        if( OPAL_THREAD_TRYLOCK(&((fl)->fl_lock)) ) {
+            if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {
+                (fl)->fl_num_waiting++;
+                opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));
+                (fl)->fl_num_waiting--;
+            } else {
+                ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);
+                if( 0 < (fl)->fl_num_waiting ) {
+                    opal_condition_signal(&((fl)->fl_condition));
+                }
+            }
+        } else {
+            /* If I wasn't able to get the lock in the begining when I finaly grab it
+             * the one holding the lock in the begining already grow the list. I will
+             * release the lock and try to get a new element until I succeed.
+             */
+            OPAL_THREAD_LOCK(&((fl)->fl_lock));
+        }
+        OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
+        *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
+    }
+    return OMPI_SUCCESS;
+} 
 
 /**
  * Return an item to a free list. 
@@ -153,15 +165,21 @@ OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elemen
  *
  */
  
-#define OMPI_FREE_LIST_RETURN(fl, item)                                    \
-{                                                                          \
-    OPAL_THREAD_LOCK(&(fl)->fl_lock);                                      \
-    opal_list_prepend(&((fl)->super), (item));                            \
-    if((fl)->fl_num_waiting > 0) {                                         \
-        opal_condition_signal(&((fl)->fl_condition));                      \
-    }                                                                      \
-    OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                                    \
-}
+#define OMPI_FREE_LIST_RETURN(fl, item)                                 \
+    do {                                                                \
+        opal_list_item_t* original;                                     \
+                                                                        \
+        original = opal_atomic_lifo_push( &(fl)->super,                 \
+                                          (opal_list_item_t*)item );    \
+        if( &(fl)->super.opal_lifo_ghost == original ) {                \
+            OPAL_THREAD_LOCK(&(fl)->fl_lock);                           \
+            if((fl)->fl_num_waiting > 0) {                              \
+                opal_condition_signal(&((fl)->fl_condition));           \
+            }                                                           \
+            OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                         \
+        }                                                               \
+    } while(0)
+    
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
