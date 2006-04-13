@@ -193,6 +193,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
     orte_rmaps_base_map_t* map;
     orte_rmaps_base_node_t *node;
     orte_rmaps_base_proc_t *proc;
+    orte_vpid_t vpid_start, vpid_range;
 
     /** first get the mapping we are going to use to launch job. The head
      * of the list is OBJ_CONSTRUCT'd since it is not dynamically allocated. The
@@ -209,6 +210,12 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
      * to launch plus any "flags" to pass to it.
      */
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /** next, get the vpid_start and range info so we can pass it along */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start, &vpid_range))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -280,6 +287,30 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
                 return rc;
             }
             var = mca_base_param_environ_variable("ns", "nds", "name");
+            opal_setenv(var, param, true, &(map->app->env));
+            free(var);
+            free(param);
+
+            /** now add the num_procs to the environment so we can
+             * retrieve it on the other end
+             */
+            if (0 < asprintf(&param, "%lu", (unsigned long)map->num_procs)) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            var = mca_base_param_environ_variable("ns", "nds", "num_procs");
+            opal_setenv(var, param, true, &(map->app->env));
+            free(var);
+            free(param);
+
+            /** now add the vpid_start to the environment so we can
+             * retrieve it on the other end
+             */
+            if (0 < asprintf(&param, "%lu", (unsigned long)vpid_start)) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            var = mca_base_param_environ_variable("ns", "nds", "vpid_start");
             opal_setenv(var, param, true, &(map->app->env));
             free(var);
             free(param);
