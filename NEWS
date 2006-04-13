@@ -24,15 +24,17 @@ version 1.0.
 1.1
 ---
 
+- Numerous performance improvements throughout the entire code base.
+- Many minor threading fixes.
 - Fixed MPI_COMM_SELF attributes to free properly at the beginning of
   MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
   attention.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
   being included in mpi.h. It allows the user to compile C code with a CXX
   compiler without including the CXX bindings.
-- The PERUSE support is now available directly on the trunk. In order to
-  activate it add --enable-peruse to the configure options. All events
-  described in the PERUSE 2.0 draft are supported, plus one Open MPI
+- PERUSE support has been added. In order to activate it add
+  --enable-peruse to the configure options. All events described in
+  the PERUSE 2.0 draft are supported, plus one Open MPI
   extension. PERUSE_COMM_REQ_XFER_CONTINUE allow to see how the data
   is segmented internally, using multiple interfaces or the pipeline
   engine. However, this version only support one event of each type
