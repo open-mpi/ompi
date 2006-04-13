@@ -48,6 +48,13 @@ version 1.0.
   Thanks to Michael Kluskens for pointing out the problems to us.
 
 
+1.0.3
+-----
+- Fixed MPI_COMM_SELF attributes to free properly at the beginning of
+  MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
+  attention.
+
+
 1.0.2
 -----
 
