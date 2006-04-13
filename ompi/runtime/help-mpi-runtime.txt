@@ -42,3 +42,10 @@ Typical causes for this problem include:
      which case Open MPI will not bind any processes on that node
    - A startup mechanism was used which did not tell Open MPI which
      processors to bind processes to
+[mpi_finalize:invoked_multiple_times]
+The function MPI_FINALIZE was invoked multiple times in a single
+process on host %s, PID %d.  
+
+This indicates an erroneous MPI program; MPI_FINALIZE is only allowed
+to be invoked exactly once in a process.
+

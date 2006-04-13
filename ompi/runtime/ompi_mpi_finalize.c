@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -18,10 +19,25 @@
 
 #include "orte_config.h"
 
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_NETDB_H
+#include <netdb.h>
+#endif
+
 #include "opal/event/event.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/show_help.h"
+#include "opal/sys/atomic.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/include/orte_constants.h"
@@ -63,6 +79,39 @@
 int ompi_mpi_finalize(void)
 {
     int ret;
+    static int32_t finalize_has_already_started = 0;
+
+    /* Be a bit social if an erroneous program calls MPI_FINALIZE in
+       two different threads, otherwise we may deadlock in
+       ompi_comm_free() (or run into other nasty lions, tigers, or
+       bears) */
+
+    if (! opal_atomic_cmpset_32(&finalize_has_already_started, 0, 1)) {
+        /* Note that if we're already finalized, we cannot raise an
+           MPI exception.  The best that we can do is write something
+           to stderr. */
+        char hostname[MAXHOSTNAMELEN];
+        pid_t pid = getpid();
+        gethostname(hostname, sizeof(hostname));
+
+        opal_show_help("help-mpi-runtime.txt",
+                       "mpi_finalize:invoked_multiple_times",
+                       true, hostname, pid);
+        return MPI_ERR_OTHER;
+    }
+
+    /* Per MPI-2:4.8, we have to free MPI_COMM_SELF before doing
+       anything else in MPI_FINALIZE (to include setting up such that
+       MPI_FINALIZED will return true). */
+
+    if (NULL != ompi_mpi_comm_self.c_keyhash) {
+        ompi_attr_delete_all(COMM_ATTR, &ompi_mpi_comm_self,
+                             ompi_mpi_comm_self.c_keyhash);
+        OBJ_RELEASE(ompi_mpi_comm_self.c_keyhash);
+        ompi_mpi_comm_self.c_keyhash = NULL;
+    }
+
+    /* Proceed with MPI_FINALIZE */
 
     ompi_mpi_finalized = true;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
