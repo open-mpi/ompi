@@ -26,9 +26,6 @@ version 1.0.
 
 - Numerous performance improvements throughout the entire code base.
 - Many minor threading fixes.
-- Fixed MPI_COMM_SELF attributes to free properly at the beginning of
-  MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
-  attention.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
   being included in mpi.h. It allows the user to compile C code with a CXX
   compiler without including the CXX bindings.
@@ -51,6 +48,14 @@ version 1.0.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 - Fix various MPI F90 interface functions and constant types to match.
   Thanks to Michael Kluskens for pointing out the problems to us.
+
+
+1.0.3
+-----
+
+- Fixed MPI_COMM_SELF attributes to free properly at the beginning of
+  MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
+  attention.
 
 
 1.0.2
