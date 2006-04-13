@@ -121,6 +121,14 @@ static int orte_pls_xcpu_setup_env(char ***env)
         ORTE_ERROR_LOG(rc);
     }
 
+    /** indicate that the env module of the sds is to be used */
+    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(var, "env", true, env);
+    free(var);
+
     /** ns replica contact info */
     if (NULL != orte_process_info.ns_replica) {
         param = strdup(orte_process_info.ns_replica_uri);
@@ -157,6 +165,36 @@ static int orte_pls_xcpu_setup_env(char ***env)
               orte_universe_info.host, orte_universe_info.name);
     opal_setenv(var, param, true, env);
     free(param);
+    free(var);
+
+    /** make sure the name components are cleared from the environment */
+    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "cellid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_unsetenv(var, env);
+    free(var);
+
+    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "jobid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_unsetenv(var, env);
+    free(var);
+
+    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "vpid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_unsetenv(var, env);
+    free(var);
+
+    /** we are NOT going to be a seed - ensure that is cleared */
+    if (NULL == (var = mca_base_param_environ_variable("seed", NULL, NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_unsetenv(var, env);
     free(var);
 
     /** merge in environment */
@@ -294,7 +332,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             /** now add the num_procs to the environment so we can
              * retrieve it on the other end
              */
-            if (0 < asprintf(&param, "%lu", (unsigned long)map->num_procs)) {
+            if (0 > asprintf(&param, "%lu", (unsigned long)map->num_procs)) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
@@ -306,7 +344,7 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             /** now add the vpid_start to the environment so we can
              * retrieve it on the other end
              */
-            if (0 < asprintf(&param, "%lu", (unsigned long)vpid_start)) {
+            if (0 > asprintf(&param, "%lu", (unsigned long)vpid_start)) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
