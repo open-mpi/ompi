@@ -304,16 +304,7 @@ int mca_btl_self_send(
     mca_btl_base_tag_t tag)
 {
     /* upcall */
-    des->des_dst = des->des_src;
-    des->des_dst_cnt = des->des_src_cnt;
-    des->des_src = NULL;
-    des->des_src_cnt = 0;
     mca_btl_self_component.self_reg[tag].cbfunc(btl,tag,des,OMPI_SUCCESS);
-    des->des_src = des->des_dst;
-    des->des_src_cnt = des->des_dst_cnt;
-    des->des_dst = NULL;
-    des->des_dst_cnt = 0;
-
     /* send completion */
     des->des_cbfunc(btl,endpoint,des,OMPI_SUCCESS);
     return OMPI_SUCCESS;

@@ -7,8 +7,8 @@ static inline void mca_btl_self_frag_constructor(mca_btl_self_frag_t* frag)
     frag->segment.seg_len = frag->size;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
 }
 
