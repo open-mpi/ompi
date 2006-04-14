@@ -37,7 +37,7 @@
 #include "opal/mca/maffinity/base/base.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/show_help.h"
-#include "opal/sys/atomic.h"
+#include "opal/include/sys/atomic.h"
 
 #include "orte/util/proc_info.h"
 #include "orte/include/orte_constants.h"
