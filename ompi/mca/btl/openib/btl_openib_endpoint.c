@@ -532,6 +532,11 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
     endpoint->endpoint_btl->poll_cq = true; 
     
+    /**
+     * The connection is correctly setup. Now we can decrease the event trigger.
+     */
+    opal_progress_event_decrement();
+
     /* While there are frags in the list,
      * process them */
 
@@ -702,7 +707,12 @@ static void mca_btl_openib_endpoint_recv(
                     BTL_ERROR(("error in endpoint reply start connect")); 
                     break;
                 }
-              
+                                                                                     
+                /** As long as we expect a message from the peer (in order to setup the connection)
+                 * let the event engine pool the OOB events. Note: we increment it once peer active
+                 * connection.
+                 */
+                opal_progress_event_increment();
                 break;
                 
             case MCA_BTL_IB_CONNECTING :
@@ -766,10 +776,10 @@ int mca_btl_openib_endpoint_send(
                              )
 {
     int rc;
+    bool call_progress = false;
     mca_btl_openib_module_t *openib_btl; 
     
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-    
     switch(endpoint->endpoint_state) {
         case MCA_BTL_IB_CONNECTING:
 
@@ -777,7 +787,7 @@ int mca_btl_openib_endpoint_send(
             
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
-
+            call_progress = true;
             rc = OMPI_SUCCESS;
             break;
 
@@ -787,7 +797,7 @@ int mca_btl_openib_endpoint_send(
 
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
-
+            call_progress = true;
             rc = OMPI_SUCCESS;
             break;
 
@@ -797,6 +807,13 @@ int mca_btl_openib_endpoint_send(
             opal_list_append(&endpoint->pending_send_frags,
                     (opal_list_item_t *)frag);
             rc = mca_btl_openib_endpoint_start_connect(endpoint);
+            /**
+             * As long as we expect a message from the peer (in order to setup the connection)
+             * let the event engine pool the OOB events. Note: we increment it once peer active
+             * connection.
+             */
+            opal_progress_event_increment();
+            call_progress = true;
             break;
 
         case MCA_BTL_IB_FAILED:
@@ -818,9 +835,8 @@ int mca_btl_openib_endpoint_send(
     default:
         rc = OMPI_ERR_UNREACH;
     }
-    
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-    
+    if(call_progress) opal_progress();
     return rc;
 }
 
