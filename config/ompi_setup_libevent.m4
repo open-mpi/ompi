@@ -125,6 +125,7 @@ if test "x$havertsig" = "xyes" ; then
 #include <fcntl.h>
 #include <signal.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int sigio()
 {
@@ -199,6 +200,7 @@ if test "x$ac_cv_header_sys_event_h" = "xyes"; then
 #include <stdio.h>
 #include <unistd.h>
 #include <fcntl.h>
+#include <stdlib.h>
 
 int
 main(int argc, char **argv)
@@ -256,6 +258,7 @@ if test "x$ac_cv_header_sys_epoll_h" = "xyes"; then
 #include <sys/syscall.h>
 #include <sys/epoll.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 int
 epoll_create(int size)

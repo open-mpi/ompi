@@ -43,14 +43,15 @@ int main(int argc, char* argv[])
                                 AC_MSG_WARN([*** See config.log for details.])
                                 AC_MSG_ERROR([*** Cannot continue.])],
                                [ # cross compile - do a non-executable test.  Trick 
-                                 # taken from the AC CVS repository.  If only they'd
-                                 # get around to actually releasing something post 2.59...
-                                 _AC_COMPUTE_INT([offsetof (struct { char x; $1 y; }, y)],
+                                 # taken from the Autoconf 2.59c.  Switch to using
+                                 # AC_CHECK_ALIGNOF when we can require Autoconf 2.60.
+                                 _AC_COMPUTE_INT([(long int) offsetof (ompi__type_alignof_, y)],
                                                  [AS_TR_SH([ompi_cv_c_align_$1])],
-                                                 [AC_INCLUDES_DEFAULT()
+                                                 [AC_INCLUDES_DEFAULT
 #ifndef offsetof
 # define offsetof(type, member) ((char *) &((type *) 0)->member - (char *) 0)
 #endif
+typedef struct { char x; $1 y; } ompi__type_alignof_;
 ],
                                                  [AC_MSG_WARN([*** Problem running configure test!])
                                                   AC_MSG_WARN([*** See config.log for details.])
