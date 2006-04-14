@@ -56,6 +56,8 @@ version 1.0.
 - Fixed MPI_COMM_SELF attributes to free properly at the beginning of
   MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
   attention.
+- Fixed alignment tests for cross-compiling to not cause errors with
+  recent versions of GCC.
 
 
 1.0.2
