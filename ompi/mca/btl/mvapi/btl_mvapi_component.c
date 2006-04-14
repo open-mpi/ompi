@@ -199,11 +199,11 @@ int mca_btl_mvapi_component_open(void)
                                       8,  &mca_btl_mvapi_component.srq_sd_max); 
 
     mca_btl_mvapi_param_register_int("use_eager_rdma", "user RDMA for eager messages", 
-            0, (int*) &mca_btl_mvapi_component.use_eager_rdma);
+            1, (int*) &mca_btl_mvapi_component.use_eager_rdma);
     if (mca_btl_mvapi_component.use_srq)
         mca_btl_mvapi_component.use_eager_rdma = 0;
     mca_btl_mvapi_param_register_int("eager_rdma_threshold", "Open rdma channel for eager messages after this number of messages received from peer (zero to disable)",
-            100, (int*)&mca_btl_mvapi_component.eager_rdma_threshold);
+            16, (int*)&mca_btl_mvapi_component.eager_rdma_threshold);
     mca_btl_mvapi_param_register_int("max_eager_rdma", "Maximum number of eager RDMA connections",
             16, (int*)&mca_btl_mvapi_component.max_eager_rdma);
     mca_btl_mvapi_param_register_int("eager_rdma_num", "Number of RDMA buffers for eager messages",
