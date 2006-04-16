@@ -117,10 +117,6 @@ int ompi_comm_set ( ompi_communicator_t *newcomm,
     newcomm->error_handler = errh;
     OBJ_RETAIN ( newcomm->error_handler );
 
-    /* Set name for debugging purposes */
-    snprintf(newcomm->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d", 
-             newcomm->c_contextid);
-
     /* Set Topology, if required */
     
     if ( NULL != topocomponent ) {
@@ -314,6 +310,10 @@ int ompi_comm_create ( ompi_communicator_t *comm, ompi_group_t *group,
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
+
+    /* Set name for debugging purposes */
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d CREATE FROM %d", 
+             newcomp->c_contextid, comm->c_contextid );
 
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
@@ -536,6 +536,10 @@ int ompi_comm_split ( ompi_communicator_t* comm, int color, int key,
         goto exit;
     }
 
+    /* Set name for debugging purposes */
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d SPLIT FROM %d", 
+             newcomp->c_contextid, comm->c_contextid );
+
     /* Activate the communicator and init coll-component */
     rc = ompi_comm_activate ( newcomp,  /* new communicator */ 
                              comm,     /* old comm */
@@ -634,6 +638,10 @@ int ompi_comm_dup ( ompi_communicator_t * comm, ompi_communicator_t **newcomm)
     if ( MPI_SUCCESS != rc) { 
         return rc;
     }
+
+    /* Set name for debugging purposes */
+    snprintf(newcomp->c_name, MPI_MAX_OBJECT_NAME, "MPI COMMUNICATOR %d DUP FROM %d", 
+             newcomp->c_contextid, comm->c_contextid );
 
     /* activate communicator and init coll-module */
     rc = ompi_comm_activate (newcomp,  /* new communicator */ 
