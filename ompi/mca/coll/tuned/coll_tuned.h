@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,24 +33,12 @@
 /* also need the dynamic rule structures */
 #include "coll_tuned_dynamic_rules.h"
 
+/* need the forced user choice structures */
+#include "coll_tuned_forced.h"
+
 /* some fixed value index vars to simplify certain operations */
-#define ALLGATHER 0
-#define ALLGATHERV 1
-#define ALLREDUCE 2
-#define ALLTOALL 3
-#define ALLTOALLV 4
-#define ALLTOALLW 5
-#define BARRIER 6
-#define BCAST 7
-#define EXSCAN 8
-#define GATHER 9
-#define GATHERV 10
-#define REDUCE 11
-#define REDUCESCATTER 11
-#define SCAN 12
-#define SCATTER 13
-#define SCATTERV 14
-#define COLLCOUNT 15
+typedef enum COLLTYPE {ALLGATHER, ALLGATHERV, ALLREDUCE, ALLTOALL, ALLTOALLV, ALLTOALLW, BARRIER, BCAST,
+EXSCAN, GATHER, GATHERV, REDUCE, REDUCESCATTER, SCAN, SCATTER, SCATTERV, COLLCOUNT} COLLTYPE_T;
 
 /* defined arg lists to simply auto inclusion of user overriding decision functions */
 #define ALLGATHER_ARGS void *sbuf, int scount, struct ompi_datatype_t *sdtype, void *rbuf, int rcount, struct ompi_datatype_t *rdtype, struct ompi_communicator_t *comm
@@ -81,6 +69,7 @@ extern "C" {
 
 /* OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component; */
 
+/* these are the same across all modules and are loaded at component query time */
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_stream;
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_priority;
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_preallocate_memory_comm_size_limit;
@@ -90,27 +79,12 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_tree_fanout;
 OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_chain_fanout;
 
 /* forced algorithm choices */
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_choice;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_segsize;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_allreduce_forced_chain_fanout;
+/* the indices to the MCA params so that modules can look them up at open / comm create time  */
+OMPI_COMP_EXPORT extern coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT];
+/* the actual max algorithm values (readonly), loaded at component open */
+OMPI_COMP_EXPORT extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
 
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_choice;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_segsize;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_alltoall_forced_chain_fanout;
 
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_barrier_forced_choice;
-
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_choice;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_segsize;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_bcast_forced_chain_fanout;
-
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_choice;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_segsize;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_tree_fanout;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
 
 /*
  * coll API functions
@@ -156,9 +130,8 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
   int ompi_coll_tuned_allreduce_intra_dec_fixed(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_intra_dec_dynamic(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_intra_do_forced(ALLREDUCE_ARGS);
-  int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int choice, int faninout, int segsize);
-  int ompi_coll_tuned_allreduce_intra_check_forced(void);
-  int ompi_coll_tuned_allreduce_intra_query(void);
+  int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_allreduce_intra_nonoverlapping(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_intra_basic_linear(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_inter_dec_fixed(ALLREDUCE_ARGS);
@@ -168,9 +141,8 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
   int ompi_coll_tuned_alltoall_intra_dec_fixed(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_dec_dynamic(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_do_forced(ALLTOALL_ARGS);
-  int ompi_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int choice, int faninout, int segsize);
-  int ompi_coll_tuned_alltoall_intra_check_forced(void);
-  int ompi_coll_tuned_alltoall_intra_query (void);
+  int ompi_coll_tuned_alltoall_intra_do_this(ALLTOALL_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_alltoall_intra_pairwise(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_bruck(ALLTOALL_ARGS);
   int ompi_coll_tuned_alltoall_intra_basic_linear(ALLTOALL_ARGS);
@@ -194,14 +166,10 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
   int ompi_coll_tuned_barrier_intra_dec_fixed(BARRIER_ARGS);
   int ompi_coll_tuned_barrier_intra_dec_dynamic(BARRIER_ARGS);
   int ompi_coll_tuned_barrier_intra_do_forced(BARRIER_ARGS);
-  int ompi_coll_tuned_barrier_intra_do_this(BARRIER_ARGS, int choice, int faninout, int segsize);
-
-  int ompi_coll_tuned_barrier_intra_check_forced(void);
-  int ompi_coll_tuned_barrier_intra_query (void);
-
+  int ompi_coll_tuned_barrier_intra_do_this(BARRIER_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_barrier_inter_dec_fixed(BARRIER_ARGS);
   int ompi_coll_tuned_barrier_inter_dec_dynamic(BARRIER_ARGS);
-
   int ompi_coll_tuned_barrier_intra_doublering(BARRIER_ARGS);
   int ompi_coll_tuned_barrier_intra_recursivedoubling(BARRIER_ARGS);
   int ompi_coll_tuned_barrier_intra_bruck(BARRIER_ARGS);
@@ -212,9 +180,8 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
   int ompi_coll_tuned_bcast_intra_dec_fixed(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_dec_dynamic(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_do_forced(BCAST_ARGS);
-  int ompi_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int choice, int faninout, int segsize);
-  int ompi_coll_tuned_bcast_intra_check_forced(void);
-  int ompi_coll_tuned_bcast_intra_query (void);
+  int ompi_coll_tuned_bcast_intra_do_this(BCAST_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_bcast_intra_basic_linear(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
   int ompi_coll_tuned_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
@@ -246,9 +213,8 @@ OMPI_COMP_EXPORT extern int   ompi_coll_tuned_reduce_forced_chain_fanout;
   int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
-  int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int choice, int faninout, int segsize);
-  int ompi_coll_tuned_reduce_intra_check_forced(void);
-  int ompi_coll_tuned_reduce_intra_query (void);
+  int ompi_coll_tuned_reduce_intra_do_this(REDUCE_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_reduce_intra_basic_linear(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout);
   int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
@@ -372,6 +338,10 @@ struct mca_coll_base_comm_t {
    ompi_coll_alg_rule_t *all_base_rules;       /* stored only on MCW, all other coms ref it */
                                                 /* moving to the component */
    ompi_coll_com_rule_t *com_rules[COLLCOUNT]; /* the communicator rules for each MPI collective for ONLY my comsize */
+
+   /* for forced algorithms we store the information on the module */
+   /* previously we only had one shared copy, ops, it really is per comm/module */
+   coll_tuned_force_algorithm_params_t user_forced[COLLCOUNT];
 };
 
    /**

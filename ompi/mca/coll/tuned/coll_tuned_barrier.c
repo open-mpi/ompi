@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -325,32 +325,38 @@ static int ompi_coll_tuned_barrier_intra_basic_linear(struct ompi_communicator_t
 /* publish details of each algorithm and if its forced/fixed/locked in */
 /* as you add methods/algorithms you must update this and the query/map routines */
 
-int ompi_coll_tuned_barrier_intra_check_forced ( )
-{
+/* this routine is called by the component only */
+/* this makes sure that the mca parameters are set to their initial values and perms */
+/* module does not call this they call the forced_getvalues routine instead */
 
-mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
+{
+    int rc;
+    int max_alg = 5;
+
+  ompi_coll_tuned_forced_max_algorithms[BARRIER] = max_alg;
+
+rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                           "barrier_algorithm_count",
+                           "Number of barrier algorithms available",
+                           false, true, max_alg, NULL);
+
+mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "barrier_algorithm",
-                           "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only, 6: step based bmtree",
-                           false, false, ompi_coll_tuned_barrier_forced_choice,
-                           &ompi_coll_tuned_barrier_forced_choice);
+                           "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only",
+                           false, false, 0, NULL);
 
 return (MPI_SUCCESS);
 }
 
 
 
-int ompi_coll_tuned_barrier_intra_query ( )
-{
-    return (5); /* 4 algorithms available */ 
-                /* 2 to do */
-}
-
-
 int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm)
 {
-   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced selected algorithm %d", ompi_coll_tuned_barrier_forced_choice));
+   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced selected algorithm %d",
+                                        comm->c_coll_selected_data->user_forced[BARRIER].algorithm));
 
-switch (ompi_coll_tuned_barrier_forced_choice) {
+switch (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
     case (1):   return ompi_coll_tuned_barrier_intra_basic_linear (comm); 
     case (2):   return ompi_coll_tuned_barrier_intra_doublering (comm);
@@ -360,18 +366,18 @@ switch (ompi_coll_tuned_barrier_forced_choice) {
 /*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                    ompi_coll_tuned_barrier_forced_choice, ompi_coll_tuned_barrier_intra_query()));
+                    comm->c_coll_selected_data->user_forced[BARRIER].algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
     } /* switch */
 
 }
 
 
-int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm, int choice, int faninout, int segsize)
+int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm, int algorithm, int faninout, int segsize)
 {
-   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", choice, faninout));
+   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
 
-switch (choice) {
+switch (algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
     case (1):   return ompi_coll_tuned_barrier_intra_basic_linear (comm); 
     case (2):   return ompi_coll_tuned_barrier_intra_doublering (comm);
@@ -381,7 +387,7 @@ switch (choice) {
 /*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                    choice, ompi_coll_tuned_barrier_intra_query()));
+                    algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
     } /* switch */
 
