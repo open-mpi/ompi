@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-# _OMPI_CHECK_PACKAGE_HEADER(prefix, hedaer, dir-prefix,
+# _OMPI_CHECK_PACKAGE_HEADER(prefix, header, dir-prefix,
 #                            [action-if-found], [action-if-not-found])
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
@@ -72,7 +72,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
           [ompi_check_package_libdir="$6"],
           [ompi_check_package_libdir="$5"])
 
-    AS_IF([test "$ompi_check_packag_libdir" = "" -o "$ompi_check_package_libdir" = "/usr" -o "$ompi_check_package_libdir" = "/usr/local"],
+    AS_IF([test "$ompi_check_package_libdir" = "" -o "$ompi_check_package_libdir" = "/usr" -o "$ompi_check_package_libdir" = "/usr/local"],
           [ # try as is...
            AC_VERBOSE([looking for library without search path])
            AC_CHECK_LIB([$2], [$3], 
