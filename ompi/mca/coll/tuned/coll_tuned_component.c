@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -49,27 +49,10 @@ int   ompi_coll_tuned_init_tree_fanout = 4;
 int   ompi_coll_tuned_init_chain_fanout = 4;
 
 /* forced alogrithm variables */
-int ompi_coll_tuned_allreduce_forced_choice = 0;
-int ompi_coll_tuned_allreduce_forced_segsize = 0;
-int ompi_coll_tuned_allreduce_forced_chain_fanout = 0;
-int ompi_coll_tuned_allreduce_forced_tree_fanout = 0;
-
-int ompi_coll_tuned_alltoall_forced_choice = 0;
-int ompi_coll_tuned_alltoall_forced_segsize = 0;
-int ompi_coll_tuned_alltoall_forced_chain_fanout = 0;
-int ompi_coll_tuned_alltoall_forced_tree_fanout = 0;
-
-int ompi_coll_tuned_barrier_forced_choice = 0;
-
-int ompi_coll_tuned_bcast_forced_choice = 0;
-int ompi_coll_tuned_bcast_forced_segsize = 0;
-int ompi_coll_tuned_bcast_forced_chain_fanout = 0;
-int ompi_coll_tuned_bcast_forced_tree_fanout = 0;
-
-int ompi_coll_tuned_reduce_forced_choice = 0;
-int ompi_coll_tuned_reduce_forced_segsize = 0;
-int ompi_coll_tuned_reduce_forced_chain_fanout = 0;
-int ompi_coll_tuned_reduce_forced_tree_fanout = 0;
+/* indices for the MCA parameters */
+coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT];
+/* max algorithm values */
+int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
 
 
 /*
@@ -159,7 +142,7 @@ static int tuned_open(void)
     /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
     mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "use_dynamic_rules",
-                           "Switch used to decide if we use static (if statements) or dynamic (built at runtime) decision function rules",
+                           "Switch used to decide if we use static (compiled/if statements) or dynamic (built at runtime) decision function rules",
                            false, false, ompi_coll_tuned_use_dynamic_rules,
                            &ompi_coll_tuned_use_dynamic_rules);
 
@@ -197,16 +180,21 @@ static int tuned_open(void)
         }
     }
 
-    /* now check that the user hasn't overrode any of the decision functions */
-    /* the user can do this before every comm dup/create if they like */
+    /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
+    /* the user can redo this before every comm dup/create if they like */
     /* this is useful for benchmarking and user knows best tuning */
+    /* as this is the component we only lookup the indicies of the mca params */
+    /* the actual values are looked up during comm create via module init */
    
     /* intra functions first */
-    ompi_coll_tuned_allreduce_intra_check_forced();
-    ompi_coll_tuned_alltoall_intra_check_forced();
-    ompi_coll_tuned_barrier_intra_check_forced();
-    ompi_coll_tuned_bcast_intra_check_forced();
-    ompi_coll_tuned_reduce_intra_check_forced();
+    if (ompi_coll_tuned_use_dynamic_rules) {
+        ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
+        ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
+/*         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALLV]); */
+        ompi_coll_tuned_barrier_intra_check_forced_init(&ompi_coll_tuned_forced_params[BARRIER]);
+        ompi_coll_tuned_bcast_intra_check_forced_init(&ompi_coll_tuned_forced_params[BCAST]);
+        ompi_coll_tuned_reduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCE]);
+    }
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:component_open: done!"));
 

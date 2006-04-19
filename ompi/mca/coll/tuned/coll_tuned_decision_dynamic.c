@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -80,7 +80,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
         } /* found a method */
     } /*end if any com rules to check */
 
-    if (ompi_coll_tuned_allreduce_forced_choice) {
+    if (comm->c_coll_selected_data->user_forced[ALLREDUCE].algorithm) {
         return ompi_coll_tuned_allreduce_intra_do_forced (sbuf, rbuf, count, dtype, op, comm);
     }
     else {
@@ -127,7 +127,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     } /*end if any com rules to check */
 
 
-    if (ompi_coll_tuned_alltoall_forced_choice) {
+    if (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
         return ompi_coll_tuned_alltoall_intra_do_forced (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else {
@@ -162,7 +162,7 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
         } /* found a method */
     } /*end if any com rules to check */
 
-    if (ompi_coll_tuned_barrier_forced_choice) {
+    if (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
        return ompi_coll_tuned_barrier_intra_do_forced (comm);
     }
     else {
@@ -205,7 +205,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
     } /*end if any com rules to check */
 
 
-    if (ompi_coll_tuned_bcast_forced_choice) {
+    if (comm->c_coll_selected_data->user_forced[BCAST].algorithm) {
        return ompi_coll_tuned_bcast_intra_do_forced (buff, count, datatype, root, comm);
     }
     else {
@@ -249,7 +249,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
         } /* found a method */
     } /*end if any com rules to check */
 
-    if (ompi_coll_tuned_reduce_forced_choice) {
+    if (comm->c_coll_selected_data->user_forced[REDUCE].algorithm) {
        return ompi_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype, op, root, comm);
     }
     else {

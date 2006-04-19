@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,7 +30,7 @@
 #include "coll_tuned_topo.h"
 #include "coll_tuned_dynamic_rules.h"
 #include "coll_tuned_dynamic_file.h"
-
+#include "coll_tuned_forced.h"
 
 /*
  * Which set are we using?
@@ -332,6 +332,8 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
    */
 
   /* if we within the memory/size limit, allow preallocated data */
+
+
   if (size<=ompi_coll_tuned_preallocate_memory_comm_size_limit) {
     data = malloc(sizeof(struct mca_coll_base_comm_t) +
                  (sizeof(ompi_request_t *) * size * 2));
@@ -379,6 +381,17 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
         for (i=0;i<COLLCOUNT;i++) {
            data->com_rules[i] = (ompi_coll_com_rule_t*) NULL;
         }
+  }
+
+  /* next dynamic state, recheck all forced rules as well */
+  /* warning, we should check to make sure this is really an INTRA comm here... */
+  if (ompi_coll_tuned_use_dynamic_rules) {
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLREDUCE], &(data->user_forced[ALLREDUCE]));
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[ALLTOALL],  &(data->user_forced[ALLTOALL]));
+/*         ompi_coll_tuned_forced_getvalues (ompi_coll_tuned_forced_params[ALLTOALLV], &(data->user_forced[ALLTOALLV])); */
+        ompi_coll_tuned_forced_getvalues_barrier (ompi_coll_tuned_forced_params[BARRIER],   &(data->user_forced[BARRIER]));
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[BCAST],     &(data->user_forced[BCAST]));
+        ompi_coll_tuned_forced_getvalues         (ompi_coll_tuned_forced_params[REDUCE],    &(data->user_forced[REDUCE]));
   }
 
 
