@@ -115,19 +115,16 @@ static int orte_pls_xcpu_setup_env(char ***env)
     int rc;
     int num_env;
 
+    /** merge in environment */
+    merged = opal_environ_merge(*env, environ);
+    opal_argv_free(*env);
+    *env = merged;
+
     num_env = opal_argv_count(*env);
     /** append mca parameters to our environment */
     if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, &num_env, false))) {
         ORTE_ERROR_LOG(rc);
     }
-
-    /** indicate that the env module of the sds is to be used */
-    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_setenv(var, "env", true, env);
-    free(var);
 
     /** ns replica contact info */
     if (NULL != orte_process_info.ns_replica) {
@@ -166,41 +163,6 @@ static int orte_pls_xcpu_setup_env(char ***env)
     opal_setenv(var, param, true, env);
     free(param);
     free(var);
-
-    /** make sure the name components are cleared from the environment */
-    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "cellid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(var, env);
-    free(var);
-
-    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "jobid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(var, env);
-    free(var);
-
-    if (NULL == (var = mca_base_param_environ_variable("ns", "nds", "vpid"))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(var, env);
-    free(var);
-
-    /** we are NOT going to be a seed - ensure that is cleared */
-    if (NULL == (var = mca_base_param_environ_variable("seed", NULL, NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(var, env);
-    free(var);
-
-    /** merge in environment */
-    merged = opal_environ_merge(*env, environ);
-    opal_argv_free(*env);
-    *env = merged;
 
     /** make sure hostname doesn't get pushed to backend node */
     opal_unsetenv("HOSTNAME", env);
@@ -317,41 +279,15 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
                 return rc;
             }
 
-            /** now add the process name to the environment so we can
+            /** now setup the process name in the environment so we can
              * retrieve it on the other end
              */
-            if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string(&param, &(proc->proc_name)))) {
+            if (ORTE_SUCCESS != (rc = orte_ns_nds_env_put(&(proc->proc_name),
+                                            vpid_start, map->num_procs,
+                                            &(map->app->env)))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            var = mca_base_param_environ_variable("ns", "nds", "name");
-            opal_setenv(var, param, true, &(map->app->env));
-            free(var);
-            free(param);
-
-            /** now add the num_procs to the environment so we can
-             * retrieve it on the other end
-             */
-            if (0 > asprintf(&param, "%lu", (unsigned long)map->num_procs)) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            var = mca_base_param_environ_variable("ns", "nds", "num_procs");
-            opal_setenv(var, param, true, &(map->app->env));
-            free(var);
-            free(param);
-
-            /** now add the vpid_start to the environment so we can
-             * retrieve it on the other end
-             */
-            if (0 > asprintf(&param, "%lu", (unsigned long)vpid_start)) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            var = mca_base_param_environ_variable("ns", "nds", "vpid_start");
-            opal_setenv(var, param, true, &(map->app->env));
-            free(var);
-            free(param);
 
             /** the launcher wants to know how long the argv array is - get that now */
             argc = opal_argv_count(map->app->argv);
