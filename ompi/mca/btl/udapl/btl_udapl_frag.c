@@ -25,11 +25,13 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 {
     mca_mpool_udapl_registration_t* reg = frag->base.super.user_data;
 
+#if OMPI_ENABLE_DEBUG
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+#endif
 
     frag->registration = (mca_mpool_base_registration_t*)reg; 
     frag->hdr = (mca_btl_base_header_t*)(frag + 1);
@@ -64,6 +66,7 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
 { 
     mca_btl_udapl_frag_common_constructor(frag); 
     frag->segment.seg_len = 0;
+    frag->segment.seg_addr.pval = NULL;
     frag->hdr = NULL;
     frag->size = 0; 
 }

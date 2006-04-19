@@ -350,6 +350,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl, DAT_CR_HANDLE cr_handle)
 {
     mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
     DAT_EP_HANDLE endpoint;
     int rc;
 
@@ -370,12 +371,13 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl, DAT_CR_HAND
     /* Post a receive to get the address data */
     frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
             (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
+    cookie.as_ptr = frag;
 
     frag->endpoint = NULL;
     frag->type = MCA_BTL_UDAPL_CONN_RECV;
 
-    rc = dat_ep_post_recv(endpoint, 1, &frag->triplet,
-            (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+    rc = dat_ep_post_recv(endpoint, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
         MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
         return OMPI_ERROR;
@@ -461,10 +463,11 @@ int mca_btl_udapl_component_progress()
 
                         /* Repost the frag */
                         frag->segment.seg_addr.pval = frag->hdr;
-                        frag->segment.seg_len = frag->size;
+                        frag->segment.seg_len =
+                            frag->size - sizeof(mca_btl_base_header_t);
 
                         dat_ep_post_recv(frag->endpoint->endpoint_ep,
-                                1, &frag->triplet, (DAT_DTO_COOKIE)(void*)frag,
+                                1, &frag->triplet, dto->user_cookie,
                                 DAT_COMPLETION_DEFAULT_FLAG);
                         break;
                     }
