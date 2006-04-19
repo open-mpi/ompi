@@ -355,6 +355,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
     return &frag->base;
 }
 
@@ -414,12 +417,16 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
      * If the data has already been pinned and is contigous than we can
      * use it in place.
     */
+#if 0
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
-        size_t reg_len;
+        //size_t reg_len;
+        OPAL_OUTPUT((0, "udapl_prepare_src 1\n"));
+
         MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
         if(NULL == frag){
             return NULL;
         }
+
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
@@ -428,6 +435,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
+        frag->triplet.segment_length = max_data;
+        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
 
         reg_len = (unsigned char*)registration->bound -
                 (unsigned char*)iov.iov_base + 1;
@@ -441,7 +450,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     /*
      * if the data is not already pinned - but the leave pinned option is set,
      * then go ahead and pin contigous data. however, if a reserve is required 
-     * then we must allocated a fragment w/ buffer space
+     * then we must allocate a fragment w/ buffer space
     */
     } else if (max_data > btl->btl_max_send_size && 
                ompi_convertor_need_buffers(convertor) == 0 &&
@@ -452,6 +461,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         if(NULL == frag){
             return NULL;
         }
+        
+        OPAL_OUTPUT((0, "udapl_prepare_src 2\n"));
+
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
@@ -460,6 +472,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
+        frag->triplet.segment_length = max_data;
+        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
 
         rc = mpool->mpool_register(
                                    mpool,
@@ -474,29 +488,37 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
 
         frag->registration = registration;
+        frag->triplet.lmr_context =
+            ((mca_mpool_udapl_registration_t*)registration)->lmr_triplet.lmr_context;
     } 
 
     /*
      * if we aren't pinning the data and the requested size is less
      * than the eager limit pack into a fragment from the eager pool
     */
-    else if (max_data+reserve <= btl->btl_eager_limit) {
-                                                                                                    
+    else
+#endif
+    if (max_data+reserve <= btl->btl_eager_limit) {
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
         }
-                                                                                                    
+
+        OPAL_OUTPUT((0, "udapl_prepare_src 3\n"));
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        
+        rc = ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
         if( rc < 0 ) {
             MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
+
         frag->segment.seg_len = max_data + reserve;
+        frag->triplet.segment_length = max_data + reserve;
+        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
     }
 
     /* 
@@ -504,7 +526,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
      * that is the max send size.
      */
     else {
-                                                                                                    
+        OPAL_OUTPUT((0, "udapl_prepare_src 4\n"));
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -514,15 +536,18 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        
+        rc = ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
-                                                                                                    
+        
         if( rc < 0 ) {
             MCA_BTL_UDAPL_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
+        frag->triplet.segment_length = max_data + reserve;
+        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
     }
 
     frag->base.des_src = &frag->segment;

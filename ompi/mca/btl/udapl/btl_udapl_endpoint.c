@@ -46,13 +46,16 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                 mca_btl_udapl_frag_t* frag)
 {
     int rc = OMPI_SUCCESS;
+    DAT_DTO_COOKIE cookie;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
     switch(endpoint->endpoint_state) {
         case MCA_BTL_UDAPL_CONNECTED:
             /* just send it already.. */
+            OPAL_OUTPUT((0, "sending %d bytes\n", frag->triplet.segment_length));
+            cookie.as_ptr = frag;
             rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
-                    (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+                    cookie, DAT_COMPLETION_DEFAULT_FLAG);
             if(DAT_SUCCESS != rc) {
                 MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send");
                 rc = OMPI_ERROR;
@@ -193,6 +196,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
 {
     mca_btl_udapl_module_t* btl = endpoint->endpoint_btl;
     mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
     int rc;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
@@ -230,15 +234,17 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     /* Can't use btl_udapl_send here, will start an infinite loop! */
     frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
             (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
+    cookie.as_ptr = frag;
 
     memcpy(frag->segment.seg_addr.pval,
             &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
     frag->endpoint = endpoint;
     frag->type = MCA_BTL_UDAPL_CONN_SEND;
 
+
     /* Do the actual send now.. */
-    rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
-            (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+    rc = dat_ep_post_send(endpoint->endpoint_ep, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
     if(DAT_SUCCESS != rc) {
         MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send");
         goto failure;
@@ -265,14 +271,16 @@ failure_create:
 int mca_btl_udapl_endpoint_post_queue(mca_btl_udapl_endpoint_t* endpoint)
 {
     mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
     int rc = OMPI_SUCCESS;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONNECTED;
     while(NULL != (frag = (mca_btl_udapl_frag_t*)
             opal_list_remove_first(&endpoint->endpoint_frags))) {
-        rc = dat_ep_post_send(endpoint->endpoint_ep, 1, &frag->triplet,
-                (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+        cookie.as_ptr = frag;
+        rc = dat_ep_post_send(endpoint->endpoint_ep, 1,
+                &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
             MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send");
             rc = OMPI_ERROR;
@@ -334,6 +342,7 @@ int mca_btl_udapl_endpoint_match(struct mca_btl_udapl_module_t* btl,
 static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint)
 {
     mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
     int rc;
     int i;
 
@@ -354,8 +363,10 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint)
         frag->base.des_dst_cnt = 1;
         frag->type = MCA_BTL_UDAPL_RECV;
 
-        rc = dat_ep_post_recv(endpoint->endpoint_ep, 1, &frag->triplet,
-                (DAT_DTO_COOKIE)(void*)frag, DAT_COMPLETION_DEFAULT_FLAG);
+        cookie.as_ptr = frag;
+
+        rc = dat_ep_post_recv(endpoint->endpoint_ep, 1,
+                &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
             MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
             OPAL_THREAD_UNLOCK(&endpoint->endpoint_recv_lock);
