@@ -39,13 +39,14 @@
 #define D(foo)
 #endif
 
-#if OMPI_ENABLE_DEBUG
-#include <sched.h>
-#define SPIN sched_yield()
-#else
-#define SPIN continue
+#ifdef HAVE_SCHED_YIELD
+#  include <sched.h>
+#  define SPIN sched_yield()
+#elif __WINDOWS__
+#  define SPIN SwitchToThread()
+#else  /* no switch available */
+#  define SPIN
 #endif
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
