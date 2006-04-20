@@ -19,8 +19,7 @@
 dist_pkgdata_DATA = help-orted.txt
 
 libs = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/liborte.la
 
 headers = orted.h
 

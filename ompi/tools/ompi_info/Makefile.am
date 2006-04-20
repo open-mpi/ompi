@@ -39,9 +39,7 @@ AM_CPPFLAGS = \
 dist_pkgdata_DATA = help-ompi_info.txt
 
 libs = \
-        $(top_builddir)/ompi/libmpi.la \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/ompi/libmpi.la
 
 bin_PROGRAMS = ompi_info
 ompi_info_SOURCES = \
