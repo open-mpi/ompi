@@ -377,7 +377,7 @@
       -     there is no way to alloc memory in C for Fortran arrays
       -     see MPI_Free_mem
       -->
-    <method name="MPI_Alloc_mem" kind="No_F90">
+    <method name="MPI_Alloc_mem" kind="final">
 
       <!-- ARGUMENT : size -->
       <arg name="size" intent="in">
@@ -1953,7 +1953,7 @@
     <method name="MPI_Comm_set_attr" kind="final">
 
       <!-- ARGUMENT : comm -->
-      <arg name="comm" intent="in">
+      <arg name="comm" intent="inout">
         <type kind="usertype" usertype="MPI_Comm" >
         </type>
       </arg>
@@ -4624,11 +4624,11 @@
     <!-- 
       -  METHOD: int MPI_Free_mem(void *) C
       -->
-    <method name="MPI_Free_mem" kind="No_F90" template="yes">
+    <method name="MPI_Free_mem" kind="final" template="yes">
 
       <!-- ARGUMENT : base -->
       <arg name="base" intent="in">
-        <type kind="ptr">
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -4862,11 +4862,11 @@
     <!-- 
       -  METHOD: int MPI_Get_address(void *, MPI_Aint *) C
       -->
-    <method name="MPI_Get_address" kind="No_F90" template="yes">
+    <method name="MPI_Get_address" kind="final" template="yes">
 
       <!-- ARGUMENT : location -->
       <arg name="location" intent="in">
-        <type kind="ptr" >
+        <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
             </type>
@@ -8541,7 +8541,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="count"/>
           </array>
         </type>
       </arg>
@@ -8560,8 +8560,8 @@
       <arg name="array_of_statuses" intent="inout">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Status"/>
-            <dimension extent="*"/>
+            <type kind="int" ikind="int"/>
+            <dimension extent="count, MPI_STATUS_SIZE"/>
           </array>
         </type>
       </arg>
@@ -8589,7 +8589,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="count"/>
           </array>
         </type>
       </arg>
@@ -8647,7 +8647,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="incount"/>
           </array>
         </type>
       </arg>
@@ -8676,8 +8676,8 @@
       <arg name="array_of_statuses" intent="inout">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Status"/>
-            <dimension extent="*"/>
+            <type kind="int" ikind="int"/>
+            <dimension extent="incount, MPI_STATUS_SIZE"/>
           </array>
         </type>
       </arg>
@@ -10372,7 +10372,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="count"/>
           </array>
         </type>
       </arg>
@@ -10381,8 +10381,8 @@
       <arg name="array_of_statuses" intent="inout">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Status"/>
-            <dimension extent="*"/>
+            <type kind="int" ikind="int"/>
+            <dimension extent="count, MPI_STATUS_SIZE"/>
           </array>
         </type>
       </arg>
@@ -10410,7 +10410,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="count"/>
           </array>
         </type>
       </arg>
@@ -10458,7 +10458,7 @@
         <type kind="array">
           <array lang="c" rank="1">
             <type kind="usertype" usertype="MPI_Request"/>
-            <dimension extent="*"/>
+            <dimension extent="incount"/>
           </array>
         </type>
       </arg>
@@ -10487,8 +10487,8 @@
       <arg name="array_of_statuses" intent="inout">
         <type kind="array">
           <array lang="c" rank="1">
-            <type kind="usertype" usertype="MPI_Status"/>
-            <dimension extent="*"/>
+            <type kind="int" ikind="int"/>
+            <dimension extent="incount, MPI_STATUS_SIZE"/>
           </array>
         </type>
       </arg>
@@ -11607,8 +11607,20 @@
     
     <!-- 
       -  METHOD: int MPI_Comm_spawn_multiple(int, char **, char ***, int *, MPI_Info *, int, MPI_Comm, MPI_Comm *, int *) C
+      #
+      # The SPAWN_MULTIPLE interface has a nice compile-time check to ensure
+      # that the "count" parameter matches the dimension of the other
+      # parameters.  If the constant MPI_ARGVS_NULL is a character array of
+      # some kind, there is no guarantee that the count value provided by
+      # the application will match the dimension of MPI_ARGVS_NULL, which
+      # could therefore result in a[n erroneous] compile-time error.  As
+      # such, it is simpler to just make MPI_ARGVS_NULL a wholly different
+      # type (e.g., integer) that matches an entirely different interface
+      # function.
+      #
       -->
-    <method name="MPI_Comm_spawn_multiple" kind="final">
+    <method name="MPI_Comm_spawn_multipleN" kind="final"
+            interface="MPI_Comm_spawn_multiple">
 
       <!-- ARGUMENT : count -->
       <arg name="count" intent="in">
@@ -11698,7 +11710,98 @@
       </return>
     </method>
     
+    <!-- 
+      -  METHOD: int MPI_Comm_spawn_multiple(int, char **, char ***, int *, MPI_Info *, int, MPI_Comm, MPI_Comm *, int *) C
+      #
+      # Now we do the MPI_ARGVS_NULL variant - note the different type for
+      # the array_of_argv argument from the previous version
+      #
+      -->
+    <method name="MPI_Comm_spawn_multipleAN" kind="final"
+            interface="MPI_Comm_spawn_multiple">
+
+      <!-- ARGUMENT : count -->
+      <arg name="count" intent="in">
+        <type kind="int" ikind="int" >
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : array_of_commands -->
+      <arg name="array_of_commands" intent="in">
+        <type kind="array" idl="MPI_ARGV">
+          <array lang="c" rank="2">
+            <type kind="int" ikind="char"/>
+            <dimension extent="*"/>
+            <dimension extent="*"/>
+          </array>
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : array_of_argv -->
+      <arg name="array_of_argv" intent="in">
+        <type kind="int" ikind="int">
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : array_of_maxprocs -->
+      <arg name="array_of_maxprocs" intent="in">
+        <type kind="array">
+          <array lang="c" rank="1">
+            <type kind="int" ikind="int"/>
+            <dimension extent="*"/>
+          </array>
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : array_of_info -->
+      <arg name="array_of_info" intent="in">
+        <type kind="array">
+          <array lang="c" rank="1">
+            <type kind="usertype" usertype="MPI_Info"/>
+            <dimension extent="*"/>
+          </array>
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : root -->
+      <arg name="root" intent="in">
+        <type kind="int" ikind="int" >
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : comm -->
+      <arg name="comm" intent="in">
+        <type kind="usertype" usertype="MPI_Comm" >
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : intercomm -->
+      <arg name="intercomm" intent="out">
+        <type kind="ptr" >
+          <indirect depth="1" kind="pointer">
+            <type kind="usertype" usertype="MPI_Comm" >
+            </type>
+          </indirect>
+        </type>
+      </arg>
+
+      <!-- ARGUMENT : array_of_errcodes -->
+      <arg name="array_of_errcodes" intent="out">
+        <type kind="array">
+          <array lang="c" rank="1">
+            <type kind="int" ikind="int"/>
+            <dimension extent="*"/>
+          </array>
+        </type>
+      </arg>
+
+      <!-- return type (name=int) -->
+      <return name="ierr">
+        <type kind="int" ikind="int" >
+        </type>
+      </return>
+    </method>
+    
   </scope>
 
 </library>
-
