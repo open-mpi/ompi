@@ -99,7 +99,7 @@
 <xsl:text>
 #------------------------------------------------------------------------
 
-output</xsl:text>  <xsl:text>() {
+output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -144,7 +144,8 @@ start </xsl:text>
     <xsl:text> </xsl:text>
     <xsl:call-template name="interface-size"/>
 <xsl:text>
-output </xsl:text>  <xsl:value-of select="@name"/>  <xsl:text>
+output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+<xsl:value-of select="@name"/>  <xsl:text>
 end </xsl:text>
     <xsl:choose>
       <xsl:when test="@interface != ''">
@@ -167,7 +168,7 @@ end </xsl:text>
 <xsl:text>
 #------------------------------------------------------------------------
 
-output</xsl:text>  <xsl:text>() {
+output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -220,23 +221,28 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output </xsl:text>  <xsl:value-of select="@name"/>
+  output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+  <xsl:value-of select="@name"/>
   <xsl:text> ${rank} CH "character${dim}"
-  output </xsl:text>  <xsl:value-of select="@name"/>
+  output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+  <xsl:value-of select="@name"/>
   <xsl:text> ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output </xsl:text>  <xsl:value-of select="@name"/>
+    output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>
   <xsl:text> ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output </xsl:text>  <xsl:value-of select="@name"/>
+    output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>
     <xsl:text> ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output </xsl:text>  <xsl:value-of select="@name"/>
+    output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
+    <xsl:value-of select="@name"/>
     <xsl:text> ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
