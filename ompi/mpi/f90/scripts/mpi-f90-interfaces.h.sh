@@ -4416,7 +4416,7 @@ do
   for kind in $rkinds
   do
     output MPI_Free_mem ${rank} R${kind} "real*${kind}${dim}"
- done
+  done
   for kind in $ckinds
   do
     output MPI_Free_mem ${rank} C${kind} "complex*${kind}${dim}"
@@ -7540,7 +7540,7 @@ subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: flag
-  integer, dimension(count,MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -9613,26 +9613,15 @@ end MPI_Comm_spawn
 
 #------------------------------------------------------------------------
 
-# The SPAWN_MULTIPLE interface has a nice compile-time check to ensure
-# that the "count" parameter matches the dimension of the other
-# parameters.  If the constant MPI_ARGVS_NULL is a character array of
-# some kind, there is no guarantee that the count value provided by
-# the application will match the dimension of MPI_ARGVS_NULL, which
-# could therefore result in a[n erroneous] compile-time error.  As
-# such, it is simpler to just make MPI_ARGVS_NULL a wholly different
-# type (e.g., integer) that matches an entirely different interface
-# function.
-
 output() {
     if test "$output" = "0"; then
         return 0
     fi
 
     procedure=$1
-    # N = "normal"
     cat <<EOF
 
-subroutine ${procedure}N(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
+subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
   include 'mpif.h'
   integer, intent(in) :: count
@@ -9645,16 +9634,16 @@ subroutine ${procedure}N(count, array_of_commands, array_of_argv, array_of_maxpr
   integer, intent(out) :: intercomm
   integer, dimension(*), intent(out) :: array_of_errcodes
   integer, intent(out) :: ierr
-end subroutine ${procedure}N
+end subroutine ${procedure}
 
 EOF
 }
 
 start MPI_Comm_spawn_multiple small
-output MPI_Comm_spawn_multiple
+output MPI_Comm_spawn_multipleN
+end MPI_Comm_spawn_multiple
 
-# Now we do the MPI_ARGVS_NULL variant -- note the different type for
-# the array_of_argv argument.
+#------------------------------------------------------------------------
 
 output() {
     if test "$output" = "0"; then
@@ -9662,10 +9651,9 @@ output() {
     fi
 
     procedure=$1
-    # AN = "ARGV_NULL variant"
     cat <<EOF
 
-subroutine ${procedure}AN(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
+subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
   include 'mpif.h'
   integer, intent(in) :: count
@@ -9678,11 +9666,11 @@ subroutine ${procedure}AN(count, array_of_commands, array_of_argv, array_of_maxp
   integer, intent(out) :: intercomm
   integer, dimension(*), intent(out) :: array_of_errcodes
   integer, intent(out) :: ierr
-end subroutine ${procedure}AN
+end subroutine ${procedure}
 
 EOF
 }
 
-output MPI_Comm_spawn_multiple
+start MPI_Comm_spawn_multiple small
+output MPI_Comm_spawn_multipleAN
 end MPI_Comm_spawn_multiple
-
