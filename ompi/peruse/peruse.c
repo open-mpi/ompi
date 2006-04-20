@@ -59,7 +59,7 @@ static const peruse_event_associations_t PERUSE_events[] = {
     { "PERUSE_COMM_SEARCH_POSTED_Q_END", PERUSE_COMM_SEARCH_POSTED_Q_END },
     { "PERUSE_COMM_SEARCH_UNEX_Q_BEGIN", PERUSE_COMM_SEARCH_UNEX_Q_BEGIN },
     { "PERUSE_COMM_SEARCH_UNEX_Q_END", PERUSE_COMM_SEARCH_UNEX_Q_END },
-    { NULL, PERUSE_CUSTOM_EVENT }
+    { "PERUSE_CUSTOM_EVENT", PERUSE_CUSTOM_EVENT }
 };
 
 const int PERUSE_num_events = (sizeof(PERUSE_events) / sizeof(peruse_event_associations_t));
@@ -82,9 +82,6 @@ int PERUSE_Query_supported_events( int* num_supported,
     int i;
     *num_supported = PERUSE_num_events;
 
-    /*
-     * Play save and copy all values.
-     */
     *event_names = (char**) malloc (PERUSE_num_events * sizeof (char *));
     *events = (int*) malloc (PERUSE_num_events * sizeof (int));
 
