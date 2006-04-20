@@ -19,8 +19,7 @@
 dist_pkgdata_DATA = help-orteprobe.txt
 
 libs = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/liborte.la
 
 bin_PROGRAMS = orteprobe
 orteprobe_SOURCES = \
