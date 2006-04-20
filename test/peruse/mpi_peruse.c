@@ -152,6 +152,13 @@ int main (int argc, char * argv[])
     MPI_Comm_rank (MPI_COMM_WORLD, &comm_rank);
     MPI_Comm_size (MPI_COMM_WORLD, &comm_size);
 
+    if( comm_size < 2 ) {
+        /* We're looking for send & receive messages we ned at least 2 nodes. */
+        printf( "Please use at least 2 processes\n" );
+        MPI_Finalize();
+        return -1;
+    }
+
     PERUSE_Init ();
     PERUSE_Query_supported_events (&peruse_num_supported,
                                    &peruse_event_names,
