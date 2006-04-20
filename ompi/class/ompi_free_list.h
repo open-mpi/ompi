@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,6 +25,7 @@
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
 #include "ompi/mca/mpool/mpool.h"
+#include "opal/sys/cache.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -78,7 +79,21 @@ OMPI_DECLSPEC int ompi_free_list_init(
     mca_mpool_base_module_t*);
 
 OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
-    
+
+/* Allow to walk through the all allocated items. Not thread-safe, not
+ * protected, this function should never be used except for debugging purposes.
+ * The position should never be NULL, and it should be set to {NULL, NULL} 
+ * for the first call.
+ */
+typedef struct ompi_free_list_pos_t {
+    unsigned char* last_memory;
+    unsigned char* last_item;
+} ompi_free_list_pos_t;
+#define OMPI_FREE_LIST_POS_BEGINING {NULL, NULL}
+
+OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
+                                        ompi_free_list_pos_t* position,
+                                        opal_list_item_t** return_item );
 /**
  * Attemp to obtain an item from a free list. 
  *
