@@ -331,15 +331,15 @@ static void orte_dss_arith_int(int *value, int *operand, orte_dss_arith_op_t ope
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -347,11 +347,11 @@ static void orte_dss_arith_int(int *value, int *operand, orte_dss_arith_op_t ope
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -361,15 +361,15 @@ static void orte_dss_arith_uint(uint *value, uint *operand, orte_dss_arith_op_t 
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -377,11 +377,11 @@ static void orte_dss_arith_uint(uint *value, uint *operand, orte_dss_arith_op_t 
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -391,15 +391,15 @@ static void orte_dss_arith_size(size_t *value, size_t *operand, orte_dss_arith_o
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -407,11 +407,11 @@ static void orte_dss_arith_size(size_t *value, size_t *operand, orte_dss_arith_o
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -421,15 +421,15 @@ static void orte_dss_arith_pid(pid_t *value, pid_t *operand, orte_dss_arith_op_t
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -437,11 +437,11 @@ static void orte_dss_arith_pid(pid_t *value, pid_t *operand, orte_dss_arith_op_t
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -451,15 +451,15 @@ static void orte_dss_arith_byte(uint8_t *value, uint8_t *operand, orte_dss_arith
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -467,11 +467,11 @@ static void orte_dss_arith_byte(uint8_t *value, uint8_t *operand, orte_dss_arith
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -481,15 +481,15 @@ static void orte_dss_arith_int8(int8_t *value, int8_t *operand, orte_dss_arith_o
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -497,11 +497,11 @@ static void orte_dss_arith_int8(int8_t *value, int8_t *operand, orte_dss_arith_o
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -511,15 +511,15 @@ static void orte_dss_arith_int16(int16_t *value, int16_t *operand, orte_dss_arit
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -527,11 +527,11 @@ static void orte_dss_arith_int16(int16_t *value, int16_t *operand, orte_dss_arit
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -541,15 +541,15 @@ static void orte_dss_arith_uint16(uint16_t *value, uint16_t *operand, orte_dss_a
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -557,11 +557,11 @@ static void orte_dss_arith_uint16(uint16_t *value, uint16_t *operand, orte_dss_a
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -571,15 +571,15 @@ static void orte_dss_arith_int32(int32_t *value, int32_t *operand, orte_dss_arit
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -587,11 +587,11 @@ static void orte_dss_arith_int32(int32_t *value, int32_t *operand, orte_dss_arit
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -601,15 +601,15 @@ static void orte_dss_arith_uint32(uint32_t *value, uint32_t *operand, orte_dss_a
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -617,11 +617,11 @@ static void orte_dss_arith_uint32(uint32_t *value, uint32_t *operand, orte_dss_a
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -631,15 +631,15 @@ static void orte_dss_arith_int64(int64_t *value, int64_t *operand, orte_dss_arit
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -647,11 +647,11 @@ static void orte_dss_arith_int64(int64_t *value, int64_t *operand, orte_dss_arit
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -661,15 +661,15 @@ static void orte_dss_arith_uint64(uint64_t *value, uint64_t *operand, orte_dss_a
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -677,11 +677,11 @@ static void orte_dss_arith_uint64(uint64_t *value, uint64_t *operand, orte_dss_a
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -691,15 +691,15 @@ static void orte_dss_arith_data_type(orte_data_type_t *value, orte_data_type_t *
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -707,11 +707,11 @@ static void orte_dss_arith_data_type(orte_data_type_t *value, orte_data_type_t *
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }
@@ -721,15 +721,15 @@ static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon
     switch(operation) {
         case ORTE_DSS_ADD:
             (*value) += *operand;
-            return;
+            break;
 
         case ORTE_DSS_SUB:
             (*value) -= *operand;
-            return;
+            break;
 
         case ORTE_DSS_MUL:
             (*value) *= *operand;
-            return;
+            break;
 
         case ORTE_DSS_DIV:
             if (0 == *operand) {
@@ -737,11 +737,11 @@ static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon
                 return;
             }
             (*value) /= *operand;
-            return;
+            break;
 
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
-            return;
+            break;
     }
     return;
 }

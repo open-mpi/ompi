@@ -82,9 +82,9 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX ((orte_cellid_t)(1 << 31))
-#define ORTE_JOBID_MAX  ((orte_jobid_t)(1 << 31))
-#define ORTE_VPID_MAX   ((orte_vpid_t)(1 << 31))
+#define ORTE_CELLID_MAX ((orte_cellid_t)(1UL << 31))
+#define ORTE_JOBID_MAX  ((orte_jobid_t)(1UL << 31))
+#define ORTE_VPID_MAX   ((orte_vpid_t)(1UL << 31))
 
 extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
