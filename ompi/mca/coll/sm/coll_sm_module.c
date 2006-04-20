@@ -722,9 +722,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
         else {
             opal_atomic_unlock(&bshe->super.seg_lock);
-#ifdef HAVE_SCHED_YIELD
-            sched_yield();
-#endif
+            SPIN;
             opal_atomic_lock(&bshe->super.seg_lock);
         }
     }
