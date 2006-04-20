@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -169,8 +169,7 @@ struct ompi_communicator_t {
     static inline int ompi_comm_invalid(ompi_communicator_t* comm)
     {
         if ((NULL == comm) || (MPI_COMM_NULL == comm) ||
-            (comm->c_flags & OMPI_COMM_ISFREED ) ||
-            (OMPI_COMM_IS_INVALID(comm)) )
+            (OMPI_COMM_IS_FREED(comm)) || (OMPI_COMM_IS_INVALID(comm)) )
             return true;
         else
             return false;
