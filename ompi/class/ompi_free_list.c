@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -176,4 +176,56 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     }
     flist->fl_num_allocated += num_elements;
     return OMPI_SUCCESS;
+}
+
+/* This function is not protected. It should be never used when the
+ * process s still active. It was designed for debugger, in order
+ * to provide them with a fast mechanism to look into the queues
+ * (mostly the MPI request queue).
+ */
+int ompi_free_list_parse( ompi_free_list_t* list,
+                          struct ompi_free_list_pos_t* position,
+                          opal_list_item_t** return_item )
+{
+    /* Make sure we are in one of the free list allocations */
+    if( NULL == position->last_memory ) {
+        position->last_memory = (unsigned char*)opal_list_get_first( &(list->fl_allocations) );
+        position->last_item = NULL;
+    }
+
+ dig_for_the_requests:
+    /* If the request will be the first on this memory region, it's easy. */
+    if( NULL == position->last_item ) {
+        unsigned long ptr = (unsigned long)position->last_memory;
+        /* move it on the cache boundary */
+        if( ptr % CACHE_LINE_SIZE ) {
+            ptr = (ptr + CACHE_LINE_SIZE) & (CACHE_LINE_SIZE - 1);
+        }
+        *return_item = (opal_list_item_t*)(ptr + sizeof(ompi_free_list_memory_t));
+        return 0;
+    }
+    /* else go to the next request */
+    position->last_item += list->fl_elem_size;
+
+    {
+        /* otherwise go to the next one. Once there make sure we're still on the
+         * memory fragment, otherwise go to the next fragment.
+         */
+        size_t frag_length = (list->fl_elem_size * list->fl_num_per_alloc + CACHE_LINE_SIZE
+                              + sizeof(ompi_free_list_memory_t));
+        if( position->last_item < (position->last_memory + frag_length) ) {
+            *return_item = (opal_list_item_t*)position->last_item;
+            return 0;
+        }
+    }
+
+    /* we're outside the fragment. Try to go to the next one ... */
+    if( opal_list_get_end(&(list->fl_allocations)) ==
+        ((opal_list_item_t*)position->last_memory)->opal_list_next ) {
+        *return_item = NULL;
+        return 0;  /* nothing anymore */
+    }
+
+    position->last_memory = (unsigned char*)((opal_list_item_t*)position->last_memory)->opal_list_next;
+    goto dig_for_the_requests;
 }
