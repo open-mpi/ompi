@@ -198,9 +198,9 @@ int mca_btl_openib_component_open(void)
                                       16, (int*)&mca_btl_openib_component.eager_rdma_num);
     mca_btl_openib_component.eager_rdma_num+=1;
     mca_btl_openib_param_register_int ("eager_limit", "eager send limit", 
-                                       (32*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
+                                       (12*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
     mca_btl_openib_param_register_int ("min_send_size", "minimum send size", 
-                                       (64*1024),(int*)  &mca_btl_openib_module.super.btl_min_send_size);
+                                       (32*1024),(int*)  &mca_btl_openib_module.super.btl_min_send_size);
     mca_btl_openib_param_register_int ("max_send_size", "maximum send size", 
                                        (64*1024), (int*) &mca_btl_openib_module.super.btl_max_send_size); 
     mca_btl_openib_param_register_int("min_rdma_size", "minimum rdma size", 
