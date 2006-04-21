@@ -212,7 +212,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_param_register_int ("exclusivity", "BTL exclusivity", 
                                       MCA_BTL_EXCLUSIVITY_DEFAULT, (int*) &mca_btl_mvapi_module.super.btl_exclusivity);
     mca_btl_mvapi_param_register_int ("eager_limit", "eager send limit", 
-                                      (32*1024),(int*) &mca_btl_mvapi_module.super.btl_eager_limit);  
+                                      (12*1024),(int*) &mca_btl_mvapi_module.super.btl_eager_limit);  
     mca_btl_mvapi_param_register_int ("min_send_size", "minimum send size", 
                                       (32*1024),(int*)  &mca_btl_mvapi_module.super.btl_min_send_size);
     mca_btl_mvapi_param_register_int ("max_send_size", "maximum send size", 
