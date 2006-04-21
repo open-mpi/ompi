@@ -1492,7 +1492,7 @@ subroutine ${procedure}(comm, comm_keyval, attribute_val, flag, ierr)
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -8113,7 +8113,7 @@ subroutine ${procedure}(type, type_keyval, attribute_val, flag, ierr)
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -9028,7 +9028,7 @@ subroutine ${procedure}(win, win_keyval, attribute_val, flag, ierr)
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
