@@ -151,7 +151,7 @@ fi
 
 haveepoll=no
 AC_CHECK_FUNCS(epoll_ctl, [haveepoll=yes], )
-if test "x$haveepoll" = "xyes" ; then
+if test "x$haveepoll" = "xyes" -a "$cross_compiling" != "yes" ; then
 
 	# OMPI: Unfortunately, this test is not sufficient on some
 	# Linux distros (e.g., RH 9), where the function is defined
@@ -162,6 +162,7 @@ if test "x$haveepoll" = "xyes" ; then
 	# Hence, the test succeeds because it thinks it can use
 	# epoll_ctl (and friends).  So we have to do a better test
 	# after we determine that epoll_ctl is linkable.  Grumble.
+        # If we are cross compiling, just trust AC_CHECK_FUNCS
 
 	AC_MSG_CHECKING([for epoll_ctl on broken Linux distros])
         rm -f conftest.out
