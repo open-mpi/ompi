@@ -143,6 +143,9 @@ fi
 AC_DEFINE_UNQUOTED(OMPI_ENABLE_DEBUG, $WANT_DEBUG,
     [Whether we want developer-level debugging code or not])
 
+AC_ARG_ENABLE(debug-symbols,
+    AC_HELP_STRING([--disable-debug-symbols],
+        [Disable adding compiler flags to enable debugging symbols if --enable-debug is specified.  For non-debugging builds, this flag has no effect.]))
 
 #
 # Fortran 77
