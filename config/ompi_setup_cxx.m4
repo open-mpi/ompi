@@ -42,7 +42,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     fi
 
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1"; then
+    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
         CXXFLAGS="$CXXFLAGS -g"
         OMPI_UNIQ(CXXFLAGS)
         AC_MSG_WARN([-g has been added to CXXFLAGS (--enable-debug)])
@@ -148,11 +148,16 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     esac
 
     # Note: gcc-imperonating compilers accept -O3
-    if test "$GXX" = yes; then
-        OPTFLAGS="-O3"
+    if test "$WANT_DEBUG" = "1"; then
+        OPTFLAGS=
     else
-        OPTFLAGS="-O"
+        if test "$GXX" = yes; then
+            OPTFLAGS="-O3"
+        else
+            OPTFLAGS="-O"
+        fi
     fi
+
     # config/ompi_check_optflags.m4
     OMPI_CHECK_OPTFLAGS(["$CXXFLAGS"])
     AC_MSG_CHECKING([for C++ optimization flags])

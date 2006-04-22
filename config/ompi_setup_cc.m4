@@ -47,7 +47,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     fi
 
     # Do we want debugging?
-    if test "$WANT_DEBUG" = "1"; then
+    if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
         if test "$ompi_c_vendor" = "gnu"; then
             CFLAGS="$CFLAGS -g3"
         else
@@ -161,10 +161,14 @@ AC_DEFUN([OMPI_SETUP_CC],[
     # be conservative and just use -O.
     #
     # Note: gcc-impersonating compilers accept -O3
-    if test "$GCC" = yes; then
-        OPTFLAGS="-O3"
+    if test "$WANT_DEBUG" = "1"; then
+        OPTFLAGS=
     else
-        OPTFLAGS="-O"
+        if test "$GCC" = yes; then
+            OPTFLAGS="-O3"
+        else
+            OPTFLAGS="-O"
+        fi
     fi
 
     OMPI_CHECK_OPTFLAGS("$OMPI_CFLAGS_BEFORE_PICKY")
