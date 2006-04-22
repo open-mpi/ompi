@@ -60,7 +60,7 @@ libdatatype_la_SOURCES = \
 	convertor.c position.c \
 	copy_functions.c \
 	copy_functions_heterogeneous.c \
-	get_count.c
+	dt_get_count.c
 
 libdatatype_la_LIBADD = libdatatype_reliable.la
 
