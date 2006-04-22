@@ -25,4 +25,4 @@ headers += \
 libmpi_la_SOURCES += \
         group/group.c \
         group/group_init.c \
-        group/group_rank.c
+        group/group_set_rank.c
