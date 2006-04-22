@@ -94,10 +94,7 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
     /* and the memory descriptor */
     md.start = block->start;
     md.length = block->length;
-    /* try to throttle incoming sends so that we don't overrun the incoming
-       queue size */
-    md.threshold = mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ] /
-        mca_btl_portals_module.portals_recv_mds_num;
+    md.threshold = PTL_MD_THRESH_INF;
     md.max_size = block->btl->super.btl_max_send_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = block;
