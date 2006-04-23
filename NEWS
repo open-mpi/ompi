@@ -53,6 +53,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed segmentation fault with 64 bit applications on Solaris when
+  using the shared memory transports.
 - Fixed MPI_COMM_SELF attributes to free properly at the beginning of
   MPI_FINALIZE.  Thanks to Martin Audet for bringing this to our
   attention.

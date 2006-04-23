@@ -288,9 +288,18 @@ void* mca_common_sm_mmap_seg_alloc(
     if(seg->seg_offset + *size > map->map_size) {
         addr = NULL;
     } else {
+        size_t fixup;
+
         /* add base address to segment offset */
         addr = map->data_addr + seg->seg_offset;
         seg->seg_offset += *size;
+
+        /* fix up seg_offset so next allocation is aligned on a
+           sizeof(long) boundry.  Do it here so that we don't have to
+           check before checking remaining size in buffer */
+        if ((fixup = (seg->seg_offset & (sizeof(long) - 1))) > 0) {
+            seg->seg_offset += sizeof(long) - fixup;
+        }
     }
     if (NULL != registration) {
         *registration = NULL;
