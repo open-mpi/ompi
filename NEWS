@@ -9,6 +9,7 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -24,6 +25,9 @@ version 1.0.
 1.1
 ---
 
+- Addition of short message RDMA optimization to a limited number of
+  peers in both the mvapi and openib BTL components. This reduce 
+  communication latency over IB channel.
 - Numerous performance improvements throughout the entire code base.
 - Many minor threading fixes.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
