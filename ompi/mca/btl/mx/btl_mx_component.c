@@ -155,30 +155,6 @@ int mca_btl_mx_component_close(void)
         return OMPI_SUCCESS;
 
     mx_finalize();
-#if OMPI_ENABLE_DEBUG
-    if (mca_btl_mx_component.mx_send_eager_frags.fl_num_allocated &&
-        mca_btl_mx_component.mx_send_eager_frags.fl_num_allocated !=
-        mca_btl_mx_component.mx_send_eager_frags.super.opal_list_length) {
-        opal_output(0, "mx send eager frags: %d allocated %d returned\n",
-            mca_btl_mx_component.mx_send_eager_frags.fl_num_allocated,
-            mca_btl_mx_component.mx_send_eager_frags.super.opal_list_length);
-    }
-    if (mca_btl_mx_component.mx_send_user_frags.fl_num_allocated &&
-        mca_btl_mx_component.mx_send_user_frags.fl_num_allocated !=
-        mca_btl_mx_component.mx_send_user_frags.super.opal_list_length) {
-        opal_output(0, "mx send user frags: %d allocated %d returned\n",
-            mca_btl_mx_component.mx_send_user_frags.fl_num_allocated,
-            mca_btl_mx_component.mx_send_user_frags.super.opal_list_length);
-    }
-    /* allow for pre-posted receives */
-    if (mca_btl_mx_component.mx_recv_frags.fl_num_allocated &&
-        mca_btl_mx_component.mx_recv_frags.fl_num_allocated - 3 >
-        mca_btl_mx_component.mx_recv_frags.super.opal_list_length) {
-        opal_output(0, "mx recv frags: %d allocated %d returned\n",
-            mca_btl_mx_component.mx_recv_frags.fl_num_allocated,
-            mca_btl_mx_component.mx_recv_frags.super.opal_list_length);
-    }
-#endif
 
     /* release resources */
     OBJ_DESTRUCT(&mca_btl_mx_component.mx_send_eager_frags);
