@@ -219,7 +219,6 @@ conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED] = {
    (conversion_fct_t)copy_int,                  /* DT_UNSIGNED_INT        */
    (conversion_fct_t)copy_long,                 /* DT_LONG                */
    (conversion_fct_t)copy_long,                 /* DT_UNSIGNED_LONG       */
-   (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG           */
    (conversion_fct_t)copy_long_long,            /* DT_LONG_LONG_INT       */
    (conversion_fct_t)copy_long_long,            /* DT_UNSIGNED_LONG_LONG  */
    (conversion_fct_t)copy_float,                /* DT_FLOAT               */

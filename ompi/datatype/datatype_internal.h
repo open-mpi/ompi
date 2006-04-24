@@ -90,44 +90,43 @@ static inline void DUMP( char* fmt, ... )
 #define DT_UNSIGNED_INT            0x0C
 #define DT_LONG                    0x0D
 #define DT_UNSIGNED_LONG           0x0E
-#define DT_LONG_LONG               0x0F
-#define DT_LONG_LONG_INT           0x10
-#define DT_UNSIGNED_LONG_LONG      0x11
-#define DT_FLOAT                   0x12
-#define DT_DOUBLE                  0x13
-#define DT_LONG_DOUBLE             0x14
-#define DT_PACKED                  0x15
-#define DT_WCHAR                   0x16
-#define DT_CXX_BOOL                0x17
-#define DT_LOGIC                   0x18
-#define DT_INTEGER                 0x19
-#define DT_REAL                    0x1A
-#define DT_DBLPREC                 0x1B
+#define DT_LONG_LONG_INT           0x0F
+#define DT_UNSIGNED_LONG_LONG      0x10
+#define DT_FLOAT                   0x11
+#define DT_DOUBLE                  0x12
+#define DT_LONG_DOUBLE             0x13
+#define DT_PACKED                  0x14
+#define DT_WCHAR                   0x15
+#define DT_CXX_BOOL                0x16
+#define DT_LOGIC                   0x17
+#define DT_INTEGER                 0x18
+#define DT_REAL                    0x19
+#define DT_DBLPREC                 0x1A
 /*
  * This is not a datatype. It contain the number of basic datatypes.
  */
-#define DT_MAX_BASIC               0x1C
+#define DT_MAX_BASIC               0x1B
 /*
  * Derived datatypes supposely contiguous
  */
-#define DT_COMPLEX_FLOAT           0x1C
-#define DT_COMPLEX_DOUBLE          0x1D
-#define DT_COMPLEX_LONG_DOUBLE     0x1E
-#define DT_2INT                    0x1F
-#define DT_2INTEGER                0x20
-#define DT_2REAL                   0x21
-#define DT_2DBLPREC                0x22
-#define DT_2COMPLEX                0x23
-#define DT_2DOUBLE_COMPLEX         0x24
+#define DT_COMPLEX_FLOAT           0x1B
+#define DT_COMPLEX_DOUBLE          0x1C
+#define DT_COMPLEX_LONG_DOUBLE     0x1D
+#define DT_2INT                    0x1E
+#define DT_2INTEGER                0x1F
+#define DT_2REAL                   0x20
+#define DT_2DBLPREC                0x21
+#define DT_2COMPLEX                0x22
+#define DT_2DOUBLE_COMPLEX         0x23
 /*
  * Derived datatypes which will definitively be non contiguous on some architectures.
  */
-#define DT_FLOAT_INT               0x25
-#define DT_DOUBLE_INT              0x26
-#define DT_LONG_DOUBLE_INT         0x27
-#define DT_LONG_INT                0x28
-#define DT_SHORT_INT               0x29
-#define DT_UNAVAILABLE             0x2A
+#define DT_FLOAT_INT               0x24
+#define DT_DOUBLE_INT              0x25
+#define DT_LONG_DOUBLE_INT         0x26
+#define DT_LONG_INT                0x27
+#define DT_SHORT_INT               0x28
+#define DT_UNAVAILABLE             0x29
 /* If the number of basic datatype should change update
  * DT_MAX_PREDEFINED in datatype.h
  */

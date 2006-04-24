@@ -67,12 +67,10 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
 
 #ifdef HAVE_LONG_LONG
 #define C_INTEGER_LONG_LONG(name) \
-  { ompi_mpi_op_##name##_long_long },      /* OMPI_OP_TYPE_LONG_LONG */ \
   { ompi_mpi_op_##name##_long_long_int },  /* OMPI_OP_TYPE_LONG_LONG_INT */ \
   { ompi_mpi_op_##name##_unsigned_long_long } /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 #else
 #define C_INTEGER_LONG_LONG(name) \
-  { NULL }, /* OMPI_OP_TYPE_LONG_LONG */ \
   { NULL }, /* OMPI_OP_TYPE_LONG_LONG_INT */ \
   { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 #endif
@@ -96,7 +94,6 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED_SHORT */ \
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED */ \
   { NULL }, /* OMPI_OP_TYPE_UNSIGNED_LONG */ \
-  { NULL }, /* OMPI_OP_TYPE_LONG_LONG */ \
   { NULL }, /* OMPI_OP_TYPE_LONG_LONG_ING */ \
   { NULL }  /* OMPI_OP_TYPE_UNSIGNED_LONG_LONG */
 
@@ -607,7 +604,6 @@ int ompi_op_init(void)
   ompi_op_ddt_map[DT_UNSIGNED_INT] = OMPI_OP_TYPE_UNSIGNED;
   ompi_op_ddt_map[DT_LONG] = OMPI_OP_TYPE_LONG;
   ompi_op_ddt_map[DT_UNSIGNED_LONG] = OMPI_OP_TYPE_UNSIGNED_LONG;
-  ompi_op_ddt_map[DT_LONG_LONG] = OMPI_OP_TYPE_LONG_LONG;
   ompi_op_ddt_map[DT_LONG_LONG_INT] = OMPI_OP_TYPE_LONG_LONG_INT;
   ompi_op_ddt_map[DT_UNSIGNED_LONG_LONG] = OMPI_OP_TYPE_UNSIGNED_LONG_LONG;
   ompi_op_ddt_map[DT_FLOAT] = OMPI_OP_TYPE_FLOAT;

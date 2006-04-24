@@ -49,7 +49,7 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
  */
-#define DT_MAX_PREDEFINED  0x2B
+#define DT_MAX_PREDEFINED  0x2A
 
 /* flags for the datatypes. */
 #define DT_FLAG_DESTROYED     0x0001  /**< user destroyed but some other layers still have a reference */

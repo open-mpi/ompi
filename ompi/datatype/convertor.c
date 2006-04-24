@@ -126,7 +126,6 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_LONGIS64 ) ) {
         remote_sizes[DT_LONG]               = 8;
         remote_sizes[DT_UNSIGNED_LONG]      = 8;
-        remote_sizes[DT_LONG_LONG]          = 8;
         remote_sizes[DT_LONG_LONG_INT]      = 8;
         remote_sizes[DT_UNSIGNED_LONG_LONG] = 8;
     }
