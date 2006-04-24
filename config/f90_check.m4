@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Cisco Systems, Inc.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -23,7 +24,6 @@ dnl
 # - whether compiler supports or not
 # - size of type
 # - equal to expected size
-# - alignment
 # - range (optional)
 # - precision (optional)
 #
@@ -34,7 +34,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
 
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
-    ofc_type_alignment=$ac_cv_sizeof_int
 
     # Only check if we actually want the F90 bindings / have a F90
     # compiler.  This allows us to call this macro even if there is
@@ -90,26 +89,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
                     fi
                 fi
 
-                # Get the alignment of the type and check against its F77
-                # counterpart
-                OMPI_F90_GET_ALIGNMENT([$1], [ofc_type_alignment])
-                ofc_f77_alignment=$[OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
-                if test "$ofc_f77_alignment" != ""; then
-                    AC_MSG_CHECKING([if Fortran 77 and 90 type alignments match])
-                    if test "$ofc_f77_alignment" != "$ofc_type_alignment"; then
-                        AC_MSG_RESULT([no])
-                        AC_MSG_WARN([*** Fortran 77 alignment for $1 ($ofc_f77_alignment) does not match])
-                        AC_MSG_WARN([*** Fortran 90 alignment for $1 ($ofc_type_alignment)])
-# JMS Commented out for now so that a) people can continue developing
-# with f90, b) we stop breaking "make dist", and c) we can find out
-# the Real Deal from Fortran compiler vendors.
-#                        AC_MSG_ERROR([*** Cannot continue])
-                        AC_MSG_WARN([*** OMPI-F90-CHECK macro needs to be updated!])
-                    else
-                        AC_MSG_RESULT([yes])
-                    fi
-                fi
-
                 # If we passed in the expected size, then also add the
                 # type to the relevant list of types found.
                 if test "$ofc_expected_size" != ""; then
@@ -131,10 +110,10 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # first part of the provided fortran type (e.g.,
     # "logical(selected_int_kind(2))" -> logical1")
 
-    # Note that there is no need to AC_DEFINE the size and alignment
-    # of the F90 datatype.  We have ensured (above) that they are the
-    # same as the corresponding F77 datatypes, and that's good enough
-    # (i.e., the DDT engine only looks at the F77 sizes/alignments).
+    # Note that there is no need to AC_DEFINE the size of the F90
+    # datatype.  We have ensured (above) that they are the same as the
+    # corresponding F77 datatypes, and that's good enough (i.e., the
+    # DDT engine only looks at the F77 sizes).
 
     # Finally, note that it is necessary to use the Big Long Ugly m4
     # expressions in the AC_DEFINE_UNQUOTEDs.  If you don't (e.g., put
@@ -154,7 +133,7 @@ AC_DEFUN([OMPI_F90_CHECK], [
 
     # Clean up
     unset ofc_fortran_type ofc_expected_size ofc_want_range ofc_pretty_name
-    unset ofc_have_type ofc_type_size ofc_type_alignment ofc_letter ofc_str
+    unset ofc_have_type ofc_type_size ofc_letter ofc_str
     unset ofc_type_range ofc_type_precision
-    unset ofc_f77_sizeof ofc_f77_alignment
+    unset ofc_f77_sizeof 
 ])dnl
