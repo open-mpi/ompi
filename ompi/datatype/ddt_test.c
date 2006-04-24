@@ -947,7 +947,7 @@ int main( int argc, char* argv[] )
     ompi_ddt_add( pdt2, ompi_ddt_basicDatatypes[DT_INT], 1, 0, -1 );
     ompi_ddt_add( pdt2, pdt3, 3, sizeof(int) * 1, -1 );
 
-    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_LONG], 5, 0, -1 );
+    ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_LONG_INT], 5, 0, -1 );
     ompi_ddt_add( pdt1, ompi_ddt_basicDatatypes[DT_LONG_DOUBLE], 2, sizeof(long long) * 5, -1 );
 
     printf( ">>--------------------------------------------<<\n" );

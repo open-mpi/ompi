@@ -93,8 +93,6 @@ enum {
   OMPI_OP_TYPE_UNSIGNED_LONG,
   /**< C integer: unsigned long */
 
-  OMPI_OP_TYPE_LONG_LONG,
-  /**< C integer: long long (optional) */
   OMPI_OP_TYPE_LONG_LONG_INT,
   /**< C integer: long long int (optional) */
   OMPI_OP_TYPE_UNSIGNED_LONG_LONG,

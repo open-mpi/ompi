@@ -97,11 +97,9 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned = INIT_BASIC_DATA( unsigned int,
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long = INIT_BASIC_DATA( long, OMPI_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long = INIT_BASIC_DATA( unsigned long, OMPI_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 #if HAVE_LONG_LONG
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long = INIT_BASIC_DATA( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_BASIC_DATA( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long_long = INIT_BASIC_DATA( unsigned long long, OMPI_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 #else
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long = INIT_UNAVAILABLE_DATA( LONG_LONG );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_UNAVAILABLE_DATA( LONG_LONG_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long_long = INIT_UNAVAILABLE_DATA( UNIGNED_LONG_LONG );
 #endif  /* HAVE_LONG_LONG */
@@ -238,7 +236,6 @@ const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
     &ompi_mpi_unsigned,
     &ompi_mpi_long,
     &ompi_mpi_unsigned_long,
-    &ompi_mpi_long_long,
     &ompi_mpi_long_long_int,
     &ompi_mpi_unsigned_long_long,
     &ompi_mpi_float,
@@ -482,7 +479,7 @@ int32_t ompi_ddt_init( void )
     ompi_mpi_integer2.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer4, "MPI_INTEGER4", &ompi_mpi_int );
     ompi_mpi_integer4.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
-    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long_long );
+    DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer8, "MPI_INTEGER8", &ompi_mpi_long_long_int );
     ompi_mpi_integer8.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
     DECLARE_MPI_SYNONYM_DDT( &ompi_mpi_integer16, "MPI_INTEGER16", &ompi_mpi_unavailable );
     ompi_mpi_integer16.flags |= DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_INT;
