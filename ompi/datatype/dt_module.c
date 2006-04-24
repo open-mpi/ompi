@@ -542,7 +542,6 @@ int32_t ompi_ddt_init( void )
     MOOG(unsigned);
     MOOG(long);
     MOOG(unsigned_long);
-    MOOG(long_long);
     MOOG(long_long_int);
     MOOG(unsigned_long_long);
 
