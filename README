@@ -234,7 +234,7 @@ base as of this writing (27 Feb 2006):
     all MPI functions that take two choice buffers, such as
     MPI_SCATTER, MPI_GATHER, etc.).  All the two-choice-buffer
     functions will have variants for each of the MPI-supported Fortran
-    instrinic types up to the number of dimensions specified by
+    intrinsic types up to the number of dimensions specified by
     --with-f90-max-array-dim, but both buffers will be of the same
     type.
 
