@@ -202,17 +202,6 @@ mca_oob_tcp_peer_t * mca_oob_tcp_peer_lookup(const orte_process_name_t* name)
         return peer;
     }
 
-    /* search the peer list - if we find it here this is a bug in the tree */
-    for(item =  opal_list_get_first(&mca_oob_tcp_component.tcp_peer_list);
-        item != opal_list_get_end(&mca_oob_tcp_component.tcp_peer_list);
-        item =  opal_list_get_next(item)) {
-        peer = (mca_oob_tcp_peer_t*)item;
-        if (memcmp(&peer->peer_name, name, sizeof(peer->peer_name)) == 0) {
-            OPAL_THREAD_UNLOCK(&mca_oob_tcp_component.tcp_lock);
-            return peer;
-        }
-    }
-
     /* allocate from free list */
     MCA_OOB_TCP_PEER_ALLOC(peer, rc);
     if(NULL == peer) {
