@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Cisco Systems, Inc.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -43,7 +44,6 @@ m4_include(config/f77_purge_unsupported_kind.m4)
 m4_include(config/f90_check.m4)
 m4_include(config/f90_check_type.m4)
 m4_include(config/f90_find_module_include_flag.m4)
-m4_include(config/f90_get_alignment.m4)
 m4_include(config/f90_get_precision.m4)
 m4_include(config/f90_get_range.m4)
 m4_include(config/f90_get_sizeof.m4)
