@@ -10,6 +10,7 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Cisco Systems, Inc.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -23,10 +24,46 @@ dnl
 # - whether compiler supports or not
 # - size of type
 # - equal to expected size
-# - alignment
 # - range (optional)
 # - precision (optional)
-#
+
+# Note that we do *not* check for the alignment here.  This is a long,
+# sordid tale.
+
+# We have been unable to devise a F90 test that will result in a
+# consistent answer.  Specifically, our prior tests have been similar
+# to the f77 test -- have a small chunk of f90 code compiled with the
+# C code to actually compute the offsets.  The f90 code was a
+# struct-like entity (a "type") with multiple members -- on a
+# character and the other of the target type.  The C code measured the
+# distance between them.  But even if you use the keyword to ensure
+# that the F90 compiler does not re-order this struct, you may still
+# get a different alignment answer than the F77 test (!).  This is
+# apparently because F90 allows compilers to align types differently
+# according to use (in common blocks, as standalone variables, and as
+# a member of a struct).  Hence, the alignment can be different
+# depending on how to measure (and use) it.  This was confirmed by
+# various members of the Fortran committee and several Fortran
+# compiler vendors.
+
+# We check the F77 alignment based on common block usage, but this is
+# only one of the available types for F90.  Hence, we may actually get
+# a different answer between f77 and f90 in the same compiler series
+# (and some compilers do!  E.g., g95 gives different answers even when
+# "g95" itself is used as both the f77 and f90 compiler).
+
+# So we gave up.
+
+# Additionally, this was really only a sanity check anyway, because
+# the way out F90 MPI layer is organized, there is no translation
+# between the data and datatypes performed -- we simply invoke the F77
+# layer from the F90 layer.  Hence, we make no distinction between
+# them, and therefore the OMPI DDT engine uses only the F77 sizes and
+# alignments.  So rather than display a warning to the user for a test
+# that was questionable at best, we just eliminated the F90 alignment
+# test, corresponding F77 comparison, and ensuring warning -- because
+# it really didn't mean anything anyway.
+
 # types to search is a comma-seperated list of values
 AC_DEFUN([OMPI_F90_CHECK], [
     ofc_fortran_type="$1"
@@ -34,7 +71,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
 
     ofc_have_type=0
     ofc_type_size=$ac_cv_sizeof_int
-    ofc_type_alignment=$ac_cv_sizeof_int
 
     # Only check if we actually want the F90 bindings / have a F90
     # compiler.  This allows us to call this macro even if there is
@@ -90,26 +126,6 @@ AC_DEFUN([OMPI_F90_CHECK], [
                     fi
                 fi
 
-                # Get the alignment of the type and check against its F77
-                # counterpart
-                OMPI_F90_GET_ALIGNMENT([$1], [ofc_type_alignment])
-                ofc_f77_alignment=$[OMPI_ALIGNMENT_FORTRAN_]m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_])
-                if test "$ofc_f77_alignment" != ""; then
-                    AC_MSG_CHECKING([if Fortran 77 and 90 type alignments match])
-                    if test "$ofc_f77_alignment" != "$ofc_type_alignment"; then
-                        AC_MSG_RESULT([no])
-                        AC_MSG_WARN([*** Fortran 77 alignment for $1 ($ofc_f77_alignment) does not match])
-                        AC_MSG_WARN([*** Fortran 90 alignment for $1 ($ofc_type_alignment)])
-# JMS Commented out for now so that a) people can continue developing
-# with f90, b) we stop breaking "make dist", and c) we can find out
-# the Real Deal from Fortran compiler vendors.
-#                        AC_MSG_ERROR([*** Cannot continue])
-                        AC_MSG_WARN([*** OMPI-F90-CHECK macro needs to be updated!])
-                    else
-                        AC_MSG_RESULT([yes])
-                    fi
-                fi
-
                 # If we passed in the expected size, then also add the
                 # type to the relevant list of types found.
                 if test "$ofc_expected_size" != ""; then
@@ -131,10 +147,10 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # first part of the provided fortran type (e.g.,
     # "logical(selected_int_kind(2))" -> logical1")
 
-    # Note that there is no need to AC_DEFINE the size and alignment
-    # of the F90 datatype.  We have ensured (above) that they are the
-    # same as the corresponding F77 datatypes, and that's good enough
-    # (i.e., the DDT engine only looks at the F77 sizes/alignments).
+    # Note that there is no need to AC_DEFINE the size of the F90
+    # datatype.  We have ensured (above) that they are the same as the
+    # corresponding F77 datatypes, and that's good enough (i.e., the
+    # DDT engine only looks at the F77 sizes).
 
     # Finally, note that it is necessary to use the Big Long Ugly m4
     # expressions in the AC_DEFINE_UNQUOTEDs.  If you don't (e.g., put
@@ -154,7 +170,7 @@ AC_DEFUN([OMPI_F90_CHECK], [
 
     # Clean up
     unset ofc_fortran_type ofc_expected_size ofc_want_range ofc_pretty_name
-    unset ofc_have_type ofc_type_size ofc_type_alignment ofc_letter ofc_str
+    unset ofc_have_type ofc_type_size ofc_letter ofc_str
     unset ofc_type_range ofc_type_precision
-    unset ofc_f77_sizeof ofc_f77_alignment
+    unset ofc_f77_sizeof 
 ])dnl
