@@ -205,12 +205,13 @@ base as of this writing (27 Feb 2006):
   eliminate the extra overhead of software MPI message matching where
   possible.
 
-- The Fortran 90 MPI bindings can now be built in one of four sizes.
-  These sizes reflect the number of MPI functions included in the
-  "mpi" Fortran 90 module and therefore which functions will be
-  subject to strict type checking.  All functions not included in the
-  Fortran 90 module can still be invoked from F90 applications, but
-  will fall back to Fortran-77 style checking (i.e., little/none).
+- The Fortran 90 MPI bindings can now be built in one of four sizes
+  using --with-mpi-f90-size=SIZE (see description below).  These sizes
+  reflect the number of MPI functions included in the "mpi" Fortran 90
+  module and therefore which functions will be subject to strict type
+  checking.  All functions not included in the Fortran 90 module can
+  still be invoked from F90 applications, but will fall back to
+  Fortran-77 style checking (i.e., little/none).
 
   - trivial: Only includes F90-specific functions from MPI-2.  This
     means overloaded versions of MPI_SIZEOF for all the MPI-supported
@@ -289,9 +290,11 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This enables PBS / Torque support in Open MPI.
 
 --with-mpi-param_check(=value)
-  "value" can be one of: always, never, runtime.  If no value is
-  specified, or this option is not used, "always" is the default.
-  Using --without-mpi-param-check is equivalent to "never".
+  "value" can be one of: always, never, runtime.  If --with-mpi-param
+  is not specified, "runtime" is the default.  If --with-mpi-param
+  is specified with no value, "always" is used.  Using
+  --without-mpi-param-check is equivalent to "never".
+
   - always: the parameters of MPI functions are always checked for
     errors 
   - never: the parameters of MPI functions are never checked for
