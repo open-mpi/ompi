@@ -26,7 +26,44 @@ dnl
 # - equal to expected size
 # - range (optional)
 # - precision (optional)
-#
+
+# Note that we do *not* check for the alignment here.  This is a long,
+# sordid tale.
+
+# We have been unable to devise a F90 test that will result in a
+# consistent answer.  Specifically, our prior tests have been similar
+# to the f77 test -- have a small chunk of f90 code compiled with the
+# C code to actually compute the offsets.  The f90 code was a
+# struct-like entity (a "type") with multiple members -- on a
+# character and the other of the target type.  The C code measured the
+# distance between them.  But even if you use the keyword to ensure
+# that the F90 compiler does not re-order this struct, you may still
+# get a different alignment answer than the F77 test (!).  This is
+# apparently because F90 allows compilers to align types differently
+# according to use (in common blocks, as standalone variables, and as
+# a member of a struct).  Hence, the alignment can be different
+# depending on how to measure (and use) it.  This was confirmed by
+# various members of the Fortran committee and several Fortran
+# compiler vendors.
+
+# We check the F77 alignment based on common block usage, but this is
+# only one of the available types for F90.  Hence, we may actually get
+# a different answer between f77 and f90 in the same compiler series
+# (and some compilers do!  E.g., g95 gives different answers even when
+# "g95" itself is used as both the f77 and f90 compiler).
+
+# So we gave up.
+
+# Additionally, this was really only a sanity check anyway, because
+# the way out F90 MPI layer is organized, there is no translation
+# between the data and datatypes performed -- we simply invoke the F77
+# layer from the F90 layer.  Hence, we make no distinction between
+# them, and therefore the OMPI DDT engine uses only the F77 sizes and
+# alignments.  So rather than display a warning to the user for a test
+# that was questionable at best, we just eliminated the F90 alignment
+# test, corresponding F77 comparison, and ensuring warning -- because
+# it really didn't mean anything anyway.
+
 # types to search is a comma-seperated list of values
 AC_DEFUN([OMPI_F90_CHECK], [
     ofc_fortran_type="$1"
