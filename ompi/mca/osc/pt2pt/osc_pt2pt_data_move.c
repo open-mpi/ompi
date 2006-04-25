@@ -243,7 +243,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
             size_t max_data = sendreq->req_origin_bytes_packed;
 
             iov.iov_len = max_data;
-            iov.iov_base = (unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data;
+            iov.iov_base = (void*) ((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data, &free_after);
@@ -420,7 +420,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
         size_t max_data = replyreq->rep_target_bytes_packed;
 
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data;
+        iov.iov_base = (void*) ((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data, &free_after);

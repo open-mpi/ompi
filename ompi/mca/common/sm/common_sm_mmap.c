@@ -137,7 +137,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     }
 
     /* map the file and initialize segment state */
-    seg = mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+    seg = (mca_common_sm_file_header_t*)
+        mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
     if( (void*)-1 == seg ) {
         opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                 errno);
@@ -238,7 +239,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         fchmod(fd, 0600);
         close(fd);
     }
-    if( NULL != seg ) munmap(seg,size);
+    if( NULL != seg ) munmap((void*) seg,size);
 #else
     if( NULL != lpvMem ) UnmapViewOfFile( lpvMem );
     if( NULL != hMapObject ) CloseHandle(hMapObject);
@@ -253,7 +254,7 @@ int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
 
     if( NULL != sm_mmap->map_seg ) {
 #if !defined(__WINDOWS__)
-        rc = munmap( sm_mmap->map_addr, sm_mmap->map_size );
+        rc = munmap((void*) sm_mmap->map_addr, sm_mmap->map_size );
         sm_mmap->map_addr = NULL;
         sm_mmap->map_size = 0;
 #else
