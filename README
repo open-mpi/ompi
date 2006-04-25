@@ -255,9 +255,11 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This enables PBS / Torque support in Open MPI.
 
 --with-mpi-param_check(=value)
-  "value" can be one of: always, never, runtime.  If no value is
-  specified, or this option is not used, "always" is the default.
-  Using --without-mpi-param-check is equivalent to "never".
+  "value" can be one of: always, never, runtime.  If --with-mpi-param
+  is not specified, "runtime" is the default.  If --with-mpi-param
+  is specified with no value, "always" is used.  Using
+  --without-mpi-param-check is equivalent to "never".
+
   - always: the parameters of MPI functions are always checked for
     errors 
   - never: the parameters of MPI functions are never checked for
