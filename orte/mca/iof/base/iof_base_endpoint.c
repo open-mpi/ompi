@@ -481,6 +481,7 @@ int orte_iof_base_endpoint_forward(
     frag->frag_owner = endpoint;
     frag->frag_src = *src;
     frag->frag_hdr.hdr_msg = *hdr;
+    frag->frag_len = len;
 
     /* call any registered callbacks */ 
     for(item =  opal_list_get_first(&endpoint->ep_callbacks);
@@ -498,6 +499,7 @@ int orte_iof_base_endpoint_forward(
     if(endpoint->ep_fd >= 0) {
 
         /* try to write w/out copying data */
+       
         if(opal_list_get_size(&endpoint->ep_frags) == 0) {
             if(len == 0) {
                 ORTE_IOF_BASE_FRAG_RETURN(frag);
@@ -506,15 +508,19 @@ int orte_iof_base_endpoint_forward(
                 return ORTE_SUCCESS;
             }
             rc = write(endpoint->ep_fd,data,len);
-            if(rc < 0 && (errno != EAGAIN && errno != EINTR)) {
-                ORTE_IOF_BASE_FRAG_RETURN(frag);
-                orte_iof_base_endpoint_closed(endpoint);
-                OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
-                return ORTE_SUCCESS;
-             } 
-        } 
+            if(rc < 0) {
+                if (errno != EAGAIN && errno != EINTR) {
+                    ORTE_IOF_BASE_FRAG_RETURN(frag);
+                    orte_iof_base_endpoint_closed(endpoint);
+                    OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
+                    return ORTE_SUCCESS;
+                }
+                rc = 0;
+            } else {
+                frag->frag_len -= rc;
+            }
+        }
 
-        frag->frag_len = len - rc;
         if(frag->frag_len > 0 || len == 0) {
             /* handle incomplete write - also queue up 0 byte message 
              * and recognize this as a request to close the descriptor
