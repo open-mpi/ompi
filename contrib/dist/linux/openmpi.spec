@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -36,35 +37,42 @@
 # Part of the purpose of this specfile is to help Los Alamos National
 # Labs (LANL), so we're going to put in a bunch of defaults for them.
 
-%define lanl 0
+%{!?lanl: %define lanl 0}
 
 # Define this if you want to make this SRPM build in /opt/NAME/VERSION-RELEASE
 # instead of the default /usr/
 # type: bool (0/1)
-%define install_in_opt	0
+%{!?install_in_opt: %define install_in_opt 0}
 
 # Define this if you want this RPM to install environment setup
 # scripts, currently either a modulefile or profile.d script.
 # type: bool (0/1)
-%define install_env_scripts 0
+%{!?install_env_scripts: %define install_env_scripts 0}
 
 # Should this drop a modulefile (if being used with enviornment modules)? 
 # Specify the modulefile PATH you wish to use, or '0' for null (which will
 # cause /etc/profile.d/ scripts to be created.
 # note: This will only work if %{install_in_opt} is true.
 # type: bool (0/1)
-%define install_modulefile 0
+%{!?install_modulefile: %define install_modulefile 0}
 # type: string (root path to install modulefiles)
-%define modulefile_path /etc/modulefiles
+%{!?modulefile_path: %define modulefile_path /etc/modulefiles}
 # type: string (subdir to install modulefile)
-%define modulefile_subdir %{name}
+%{!?modulefile_subdir: %define modulefile_subdir %{name}}
 # type: string (name of modulefile)
-%define modulefile_name %{version}-%{release}
+%{!?modulefile_name: %define modulefile_name %{version}-%{release}}
 
 # The name of the modules RPM.  Can vary from system to system.
 # type: string (name of modules RPM)
-%define modules_rpm_name modules
+%{!?modules_rpm_name: %define modules_rpm_name modules}
 
+# Should we build a debuginfo RPM or not?
+# type: bool (0/1)
+%{!?build_debuginfo_rpm: %define build_debuginfo_rpm 0}
+
+# Should we build an all-in-one RPM, or several sub-package RPMs?
+# type: bool (0/1)
+%{!?build_all_in_one_rpm: %define build_all_in_one_rpm 1}
 
 #############################################################################
 #
@@ -96,6 +104,18 @@
 %define _includedir /opt/%{name}/%{version}-%{release}/include
 %endif
 
+%if !%{build_debuginfo_rpm}
+%define debug_package %{nil}
+%endif
+
+%if %(test "%{_prefix}" = "/usr" && echo 1 || echo 0)
+%global _sysconfdir /etc
+%else
+%global _sysconfdir %{_prefix}/etc
+%endif
+
+%{!?configure_options: %define configure_options %{nil}}
+
 #############################################################################
 #
 # Preamble Section
@@ -103,18 +123,19 @@
 #############################################################################
 
 Summary: A powerful implementaion of MPI
-Name: openmpi
+Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
 Release: 1
 License: BSD
 Group: Development/Libraries
-Source: openmpi-%{version}.tar.bz2
+Source: openmpi-%{version}.tar.$EXTENSION
 Packager: %{?_packager:%{_packager}}%{!?_packager:%{_vendor}}
 Vendor: %{?_vendorinfo:%{_vendorinfo}}%{!?_vendorinfo:%{_vendor}}
 Distribution: %{?_distribution:%{_distribution}}%{!?_distribution:%{_vendor}}
 Prefix: %{_prefix}
+Provides: mpi
 BuildRoot: /var/tmp/%{name}-%{version}-%{release}-root
-%if %{module_modulefile}
+%if %{install_modulefile}
 Requires: %{modules_rpm_name}
 %endif
 
@@ -123,6 +144,33 @@ Open MPI is a project combining technologies and resources from
 several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
 order to build the best MPI library available.
 
+This RPM contains all the tools necessary to compile, link, and run
+Open MPI jobs.
+
+%if !%{build_all_in_one_rpm}
+
+#############################################################################
+#
+# Preamble Section (runtime)
+#
+#############################################################################
+
+%package runtime
+Summary: Tools and plugin modules for running Open MPI jobs
+Group: Development/Libraries
+Provides: mpi
+
+%description runtime
+Open MPI is a project combining technologies and resources from several other
+projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
+MPI library available.
+
+This subpackage provides general tools (mpirun, mpiexec, etc.) and the
+Module Component Architecture (MCA) base and plugins necessary for
+running Open MPI jobs.
+
+%endif
+
 #############################################################################
 #
 # Preamble Section (devel)
@@ -130,9 +178,9 @@ order to build the best MPI library available.
 #############################################################################
 
 %package devel
-Summary: Development components for OpenMPI
+Summary: Development tools and header files for Open MPI
 Group: Development/Libraries
-Provides: mpi
+Requires: openmpi-runtime
 
 %description devel
 Open MPI is a project combining technologies and resources from
@@ -140,7 +188,7 @@ several other projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in
 order to build the best MPI library available.
 
 This subpackage provides the development files for Open MPI, such as
-header files for MPI development.
+wrapper compilers and header files for MPI development.
 
 #############################################################################
 #
@@ -149,7 +197,7 @@ header files for MPI development.
 #############################################################################
 
 %package docs
-Summary: Documentation for OpenMPI
+Summary: Documentation for Open MPI
 Group: Development/Documentation
 
 %description docs
@@ -161,34 +209,11 @@ This subpackage provides the documentation for Open MPI.
 
 #############################################################################
 #
-# Preamble Section (mca-general)
-#
-#############################################################################
-
-# First conversations with Jeff and we were going to do this, but later we
-# decided that since these are pretty much always needed, they should be
-# included in the main pacakge. I am leaving this here just incase there
-# is a reason to re-include.
-
-%package mca-general
-Summary: General communication modules for OpenMPI
-Group: Development/Libraries
-
-%description mca-general
-Open MPI is a project combining technologies and resources from several other
-projects (FT-MPI, LA-MPI, LAM/MPI, and PACX-MPI) in order to build the best
-MPI library available.
-
-This subpackage provides the general Module Component Architecture
-(MCA) components.
-
-#############################################################################
-#
 # Prepatory Section
 #
 #############################################################################
 %prep
-%setup -q 
+%setup -q -n openmpi-%{version}
 
 #############################################################################
 #
@@ -199,10 +224,12 @@ This subpackage provides the general Module Component Architecture
 %build
 
 CFLAGS="%{?cflags:%{cflags}}%{!?cflags:$RPM_OPT_FLAGS}"
-CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cflags:$RPM_OPT_FLAGS}"
-export CFLAGS CXXFLAGS
+CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
+F77FLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
+FCFLAGS="%{?fcflags:%{fcflags}}%{!?fcflags:$RPM_OPT_FLAGS}"
+export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 
-%configure %{?acflags}
+%configure %{configure_options}
 %{__make} %{?mflags}
 
 
@@ -213,6 +240,13 @@ export CFLAGS CXXFLAGS
 #############################################################################
 %install
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
+
+# Currently remove a few executables that are not yet ready for prime
+# time
+
+rm -f "$RPM_BUILD_ROOT/%{_bindir}/openmpi"
+rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteconsole"
+rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteprobe"
 
 # An attempt to make enviornment happier when installed into non /usr path
 
@@ -290,25 +324,27 @@ EOF
 %endif
 %endif
 
-# Build the files lists. Since the files are still not completly known to me,
+# Build the files lists. Since the files are still not completly known,
 # it is easier to do some all-emcompasing find's.
-find $RPM_BUILD_ROOT -type f | \
+find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" |\
-   grep -v "man" |\
-   grep -v ".la" |\
-   grep -v "include" > main.files
+   egrep -v "README|INSTALL|LICENSE" > main.files
 
-find $RPM_BUILD_ROOT -type f | \
+# Runtime files
+find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep "lib\*.a|lib\*.so|.la|include" > devel.files
+   egrep "lib.*.so|mca.*so|etc/openmpi|share/openmpi/.*txt" > runtime.files
 
-find $RPM_BUILD_ROOT -type f | \
+# Devel files
+find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep "/man/" > man.files
+   egrep "lib.*\.a|lib.*\.la|/include/" > devel.files
 
-find $RPM_BUILD_ROOT -type f | \
-   sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep "mca\*so" > mca.files
+# Docs files
+# For when we have man pages / documentation
+#find $RPM_BUILD_ROOT -type f -o -type l | \
+#   sed -e "s@$RPM_BUILD_ROOT@@" |\
+#   egrep "/man/" > docs.files
 
 
 #############################################################################
@@ -336,18 +372,46 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 # Files Section
 #
 #############################################################################
+
+%if %{build_all_in_one_rpm}
+
+#
+# All in one RPM
+#
+
 %files -f main.files
 %defattr(-, root, root)
-%doc README INSTALL LICENSE 
+%doc README INSTALL LICENSE
+
+%else
+
+#
+# Sub-package RPMs
+#
+
+%files runtime -f runtime.files
+%defattr(-, root, root)
+%doc README INSTALL LICENSE
+%{_bindir}/mpirun
+%{_bindir}/mpiexec
+%{_bindir}/ompi_info
+%{_bindir}/orterun
+%{_bindir}/orted
 
 %files devel -f devel.files
 %defattr(-, root, root)
+%{_bindir}/mpicc
+%{_bindir}/mpiCC
+%{_bindir}/mpic++
+%{_bindir}/mpicxx
+%{_bindir}/mpif77
+%{_bindir}/mpif90
 
-%files man -f man.files
-%defattr(-, root, root)
+# For when we have documentation
+#% files docs -f docs.files
+#% defattr(-, root, root)
 
-%files mca-general -f mca.files
-%defattr(-, root, root)
+%endif
 
 
 #############################################################################
@@ -356,6 +420,13 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Wed Mar 30 2006 Jeff Squyres <jsquyres@cisco.com>
+- Lots of bit rot updates
+- Reorganize and rename the subpackages
+- Add / formalize a variety of rpmbuild --define options
+- Comment out the docs subpackage for the moment (until we have some
+  documentation -- coming in v1.1!)
+
 * Wed May 03 2005 Jeff Squyres <jsquyres@open-mpi.org>
 - Added some defines for LANL defaults
 - Added more defines for granulatirty of installation location for
