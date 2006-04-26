@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -30,7 +31,6 @@ EXTRA_DIST = \
         f77_get_sizeof.m4 \
         f90_check_type.m4 \
         f90_find_module_include_flag.m4 \
-        f90_get_alignment.m4 \
         f90_get_precision.m4 \
         f90_get_range.m4 \
         f90_get_sizeof.m4 \
