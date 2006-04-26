@@ -771,7 +771,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     AC_MSG_CHECKING([whether to enable smp locks])
     AC_ARG_ENABLE([smp-locks], 
         [AC_HELP_STRING([--enable-smp-locks],
-            [disable smp locks in atomic ops (default: enabled)])])
+            [enable smp locks in atomic ops.  Do not disable if code will ever run in SMP or multi-threaded environment. (default: enabled)])])
     if test "$enable_smp_locks" != "no"; then
         AC_MSG_RESULT([yes])
         want_smp_locks=1
