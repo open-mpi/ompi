@@ -39,6 +39,9 @@ OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
     if((frag = (orte_iof_base_frag_t*)item) == NULL) { \
         opal_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
     } \
+    frag->frag_owner = NULL; \
+    frag->frag_ptr = frag->frag_data; \
+    frag->frag_len = 0; \
 }
 
 #define ORTE_IOF_BASE_FRAG_RETURN(frag) \
