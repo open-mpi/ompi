@@ -40,7 +40,8 @@ mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../..
 #define DUMP_DATA_AFTER_COMMIT 0x00000001
 #define CHECK_PACK_UNPACK      0x00000002
 
-static outputFlags = CHECK_PACK_UNPACK;
+static uint32_t outputFlags = CHECK_PACK_UNPACK;
+uint32_t remote_arch;
 
 ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
 {
@@ -411,15 +412,11 @@ int test_upper( unsigned int length )
             inbuf++;
         }
     inbuf = (double*)ptr;
-    pConv = ompi_convertor_create( 0, 0 );
+    pConv = ompi_convertor_create( remote_arch, 0 );
     if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pConv, pdt, 1, mat2 ) ) {
         printf( "Cannot attach the datatype to a convertor\n" );
         return OMPI_ERROR;
     }
-
-    /* test the automatic destruction pf the data */
-    ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
-    ompi_ddt_destroy( &pdt1 ); assert( pdt1 == NULL );
 
     GET_TIME( start );
     split_chunk = (length + 1) * sizeof(double);
@@ -446,6 +443,11 @@ int test_upper( unsigned int length )
     rc = check_diag_matrix( length, mat1, mat2 );
     free( mat1 );
     free( mat2 );
+
+    /* test the automatic destruction pf the data */
+    ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
+    ompi_ddt_destroy( &pdt1 ); assert( pdt1 == NULL );
+
     OBJ_RELEASE( pConv );
     return rc;
 }
@@ -694,14 +696,22 @@ int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
 {
     long extent;
     void *pdst, *psrc;
+    TIMER_DATA_TYPE start, end;
+    long total_time;
+
     ompi_ddt_type_extent( pdt, &extent );
 
     pdst = malloc( extent * count );
     psrc = malloc( extent * count );
 
+    GET_TIME( start );
     if( OMPI_SUCCESS != ompi_ddt_copy_content_same_ddt( pdt, count, pdst, psrc ) ) {
-        printf( "Unable to copy the datatype in the function local_copy_ddt_count. Is the datatype committed ?\n" );
+        printf( "Unable to copy the datatype in the function local_copy_ddt_count."
+                " Is the datatype committed ?\n" );
     }
+    GET_TIME( end );
+    total_time = ELAPSED_TIME( start, end );
+    printf( "direct local copy in %ld microsec\n", total_time );
     free( pdst );
     free( psrc );
 
@@ -719,6 +729,8 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     uint32_t iov_count;
     size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
+    TIMER_DATA_TYPE start, end;
+    long total_time;
 
     ompi_ddt_type_extent( send_type, &send_extent );
     ompi_ddt_type_extent( recv_type, &recv_extent );
@@ -735,27 +747,18 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     }
     memset( pdst, 0, recv_count * recv_extent );
 
-    pSendConvertor = ompi_convertor_create( 0, 0 );
+    pSendConvertor = ompi_convertor_create( remote_arch, 0 );
     if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( pSendConvertor, send_type, send_count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
-    pRecvConvertor = ompi_convertor_create( 0, 0 );
+    pRecvConvertor = ompi_convertor_create( remote_arch, 0 );
     if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pRecvConvertor, recv_type, recv_count, pdst ) ) {
         printf( "Unable to create the recv convertor. Is the datatype committed ?\n" );
         goto clean_and_return;
     }
 
-    {  /* Initial destination */
-        int i, j;
-        for( j = 0; j < 7; j++ ) {
-            for( i = 0; i < 2; i++ ) {
-                printf( "%08x ", ((int*)pdst)[i*7+j] );
-            }
-            printf( "\n" );
-        }
-    }
-
+    GET_TIME( start );
     while( (done1 & done2) != 1 ) {
         /* They are supposed to finish in exactly the same time. */
         if( done1 | done2 ) {
@@ -773,12 +776,6 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
             if( 1 == done1 ) {
                 printf( "pack finished\n" );
             }
-            {
-                int i;
-                printf( "print the packed buffer as ints:\n" );
-                for( i = 0; i < 7; i++ )
-                    printf( "%x\n", ((int*)ptemp)[i] );
-            }
         }
 
         if( done2 == 0 ) {
@@ -791,15 +788,9 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
 
         length += max_data;
     }
-    {  /* final destination */
-        int i, j;
-        for( j = 0; j < 7; j++ ) {
-            for( i = 0; i < 2; i++ ) {
-                printf( "%08x ", ((int*)pdst)[i*7+j] );
-            }
-            printf( "\n" );
-        }
-    }
+    GET_TIME( end );
+    total_time = ELAPSED_TIME( start, end );
+    printf( "unpacking different data-types using convertors in %ld microsec\n", total_time );
  clean_and_return:
     if( pSendConvertor != NULL ) {
         OBJ_RELEASE( pSendConvertor ); assert( pSendConvertor == NULL );
@@ -822,6 +813,8 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     uint32_t iov_count;
     size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
+    TIMER_DATA_TYPE start, end;
+    long total_time;
 
     ompi_ddt_type_extent( pdt, &extent );
 
@@ -829,8 +822,8 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     psrc  = malloc( extent * count );
     ptemp = malloc( chunk );
 
-    send_convertor = ompi_convertor_create( 0, 0 );
-    recv_convertor = ompi_convertor_create( 0, 0 );
+    send_convertor = ompi_convertor_create( remote_arch, 0 );
+    recv_convertor = ompi_convertor_create( remote_arch, 0 );
 
     if( OMPI_SUCCESS != ompi_convertor_prepare_for_send( send_convertor, pdt, count, psrc ) ) {
         printf( "Unable to create the send convertor. Is the datatype committed ?\n" );
@@ -842,6 +835,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
         goto clean_and_return;
     }
 
+    GET_TIME( start );
     while( (done1 & done2) != 1 ) {
         /* They are supposed to finish in exactly the same time. */
         if( done1 | done2 ) {
@@ -873,6 +867,10 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 
         length += max_data;
     }
+    GET_TIME( end );
+    total_time = ELAPSED_TIME( start, end );
+    printf( "unpacking same data-type using convertors in %ld microsec\n", total_time );
+
  clean_and_return:
     if( NULL != send_convertor ) OBJ_RELEASE( send_convertor );
     if( NULL != recv_convertor ) OBJ_RELEASE( recv_convertor );
@@ -890,6 +888,11 @@ int main( int argc, char* argv[] )
 
     ompi_ddt_init();
 
+    /**
+     * By default simulate homogeneous architectures.
+     */
+    remote_arch = ompi_mpi_local_arch;
+
     printf( "\n\n/*\n * TEST INVERSED VECTOR\n */\n\n" );
     pdt = create_inversed_vector( &ompi_mpi_int, 10 );
     if( outputFlags & CHECK_PACK_UNPACK ) {
@@ -905,7 +908,7 @@ int main( int argc, char* argv[] )
     }
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
    
-    printf( "\n\n/*\n * TEST UPPER TRIANGULAR MATRIX\n */\n\n" );
+    printf( "\n\n/*\n * TEST UPPER TRIANGULAR MATRIX (size 100)\n */\n\n" );
     pdt = upper_matrix(100);
     if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_ddt_count(pdt, 1);
@@ -963,35 +966,57 @@ int main( int argc, char* argv[] )
         ompi_ddt_dump( pdt3 );
     }
 
-#if 0
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
     OBJ_RELEASE( pdt3 ); assert( pdt3 == NULL );
-#endif
 
+    printf( ">>--------------------------------------------<<\n" );
+    printf( " Contiguous data-type (MPI_DOUBLE)\n" );
+    pdt = MPI_DOUBLE;
+    if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 4500);
+       local_copy_with_convertor( pdt, 4500, 12 );
+       local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 12 );
+    }
+    printf( ">>--------------------------------------------<<\n" );
+
+    printf( ">>--------------------------------------------<<\n" );
     pdt = test_struct_char_double();
     if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 4500);
        local_copy_with_convertor( pdt, 4500, 12 );
+       local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 12 );
     }
+    printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
+    printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_twice_two_doubles();
     if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 4500);
        local_copy_with_convertor( pdt, 4500, 12 );
+       local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 12 );
     }
+    printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
+    printf( ">>--------------------------------------------<<\n" );
     pdt = test_create_blacs_type();
     if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 4500);
        local_copy_with_convertor( pdt, 4500, 956 );
+       local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 956 );
     }
+    printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
+    printf( ">>--------------------------------------------<<\n" );
     pdt1 = test_create_blacs_type1( &ompi_mpi_int );
     pdt2 = test_create_blacs_type2( &ompi_mpi_int );
     if( outputFlags & CHECK_PACK_UNPACK ) {
        local_copy_with_convertor_2datatypes( pdt1, 1, pdt2, 1, 100 );
     }
+    printf( ">>--------------------------------------------<<\n" );
     OBJ_RELEASE( pdt1 ); assert( pdt1 == NULL );
     OBJ_RELEASE( pdt2 ); assert( pdt2 == NULL );
 
