@@ -322,9 +322,9 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
         /* in case we get back more than we asked for */
         if(node->node_slots_inuse == 0) {
             OBJ_RELEASE(node);
-            continue;
+        } else {
+            opal_list_append(nodes, &node->super);
         }
-        opal_list_append(nodes, &node->super);
         OBJ_RELEASE(value);
     }
 
