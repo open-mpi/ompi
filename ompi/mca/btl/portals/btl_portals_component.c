@@ -205,7 +205,7 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-#if 0
+#if 0 /* it appears that copying is faster than iovecs at present */
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
 #else
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
