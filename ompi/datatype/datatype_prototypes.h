@@ -40,19 +40,19 @@ ompi_pack_no_conversion_checksum( ompi_convertor_t* pConv,
                                   struct iovec* iov, uint32_t *out_size,
                                   size_t* max_data, int32_t* freeAfter );
 OMPI_DECLSPEC int32_t
-ompi_pack_no_conv_contig( ompi_convertor_t* pConv,
+ompi_pack_homogeneous_contig( ompi_convertor_t* pConv,
                           struct iovec* iov, uint32_t* out_size,
                           size_t* max_data, int32_t* freeAfter );
 OMPI_DECLSPEC int32_t
-ompi_pack_no_conv_contig_checksum( ompi_convertor_t* pConv,
+ompi_pack_homogeneous_contig_checksum( ompi_convertor_t* pConv,
                                    struct iovec* iov, uint32_t* out_size,
                                    size_t* max_data, int32_t* freeAfter );
 OMPI_DECLSPEC int32_t
-ompi_pack_no_conv_contig_with_gaps( ompi_convertor_t* pConv,
+ompi_pack_homogeneous_contig_with_gaps( ompi_convertor_t* pConv,
                                     struct iovec* iov, uint32_t* out_size,
                                     size_t* max_data, int32_t* freeAfter );
 OMPI_DECLSPEC int32_t
-ompi_pack_no_conv_contig_with_gaps_checksum( ompi_convertor_t* pConv,
+ompi_pack_homogeneous_contig_with_gaps_checksum( ompi_convertor_t* pConv,
                                              struct iovec* iov, uint32_t* out_size,
                                              size_t* max_data, int32_t* freeAfter );
 OMPI_DECLSPEC int32_t
