@@ -470,9 +470,11 @@ mca_btl_portals_component_progress(void)
                     frag->segments[0].seg_len = ev.mlength;
 
                     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                         "received send fragment %x", frag));
-                
-                    if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size) {
+                                         "received send fragment %x (thresh: %d)", 
+                                         frag, ev.md.threshold));
+
+                    if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size ||
+                        ev.md.threshold == 1) {
                         /* the block is full.  It's deactivated automagically, but we
                            can't start it up again until everyone is done with it.
                            The actual reactivation and all that will happen after the
