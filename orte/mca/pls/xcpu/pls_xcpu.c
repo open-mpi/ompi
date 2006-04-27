@@ -244,14 +244,24 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
          */
         opal_argv_insert(&(map->app->argv), 0, header);
 
+        /** we also need to pass the proper environment to the remote
+         * process so it knows its universe, gpr and ns replicas, etc. Since this
+         * can be specified by the user for each app, we have to do this
+         * each time.
+         */
+        if (ORTE_SUCCESS != (rc = orte_pls_xcpu_setup_env(&map->app->env))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
         /** since it is possible that each node could be executing a different application,
          * we cannot just do a mass launch - that would only be supported in the special
          * case of all the application processes being identical. Instead, we are going to
          * step our way through the list, launching each process individually.
          */
-       proc_id=0;
+        proc_id=0;
         while (proc_id < map->num_procs){
+            char** env;
             proc = (orte_rmaps_base_proc_t*)(map->procs[proc_id]);
             node = proc->proc_node;
             proc_id++;
@@ -269,22 +279,15 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             if (NULL != map->app->argv[1]) free(map->app->argv[1]);
             map->app->argv[1] = strdup(node->node->node_name);
 
-            /** we also need to pass the proper environment to the remote
-             * process so it knows its universe, gpr and ns replicas, etc. Since this
-             * can be specified by the user for each app, we have to do this
-             * each time.
-             */
-            if (ORTE_SUCCESS != (rc = orte_pls_xcpu_setup_env(&map->app->env))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+            /* create a copy of the environment and modify for this proc */
+            env = opal_argv_copy(map->app->env);
 
             /** now setup the process name in the environment so we can
              * retrieve it on the other end
              */
             if (ORTE_SUCCESS != (rc = orte_ns_nds_env_put(&(proc->proc_name),
                                             vpid_start, map->num_procs,
-                                            &(map->app->env)))) {
+                                            &env))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -298,18 +301,18 @@ int orte_pls_xcpu_launch(orte_jobid_t jobid){
             t_stack=temp_stack;
 
             /** launch the process */
-            t_stack->tid=lrx(argc, map->app->argv, map->app->env);
+            t_stack->tid=lrx(argc, map->app->argv, env);
         }
     }
 
     /** wait for all threads that have launched processes on remote nodes */
-    temp_stack=t_stack;
+    /*temp_stack=t_stack;
     while(t_stack){
         pthread_join(t_stack->tid, NULL);
         t_stack=t_stack->next;
     }
     orte_soh.begin_monitoring_job(jobid);
-
+*/
     /** cleanup local storage */
     orte_pls_xcpu_free_stack(temp_stack);
     OBJ_DESTRUCT(&mapping);
