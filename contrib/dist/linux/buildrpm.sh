@@ -13,10 +13,11 @@
 prefix="/opt/openmpi"
 specfile="openmpi.spec"
 rpmbuild_options="--define 'mflags -j4'"
-#rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g'"
 configure_options=
-#configure_options="--disable-mpi-f77 --without-romio --disable-mpi-f90"
-# Another option: --target=i686-pc-gnu
+
+# Helpful when debugging
+#rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g' --define 'install_modulefile 1' --define 'modules_rpm_name dhcp'"
+#configure_options="--disable-mpi-f77 --without-io-romio --disable-mpi-f90"
 
 # Some distro's will attempt to force using bizarre, custom compiler
 # names (e.g., i386-redhat-linux-gnu-gcc).  So hardwire them to use
@@ -222,7 +223,11 @@ fi
 
 if test "$build_single" = "yes"; then
     echo "--> Building the single Open MPI RPM"
-    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 1' --define 'configure_options $configure_options' $specdest"
+    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 1'"
+    if test "$configure_options" != ""; then
+        cmd="$cmd --define 'configure_options $configure_options'"
+    fi
+    cmd="$cmd $specdest"
     echo "--> $cmd"
     eval $cmd
 
@@ -240,7 +245,11 @@ fi
 
 if test "$build_multiple" = "yes"; then
     echo "--> Building the multiple Open MPI RPM"
-    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0' --define 'configure_options $configure_options' $specdest"
+    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0'"
+    if test "$configure_options" != ""; then
+        cmd="$cmd --define 'configure_options $configure_options'"
+    fi
+    cmd="$cmd $specdest"
     echo "--> $cmd"
     eval $cmd
 
