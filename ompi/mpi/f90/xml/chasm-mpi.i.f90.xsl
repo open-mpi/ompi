@@ -466,7 +466,7 @@ end </xsl:text>
       </xsl:choose>
     </xsl:when>
     <xsl:when test="@kind = 'bool'">
-      <xsl:text>integer</xsl:text>
+      <xsl:text>logical</xsl:text>
     </xsl:when>
     <xsl:when test="@kind = 'int'">
       <xsl:choose>
