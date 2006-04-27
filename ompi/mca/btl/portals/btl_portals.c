@@ -237,7 +237,10 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     int rc;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
-    
+
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                         "alloc called with size %d", size));
+
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
         frag->segments[0].seg_len = 
@@ -306,6 +309,9 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     int ret;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
+
+    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                         "prepare_src called with size %d", *size));
 
     if (0 != ompi_convertor_need_buffers(convertor)) {
         /* if we need to use buffers to pack the data, grab either an
