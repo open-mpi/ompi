@@ -692,6 +692,33 @@ ompi_datatype_t* create_strange_dt( void )
     return pdt;
 }
 
+ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count )
+{
+    ompi_datatype_t* contiguous;
+
+    ompi_ddt_create_contiguous( count, data, &contiguous );
+    ompi_ddt_commit( &contiguous );
+    return contiguous;
+}
+
+ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count, int length, int stride )
+{
+    ompi_datatype_t* vector;
+
+    ompi_ddt_create_vector( count, length, stride, data, &vector );
+    ompi_ddt_commit( &vector );
+    return vector;
+}
+
+/**
+ *  Conversion function. They deal with data-types in 3 ways, always making local copies.
+ * In order to allow performance testings, there are 3 functions:
+ *  - one copying directly from one memory location to another one using the
+ *    data-type copy function.
+ *  - one which use a 2 convertors created with the same data-type
+ *  - and one using 2 convertors created from different data-types.
+ *
+ */
 int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
 {
     long extent;
@@ -881,6 +908,13 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     return OMPI_SUCCESS;
 }
 
+/**
+ * Main function. Call several tests and print-out the results. It try to stress the convertor
+ * using difficult data-type constructions as well as strange segment sizes for the conversion.
+ * Usually, it is able to detect most of the data-type and convertor problems. Any modifications
+ * on the data-type engine should first pass all the tests from this file, before going into other
+ * tests.
+ */
 int main( int argc, char* argv[] )
 {
     ompi_datatype_t *pdt, *pdt1, *pdt2, *pdt3;
@@ -979,6 +1013,28 @@ int main( int argc, char* argv[] )
        local_copy_with_convertor_2datatypes( pdt, 4500, pdt, 4500, 12 );
     }
     printf( ">>--------------------------------------------<<\n" );
+
+    printf( ">>--------------------------------------------<<\n" );
+    printf( "Contiguous multiple data-type\n" );
+    pdt = create_contiguous_type( MPI_DOUBLE, 4500 );
+    if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 1);
+       local_copy_with_convertor( pdt, 1, 12 );
+       local_copy_with_convertor_2datatypes( pdt, 1, pdt, 1, 12 );
+    }
+    printf( ">>--------------------------------------------<<\n" );
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
+
+    printf( ">>--------------------------------------------<<\n" );
+    printf( "Vector data-type\n" );
+    pdt = create_vector_type( MPI_DOUBLE, 450, 10, 11 );
+    if( outputFlags & CHECK_PACK_UNPACK ) {
+       local_copy_ddt_count(pdt, 1);
+       local_copy_with_convertor( pdt, 1, 12 );
+       local_copy_with_convertor_2datatypes( pdt, 1, pdt, 1, 12 );
+    }
+    printf( ">>--------------------------------------------<<\n" );
+    OBJ_RELEASE( pdt ); assert( pdt == NULL );
 
     printf( ">>--------------------------------------------<<\n" );
     pdt = test_struct_char_double();
