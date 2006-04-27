@@ -55,7 +55,7 @@ EOF
 
 #------------------------------------------------------------------------
 
-output() {
+output_1() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -74,12 +74,12 @@ EOF
 }
 
 start MPI_Abort small
-output MPI_Abort
+output_1 MPI_Abort
 end MPI_Abort
 
 #------------------------------------------------------------------------
 
-output() {
+output_2() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -121,26 +121,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Accumulate ${rank} CH "character${dim}"
-  output MPI_Accumulate ${rank} L "logical${dim}"
+  output_2 MPI_Accumulate ${rank} CH "character${dim}"
+  output_2 MPI_Accumulate ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Accumulate ${rank} I${kind} "integer*${kind}${dim}"
+    output_2 MPI_Accumulate ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Accumulate ${rank} R${kind} "real*${kind}${dim}"
+    output_2 MPI_Accumulate ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Accumulate ${rank} C${kind} "complex*${kind}${dim}"
+    output_2 MPI_Accumulate ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Accumulate
 
 #------------------------------------------------------------------------
 
-output() {
+output_3() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -158,12 +158,12 @@ EOF
 }
 
 start MPI_Add_error_class small
-output MPI_Add_error_class
+output_3 MPI_Add_error_class
 end MPI_Add_error_class
 
 #------------------------------------------------------------------------
 
-output() {
+output_4() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -182,12 +182,12 @@ EOF
 }
 
 start MPI_Add_error_code small
-output MPI_Add_error_code
+output_4 MPI_Add_error_code
 end MPI_Add_error_code
 
 #------------------------------------------------------------------------
 
-output() {
+output_5() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -206,12 +206,12 @@ EOF
 }
 
 start MPI_Add_error_string small
-output MPI_Add_error_string
+output_5 MPI_Add_error_string
 end MPI_Add_error_string
 
 #------------------------------------------------------------------------
 
-output() {
+output_6() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -245,26 +245,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Address ${rank} CH "character${dim}"
-  output MPI_Address ${rank} L "logical${dim}"
+  output_6 MPI_Address ${rank} CH "character${dim}"
+  output_6 MPI_Address ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Address ${rank} I${kind} "integer*${kind}${dim}"
+    output_6 MPI_Address ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Address ${rank} R${kind} "real*${kind}${dim}"
+    output_6 MPI_Address ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Address ${rank} C${kind} "complex*${kind}${dim}"
+    output_6 MPI_Address ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Address
 
 #------------------------------------------------------------------------
 
-output() {
+output_7() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -304,26 +304,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Allgather ${rank} CH "character${dim}"
-  output MPI_Allgather ${rank} L "logical${dim}"
+  output_7 MPI_Allgather ${rank} CH "character${dim}"
+  output_7 MPI_Allgather ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Allgather ${rank} I${kind} "integer*${kind}${dim}"
+    output_7 MPI_Allgather ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Allgather ${rank} R${kind} "real*${kind}${dim}"
+    output_7 MPI_Allgather ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Allgather ${rank} C${kind} "complex*${kind}${dim}"
+    output_7 MPI_Allgather ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Allgather
 
 #------------------------------------------------------------------------
 
-output() {
+output_8() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -364,26 +364,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Allgatherv ${rank} CH "character${dim}"
-  output MPI_Allgatherv ${rank} L "logical${dim}"
+  output_8 MPI_Allgatherv ${rank} CH "character${dim}"
+  output_8 MPI_Allgatherv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Allgatherv ${rank} I${kind} "integer*${kind}${dim}"
+    output_8 MPI_Allgatherv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Allgatherv ${rank} R${kind} "real*${kind}${dim}"
+    output_8 MPI_Allgatherv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Allgatherv ${rank} C${kind} "complex*${kind}${dim}"
+    output_8 MPI_Allgatherv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Allgatherv
 
 #------------------------------------------------------------------------
 
-output() {
+output_9() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -403,12 +403,12 @@ EOF
 }
 
 start MPI_Alloc_mem medium
-output MPI_Alloc_mem
+output_9 MPI_Alloc_mem
 end MPI_Alloc_mem
 
 #------------------------------------------------------------------------
 
-output() {
+output_10() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -447,26 +447,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Allreduce ${rank} CH "character${dim}"
-  output MPI_Allreduce ${rank} L "logical${dim}"
+  output_10 MPI_Allreduce ${rank} CH "character${dim}"
+  output_10 MPI_Allreduce ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Allreduce ${rank} I${kind} "integer*${kind}${dim}"
+    output_10 MPI_Allreduce ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Allreduce ${rank} R${kind} "real*${kind}${dim}"
+    output_10 MPI_Allreduce ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Allreduce ${rank} C${kind} "complex*${kind}${dim}"
+    output_10 MPI_Allreduce ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Allreduce
 
 #------------------------------------------------------------------------
 
-output() {
+output_11() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -506,26 +506,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Alltoall ${rank} CH "character${dim}"
-  output MPI_Alltoall ${rank} L "logical${dim}"
+  output_11 MPI_Alltoall ${rank} CH "character${dim}"
+  output_11 MPI_Alltoall ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Alltoall ${rank} I${kind} "integer*${kind}${dim}"
+    output_11 MPI_Alltoall ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Alltoall ${rank} R${kind} "real*${kind}${dim}"
+    output_11 MPI_Alltoall ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Alltoall ${rank} C${kind} "complex*${kind}${dim}"
+    output_11 MPI_Alltoall ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Alltoall
 
 #------------------------------------------------------------------------
 
-output() {
+output_12() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -567,26 +567,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Alltoallv ${rank} CH "character${dim}"
-  output MPI_Alltoallv ${rank} L "logical${dim}"
+  output_12 MPI_Alltoallv ${rank} CH "character${dim}"
+  output_12 MPI_Alltoallv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Alltoallv ${rank} I${kind} "integer*${kind}${dim}"
+    output_12 MPI_Alltoallv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Alltoallv ${rank} R${kind} "real*${kind}${dim}"
+    output_12 MPI_Alltoallv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Alltoallv ${rank} C${kind} "complex*${kind}${dim}"
+    output_12 MPI_Alltoallv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Alltoallv
 
 #------------------------------------------------------------------------
 
-output() {
+output_13() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -628,26 +628,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Alltoallw ${rank} CH "character${dim}"
-  output MPI_Alltoallw ${rank} L "logical${dim}"
+  output_13 MPI_Alltoallw ${rank} CH "character${dim}"
+  output_13 MPI_Alltoallw ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Alltoallw ${rank} I${kind} "integer*${kind}${dim}"
+    output_13 MPI_Alltoallw ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Alltoallw ${rank} R${kind} "real*${kind}${dim}"
+    output_13 MPI_Alltoallw ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Alltoallw ${rank} C${kind} "complex*${kind}${dim}"
+    output_13 MPI_Alltoallw ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Alltoallw
 
 #------------------------------------------------------------------------
 
-output() {
+output_14() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -666,12 +666,12 @@ EOF
 }
 
 start MPI_Attr_delete small
-output MPI_Attr_delete
+output_14 MPI_Attr_delete
 end MPI_Attr_delete
 
 #------------------------------------------------------------------------
 
-output() {
+output_15() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -684,7 +684,7 @@ subroutine ${procedure}(comm, keyval, attribute_val, flag, ierr)
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: attribute_val
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -692,12 +692,12 @@ EOF
 }
 
 start MPI_Attr_get small
-output MPI_Attr_get
+output_15 MPI_Attr_get
 end MPI_Attr_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_16() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -717,12 +717,12 @@ EOF
 }
 
 start MPI_Attr_put small
-output MPI_Attr_put
+output_16 MPI_Attr_put
 end MPI_Attr_put
 
 #------------------------------------------------------------------------
 
-output() {
+output_17() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -740,12 +740,12 @@ EOF
 }
 
 start MPI_Barrier small
-output MPI_Barrier
+output_17 MPI_Barrier
 end MPI_Barrier
 
 #------------------------------------------------------------------------
 
-output() {
+output_18() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -783,26 +783,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Bcast ${rank} CH "character${dim}"
-  output MPI_Bcast ${rank} L "logical${dim}"
+  output_18 MPI_Bcast ${rank} CH "character${dim}"
+  output_18 MPI_Bcast ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Bcast ${rank} I${kind} "integer*${kind}${dim}"
+    output_18 MPI_Bcast ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Bcast ${rank} R${kind} "real*${kind}${dim}"
+    output_18 MPI_Bcast ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Bcast ${rank} C${kind} "complex*${kind}${dim}"
+    output_18 MPI_Bcast ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Bcast
 
 #------------------------------------------------------------------------
 
-output() {
+output_19() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -841,26 +841,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Bsend ${rank} CH "character${dim}"
-  output MPI_Bsend ${rank} L "logical${dim}"
+  output_19 MPI_Bsend ${rank} CH "character${dim}"
+  output_19 MPI_Bsend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Bsend ${rank} I${kind} "integer*${kind}${dim}"
+    output_19 MPI_Bsend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Bsend ${rank} R${kind} "real*${kind}${dim}"
+    output_19 MPI_Bsend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Bsend ${rank} C${kind} "complex*${kind}${dim}"
+    output_19 MPI_Bsend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Bsend
 
 #------------------------------------------------------------------------
 
-output() {
+output_20() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -900,26 +900,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Bsend_init ${rank} CH "character${dim}"
-  output MPI_Bsend_init ${rank} L "logical${dim}"
+  output_20 MPI_Bsend_init ${rank} CH "character${dim}"
+  output_20 MPI_Bsend_init ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Bsend_init ${rank} I${kind} "integer*${kind}${dim}"
+    output_20 MPI_Bsend_init ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Bsend_init ${rank} R${kind} "real*${kind}${dim}"
+    output_20 MPI_Bsend_init ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Bsend_init ${rank} C${kind} "complex*${kind}${dim}"
+    output_20 MPI_Bsend_init ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Bsend_init
 
 #------------------------------------------------------------------------
 
-output() {
+output_21() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -953,26 +953,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Buffer_attach ${rank} CH "character${dim}"
-  output MPI_Buffer_attach ${rank} L "logical${dim}"
+  output_21 MPI_Buffer_attach ${rank} CH "character${dim}"
+  output_21 MPI_Buffer_attach ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Buffer_attach ${rank} I${kind} "integer*${kind}${dim}"
+    output_21 MPI_Buffer_attach ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Buffer_attach ${rank} R${kind} "real*${kind}${dim}"
+    output_21 MPI_Buffer_attach ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Buffer_attach ${rank} C${kind} "complex*${kind}${dim}"
+    output_21 MPI_Buffer_attach ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Buffer_attach
 
 #------------------------------------------------------------------------
 
-output() {
+output_22() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1006,26 +1006,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Buffer_detach ${rank} CH "character${dim}"
-  output MPI_Buffer_detach ${rank} L "logical${dim}"
+  output_22 MPI_Buffer_detach ${rank} CH "character${dim}"
+  output_22 MPI_Buffer_detach ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Buffer_detach ${rank} I${kind} "integer*${kind}${dim}"
+    output_22 MPI_Buffer_detach ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Buffer_detach ${rank} R${kind} "real*${kind}${dim}"
+    output_22 MPI_Buffer_detach ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Buffer_detach ${rank} C${kind} "complex*${kind}${dim}"
+    output_22 MPI_Buffer_detach ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Buffer_detach
 
 #------------------------------------------------------------------------
 
-output() {
+output_23() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1043,12 +1043,12 @@ EOF
 }
 
 start MPI_Cancel small
-output MPI_Cancel
+output_23 MPI_Cancel
 end MPI_Cancel
 
 #------------------------------------------------------------------------
 
-output() {
+output_24() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1069,12 +1069,12 @@ EOF
 }
 
 start MPI_Cart_coords small
-output MPI_Cart_coords
+output_24 MPI_Cart_coords
 end MPI_Cart_coords
 
 #------------------------------------------------------------------------
 
-output() {
+output_25() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1098,12 +1098,12 @@ EOF
 }
 
 start MPI_Cart_create small
-output MPI_Cart_create
+output_25 MPI_Cart_create
 end MPI_Cart_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_26() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1126,12 +1126,12 @@ EOF
 }
 
 start MPI_Cart_get small
-output MPI_Cart_get
+output_26 MPI_Cart_get
 end MPI_Cart_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_27() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1154,12 +1154,12 @@ EOF
 }
 
 start MPI_Cart_map small
-output MPI_Cart_map
+output_27 MPI_Cart_map
 end MPI_Cart_map
 
 #------------------------------------------------------------------------
 
-output() {
+output_28() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1179,12 +1179,12 @@ EOF
 }
 
 start MPI_Cart_rank small
-output MPI_Cart_rank
+output_28 MPI_Cart_rank
 end MPI_Cart_rank
 
 #------------------------------------------------------------------------
 
-output() {
+output_29() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1207,12 +1207,12 @@ EOF
 }
 
 start MPI_Cart_shift small
-output MPI_Cart_shift
+output_29 MPI_Cart_shift
 end MPI_Cart_shift
 
 #------------------------------------------------------------------------
 
-output() {
+output_30() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1223,7 +1223,7 @@ output() {
 subroutine ${procedure}(comm, remain_dims, new_comm, ierr)
   include 'mpif.h'
   integer, intent(in) :: comm
-  integer, dimension(*), intent(in) :: remain_dims
+  logical, dimension(*), intent(in) :: remain_dims
   integer, intent(out) :: new_comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1232,12 +1232,12 @@ EOF
 }
 
 start MPI_Cart_sub small
-output MPI_Cart_sub
+output_30 MPI_Cart_sub
 end MPI_Cart_sub
 
 #------------------------------------------------------------------------
 
-output() {
+output_31() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1256,12 +1256,12 @@ EOF
 }
 
 start MPI_Cartdim_get small
-output MPI_Cartdim_get
+output_31 MPI_Cartdim_get
 end MPI_Cartdim_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_32() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1280,12 +1280,12 @@ EOF
 }
 
 start MPI_Comm_call_errhandler small
-output MPI_Comm_call_errhandler
+output_32 MPI_Comm_call_errhandler
 end MPI_Comm_call_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_33() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1305,12 +1305,12 @@ EOF
 }
 
 start MPI_Comm_compare small
-output MPI_Comm_compare
+output_33 MPI_Comm_compare
 end MPI_Comm_compare
 
 #------------------------------------------------------------------------
 
-output() {
+output_34() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1330,12 +1330,12 @@ EOF
 }
 
 start MPI_Comm_create small
-output MPI_Comm_create
+output_34 MPI_Comm_create
 end MPI_Comm_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_35() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1354,12 +1354,12 @@ EOF
 }
 
 start MPI_Comm_create_errhandler small
-output MPI_Comm_create_errhandler
+output_35 MPI_Comm_create_errhandler
 end MPI_Comm_create_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_36() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1380,12 +1380,12 @@ EOF
 }
 
 start MPI_Comm_create_keyval small
-output MPI_Comm_create_keyval
+output_36 MPI_Comm_create_keyval
 end MPI_Comm_create_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_37() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1404,12 +1404,12 @@ EOF
 }
 
 start MPI_Comm_delete_attr small
-output MPI_Comm_delete_attr
+output_37 MPI_Comm_delete_attr
 end MPI_Comm_delete_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_38() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1428,12 +1428,12 @@ EOF
 }
 
 start MPI_Comm_dup small
-output MPI_Comm_dup
+output_38 MPI_Comm_dup
 end MPI_Comm_dup
 
 #------------------------------------------------------------------------
 
-output() {
+output_39() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1451,12 +1451,12 @@ EOF
 }
 
 start MPI_Comm_free small
-output MPI_Comm_free
+output_39 MPI_Comm_free
 end MPI_Comm_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_40() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1474,12 +1474,12 @@ EOF
 }
 
 start MPI_Comm_free_keyval small
-output MPI_Comm_free_keyval
+output_40 MPI_Comm_free_keyval
 end MPI_Comm_free_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_41() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1500,12 +1500,12 @@ EOF
 }
 
 start MPI_Comm_get_attr small
-output MPI_Comm_get_attr
+output_41 MPI_Comm_get_attr
 end MPI_Comm_get_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_42() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1524,12 +1524,12 @@ EOF
 }
 
 start MPI_Comm_get_errhandler small
-output MPI_Comm_get_errhandler
+output_42 MPI_Comm_get_errhandler
 end MPI_Comm_get_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_43() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1549,12 +1549,12 @@ EOF
 }
 
 start MPI_Comm_get_name small
-output MPI_Comm_get_name
+output_43 MPI_Comm_get_name
 end MPI_Comm_get_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_44() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1573,12 +1573,12 @@ EOF
 }
 
 start MPI_Comm_group small
-output MPI_Comm_group
+output_44 MPI_Comm_group
 end MPI_Comm_group
 
 #------------------------------------------------------------------------
 
-output() {
+output_45() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1597,12 +1597,12 @@ EOF
 }
 
 start MPI_Comm_rank small
-output MPI_Comm_rank
+output_45 MPI_Comm_rank
 end MPI_Comm_rank
 
 #------------------------------------------------------------------------
 
-output() {
+output_46() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1621,12 +1621,12 @@ EOF
 }
 
 start MPI_Comm_remote_group small
-output MPI_Comm_remote_group
+output_46 MPI_Comm_remote_group
 end MPI_Comm_remote_group
 
 #------------------------------------------------------------------------
 
-output() {
+output_47() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1645,12 +1645,12 @@ EOF
 }
 
 start MPI_Comm_remote_size small
-output MPI_Comm_remote_size
+output_47 MPI_Comm_remote_size
 end MPI_Comm_remote_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_48() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1670,12 +1670,12 @@ EOF
 }
 
 start MPI_Comm_set_attr small
-output MPI_Comm_set_attr
+output_48 MPI_Comm_set_attr
 end MPI_Comm_set_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_49() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1694,12 +1694,12 @@ EOF
 }
 
 start MPI_Comm_set_errhandler small
-output MPI_Comm_set_errhandler
+output_49 MPI_Comm_set_errhandler
 end MPI_Comm_set_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_50() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1718,12 +1718,12 @@ EOF
 }
 
 start MPI_Comm_set_name small
-output MPI_Comm_set_name
+output_50 MPI_Comm_set_name
 end MPI_Comm_set_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_51() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1742,12 +1742,12 @@ EOF
 }
 
 start MPI_Comm_size small
-output MPI_Comm_size
+output_51 MPI_Comm_size
 end MPI_Comm_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_52() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1768,12 +1768,12 @@ EOF
 }
 
 start MPI_Comm_split small
-output MPI_Comm_split
+output_52 MPI_Comm_split
 end MPI_Comm_split
 
 #------------------------------------------------------------------------
 
-output() {
+output_53() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1784,7 +1784,7 @@ output() {
 subroutine ${procedure}(comm, flag, ierr)
   include 'mpif.h'
   integer, intent(inout) :: comm
-  integer, intent(in) :: flag
+  logical, intent(in) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -1792,12 +1792,12 @@ EOF
 }
 
 start MPI_Comm_test_inter small
-output MPI_Comm_test_inter
+output_53 MPI_Comm_test_inter
 end MPI_Comm_test_inter
 
 #------------------------------------------------------------------------
 
-output() {
+output_54() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1817,12 +1817,12 @@ EOF
 }
 
 start MPI_Dims_create small
-output MPI_Dims_create
+output_54 MPI_Dims_create
 end MPI_Dims_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_55() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1841,12 +1841,12 @@ EOF
 }
 
 start MPI_Errhandler_create small
-output MPI_Errhandler_create
+output_55 MPI_Errhandler_create
 end MPI_Errhandler_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_56() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1864,12 +1864,12 @@ EOF
 }
 
 start MPI_Errhandler_free small
-output MPI_Errhandler_free
+output_56 MPI_Errhandler_free
 end MPI_Errhandler_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_57() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1888,12 +1888,12 @@ EOF
 }
 
 start MPI_Errhandler_get small
-output MPI_Errhandler_get
+output_57 MPI_Errhandler_get
 end MPI_Errhandler_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_58() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1912,12 +1912,12 @@ EOF
 }
 
 start MPI_Errhandler_set small
-output MPI_Errhandler_set
+output_58 MPI_Errhandler_set
 end MPI_Errhandler_set
 
 #------------------------------------------------------------------------
 
-output() {
+output_59() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1936,12 +1936,12 @@ EOF
 }
 
 start MPI_Error_class small
-output MPI_Error_class
+output_59 MPI_Error_class
 end MPI_Error_class
 
 #------------------------------------------------------------------------
 
-output() {
+output_60() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -1961,12 +1961,12 @@ EOF
 }
 
 start MPI_Error_string small
-output MPI_Error_string
+output_60 MPI_Error_string
 end MPI_Error_string
 
 #------------------------------------------------------------------------
 
-output() {
+output_61() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2005,26 +2005,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Exscan ${rank} CH "character${dim}"
-  output MPI_Exscan ${rank} L "logical${dim}"
+  output_61 MPI_Exscan ${rank} CH "character${dim}"
+  output_61 MPI_Exscan ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Exscan ${rank} I${kind} "integer*${kind}${dim}"
+    output_61 MPI_Exscan ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Exscan ${rank} R${kind} "real*${kind}${dim}"
+    output_61 MPI_Exscan ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Exscan ${rank} C${kind} "complex*${kind}${dim}"
+    output_61 MPI_Exscan ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Exscan
 
 #------------------------------------------------------------------------
 
-output() {
+output_62() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2043,12 +2043,12 @@ EOF
 }
 
 start MPI_File_call_errhandler small
-output MPI_File_call_errhandler
+output_62 MPI_File_call_errhandler
 end MPI_File_call_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_63() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2066,12 +2066,12 @@ EOF
 }
 
 start MPI_File_close small
-output MPI_File_close
+output_63 MPI_File_close
 end MPI_File_close
 
 #------------------------------------------------------------------------
 
-output() {
+output_64() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2090,12 +2090,12 @@ EOF
 }
 
 start MPI_File_create_errhandler small
-output MPI_File_create_errhandler
+output_64 MPI_File_create_errhandler
 end MPI_File_create_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_65() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2114,12 +2114,12 @@ EOF
 }
 
 start MPI_File_delete small
-output MPI_File_delete
+output_65 MPI_File_delete
 end MPI_File_delete
 
 #------------------------------------------------------------------------
 
-output() {
+output_66() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2138,12 +2138,12 @@ EOF
 }
 
 start MPI_File_get_amode small
-output MPI_File_get_amode
+output_66 MPI_File_get_amode
 end MPI_File_get_amode
 
 #------------------------------------------------------------------------
 
-output() {
+output_67() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2154,7 +2154,7 @@ output() {
 subroutine ${procedure}(fh, flag, ierr)
   include 'mpif.h'
   integer, intent(in) :: fh
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -2162,12 +2162,12 @@ EOF
 }
 
 start MPI_File_get_atomicity small
-output MPI_File_get_atomicity
+output_67 MPI_File_get_atomicity
 end MPI_File_get_atomicity
 
 #------------------------------------------------------------------------
 
-output() {
+output_68() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2187,12 +2187,12 @@ EOF
 }
 
 start MPI_File_get_byte_offset small
-output MPI_File_get_byte_offset
+output_68 MPI_File_get_byte_offset
 end MPI_File_get_byte_offset
 
 #------------------------------------------------------------------------
 
-output() {
+output_69() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2211,12 +2211,12 @@ EOF
 }
 
 start MPI_File_get_errhandler small
-output MPI_File_get_errhandler
+output_69 MPI_File_get_errhandler
 end MPI_File_get_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_70() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2235,12 +2235,12 @@ EOF
 }
 
 start MPI_File_get_group small
-output MPI_File_get_group
+output_70 MPI_File_get_group
 end MPI_File_get_group
 
 #------------------------------------------------------------------------
 
-output() {
+output_71() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2259,12 +2259,12 @@ EOF
 }
 
 start MPI_File_get_info small
-output MPI_File_get_info
+output_71 MPI_File_get_info
 end MPI_File_get_info
 
 #------------------------------------------------------------------------
 
-output() {
+output_72() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2283,12 +2283,12 @@ EOF
 }
 
 start MPI_File_get_position small
-output MPI_File_get_position
+output_72 MPI_File_get_position
 end MPI_File_get_position
 
 #------------------------------------------------------------------------
 
-output() {
+output_73() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2307,12 +2307,12 @@ EOF
 }
 
 start MPI_File_get_position_shared small
-output MPI_File_get_position_shared
+output_73 MPI_File_get_position_shared
 end MPI_File_get_position_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_74() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2331,12 +2331,12 @@ EOF
 }
 
 start MPI_File_get_size small
-output MPI_File_get_size
+output_74 MPI_File_get_size
 end MPI_File_get_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_75() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2356,12 +2356,12 @@ EOF
 }
 
 start MPI_File_get_type_extent small
-output MPI_File_get_type_extent
+output_75 MPI_File_get_type_extent
 end MPI_File_get_type_extent
 
 #------------------------------------------------------------------------
 
-output() {
+output_76() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2384,12 +2384,12 @@ EOF
 }
 
 start MPI_File_get_view small
-output MPI_File_get_view
+output_76 MPI_File_get_view
 end MPI_File_get_view
 
 #------------------------------------------------------------------------
 
-output() {
+output_77() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2427,26 +2427,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iread ${rank} CH "character${dim}"
-  output MPI_File_iread ${rank} L "logical${dim}"
+  output_77 MPI_File_iread ${rank} CH "character${dim}"
+  output_77 MPI_File_iread ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iread ${rank} I${kind} "integer*${kind}${dim}"
+    output_77 MPI_File_iread ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iread ${rank} R${kind} "real*${kind}${dim}"
+    output_77 MPI_File_iread ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iread ${rank} C${kind} "complex*${kind}${dim}"
+    output_77 MPI_File_iread ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iread
 
 #------------------------------------------------------------------------
 
-output() {
+output_78() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2485,26 +2485,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iread_at ${rank} CH "character${dim}"
-  output MPI_File_iread_at ${rank} L "logical${dim}"
+  output_78 MPI_File_iread_at ${rank} CH "character${dim}"
+  output_78 MPI_File_iread_at ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iread_at ${rank} I${kind} "integer*${kind}${dim}"
+    output_78 MPI_File_iread_at ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iread_at ${rank} R${kind} "real*${kind}${dim}"
+    output_78 MPI_File_iread_at ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iread_at ${rank} C${kind} "complex*${kind}${dim}"
+    output_78 MPI_File_iread_at ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iread_at
 
 #------------------------------------------------------------------------
 
-output() {
+output_79() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2542,26 +2542,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iread_shared ${rank} CH "character${dim}"
-  output MPI_File_iread_shared ${rank} L "logical${dim}"
+  output_79 MPI_File_iread_shared ${rank} CH "character${dim}"
+  output_79 MPI_File_iread_shared ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iread_shared ${rank} I${kind} "integer*${kind}${dim}"
+    output_79 MPI_File_iread_shared ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iread_shared ${rank} R${kind} "real*${kind}${dim}"
+    output_79 MPI_File_iread_shared ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iread_shared ${rank} C${kind} "complex*${kind}${dim}"
+    output_79 MPI_File_iread_shared ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iread_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_80() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2599,26 +2599,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iwrite ${rank} CH "character${dim}"
-  output MPI_File_iwrite ${rank} L "logical${dim}"
+  output_80 MPI_File_iwrite ${rank} CH "character${dim}"
+  output_80 MPI_File_iwrite ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iwrite ${rank} I${kind} "integer*${kind}${dim}"
+    output_80 MPI_File_iwrite ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iwrite ${rank} R${kind} "real*${kind}${dim}"
+    output_80 MPI_File_iwrite ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iwrite ${rank} C${kind} "complex*${kind}${dim}"
+    output_80 MPI_File_iwrite ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iwrite
 
 #------------------------------------------------------------------------
 
-output() {
+output_81() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2657,26 +2657,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iwrite_at ${rank} CH "character${dim}"
-  output MPI_File_iwrite_at ${rank} L "logical${dim}"
+  output_81 MPI_File_iwrite_at ${rank} CH "character${dim}"
+  output_81 MPI_File_iwrite_at ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iwrite_at ${rank} I${kind} "integer*${kind}${dim}"
+    output_81 MPI_File_iwrite_at ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iwrite_at ${rank} R${kind} "real*${kind}${dim}"
+    output_81 MPI_File_iwrite_at ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iwrite_at ${rank} C${kind} "complex*${kind}${dim}"
+    output_81 MPI_File_iwrite_at ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iwrite_at
 
 #------------------------------------------------------------------------
 
-output() {
+output_82() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2714,26 +2714,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_iwrite_shared ${rank} CH "character${dim}"
-  output MPI_File_iwrite_shared ${rank} L "logical${dim}"
+  output_82 MPI_File_iwrite_shared ${rank} CH "character${dim}"
+  output_82 MPI_File_iwrite_shared ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_iwrite_shared ${rank} I${kind} "integer*${kind}${dim}"
+    output_82 MPI_File_iwrite_shared ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_iwrite_shared ${rank} R${kind} "real*${kind}${dim}"
+    output_82 MPI_File_iwrite_shared ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_iwrite_shared ${rank} C${kind} "complex*${kind}${dim}"
+    output_82 MPI_File_iwrite_shared ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_iwrite_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_83() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2756,12 +2756,12 @@ EOF
 }
 
 start MPI_File_open small
-output MPI_File_open
+output_83 MPI_File_open
 end MPI_File_open
 
 #------------------------------------------------------------------------
 
-output() {
+output_84() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2780,12 +2780,12 @@ EOF
 }
 
 start MPI_File_preallocate small
-output MPI_File_preallocate
+output_84 MPI_File_preallocate
 end MPI_File_preallocate
 
 #------------------------------------------------------------------------
 
-output() {
+output_85() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2823,26 +2823,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read ${rank} CH "character${dim}"
-  output MPI_File_read ${rank} L "logical${dim}"
+  output_85 MPI_File_read ${rank} CH "character${dim}"
+  output_85 MPI_File_read ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read ${rank} I${kind} "integer*${kind}${dim}"
+    output_85 MPI_File_read ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read ${rank} R${kind} "real*${kind}${dim}"
+    output_85 MPI_File_read ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read ${rank} C${kind} "complex*${kind}${dim}"
+    output_85 MPI_File_read ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read
 
 #------------------------------------------------------------------------
 
-output() {
+output_86() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2880,26 +2880,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_all ${rank} CH "character${dim}"
-  output MPI_File_read_all ${rank} L "logical${dim}"
+  output_86 MPI_File_read_all ${rank} CH "character${dim}"
+  output_86 MPI_File_read_all ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_all ${rank} I${kind} "integer*${kind}${dim}"
+    output_86 MPI_File_read_all ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_all ${rank} R${kind} "real*${kind}${dim}"
+    output_86 MPI_File_read_all ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_all ${rank} C${kind} "complex*${kind}${dim}"
+    output_86 MPI_File_read_all ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_all
 
 #------------------------------------------------------------------------
 
-output() {
+output_87() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2935,26 +2935,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_all_begin ${rank} CH "character${dim}"
-  output MPI_File_read_all_begin ${rank} L "logical${dim}"
+  output_87 MPI_File_read_all_begin ${rank} CH "character${dim}"
+  output_87 MPI_File_read_all_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_all_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_87 MPI_File_read_all_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_all_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_87 MPI_File_read_all_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_all_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_87 MPI_File_read_all_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_all_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_88() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -2989,26 +2989,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_all_end ${rank} CH "character${dim}"
-  output MPI_File_read_all_end ${rank} L "logical${dim}"
+  output_88 MPI_File_read_all_end ${rank} CH "character${dim}"
+  output_88 MPI_File_read_all_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_all_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_88 MPI_File_read_all_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_all_end ${rank} R${kind} "real*${kind}${dim}"
+    output_88 MPI_File_read_all_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_all_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_88 MPI_File_read_all_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_all_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_89() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3047,26 +3047,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_at ${rank} CH "character${dim}"
-  output MPI_File_read_at ${rank} L "logical${dim}"
+  output_89 MPI_File_read_at ${rank} CH "character${dim}"
+  output_89 MPI_File_read_at ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_at ${rank} I${kind} "integer*${kind}${dim}"
+    output_89 MPI_File_read_at ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_at ${rank} R${kind} "real*${kind}${dim}"
+    output_89 MPI_File_read_at ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_at ${rank} C${kind} "complex*${kind}${dim}"
+    output_89 MPI_File_read_at ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_at
 
 #------------------------------------------------------------------------
 
-output() {
+output_90() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3105,26 +3105,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_at_all ${rank} CH "character${dim}"
-  output MPI_File_read_at_all ${rank} L "logical${dim}"
+  output_90 MPI_File_read_at_all ${rank} CH "character${dim}"
+  output_90 MPI_File_read_at_all ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_at_all ${rank} I${kind} "integer*${kind}${dim}"
+    output_90 MPI_File_read_at_all ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_at_all ${rank} R${kind} "real*${kind}${dim}"
+    output_90 MPI_File_read_at_all ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_at_all ${rank} C${kind} "complex*${kind}${dim}"
+    output_90 MPI_File_read_at_all ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_at_all
 
 #------------------------------------------------------------------------
 
-output() {
+output_91() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3162,26 +3162,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_at_all_begin ${rank} CH "character${dim}"
-  output MPI_File_read_at_all_begin ${rank} L "logical${dim}"
+  output_91 MPI_File_read_at_all_begin ${rank} CH "character${dim}"
+  output_91 MPI_File_read_at_all_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_91 MPI_File_read_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_91 MPI_File_read_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_91 MPI_File_read_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_at_all_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_92() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3216,26 +3216,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_at_all_end ${rank} CH "character${dim}"
-  output MPI_File_read_at_all_end ${rank} L "logical${dim}"
+  output_92 MPI_File_read_at_all_end ${rank} CH "character${dim}"
+  output_92 MPI_File_read_at_all_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_at_all_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_92 MPI_File_read_at_all_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_at_all_end ${rank} R${kind} "real*${kind}${dim}"
+    output_92 MPI_File_read_at_all_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_at_all_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_92 MPI_File_read_at_all_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_at_all_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_93() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3273,26 +3273,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_ordered ${rank} CH "character${dim}"
-  output MPI_File_read_ordered ${rank} L "logical${dim}"
+  output_93 MPI_File_read_ordered ${rank} CH "character${dim}"
+  output_93 MPI_File_read_ordered ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_ordered ${rank} I${kind} "integer*${kind}${dim}"
+    output_93 MPI_File_read_ordered ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_ordered ${rank} R${kind} "real*${kind}${dim}"
+    output_93 MPI_File_read_ordered ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_ordered ${rank} C${kind} "complex*${kind}${dim}"
+    output_93 MPI_File_read_ordered ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_ordered
 
 #------------------------------------------------------------------------
 
-output() {
+output_94() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3328,26 +3328,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_ordered_begin ${rank} CH "character${dim}"
-  output MPI_File_read_ordered_begin ${rank} L "logical${dim}"
+  output_94 MPI_File_read_ordered_begin ${rank} CH "character${dim}"
+  output_94 MPI_File_read_ordered_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_94 MPI_File_read_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_94 MPI_File_read_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_94 MPI_File_read_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_ordered_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_95() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3382,26 +3382,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_ordered_end ${rank} CH "character${dim}"
-  output MPI_File_read_ordered_end ${rank} L "logical${dim}"
+  output_95 MPI_File_read_ordered_end ${rank} CH "character${dim}"
+  output_95 MPI_File_read_ordered_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_ordered_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_95 MPI_File_read_ordered_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_ordered_end ${rank} R${kind} "real*${kind}${dim}"
+    output_95 MPI_File_read_ordered_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_ordered_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_95 MPI_File_read_ordered_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_ordered_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_96() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3439,26 +3439,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_read_shared ${rank} CH "character${dim}"
-  output MPI_File_read_shared ${rank} L "logical${dim}"
+  output_96 MPI_File_read_shared ${rank} CH "character${dim}"
+  output_96 MPI_File_read_shared ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_shared ${rank} I${kind} "integer*${kind}${dim}"
+    output_96 MPI_File_read_shared ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_shared ${rank} R${kind} "real*${kind}${dim}"
+    output_96 MPI_File_read_shared ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_shared ${rank} C${kind} "complex*${kind}${dim}"
+    output_96 MPI_File_read_shared ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_97() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3478,12 +3478,12 @@ EOF
 }
 
 start MPI_File_seek small
-output MPI_File_seek
+output_97 MPI_File_seek
 end MPI_File_seek
 
 #------------------------------------------------------------------------
 
-output() {
+output_98() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3503,12 +3503,12 @@ EOF
 }
 
 start MPI_File_seek_shared small
-output MPI_File_seek_shared
+output_98 MPI_File_seek_shared
 end MPI_File_seek_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_99() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3519,7 +3519,7 @@ output() {
 subroutine ${procedure}(fh, flag, ierr)
   include 'mpif.h'
   integer, intent(inout) :: fh
-  integer, intent(in) :: flag
+  logical, intent(in) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -3527,12 +3527,12 @@ EOF
 }
 
 start MPI_File_set_atomicity small
-output MPI_File_set_atomicity
+output_99 MPI_File_set_atomicity
 end MPI_File_set_atomicity
 
 #------------------------------------------------------------------------
 
-output() {
+output_100() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3551,12 +3551,12 @@ EOF
 }
 
 start MPI_File_set_errhandler small
-output MPI_File_set_errhandler
+output_100 MPI_File_set_errhandler
 end MPI_File_set_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_101() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3575,12 +3575,12 @@ EOF
 }
 
 start MPI_File_set_info small
-output MPI_File_set_info
+output_101 MPI_File_set_info
 end MPI_File_set_info
 
 #------------------------------------------------------------------------
 
-output() {
+output_102() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3599,12 +3599,12 @@ EOF
 }
 
 start MPI_File_set_size small
-output MPI_File_set_size
+output_102 MPI_File_set_size
 end MPI_File_set_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_103() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3628,12 +3628,12 @@ EOF
 }
 
 start MPI_File_set_view small
-output MPI_File_set_view
+output_103 MPI_File_set_view
 end MPI_File_set_view
 
 #------------------------------------------------------------------------
 
-output() {
+output_104() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3651,12 +3651,12 @@ EOF
 }
 
 start MPI_File_sync small
-output MPI_File_sync
+output_104 MPI_File_sync
 end MPI_File_sync
 
 #------------------------------------------------------------------------
 
-output() {
+output_105() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3694,26 +3694,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write ${rank} CH "character${dim}"
-  output MPI_File_write ${rank} L "logical${dim}"
+  output_105 MPI_File_write ${rank} CH "character${dim}"
+  output_105 MPI_File_write ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write ${rank} I${kind} "integer*${kind}${dim}"
+    output_105 MPI_File_write ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write ${rank} R${kind} "real*${kind}${dim}"
+    output_105 MPI_File_write ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write ${rank} C${kind} "complex*${kind}${dim}"
+    output_105 MPI_File_write ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write
 
 #------------------------------------------------------------------------
 
-output() {
+output_106() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3751,26 +3751,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_all ${rank} CH "character${dim}"
-  output MPI_File_write_all ${rank} L "logical${dim}"
+  output_106 MPI_File_write_all ${rank} CH "character${dim}"
+  output_106 MPI_File_write_all ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_all ${rank} I${kind} "integer*${kind}${dim}"
+    output_106 MPI_File_write_all ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_all ${rank} R${kind} "real*${kind}${dim}"
+    output_106 MPI_File_write_all ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_all ${rank} C${kind} "complex*${kind}${dim}"
+    output_106 MPI_File_write_all ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_all
 
 #------------------------------------------------------------------------
 
-output() {
+output_107() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3806,26 +3806,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_all_begin ${rank} CH "character${dim}"
-  output MPI_File_write_all_begin ${rank} L "logical${dim}"
+  output_107 MPI_File_write_all_begin ${rank} CH "character${dim}"
+  output_107 MPI_File_write_all_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_all_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_107 MPI_File_write_all_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_all_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_107 MPI_File_write_all_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_all_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_107 MPI_File_write_all_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_all_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_108() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3860,26 +3860,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_all_end ${rank} CH "character${dim}"
-  output MPI_File_write_all_end ${rank} L "logical${dim}"
+  output_108 MPI_File_write_all_end ${rank} CH "character${dim}"
+  output_108 MPI_File_write_all_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_all_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_108 MPI_File_write_all_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_all_end ${rank} R${kind} "real*${kind}${dim}"
+    output_108 MPI_File_write_all_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_all_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_108 MPI_File_write_all_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_all_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_109() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3918,26 +3918,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_at ${rank} CH "character${dim}"
-  output MPI_File_write_at ${rank} L "logical${dim}"
+  output_109 MPI_File_write_at ${rank} CH "character${dim}"
+  output_109 MPI_File_write_at ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_at ${rank} I${kind} "integer*${kind}${dim}"
+    output_109 MPI_File_write_at ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_at ${rank} R${kind} "real*${kind}${dim}"
+    output_109 MPI_File_write_at ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_at ${rank} C${kind} "complex*${kind}${dim}"
+    output_109 MPI_File_write_at ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_at
 
 #------------------------------------------------------------------------
 
-output() {
+output_110() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -3976,26 +3976,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_at_all ${rank} CH "character${dim}"
-  output MPI_File_write_at_all ${rank} L "logical${dim}"
+  output_110 MPI_File_write_at_all ${rank} CH "character${dim}"
+  output_110 MPI_File_write_at_all ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_at_all ${rank} I${kind} "integer*${kind}${dim}"
+    output_110 MPI_File_write_at_all ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_at_all ${rank} R${kind} "real*${kind}${dim}"
+    output_110 MPI_File_write_at_all ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_at_all ${rank} C${kind} "complex*${kind}${dim}"
+    output_110 MPI_File_write_at_all ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_at_all
 
 #------------------------------------------------------------------------
 
-output() {
+output_111() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4033,26 +4033,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_at_all_begin ${rank} CH "character${dim}"
-  output MPI_File_write_at_all_begin ${rank} L "logical${dim}"
+  output_111 MPI_File_write_at_all_begin ${rank} CH "character${dim}"
+  output_111 MPI_File_write_at_all_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_111 MPI_File_write_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_111 MPI_File_write_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_111 MPI_File_write_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_at_all_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_112() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4087,26 +4087,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_at_all_end ${rank} CH "character${dim}"
-  output MPI_File_write_at_all_end ${rank} L "logical${dim}"
+  output_112 MPI_File_write_at_all_end ${rank} CH "character${dim}"
+  output_112 MPI_File_write_at_all_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_at_all_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_112 MPI_File_write_at_all_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_at_all_end ${rank} R${kind} "real*${kind}${dim}"
+    output_112 MPI_File_write_at_all_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_at_all_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_112 MPI_File_write_at_all_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_at_all_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_113() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4144,26 +4144,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_ordered ${rank} CH "character${dim}"
-  output MPI_File_write_ordered ${rank} L "logical${dim}"
+  output_113 MPI_File_write_ordered ${rank} CH "character${dim}"
+  output_113 MPI_File_write_ordered ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_ordered ${rank} I${kind} "integer*${kind}${dim}"
+    output_113 MPI_File_write_ordered ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_ordered ${rank} R${kind} "real*${kind}${dim}"
+    output_113 MPI_File_write_ordered ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_ordered ${rank} C${kind} "complex*${kind}${dim}"
+    output_113 MPI_File_write_ordered ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_ordered
 
 #------------------------------------------------------------------------
 
-output() {
+output_114() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4199,26 +4199,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_ordered_begin ${rank} CH "character${dim}"
-  output MPI_File_write_ordered_begin ${rank} L "logical${dim}"
+  output_114 MPI_File_write_ordered_begin ${rank} CH "character${dim}"
+  output_114 MPI_File_write_ordered_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_114 MPI_File_write_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_114 MPI_File_write_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_114 MPI_File_write_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_ordered_begin
 
 #------------------------------------------------------------------------
 
-output() {
+output_115() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4253,26 +4253,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_ordered_end ${rank} CH "character${dim}"
-  output MPI_File_write_ordered_end ${rank} L "logical${dim}"
+  output_115 MPI_File_write_ordered_end ${rank} CH "character${dim}"
+  output_115 MPI_File_write_ordered_end ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_ordered_end ${rank} I${kind} "integer*${kind}${dim}"
+    output_115 MPI_File_write_ordered_end ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_ordered_end ${rank} R${kind} "real*${kind}${dim}"
+    output_115 MPI_File_write_ordered_end ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_ordered_end ${rank} C${kind} "complex*${kind}${dim}"
+    output_115 MPI_File_write_ordered_end ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_ordered_end
 
 #------------------------------------------------------------------------
 
-output() {
+output_116() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4310,26 +4310,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_File_write_shared ${rank} CH "character${dim}"
-  output MPI_File_write_shared ${rank} L "logical${dim}"
+  output_116 MPI_File_write_shared ${rank} CH "character${dim}"
+  output_116 MPI_File_write_shared ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_write_shared ${rank} I${kind} "integer*${kind}${dim}"
+    output_116 MPI_File_write_shared ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_write_shared ${rank} R${kind} "real*${kind}${dim}"
+    output_116 MPI_File_write_shared ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_write_shared ${rank} C${kind} "complex*${kind}${dim}"
+    output_116 MPI_File_write_shared ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_shared
 
 #------------------------------------------------------------------------
 
-output() {
+output_117() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4346,12 +4346,12 @@ EOF
 }
 
 start MPI_Finalize small
-output MPI_Finalize
+output_117 MPI_Finalize
 end MPI_Finalize
 
 #------------------------------------------------------------------------
 
-output() {
+output_118() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4361,7 +4361,7 @@ output() {
 
 subroutine ${procedure}(flag, ierr)
   include 'mpif.h'
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -4369,12 +4369,12 @@ EOF
 }
 
 start MPI_Finalized small
-output MPI_Finalized
+output_118 MPI_Finalized
 end MPI_Finalized
 
 #------------------------------------------------------------------------
 
-output() {
+output_119() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4407,26 +4407,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Free_mem ${rank} CH "character${dim}"
-  output MPI_Free_mem ${rank} L "logical${dim}"
+  output_119 MPI_Free_mem ${rank} CH "character${dim}"
+  output_119 MPI_Free_mem ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Free_mem ${rank} I${kind} "integer*${kind}${dim}"
+    output_119 MPI_Free_mem ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Free_mem ${rank} R${kind} "real*${kind}${dim}"
+    output_119 MPI_Free_mem ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Free_mem ${rank} C${kind} "complex*${kind}${dim}"
+    output_119 MPI_Free_mem ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Free_mem
 
 #------------------------------------------------------------------------
 
-output() {
+output_120() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4467,26 +4467,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Gather ${rank} CH "character${dim}"
-  output MPI_Gather ${rank} L "logical${dim}"
+  output_120 MPI_Gather ${rank} CH "character${dim}"
+  output_120 MPI_Gather ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Gather ${rank} I${kind} "integer*${kind}${dim}"
+    output_120 MPI_Gather ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Gather ${rank} R${kind} "real*${kind}${dim}"
+    output_120 MPI_Gather ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Gather ${rank} C${kind} "complex*${kind}${dim}"
+    output_120 MPI_Gather ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Gather
 
 #------------------------------------------------------------------------
 
-output() {
+output_121() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4528,26 +4528,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Gatherv ${rank} CH "character${dim}"
-  output MPI_Gatherv ${rank} L "logical${dim}"
+  output_121 MPI_Gatherv ${rank} CH "character${dim}"
+  output_121 MPI_Gatherv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Gatherv ${rank} I${kind} "integer*${kind}${dim}"
+    output_121 MPI_Gatherv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Gatherv ${rank} R${kind} "real*${kind}${dim}"
+    output_121 MPI_Gatherv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Gatherv ${rank} C${kind} "complex*${kind}${dim}"
+    output_121 MPI_Gatherv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Gatherv
 
 #------------------------------------------------------------------------
 
-output() {
+output_122() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4588,26 +4588,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Get ${rank} CH "character${dim}"
-  output MPI_Get ${rank} L "logical${dim}"
+  output_122 MPI_Get ${rank} CH "character${dim}"
+  output_122 MPI_Get ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Get ${rank} I${kind} "integer*${kind}${dim}"
+    output_122 MPI_Get ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Get ${rank} R${kind} "real*${kind}${dim}"
+    output_122 MPI_Get ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Get ${rank} C${kind} "complex*${kind}${dim}"
+    output_122 MPI_Get ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Get
 
 #------------------------------------------------------------------------
 
-output() {
+output_123() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4641,26 +4641,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Get_address ${rank} CH "character${dim}"
-  output MPI_Get_address ${rank} L "logical${dim}"
+  output_123 MPI_Get_address ${rank} CH "character${dim}"
+  output_123 MPI_Get_address ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Get_address ${rank} I${kind} "integer*${kind}${dim}"
+    output_123 MPI_Get_address ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Get_address ${rank} R${kind} "real*${kind}${dim}"
+    output_123 MPI_Get_address ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Get_address ${rank} C${kind} "complex*${kind}${dim}"
+    output_123 MPI_Get_address ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Get_address
 
 #------------------------------------------------------------------------
 
-output() {
+output_124() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4680,12 +4680,12 @@ EOF
 }
 
 start MPI_Get_count small
-output MPI_Get_count
+output_124 MPI_Get_count
 end MPI_Get_count
 
 #------------------------------------------------------------------------
 
-output() {
+output_125() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4705,12 +4705,12 @@ EOF
 }
 
 start MPI_Get_elements small
-output MPI_Get_elements
+output_125 MPI_Get_elements
 end MPI_Get_elements
 
 #------------------------------------------------------------------------
 
-output() {
+output_126() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4729,12 +4729,12 @@ EOF
 }
 
 start MPI_Get_processor_name small
-output MPI_Get_processor_name
+output_126 MPI_Get_processor_name
 end MPI_Get_processor_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_127() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4753,12 +4753,12 @@ EOF
 }
 
 start MPI_Get_version small
-output MPI_Get_version
+output_127 MPI_Get_version
 end MPI_Get_version
 
 #------------------------------------------------------------------------
 
-output() {
+output_128() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4782,12 +4782,12 @@ EOF
 }
 
 start MPI_Graph_create small
-output MPI_Graph_create
+output_128 MPI_Graph_create
 end MPI_Graph_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_129() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4810,12 +4810,12 @@ EOF
 }
 
 start MPI_Graph_get small
-output MPI_Graph_get
+output_129 MPI_Graph_get
 end MPI_Graph_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_130() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4838,12 +4838,12 @@ EOF
 }
 
 start MPI_Graph_map small
-output MPI_Graph_map
+output_130 MPI_Graph_map
 end MPI_Graph_map
 
 #------------------------------------------------------------------------
 
-output() {
+output_131() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4864,12 +4864,12 @@ EOF
 }
 
 start MPI_Graph_neighbors small
-output MPI_Graph_neighbors
+output_131 MPI_Graph_neighbors
 end MPI_Graph_neighbors
 
 #------------------------------------------------------------------------
 
-output() {
+output_132() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4889,12 +4889,12 @@ EOF
 }
 
 start MPI_Graph_neighbors_count small
-output MPI_Graph_neighbors_count
+output_132 MPI_Graph_neighbors_count
 end MPI_Graph_neighbors_count
 
 #------------------------------------------------------------------------
 
-output() {
+output_133() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4914,12 +4914,12 @@ EOF
 }
 
 start MPI_Graphdims_get small
-output MPI_Graphdims_get
+output_133 MPI_Graphdims_get
 end MPI_Graphdims_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_134() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4937,12 +4937,12 @@ EOF
 }
 
 start MPI_Grequest_complete small
-output MPI_Grequest_complete
+output_134 MPI_Grequest_complete
 end MPI_Grequest_complete
 
 #------------------------------------------------------------------------
 
-output() {
+output_135() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4965,12 +4965,12 @@ EOF
 }
 
 start MPI_Grequest_start small
-output MPI_Grequest_start
+output_135 MPI_Grequest_start
 end MPI_Grequest_start
 
 #------------------------------------------------------------------------
 
-output() {
+output_136() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -4990,12 +4990,12 @@ EOF
 }
 
 start MPI_Group_compare small
-output MPI_Group_compare
+output_136 MPI_Group_compare
 end MPI_Group_compare
 
 #------------------------------------------------------------------------
 
-output() {
+output_137() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5015,12 +5015,12 @@ EOF
 }
 
 start MPI_Group_difference small
-output MPI_Group_difference
+output_137 MPI_Group_difference
 end MPI_Group_difference
 
 #------------------------------------------------------------------------
 
-output() {
+output_138() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5041,12 +5041,12 @@ EOF
 }
 
 start MPI_Group_excl small
-output MPI_Group_excl
+output_138 MPI_Group_excl
 end MPI_Group_excl
 
 #------------------------------------------------------------------------
 
-output() {
+output_139() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5064,12 +5064,12 @@ EOF
 }
 
 start MPI_Group_free small
-output MPI_Group_free
+output_139 MPI_Group_free
 end MPI_Group_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_140() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5090,12 +5090,12 @@ EOF
 }
 
 start MPI_Group_incl small
-output MPI_Group_incl
+output_140 MPI_Group_incl
 end MPI_Group_incl
 
 #------------------------------------------------------------------------
 
-output() {
+output_141() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5115,12 +5115,12 @@ EOF
 }
 
 start MPI_Group_intersection small
-output MPI_Group_intersection
+output_141 MPI_Group_intersection
 end MPI_Group_intersection
 
 #------------------------------------------------------------------------
 
-output() {
+output_142() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5141,12 +5141,12 @@ EOF
 }
 
 start MPI_Group_range_excl small
-output MPI_Group_range_excl
+output_142 MPI_Group_range_excl
 end MPI_Group_range_excl
 
 #------------------------------------------------------------------------
 
-output() {
+output_143() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5167,12 +5167,12 @@ EOF
 }
 
 start MPI_Group_range_incl small
-output MPI_Group_range_incl
+output_143 MPI_Group_range_incl
 end MPI_Group_range_incl
 
 #------------------------------------------------------------------------
 
-output() {
+output_144() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5191,12 +5191,12 @@ EOF
 }
 
 start MPI_Group_rank small
-output MPI_Group_rank
+output_144 MPI_Group_rank
 end MPI_Group_rank
 
 #------------------------------------------------------------------------
 
-output() {
+output_145() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5215,12 +5215,12 @@ EOF
 }
 
 start MPI_Group_size small
-output MPI_Group_size
+output_145 MPI_Group_size
 end MPI_Group_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_146() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5243,12 +5243,12 @@ EOF
 }
 
 start MPI_Group_translate_ranks small
-output MPI_Group_translate_ranks
+output_146 MPI_Group_translate_ranks
 end MPI_Group_translate_ranks
 
 #------------------------------------------------------------------------
 
-output() {
+output_147() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5268,12 +5268,12 @@ EOF
 }
 
 start MPI_Group_union small
-output MPI_Group_union
+output_147 MPI_Group_union
 end MPI_Group_union
 
 #------------------------------------------------------------------------
 
-output() {
+output_148() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5313,26 +5313,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Ibsend ${rank} CH "character${dim}"
-  output MPI_Ibsend ${rank} L "logical${dim}"
+  output_148 MPI_Ibsend ${rank} CH "character${dim}"
+  output_148 MPI_Ibsend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Ibsend ${rank} I${kind} "integer*${kind}${dim}"
+    output_148 MPI_Ibsend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Ibsend ${rank} R${kind} "real*${kind}${dim}"
+    output_148 MPI_Ibsend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Ibsend ${rank} C${kind} "complex*${kind}${dim}"
+    output_148 MPI_Ibsend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Ibsend
 
 #------------------------------------------------------------------------
 
-output() {
+output_149() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5350,12 +5350,12 @@ EOF
 }
 
 start MPI_Info_create small
-output MPI_Info_create
+output_149 MPI_Info_create
 end MPI_Info_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_150() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5374,12 +5374,12 @@ EOF
 }
 
 start MPI_Info_delete small
-output MPI_Info_delete
+output_150 MPI_Info_delete
 end MPI_Info_delete
 
 #------------------------------------------------------------------------
 
-output() {
+output_151() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5398,12 +5398,12 @@ EOF
 }
 
 start MPI_Info_dup small
-output MPI_Info_dup
+output_151 MPI_Info_dup
 end MPI_Info_dup
 
 #------------------------------------------------------------------------
 
-output() {
+output_152() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5421,12 +5421,12 @@ EOF
 }
 
 start MPI_Info_free small
-output MPI_Info_free
+output_152 MPI_Info_free
 end MPI_Info_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_153() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5441,7 +5441,7 @@ subroutine ${procedure}(info, key, valuelen, value, flag&
   character(len=*), intent(in) :: key
   integer, intent(in) :: valuelen
   character(len=*), intent(out) :: value
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -5449,12 +5449,12 @@ EOF
 }
 
 start MPI_Info_get small
-output MPI_Info_get
+output_153 MPI_Info_get
 end MPI_Info_get
 
 #------------------------------------------------------------------------
 
-output() {
+output_154() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5473,12 +5473,12 @@ EOF
 }
 
 start MPI_Info_get_nkeys small
-output MPI_Info_get_nkeys
+output_154 MPI_Info_get_nkeys
 end MPI_Info_get_nkeys
 
 #------------------------------------------------------------------------
 
-output() {
+output_155() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5498,12 +5498,12 @@ EOF
 }
 
 start MPI_Info_get_nthkey small
-output MPI_Info_get_nthkey
+output_155 MPI_Info_get_nthkey
 end MPI_Info_get_nthkey
 
 #------------------------------------------------------------------------
 
-output() {
+output_156() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5516,7 +5516,7 @@ subroutine ${procedure}(info, key, valuelen, flag, ierr)
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: valuelen
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -5524,12 +5524,12 @@ EOF
 }
 
 start MPI_Info_get_valuelen small
-output MPI_Info_get_valuelen
+output_156 MPI_Info_get_valuelen
 end MPI_Info_get_valuelen
 
 #------------------------------------------------------------------------
 
-output() {
+output_157() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5549,12 +5549,12 @@ EOF
 }
 
 start MPI_Info_set small
-output MPI_Info_set
+output_157 MPI_Info_set
 end MPI_Info_set
 
 #------------------------------------------------------------------------
 
-output() {
+output_158() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5571,12 +5571,12 @@ EOF
 }
 
 start MPI_Init small
-output MPI_Init
+output_158 MPI_Init
 end MPI_Init
 
 #------------------------------------------------------------------------
 
-output() {
+output_159() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5595,12 +5595,12 @@ EOF
 }
 
 start MPI_Init_thread small
-output MPI_Init_thread
+output_159 MPI_Init_thread
 end MPI_Init_thread
 
 #------------------------------------------------------------------------
 
-output() {
+output_160() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5618,12 +5618,12 @@ EOF
 }
 
 start MPI_Initialized small
-output MPI_Initialized
+output_160 MPI_Initialized
 end MPI_Initialized
 
 #------------------------------------------------------------------------
 
-output() {
+output_161() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5647,12 +5647,12 @@ EOF
 }
 
 start MPI_Intercomm_create small
-output MPI_Intercomm_create
+output_161 MPI_Intercomm_create
 end MPI_Intercomm_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_162() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5672,12 +5672,12 @@ EOF
 }
 
 start MPI_Intercomm_merge small
-output MPI_Intercomm_merge
+output_162 MPI_Intercomm_merge
 end MPI_Intercomm_merge
 
 #------------------------------------------------------------------------
 
-output() {
+output_163() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5691,7 +5691,7 @@ subroutine ${procedure}(source, tag, comm, flag, status&
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5700,12 +5700,12 @@ EOF
 }
 
 start MPI_Iprobe small
-output MPI_Iprobe
+output_163 MPI_Iprobe
 end MPI_Iprobe
 
 #------------------------------------------------------------------------
 
-output() {
+output_164() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5745,26 +5745,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Irecv ${rank} CH "character${dim}"
-  output MPI_Irecv ${rank} L "logical${dim}"
+  output_164 MPI_Irecv ${rank} CH "character${dim}"
+  output_164 MPI_Irecv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Irecv ${rank} I${kind} "integer*${kind}${dim}"
+    output_164 MPI_Irecv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Irecv ${rank} R${kind} "real*${kind}${dim}"
+    output_164 MPI_Irecv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Irecv ${rank} C${kind} "complex*${kind}${dim}"
+    output_164 MPI_Irecv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Irecv
 
 #------------------------------------------------------------------------
 
-output() {
+output_165() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5804,26 +5804,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Irsend ${rank} CH "character${dim}"
-  output MPI_Irsend ${rank} L "logical${dim}"
+  output_165 MPI_Irsend ${rank} CH "character${dim}"
+  output_165 MPI_Irsend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Irsend ${rank} I${kind} "integer*${kind}${dim}"
+    output_165 MPI_Irsend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Irsend ${rank} R${kind} "real*${kind}${dim}"
+    output_165 MPI_Irsend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Irsend ${rank} C${kind} "complex*${kind}${dim}"
+    output_165 MPI_Irsend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Irsend
 
 #------------------------------------------------------------------------
 
-output() {
+output_166() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5833,7 +5833,7 @@ output() {
 
 subroutine ${procedure}(flag, ierr)
   include 'mpif.h'
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -5841,12 +5841,12 @@ EOF
 }
 
 start MPI_Is_thread_main small
-output MPI_Is_thread_main
+output_166 MPI_Is_thread_main
 end MPI_Is_thread_main
 
 #------------------------------------------------------------------------
 
-output() {
+output_167() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5886,26 +5886,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Isend ${rank} CH "character${dim}"
-  output MPI_Isend ${rank} L "logical${dim}"
+  output_167 MPI_Isend ${rank} CH "character${dim}"
+  output_167 MPI_Isend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Isend ${rank} I${kind} "integer*${kind}${dim}"
+    output_167 MPI_Isend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Isend ${rank} R${kind} "real*${kind}${dim}"
+    output_167 MPI_Isend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Isend ${rank} C${kind} "complex*${kind}${dim}"
+    output_167 MPI_Isend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Isend
 
 #------------------------------------------------------------------------
 
-output() {
+output_168() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5945,26 +5945,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Issend ${rank} CH "character${dim}"
-  output MPI_Issend ${rank} L "logical${dim}"
+  output_168 MPI_Issend ${rank} CH "character${dim}"
+  output_168 MPI_Issend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Issend ${rank} I${kind} "integer*${kind}${dim}"
+    output_168 MPI_Issend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Issend ${rank} R${kind} "real*${kind}${dim}"
+    output_168 MPI_Issend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Issend ${rank} C${kind} "complex*${kind}${dim}"
+    output_168 MPI_Issend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Issend
 
 #------------------------------------------------------------------------
 
-output() {
+output_169() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -5985,12 +5985,12 @@ EOF
 }
 
 start MPI_Keyval_create small
-output MPI_Keyval_create
+output_169 MPI_Keyval_create
 end MPI_Keyval_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_170() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6008,12 +6008,12 @@ EOF
 }
 
 start MPI_Keyval_free small
-output MPI_Keyval_free
+output_170 MPI_Keyval_free
 end MPI_Keyval_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_171() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6024,7 +6024,7 @@ output() {
 subroutine ${procedure}(function, commute, op, ierr)
   include 'mpif.h'
   external :: function
-  integer, intent(in) :: commute
+  logical, intent(in) :: commute
   integer, intent(out) :: op
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6033,12 +6033,12 @@ EOF
 }
 
 start MPI_Op_create small
-output MPI_Op_create
+output_171 MPI_Op_create
 end MPI_Op_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_172() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6056,12 +6056,12 @@ EOF
 }
 
 start MPI_Op_free small
-output MPI_Op_free
+output_172 MPI_Op_free
 end MPI_Op_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_173() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6101,26 +6101,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Pack ${rank} CH "character${dim}"
-  output MPI_Pack ${rank} L "logical${dim}"
+  output_173 MPI_Pack ${rank} CH "character${dim}"
+  output_173 MPI_Pack ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Pack ${rank} I${kind} "integer*${kind}${dim}"
+    output_173 MPI_Pack ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Pack ${rank} R${kind} "real*${kind}${dim}"
+    output_173 MPI_Pack ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Pack ${rank} C${kind} "complex*${kind}${dim}"
+    output_173 MPI_Pack ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Pack
 
 #------------------------------------------------------------------------
 
-output() {
+output_174() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6160,26 +6160,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Pack_external ${rank} CH "character${dim}"
-  output MPI_Pack_external ${rank} L "logical${dim}"
+  output_174 MPI_Pack_external ${rank} CH "character${dim}"
+  output_174 MPI_Pack_external ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Pack_external ${rank} I${kind} "integer*${kind}${dim}"
+    output_174 MPI_Pack_external ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Pack_external ${rank} R${kind} "real*${kind}${dim}"
+    output_174 MPI_Pack_external ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Pack_external ${rank} C${kind} "complex*${kind}${dim}"
+    output_174 MPI_Pack_external ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Pack_external
 
 #------------------------------------------------------------------------
 
-output() {
+output_175() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6200,12 +6200,12 @@ EOF
 }
 
 start MPI_Pack_external_size small
-output MPI_Pack_external_size
+output_175 MPI_Pack_external_size
 end MPI_Pack_external_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_176() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6226,12 +6226,12 @@ EOF
 }
 
 start MPI_Pack_size small
-output MPI_Pack_size
+output_176 MPI_Pack_size
 end MPI_Pack_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_177() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6249,12 +6249,12 @@ EOF
 }
 
 start MPI_Pcontrol small
-output MPI_Pcontrol
+output_177 MPI_Pcontrol
 end MPI_Pcontrol
 
 #------------------------------------------------------------------------
 
-output() {
+output_178() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6275,12 +6275,12 @@ EOF
 }
 
 start MPI_Probe small
-output MPI_Probe
+output_178 MPI_Probe
 end MPI_Probe
 
 #------------------------------------------------------------------------
 
-output() {
+output_179() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6321,26 +6321,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Put ${rank} CH "character${dim}"
-  output MPI_Put ${rank} L "logical${dim}"
+  output_179 MPI_Put ${rank} CH "character${dim}"
+  output_179 MPI_Put ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Put ${rank} I${kind} "integer*${kind}${dim}"
+    output_179 MPI_Put ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Put ${rank} R${kind} "real*${kind}${dim}"
+    output_179 MPI_Put ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Put ${rank} C${kind} "complex*${kind}${dim}"
+    output_179 MPI_Put ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Put
 
 #------------------------------------------------------------------------
 
-output() {
+output_180() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6358,12 +6358,12 @@ EOF
 }
 
 start MPI_Query_thread small
-output MPI_Query_thread
+output_180 MPI_Query_thread
 end MPI_Query_thread
 
 #------------------------------------------------------------------------
 
-output() {
+output_181() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6403,26 +6403,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Recv ${rank} CH "character${dim}"
-  output MPI_Recv ${rank} L "logical${dim}"
+  output_181 MPI_Recv ${rank} CH "character${dim}"
+  output_181 MPI_Recv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Recv ${rank} I${kind} "integer*${kind}${dim}"
+    output_181 MPI_Recv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Recv ${rank} R${kind} "real*${kind}${dim}"
+    output_181 MPI_Recv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Recv ${rank} C${kind} "complex*${kind}${dim}"
+    output_181 MPI_Recv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Recv
 
 #------------------------------------------------------------------------
 
-output() {
+output_182() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6462,26 +6462,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Recv_init ${rank} CH "character${dim}"
-  output MPI_Recv_init ${rank} L "logical${dim}"
+  output_182 MPI_Recv_init ${rank} CH "character${dim}"
+  output_182 MPI_Recv_init ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Recv_init ${rank} I${kind} "integer*${kind}${dim}"
+    output_182 MPI_Recv_init ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Recv_init ${rank} R${kind} "real*${kind}${dim}"
+    output_182 MPI_Recv_init ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Recv_init ${rank} C${kind} "complex*${kind}${dim}"
+    output_182 MPI_Recv_init ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Recv_init
 
 #------------------------------------------------------------------------
 
-output() {
+output_183() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6521,26 +6521,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Reduce ${rank} CH "character${dim}"
-  output MPI_Reduce ${rank} L "logical${dim}"
+  output_183 MPI_Reduce ${rank} CH "character${dim}"
+  output_183 MPI_Reduce ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Reduce ${rank} I${kind} "integer*${kind}${dim}"
+    output_183 MPI_Reduce ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Reduce ${rank} R${kind} "real*${kind}${dim}"
+    output_183 MPI_Reduce ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Reduce ${rank} C${kind} "complex*${kind}${dim}"
+    output_183 MPI_Reduce ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Reduce
 
 #------------------------------------------------------------------------
 
-output() {
+output_184() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6579,26 +6579,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Reduce_scatter ${rank} CH "character${dim}"
-  output MPI_Reduce_scatter ${rank} L "logical${dim}"
+  output_184 MPI_Reduce_scatter ${rank} CH "character${dim}"
+  output_184 MPI_Reduce_scatter ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Reduce_scatter ${rank} I${kind} "integer*${kind}${dim}"
+    output_184 MPI_Reduce_scatter ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Reduce_scatter ${rank} R${kind} "real*${kind}${dim}"
+    output_184 MPI_Reduce_scatter ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Reduce_scatter ${rank} C${kind} "complex*${kind}${dim}"
+    output_184 MPI_Reduce_scatter ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Reduce_scatter
 
 #------------------------------------------------------------------------
 
-output() {
+output_185() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6621,12 +6621,12 @@ EOF
 }
 
 start MPI_Register_datarep small
-output MPI_Register_datarep
+output_185 MPI_Register_datarep
 end MPI_Register_datarep
 
 #------------------------------------------------------------------------
 
-output() {
+output_186() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6644,12 +6644,12 @@ EOF
 }
 
 start MPI_Request_free small
-output MPI_Request_free
+output_186 MPI_Request_free
 end MPI_Request_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_187() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6660,7 +6660,7 @@ output() {
 subroutine ${procedure}(request, flag, status, ierr)
   include 'mpif.h'
   integer, intent(in) :: request
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6669,12 +6669,12 @@ EOF
 }
 
 start MPI_Request_get_status small
-output MPI_Request_get_status
+output_187 MPI_Request_get_status
 end MPI_Request_get_status
 
 #------------------------------------------------------------------------
 
-output() {
+output_188() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6713,26 +6713,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Rsend ${rank} CH "character${dim}"
-  output MPI_Rsend ${rank} L "logical${dim}"
+  output_188 MPI_Rsend ${rank} CH "character${dim}"
+  output_188 MPI_Rsend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Rsend ${rank} I${kind} "integer*${kind}${dim}"
+    output_188 MPI_Rsend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Rsend ${rank} R${kind} "real*${kind}${dim}"
+    output_188 MPI_Rsend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Rsend ${rank} C${kind} "complex*${kind}${dim}"
+    output_188 MPI_Rsend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Rsend
 
 #------------------------------------------------------------------------
 
-output() {
+output_189() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6772,26 +6772,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Rsend_init ${rank} CH "character${dim}"
-  output MPI_Rsend_init ${rank} L "logical${dim}"
+  output_189 MPI_Rsend_init ${rank} CH "character${dim}"
+  output_189 MPI_Rsend_init ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Rsend_init ${rank} I${kind} "integer*${kind}${dim}"
+    output_189 MPI_Rsend_init ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Rsend_init ${rank} R${kind} "real*${kind}${dim}"
+    output_189 MPI_Rsend_init ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Rsend_init ${rank} C${kind} "complex*${kind}${dim}"
+    output_189 MPI_Rsend_init ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Rsend_init
 
 #------------------------------------------------------------------------
 
-output() {
+output_190() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6830,26 +6830,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Scan ${rank} CH "character${dim}"
-  output MPI_Scan ${rank} L "logical${dim}"
+  output_190 MPI_Scan ${rank} CH "character${dim}"
+  output_190 MPI_Scan ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Scan ${rank} I${kind} "integer*${kind}${dim}"
+    output_190 MPI_Scan ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Scan ${rank} R${kind} "real*${kind}${dim}"
+    output_190 MPI_Scan ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Scan ${rank} C${kind} "complex*${kind}${dim}"
+    output_190 MPI_Scan ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Scan
 
 #------------------------------------------------------------------------
 
-output() {
+output_191() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6890,26 +6890,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Scatter ${rank} CH "character${dim}"
-  output MPI_Scatter ${rank} L "logical${dim}"
+  output_191 MPI_Scatter ${rank} CH "character${dim}"
+  output_191 MPI_Scatter ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Scatter ${rank} I${kind} "integer*${kind}${dim}"
+    output_191 MPI_Scatter ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Scatter ${rank} R${kind} "real*${kind}${dim}"
+    output_191 MPI_Scatter ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Scatter ${rank} C${kind} "complex*${kind}${dim}"
+    output_191 MPI_Scatter ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Scatter
 
 #------------------------------------------------------------------------
 
-output() {
+output_192() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -6951,26 +6951,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Scatterv ${rank} CH "character${dim}"
-  output MPI_Scatterv ${rank} L "logical${dim}"
+  output_192 MPI_Scatterv ${rank} CH "character${dim}"
+  output_192 MPI_Scatterv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Scatterv ${rank} I${kind} "integer*${kind}${dim}"
+    output_192 MPI_Scatterv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Scatterv ${rank} R${kind} "real*${kind}${dim}"
+    output_192 MPI_Scatterv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Scatterv ${rank} C${kind} "complex*${kind}${dim}"
+    output_192 MPI_Scatterv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Scatterv
 
 #------------------------------------------------------------------------
 
-output() {
+output_193() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7009,26 +7009,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Send ${rank} CH "character${dim}"
-  output MPI_Send ${rank} L "logical${dim}"
+  output_193 MPI_Send ${rank} CH "character${dim}"
+  output_193 MPI_Send ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Send ${rank} I${kind} "integer*${kind}${dim}"
+    output_193 MPI_Send ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Send ${rank} R${kind} "real*${kind}${dim}"
+    output_193 MPI_Send ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Send ${rank} C${kind} "complex*${kind}${dim}"
+    output_193 MPI_Send ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Send
 
 #------------------------------------------------------------------------
 
-output() {
+output_194() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7068,26 +7068,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Send_init ${rank} CH "character${dim}"
-  output MPI_Send_init ${rank} L "logical${dim}"
+  output_194 MPI_Send_init ${rank} CH "character${dim}"
+  output_194 MPI_Send_init ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Send_init ${rank} I${kind} "integer*${kind}${dim}"
+    output_194 MPI_Send_init ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Send_init ${rank} R${kind} "real*${kind}${dim}"
+    output_194 MPI_Send_init ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Send_init ${rank} C${kind} "complex*${kind}${dim}"
+    output_194 MPI_Send_init ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Send_init
 
 #------------------------------------------------------------------------
 
-output() {
+output_195() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7132,26 +7132,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Sendrecv ${rank} CH "character${dim}"
-  output MPI_Sendrecv ${rank} L "logical${dim}"
+  output_195 MPI_Sendrecv ${rank} CH "character${dim}"
+  output_195 MPI_Sendrecv ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Sendrecv ${rank} I${kind} "integer*${kind}${dim}"
+    output_195 MPI_Sendrecv ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Sendrecv ${rank} R${kind} "real*${kind}${dim}"
+    output_195 MPI_Sendrecv ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Sendrecv ${rank} C${kind} "complex*${kind}${dim}"
+    output_195 MPI_Sendrecv ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Sendrecv
 
 #------------------------------------------------------------------------
 
-output() {
+output_196() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7193,26 +7193,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Sendrecv_replace ${rank} CH "character${dim}"
-  output MPI_Sendrecv_replace ${rank} L "logical${dim}"
+  output_196 MPI_Sendrecv_replace ${rank} CH "character${dim}"
+  output_196 MPI_Sendrecv_replace ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Sendrecv_replace ${rank} I${kind} "integer*${kind}${dim}"
+    output_196 MPI_Sendrecv_replace ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Sendrecv_replace ${rank} R${kind} "real*${kind}${dim}"
+    output_196 MPI_Sendrecv_replace ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Sendrecv_replace ${rank} C${kind} "complex*${kind}${dim}"
+    output_196 MPI_Sendrecv_replace ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Sendrecv_replace
 
 #------------------------------------------------------------------------
 
-output() {
+output_197() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7246,26 +7246,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_SIZEOF ${rank} CH "character${dim}"
-  output MPI_SIZEOF ${rank} L "logical${dim}"
+  output_197 MPI_SIZEOF ${rank} CH "character${dim}"
+  output_197 MPI_SIZEOF ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_SIZEOF ${rank} I${kind} "integer*${kind}${dim}"
+    output_197 MPI_SIZEOF ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_SIZEOF ${rank} R${kind} "real*${kind}${dim}"
+    output_197 MPI_SIZEOF ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_SIZEOF ${rank} C${kind} "complex*${kind}${dim}"
+    output_197 MPI_SIZEOF ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_SIZEOF
 
 #------------------------------------------------------------------------
 
-output() {
+output_198() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7304,26 +7304,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Ssend ${rank} CH "character${dim}"
-  output MPI_Ssend ${rank} L "logical${dim}"
+  output_198 MPI_Ssend ${rank} CH "character${dim}"
+  output_198 MPI_Ssend ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Ssend ${rank} I${kind} "integer*${kind}${dim}"
+    output_198 MPI_Ssend ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Ssend ${rank} R${kind} "real*${kind}${dim}"
+    output_198 MPI_Ssend ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Ssend ${rank} C${kind} "complex*${kind}${dim}"
+    output_198 MPI_Ssend ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Ssend
 
 #------------------------------------------------------------------------
 
-output() {
+output_199() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7363,26 +7363,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Ssend_init ${rank} CH "character${dim}"
-  output MPI_Ssend_init ${rank} L "logical${dim}"
+  output_199 MPI_Ssend_init ${rank} CH "character${dim}"
+  output_199 MPI_Ssend_init ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Ssend_init ${rank} I${kind} "integer*${kind}${dim}"
+    output_199 MPI_Ssend_init ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Ssend_init ${rank} R${kind} "real*${kind}${dim}"
+    output_199 MPI_Ssend_init ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Ssend_init ${rank} C${kind} "complex*${kind}${dim}"
+    output_199 MPI_Ssend_init ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Ssend_init
 
 #------------------------------------------------------------------------
 
-output() {
+output_200() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7400,12 +7400,12 @@ EOF
 }
 
 start MPI_Start small
-output MPI_Start
+output_200 MPI_Start
 end MPI_Start
 
 #------------------------------------------------------------------------
 
-output() {
+output_201() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7424,12 +7424,12 @@ EOF
 }
 
 start MPI_Startall small
-output MPI_Startall
+output_201 MPI_Startall
 end MPI_Startall
 
 #------------------------------------------------------------------------
 
-output() {
+output_202() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7440,7 +7440,7 @@ output() {
 subroutine ${procedure}(status, flag, ierr)
   include 'mpif.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
-  integer, intent(in) :: flag
+  logical, intent(in) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -7448,12 +7448,12 @@ EOF
 }
 
 start MPI_Status_set_cancelled small
-output MPI_Status_set_cancelled
+output_202 MPI_Status_set_cancelled
 end MPI_Status_set_cancelled
 
 #------------------------------------------------------------------------
 
-output() {
+output_203() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7473,12 +7473,12 @@ EOF
 }
 
 start MPI_Status_set_elements small
-output MPI_Status_set_elements
+output_203 MPI_Status_set_elements
 end MPI_Status_set_elements
 
 #------------------------------------------------------------------------
 
-output() {
+output_204() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7489,7 +7489,7 @@ output() {
 subroutine ${procedure}(request, flag, status, ierr)
   include 'mpif.h'
   integer, intent(inout) :: request
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7498,12 +7498,12 @@ EOF
 }
 
 start MPI_Test small
-output MPI_Test
+output_204 MPI_Test
 end MPI_Test
 
 #------------------------------------------------------------------------
 
-output() {
+output_205() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7514,7 +7514,7 @@ output() {
 subroutine ${procedure}(status, flag, ierr)
   include 'mpif.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -7522,12 +7522,12 @@ EOF
 }
 
 start MPI_Test_cancelled small
-output MPI_Test_cancelled
+output_205 MPI_Test_cancelled
 end MPI_Test_cancelled
 
 #------------------------------------------------------------------------
 
-output() {
+output_206() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7539,7 +7539,7 @@ subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
   include 'mpif.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7548,12 +7548,12 @@ EOF
 }
 
 start MPI_Testall small
-output MPI_Testall
+output_206 MPI_Testall
 end MPI_Testall
 
 #------------------------------------------------------------------------
 
-output() {
+output_207() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7567,7 +7567,7 @@ subroutine ${procedure}(count, array_of_requests, index, flag, status&
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7576,12 +7576,12 @@ EOF
 }
 
 start MPI_Testany small
-output MPI_Testany
+output_207 MPI_Testany
 end MPI_Testany
 
 #------------------------------------------------------------------------
 
-output() {
+output_208() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7604,12 +7604,12 @@ EOF
 }
 
 start MPI_Testsome small
-output MPI_Testsome
+output_208 MPI_Testsome
 end MPI_Testsome
 
 #------------------------------------------------------------------------
 
-output() {
+output_209() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7628,12 +7628,12 @@ EOF
 }
 
 start MPI_Topo_test small
-output MPI_Topo_test
+output_209 MPI_Topo_test
 end MPI_Topo_test
 
 #------------------------------------------------------------------------
 
-output() {
+output_210() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7651,12 +7651,12 @@ EOF
 }
 
 start MPI_Type_commit small
-output MPI_Type_commit
+output_210 MPI_Type_commit
 end MPI_Type_commit
 
 #------------------------------------------------------------------------
 
-output() {
+output_211() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7676,12 +7676,12 @@ EOF
 }
 
 start MPI_Type_contiguous small
-output MPI_Type_contiguous
+output_211 MPI_Type_contiguous
 end MPI_Type_contiguous
 
 #------------------------------------------------------------------------
 
-output() {
+output_212() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7709,12 +7709,12 @@ EOF
 }
 
 start MPI_Type_create_darray small
-output MPI_Type_create_darray
+output_212 MPI_Type_create_darray
 end MPI_Type_create_darray
 
 #------------------------------------------------------------------------
 
-output() {
+output_213() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7734,12 +7734,12 @@ EOF
 }
 
 start MPI_Type_create_f90_complex small
-output MPI_Type_create_f90_complex
+output_213 MPI_Type_create_f90_complex
 end MPI_Type_create_f90_complex
 
 #------------------------------------------------------------------------
 
-output() {
+output_214() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7758,12 +7758,12 @@ EOF
 }
 
 start MPI_Type_create_f90_integer small
-output MPI_Type_create_f90_integer
+output_214 MPI_Type_create_f90_integer
 end MPI_Type_create_f90_integer
 
 #------------------------------------------------------------------------
 
-output() {
+output_215() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7783,12 +7783,12 @@ EOF
 }
 
 start MPI_Type_create_f90_real small
-output MPI_Type_create_f90_real
+output_215 MPI_Type_create_f90_real
 end MPI_Type_create_f90_real
 
 #------------------------------------------------------------------------
 
-output() {
+output_216() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7811,12 +7811,12 @@ EOF
 }
 
 start MPI_Type_create_hindexed small
-output MPI_Type_create_hindexed
+output_216 MPI_Type_create_hindexed
 end MPI_Type_create_hindexed
 
 #------------------------------------------------------------------------
 
-output() {
+output_217() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7839,12 +7839,12 @@ EOF
 }
 
 start MPI_Type_create_hvector small
-output MPI_Type_create_hvector
+output_217 MPI_Type_create_hvector
 end MPI_Type_create_hvector
 
 #------------------------------------------------------------------------
 
-output() {
+output_218() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7867,12 +7867,12 @@ EOF
 }
 
 start MPI_Type_create_indexed_block small
-output MPI_Type_create_indexed_block
+output_218 MPI_Type_create_indexed_block
 end MPI_Type_create_indexed_block
 
 #------------------------------------------------------------------------
 
-output() {
+output_219() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7893,12 +7893,12 @@ EOF
 }
 
 start MPI_Type_create_keyval small
-output MPI_Type_create_keyval
+output_219 MPI_Type_create_keyval
 end MPI_Type_create_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_220() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7919,12 +7919,12 @@ EOF
 }
 
 start MPI_Type_create_resized small
-output MPI_Type_create_resized
+output_220 MPI_Type_create_resized
 end MPI_Type_create_resized
 
 #------------------------------------------------------------------------
 
-output() {
+output_221() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7947,12 +7947,12 @@ EOF
 }
 
 start MPI_Type_create_struct small
-output MPI_Type_create_struct
+output_221 MPI_Type_create_struct
 end MPI_Type_create_struct
 
 #------------------------------------------------------------------------
 
-output() {
+output_222() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -7977,12 +7977,12 @@ EOF
 }
 
 start MPI_Type_create_subarray small
-output MPI_Type_create_subarray
+output_222 MPI_Type_create_subarray
 end MPI_Type_create_subarray
 
 #------------------------------------------------------------------------
 
-output() {
+output_223() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8001,12 +8001,12 @@ EOF
 }
 
 start MPI_Type_delete_attr small
-output MPI_Type_delete_attr
+output_223 MPI_Type_delete_attr
 end MPI_Type_delete_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_224() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8025,12 +8025,12 @@ EOF
 }
 
 start MPI_Type_dup small
-output MPI_Type_dup
+output_224 MPI_Type_dup
 end MPI_Type_dup
 
 #------------------------------------------------------------------------
 
-output() {
+output_225() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8049,12 +8049,12 @@ EOF
 }
 
 start MPI_Type_extent small
-output MPI_Type_extent
+output_225 MPI_Type_extent
 end MPI_Type_extent
 
 #------------------------------------------------------------------------
 
-output() {
+output_226() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8072,12 +8072,12 @@ EOF
 }
 
 start MPI_Type_free small
-output MPI_Type_free
+output_226 MPI_Type_free
 end MPI_Type_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_227() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8095,12 +8095,12 @@ EOF
 }
 
 start MPI_Type_free_keyval small
-output MPI_Type_free_keyval
+output_227 MPI_Type_free_keyval
 end MPI_Type_free_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_228() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8121,12 +8121,12 @@ EOF
 }
 
 start MPI_Type_get_attr small
-output MPI_Type_get_attr
+output_228 MPI_Type_get_attr
 end MPI_Type_get_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_229() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8151,12 +8151,12 @@ EOF
 }
 
 start MPI_Type_get_contents small
-output MPI_Type_get_contents
+output_229 MPI_Type_get_contents
 end MPI_Type_get_contents
 
 #------------------------------------------------------------------------
 
-output() {
+output_230() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8179,12 +8179,12 @@ EOF
 }
 
 start MPI_Type_get_envelope small
-output MPI_Type_get_envelope
+output_230 MPI_Type_get_envelope
 end MPI_Type_get_envelope
 
 #------------------------------------------------------------------------
 
-output() {
+output_231() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8204,12 +8204,12 @@ EOF
 }
 
 start MPI_Type_get_extent small
-output MPI_Type_get_extent
+output_231 MPI_Type_get_extent
 end MPI_Type_get_extent
 
 #------------------------------------------------------------------------
 
-output() {
+output_232() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8229,12 +8229,12 @@ EOF
 }
 
 start MPI_Type_get_name small
-output MPI_Type_get_name
+output_232 MPI_Type_get_name
 end MPI_Type_get_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_233() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8254,12 +8254,12 @@ EOF
 }
 
 start MPI_Type_get_true_extent small
-output MPI_Type_get_true_extent
+output_233 MPI_Type_get_true_extent
 end MPI_Type_get_true_extent
 
 #------------------------------------------------------------------------
 
-output() {
+output_234() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8282,12 +8282,12 @@ EOF
 }
 
 start MPI_Type_hindexed small
-output MPI_Type_hindexed
+output_234 MPI_Type_hindexed
 end MPI_Type_hindexed
 
 #------------------------------------------------------------------------
 
-output() {
+output_235() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8310,12 +8310,12 @@ EOF
 }
 
 start MPI_Type_hvector small
-output MPI_Type_hvector
+output_235 MPI_Type_hvector
 end MPI_Type_hvector
 
 #------------------------------------------------------------------------
 
-output() {
+output_236() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8338,12 +8338,12 @@ EOF
 }
 
 start MPI_Type_indexed small
-output MPI_Type_indexed
+output_236 MPI_Type_indexed
 end MPI_Type_indexed
 
 #------------------------------------------------------------------------
 
-output() {
+output_237() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8362,12 +8362,12 @@ EOF
 }
 
 start MPI_Type_lb small
-output MPI_Type_lb
+output_237 MPI_Type_lb
 end MPI_Type_lb
 
 #------------------------------------------------------------------------
 
-output() {
+output_238() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8387,12 +8387,12 @@ EOF
 }
 
 start MPI_Type_match_size small
-output MPI_Type_match_size
+output_238 MPI_Type_match_size
 end MPI_Type_match_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_239() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8412,12 +8412,12 @@ EOF
 }
 
 start MPI_Type_set_attr small
-output MPI_Type_set_attr
+output_239 MPI_Type_set_attr
 end MPI_Type_set_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_240() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8436,12 +8436,12 @@ EOF
 }
 
 start MPI_Type_set_name small
-output MPI_Type_set_name
+output_240 MPI_Type_set_name
 end MPI_Type_set_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_241() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8460,12 +8460,12 @@ EOF
 }
 
 start MPI_Type_size small
-output MPI_Type_size
+output_241 MPI_Type_size
 end MPI_Type_size
 
 #------------------------------------------------------------------------
 
-output() {
+output_242() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8488,12 +8488,12 @@ EOF
 }
 
 start MPI_Type_struct small
-output MPI_Type_struct
+output_242 MPI_Type_struct
 end MPI_Type_struct
 
 #------------------------------------------------------------------------
 
-output() {
+output_243() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8512,12 +8512,12 @@ EOF
 }
 
 start MPI_Type_ub small
-output MPI_Type_ub
+output_243 MPI_Type_ub
 end MPI_Type_ub
 
 #------------------------------------------------------------------------
 
-output() {
+output_244() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8540,12 +8540,12 @@ EOF
 }
 
 start MPI_Type_vector small
-output MPI_Type_vector
+output_244 MPI_Type_vector
 end MPI_Type_vector
 
 #------------------------------------------------------------------------
 
-output() {
+output_245() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8585,26 +8585,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Unpack ${rank} CH "character${dim}"
-  output MPI_Unpack ${rank} L "logical${dim}"
+  output_245 MPI_Unpack ${rank} CH "character${dim}"
+  output_245 MPI_Unpack ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Unpack ${rank} I${kind} "integer*${kind}${dim}"
+    output_245 MPI_Unpack ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Unpack ${rank} R${kind} "real*${kind}${dim}"
+    output_245 MPI_Unpack ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Unpack ${rank} C${kind} "complex*${kind}${dim}"
+    output_245 MPI_Unpack ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Unpack
 
 #------------------------------------------------------------------------
 
-output() {
+output_246() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8644,26 +8644,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Unpack_external ${rank} CH "character${dim}"
-  output MPI_Unpack_external ${rank} L "logical${dim}"
+  output_246 MPI_Unpack_external ${rank} CH "character${dim}"
+  output_246 MPI_Unpack_external ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Unpack_external ${rank} I${kind} "integer*${kind}${dim}"
+    output_246 MPI_Unpack_external ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Unpack_external ${rank} R${kind} "real*${kind}${dim}"
+    output_246 MPI_Unpack_external ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Unpack_external ${rank} C${kind} "complex*${kind}${dim}"
+    output_246 MPI_Unpack_external ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Unpack_external
 
 #------------------------------------------------------------------------
 
-output() {
+output_247() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8682,12 +8682,12 @@ EOF
 }
 
 start MPI_Wait small
-output MPI_Wait
+output_247 MPI_Wait
 end MPI_Wait
 
 #------------------------------------------------------------------------
 
-output() {
+output_248() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8707,12 +8707,12 @@ EOF
 }
 
 start MPI_Waitall small
-output MPI_Waitall
+output_248 MPI_Waitall
 end MPI_Waitall
 
 #------------------------------------------------------------------------
 
-output() {
+output_249() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8733,12 +8733,12 @@ EOF
 }
 
 start MPI_Waitany small
-output MPI_Waitany
+output_249 MPI_Waitany
 end MPI_Waitany
 
 #------------------------------------------------------------------------
 
-output() {
+output_250() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8761,12 +8761,12 @@ EOF
 }
 
 start MPI_Waitsome small
-output MPI_Waitsome
+output_250 MPI_Waitsome
 end MPI_Waitsome
 
 #------------------------------------------------------------------------
 
-output() {
+output_251() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8785,12 +8785,12 @@ EOF
 }
 
 start MPI_Win_call_errhandler small
-output MPI_Win_call_errhandler
+output_251 MPI_Win_call_errhandler
 end MPI_Win_call_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_252() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8808,12 +8808,12 @@ EOF
 }
 
 start MPI_Win_complete small
-output MPI_Win_complete
+output_252 MPI_Win_complete
 end MPI_Win_complete
 
 #------------------------------------------------------------------------
 
-output() {
+output_253() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8852,26 +8852,26 @@ do
   case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
   case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
 
-  output MPI_Win_create ${rank} CH "character${dim}"
-  output MPI_Win_create ${rank} L "logical${dim}"
+  output_253 MPI_Win_create ${rank} CH "character${dim}"
+  output_253 MPI_Win_create ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_Win_create ${rank} I${kind} "integer*${kind}${dim}"
+    output_253 MPI_Win_create ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_Win_create ${rank} R${kind} "real*${kind}${dim}"
+    output_253 MPI_Win_create ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_Win_create ${rank} C${kind} "complex*${kind}${dim}"
+    output_253 MPI_Win_create ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_Win_create
 
 #------------------------------------------------------------------------
 
-output() {
+output_254() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8890,12 +8890,12 @@ EOF
 }
 
 start MPI_Win_create_errhandler small
-output MPI_Win_create_errhandler
+output_254 MPI_Win_create_errhandler
 end MPI_Win_create_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_255() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8916,12 +8916,12 @@ EOF
 }
 
 start MPI_Win_create_keyval small
-output MPI_Win_create_keyval
+output_255 MPI_Win_create_keyval
 end MPI_Win_create_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_256() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8940,12 +8940,12 @@ EOF
 }
 
 start MPI_Win_delete_attr small
-output MPI_Win_delete_attr
+output_256 MPI_Win_delete_attr
 end MPI_Win_delete_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_257() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8964,12 +8964,12 @@ EOF
 }
 
 start MPI_Win_fence small
-output MPI_Win_fence
+output_257 MPI_Win_fence
 end MPI_Win_fence
 
 #------------------------------------------------------------------------
 
-output() {
+output_258() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -8987,12 +8987,12 @@ EOF
 }
 
 start MPI_Win_free small
-output MPI_Win_free
+output_258 MPI_Win_free
 end MPI_Win_free
 
 #------------------------------------------------------------------------
 
-output() {
+output_259() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9010,12 +9010,12 @@ EOF
 }
 
 start MPI_Win_free_keyval small
-output MPI_Win_free_keyval
+output_259 MPI_Win_free_keyval
 end MPI_Win_free_keyval
 
 #------------------------------------------------------------------------
 
-output() {
+output_260() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9036,12 +9036,12 @@ EOF
 }
 
 start MPI_Win_get_attr small
-output MPI_Win_get_attr
+output_260 MPI_Win_get_attr
 end MPI_Win_get_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_261() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9060,12 +9060,12 @@ EOF
 }
 
 start MPI_Win_get_errhandler small
-output MPI_Win_get_errhandler
+output_261 MPI_Win_get_errhandler
 end MPI_Win_get_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_262() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9084,12 +9084,12 @@ EOF
 }
 
 start MPI_Win_get_group small
-output MPI_Win_get_group
+output_262 MPI_Win_get_group
 end MPI_Win_get_group
 
 #------------------------------------------------------------------------
 
-output() {
+output_263() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9109,12 +9109,12 @@ EOF
 }
 
 start MPI_Win_get_name small
-output MPI_Win_get_name
+output_263 MPI_Win_get_name
 end MPI_Win_get_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_264() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9135,12 +9135,12 @@ EOF
 }
 
 start MPI_Win_lock small
-output MPI_Win_lock
+output_264 MPI_Win_lock
 end MPI_Win_lock
 
 #------------------------------------------------------------------------
 
-output() {
+output_265() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9160,12 +9160,12 @@ EOF
 }
 
 start MPI_Win_post small
-output MPI_Win_post
+output_265 MPI_Win_post
 end MPI_Win_post
 
 #------------------------------------------------------------------------
 
-output() {
+output_266() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9185,12 +9185,12 @@ EOF
 }
 
 start MPI_Win_set_attr small
-output MPI_Win_set_attr
+output_266 MPI_Win_set_attr
 end MPI_Win_set_attr
 
 #------------------------------------------------------------------------
 
-output() {
+output_267() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9209,12 +9209,12 @@ EOF
 }
 
 start MPI_Win_set_errhandler small
-output MPI_Win_set_errhandler
+output_267 MPI_Win_set_errhandler
 end MPI_Win_set_errhandler
 
 #------------------------------------------------------------------------
 
-output() {
+output_268() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9233,12 +9233,12 @@ EOF
 }
 
 start MPI_Win_set_name small
-output MPI_Win_set_name
+output_268 MPI_Win_set_name
 end MPI_Win_set_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_269() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9258,12 +9258,12 @@ EOF
 }
 
 start MPI_Win_start small
-output MPI_Win_start
+output_269 MPI_Win_start
 end MPI_Win_start
 
 #------------------------------------------------------------------------
 
-output() {
+output_270() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9274,7 +9274,7 @@ output() {
 subroutine ${procedure}(win, flag, ierr)
   include 'mpif.h'
   integer, intent(in) :: win
-  integer, intent(out) :: flag
+  logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -9282,12 +9282,12 @@ EOF
 }
 
 start MPI_Win_test small
-output MPI_Win_test
+output_270 MPI_Win_test
 end MPI_Win_test
 
 #------------------------------------------------------------------------
 
-output() {
+output_271() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9306,12 +9306,12 @@ EOF
 }
 
 start MPI_Win_unlock small
-output MPI_Win_unlock
+output_271 MPI_Win_unlock
 end MPI_Win_unlock
 
 #------------------------------------------------------------------------
 
-output() {
+output_272() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9329,12 +9329,12 @@ EOF
 }
 
 start MPI_Win_wait small
-output MPI_Win_wait
+output_272 MPI_Win_wait
 end MPI_Win_wait
 
 #------------------------------------------------------------------------
 
-output() {
+output_273() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9352,12 +9352,12 @@ EOF
 }
 
 start MPI_Close_port small
-output MPI_Close_port
+output_273 MPI_Close_port
 end MPI_Close_port
 
 #------------------------------------------------------------------------
 
-output() {
+output_274() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9377,12 +9377,12 @@ EOF
 }
 
 start MPI_Lookup_name small
-output MPI_Lookup_name
+output_274 MPI_Lookup_name
 end MPI_Lookup_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_275() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9401,12 +9401,12 @@ EOF
 }
 
 start MPI_Open_port small
-output MPI_Open_port
+output_275 MPI_Open_port
 end MPI_Open_port
 
 #------------------------------------------------------------------------
 
-output() {
+output_276() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9426,12 +9426,12 @@ EOF
 }
 
 start MPI_Publish_name small
-output MPI_Publish_name
+output_276 MPI_Publish_name
 end MPI_Publish_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_277() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9451,12 +9451,12 @@ EOF
 }
 
 start MPI_Unpublish_name small
-output MPI_Unpublish_name
+output_277 MPI_Unpublish_name
 end MPI_Unpublish_name
 
 #------------------------------------------------------------------------
 
-output() {
+output_278() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9474,12 +9474,12 @@ EOF
 }
 
 start MPI_Comm_disconnect small
-output MPI_Comm_disconnect
+output_278 MPI_Comm_disconnect
 end MPI_Comm_disconnect
 
 #------------------------------------------------------------------------
 
-output() {
+output_279() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9497,12 +9497,12 @@ EOF
 }
 
 start MPI_Comm_get_parent small
-output MPI_Comm_get_parent
+output_279 MPI_Comm_get_parent
 end MPI_Comm_get_parent
 
 #------------------------------------------------------------------------
 
-output() {
+output_280() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9521,12 +9521,12 @@ EOF
 }
 
 start MPI_Comm_join small
-output MPI_Comm_join
+output_280 MPI_Comm_join
 end MPI_Comm_join
 
 #------------------------------------------------------------------------
 
-output() {
+output_281() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9549,12 +9549,12 @@ EOF
 }
 
 start MPI_Comm_accept small
-output MPI_Comm_accept
+output_281 MPI_Comm_accept
 end MPI_Comm_accept
 
 #------------------------------------------------------------------------
 
-output() {
+output_282() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9577,12 +9577,12 @@ EOF
 }
 
 start MPI_Comm_connect small
-output MPI_Comm_connect
+output_282 MPI_Comm_connect
 end MPI_Comm_connect
 
 #------------------------------------------------------------------------
 
-output() {
+output_283() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9608,12 +9608,12 @@ EOF
 }
 
 start MPI_Comm_spawn small
-output MPI_Comm_spawn
+output_283 MPI_Comm_spawn
 end MPI_Comm_spawn
 
 #------------------------------------------------------------------------
 
-output() {
+output_284() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9640,12 +9640,12 @@ EOF
 }
 
 start MPI_Comm_spawn_multiple small
-output MPI_Comm_spawn_multipleN
+output_284 MPI_Comm_spawn_multipleN
 end MPI_Comm_spawn_multiple
 
 #------------------------------------------------------------------------
 
-output() {
+output_285() {
     if test "$output" = "0"; then
         return 0
     fi
@@ -9672,5 +9672,5 @@ EOF
 }
 
 start MPI_Comm_spawn_multiple small
-output MPI_Comm_spawn_multipleAN
+output_285 MPI_Comm_spawn_multipleAN
 end MPI_Comm_spawn_multiple
