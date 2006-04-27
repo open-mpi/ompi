@@ -167,13 +167,16 @@ ompi_pack_general_function( ompi_convertor_t* pConvertor,
     /* out of the loop: we have complete the data conversion or no more space
      * in the buffer.
      */
-    if( pConvertor->pStack[0].count < 0 ) return 1;  /* data succesfully converted */
+    if( pConvertor->local_size == pConvertor->bConverted ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type, count_desc,
 		disp_desc, pos_desc );
 
-    return (pConvertor->bConverted == pConvertor->local_size);
+    return 0;
 }
 
 /* We suppose here that we work with an already optimized version of the data
