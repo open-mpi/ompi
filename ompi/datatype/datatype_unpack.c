@@ -99,7 +99,6 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
             if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
-                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto save_and_return;  /* completed */
                     }
                     pConvertor->stack_pos--;
@@ -162,7 +161,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     /* out of the loop: we have complete the data conversion or no more space
      * in the buffer.
      */
-    if( pConvertor->flags & CONVERTOR_COMPLETED ) return 1;  /* data succesfully converted */
+    if( pConvertor->remote_size == pConvertor->bConverted ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;  /* I'm done */
+    }
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type,
