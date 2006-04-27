@@ -301,7 +301,7 @@ do
       <xsl:value-of select="$void_type"/>
     </xsl:when>
     <xsl:when test="@kind = 'bool'">
-      <xsl:text>integer</xsl:text>
+      <xsl:text>logical</xsl:text>
     </xsl:when>
     <xsl:when test="@kind = 'int'">
       <xsl:choose>
