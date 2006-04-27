@@ -13,6 +13,9 @@
 prefix="/opt/openmpi"
 specfile="openmpi.spec"
 rpmbuild_options="--define 'mflags -j4'"
+#rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g'"
+configure_options=
+#configure_options="--disable-mpi-f77 --without-romio --disable-mpi-f90"
 # Another option: --target=i686-pc-gnu
 
 # Some distro's will attempt to force using bizarre, custom compiler
@@ -31,7 +34,7 @@ build_srpm=yes
 # If you want to build the "all in one RPM", put "yes" here
 build_single=no
 # If you want to build the "multiple" RPMs, put "yes" here
-build_multiple=yes
+build_multiple=no
 
 #########################################################################
 # You should not need to change anything below this line
@@ -182,7 +185,18 @@ release=`egrep -i release: $specdest | cut -d\  -f2`
 # Setup compiler string
 #
 
-configure_options="CC=$CC CXX=$CXX FC=$FC F77=$F77"
+if test "$CC" != ""; then
+    configure_options="$configure_options CC=$CC"
+fi
+if test "$CXX" != ""; then
+    configure_options="$configure_options CXX=$CXX"
+fi
+if test "$F77" != ""; then
+    configure_options="$configure_options F77=$F77"
+fi
+if test "$FC" != ""; then
+    configure_options="$configure_options FC=$FC"
+fi
 
 #
 # Make the SRPM
