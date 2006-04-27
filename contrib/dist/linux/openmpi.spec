@@ -22,7 +22,7 @@
 # Lawrence Berkeley National Laboratory (subject to receipt of any
 # required approvals from the U.S. Dept. of Energy).  All rights reserved.
 #
-# Written and maintained by:
+# Initially written by:
 #       Greg Kurtzer, <gmkurtzer@lbl.gov>
 #
 ############################################################################
@@ -85,8 +85,8 @@
 %if %{lanl}
 %define install_in_opt 1
 %define install_modulefile 1
-%define modulefile_path /usr/share/modules/modulefiles/mpi/openmpi-%{version}
-%define modulefile_path_subdir mpi
+%define modulefile_path /usr/share/modules/modulefiles
+%define modulefile_subdir mpi
 %define modulefile_name %{name}-%{version}
 %define modules_rpm_name environment-modules
 %endif
@@ -101,8 +101,8 @@
 %if %{oscar}
 %define install_in_opt 1
 %define install_modulefile 1
-%define modulefile_path /opt/modules/modulesfiles/openmpi/%{version}
-%define modulefile_path_subdir mpi
+%define modulefile_path /opt/modules/modulefiles
+%define modulefile_subdir openmpi
 %define modulefile_name %{name}-%{version}
 %define modules_rpm_name modules-oscar
 %endif
@@ -134,6 +134,7 @@
 %endif
 
 %{!?configure_options: %define configure_options %{nil}}
+
 
 #############################################################################
 #
@@ -178,6 +179,9 @@ Open MPI jobs.
 Summary: Tools and plugin modules for running Open MPI jobs
 Group: Development/Libraries
 Provides: mpi
+%if %{install_modulefile}
+Requires: %{modules_rpm_name}
+%endif
 
 %description runtime
 Open MPI is a project combining technologies and resources from several other
@@ -233,6 +237,12 @@ This subpackage provides the documentation for Open MPI.
 #
 #############################################################################
 %prep
+# Unbelievably, some versions of RPM do not first delete the previous
+# installation root (e.g., it may have been left over from a prior
+# failed build).  This can lead to Badness later if there's files in
+# there that are not meant to be packaged.
+rm -rf $RPM_BUILD_ROOT
+
 %setup -q -n openmpi-%{version}
 
 #############################################################################
@@ -284,10 +294,10 @@ cat <<EOF >$RPM_BUILD_ROOT/%{modulefile_path}/%{modulefile_subdir}/%{modulefile_
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
 
 proc ModulesHelp { } {
-   puts stderr "This module adds Open MPI (%{version}) to various paths"
+   puts stderr "This module adds Open MPI v%{version} to various paths"
 }
 
-module-whatis   "Sets up Open MPI in your enviornment"
+module-whatis   "Sets up Open MPI v%{version}  in your enviornment"
 
 append-path PATH "%{_prefix}/bin/"
 append-path LD_LIBRARY_PATH %{_libdir}
@@ -406,10 +416,23 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %files
 %defattr(-, root, root)
 %{_prefix}
-# Because of modules, we install in /opt/openmpi/<version>, so be sure
-# to list /opt/openmpi as well (so that it can be removed).
-%if %{install_in_opt}
+# If we're not installing in /opt, then the prefix is /usr, but the
+# sysconfdir is /etc -- so list them both.  Otherwise, we install in
+# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
+# that it can be removed).
+%if !%{install_in_opt}
+%{_sysconfdir}
+%else
 %dir /opt/%{name}
+%endif
+# If we're installing the modulefile, get that, too
+%if %{install_modulefile}
+%{modulefile_path}
+%endif
+# If we're installing the profile.d scripts, get those, too
+%if %{install_profile_d_scripts}
+/etc/profile.d/%{name}-%{version}.sh
+/etc/profile.d/%{name}-%{version}.csh
 %endif
 %doc README INSTALL LICENSE
 
@@ -426,12 +449,25 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 %files runtime -f runtime.files
 %defattr(-, root, root)
-# Because of modules, we install in /opt/openmpi/<version>, so be sure
-# to list /opt/openmpi as well (so that it can be removed).  Same to
-# get the middle component of pkgdatadir (/opt/openmpi/share).
+%dir %{_prefix}
+# If we're not installing in /opt, then the prefix is /usr, but the
+# sysconfdir is /etc -- so list them both.  Otherwise, we install in
+# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
+# that it can be removed).
 %if %{install_in_opt}
 %dir /opt/%{name}
-%dir /opt/%{name}/share
+%dir /opt/%{name}/%{version}/share
+%else
+%{_sysconfdir}
+%endif
+# If we're installing the modulefile, get that, too
+%if %{install_modulefile}
+%{modulefile_path}
+%endif
+# If we're installing the profile.d scripts, get those, too
+%if %{install_profile_d_scripts}
+/etc/profile.d/%{name}-%{version}.sh
+/etc/profile.d/%{name}-%{version}.csh
 %endif
 %dir %{_bindir}
 %dir %{_libdir}
@@ -478,7 +514,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
   if rpm -i created them.
 - Simplify options for making modulefiles and profile.d scripts.
 - Add oscar define.
-- Add docs sub package for the 3 man pages that are in OMPI 1.1.
+- Ensure to remove the previous installation root during prep.
+- Cleanup the modulefile specification and installation; also ensure
+  that the profile.d scripts get installed if selected.
+- Ensure to list sysconfdir in the files list if it's outside of the
+  prefix.
 
 * Wed Mar 30 2006 Jeff Squyres <jsquyres@cisco.com>
 - Lots of bit rot updates
