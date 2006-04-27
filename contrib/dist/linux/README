@@ -44,8 +44,9 @@ or SRPM directly.  The following options are permissable on the
 - install_in_opt: 0 or 1 (default: 0)
   If 1, use a prefix of /opt/openmpi/<version>-<release>.
 
-- install_env_scripts: 0 or 1 (default: 0)
-  If 1, install the modulefile or profile.d scripts.
+- install_profile_d_scripts: 0 or 1 (default: 0)
+  If 1, and install_in_opt is 1, then install the /etc/profile.d
+  scripts.
 
 - install_modulefile: 0 or 1 (default: 0)
   If 1 and if install_in_opt is 1, then install a modulefile in
@@ -57,8 +58,8 @@ or SRPM directly.  The following options are permissable on the
 - modulefile_subdir: string (default: "openmpi")
   Defaults to openmpi
 
-- modulefile_name: string (default: "%{version}-${release}")
-  Defaults to %{version}-%{release}
+- modulefile_name: string (default: "%{version}")
+  Defaults to %{version}
 
 - modules_rpm_name: string ("modules")
   Name of the environment modules RPM to "require".
