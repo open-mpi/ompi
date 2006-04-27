@@ -297,14 +297,18 @@ ompi_pack_homogeneous_with_memcpy_function( ompi_convertor_t* pConv,
         bConverted += last_count;
         lastDisp += last_count;
     }
+    pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
+    iov[0].iov_len = bConverted;      /* update the length in the iovec */
+    *max_data = bConverted;
+    if( pConv->bConverted == pConv->local_size ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
     /* update the current stack position */
     PUSH_STACK( pStack, pConv->stack_pos, pos_desc, last_blength, pElems[pos_desc].elem.common.type,
 		lastDisp, pos_desc );
 
-    pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
-    iov[0].iov_len = bConverted;      /* update the length in the iovec */
-    *max_data = bConverted;
-    return (pConv->bConverted == pConv->local_size);
+    return 0;
 }
 
 #define IOVEC_MEM_LIMIT 8192
@@ -580,18 +584,18 @@ ompi_pack_no_conversion_function( ompi_convertor_t* pConv,
         }
     }
  end_loop:
-    if( pos_desc >= 0 ) {  /* if the pack is not finish add a new entry in the stack */
-        PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
-		    saveLength, lastDisp, pos_desc );
-    }
     assert( last_blength == 0 );
     pConv->bConverted += bConverted;  /* update the byte converted field in the convertor */
     *max_data = bConverted;      /* update the length in the iovec */
     if( ((*out_size) == iov_pos) || (iov[iov_pos].iov_base == NULL) ) *out_size = iov_pos;
     else *out_size = iov_pos + 1;
-    assert( pConv->bConverted <= pConv->local_size );
-    DO_DEBUG( opal_output( 0, "--------------------------------------------------------------------\n" ); );
-    return (pConv->bConverted == pConv->local_size);
+    if( pConv->bConverted == pConv->local_size ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
+    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
+                saveLength, lastDisp, pos_desc );
+    return 0;
 }
 
 /* the contig versions does not use the stack. They can easily retrieve
@@ -637,7 +641,11 @@ ompi_pack_no_conv_contig_function( ompi_convertor_t* pConv,
     /* update the return value */
     *max_data = pConv->bConverted - initial_amount;
     *out_size = iov_count;
-    return (0 == length);
+    if( pConv->bConverted == pConv->local_size ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
+    return 0;
 }
 
 int32_t
@@ -650,7 +658,6 @@ ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *user_memory, *packed_buffer;
-    size_t length = pConv->local_size;
     long extent;
     uint32_t max_allowed, i, index;
     uint32_t iov_count, total_bytes_converted = 0;
@@ -692,6 +699,7 @@ ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
                 *out_size = iov_count + index;
                 pConv->bConverted += total_bytes_converted;
                 *max_data = total_bytes_converted;
+                pConv->flags |= CONVERTOR_COMPLETED;
                 return 1;  /* we're done */
             }
             /* now special case for big contiguous data with gaps around */
@@ -720,7 +728,11 @@ ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
                 *out_size = index;
                 *max_data = total_bytes_converted;
                 pConv->bConverted += total_bytes_converted;
-                return (pConv->bConverted == length );
+                if( pConv->bConverted == pConv->local_size ) {
+                    pConv->flags |= CONVERTOR_COMPLETED;
+                    return 1;
+                }
+                return 0;
             }
         }
 
@@ -772,7 +784,11 @@ ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;
     *out_size = iov_count;
-    return (pConv->bConverted == length);
+    if( pConv->bConverted == pConv->local_size ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
+    return 0;
 }
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
@@ -855,7 +871,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                          * make sure we exit the main loop.
                          */
                         required_space = 0xffffffff;
-                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto complete_loop;  /* completed */
                     }
                     pConvertor->stack_pos--;
@@ -917,13 +932,14 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     }
     *max_data = total_packed;
     *out_size = iov_count;
-    if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
-        /* I complete an element, next step I should go to the next one */
-        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
-                    source_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
-        DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                               pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
-        return 0;
+    if( pConvertor->bConverted == pConvertor->local_size ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;
     }
-    return 1;
+    /* I complete an element, next step I should go to the next one */
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
+                source_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
+    DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
+    return 0;
 }
