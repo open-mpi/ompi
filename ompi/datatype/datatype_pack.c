@@ -37,15 +37,15 @@ extern int ompi_pack_debug;
 #define ompi_pack_general_function                  ompi_pack_general_checksum
 #define ompi_pack_homogeneous_with_memcpy_function  ompi_pack_homogeneous_with_memcpy_checksum
 #define ompi_pack_no_conversion_function            ompi_pack_no_conversion_checksum
-#define ompi_pack_no_conv_contig_function           ompi_pack_no_conv_contig_checksum
-#define ompi_pack_no_conv_contig_with_gaps_function ompi_pack_no_conv_contig_with_gaps_checksum
+#define ompi_pack_homogeneous_contig_function           ompi_pack_homogeneous_contig_checksum
+#define ompi_pack_homogeneous_contig_with_gaps_function ompi_pack_homogeneous_contig_with_gaps_checksum
 #define ompi_generic_simple_pack_function ompi_generic_simple_pack_checksum
 #else
 #define ompi_pack_general_function                  ompi_pack_general
 #define ompi_pack_homogeneous_with_memcpy_function  ompi_pack_homogeneous_with_memcpy
 #define ompi_pack_no_conversion_function            ompi_pack_no_conversion
-#define ompi_pack_no_conv_contig_function           ompi_pack_no_conv_contig
-#define ompi_pack_no_conv_contig_with_gaps_function ompi_pack_no_conv_contig_with_gaps
+#define ompi_pack_homogeneous_contig_function           ompi_pack_homogeneous_contig
+#define ompi_pack_homogeneous_contig_with_gaps_function ompi_pack_homogeneous_contig_with_gaps
 #define ompi_generic_simple_pack_function ompi_generic_simple_pack
 #endif  /* defined(CHECKSUM) */
 
@@ -602,11 +602,11 @@ ompi_pack_no_conversion_function( ompi_convertor_t* pConv,
  * the status with just the informations from pConvertor->bConverted.
  */
 int32_t
-ompi_pack_no_conv_contig_function( ompi_convertor_t* pConv,
-                                   struct iovec* iov,
-                                   uint32_t* out_size,
-                                   size_t* max_data,
-                                   int* freeAfter )
+ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
+                                       struct iovec* iov,
+                                       uint32_t* out_size,
+                                       size_t* max_data,
+                                       int* freeAfter )
 {
     dt_stack_t* pStack = pConv->pStack;
     char *source_base = NULL;
@@ -649,11 +649,11 @@ ompi_pack_no_conv_contig_function( ompi_convertor_t* pConv,
 }
 
 int32_t
-ompi_pack_no_conv_contig_with_gaps_function( ompi_convertor_t* pConv,
-                                             struct iovec* iov,
-                                             uint32_t* out_size,
-                                             size_t* max_data,
-                                             int* freeAfter )
+ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
+                                                 struct iovec* iov,
+                                                 uint32_t* out_size,
+                                                 size_t* max_data,
+                                                 int* freeAfter )
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;

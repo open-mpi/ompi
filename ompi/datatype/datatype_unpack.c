@@ -543,6 +543,17 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                     type = pElem->elem.common.type;
                     assert (type < DT_MAX_PREDEFINED);
                     required_space = ompi_ddt_basicDatatypes[type]->size;
+                    if( 0 != iov_len_local ) {
+                        /* We have some partial data here. Let's copy it into the convertor
+                         * and keep it hot until the next round.
+                         */
+                        assert (type < DT_MAX_PREDEFINED);
+                        assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
+                        MEMCPY_CSUM( pConvertor->storage.data, packed_buffer, iov_len_local, pConvertor );
+                        DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
+                        pConvertor->storage.length = iov_len_local;
+                        iov_len_local = 0;
+                    }
                     goto complete_loop;
                 }
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
@@ -551,17 +562,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
             }
         }
     complete_loop:
-        if( !(pConvertor->flags & CONVERTOR_COMPLETED) && (0 != iov_len_local) ) {
-            /* We have some partial data here. Let's copy it into the convertor
-             * and keep it hot until the next round.
-             */
-            assert (type < DT_MAX_PREDEFINED);
-            assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
-            MEMCPY_CSUM( pConvertor->storage.data, packed_buffer, iov_len_local, pConvertor );
-            DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
-            pConvertor->storage.length = iov_len_local;
-            iov_len_local = 0;
-        }
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
         pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
