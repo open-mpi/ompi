@@ -517,11 +517,9 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
 {
     int i;
-    struct iovec *src = msg->msg_rwiov+1;
+    unsigned char* src_ptr = (unsigned char*)msg->msg_rwbuf;
+    size_t src_len = msg->msg_hdr.msg_size;
     struct iovec *dst = iov;
-    unsigned char* src_ptr = (unsigned char*)src->iov_base;
-    size_t src_len = src->iov_len;
-    int src_cnt = 0;
     int rc = 0;
 
     for(i=0; i<count; i++) {
@@ -536,11 +534,7 @@ int mca_oob_tcp_msg_copy(mca_oob_tcp_msg_t* msg, struct iovec* iov, int count)
             src_ptr += len;
             src_len -= len;
             if(src_len == 0) {
-                if(++src_cnt == msg->msg_rwcnt)
-                    return rc;
-                src++;
-                src_ptr = (unsigned char*)src->iov_base;
-                src_len = src->iov_len;
+                return rc;
             }
         }
         dst++;
