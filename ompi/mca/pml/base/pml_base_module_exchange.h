@@ -128,6 +128,39 @@ OMPI_DECLSPEC int mca_pml_base_modex_recv(mca_base_component_t *dest_component,
                                           struct ompi_proc_t *source_proc,
                                           void **buffer, size_t *size);
 
+  /**
+   * Register to receive a callback on change to module specific data.
+   *
+   * @param dest_component A pointer to this module's component struct
+   * (i.e., mca_base_component_t instance).
+   * @param source_proc Peer process to receive from.
+   * @param buffer A pointer to a (void*) that will be filled with a
+   * pointer to the received buffer.
+   * @param size Pointer to a size_t that will be filled with the
+   * number of bytes of each instance in the buffer.
+   * @param count Pointer to an int that will be filled with the
+   * number of instances in the buffer.
+   *
+   * @retval OMPI_SUCCESS If a corresponding module buffer is found and
+   * is successfully returned to the caller.
+   * @retval OMPI_ERR_OUT_OF_RESOURCE If no corresponding module buffer is found,
+   * or if an error occurs wil returning the buffer to the caller.
+   *
+   */
+
+typedef void (*mca_pml_base_modex_cb_fn_t)(
+    mca_base_component_t *component,
+    struct ompi_proc_t* proc,
+    void* buffer,
+    size_t size,
+    void* cbdata);
+
+OMPI_DECLSPEC int mca_pml_base_modex_recv_nb(
+    mca_base_component_t *component,
+    struct ompi_proc_t* proc,
+    mca_pml_base_modex_cb_fn_t cbfunc,
+    void* cbdata);
+
   /*
    * Called to subscribe to registry.
    */
