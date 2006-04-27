@@ -237,7 +237,6 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
                 COPY_CONTIGUOUS_LOOP( pElem, datatype, source_base, count, count_desc,
                                       source, destination, iov_len_local );
-                assert( 0 == count_desc );
                 pos_desc += pElem->loop.items + 1;
                 goto update_loop_description;
             }
