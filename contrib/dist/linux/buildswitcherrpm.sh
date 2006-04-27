@@ -3,6 +3,7 @@
 # Copyright (c) 2006 The Trustees of Indiana University and Indiana
 #                    University Research and Technology
 #                    Corporation.  All rights reserved.
+# Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
 #
 
 #
@@ -10,8 +11,8 @@
 #
 
 target="noarch"
-specfile="lam-switcher-modulefile.spec"
-sourcefile="lam-switcher-modulefile.tcl"
+specfile="openmpi-switcher-modulefile.spec"
+sourcefile="openmpi-switcher-modulefile.tcl"
 rpmbuild_options=
 
 #########################################################################
@@ -53,7 +54,7 @@ fi
 first="`basename $tarball | cut -d- -f2`"
 version="`echo $first | sed -e 's/\.tar\.gz//'`"
 unset first
-echo "--> Found LAM version: $version"
+echo "--> Found Open MPI version: $version"
 
 #
 # do we have the spec files?
@@ -146,9 +147,9 @@ fi
 #
 
 specdest="$rpmtopdir/SPECS/$specfile"
-sed -e 's/LAMVERSION/'$version'/g' $specfile > "$specdest"
+sed -e 's/OPENMPIVERSION/'$version'/g' $specfile > "$specdest"
 
-echo "--> Building the OSCAR LAM modulefile RPM"
+echo "--> Building the OSCAR Open MPI modulefile RPM"
 
 cmd="$rpm_cmd -ba --target=$target $rpmbuild_options $specdest"
 echo "--> $cmd"
@@ -162,7 +163,7 @@ if test $? != 0; then
   echo "Aborting"
   exit 1
 fi
-echo "--> Done building the OSCAR LAM modulefile RPM"
+echo "--> Done building the OSCAR Open MPI modulefile RPM"
 
 #
 # Done
@@ -171,7 +172,7 @@ echo "--> Done building the OSCAR LAM modulefile RPM"
 cat <<EOF
 
 ------------------------------------------------------------------------------
-====                     FINISHED BUILDING LAM RPMs                       ====
+====                FINISHED BUILDING Open MPI switcher RPMs              ====
 ------------------------------------------------------------------------------
 A copy of the tarball is located in: $rpmtopdir/SOURCES/
 The completed rpms are located in:   $rpmtopdir/RPMS/noarch/
