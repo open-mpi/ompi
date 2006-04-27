@@ -207,7 +207,6 @@ ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConv->stack_pos == 0 ) {
                     last_blength = 0;  /* nothing to copy anymore */
-                    pConv->flags |= CONVERTOR_COMPLETED;
                     goto end_loop;
                 }
                 pStack--;
@@ -314,7 +313,8 @@ ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
     iov[0].iov_len = bConverted;      /* update the iovec length */
     *max_data = bConverted;
 
-    if( pConv->flags & CONVERTOR_COMPLETED ) {  /* finish thus do not update the stack */
+    if( pConv->bConverted == pConv->remote_size ) {
+        pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
     PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
@@ -495,7 +495,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                          * make sure we exit the main loop.
                          */
                         required_space = 0xffffffff;
-                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto complete_loop;  /* completed */
                     }
                     pConvertor->stack_pos--;
@@ -569,13 +568,14 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     }
     *max_data = total_unpacked;
     *out_size = iov_count;
-    if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
-        /* I complete an element, next step I should go to the next one */
-        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
-                    user_memory_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
-        DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                               pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
-        return 0;
+    if( pConvertor->bConverted == pConvertor->remote_size ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;
     }
-    return 1;
+    /* I complete an element, next step I should go to the next one */
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
+                user_memory_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
+    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
+    return 0;
 }
