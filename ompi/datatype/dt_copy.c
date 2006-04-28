@@ -206,6 +206,13 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     pElem = &(description[pos_desc]);
 
     while( 1 ) {
+        while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            COPY_PREDEFINED_DATATYPE( pElem, datatype, source_base, count, count_desc,
+                                      source, destination, iov_len_local );
+            pos_desc++;  /* advance to the next data */
+            UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+        }
         if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
             DO_DEBUG( opal_output( 0, "copy end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
                                    pStack->count, stack_pos, pos_desc, pStack->disp, iov_len_local ); );
@@ -250,13 +257,6 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             DDT_DUMP_STACK( pStack, stack_pos, pElem, "advance loop" );
             continue;
-        }
-        while( pElem->elem.common.flags & DT_FLAG_DATA ) {
-            /* now here we have a basic datatype */
-            COPY_PREDEFINED_DATATYPE( pElem, datatype, source_base, count, count_desc,
-                                      source, destination, iov_len_local );
-            pos_desc++;  /* advance to the next data */
-            UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
         }
     }
 }
