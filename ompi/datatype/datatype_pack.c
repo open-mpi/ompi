@@ -862,6 +862,20 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
         destination = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {
+            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                PACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                          source_base, destination, iov_len_local );
+                if( 0 == count_desc ) {  /* completed */
+                    source_base = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;  /* advance to the next data */
+                    UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+                    continue;
+                }
+                type = pElem->elem.common.type;
+                required_space = ompi_ddt_basicDatatypes[type]->size;
+                goto complete_loop;
+            }
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
                                        pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
@@ -910,19 +924,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
                 continue;
-            }
-            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
-                /* now here we have a basic datatype */
-                PACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                          source_base, destination, iov_len_local );
-                if( 0 != count_desc ) {  /* completed */
-                    type = pElem->elem.common.type;
-                    required_space = ompi_ddt_basicDatatypes[type]->size;
-                    goto complete_loop;
-                }
-                source_base = pConvertor->pBaseBuf + pStack->disp;
-                pos_desc++;  /* advance to the next data */
-                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
         }
     complete_loop:
