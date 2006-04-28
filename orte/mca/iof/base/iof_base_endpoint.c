@@ -515,13 +515,12 @@ int orte_iof_base_endpoint_forward(
                     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
                     return ORTE_SUCCESS;
                 }
-                rc = 0;
-            } else {
-                frag->frag_len -= rc;
+                rc = 0;  /* don't affect the remaining length of the data */
             }
+            frag->frag_len -= rc;
         }
 
-        if(frag->frag_len > 0 || len == 0) {
+        if(frag->frag_len > 0) {
             /* handle incomplete write - also queue up 0 byte message 
              * and recognize this as a request to close the descriptor
              * when all pending operations complete
