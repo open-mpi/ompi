@@ -67,9 +67,9 @@ extern "C" {
 typedef uint8_t orte_gpr_notify_action_t;
 #define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT8
 
-typedef size_t orte_gpr_subscription_id_t;
-#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_SIZE
-#define ORTE_GPR_SUBSCRIPTION_ID_MAX SIZE_MAX
+typedef uint32_t orte_gpr_subscription_id_t;
+#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_UINT32
+#define ORTE_GPR_SUBSCRIPTION_ID_MAX (1UL << 31)
 
 
 #define ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS    (uint8_t)0x01   /**< Include the trigger data in the notification msg */
@@ -84,9 +84,9 @@ typedef size_t orte_gpr_subscription_id_t;
 typedef uint8_t orte_gpr_trigger_action_t;
 #define ORTE_GPR_TRIGGER_ACTION_T ORTE_UINT8
 
-typedef size_t orte_gpr_trigger_id_t;
-#define ORTE_GPR_TRIGGER_ID_T ORTE_SIZE
-#define ORTE_GPR_TRIGGER_ID_MAX SIZE_MAX
+typedef uint32_t orte_gpr_trigger_id_t;
+#define ORTE_GPR_TRIGGER_ID_T ORTE_UINT32
+#define ORTE_GPR_TRIGGER_ID_MAX (1UL << 31)
 
 
 /** Define the addressing mode bit-masks for registry operations.
