@@ -16,12 +16,17 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = help-orteprobe.txt
+
+bin_PROGRAMS = orteprobe
+
+endif
 
 libs = \
         $(top_builddir)/orte/liborte.la
 
-bin_PROGRAMS = orteprobe
 orteprobe_SOURCES = \
         orteprobe.h \
         orteprobe.c 

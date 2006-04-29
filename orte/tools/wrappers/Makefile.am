@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 nodist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
@@ -42,5 +44,7 @@ install-exec-hook:
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/ortec++$(EXEEXT)
+
+endif
 
 endif

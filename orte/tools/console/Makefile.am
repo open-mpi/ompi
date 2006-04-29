@@ -16,15 +16,19 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orteconsole.txt
-
 libs = \
         $(top_builddir)/orte/liborte.la
 
 headers = orteconsole.h
 
+if OMPI_INSTALL_BINARIES
+
+dist_pkgdata_DATA = help-orteconsole.txt
+
 bin_PROGRAMS = \
         orteconsole
+
+endif
 
 orteconsole_SOURCES = \
 		$(headers) \
@@ -39,6 +43,3 @@ orte_HEADERS = $(headers)
 else
 ortedir = $(includedir)
 endif
-
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)
