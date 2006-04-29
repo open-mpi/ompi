@@ -782,8 +782,8 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     uint32_t iov_count;
     size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
-    TIMER_DATA_TYPE start, end;
-    long total_time;
+    TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
+    long total_time, unpack_time = 0;
 
     ompi_ddt_type_extent( send_type, &send_extent );
     ompi_ddt_type_extent( recv_type, &recv_extent );
@@ -833,15 +833,20 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
         }
 
         if( done2 == 0 ) {
+            GET_TIME( unpack_start );
             done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &free_after );
             assert( free_after == 0 );
+            GET_TIME( unpack_end );
+            unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
 
         length += max_data;
     }
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
-    printf( "unpacking different data-types using convertors in %ld microsec\n", total_time );
+    printf( "copying different data-types using convertors in %ld microsec\n", total_time );
+    printf( "\t unpack in %ld microsec [pack in %ld microsec]\n", unpack_time,
+            total_time - unpack_time );
  clean_and_return:
     if( send_convertor != NULL ) {
         OBJ_RELEASE( send_convertor ); assert( send_convertor == NULL );
@@ -864,8 +869,8 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     uint32_t iov_count;
     size_t max_data;
     int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
-    TIMER_DATA_TYPE start, end;
-    long total_time;
+    TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
+    long total_time, unpack_time = 0;
 
     ompi_ddt_type_extent( pdt, &extent );
 
@@ -914,16 +919,20 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
         }
 
         if( done2 == 0 ) {
+            GET_TIME( unpack_start );
             done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &free_after );
             assert( free_after == 0 );
+            GET_TIME( unpack_end );
+            unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
 
         length += max_data;
     }
     GET_TIME( end );
     total_time = ELAPSED_TIME( start, end );
-    printf( "unpacking same data-type using convertors in %ld microsec\n", total_time );
-
+    printf( "copying same data-type using convertors in %ld microsec\n", total_time );
+    printf( "\t unpack in %ld microsec [pack in %ld microsec]\n", unpack_time,
+            total_time - unpack_time );
  clean_and_return:
     if( NULL != send_convertor ) OBJ_RELEASE( send_convertor );
     if( NULL != recv_convertor ) OBJ_RELEASE( recv_convertor );
