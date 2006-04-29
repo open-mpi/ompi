@@ -20,12 +20,13 @@
 libs = \
         $(top_builddir)/orte/liborte.la
 
+if OMPI_INSTALL_BINARIES
+
 bin_PROGRAMS = openmpi
+
+endif
 
 openmpi_SOURCES = openmpi.h openmpi.c
 openmpi_LDADD = $(libs)
 openmpi_DFLAGS =
 openmpi_DEPENDENCIES = $(libs)
-
-clean-local:
-	test -z "$(OMPI_CXX_TEMPLATE_REPOSITORY)" || $(RM) -rf $(OMPI_CXX_TEMPLATE_REPOSITORY)

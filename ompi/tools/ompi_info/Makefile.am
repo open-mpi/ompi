@@ -36,12 +36,17 @@ AM_CPPFLAGS = \
             -DOMPI_F77_ABSOLUTE="\"@OMPI_F77_ABSOLUTE@\"" \
             -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\""
 
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = help-ompi_info.txt
+
+bin_PROGRAMS = ompi_info
+
+endif
 
 libs = \
         $(top_builddir)/ompi/libmpi.la
 
-bin_PROGRAMS = ompi_info
 ompi_info_SOURCES = \
         components.cc \
         ompi_info.h \

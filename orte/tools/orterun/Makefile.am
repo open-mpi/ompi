@@ -16,8 +16,6 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orterun.txt
-
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we
 # must eliminate the CFLAGS that are passed in here by default (which
@@ -30,8 +28,6 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 libs = \
         $(top_builddir)/orte/liborte.la
 
-bin_PROGRAMS = orterun
-
 orterun_SOURCES = \
         main.c \
         orterun.c \
@@ -41,6 +37,12 @@ orterun_SOURCES = \
 
 orterun_LDADD = $(libs) 
 orterun_DEPENDENCIES = $(libs)
+
+if OMPI_INSTALL_BINARIES
+
+bin_PROGRAMS = orterun
+
+dist_pkgdata_DATA = help-orterun.txt
 
 # AM 1.9.6 seems to have a bug in it's dependencies for install-man if
 #dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
@@ -63,3 +65,5 @@ mpiexec.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 
 distclean-local:
 	rm -f mpirun.1 mpiexec.1
+
+endif

@@ -497,4 +497,12 @@ elif test "$with_cross" != "" ; then
     . "$with_cross"
 fi
 
+#
+# Do we want to install binaries?
+#
+AC_ARG_ENABLE([binaries],
+    [AC_HELP_STRING([--enable-binaries],
+        [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
+AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
+
 ])

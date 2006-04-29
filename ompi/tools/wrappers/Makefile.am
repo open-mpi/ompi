@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
 	mpif77-wrapper-data.txt \
@@ -70,4 +72,6 @@ uninstall-local:
 	$(DESTDIR)$(bindir)/mpif77$(EXEEXT) \
 	$(DESTDIR)$(bindir)/mpif90$(EXEEXT) \
 	$(DESTDIR)$(pkgdatadir)/mpicxx-wrapper-data.txt
+endif
+
 endif

@@ -16,6 +16,14 @@
 # $HEADER$
 #
 
+opal_wrapper_SOURCES = \
+	opal_wrapper.c
+
+opal_wrapper_LDADD = $(top_builddir)/opal/libopal.la
+opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopal.la
+
+if OMPI_INSTALL_BINARIES
+
 nodist_pkgdata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
@@ -24,12 +32,6 @@ dist_pkgdata_DATA = \
 	help-opal-wrapper.txt
 
 bin_PROGRAMS = opal_wrapper
-
-opal_wrapper_SOURCES = \
-	opal_wrapper.c
-
-opal_wrapper_LDADD = $(top_builddir)/opal/libopal.la
-opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopal.la
 
 if CASE_SENSITIVE_FS
 install-exec-hook:
@@ -53,5 +55,9 @@ install-exec-hook:
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/opalc++$(EXEEXT)
+
+endif
+
+else
 
 endif

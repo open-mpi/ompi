@@ -16,14 +16,18 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = help-orted.txt
+
+bin_PROGRAMS = orted
+
+endif
 
 libs = \
         $(top_builddir)/orte/liborte.la
 
 headers = orted.h
-
-bin_PROGRAMS = orted
 orted_SOURCES = \
 	$(headers) \
         orted.c 
