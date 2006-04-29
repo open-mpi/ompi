@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -16,79 +16,6 @@
 # 
 # $HEADER$
 #
-
-
-# _MCA_pml_portals_config_val(config_name, define_name, 
-#                             default_val, descrtiption)
-# -----------------------------------------------------
-AC_DEFUN([MCA_pml_portals_CONFIG_VAL], [
-    AC_ARG_WITH([portals-$1], AC_HELP_STRING([--with-portals-$1], 
-                [$4 (default: $3)]))
-    case "[$with_]m4_bpatsubst([portals-$1], -, _)" in
-        "")
-            $2=$3
-            ;;
-        "no")
-            AC_MSG_ERROR([--without-portals-$1 is invalid argument])
-            ;;
-        *)
-            $2="[$with_]m4_bpatsubst([portals-$1], -, _)"
-            ;;
-    esac
-    AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
-])
-
-
-# _MCA_pml_portals_CONFIG_VALS()
-# ------------------------------
-AC_DEFUN([MCA_pml_portals_CONFIG_VALS], [
-    # User configuration options
-    MCA_pml_portals_CONFIG_VAL([debug-level],
-        [OMPI_PML_PORTALS_DEFAULT_DEBUG_LEVEL], [0],
-        [debugging level for portals pml])
-
-    MCA_pml_portals_CONFIG_VAL([eager-limit],
-        [OMPI_PML_PORTALS_DEFAULT_EAGER_LIMIT], [32768],
-        [max size for eager sends])
-
-    MCA_pml_portals_CONFIG_VAL([min-send-size],
-        [OMPI_PML_PORTALS_DEFAULT_MIN_SEND_SIZE], [32768],
-        [min size for send fragments])
-    MCA_pml_portals_CONFIG_VAL([max-send-size],
-        [OMPI_PML_PORTALS_DEFAULT_MAX_SEND_SIZE], [65536],
-        [max size for send fragments])
-
-    MCA_pml_portals_CONFIG_VAL([md-size],
-        [OMPI_PML_PORTALS_DEFAULT_RECV_MD_SIZE], [1048576],
-        [Size of receive memory descriptors])
-    MCA_pml_portals_CONFIG_VAL([md-size],
-        [OMPI_PML_PORTALS_DEFAULT_RECV_MD_NUM], [3],
-        [Number of receive memory descriptors])
-
-    MCA_pml_portals_CONFIG_VAL([min-rdma-size],
-        [OMPI_PML_PORTALS_DEFAULT_MIN_RDMA_SIZE], [65536],
-        [min size for rdma fragments])
-    MCA_pml_portals_CONFIG_VAL([max-rdma-size],
-        [OMPI_PML_PORTALS_DEFAULT_MAX_RDMA_SIZE], [2147483647],
-        [max size for rdma fragments])
-
-    MCA_pml_portals_CONFIG_VAL([max-sends-pending],
-        [OMPI_PML_PORTALS_MAX_SENDS_PENDING], [128],
-        [max number of sends pending at any time])
-    MCA_pml_portals_CONFIG_VAL([recv-queue-size],
-        [OMPI_PML_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [512],
-        [size of event queue for receiving frags])
-
-    MCA_pml_portals_CONFIG_VAL([free-list-init-num],
-        [OMPI_PML_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [8],
-        [starting size of free lists])
-    MCA_pml_portals_CONFIG_VAL([free-list-max-num],
-        [OMPI_PML_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [1024],
-        [maximum size of free lists])
-    MCA_pml_portals_CONFIG_VAL([free-list-inc-num],
-        [OMPI_PML_PORTALS_DEFAULT_FREE_LIST_INC_NUM], [32],
-        [grow size for freelists])
-])
 
 
 # _MCA_pml_portals_CONFIG_PLATFORM()
@@ -114,7 +41,7 @@ AC_DEFUN([MCA_pml_portals_CONFIG_PLATFORM], [
         "utcp")
             PML_PORTALS_UTCP=1
             PML_PORTALS_HAVE_EVENT_UNLINK=1
-            pml_portals_LIBS="-lutcpapi -lutcplib -lp3api -lp3lib -lp3rt"
+            pml_portals_LIBS="-lp3utcp -lp3api -lp3lib -lp3rt -lp3utcp"
             pml_portals_compat="utcp"
             pml_portals_header_prefix=
             pml_portals_starting_table_id=0
@@ -126,7 +53,7 @@ AC_DEFUN([MCA_pml_portals_CONFIG_PLATFORM], [
             pml_portals_LIBS=
             pml_portals_compat="redstorm"
             pml_portals_header_prefix="portals/"
-            pml_portals_starting_table_id=30
+            pml_portals_starting_table_id=32
             AC_MSG_RESULT([red storm])
             ;;
         *)
@@ -199,7 +126,6 @@ AC_DEFUN([MCA_pml_portals_CONFIG],[
          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <${pml_portals_header_prefix}portals3.h>], 
                                          [int i; PtlInit(&i);])],
               [AC_MSG_RESULT([yes])
-               MCA_pml_portals_CONFIG_VALS()          
                pml_portals_WRAPPER_EXTRA_LDFLAGS="$pml_portals_LDFLAGS"
                pml_portals_WRAPPER_EXTRA_LIBS="$pml_portals_LIBS"
                $1],
