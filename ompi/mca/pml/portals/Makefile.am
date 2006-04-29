@@ -34,9 +34,9 @@ local_sources = \
 	pml_portals.c \
 	pml_portals.h \
 	pml_portals_component.c \
-	pml_portals_iprobe.c \
-	pml_portals_irecv.c \
-	pml_portals_isend.c \
+	pml_portals_probe.c \
+	pml_portals_recv.c \
+	pml_portals_send.c \
 	pml_portals_progress.c \
 	pml_portals_start.c
 
