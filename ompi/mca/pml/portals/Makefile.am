@@ -30,9 +30,13 @@ component_noinst = libmca_pml_portals.la
 component_install =
 endif
 
+EXTRA_DIST = pml_portals_compat_redstorm.c pml_portals_compat_utcp.c
+
 local_sources = \
 	pml_portals.c \
 	pml_portals.h \
+	pml_portals_compat.c \
+	pml_portals_compat.h \
 	pml_portals_component.c \
 	pml_portals_probe.c \
 	pml_portals_recv.c \
