@@ -6342,7 +6342,7 @@
 
       <!-- ARGUMENT : high -->
       <arg name="high" intent="in">
-        <type kind="int" ikind="int" >
+        <type kind="bool" ikind="int" >
         </type>
       </arg>
 
