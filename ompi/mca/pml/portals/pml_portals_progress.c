@@ -19,7 +19,9 @@
 #include "ompi_config.h"
 #include "pml_portals.h"
 
-int mca_pml_portals_progress(void)
+
+int
+ompi_pml_portals_progress(void)
 {
     return 0;
 }
