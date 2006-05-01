@@ -191,10 +191,6 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                         OBJ_CLASS(ompi_osc_pt2pt_longreq_t),
                         1, -1, 1);
 
-    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
-                               ompi_osc_pt2pt_component_fragment_cb,
-                               NULL);
-
     return ret;
 }
 
