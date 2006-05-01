@@ -95,7 +95,7 @@ ompi_pml_portals_recv(void *buf,
     uint64_t ignore_bits, match_bits;
     opal_list_item_t *list_item;
     int ret, free_after;
-    ptl_md_t md;
+    ptl_md_t md, newmd;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
     ptl_process_id_t portals_proc;
@@ -172,14 +172,15 @@ ompi_pml_portals_recv(void *buf,
                 PTL_INS_BEFORE,
                 &me_h);
 
-    md.threshold = 1;
-    md.options |= PTL_MD_EVENT_START_DISABLE;
+    md.threshold = 0;
+    md.options |= (PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE);
     md.eq_handle = ompi_pml_portals.portals_blocking_receive_queue;
     PtlMDAttach(me_h, md, PTL_UNLINK, &md_h);
 
     /* now try to make active */
-    md.options |= PTL_MD_OP_PUT;
-    ret = PtlMDUpdate(md_h, NULL, &md, ompi_pml_portals.portals_unexpected_receive_queue);
+    newmd = md;
+    newmd.threshold = 1;
+    ret = PtlMDUpdate(md_h, NULL, &newmd, ompi_pml_portals.portals_unexpected_receive_queue);
     if (ret == PTL_MD_NO_UPDATE) {
         /* a message has arrived since we searched - look again */
         PtlMDUnlink(md_h);
