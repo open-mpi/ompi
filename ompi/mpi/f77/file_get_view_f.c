@@ -19,6 +19,8 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
+#include "ompi/file/file.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_GET_VIEW = mpi_file_get_view_f
@@ -31,8 +33,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_VIEW,
                            pmpi_file_get_view_,
                            pmpi_file_get_view__,
                            pmpi_file_get_view_f,
-                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr),
-                           (fh, disp, etype, filetype, datarep, ierr) )
+                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr, int datarep_len),
+                           (fh, disp, etype, filetype, datarep, ierr, datarep_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +50,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
                            mpi_file_get_view_,
                            mpi_file_get_view__,
                            mpi_file_get_view_f,
-                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr),
-                           (fh, disp, etype, filetype, datarep, ierr) )
+                           (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr, int datarep_len),
+                           (fh, disp, etype, filetype, datarep, ierr, datarep_len) )
 #endif
 
 
@@ -59,17 +61,19 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_VIEW,
 
 void mpi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp, 
 			 MPI_Fint *etype, MPI_Fint *filetype, 
-			 char *datarep, MPI_Fint *ierr)
+			 char *datarep, MPI_Fint *ierr, int datarep_len)
 {
     MPI_File c_fh = MPI_File_f2c(*fh);
     MPI_Datatype c_etype, c_filetype;
     MPI_Offset c_disp;
+    char c_datarep[MPI_MAX_DATAREP_STRING];
 
     *ierr = OMPI_INT_2_FINT(MPI_File_get_view(c_fh, &c_disp, &c_etype, 
-					      &c_filetype, datarep));
+					      &c_filetype, c_datarep));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         *disp = (MPI_Fint) c_disp;
         *etype = MPI_Type_c2f(c_etype);
         *filetype = MPI_Type_c2f(c_filetype);
+        ompi_fortran_string_c2f(c_datarep, datarep, MPI_MAX_DATAREP_STRING);
     }
 }
