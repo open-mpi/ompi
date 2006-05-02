@@ -127,9 +127,9 @@ PN(void, mpi_file_call_errhandler, MPI_FILE_CALL_ERRHANDLER, (MPI_Fint *fh, MPI_
 PN(void, mpi_file_create_errhandler, MPI_FILE_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_file_set_errhandler, MPI_FILE_SET_ERRHANDLER, (MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_file_get_errhandler, MPI_FILE_GET_ERRHANDLER, (MPI_Fint *file, MPI_Fint *errhandler, MPI_Fint *ierr));
-PN(void, mpi_file_open, MPI_FILE_OPEN, (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr));
+PN(void, mpi_file_open, MPI_FILE_OPEN, (MPI_Fint *comm, char *filename, MPI_Fint *amode, MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int name_len));
 PN(void, mpi_file_close, MPI_FILE_CLOSE, (MPI_Fint *fh, MPI_Fint *ierr));
-PN(void, mpi_file_delete, MPI_FILE_DELETE, (char *filename, MPI_Fint *info, MPI_Fint *ierr));
+PN(void, mpi_file_delete, MPI_FILE_DELETE, (char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len));
 PN(void, mpi_file_set_size, MPI_FILE_SET_SIZE, (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr));
 PN(void, mpi_file_preallocate, MPI_FILE_PREALLOCATE, (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr));
 PN(void, mpi_file_get_size, MPI_FILE_GET_SIZE, (MPI_Fint *fh, MPI_Offset *size, MPI_Fint *ierr));
@@ -137,8 +137,8 @@ PN(void, mpi_file_get_group, MPI_FILE_GET_GROUP, (MPI_Fint *fh, MPI_Fint *group,
 PN(void, mpi_file_get_amode, MPI_FILE_GET_AMODE, (MPI_Fint *fh, MPI_Fint *amode, MPI_Fint *ierr));
 PN(void, mpi_file_set_info, MPI_FILE_SET_INFO, (MPI_Fint *fh, MPI_Fint *info, MPI_Fint *ierr));
 PN(void, mpi_file_get_info, MPI_FILE_GET_INFO, (MPI_Fint *fh, MPI_Fint *info_used, MPI_Fint *ierr));
-PN(void, mpi_file_set_view, MPI_FILE_SET_VIEW, (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr));
-PN(void, mpi_file_get_view, MPI_FILE_GET_VIEW, (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr));
+PN(void, mpi_file_set_view, MPI_FILE_SET_VIEW, (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *info, MPI_Fint *ierr, int datarep_len));
+PN(void, mpi_file_get_view, MPI_FILE_GET_VIEW, (MPI_Fint *fh, MPI_Offset *disp, MPI_Fint *etype, MPI_Fint *filetype, char *datarep, MPI_Fint *ierr, int datarep_len));
 PN(void, mpi_file_read_at, MPI_FILE_READ_AT, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_file_read_at_all, MPI_FILE_READ_AT_ALL, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_file_write_at, MPI_FILE_WRITE_AT, (MPI_Fint *fh, MPI_Offset *offset, char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *status, MPI_Fint *ierr));
@@ -249,7 +249,7 @@ PN(void, mpi_recv_init, MPI_RECV_INIT, (char *buf, MPI_Fint *count, MPI_Fint *da
 PN(void, mpi_recv, MPI_RECV, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *source, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_reduce, MPI_REDUCE, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *root, MPI_Fint *comm, MPI_Fint *ierr));
 PN(void, mpi_reduce_scatter, MPI_REDUCE_SCATTER, (char *sendbuf, char *recvbuf, MPI_Fint *recvcounts, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
-PN(void, mpi_register_datarep, MPI_REGISTER_DATAREP, (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Fint *extra_state, MPI_Fint *ierr));
+PN(void, mpi_register_datarep, MPI_REGISTER_DATAREP, (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Fint *extra_state, MPI_Fint *ierr, int datarep_len));
 PN(void, mpi_request_free, MPI_REQUEST_FREE, (MPI_Fint *request, MPI_Fint *ierr));
 PN(void, mpi_request_get_status, MPI_REQUEST_GET_STATUS, (MPI_Fint *request, MPI_Flogical *flag, MPI_Fint *status, MPI_Fint *ierr));
 PN(void, mpi_rsend, MPI_RSEND, (char *ibuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *ierr));

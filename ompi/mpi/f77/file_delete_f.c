@@ -19,6 +19,8 @@
 #include "ompi_config.h"
 
 #include "ompi/mpi/f77/bindings.h"
+#include "ompi/mpi/f77/strings.h"
+#include "ompi/file/file.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILE_LAYER
 #pragma weak PMPI_FILE_DELETE = mpi_file_delete_f
@@ -31,8 +33,8 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_DELETE,
                            pmpi_file_delete_,
                            pmpi_file_delete__,
                            pmpi_file_delete_f,
-                           (char *filename, MPI_Fint *info, MPI_Fint *ierr),
-                           (filename, info, ierr) )
+                           (char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len),
+                           (filename, info, ierr, filename_len)  )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -48,8 +50,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
                            mpi_file_delete_,
                            mpi_file_delete__,
                            mpi_file_delete_f,
-                           (char *filename, MPI_Fint *info, MPI_Fint *ierr),
-                           (filename, info, ierr) )
+                           (char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len),
+                           (filename, info, ierr, filename_len) )
 #endif
 
 
@@ -57,11 +59,23 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_DELETE,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr)
+void mpi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int filename_len)
 {
     MPI_Info c_info;
+    char *c_filename;
+    int c_err, ret;
 
     c_info = MPI_Info_f2c(*info);
+
+    /* Convert the fortran string */
+    if (OMPI_SUCCESS != (ret = ompi_fortran_string_f2c(filename, filename_len,
+                                                       &c_filename))) {
+        c_err = OMPI_ERRHANDLER_INVOKE(MPI_FILE_NULL, ret, "MPI_FILE_DELETE");
+        *ierr = OMPI_INT_2_FINT(c_err);
+        return;
+    }
     
     *ierr = OMPI_INT_2_FINT(MPI_File_delete(filename, c_info));
+
+    free(c_filename);
 }

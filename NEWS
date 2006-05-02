@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed improper handling of string arguments in Fortran bindings
+  for MPI-IO functionality
 - Fixed segmentation fault with 64 bit applications on Solaris when
   using the shared memory transports.
 - Fixed MPI_COMM_SELF attributes to free properly at the beginning of
