@@ -5663,7 +5663,7 @@ output_162() {
 subroutine ${procedure}(intercomm, high, newintercomm, ierr)
   include 'mpif.h'
   integer, intent(in) :: intercomm
-  integer, intent(in) :: high
+  logical, intent(in) :: high
   integer, intent(out) :: newintercomm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
