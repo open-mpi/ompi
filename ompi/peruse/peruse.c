@@ -40,7 +40,6 @@ typedef struct {
 static const peruse_event_associations_t PERUSE_events[] = {
     /* Point-to-point request events */
     { "PERUSE_COMM_REQ_ACTIVATE", PERUSE_COMM_REQ_ACTIVATE },
-    { "PERUSE_COMM_REQ_ACTIVATE", PERUSE_COMM_REQ_ACTIVATE },
     { "PERUSE_COMM_REQ_MATCH_UNEX", PERUSE_COMM_REQ_MATCH_UNEX },
     { "PERUSE_COMM_REQ_INSERT_IN_POSTED_Q", PERUSE_COMM_REQ_INSERT_IN_POSTED_Q },
     { "PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q", PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q },
@@ -181,6 +180,7 @@ int PERUSE_Event_comm_register( int                       event,
     OPAL_THREAD_LOCK (&comm->c_lock);
     if( NULL == comm->c_peruse_handles ) {
         comm->c_peruse_handles = malloc( PERUSE_num_events * sizeof(ompi_peruse_handle_t*) );
+        memset (comm->c_peruse_handles, 0, PERUSE_num_events * sizeof (ompi_peruse_handle_t*));
     }
     OPAL_THREAD_UNLOCK (&comm->c_lock);
     comm->c_peruse_handles[event] = handle;
