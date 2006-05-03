@@ -22,6 +22,11 @@
 #include "pml_portals.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#if OMPI_BTL_PORTALS_REDSTORM
+#include <catamount/cnos_mpi_os.h>
+#endif
+
+
 static int ompi_pml_portals_component_open(void);
 static int ompi_pml_portals_component_close(void);
 static mca_pml_base_module_t* ompi_pml_portals_component_init( int* priority,
