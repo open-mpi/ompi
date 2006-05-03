@@ -160,8 +160,6 @@ int
 ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
-    int ret;
-
     /* we can run with either threads or not threads (may not be able
        to do win locks)... */
     mca_osc_pt2pt_component.p2p_c_have_progress_threads = 
@@ -191,7 +189,7 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                         OBJ_CLASS(ompi_osc_pt2pt_longreq_t),
                         1, -1, 1);
 
-    return ret;
+    return OMPI_SUCCESS;
 }
 
 
