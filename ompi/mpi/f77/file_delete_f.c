@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,7 +76,7 @@ void mpi_file_delete_f(char *filename, MPI_Fint *info, MPI_Fint *ierr, int filen
         return;
     }
     
-    *ierr = OMPI_INT_2_FINT(MPI_File_delete(filename, c_info));
+    *ierr = OMPI_INT_2_FINT(MPI_File_delete(c_filename, c_info));
 
     free(c_filename);
 }
