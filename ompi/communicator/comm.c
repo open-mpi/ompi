@@ -694,11 +694,12 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
                                               int outcount, MPI_Datatype outtype,
                                               ompi_communicator_t *comm)
 {
-    int rank, rsize, i, rc;
+    int rank, size, rsize, i, rc;
     int *tmpbuf=NULL;
     MPI_Request *req=NULL, sendreq;
 
     rsize = ompi_comm_remote_size(comm);
+    size  = ompi_comm_size(comm);
     rank  = ompi_comm_rank(comm);
 
     /* Step 1: the gather-step */
@@ -736,7 +737,7 @@ static int ompi_comm_allgather_emulate_intra( void *inbuf, int incount,
     }
 
     /* Step 2: the inter-bcast step */
-    rc = MCA_PML_CALL(irecv (outbuf, rsize*outcount, outtype, 0, 
+    rc = MCA_PML_CALL(irecv (outbuf, size*outcount, outtype, 0, 
                             OMPI_COMM_ALLGATHER_TAG, comm, &sendreq));
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
