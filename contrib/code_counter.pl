@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -29,8 +30,8 @@ use Cwd;
 my $verbose = 0;
 my @skip_dirs;
 
-my @code_dirs = ( "ompi", "orte", "opal", "include", "test" );
-my @doc_dirs = ( "doxygen" );
+my @code_dirs = ( "ompi", "orte", "opal", "test" );
+my @doc_dirs = ( );
 
 my @meta_dirs = ( ".svn", ".deps", ".libs", "libltdl" );
 my @skip_files = ( "Makefile.in", "Makefile", ".ompi_built" , "config.cache",
@@ -136,23 +137,26 @@ sub wanted {
 %files_found = ();
 %dirs_found = ();
 @skip_dirs = @meta_dirs;
-for (my $i = 0; $i <= $#doc_dirs; ++$i) {
-    $skip_dirs[$#skip_dirs + 1] = $doc_dirs[$i];
-}
-print("Searching for code files...\n");
-find(\&wanted, ".");
 
-my @files = keys(%files_found);
-my @dirs = keys(%dirs_found);
-print ("Found files $#files\n");
-print ("Found dirs $#dirs\n");
+if ($#doc_dirs >= 0) {
+    for (my $i = 0; $i <= $#doc_dirs; ++$i) {
+        $skip_dirs[$#skip_dirs + 1] = $doc_dirs[$i];
+    }
+    print("Searching for code files...\n");
+    find(\&wanted, ".");
+
+    my @files = keys(%files_found);
+    my @dirs = keys(%dirs_found);
+    print ("Found files $#files\n");
+    print ("Found dirs $#dirs\n");
+}
 
 # Total files
 
 %files_found = ();
 %dirs_found = ();
 @skip_dirs = @meta_dirs;
-print("Searching for all files (including docs)...\n");
+print("Searching for all files...\n");
 find(\&wanted, ".");
 
 my @files = keys(%files_found);
