@@ -20,6 +20,7 @@
 
 #include "ompi/constants.h"
 #include "opal/util/output.h"
+#include "ompi/proc/proc.h"
 
 #include "pml_portals.h"
 #include "pml_portals_compat.h"
@@ -30,14 +31,13 @@ int
 ompi_pml_portals_init_compat(void)
 {
     int ret, max_interfaces;
-    uint32_t i;
 
     /*
      * Initialize Portals interface
      */
     ret = PtlInit(&max_interfaces);
     if (PTL_OK != ret) {
-        opal_output_verbose(10, mca_pml_portals_component.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "PtlInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
@@ -49,10 +49,10 @@ ompi_pml_portals_init_compat(void)
                     PTL_PID_ANY,       /* let library assign our pid */
                     NULL,              /* no desired limits */
                     NULL,              /* actual limits */
-                    &(mca_pml_portals_module.portals_ni_h)  /* our interface handle */
+                    &(ompi_pml_portals.portals_ni_h)  /* our interface handle */
                     );
     if (PTL_OK != ret && PTL_IFACE_DUP != ret) {
-        opal_output_verbose(10, mca_pml_portals_component.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "PtlNIInit failed, returning %d\n", ret);
         return OMPI_ERR_FATAL;
     }
@@ -76,25 +76,26 @@ ompi_pml_portals_add_procs_compat(struct ompi_proc_t **procs, size_t nprocs)
 
     nptl_procs = cnos_get_nidpid_map(&map);
     if (nptl_procs <= 0) {
-        opal_output_verbose(10, mca_pml_portals_component.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "cnos_get_nidpid_map() returned %d", nptl_procs);
         return OMPI_ERR_FATAL;
     } else if (nptl_procs != nprocs) {
-        opal_output_verbose(10, mca_pml_portals_component.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "nptl_procs != nprocs (%d, %d)", nptl_procs,
                             nprocs);
         return OMPI_ERR_FATAL;
     } else {
-        opal_output_verbose(10, mca_pml_portals_component.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "nptl_procs: %d", nptl_procs);
     }
 
     for (i = 0 ; i < nprocs ; ++i) {
-	opal_output_verbose(120, mca_pml_portals_component.portals_output,
+	opal_output_verbose(119, ompi_pml_portals.portals_output,
 			    "rank %d: nid %ld, pid %ld", i,
 			    map[i].nid, map[i].pid);
 
-        ((ompi_pml_portals_proc_t*) procs[i]->proc_pml)->proc_id = map[i];
+        ((ompi_pml_portals_proc_t*) procs[i]->proc_pml)->proc_id.nid = map[i].nid;
+       ((ompi_pml_portals_proc_t*) procs[i]->proc_pml)->proc_id.pid = map[i].pid;
     }
 
     return OMPI_SUCCESS;
