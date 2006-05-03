@@ -1031,10 +1031,10 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
 
     /* This is the logic for determining who is first, who is second */
     if ( high && !rhigh ) {
-        flag = true;
+        flag = false;
     }
     else if ( !high && rhigh ) {
-        flag = false;
+        flag = true;
     }
     else {
         ourproc   = intercomm->c_local_group->grp_proc_pointers[0];
