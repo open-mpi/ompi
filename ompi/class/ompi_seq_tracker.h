@@ -63,8 +63,12 @@ bool ompi_seq_tracker_check_duplicate(
  * insert item into sequence tracking list,
  *   compacts continuous regions into a single entry
  */
-void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker, 
-                                                uint32_t seq_i);
+void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker, uint32_t seq_i);
+
+/*
+ * Copy state from one sequence tracker list into another.
+ */
+void ompi_seq_tracker_copy(ompi_seq_tracker_t* dst, ompi_seq_tracker_t* src);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
