@@ -36,7 +36,11 @@ static void ompi_seq_tracker_construct(ompi_seq_tracker_t* seq_tracker) {
 }
 
 
-static void ompi_seq_tracker_destruct(ompi_seq_tracker_t* seq_tracker) { 
+static void ompi_seq_tracker_destruct(ompi_seq_tracker_t* seq_tracker) 
+{ 
+    opal_list_item_t* item;
+    while(NULL != (item = opal_list_remove_first(&seq_tracker->seq_ids)))
+        OBJ_RELEASE(item);
     OBJ_DESTRUCT(&seq_tracker->seq_ids);
 }
 
@@ -177,6 +181,19 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
 }
 
 
-
-
-
+void ompi_seq_tracker_copy(ompi_seq_tracker_t* dst, ompi_seq_tracker_t* src)
+{
+    opal_list_item_t* item;
+    for( item =  opal_list_get_first(&src->seq_ids);
+         item != opal_list_get_end(&src->seq_ids);
+         item =  opal_list_get_next(item)) {
+        ompi_seq_tracker_range_t* src_item = (ompi_seq_tracker_range_t*)item;
+        ompi_seq_tracker_range_t* dst_item = OBJ_NEW(ompi_seq_tracker_range_t);
+        dst_item->seq_id_high = src_item->seq_id_high;
+        dst_item->seq_id_low = src_item->seq_id_low;
+        opal_list_append(&dst->seq_ids, &dst_item->super);
+        if(src->seq_ids_current == src_item) {
+           dst->seq_ids_current = dst_item;
+        }
+    }
+}
