@@ -95,12 +95,6 @@ static inline void position_contiguous_loop( ompi_convertor_t* CONVERTOR,
 #define POSITION_CONTIGUOUS_LOOP( CONVERTOR, ELEM, COUNT, POSITION, SPACE ) \
     position_contiguous_loop( (CONVERTOR), (ELEM), &(COUNT), &(POSITION), &(SPACE) )
 
-#define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER ) \
-    do {                                                                \
-        (ELEMENT) = &((DESCRIPTION)[(POSITION)]);                       \
-        (COUNTER) = (ELEMENT)->elem.count;                              \
-    } while (0)
-
 int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                                             size_t* position )
 {
