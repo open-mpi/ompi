@@ -79,15 +79,13 @@ struct mca_pml_dr_t {
     /* my 'global' rank */ 
     int32_t my_rank;
     
-    int timer_wdog_sec;
-    int timer_wdog_usec;
-    int timer_wdog_multiplier;
-    int timer_wdog_max_count;
+    struct timeval wdog_timer;
+    int wdog_timer_multiplier;
+    int wdog_retry_max;
 
-    int timer_ack_sec;
-    int timer_ack_usec;
-    int timer_ack_multiplier;
-    int timer_ack_max_count;
+    struct timeval  ack_timer;
+    int ack_timer_multiplier;
+    int ack_retry_max;
 
     /* enable/disable csum */ 
     int enable_csum;
