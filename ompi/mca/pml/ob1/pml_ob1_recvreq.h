@@ -273,6 +273,8 @@ do {                                                                            
             &max_data,                                                            \
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
+        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,                   \
+                                 &(recvreq->req_recv.req_base), PERUSE_RECV);     \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
     }                                                                             \
