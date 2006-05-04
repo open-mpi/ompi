@@ -43,8 +43,6 @@
 extern "C" {
 #endif
 
-#define MCA_BTL_HAS_MPOOL 0
-
 /**
  * MX BTL component.
  */
@@ -108,14 +106,9 @@ struct mca_btl_mx_module_t {
 
     int32_t            mx_posted_request;  /**< number of posted MX request */
     opal_mutex_t       mx_lock;            /**< lock for accessing module state */
-
-#if MCA_BTL_HAS_MPOOL
-    struct mca_mpool_base_module_t* mx_mpool;
-#endif
 }; 
 typedef struct mca_btl_mx_module_t mca_btl_mx_module_t;
 extern mca_btl_mx_module_t mca_btl_mx_module;
-
 
 /**
  * Register MX component parameters with the MCA framework
@@ -215,35 +208,6 @@ extern int mca_btl_mx_send(
     mca_btl_base_tag_t tag
 );
 
-
-/**
- * Initiate an asynchronous put.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-                                                                                                    
-extern int mca_btl_mx_put(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
-
-
-/**
- * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-                                                                                                    
-extern int mca_btl_mx_get(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* btl_peer,
-    struct mca_btl_base_descriptor_t* decriptor
-);
 
 /**
  * Register a callback function that is called on receipt
