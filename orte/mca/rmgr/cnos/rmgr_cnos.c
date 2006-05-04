@@ -23,6 +23,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_SIGNAL_H
+#include <signal.h>
+#endif
 #ifdef HAVE_CNOS_PM_BARRIER
 #include <catamount/cnos_mpi_os.h>
 #endif
@@ -152,7 +155,6 @@ static int orte_rmgr_cnos_terminate_proc(const orte_process_name_t* proc_name)
 #ifdef HAVE_KILLRANK
     orte_jobid_t my_jobid;
     orte_jobid_t his_jobid;
-    orte_vpid_t my_vpid;
     orte_vpid_t his_vpid;
 
     orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
@@ -162,7 +164,7 @@ static int orte_rmgr_cnos_terminate_proc(const orte_process_name_t* proc_name)
 
     /* make sure it's my job.  This may end up killing me, but what
        the heck. */
-    if (jobid == my_jobid) {
+    if (his_jobid == my_jobid) {
         killrank((int) his_vpid, SIGKILL);
     } else {
         return ORTE_ERR_NOT_SUPPORTED;
