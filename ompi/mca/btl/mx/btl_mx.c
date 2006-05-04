@@ -53,7 +53,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_src,
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
-        mca_btl_mx_put,
+        NULL, /* put */
         NULL, /* get */ 
         mca_btl_base_dump 
     }
@@ -64,7 +64,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
  */
 int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl, 
                           size_t nprocs, 
-                          struct ompi_proc_t **ompi_procs, 
+                          struct ompi_proc_t** ompi_procs, 
                           struct mca_btl_base_endpoint_t** peers, 
                           ompi_bitmap_t* reachable )
 {
@@ -118,10 +118,10 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
     return OMPI_SUCCESS;
 }
 
-int mca_btl_mx_del_procs(struct mca_btl_base_module_t* btl, 
-        size_t nprocs, 
-        struct ompi_proc_t **procs, 
-        struct mca_btl_base_endpoint_t ** peers)
+int mca_btl_mx_del_procs( struct mca_btl_base_module_t* btl, 
+                          size_t nprocs, 
+                          struct ompi_proc_t** procs, 
+                          struct mca_btl_base_endpoint_t** peers )
 {
     /* TODO */
     return OMPI_SUCCESS;
@@ -183,9 +183,8 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
  * @param size (IN)     Request segment size.
  */
 
-mca_btl_base_descriptor_t* mca_btl_mx_alloc(
-    struct mca_btl_base_module_t* btl,
-    size_t size)
+mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
+                                             size_t size )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
     mca_btl_mx_frag_t* frag;
@@ -221,16 +220,11 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc(
  * Return a segment
 xo */
 
-int mca_btl_mx_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des) 
+int mca_btl_mx_free( struct mca_btl_base_module_t* btl, 
+                     mca_btl_base_descriptor_t* des )
 {
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)des; 
-#if MCA_BTL_HAS_MPOOL
-    if(frag->size == 0) {
-        OBJ_RELEASE(frag->registration);
-    }
-#endif
+
     if( 0 == frag->base.des_dst_cnt ) {  /* send fragment */
         MCA_BTL_MX_FRAG_RETURN(btl, frag);
     } else {  /* receive fragment */
@@ -246,14 +240,12 @@ int mca_btl_mx_free(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size
-)
+mca_btl_base_descriptor_t* mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
+                                                   struct mca_btl_base_endpoint_t* endpoint,
+                                                   struct mca_mpool_base_registration_t* registration,
+                                                   struct ompi_convertor_t* convertor,
+                                                   size_t reserve,
+                                                   size_t* size )
 {
     mca_btl_mx_frag_t* frag;
     struct iovec iov;
@@ -262,157 +254,40 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
     int32_t free_after;
     int rc;
 
-#if MCA_BTL_HAS_MPOOL
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
-    /*
-     * If the data has already been pinned and is contigous than we can
-     * use it in place.
-    */
-    if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
 
-        size_t reg_len;
-        MCA_BTL_MX_FRAG_ALLOC_USER(mx_btl, frag, rc);
-        if(NULL == frag){
+    /* If the data is contiguous we can use directly the pointer
+     * to the user memory.
+     */
+    if( 0 == ompi_convertor_need_buffers(convertor) ) {
+        MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
+        if( NULL == frag ) {
             return NULL;
         }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                    
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
-        if(frag->segment.seg_len > reg_len) {
-                                                                                                    
-            mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
-            size_t new_len = (unsigned char*)iov.iov_base - 
-                (unsigned char *) registration->base + max_data;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        } 
-
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        OBJ_RETAIN(registration);
-        frag->registration = registration;
-
-    /*
-     * if the data is not already pinned - but the leave pinned option is set,
-     * then go ahead and pin contigous data. however, if a reserve is required 
-     * then we must allocated a fragment w/ buffer space
-    */
-    } else if ((mca_btl_mx_component.leave_pinned || max_data > btl->btl_max_send_size) && 
-               ompi_convertor_need_buffers(convertor) == 0 &&
-               reserve == 0) {
-
-        mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
-        MCA_BTL_MX_FRAG_ALLOC_USER(mx_btl, frag, rc);
-        if(NULL == frag){
-            return NULL;
-        }
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-                                                                                                
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        rc = mpool->mpool_register(
-            mpool,
-            iov.iov_base,
-            max_data,
-            &registration);
-        if(rc != OMPI_SUCCESS) {
-            MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-            return NULL;
-        }
-
-        if(mca_btl_mx_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            rc = mca_mpool_base_insert(
-                iov.iov_base,
-                iov.iov_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-            OBJ_RETAIN(registration);
-        } 
-        frag->registration = registration;
-
-    } else
-#endif
-        /* If the data is contiguous we can user directly the pointer
-         * to the user memory.
-         */
-        if( 0 == ompi_convertor_need_buffers(convertor) ) {
-            MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
-            if( NULL == frag ) {
-                return NULL;
-            }
             
-            if( (max_data + reserve) > btl->btl_eager_limit ) {
-                max_data = btl->btl_eager_limit - reserve;
-            }
-            /* let the convertor figure out the correct pointer depending on the data layout */
-            iov.iov_base = NULL;
-            iov.iov_len  = max_data;
-            frag->base.des_src_cnt = 2;
-            frag->segment[0].seg_len = reserve;
-        } else {
-            MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
-            if( NULL == frag ) {
-                return NULL;
-            }
-                
-            if( (max_data + reserve) <= btl->btl_eager_limit ) {
-                iov.iov_len = max_data;
-            } else {
-                iov.iov_len = mca_btl_mx_module.super.btl_eager_limit - reserve;
-                max_data = iov.iov_len;  /* let the PML establish the pipeline */
-            }
-            iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
-            frag->segment[0].seg_len = reserve;
-            frag->base.des_src_cnt = 1;
+        if( (max_data + reserve) > btl->btl_eager_limit ) {
+            max_data = btl->btl_eager_limit - reserve;
         }
+        /* let the convertor figure out the correct pointer depending on the data layout */
+        iov.iov_base = NULL;
+        iov.iov_len  = max_data;
+        frag->base.des_src_cnt = 2;
+        frag->segment[0].seg_len = reserve;
+    } else {
+        MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+        if( NULL == frag ) {
+            return NULL;
+        }
+                
+        if( (max_data + reserve) <= btl->btl_eager_limit ) {
+            iov.iov_len = max_data;
+        } else {
+            iov.iov_len = mca_btl_mx_module.super.btl_eager_limit - reserve;
+            max_data = iov.iov_len;  /* let the PML establish the pipeline */
+        }
+        iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
+        frag->segment[0].seg_len = reserve;
+        frag->base.des_src_cnt = 1;
+    }
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     *size  = max_data;
@@ -448,17 +323,13 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
  */
 
-mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_mpool_base_registration_t* registration,
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size)
+mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl,
+                                                   struct mca_btl_base_endpoint_t* endpoint,
+                                                   struct mca_mpool_base_registration_t* registration,
+                                                   struct ompi_convertor_t* convertor,
+                                                   size_t reserve,
+                                                   size_t* size)
 {
-#if MCA_BTL_HAS_MPOOL
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl;
-#endif  /* MCA_BTL_HAS_MPOOL */
     mca_btl_mx_frag_t* frag;
     int rc;
 
@@ -476,85 +347,6 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
 
-#if MCA_BTL_HAS_MPOOL
-    if(NULL != registration) {
-        size_t reg_len = (unsigned char*)registration->bound - (unsigned char*)frag->segment.seg_addr.pval + 1;
-        if(frag->segment.seg_len > reg_len) {
-            mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
-            size_t new_len = (unsigned char*)frag->segment.seg_addr.pval - 
-                (unsigned char*) registration->base + 
-                frag->segment.seg_len;
-            void* base_addr = registration->base;
-
-            /* remove old registration from tree and decrement reference count */
-            mca_mpool_base_remove(base_addr);
-            OBJ_RELEASE(registration);
-
-            /* re-register at new size */
-            rc = mpool->mpool_register(
-                mpool,
-                base_addr,
-                new_len,
-                &registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                return NULL;
-            }
-
-            /* re-insert into tree with new registration */
-            rc = mca_mpool_base_insert(
-                base_addr,
-                new_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-        }
-
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        OBJ_RETAIN(registration);
-        frag->registration = registration;
-
-    }  else {
-
-        mca_mpool_base_module_t* mpool = mx_btl->mx_mpool;
-        rc = mpool->mpool_register(
-            mpool,
-            frag->segment.seg_addr.pval,
-            frag->segment.seg_len,
-            &registration);
-        if(rc != OMPI_SUCCESS) {
-            MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-            return NULL;
-        }
-                                                                                                                   
-        if(mca_btl_mx_component.leave_pinned) {
-            /*
-             * insert the registration into the tree and bump the reference
-             * count so that it doesn't go away on completion.
-            */
-            rc = mca_mpool_base_insert(
-                frag->segment.seg_addr.pval,
-                frag->segment.seg_len,
-                mpool,
-                btl,
-                registration);
-            if(rc != OMPI_SUCCESS) {
-                MCA_BTL_MX_FRAG_RETURN_USER(btl,frag);
-                OBJ_RELEASE(registration);
-                return NULL;
-            }
-            OBJ_RETAIN(registration);
-        }
-        frag->registration = registration;
-    }
-#endif
     return &frag->base;
 }
 
@@ -568,11 +360,10 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst(
  * @param tag (IN)         The tag value used to notify the peer.
  */
 
-int mca_btl_mx_send( 
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* descriptor, 
-    mca_btl_base_tag_t tag)
+int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
+                     struct mca_btl_base_endpoint_t* endpoint,
+                     struct mca_btl_base_descriptor_t* descriptor, 
+                     mca_btl_base_tag_t tag )
    
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl;
@@ -620,54 +411,11 @@ int mca_btl_mx_send(
 }
 
 
-/**
- * Initiate an asynchronous put.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-
-int mca_btl_mx_put( 
-    mca_btl_base_module_t* btl,
-    mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
-{
-    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
-    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*) descriptor; 
-    frag->endpoint = endpoint;
-    /* TODO */
-    return OMPI_ERR_NOT_IMPLEMENTED; 
-}
-
-
-/**
- * Initiate an asynchronous get.
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- *
- */
-
-int mca_btl_mx_get( 
-    mca_btl_base_module_t* btl,
-    mca_btl_base_endpoint_t* endpoint,
-    mca_btl_base_descriptor_t* descriptor)
-{
-    /* mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; */
-    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*) descriptor; 
-    frag->endpoint = endpoint;
-    /* TODO */
-    return OMPI_ERR_NOT_IMPLEMENTED; 
-}
-
-
 /*
  * Cleanup/release module resources.
  */
 
-int mca_btl_mx_finalize(struct mca_btl_base_module_t* btl)
+int mca_btl_mx_finalize( struct mca_btl_base_module_t* btl )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
     

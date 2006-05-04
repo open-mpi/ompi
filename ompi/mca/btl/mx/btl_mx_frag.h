@@ -43,9 +43,6 @@ extern "C" {
         mx_request_t                    mx_request;
         size_t                          size; 
         ompi_free_list_t*               mx_frag_list;
-#if MCA_BTL_HAS_MPOOL
-        struct mca_mpool_base_registration_t* registration;
-#endif
     }; 
     typedef struct mca_btl_mx_frag_t mca_btl_mx_frag_t;
     OBJ_CLASS_DECLARATION(mca_btl_mx_frag_t); 
