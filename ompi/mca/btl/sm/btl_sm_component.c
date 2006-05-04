@@ -126,6 +126,10 @@ int mca_btl_sm_component_open(void)
         mca_btl_sm_param_register_int("free_list_max", -1);
     mca_btl_sm_component.sm_free_list_inc =
         mca_btl_sm_param_register_int("free_list_inc", 256);
+    mca_btl_sm_component.sm_exclusivity =
+        mca_btl_sm_param_register_int("exclusivity", MCA_BTL_EXCLUSIVITY_HIGH-1);
+    mca_btl_sm_component.sm_latency =
+        mca_btl_sm_param_register_int("latency", 100);
     mca_btl_sm_component.sm_max_procs =
         mca_btl_sm_param_register_int("max_procs", -1);
     mca_btl_sm_component.sm_extra_procs =
@@ -283,8 +287,8 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
          * mca_btl_sm_add_procs) or we will face segfault as only the first
          * allocate memory for the mca_btl_sm_component.sm_proc_connect array.
          */
-        mca_btl_sm[i].super.btl_exclusivity=MCA_BTL_EXCLUSIVITY_HIGH-1-i;  /* always use this btl */
-        mca_btl_sm[i].super.btl_latency=100;      /* lowest latency */
+        mca_btl_sm[i].super.btl_exclusivity=mca_btl_sm_component.sm_exclusivity;
+        mca_btl_sm[i].super.btl_latency=mca_btl_sm_component.sm_latency; /* lowest latency */
         mca_btl_sm[i].super.btl_bandwidth=900; /* not really used now since exclusivity is set to the highest value */
     }
 
