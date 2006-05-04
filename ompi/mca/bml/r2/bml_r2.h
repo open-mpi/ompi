@@ -89,6 +89,8 @@ int mca_bml_r2_add_btl( mca_btl_base_module_t* btl );
 
 int mca_bml_r2_del_btl( mca_btl_base_module_t* btl );
 
+int mca_bml_r2_del_proc_btl( struct ompi_proc_t* proc, mca_btl_base_module_t* btl );
+
 int mca_bml_r2_register( 
                         mca_btl_base_tag_t tag, 
                         mca_bml_base_module_recv_cb_fn_t cbfunc, 
