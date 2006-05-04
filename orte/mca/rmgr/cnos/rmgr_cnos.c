@@ -23,9 +23,14 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_CNOS_PM_BARRIER
+#include <catamount/cnos_mpi_os.h>
+#endif
 
 #include "orte/orte_constants.h"
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/util/proc_info.h"
 #include "rmgr_cnos.h"
 
 
@@ -61,6 +66,8 @@ static int orte_rmgr_cnos_spawn(
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
 
+static int orte_rmgr_cnos_finalize(void);
+
 orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_query,
     orte_rmgr_cnos_create,
@@ -73,7 +80,7 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_spawn,
     orte_rmgr_base_proc_stage_gate_init,
     orte_rmgr_base_proc_stage_gate_mgr,
-    NULL, /* finalize */
+    orte_rmgr_cnos_finalize
 };
 
 
@@ -114,15 +121,56 @@ static int orte_rmgr_cnos_launch(orte_jobid_t jobid)
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
+#ifdef HAVE_KILLRANK
+#include "catamount/types.h"
+/* secret sauce on the Cray machine */
+extern int killrank(rank_t RANK, int SIG);
+#endif
+
 static int orte_rmgr_cnos_terminate_job(orte_jobid_t jobid)
 {
-    abort();
+#ifdef HAVE_KILLRANK
+    orte_jobid_t my_jobid;
+
+    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+
+    /* make sure it's my job */
+    if (jobid == my_jobid) {
+        killrank(-1, SIGKILL);
+    } else {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+#else
+    exit(0);
+#endif
+
     return ORTE_SUCCESS;
 }
 
 static int orte_rmgr_cnos_terminate_proc(const orte_process_name_t* proc_name)
 {
-    abort();
+#ifdef HAVE_KILLRANK
+    orte_jobid_t my_jobid;
+    orte_jobid_t his_jobid;
+    orte_vpid_t my_vpid;
+    orte_vpid_t his_vpid;
+
+    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+    orte_ns.get_jobid(&his_jobid, proc_name);
+
+    orte_ns.get_vpid(&his_vpid, proc_name);
+
+    /* make sure it's my job.  This may end up killing me, but what
+       the heck. */
+    if (jobid == my_jobid) {
+        killrank((int) his_vpid, SIGKILL);
+    } else {
+        return ORTE_ERR_NOT_SUPPORTED;
+    }
+#else
+    exit(0);
+#endif
+
     return ORTE_SUCCESS;
 }
 
@@ -138,4 +186,14 @@ static int orte_rmgr_cnos_spawn(
 }
 
 
+static int orte_rmgr_cnos_finalize(void)
+{
+#ifdef HAVE_CNOS_PM_BARRIER
+    /* register with the process manager so that everyone aborts if
+       any one process aborts.  This is a bit slower than it needs to
+       be, but useful. */
+    cnos_pm_barrier(1);
+#endif
 
+    return ORTE_SUCCESS;
+}

@@ -15,6 +15,11 @@
  */
 
 #include "orte_config.h"
+
+#ifdef HAVE_CNOS_PM_BARRIER
+#include <catamount/cnos_mpi_os.h>
+#endif
+
 #include "orte/orte_constants.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
@@ -75,6 +80,14 @@ static int orte_rmgr_cnos_open(void)
 static orte_rmgr_base_module_t *orte_rmgr_cnos_init(int* priority)
 {
     *priority = 1;
+
+#ifdef HAVE_CNOS_PM_BARRIER
+    /* register with the process manager so that everyone aborts if
+       any one process aborts.  This is a bit slower than it needs to
+       be, but useful. */
+    cnos_pm_barrier(0);
+#endif
+
     return &orte_rmgr_cnos_module;
 }
 
