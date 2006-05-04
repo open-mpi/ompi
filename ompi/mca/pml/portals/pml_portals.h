@@ -27,6 +27,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/convertor.h"
 
 #include "pml_portals_compat.h"
 
@@ -62,23 +63,19 @@ struct ompi_pml_portals_t {
      */
     int portals_output;
 
-    /* switch over point for eager -> long messages */
-    int portals_eager_limit;
-
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
 
     /* blocking send event queue */
     ptl_handle_eq_t portals_blocking_send_queue;
+    ompi_convertor_t portals_blocking_send_convertor;
 
     /* blocking receive event queue */
     ptl_handle_eq_t portals_blocking_receive_queue;
+    ompi_convertor_t portals_blocking_receive_convertor;
 
     /* unexpected receive event queue */
     ptl_handle_eq_t portals_unexpected_receive_queue;
-
-    /* nonblocking event queue */
-    ptl_handle_eq_t portals_nonblocking_queue;
 
     ptl_handle_me_t portals_unexpected_me_h;
 
@@ -104,9 +101,9 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
  * Portals match info
  */
 
-#define PML_PTLS_READY       0x4000000000000000ULL
-#define PML_PTLS_LONG        0x2000000000000000ULL
-#define PML_PTLS_SHORT       0x1000000000000000ULL
+#define PML_PTLS_READY       0x8000000000000000ULL
+#define PML_PTLS_LONG        0x4000000000000000ULL
+#define PML_PTLS_SHORT       0x2000000000000000ULL
 
 #define PML_PTLS_PROT_MASK   0xE000000000000000ULL
 #define PML_PTLS_CTX_MASK    0x1FFF000000000000ULL
@@ -132,9 +129,10 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
     if (tag == MPI_ANY_TAG) { \
          ignore_bits |= PML_PTLS_TAG_MASK; \
     } else { \
-        match_bits |= tag; \
+        match_bits |= (PML_PTLS_TAG_MASK & tag); \
     } \
 } \
+
 
 #define PML_PTLS_SEND_BITS(match_bits, ctxid, src, tag)  \
 {                                                        \
@@ -142,8 +140,7 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
     match_bits = (match_bits << 16);                     \
     match_bits |= src;                                   \
     match_bits = (match_bits << 32);                     \
-    match_bits |= tag;                                   \
-    match_bits |= PML_PTLS_LONG;                         \
+    match_bits |= (PML_PTLS_TAG_MASK & tag);                                   \
 }
 
 #define PML_PTLS_IS_LONG(match_bits) (match_bits & PML_PTLS_LONG)
@@ -164,9 +161,9 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
 
 
 /* table indexes */
-#define PML_PTLS_INDEX_RECV  (OMPI_PML_PORTALS_STARTING_TABLE_ID)
-#define PML_PTLS_INDEX_READ  (OMPI_PML_PORTALS_STARTING_TABLE_ID)
-#define PML_PTLS_INDEX_ACK   (OMPI_PML_PORTALS_STARTING_TABLE_ID)
+#define PML_PTLS_INDEX_RECV  (OMPI_PML_PORTALS_STARTING_TABLE_ID + 0)
+#define PML_PTLS_INDEX_READ  (OMPI_PML_PORTALS_STARTING_TABLE_ID + 1)
+#define PML_PTLS_INDEX_ACK   (OMPI_PML_PORTALS_STARTING_TABLE_ID + 2)
 
 /*
  * PML interface functions.

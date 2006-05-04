@@ -21,6 +21,7 @@
 #include "opal/event/event.h"
 #include "pml_portals.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/datatype/convertor.h"
 
 #if OMPI_BTL_PORTALS_REDSTORM
 #include <catamount/cnos_mpi_os.h>
@@ -101,15 +102,6 @@ ompi_pml_portals_component_open(void)
                               &(ompi_pml_portals.portals_ifname));
 #endif
 
-    /* eager limit */
-    mca_base_param_reg_int(&mca_pml_portals_component.pmlm_version,
-                           "eager_limit",
-                           "short message eager send limit",
-                           false,
-                           false,
-                           8192,
-                           &(ompi_pml_portals.portals_eager_limit));
-
     return OMPI_SUCCESS;
 }
 
@@ -155,6 +147,14 @@ ompi_pml_portals_component_init(int* priority,
     OBJ_CONSTRUCT(&(ompi_pml_portals.portals_unexpected_events),
                   opal_list_t);
 
+    OBJ_CONSTRUCT(&ompi_pml_portals.portals_blocking_send_convertor,
+                  ompi_convertor_t);
+    OBJ_CONSTRUCT(&ompi_pml_portals.portals_blocking_receive_convertor,
+                  ompi_convertor_t);
+
+    opal_output_verbose(20, ompi_pml_portals.portals_output,
+                        "successfully initialized portals pml");
+
     return &ompi_pml_portals.super;
 }
 
@@ -162,12 +162,14 @@ ompi_pml_portals_component_init(int* priority,
 static int
 ompi_pml_portals_component_fini(void)
 {
-    PtlEQFree(ompi_pml_portals.portals_nonblocking_queue);
     PtlEQFree(ompi_pml_portals.portals_unexpected_receive_queue);
     PtlEQFree(ompi_pml_portals.portals_blocking_receive_queue);
     PtlEQFree(ompi_pml_portals.portals_blocking_send_queue);
 
     PtlNIFini(ompi_pml_portals.portals_ni_h);
+
+    OBJ_DESTRUCT(&ompi_pml_portals.portals_blocking_send_convertor);
+    OBJ_DESTRUCT(&ompi_pml_portals.portals_blocking_receive_convertor);
 
     opal_output_verbose(20, ompi_pml_portals.portals_output,
                         "successfully finalized portals pml");

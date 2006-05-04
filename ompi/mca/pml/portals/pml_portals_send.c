@@ -60,9 +60,8 @@ ompi_pml_portals_send(void *buf,
                       mca_pml_base_send_mode_t sendmode,
                       ompi_communicator_t* comm)
 {
-    ompi_convertor_t convertor;
     int ret, free_after;
-    static int msg_count = 0;
+    static int msg_count = 1;
     uint64_t match_bits;
 
     ptl_md_t md;
@@ -75,34 +74,34 @@ ompi_pml_portals_send(void *buf,
 
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == sendmode) abort();
 
-    OBJ_CONSTRUCT(&convertor, ompi_convertor_t);
     ompi_convertor_copy_and_prepare_for_send(comm->c_pml_procs[dst]->proc_ompi->proc_convertor,
                                              datatype,
                                              count,
                                              buf,
                                              0,
-                                             &convertor);
-
+                                             &ompi_pml_portals.portals_blocking_send_convertor);
     PtlMEAttach(ompi_pml_portals.portals_ni_h,
                 PML_PTLS_INDEX_READ,
                 portals_proc->proc_id,
                 msg_count,
                 0,
-                PTL_UNLINK,
+                PTL_RETAIN,
                 PTL_INS_AFTER,
                 &me_h);
 
-    ompi_pml_portals_prepare_md_send(&convertor, &md, &free_after);
+    ompi_pml_portals_prepare_md_send(&ompi_pml_portals.portals_blocking_send_convertor, 
+                                     &md, &free_after);
     md.threshold = 2;
     md.options |= (PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE);
     md.eq_handle = ompi_pml_portals.portals_blocking_send_queue;
-
-    PtlMDAttach(me_h, md, PTL_UNLINK, &md_h);
-
+    PtlMDAttach(me_h, md, PTL_RETAIN, &md_h);
     PML_PTLS_SEND_BITS(match_bits, comm->c_contextid, comm->c_my_rank, tag);
 
-    printf("send to: %d, %d\n", portals_proc->proc_id.nid, portals_proc->proc_id.pid);
-    printf("send match bits: %lx\n", match_bits);
+    OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
+                        "send to: %u, %u\n", 
+                         portals_proc->proc_id.nid, portals_proc->proc_id.pid));
+    OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
+                        "send match bits: %lx\n", match_bits));
     PtlPut(md_h, PTL_ACK_REQ, portals_proc->proc_id,
            PML_PTLS_INDEX_RECV, 0,
            match_bits, 0, msg_count);
@@ -113,21 +112,21 @@ ompi_pml_portals_send(void *buf,
     ret = PtlEQWait(ompi_pml_portals.portals_blocking_send_queue, &ev);
     assert(ret == PTL_OK);
     assert(ev.type == PTL_EVENT_SEND_END);
+    OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
+                        "send: SEND_END event received"));
 
     /* our ack / get event */
     ret = PtlEQWait(ompi_pml_portals.portals_blocking_send_queue, &ev);
     assert(ret == PTL_OK);
-#if OMPI_PML_PORTALS_HAVE_EVENT_UNLINK
-    if (ev.type == PTL_EVENT_UNLINK) {
-        ret = PtlEQWait(ompi_pml_portals.portals_blocking_send_queue, &ev);
-        assert(ret == PTL_OK);
-    }
-#endif
     assert((ev.type == PTL_EVENT_ACK) || (ev.type == PTL_EVENT_GET_END));
+    OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
+                        "send: GET_END/ACK event received"));
 
     ompi_pml_portals_free_md_send(&md, free_after);
 
-    OBJ_DESTRUCT(&convertor);
+    PtlMDUnlink(md_h);
+
+    ompi_convertor_cleanup(&ompi_pml_portals.portals_blocking_send_convertor);
 
     return OMPI_SUCCESS;
 }

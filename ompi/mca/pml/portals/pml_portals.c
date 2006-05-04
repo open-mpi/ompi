@@ -95,10 +95,11 @@ int
 ompi_pml_portals_add_procs(struct ompi_proc_t** procs, size_t nprocs)
 {
     size_t i;
-    bool done_init = false;
+    static bool done_init = false;
     int ret;
-    uint64_t match_bits = 0;
-    ptl_process_id_t portals_proc;
+
+    opal_output_verbose(100, ompi_pml_portals.portals_output,
+                        "pml_add_procs called with %d procs\n", nprocs);
 
     if (0 == nprocs) return OMPI_SUCCESS;
 
@@ -110,53 +111,71 @@ ompi_pml_portals_add_procs(struct ompi_proc_t** procs, size_t nprocs)
 
     ompi_pml_portals_add_procs_compat(procs, nprocs);
 
-    if (!done_init) {
+    opal_output_verbose(100, ompi_pml_portals.portals_output,
+                        "proc list:");
+    for (i = 0 ; i < nprocs ; ++i) {
+        ompi_pml_portals_proc_t *ptlproc = (ompi_pml_portals_proc_t*) procs[i]->proc_pml;
+        opal_output_verbose(100, ompi_pml_portals.portals_output,
+                            "    procs[%d] = %u, %u",
+                            i, ptlproc->proc_id.nid, ptlproc->proc_id.pid);
+    }
+
+    if (!done_init) { 
         ptl_md_t md;
         ptl_handle_md_t md_h;
+        ptl_process_id_t anyproc;
+        uint64_t match_bits = 0;
+
+        opal_output_verbose(100, ompi_pml_portals.portals_output,
+                            "running initialization");
 
         /* setup our event queues */
         ret = PtlEQAlloc(ompi_pml_portals.portals_ni_h,
-                         10, /* BWB - fix me */
+                         3, /* BWB - fix me */
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_pml_portals.portals_blocking_send_queue));
         assert(ret == PTL_OK);
 
         ret = PtlEQAlloc(ompi_pml_portals.portals_ni_h,
-                         10, /* BWB - fix me */
+                         3, /* BWB - fix me */
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_pml_portals.portals_blocking_receive_queue));
+        assert(ret == PTL_OK);
 
         ret = PtlEQAlloc(ompi_pml_portals.portals_ni_h,
                          1024, /* BWB - fix me */
                          PTL_EQ_HANDLER_NONE,
                          &(ompi_pml_portals.portals_unexpected_receive_queue));
-
-        ret = PtlEQAlloc(ompi_pml_portals.portals_ni_h,
-                         1024, /* BWB - fix me */
-                         PTL_EQ_HANDLER_NONE,
-                         &(ompi_pml_portals.portals_nonblocking_queue));
+        assert(ret == PTL_OK);
 
         /* create unexpected message match entry */
-        portals_proc.nid = PTL_NID_ANY;
-        portals_proc.pid = PTL_PID_ANY;
+        anyproc.nid = PTL_NID_ANY;
+        anyproc.pid = PTL_PID_ANY;
 
-        PtlMEAttach(ompi_pml_portals.portals_ni_h,
-                    PML_PTLS_INDEX_RECV,
-                    portals_proc,
-                    match_bits,
-                    ~match_bits,
-                    PTL_RETAIN,
-                    PTL_INS_AFTER,
-                    &(ompi_pml_portals.portals_unexpected_me_h));
+        /* unexpected message match entry should receive from anyone,
+           so ignore bits are all 1 */
+        ret = PtlMEAttach(ompi_pml_portals.portals_ni_h,
+                          PML_PTLS_INDEX_RECV,
+                          anyproc,
+                          match_bits,
+                          ~match_bits, 
+                          PTL_RETAIN,
+                          PTL_INS_AFTER,
+                          &(ompi_pml_portals.portals_unexpected_me_h));
+        assert(ret == PTL_OK);
 
         md.start = NULL;
         md.length = 0;
         md.threshold = PTL_MD_THRESH_INF;
+        md.max_size = 0;
         md.options = (PTL_MD_OP_PUT | PTL_MD_TRUNCATE | PTL_MD_ACK_DISABLE | PTL_MD_EVENT_START_DISABLE);
         md.eq_handle = ompi_pml_portals.portals_unexpected_receive_queue;
 
-        PtlMDAttach(ompi_pml_portals.portals_unexpected_me_h,
-                    md, PTL_RETAIN, &md_h);
+        ret = PtlMDAttach(ompi_pml_portals.portals_unexpected_me_h,
+                          md, 
+                          PTL_RETAIN, 
+                          &md_h);
+        assert(ret == PTL_OK);
 
         done_init = true;
     }
@@ -169,6 +188,9 @@ int
 ompi_pml_portals_del_procs(struct ompi_proc_t** procs, size_t nprocs)
 {
     size_t i;
+
+    opal_output_verbose(100, ompi_pml_portals.portals_output,
+                        "pml_del_procs called with %d procs\n", nprocs);
 
     if (0 == nprocs) return OMPI_SUCCESS;
 
