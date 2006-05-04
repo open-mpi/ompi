@@ -492,16 +492,45 @@ int mca_bml_r2_finalize( void ) {
 int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 {
     ompi_proc_t** procs;
-    size_t p, num_procs;
+    size_t i, m, p, num_procs;
+    opal_list_item_t* item;
+    mca_btl_base_module_t** modules;
 
     procs = ompi_proc_all(&num_procs);
     if(NULL == procs)
         return OMPI_SUCCESS;
 
+    /* dont use this btl for any peers */
     for(p=0; p<num_procs; p++) {
         ompi_proc_t* proc = procs[p];
         mca_bml_r2_del_proc_btl(proc, btl);
     }
+
+    /* remove from the btl list */
+    for (item =  opal_list_get_first(&mca_btl_base_modules_initialized);
+         item != opal_list_get_end(&mca_btl_base_modules_initialized);
+         item =  opal_list_get_next(item)) {
+        mca_btl_base_selected_module_t *sm = (mca_btl_base_selected_module_t *) item;
+        if(sm->btl_module == btl) {
+            opal_list_remove_item(&mca_btl_base_modules_initialized, item);
+            free(sm);
+            break;
+        }
+    }
+
+    /* remove from bml list */
+    modules = malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
+    for(i=0,m=0; i<mca_bml_r2.num_btl_modules; i++) {
+        if(mca_bml_r2.btl_modules[i] != btl) {
+            modules[m++] = mca_bml_r2.btl_modules[i];
+        }
+    }
+    free(mca_bml_r2.btl_modules);
+    mca_bml_r2.btl_modules = modules;
+    mca_bml_r2.num_btl_modules = m;
+
+    /* cleanup */
+    btl->btl_finalize(btl);
     free(procs);
     return OMPI_SUCCESS;
 }
@@ -509,7 +538,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
 {
     mca_bml_base_endpoint_t* ep_old = (mca_bml_base_endpoint_t*)proc->proc_pml;
-    mca_bml_base_endpoint_t* ep_new = opal_obj_new(mca_bml_r2.endpoint_class);
+    mca_bml_base_endpoint_t* ep_new = (mca_bml_base_endpoint_t*)opal_obj_new(mca_bml_r2.endpoint_class);
     double total_bandwidth = 0;
     size_t b;
 
