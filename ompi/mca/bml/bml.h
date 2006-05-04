@@ -203,7 +203,13 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
     return NULL;
 }
 
+/**
+ * Hook to copy derived class info.
+ */
 
+typedef void (*mca_bml_base_endpoint_copy_fn_t)(
+    struct mca_bml_base_endpoint_t* dst, 
+    struct mca_bml_base_endpoint_t* src);
 
 /**
  *  Structure associated w/ ompi_proc_t that contains the set
@@ -218,6 +224,7 @@ struct mca_bml_base_endpoint_t {
     mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
+    mca_bml_base_endpoint_copy_fn_t copy;
 };
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
                               
@@ -515,6 +522,19 @@ typedef int (*mca_bml_base_module_add_btl_fn_t)( struct mca_btl_base_module_t* )
 typedef int (*mca_bml_base_module_del_btl_fn_t)( struct mca_btl_base_module_t* );
 
 /**
+ * Notification of change to the btl list.
+ *
+ * @param bml (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ *
+ * On failure of a btl, remove it from the set of forwarding
+ * entries used by the BML.
+ */
+typedef int (*mca_bml_base_module_del_proc_btl_fn_t)( 
+    struct ompi_proc_t*,
+    struct mca_btl_base_module_t* );
+
+/**
  * Callback function that is called asynchronously on receipt
  * of data by the transport layer.
  */
@@ -559,12 +579,13 @@ struct mca_bml_base_module_t {
     size_t      bml_max_rdma_size;    /**< maximum rdma fragment size supported by the BML */
     
     /* BML function table */
-    mca_bml_base_module_add_procs_fn_t   bml_add_procs;
-    mca_bml_base_module_del_procs_fn_t   bml_del_procs;
-    mca_bml_base_module_add_btl_fn_t     bml_add_btl;
-    mca_bml_base_module_del_btl_fn_t     bml_del_btl;
-    mca_bml_base_module_register_fn_t    bml_register;
-    mca_bml_base_module_finalize_fn_t    bml_finalize;
+    mca_bml_base_module_add_procs_fn_t     bml_add_procs;
+    mca_bml_base_module_del_procs_fn_t     bml_del_procs;
+    mca_bml_base_module_add_btl_fn_t       bml_add_btl;
+    mca_bml_base_module_del_btl_fn_t       bml_del_btl;
+    mca_bml_base_module_del_proc_btl_fn_t  bml_del_proc_btl;
+    mca_bml_base_module_register_fn_t      bml_register;
+    mca_bml_base_module_finalize_fn_t      bml_finalize;
 
     mca_bml_base_module_progress_fn_t bml_progress;
 

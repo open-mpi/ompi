@@ -45,6 +45,7 @@ mca_bml_r2_module_t mca_bml_r2 = {
         mca_bml_r2_del_procs,
         mca_bml_r2_add_btl,
         mca_bml_r2_del_btl,
+        mca_bml_r2_del_proc_btl,
         mca_bml_r2_register, 
         mca_bml_r2_finalize, 
         mca_bml_r2_progress
@@ -282,9 +283,6 @@ int mca_bml_r2_add_procs(
                         continue;
                     }
                 }
-                
-                
-                
 
                 /* cache the endpoint on the proc */
                 bml_btl = mca_bml_base_btl_array_insert(&bml_endpoint->btl_send);
@@ -501,89 +499,99 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         return OMPI_SUCCESS;
 
     for(p=0; p<num_procs; p++) {
-        double total_bandwidth = 0;
         ompi_proc_t* proc = procs[p];
-        mca_bml_base_endpoint_t* ep_old = (mca_bml_base_endpoint_t*)proc->proc_pml;
-        mca_bml_base_endpoint_t* ep_new = OBJ_NEW(mca_bml_base_endpoint_t);
-        size_t b;
-
-        /* initialize */
-        ep_new->super.proc_ompi = proc;
-        ep_new->btl_max_send_size = -1;
-        ep_new->btl_rdma_size = -1;
-        ep_new->btl_rdma_align = 0;
-        ep_new->btl_rdma_offset = 0;
-
-        /* build new eager list */
-        mca_bml_base_btl_array_reserve(&ep_new->btl_eager, mca_bml_base_btl_array_get_size(&ep_old->btl_eager));
-        for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_eager); b++) {
-            mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_eager, b);
-            if(bml_btl_old->btl != btl) {
-                 mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_eager);
-                 *bml_btl_new = *bml_btl_old;
-            }
-        }
-
-        /* build new send list */
-        total_bandwidth = 0;
-        mca_bml_base_btl_array_reserve(&ep_new->btl_send, mca_bml_base_btl_array_get_size(&ep_old->btl_send));
-        for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_send); b++) {
-            mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
-            if(bml_btl_old->btl != btl) {
-                mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_send);
-                *bml_btl_new = *bml_btl_old;
-                total_bandwidth += bml_btl_new->btl->btl_bandwidth;
-                if (bml_btl_new->btl_max_send_size < ep_new->btl_max_send_size) {
-                    ep_new->btl_max_send_size = bml_btl_new->btl->btl_max_send_size;
-                }
-            }
-        }
-        /* compute weighting factor for this btl */
-        for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_send); b++) {
-            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
-            if(bml_btl->btl->btl_bandwidth > 0) {
-                bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
-            } else {
-                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_send);
-            }
-        }
-
-        /* build new rdma list */
-        total_bandwidth = 0;
-        mca_bml_base_btl_array_reserve(&ep_new->btl_rdma, mca_bml_base_btl_array_get_size(&ep_old->btl_rdma));
-        for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_rdma); b++) {
-            mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
-            if(bml_btl_old->btl != btl) {
-                mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_rdma);
-                *bml_btl_new = *bml_btl_old;
-
-                /* update aggregate endpoint info */
-                total_bandwidth += bml_btl_new->btl->btl_bandwidth;
-                if (ep_new->btl_rdma_offset < bml_btl_new->btl_min_rdma_size) {
-                    ep_new->btl_rdma_offset = bml_btl_new->btl_min_rdma_size;
-                }
-                if (ep_new->btl_rdma_size > bml_btl_new->btl_max_rdma_size) {
-                    ep_new->btl_rdma_size = bml_btl_new->btl_max_rdma_size;
-                    ep_new->btl_rdma_align = bml_base_log2(ep_new->btl_rdma_size);
-                }
-            }
-        }
-
-        /* compute weighting factor for this btl */
-        for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_rdma); b++) {
-            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
-            if(bml_btl->btl->btl_bandwidth > 0) {
-                bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
-            } else {
-                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_rdma);
-            }
-        }
-
-        /* save on proc */
-        proc->proc_pml = (mca_pml_proc_t*)ep_new;
-
-        /* DONT delete old endpoint structure as it may still be in use... */
+        mca_bml_r2_del_proc_btl(proc, btl);
     }
+    free(procs);
+    return OMPI_SUCCESS;
+}
+
+int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
+{
+    mca_bml_base_endpoint_t* ep_old = (mca_bml_base_endpoint_t*)proc->proc_pml;
+    mca_bml_base_endpoint_t* ep_new = opal_obj_new(mca_bml_r2.endpoint_class);
+    double total_bandwidth = 0;
+    size_t b;
+
+    /* initialize */
+    ep_new->super.proc_ompi = proc;
+    ep_new->btl_max_send_size = -1;
+    ep_new->btl_rdma_size = -1;
+    ep_new->btl_rdma_align = 0;
+    ep_new->btl_rdma_offset = 0;
+
+    /* build new eager list */
+    mca_bml_base_btl_array_reserve(&ep_new->btl_eager, mca_bml_base_btl_array_get_size(&ep_old->btl_eager));
+    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_eager); b++) {
+        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_eager, b);
+        if(bml_btl_old->btl != btl) {
+             mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_eager);
+             *bml_btl_new = *bml_btl_old;
+        }
+    }
+
+    /* build new send list */
+    total_bandwidth = 0;
+    mca_bml_base_btl_array_reserve(&ep_new->btl_send, mca_bml_base_btl_array_get_size(&ep_old->btl_send));
+    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_send); b++) {
+        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
+        if(bml_btl_old->btl != btl) {
+            mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_send);
+            *bml_btl_new = *bml_btl_old;
+            total_bandwidth += bml_btl_new->btl->btl_bandwidth;
+            if (bml_btl_new->btl_max_send_size < ep_new->btl_max_send_size) {
+                ep_new->btl_max_send_size = bml_btl_new->btl->btl_max_send_size;
+            }
+        }
+    }
+    /* compute weighting factor for this btl */
+    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_send); b++) {
+        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
+        if(bml_btl->btl->btl_bandwidth > 0) {
+            bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
+        } else {
+            bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_send);
+        }
+    }
+
+    /* build new rdma list */
+    total_bandwidth = 0;
+    mca_bml_base_btl_array_reserve(&ep_new->btl_rdma, mca_bml_base_btl_array_get_size(&ep_old->btl_rdma));
+    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_rdma); b++) {
+        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
+        if(bml_btl_old->btl != btl) {
+            mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_rdma);
+            *bml_btl_new = *bml_btl_old;
+
+            /* update aggregate endpoint info */
+            total_bandwidth += bml_btl_new->btl->btl_bandwidth;
+            if (ep_new->btl_rdma_offset < bml_btl_new->btl_min_rdma_size) {
+                ep_new->btl_rdma_offset = bml_btl_new->btl_min_rdma_size;
+            }
+            if (ep_new->btl_rdma_size > bml_btl_new->btl_max_rdma_size) {
+                ep_new->btl_rdma_size = bml_btl_new->btl_max_rdma_size;
+                ep_new->btl_rdma_align = bml_base_log2(ep_new->btl_rdma_size);
+            }
+        }
+    }
+
+    /* compute weighting factor for this btl */
+    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_rdma); b++) {
+        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
+        if(bml_btl->btl->btl_bandwidth > 0) {
+            bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
+        } else {
+            bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_rdma);
+        }
+    }
+
+    /* copy over any additional state ... */
+    if(NULL != ep_new->copy) {
+        ep_new->copy(ep_new, ep_old);
+    }
+
+    /* save on proc */
+    proc->proc_pml = (mca_pml_proc_t*)ep_new;
     return OMPI_SUCCESS;
 }
 
