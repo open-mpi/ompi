@@ -31,6 +31,7 @@ extern "C" {
 
 #define MCA_PML_DR_VFRAG_NACKED  0x01
 #define MCA_PML_DR_VFRAG_RNDV    0x02
+#define MCA_PML_DR_VFRAG_RETRANS 0x04
 
 struct mca_pml_dr_vfrag_t {
     opal_list_item_t super;
