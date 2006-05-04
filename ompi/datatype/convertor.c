@@ -361,21 +361,6 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
     convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
     convertor->pDesc          = (ompi_datatype_t*)datatype;
 
-    /* Decide which data representation will be used for the conversion. */
-    if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
-        convertor->use_desc = &(datatype->opt_desc);
-    } else {
-        convertor->use_desc = &(datatype->desc);
-    }
-
-    if( required_stack_length > convertor->stack_size ) {
-        convertor->stack_size = required_stack_length;
-        convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * convertor->stack_size );
-    } else {
-        convertor->pStack = convertor->static_stack;
-        convertor->stack_size = DT_STATIC_STACK_SIZE;
-    }
-
     /* Compute the local and remote sizes */
     convertor->local_size = convertor->count * datatype->size;
     /* If the data is empty we don't have to anything except mark the convertor as
@@ -401,6 +386,21 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
             }
         }   
         convertor->remote_size *= convertor->count;
+    }
+
+    /* Decide which data representation will be used for the conversion. */
+    if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
+        convertor->use_desc = &(datatype->opt_desc);
+    } else {
+        convertor->use_desc = &(datatype->desc);
+    }
+
+    if( required_stack_length > convertor->stack_size ) {
+        convertor->stack_size = required_stack_length;
+        convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * convertor->stack_size );
+    } else {
+        convertor->pStack = convertor->static_stack;
+        convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
 
     return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
