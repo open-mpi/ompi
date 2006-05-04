@@ -316,12 +316,12 @@ do {                                                                            
 
 #define MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag)                 \
 do {                                                                          \
-    if(vfrag->vf_idx == vfrag->vf_len ||                                      \
-       (vfrag->vf_wdog_cnt == 0 && vfrag->vf_ack_cnt == 0)) {                 \
-        opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)vfrag);  \
+    if(((vfrag)->vf_state & MCA_PML_DR_VFRAG_RETRANS) == 0) {                 \
+        opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)(vfrag));\
+        (vfrag)->vf_state |= MCA_PML_DR_VFRAG_RETRANS;                        \
     }                                                                         \
-    vfrag->vf_idx = 0;                                                        \
-    vfrag->vf_state = 0;                                                      \
+    (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                            \
+    (vfrag)->vf_idx = 0;                                                      \
 } while(0)
 
 /*
@@ -360,7 +360,7 @@ do {                                                                  \
 do {                                                                 \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
-    OPAL_OUTPUT((0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__)); \
+    OPAL_OUTPUT((0, "%s:%d:%s: retransmitting eager\n", __FILE__, __LINE__, __func__)); \
     assert(sendreq->req_descriptor->des_src != NULL);                \
                                                                      \
     OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
@@ -391,7 +391,7 @@ do {                                                                 \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \
                                                                      \
-    opal_output(0, "%s:%d:%s, (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
+    opal_output(0, "%s:%d:%s: (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
     OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
     OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \

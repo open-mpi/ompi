@@ -302,8 +302,9 @@ static void mca_pml_dr_frag_completion(
             assert(sendreq->req_bytes_delivered <= sendreq->req_send.req_bytes_packed);
 
             /* is this vfrag in the process of being retransmitted */
-            if(vfrag->vf_idx != vfrag->vf_len) {
+            if(vfrag->vf_state & MCA_PML_DR_VFRAG_RETRANS) {
                 opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+                vfrag->vf_state &= ~MCA_PML_DR_VFRAG_RETRANS;
             } 
 
             /* record vfrag id to drop duplicate acks */
@@ -817,6 +818,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 if(vfrag->vf_idx == vfrag->vf_len) {
                     OPAL_THREAD_LOCK(&ompi_request_lock);
                     opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+                    vfrag->vf_state &= ~MCA_PML_DR_VFRAG_RETRANS;
                     OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 }
             }
