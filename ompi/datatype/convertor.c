@@ -188,6 +188,45 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
+    if( (pConv->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
+        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
+        /* We are doing conversion on a predefined datatype. The convertor contain
+         * minimal informations, we only use the bConverted to manage the conversion.
+         */
+        uint32_t i;
+        char* base_pointer;
+
+        *max_data = pConv->bConverted;
+        for( i = 0; i < *out_size; i++ ) {
+            base_pointer = pConv->pBaseBuf + pConv->bConverted;
+            if( NULL == iov[i].iov_base ) {
+                iov[i].iov_base = base_pointer;
+                pConv->bConverted += iov[i].iov_len;
+                if( pConv->bConverted > pConv->local_size ) {
+                    iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
+                    goto predefined_data_pack;
+                }
+            } else {
+                pConv->bConverted += iov[i].iov_len;
+                if( pConv->bConverted > pConv->local_size ) {
+                    iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
+                    MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+                    goto predefined_data_pack;
+                }
+                MEMCPY( iov[i].iov_base, base_pointer,
+                        iov[i].iov_len );
+            }
+        }
+        *max_data = pConv->bConverted - (*max_data);
+        return 0;
+    predefined_data_pack:
+        *out_size = i;
+        *max_data = pConv->bConverted - (*max_data);
+        pConv->bConverted = pConv->local_size;
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
+
     /* There is no specific memory allocation. If the convertor notice that some memory
      * is required in order to perform the operation (depend on the way the convertor
      * was configured) it will call the attached function to get some memory. Any failure
@@ -201,6 +240,36 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       size_t* max_data, int32_t* freeAfter )
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
+
+    if( (pConv->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) == 
+        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
+        /* We are doing conversion on a predefined datatype. The convertor contain
+         * minimal informations, we only use the bConverted to manage the conversion.
+         */
+        uint32_t i;
+        char* base_pointer;
+
+        *max_data = pConv->bConverted;
+        for( i = 0; i < *out_size; i++ ) {
+            base_pointer = pConv->pBaseBuf + pConv->bConverted;
+            pConv->bConverted += iov[i].iov_len;
+            if( pConv->bConverted > pConv->local_size ) {
+                pConv->bConverted = pConv->local_size;
+                iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
+                MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+                goto predefined_data_unpack;
+            }
+            MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+        }
+        *max_data = pConv->bConverted - (*max_data);
+        return 0;
+    predefined_data_unpack:
+        *out_size = i;
+        *max_data = pConv->bConverted - (*max_data);
+        pConv->bConverted = pConv->local_size;
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
 
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
@@ -292,20 +361,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     int32_t rc;
 
     /*
-     * Do not allow the convertor to go outside the data boundaries. This test include
-     * the check for datatype with size zero as well as for convertors with a count of zero.
-     */
-    if( convertor->local_size <= *position) {
-        convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->bConverted = convertor->local_size;
-        *position = convertor->bConverted;
-        return OMPI_SUCCESS;
-    }
-
-    /* Remove the completed flag if it's already set */
-    convertor->flags &= ~CONVERTOR_COMPLETED;
-
-    /*
      * If we plan to rollback the convertor then first we have to set it
      * at the beginning.
      */
@@ -321,17 +376,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     }
     *position = convertor->bConverted;
     return rc;
-}
-
-int32_t
-ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
-                            size_t* position, memalloc_fct_t allocfn, void* userdata )
-{
-    convertor->flags |= flags;
-    convertor->memAlloc_fn = allocfn;
-    convertor->memAlloc_userdata = userdata;
-
-    return ompi_convertor_set_position( convertor, position );
 }
 
 /* This function will initialize a convertor based on a previously created convertor. The idea
@@ -365,16 +409,22 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
     convertor->local_size = convertor->count * datatype->size;
     /* If the data is empty we don't have to anything except mark the convertor as
      * completed. With this flag set the pack and unpack functions will not do
-     * anything.
+     * anything. In order to decrease the data dependencies (and to speed-up this code)
+     * we will not test the convertor->local_size but we can test the 2 components.
      */
-    if( 0 == convertor->local_size ) {
+    if( (0 == convertor->count) || (0 == datatype->size) ) {
         convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->remote_size = 0;
+        convertor->local_size = convertor->remote_size = 0;
         return OMPI_SUCCESS;
     }
 
     if( convertor->remoteArch == ompi_mpi_local_arch ) {
         convertor->remote_size = convertor->local_size;
+        /* For predefined datatypes (contiguous) do nothing more */
+        if( (convertor->flags & DT_FLAG_PREDEFINED) == DT_FLAG_PREDEFINED ) {
+            convertor->bConverted = 0;
+            return OMPI_SUCCESS;
+        }
     } else {
         int i;
         uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;

@@ -207,15 +207,6 @@ OMPI_DECLSPEC int ompi_convertor_cleanup( ompi_convertor_t* convertor );
 /*
  *
  */
-OMPI_DECLSPEC int32_t
-ompi_convertor_personalize( ompi_convertor_t* pConv, uint32_t flags,
-                            size_t* starting_point,
-                            memalloc_fct_t allocfn,
-                            void* userdata );
-
-/*
- *
- */
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
 {
@@ -312,7 +303,44 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
      * If the convertor is already at the correct position we are happy.
      */
     if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
+
+    /*
+     * Do not allow the convertor to go outside the data boundaries. This test include
+     * the check for datatype with size zero as well as for convertors with a count of zero.
+     */
+    if( convertor->local_size <= *position) {
+        convertor->flags |= CONVERTOR_COMPLETED;
+        convertor->bConverted = convertor->local_size;
+        *position = convertor->bConverted;
+        return OMPI_SUCCESS;
+    }
+
+    /* Remove the completed flag if it's already set */
+    convertor->flags &= ~CONVERTOR_COMPLETED;
+
+    if( (convertor->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
+        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
+        /* basic predefined datatype (contiguous) */
+        convertor->bConverted = *position;
+        return OMPI_SUCCESS;
+    }
+
     return ompi_convertor_set_position_nocheck( convertor, position );
+}
+
+/*
+ *
+ */
+static inline int32_t
+ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
+                            size_t* position,
+                            memalloc_fct_t allocfn, void* userdata )
+{
+    convertor->flags |= flags;
+    convertor->memAlloc_fn = allocfn;
+    convertor->memAlloc_userdata = userdata;
+
+    return ompi_convertor_set_position( convertor, position );
 }
 
 /*
