@@ -255,7 +255,10 @@ ompi_pml_portals_add_procs_compat(struct ompi_proc_t **procs, size_t nprocs)
     }
 
 #if 0
-    PtlNIDebug(mca_pml_portals_module.portals_ni_h, PTL_DBG_ALL);
+    PtlNIDebug(ompi_pml_portals.portals_ni_h, PTL_DBG_API |
+               PTL_DBG_MOVE | PTL_DBG_DROP | PTL_DBG_REQUEST | 
+               PTL_DBG_DELIVERY | PTL_DBG_MD | PTL_DBG_UNLINK |
+               PTL_DBG_EQ | PTL_DBG_EVENT | PTL_DBG_MEMORY );
 #endif
 
     return OMPI_SUCCESS;
