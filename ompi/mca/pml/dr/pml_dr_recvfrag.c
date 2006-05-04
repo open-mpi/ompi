@@ -54,6 +54,7 @@ do {                                                                            
     ep = ompi_pointer_array_get_item(&mca_pml_dr.procs, hdr->hdr_common.hdr_src);              \
     assert(ep != NULL);                                                                        \
     if(ompi_seq_tracker_check_duplicate(&ep->seq_sends, hdr->hdr_common.hdr_vid)) {            \
+        OPAL_OUTPUT((0, "%s:%d: dropping duplicate ack", __FILE__, __LINE__));                 \
         return;                                                                                \
     }                                                                                          \
 } while (0)

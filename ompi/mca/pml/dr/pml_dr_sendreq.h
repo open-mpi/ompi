@@ -58,7 +58,7 @@ struct mca_pml_dr_send_request_t {
     mca_pml_dr_vfrag_t* req_vfrag;
     mca_pml_dr_vfrag_t  req_vfrag0;
     opal_list_t         req_retrans;
-    mca_btl_base_descriptor_t* descriptor; /* descriptor for first frag, retransmission */
+    mca_btl_base_descriptor_t* req_descriptor; /* descriptor for first frag, retransmission */
     
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
@@ -159,12 +159,13 @@ do {                                                                            
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);                 \
     MCA_PML_DR_VFRAG_INIT(&sendreq->req_vfrag0);                                          \
     sendreq->req_vfrag0.vf_id = OPAL_THREAD_ADD32(&endpoint->vfrag_seq,1);                \
+    sendreq->req_vfrag0.bml_btl = bml_btl;                                                \
     sendreq->req_vfrag = &sendreq->req_vfrag0;                                            \
     sendreq->req_endpoint = endpoint;                                                     \
     sendreq->req_proc = proc;                                                             \
                                                                                           \
     sendreq->req_lock = 0;                                                                \
-    sendreq->req_pipeline_depth = 0;                                                      \
+    sendreq->req_pipeline_depth = 1;                                                      \
     sendreq->req_bytes_delivered = 0;                                                     \
     sendreq->req_state = 0;                                                               \
     sendreq->req_send_offset = 0;                                                         \
@@ -315,10 +316,12 @@ do {                                                                            
 
 #define MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag)                 \
 do {                                                                          \
+    if(vfrag->vf_idx == vfrag->vf_len ||                                      \
+       (vfrag->vf_wdog_cnt == 0 && vfrag->vf_ack_cnt == 0)) {                 \
+        opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)vfrag);  \
+    }                                                                         \
     vfrag->vf_idx = 0;                                                        \
     vfrag->vf_state = 0;                                                      \
-    opal_output(0, "queuing vfrag for retrans!\n");                           \
-    opal_list_append(&(sendreq)->req_retrans, (opal_list_item_t*)vfrag);      \
 } while(0)
 
 /*
@@ -355,29 +358,25 @@ do {                                                                  \
 
 #define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)          \
 do {                                                                 \
-    mca_pml_dr_endpoint_t* endpoint = sendreq->req_endpoint;         \
-    mca_bml_base_btl_t* bml_btl =                                    \
-      mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);    \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
-                                                                     \
-    if(++vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) {     \
-        opal_output(0, "%s:%d,%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);  \
-        orte_errmgr.abort();                                         \
-    }                                                                \
     OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
-                                                                     \
     OPAL_OUTPUT((0, "%s:%d:%s, retransmitting eager\n", __FILE__, __LINE__, __func__)); \
-    assert(sendreq->descriptor->des_src != NULL);                    \
-    MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
-    des_old = sendreq->descriptor;                                   \
-    mca_bml_base_alloc(bml_btl, &des_new, des_old->des_src->seg_len);\
+    assert(sendreq->req_descriptor->des_src != NULL);                \
+                                                                     \
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
+    OPAL_THREAD_ADD64(&(vfrag)->vf_pending,1);                       \
+    (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
+                                                                     \
+    des_old = sendreq->req_descriptor;                               \
+    mca_bml_base_alloc(vfrag->bml_btl, &des_new, des_old->des_src->seg_len);\
+    sendreq->req_descriptor = des_new;                               \
     memcpy(des_new->des_src->seg_addr.pval,                          \
            des_old->des_src->seg_addr.pval,                          \
            des_old->des_src->seg_len);                               \
     des_new->des_flags = des_old->des_flags;                         \
     des_new->des_cbdata = des_old->des_cbdata;                       \
     des_new->des_cbfunc = des_old->des_cbfunc;                       \
-    mca_bml_base_send(bml_btl, des_new, MCA_BTL_TAG_PML);            \
+    mca_bml_base_send(vfrag->bml_btl, des_new, MCA_BTL_TAG_PML);     \
 } while(0)        
 
 /*
@@ -392,18 +391,15 @@ do {                                                                 \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \
                                                                      \
-    if(++vfrag->vf_retry_cnt > mca_pml_dr.timer_ack_max_count) {     \
-        opal_output(0, "%s:%d,%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);  \
-        orte_errmgr.abort();                                         \
-    }                                                                \
-    OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
-                                                                     \
     opal_output(0, "%s:%d:%s, (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
-    assert(sendreq->descriptor->des_src != NULL);                    \
-    MCA_PML_DR_VFRAG_RESET(vfrag);                                   \
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
+    OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
+    (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
+                                                                     \
+    assert(sendreq->req_descriptor->des_src != NULL);                \
     mca_bml_base_alloc(bml_btl, &des_new,                            \
                        sizeof(mca_pml_dr_rendezvous_hdr_t));         \
-    des_old = sendreq->descriptor;                                   \
+    des_old = sendreq->req_descriptor;                               \
     /* build hdr */                                                  \
     hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
     hdr->hdr_common.hdr_flags = 0;                                   \

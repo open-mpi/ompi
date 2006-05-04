@@ -92,23 +92,23 @@ int mca_pml_dr_component_open(void)
         mca_pml_dr_param_register_int("eager_limit", 128 * 1024);
     mca_pml_dr.send_pipeline_depth =
         mca_pml_dr_param_register_int("send_pipeline_depth", 3);
-    mca_pml_dr.timer_wdog_sec = 
-        mca_pml_dr_param_register_int("timer_wdog_sec", 1);
-    mca_pml_dr.timer_wdog_usec = 
-        mca_pml_dr_param_register_int("timer_wdog_usec", 0);
-    mca_pml_dr.timer_wdog_multiplier = 
-        mca_pml_dr_param_register_int("timer_wdog_multiplier", 2);
-    mca_pml_dr.timer_wdog_max_count = 
-        mca_pml_dr_param_register_int("timer_wdog_max_count", 10);
+    mca_pml_dr.wdog_timer.tv_sec = 
+        mca_pml_dr_param_register_int("wdog_timer_sec", 5);
+    mca_pml_dr.wdog_timer.tv_usec = 
+        mca_pml_dr_param_register_int("wdog_timer_usec", 0);
+    mca_pml_dr.wdog_timer_multiplier = 
+        mca_pml_dr_param_register_int("wdog_timer_multiplier", 1);
+    mca_pml_dr.wdog_retry_max = 
+        mca_pml_dr_param_register_int("wdog_retry_max", 1);
     
-    mca_pml_dr.timer_ack_sec = 
-        mca_pml_dr_param_register_int("timer_ack_sec", 10);
-    mca_pml_dr.timer_ack_usec = 
-        mca_pml_dr_param_register_int("timer_ack_usec", 0);
-    mca_pml_dr.timer_ack_multiplier = 
-        mca_pml_dr_param_register_int("timer_ack_multiplier", 2);
-    mca_pml_dr.timer_ack_max_count = 
-        mca_pml_dr_param_register_int("timer_ack_max_count", 10);
+    mca_pml_dr.ack_timer.tv_sec = 
+        mca_pml_dr_param_register_int("ack_timer_sec", 10);
+    mca_pml_dr.ack_timer.tv_usec = 
+        mca_pml_dr_param_register_int("ack_timer_usec", 0);
+    mca_pml_dr.ack_timer_multiplier = 
+        mca_pml_dr_param_register_int("ack_timer_multiplier", 1);
+    mca_pml_dr.ack_retry_max = 
+        mca_pml_dr_param_register_int("ack_retry_max", 3);
     
     /* default is to csum all data */
     mca_pml_dr.enable_csum = 

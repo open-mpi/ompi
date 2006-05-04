@@ -89,6 +89,51 @@ OBJ_CLASS_INSTANCE(
     mca_pml_dr_send_request_construct,
     mca_pml_dr_send_request_destruct);
 
+/**
+ * Handle error status on local completion
+ */
+
+static void mca_pml_dr_error_completion(
+    struct mca_btl_base_module_t* btl,  
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* descriptor,
+    int status)
+{
+    mca_pml_dr_vfrag_t* vfrag = descriptor->des_cbdata;
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+
+    switch(status) {
+        case OMPI_ERR_UNREACH:
+        case OMPI_ERR_CONNECTION_FAILED:
+        case OMPI_ERR_CONNECTION_REFUSED:
+            /**
+             * peer is no longer reachable through this btl
+             */
+            mca_bml.bml_del_proc_btl(sendreq->req_proc->ompi_proc, btl);
+            break;
+
+        case OMPI_ERR_FATAL:
+        case OMPI_ERR_COMM_FAILURE:
+            /**
+             * btl is no longer available
+             */
+            mca_bml.bml_del_btl(btl);
+            break;
+        default:
+            orte_errmgr.abort();
+            break;
+    }
+
+    /* update pending counts */
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+    OPAL_THREAD_ADD64(&vfrag->vf_pending,-1);
+
+    /* reset vfrag state - select new BTL */
+    mca_pml_dr_vfrag_reset(vfrag);
+   
+    /* reschedule vfrag */
+    mca_pml_dr_vfrag_reschedule(vfrag);
+}
 
 /**
  * Completion of a short message - nothing left to schedule.
@@ -100,34 +145,36 @@ static void mca_pml_dr_match_completion(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    mca_pml_dr_send_request_t* sendreq = descriptor->des_cbdata;
-    mca_pml_dr_vfrag_t* vfrag = &sendreq->req_vfrag0;
+    mca_pml_dr_vfrag_t* vfrag = descriptor->des_cbdata;
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+
+    /* kill pending wdog timer */
+    MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
 
     /* free any descriptor used to retransmit */
-    if(descriptor != sendreq->descriptor) {
+    if(descriptor != sendreq->req_descriptor) {
         mca_bml_base_free(descriptor->des_context, descriptor);
     }
     
     /* check completion status */
     if(OMPI_SUCCESS != status) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        mca_pml_dr_error_completion(btl,ep,descriptor,status);
+        return;
     }
 
     /* wait for local completion */
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
     if(OPAL_THREAD_ADD64(&vfrag->vf_pending,-1) > 0) 
         return;
 
     /* wait for positive ack to complete request */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag->vf_ack == vfrag->vf_mask) {
-        MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
 
         /* return descriptor */
-        if(NULL != sendreq->descriptor) {
-            mca_bml_base_free(sendreq->descriptor->des_context, sendreq->descriptor); 
-            sendreq->descriptor = NULL;
+        if(NULL != sendreq->req_descriptor) {
+            mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+            sendreq->req_descriptor = NULL;
         }
 
         /* update statistics and complete */
@@ -137,9 +184,13 @@ static void mca_pml_dr_match_completion(
 
     /* on negative ack need to retransmit */
     } else if(vfrag->vf_state & MCA_PML_DR_VFRAG_NACKED) {
-        MCA_PML_DR_VFRAG_ACK_RESET(vfrag);
+        MCA_PML_DR_VFRAG_WDOG_START(vfrag);
         MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
-    } 
+
+    /* start ack timer */
+    }  else {
+        MCA_PML_DR_VFRAG_ACK_START(vfrag);
+    }
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* check for pending requests */
@@ -157,33 +208,35 @@ static void mca_pml_dr_rndv_completion(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)descriptor->des_cbdata;
-    mca_pml_dr_vfrag_t* vfrag = &sendreq->req_vfrag0;
+    mca_pml_dr_vfrag_t* vfrag = descriptor->des_cbdata;
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
     bool schedule = false;
 
+    /* kill pending wdog timer */
+    MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
+
     /* free any descriptor used to retransmit */
-    if(descriptor != sendreq->descriptor) {
+    if(descriptor != sendreq->req_descriptor) {
         mca_bml_base_free(descriptor->des_context, descriptor);
     }
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        mca_pml_dr_error_completion(btl,ep,descriptor,status); 
+        return;
     }
 
     /* local completion */
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
     if(OPAL_THREAD_ADD64(&vfrag->vf_pending,-1) > 0)
         return;
     
     /* wait for positive ack to complete request */
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag->vf_ack == vfrag->vf_mask) {
-        MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
-        if(sendreq->descriptor) {
-            mca_bml_base_free(sendreq->descriptor->des_context, sendreq->descriptor);
-            sendreq->descriptor = NULL;
+        if(sendreq->req_descriptor) {
+            mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor);
+            sendreq->req_descriptor = NULL;
         }
 
         /* update statistics and complete */
@@ -203,6 +256,11 @@ static void mca_pml_dr_rndv_completion(
         MCA_PML_DR_VFRAG_ACK_RESET(vfrag);
         MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    /* setup ack timer */
+    } else {
+        OPAL_THREAD_UNLOCK(&ompi_request_lock);
+        MCA_PML_DR_VFRAG_ACK_START(vfrag);
     }
 
     /* check for pending requests */
@@ -228,9 +286,8 @@ static void mca_pml_dr_frag_completion(
     
     /* check completion status */
     if(OMPI_SUCCESS != status) {
-        /* TSW - FIX */
-        opal_output(0, "%s:%d FATAL", __FILE__, __LINE__);
-        orte_errmgr.abort();
+        mca_pml_dr_error_completion(btl,ep,descriptor,status);
+        return;
     }
 
     /* have all pending frags completed for this vfrag? */
@@ -313,7 +370,7 @@ int mca_pml_dr_send_request_start_buffered(
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    sendreq->descriptor = descriptor; /* hang on to this for later */
+    sendreq->req_descriptor = descriptor; /* hang on to this for later */
     segment = descriptor->des_src;
     
     /* pack the data into the BTL supplied buffer */
@@ -342,7 +399,7 @@ int mca_pml_dr_send_request_start_buffered(
     
     descriptor->des_cbfunc = mca_pml_dr_rndv_completion;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    descriptor->des_cbdata = sendreq;
+    descriptor->des_cbdata = &sendreq->req_vfrag0;
 
     /* buffer the remainder of the message */
     rc = mca_pml_base_bsend_request_alloc((ompi_request_t*)sendreq);
@@ -396,7 +453,7 @@ int mca_pml_dr_send_request_start_buffered(
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
-    MCA_PML_DR_VFRAG_ACK_START(&sendreq->req_vfrag0);
+    MCA_PML_DR_VFRAG_WDOG_START(&sendreq->req_vfrag0);
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
         mca_bml_base_free(bml_btl, descriptor );
@@ -429,7 +486,7 @@ int mca_pml_dr_send_request_start_copy(
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
-    sendreq->descriptor = descriptor; /* hang on to this for later */
+    sendreq->req_descriptor = descriptor; /* hang on to this for later */
     segment = descriptor->des_src;
 
     /* pack the data into the supplied buffer */
@@ -475,7 +532,7 @@ int mca_pml_dr_send_request_start_copy(
     /* short message */
     descriptor->des_cbfunc = mca_pml_dr_match_completion;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    descriptor->des_cbdata = sendreq;
+    descriptor->des_cbdata = &sendreq->req_vfrag0;
     segment->seg_len = sizeof(mca_pml_dr_match_hdr_t) + max_data;
 
     /* signal request completion */
@@ -484,7 +541,7 @@ int mca_pml_dr_send_request_start_copy(
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
     /* send */
-    MCA_PML_DR_VFRAG_ACK_START(&sendreq->req_vfrag0);
+    MCA_PML_DR_VFRAG_WDOG_START(&sendreq->req_vfrag0);
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
         mca_bml_base_free(bml_btl, descriptor );
@@ -518,7 +575,7 @@ int mca_pml_dr_send_request_start_prepare(
     if(NULL == descriptor) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    sendreq->descriptor = descriptor; /* hang on to this for later */
+    sendreq->req_descriptor = descriptor; /* hang on to this for later */
     segment = descriptor->des_src;
 
     /* build match header */
@@ -542,7 +599,7 @@ int mca_pml_dr_send_request_start_prepare(
     /* short message */
     descriptor->des_cbfunc = mca_pml_dr_match_completion;
     descriptor->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    descriptor->des_cbdata = sendreq;
+    descriptor->des_cbdata = &sendreq->req_vfrag0;
        
     /* vfrag state */
     sendreq->req_vfrag0.vf_size = size;
@@ -550,7 +607,7 @@ int mca_pml_dr_send_request_start_prepare(
     sendreq->req_vfrag0.vf_pending = 1;
 
     /* send */
-    MCA_PML_DR_VFRAG_ACK_START(&sendreq->req_vfrag0);
+    MCA_PML_DR_VFRAG_WDOG_START(&sendreq->req_vfrag0);
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML); 
     if(OMPI_SUCCESS != rc) {
         mca_bml_base_free(bml_btl, descriptor );
@@ -596,7 +653,7 @@ int mca_pml_dr_send_request_start_rndv(
     if(NULL == des) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    sendreq->descriptor = des; /* hang on to this for later */
+    sendreq->req_descriptor = des; /* hang on to this for later */
     segment = des->des_src;
     
     /* build hdr */
@@ -619,7 +676,7 @@ int mca_pml_dr_send_request_start_rndv(
 
     /* first fragment of a long message */
     des->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
-    des->des_cbdata = sendreq;
+    des->des_cbdata = &sendreq->req_vfrag0;
     des->des_cbfunc = mca_pml_dr_rndv_completion;
 
     /* vfrag state */
@@ -629,7 +686,7 @@ int mca_pml_dr_send_request_start_rndv(
     sendreq->req_vfrag0.vf_pending = 1;
 
     /* send */
-    MCA_PML_DR_VFRAG_ACK_START(&sendreq->req_vfrag0);
+    MCA_PML_DR_VFRAG_WDOG_START(&sendreq->req_vfrag0);
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
     if(OMPI_SUCCESS != rc) {
         mca_bml_base_free(bml_btl, des );
@@ -655,8 +712,117 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
     assert(sendreq->req_vfrag0.vf_recv.pval != NULL);
     if(OPAL_THREAD_ADD32(&sendreq->req_lock,1) == 1) {
         do {
+            size_t bytes_remaining;
+            /*
+             * VFrags w/ nacks or that timed out
+             */
+            while(opal_list_get_size(&sendreq->req_retrans) &&
+                  sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
+                mca_pml_dr_vfrag_t* vfrag;
+
+                OPAL_THREAD_LOCK(&ompi_request_lock);
+                vfrag = (mca_pml_dr_vfrag_t*)opal_list_get_first(&sendreq->req_retrans);
+                OPAL_THREAD_UNLOCK(&ompi_request_lock);
+                if(NULL == vfrag) {
+                    break;
+                }
+                
+                /*
+                 * Retransmit fragments that have not been acked.
+                 */
+                while(vfrag->vf_idx < vfrag->vf_len && 
+                      sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
+                    if(((uint64_t)1 << vfrag->vf_idx) & ~vfrag->vf_ack) {
+                        mca_bml_base_btl_t* bml_btl = vfrag->bml_btl; 
+                        mca_pml_dr_frag_hdr_t* hdr;
+                        mca_btl_base_descriptor_t* des;
+                        size_t offset_in_vfrag = vfrag->vf_max_send_size * vfrag->vf_idx;
+                        size_t offset_in_msg = vfrag->vf_offset + offset_in_vfrag;
+                        size_t size;
+                        int rc;
+
+                        if(vfrag->vf_idx == vfrag->vf_len - 1) {
+                            size = vfrag->vf_size - offset_in_vfrag;
+                        } else {
+                            size = vfrag->vf_max_send_size;
+                        }
+
+                        /* pack into a descriptor */
+                        ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset_in_msg);
+                        mca_bml_base_prepare_src(
+                                                 bml_btl, 
+                                                 NULL, 
+                                                 &sendreq->req_send.req_convertor,
+                                                 sizeof(mca_pml_dr_frag_hdr_t),
+                                                 &size,
+                                                 &des
+                                                 );
+                        if(des == NULL) {
+                            OPAL_THREAD_LOCK(&ompi_request_lock);
+                            opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
+                            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+                            break;
+                        }
+                        des->des_cbfunc = mca_pml_dr_frag_completion;
+                        des->des_cbdata = vfrag;
+
+                        /* setup header */
+                        hdr = (mca_pml_dr_frag_hdr_t*)des->des_src->seg_addr.pval;
+                        hdr->hdr_common.hdr_flags = 0;
+                        hdr->hdr_common.hdr_csum = 0;
+                        hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_FRAG;
+                        hdr->hdr_common.hdr_dst = sendreq->req_endpoint->dst; 
+                        hdr->hdr_common.hdr_vid = vfrag->vf_id;
+                        hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
+                        hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
+                        hdr->hdr_vlen = vfrag->vf_len;
+                        hdr->hdr_frag_idx = vfrag->vf_idx;
+                        hdr->hdr_frag_csum = sendreq->req_send.req_convertor.checksum; 
+                        hdr->hdr_frag_offset = offset_in_msg;
+                        hdr->hdr_src_ptr.pval = vfrag;
+                        hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
+                        hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                                                    opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)) : 
+                                                    OPAL_CSUM_ZERO);
+                        
+                        /* adjust number of outstanding operations */
+                        if(OPAL_THREAD_ADD64(&vfrag->vf_pending, 1) == 1) {
+                            MCA_PML_DR_VFRAG_WDOG_START(vfrag);
+                        }
+                        OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
+
+                        /* adjust send offset - may not have finished scheduling entire vfrag */
+                        if(offset_in_msg + size > sendreq->req_send_offset) {
+                            sendreq->req_send_offset = offset_in_msg + size;
+                        }
+
+                        /* initiate send - note that this may complete before the call returns */
+                        rc = mca_bml_base_send( bml_btl, des, MCA_BTL_TAG_PML);
+                        
+                        if(rc == OMPI_SUCCESS) {
+                            bytes_remaining -= size;
+                        } else {
+                            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
+                            mca_bml_base_free(bml_btl,des);
+                            OPAL_THREAD_LOCK(&ompi_request_lock);
+                            opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
+                            OPAL_THREAD_UNLOCK(&ompi_request_lock);
+                            break;
+                        }
+                    }
+                    vfrag->vf_idx++;
+                }
+
+                /* remove from retrans list */
+                if(vfrag->vf_idx == vfrag->vf_len) {
+                    OPAL_THREAD_LOCK(&ompi_request_lock);
+                    opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
+                    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+                }
+            }
+
             /* allocate remaining bytes to BTLs */
-            size_t bytes_remaining = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
+            bytes_remaining = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
             while(bytes_remaining > 0 && 
                   sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
                 
@@ -682,7 +848,6 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         break;
                     }
                     MCA_PML_DR_SEND_REQUEST_VFRAG_INIT(sendreq,endpoint,bytes_remaining,vfrag);
-                    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
                     vfrag->bml_btl = bml_btl;
                     bytes_sent = 0;
                     
@@ -740,7 +905,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 
                 /* update state */
                 vfrag->vf_idx++;
-                OPAL_THREAD_ADD64(&vfrag->vf_pending,1);
+                if(OPAL_THREAD_ADD64(&vfrag->vf_pending,1) == 1) {
+                    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
+                }
                 sendreq->req_send_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
 
@@ -757,101 +924,6 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                     OPAL_THREAD_UNLOCK(&ompi_request_lock);
                     break;
-                }
-                mca_pml_dr_progress(); 
-            }
-
-            /*
-             * VFrags w/ nacks or that timed out
-             */
-            while(opal_list_get_size(&sendreq->req_retrans) &&
-                  sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
-                mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*)opal_list_get_first(&sendreq->req_retrans);
-                
-                /*
-                 * Retransmit fragments that have not been acked.
-                 */
-                while(vfrag->vf_idx < vfrag->vf_len && 
-                      sendreq->req_pipeline_depth < mca_pml_dr.send_pipeline_depth) {
-                    if(((uint64_t)1 << vfrag->vf_idx) & ~vfrag->vf_ack) {
-                        mca_bml_base_btl_t* bml_btl = vfrag->bml_btl; 
-                        mca_pml_dr_frag_hdr_t* hdr;
-                        mca_btl_base_descriptor_t* des;
-                        size_t offset_in_vfrag = vfrag->vf_max_send_size * vfrag->vf_idx;
-                        size_t offset_in_msg = vfrag->vf_offset + offset_in_vfrag;
-                        size_t size;
-                        int rc;
-
-                        vfrag->vf_retry_cnt ++;
-                        if(vfrag->vf_idx == vfrag->vf_len - 1) {
-                            size = vfrag->vf_size - offset_in_vfrag;
-                        } else {
-                            size = vfrag->vf_max_send_size;
-                        }
-
-                        /* pack into a descriptor */
-                        ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset_in_msg);
-                        mca_bml_base_prepare_src(
-                                                 bml_btl, 
-                                                 NULL, 
-                                                 &sendreq->req_send.req_convertor,
-                                                 sizeof(mca_pml_dr_frag_hdr_t),
-                                                 &size,
-                                                 &des
-                                                 );
-                        if(des == NULL) {
-                            OPAL_THREAD_LOCK(&ompi_request_lock);
-                            opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
-                            OPAL_THREAD_UNLOCK(&ompi_request_lock);
-                            break;
-                        }
-                        des->des_cbfunc = mca_pml_dr_frag_completion;
-                        des->des_cbdata = vfrag;
-
-                        /* setup header */
-                        hdr = (mca_pml_dr_frag_hdr_t*)des->des_src->seg_addr.pval;
-                        hdr->hdr_common.hdr_flags = 0;
-                        hdr->hdr_common.hdr_csum = 0;
-                        hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_FRAG;
-                        hdr->hdr_common.hdr_dst = sendreq->req_endpoint->dst; 
-                        hdr->hdr_common.hdr_vid = vfrag->vf_id;
-                        hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
-                        hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
-                        hdr->hdr_vlen = vfrag->vf_len;
-                        hdr->hdr_frag_idx = vfrag->vf_idx;
-                        hdr->hdr_frag_csum = sendreq->req_send.req_convertor.checksum; 
-                        hdr->hdr_frag_offset = offset_in_msg;
-                        hdr->hdr_src_ptr.pval = vfrag;
-                        hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
-                        hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
-                                                    opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)) : 
-                                                    OPAL_CSUM_ZERO);
-                        
-                        OPAL_THREAD_ADD64(&vfrag->vf_pending, 1);
-                        OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
-
-                        /* initiate send - note that this may complete before the call returns */
-                        rc = mca_bml_base_send( bml_btl, des, MCA_BTL_TAG_PML);
-                        
-                        if(rc == OMPI_SUCCESS) {
-                            bytes_remaining -= size;
-                        } else {
-                            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
-                            mca_bml_base_free(bml_btl,des);
-                            OPAL_THREAD_LOCK(&ompi_request_lock);
-                            opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
-                            OPAL_THREAD_UNLOCK(&ompi_request_lock);
-                            break;
-                        }
-                    }
-                    vfrag->vf_idx++;
-                }
-
-                /* move from retrans to pending list */
-                if(vfrag->vf_idx == vfrag->vf_len) {
-                    OPAL_THREAD_LOCK(&ompi_request_lock);
-                    opal_list_remove_item(&sendreq->req_retrans, (opal_list_item_t*)vfrag);
-                    OPAL_THREAD_UNLOCK(&ompi_request_lock);
                 }
             }
         } while (OPAL_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
@@ -878,14 +950,14 @@ void mca_pml_dr_send_request_match_ack(
         MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
-            MCA_PML_DR_VFRAG_ACK_START(vfrag);
+            MCA_PML_DR_VFRAG_WDOG_START(vfrag);
             MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
         } else { 
             /* if already have local completion free descriptor and complete message */
             /* return descriptor */
-            if(NULL != sendreq->descriptor) {
-                mca_bml_base_free(sendreq->descriptor->des_context, sendreq->descriptor ); 
-                sendreq->descriptor = NULL;
+            if(NULL != sendreq->req_descriptor) {
+                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor ); 
+                sendreq->req_descriptor = NULL;
             }
             
             /* update statistics */
@@ -930,14 +1002,14 @@ void mca_pml_dr_send_request_rndv_ack(
         /* need to retransmit? */
         if(vfrag->vf_ack != vfrag->vf_mask) {
             /* got a NACK, resend eager data! */
-            MCA_PML_DR_VFRAG_ACK_START(vfrag);
+            MCA_PML_DR_VFRAG_WDOG_START(vfrag);
             MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag);
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
         } else {
             /* return descriptor of first fragment */
-            if(NULL != sendreq->descriptor) {
-                mca_bml_base_free(sendreq->descriptor->des_context, sendreq->descriptor); 
-                sendreq->descriptor = NULL;
+            if(NULL != sendreq->req_descriptor) {
+                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+                sendreq->req_descriptor = NULL;
             }
 
             /* done? */
@@ -1030,6 +1102,5 @@ void mca_pml_dr_send_request_frag_ack(
         mca_pml_dr_send_request_schedule(sendreq);
     }
 }
-
 
 

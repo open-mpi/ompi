@@ -19,10 +19,12 @@
 #include "ompi_config.h"
 #include "pml_dr_vfrag.h"
 #include "pml_dr_sendreq.h"
+#include "ompi/mca/bml/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* vfrag); 
-void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
+static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* vfrag); 
+static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
+
 
 static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
 {
@@ -36,14 +38,13 @@ static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
     vfrag->vf_max_send_size = 0;
     vfrag->vf_ack = 0;
     vfrag->vf_mask = 1;
-    vfrag->vf_retry_cnt = 0;
     vfrag->vf_state = 0;
-    vfrag->tv_wdog.tv_sec = mca_pml_dr.timer_wdog_sec;
-    vfrag->tv_wdog.tv_usec = mca_pml_dr.timer_wdog_usec;
-    vfrag->tv_ack.tv_sec = mca_pml_dr.timer_ack_usec;
-    vfrag->tv_ack.tv_usec = mca_pml_dr.timer_ack_usec;
-    opal_evtimer_set(&vfrag->ev_wdog, mca_pml_dr_vfrag_wdog_timeout, (void*) vfrag);
-    opal_evtimer_set(&vfrag->ev_ack, mca_pml_dr_vfrag_ack_timeout, (void*) vfrag);
+    vfrag->vf_wdog_tv = mca_pml_dr.wdog_timer;
+    vfrag->vf_ack_tv = mca_pml_dr.ack_timer;
+    vfrag->vf_wdog_cnt = 0;
+    vfrag->vf_ack_cnt = 0;
+    opal_evtimer_set(&vfrag->vf_wdog_ev, mca_pml_dr_vfrag_wdog_timeout, (void*) vfrag);
+    opal_evtimer_set(&vfrag->vf_ack_ev, mca_pml_dr_vfrag_ack_timeout, (void*) vfrag);
 }
 
 
@@ -64,47 +65,120 @@ OBJ_CLASS_INSTANCE(
 /** 
  * The wdog timer expired, better do something about it, like resend the current part of the vfrag 
  */
-void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
+static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
 
-    OPAL_OUTPUT((0, "%s:%d:%s: wdog timeout!", __FILE__, __LINE__, __func__));
-    if(++vfrag->vf_retry_cnt > mca_pml_dr.timer_wdog_max_count) {
-        opal_output(0, "%s:%d:%s  retry count exceeded! FATAL", __FILE__, __LINE__, __func__);
-        orte_errmgr.abort();
-    }
-    /* back off watchdog timer */
-    vfrag->tv_wdog.tv_sec = 
-          mca_pml_dr.timer_wdog_sec + 
-          mca_pml_dr.timer_wdog_sec * mca_pml_dr.timer_wdog_multiplier  * 
-          vfrag->vf_retry_cnt;
-    vfrag->tv_wdog.tv_usec =
-          mca_pml_dr.timer_wdog_usec +
-          mca_pml_dr.timer_wdog_usec * mca_pml_dr.timer_wdog_multiplier  *
-          vfrag->vf_retry_cnt;
-    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
+    OPAL_OUTPUT((0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
 
-    /* retransmit vfrag */
-    OPAL_THREAD_LOCK(&ompi_request_lock);
-    MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag);
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);
-    mca_pml_dr_send_request_schedule(sendreq);
+    /* update pending counts */
+    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-vfrag->vf_pending);
+    OPAL_THREAD_ADD64(&vfrag->vf_pending,-vfrag->vf_pending);
+
+    /* check for hung btl */
+    if(++vfrag->vf_wdog_cnt == mca_pml_dr.wdog_retry_max) {
+        /* declare btl dead */
+        opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
+            vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+        mca_bml.bml_del_btl(vfrag->bml_btl->btl);
+        mca_pml_dr_vfrag_reset(vfrag);
+    } 
+
+    /* back off watchdog timer */
+    vfrag->vf_wdog_tv.tv_sec = 
+          mca_pml_dr.wdog_timer.tv_sec + 
+          mca_pml_dr.wdog_timer.tv_sec * mca_pml_dr.wdog_timer_multiplier  * 
+          vfrag->vf_wdog_cnt;
+    vfrag->vf_wdog_tv.tv_usec =
+          mca_pml_dr.wdog_timer.tv_usec +
+          mca_pml_dr.wdog_timer.tv_usec * mca_pml_dr.wdog_timer_multiplier  *
+          vfrag->vf_wdog_cnt;
+
+    /* reschedule vfrag */
+    mca_pml_dr_vfrag_reschedule(vfrag);
 }
+
 
 /** 
  * The ack timer expired, better do something about it, like resend the entire vfrag? 
  */
-void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) { 
+static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) 
+{
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
-    opal_output(0, "%s:%d:%s: ack timeout!", __FILE__, __LINE__, __func__);
+    OPAL_OUTPUT((0, "%s:%d:%s: ack timeout: %0x08x", __FILE__, __LINE__, __func__, vfrag));
 
-    OPAL_THREAD_LOCK(&ompi_request_lock);
+    /* stop ack timer */
+    MCA_PML_DR_VFRAG_ACK_STOP(vfrag);
+
+    /* check for hung btl */
+    if(++vfrag->vf_ack_cnt == mca_pml_dr.ack_retry_max) {
+        /* declare btl dead */
+        opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
+            vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+        mca_bml.bml_del_btl(vfrag->bml_btl->btl);
+        mca_pml_dr_vfrag_reset(vfrag);
+    }
+
+    /* back off ack timer */
+    vfrag->vf_ack_tv.tv_sec = 
+          mca_pml_dr.ack_timer.tv_sec + 
+          mca_pml_dr.ack_timer.tv_sec * mca_pml_dr.ack_timer_multiplier  * 
+          vfrag->vf_ack_cnt;
+    vfrag->vf_ack_tv.tv_usec =
+          mca_pml_dr.ack_timer.tv_usec +
+          mca_pml_dr.ack_timer.tv_usec * mca_pml_dr.ack_timer_multiplier  *
+          vfrag->vf_ack_cnt;
+
+    /* reschedule vfrag */
+    mca_pml_dr_vfrag_reschedule(vfrag);
+}
+
+/**
+ * Vfrag failure - declare btl dead and try to resend on an alternate btl
+ */
+
+void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
+{
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+
+    /* update counters - give new BTL a fair chance :-) */
+    vfrag->vf_ack_cnt = 0;
+    vfrag->vf_wdog_cnt = 0;
+
+    /* lookup new bml_btl data structure */
+    sendreq->req_endpoint = (mca_pml_dr_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; 
+
+    /* make sure a path is available */
+    if(mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->base.btl_eager) == 0 ||
+       mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->base.btl_eager) == 0) {
+        opal_output(0, "%s:%d:%s: no path to peer", __FILE__, __LINE__, __func__);
+        orte_errmgr.abort();
+    }
+    if(vfrag->vf_offset == 0) {
+        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->base.btl_eager);
+    } else {
+        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->base.btl_send);
+    }
+    opal_output(0, "%s:%d:%s: selected new BTL: %s", __FILE__, __LINE__, __func__, 
+        vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+}
+
+
+/**
+ *  Reschedule vfrag that has timed out 
+ */
+
+void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t* vfrag)
+{
+    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+
+    /* start wdog timer */
+    MCA_PML_DR_VFRAG_WDOG_START(vfrag);
 
     /* first frag within send request */
+    OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag == &sendreq->req_vfrag0) {
-        MCA_PML_DR_VFRAG_ACK_START(vfrag);
         if(vfrag->vf_state & MCA_PML_DR_VFRAG_RNDV) { 
             MCA_PML_DR_SEND_REQUEST_RNDV_PROBE(sendreq, vfrag);
         } else { 
@@ -116,9 +190,7 @@ void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) {
     } else { 
         MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq, vfrag);
         OPAL_THREAD_UNLOCK(&ompi_request_lock);
-        MCA_PML_DR_VFRAG_WDOG_START(vfrag);
         mca_pml_dr_send_request_schedule(sendreq);
     }
 }
-
 
