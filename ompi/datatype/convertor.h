@@ -234,16 +234,6 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
 }
 
 /*
- * This function is internal to the data type engine. It should not be called from
- * outside. The data preparation should use the specialized prepare_for_send and
- * prepare_for_recv functions.
- */
-OMPI_DECLSPEC
-int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                            const struct ompi_datatype_t* datatype, int32_t count,
-                            const void* pUserBuf );
-
-/*
  *
  */
 OMPI_DECLSPEC int32_t

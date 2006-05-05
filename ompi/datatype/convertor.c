@@ -383,17 +383,11 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  *
  * I consider here that the convertor is clean, either never initialized or already cleanup.
  */
-int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                            const ompi_datatype_t* datatype, int32_t count,
-                            const void* pUserBuf )
+static inline int
+ompi_convertor_prepare( ompi_convertor_t* convertor,
+                        const ompi_datatype_t* datatype, int32_t count,
+                        const void* pUserBuf )
 {
-    uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
-
-    if( !(datatype->flags & DT_FLAG_COMMITED) ) {
-        /* this datatype is improper for conversion. Commit it first */
-        return OMPI_ERROR;
-    }
-
     convertor->pBaseBuf        = (void*)pUserBuf;
     convertor->count           = count;
 
@@ -425,6 +419,7 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
             convertor->bConverted = 0;
             return OMPI_SUCCESS;
         }
+        convertor->use_desc = &(datatype->opt_desc);
     } else {
         int i;
         uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;
@@ -436,23 +431,21 @@ int ompi_convertor_prepare( ompi_convertor_t* convertor,
             }
         }   
         convertor->remote_size *= convertor->count;
-    }
-
-    /* Decide which data representation will be used for the conversion. */
-    if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
-        convertor->use_desc = &(datatype->opt_desc);
-    } else {
         convertor->use_desc = &(datatype->desc);
     }
 
-    if( required_stack_length > convertor->stack_size ) {
-        convertor->stack_size = required_stack_length;
-        convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * convertor->stack_size );
-    } else {
-        convertor->pStack = convertor->static_stack;
-        convertor->stack_size = DT_STATIC_STACK_SIZE;
-    }
+    {
+        uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
 
+        if( required_stack_length > convertor->stack_size ) {
+            convertor->stack_size = required_stack_length;
+            convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) *
+                                                        convertor->stack_size );
+        } else {
+            convertor->pStack = convertor->static_stack;
+            convertor->stack_size = DT_STATIC_STACK_SIZE;
+        }
+    }
     return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
 }
 
