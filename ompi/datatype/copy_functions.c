@@ -15,6 +15,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/datatype_checksum.h"
+#include "ompi/datatype/convertor_internal.h"
 
 /* 
  * This function is used to copy data from one buffer to another.  The assumption

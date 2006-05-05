@@ -18,8 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/datatype_internal.h"
 
 #if OMPI_ENABLE_DEBUG
@@ -69,6 +68,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
+    const ompi_convertor_master_t* master = pConvertor->master;
     dt_elem_desc_t* pElems;
     int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
     char* pInput;
@@ -128,10 +128,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
             while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 type = pElems[pos_desc].elem.common.type;
-                rc = pConvertor->pFunctions[type]( pConvertor, count_desc,
-                                                   pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
-                                                   pConvertor->pBaseBuf + pStack->disp + disp_desc,
-                                                   oCount, pElems[pos_desc].elem.extent, &advance );
+                rc = master->pFunctions[type]( pConvertor, count_desc,
+                                               pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
+                                               pConvertor->pBaseBuf + pStack->disp + disp_desc,
+                                               oCount, pElems[pos_desc].elem.extent, &advance );
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;

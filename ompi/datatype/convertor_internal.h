@@ -17,10 +17,16 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 
+typedef int32_t (*conversion_fct_t)( ompi_convertor_t* pConvertor, uint32_t count,
+                                     const void* from, uint32_t from_len, long from_extent,
+                                     void* to, uint32_t to_length, long to_extent, 
+                                     uint32_t *advance );
+
 typedef struct ompi_convertor_master_t {
     struct ompi_convertor_master_t* next;
     uint32_t                        remote_arch;
     const int32_t                   remote_sizes[DT_MAX_PREDEFINED];
+    conversion_fct_t*               pFunctions;   /**< the convertor functions pointer */
 } ompi_convertor_master_t;
 
 /*

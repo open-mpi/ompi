@@ -46,7 +46,6 @@ extern "C" {
 #define CONVERTOR_CLONE            0x00100000
 #define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_TYPE_MASK        0x00FF0000
-#define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
@@ -54,11 +53,6 @@ extern "C" {
 #define CONVERTOR_COMPUTE_CRC      0x10000000
 
 typedef struct ompi_convertor_t ompi_convertor_t;
-
-typedef int32_t (*conversion_fct_t)( ompi_convertor_t* pConvertor, uint32_t count,
-                                     const void* from, uint32_t from_len, long from_extent,
-                                     void* to, uint32_t to_length, long to_extent, 
-                                     uint32_t *advance );
 
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             struct iovec* iov,
@@ -104,7 +98,6 @@ struct ompi_convertor_t {
     memalloc_fct_t                memAlloc_fn;  /**< pointer to the memory allocation function */
     void*                         memAlloc_userdata;  /**< user data for the malloc function */
     struct ompi_convertor_master_t* master;     /* the master convertor */
-    conversion_fct_t*             pFunctions;   /**< the convertor functions pointer */
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
     size_t                        bConverted;   /**< # of bytes already converted */
@@ -120,9 +113,6 @@ OBJ_CLASS_DECLARATION( ompi_convertor_t );
 OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_external32_convertor;
 OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_local_convertor;
 OMPI_DECLSPEC extern uint32_t          ompi_mpi_local_arch;
-
-extern conversion_fct_t ompi_ddt_copy_functions[];
-extern conversion_fct_t ompi_ddt_heterogeneous_copy_functions[];
 
 /*
  *
@@ -250,9 +240,8 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->pFunctions = pSrcConv->pFunctions;
-    convertor->flags      = (pSrcConv->flags | flags) & ~CONVERTOR_STATE_MASK;
-    
+    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->master     = pSrcConv->master;
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
 
@@ -273,9 +262,9 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->pFunctions = pSrcConv->pFunctions;
-    convertor->flags      = (pSrcConv->flags | flags) & ~CONVERTOR_STATE_MASK;
-        
+    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->master     = pSrcConv->master;
+
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
 
