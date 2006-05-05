@@ -897,6 +897,9 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 #endif
 #endif
 
+                /*
+                 * The if-clause should be optimized away, in case the macro extends to ;
+                 */
 #if OMPI_WANT_PERUSE
                 if( 0 != sendreq->req_send_offset ) {
                     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,

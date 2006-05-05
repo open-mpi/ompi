@@ -32,7 +32,7 @@ char * operation_string[] = {
  * Global variables
  */
 int comm_rank, comm_size;
-MPI_Comm comm_result = MPI_COMM_WORLD;
+MPI_Comm comm_result;
 peruse_timed_events_t* array_of_comm_spec = NULL;
 int max_array_of_comm_spec_index = 0;
 int current_array_of_comm_spec_index = 0;
@@ -68,6 +68,16 @@ static int print_generated_events( int rank, peruse_timed_events_t* spec_array, 
     }
     fflush(stdout);
     return 0;
+}
+
+static int collective_start_experiment( void )
+{
+    if( 0 == comm_rank ) {
+        static int experiment=1;
+
+        printf( "\n\nStarting Experiment %d:\n\n\n", experiment++ );
+    }
+    MPI_Barrier (comm_result);
 }
 
 static int collective_dump_events_trace( void )
@@ -124,6 +134,7 @@ event_t events[] = {
     {"PERUSE_COMM_REQ_INSERT_IN_POSTED_Q",   0, PERUSE_EVENT_HANDLE_NULL},
     {"PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q", 0, PERUSE_EVENT_HANDLE_NULL},
     {"PERUSE_COMM_REQ_XFER_BEGIN",           0, PERUSE_EVENT_HANDLE_NULL},
+    {"PERUSE_COMM_REQ_XFER_CONTINUE",        0, PERUSE_EVENT_HANDLE_NULL},
     {"PERUSE_COMM_REQ_XFER_END",             0, PERUSE_EVENT_HANDLE_NULL},
     {"PERUSE_COMM_REQ_COMPLETE",             0, PERUSE_EVENT_HANDLE_NULL},
     {"PERUSE_COMM_REQ_NOTIFY",               0, PERUSE_EVENT_HANDLE_NULL},
@@ -153,11 +164,15 @@ int main (int argc, char * argv[])
     MPI_Comm_size (MPI_COMM_WORLD, &comm_size);
 
     if( comm_size < 2 ) {
-        /* We're looking for send & receive messages we ned at least 2 nodes. */
+        /* We're looking for send & receive messages we need at least 2 nodes. */
         printf( "Please use at least 2 processes\n" );
         MPI_Finalize();
         return -1;
     }
+
+    MPI_Comm_dup (MPI_COMM_WORLD, &comm_result);
+    printf ("(Rank:%d) MPI_COMM_WORLD:%p comm_result:%p\n",
+            comm_rank, MPI_COMM_WORLD, comm_result);
 
     PERUSE_Init ();
     PERUSE_Query_supported_events (&peruse_num_supported,
@@ -192,10 +207,15 @@ int main (int argc, char * argv[])
     array_of_comm_spec = (peruse_timed_events_t*)malloc( sizeof(peruse_timed_events_t) *
                                                          max_array_of_comm_spec_index );
     initial_wtime = MPI_Wtime();
+    collective_start_experiment();
+    /*
+     * Experiment number 1
+     */
     if (comm_rank == 0) {
         /*
          * Delay the send, so that the MPI_RECV is posted for sure in order
-         * to trigger the PERUSE_COMM_MSG_MATCH_POSTED_REQ-event
+         * to trigger the PERUSE_COMM_MSG_MATCH_POSTED_REQ-event on rank 1
+         * The unique_id is taken from the internal request.
          */
         sleep (1);
         MPI_Send (array, ARRAY_SIZE, MPI_INT, 1, 4711, MPI_COMM_WORLD);
@@ -205,10 +225,15 @@ int main (int argc, char * argv[])
 
     collective_dump_events_trace();
 
+    collective_start_experiment();
+    /*
+     * Experiment number 2
+     */
     if (comm_rank == 0) {
         /*
          * Delay the send, so that the MPI_RECV is posted for sure in order
-         * to trigger the PERUSE_COMM_MSG_MATCH_POSTED_REQ-event
+         * to trigger the PERUSE_COMM_MSG_MATCH_POSTED_REQ-event on rank 1
+         * The unique_id is the request specified here.
          */
         sleep (1);
         MPI_Isend (array, ARRAY_SIZE, MPI_INT, 1, 4711, MPI_COMM_WORLD, &request);
@@ -219,10 +244,13 @@ int main (int argc, char * argv[])
 
     collective_dump_events_trace();
 
+    /*
+     * Experiment number 2
+     */
     if (comm_rank == 0) {
         /*
-         * Delay the send, so that the MPI_RECV is posted for sure in order
-         * to trigger the PERUSE_COMM_MSG_MATCH_POSTED_REQ-event
+         * Delay the probei/recv, so that the MPI_SEND is posted for sure in order
+         * to trigger the PERUSE_COMM_REQ_INSERT_IN_POSTED_Q-event
          */
         MPI_Send (array, ARRAY_SIZE, MPI_INT, 1, 4711, MPI_COMM_WORLD);
     } else if (comm_rank == 1) {
