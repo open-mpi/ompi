@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed backwards handling of "high" parameter in MPI_INTERCOMM_MERGE.
+  Thanks to Michael Kluskens for pointing this out to us.
 - Fixed improper handling of string arguments in Fortran bindings
   for MPI-IO functionality
 - Fixed segmentation fault with 64 bit applications on Solaris when
