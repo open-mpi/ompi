@@ -84,6 +84,9 @@ void ompi_convertor_destroy_masters( void )
     }
 }
 
+extern conversion_fct_t ompi_ddt_heterogeneous_copy_functions[DT_MAX_PREDEFINED];
+extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
+
 ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_arch )
 {
     ompi_convertor_master_t* master = ompi_convertor_master_list;
@@ -142,6 +145,13 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     } else {
         opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
     }
+
+    if( master->remote_arch == ompi_mpi_local_arch ) {
+        master->pFunctions = ompi_ddt_copy_functions;
+    } else {
+        master->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+    }
+
     /* We're done so far, return th mater convertor */
     return master;
 }
@@ -154,7 +164,6 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
     master = ompi_convertor_find_or_create_master( remote_arch );
 
     convertor->remoteArch = remote_arch;
-    convertor->pFunctions = ompi_ddt_copy_functions;
     convertor->stack_pos  = 0;
 
     return convertor;
@@ -461,7 +470,6 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if (convertor->remoteArch != ompi_mpi_local_arch) {
-            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
             convertor->fAdvance = ompi_unpack_general_checksum;
         } else
 #endif
@@ -474,7 +482,6 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     } else {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
         if (convertor->remoteArch != ompi_mpi_local_arch) {
-            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
             convertor->fAdvance = ompi_unpack_general;
         } else
 #endif
@@ -550,7 +557,7 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
     destination->fAdvance          = source->fAdvance;
     destination->memAlloc_fn       = source->memAlloc_fn;
     destination->memAlloc_userdata = source->memAlloc_userdata;
-    destination->pFunctions        = source->pFunctions;
+    destination->master            = source->master;
     destination->local_size        = source->local_size;
     destination->remote_size       = source->remote_size;
     /* create the stack */
