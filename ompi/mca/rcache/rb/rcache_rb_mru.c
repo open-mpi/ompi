@@ -64,7 +64,7 @@ int mca_rcache_rb_mru_insert(
         
     }
     
-    while(rcache->reg_max_mru_size <= rcache->reg_cur_mru_size) { 
+    while(rcache->reg_max_mru_size <= rcache->reg_cur_mru_size) {
         old_reg = (mca_mpool_base_registration_t*)
             opal_list_get_first(&rcache->mru_list);
         /* we need to retain first, because we only want the registration 
@@ -95,6 +95,7 @@ int mca_rcache_rb_mru_delete(
                                      )) {
         rc =  OMPI_ERROR;
     } else { 
+        rcache->reg_cur_mru_size -= (reg->bound - reg->base + 1);
         rc = OMPI_SUCCESS; 
     }
     return rc; 
