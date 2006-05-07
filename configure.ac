@@ -33,8 +33,8 @@ AC_INIT([Open MPI],
         [m4_normalize(esyscmd([config/ompi_get_version.sh VERSION --base]))],
         [http://www.open-mpi.org/community/help/], [openmpi])
 AC_PREREQ(2.58)
-AC_CONFIG_AUX_DIR(./config)
-AC_CONFIG_MACRO_DIR(./config)
+AC_CONFIG_AUX_DIR(config)
+AC_CONFIG_MACRO_DIR(config)
 
 # Get our platform support file.  This has to be done very, very early
 # because it twiddles random bits of autoconf
