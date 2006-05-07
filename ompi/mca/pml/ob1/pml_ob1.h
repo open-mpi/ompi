@@ -233,5 +233,18 @@ typedef struct mca_pml_ob1_rdma_reg_t mca_pml_ob1_rdma_reg_t;
 
 #define MCA_PML_OB1_MAX_REGISTRATIONS 4
 
+/*
+ * Compute the total number of bytes on supplied descriptor
+ */
+#define MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH(segments, count, hdrlen, length) \
+do {                                                                        \
+   size_t i;                                                                \
+                                                                            \
+   for( i = 0; i < count; i++ ) {                                           \
+       length += segments[i].seg_len;                                       \
+   }                                                                        \
+   length -= hdrlen;                                                        \
+} while(0)
+
 #endif
 
