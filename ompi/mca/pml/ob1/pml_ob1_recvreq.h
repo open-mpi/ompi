@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,8 +24,11 @@
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_rdma.h"
+#include "ompi/proc/proc.h"
+#include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
+#include "ompi/datatype/datatype.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -98,6 +101,19 @@ do {                                                                \
                                     tag,                            \
                                     comm,                           \
                                     persistent);                    \
+    if( MPI_ANY_SOURCE != src ) {                                   \
+        (request)->req_recv.req_base.req_proc =                     \
+            comm->c_pml_comm->procs[src].proc_ompi;                 \
+        if( (0 != (datatype)->size) && (0 != count) ) {             \
+            ompi_convertor_copy_and_prepare_for_recv(               \
+                (request)->req_recv.req_base.req_proc->proc_convertor, \
+                (request)->req_recv.req_base.req_datatype,          \
+                (request)->req_recv.req_base.req_count,             \
+                (request)->req_recv.req_base.req_addr,              \
+                0,                                                  \
+                &(request)->req_recv.req_convertor );               \
+        }                                                           \
+    }                                                               \
 } while(0)
 
 /**
@@ -218,13 +234,15 @@ do {                                                                            
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
                                                                                    \
     if((request)->req_recv.req_bytes_packed != 0) {                                \
-        ompi_convertor_copy_and_prepare_for_recv(                                  \
+        if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \
+            ompi_convertor_copy_and_prepare_for_recv(                              \
                          (request)->req_recv.req_base.req_proc->proc_convertor,    \
                          (request)->req_recv.req_base.req_datatype,                \
                          (request)->req_recv.req_base.req_count,                   \
                          (request)->req_recv.req_base.req_addr,                    \
                          0,                                                        \
                          &(request)->req_recv.req_convertor );                     \
+        }                                                                          \
         ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
                                           &(request)->req_bytes_delivered );       \
     }                                                                              \
