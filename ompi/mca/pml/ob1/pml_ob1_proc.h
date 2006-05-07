@@ -25,7 +25,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/group/group.h"
 #include "ompi/proc/proc.h"
-#include "pml_ob1_endpoint.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
