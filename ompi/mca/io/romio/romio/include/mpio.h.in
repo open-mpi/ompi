@@ -16,6 +16,12 @@
    a the types to be names that conform to the prefix rule */
 #include "io_romio_conv.h"
 
+#define MPIIMPL_HAVE_MPI_COMBINER_DARRAY 1
+#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
+#define MPIIMPL_HAVE_MPI_COMBINER_SUBARRAY 1
+#define MPIIMPL_HAVE_MPI_TYPE_CREATE_DARRAY 1
+#define MPIIMPL_HAVE_MPI_COMBINER_DUP 1
+
 #if defined(__cplusplus)
 extern "C" {
 #endif
