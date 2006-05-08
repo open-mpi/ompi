@@ -35,6 +35,8 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
             AS_IF([test "$enable_mpi_profile" = "no"],
                   [AC_MSG_RESULT([no])
                    AC_MSG_WARN([*** The ROMIO io component requires the MPI profiling layer])
+                   AS_IF([test "$enable_io_romio" = "yes"],
+                         [AC_MSG_ERROR([*** ROMIO requested but not available.  Aborting])])
                    $2],
                   [AC_MSG_RESULT([yes])
 
@@ -64,7 +66,7 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                        [AS_IF([test ! -z $build], [io_romio_flags="$io_romio_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio_flags="$io_romio_flags --host=$host"])
                         AS_IF([test ! -z $target], [io_romio_flags="$io_romio_flags --target=$target"])])
-                   io_romio_flags="$io_romio_flags CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LSFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
+                   io_romio_flags="$io_romio_flags CFLAGS="'"'"$CFLAGS"'"'" CPPFLAGS="'"'"$CPPFLAGS"'"'" FFLAGS="'"'"$FFLAGS"'"'" LDFLAGS="'"'"$LDFLAGS"'"'" --$io_romio_shared-shared --$io_romio_static-static $io_romio_flags $io_romio_prefix_arg --with-mpi=open_mpi"
 
                    ompi_show_subtitle "Configuring ROMIO distribution"
                    OMPI_CONFIG_SUBDIR([ompi/mca/io/romio/romio], 
@@ -85,6 +87,8 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                           echo "ROMIO distribution configured successfully"
                           io_romio_WRAPPER_EXTRA_LIBS="$io_romio_LIBS"
                           $1],
-                         [AC_MSG_WARN([ROMIO distribution did not configure successfully])
+                         [AS_IF([test "$enable_io_romio" = "yes"],
+                                [AC_MSG_ERROR([ROMIO distribution did not configure successfully])],
+                                [AC_MSG_WARN([ROMIO distribution did not configure successfully])])
                           $2])])])
 ])
