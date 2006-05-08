@@ -108,7 +108,7 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
 #define PML_PTLS_PROT_MASK   0xE000000000000000ULL
 #define PML_PTLS_CTX_MASK    0x1FFF000000000000ULL
 #define PML_PTLS_SOURCE_MASK 0x0000FFFF00000000ULL
-#define PML_PTLS_TAG_MASK    0x00000000FFFFFFFFULL
+#define PML_PTLS_TAG_MASK    0x000000007FFFFFFFULL
 
 #define PML_PTLS_RECV_BITS(match_bits, ignore_bits, ctxid, src, tag) \
 { \
@@ -129,7 +129,7 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
     if (tag == MPI_ANY_TAG) { \
          ignore_bits |= PML_PTLS_TAG_MASK; \
     } else { \
-        match_bits |= (PML_PTLS_TAG_MASK & tag); \
+        match_bits |= (0x00000000FFFFFFFFULL & tag); \
     } \
 } \
 
@@ -140,7 +140,7 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
     match_bits = (match_bits << 16);                     \
     match_bits |= src;                                   \
     match_bits = (match_bits << 32);                     \
-    match_bits |= (PML_PTLS_TAG_MASK & tag);                                   \
+    match_bits |= (0x00000000FFFFFFFFULL & tag);         \
 }
 
 #define PML_PTLS_IS_LONG(match_bits) (match_bits & PML_PTLS_LONG)
