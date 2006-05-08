@@ -126,7 +126,7 @@ ompi_pml_portals_add_procs(struct ompi_proc_t** procs, size_t nprocs)
         ptl_process_id_t anyproc;
         uint64_t match_bits = 0;
 
-        opal_output_verbose(100, ompi_pml_portals.portals_output,
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
                             "running initialization");
 
         /* setup our event queues */
@@ -176,6 +176,10 @@ ompi_pml_portals_add_procs(struct ompi_proc_t** procs, size_t nprocs)
                           PTL_RETAIN, 
                           &md_h);
         assert(ret == PTL_OK);
+
+        opal_output_verbose(10, ompi_pml_portals.portals_output,
+                            "unexpected me: %ld",
+                            ompi_pml_portals.portals_unexpected_me_h);
 
         done_init = true;
     }

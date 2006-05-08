@@ -109,6 +109,9 @@ ompi_pml_portals_recv(void *buf,
         (ompi_pml_portals_proc_t*) comm->c_pml_procs[src];
     ptl_event_t ev;
 
+    OPAL_OUTPUT_VERBOSE((90, ompi_pml_portals.portals_output,
+                         "receive called from %d", src));
+
     /* BWB - fix me - need some way of finding source in ANY_SOURCE case */
     ompi_convertor_copy_and_prepare_for_send(comm->c_pml_procs[comm->c_my_rank]->proc_ompi->proc_convertor,
                                              datatype,
@@ -198,6 +201,7 @@ ompi_pml_portals_recv(void *buf,
     /* now try to make active */
     new_md = md;
     new_md.threshold = 3;
+#if 0
     OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
                         "  calling PtlMDUpdate(\n"));
     OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
@@ -232,6 +236,7 @@ ompi_pml_portals_recv(void *buf,
                         "      eventq             = %d\n",new_md.eq_handle));
     OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
                         "    test eventq          = %d )\n",ompi_pml_portals.portals_unexpected_receive_queue));
+#endif
     
     ret = PtlMDUpdate(md_h, &md, &new_md, ompi_pml_portals.portals_unexpected_receive_queue);
     OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
@@ -248,7 +253,7 @@ ompi_pml_portals_recv(void *buf,
     /* wait for our completion event */
     PtlEQWait(ompi_pml_portals.portals_blocking_receive_queue, &ev);
     assert(ev.type == PTL_EVENT_PUT_END);
-    OPAL_OUTPUT_VERBOSE((100, ompi_pml_portals.portals_output,
+    OPAL_OUTPUT_VERBOSE((90, ompi_pml_portals.portals_output,
                         "recv: PUT_END event received"));
 
     PtlMDUnlink(md_h);

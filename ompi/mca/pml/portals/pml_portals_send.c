@@ -71,7 +71,6 @@ ompi_pml_portals_send(void *buf,
     ompi_pml_portals_proc_t *portals_proc = 
         (ompi_pml_portals_proc_t*) comm->c_pml_procs[dst];
 
-
     if (MCA_PML_BASE_SEND_SYNCHRONOUS == sendmode) abort();
 
     ompi_convertor_copy_and_prepare_for_send(comm->c_pml_procs[dst]->proc_ompi->proc_convertor,
@@ -91,7 +90,7 @@ ompi_pml_portals_send(void *buf,
 
     ompi_pml_portals_prepare_md_send(&ompi_pml_portals.portals_blocking_send_convertor, 
                                      &md, &free_after);
-    md.threshold = 2;
+    md.threshold = 100;
     md.options |= (PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE);
     md.eq_handle = ompi_pml_portals.portals_blocking_send_queue;
     PtlMDAttach(me_h, md, PTL_RETAIN, &md_h);
