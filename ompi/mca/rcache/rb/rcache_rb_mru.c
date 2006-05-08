@@ -68,11 +68,11 @@ int mca_rcache_rb_mru_insert(
         old_reg = (mca_mpool_base_registration_t*)
             opal_list_get_first(&rcache->mru_list);
         /* we need to retain first, because we only want the registration 
-         removed from the tree and the mru */
+         removed from the tree and the mru we didn't get this registration 
+        using mpool_find so the refernce count wasn't bumped up.*/
         old_reg->mpool->mpool_retain(old_reg->mpool, old_reg);
         old_reg->mpool->mpool_deregister(old_reg->mpool, old_reg);
-        rcache->reg_cur_mru_size -= (old_reg->bound - old_reg->base + 1);
-                
+        
     }
 
     opal_list_append(&rcache->mru_list,(opal_list_item_t*) reg); 
