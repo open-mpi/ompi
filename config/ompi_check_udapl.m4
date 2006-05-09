@@ -48,13 +48,25 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
     
            OMPI_CHECK_PACKAGE([$1],
 	          [dat/udat.h],
-                  [dapl],
+                  [dat],
                   [dat_registry_list_providers],
-                  [-ldat],
+                  [],
                   [$ompi_check_udapl_dir],
                   [$ompi_check_udapl_libdir],
                   [ompi_check_udapl_happy="yes"],
                   [ompi_check_udapl_happy="no"])
+
+           # if needed use -ldapl as well
+           AS_IF([test "$ompi_check_udapl_happy" = "no"],
+             [OMPI_CHECK_PACKAGE([$1],
+	            [dat/udat.h],
+                   [dat],
+                   [dat_registry_list_providers],
+                   [-ldapl],
+                   [$ompi_check_udapl_dir],
+                   [$ompi_check_udapl_libdir],
+                   [ompi_check_udapl_happy="yes"],
+                   [ompi_check_udapl_happy="no"])])
 
            CPPFLAGS="$ompi_check_udapl$1_save_CPPFLAGS"],
           [ompi_check_udapl_happy="no"])
