@@ -137,9 +137,9 @@ int mca_btl_sm_component_open(void)
     mca_btl_sm_component.sm_mpool_name =
         mca_btl_sm_param_register_string("mpool", "sm");
     mca_btl_sm_component.eager_limit =
-        mca_btl_sm_param_register_int("eager_limit", 1024);
+        mca_btl_sm_param_register_int("eager_limit", 4*1024);
     mca_btl_sm_component.max_frag_size =
-        mca_btl_sm_param_register_int("max_frag_size", 8*1024);
+        mca_btl_sm_param_register_int("max_frag_size", 32*1024);
     mca_btl_sm_component.size_of_cb_queue =
         mca_btl_sm_param_register_int("size_of_cb_queue", 128);
     mca_btl_sm_component.cb_lazy_free_freq =
