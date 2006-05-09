@@ -194,7 +194,20 @@ static int orte_rmgr_urm_launch(orte_jobid_t jobid)
 
 static int orte_rmgr_urm_terminate_job(orte_jobid_t jobid)
 {
+    int ret;
+    orte_jobid_t my_jobid;
+
     OPAL_TRACE(1);
+
+    ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+    if (ORTE_SUCCESS == ret) {
+        /* if our jobid is the one we're trying to kill AND we're a
+           singleton, then calling the urm_pls isn't going to be able
+           to do anything.  Just call exit. */
+        if (orte_process_info.singleton && jobid == my_jobid) {
+            exit(1);
+        }
+    }
 
     return mca_rmgr_urm_component.urm_pls->terminate_job(jobid);
 }
@@ -202,6 +215,16 @@ static int orte_rmgr_urm_terminate_job(orte_jobid_t jobid)
 static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
 {
     OPAL_TRACE(1);
+
+    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name, 
+                              orte_process_info.my_name)) &&
+        (orte_process_info.singleton)) {
+        /* if we're trying to get ourselves killed and we're a
+           singleton, calling terminate_proc isn't going to work
+           properly -- there's no pls setup properly for us.  Just
+           call exit and be done. */
+        exit(1);
+    }
 
     return mca_rmgr_urm_component.urm_pls->terminate_proc(proc_name);
 }
