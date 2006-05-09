@@ -1882,18 +1882,9 @@ CFLAGS="$CFLAGS -DHAVE_ROMIOCONF_H"
 AM_PROG_LIBTOOL
 
 # Open MPI: setup the AM_CONDITIONALs to build the different adio devices
-AM_CONDITIONAL(BUILD_GRIDFTP, [test -n "`echo $FILE_SYSTEM | grep gridftp`"])
-AM_CONDITIONAL(BUILD_HFS, [test -n "`echo $FILE_SYSTEM | grep hfs`"])
-AM_CONDITIONAL(BUILD_NFS, [test -n "`echo $FILE_SYSTEM | grep nfs`"])
-AM_CONDITIONAL(BUILD_PANFS, [test -n "`echo $FILE_SYSTEM | grep panfs`"])
-AM_CONDITIONAL(BUILD_PFS, [test -n "`echo $FILE_SYSTEM | grep pfs`"])
-AM_CONDITIONAL(BUILD_PIOFS, [test -n "`echo $FILE_SYSTEM | grep piofs`"])
-AM_CONDITIONAL(BUILD_PVFS, [test -n "`echo $FILE_SYSTEM | grep pvfs`"])
-AM_CONDITIONAL(BUILD_PVFS2, [test -n "`echo $FILE_SYSTEM | grep pvfs2`"])
-AM_CONDITIONAL(BUILD_SFS, [test -n "`echo $FILE_SYSTEM | grep sfs`"])
-AM_CONDITIONAL(BUILD_TESTFS, [test -n "`echo $FILE_SYSTEM | grep testfs`"])
-AM_CONDITIONAL(BUILD_UFS, [test -n "`echo $FILE_SYSTEM | grep ufs`"])
-AM_CONDITIONAL(BUILD_XFS, [test -n "`echo $FILE_SYSTEM | grep xfs`"])
+ m4_foreach([my_fs], 
+  [gridftp, hfs, nfs, panfs, pfs, piofs, pvfs, pvfs2, sfs, testfs, ufs, xfs],
+  [AM_CONDITIONAL(BUILD_[]AS_TR_CPP(my_fs), [test -n "$file_system_]my_fs["])])
 
 echo "setting CC to $CC"
 echo "setting F77 to $F77"
