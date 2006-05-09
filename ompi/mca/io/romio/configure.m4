@@ -61,7 +61,6 @@ AC_DEFUN([MCA_io_romio_CONFIG],[
                          [io_romio_prefix_arg="--prefix=$prefix"], 
                          [io_romio_prefix_arg=])
 
-                   io_romio_flags=
                    AS_IF([test "$cross_compiling" = "yes"],
                        [AS_IF([test ! -z $build], [io_romio_flags="$io_romio_flags --build=$build"])
                         AS_IF([test ! -z $host], [io_romio_flags="$io_romio_flags --host=$host"])

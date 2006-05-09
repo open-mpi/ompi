@@ -139,7 +139,7 @@ libadio_la_SOURCES =
 libadio_la_LIBADD = \
         common/libadio_common.la \
         $(HFS_LIB) $(NFS_LIB) $(NTFS_LIB) $(PFS_LIB) $(PIOFS_LIB) \
-        $(PVFS_LIB) $(SFS_LIB) $(TESTFS_LIB) $(UFS_LIB) $(XFS_LIB)
+        $(PVFS_LIB) $(PVFS2_LIB) $(SFS_LIB) $(TESTFS_LIB) $(UFS_LIB) $(XFS_LIB)
 libadio_la_DEPENDENCIES = \
         $(libadio_la_LIBADD)
 
