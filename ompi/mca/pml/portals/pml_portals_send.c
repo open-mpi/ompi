@@ -84,7 +84,7 @@ ompi_pml_portals_send(void *buf,
                 portals_proc->proc_id,
                 msg_count,
                 0,
-                PTL_RETAIN,
+                PTL_UNLINK,
                 PTL_INS_AFTER,
                 &me_h);
 

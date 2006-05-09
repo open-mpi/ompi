@@ -189,7 +189,7 @@ ompi_pml_portals_recv(void *buf,
                 portals_proc,
                 match_bits,
                 ignore_bits,
-                PTL_RETAIN,
+                PTL_UNLINK,
                 PTL_INS_BEFORE,
                 &me_h);
 
