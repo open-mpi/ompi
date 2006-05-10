@@ -37,8 +37,6 @@ static inline void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
     if( 0 != alignment ) {
         unsigned long ptr = (unsigned long)frag->segment.seg_addr.pval;
         alignment = BTL_SM_ALIGNMENT_TO - alignment;
-        printf( "SM fragment realignment by %ld from %lx to %lx\n", alignment,
-                ptr, ptr + alignment );
         ptr += alignment;
         frag->segment.seg_addr.pval = (void*)ptr;
     }
