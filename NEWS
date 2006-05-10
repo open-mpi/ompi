@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed various configure and build issues with ROMIO.  Thanks to
+  Dries Kimpe for bringing them to our attention.
 - Fixed error in MPI_COMM_SPLIT when dealing with intercommunicators.
   Thanks to Bert Wesarg for identifying the problem.
 - Fixed backwards handling of "high" parameter in MPI_INTERCOMM_MERGE.
