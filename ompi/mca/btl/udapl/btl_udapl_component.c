@@ -255,6 +255,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
                            bool enable_mpi_threads)
 {
     DAT_PROVIDER_INFO* datinfo;
+    DAT_PROVIDER_INFO** datinfoptr;
     mca_btl_base_module_t **btls;
     mca_btl_udapl_module_t *btl;
     DAT_COUNT num_ias;
@@ -263,17 +264,29 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     OPAL_OUTPUT((0, "udapl_component_init\n"));
 
     /* enumerate uDAPL interfaces */
+	 /* Have to do weird pointer stuff to make uDAPL happy -
+	    just an array of DAT_PROVIDER_INFO isn't good enough. */
     datinfo = malloc(sizeof(DAT_PROVIDER_INFO) *
             mca_btl_udapl_component.udapl_max_btls);
-    if(NULL == datinfo) {
+    datinfoptr = malloc(sizeof(DAT_PROVIDER_INFO*) *
+            mca_btl_udapl_component.udapl_max_btls);
+    if(NULL == datinfo || NULL == datinfoptr) {
         return NULL;
     }
+
+	 for(i = 0; i < mca_btl_udapl_component.udapl_max_btls; i++) {
+		 datinfoptr[i] = &datinfo[i];
+	 }
+
     if(DAT_SUCCESS != dat_registry_list_providers(
             mca_btl_udapl_component.udapl_max_btls,
             (DAT_COUNT*)&num_ias, &datinfo)) {
         free(datinfo);
+		  free(datinfoptr);
         return NULL;
     }
+
+	 free(datinfoptr);
 
     /* allocate space for the each possible BTL */
     mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t **)
