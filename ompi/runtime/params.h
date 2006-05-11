@@ -90,6 +90,12 @@ OMPI_DECLSPEC extern char * ompi_mpi_show_mca_params_file;
 OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
 
     /**
+     * Whether we should keep the string hostnames of all the MPI
+     * process peers around or not (eats up a good bit of memory).
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_keep_peer_hostnames;
+
+    /**
      * Whether an MPI_ABORT should print out a stack trace or not.
      */
     OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;

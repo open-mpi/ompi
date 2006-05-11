@@ -46,6 +46,8 @@ char *ompi_mpi_show_mca_params_file = NULL;
 bool ompi_mpi_paffinity_alone = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
+bool ompi_mpi_keep_peer_hostnames = true;
+
 
 int ompi_mpi_register_params(void)
 {
@@ -137,6 +139,14 @@ int ompi_mpi_register_params(void)
                                 "If set, pin this process to the processor number indicated by the value",
                                 true, false, 
                                 -1, NULL);
+
+    /* Do we want to save hostnames for debugging messages?  This can
+       eat quite a bit of memory... */
+
+    mca_base_param_reg_int_name("mpi", "keep_peer_hostnames",
+                                "If nonzero, save the string hostnames of all MPI peer processes (mostly for error / debugging output messages).  This can add quite a bit of memory usage to each MPI process.",
+                                false, false, 1, &value);
+    ompi_mpi_keep_peer_hostnames = (bool) value;
 
     /* MPI_ABORT controls */
 
