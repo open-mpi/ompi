@@ -49,6 +49,11 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM,
                                           FUNC_NAME);
         }
+        if (OMPI_COMM_IS_INTER(comm)) {
+            return OMPI_ERRHANDLER_INVOKE (comm, MPI_ERR_COMM,
+                                          FUNC_NAME);
+        }
+	
     }
 
     /* Note that MPI-2:9.7 (p265) says that errors in MPI_FILE_OPEN
