@@ -24,4 +24,5 @@ EXTRA_DIST = \
 	dist/macosx-pkg/buildpackage.sh \
 	dist/macosx-pkg/ReadMe.rtf \
 	platform/optimized \
-	platform/redstorm
+	platform/redstorm \
+	platform/cray_xt3
