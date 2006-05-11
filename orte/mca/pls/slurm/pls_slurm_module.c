@@ -471,7 +471,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset PATH */
             oldenv = getenv("PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/bin:%s\n", prefix, oldenv);
+                asprintf(&newenv, "%s/bin:%s", prefix, oldenv);
             } else {
                 asprintf(&newenv, "%s/bin", prefix);
             }
@@ -484,7 +484,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset LD_LIBRARY_PATH */
             oldenv = getenv("LD_LIBRARY_PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/lib:%s\n", prefix, oldenv);
+                asprintf(&newenv, "%s/lib:%s", prefix, oldenv);
             } else {
                 asprintf(&newenv, "%s/lib", prefix);
             }
