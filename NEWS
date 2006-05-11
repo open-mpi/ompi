@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed various InfiniBand port matching issues during startup.
+  Thanks to Scott Weitzenkamp for identifying these problems.
 - Fixed various configure and build issues with ROMIO.  Thanks to
   Dries Kimpe for bringing them to our attention.
 - Fixed error in MPI_COMM_SPLIT when dealing with intercommunicators.
