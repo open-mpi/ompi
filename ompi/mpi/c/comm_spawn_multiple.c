@@ -63,10 +63,6 @@ int MPI_Comm_spawn_multiple(int count, char **array_of_commands, char ***array_o
             return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
-        if ( NULL == array_of_errcodes ) {
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG,
-                                          FUNC_NAME);
-        }
         if (NULL == array_of_info) {
           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                         FUNC_NAME);
