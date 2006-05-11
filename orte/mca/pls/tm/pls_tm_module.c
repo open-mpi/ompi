@@ -311,7 +311,7 @@ pls_tm_launch(orte_jobid_t jobid)
             for (i = 0; NULL != env && NULL != env[i]; ++i) {
                 /* Reset PATH */
                 if (0 == strncmp("PATH=", env[i], 5)) {
-                    asprintf(&newenv, "%s/bin:%s\n", 
+                    asprintf(&newenv, "%s/bin:%s", 
                              cur_prefix, env[i] + 5);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting PATH: %s", 
@@ -323,7 +323,7 @@ pls_tm_launch(orte_jobid_t jobid)
 
                 /* Reset LD_LIBRARY_PATH */
                 else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
-                    asprintf(&newenv, "%s/lib:%s\n", 
+                    asprintf(&newenv, "%s/lib:%s", 
                              cur_prefix, env[i] + 16);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting LD_LIBRARY_PATH: %s", 

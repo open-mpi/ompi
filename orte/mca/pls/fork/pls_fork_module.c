@@ -324,7 +324,7 @@ static int orte_pls_fork_proc(
 
             /* Reset PATH */
             if (0 == strncmp("PATH=", context->env[i], 5)) {
-                asprintf(&newenv, "%s/bin:%s\n",
+                asprintf(&newenv, "%s/bin:%s",
                          context->prefix_dir, context->env[i] + 5);
                 opal_setenv("PATH", newenv, true, &environ_copy);
                 free(newenv);
@@ -332,7 +332,7 @@ static int orte_pls_fork_proc(
 
             /* Reset LD_LIBRARY_PATH */
             else if (0 == strncmp("LD_LIBRARY_PATH=", context->env[i], 16)) {
-                asprintf(&newenv, "%s/lib:%s\n",
+                asprintf(&newenv, "%s/lib:%s",
                          context->prefix_dir, context->env[i] + 16);
                 opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ_copy);
                 free(newenv);
