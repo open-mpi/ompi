@@ -691,8 +691,8 @@ static void mca_btl_openib_endpoint_recv(
                 BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
                 return; 
             }
-            ib_endpoint = ib_proc->proc_endpoints[0];
-            
+           
+            OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock); 
             endpoint_state = ib_endpoint->endpoint_state;
 
             /* Update status */
@@ -744,7 +744,7 @@ static void mca_btl_openib_endpoint_recv(
             default :
                 BTL_ERROR(("Invalid endpoint state %d", endpoint_state));
             }
-
+            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
             break;
         }
     }
