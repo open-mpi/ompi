@@ -414,7 +414,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 
 %files
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %{_prefix}
 # If we're not installing in /opt, then the prefix is /usr, but the
 # sysconfdir is /etc -- so list them both.  Otherwise, we install in
@@ -448,7 +448,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 
 %files runtime -f runtime.files
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %dir %{_prefix}
 # If we're not installing in /opt, then the prefix is /usr, but the
 # sysconfdir is /etc -- so list them both.  Otherwise, we install in
@@ -482,7 +482,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_bindir}/orted
 
 %files devel -f devel.files
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %{_includedir}
 %{_bindir}/mpicc
 %{_bindir}/mpiCC
@@ -497,7 +497,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 # (e.g., foo.1.gz or foo.1.bz2) -- and we therefore don't know the
 # exact filenames.
 %files docs
-%defattr(-, root, root)
+%defattr(-, root, root, -)
 %{_mandir}
 
 %endif
