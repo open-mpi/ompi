@@ -228,10 +228,15 @@ extern "C" {
      * MPI layer, or the MCA base system framework itself).  Typical
      * "type" strings are:
      *
-     * * "mca": for the MCA base framework itself
-     * * framework name: for any given framework
-     * * "mpi": for parameters that apply to the overall MPI layer
-     * * "orte": for parameters that apply to the overall ORTE layer
+     * "mca": for the MCA base framework itself
+     * framework name: for any given framework
+     * "mpi": for parameters that apply to the overall MPI layer
+     * "orte": for parameters that apply to the overall ORTE layer
+     *
+     * Note that if you use mca_base_param_find() to lookup the index
+     * of the registered parameter, the "component" argument should be
+     * NULL (because it is not specified in this registration
+     * function, and is therefore registered with a NULL value).
      */
     OMPI_DECLSPEC int mca_base_param_reg_int_name(const char *type,
                                                   const char *param_name, 
@@ -320,10 +325,15 @@ extern "C" {
      * (e.g., the MPI layer, or the MCA base system framework itself).
      * Typical "type" strings are:
      *
-     * * "mca": for the MCA base framework itself
-     * * framework name: for any given framework
-     * * "mpi": for parameters that apply to the overall MPI layer
-     * * "orte": for parameters that apply to the overall ORTE layer
+     * "mca": for the MCA base framework itself
+     * framework name: for any given framework
+     * "mpi": for parameters that apply to the overall MPI layer
+     * "orte": for parameters that apply to the overall ORTE layer
+     *
+     * Note that if you use mca_base_param_find() to lookup the index
+     * of the registered parameter, the "component" argument should be
+     * NULL (because it is not specified in this registration
+     * function, and is therefore registered with a NULL value).
      */
     OMPI_DECLSPEC int mca_base_param_reg_string_name(const char *type,
                                                      const char *param_name,
