@@ -135,6 +135,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
         if (opal_list_get_size(&file->f_io_requests) > 0) {
             *req = (mca_io_base_request_t*) 
                 opal_list_remove_first(&file->f_io_requests);
+            (*req)->free_called = false;
         } else {
             *req = NULL;
         }
@@ -221,14 +222,11 @@ void mca_io_base_request_free(ompi_file_t *file,
  */
 void mca_io_base_request_return(ompi_file_t *file)
 {
-    opal_list_item_t *p, *next;
+    opal_list_item_t *next;
 
     OPAL_THREAD_LOCK(&file->f_io_requests_lock);
-    for (p = opal_list_get_first(&file->f_io_requests);
-         p != opal_list_get_end(&file->f_io_requests);
-         p = next) {
-        next = opal_list_get_next(p);
-        OMPI_FREE_LIST_RETURN(&mca_io_base_requests, p);
+    while (NULL != (next = opal_list_remove_first(&file->f_io_requests))) {
+        OMPI_FREE_LIST_RETURN(&mca_io_base_requests, next);
     }
     OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
 }
