@@ -17,80 +17,6 @@
 # $HEADER$
 #
 
-
-# _MCA_btl_portals_config_val(config_name, define_name, 
-#                             default_val, descrtiption)
-# -----------------------------------------------------
-AC_DEFUN([MCA_btl_portals_CONFIG_VAL], [
-    AC_ARG_WITH([portals-$1], AC_HELP_STRING([--with-portals-$1], 
-                [$4 (default: $3)]))
-    case "[$with_]m4_bpatsubst([portals-$1], -, _)" in
-        "")
-            $2=$3
-            ;;
-        "no")
-            AC_MSG_ERROR([--without-portals-$1 is invalid argument])
-            ;;
-        *)
-            $2="[$with_]m4_bpatsubst([portals-$1], -, _)"
-            ;;
-    esac
-    AC_DEFINE_UNQUOTED([$2], [[$]$2], [$4])
-])
-
-
-# _MCA_btl_portals_CONFIG_VALS()
-# ------------------------------
-AC_DEFUN([MCA_btl_portals_CONFIG_VALS], [
-    # User configuration options
-    MCA_btl_portals_CONFIG_VAL([debug-level],
-        [OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL], [0],
-        [debugging level for portals btl])
-
-    MCA_btl_portals_CONFIG_VAL([eager-limit],
-        [OMPI_BTL_PORTALS_DEFAULT_EAGER_LIMIT], [32768],
-        [max size for eager sends])
-
-    MCA_btl_portals_CONFIG_VAL([min-send-size],
-        [OMPI_BTL_PORTALS_DEFAULT_MIN_SEND_SIZE], [32768],
-        [min size for send fragments])
-    MCA_btl_portals_CONFIG_VAL([max-send-size],
-        [OMPI_BTL_PORTALS_DEFAULT_MAX_SEND_SIZE], [65536],
-        [max size for send fragments])
-
-    MCA_btl_portals_CONFIG_VAL([md-size],
-        [OMPI_BTL_PORTALS_DEFAULT_RECV_MD_SIZE], [1048576],
-        [Size of receive memory descriptors])
-    MCA_btl_portals_CONFIG_VAL([md-size],
-        [OMPI_BTL_PORTALS_DEFAULT_RECV_MD_NUM], [3],
-        [Number of receive memory descriptors])
-
-    MCA_btl_portals_CONFIG_VAL([min-rdma-size],
-        [OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE], [65536],
-        [min size for rdma fragments])
-    MCA_btl_portals_CONFIG_VAL([max-rdma-size],
-        [OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE], [2147483647],
-        [max size for rdma fragments])
-
-    MCA_btl_portals_CONFIG_VAL([max-sends-pending],
-        [OMPI_BTL_PORTALS_MAX_SENDS_PENDING], [64],
-        [max number of sends pending at any time])
-    MCA_btl_portals_CONFIG_VAL([recv-queue-size],
-        [OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE], [8192],
-        [size of event queue for receiving frags])
-
-    MCA_btl_portals_CONFIG_VAL([free-list-init-num],
-        [OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM], [8],
-        [starting size of free lists])
-    MCA_btl_portals_CONFIG_VAL([free-list-max-num],
-        [OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM], [1024],
-        [maximum size of free lists])
-    MCA_btl_portals_CONFIG_VAL([free-list-inc-num],
-        [OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM], [32],
-        [grow size for freelists])
-])
-
-
 # _MCA_btl_portals_CONFIG_PLATFORM()
 # ----------------------------------
 AC_DEFUN([MCA_btl_portals_CONFIG_PLATFORM], [
@@ -197,7 +123,6 @@ AC_DEFUN([MCA_btl_portals_CONFIG],[
          AC_LINK_IFELSE([AC_LANG_PROGRAM([#include <${btl_portals_header_prefix}portals3.h>], 
                                          [int i; PtlInit(&i);])],
               [AC_MSG_RESULT([yes])
-               MCA_btl_portals_CONFIG_VALS()          
                btl_portals_WRAPPER_EXTRA_LDFLAGS="$btl_portals_LDFLAGS"
                btl_portals_WRAPPER_EXTRA_LIBS="$btl_portals_LIBS"
                $1],

@@ -153,7 +153,7 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
         /* fill in send memory descriptor */
         mca_btl_portals_module.md_send.start = NULL;
         mca_btl_portals_module.md_send.length = 0;
-        mca_btl_portals_module.md_send.threshold = 2; /* send and ack */
+        mca_btl_portals_module.md_send.threshold = PTL_MD_THRESH_INF;
         mca_btl_portals_module.md_send.max_size = 0;
         mca_btl_portals_module.md_send.options = PTL_MD_EVENT_START_DISABLE;
         mca_btl_portals_module.md_send.user_ptr = NULL;
@@ -162,9 +162,6 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
     } else {
         ret = OMPI_SUCCESS;
     }
-
-    opal_output_verbose(50, mca_btl_portals_component.portals_output,
-                        "count: %d", mca_btl_portals_module.portals_num_procs);
 
     return ret;
 }
@@ -233,21 +230,20 @@ mca_btl_base_descriptor_t*
 mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
                        size_t size)
 {
-    mca_btl_portals_frag_t* frag;
     int rc;
+    mca_btl_portals_frag_t* frag;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "alloc called with size %d", size));
-
     if (size <= mca_btl_portals_module.super.btl_eager_limit) { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, rc); 
+        if (OMPI_SUCCESS != rc) return NULL;
         frag->segments[0].seg_len = 
             size <= mca_btl_portals_module.super.btl_eager_limit ? 
             size : mca_btl_portals_module.super.btl_eager_limit ; 
     } else { 
         OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, rc); 
+        if (OMPI_SUCCESS != rc) return NULL;
         frag->segments[0].seg_len = 
             size <= mca_btl_portals_module.super.btl_max_send_size ? 
             size : mca_btl_portals_module.super.btl_max_send_size ; 
@@ -255,10 +251,6 @@ mca_btl_portals_alloc(struct mca_btl_base_module_t* btl_base,
     
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = 0; 
-
-    /* can't setup off an alloc right now - we don't know how much the
-       caller will actually use */
-    frag->md_h = PTL_INVALID_HANDLE;
 
     return &frag->base;
 }
@@ -272,20 +264,23 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    if (frag->md_h != PTL_INVALID_HANDLE) {
-        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                             "rdma frag free frag 0x%x, callback 0x%x, bits %lld",
-                             frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
-        PtlMDUnlink(frag->md_h);
-    }
-
-    if (frag->size == 0) {
-        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag); 
-    } else if (frag->size == mca_btl_portals_module.super.btl_eager_limit){ 
+    if (frag->size == mca_btl_portals_module.super.btl_eager_limit){ 
+        /* don't ever unlink eager frags */
         OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module.super, frag); 
     } else if (frag->size == mca_btl_portals_module.super.btl_max_send_size) {
+        if (frag->md_h != PTL_INVALID_HANDLE) {
+            PtlMDUnlink(frag->md_h);
+            frag->md_h = PTL_INVALID_HANDLE;
+        }
         OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module.super, frag); 
-    }  else {
+    } else if (frag->size == 0) {
+        if (frag->md_h != PTL_INVALID_HANDLE) {
+            PtlMDUnlink(frag->md_h);
+            frag->md_h = PTL_INVALID_HANDLE;
+        }
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+        OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag); 
+    } else {
         return OMPI_ERR_BAD_PARAM;
     }
 
@@ -310,165 +305,100 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                         "prepare_src called with size %d", *size));
-
-    if (0 != ompi_convertor_need_buffers(convertor)) {
-        /* if we need to use buffers to pack the data, grab either an
-           eager or (if we need more space) max buffer, pack the data
-           into the first segment, and return */
-        if (max_data+reserve <= mca_btl_portals_module.super.btl_eager_limit) {
-            /*
-             * if we can't send out of the buffer directly and the
-             * requested size is less than the eager limit, pack into a
-             * fragment from the eager pool
-             */
-            OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
-            if (NULL == frag) {
-                return NULL;
-            }
-
-            iov.iov_len = max_data;
-            iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
-            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                      &max_data, &free_after);
-            *size  = max_data;
-            if (ret < 0) {
-                OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
-                return NULL;
-            }
-            frag->segments[0].seg_len = max_data + reserve;
-            frag->base.des_src_cnt = 1;
-
-        } else {
-            /* 
-             * otherwise pack as much data as we can into a fragment
-             * that is the max send size.
-             */
-            OMPI_BTL_PORTALS_FRAG_ALLOC_MAX(&mca_btl_portals_module, frag, ret);
-            if (NULL == frag) {
-                return NULL;
-            }
-            if (max_data + reserve > mca_btl_portals_module.super.btl_max_send_size){
-                max_data = mca_btl_portals_module.super.btl_max_send_size - reserve;
-            }
-            iov.iov_len = max_data;
-            iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
-            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                      &max_data, &free_after);
-            *size  = max_data;
-            if ( ret < 0 ) {
-                OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module, frag);
-                return NULL;
-            }
-            frag->segments[0].seg_len = max_data + reserve;
-            frag->base.des_src_cnt = 1;
+    if (0 != reserve || 0 != ompi_convertor_need_buffers(convertor)) {
+        frag = (mca_btl_portals_frag_t*) 
+            mca_btl_portals_alloc(btl_base, max_data + reserve);
+        if (NULL == frag)  {
+            return NULL;
         }
 
-        /* clearly a send - delay setup of memory descriptor until send */
-        frag->md_h = PTL_INVALID_HANDLE;
+        if (max_data + reserve > frag->size) {
+            max_data = frag->size - reserve;
+        }
         
+        iov.iov_len = max_data;
+        iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
+        ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
+                                  &max_data, &free_after);
+        *size  = max_data;
+        if ( ret < 0 ) {
+            return NULL;
+        }
+
+        frag->segments[0].seg_len = max_data + reserve;
+        frag->base.des_src_cnt = 1;
 
     } else {
-        /* no need to pack - we can send directly out of the user's
-           buffer.  If we have reserve space, use an eager fragment
-           and give the caller the eager space as reserve.  If we have
-           no reserve space needs, use a user frag */
-        if (0 == reserve) {
-            ptl_md_t md;
-            ptl_handle_me_t me_h;
+        /* no need to pack - rdma operation out of user's buffer */
+        ptl_md_t md;
+        ptl_handle_me_t me_h;
 
-            /* user frags are always setup to use only one fragment */
-            OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
-            if(NULL == frag){
-                return NULL;
-            }
-            iov.iov_len = max_data;
-            iov.iov_base = NULL;
+        /* reserve space in the event queue for rdma operations immediately */
+        while (OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, 1) >
+               mca_btl_portals_module.portals_max_outstanding_ops) {
+            OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+            mca_btl_portals_component_progress();
+        }
 
-            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
-                                &free_after);
+        OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
+        if(NULL == frag){
+            OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+            return NULL;
+        }
+        iov.iov_len = max_data;
+        iov.iov_base = NULL;
 
-            frag->segments[0].seg_len = max_data;
-            frag->segments[0].seg_addr.pval = iov.iov_base;
-            frag->segments[0].seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
-            frag->base.des_src_cnt = 1;
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
+                            &free_after);
 
-            /* either a put or get.  figure out which later */
+        frag->segments[0].seg_len = max_data;
+        frag->segments[0].seg_addr.pval = iov.iov_base;
+        frag->segments[0].seg_key.key64 = 
+            OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
+        frag->base.des_src_cnt = 1;
 
-            OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                 "rdma src posted for frag 0x%x, callback 0x%x, bits %lld",
-                                 frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
+        /* either a put or get.  figure out which later */
+        OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
+                             "rdma src posted for frag 0x%x, callback 0x%x, bits %lld",
+                             frag, frag->base.des_cbfunc, frag->segments[0].seg_key.key64));
 
-            /* create a match entry */
-            ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
-                              OMPI_BTL_PORTALS_RDMA_TABLE_ID,
-                              *((mca_btl_base_endpoint_t*) peer),
-                              frag->segments[0].seg_key.key64, /* match */
-                              0, /* ignore */
-                              PTL_UNLINK,
-                              PTL_INS_AFTER,
-                              &me_h);
-            if (PTL_OK != ret) {
-                opal_output(mca_btl_portals_component.portals_output,
-                            "Error creating rdma src ME: %d", ret);
-                OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
-                return NULL;
-            }
+        /* create a match entry */
+        ret = PtlMEAttach(mca_btl_portals_module.portals_ni_h,
+                          OMPI_BTL_PORTALS_RDMA_TABLE_ID,
+                          *((mca_btl_base_endpoint_t*) peer),
+                          frag->segments[0].seg_key.key64, /* match */
+                          0, /* ignore */
+                          PTL_UNLINK,
+                          PTL_INS_AFTER,
+                          &me_h);
+        if (PTL_OK != ret) {
+            opal_output(mca_btl_portals_component.portals_output,
+                        "Error creating rdma src ME: %d", ret);
+            OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
+            OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+            return NULL;
+        }
 
-            /* setup the memory descriptor.  RDMA should never need to be
-               retransmitted, so we set the threshold for the event it will
-               receive (PUT/GET START and END).  No need to track the unlinks
-               later :) */
-            md.start = frag->segments[0].seg_addr.pval;
-            md.length = frag->segments[0].seg_len;
-            md.threshold = PTL_MD_THRESH_INF;
-            md.max_size = 0;
-            md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
-            md.user_ptr = frag; /* keep a pointer to ourselves */
-            md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ];
+        /* setup the memory descriptor */
+        md.start = frag->segments[0].seg_addr.pval;
+        md.length = frag->segments[0].seg_len;
+        md.threshold = PTL_MD_THRESH_INF;
+        md.max_size = 0;
+        md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
+        md.user_ptr = frag; /* keep a pointer to ourselves */
+        md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ_SEND];
 
-            ret = PtlMDAttach(me_h, 
-                              md,
-                              PTL_UNLINK,
-                              &(frag->md_h));
-            if (PTL_OK != ret) {
-                opal_output(mca_btl_portals_component.portals_output,
-                            "Error creating rdma src MD: %d", ret);
-                PtlMEUnlink(me_h);
-                OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
-                return NULL;
-            }
-
-        } else {
-            OMPI_BTL_PORTALS_FRAG_ALLOC_EAGER(&mca_btl_portals_module, frag, ret);
-            if (NULL == frag) {
-                return NULL;
-            }
-
-            iov.iov_len = max_data;
-            iov.iov_base = NULL;
-            ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                      &max_data, &free_after);
-
-            *size  = max_data;
-            if (ret < 0) {
-                OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module, frag);
-                return NULL;
-            }
-
-            frag->segments[0].seg_len = reserve;
-            frag->segments[1].seg_addr.pval = iov.iov_base;
-            frag->segments[1].seg_len = max_data;
-            frag->base.des_src_cnt = 2;
-
-            frag->iov[0].iov_base = frag->segments[0].seg_addr.pval;
-            frag->iov[0].iov_len = frag->segments[0].seg_len;
-            frag->iov[1].iov_base = frag->segments[1].seg_addr.pval;
-            frag->iov[1].iov_len = frag->segments[1].seg_len;
-
-            /* clearly a send - delay setup of memory descriptor until send */
-            frag->md_h = PTL_INVALID_HANDLE;
+        ret = PtlMDAttach(me_h, 
+                          md,
+                          PTL_UNLINK,
+                          &(frag->md_h));
+        if (PTL_OK != ret) {
+            opal_output(mca_btl_portals_component.portals_output,
+                        "Error creating rdma src MD: %d", ret);
+            PtlMEUnlink(me_h);
+            OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
+            OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+            return NULL;
         }
     }
 
@@ -497,22 +427,29 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
+    /* reserve space in the event queue for rdma operations immediately */
+    while (OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, 1) >
+           mca_btl_portals_module.portals_max_outstanding_ops) {
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
+        mca_btl_portals_component_progress();
+    }
+
     OMPI_BTL_PORTALS_FRAG_ALLOC_USER(&mca_btl_portals_module.super, frag, ret);
     if(NULL == frag) {
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         return NULL;
     }
 
     ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments[0].seg_len = *size;
     frag->segments[0].seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
-    frag->segments[0].seg_key.key64 = OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
-
+    frag->segments[0].seg_key.key64 = 
+        OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segments;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
-    frag->type = mca_btl_portals_frag_type_rdma;
 
     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
                          "rdma dest posted for frag 0x%x, callback 0x%x, bits %lld",
@@ -530,21 +467,19 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     if (PTL_OK != ret) {
         opal_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest ME: %d", ret);
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
         return NULL;
     }
 
-    /* setup the memory descriptor.  RDMA should never need to be
-       retransmitted, so we set the threshold for the event it will
-       receive (PUT/GET START and END).  No need to track the unlinks
-       later :) */
+    /* setup the memory descriptor. */
     md.start = frag->segments[0].seg_addr.pval;
     md.length = frag->segments[0].seg_len;
     md.threshold = PTL_MD_THRESH_INF;
     md.max_size = 0;
     md.options = PTL_MD_OP_PUT | PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
     md.user_ptr = frag; /* keep a pointer to ourselves */
-    md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ];
+    md.eq_handle = mca_btl_portals_module.portals_eq_handles[OMPI_BTL_PORTALS_EQ_SEND];
 
     ret = PtlMDAttach(me_h, 
                       md,
@@ -554,6 +489,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
         opal_output(mca_btl_portals_component.portals_output,
                     "Error creating rdma dest MD: %d", ret);
         PtlMEUnlink(me_h);
+        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops, -1);
         OMPI_BTL_PORTALS_FRAG_RETURN_USER(&mca_btl_portals_module.super, frag);
         return NULL;
     }
@@ -570,14 +506,8 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
     /* finalize all communication */
-    while (mca_btl_portals_module.portals_outstanding_sends > 0) {
+    while (mca_btl_portals_module.portals_outstanding_ops > 0) {
         mca_btl_portals_component_progress();
-    }
-
-    if (0 != opal_list_get_size(&(mca_btl_portals_module.portals_queued_sends))) {
-        opal_output(mca_btl_portals_component.portals_output,
-                    "Warning: there were %d queued sends not sent",
-                    opal_list_get_size(&(mca_btl_portals_module.portals_queued_sends)));
     }
 
     if (mca_btl_portals_module.portals_num_procs != 0) {
@@ -597,7 +527,10 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     } 
 
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_recv_blocks);
-    OBJ_DESTRUCT(&mca_btl_portals_module.portals_queued_sends);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_recv_frag);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_eager);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_max);
+    OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_user);
 
     if (PTL_INVALID_HANDLE != mca_btl_portals_module.portals_ni_h) {
         ret = PtlNIFini(mca_btl_portals_module.portals_ni_h);

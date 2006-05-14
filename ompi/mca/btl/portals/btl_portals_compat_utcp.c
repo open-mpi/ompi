@@ -119,7 +119,7 @@ mca_btl_portals_add_procs_compat(struct mca_btl_portals_module_t* btl,
     int ret;
 
     if (use_modex) {
-        int my_rid;
+        int my_rid = 0;
         ptl_process_id_t *info;
         char *nidmap = NULL;
         char *pidmap = NULL;
