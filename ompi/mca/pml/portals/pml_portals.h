@@ -65,21 +65,6 @@ struct ompi_pml_portals_t {
 
     /* our portals network interface */
     ptl_handle_ni_t portals_ni_h;
-
-    /* blocking send event queue */
-    ptl_handle_eq_t portals_blocking_send_queue;
-    ompi_convertor_t portals_blocking_send_convertor;
-
-    /* blocking receive event queue */
-    ptl_handle_eq_t portals_blocking_receive_queue;
-    ompi_convertor_t portals_blocking_receive_convertor;
-
-    /* unexpected receive event queue */
-    ptl_handle_eq_t portals_unexpected_receive_queue;
-
-    ptl_handle_me_t portals_unexpected_me_h;
-
-    opal_list_t portals_unexpected_events;
 };
 typedef struct ompi_pml_portals_t ompi_pml_portals_t;
 extern ompi_pml_portals_t ompi_pml_portals;
@@ -97,78 +82,13 @@ extern opal_class_t ompi_pml_portals_proc_t_class;
 
         
 
-/*
- * Portals match info
- */
-
-#define PML_PTLS_READY       0x8000000000000000ULL
-#define PML_PTLS_LONG        0x4000000000000000ULL
-#define PML_PTLS_SHORT       0x2000000000000000ULL
-
-#define PML_PTLS_PROT_MASK   0xE000000000000000ULL
-#define PML_PTLS_CTX_MASK    0x1FFF000000000000ULL
-#define PML_PTLS_SOURCE_MASK 0x0000FFFF00000000ULL
-#define PML_PTLS_TAG_MASK    0x000000007FFFFFFFULL
-
-#define PML_PTLS_RECV_BITS(match_bits, ignore_bits, ctxid, src, tag) \
-{ \
-    match_bits = 0; \
-    ignore_bits = PML_PTLS_PROT_MASK; \
-\
-    match_bits = ctxid; \
-    match_bits = (match_bits << 16); \
-\
-    if (src == MPI_ANY_SOURCE) { \
-        match_bits = (match_bits << 32); \
-        ignore_bits |= PML_PTLS_SOURCE_MASK; \
-    } else { \
-        match_bits |= src;                                   \
-        match_bits = (match_bits << 32);                     \
-    } \
-\
-    if (tag == MPI_ANY_TAG) { \
-         ignore_bits |= PML_PTLS_TAG_MASK; \
-    } else { \
-        match_bits |= (0x00000000FFFFFFFFULL & tag); \
-    } \
-} \
-
-
-#define PML_PTLS_SEND_BITS(match_bits, ctxid, src, tag)  \
-{                                                        \
-    match_bits = ctxid;                                  \
-    match_bits = (match_bits << 16);                     \
-    match_bits |= src;                                   \
-    match_bits = (match_bits << 32);                     \
-    match_bits |= (0x00000000FFFFFFFFULL & tag);         \
-}
-
-#define PML_PTLS_IS_LONG(match_bits) (match_bits & PML_PTLS_LONG)
-#define PML_PTLS_GET_SOURCE(match_bits, src) \
-{ \
-    src = (int)((PML_PTLS_SOURCE_MASK & match_bits) >> 32); \
-}
-
-#define PML_PTLS_GET_TAG(match_bits, tag) \
-{ \
-    tag = (int)(PML_PTLS_TAG_MASK & match_bits); \
-}
-
-#define PML_PTLS_GET_CONTEXT(match_bits, ctxid) \
-{ \
-    ctxid = (int)((PML_PTLS_CTX_MASK & match_bits) >> 48); \
-}
-
-
 /* table indexes */
 #define PML_PTLS_INDEX_RECV  (OMPI_PML_PORTALS_STARTING_TABLE_ID + 0)
 #define PML_PTLS_INDEX_READ  (OMPI_PML_PORTALS_STARTING_TABLE_ID + 1)
 #define PML_PTLS_INDEX_ACK   (OMPI_PML_PORTALS_STARTING_TABLE_ID + 2)
 
-/*
- * PML interface functions.
- */
 
+/* PML interface functions */
 extern int ompi_pml_portals_add_procs(struct ompi_proc_t **procs, size_t nprocs);
 extern int ompi_pml_portals_del_procs(struct ompi_proc_t **procs, size_t nprocs);
 

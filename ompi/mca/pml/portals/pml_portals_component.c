@@ -144,17 +144,6 @@ ompi_pml_portals_component_init(int* priority,
         return NULL;
     }
 
-    OBJ_CONSTRUCT(&(ompi_pml_portals.portals_unexpected_events),
-                  opal_list_t);
-
-    OBJ_CONSTRUCT(&ompi_pml_portals.portals_blocking_send_convertor,
-                  ompi_convertor_t);
-    OBJ_CONSTRUCT(&ompi_pml_portals.portals_blocking_receive_convertor,
-                  ompi_convertor_t);
-
-    opal_output_verbose(20, ompi_pml_portals.portals_output,
-                        "successfully initialized portals pml");
-
     return &ompi_pml_portals.super;
 }
 
@@ -162,14 +151,7 @@ ompi_pml_portals_component_init(int* priority,
 static int
 ompi_pml_portals_component_fini(void)
 {
-    PtlEQFree(ompi_pml_portals.portals_unexpected_receive_queue);
-    PtlEQFree(ompi_pml_portals.portals_blocking_receive_queue);
-    PtlEQFree(ompi_pml_portals.portals_blocking_send_queue);
-
     PtlNIFini(ompi_pml_portals.portals_ni_h);
-
-    OBJ_DESTRUCT(&ompi_pml_portals.portals_blocking_send_convertor);
-    OBJ_DESTRUCT(&ompi_pml_portals.portals_blocking_receive_convertor);
 
     opal_output_verbose(20, ompi_pml_portals.portals_output,
                         "successfully finalized portals pml");
