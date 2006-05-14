@@ -96,12 +96,12 @@ mca_btl_portals_activate_block(mca_btl_portals_recv_block_t *block)
     md.length = block->length;
     /* try to throttle incoming sends so that we don't overrun the incoming
        queue size */
-    md.threshold = mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ] /
+    md.threshold = mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RECV] /
         (mca_btl_portals_module.portals_recv_mds_num * 2);
     md.max_size = block->btl->super.btl_max_send_size;
     md.options = PTL_MD_OP_PUT | PTL_MD_MAX_SIZE;
     md.user_ptr = block;
-    md.eq_handle = block->btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ];
+    md.eq_handle = block->btl->portals_eq_handles[OMPI_BTL_PORTALS_EQ_RECV];
 
     block->pending = 0;
     block->full = false;

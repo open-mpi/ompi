@@ -34,9 +34,7 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
     frag->segments[0].seg_len = frag->size;
     frag->segments[0].seg_key.key64 = 0;
 
-    frag->segments[1].seg_addr.pval = 0;
-    frag->segments[1].seg_len = 0;
-    frag->segments[1].seg_key.key64 = 0;
+    frag->md_h = PTL_INVALID_HANDLE;
 }
 
 
@@ -45,6 +43,16 @@ mca_btl_portals_frag_eager_constructor(mca_btl_portals_frag_t* frag)
 { 
     frag->size = mca_btl_portals_module.super.btl_eager_limit;  
     mca_btl_portals_frag_common_send_constructor(frag); 
+}
+
+
+static void
+mca_btl_portals_frag_eager_destructor(mca_btl_portals_frag_t* frag)
+{
+    if (PTL_INVALID_HANDLE == frag->md_h) {
+        PtlMDUnlink(frag->md_h);
+        frag->md_h = PTL_INVALID_HANDLE;
+    }
 }
 
 
@@ -76,7 +84,6 @@ mca_btl_portals_frag_recv_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
     frag->size = 0; 
-    frag->type = mca_btl_portals_frag_type_recv;
 }
 
 
@@ -90,7 +97,7 @@ OBJ_CLASS_INSTANCE(
     mca_btl_portals_frag_eager_t, 
     mca_btl_base_descriptor_t, 
     mca_btl_portals_frag_eager_constructor, 
-    NULL); 
+    mca_btl_portals_frag_eager_destructor);
 
 OBJ_CLASS_INSTANCE(
     mca_btl_portals_frag_max_t, 

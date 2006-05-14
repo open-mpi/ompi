@@ -20,6 +20,7 @@
 
 #include <sys/types.h>
 #include <unistd.h>
+#include <limits.h>
 #if OMPI_BTL_PORTALS_REDSTORM
 #include <catamount/cnos_mpi_os.h>
 #endif
@@ -91,11 +92,11 @@ mca_btl_portals_component_open(void)
                            "Debugging verbosity (0 - 100)",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_DEBUG_LEVEL,
+                           0, 
                            &(portals_output_stream.lds_verbose_level));
 #if OMPI_BTL_PORTALS_REDSTORM
     asprintf(&(portals_output_stream.lds_prefix),
-             "btl: portals (%2d): ", cnos_get_rank());
+             "btl: portals (%5d): ", cnos_get_rank());
 #else
     asprintf(&(portals_output_stream.lds_prefix), 
              "btl: portals (%5d): ", getpid());
@@ -118,22 +119,29 @@ mca_btl_portals_component_open(void)
                            "Initial number of elements to initialize in free lists",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INIT_NUM,
+                           16,
                            &(mca_btl_portals_component.portals_free_list_init_num));
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "free_list_max_num",
                            "Max number of elements to initialize in free lists",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_MAX_NUM,
+                           1024,
                            &(mca_btl_portals_component.portals_free_list_max_num));
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "free_list_inc_num",
                            "Increment count for free lists",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_FREE_LIST_INC_NUM,
+                           16,
                            &(mca_btl_portals_component.portals_free_list_inc_num));
+    mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
+                           "eager_frag_limit",
+                           "Maximum number of pre-pinned eager fragments",
+                           false,
+                           false,
+                           32,
+                           &(mca_btl_portals_component.portals_free_list_eager_max_num));
 
     /* 
      * fill default module state 
@@ -143,7 +151,7 @@ mca_btl_portals_component_open(void)
                            "Maximum size for eager frag",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_EAGER_LIMIT,
+                           32 * 1024,
                            &dummy);
     mca_btl_portals_module.super.btl_eager_limit = dummy;
 
@@ -152,7 +160,7 @@ mca_btl_portals_component_open(void)
                            "Minimum size for a send frag",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_MIN_SEND_SIZE,
+                           32 * 1024,
                            &dummy);
     mca_btl_portals_module.super.btl_min_send_size = dummy;
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
@@ -160,7 +168,7 @@ mca_btl_portals_component_open(void)
                            "Maximum size for a send frag",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_MAX_SEND_SIZE,
+                           64 * 1024,
                            &dummy);
     mca_btl_portals_module.super.btl_max_send_size = dummy;
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
@@ -168,7 +176,7 @@ mca_btl_portals_component_open(void)
                            "Minimum size for a rdma frag",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_MIN_RDMA_SIZE,
+                           64 * 1024,
                            &dummy);
     mca_btl_portals_module.super.btl_min_rdma_size = dummy;
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
@@ -176,7 +184,7 @@ mca_btl_portals_component_open(void)
                            "Maximum size for a rdma frag",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_MAX_RDMA_SIZE,
+                           INT_MAX,
                            &dummy);
     mca_btl_portals_module.super.btl_max_rdma_size = dummy;
 
@@ -205,11 +213,10 @@ mca_btl_portals_component_open(void)
                            &dummy);
     mca_btl_portals_module.super.btl_bandwidth = dummy;
 
-#if 0 /* it appears that copying is faster than iovecs at present */
-    mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_SEND_INPLACE;
-#else
+    /* send in place actually increases our latency because we have to
+       hold on to the buffer until we're done with it, rather than
+       copy and send.  So don't use it for now. */
     mca_btl_portals_module.super.btl_flags = MCA_BTL_FLAGS_RDMA;
-#endif
 
     mca_btl_portals_module.portals_num_procs = 0;
     bzero(&(mca_btl_portals_module.portals_reg),
@@ -222,23 +229,23 @@ mca_btl_portals_component_open(void)
     /* eq handles will be created when the module is instantiated.
        Set sizes here */
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "eq_size",
-                           "Size of the event queue",
+                           "eq_recv_size",
+                           "Size of the receive event queue",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_QUEUE_SIZE,
-                           &(mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ]));
+                           16 * 1024,
+                           &(mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_RECV]));
 
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
-                           "eq_send_max_pending",
-                           "Maximum number of pending send frags",
+                           "max_pending_ops",
+                           "Maximum number of pending send/rdma frags",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_MAX_SENDS_PENDING,
-                           &(mca_btl_portals_module.portals_max_outstanding_sends));
-    /* sends_pending * 2 for end, ack */
+                           8 * 1024,
+                           &(mca_btl_portals_module.portals_max_outstanding_ops));
+    /* ops_pending * 2 for end, ack */
     mca_btl_portals_module.portals_eq_sizes[OMPI_BTL_PORTALS_EQ_SEND] = 
-        mca_btl_portals_module.portals_max_outstanding_sends * 2;
+        mca_btl_portals_module.portals_max_outstanding_ops * 2;
 
     mca_btl_portals_module.portals_recv_reject_me_h = PTL_INVALID_HANDLE;
 
@@ -247,19 +254,19 @@ mca_btl_portals_component_open(void)
                            "Number of send frag receive descriptors",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_NUM,
+                           3,
                            &(mca_btl_portals_module.portals_recv_mds_num));
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "recv_md_size",
                            "Size of send frag receive descriptors",
                            false,
                            false,
-                           OMPI_BTL_PORTALS_DEFAULT_RECV_MD_SIZE,
+                           10 * 1024 * 1024,
                            &(mca_btl_portals_module.portals_recv_mds_size));
 
     mca_btl_portals_module.portals_ni_h = PTL_INVALID_HANDLE;
     mca_btl_portals_module.portals_sr_dropped = 0;
-    mca_btl_portals_module.portals_outstanding_sends = 0;
+    mca_btl_portals_module.portals_outstanding_ops = 0;
     mca_btl_portals_module.portals_rdma_key = 1;
 
     return OMPI_SUCCESS;
@@ -315,7 +322,6 @@ mca_btl_portals_component_init(int *num_btls,
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_eager), ompi_free_list_t);
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_max), ompi_free_list_t);
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_user), ompi_free_list_t);
-    OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_recv), ompi_free_list_t);
 
     /* eager frags */
     ompi_free_list_init(&(mca_btl_portals_module.portals_frag_eager),
@@ -323,7 +329,7 @@ mca_btl_portals_component_init(int *num_btls,
                         mca_btl_portals_module.super.btl_eager_limit,
                         OBJ_CLASS(mca_btl_portals_frag_eager_t),
                         mca_btl_portals_component.portals_free_list_init_num,
-                        mca_btl_portals_component.portals_free_list_max_num,
+                        mca_btl_portals_component.portals_free_list_eager_max_num,
                         mca_btl_portals_component.portals_free_list_inc_num,
                         NULL);
 
@@ -347,19 +353,16 @@ mca_btl_portals_component_init(int *num_btls,
                         NULL);
 
     /* recv frags */
-    ompi_free_list_init(&(mca_btl_portals_module.portals_frag_recv),
-                        sizeof(mca_btl_portals_frag_recv_t),
-                        OBJ_CLASS(mca_btl_portals_frag_recv_t),
-                        mca_btl_portals_component.portals_free_list_init_num,
-                        mca_btl_portals_component.portals_free_list_max_num,
-                        mca_btl_portals_component.portals_free_list_inc_num,
-                        NULL);
+    OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_recv_frag),
+                  mca_btl_portals_frag_recv_t);
 
     /* receive block list */
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_recv_blocks), opal_list_t);
 
-    /* pending sends */
-    OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_queued_sends), opal_list_t);
+    /* list for send requests that have to be delayed */
+    OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_queued_sends),
+                  opal_list_t);
+
     *num_btls = 1;
 
     opal_output_verbose(20, mca_btl_portals_component.portals_output,
@@ -386,18 +389,9 @@ mca_btl_portals_component_progress(void)
     while (true) {
         ret = PtlEQPoll(mca_btl_portals_module.portals_eq_handles,
                         OMPI_BTL_PORTALS_EQ_SIZE,
-#if OMPI_BTL_PORTALS_REDSTORM
-                        0, /* timeout */
-#else
-                        /* with a timeout of 0, the reference
-                        implementation seems to get really unhappy
-                        really fast when communication starts between
-                        all peers at the same time.  Slowing things
-                        down a bit seems to help a bunch. */
-                        1, /* timeout */
-#endif
-                        &ev,
-                        &which);
+                        0,       /* timeout */
+                        &ev,     /* event structure to update */
+                        &which); /* which queue the event came from - we don't care */
         switch (ret) {
         case PTL_OK:
             frag = ev.md.user_ptr;
@@ -406,7 +400,6 @@ mca_btl_portals_component_progress(void)
             switch (ev.type) {
             case PTL_EVENT_GET_START:
                 /* generated on source (target) when a get from memory starts */
-
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_GET_START for 0x%x, %d",
                                      frag, (int) ev.hdr_data));
@@ -415,7 +408,6 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_GET_END:
                 /* generated on source (target) when a get from memory ends */
-
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_GET_END for 0x%x, %d",
                                      frag, (int) ev.hdr_data));
@@ -424,7 +416,6 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_PUT_START:
                 /* generated on destination (target) when a put into memory starts */
-
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_START for 0x%x, %d",
                                      frag, (int) ev.hdr_data));
@@ -446,7 +437,6 @@ mca_btl_portals_component_progress(void)
 
             case PTL_EVENT_PUT_END: 
                 /* generated on destination (target) when a put into memory ends */
-
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
                                      "PTL_EVENT_PUT_END for 0x%x, %d",
                                      frag, (int) ev.hdr_data));
@@ -465,13 +455,15 @@ mca_btl_portals_component_progress(void)
                     block = ev.md.user_ptr;
                     tag = ev.hdr_data;
 
-                    OMPI_BTL_PORTALS_FRAG_ALLOC_RECV(&mca_btl_portals_module, frag, ret);
+                    /* if we ever make this thread hot, need to do
+                       something with the receive fragments */
+                    frag = &mca_btl_portals_module.portals_recv_frag;
                     frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
                     frag->segments[0].seg_len = ev.mlength;
 
                     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                         "received send fragment %x (thresh: %d)", 
-                                         frag, ev.md.threshold));
+                                         "received send fragment %x (thresh: %d, length %d)", 
+                                         frag, ev.md.threshold, (int) ev.mlength));
 
                     if (ev.md.length - (ev.offset + ev.mlength) < ev.md.max_size ||
                         ev.md.threshold == 1) {
@@ -491,8 +483,6 @@ mca_btl_portals_component_progress(void)
                                              tag,
                                              &frag->base,
                                              mca_btl_portals_module.portals_reg[tag].cbdata);
-                    OMPI_BTL_PORTALS_FRAG_RETURN_RECV(&mca_btl_portals_module.super, 
-                                                      frag);
                     mca_btl_portals_return_block_part(&mca_btl_portals_module, block);
                 }
                 break;
@@ -502,8 +492,8 @@ mca_btl_portals_component_progress(void)
                    returning data */
 
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_REPLY_START for 0x%x, %d, %d",
-                                     frag, (int) frag->type, (int) ev.hdr_data));
+                                     "PTL_EVENT_REPLY_START for 0x%x, %d",
+                                     frag, (int) ev.hdr_data));
 
                 break;
 
@@ -512,8 +502,7 @@ mca_btl_portals_component_progress(void)
                    done returning data */
 
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_REPLY_END for 0x%x, %d",
-                                     frag, (int) frag->type));
+                                     "PTL_EVENT_REPLY_END for 0x%x", frag));
 
                 /* let the PML know we're done */
                 frag->base.des_cbfunc(&mca_btl_portals_module.super,
@@ -528,18 +517,12 @@ mca_btl_portals_component_progress(void)
 
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((900, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_SEND_START for 0x%x, %d, %d",
-                                     frag, (int) frag->type, (int) ev.hdr_data));
+                                     "PTL_EVENT_SEND_START for 0x%x, %d",
+                                     frag, (int) ev.hdr_data));
 
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to start send event\n");
-                    if (ev.hdr_data < MCA_BTL_TAG_MAX) {
-                        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_sends,
-                                          -1);
-                        /* unlink, since we don't expect to get an end or ack */
-                    }
-                    PtlMDUnlink(ev.md_handle);
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
                                           &frag->base,
@@ -552,18 +535,12 @@ mca_btl_portals_component_progress(void)
                 /* generated on source (origin) when put stops sending */
 #if OMPI_ENABLE_DEBUG
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_SEND_END for 0x%x, %d, %d",
-                                     frag, (int) frag->type, (int) ev.hdr_data));
+                                     "PTL_EVENT_SEND_END for 0x%x, %d",
+                                     frag, (int) ev.hdr_data));
 
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to end send event\n");
-                    if (ev.hdr_data < MCA_BTL_TAG_MAX) {
-                        /* unlink, since we don't expect to get an ack */
-                        OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_sends,
-                                          -1);
-                        PtlMDUnlink(ev.md_handle);
-                    }
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
                                           &frag->base,
@@ -580,20 +557,12 @@ mca_btl_portals_component_progress(void)
                    Requeue the put on badness */
 
                 OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,
-                                     "PTL_EVENT_ACK for 0x%x, %d",
-                                     frag, (int) frag->type));
-
-                if (frag->type == mca_btl_portals_frag_type_send) {
-                    OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_sends,
-                                      -1);
-                }
+                                     "PTL_EVENT_ACK for 0x%x", frag));
 
 #if OMPI_ENABLE_DEBUG
                 if (ev.ni_fail_type != PTL_NI_OK) {
                     opal_output(mca_btl_portals_component.portals_output,
                                 "Failure to ack event\n");
-                    /* unlink, since we don't expect to get an ack */
-                    PtlMDUnlink(ev.md_handle);
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
                                           &frag->base,
@@ -608,14 +577,15 @@ mca_btl_portals_component_progress(void)
                        buffer space available for receiving */
                     opal_output_verbose(50,
                                         mca_btl_portals_component.portals_output,
-                                        "message was dropped.  Adding to front of queue list");
-                    opal_list_prepend(&(mca_btl_portals_module.portals_queued_sends),
-                                      (opal_list_item_t*) frag);
-
+                                        "message was dropped.  Trying again");
+                    
+                    mca_btl_portals_send(&mca_btl_portals_module.super,
+                                         frag->endpoint,
+                                         &frag->base,
+                                         frag->hdr.tag);
                 } else {
                     /* other side received the message.  should have
                        received entire thing */
-
                     /* let the PML know we're done */
                     frag->base.des_cbfunc(&mca_btl_portals_module.super,
                                           frag->endpoint,
@@ -623,7 +593,11 @@ mca_btl_portals_component_progress(void)
                                           OMPI_SUCCESS);
                 }
 
-                if (frag->type == mca_btl_portals_frag_type_send) {
+                opal_output_verbose(50, mca_btl_portals_component.portals_output, "fuck");
+
+                if (0 != frag->size) {
+                    OPAL_THREAD_ADD32(&mca_btl_portals_module.portals_outstanding_ops,
+                                      -1);
                     MCA_BTL_PORTALS_PROGRESS_QUEUED_SENDS();
                 }
 
