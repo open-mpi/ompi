@@ -1660,7 +1660,7 @@ output_48() {
 
 subroutine ${procedure}(comm, comm_keyval, attribute_val, ierr)
   include 'mpif.h'
-  integer, intent(inout) :: comm
+  integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
   integer, intent(out) :: ierr
@@ -8402,7 +8402,7 @@ output_239() {
 
 subroutine ${procedure}(type, type_keyval, attr_val, ierr)
   include 'mpif.h'
-  integer, intent(inout) :: type
+  integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
   integer, intent(out) :: ierr
@@ -9175,7 +9175,7 @@ output_266() {
 
 subroutine ${procedure}(win, win_keyval, attribute_val, ierr)
   include 'mpif.h'
-  integer, intent(inout) :: win
+  integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
   integer, intent(out) :: ierr
