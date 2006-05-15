@@ -232,7 +232,7 @@ large_sources = \
 # The rest of the files that are in the library depend on which size
 # we're building.
 
-nodist_libmpi_f90_a_SOURCES =
+nodist_libmpi_f90_a_SOURCES = mpi_sizeof.f90
 if OMPI_WANT_BUILD_F90_MEDIUM
 nodist_libmpi_f90_a_SOURCES += $(medium_sources)
 endif
