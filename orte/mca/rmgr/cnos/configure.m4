@@ -31,5 +31,7 @@ AC_DEFUN([MCA_rmgr_cnos_CONFIG],[
                       [rmgr_cnos_happy="no"])
     fi
 
+    AC_CHECK_FUNCS([killrank cnos_pm_barrier])
+
     AS_IF([test "$rmgr_cnos_happy" = "yes"], [$1], [$2])
 ])dnl
