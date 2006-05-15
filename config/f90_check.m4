@@ -165,8 +165,8 @@ AC_DEFUN([OMPI_F90_CHECK], [
     # Save some in shell variables for later use.  Have to use m4
     # functions here (vs. $ompi_upper_var_name, defined above) because
     # these need to be set at autoconf time, not configure time.
-    [OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst([$1], [^\([a-zA-Z_]*\).+], [[\1]]), [A-Z], [a-z])[=$ofc_type_size]
-    AC_SUBST([OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst([$1], [^\([a-zA-Z_]*\).+], [[\1]]), [A-Z], [a-z]))
+    [OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z])[=$ofc_type_size]
+    AC_SUBST([OMPI_SIZEOF_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]))
 
     # Clean up
     unset ofc_fortran_type ofc_expected_size ofc_want_range ofc_pretty_name
