@@ -1952,8 +1952,8 @@
       -->
     <method name="MPI_Comm_set_attr" kind="final">
 
-      <!-- ARGUMENT : comm -->
-      <arg name="comm" intent="inout">
+      <!-- ARGUMENT : comm (officially INOUT in MPI standard) -->
+      <arg name="comm" intent="in">
         <type kind="usertype" usertype="MPI_Comm" >
         </type>
       </arg>
@@ -9969,8 +9969,8 @@
       -->
     <method name="MPI_Type_set_attr" kind="final">
 
-      <!-- ARGUMENT : type -->
-      <arg name="type" intent="inout">
+      <!-- ARGUMENT : type (officially INOUT in MPI standard) -->
+      <arg name="type" intent="in">
         <type kind="usertype" usertype="MPI_Datatype" >
         </type>
       </arg>
@@ -10995,8 +10995,8 @@
       -->
     <method name="MPI_Win_set_attr" kind="final">
 
-      <!-- ARGUMENT : win -->
-      <arg name="win" intent="inout">
+      <!-- ARGUMENT : win (officially INOUT in MPI standard) -->
+      <arg name="win" intent="in">
         <type kind="usertype" usertype="MPI_Win" >
         </type>
       </arg>
