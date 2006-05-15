@@ -41,7 +41,7 @@ int opal_size2int(size_t in, int *out, bool want_check)
  */
 
 static bool init_done = false;
-static unsigned int int_pos = -1;
+static unsigned int int_pos = 0;
 
 
 static void opal_size2int_init(void);
@@ -59,7 +59,7 @@ int opal_size2int(size_t in, int *out, bool want_check)
 
     *out = pos[int_pos];
     if (want_check) {
-        /* Remember that size_t is signed, so we don't need to check
+        /* Remember that size_t is unsigned, so we don't need to check
            for when in < 0 (in which case the internal checks would be
            slightly different) */
         for (i = 0; i < (sizeof(in) / sizeof(*out)); ++i) {
