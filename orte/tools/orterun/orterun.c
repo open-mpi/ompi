@@ -84,7 +84,7 @@ static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
 static char *abort_msg = NULL;
-static size_t abort_msg_len = -1;
+static size_t abort_msg_len = 0;
 static char *orterun_basename = NULL;
 static int max_display_aborted = 1;
 static int num_aborted = 0;
