@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,11 +37,13 @@
 #include <errno.h>
 #include <tm.h>
 
+#include "opal/install_dirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
+#include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
 #include "orte/orte_constants.h"
@@ -105,6 +108,7 @@ pls_tm_launch(orte_jobid_t jobid)
     bool connected = false;
     opal_list_t map;
     char *cur_prefix;
+    char *bin_base = NULL, *lib_base = NULL;
     
     /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
@@ -210,6 +214,13 @@ pls_tm_launch(orte_jobid_t jobid)
     }
     connected = true;
 
+    /* Figure out the basenames for the libdir and bindir.  There is a
+       lengthy comment about this in pls_rsh_module.c explaining all
+       the rationale for how / why we're doing this. */
+
+    lib_base = opal_basename(OPAL_LIBDIR);
+    bin_base = opal_basename(OPAL_BINDIR);
+
     /*
      * Iterate through each of the nodes and spin
      * up a daemon.
@@ -311,8 +322,8 @@ pls_tm_launch(orte_jobid_t jobid)
             for (i = 0; NULL != env && NULL != env[i]; ++i) {
                 /* Reset PATH */
                 if (0 == strncmp("PATH=", env[i], 5)) {
-                    asprintf(&newenv, "%s/bin:%s", 
-                             cur_prefix, env[i] + 5);
+                    asprintf(&newenv, "%s/%s:%s", 
+                             cur_prefix, bin_base, env[i] + 5);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting PATH: %s", 
                                     newenv);
@@ -323,8 +334,8 @@ pls_tm_launch(orte_jobid_t jobid)
 
                 /* Reset LD_LIBRARY_PATH */
                 else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
-                    asprintf(&newenv, "%s/lib:%s", 
-                             cur_prefix, env[i] + 16);
+                    asprintf(&newenv, "%s/%s:%s", 
+                             cur_prefix, lib_base, env[i] + 16);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting LD_LIBRARY_PATH: %s", 
                                     newenv);
@@ -407,6 +418,13 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&mapping_list);
+
+    if (NULL != lib_base) {
+        free(lib_base);
+    }
+    if (NULL != bin_base) {
+        free(bin_base);
+    }
 
     return rc;
 }

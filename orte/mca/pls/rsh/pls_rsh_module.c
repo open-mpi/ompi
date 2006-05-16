@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,6 +65,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/basename.h"
 #include "orte/orte_constants.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
@@ -396,6 +398,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     struct passwd *p;
     bool remote_bash = false, remote_csh = false;
     bool local_bash = false, local_csh = false;
+    char *lib_base = NULL, *bin_base = NULL;
 
     /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
@@ -583,6 +586,39 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
     }
 
+    /* Figure out the basenames for the libdir and bindir.  This
+       requires some explanation:
+
+       - Use OPAL_LIBDIR and OPAL_BINDIR instead of -D'ing some macros
+         in this directory's Makefile.am because it makes all the
+         dependencies work out correctly.  These are defined in
+         opal/install_dirs.h.
+
+       - After a discussion on the devel-core mailing list, the
+         developers decided that we should use the local directory
+         basenames as the basis for the prefix on the remote note.
+         This does not handle a few notable cases (e.g., f the
+         libdir/bindir is not simply a subdir under the prefix, if the
+         libdir/bindir basename is not the same on the remote node as
+         it is here in the local node, etc.), but we decided that
+         --prefix was meant to handle "the common case".  If you need
+         something more complex than this, a) edit your shell startup
+         files to set PATH/LD_LIBRARY_PATH properly on the remove
+         node, or b) use some new/to-be-defined options that
+         explicitly allow setting the bindir/libdir on the remote
+         node.  We decided to implement these options (e.g.,
+         --remote-bindir and --remote-libdir) to orterun when it
+         actually becomes a problem for someone (vs. a hypothetical
+         situation).
+
+       Hence, for now, we simply take the basename of this install's
+       libdir and bindir and use it to append this install's prefix
+       and use that on the remote node.
+    */
+
+    lib_base = opal_basename(OPAL_LIBDIR);
+    bin_base = opal_basename(OPAL_BINDIR);
+
     /*
      * Iterate through each of the contexts
      */
@@ -727,7 +763,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         }
                     } else {
                         if (NULL != prefix_dir) {
-                            asprintf(&exec_path, "%s/bin/orted", prefix_dir);
+                            asprintf(&exec_path, "%s/%s/orted", 
+                                     prefix_dir, bin_base);
                         }
                         /* If we yet did not fill up the execpath, do so now */
                         if (NULL == exec_path) {
@@ -748,9 +785,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset PATH */
                         oldenv = getenv("PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/bin:%s", prefix_dir, oldenv);
+                            asprintf(&newenv, "%s/%s:%s", prefix_dir, 
+                                     bin_base, oldenv);
                         } else {
-                            asprintf(&newenv, "%s/bin", prefix_dir);
+                            asprintf(&newenv, "%s/%s", prefix_dir, bin_base);
                         }
                         opal_setenv("PATH", newenv, true, &environ);
                         if (mca_pls_rsh_component.debug) {
@@ -761,9 +799,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset LD_LIBRARY_PATH */
                         oldenv = getenv("LD_LIBRARY_PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/lib:%s", prefix_dir, oldenv);
+                            asprintf(&newenv, "%s/%s:%s", prefix_dir, 
+                                     lib_base, oldenv);
                         } else {
-                            asprintf(&newenv, "%s/lib", prefix_dir);
+                            asprintf(&newenv, "%s/%s", prefix_dir, lib_base);
                         }
                         opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
                         if (mca_pls_rsh_component.debug) {
@@ -953,6 +992,13 @@ cleanup:
         OBJ_RELEASE(m_item);
     }
     OBJ_DESTRUCT(&mapping);
+
+    if (NULL != lib_base) {
+        free(lib_base);
+    }
+    if (NULL != bin_base) {
+        free(bin_base);
+    }
 
     free(jobid_string);  /* done with this variable */
     opal_argv_free(argv);
