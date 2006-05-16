@@ -15,10 +15,10 @@
 
 # Do a little error checking
 
-if test ! -f fortran_kinds.sh; then
+if test ! -f "$1/fortran_kinds.sh"; then
     echo "ERROR: Cannot find fortran_kinds.sh" >&2
     exit 1
-elif test -z fortran_kinds.sh; then
+elif test -z "$1/fortran_kinds.sh"; then
     echo "ERROR: fortran_kinds.sh appears to be empty!" >&2
     exit 1
 fi
