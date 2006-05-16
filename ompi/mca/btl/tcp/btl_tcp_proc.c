@@ -303,7 +303,12 @@ int mca_btl_tcp_proc_remove(mca_btl_tcp_proc_t* btl_proc, mca_btl_base_endpoint_
                 OBJ_RELEASE(btl_proc);
                 return OMPI_SUCCESS;
             }
-            btl_endpoint->endpoint_addr->addr_inuse--;
+            /* The endpoint_addr may still be NULL if this enpoint is
+               being removed early in the wireup sequence (e.g., if it
+               is unreachable by all other procs) */
+            if (NULL != btl_endpoint->endpoint_addr) {
+                btl_endpoint->endpoint_addr->addr_inuse--;
+            }
             break;
         }
     }
