@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,11 +43,13 @@
 #include <fcntl.h>
 #endif
 
+#include "opal/install_dirs.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/runtime/runtime.h"
 #include "orte/orte_constants.h"
@@ -461,7 +464,16 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
                     "pls:slurm:start_proc: fork failed");
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
+        char *bin_base = NULL, *lib_base = NULL;
         
+        /* Figure out the basenames for the libdir and bindir.  There
+           is a lengthy comment about this in pls_rsh_module.c
+           explaining all the rationale for how / why we're doing
+           this. */
+
+        lib_base = opal_basename(OPAL_LIBDIR);
+        bin_base = opal_basename(OPAL_BINDIR);
+
         /* If we have a prefix, then modify the PATH and
            LD_LIBRARY_PATH environment variables.  We're already in
            the child process, so it's ok to modify environ. */
@@ -471,9 +483,9 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset PATH */
             oldenv = getenv("PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/bin:%s", prefix, oldenv);
+                asprintf(&newenv, "%s/%s:%s", prefix, bin_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/bin", prefix);
+                asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
             opal_setenv("PATH", newenv, true, &environ);
             if (mca_pls_slurm_component.debug) {
@@ -484,9 +496,9 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             /* Reset LD_LIBRARY_PATH */
             oldenv = getenv("LD_LIBRARY_PATH");
             if (NULL != oldenv) {
-                asprintf(&newenv, "%s/lib:%s", prefix, oldenv);
+                asprintf(&newenv, "%s/%s:%s", prefix, lib_base, oldenv);
             } else {
-                asprintf(&newenv, "%s/lib", prefix);
+                asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
             opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
             if (mca_pls_slurm_component.debug) {

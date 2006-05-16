@@ -26,6 +26,7 @@ Single Process Multiple Data (SPMD) Model:
 .R [ options ] 
 .B <program>
 .R [ <args> ]
+.
 
 Multiple Instruction Multiple Data (MIMD) Model:
 
@@ -41,6 +42,19 @@ Multiple Instruction Multiple Data (MIMD) Model:
        [ local_optionsN ]
 .B <programN>
 .R [ <argsN> ]
+.P
+
+Note that in both models, invoking \fImpirun\fR via an absolute path
+name is equivalent to specifying the \fI--prefix\fR option with a
+\fI<dir>\fR value equivalent to the directory where \fImpirun\fR
+resides, minus its last subdirectory.  For example:
+
+    \fBshell$\fP /usr/local/bin/mpirun ...
+
+is equivalent to
+
+    \fBshell$\fP mpirun --prefix /usr/local
+
 .
 .\" **************************
 .\"    Quick Summary Section
@@ -182,6 +196,13 @@ complete as soon as successful launch occurs.
 .TP
 .B -path\fR,\fP --path \fR<path>\fP
 <path> that will be used when attempting to locate requested executables.
+.
+.
+.TP
+.B --prefix \fR<dir>\fP
+Prefix directory that will be used to set the \fIPATH\fR and
+\fILD_LIBRARY_PATH\fR on the remote node before invoking Open MPI or
+the target process.  See the "Remote Execution" section, below.
 .
 .
 .TP
@@ -477,14 +498,85 @@ necessary (and safest) for the user to only clean up non-MPI state.
 .SS Process Environment
 .
 Processes in the MPI application inherit their environment from the
-Open RTE daemon upon the node on which they are running.  The environment
-is typically inherited from the user's shell.  On remote nodes, the exact
-environment is determined by the boot MCA module used.  The rsh boot module,
-for example, uses either rsh/ssh to launch the Open RTE daemon on remote nodes, and
-typically executes one or more of the user's shell-setup files before launching
-the Open RTE daemon.  When running dynamically linked applications which
-require the LD_LIBRARY_PATH environment variable to be set, care must be taken
-to ensure that it is correctly set when booting Open MPI.
+Open RTE daemon upon the node on which they are running.  The
+environment is typically inherited from the user's shell.  On remote
+nodes, the exact environment is determined by the boot MCA module
+used.  The \fIrsh\fR launch module, for example, uses either
+\fIrsh\fR/\fIssh\fR to launch the Open RTE daemon on remote nodes, and
+typically executes one or more of the user's shell-setup files before
+launching the Open RTE daemon.  When running dynamically linked
+applications which require the \fILD_LIBRARY_PATH\fR environment
+variable to be set, care must be taken to ensure that it is correctly
+set when booting Open MPI.
+.PP
+See the "Remote Execution" section for more details.
+.
+.
+.SS Remote Execution
+.
+Open MPI requires that the \fIPATH\fR environment variable be set to
+find executables on remote nodes (this is typically only necessary in
+\fIrsh\fR- or \fIssh\fR-based environments -- batch/scheduled
+environments typically copy the current environment to the execution
+of remote jobs, so if the current environment has \fIPATH\fR and/or
+\fILD_LIBRARY_PATH\fR set properly, the remote nodes will also have it
+set properly).  If Open MPI was compiled with shared library support,
+it may also be necessary to have the \fILD_LIBRARY_PATH\fR environment
+variable set on remote nodes as well (especially to find the shared
+libraries required to run user MPI applications).
+.PP
+However, it is not always desirable or possible to edit shell
+startup files to set \fIPATH\fR and/or \fILD_LIBRARY_PATH\fR.  The
+\fI--prefix\fR option is provided for some simple configurations where
+this is not possible.
+.PP
+The \fI--prefix\fR option takes a single argument: the base directory
+on the remote node where Open MPI is installed.  Open MPI will use
+this directory to set the remote \fIPATH\fR and \fILD_LIBRARY_PATH\fR
+before executing any Open MPI or user applications.  This allows
+running Open MPI jobs without having pre-configued the \fIPATH\fR and
+\fILD_LIBRARY_PATH\fR on the remote nodes.
+.PP
+Open MPI adds the basename of the current
+node's "bindir" (the directory where Open MPI's executables are
+installed) to the prefix and uses that to set the \fIPATH\fR on the
+remote node.  Similarly, Open MPI adds the basename of the current
+node's "libdir" (the directory where Open MPI's libraries are
+installed) to the prefix and uses that to set the
+\fILD_LIBRARY_PATH\fR on the remote node.  For example:
+.TP 15
+Local bindir:
+/local/node/directory/bin
+.TP
+Local libdir:
+/local/node/directory/lib64
+.PP
+If the following command line is used:
+
+    \fBshell$\fP mpirun --prefix /remote/node/directory
+
+Open MPI will add "/remote/node/directory/bin" to the \fIPATH\fR
+and "/remote/node/directory/lib64" to the \fLD_LIBRARY_PATH\fR on the
+remote node before attempting to execute anything.
+.PP
+Note that \fI--prefix\fR can be set on a per-context basis, allowing
+for different values for different nodes.
+.PP
+The \fI--prefix\fR option is not sufficient if the installation paths
+on the remote node are different than the local node (e.g., if "/lib"
+is used on the local node, but "/lib64" is used on the remote node),
+or if the installation paths are something other than a subdirectory
+under a common prefix.  
+.PP
+Note that executing \fImpirun\fR via an absolute pathname is
+equivalent to specifying \fI--prefix\fR without the last subdirectory
+in the absolute pathname to \fImpirun\fR.  For example:
+
+    \fBshell$\fP /usr/local/bin/mpirun ...
+
+is equivalent to
+
+    \fBshell$\fP mpirun --prefix /usr/local
 .
 .
 .
@@ -502,6 +594,7 @@ environment and use \fI\-x\fP to export them; not to define them.
 .
 .
 .SS MCA (Modular Component Architecture)
+.
 The \fI-mca\fP switch allows the passing of parameters to various MCA modules.
 .\" Open MPI's MCA modules are described in detail in ompimca(7).
 MCA modules have direct impact on MPI programs because they allow tunable
