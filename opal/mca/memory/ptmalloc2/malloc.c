@@ -62,6 +62,10 @@ extern void*  opal_mem_free_ptmalloc2_mmap(void *start, size_t length,
    are never reused, so this keeps the number of calls to munmap and
    sbrk down significantly */
 #define DEFAULT_MMAP_THRESHOLD (2*1024*1024)
+/* free() of small allocations is not reentrant and the mvapi libraries
+   call free() from deregister.  Big allocations (using mmap()) are fine
+   and don't need any special care. */
+#define MORECORE_CANNOT_TRIM 1
 
 /* make some non-GCC compilers happy */
 #ifndef __GNUC__
@@ -2385,12 +2389,16 @@ static void malloc_init_state(av) mstate av;
 
 #if __STD_C
 static Void_t*  sYSMALLOc(INTERNAL_SIZE_T, mstate);
+#ifndef MORECORE_CANNOT_TRIM
 static int      sYSTRIm(size_t, mstate);
+#endif
 static void     malloc_consolidate(mstate);
 static Void_t** iALLOc(mstate, size_t, size_t*, int, Void_t**);
 #else
 static Void_t*  sYSMALLOc();
+#ifndef MORECORE_CANNOT_TRIM
 static int      sYSTRIm();
+#endif
 static void     malloc_consolidate();
 static Void_t** iALLOc();
 #endif
@@ -3255,6 +3263,7 @@ static Void_t* sYSMALLOc(nb, av) INTERNAL_SIZE_T nb; mstate av;
 }
 
 
+#ifndef MORECORE_CANNOT_TRIM
 /*
   sYSTRIm is an inverse of sorts to sYSMALLOc.  It gives memory back
   to the system (via negative arguments to sbrk) if there is unused
@@ -3323,6 +3332,7 @@ static int sYSTRIm(pad, av) size_t pad; mstate av;
   }
   return 0;
 }
+#endif
 
 #ifdef HAVE_MMAP
 
