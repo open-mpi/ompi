@@ -180,8 +180,9 @@ void* mca_mpool_openib_realloc(
 void mca_mpool_openib_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    
-    mpool->mpool_deregister(mpool, registration); 
+    if(registration){
+        mpool->mpool_deregister(mpool, registration); 
+    }
     free(registration->alloc_base); 
     
     

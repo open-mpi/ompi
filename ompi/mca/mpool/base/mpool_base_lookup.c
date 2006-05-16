@@ -82,6 +82,9 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
         return NULL;
     }
     module = component->mpool_init(resources); 
+    if ( NULL == module ) {
+        return NULL;
+    }
     sm = OBJ_NEW(mca_mpool_base_selected_module_t); 
     sm->mpool_component = component; 
     sm->mpool_module = module; 
