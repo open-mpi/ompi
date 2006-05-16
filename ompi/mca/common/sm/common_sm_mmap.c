@@ -71,7 +71,7 @@ static int mca_common_sm_mmap_open(char* path)
         fd = open(path, O_CREAT|O_RDWR, 0000); 
         if (fd < 0 && errno != EACCES) {
             opal_output(0, 
-                        "mca_ptl_sm_mmap_open: open %s failed with errno=%d\n",
+                        "mca_common_sm_mmap_open: open %s failed with errno=%d\n",
                         path, errno);
             return -1;
         }
