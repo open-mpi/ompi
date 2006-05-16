@@ -148,7 +148,7 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
 {
     *item = (ompi_free_list_item_t*)opal_atomic_lifo_pop(&((fl)->super));
     while( NULL == *item ) {
-        if( OPAL_THREAD_TRYLOCK(&((fl)->fl_lock)) ) {
+        if( !OPAL_THREAD_TRYLOCK(&((fl)->fl_lock)) ) {
             if((fl)->fl_max_to_alloc <= (fl)->fl_num_allocated) {
                 (fl)->fl_num_waiting++;
                 opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));
