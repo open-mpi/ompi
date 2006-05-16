@@ -123,13 +123,17 @@ $(nodist_libmpi_f90_a_SOURCES): fortran_kinds.sh
 # exist; there aren't good portable ways to indicate that the target
 # name is fake and should never exist).
 
+# Note the "-I." in the commands below.  This is because mpi.f90
+# includes mpi-f90-interfaces.h, which will be in the build tree
+# (i.e., the current directory) because it is generated.
+
 mpi.o: mpi.f90 mpi-f90-interfaces.h
 	@echo "***************************************************************"
 	@echo "* Compiling the mpi.f90 file may take a few minutes."
 	@echo "* This is quite normal -- do not be alarmed if the compile"
 	@echo "* process seems to 'hang' at this point for several minutes."
 	@echo "***************************************************************"
-	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
+	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) $<
 
 mpi.obj: mpi.f90 mpi-f90-interfaces.h
 	@echo "***************************************************************"
@@ -137,7 +141,7 @@ mpi.obj: mpi.f90 mpi-f90-interfaces.h
 	@echo "* This is quite normal -- do not be alarmed if the compile"
 	@echo "* process seems to 'hang' at this point for several minutes."
 	@echo "***************************************************************"
-	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
+	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
 
 else
 lib_LIBRARIES +=
