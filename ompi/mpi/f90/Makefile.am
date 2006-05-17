@@ -163,7 +163,6 @@ medium_sources = \
      mpi_bsend_init_f90.f90 \
      mpi_buffer_attach_f90.f90 \
      mpi_buffer_detach_f90.f90 \
-     mpi_comm_spawn_multiple_f90.f90 \
      mpi_file_iread_f90.f90 \
      mpi_file_iread_at_f90.f90 \
      mpi_file_iread_shared_f90.f90 \
@@ -236,7 +235,7 @@ large_sources = \
 # The rest of the files that are in the library depend on which size
 # we're building.
 
-nodist_libmpi_f90_a_SOURCES = mpi_sizeof.f90
+nodist_libmpi_f90_a_SOURCES = mpi_sizeof.f90 mpi_comm_spawn_multiple_f90.f90
 if OMPI_WANT_BUILD_F90_MEDIUM
 nodist_libmpi_f90_a_SOURCES += $(medium_sources)
 endif
