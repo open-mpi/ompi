@@ -226,7 +226,8 @@ int mca_mpool_base_free(void * base)
 {
     int rc = OMPI_SUCCESS;
     opal_list_item_t * item;
-    mca_mpool_base_selected_module_t * current;
+    mca_mpool_base_selected_module_t * current = NULL;
+    mca_mpool_base_selected_module_t * free_function = NULL;
     uint32_t i, cnt;
     ompi_pointer_array_t regs;
     OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
@@ -235,6 +236,22 @@ int mca_mpool_base_free(void * base)
         item != opal_list_get_end(&mca_mpool_base_modules);
         item = opal_list_get_next(item)) {
         current = ((mca_mpool_base_selected_module_t *) item);
+        /* 
+         * Check if a mpool has been used for allocating the memory. This 
+         * approach only works for the case that the user specified MPI_INFO_NULL
+         * in MPI_Alloc_mem.
+         * Maybe all possible mpools should be asked if they can free the 
+         * memory until the right returns OK ?
+         */
+        if(current->mpool_module->flags & MCA_MPOOL_FLAGS_MPI_ALLOC_MEM) {
+            if(NULL == current->mpool_module->mpool_register){
+                free_function = current;
+            } else {
+                if ( NULL == free_function ) {
+                    free_function = current;
+                }
+            }
+        }
         if(NULL != current->mpool_module->mpool_find)  {
             rc = current->mpool_module->mpool_find(
                 current->mpool_module,
@@ -257,6 +274,17 @@ int mca_mpool_base_free(void * base)
             }
             ompi_pointer_array_remove_all(&regs);
         }
+    }
+
+    /* free the memory */
+    if ( NULL == free_function ) {
+        /* If there is no mpool the memory has been allocated with malloc */
+        free(base);
+    } else {
+        /* free the memory with the mpool that was responsible for the allocation.
+         * The registration is NULL because the buffer has been unregistered above.
+         */
+        free_function->mpool_module->mpool_free(free_function->mpool_module, base, NULL);
     }
 
 cleanup:
