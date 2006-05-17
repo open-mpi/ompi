@@ -1097,7 +1097,7 @@ fi
 if test -n "$file_system_pvfs"; then
     CPPFLAGS="$CPPFLAGS $CFLAGS"
     AC_CHECK_HEADERS(pvfs.h,
-    	AC_DEFINE(ROMIO_PVFS2,1,[Define for ROMIO with PVFS]),
+    	AC_DEFINE(ROMIO_PVFS,1,[Define for ROMIO with PVFS]),
 	AC_MSG_ERROR([PVFS support requested but cannot find pvfs.h header file])
 	)
     # Check for missing int64_t (intel version 8 compiler and -no-gcc
