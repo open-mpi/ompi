@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed problems with leave_pinned that could cause Badness with the
+  mvapi BTL.
 - Fixed problems with MPI_FILE_OPEN and non-blocking MPI-2 IO access.
 - Fixed various InfiniBand port matching issues during startup.
   Thanks to Scott Weitzenkamp for identifying these problems.
