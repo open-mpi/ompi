@@ -25,7 +25,7 @@ fi
 
 # Read in the KIND information
 
-. fortran_kinds.sh
+. "$1/fortran_kinds.sh"
 
 # Setup
 
