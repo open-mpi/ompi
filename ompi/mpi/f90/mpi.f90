@@ -9,6 +9,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
+! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 ! 
 ! Additional copyrights may follow
@@ -19,6 +20,10 @@
 module mpi
 
   include "mpif.h"
+
+! The MPI attribute callback functions need to be explictly called out
+! so that they don't end up in the MPI namespace.  See a longer
+! explanation in attr_fn-f90-interfaces.h.
 
   include "attr_fn-f90-interfaces.h"
 
