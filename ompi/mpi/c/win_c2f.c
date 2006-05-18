@@ -41,10 +41,10 @@ MPI_Fint MPI_Win_c2f(MPI_Win win)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         /* Note that ompi_comm_invalid() explicitly checks for
-           MPI_COMM_NULL, but MPI_COMM_C2F is supposed to treat
-           MPI_COMM_NULL as a valid communicator (and therefore return
+           MPI_WIN_NULL, but MPI_WIN_C2F is supposed to treat
+           MPI_WIN_NULL as a valid communicator (and therefore return
            a valid Fortran handle for it).  Hence, this function
-           should not return an error if MPI_COMM_NULL is passed in.
+           should not return an error if MPI_WIN_NULL is passed in.
 
            See a big comment in ompi/communicator/communicator.h about
            this (I know that's not win.h, but the issues are related,
