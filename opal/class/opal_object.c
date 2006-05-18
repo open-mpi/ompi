@@ -112,7 +112,7 @@ void opal_class_initialize(opal_class_t *cls)
         perror("Out of memory");
         exit(-1);
     }
-    cls->cls_destruct_array = cls->cls_construct_array + cls->cls_depth;
+    cls->cls_destruct_array = cls->cls_construct_array + cls->cls_depth + 1;
     cls_construct_array = cls->cls_construct_array;
     cls_destruct_array  = cls->cls_destruct_array; 
     
