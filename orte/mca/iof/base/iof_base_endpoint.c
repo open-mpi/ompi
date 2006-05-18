@@ -306,13 +306,31 @@ int orte_iof_base_endpoint_create(
     endpoint->ep_tag = tag;
     endpoint->ep_fd = fd;
 
-    /* set to non-blocking */
-    if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
-        opal_output(0, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
-            __FILE__, __LINE__, errno);
-    } else {
-        flags |= O_NONBLOCK;
-        fcntl(fd, F_SETFL, flags);
+    /* If it looks like we're on the mpirun side of a standard IO
+       stream (like we're a SOURCE and tag is STDIN and we're mucking
+       with fd 0), we don't want to set nonblocking.  If we do so, we
+       set the file descriptor to non-blocking for everyone that has
+       that file descriptor, which includes everyone else in our shell
+       pipeline chain.  (See
+       http://lists.freebsd.org/pipermail/freebsd-hackers/2005-January/009742.html).
+       This causes things like "mpirun -np 1 big_app | cat" to lose
+       output, because cat's stdout is then ALSO non-blocking and cat
+       isn't built to deal with that case (same with almost all other
+       unix text utils). 
+
+       Otherwise, we're probably on the non-mpirun end of things, and
+       should be non-blocking.
+    */
+    if ( ! ((ORTE_IOF_SOURCE == mode && ORTE_IOF_STDIN == tag && 0 == fd) ||
+            (ORTE_IOF_SINK == mode && ORTE_IOF_STDOUT == tag && 1 == fd) ||
+            (ORTE_IOF_SINK == mode && ORTE_IOF_STDERR == tag && 2 == fd))) {
+        if((flags = fcntl(fd, F_GETFL, 0)) < 0) {
+            opal_output(0, "[%s:%d]: fcntl(F_GETFL) failed with errno=%d\n", 
+                        __FILE__, __LINE__, errno);
+        } else {
+            flags |= O_NONBLOCK;
+            fcntl(fd, F_SETFL, flags);
+        }
     }
 
     /* setup event handler */

@@ -60,6 +60,9 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed situation where mpirun could set a shell pipeline's stdout
+  to non-blocking, causing the shell pipeline to prematurely fail.
+  Thanks to Darrell Kresge for figuring out what was happening.
 - Fixed problems with leave_pinned that could cause Badness with the
   mvapi BTL.
 - Fixed problems with MPI_FILE_OPEN and non-blocking MPI-2 IO access.
