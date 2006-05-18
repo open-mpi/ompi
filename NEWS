@@ -60,6 +60,9 @@ version 1.0.
 1.0.3
 -----
 
+- Adapted configure to be able to handle Torque 2.1.0p0's (and above)
+  new library name.  Thanks to Brock Palen for pointing this out and
+  providing access to a Torque 2.1.0p0 cluster to test with.
 - Fixed situation where mpirun could set a shell pipeline's stdout
   to non-blocking, causing the shell pipeline to prematurely fail.
   Thanks to Darrell Kresge for figuring out what was happening.
