@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -164,7 +165,27 @@ struct ompi_communicator_t {
 
 
     /**
-     * is this a valid communicator
+     * Is this a valid communicator?  This is a complicated question.
+     * :-)
+     *
+     * According to MPI-1:5.2.4 (p137):
+     *
+     * "The predefined constant MPI_COMM_NULL is the value used for
+     * invalid communicator handles."
+     *
+     * Hence, MPI_COMM_NULL is not valid.  However, MPI-2:4.12.4 (p50)
+     * clearly states that the MPI_*_C2F and MPI_*_F2C functions
+     * should treat MPI_COMM_NULL as a valid communicator -- it
+     * distinctly differentiates between "invalid" handles and
+     * "MPI_*_NULL" handles.  Some feel that the MPI-1 definition
+     * still holds for all other MPI functions; others feel that the
+     * MPi-2 definitions trump the MPI-1 definition.  Regardless of
+     * who is right, there is ambiguity here.  So we have left
+     * ompi_comm_invalid() as originally coded -- per the MPI-1
+     * definition, where MPI_COMM_NULL is an invalid communicator.
+     * The MPI_Comm_c2f() function, therefore, calls
+     * ompi_comm_invalid() but also explictily checks to see if the
+     * handle is MPI_COMM_NULL.
      */
     static inline int ompi_comm_invalid(ompi_communicator_t* comm)
     {
