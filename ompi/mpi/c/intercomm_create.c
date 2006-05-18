@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,7 +48,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME); 
 
-        if ( MPI_COMM_NULL == local_comm || ompi_comm_invalid ( local_comm ) ||
+        if ( ompi_comm_invalid ( local_comm ) ||
              ( local_comm->c_flags & OMPI_COMM_INTER ) ) 
             return OMPI_ERRHANDLER_INVOKE ( MPI_COMM_WORLD, MPI_ERR_COMM,
                                             FUNC_NAME);
@@ -75,7 +76,7 @@ int MPI_Intercomm_create(MPI_Comm local_comm, int local_leader,
         /* remember that the remote_leader and bridge_comm arguments
            just have to be valid at the local_leader */
         if ( local_rank == local_leader ) {
-            if ( (MPI_COMM_NULL == bridge_comm) || ompi_comm_invalid ( bridge_comm ) ||
+            if ( ompi_comm_invalid ( bridge_comm ) ||
                  (bridge_comm->c_flags & OMPI_COMM_INTER) ) {
                 return OMPI_ERRHANDLER_INVOKE ( local_comm, MPI_ERR_COMM, 
                                                 FUNC_NAME);

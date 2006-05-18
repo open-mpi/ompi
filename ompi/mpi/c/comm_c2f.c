@@ -38,7 +38,15 @@ MPI_Fint MPI_Comm_c2f(MPI_Comm comm)
     if ( MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_comm_invalid (comm)) {
+        /* Note that ompi_comm_invalid() explicitly checks for
+           MPI_COMM_NULL, but MPI_COMM_C2F is supposed to treat
+           MPI_COMM_NULL as a valid communicator (and therefore return
+           a valid Fortran handle for it).  Hence, this function
+           should not return an error if MPI_COMM_NULL is passed in.
+
+           See a big comment in ompi/communicator/communicator.h about
+           this. */
+        if (ompi_comm_invalid (comm) && MPI_COMM_NULL != comm) {
             return OMPI_INT_2_FINT(-1);
         }
     }

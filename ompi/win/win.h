@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -107,6 +108,9 @@ int ompi_win_get_name(ompi_win_t *win, char *win_name, int *length);
 
 int ompi_win_group(ompi_win_t *win, ompi_group_t **group);
 
+/* Note that the defintion of an "invalid" window is closely related
+   to the defintion of an "invalid" communicator.  See a big comment
+   in ompi/communicator/communicator.h about this. */
 static inline int ompi_win_invalid(ompi_win_t *win) {
     if (NULL == win || 
         MPI_WIN_NULL == win ||
