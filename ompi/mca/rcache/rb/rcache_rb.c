@@ -36,6 +36,7 @@ void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache ) {
     rcache->base.rcache_insert = mca_rcache_rb_insert; 
     rcache->base.rcache_delete = mca_rcache_rb_delete; 
     rcache->base.rcache_finalize = mca_rcache_rb_finalize; 
+    OBJ_CONSTRUCT(&rcache->base.lock, opal_mutex_t);
     mca_rcache_rb_tree_init(rcache);
     mca_rcache_rb_mru_init(rcache);
 }
