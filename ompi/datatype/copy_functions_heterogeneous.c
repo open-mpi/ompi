@@ -42,7 +42,7 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
-    datatype_check( #TYPE, sizeof(TYPE), sizeof(TYPE), count,           \
+    datatype_check( #TYPE, sizeof(TYPE), sizeof(TYPE), &count,          \
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
@@ -79,7 +79,7 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
     uint32_t i;                                                         \
                                                                         \
     datatype_check( #TYPENAME, sizeof(TYPE1) + sizeof(TYPE2),           \
-                   sizeof(TYPE1) + sizeof(TYPE2), count,                \
+                   sizeof(TYPE1) + sizeof(TYPE2), &count,               \
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
@@ -126,7 +126,7 @@ copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t 
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
-    datatype_check( #TYPENAME, sizeof(TYPE) * 2, sizeof(TYPE) * 2, count, \
+    datatype_check( #TYPENAME, sizeof(TYPE) * 2, sizeof(TYPE) * 2, &count, \
                    from, from_len, from_extent,                         \
                    to, to_length, to_extent);                           \
                                                                         \
@@ -161,22 +161,22 @@ copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t 
 
 
 static inline void
-datatype_check(char *type, uint32_t local_size, uint32_t remote_size, uint32_t count, 
+datatype_check(char *type, uint32_t local_size, uint32_t remote_size, uint32_t *count, 
                const char* from, uint32_t from_len, long from_extent,
                char* to, uint32_t to_len, long to_extent)
 {
     /* make sure the remote buffer is large enough to hold the data */  
-    if( (remote_size * count) > from_len ) {                       
-        count = from_len / remote_size;                            
-        if( (count * remote_size) != from_len ) {                  
+    if( (remote_size * *count) > from_len ) {                       
+        *count = from_len / remote_size;                            
+        if( (*count * remote_size) != from_len ) {                  
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", 
-                  from_len - (count * remote_size) );              
+                  from_len - (*count * remote_size) );              
         }                                                               
         DUMP( "correct: copy %s count %d from buffer %p with length %d to %p space %d\n", 
-              "char", count, from, from_len, to, to_len );               
+              "char", *count, from, from_len, to, to_len );               
     } else {
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", 
-              "char", count, from, from_len, to, to_len );               
+              "char", *count, from, from_len, to, to_len );               
     }    
 }
 
@@ -190,7 +190,7 @@ copy_char_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
 {
     uint32_t i;
 
-    datatype_check("char", sizeof(char), sizeof(char), count, 
+    datatype_check("char", sizeof(char), sizeof(char), &count, 
                    from, from_len, from_extent,
                    to, to_length, to_extent);
 
@@ -242,7 +242,7 @@ copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
         }
     }
 
-    datatype_check( "bool", sizeof(bool), sizeof(bool), count,
+    datatype_check( "bool", sizeof(bool), sizeof(bool), &count,
                    from, from_len, from_extent,
                    to, to_length, to_extent);
 
@@ -300,7 +300,7 @@ copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
     }
 
     datatype_check( "logical", sizeof(ompi_fortran_logical_t), 
-                    sizeof(ompi_fortran_logical_t), count,
+                    sizeof(ompi_fortran_logical_t), &count,
                     from, from_len, from_extent,
                     to, to_length, to_extent);
 
