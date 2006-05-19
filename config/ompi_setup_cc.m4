@@ -49,7 +49,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
     # Do we want debugging?
     if test "$WANT_DEBUG" = "1" -a "$enable_debug_symbols" != "no" ; then
         if test "$ompi_c_vendor" = "gnu"; then
-            CFLAGS="$CFLAGS -g3"
+            CFLAGS="$CFLAGS -g"  # keep the -g3 for when it will become a standard option.
         else
             CFLAGS="$CFLAGS -g"
         fi
