@@ -12,8 +12,12 @@
 
 prefix="/opt/openmpi"
 specfile="openmpi.spec"
-rpmbuild_options="--define 'mflags -j4'"
-# Another option: --target=i686-pc-gnu
+rpmbuild_options="--define 'mflags -j4' --define 'oscar 1'"
+configure_options=
+
+# Helpful when debugging
+#rpmbuild_options="--define 'mflags -j4' --define 'install_in_opt 1' --define 'cflags -g'"
+configure_options="--disable-mpi-f77 --without-io-romio --disable-mpi-f90"
 
 # Some distro's will attempt to force using bizarre, custom compiler
 # names (e.g., i386-redhat-linux-gnu-gcc).  So hardwire them to use
@@ -31,7 +35,7 @@ build_srpm=yes
 # If you want to build the "all in one RPM", put "yes" here
 build_single=no
 # If you want to build the "multiple" RPMs, put "yes" here
-build_multiple=yes
+build_multiple=no
 
 #########################################################################
 # You should not need to change anything below this line
@@ -182,7 +186,18 @@ release=`egrep -i release: $specdest | cut -d\  -f2`
 # Setup compiler string
 #
 
-configure_options="CC=$CC CXX=$CXX FC=$FC F77=$F77"
+if test "$CC" != ""; then
+    configure_options="$configure_options CC=$CC"
+fi
+if test "$CXX" != ""; then
+    configure_options="$configure_options CXX=$CXX"
+fi
+if test "$F77" != ""; then
+    configure_options="$configure_options F77=$F77"
+fi
+if test "$FC" != ""; then
+    configure_options="$configure_options FC=$FC"
+fi
 
 #
 # Make the SRPM
@@ -208,7 +223,11 @@ fi
 
 if test "$build_single" = "yes"; then
     echo "--> Building the single Open MPI RPM"
-    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 1' --define 'configure_options $configure_options' $specdest"
+    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 1'"
+    if test "$configure_options" != ""; then
+        cmd="$cmd --define 'configure_options $configure_options'"
+    fi
+    cmd="$cmd $specdest"
     echo "--> $cmd"
     eval $cmd
 
@@ -226,7 +245,11 @@ fi
 
 if test "$build_multiple" = "yes"; then
     echo "--> Building the multiple Open MPI RPM"
-    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0' --define 'configure_options $configure_options' $specdest"
+    cmd="$rpm_cmd -bb $rpmbuild_options --define 'build_all_in_one_rpm 0'"
+    if test "$configure_options" != ""; then
+        cmd="$cmd --define 'configure_options $configure_options'"
+    fi
+    cmd="$cmd $specdest"
     echo "--> $cmd"
     eval $cmd
 

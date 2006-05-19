@@ -22,7 +22,7 @@
 # Lawrence Berkeley National Laboratory (subject to receipt of any
 # required approvals from the U.S. Dept. of Energy).  All rights reserved.
 #
-# Written and maintained by:
+# Initially written by:
 #       Greg Kurtzer, <gmkurtzer@lbl.gov>
 #
 ############################################################################
@@ -39,20 +39,22 @@
 
 %{!?lanl: %define lanl 0}
 
+# Help for OSCAR RPMs
+
+%{!?oscar: %define oscar 0}
+
 # Define this if you want to make this SRPM build in /opt/NAME/VERSION-RELEASE
 # instead of the default /usr/
 # type: bool (0/1)
 %{!?install_in_opt: %define install_in_opt 0}
 
 # Define this if you want this RPM to install environment setup
-# scripts, currently either a modulefile or profile.d script.
+# scripts in /etc/profile.d.  Only used if install_in_opt is true.
 # type: bool (0/1)
-%{!?install_env_scripts: %define install_env_scripts 0}
+%{!?install_profile_d_scripts: %define install_profile_d_scripts 0}
 
-# Should this drop a modulefile (if being used with enviornment modules)? 
-# Specify the modulefile PATH you wish to use, or '0' for null (which will
-# cause /etc/profile.d/ scripts to be created.
-# note: This will only work if %{install_in_opt} is true.
+# Define this to 1 if you want this RPM to install a modulefile.  Only
+# used if install_in_opt is true.
 # type: bool (0/1)
 %{!?install_modulefile: %define install_modulefile 0}
 # type: string (root path to install modulefiles)
@@ -60,7 +62,7 @@
 # type: string (subdir to install modulefile)
 %{!?modulefile_subdir: %define modulefile_subdir %{name}}
 # type: string (name of modulefile)
-%{!?modulefile_name: %define modulefile_name %{version}-%{release}}
+%{!?modulefile_name: %define modulefile_name %{version}}
 
 # The name of the modules RPM.  Can vary from system to system.
 # type: string (name of modules RPM)
@@ -82,12 +84,27 @@
 
 %if %{lanl}
 %define install_in_opt 1
-%define install_env_scripts 1
 %define install_modulefile 1
-%define modulefile_path /usr/share/modules/modulefiles/mpi/openmpi-%{version}
-%define modulefile_path_subdir mpi
+%define modulefile_path /usr/share/modules/modulefiles
+%define modulefile_subdir mpi
 %define modulefile_name %{name}-%{version}
 %define modules_rpm_name environment-modules
+%endif
+
+
+#############################################################################
+#
+# OSCAR-specific defaults
+#
+#############################################################################
+
+%if %{oscar}
+%define install_in_opt 1
+%define install_modulefile 1
+%define modulefile_path /opt/modules/modulefiles
+%define modulefile_subdir openmpi
+%define modulefile_name %{name}-%{version}
+%define modules_rpm_name modules-oscar
 %endif
 
 
@@ -98,10 +115,12 @@
 #############################################################################
 
 %if %{install_in_opt}
-%define _prefix /opt/%{name}/%{version}-%{release}
-%define _sysconfdir /opt/%{name}/%{version}-%{release}/etc
-%define _libdir /opt/%{name}/%{version}-%{release}/lib
-%define _includedir /opt/%{name}/%{version}-%{release}/include
+%define _prefix /opt/%{name}/%{version}
+%define _sysconfdir /opt/%{name}/%{version}/etc
+%define _libdir /opt/%{name}/%{version}/lib
+%define _includedir /opt/%{name}/%{version}/include
+%define _mandir /opt/%{name}/%{version}/man
+%define _pkgdatadir /opt/%{name}/%{version}/share/%{name}
 %endif
 
 %if !%{build_debuginfo_rpm}
@@ -115,6 +134,7 @@
 %endif
 
 %{!?configure_options: %define configure_options %{nil}}
+
 
 #############################################################################
 #
@@ -159,6 +179,9 @@ Open MPI jobs.
 Summary: Tools and plugin modules for running Open MPI jobs
 Group: Development/Libraries
 Provides: mpi
+%if %{install_modulefile}
+Requires: %{modules_rpm_name}
+%endif
 
 %description runtime
 Open MPI is a project combining technologies and resources from several other
@@ -199,6 +222,7 @@ wrapper compilers and header files for MPI development.
 %package docs
 Summary: Documentation for Open MPI
 Group: Development/Documentation
+Requires: openmpi-runtime
 
 %description docs
 Open MPI is a project combining technologies and resources from several other
@@ -213,6 +237,12 @@ This subpackage provides the documentation for Open MPI.
 #
 #############################################################################
 %prep
+# Unbelievably, some versions of RPM do not first delete the previous
+# installation root (e.g., it may have been left over from a prior
+# failed build).  This can lead to Badness later if there's files in
+# there that are not meant to be packaged.
+rm -rf $RPM_BUILD_ROOT
+
 %setup -q -n openmpi-%{version}
 
 #############################################################################
@@ -250,7 +280,9 @@ rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteprobe"
 
 # An attempt to make enviornment happier when installed into non /usr path
 
-%if %{install_env_scripts}
+%if %{install_in_opt}
+
+# First, the [optional] modulefile
 
 %if %{install_modulefile}
 %{__mkdir_p} $RPM_BUILD_ROOT/%{modulefile_path}/%{modulefile_subdir}/
@@ -262,10 +294,10 @@ cat <<EOF >$RPM_BUILD_ROOT/%{modulefile_path}/%{modulefile_subdir}/%{modulefile_
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
 
 proc ModulesHelp { } {
-   puts stderr "This module adds Open MPI (%{version}-%{release}) to various paths"
+   puts stderr "This module adds Open MPI v%{version} to various paths"
 }
 
-module-whatis   "Sets up Open MPI in your enviornment"
+module-whatis   "Sets up Open MPI v%{version}  in your enviornment"
 
 append-path PATH "%{_prefix}/bin/"
 append-path LD_LIBRARY_PATH %{_libdir}
@@ -278,9 +310,14 @@ setenv MPI_LD_FLAGS ""
 setenv MPI_COMPILE_FLAGS ""
 %endif
 EOF
-%else
+%endif
+# End of modulefile if
+
+# Next, the [optional] profile.d scripts
+
+%if %{install_profile_d_scripts}
 %{__mkdir_p} $RPM_BUILD_ROOT/etc/profile.d/
-cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}-%{release}.sh
+cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}.sh
 # NOTE: This is an automatically-generated file!  (generated by the
 # Open MPI RPM).  Any changes made here will be lost a) if the RPM is
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
@@ -302,7 +339,7 @@ if test "$CHANGED" = "1"; then
     export PATH LD_LIBRARY_PATH MANPATH
 fi
 EOF
-cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}-%{release}.csh
+cat <<EOF > $RPM_BUILD_ROOT/etc/profile.d/%{name}-%{version}.csh
 # NOTE: This is an automatically-generated file!  (generated by the
 # Open MPI RPM).  Any changes made here will be lost a) if the RPM is
 # uninstalled, or b) if the RPM is upgraded or uninstalled.
@@ -322,29 +359,23 @@ if ("$?MANPATH") then
 endif
 EOF
 %endif
+# End of profile.d if
 %endif
+# End of install_in_opt if
 
-# Build the files lists. Since the files are still not completly known,
-# it is easier to do some all-emcompasing find's.
-find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep -v "README|INSTALL|LICENSE" > main.files
+# Build lists of files that are specific to each package that are not
+# easily identifiable by a single directory (e.g., the different
+# libraries).
 
 # Runtime files
 find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep "lib.*.so|mca.*so|etc/openmpi|share/openmpi/.*txt" > runtime.files
+   sed -e "s@$RPM_BUILD_ROOT@@" | \
+   egrep "lib.*.so|mca.*so" > runtime.files
 
 # Devel files
 find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" |\
-   egrep "lib.*\.a|lib.*\.la|/include/" > devel.files
-
-# Docs files
-# For when we have man pages / documentation
-#find $RPM_BUILD_ROOT -type f -o -type l | \
-#   sed -e "s@$RPM_BUILD_ROOT@@" |\
-#   egrep "/man/" > docs.files
+   sed -e "s@$RPM_BUILD_ROOT@@" | \
+   egrep "lib.*\.a|lib.*\.la" > devel.files
 
 
 #############################################################################
@@ -376,11 +407,33 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %if %{build_all_in_one_rpm}
 
 #
-# All in one RPM
+# All in one RPM 
+#
+# Easy; just list the prefix and then specifically call out the doc
+# files.
 #
 
-%files -f main.files
+%files
 %defattr(-, root, root)
+%{_prefix}
+# If we're not installing in /opt, then the prefix is /usr, but the
+# sysconfdir is /etc -- so list them both.  Otherwise, we install in
+# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
+# that it can be removed).
+%if !%{install_in_opt}
+%{_sysconfdir}
+%else
+%dir /opt/%{name}
+%endif
+# If we're installing the modulefile, get that, too
+%if %{install_modulefile}
+%{modulefile_path}
+%endif
+# If we're installing the profile.d scripts, get those, too
+%if %{install_profile_d_scripts}
+/etc/profile.d/%{name}-%{version}.sh
+/etc/profile.d/%{name}-%{version}.csh
+%endif
 %doc README INSTALL LICENSE
 
 %else
@@ -388,10 +441,40 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 # Sub-package RPMs
 #
+# Harder than all-in-one.  We list the directories specifically so
+# that if the RPM creates directories when it is installed, we will
+# remove them when the RPM is uninstalled.  We also have to use
+# specific file lists.
+#
 
 %files runtime -f runtime.files
 %defattr(-, root, root)
+%dir %{_prefix}
+# If we're not installing in /opt, then the prefix is /usr, but the
+# sysconfdir is /etc -- so list them both.  Otherwise, we install in
+# /opt/openmpi/<version>, so be sure to list /opt/openmpi as well (so
+# that it can be removed).
+%if %{install_in_opt}
+%dir /opt/%{name}
+%dir /opt/%{name}/%{version}/share
+%else
+%{_sysconfdir}
+%endif
+# If we're installing the modulefile, get that, too
+%if %{install_modulefile}
+%{modulefile_path}
+%endif
+# If we're installing the profile.d scripts, get those, too
+%if %{install_profile_d_scripts}
+/etc/profile.d/%{name}-%{version}.sh
+/etc/profile.d/%{name}-%{version}.csh
+%endif
+%dir %{_bindir}
+%dir %{_libdir}
+%dir %{_libdir}/openmpi
 %doc README INSTALL LICENSE
+%{_sysconfdir}
+%{_pkgdatadir}
 %{_bindir}/mpirun
 %{_bindir}/mpiexec
 %{_bindir}/ompi_info
@@ -400,6 +483,7 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 
 %files devel -f devel.files
 %defattr(-, root, root)
+%{_includedir}
 %{_bindir}/mpicc
 %{_bindir}/mpiCC
 %{_bindir}/mpic++
@@ -407,9 +491,13 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 %{_bindir}/mpif77
 %{_bindir}/mpif90
 
-# For when we have documentation
-#% files docs -f docs.files
-#% defattr(-, root, root)
+# Note that we list the mandir specifically here, because we want all
+# files found in that tree, because rpmbuild may have compressed them
+# (e.g., foo.1.gz or foo.1.bz2) -- and we therefore don't know the
+# exact filenames.
+#%files docs
+#%defattr(-, root, root)
+#%{_mandir}
 
 %endif
 
@@ -420,6 +508,22 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Wed Apr 26 2006 Jeff Squyres <jsquyres@cisco.com>
+- This spec is for Open MPI 1.0.x and is now diverging from the trunk
+  spec file (some packaging details changed slightly in Open MPI
+  1.1.x):
+  - Delete opal_wrapper
+  - Delete the docs sub package
+- Revamp files listings to ensure that rpm -e will remove directories
+  if rpm -i created them.
+- Simplify options for making modulefiles and profile.d scripts.
+- Add oscar define.
+- Ensure to remove the previous installation root during prep.
+- Cleanup the modulefile specification and installation; also ensure
+  that the profile.d scripts get installed if selected.
+- Ensure to list sysconfdir in the files list if it's outside of the
+  prefix.
+
 * Wed Mar 30 2006 Jeff Squyres <jsquyres@cisco.com>
 - Lots of bit rot updates
 - Reorganize and rename the subpackages
