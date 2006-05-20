@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
         , ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   ${type}, intent(in) :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype

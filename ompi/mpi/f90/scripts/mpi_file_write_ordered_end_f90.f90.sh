@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status

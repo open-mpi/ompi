@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, win, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype

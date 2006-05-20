@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, root, comm, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype

@@ -64,7 +64,7 @@ output_1() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errorcode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -92,7 +92,7 @@ output_2() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, op, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype
@@ -149,7 +149,7 @@ output_3() {
     cat <<EOF
 
 subroutine ${procedure}(errorclass, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: errorclass
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -172,7 +172,7 @@ output_4() {
     cat <<EOF
 
 subroutine ${procedure}(errorclass, errorcode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: errorclass
   integer, intent(out) :: errorcode
   integer, intent(out) :: ierr
@@ -196,7 +196,7 @@ output_5() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, string, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   character(len=*), intent(in) :: string
   integer, intent(out) :: ierr
@@ -223,7 +223,7 @@ output_6() {
     cat <<EOF
 
 subroutine ${proc}(location, address, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: location
   integer, intent(out) :: address
   integer, intent(out) :: ierr
@@ -277,7 +277,7 @@ output_7() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -336,7 +336,7 @@ output_8() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
         displs, recvtype, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -392,7 +392,7 @@ output_9() {
     cat <<EOF
 
 subroutine ${procedure}(size, info, baseptr, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: info
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: baseptr
@@ -421,7 +421,7 @@ output_10() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -479,7 +479,7 @@ output_11() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -538,7 +538,7 @@ output_12() {
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
         recvcounts, rdispls, recvtype, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -599,7 +599,7 @@ output_13() {
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
         recvcounts, rdispls, recvtypes, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -656,7 +656,7 @@ output_14() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: ierr
@@ -680,7 +680,7 @@ output_15() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, attribute_val, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: attribute_val
@@ -706,7 +706,7 @@ output_16() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, attribute_val, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(in) :: attribute_val
@@ -731,7 +731,7 @@ output_17() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -758,7 +758,7 @@ output_18() {
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -815,7 +815,7 @@ output_19() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -873,7 +873,7 @@ output_20() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -931,7 +931,7 @@ output_21() {
     cat <<EOF
 
 subroutine ${proc}(buffer, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buffer
   integer, intent(in) :: size
   integer, intent(out) :: ierr
@@ -984,7 +984,7 @@ output_22() {
     cat <<EOF
 
 subroutine ${proc}(buffer, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(out) :: buffer
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -1034,7 +1034,7 @@ output_23() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1057,7 +1057,7 @@ output_24() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, maxdims, coords, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxdims
@@ -1084,7 +1084,7 @@ output_25() {
 
 subroutine ${procedure}(old_comm, ndims, dims, periods, reorder, &
         comm_cart, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: old_comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
@@ -1113,7 +1113,7 @@ output_26() {
 
 subroutine ${procedure}(comm, maxdims, dims, periods, coords&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: maxdims
   integer, dimension(*), intent(out) :: dims
@@ -1141,7 +1141,7 @@ output_27() {
 
 subroutine ${procedure}(comm, ndims, dims, periods, newrank&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
@@ -1168,7 +1168,7 @@ output_28() {
     cat <<EOF
 
 subroutine ${procedure}(comm, coords, rank, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, dimension(*), intent(in) :: coords
   integer, intent(out) :: rank
@@ -1194,7 +1194,7 @@ output_29() {
 
 subroutine ${procedure}(comm, direction, disp, rank_source, rank_dest&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: direction
   integer, intent(in) :: disp
@@ -1221,7 +1221,7 @@ output_30() {
     cat <<EOF
 
 subroutine ${procedure}(comm, remain_dims, new_comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   logical, dimension(*), intent(in) :: remain_dims
   integer, intent(out) :: new_comm
@@ -1246,7 +1246,7 @@ output_31() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ndims, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: ndims
   integer, intent(out) :: ierr
@@ -1270,7 +1270,7 @@ output_32() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errorcode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -1294,7 +1294,7 @@ output_33() {
     cat <<EOF
 
 subroutine ${procedure}(comm1, comm2, result, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm1
   integer, intent(in) :: comm2
   integer, intent(out) :: result
@@ -1319,7 +1319,7 @@ output_34() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, newcomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: group
   integer, intent(out) :: newcomm
@@ -1344,7 +1344,7 @@ output_35() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1368,7 +1368,7 @@ output_36() {
     cat <<EOF
 
 subroutine ${procedure}(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: comm_copy_attr_fn
   external :: comm_delete_attr_fn
   integer, intent(out) :: comm_keyval
@@ -1394,7 +1394,7 @@ output_37() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(in) :: comm_keyval
   integer, intent(out) :: ierr
@@ -1418,7 +1418,7 @@ output_38() {
     cat <<EOF
 
 subroutine ${procedure}(comm, newcomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierr
@@ -1442,7 +1442,7 @@ output_39() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1465,7 +1465,7 @@ output_40() {
     cat <<EOF
 
 subroutine ${procedure}(comm_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1488,7 +1488,7 @@ output_41() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, attribute_val, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -1514,7 +1514,7 @@ output_42() {
     cat <<EOF
 
 subroutine ${procedure}(comm, erhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: erhandler
   integer, intent(out) :: ierr
@@ -1538,7 +1538,7 @@ output_43() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_name, resultlen, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   character(len=*), intent(out) :: comm_name
   integer, intent(out) :: resultlen
@@ -1563,7 +1563,7 @@ output_44() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -1587,7 +1587,7 @@ output_45() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: rank
   integer, intent(out) :: ierr
@@ -1611,7 +1611,7 @@ output_46() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -1635,7 +1635,7 @@ output_47() {
     cat <<EOF
 
 subroutine ${procedure}(comm, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -1659,7 +1659,7 @@ output_48() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, attribute_val, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
@@ -1684,7 +1684,7 @@ output_49() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -1708,7 +1708,7 @@ output_50() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   character(len=*), intent(in) :: comm_name
   integer, intent(out) :: ierr
@@ -1732,7 +1732,7 @@ output_51() {
     cat <<EOF
 
 subroutine ${procedure}(comm, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -1756,7 +1756,7 @@ output_52() {
     cat <<EOF
 
 subroutine ${procedure}(comm, color, key, newcomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: color
   integer, intent(in) :: key
@@ -1782,7 +1782,7 @@ output_53() {
     cat <<EOF
 
 subroutine ${procedure}(comm, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -1806,7 +1806,7 @@ output_54() {
     cat <<EOF
 
 subroutine ${procedure}(nnodes, ndims, dims, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: nnodes
   integer, intent(in) :: ndims
   integer, dimension(*), intent(inout) :: dims
@@ -1831,7 +1831,7 @@ output_55() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1855,7 +1855,7 @@ output_56() {
     cat <<EOF
 
 subroutine ${procedure}(errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: errhandler
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1878,7 +1878,7 @@ output_57() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1902,7 +1902,7 @@ output_58() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -1926,7 +1926,7 @@ output_59() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, errorclass, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   integer, intent(out) :: errorclass
   integer, intent(out) :: ierr
@@ -1950,7 +1950,7 @@ output_60() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, string, resultlen, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   character(len=*), intent(out) :: string
   integer, intent(out) :: resultlen
@@ -1979,7 +1979,7 @@ output_61() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -2033,7 +2033,7 @@ output_62() {
     cat <<EOF
 
 subroutine ${procedure}(fh, errorcode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -2057,7 +2057,7 @@ output_63() {
     cat <<EOF
 
 subroutine ${procedure}(fh, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -2080,7 +2080,7 @@ output_64() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -2104,7 +2104,7 @@ output_65() {
     cat <<EOF
 
 subroutine ${procedure}(filename, info, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: filename
   integer, intent(in) :: info
   integer, intent(out) :: ierr
@@ -2128,7 +2128,7 @@ output_66() {
     cat <<EOF
 
 subroutine ${procedure}(fh, amode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: amode
   integer, intent(out) :: ierr
@@ -2152,7 +2152,7 @@ output_67() {
     cat <<EOF
 
 subroutine ${procedure}(fh, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -2176,7 +2176,7 @@ output_68() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, disp, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
@@ -2201,7 +2201,7 @@ output_69() {
     cat <<EOF
 
 subroutine ${procedure}(file, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: file
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -2225,7 +2225,7 @@ output_70() {
     cat <<EOF
 
 subroutine ${procedure}(fh, group, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -2249,7 +2249,7 @@ output_71() {
     cat <<EOF
 
 subroutine ${procedure}(fh, info_used, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: info_used
   integer, intent(out) :: ierr
@@ -2273,7 +2273,7 @@ output_72() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
   integer, intent(out) :: ierr
@@ -2297,7 +2297,7 @@ output_73() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
   integer, intent(out) :: ierr
@@ -2321,7 +2321,7 @@ output_74() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: size
   integer, intent(out) :: ierr
@@ -2345,7 +2345,7 @@ output_75() {
     cat <<EOF
 
 subroutine ${procedure}(fh, datatype, extent, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
@@ -2371,7 +2371,7 @@ output_76() {
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
   integer, intent(out) :: etype
@@ -2402,7 +2402,7 @@ output_77() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2459,7 +2459,7 @@ output_78() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -2517,7 +2517,7 @@ output_79() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2574,7 +2574,7 @@ output_80() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -2631,7 +2631,7 @@ output_81() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -2689,7 +2689,7 @@ output_82() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -2743,7 +2743,7 @@ output_83() {
 
 subroutine ${procedure}(comm, filename, amode, info, fh&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   character(len=*), intent(in) :: filename
   integer, intent(in) :: amode
@@ -2770,7 +2770,7 @@ output_84() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
   integer, intent(out) :: ierr
@@ -2798,7 +2798,7 @@ output_85() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2855,7 +2855,7 @@ output_86() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2911,7 +2911,7 @@ output_87() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2966,7 +2966,7 @@ output_88() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3021,7 +3021,7 @@ output_89() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3079,7 +3079,7 @@ output_90() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3137,7 +3137,7 @@ output_91() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3193,7 +3193,7 @@ output_92() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3248,7 +3248,7 @@ output_93() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3304,7 +3304,7 @@ output_94() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3359,7 +3359,7 @@ output_95() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3414,7 +3414,7 @@ output_96() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3467,7 +3467,7 @@ output_97() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, whence, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
@@ -3492,7 +3492,7 @@ output_98() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, whence, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
@@ -3517,7 +3517,7 @@ output_99() {
     cat <<EOF
 
 subroutine ${procedure}(fh, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -3541,7 +3541,7 @@ output_100() {
     cat <<EOF
 
 subroutine ${procedure}(file, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: file
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -3565,7 +3565,7 @@ output_101() {
     cat <<EOF
 
 subroutine ${procedure}(fh, info, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(in) :: info
   integer, intent(out) :: ierr
@@ -3589,7 +3589,7 @@ output_102() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
   integer, intent(out) :: ierr
@@ -3614,7 +3614,7 @@ output_103() {
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep, &
         info, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: disp
   integer, intent(in) :: etype
@@ -3642,7 +3642,7 @@ output_104() {
     cat <<EOF
 
 subroutine ${procedure}(fh, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -3669,7 +3669,7 @@ output_105() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3726,7 +3726,7 @@ output_106() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3782,7 +3782,7 @@ output_107() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3837,7 +3837,7 @@ output_108() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3892,7 +3892,7 @@ output_109() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -3950,7 +3950,7 @@ output_110() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -4008,7 +4008,7 @@ output_111() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -4064,7 +4064,7 @@ output_112() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -4119,7 +4119,7 @@ output_113() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4175,7 +4175,7 @@ output_114() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4230,7 +4230,7 @@ output_115() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -4285,7 +4285,7 @@ output_116() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4338,7 +4338,7 @@ output_117() {
     cat <<EOF
 
 subroutine ${procedure}(ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -4360,7 +4360,7 @@ output_118() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -4386,7 +4386,7 @@ output_119() {
     cat <<EOF
 
 subroutine ${proc}(base, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: base
   integer, intent(out) :: ierr
 end subroutine ${proc}
@@ -4439,7 +4439,7 @@ output_120() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, root, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4499,7 +4499,7 @@ output_121() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
         displs, recvtype, root, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4560,7 +4560,7 @@ output_122() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype
@@ -4619,7 +4619,7 @@ output_123() {
     cat <<EOF
 
 subroutine ${proc}(location, address, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: location
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: address
   integer, intent(out) :: ierr
@@ -4669,7 +4669,7 @@ output_124() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
@@ -4694,7 +4694,7 @@ output_125() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
@@ -4719,7 +4719,7 @@ output_126() {
     cat <<EOF
 
 subroutine ${procedure}(name, resultlen, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(out) :: name
   integer, intent(out) :: resultlen
   integer, intent(out) :: ierr
@@ -4743,7 +4743,7 @@ output_127() {
     cat <<EOF
 
 subroutine ${procedure}(version, subversion, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: version
   integer, intent(out) :: subversion
   integer, intent(out) :: ierr
@@ -4768,7 +4768,7 @@ output_128() {
 
 subroutine ${procedure}(comm_old, nnodes, index, edges, reorder, &
         comm_graph, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm_old
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
@@ -4797,7 +4797,7 @@ output_129() {
 
 subroutine ${procedure}(comm, maxindex, maxedges, index, edges&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: maxindex
   integer, intent(in) :: maxedges
@@ -4825,7 +4825,7 @@ output_130() {
 
 subroutine ${procedure}(comm, nnodes, index, edges, newrank&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
@@ -4852,7 +4852,7 @@ output_131() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, maxneighbors, neighbors, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxneighbors
@@ -4878,7 +4878,7 @@ output_132() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, nneighbors, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(out) :: nneighbors
@@ -4903,7 +4903,7 @@ output_133() {
     cat <<EOF
 
 subroutine ${procedure}(comm, nnodes, nedges, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: nnodes
   integer, intent(out) :: nedges
@@ -4928,7 +4928,7 @@ output_134() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -4952,7 +4952,7 @@ output_135() {
 
 subroutine ${procedure}(query_fn, free_fn, cancel_fn, extra_state, request&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: query_fn
   external :: free_fn
   external :: cancel_fn
@@ -4979,7 +4979,7 @@ output_136() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, result, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: result
@@ -5004,7 +5004,7 @@ output_137() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5029,7 +5029,7 @@ output_138() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranks, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
@@ -5055,7 +5055,7 @@ output_139() {
     cat <<EOF
 
 subroutine ${procedure}(group, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: group
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5078,7 +5078,7 @@ output_140() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranks, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
@@ -5104,7 +5104,7 @@ output_141() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5129,7 +5129,7 @@ output_142() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranges, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
@@ -5155,7 +5155,7 @@ output_143() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranges, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
@@ -5181,7 +5181,7 @@ output_144() {
     cat <<EOF
 
 subroutine ${procedure}(group, rank, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(out) :: rank
   integer, intent(out) :: ierr
@@ -5205,7 +5205,7 @@ output_145() {
     cat <<EOF
 
 subroutine ${procedure}(group, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -5230,7 +5230,7 @@ output_146() {
 
 subroutine ${procedure}(group1, n, ranks1, group2, ranks2&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks1
@@ -5257,7 +5257,7 @@ output_147() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5286,7 +5286,7 @@ output_148() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5341,7 +5341,7 @@ output_149() {
     cat <<EOF
 
 subroutine ${procedure}(info, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: info
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5364,7 +5364,7 @@ output_150() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: ierr
@@ -5388,7 +5388,7 @@ output_151() {
     cat <<EOF
 
 subroutine ${procedure}(info, newinfo, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(out) :: newinfo
   integer, intent(out) :: ierr
@@ -5412,7 +5412,7 @@ output_152() {
     cat <<EOF
 
 subroutine ${procedure}(info, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: info
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5436,7 +5436,7 @@ output_153() {
 
 subroutine ${procedure}(info, key, valuelen, value, flag&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(in) :: valuelen
@@ -5463,7 +5463,7 @@ output_154() {
     cat <<EOF
 
 subroutine ${procedure}(info, nkeys, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(out) :: nkeys
   integer, intent(out) :: ierr
@@ -5487,7 +5487,7 @@ output_155() {
     cat <<EOF
 
 subroutine ${procedure}(info, n, key, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(in) :: n
   character(len=*), intent(out) :: key
@@ -5512,7 +5512,7 @@ output_156() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, valuelen, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: valuelen
@@ -5538,7 +5538,7 @@ output_157() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, value, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: info
   character(len=*), intent(in) :: key
   character(len=*), intent(in) :: value
@@ -5563,7 +5563,7 @@ output_158() {
     cat <<EOF
 
 subroutine ${procedure}(ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -5585,7 +5585,7 @@ output_159() {
     cat <<EOF
 
 subroutine ${procedure}(required, provided, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: required
   integer, intent(out) :: provided
   integer, intent(out) :: ierr
@@ -5609,7 +5609,7 @@ output_160() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5633,7 +5633,7 @@ output_161() {
 
 subroutine ${procedure}(local_comm, local_leader, bridge_comm, remote_leader, tag, &
         newintercomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: local_comm
   integer, intent(in) :: local_leader
   integer, intent(in) :: bridge_comm
@@ -5661,7 +5661,7 @@ output_162() {
     cat <<EOF
 
 subroutine ${procedure}(intercomm, high, newintercomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
   integer, intent(out) :: newintercomm
@@ -5687,7 +5687,7 @@ output_163() {
 
 subroutine ${procedure}(source, tag, comm, flag, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
@@ -5718,7 +5718,7 @@ output_164() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5777,7 +5777,7 @@ output_165() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5832,7 +5832,7 @@ output_166() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5859,7 +5859,7 @@ output_167() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5918,7 +5918,7 @@ output_168() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5973,7 +5973,7 @@ output_169() {
     cat <<EOF
 
 subroutine ${procedure}(copy_fn, delete_fn, keyval, extra_state, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: copy_fn
   external :: delete_fn
   integer, intent(out) :: keyval
@@ -5999,7 +5999,7 @@ output_170() {
     cat <<EOF
 
 subroutine ${procedure}(keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6022,7 +6022,7 @@ output_171() {
     cat <<EOF
 
 subroutine ${procedure}(function, commute, op, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: function
   logical, intent(in) :: commute
   integer, intent(out) :: op
@@ -6047,7 +6047,7 @@ output_172() {
     cat <<EOF
 
 subroutine ${procedure}(op, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: op
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6074,7 +6074,7 @@ output_173() {
 
 subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
         position, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
@@ -6133,7 +6133,7 @@ output_174() {
 
 subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
         outsize, position, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: incount
@@ -6188,7 +6188,7 @@ output_175() {
     cat <<EOF
 
 subroutine ${procedure}(datarep, incount, datatype, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: datarep
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
@@ -6214,7 +6214,7 @@ output_176() {
     cat <<EOF
 
 subroutine ${procedure}(incount, datatype, comm, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
   integer, intent(in) :: comm
@@ -6240,7 +6240,7 @@ output_177() {
     cat <<EOF
 
 subroutine ${procedure}(level)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: level
 
 end subroutine ${procedure}
@@ -6263,7 +6263,7 @@ output_178() {
     cat <<EOF
 
 subroutine ${procedure}(source, tag, comm, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
@@ -6293,7 +6293,7 @@ output_179() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype
@@ -6349,7 +6349,7 @@ output_180() {
     cat <<EOF
 
 subroutine ${procedure}(provided, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: provided
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6376,7 +6376,7 @@ output_181() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6435,7 +6435,7 @@ output_182() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6494,7 +6494,7 @@ output_183() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         root, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -6553,7 +6553,7 @@ output_184() {
 
 subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: recvcounts
@@ -6608,7 +6608,7 @@ output_185() {
 
 subroutine ${procedure}(datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: datarep
   external :: read_conversion_fn
   external :: write_conversion_fn
@@ -6635,7 +6635,7 @@ output_186() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6658,7 +6658,7 @@ output_187() {
     cat <<EOF
 
 subroutine ${procedure}(request, flag, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
@@ -6687,7 +6687,7 @@ output_188() {
 
 subroutine ${proc}(ibuf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: ibuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6745,7 +6745,7 @@ output_189() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6804,7 +6804,7 @@ output_190() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -6862,7 +6862,7 @@ output_191() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, root, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -6922,7 +6922,7 @@ output_192() {
 
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcounts
   integer, intent(in) :: displs
@@ -6983,7 +6983,7 @@ output_193() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7041,7 +7041,7 @@ output_194() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7100,7 +7100,7 @@ output_195() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
         recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -7164,7 +7164,7 @@ output_196() {
 
 subroutine ${proc}(buf, count, datatype, dest, sendtag, &
         source, recvtag, comm, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(inout) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7224,7 +7224,7 @@ output_197() {
     cat <<EOF
 
 subroutine ${proc}(x, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: x
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -7278,7 +7278,7 @@ output_198() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7336,7 +7336,7 @@ output_199() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7391,7 +7391,7 @@ output_200() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7414,7 +7414,7 @@ output_201() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: ierr
@@ -7438,7 +7438,7 @@ output_202() {
     cat <<EOF
 
 subroutine ${procedure}(status, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -7462,7 +7462,7 @@ output_203() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(in) :: datatype
   integer, intent(in) :: count
@@ -7487,7 +7487,7 @@ output_204() {
     cat <<EOF
 
 subroutine ${procedure}(request, flag, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
@@ -7512,7 +7512,7 @@ output_205() {
     cat <<EOF
 
 subroutine ${procedure}(status, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -7536,7 +7536,7 @@ output_206() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
@@ -7563,7 +7563,7 @@ output_207() {
 
 subroutine ${procedure}(count, array_of_requests, index, flag, status&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
@@ -7591,7 +7591,7 @@ output_208() {
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
@@ -7618,7 +7618,7 @@ output_209() {
     cat <<EOF
 
 subroutine ${procedure}(comm, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: status
   integer, intent(out) :: ierr
@@ -7642,7 +7642,7 @@ output_210() {
     cat <<EOF
 
 subroutine ${procedure}(type, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7665,7 +7665,7 @@ output_211() {
     cat <<EOF
 
 subroutine ${procedure}(count, oldtype, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
@@ -7691,7 +7691,7 @@ output_212() {
 
 subroutine ${procedure}(size, rank, ndims, gsize_array, distrib_array, &
         darg_array, psize_array, order, oldtype, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: size
   integer, intent(in) :: rank
   integer, intent(in) :: ndims
@@ -7723,7 +7723,7 @@ output_213() {
     cat <<EOF
 
 subroutine ${procedure}(p, r, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
@@ -7748,7 +7748,7 @@ output_214() {
     cat <<EOF
 
 subroutine ${procedure}(r, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: r
   integer, intent(out) :: newtype
   integer, intent(out) :: ierr
@@ -7772,7 +7772,7 @@ output_215() {
     cat <<EOF
 
 subroutine ${procedure}(p, r, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
@@ -7798,7 +7798,7 @@ output_216() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
@@ -7826,7 +7826,7 @@ output_217() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: stride
@@ -7854,7 +7854,7 @@ output_218() {
 
 subroutine ${procedure}(count, blocklength, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -7881,7 +7881,7 @@ output_219() {
     cat <<EOF
 
 subroutine ${procedure}(type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: type_copy_attr_fn
   external :: type_delete_attr_fn
   integer, intent(out) :: type_keyval
@@ -7907,7 +7907,7 @@ output_220() {
     cat <<EOF
 
 subroutine ${procedure}(oldtype, lb, extent, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: oldtype
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extent
@@ -7934,7 +7934,7 @@ output_221() {
 
 subroutine ${procedure}(count, array_of_block_lengths, array_of_displacements, array_of_types, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_block_lengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
@@ -7962,7 +7962,7 @@ output_222() {
 
 subroutine ${procedure}(ndims, size_array, subsize_array, start_array, order, &
         oldtype, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: size_array
   integer, dimension(*), intent(in) :: subsize_array
@@ -7991,7 +7991,7 @@ output_223() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(in) :: type_keyval
   integer, intent(out) :: ierr
@@ -8015,7 +8015,7 @@ output_224() {
     cat <<EOF
 
 subroutine ${procedure}(type, newtype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: newtype
   integer, intent(out) :: ierr
@@ -8039,7 +8039,7 @@ output_225() {
     cat <<EOF
 
 subroutine ${procedure}(type, extent, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: extent
   integer, intent(out) :: ierr
@@ -8063,7 +8063,7 @@ output_226() {
     cat <<EOF
 
 subroutine ${procedure}(type, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8086,7 +8086,7 @@ output_227() {
     cat <<EOF
 
 subroutine ${procedure}(type_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: type_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8109,7 +8109,7 @@ output_228() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, attribute_val, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -8136,7 +8136,7 @@ output_229() {
 
 subroutine ${procedure}(mtype, max_integers, max_addresses, max_datatypes, array_of_integers, &
         array_of_addresses, array_of_datatypes, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: mtype
   integer, intent(in) :: max_integers
   integer, intent(in) :: max_addresses
@@ -8166,7 +8166,7 @@ output_230() {
 
 subroutine ${procedure}(type, num_integers, num_addresses, num_datatypes, combiner&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: num_integers
   integer, intent(out) :: num_addresses
@@ -8193,7 +8193,7 @@ output_231() {
     cat <<EOF
 
 subroutine ${procedure}(type, lb, extent, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
@@ -8218,7 +8218,7 @@ output_232() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_name, resultlen, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   character(len=*), intent(out) :: type_name
   integer, intent(out) :: resultlen
@@ -8243,7 +8243,7 @@ output_233() {
     cat <<EOF
 
 subroutine ${procedure}(datatype, true_lb, true_extent, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_extent
@@ -8269,7 +8269,7 @@ output_234() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8297,7 +8297,7 @@ output_235() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
@@ -8325,7 +8325,7 @@ output_236() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8352,7 +8352,7 @@ output_237() {
     cat <<EOF
 
 subroutine ${procedure}(type, lb, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: lb
   integer, intent(out) :: ierr
@@ -8376,7 +8376,7 @@ output_238() {
     cat <<EOF
 
 subroutine ${procedure}(typeclass, size, type, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: typeclass
   integer, intent(in) :: size
   integer, intent(out) :: type
@@ -8401,7 +8401,7 @@ output_239() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, attr_val, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
@@ -8426,7 +8426,7 @@ output_240() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: type
   character(len=*), intent(in) :: type_name
   integer, intent(out) :: ierr
@@ -8450,7 +8450,7 @@ output_241() {
     cat <<EOF
 
 subroutine ${procedure}(type, size, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -8475,7 +8475,7 @@ output_242() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8502,7 +8502,7 @@ output_243() {
     cat <<EOF
 
 subroutine ${procedure}(mtype, ub, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: mtype
   integer, intent(out) :: ub
   integer, intent(out) :: ierr
@@ -8527,7 +8527,7 @@ output_244() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
@@ -8558,7 +8558,7 @@ output_245() {
 
 subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
         datatype, comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: insize
   integer, intent(inout) :: position
@@ -8617,7 +8617,7 @@ output_246() {
 
 subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
         outcount, datatype, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize
@@ -8672,7 +8672,7 @@ output_247() {
     cat <<EOF
 
 subroutine ${procedure}(request, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
@@ -8696,7 +8696,7 @@ output_248() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, array_of_statuses, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
@@ -8721,7 +8721,7 @@ output_249() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, index, status, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
@@ -8748,7 +8748,7 @@ output_250() {
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
@@ -8775,7 +8775,7 @@ output_251() {
     cat <<EOF
 
 subroutine ${procedure}(win, errorcode, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -8799,7 +8799,7 @@ output_252() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8826,7 +8826,7 @@ output_253() {
 
 subroutine ${proc}(base, size, disp_unit, info, comm, &
         win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   ${type}, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: disp_unit
@@ -8880,7 +8880,7 @@ output_254() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -8904,7 +8904,7 @@ output_255() {
     cat <<EOF
 
 subroutine ${procedure}(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   external :: win_copy_attr_fn
   external :: win_delete_attr_fn
   integer, intent(out) :: win_keyval
@@ -8930,7 +8930,7 @@ output_256() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(in) :: win_keyval
   integer, intent(out) :: ierr
@@ -8954,7 +8954,7 @@ output_257() {
     cat <<EOF
 
 subroutine ${procedure}(assert, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: assert
   integer, intent(in) :: win
   integer, intent(out) :: ierr
@@ -8978,7 +8978,7 @@ output_258() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9001,7 +9001,7 @@ output_259() {
     cat <<EOF
 
 subroutine ${procedure}(win_keyval, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: win_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9024,7 +9024,7 @@ output_260() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, attribute_val, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -9050,7 +9050,7 @@ output_261() {
     cat <<EOF
 
 subroutine ${procedure}(win, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -9074,7 +9074,7 @@ output_262() {
     cat <<EOF
 
 subroutine ${procedure}(win, group, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -9098,7 +9098,7 @@ output_263() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_name, resultlen, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   character(len=*), intent(out) :: win_name
   integer, intent(out) :: resultlen
@@ -9123,7 +9123,7 @@ output_264() {
     cat <<EOF
 
 subroutine ${procedure}(lock_type, rank, assert, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: lock_type
   integer, intent(in) :: rank
   integer, intent(in) :: assert
@@ -9149,7 +9149,7 @@ output_265() {
     cat <<EOF
 
 subroutine ${procedure}(group, assert, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
@@ -9174,7 +9174,7 @@ output_266() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, attribute_val, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
@@ -9199,7 +9199,7 @@ output_267() {
     cat <<EOF
 
 subroutine ${procedure}(win, errhandler, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -9223,7 +9223,7 @@ output_268() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: win
   character(len=*), intent(in) :: win_name
   integer, intent(out) :: ierr
@@ -9247,7 +9247,7 @@ output_269() {
     cat <<EOF
 
 subroutine ${procedure}(group, assert, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
@@ -9272,7 +9272,7 @@ output_270() {
     cat <<EOF
 
 subroutine ${procedure}(win, flag, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -9296,7 +9296,7 @@ output_271() {
     cat <<EOF
 
 subroutine ${procedure}(rank, win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: rank
   integer, intent(in) :: win
   integer, intent(out) :: ierr
@@ -9320,7 +9320,7 @@ output_272() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9343,7 +9343,7 @@ output_273() {
     cat <<EOF
 
 subroutine ${procedure}(port_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9366,7 +9366,7 @@ output_274() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
@@ -9391,7 +9391,7 @@ output_275() {
     cat <<EOF
 
 subroutine ${procedure}(info, port_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
   integer, intent(out) :: ierr
@@ -9415,7 +9415,7 @@ output_276() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
@@ -9440,7 +9440,7 @@ output_277() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
@@ -9465,7 +9465,7 @@ output_278() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9488,7 +9488,7 @@ output_279() {
     cat <<EOF
 
 subroutine ${procedure}(parent, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(out) :: parent
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9511,7 +9511,7 @@ output_280() {
     cat <<EOF
 
 subroutine ${procedure}(fd, intercomm, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: fd
   integer, intent(out) :: intercomm
   integer, intent(out) :: ierr
@@ -9536,7 +9536,7 @@ output_281() {
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
@@ -9564,7 +9564,7 @@ output_282() {
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
         , ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
@@ -9592,7 +9592,7 @@ output_283() {
 
 subroutine ${procedure}(command, argv, maxprocs, info, root, &
         comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   character(len=*), intent(in) :: command
   character(len=*), dimension(*), intent(in) :: argv
   integer, intent(in) :: maxprocs
@@ -9623,7 +9623,7 @@ output_284() {
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   character(len=*), dimension(count,*), intent(in) :: array_of_argv
@@ -9655,7 +9655,7 @@ output_285() {
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif.h'
+  include 'mpif-common.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   integer, intent(in) :: array_of_argv

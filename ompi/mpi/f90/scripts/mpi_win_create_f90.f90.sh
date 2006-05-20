@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(base, size, disp_unit, info, comm, &
         win, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   ${type}, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: disp_unit

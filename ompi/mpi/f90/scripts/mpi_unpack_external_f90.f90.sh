@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
         outcount, datatype, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize
