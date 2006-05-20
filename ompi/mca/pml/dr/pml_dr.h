@@ -73,8 +73,8 @@ struct mca_pml_dr_t {
     ompi_free_list_t vfrags;
     ompi_free_list_t buffers;
     
-    /* proc pointer array */
-    ompi_pointer_array_t procs;
+    /* endpoint pointer array */
+    ompi_pointer_array_t endpoints;
     
     /* my 'global' rank */ 
     int32_t my_rank;
