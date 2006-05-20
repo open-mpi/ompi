@@ -140,6 +140,35 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_insert(mca_bml_base_btl
     return &array->bml_btls[array->arr_size++];
 }
 
+/** 
+ * Remove a btl from a bml_btl 
+ *
+ * @param array (IN)
+ * @param btl (IN)
+ */
+static inline bool mca_bml_base_btl_array_remove(mca_bml_base_btl_array_t* array, 
+                                                struct mca_btl_base_module_t* btl) { 
+    size_t i=0, index;
+    bool found = false;
+    /* find the btl */
+    for(i=0; i<array->arr_size; i++) {
+        if(array->bml_btls[i].btl == btl) {
+            found = true;
+        }
+        if(found) { 
+            /* move all btl's back by 1, so the found 
+               btl is "removed" */
+            array->bml_btls[i] = array->bml_btls[(i+1)];
+        }
+    }
+    if(found) { 
+        array->arr_size--;
+        array->arr_index = 0;
+    }
+    return found;
+}
+
+
 /**
  * Return an array item at the specified index.
  * 

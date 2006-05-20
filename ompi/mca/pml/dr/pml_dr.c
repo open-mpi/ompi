@@ -154,15 +154,16 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_dr.free_list_max,
                         mca_pml_dr.free_list_inc,
                         NULL);
-    for(i = 0; i < nprocs; i++) { 
+    
+    for(i = 0; i < nprocs; i++) {
         int idx;
-        /* this won't work for comm spawn and other dynamic 
+        /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
-        idx = ompi_pointer_array_add(&mca_pml_dr.procs, 
+        idx = ompi_pointer_array_add(&mca_pml_dr.endpoints,
                                      (void*) endpoints[i]);
-        if(orte_ns.compare(ORTE_NS_CMP_ALL, 
-                           orte_process_info.my_name,  
-                           &endpoints[i]->base.super.proc_ompi->proc_name) == 0) { 
+        if(orte_ns.compare(ORTE_NS_CMP_ALL,
+                           orte_process_info.my_name,
+                           &endpoints[i]->base.super.proc_ompi->proc_name) == 0) {
             mca_pml_dr.my_rank = idx;
         }
         endpoints[i]->local = endpoints[i]->dst = idx;

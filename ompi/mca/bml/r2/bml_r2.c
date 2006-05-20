@@ -492,10 +492,12 @@ int mca_bml_r2_finalize( void ) {
 int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 {
     ompi_proc_t** procs;
-    size_t i, m, p, num_procs;
+    size_t i, j, m, p, num_procs;
     opal_list_item_t* item;
     mca_btl_base_module_t** modules;
-
+    mca_btl_base_component_progress_fn_t * btl_progress_new; 
+    
+    
     procs = ompi_proc_all(&num_procs);
     if(NULL == procs)
         return OMPI_SUCCESS;
@@ -529,6 +531,30 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     mca_bml_r2.btl_modules = modules;
     mca_bml_r2.num_btl_modules = m;
 
+    
+    /* remove progress function so btl_progress isn't 
+       called on the failed BTL */ 
+    if(mca_bml_r2.num_btl_progress <= 1) { 
+        /* nothing left to send on! */ 
+        opal_output(0, "%s:%d:%s: only one BTL, can't fail-over!", 
+                    __FILE__, __LINE__, __func__);
+        return OMPI_ERROR;
+    }
+    /* figure out which progress functions to keep */
+    btl_progress_new = (mca_btl_base_component_progress_fn_t*)
+        malloc(sizeof(mca_btl_base_component_progress_fn_t) * 
+               (mca_bml_r2.num_btl_progress - 1));
+    j = 0;
+    for(i = 0; i < mca_bml_r2.num_btl_progress; i++) { 
+        if(btl->btl_component->btl_progress != mca_bml_r2.btl_progress[i]) { 
+            btl_progress_new[j] = mca_bml_r2.btl_progress[i];
+            j++;
+        }
+    }
+    free(mca_bml_r2.btl_progress);
+    mca_bml_r2.btl_progress = btl_progress_new;
+    mca_bml_r2.num_btl_progress--; 
+    
     /* cleanup */
     btl->btl_finalize(btl);
     free(procs);
@@ -537,90 +563,69 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 
 int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
 {
-    mca_bml_base_endpoint_t* ep_old = (mca_bml_base_endpoint_t*)proc->proc_pml;
-    mca_bml_base_endpoint_t* ep_new = (mca_bml_base_endpoint_t*)opal_obj_new(mca_bml_r2.endpoint_class);
+    mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_pml;
+    mca_btl_base_component_progress_fn_t * btl_progress_new; 
+    int i, j;
     double total_bandwidth = 0;
     size_t b;
 
-    /* initialize */
-    ep_new->super.proc_ompi = proc;
-    ep_new->btl_max_send_size = -1;
-    ep_new->btl_rdma_size = -1;
-    ep_new->btl_rdma_align = 0;
-    ep_new->btl_rdma_offset = 0;
-
-    /* build new eager list */
-    mca_bml_base_btl_array_reserve(&ep_new->btl_eager, mca_bml_base_btl_array_get_size(&ep_old->btl_eager));
-    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_eager); b++) {
-        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_eager, b);
-        if(bml_btl_old->btl != btl) {
-             mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_eager);
-             *bml_btl_new = *bml_btl_old;
+    /* remove btl from eager list */
+    mca_bml_base_btl_array_remove(&ep->btl_eager, btl);
+    
+    /* remove btl from send list */ 
+    if(mca_bml_base_btl_array_remove(&ep->btl_send, btl)) { 
+    
+        /* compute total_bandwidth and 
+           reset max_send_size to the min of all btl's */
+        total_bandwidth = 0;
+        for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_send); b++) {
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_send, b);
+            total_bandwidth += bml_btl->btl->btl_bandwidth;
+            if (bml_btl->btl_max_send_size < ep->btl_max_send_size) {
+                ep->btl_max_send_size = bml_btl->btl->btl_max_send_size;
+            }
         }
-    }
-
-    /* build new send list */
-    total_bandwidth = 0;
-    mca_bml_base_btl_array_reserve(&ep_new->btl_send, mca_bml_base_btl_array_get_size(&ep_old->btl_send));
-    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_send); b++) {
-        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
-        if(bml_btl_old->btl != btl) {
-            mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_send);
-            *bml_btl_new = *bml_btl_old;
-            total_bandwidth += bml_btl_new->btl->btl_bandwidth;
-            if (bml_btl_new->btl_max_send_size < ep_new->btl_max_send_size) {
-                ep_new->btl_max_send_size = bml_btl_new->btl->btl_max_send_size;
+        
+        /* compute weighting factor for this btl */
+        for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_send); b++) {
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_send, b);
+            if(bml_btl->btl->btl_bandwidth > 0) {
+                bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
+            } else {
+                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep->btl_send);
             }
         }
     }
-    /* compute weighting factor for this btl */
-    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_send); b++) {
-        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_send, b);
-        if(bml_btl->btl->btl_bandwidth > 0) {
-            bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
-        } else {
-            bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_send);
-        }
-    }
-
-    /* build new rdma list */
-    total_bandwidth = 0;
-    mca_bml_base_btl_array_reserve(&ep_new->btl_rdma, mca_bml_base_btl_array_get_size(&ep_old->btl_rdma));
-    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_old->btl_rdma); b++) {
-        mca_bml_base_btl_t* bml_btl_old = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
-        if(bml_btl_old->btl != btl) {
-            mca_bml_base_btl_t* bml_btl_new = mca_bml_base_btl_array_insert(&ep_new->btl_rdma);
-            *bml_btl_new = *bml_btl_old;
-
+    
+    /* remove btl from RDMA list */
+    if(mca_bml_base_btl_array_remove(&ep->btl_rdma, btl)) { 
+        
+        /* computer total bandwidth */
+        total_bandwidth = 0;
+        for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_rdma); b++) {
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_rdma, b);
             /* update aggregate endpoint info */
-            total_bandwidth += bml_btl_new->btl->btl_bandwidth;
-            if (ep_new->btl_rdma_offset < bml_btl_new->btl_min_rdma_size) {
-                ep_new->btl_rdma_offset = bml_btl_new->btl_min_rdma_size;
+            total_bandwidth += bml_btl->btl->btl_bandwidth;
+            if (ep->btl_rdma_offset < bml_btl->btl_min_rdma_size) {
+                ep->btl_rdma_offset = bml_btl->btl_min_rdma_size;
+            } 
+            if (ep->btl_rdma_size > bml_btl->btl_max_rdma_size) {
+                ep->btl_rdma_size = bml_btl->btl_max_rdma_size;
+                ep->btl_rdma_align = bml_base_log2(ep->btl_rdma_size);
             }
-            if (ep_new->btl_rdma_size > bml_btl_new->btl_max_rdma_size) {
-                ep_new->btl_rdma_size = bml_btl_new->btl_max_rdma_size;
-                ep_new->btl_rdma_align = bml_base_log2(ep_new->btl_rdma_size);
+        }
+        
+        /* compute weighting factor for this btl */
+        for(b=0; b< mca_bml_base_btl_array_get_size(&ep->btl_rdma); b++) {
+            mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep->btl_rdma, b);
+            if(bml_btl->btl->btl_bandwidth > 0) {
+                bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
+            } else {
+                bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep->btl_rdma);
             }
         }
     }
-
-    /* compute weighting factor for this btl */
-    for(b=0; b< mca_bml_base_btl_array_get_size(&ep_new->btl_rdma); b++) {
-        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&ep_old->btl_rdma, b);
-        if(bml_btl->btl->btl_bandwidth > 0) {
-            bml_btl->btl_weight = bml_btl->btl->btl_bandwidth / total_bandwidth;
-        } else {
-            bml_btl->btl_weight = 1.0 / mca_bml_base_btl_array_get_size(&ep_new->btl_rdma);
-        }
-    }
-
-    /* copy over any additional state ... */
-    if(NULL != ep_new->copy) {
-        ep_new->copy(ep_new, ep_old);
-    }
-
-    /* save on proc */
-    proc->proc_pml = (mca_pml_proc_t*)ep_new;
+    
     return OMPI_SUCCESS;
 }
 
