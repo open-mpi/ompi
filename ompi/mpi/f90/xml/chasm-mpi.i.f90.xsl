@@ -112,7 +112,7 @@ output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     <xsl:text>subroutine ${procedure}(</xsl:text>
     <xsl:call-template name="arg-list"/> <xsl:text>)</xsl:text>
     <xsl:value-of select="$nl"/>
-    <xsl:text>  include 'mpif.h'</xsl:text>
+    <xsl:text>  include 'mpif-common.h'</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>
@@ -184,7 +184,7 @@ output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     <xsl:text>subroutine ${proc}(</xsl:text>
     <xsl:call-template name="arg-list"/> <xsl:text>)</xsl:text>
     <xsl:value-of select="$nl"/>
-    <xsl:text>  include 'mpif.h'</xsl:text>
+    <xsl:text>  include 'mpif-common.h'</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>

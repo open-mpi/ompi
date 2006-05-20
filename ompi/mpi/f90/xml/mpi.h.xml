@@ -11178,12 +11178,12 @@
     
     <!-- 
       -  METHOD: double MPI_Wtick() C
-      -  NOTE: already defined in mpif.h
+      -  NOTE: already defined in mpif-common.h
       -->
     
     <!-- 
       -  METHOD: double MPI_Wtime() C
-      -  NOTE: already defined in mpif.h
+      -  NOTE: already defined in mpif-common.h
       -->
     
     <!--

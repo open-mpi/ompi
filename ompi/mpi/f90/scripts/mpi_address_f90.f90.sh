@@ -47,7 +47,7 @@ output() {
     cat <<EOF
 
 subroutine ${proc}(location, address, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   ${type}, intent(in) :: location
   integer, intent(out) :: address
   integer, intent(out) :: ierr

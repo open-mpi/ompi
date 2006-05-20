@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         request, ierr)
-  include "mpif.h"
+  include "mpif-common.h"
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf

@@ -10,6 +10,7 @@
 !                         University of Stuttgart.  All rights reserved.
 ! Copyright (c) 2004-2005 The Regents of the University of California.
 !                         All rights reserved.
+! Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 ! $COPYRIGHT$
 ! 
 ! Additional copyrights may follow
@@ -49,6 +50,20 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 ! WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+!
+!     This file contains the bulk of the Open MPI Fortran interface.  It
+!     is included as a back-end file to both mpif.h (i.e., the
+!     standardized MPI Fortran header file) and mpi.f90 (the MPI-2
+!     Fortran module source file, found in ompi/mpi/f90).
+!
+!     This file is marginally different than mpif.h.  mpif.h includes
+!     some "external" statements that are not suitable for use with the
+!     MPI-2 F90 module, and therefore cannot be included in the mpi.f90
+!     source file.  Hence, this file is essentially everything that
+!     needs to be in the standardized mpif.h *except* the "external"
+!     statements, and is therefore suitable to be included in mpi.f90.
+!
 
 !
 ! OMPI version
@@ -444,18 +459,8 @@
        parameter (MPI_MAXLOC=11)
        parameter (MPI_MINLOC=12)
        parameter (MPI_REPLACE=13)
-!
-! attribute functions
-!
-       external MPI_NULL_COPY_FN, MPI_NULL_DELETE_FN
-       external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
-       external MPI_TYPE_NULL_COPY_FN, MPI_TYPE_NULL_DELETE_FN
-       external MPI_DUP_FN, MPI_COMM_DUP_FN, MPI_TYPE_DUP_FN
-       external MPI_WIN_NULL_COPY_FN
-       external MPI_WIN_NULL_DELETE_FN
-       external MPI_WIN_DUP_FN
+
 !
 ! double precision functions
 !
-      double precision MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
-      external MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
+      double precision MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME

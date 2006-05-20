@@ -10,7 +10,7 @@
 !
 
 ! Note about these declarations: these are "external" functions in
-! mpif.h.  However, if we don't declare them here, compilers will add
+! mpif-common.h.  However, if we don't declare them here, compilers will add
 ! them to the "mpi" module namespace, and result in linker errors if MPI
 ! F90 applications try to use them.  because the implementations of
 ! these functions are not in the MPI module namespace -- they're the F77
