@@ -564,8 +564,6 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
 {
     mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_pml;
-    mca_btl_base_component_progress_fn_t * btl_progress_new; 
-    int i, j;
     double total_bandwidth = 0;
     size_t b;
 
