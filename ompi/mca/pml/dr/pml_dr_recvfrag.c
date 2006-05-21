@@ -757,7 +757,6 @@ void mca_pml_dr_recv_frag_ack(
     uint64_t mask, 
     uint16_t len)
 {
-    
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_recv_frag_t* frag;
