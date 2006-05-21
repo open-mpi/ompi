@@ -31,7 +31,6 @@
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvreq.h"
-#include "pml_ob1_endpoint.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/datatype/dt_arch.h"
 
