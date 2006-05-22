@@ -179,8 +179,7 @@ int PERUSE_Event_comm_register( int                       event,
      */
     OPAL_THREAD_LOCK (&comm->c_lock);
     if( NULL == comm->c_peruse_handles ) {
-        comm->c_peruse_handles = malloc( PERUSE_num_events * sizeof(ompi_peruse_handle_t*) );
-        memset (comm->c_peruse_handles, 0, PERUSE_num_events * sizeof (ompi_peruse_handle_t*));
+        comm->c_peruse_handles = calloc( PERUSE_num_events, sizeof(ompi_peruse_handle_t*) );
     }
     OPAL_THREAD_UNLOCK (&comm->c_lock);
     comm->c_peruse_handles[event] = handle;
