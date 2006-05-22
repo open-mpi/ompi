@@ -193,23 +193,23 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_btl_array_t* array)
 {
-    mca_bml_base_btl_t* bml_btl;
 #if OMPI_ENABLE_DEBUG
     if(array->arr_size == 0) {
         opal_output(0, "mca_bml_base_btl_array_get_next: invalid array size");
         return 0;
     }
 #endif
-#if OMPI_HAVE_THREAD_SUPPORT
-    array->arr_index = (array->arr_index +1) % array->arr_size;
-    bml_btl = &array->bml_btls[array->arr_index];
-#else
-    bml_btl = &array->bml_btls[array->arr_index++];
-    if(array->arr_index == array->arr_size) {
-        array->arr_index = 0;
+    if( 1 == array->arr_size ) {
+        return &array->bml_btls[0];  /* force the return to avoid a jump */
+    } else {
+        uint32_t current_position = array->arr_index;  /* force to always start from zero */
+        if( (current_position + 1) == array->arr_size ) {
+            array->arr_index = 0;  /* next time serve from the beginning */
+        } else {
+            array->arr_index = current_position + 1;  /* continue */
+        }
+        return &array->bml_btls[current_position];
     }
-#endif
-    return bml_btl;
 }
 
 /**
