@@ -49,17 +49,14 @@ inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
         convertor->stack_size = DT_STATIC_STACK_SIZE;
     }
     convertor->pDesc     = NULL;
-    convertor->flags     = CONVERTOR_HOMOGENEOUS;
     convertor->stack_pos = 0;
     return OMPI_SUCCESS;
 }
 
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
-    convertor->flags             = CONVERTOR_HOMOGENEOUS;
     convertor->pStack            = convertor->static_stack;
     convertor->stack_size        = DT_STATIC_STACK_SIZE;
-    convertor->remoteArch        = 0;
     convertor->storage.length    = 0;
 }
 
@@ -105,7 +102,7 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     master->next = ompi_convertor_master_list;
     ompi_convertor_master_list = master;
     master->remote_arch = remote_arch;
-
+    master->flags       = 0;
     /* Most of the sizes will be identical, so for now just make a copy of
      * the local ones. As master->remote_sizes is defined as being an array of
      * consts we have to manually cast it before using it for writing purposes.
@@ -148,11 +145,12 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
 
     if( master->remote_arch == ompi_mpi_local_arch ) {
         master->pFunctions = ompi_ddt_copy_functions;
+        master->flags |= CONVERTOR_HOMOGENEOUS;
     } else {
         master->pFunctions = ompi_ddt_heterogeneous_copy_functions;
     }
 
-    /* We're done so far, return th mater convertor */
+    /* We're done so far, return the mater convertor */
     return master;
 }
 
@@ -165,6 +163,8 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 
     convertor->remoteArch = remote_arch;
     convertor->stack_pos  = 0;
+    convertor->flags      = master->flags;
+    convertor->master     = master;
 
     return convertor;
 }
@@ -197,8 +197,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( (pConv->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
-        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
+    if( (pConv->flags & DT_FLAG_PREDEFINED) == DT_FLAG_PREDEFINED ) {
         /* We are doing conversion on a predefined datatype. The convertor contain
          * minimal informations, we only use the bConverted to manage the conversion.
          */
