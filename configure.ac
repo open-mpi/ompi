@@ -1151,5 +1151,6 @@ AC_CONFIG_FILES([
     test/threads/Makefile
     test/util/Makefile
     test/peruse/Makefile
+    test/datatype/Makefile
 ])
 AC_OUTPUT
