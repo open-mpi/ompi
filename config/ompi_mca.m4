@@ -669,7 +669,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
 
     # See if it dropped an output file for us to pick up some
     # shell variables in.  
-    infile="$project/mca/$framework/$component/post_configure.sh"
+    infile="$srcdir/$project/mca/$framework/$component/post_configure.sh"
 
     # Add this subdir to the mast list of all MCA component subdirs
     $4="$$4 $component"
