@@ -270,9 +270,9 @@ do {                                                                            
         size_t max_data = bytes_received;                                         \
         int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
+        mca_btl_base_segment_t* segment = segments;                               \
                                                                                   \
-        for(n=0; n<num_segments; n++) {                                           \
-            mca_btl_base_segment_t* segment = segments+n;                         \
+        for( n = 0; n < num_segments; n++, segment++ ) {                          \
             if(offset >= segment->seg_len) {                                      \
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
