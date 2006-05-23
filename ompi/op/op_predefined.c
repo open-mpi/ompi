@@ -328,8 +328,8 @@ OP_FUNC(prod, unsigned_short, unsigned short, *=)
 OP_FUNC(prod, unsigned, unsigned, *=)
 OP_FUNC(prod, unsigned_long, unsigned long, *=)
 #if HAVE_LONG_LONG
-OP_FUNC(prod, long_long_int, long long int, +=)
-OP_FUNC(prod, unsigned_long_long, unsigned long long, +=)
+OP_FUNC(prod, long_long_int, long long int, *=)
+OP_FUNC(prod, unsigned_long_long, unsigned long long, *=)
 #endif
 /* Fortran integer */
 #if OMPI_HAVE_FORTRAN_INTEGER
@@ -339,16 +339,16 @@ OP_FUNC(prod, fortran_integer, ompi_fortran_integer_t, *=)
 OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, +=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
-OP_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t, +=)
+OP_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER4
-OP_FUNC(prod, fortran_integer4, ompi_fortran_integer4_t, +=)
+OP_FUNC(prod, fortran_integer4, ompi_fortran_integer4_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER8
-OP_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t, +=)
+OP_FUNC(prod, fortran_integer8, ompi_fortran_integer8_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER16
-OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, +=)
+OP_FUNC(prod, fortran_integer16, ompi_fortran_integer16_t, *=)
 #endif
 /* Floating point */
 OP_FUNC(prod, float, float, *=)
@@ -361,13 +361,13 @@ OP_FUNC(prod, fortran_double_precision, ompi_fortran_double_precision_t, *=)
 #endif
 OP_FUNC(prod, long_double, long double, *=)
 #if OMPI_HAVE_FORTRAN_REAL4
-OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, +=)
+OP_FUNC(prod, fortran_real4, ompi_fortran_real4_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL8
-OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, +=)
+OP_FUNC(prod, fortran_real8, ompi_fortran_real8_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_REAL16
-OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, +=)
+OP_FUNC(prod, fortran_real16, ompi_fortran_real16_t, *=)
 #endif
 /* Complex */
 #if OMPI_HAVE_FORTRAN_REAL && OMPI_HAVE_FORTRAN_COMPLEX
