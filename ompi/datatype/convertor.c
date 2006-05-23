@@ -35,24 +35,6 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
-/* The cleanup function will put the convertor in exactly the same state as after a call
- * to ompi_convertor_construct. Therefore, all PML can call OBJ_DESTRUCT on the request's
- * convertors without having to call OBJ_CONSTRUCT everytime they grab a new one from the
- * cache. The OBJ_CONSTRUCT on the convertor should be called only on the first creation
- * of a request (not when extracted from the cache).
- */
-inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
-{
-    if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
-        free( convertor->pStack );
-        convertor->pStack     = convertor->static_stack;
-        convertor->stack_size = DT_STATIC_STACK_SIZE;
-    }
-    convertor->pDesc     = NULL;
-    convertor->stack_pos = 0;
-    return OMPI_SUCCESS;
-}
-
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
     convertor->pStack            = convertor->static_stack;
