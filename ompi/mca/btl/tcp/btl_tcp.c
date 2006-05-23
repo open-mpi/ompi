@@ -72,13 +72,23 @@ int mca_btl_tcp_add_procs(
     ompi_bitmap_t* reachable)
 {
     mca_btl_tcp_module_t* tcp_btl = (mca_btl_tcp_module_t*)btl;
+    ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     int i, rc;
+
+    /* get pointer to my proc structure */
+    my_proc = ompi_proc_local();
+    if( NULL == my_proc ) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
 
     for(i = 0; i < (int) nprocs; i++) {
 
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_tcp_proc_t* tcp_proc;
         mca_btl_base_endpoint_t* tcp_endpoint;
+
+        /* Do not create loopback TCP connections */
+        if( my_proc == ompi_proc ) continue;
 
         if(NULL == (tcp_proc = mca_btl_tcp_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
