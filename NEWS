@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fixed back-end operations for predefined MPI_PROD for some
+  datatypes.  Thanks to Bert Wesarg for reporting this.
 - Adapted configure to be able to handle Torque 2.1.0p0's (and above)
   new library name.  Thanks to Brock Palen for pointing this out and
   providing access to a Torque 2.1.0p0 cluster to test with.
