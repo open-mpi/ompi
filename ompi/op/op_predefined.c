@@ -337,7 +337,7 @@ OP_FUNC(prod, unsigned_long_long, unsigned long long, *=)
 OP_FUNC(prod, fortran_integer, ompi_fortran_integer_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER1
-OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, +=)
+OP_FUNC(prod, fortran_integer1, ompi_fortran_integer1_t, *=)
 #endif
 #if OMPI_HAVE_FORTRAN_INTEGER2
 OP_FUNC(prod, fortran_integer2, ompi_fortran_integer2_t, *=)
