@@ -346,6 +346,7 @@ void ompi_info::do_config(bool want_all)
   const string paramcheck(0 == MPI_PARAM_CHECK ? "never" :
                           1 == MPI_PARAM_CHECK ? "always" : "runtime");
   string threads;
+  const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
   
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
@@ -574,5 +575,5 @@ void ompi_info::do_config(bool want_all)
   out("MPI parameter check", "option:mpi-param-check", paramcheck);
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
-  out("libltdl support", "option:dlopen", OMPI_WANT_LIBLTDL);
+  out("libltdl support", "option:dlopen", want_libltdl);
 }
