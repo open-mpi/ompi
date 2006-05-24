@@ -192,19 +192,18 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             if( NULL == iov[i].iov_base ) {
                 iov[i].iov_base = base_pointer;
                 pConv->bConverted += iov[i].iov_len;
-                if( pConv->bConverted > pConv->local_size ) {
+                if( pConv->bConverted >= pConv->local_size ) {
                     iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
                     goto predefined_data_pack;
                 }
             } else {
                 pConv->bConverted += iov[i].iov_len;
-                if( pConv->bConverted > pConv->local_size ) {
+                if( pConv->bConverted >= pConv->local_size ) {
                     iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
                     MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
                     goto predefined_data_pack;
                 }
-                MEMCPY( iov[i].iov_base, base_pointer,
-                        iov[i].iov_len );
+                MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             }
         }
         *max_data = pConv->bConverted - (*max_data);
@@ -243,7 +242,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
         for( i = 0; i < *out_size; i++ ) {
             base_pointer = pConv->pBaseBuf + pConv->bConverted;
             pConv->bConverted += iov[i].iov_len;
-            if( pConv->bConverted > pConv->local_size ) {
+            if( pConv->bConverted >= pConv->local_size ) {
                 pConv->bConverted = pConv->local_size;
                 iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
                 MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
