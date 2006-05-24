@@ -246,7 +246,7 @@ mca_ptl_gm_thread_progress( opal_thread_t* thread )
         if( GM_NO_RECV_EVENT != gm_ntohc(event->recv.type) )
             mca_ptl_gm_analyze_recv_event( ptl, event );
     }
-    return PTHREAD_CANCELED;
+    return NULL;
 }
 #endif  /* OMPI_HAVE_POSIX_THREADS */
 
