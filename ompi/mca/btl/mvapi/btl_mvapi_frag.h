@@ -97,6 +97,7 @@ struct mca_btl_mvapi_frag_t {
     mca_btl_mvapi_header_t *hdr;
     mca_btl_mvapi_footer_t *ftr;
     mca_mpool_mvapi_registration_t * vapi_reg; 
+    ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t); 
@@ -136,13 +137,8 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t);
     opal_list_item_t *item;                                            \
     OMPI_FREE_LIST_WAIT(&((mca_btl_mvapi_module_t*)btl)->send_free_eager, item, rc);       \
     frag = (mca_btl_mvapi_frag_t*) item;                                  \
+    frag->my_list = &((mca_btl_mvapi_module_t*)btl)->send_free_eager;   \
 }
-
-#define MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_mvapi_module_t*)btl)->send_free_eager, (opal_list_item_t*)(frag)); \
-}
-
 
 #define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                               \
 {                                                                      \
@@ -150,13 +146,8 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t);
     opal_list_item_t *item;                                            \
     OMPI_FREE_LIST_WAIT(&((mca_btl_mvapi_module_t*)btl)->send_free_max, item, rc);       \
     frag = (mca_btl_mvapi_frag_t*) item;                                  \
+    frag->my_list = &((mca_btl_mvapi_module_t*)btl)->send_free_max;   \
 }
-
-#define MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_mvapi_module_t*)btl)->send_free_max, (opal_list_item_t*)(frag)); \
-}
-
 
 #define MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc)                               \
 {                                                                      \
@@ -164,11 +155,13 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t);
     opal_list_item_t *item;                                            \
     OMPI_FREE_LIST_WAIT(&((mca_btl_mvapi_module_t*)btl)->send_free_frag, item, rc);       \
     frag = (mca_btl_mvapi_frag_t*) item;                                  \
+    frag->my_list = &((mca_btl_mvapi_module_t*)btl)->send_free_frag;   \
 }
 
-#define MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_mvapi_module_t*)btl)->send_free_frag, (opal_list_item_t*)(frag)); \
+#define MCA_BTL_IB_FRAG_RETURN(btl, frag)                                  \
+{                                                                          \
+    OMPI_FREE_LIST_RETURN(frag->my_list,                                   \
+        (opal_list_item_t*)(frag));                                        \
 }
 
 

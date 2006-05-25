@@ -218,17 +218,7 @@ int mca_btl_gm_free(
     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
-    if(frag->size == 0) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
-        MCA_BTL_GM_FRAG_RETURN_USER(btl, frag); 
-    } else if(frag->size == mca_btl_gm_component.gm_eager_frag_size) {
-        MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag); 
-    } else if(frag->size == mca_btl_gm_component.gm_max_frag_size) {
-        MCA_BTL_GM_FRAG_RETURN_MAX(btl, frag); 
-    }  else {
-        opal_output(0, "[%s:%d] mca_btl_gm_free: invalid descriptor\n", __FILE__,__LINE__);
-        return OMPI_ERR_BAD_PARAM;
-    }
+    MCA_BTL_GM_FRAG_RETURN(btl, frag); 
     return OMPI_SUCCESS; 
 }
 
@@ -314,7 +304,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
                                    &registration);
 
         if(rc != OMPI_SUCCESS) {
-            MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
+            MCA_BTL_GM_FRAG_RETURN(btl,frag);
             return NULL;
         }
 
@@ -341,7 +331,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
         if( rc < 0 ) {
-            MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag);
+            MCA_BTL_GM_FRAG_RETURN(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -367,7 +357,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         *size  = max_data;
                                                                                                     
         if( rc < 0 ) {
-            MCA_BTL_GM_FRAG_RETURN_MAX(btl, frag);
+            MCA_BTL_GM_FRAG_RETURN(btl, frag);
             return NULL;
         }
         frag->segment.seg_len = max_data + reserve;
@@ -443,7 +433,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
                                    0,
                                    &registration);
         if(rc != OMPI_SUCCESS) {
-            MCA_BTL_GM_FRAG_RETURN_USER(btl,frag);
+            MCA_BTL_GM_FRAG_RETURN(btl,frag);
             return NULL;
         }
         
