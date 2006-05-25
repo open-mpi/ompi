@@ -50,6 +50,7 @@ struct mca_btl_gm_frag_t {
     size_t size; 
     enum gm_priority priority;
     mca_btl_gm_frag_type_t type;
+    ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
@@ -79,12 +80,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
     opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_eager, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
-}
-
-#define MCA_BTL_GM_FRAG_RETURN_EAGER(btl, frag)                    \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_gm_module_t*)btl)->gm_frag_eager, \
-        (opal_list_item_t*)(frag));                                \
+    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_eager;   \
 }
 
 #define MCA_BTL_GM_FRAG_ALLOC_MAX(btl, frag, rc)                   \
@@ -93,26 +89,21 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
     opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_max, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
+    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_max;     \
 }
-
-#define MCA_BTL_GM_FRAG_RETURN_MAX(btl, frag)                      \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_gm_module_t*)btl)->gm_frag_max, \
-        (opal_list_item_t*)(frag));                                \
-}
-
 
 #define MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc)                  \
 {                                                                  \
     opal_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_user, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
+    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_user;    \
 }
 
-#define MCA_BTL_GM_FRAG_RETURN_USER(btl, frag)                     \
+#define MCA_BTL_GM_FRAG_RETURN(btl, frag)                          \
 {                                                                  \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_gm_module_t*)btl)->gm_frag_user, \
-        (opal_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(frag->my_list,                           \
+        (opal_list_item_t*)(frag));                                \
 }
 
 

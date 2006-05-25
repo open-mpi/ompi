@@ -223,17 +223,8 @@ int mca_btl_mvapi_free(
                     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
-
-    if(frag->size == 0) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->vapi_reg); 
-        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-    } else if(frag->size == mca_btl_mvapi_component.max_send_size){ 
-        MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
-    } else if(frag->size == mca_btl_mvapi_component.eager_limit){ 
-        MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
-    } else { 
-        BTL_ERROR(("invalid descriptor")); 
-    }
+    MCA_BTL_IB_FRAG_RETURN(btl, frag); 
+    
     return OMPI_SUCCESS; 
 }
 
@@ -350,7 +341,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
             (mca_mpool_base_registration_t**) &vapi_reg); 
         if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
-            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            MCA_BTL_IB_FRAG_RETURN(btl, frag);
             return NULL;
         }
         
@@ -384,7 +375,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
         if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
+            MCA_BTL_IB_FRAG_RETURN(btl, frag); 
             return NULL; 
         } 
         
@@ -414,7 +405,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
         *size  = max_data; 
 
         if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
+            MCA_BTL_IB_FRAG_RETURN(btl, frag); 
             return NULL; 
         } 
         
@@ -495,7 +486,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
         if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
                 frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
-            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            MCA_BTL_IB_FRAG_RETURN(btl, frag);
             return NULL;
         }
     }
