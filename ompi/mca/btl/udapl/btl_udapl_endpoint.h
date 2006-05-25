@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,7 +47,8 @@ typedef struct mca_btl_udapl_addr_t mca_btl_udapl_addr_t;
  */
 
 typedef enum {
-    MCA_BTL_UDAPL_CONNECTING,
+    MCA_BTL_UDAPL_CONN_EAGER,
+    MCA_BTL_UDAPL_CONN_MAX,
     MCA_BTL_UDAPL_CONNECTED,
     MCA_BTL_UDAPL_CLOSED,
     MCA_BTL_UDAPL_FAILED
@@ -82,7 +85,8 @@ struct mca_btl_base_endpoint_t {
 
     mca_btl_udapl_addr_t endpoint_addr;
 
-    DAT_EP_HANDLE endpoint_ep;
+    DAT_EP_HANDLE endpoint_eager;
+    DAT_EP_HANDLE endpoint_max;
     /**< uDAPL endpoint handle */
 };
 
@@ -106,18 +110,11 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 void mca_btl_udapl_endpoint_post_oob_recv(void);
 
 /*
- * Post queued sends.
+ * Finish establishing a connection
  */
 
-int mca_btl_udapl_endpoint_post_queue(mca_btl_udapl_endpoint_t* endpoint);
-
-/*
- * Match a uDAPL endpoint to a BTL endpoint.
- */
-
-int mca_btl_udapl_endpoint_match(struct mca_btl_udapl_module_t* btl,
-                                 mca_btl_udapl_addr_t* addr,
-                                 DAT_EP_HANDLE endpoint);
+int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
+                                          DAT_EP_HANDLE endpoint);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -48,16 +50,14 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 
 static void mca_btl_udapl_frag_eager_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit -
-        sizeof(mca_btl_base_header_t);
+    frag->segment.seg_len = mca_btl_udapl_module.super.btl_eager_limit;
     frag->size = mca_btl_udapl_component.udapl_eager_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }
 
 static void mca_btl_udapl_frag_max_constructor(mca_btl_udapl_frag_t* frag) 
 { 
-    frag->segment.seg_len = mca_btl_udapl_module.super.btl_max_send_size -
-        sizeof(mca_btl_base_header_t);
+    frag->segment.seg_len = mca_btl_udapl_module.super.btl_max_send_size;
     frag->size = mca_btl_udapl_component.udapl_max_frag_size;
     mca_btl_udapl_frag_common_constructor(frag); 
 }

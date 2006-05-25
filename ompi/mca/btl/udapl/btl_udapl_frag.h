@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,8 +32,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t);
 
 
 typedef enum {
-    MCA_BTL_UDAPL_CONN_SEND,
-    MCA_BTL_UDAPL_CONN_RECV,
     MCA_BTL_UDAPL_SEND,
     MCA_BTL_UDAPL_RECV,
     MCA_BTL_UDAPL_PUT,
