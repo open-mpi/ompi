@@ -28,9 +28,9 @@ version 1.0.
 - Addition of "trivial", "small" (the default), "medium", and "large"
   Fortran 90 MPI module sizes (v1.0.x's F90 module was equivalent to
   "medium").  See the README file for more explanation.
-- Addition of short message RDMA optimization to a limited number of
-  peers in both the mvapi and openib BTL components. This reduce 
-  communication latency over IB channel.
+- Allow short messagees to use RDMA (vs. send/receive semantics) to a
+  limited number peers in both the mvapi and openib BTL components.
+  This reduces communication latency over IB channels.
 - Numerous performance improvements throughout the entire code base.
 - Many minor threading fixes.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
