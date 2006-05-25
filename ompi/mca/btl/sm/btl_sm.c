@@ -682,6 +682,10 @@ int mca_btl_sm_add_procs(
              * already added these into num_smp_procs */
             peers[proc]->peer_smp_rank=n_local_procs+
                 mca_btl_sm_component.num_smp_procs-tmp_cnt;
+#if OMPI_ENABLE_PROGRESS_THREADS
+            peers[proc]->fifo_fd =
+                mca_btl_sm_component.sm_peers[peers[proc]->peer_smp_rank]->fifo_fd;
+#endif
             n_local_procs++;
         }
     }
