@@ -174,7 +174,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 #endif
         frag->wr_desc.sr_desc.wr.rdma.rkey = endpoint->eager_rdma_remote.rkey;
         frag->wr_desc.sr_desc.wr.rdma.remote_addr =
-            endpoint->eager_rdma_remote.base.lval +
+            (uintptr_t)endpoint->eager_rdma_remote.base.pval +
             endpoint->eager_rdma_remote.head *
             openib_btl->eager_rdma_frag_size +
             sizeof(mca_btl_openib_frag_t) +

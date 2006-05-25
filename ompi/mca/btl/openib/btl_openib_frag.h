@@ -63,7 +63,7 @@ typedef struct mca_btl_openib_control_header_t mca_btl_openib_control_header_t;
 struct mca_btl_openib_eager_rdma_header_t {
 	mca_btl_openib_control_header_t control;
 	ompi_ptr_t rdma_start;
-	uint64_t rkey;
+	uint32_t rkey;
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
