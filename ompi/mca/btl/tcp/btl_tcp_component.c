@@ -98,7 +98,6 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
     }
 };
 
-
 /*
  * utility routines for parameter registration
  */
@@ -216,6 +215,7 @@ int mca_btl_tcp_component_open(void)
         mca_btl_tcp_param_register_int ("min_send_size", 64*1024);
     mca_btl_tcp_module.super.btl_max_send_size =
         mca_btl_tcp_param_register_int ("max_send_size", 128*1024);
+    
     mca_btl_tcp_module.super.btl_min_rdma_size =
         mca_btl_tcp_param_register_int("min_rdma_size", 128*1024);
     mca_btl_tcp_module.super.btl_max_rdma_size =

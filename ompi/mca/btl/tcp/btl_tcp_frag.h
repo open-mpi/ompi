@@ -55,6 +55,7 @@ struct mca_btl_tcp_frag_t {
     size_t iov_idx;
     size_t size; 
     int rc;
+    ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t); 
@@ -86,12 +87,6 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
-#define MCA_BTL_TCP_FRAG_RETURN_EAGER(frag)                                \
-{                                                                          \
-    OMPI_FREE_LIST_RETURN(&mca_btl_tcp_component.tcp_frag_eager,           \
-        (opal_list_item_t*)(frag));                                        \
-}
-
 #define MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc)                               \
 {                                                                          \
                                                                            \
@@ -100,13 +95,6 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
-#define MCA_BTL_TCP_FRAG_RETURN_MAX(frag)                                  \
-{                                                                          \
-    OMPI_FREE_LIST_RETURN(&mca_btl_tcp_component.tcp_frag_max,             \
-        (opal_list_item_t*)(frag));                                        \
-}
-
-
 #define MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc)                              \
 {                                                                          \
     opal_list_item_t *item;                                                \
@@ -114,9 +102,9 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
 
-#define MCA_BTL_TCP_FRAG_RETURN_USER(frag)                                 \
+#define MCA_BTL_TCP_FRAG_RETURN(frag)                                      \
 {                                                                          \
-    OMPI_FREE_LIST_RETURN(&mca_btl_tcp_component.tcp_frag_user,            \
+    OMPI_FREE_LIST_RETURN(frag->my_list,                                   \
         (opal_list_item_t*)(frag));                                        \
 }
 
