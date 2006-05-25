@@ -215,15 +215,7 @@ int mca_btl_tcp_free(
     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_tcp_frag_t* frag = (mca_btl_tcp_frag_t*)des; 
-    if(frag->size == 0) {
-        MCA_BTL_TCP_FRAG_RETURN_USER(frag); 
-    } else if(frag->size == btl->btl_eager_limit){ 
-        MCA_BTL_TCP_FRAG_RETURN_EAGER(frag); 
-    } else if(frag->size == btl->btl_max_send_size) {
-        MCA_BTL_TCP_FRAG_RETURN_MAX(frag); 
-    }  else {
-        return OMPI_ERR_BAD_PARAM;
-    }
+    MCA_BTL_TCP_FRAG_RETURN(frag); 
     return OMPI_SUCCESS; 
 }
 

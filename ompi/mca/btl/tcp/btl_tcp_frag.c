@@ -50,18 +50,21 @@ static void mca_btl_tcp_frag_common_constructor(mca_btl_tcp_frag_t* frag)
 static void mca_btl_tcp_frag_eager_constructor(mca_btl_tcp_frag_t* frag) 
 { 
     frag->size = mca_btl_tcp_module.super.btl_eager_limit;   
+    frag->my_list = &mca_btl_tcp_component.tcp_frag_eager;
     mca_btl_tcp_frag_common_constructor(frag); 
 }
 
 static void mca_btl_tcp_frag_max_constructor(mca_btl_tcp_frag_t* frag) 
 { 
     frag->size = mca_btl_tcp_module.super.btl_max_send_size; 
+    frag->my_list = &mca_btl_tcp_component.tcp_frag_max;
     mca_btl_tcp_frag_common_constructor(frag); 
 }
 
 static void mca_btl_tcp_frag_user_constructor(mca_btl_tcp_frag_t* frag) 
 { 
     frag->size = 0; 
+    frag->my_list = &mca_btl_tcp_component.tcp_frag_user;
     mca_btl_tcp_frag_common_constructor(frag); 
 }
 
