@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fix shared memory progression in asynchronous progress scenarios.
+  Thanks to Mykael Bouquey for reporting the problem.
 - Fixed back-end operations for predefined MPI_PROD for some
   datatypes.  Thanks to Bert Wesarg for reporting this.
 - Adapted configure to be able to handle Torque 2.1.0p0's (and above)
@@ -73,8 +75,8 @@ version 1.0.
 - Fixed problems with MPI_FILE_OPEN and non-blocking MPI-2 IO access.
 - Fixed various InfiniBand port matching issues during startup.
   Thanks to Scott Weitzenkamp for identifying these problems.
-- Fixed various configure and build issues with ROMIO.  Thanks to
-  Dries Kimpe for bringing them to our attention.
+- Fixed various configure, build and run-time issues with ROMIO.
+  Thanks to Dries Kimpe for bringing them to our attention.
 - Fixed error in MPI_COMM_SPLIT when dealing with intercommunicators.
   Thanks to Bert Wesarg for identifying the problem.
 - Fixed backwards handling of "high" parameter in MPI_INTERCOMM_MERGE.
