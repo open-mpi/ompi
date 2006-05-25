@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -149,7 +151,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_component.udapl_mpool_name =
         mca_btl_udapl_param_register_string("mpool", "udapl");
     mca_btl_udapl_component.udapl_max_btls = 
-        mca_btl_udapl_param_register_int("max_modules", 4);
+        mca_btl_udapl_param_register_int("max_modules", 8);
     mca_btl_udapl_component.udapl_evd_qlen =
         mca_btl_udapl_param_register_int("evd_qlen", 8);
     mca_btl_udapl_component.udapl_num_repost = 
@@ -169,7 +171,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_module.super.btl_eager_limit = 
         mca_btl_udapl_param_register_int ("eager_limit", 32*1024);
     mca_btl_udapl_module.super.btl_min_send_size =
-        mca_btl_udapl_param_register_int ("min_send_size", 32*1024);
+        mca_btl_udapl_param_register_int ("min_send_size", 16*1024);
     mca_btl_udapl_module.super.btl_max_send_size =
         mca_btl_udapl_param_register_int ("max_send_size", 64*1024);
     mca_btl_udapl_module.super.btl_min_rdma_size = 
@@ -181,9 +183,15 @@ int mca_btl_udapl_component_open(void)
 
     /* compute udapl_eager_frag_size and udapl_max_frag_size */
     mca_btl_udapl_component.udapl_eager_frag_size =
-            mca_btl_udapl_module.super.btl_eager_limit;
+        mca_btl_udapl_module.super.btl_eager_limit;
+    mca_btl_udapl_module.super.btl_eager_limit -=
+        sizeof(mca_btl_base_header_t);
+    
     mca_btl_udapl_component.udapl_max_frag_size =
-            mca_btl_udapl_module.super.btl_max_send_size;
+        mca_btl_udapl_module.super.btl_max_send_size;
+    mca_btl_udapl_module.super.btl_max_send_size -=
+        sizeof(mca_btl_base_header_t);
+
 
     /* leave pinned option */
     value = 0;
@@ -264,8 +272,8 @@ mca_btl_udapl_component_init (int *num_btl_modules,
     OPAL_OUTPUT((0, "udapl_component_init\n"));
 
     /* enumerate uDAPL interfaces */
-	 /* Have to do weird pointer stuff to make uDAPL happy -
-	    just an array of DAT_PROVIDER_INFO isn't good enough. */
+    /* Have to do weird pointer stuff to make uDAPL happy -
+       just an array of DAT_PROVIDER_INFO isn't good enough. */
     datinfo = malloc(sizeof(DAT_PROVIDER_INFO) *
             mca_btl_udapl_component.udapl_max_btls);
     datinfoptr = malloc(sizeof(DAT_PROVIDER_INFO*) *
@@ -274,19 +282,19 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         return NULL;
     }
 
-	 for(i = 0; i < mca_btl_udapl_component.udapl_max_btls; i++) {
-		 datinfoptr[i] = &datinfo[i];
-	 }
+     for(i = 0; i < (int32_t)mca_btl_udapl_component.udapl_max_btls; i++) {
+         datinfoptr[i] = &datinfo[i];
+     }
 
     if(DAT_SUCCESS != dat_registry_list_providers(
             mca_btl_udapl_component.udapl_max_btls,
-            (DAT_COUNT*)&num_ias, &datinfo)) {
+            (DAT_COUNT*)&num_ias, datinfoptr)) {
         free(datinfo);
-		  free(datinfoptr);
+        free(datinfoptr);
         return NULL;
     }
 
-	 free(datinfoptr);
+    free(datinfoptr);
 
     /* allocate space for the each possible BTL */
     mca_btl_udapl_component.udapl_btls = (mca_btl_udapl_module_t **)
@@ -318,7 +326,7 @@ mca_btl_udapl_component_init (int *num_btl_modules,
         }
 
         /* successful btl creation */
-        mca_btl_udapl_component.udapl_btls[i] = btl;
+        mca_btl_udapl_component.udapl_btls[mca_btl_udapl_component.udapl_num_btls] = btl;
         if(++mca_btl_udapl_component.udapl_num_btls >=
                 mca_btl_udapl_component.udapl_max_btls) {
             break;
@@ -362,8 +370,6 @@ mca_btl_udapl_component_init (int *num_btl_modules,
 
 static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl, DAT_CR_HANDLE cr_handle)
 {
-    mca_btl_udapl_frag_t* frag;
-    DAT_DTO_COOKIE cookie;
     DAT_EP_HANDLE endpoint;
     int rc;
 
@@ -378,21 +384,6 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl, DAT_CR_HAND
     rc = dat_cr_accept(cr_handle, endpoint, 0, NULL);
     if(DAT_SUCCESS != rc) {
         MCA_BTL_UDAPL_ERROR(rc, "dat_cr_accept");
-        return OMPI_ERROR;
-    }
-
-    /* Post a receive to get the address data */
-    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
-            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
-    cookie.as_ptr = frag;
-
-    frag->endpoint = NULL;
-    frag->type = MCA_BTL_UDAPL_CONN_RECV;
-
-    rc = dat_ep_post_recv(endpoint, 1,
-            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-    if(DAT_SUCCESS != rc) {
-        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
         return OMPI_ERROR;
     }
 
@@ -431,22 +422,16 @@ int mca_btl_udapl_component_progress()
 
             switch(event.event_number) {
                 case DAT_DTO_COMPLETION_EVENT:
-                    /* questions to answer:
-                       should i use separate endpoints for eager/max frags?
-                        i need to do this if i only want to post recv's for
-                        the exact eager/max size, and uDAPL won't just pick
-                        a large enough buffer
-                       */
                     dto = &event.event_data.dto_completion_event_data;
 
+                    frag = dto->user_cookie.as_ptr;
                     /* Was the DTO successful? */
                     if(DAT_DTO_SUCCESS != dto->status) {
                         OPAL_OUTPUT((0,
-                                "btl_udapl DTO error %d\n", dto->status));
+                                "btl_udapl ***** DTO error %d *****\n",
+                                dto->status));
                         break;
                     }
-
-                    frag = dto->user_cookie.as_ptr;
 
                     switch(frag->type) {
                     case MCA_BTL_UDAPL_SEND:
@@ -479,24 +464,23 @@ int mca_btl_udapl_component_progress()
                         frag->segment.seg_len =
                             frag->size - sizeof(mca_btl_base_header_t);
 
-                        dat_ep_post_recv(frag->endpoint->endpoint_ep,
-                                1, &frag->triplet, dto->user_cookie,
-                                DAT_COMPLETION_DEFAULT_FLAG);
+                        if(frag->size ==
+                              mca_btl_udapl_component.udapl_eager_frag_size) {
+                            dat_ep_post_recv(frag->endpoint->endpoint_eager,
+                                    1, &frag->triplet, dto->user_cookie,
+                                    DAT_COMPLETION_DEFAULT_FLAG);
+                        } else if(frag->size ==
+                                mca_btl_udapl_component.udapl_max_frag_size) {
+                            dat_ep_post_recv(frag->endpoint->endpoint_max,
+                                    1, &frag->triplet, dto->user_cookie,
+                                    DAT_COMPLETION_DEFAULT_FLAG);
+                        } else {
+                            OPAL_OUTPUT((0,
+                                    "btl_udapl ERROR unknown frag size\n"));
+                        }
+
                         break;
                     }
-                    case MCA_BTL_UDAPL_CONN_SEND:
-                        /* Client (send) side connection established */
-                        mca_btl_udapl_endpoint_post_queue(frag->endpoint);
-
-                        MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
-                        break;
-                    case MCA_BTL_UDAPL_CONN_RECV:
-                        /* Just got the address data we need for completing
-                           a new connection - match endpoints */
-                        mca_btl_udapl_endpoint_match(btl,
-                                frag->segment.seg_addr.pval, dto->ep_handle);
-                        MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
-                        break;
                     default:
                         OPAL_OUTPUT((0, "WARNING unknown frag type: %d\n",
                                     frag->type));
@@ -523,10 +507,9 @@ int mca_btl_udapl_component_progress()
                 case DAT_CONNECTION_EVENT_ESTABLISHED:
                     /* Both the client and server side of a connection generate
                        this event */
-                    /* Really shouldn't do anything here, as we won't have the
-                       address data we need to match a uDAPL EP to a BTL EP.
-                       Connections are finished when DTOs are completed for
-                       the address transfer */
+
+                    mca_btl_udapl_endpoint_finish_connect(btl,
+                            event.event_data.connect_event_data.ep_handle);
                     
                     count++;
                     break;

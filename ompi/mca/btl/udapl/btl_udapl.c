@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -139,7 +141,24 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     }
 
     /* Save the port with the address information */
+    /* TODO - since we're doing the hack below, do we need our own port? */
     btl->udapl_addr.port = port;
+
+    /* TODO - big bad evil hack! */
+    /* uDAPL doesn't ever seem to keep track of ports with addresses.  This
+       becomes a problem when we use dat_ep_query() to obtain a remote address
+       on an endpoint.  In this case, both the DAT_PORT_QUAL and the sin_port
+       field in the DAT_SOCK_ADDR are 0, regardless of the actual port. This is
+       a problem when we have more than one uDAPL process per IA - these
+       processes will have exactly the same address, as the port is all
+       we have to differentiate who is who.  Thus, our uDAPL EP -> BTL EP
+       matching algorithm will break down.
+
+       So, we insert the port we used for our PSP into the DAT_SOCK_ADDR for
+       this IA.  uDAPL then conveniently propagates this to where we need it.
+     */
+    ((struct sockaddr_in*)attr.ia_address_ptr)->sin_port = htons(port);
+    ((struct sockaddr_in*)&btl->udapl_addr.addr)->sin_port = htons(port);
 
     /* initialize the memory pool */
     res.udapl_ia = btl->udapl_ia;
@@ -160,22 +179,22 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     
     /* initialize free lists */
     ompi_free_list_init(&btl->udapl_frag_eager,
-          sizeof(mca_btl_udapl_frag_eager_t) +
-                 mca_btl_udapl_module.super.btl_eager_limit,
-          OBJ_CLASS(mca_btl_udapl_frag_eager_t),
-          mca_btl_udapl_component.udapl_free_list_num,
-          mca_btl_udapl_component.udapl_free_list_max,
-          mca_btl_udapl_component.udapl_free_list_inc,
-          btl->super.btl_mpool);
+            sizeof(mca_btl_udapl_frag_eager_t) +
+                    mca_btl_udapl_component.udapl_eager_frag_size,
+            OBJ_CLASS(mca_btl_udapl_frag_eager_t),
+            mca_btl_udapl_component.udapl_free_list_num,
+            mca_btl_udapl_component.udapl_free_list_max,
+            mca_btl_udapl_component.udapl_free_list_inc,
+            btl->super.btl_mpool);
 
     ompi_free_list_init(&btl->udapl_frag_max,
-          sizeof(mca_btl_udapl_frag_max_t) +
-                 mca_btl_udapl_module.super.btl_max_send_size,
-          OBJ_CLASS(mca_btl_udapl_frag_max_t),
-          mca_btl_udapl_component.udapl_free_list_num,
-          mca_btl_udapl_component.udapl_free_list_max,
-          mca_btl_udapl_component.udapl_free_list_inc,
-          btl->super.btl_mpool);
+            sizeof(mca_btl_udapl_frag_max_t) +
+                    mca_btl_udapl_component.udapl_max_frag_size,
+            OBJ_CLASS(mca_btl_udapl_frag_max_t),
+            mca_btl_udapl_component.udapl_free_list_num,
+            mca_btl_udapl_component.udapl_free_list_max,
+            mca_btl_udapl_component.udapl_free_list_inc,
+            btl->super.btl_mpool);
 
     ompi_free_list_init(&btl->udapl_frag_user,
           sizeof(mca_btl_udapl_frag_user_t),
@@ -330,14 +349,12 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     mca_btl_udapl_frag_t* frag;
     int rc;
 
-    OPAL_OUTPUT((0, "udapl_alloc %d\n", size));
-
-    if(size <= btl->btl_eager_limit - sizeof(mca_btl_base_header_t)) { 
+    if(size <= btl->btl_eager_limit) { 
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_eager_limit ? 
             size : btl->btl_eager_limit; 
-    } else if(size <= btl->btl_max_send_size - sizeof(mca_btl_base_header_t) ) {
+    } else if(size <= btl->btl_max_send_size) {
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(udapl_btl, frag, rc); 
         frag->segment.seg_len = 
             size <= btl->btl_max_send_size ? 
@@ -371,8 +388,6 @@ int mca_btl_udapl_free(
     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
-
-    OPAL_OUTPUT((0, "udapl_free\n"));
 
     if(frag->size == 0) {
         btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
@@ -410,8 +425,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     size_t max_data = *size;
     int32_t free_after;
     int rc;
-
-    OPAL_OUTPUT((0, "udapl_prepare_src\n"));
 
     /*
      * If the data has already been pinned and is contigous than we can
@@ -498,27 +511,28 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     */
     else
 #endif
-    if (max_data+reserve <= btl->btl_eager_limit) {
+    if(max_data + reserve <= btl->btl_eager_limit) {
         MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
         }
 
-        OPAL_OUTPUT((0, "udapl_prepare_src 3\n"));
+        //OPAL_OUTPUT((0, "udapl_prepare_src 3\n"));
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
-        if( rc < 0 ) {
+        *size = max_data;
+        if(rc < 0) {
             MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
 
         frag->segment.seg_len = max_data + reserve;
-        frag->triplet.segment_length = max_data + reserve;
-        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
+        frag->triplet.segment_length =
+            max_data + reserve + sizeof(mca_btl_base_header_t);
+        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
     }
 
     /* 
@@ -526,28 +540,33 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
      * that is the max send size.
      */
     else {
-        OPAL_OUTPUT((0, "udapl_prepare_src 4\n"));
+        //OPAL_OUTPUT((0, "udapl_prepare_src 4\n"));
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
         }
+
         if(max_data + reserve > btl->btl_max_send_size){
             max_data = btl->btl_max_send_size - reserve;
         }
+
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
+        *size = max_data;
         
-        if( rc < 0 ) {
+        if(rc < 0) {
             MCA_BTL_UDAPL_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
+
+        /* TODO - pull this out of the if statements. */
         frag->segment.seg_len = max_data + reserve;
-        frag->triplet.segment_length = max_data + reserve;
-        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
+        frag->triplet.segment_length =
+            max_data + reserve + sizeof(mca_btl_base_header_t);
+        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
     }
 
     frag->base.des_src = &frag->segment;
@@ -572,7 +591,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT)
  */
-
+#if 0
 mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
@@ -629,7 +648,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     }
     return &frag->base;
 }
-
+#endif
 
 /**
  * Initiate an asynchronous send.
