@@ -60,6 +60,9 @@ version 1.0.
 1.0.3
 -----
 
+- Fix to ensure that MPI_LONG_LONG and MPI_LONG_LONG_INT are actually
+  synonyms, as defined by the MPI standard.  Thanks to Martin Audet
+  for reporting this.
 - Fix Fortran 90 configure tests to properly utilize LDFLAGS and LIBS.
   Thanks to Terry Reeves for reporting the problem.
 - Fix shared memory progression in asynchronous progress scenarios.
