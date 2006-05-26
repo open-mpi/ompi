@@ -90,7 +90,7 @@ EOF
 #
 
 OMPI_LOG_COMMAND([$CC $CFLAGS -I. -c conftest.c],
-    OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftestf.f90 conftest.o -o conftest],
+    OMPI_LOG_COMMAND([$FC $FCFLAGS $FCFLAGS_f90 conftestf.f90 conftest.o -o conftest $LDFLAGS $LIBS],
 	OMPI_LOG_COMMAND([./conftest],[HAPPY=1],[HAPPY=0]),
 	[HAPPY=0]),
     [HAPPY=0])
