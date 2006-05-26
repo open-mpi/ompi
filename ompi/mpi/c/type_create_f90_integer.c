@@ -43,7 +43,7 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
 
    if      (r > 38) *newtype = &ompi_mpi_datatype_null;
 #if OMPI_HAVE_F90_INTEGER16
-   else if (r > 18) *newtype = &ompi_mpi_long_long;
+   else if (r > 18) *newtype = &ompi_mpi_long_long_int;
 #else
    else if (r > 18) *newtype = &ompi_mpi_datatype_null;
 #endif  /* OMPI_HAVE_F90_INTEGER16 */
@@ -51,7 +51,7 @@ int MPI_Type_create_f90_integer(int r, MPI_Datatype *newtype)
    else if (r >  9) *newtype = &ompi_mpi_long;
 #else
 #if SIZEOF_LONG_LONG > SIZEOF_INT
-   else if (r >  9) *newtype = &ompi_mpi_long_long;
+   else if (r >  9) *newtype = &ompi_mpi_long_long_int;
 #else
    else if (r >  9) *newtype = &ompi_mpi_datatype_null;
 #endif  /* SIZEOF_LONG_LONG > SIZEOF_INT */

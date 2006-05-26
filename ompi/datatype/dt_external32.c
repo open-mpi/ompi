@@ -54,7 +54,7 @@
  * MPI_INTEGER2             2
  * MPI_INTEGER4             4
  * MPI_INTEGER8             8
- * MPI_LONG_LONG            8
+ * MPI_LONG_LONG_INT        8
  * MPI_UNSIGNED_LONG_LONG   8
  * MPI_REAL4                4
  * MPI_REAL8                8
