@@ -60,6 +60,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fix Fortran 90 configure tests to properly utilize LDFLAGS and LIBS.
+  Thanks to Terry Reeves for reporting the problem.
 - Fix shared memory progression in asynchronous progress scenarios.
   Thanks to Mykael Bouquey for reporting the problem.
 - Fixed back-end operations for predefined MPI_PROD for some
