@@ -34,7 +34,7 @@ typedef struct mca_btl_openib_eager_rdma_local_t mca_btl_openib_eager_rdma_local
 
 struct mca_btl_openib_eager_rdma_remote_t {
 	ompi_ptr_t base; /**< address of remote buffer */
-	uint64_t rkey; /**< RKey for accessing remote buffer */
+	uint32_t rkey; /**< RKey for accessing remote buffer */
 	uint16_t head; /**< RDMA buffer to post to */
 	int32_t tokens; /**< number of rdam tokens */
 #ifdef OMPI_ENABLE_DEBUG
