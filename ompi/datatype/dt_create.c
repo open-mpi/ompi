@@ -55,16 +55,23 @@ static void __destroy_ddt_struct( ompi_datatype_t* datatype )
 {
     if( datatype->desc.desc != NULL ) {
         free( datatype->desc.desc );
-        datatype->desc.desc   = NULL;
         datatype->desc.length = 0;
         datatype->desc.used   = 0;
     }
     if( datatype->opt_desc.desc != NULL ) {
-        free( datatype->opt_desc.desc );
-        datatype->opt_desc.desc   = NULL;
+        if( datatype->opt_desc.desc != datatype->desc.desc )
+            free( datatype->opt_desc.desc );
         datatype->opt_desc.length = 0;
         datatype->opt_desc.used   = 0;
+        datatype->opt_desc.desc   = NULL;
     }
+    /**
+     * As the default description and the optimized description can point to the
+     * same memory location we should keep the default location pointer until we
+     * know what we should do with the optimized description.
+     */
+    datatype->desc.desc   = NULL;
+
     if( NULL != datatype->args ) {
         ompi_ddt_release_args( datatype );
         datatype->args = NULL;

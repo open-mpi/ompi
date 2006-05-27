@@ -396,6 +396,11 @@ int32_t ompi_ddt_init( void )
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
+        /* By default the optimized descritption is the same as the default
+         * description for predefined datatypes.
+         */
+        datatype->opt_desc          = datatype->desc;
+
         datatype->btypes[i]         = 1;
     }
 

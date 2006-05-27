@@ -418,6 +418,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             convertor->remote_size *= convertor->count;                 \
             convertor->use_desc = &(datatype->desc);                    \
         }                                                               \
+        assert( NULL != convertor->use_desc->desc );                    \
                                                                         \
         {                                                               \
             uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1; \
