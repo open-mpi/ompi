@@ -332,6 +332,7 @@ void ompi_info::do_config(bool want_all)
                       (OMPI_F77_SINGLE_UNDERSCORE ? "single underscore" : 
                        "double underscore")))) + string(")"): "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
+  const string f90_size(OMPI_F90_BUILD_SIZE);
   const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
   const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
@@ -373,6 +374,8 @@ void ompi_info::do_config(bool want_all)
   out("C++ bindings", "bindings:cxx", cxx);
   out("Fortran77 bindings", "bindings:f77", f77);
   out("Fortran90 bindings", "bindings:f90", f90);
+  out("Fortran90 bindings size", "bindings:f90:size", 
+      OMPI_WANT_F90_BINDINGS ? f90_size : "na");
 
   out("C compiler", "compiler:c:command", OMPI_CC);
   out("C compiler absolute", "compiler:c:absolute", OMPI_CC_ABSOLUTE);

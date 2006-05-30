@@ -64,7 +64,6 @@ output_1() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errorcode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -113,13 +112,13 @@ start MPI_Accumulate medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_2 MPI_Accumulate ${rank} CH "character${dim}"
   output_2 MPI_Accumulate ${rank} L "logical${dim}"
@@ -149,7 +148,6 @@ output_3() {
     cat <<EOF
 
 subroutine ${procedure}(errorclass, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: errorclass
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -172,7 +170,6 @@ output_4() {
     cat <<EOF
 
 subroutine ${procedure}(errorclass, errorcode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: errorclass
   integer, intent(out) :: errorcode
   integer, intent(out) :: ierr
@@ -196,7 +193,6 @@ output_5() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, string, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   character(len=*), intent(in) :: string
   integer, intent(out) :: ierr
@@ -223,7 +219,6 @@ output_6() {
     cat <<EOF
 
 subroutine ${proc}(location, address, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: location
   integer, intent(out) :: address
   integer, intent(out) :: ierr
@@ -237,13 +232,13 @@ start MPI_Address medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_6 MPI_Address ${rank} CH "character${dim}"
   output_6 MPI_Address ${rank} L "logical${dim}"
@@ -277,7 +272,6 @@ output_7() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -296,13 +290,13 @@ start MPI_Allgather large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_7 MPI_Allgather ${rank} CH "character${dim}"
   output_7 MPI_Allgather ${rank} L "logical${dim}"
@@ -336,7 +330,6 @@ output_8() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
         displs, recvtype, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -356,13 +349,13 @@ start MPI_Allgatherv large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_8 MPI_Allgatherv ${rank} CH "character${dim}"
   output_8 MPI_Allgatherv ${rank} L "logical${dim}"
@@ -392,7 +385,7 @@ output_9() {
     cat <<EOF
 
 subroutine ${procedure}(size, info, baseptr, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: info
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: baseptr
@@ -421,7 +414,6 @@ output_10() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -439,13 +431,13 @@ start MPI_Allreduce large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_10 MPI_Allreduce ${rank} CH "character${dim}"
   output_10 MPI_Allreduce ${rank} L "logical${dim}"
@@ -479,7 +471,6 @@ output_11() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -498,13 +489,13 @@ start MPI_Alltoall large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_11 MPI_Alltoall ${rank} CH "character${dim}"
   output_11 MPI_Alltoall ${rank} L "logical${dim}"
@@ -538,7 +529,6 @@ output_12() {
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtype, recvbuf, &
         recvcounts, rdispls, recvtype, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -559,13 +549,13 @@ start MPI_Alltoallv large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_12 MPI_Alltoallv ${rank} CH "character${dim}"
   output_12 MPI_Alltoallv ${rank} L "logical${dim}"
@@ -599,7 +589,6 @@ output_13() {
 
 subroutine ${proc}(sendbuf, sendcounts, sdispls, sendtypes, recvbuf, &
         recvcounts, rdispls, recvtypes, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, dimension(*), intent(in) :: sendcounts
   integer, dimension(*), intent(in) :: sdispls
@@ -620,13 +609,13 @@ start MPI_Alltoallw large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_13 MPI_Alltoallw ${rank} CH "character${dim}"
   output_13 MPI_Alltoallw ${rank} L "logical${dim}"
@@ -656,7 +645,6 @@ output_14() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: ierr
@@ -680,7 +668,6 @@ output_15() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, attribute_val, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(out) :: attribute_val
@@ -706,7 +693,6 @@ output_16() {
     cat <<EOF
 
 subroutine ${procedure}(comm, keyval, attribute_val, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: keyval
   integer, intent(in) :: attribute_val
@@ -731,7 +717,6 @@ output_17() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -758,7 +743,6 @@ output_18() {
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
         , ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -775,13 +759,13 @@ start MPI_Bcast medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_18 MPI_Bcast ${rank} CH "character${dim}"
   output_18 MPI_Bcast ${rank} L "logical${dim}"
@@ -815,7 +799,6 @@ output_19() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -833,13 +816,13 @@ start MPI_Bsend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_19 MPI_Bsend ${rank} CH "character${dim}"
   output_19 MPI_Bsend ${rank} L "logical${dim}"
@@ -873,7 +856,6 @@ output_20() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -892,13 +874,13 @@ start MPI_Bsend_init medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_20 MPI_Bsend_init ${rank} CH "character${dim}"
   output_20 MPI_Bsend_init ${rank} L "logical${dim}"
@@ -931,7 +913,6 @@ output_21() {
     cat <<EOF
 
 subroutine ${proc}(buffer, size, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buffer
   integer, intent(in) :: size
   integer, intent(out) :: ierr
@@ -945,13 +926,13 @@ start MPI_Buffer_attach medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_21 MPI_Buffer_attach ${rank} CH "character${dim}"
   output_21 MPI_Buffer_attach ${rank} L "logical${dim}"
@@ -984,7 +965,6 @@ output_22() {
     cat <<EOF
 
 subroutine ${proc}(buffer, size, ierr)
-  include 'mpif-common.h'
   ${type}, intent(out) :: buffer
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -998,13 +978,13 @@ start MPI_Buffer_detach medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_22 MPI_Buffer_detach ${rank} CH "character${dim}"
   output_22 MPI_Buffer_detach ${rank} L "logical${dim}"
@@ -1034,7 +1014,6 @@ output_23() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1057,7 +1036,6 @@ output_24() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, maxdims, coords, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxdims
@@ -1084,7 +1062,6 @@ output_25() {
 
 subroutine ${procedure}(old_comm, ndims, dims, periods, reorder, &
         comm_cart, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: old_comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
@@ -1113,7 +1090,6 @@ output_26() {
 
 subroutine ${procedure}(comm, maxdims, dims, periods, coords&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: maxdims
   integer, dimension(*), intent(out) :: dims
@@ -1141,7 +1117,6 @@ output_27() {
 
 subroutine ${procedure}(comm, ndims, dims, periods, newrank&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: dims
@@ -1168,7 +1143,6 @@ output_28() {
     cat <<EOF
 
 subroutine ${procedure}(comm, coords, rank, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, dimension(*), intent(in) :: coords
   integer, intent(out) :: rank
@@ -1194,7 +1168,6 @@ output_29() {
 
 subroutine ${procedure}(comm, direction, disp, rank_source, rank_dest&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: direction
   integer, intent(in) :: disp
@@ -1221,7 +1194,6 @@ output_30() {
     cat <<EOF
 
 subroutine ${procedure}(comm, remain_dims, new_comm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   logical, dimension(*), intent(in) :: remain_dims
   integer, intent(out) :: new_comm
@@ -1246,7 +1218,6 @@ output_31() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ndims, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: ndims
   integer, intent(out) :: ierr
@@ -1270,7 +1241,6 @@ output_32() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errorcode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -1294,7 +1264,6 @@ output_33() {
     cat <<EOF
 
 subroutine ${procedure}(comm1, comm2, result, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm1
   integer, intent(in) :: comm2
   integer, intent(out) :: result
@@ -1319,7 +1288,6 @@ output_34() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, newcomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: group
   integer, intent(out) :: newcomm
@@ -1344,7 +1312,6 @@ output_35() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1368,7 +1335,6 @@ output_36() {
     cat <<EOF
 
 subroutine ${procedure}(comm_copy_attr_fn, comm_delete_attr_fn, comm_keyval, extra_state, ierr)
-  include 'mpif-common.h'
   external :: comm_copy_attr_fn
   external :: comm_delete_attr_fn
   integer, intent(out) :: comm_keyval
@@ -1394,7 +1360,6 @@ output_37() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(in) :: comm_keyval
   integer, intent(out) :: ierr
@@ -1418,7 +1383,6 @@ output_38() {
     cat <<EOF
 
 subroutine ${procedure}(comm, newcomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: newcomm
   integer, intent(out) :: ierr
@@ -1442,7 +1406,6 @@ output_39() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1465,7 +1428,6 @@ output_40() {
     cat <<EOF
 
 subroutine ${procedure}(comm_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1488,7 +1450,7 @@ output_41() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, attribute_val, flag, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -1514,7 +1476,6 @@ output_42() {
     cat <<EOF
 
 subroutine ${procedure}(comm, erhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: erhandler
   integer, intent(out) :: ierr
@@ -1538,7 +1499,6 @@ output_43() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_name, resultlen, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   character(len=*), intent(out) :: comm_name
   integer, intent(out) :: resultlen
@@ -1563,7 +1523,6 @@ output_44() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -1587,7 +1546,6 @@ output_45() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: rank
   integer, intent(out) :: ierr
@@ -1611,7 +1569,6 @@ output_46() {
     cat <<EOF
 
 subroutine ${procedure}(comm, group, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -1635,7 +1592,6 @@ output_47() {
     cat <<EOF
 
 subroutine ${procedure}(comm, size, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -1659,7 +1615,7 @@ output_48() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_keyval, attribute_val, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: comm
   integer, intent(in) :: comm_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
@@ -1684,7 +1640,6 @@ output_49() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -1708,7 +1663,6 @@ output_50() {
     cat <<EOF
 
 subroutine ${procedure}(comm, comm_name, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   character(len=*), intent(in) :: comm_name
   integer, intent(out) :: ierr
@@ -1732,7 +1686,6 @@ output_51() {
     cat <<EOF
 
 subroutine ${procedure}(comm, size, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -1756,7 +1709,6 @@ output_52() {
     cat <<EOF
 
 subroutine ${procedure}(comm, color, key, newcomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: color
   integer, intent(in) :: key
@@ -1782,7 +1734,6 @@ output_53() {
     cat <<EOF
 
 subroutine ${procedure}(comm, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -1806,7 +1757,6 @@ output_54() {
     cat <<EOF
 
 subroutine ${procedure}(nnodes, ndims, dims, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: nnodes
   integer, intent(in) :: ndims
   integer, dimension(*), intent(inout) :: dims
@@ -1831,7 +1781,6 @@ output_55() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1855,7 +1804,6 @@ output_56() {
     cat <<EOF
 
 subroutine ${procedure}(errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: errhandler
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -1878,7 +1826,6 @@ output_57() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -1902,7 +1849,6 @@ output_58() {
     cat <<EOF
 
 subroutine ${procedure}(comm, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -1926,7 +1872,6 @@ output_59() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, errorclass, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   integer, intent(out) :: errorclass
   integer, intent(out) :: ierr
@@ -1950,7 +1895,6 @@ output_60() {
     cat <<EOF
 
 subroutine ${procedure}(errorcode, string, resultlen, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: errorcode
   character(len=*), intent(out) :: string
   integer, intent(out) :: resultlen
@@ -1979,7 +1923,6 @@ output_61() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -1997,13 +1940,13 @@ start MPI_Exscan large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_61 MPI_Exscan ${rank} CH "character${dim}"
   output_61 MPI_Exscan ${rank} L "logical${dim}"
@@ -2033,7 +1976,6 @@ output_62() {
     cat <<EOF
 
 subroutine ${procedure}(fh, errorcode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -2057,7 +1999,6 @@ output_63() {
     cat <<EOF
 
 subroutine ${procedure}(fh, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -2080,7 +2021,6 @@ output_64() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -2104,7 +2044,6 @@ output_65() {
     cat <<EOF
 
 subroutine ${procedure}(filename, info, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: filename
   integer, intent(in) :: info
   integer, intent(out) :: ierr
@@ -2128,7 +2067,6 @@ output_66() {
     cat <<EOF
 
 subroutine ${procedure}(fh, amode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: amode
   integer, intent(out) :: ierr
@@ -2152,7 +2090,6 @@ output_67() {
     cat <<EOF
 
 subroutine ${procedure}(fh, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fh
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -2176,7 +2113,7 @@ output_68() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, disp, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
@@ -2201,7 +2138,6 @@ output_69() {
     cat <<EOF
 
 subroutine ${procedure}(file, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: file
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -2225,7 +2161,6 @@ output_70() {
     cat <<EOF
 
 subroutine ${procedure}(fh, group, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -2249,7 +2184,6 @@ output_71() {
     cat <<EOF
 
 subroutine ${procedure}(fh, info_used, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fh
   integer, intent(out) :: info_used
   integer, intent(out) :: ierr
@@ -2273,7 +2207,7 @@ output_72() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
   integer, intent(out) :: ierr
@@ -2297,7 +2231,7 @@ output_73() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: offset
   integer, intent(out) :: ierr
@@ -2321,7 +2255,7 @@ output_74() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: size
   integer, intent(out) :: ierr
@@ -2345,7 +2279,7 @@ output_75() {
     cat <<EOF
 
 subroutine ${procedure}(fh, datatype, extent, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
@@ -2371,7 +2305,7 @@ output_76() {
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(out) :: disp
   integer, intent(out) :: etype
@@ -2402,7 +2336,6 @@ output_77() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2419,13 +2352,13 @@ start MPI_File_iread medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_77 MPI_File_iread ${rank} CH "character${dim}"
   output_77 MPI_File_iread ${rank} L "logical${dim}"
@@ -2459,7 +2392,7 @@ output_78() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         request, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -2477,13 +2410,13 @@ start MPI_File_iread_at medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_78 MPI_File_iread_at ${rank} CH "character${dim}"
   output_78 MPI_File_iread_at ${rank} L "logical${dim}"
@@ -2517,7 +2450,6 @@ output_79() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2534,13 +2466,13 @@ start MPI_File_iread_shared medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_79 MPI_File_iread_shared ${rank} CH "character${dim}"
   output_79 MPI_File_iread_shared ${rank} L "logical${dim}"
@@ -2574,7 +2506,6 @@ output_80() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -2591,13 +2522,13 @@ start MPI_File_iwrite medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_80 MPI_File_iwrite ${rank} CH "character${dim}"
   output_80 MPI_File_iwrite ${rank} L "logical${dim}"
@@ -2631,7 +2562,7 @@ output_81() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         request, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -2649,13 +2580,13 @@ start MPI_File_iwrite_at medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_81 MPI_File_iwrite_at ${rank} CH "character${dim}"
   output_81 MPI_File_iwrite_at ${rank} L "logical${dim}"
@@ -2689,7 +2620,6 @@ output_82() {
 
 subroutine ${proc}(fh, buf, count, datatype, request&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -2706,13 +2636,13 @@ start MPI_File_iwrite_shared medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_82 MPI_File_iwrite_shared ${rank} CH "character${dim}"
   output_82 MPI_File_iwrite_shared ${rank} L "logical${dim}"
@@ -2743,7 +2673,6 @@ output_83() {
 
 subroutine ${procedure}(comm, filename, amode, info, fh&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   character(len=*), intent(in) :: filename
   integer, intent(in) :: amode
@@ -2770,7 +2699,7 @@ output_84() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
   integer, intent(out) :: ierr
@@ -2798,7 +2727,7 @@ output_85() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2815,13 +2744,13 @@ start MPI_File_read medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_85 MPI_File_read ${rank} CH "character${dim}"
   output_85 MPI_File_read ${rank} L "logical${dim}"
@@ -2855,7 +2784,7 @@ output_86() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2872,13 +2801,13 @@ start MPI_File_read_all medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_86 MPI_File_read_all ${rank} CH "character${dim}"
   output_86 MPI_File_read_all ${rank} L "logical${dim}"
@@ -2911,7 +2840,6 @@ output_87() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -2927,13 +2855,13 @@ start MPI_File_read_all_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_87 MPI_File_read_all_begin ${rank} CH "character${dim}"
   output_87 MPI_File_read_all_begin ${rank} L "logical${dim}"
@@ -2966,7 +2894,7 @@ output_88() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -2981,13 +2909,13 @@ start MPI_File_read_all_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_88 MPI_File_read_all_end ${rank} CH "character${dim}"
   output_88 MPI_File_read_all_end ${rank} L "logical${dim}"
@@ -3021,7 +2949,7 @@ output_89() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3039,13 +2967,13 @@ start MPI_File_read_at medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_89 MPI_File_read_at ${rank} CH "character${dim}"
   output_89 MPI_File_read_at ${rank} L "logical${dim}"
@@ -3079,7 +3007,7 @@ output_90() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3097,13 +3025,13 @@ start MPI_File_read_at_all medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_90 MPI_File_read_at_all ${rank} CH "character${dim}"
   output_90 MPI_File_read_at_all ${rank} L "logical${dim}"
@@ -3137,7 +3065,7 @@ output_91() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(out) :: buf
@@ -3154,13 +3082,13 @@ start MPI_File_read_at_all_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_91 MPI_File_read_at_all_begin ${rank} CH "character${dim}"
   output_91 MPI_File_read_at_all_begin ${rank} L "logical${dim}"
@@ -3193,7 +3121,7 @@ output_92() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3208,13 +3136,13 @@ start MPI_File_read_at_all_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_92 MPI_File_read_at_all_end ${rank} CH "character${dim}"
   output_92 MPI_File_read_at_all_end ${rank} L "logical${dim}"
@@ -3248,7 +3176,7 @@ output_93() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3265,13 +3193,13 @@ start MPI_File_read_ordered medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_93 MPI_File_read_ordered ${rank} CH "character${dim}"
   output_93 MPI_File_read_ordered ${rank} L "logical${dim}"
@@ -3304,7 +3232,6 @@ output_94() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3320,27 +3247,27 @@ start MPI_File_read_ordered_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
-  output_94 MPI_File_read_ordered_begin ${rank} CH "character${dim}"
-  output_94 MPI_File_read_ordered_begin ${rank} L "logical${dim}"
+  output_94 MPI_File_read_ord_begin ${rank} CH "character${dim}"
+  output_94 MPI_File_read_ord_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output_94 MPI_File_read_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_94 MPI_File_read_ord_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output_94 MPI_File_read_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_94 MPI_File_read_ord_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output_94 MPI_File_read_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_94 MPI_File_read_ord_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_read_ordered_begin
@@ -3359,7 +3286,7 @@ output_95() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3374,13 +3301,13 @@ start MPI_File_read_ordered_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_95 MPI_File_read_ordered_end ${rank} CH "character${dim}"
   output_95 MPI_File_read_ordered_end ${rank} L "logical${dim}"
@@ -3414,7 +3341,7 @@ output_96() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
@@ -3431,13 +3358,13 @@ start MPI_File_read_shared medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_96 MPI_File_read_shared ${rank} CH "character${dim}"
   output_96 MPI_File_read_shared ${rank} L "logical${dim}"
@@ -3467,7 +3394,7 @@ output_97() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, whence, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
@@ -3492,7 +3419,7 @@ output_98() {
     cat <<EOF
 
 subroutine ${procedure}(fh, offset, whence, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   integer, intent(in) :: whence
@@ -3517,7 +3444,6 @@ output_99() {
     cat <<EOF
 
 subroutine ${procedure}(fh, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -3541,7 +3467,6 @@ output_100() {
     cat <<EOF
 
 subroutine ${procedure}(file, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: file
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -3565,7 +3490,6 @@ output_101() {
     cat <<EOF
 
 subroutine ${procedure}(fh, info, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(in) :: info
   integer, intent(out) :: ierr
@@ -3589,7 +3513,7 @@ output_102() {
     cat <<EOF
 
 subroutine ${procedure}(fh, size, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: size
   integer, intent(out) :: ierr
@@ -3614,7 +3538,7 @@ output_103() {
 
 subroutine ${procedure}(fh, disp, etype, filetype, datarep, &
         info, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: disp
   integer, intent(in) :: etype
@@ -3642,7 +3566,6 @@ output_104() {
     cat <<EOF
 
 subroutine ${procedure}(fh, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -3669,7 +3592,7 @@ output_105() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3686,13 +3609,13 @@ start MPI_File_write medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_105 MPI_File_write ${rank} CH "character${dim}"
   output_105 MPI_File_write ${rank} L "logical${dim}"
@@ -3726,7 +3649,7 @@ output_106() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3743,13 +3666,13 @@ start MPI_File_write_all medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_106 MPI_File_write_all ${rank} CH "character${dim}"
   output_106 MPI_File_write_all ${rank} L "logical${dim}"
@@ -3782,7 +3705,6 @@ output_107() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -3798,13 +3720,13 @@ start MPI_File_write_all_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_107 MPI_File_write_all_begin ${rank} CH "character${dim}"
   output_107 MPI_File_write_all_begin ${rank} L "logical${dim}"
@@ -3837,7 +3759,7 @@ output_108() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -3852,13 +3774,13 @@ start MPI_File_write_all_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_108 MPI_File_write_all_end ${rank} CH "character${dim}"
   output_108 MPI_File_write_all_end ${rank} L "logical${dim}"
@@ -3892,7 +3814,7 @@ output_109() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -3910,13 +3832,13 @@ start MPI_File_write_at medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_109 MPI_File_write_at ${rank} CH "character${dim}"
   output_109 MPI_File_write_at ${rank} L "logical${dim}"
@@ -3950,7 +3872,7 @@ output_110() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype, &
         status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -3968,13 +3890,13 @@ start MPI_File_write_at_all medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_110 MPI_File_write_at_all ${rank} CH "character${dim}"
   output_110 MPI_File_write_at_all ${rank} L "logical${dim}"
@@ -4008,7 +3930,7 @@ output_111() {
 
 subroutine ${proc}(fh, offset, buf, count, datatype&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   integer(kind=MPI_OFFSET_KIND), intent(in) :: offset
   ${type}, intent(in) :: buf
@@ -4025,27 +3947,27 @@ start MPI_File_write_at_all_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
-  output_111 MPI_File_write_at_all_begin ${rank} CH "character${dim}"
-  output_111 MPI_File_write_at_all_begin ${rank} L "logical${dim}"
+  output_111 MPI_File_wr_at_all_begin ${rank} CH "character${dim}"
+  output_111 MPI_File_wr_at_all_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output_111 MPI_File_write_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output_111 MPI_File_wr_at_all_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output_111 MPI_File_write_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
+    output_111 MPI_File_wr_at_all_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output_111 MPI_File_write_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output_111 MPI_File_wr_at_all_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
 end MPI_File_write_at_all_begin
@@ -4064,7 +3986,7 @@ output_112() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -4079,13 +4001,13 @@ start MPI_File_write_at_all_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_112 MPI_File_write_at_all_end ${rank} CH "character${dim}"
   output_112 MPI_File_write_at_all_end ${rank} L "logical${dim}"
@@ -4119,7 +4041,7 @@ output_113() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4136,13 +4058,13 @@ start MPI_File_write_ordered medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_113 MPI_File_write_ordered ${rank} CH "character${dim}"
   output_113 MPI_File_write_ordered ${rank} L "logical${dim}"
@@ -4175,7 +4097,6 @@ output_114() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4191,13 +4112,13 @@ start MPI_File_write_ordered_begin medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_114 MPI_File_write_ordered_begin ${rank} CH "character${dim}"
   output_114 MPI_File_write_ordered_begin ${rank} L "logical${dim}"
@@ -4230,7 +4151,7 @@ output_115() {
     cat <<EOF
 
 subroutine ${proc}(fh, buf, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
@@ -4245,13 +4166,13 @@ start MPI_File_write_ordered_end medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_115 MPI_File_write_ordered_end ${rank} CH "character${dim}"
   output_115 MPI_File_write_ordered_end ${rank} L "logical${dim}"
@@ -4285,7 +4206,7 @@ output_116() {
 
 subroutine ${proc}(fh, buf, count, datatype, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: fh
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
@@ -4302,13 +4223,13 @@ start MPI_File_write_shared medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_116 MPI_File_write_shared ${rank} CH "character${dim}"
   output_116 MPI_File_write_shared ${rank} L "logical${dim}"
@@ -4338,7 +4259,6 @@ output_117() {
     cat <<EOF
 
 subroutine ${procedure}(ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -4360,7 +4280,6 @@ output_118() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif-common.h'
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -4386,7 +4305,6 @@ output_119() {
     cat <<EOF
 
 subroutine ${proc}(base, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: base
   integer, intent(out) :: ierr
 end subroutine ${proc}
@@ -4399,13 +4317,13 @@ start MPI_Free_mem medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_119 MPI_Free_mem ${rank} CH "character${dim}"
   output_119 MPI_Free_mem ${rank} L "logical${dim}"
@@ -4439,7 +4357,6 @@ output_120() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, root, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4459,13 +4376,13 @@ start MPI_Gather large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_120 MPI_Gather ${rank} CH "character${dim}"
   output_120 MPI_Gather ${rank} L "logical${dim}"
@@ -4499,7 +4416,6 @@ output_121() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcounts, &
         displs, recvtype, root, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -4520,13 +4436,13 @@ start MPI_Gatherv large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_121 MPI_Gatherv ${rank} CH "character${dim}"
   output_121 MPI_Gatherv ${rank} L "logical${dim}"
@@ -4560,7 +4476,7 @@ output_122() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, win, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype
@@ -4580,13 +4496,13 @@ start MPI_Get medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_122 MPI_Get ${rank} CH "character${dim}"
   output_122 MPI_Get ${rank} L "logical${dim}"
@@ -4619,7 +4535,7 @@ output_123() {
     cat <<EOF
 
 subroutine ${proc}(location, address, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(in) :: location
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: address
   integer, intent(out) :: ierr
@@ -4633,13 +4549,13 @@ start MPI_Get_address medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_123 MPI_Get_address ${rank} CH "character${dim}"
   output_123 MPI_Get_address ${rank} L "logical${dim}"
@@ -4669,7 +4585,7 @@ output_124() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
@@ -4694,7 +4610,7 @@ output_125() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   integer, intent(in) :: datatype
   integer, intent(out) :: count
@@ -4719,7 +4635,6 @@ output_126() {
     cat <<EOF
 
 subroutine ${procedure}(name, resultlen, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(out) :: name
   integer, intent(out) :: resultlen
   integer, intent(out) :: ierr
@@ -4743,7 +4658,6 @@ output_127() {
     cat <<EOF
 
 subroutine ${procedure}(version, subversion, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: version
   integer, intent(out) :: subversion
   integer, intent(out) :: ierr
@@ -4768,7 +4682,6 @@ output_128() {
 
 subroutine ${procedure}(comm_old, nnodes, index, edges, reorder, &
         comm_graph, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm_old
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
@@ -4797,7 +4710,6 @@ output_129() {
 
 subroutine ${procedure}(comm, maxindex, maxedges, index, edges&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: maxindex
   integer, intent(in) :: maxedges
@@ -4825,7 +4737,6 @@ output_130() {
 
 subroutine ${procedure}(comm, nnodes, index, edges, newrank&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: nnodes
   integer, dimension(*), intent(in) :: index
@@ -4852,7 +4763,6 @@ output_131() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, maxneighbors, neighbors, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(in) :: maxneighbors
@@ -4878,7 +4788,6 @@ output_132() {
     cat <<EOF
 
 subroutine ${procedure}(comm, rank, nneighbors, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(in) :: rank
   integer, intent(out) :: nneighbors
@@ -4903,7 +4812,6 @@ output_133() {
     cat <<EOF
 
 subroutine ${procedure}(comm, nnodes, nedges, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: nnodes
   integer, intent(out) :: nedges
@@ -4928,7 +4836,6 @@ output_134() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -4952,7 +4859,6 @@ output_135() {
 
 subroutine ${procedure}(query_fn, free_fn, cancel_fn, extra_state, request&
         , ierr)
-  include 'mpif-common.h'
   external :: query_fn
   external :: free_fn
   external :: cancel_fn
@@ -4979,7 +4885,6 @@ output_136() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, result, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: result
@@ -5004,7 +4909,6 @@ output_137() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5029,7 +4933,6 @@ output_138() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranks, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
@@ -5055,7 +4958,6 @@ output_139() {
     cat <<EOF
 
 subroutine ${procedure}(group, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: group
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5078,7 +4980,6 @@ output_140() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranks, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks
@@ -5104,7 +5005,6 @@ output_141() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5129,7 +5029,6 @@ output_142() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranges, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
@@ -5155,7 +5054,6 @@ output_143() {
     cat <<EOF
 
 subroutine ${procedure}(group, n, ranges, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: n
   integer, dimension(3, *), intent(in) :: ranges
@@ -5181,7 +5079,6 @@ output_144() {
     cat <<EOF
 
 subroutine ${procedure}(group, rank, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(out) :: rank
   integer, intent(out) :: ierr
@@ -5205,7 +5102,6 @@ output_145() {
     cat <<EOF
 
 subroutine ${procedure}(group, size, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -5230,7 +5126,6 @@ output_146() {
 
 subroutine ${procedure}(group1, n, ranks1, group2, ranks2&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: n
   integer, dimension(*), intent(in) :: ranks1
@@ -5257,7 +5152,6 @@ output_147() {
     cat <<EOF
 
 subroutine ${procedure}(group1, group2, newgroup, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group1
   integer, intent(in) :: group2
   integer, intent(out) :: newgroup
@@ -5286,7 +5180,6 @@ output_148() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5305,13 +5198,13 @@ start MPI_Ibsend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_148 MPI_Ibsend ${rank} CH "character${dim}"
   output_148 MPI_Ibsend ${rank} L "logical${dim}"
@@ -5341,7 +5234,6 @@ output_149() {
     cat <<EOF
 
 subroutine ${procedure}(info, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: info
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5364,7 +5256,6 @@ output_150() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: ierr
@@ -5388,7 +5279,6 @@ output_151() {
     cat <<EOF
 
 subroutine ${procedure}(info, newinfo, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(out) :: newinfo
   integer, intent(out) :: ierr
@@ -5412,7 +5302,6 @@ output_152() {
     cat <<EOF
 
 subroutine ${procedure}(info, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: info
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5436,7 +5325,6 @@ output_153() {
 
 subroutine ${procedure}(info, key, valuelen, value, flag&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(in) :: valuelen
@@ -5463,7 +5351,6 @@ output_154() {
     cat <<EOF
 
 subroutine ${procedure}(info, nkeys, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(out) :: nkeys
   integer, intent(out) :: ierr
@@ -5487,7 +5374,6 @@ output_155() {
     cat <<EOF
 
 subroutine ${procedure}(info, n, key, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   integer, intent(in) :: n
   character(len=*), intent(out) :: key
@@ -5512,7 +5398,6 @@ output_156() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, valuelen, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(in) :: key
   integer, intent(out) :: valuelen
@@ -5538,7 +5423,6 @@ output_157() {
     cat <<EOF
 
 subroutine ${procedure}(info, key, value, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: info
   character(len=*), intent(in) :: key
   character(len=*), intent(in) :: value
@@ -5563,7 +5447,6 @@ output_158() {
     cat <<EOF
 
 subroutine ${procedure}(ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -5585,7 +5468,6 @@ output_159() {
     cat <<EOF
 
 subroutine ${procedure}(required, provided, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: required
   integer, intent(out) :: provided
   integer, intent(out) :: ierr
@@ -5609,7 +5491,6 @@ output_160() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5633,7 +5514,6 @@ output_161() {
 
 subroutine ${procedure}(local_comm, local_leader, bridge_comm, remote_leader, tag, &
         newintercomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: local_comm
   integer, intent(in) :: local_leader
   integer, intent(in) :: bridge_comm
@@ -5661,7 +5541,6 @@ output_162() {
     cat <<EOF
 
 subroutine ${procedure}(intercomm, high, newintercomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: intercomm
   logical, intent(in) :: high
   integer, intent(out) :: newintercomm
@@ -5687,7 +5566,7 @@ output_163() {
 
 subroutine ${procedure}(source, tag, comm, flag, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
@@ -5718,7 +5597,6 @@ output_164() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5737,13 +5615,13 @@ start MPI_Irecv medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_164 MPI_Irecv ${rank} CH "character${dim}"
   output_164 MPI_Irecv ${rank} L "logical${dim}"
@@ -5777,7 +5655,6 @@ output_165() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5796,13 +5673,13 @@ start MPI_Irsend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_165 MPI_Irsend ${rank} CH "character${dim}"
   output_165 MPI_Irsend ${rank} L "logical${dim}"
@@ -5832,7 +5709,6 @@ output_166() {
     cat <<EOF
 
 subroutine ${procedure}(flag, ierr)
-  include 'mpif-common.h'
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -5859,7 +5735,6 @@ output_167() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5878,13 +5753,13 @@ start MPI_Isend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_167 MPI_Isend ${rank} CH "character${dim}"
   output_167 MPI_Isend ${rank} L "logical${dim}"
@@ -5918,7 +5793,6 @@ output_168() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -5937,13 +5811,13 @@ start MPI_Issend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_168 MPI_Issend ${rank} CH "character${dim}"
   output_168 MPI_Issend ${rank} L "logical${dim}"
@@ -5973,7 +5847,6 @@ output_169() {
     cat <<EOF
 
 subroutine ${procedure}(copy_fn, delete_fn, keyval, extra_state, ierr)
-  include 'mpif-common.h'
   external :: copy_fn
   external :: delete_fn
   integer, intent(out) :: keyval
@@ -5999,7 +5872,6 @@ output_170() {
     cat <<EOF
 
 subroutine ${procedure}(keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6022,7 +5894,6 @@ output_171() {
     cat <<EOF
 
 subroutine ${procedure}(function, commute, op, ierr)
-  include 'mpif-common.h'
   external :: function
   logical, intent(in) :: commute
   integer, intent(out) :: op
@@ -6047,7 +5918,6 @@ output_172() {
     cat <<EOF
 
 subroutine ${procedure}(op, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: op
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6074,7 +5944,6 @@ output_173() {
 
 subroutine ${proc}(inbuf, incount, datatype, outbuf, outsize, &
         position, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
@@ -6093,13 +5962,13 @@ start MPI_Pack large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_173 MPI_Pack ${rank} CH "character${dim}"
   output_173 MPI_Pack ${rank} L "logical${dim}"
@@ -6133,7 +6002,7 @@ output_174() {
 
 subroutine ${proc}(datarep, inbuf, incount, datatype, outbuf, &
         outsize, position, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: incount
@@ -6152,13 +6021,13 @@ start MPI_Pack_external large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_174 MPI_Pack_external ${rank} CH "character${dim}"
   output_174 MPI_Pack_external ${rank} L "logical${dim}"
@@ -6188,7 +6057,7 @@ output_175() {
     cat <<EOF
 
 subroutine ${procedure}(datarep, incount, datatype, size, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
@@ -6214,7 +6083,6 @@ output_176() {
     cat <<EOF
 
 subroutine ${procedure}(incount, datatype, comm, size, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: incount
   integer, intent(in) :: datatype
   integer, intent(in) :: comm
@@ -6240,7 +6108,6 @@ output_177() {
     cat <<EOF
 
 subroutine ${procedure}(level)
-  include 'mpif-common.h'
   integer, intent(in) :: level
 
 end subroutine ${procedure}
@@ -6263,7 +6130,7 @@ output_178() {
     cat <<EOF
 
 subroutine ${procedure}(source, tag, comm, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
@@ -6293,7 +6160,7 @@ output_179() {
 
 subroutine ${proc}(origin_addr, origin_count, origin_datatype, target_rank, target_disp, &
         target_count, target_datatype, win, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(in) :: origin_addr
   integer, intent(in) :: origin_count
   integer, intent(in) :: origin_datatype
@@ -6313,13 +6180,13 @@ start MPI_Put medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_179 MPI_Put ${rank} CH "character${dim}"
   output_179 MPI_Put ${rank} L "logical${dim}"
@@ -6349,7 +6216,6 @@ output_180() {
     cat <<EOF
 
 subroutine ${procedure}(provided, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: provided
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6376,7 +6242,7 @@ output_181() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6395,13 +6261,13 @@ start MPI_Recv medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_181 MPI_Recv ${rank} CH "character${dim}"
   output_181 MPI_Recv ${rank} L "logical${dim}"
@@ -6435,7 +6301,6 @@ output_182() {
 
 subroutine ${proc}(buf, count, datatype, source, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6454,13 +6319,13 @@ start MPI_Recv_init medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_182 MPI_Recv_init ${rank} CH "character${dim}"
   output_182 MPI_Recv_init ${rank} L "logical${dim}"
@@ -6494,7 +6359,6 @@ output_183() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         root, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -6513,13 +6377,13 @@ start MPI_Reduce large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_183 MPI_Reduce ${rank} CH "character${dim}"
   output_183 MPI_Reduce ${rank} L "logical${dim}"
@@ -6553,7 +6417,6 @@ output_184() {
 
 subroutine ${proc}(sendbuf, recvbuf, recvcounts, datatype, op, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: recvcounts
@@ -6571,13 +6434,13 @@ start MPI_Reduce_scatter large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_184 MPI_Reduce_scatter ${rank} CH "character${dim}"
   output_184 MPI_Reduce_scatter ${rank} L "logical${dim}"
@@ -6608,7 +6471,6 @@ output_185() {
 
 subroutine ${procedure}(datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state&
         , ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: datarep
   external :: read_conversion_fn
   external :: write_conversion_fn
@@ -6635,7 +6497,6 @@ output_186() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -6658,7 +6519,7 @@ output_187() {
     cat <<EOF
 
 subroutine ${procedure}(request, flag, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
@@ -6687,7 +6548,6 @@ output_188() {
 
 subroutine ${proc}(ibuf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: ibuf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6705,13 +6565,13 @@ start MPI_Rsend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_188 MPI_Rsend ${rank} CH "character${dim}"
   output_188 MPI_Rsend ${rank} L "logical${dim}"
@@ -6745,7 +6605,6 @@ output_189() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -6764,13 +6623,13 @@ start MPI_Rsend_init medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_189 MPI_Rsend_init ${rank} CH "character${dim}"
   output_189 MPI_Rsend_init ${rank} L "logical${dim}"
@@ -6804,7 +6663,6 @@ output_190() {
 
 subroutine ${proc}(sendbuf, recvbuf, count, datatype, op, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   ${type}, intent(out) :: recvbuf
   integer, intent(in) :: count
@@ -6822,13 +6680,13 @@ start MPI_Scan large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_190 MPI_Scan ${rank} CH "character${dim}"
   output_190 MPI_Scan ${rank} L "logical${dim}"
@@ -6862,7 +6720,6 @@ output_191() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, recvbuf, recvcount, &
         recvtype, root, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -6882,13 +6739,13 @@ start MPI_Scatter large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_191 MPI_Scatter ${rank} CH "character${dim}"
   output_191 MPI_Scatter ${rank} L "logical${dim}"
@@ -6922,7 +6779,6 @@ output_192() {
 
 subroutine ${proc}(sendbuf, sendcounts, displs, sendtype, recvbuf, &
         recvcount, recvtype, root, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcounts
   integer, intent(in) :: displs
@@ -6943,13 +6799,13 @@ start MPI_Scatterv large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_192 MPI_Scatterv ${rank} CH "character${dim}"
   output_192 MPI_Scatterv ${rank} L "logical${dim}"
@@ -6983,7 +6839,6 @@ output_193() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7001,13 +6856,13 @@ start MPI_Send medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_193 MPI_Send ${rank} CH "character${dim}"
   output_193 MPI_Send ${rank} L "logical${dim}"
@@ -7041,7 +6896,6 @@ output_194() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7060,13 +6914,13 @@ start MPI_Send_init medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_194 MPI_Send_init ${rank} CH "character${dim}"
   output_194 MPI_Send_init ${rank} L "logical${dim}"
@@ -7100,7 +6954,7 @@ output_195() {
 
 subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
         recvbuf, recvcount, recvtype, source, recvtag, comm, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(in) :: sendbuf
   integer, intent(in) :: sendcount
   integer, intent(in) :: sendtype
@@ -7124,13 +6978,13 @@ start MPI_Sendrecv large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_195 MPI_Sendrecv ${rank} CH "character${dim}"
   output_195 MPI_Sendrecv ${rank} L "logical${dim}"
@@ -7164,7 +7018,7 @@ output_196() {
 
 subroutine ${proc}(buf, count, datatype, dest, sendtag, &
         source, recvtag, comm, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(inout) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7185,13 +7039,13 @@ start MPI_Sendrecv_replace medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_196 MPI_Sendrecv_replace ${rank} CH "character${dim}"
   output_196 MPI_Sendrecv_replace ${rank} L "logical${dim}"
@@ -7224,7 +7078,6 @@ output_197() {
     cat <<EOF
 
 subroutine ${proc}(x, size, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: x
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -7233,35 +7086,35 @@ end subroutine ${proc}
 EOF
 }
 
-start MPI_SIZEOF trivial
+start MPI_Sizeof trivial
 
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
-  output_197 MPI_SIZEOF ${rank} CH "character${dim}"
-  output_197 MPI_SIZEOF ${rank} L "logical${dim}"
+  output_197 MPI_Sizeof ${rank} CH "character${dim}"
+  output_197 MPI_Sizeof ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output_197 MPI_SIZEOF ${rank} I${kind} "integer*${kind}${dim}"
+    output_197 MPI_Sizeof ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output_197 MPI_SIZEOF ${rank} R${kind} "real*${kind}${dim}"
+    output_197 MPI_Sizeof ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output_197 MPI_SIZEOF ${rank} C${kind} "complex*${kind}${dim}"
+    output_197 MPI_Sizeof ${rank} C${kind} "complex*${kind}${dim}"
   done
 done
-end MPI_SIZEOF
+end MPI_Sizeof
 
 #------------------------------------------------------------------------
 
@@ -7278,7 +7131,6 @@ output_198() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7296,13 +7148,13 @@ start MPI_Ssend medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_198 MPI_Ssend ${rank} CH "character${dim}"
   output_198 MPI_Ssend ${rank} L "logical${dim}"
@@ -7336,7 +7188,6 @@ output_199() {
 
 subroutine ${proc}(buf, count, datatype, dest, tag, &
         comm, request, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -7355,13 +7206,13 @@ start MPI_Ssend_init medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_199 MPI_Ssend_init ${rank} CH "character${dim}"
   output_199 MPI_Ssend_init ${rank} L "logical${dim}"
@@ -7391,7 +7242,6 @@ output_200() {
     cat <<EOF
 
 subroutine ${procedure}(request, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: request
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7414,7 +7264,6 @@ output_201() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(inout) :: array_of_requests
   integer, intent(out) :: ierr
@@ -7438,7 +7287,7 @@ output_202() {
     cat <<EOF
 
 subroutine ${procedure}(status, flag, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   logical, intent(in) :: flag
   integer, intent(out) :: ierr
@@ -7462,7 +7311,7 @@ output_203() {
     cat <<EOF
 
 subroutine ${procedure}(status, datatype, count, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(in) :: datatype
   integer, intent(in) :: count
@@ -7487,7 +7336,7 @@ output_204() {
     cat <<EOF
 
 subroutine ${procedure}(request, flag, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: request
   logical, intent(out) :: flag
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
@@ -7512,7 +7361,7 @@ output_205() {
     cat <<EOF
 
 subroutine ${procedure}(status, flag, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, dimension(MPI_STATUS_SIZE), intent(in) :: status
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -7536,7 +7385,7 @@ output_206() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
@@ -7563,7 +7412,7 @@ output_207() {
 
 subroutine ${procedure}(count, array_of_requests, index, flag, status&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
@@ -7591,7 +7440,7 @@ output_208() {
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
@@ -7618,7 +7467,6 @@ output_209() {
     cat <<EOF
 
 subroutine ${procedure}(comm, status, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: comm
   integer, intent(out) :: status
   integer, intent(out) :: ierr
@@ -7642,7 +7490,6 @@ output_210() {
     cat <<EOF
 
 subroutine ${procedure}(type, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -7665,7 +7512,6 @@ output_211() {
     cat <<EOF
 
 subroutine ${procedure}(count, oldtype, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: oldtype
   integer, intent(out) :: newtype
@@ -7691,7 +7537,6 @@ output_212() {
 
 subroutine ${procedure}(size, rank, ndims, gsize_array, distrib_array, &
         darg_array, psize_array, order, oldtype, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: size
   integer, intent(in) :: rank
   integer, intent(in) :: ndims
@@ -7723,7 +7568,6 @@ output_213() {
     cat <<EOF
 
 subroutine ${procedure}(p, r, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
@@ -7748,7 +7592,6 @@ output_214() {
     cat <<EOF
 
 subroutine ${procedure}(r, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: r
   integer, intent(out) :: newtype
   integer, intent(out) :: ierr
@@ -7772,7 +7615,6 @@ output_215() {
     cat <<EOF
 
 subroutine ${procedure}(p, r, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: p
   integer, intent(in) :: r
   integer, intent(out) :: newtype
@@ -7798,7 +7640,7 @@ output_216() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
@@ -7826,7 +7668,7 @@ output_217() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: stride
@@ -7854,7 +7696,6 @@ output_218() {
 
 subroutine ${procedure}(count, blocklength, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -7881,7 +7722,6 @@ output_219() {
     cat <<EOF
 
 subroutine ${procedure}(type_copy_attr_fn, type_delete_attr_fn, type_keyval, extra_state, ierr)
-  include 'mpif-common.h'
   external :: type_copy_attr_fn
   external :: type_delete_attr_fn
   integer, intent(out) :: type_keyval
@@ -7907,7 +7747,7 @@ output_220() {
     cat <<EOF
 
 subroutine ${procedure}(oldtype, lb, extent, newtype, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: oldtype
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: extent
@@ -7934,7 +7774,7 @@ output_221() {
 
 subroutine ${procedure}(count, array_of_block_lengths, array_of_displacements, array_of_types, newtype&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_block_lengths
   integer(kind=MPI_ADDRESS_KIND), dimension(*), intent(in) :: array_of_displacements
@@ -7962,7 +7802,6 @@ output_222() {
 
 subroutine ${procedure}(ndims, size_array, subsize_array, start_array, order, &
         oldtype, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: ndims
   integer, dimension(*), intent(in) :: size_array
   integer, dimension(*), intent(in) :: subsize_array
@@ -7991,7 +7830,6 @@ output_223() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(in) :: type_keyval
   integer, intent(out) :: ierr
@@ -8015,7 +7853,6 @@ output_224() {
     cat <<EOF
 
 subroutine ${procedure}(type, newtype, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: newtype
   integer, intent(out) :: ierr
@@ -8039,7 +7876,6 @@ output_225() {
     cat <<EOF
 
 subroutine ${procedure}(type, extent, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: extent
   integer, intent(out) :: ierr
@@ -8063,7 +7899,6 @@ output_226() {
     cat <<EOF
 
 subroutine ${procedure}(type, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: type
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8086,7 +7921,6 @@ output_227() {
     cat <<EOF
 
 subroutine ${procedure}(type_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: type_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8109,7 +7943,7 @@ output_228() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, attribute_val, flag, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -8136,7 +7970,7 @@ output_229() {
 
 subroutine ${procedure}(mtype, max_integers, max_addresses, max_datatypes, array_of_integers, &
         array_of_addresses, array_of_datatypes, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: mtype
   integer, intent(in) :: max_integers
   integer, intent(in) :: max_addresses
@@ -8166,7 +8000,6 @@ output_230() {
 
 subroutine ${procedure}(type, num_integers, num_addresses, num_datatypes, combiner&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: num_integers
   integer, intent(out) :: num_addresses
@@ -8193,7 +8026,7 @@ output_231() {
     cat <<EOF
 
 subroutine ${procedure}(type, lb, extent, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: type
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: extent
@@ -8218,7 +8051,6 @@ output_232() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_name, resultlen, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   character(len=*), intent(out) :: type_name
   integer, intent(out) :: resultlen
@@ -8243,7 +8075,7 @@ output_233() {
     cat <<EOF
 
 subroutine ${procedure}(datatype, true_lb, true_extent, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: datatype
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_lb
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: true_extent
@@ -8269,7 +8101,6 @@ output_234() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8297,7 +8128,6 @@ output_235() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
@@ -8325,7 +8155,6 @@ output_236() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8352,7 +8181,6 @@ output_237() {
     cat <<EOF
 
 subroutine ${procedure}(type, lb, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: lb
   integer, intent(out) :: ierr
@@ -8376,7 +8204,6 @@ output_238() {
     cat <<EOF
 
 subroutine ${procedure}(typeclass, size, type, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: typeclass
   integer, intent(in) :: size
   integer, intent(out) :: type
@@ -8401,7 +8228,7 @@ output_239() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_keyval, attr_val, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: type
   integer, intent(in) :: type_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attr_val
@@ -8426,7 +8253,6 @@ output_240() {
     cat <<EOF
 
 subroutine ${procedure}(type, type_name, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: type
   character(len=*), intent(in) :: type_name
   integer, intent(out) :: ierr
@@ -8450,7 +8276,6 @@ output_241() {
     cat <<EOF
 
 subroutine ${procedure}(type, size, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: type
   integer, intent(out) :: size
   integer, intent(out) :: ierr
@@ -8475,7 +8300,6 @@ output_242() {
 
 subroutine ${procedure}(count, array_of_blocklengths, array_of_displacements, array_of_types, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, dimension(*), intent(in) :: array_of_blocklengths
   integer, dimension(*), intent(in) :: array_of_displacements
@@ -8502,7 +8326,6 @@ output_243() {
     cat <<EOF
 
 subroutine ${procedure}(mtype, ub, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: mtype
   integer, intent(out) :: ub
   integer, intent(out) :: ierr
@@ -8527,7 +8350,6 @@ output_244() {
 
 subroutine ${procedure}(count, blocklength, stride, oldtype, newtype&
         , ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   integer, intent(in) :: blocklength
   integer, intent(in) :: stride
@@ -8558,7 +8380,6 @@ output_245() {
 
 subroutine ${proc}(inbuf, insize, position, outbuf, outcount, &
         datatype, comm, ierr)
-  include 'mpif-common.h'
   ${type}, intent(in) :: inbuf
   integer, intent(in) :: insize
   integer, intent(inout) :: position
@@ -8577,13 +8398,13 @@ start MPI_Unpack large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_245 MPI_Unpack ${rank} CH "character${dim}"
   output_245 MPI_Unpack ${rank} L "logical${dim}"
@@ -8617,7 +8438,7 @@ output_246() {
 
 subroutine ${proc}(datarep, inbuf, insize, position, outbuf, &
         outcount, datatype, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   character(len=*), intent(in) :: datarep
   ${type}, intent(in) :: inbuf
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: insize
@@ -8636,13 +8457,13 @@ start MPI_Unpack_external large
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_246 MPI_Unpack_external ${rank} CH "character${dim}"
   output_246 MPI_Unpack_external ${rank} L "logical${dim}"
@@ -8672,7 +8493,7 @@ output_247() {
     cat <<EOF
 
 subroutine ${procedure}(request, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(inout) :: request
   integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
   integer, intent(out) :: ierr
@@ -8696,7 +8517,7 @@ output_248() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, array_of_statuses, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
@@ -8721,7 +8542,7 @@ output_249() {
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_requests, index, status, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
@@ -8748,7 +8569,7 @@ output_250() {
 
 subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
@@ -8775,7 +8596,6 @@ output_251() {
     cat <<EOF
 
 subroutine ${procedure}(win, errorcode, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(in) :: errorcode
   integer, intent(out) :: ierr
@@ -8799,7 +8619,6 @@ output_252() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -8826,7 +8645,7 @@ output_253() {
 
 subroutine ${proc}(base, size, disp_unit, info, comm, &
         win, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   ${type}, intent(in) :: base
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: size
   integer, intent(in) :: disp_unit
@@ -8844,13 +8663,13 @@ start MPI_Win_create medium
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_253 MPI_Win_create ${rank} CH "character${dim}"
   output_253 MPI_Win_create ${rank} L "logical${dim}"
@@ -8880,7 +8699,6 @@ output_254() {
     cat <<EOF
 
 subroutine ${procedure}(function, errhandler, ierr)
-  include 'mpif-common.h'
   external :: function
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -8904,7 +8722,6 @@ output_255() {
     cat <<EOF
 
 subroutine ${procedure}(win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr)
-  include 'mpif-common.h'
   external :: win_copy_attr_fn
   external :: win_delete_attr_fn
   integer, intent(out) :: win_keyval
@@ -8930,7 +8747,6 @@ output_256() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(in) :: win_keyval
   integer, intent(out) :: ierr
@@ -8954,7 +8770,6 @@ output_257() {
     cat <<EOF
 
 subroutine ${procedure}(assert, win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: assert
   integer, intent(in) :: win
   integer, intent(out) :: ierr
@@ -8978,7 +8793,6 @@ output_258() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9001,7 +8815,6 @@ output_259() {
     cat <<EOF
 
 subroutine ${procedure}(win_keyval, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: win_keyval
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9024,7 +8837,7 @@ output_260() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, attribute_val, flag, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(out) :: attribute_val
@@ -9050,7 +8863,6 @@ output_261() {
     cat <<EOF
 
 subroutine ${procedure}(win, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: errhandler
   integer, intent(out) :: ierr
@@ -9074,7 +8886,6 @@ output_262() {
     cat <<EOF
 
 subroutine ${procedure}(win, group, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: group
   integer, intent(out) :: ierr
@@ -9098,7 +8909,6 @@ output_263() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_name, resultlen, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   character(len=*), intent(out) :: win_name
   integer, intent(out) :: resultlen
@@ -9123,7 +8933,6 @@ output_264() {
     cat <<EOF
 
 subroutine ${procedure}(lock_type, rank, assert, win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: lock_type
   integer, intent(in) :: rank
   integer, intent(in) :: assert
@@ -9149,7 +8958,6 @@ output_265() {
     cat <<EOF
 
 subroutine ${procedure}(group, assert, win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
@@ -9174,7 +8982,7 @@ output_266() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_keyval, attribute_val, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: win
   integer, intent(in) :: win_keyval
   integer(kind=MPI_ADDRESS_KIND), intent(in) :: attribute_val
@@ -9199,7 +9007,6 @@ output_267() {
     cat <<EOF
 
 subroutine ${procedure}(win, errhandler, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: win
   integer, intent(in) :: errhandler
   integer, intent(out) :: ierr
@@ -9223,7 +9030,6 @@ output_268() {
     cat <<EOF
 
 subroutine ${procedure}(win, win_name, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: win
   character(len=*), intent(in) :: win_name
   integer, intent(out) :: ierr
@@ -9247,7 +9053,6 @@ output_269() {
     cat <<EOF
 
 subroutine ${procedure}(group, assert, win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: group
   integer, intent(in) :: assert
   integer, intent(in) :: win
@@ -9272,7 +9077,6 @@ output_270() {
     cat <<EOF
 
 subroutine ${procedure}(win, flag, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   logical, intent(out) :: flag
   integer, intent(out) :: ierr
@@ -9296,7 +9100,6 @@ output_271() {
     cat <<EOF
 
 subroutine ${procedure}(rank, win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: rank
   integer, intent(in) :: win
   integer, intent(out) :: ierr
@@ -9320,7 +9123,6 @@ output_272() {
     cat <<EOF
 
 subroutine ${procedure}(win, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: win
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9343,7 +9145,6 @@ output_273() {
     cat <<EOF
 
 subroutine ${procedure}(port_name, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9366,7 +9167,6 @@ output_274() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
@@ -9391,7 +9191,6 @@ output_275() {
     cat <<EOF
 
 subroutine ${procedure}(info, port_name, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: info
   character(len=*), intent(out) :: port_name
   integer, intent(out) :: ierr
@@ -9415,7 +9214,6 @@ output_276() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
@@ -9440,7 +9238,6 @@ output_277() {
     cat <<EOF
 
 subroutine ${procedure}(service_name, info, port_name, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: service_name
   integer, intent(in) :: info
   character(len=*), intent(in) :: port_name
@@ -9465,7 +9262,6 @@ output_278() {
     cat <<EOF
 
 subroutine ${procedure}(comm, ierr)
-  include 'mpif-common.h'
   integer, intent(inout) :: comm
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9488,7 +9284,6 @@ output_279() {
     cat <<EOF
 
 subroutine ${procedure}(parent, ierr)
-  include 'mpif-common.h'
   integer, intent(out) :: parent
   integer, intent(out) :: ierr
 end subroutine ${procedure}
@@ -9511,7 +9306,6 @@ output_280() {
     cat <<EOF
 
 subroutine ${procedure}(fd, intercomm, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: fd
   integer, intent(out) :: intercomm
   integer, intent(out) :: ierr
@@ -9536,7 +9330,6 @@ output_281() {
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
         , ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
@@ -9564,7 +9357,6 @@ output_282() {
 
 subroutine ${procedure}(port_name, info, root, comm, newcomm&
         , ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: port_name
   integer, intent(in) :: info
   integer, intent(in) :: root
@@ -9592,7 +9384,6 @@ output_283() {
 
 subroutine ${procedure}(command, argv, maxprocs, info, root, &
         comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif-common.h'
   character(len=*), intent(in) :: command
   character(len=*), dimension(*), intent(in) :: argv
   integer, intent(in) :: maxprocs
@@ -9623,7 +9414,6 @@ output_284() {
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   character(len=*), dimension(count,*), intent(in) :: array_of_argv
@@ -9655,7 +9445,6 @@ output_285() {
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif-common.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   integer, intent(in) :: array_of_argv

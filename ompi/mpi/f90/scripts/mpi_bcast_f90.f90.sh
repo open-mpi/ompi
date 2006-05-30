@@ -48,7 +48,7 @@ output() {
 
 subroutine ${proc}(buffer, count, datatype, root, comm&
         , ierr)
-  include "mpif-common.h"
+  include "mpif-config.h"
   ${type}, intent(in) :: buffer
   integer, intent(in) :: count
   integer, intent(in) :: datatype
@@ -65,13 +65,13 @@ EOF
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output MPI_Bcast ${rank} CH "character${dim}"
   output MPI_Bcast ${rank} L "logical${dim}"

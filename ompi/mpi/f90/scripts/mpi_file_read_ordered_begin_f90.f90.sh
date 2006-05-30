@@ -39,21 +39,22 @@ allranks="0 $ranks"
 
 
 output() {
-    procedure=$1
-    rank=$2
-    type=$4
-    proc="$1$2D$3"
+    short_procedure=$1
+    full_procedure=$2
+    rank=$3
+    type=$5
+    proc="$1$3D$4"
 
     cat <<EOF
 
 subroutine ${proc}(fh, buf, count, datatype, ierr)
-  include "mpif-common.h"
+  include "mpif-config.h"
   integer, intent(inout) :: fh
   ${type}, intent(out) :: buf
   integer, intent(in) :: count
   integer, intent(in) :: datatype
   integer, intent(out) :: ierr
-  call ${procedure}(fh, buf, count, datatype, ierr)
+  call ${full_procedure}(fh, buf, count, datatype, ierr)
 end subroutine ${proc}
 
 EOF
@@ -62,26 +63,26 @@ EOF
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
-  output MPI_File_read_ordered_begin ${rank} CH "character${dim}"
-  output MPI_File_read_ordered_begin ${rank} L "logical${dim}"
+  output MPI_File_read_ord_begin MPI_File_read_ordered_begin ${rank} CH "character${dim}"
+  output MPI_File_read_ord_begin MPI_File_read_ordered_begin ${rank} L "logical${dim}"
   for kind in $ikinds
   do
-    output MPI_File_read_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
+    output MPI_File_read_ord_begin MPI_File_read_ordered_begin ${rank} I${kind} "integer*${kind}${dim}"
   done
   for kind in $rkinds
   do
-    output MPI_File_read_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
+    output MPI_File_read_ord_begin MPI_File_read_ordered_begin ${rank} R${kind} "real*${kind}${dim}"
   done
   for kind in $ckinds
   do
-    output MPI_File_read_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
+    output MPI_File_read_ord_begin MPI_File_read_ordered_begin ${rank} C${kind} "complex*${kind}${dim}"
   done
 done

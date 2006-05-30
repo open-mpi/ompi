@@ -52,26 +52,37 @@
 !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 !
-!     Include the back-end file that has the bulk of the MPI Fortran
-!     interface.
+!     This file is included as a back-end file to both mpif.h (i.e., the
+!     standardized MPI Fortran header file) and a bunch of the MPI
+!     Fortran 90 subroutine implementations found in ompi/mpi/f90.
+!
+!     This file contains the output from configure that is relevant for
+!     Fortran applications (both 77 and 90) and a few values that are
+!     necessary to compile the F90 module (e.g., MPI_STATUS_SIZE).
 !
 
-      include 'mpif-common.h'
-
 !
-!     These "external" statements are specific to the MPI F77 interface
-!     (and are toxic to the MPI F90 interface), and are therefore in the
-!     MPI F77-specific header file (i.e., this one).
+!     OMPI version
+!     This file is generated from configure; do not edit it manually.
+!
+      integer OMPI_MAJOR_VERSION, OMPI_MINOR_VERSION
+      integer OMPI_RELEASE_VERSION
+      character*32 OMPI_GREEK_VERSION
+      character*32 OMPI_SVN_VERSION
+      parameter (OMPI_MAJOR_VERSION=@OMPI_MAJOR_VERSION@)
+      parameter (OMPI_MINOR_VERSION=@OMPI_MINOR_VERSION@)
+      parameter (OMPI_RELEASE_VERSION=@OMPI_RELEASE_VERSION@)
+      parameter (OMPI_GREEK_VERSION="@OMPI_GREEK_VERSION@")
+      parameter (OMPI_SVN_VERSION="@OMPI_SVN_R@")
+!
+!     Kind parameters
 !     
-      external MPI_NULL_COPY_FN, MPI_NULL_DELETE_FN
-      external MPI_COMM_NULL_COPY_FN, MPI_COMM_NULL_DELETE_FN
-      external MPI_TYPE_NULL_COPY_FN, MPI_TYPE_NULL_DELETE_FN
-      external MPI_DUP_FN, MPI_COMM_DUP_FN, MPI_TYPE_DUP_FN
-      external MPI_WIN_NULL_COPY_FN
-      external MPI_WIN_NULL_DELETE_FN
-      external MPI_WIN_DUP_FN
-      
+      integer MPI_OFFSET_KIND, MPI_ADDRESS_KIND, MPI_INTEGER_KIND
+      parameter (MPI_INTEGER_KIND=@OMPI_MPI_INTEGER_KIND@)
+      parameter (MPI_ADDRESS_KIND=@OMPI_MPI_ADDRESS_KIND@)
+      parameter (MPI_OFFSET_KIND=@OMPI_MPI_OFFSET_KIND@)
 !     
-!     double precision functions
+!     Miscellaneous constants
 !     
-      external MPI_WTIME, MPI_WTICK, PMPI_WTICK, PMPI_WTIME
+      integer MPI_STATUS_SIZE
+      parameter (MPI_STATUS_SIZE=5)

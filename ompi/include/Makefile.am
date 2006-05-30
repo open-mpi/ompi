@@ -17,10 +17,12 @@
 # $HEADER$
 #
 
-# mpif.h is not generated, but mpif-common.h is.  See big comments in
-# these files for an explanation.
+# mpif.h and mpif-common.h are not generated, but mpif-config.h is.
+# See big comments in these files for an explanation.
 
-headers = mpif.h
+headers = \
+        mpif.h \
+        mpif-common.h
 nodist_headers = \
 	ompi_config.h
 
@@ -32,7 +34,7 @@ include_HEADERS = $(headers)
 # counterparts, which AM automatically ships.
 nodist_include_HEADERS = \
         mpi.h \
-        mpif-common.h
+        mpif-config.h
 
 if WANT_INSTALL_HEADERS 
 ompidir = $(includedir)/openmpi

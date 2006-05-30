@@ -2,6 +2,7 @@
  ...........................................................................
  Copyright (c) 2004-2006 The Regents of the University of California.
                          All rights reserved.
+ Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  $COPYRIGHT$
  
  Additional copyrights may follow
@@ -129,13 +130,13 @@ EOF
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
 </xsl:text>
 
@@ -190,7 +191,7 @@ do
     <xsl:text>subroutine ${proc}(</xsl:text>
     <xsl:call-template name="arg-list"/> <xsl:text>)</xsl:text>
     <xsl:value-of select="$nl"/>
-    <xsl:text>  include "mpif-common.h"</xsl:text>
+    <xsl:text>  include "mpif-config.h"</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>

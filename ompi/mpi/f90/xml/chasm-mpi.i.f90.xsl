@@ -2,6 +2,7 @@
  ...........................................................................
  Copyright (c) 2004-2006 The Regents of the University of California.
                          All rights reserved.
+ Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  $COPYRIGHT$
  
  Additional copyrights may follow
@@ -112,7 +113,7 @@ output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     <xsl:text>subroutine ${procedure}(</xsl:text>
     <xsl:call-template name="arg-list"/> <xsl:text>)</xsl:text>
     <xsl:value-of select="$nl"/>
-    <xsl:text>  include 'mpif-common.h'</xsl:text>
+    <xsl:text>  include 'mpif-config.h'</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>
@@ -184,7 +185,7 @@ output_</xsl:text>  <xsl:number/>  <xsl:text>() {
     <xsl:text>subroutine ${proc}(</xsl:text>
     <xsl:call-template name="arg-list"/> <xsl:text>)</xsl:text>
     <xsl:value-of select="$nl"/>
-    <xsl:text>  include 'mpif-common.h'</xsl:text>
+    <xsl:text>  include 'mpif-config.h'</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:call-template name="decl-construct-list">
       <xsl:with-param name="ws" select="''"/>
@@ -213,13 +214,13 @@ start </xsl:text>  <xsl:value-of select="@name"/>  <xsl:text> </xsl:text>
 for rank in $allranks
 do
   case "$rank" in  0)  dim=''  ;  esac
-  case "$rank" in  1)  dim=', dimension(:)'  ;  esac
-  case "$rank" in  2)  dim=', dimension(:,:)'  ;  esac
-  case "$rank" in  3)  dim=', dimension(:,:,:)'  ;  esac
-  case "$rank" in  4)  dim=', dimension(:,:,:,:)'  ;  esac
-  case "$rank" in  5)  dim=', dimension(:,:,:,:,:)'  ;  esac
-  case "$rank" in  6)  dim=', dimension(:,:,:,:,:,:)'  ;  esac
-  case "$rank" in  7)  dim=', dimension(:,:,:,:,:,:,:)'  ;  esac
+  case "$rank" in  1)  dim=', dimension(*)'  ;  esac
+  case "$rank" in  2)  dim=', dimension(1,*)'  ;  esac
+  case "$rank" in  3)  dim=', dimension(1,1,*)'  ;  esac
+  case "$rank" in  4)  dim=', dimension(1,1,1,*)'  ;  esac
+  case "$rank" in  5)  dim=', dimension(1,1,1,1,*)'  ;  esac
+  case "$rank" in  6)  dim=', dimension(1,1,1,1,1,*)'  ;  esac
+  case "$rank" in  7)  dim=', dimension(1,1,1,1,1,1,*)'  ;  esac
 
   output_</xsl:text>  <xsl:number/>  <xsl:text> </xsl:text>
   <xsl:value-of select="@name"/>
@@ -631,17 +632,17 @@ end </xsl:text>
 <xsl:text>
 # Do a little error checking
 
-if test ! -f fortran_kinds.sh; then
+if test ! -f "$1/fortran_kinds.sh"; then
     echo "ERROR: Cannot find fortran_kinds.sh" >&amp;2
     exit 1
-elif test -z fortran_kinds.sh; then
+elif test -z "$1/fortran_kinds.sh"; then
     echo "ERROR: fortran_kinds.sh appears to be empty!" >&amp;2
     exit 1
 fi
 
 # Read in the KIND information
 
-. fortran_kinds.sh
+. "$1/fortran_kinds.sh"
 
 # Setup
 
