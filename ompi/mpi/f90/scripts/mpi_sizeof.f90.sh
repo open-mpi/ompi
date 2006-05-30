@@ -28,7 +28,6 @@ do
     proc="${procedure}${rank}DL${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  logical*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -44,7 +43,6 @@ do
     proc="${procedure}${rank}DI${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  integer*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -60,7 +58,6 @@ do
     proc="${procedure}${rank}DR${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  real*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -79,7 +76,6 @@ do
     proc="${procedure}${rank}DC${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  complex*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -93,20 +89,19 @@ done
 
 for rank in $ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
+  case "$rank" in  1)  dim='*'  ;  esac
+  case "$rank" in  2)  dim='1,*'  ;  esac
+  case "$rank" in  3)  dim='1,1,*'  ;  esac
+  case "$rank" in  4)  dim='1,1,1,*'  ;  esac
+  case "$rank" in  5)  dim='1,1,1,1,*'  ;  esac
+  case "$rank" in  6)  dim='1,1,1,1,1,*'  ;  esac
+  case "$rank" in  7)  dim='1,1,1,1,1,1,*'  ;  esac
 
   for kind in $lkinds
   do
     proc="${procedure}${rank}DL${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  logical*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -122,7 +117,6 @@ do
     proc="${procedure}${rank}DI${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  integer*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -138,7 +132,6 @@ do
     proc="${procedure}${rank}DR${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  real*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
@@ -157,7 +150,6 @@ do
     proc="${procedure}${rank}DC${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
-    echo "  include 'mpif-common.h'"
     echo "  include 'fortran_sizes.h'"
     echo "  complex*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"

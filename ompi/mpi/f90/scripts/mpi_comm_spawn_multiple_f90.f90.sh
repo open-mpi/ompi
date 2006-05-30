@@ -44,7 +44,7 @@ output() {
 subroutine ${proc}(count, array_of_commands, array_of_argv, &
         array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
-  include 'mpif-common.h'
+  include 'mpif-config.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
   $type, intent(in) :: array_of_argv

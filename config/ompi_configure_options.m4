@@ -179,12 +179,6 @@ else
     AC_MSG_RESULT([no])
     OMPI_WANT_F90_BINDINGS=0
 fi
-#################### Early development override ####################
-if test "$OMPI_WANT_F90_BINDINGS" = "1" -a -z "$enable_mpi_f90" -a -d .svn; then
-    OMPI_WANT_F90_BINDINGS=0
-    echo "--> developer override: disable Fortran 90 by default"
-fi
-#################### Early development override ####################
 
 AC_MSG_CHECKING([desired Fortran 90 bindings "size"])
 AC_ARG_WITH(mpi-f90-size,
