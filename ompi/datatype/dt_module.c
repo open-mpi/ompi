@@ -281,11 +281,16 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         (PDST)->id       = (PSRC)->id;                                  \
         (PDST)->nbElems  = (PSRC)->nbElems;                             \
         (PDST)->bdt_used = (PSRC)->bdt_used;                            \
-        if( (PDST)->desc.desc != NULL )                                 \
+        if( NULL != (PDST)->desc.desc )                                 \
             free( (PDST)->desc.desc );                                  \
-        (PDST)->desc     = (PSRC)->desc;                                \
-        if( (PDST)->opt_desc.desc != NULL )                             \
+        /* Don't re-assing the (PDST)->desc because we need the pointer \
+         * value in the following if statement. In the case of          \
+         * predefined datatypes both descriptors point to the same      \
+         * memory and if we free the memory twice bad things happen.*/  \
+        if( (NULL != (PDST)->opt_desc.desc) &&                          \
+            ((PDST)->opt_desc.desc != (PDST)->desc.desc) )              \
             free( (PDST)->opt_desc.desc );                              \
+        (PDST)->desc     = (PSRC)->desc;                                \
         (PDST)->opt_desc = (PSRC)->opt_desc;                            \
         (PDST)->packed_description = (PSRC)->packed_description;        \
         (PSRC)->packed_description = NULL;                              \
