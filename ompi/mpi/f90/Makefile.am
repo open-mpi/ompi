@@ -50,7 +50,7 @@
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include $(OMPI_FC_MODULE_FLAG). -I$(srcdir)
+AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include $(OMPI_FC_MODULE_FLAG). -I$(srcdir)
 
 # Override the default f90 rules because we have to insert
 # $(FCFLAGS_f90) right before the source filename.  This is necessary

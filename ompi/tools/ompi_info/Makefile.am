@@ -34,7 +34,8 @@ AM_CPPFLAGS = \
             -DOMPI_CC_ABSOLUTE="\"@OMPI_CC_ABSOLUTE@\"" \
             -DOMPI_CXX_ABSOLUTE="\"@OMPI_CXX_ABSOLUTE@\"" \
             -DOMPI_F77_ABSOLUTE="\"@OMPI_F77_ABSOLUTE@\"" \
-            -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\""
+            -DOMPI_F90_ABSOLUTE="\"@OMPI_F90_ABSOLUTE@\"" \
+            -DOMPI_F90_BUILD_SIZE="\"@OMPI_F90_BUILD_SIZE@\""
 
 dist_pkgdata_DATA = help-ompi_info.txt
 

@@ -25,9 +25,16 @@ version 1.0.
 1.1
 ---
 
-- Addition of "trivial", "small" (the default), "medium", and "large"
-  Fortran 90 MPI module sizes (v1.0.x's F90 module was equivalent to
-  "medium").  See the README file for more explanation.
+- Major improvements to the Fortran 90 MPI bindings:
+  - General improvements in compile/linking time and portability
+    between different F90 compilers.
+  - Addition of "trivial", "small" (the default), "medium", and
+    "large" Fortran 90 MPI module sizes (v1.0.x's F90 module was
+    equivalent to "medium").  See the README file for more
+    explanation.
+  - Fix various MPI F90 interface functions and constant types to
+    match.  Thanks to Michael Kluskens for pointing out the problems
+    to us.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
   being included in mpi.h. It allows the user to compile C code with a CXX
   compiler without including the CXX bindings.
@@ -48,8 +55,6 @@ version 1.0.
   Several Fortran 77 and Fortran 90 tests need to be pre-seeded with
   results from a config.cache-like file.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
-- Fix various MPI F90 interface functions and constant types to match.
-  Thanks to Michael Kluskens for pointing out the problems to us.
 
 
 1.0.3

@@ -317,13 +317,13 @@ done
 <xsl:text>
 for rank in $ranks
 do
-  case "$rank" in  1)  dim=':'  ;  esac
-  case "$rank" in  2)  dim=':,:'  ;  esac
-  case "$rank" in  3)  dim=':,:,:'  ;  esac
-  case "$rank" in  4)  dim=':,:,:,:'  ;  esac
-  case "$rank" in  5)  dim=':,:,:,:,:'  ;  esac
-  case "$rank" in  6)  dim=':,:,:,:,:,:'  ;  esac
-  case "$rank" in  7)  dim=':,:,:,:,:,:,:'  ;  esac
+  case "$rank" in  1)  dim='*'  ;  esac
+  case "$rank" in  2)  dim='1,*'  ;  esac
+  case "$rank" in  3)  dim='1,1,*'  ;  esac
+  case "$rank" in  4)  dim='1,1,1,*'  ;  esac
+  case "$rank" in  5)  dim='1,1,1,1,*'  ;  esac
+  case "$rank" in  6)  dim='1,1,1,1,1,*'  ;  esac
+  case "$rank" in  7)  dim='1,1,1,1,1,1,*'  ;  esac
 
 </xsl:text>
 
