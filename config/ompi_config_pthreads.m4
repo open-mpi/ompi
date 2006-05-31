@@ -381,7 +381,15 @@ AC_DEFUN([OMPI_INTL_POSIX_THREADS_SPECIAL_FLAGS],[
 # Put -mt before -mthreads because HP-UX aCC will properly compile
 # with -mthreads (reading as -mt), but emit a warning about unknown
 # flags hreads.  Stupid compilers.
-pflags="-Kthread -kthread -pthread -pthreads -mt -mthreads"
+
+case "${host_cpu}-${host_os}" in
+  *solaris*)
+    pflags="-pthread -pthreads -mt"
+  ;;
+  *)
+    pflags="-Kthread -kthread -pthread -pthreads -mt -mthreads"
+  ;;
+esac
 
 # Only run C++ and Fortran if those compilers already configured
 AC_PROVIDE_IFELSE([AC_PROG_CC], 
