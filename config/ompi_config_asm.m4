@@ -424,10 +424,10 @@ AC_DEFUN([OMPI_CHECK_POWERPC_REG],[
     OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
         addi 1,1,0],
         [ompi_cv_asm_powerpc_r_reg=0],
-        OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
+        [OMPI_TRY_ASSEMBLE([$ompi_cv_asm_text
         addi r1,r1,0],
             [ompi_cv_asm_powerpc_r_reg=1],
-            AC_MSG_ERROR([Can not determine how to use PPC registers])))
+            [AC_MSG_ERROR([Can not determine how to use PPC registers])])])
     if test "$ompi_cv_asm_powerpc_r_reg" = "1" ; then
         AC_MSG_RESULT([yes])
     else
