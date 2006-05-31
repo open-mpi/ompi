@@ -33,7 +33,10 @@ AC_DEFUN([OMPI_CONFIG_SUBDIR_ARGS],[
 subdirs_args=
 subdirs_skip=no
 
-for subdirs_arg in $ac_configure_args; do
+eval "set x $ac_configure_args"
+shift
+for subdirs_arg
+do
     if test "$subdirs_skip" = "yes"; then
 	subdirs_skip=no
     else
@@ -51,7 +54,10 @@ for subdirs_arg in $ac_configure_args; do
 	-srcdir=* | --srcdir=*)
 	    ;;
 	*) 
-	    subdirs_args="$subdirs_args $subdirs_arg" 
+	    case $subdir_arg in
+	    *\'*) subdir_arg=`echo "$subdir_arg | sed "s/'/'\\\\\\\\''/g"` ;;
+	    esac
+	    subdirs_args="$subdirs_args '$subdirs_arg'" 
 	    ;;
 	esac
     fi
@@ -61,8 +67,8 @@ done
 # Assign the output
 #
 
-subdirs_str="$1="'"'"$subdirs_args"'"'
-eval $subdirs_str
+subdirs_str=$1=\"$subdirs_args\"
+eval "$subdirs_str"
 
 #
 # Clean up
