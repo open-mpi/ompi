@@ -479,7 +479,9 @@ int ompi_attr_init(void)
         }
     }
 
+#if OMPI_HAVE_THREAD_SUPPORT
     OBJ_CONSTRUCT(&alock, opal_mutex_t);
+#endif
 
     if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {
