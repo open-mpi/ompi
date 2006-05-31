@@ -41,6 +41,9 @@ struct mca_btl_portals_frag_t {
        we need to send */
     size_t size; 
 
+    enum { BTL_PORTALS_FRAG_TYPE_EAGER, 
+           BTL_PORTALS_FRAG_TYPE_MAX,
+           BTL_PORTALS_FRAG_TYPE_USER } type;
 };
 typedef struct mca_btl_portals_frag_t mca_btl_portals_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_portals_frag_t); 
@@ -77,6 +80,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
 
 #define OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(btl_macro, frag)        \
 {                                                                  \
+    assert(BTL_PORTALS_FRAG_TYPE_EAGER == frag->type);                  \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_eager, \
         (opal_list_item_t*)(frag));                                \
 }
@@ -93,6 +97,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
 
 #define OMPI_BTL_PORTALS_FRAG_RETURN_MAX(btl_macro, frag)          \
 {                                                                  \
+    assert(BTL_PORTALS_FRAG_TYPE_MAX == frag->type);                    \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_max, \
         (opal_list_item_t*)(frag));                                \
 }
@@ -108,6 +113,7 @@ OBJ_CLASS_DECLARATION(mca_btl_portals_frag_recv_t);
 
 #define OMPI_BTL_PORTALS_FRAG_RETURN_USER(btl_macro, frag)         \
 {                                                                  \
+    assert(BTL_PORTALS_FRAG_TYPE_USER == frag->type);                    \
     OMPI_FREE_LIST_RETURN(&((mca_btl_portals_module_t*)btl_macro)->portals_frag_user, \
         (opal_list_item_t*)(frag));                                \
 }

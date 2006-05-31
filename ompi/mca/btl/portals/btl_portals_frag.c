@@ -43,6 +43,7 @@ mca_btl_portals_frag_eager_constructor(mca_btl_portals_frag_t* frag)
 { 
     frag->size = mca_btl_portals_module.super.btl_eager_limit;  
     mca_btl_portals_frag_common_send_constructor(frag); 
+    frag->type = BTL_PORTALS_FRAG_TYPE_EAGER;
 }
 
 
@@ -61,6 +62,7 @@ mca_btl_portals_frag_max_constructor(mca_btl_portals_frag_t* frag)
 { 
     frag->size = mca_btl_portals_module.super.btl_max_send_size; 
     mca_btl_portals_frag_common_send_constructor(frag); 
+    frag->type = BTL_PORTALS_FRAG_TYPE_MAX;
 }
 
 
@@ -73,6 +75,7 @@ mca_btl_portals_frag_user_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = 0;
     frag->base.des_src_cnt = 0;
     frag->size = 0; 
+    frag->type = BTL_PORTALS_FRAG_TYPE_USER;
 }
 
 static void

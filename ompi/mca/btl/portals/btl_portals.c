@@ -264,16 +264,18 @@ mca_btl_portals_free(struct mca_btl_base_module_t* btl_base,
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 
-    if (frag->size == mca_btl_portals_module.super.btl_eager_limit){ 
+    if (BTL_PORTALS_FRAG_TYPE_EAGER == frag->type) {
         /* don't ever unlink eager frags */
         OMPI_BTL_PORTALS_FRAG_RETURN_EAGER(&mca_btl_portals_module.super, frag); 
-    } else if (frag->size == mca_btl_portals_module.super.btl_max_send_size) {
+
+    } else if (BTL_PORTALS_FRAG_TYPE_MAX == frag->type) {
         if (frag->md_h != PTL_INVALID_HANDLE) {
             PtlMDUnlink(frag->md_h);
             frag->md_h = PTL_INVALID_HANDLE;
         }
         OMPI_BTL_PORTALS_FRAG_RETURN_MAX(&mca_btl_portals_module.super, frag); 
-    } else if (frag->size == 0) {
+
+    } else if (BTL_PORTALS_FRAG_TYPE_USER == frag->type) {
         if (frag->md_h != PTL_INVALID_HANDLE) {
             PtlMDUnlink(frag->md_h);
             frag->md_h = PTL_INVALID_HANDLE;
