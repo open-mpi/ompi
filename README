@@ -89,6 +89,16 @@ base as of this writing (27 Feb 2006):
   - Other compilers on Linux, 32 and 64 bit
   - Other 64 bit platforms (Linux and AIX on PPC64, SPARC)
 
+- Some MCA parameters can be set in a way that renders Open MPI
+  inoperable (see notes about MCA parameters later in this file).  In
+  particular, some parameters have required options that must be
+  included.
+  - The "btl" parameter must include the "self" component, or Open MPI
+    will not be able to deliver messages to the same rank as the
+    sender.
+  - The "btl_tcp_if_exclude" paramater must include "lo", or Open MPI
+    will not be able to route MPI messages using the TCP BTL.
+
 - Building shared libraries on AIX with the xlc compilers is only
   supported if you supply the following command line option to
   configure: LDFLAGS=-Wl,-brtl.
