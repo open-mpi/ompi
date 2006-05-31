@@ -17,6 +17,26 @@
 # $HEADER$
 #
 
+AC_DEFUN([_OMPI_CHECK_MX_REGISTER_CALLBACK],[
+    #
+    # Check if the MX library provide the mx_register_unexp_callback function.
+    # With this function, OMPI can avoid having a double matching logic
+    # (one on the MX library and one on OMPI) by registering our own matching
+    # function.
+
+    AC_MSG_CHECKING([for a MX version with mx_register_match_callback])
+    AC_TRY_LINK([#include <myriexpress.h>],
+             [mx_register_unexp_callback(0, 0, 0);],
+             [mx_provide_match_callback="yes"],
+             [mx_provide_match_callback="no"])
+    AC_MSG_RESULT([$mx_provide_match_callback])
+    AS_IF([test x"$mx_provide_match_callback" = "xyes"],
+          [AC_DEFINE_UNQUOTED([OMPI_MCA_MX_HAVE_MATCH_CALLBACK], [1],
+                              [MX define a match callback])
+           $2],
+          [$3])
+    unset mx_provide_match_callback
+])
 
 AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
     #
@@ -45,6 +65,7 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
            unset mx_api_ver have_mx_api_ver_msg found val msg
            $2],
           [$3])
+    AC_MSG_RESULT([$mx_api_ver])
 ])dnl
 
 # OMPI_CHECK_MX(prefix, [action-if-found], [action-if-not-found])
@@ -85,6 +106,9 @@ AC_DEFUN([OMPI_CHECK_MX],[
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
           [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
                                  [ompi_check_mx_happy="no"])])
+    AS_IF([test "$ompi_check_mx_happy" = "yes"],
+          [_OMPI_CHECK_MX_REGISTER_CALLBACK($1, [ompi_check_mx_register="yes"],
+                                 [ompi_check_mx_register="no"])])
 
     CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"
     LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS"
