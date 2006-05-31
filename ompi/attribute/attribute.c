@@ -479,6 +479,8 @@ int ompi_attr_init(void)
         }
     }
 
+    OBJ_CONSTRUCT(&alock, opal_mutex_t);
+
     if (OMPI_SUCCESS != (ret = opal_hash_table_init(keyval_hash,
                                                     ATTR_TABLE_SIZE))) {
 	return ret;
