@@ -46,6 +46,7 @@ struct mca_btl_sm_frag_t {
     mca_btl_base_tag_t tag;
     size_t size;
     int rc;
+    ompi_free_list_t* my_list;
 };
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag_t;
 typedef struct mca_btl_sm_frag_t mca_btl_sm_frag1_t;
@@ -61,6 +62,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
     opal_list_item_t* item;                                              \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags1, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
+    frag->my_list = &mca_btl_sm_component.sm_frags1;                     \
 }
 
 #define MCA_BTL_SM_FRAG_ALLOC2(frag, rc)                                 \
@@ -68,17 +70,12 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
     opal_list_item_t* item;                                              \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags2, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
+    frag->my_list = &mca_btl_sm_component.sm_frags2;                     \
 }
 
-#define MCA_BTL_SM_FRAG_RETURN1(frag)                                     \
+#define MCA_BTL_SM_FRAG_RETURN(frag)                                      \
 {                                                                         \
-    OMPI_FREE_LIST_RETURN(&mca_btl_sm_component.sm_frags1, (opal_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(frag->my_list, (opal_list_item_t*)(frag));      \
 }
-
-#define MCA_BTL_SM_FRAG_RETURN2(frag)                                     \
-{                                                                         \
-    OMPI_FREE_LIST_RETURN(&mca_btl_sm_component.sm_frags2, (opal_list_item_t*)(frag)); \
-}
-
 #endif
 
