@@ -112,11 +112,29 @@
 
     <xsl:text>
 output() {
-    procedure=$1
+    procedure=$1</xsl:text>
+
+  <xsl:choose>
+
+    <xsl:when test="@alias != ''">
+    <xsl:text>
+    rank=$3
+    type=$5
+    proc="$2$3D$4"
+</xsl:text>
+    </xsl:when>
+
+    <xsl:otherwise>
+    <xsl:text>
     rank=$2
     type=$4
     proc="$1$2D$3"
+</xsl:text>
+    </xsl:otherwise>
 
+  </xsl:choose>
+
+    <xsl:text>
     cat &lt;&lt;EOF
 
 </xsl:text>
@@ -141,9 +159,15 @@ do
 </xsl:text>
 
     <xsl:text>  output </xsl:text> <xsl:value-of select="@name"/>
+    <xsl:if test="@alias != ''">
+      <xsl:text> </xsl:text>  <xsl:value-of select="@alias"/>
+    </xsl:if>
     <xsl:text> ${rank} CH "character${dim}"</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>  output </xsl:text> <xsl:value-of select="@name"/>
+    <xsl:if test="@alias != ''">
+      <xsl:text> </xsl:text>  <xsl:value-of select="@alias"/>
+    </xsl:if>
     <xsl:text> ${rank} L "logical${dim}"</xsl:text>
     <xsl:value-of select="$nl"/>
 
@@ -152,6 +176,9 @@ do
     <xsl:text>  do</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>    output </xsl:text> <xsl:value-of select="@name"/>
+    <xsl:if test="@alias != ''">
+      <xsl:text> </xsl:text>  <xsl:value-of select="@alias"/>
+    </xsl:if>
     <xsl:text> ${rank} I${kind} "integer*${kind}${dim}"</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>  done</xsl:text>
@@ -162,6 +189,9 @@ do
     <xsl:text>  do</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>    output </xsl:text> <xsl:value-of select="@name"/>
+    <xsl:if test="@alias != ''">
+      <xsl:text> </xsl:text>  <xsl:value-of select="@alias"/>
+    </xsl:if>
     <xsl:text> ${rank} R${kind} "real*${kind}${dim}"</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>  done</xsl:text>
@@ -172,6 +202,9 @@ do
     <xsl:text>  do</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>    output </xsl:text> <xsl:value-of select="@name"/>
+    <xsl:if test="@alias != ''">
+      <xsl:text> </xsl:text>  <xsl:value-of select="@alias"/>
+    </xsl:if>
     <xsl:text> ${rank} C${kind} "complex*${kind}${dim}"</xsl:text>
     <xsl:value-of select="$nl"/>
     <xsl:text>  done</xsl:text>
