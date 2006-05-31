@@ -1475,7 +1475,7 @@ fi
 #
 AC_CHECK_HEADERS(sys/stat.h sys/types.h unistd.h)
 AC_CHECK_FUNCS(stat,
-    AC_DEFINE(HAVE_STAT, 1, Define if stat function is present)
+    [AC_DEFINE(HAVE_STAT, 1, Define if stat function is present)
     AC_MSG_CHECKING([for st_fstype member of stat structure])
     AC_TRY_COMPILE([
 	#ifdef HAVE_SYS_TYPES_H
@@ -1496,14 +1496,14 @@ AC_CHECK_FUNCS(stat,
 	AC_DEFINE(ROMIO_HAVE_STRUCT_STAT_WITH_ST_FSTYPE, 1, Define if struct stat has a st_fstype member),
 	AC_MSG_RESULT(no)
     )
-)
+])
 
 #
 # Check for statvfs and f_basetype field (Solaris, Irix, AIX, etc.)
 #
 AC_CHECK_HEADERS(sys/types.h sys/statvfs.h sys/vfs.h)
 AC_CHECK_FUNCS(statvfs,
-    AC_DEFINE(HAVE_STATVFS, 1, Define if statvfs function is present)
+    [AC_DEFINE(HAVE_STATVFS, 1, Define if statvfs function is present)
     AC_MSG_CHECKING([for f_basetype member of statvfs structure])
     AC_TRY_COMPILE([
 	#ifdef HAVE_SYS_TYPES_H
@@ -1524,7 +1524,7 @@ AC_CHECK_FUNCS(statvfs,
 	AC_DEFINE(ROMIO_HAVE_STRUCT_STATVFS_WITH_F_BASETYPE, 1, defined if struct statvfs has a f_basetype member),
 	AC_MSG_RESULT(no)
     )
-)
+])
 
 #
 # Check for large file support.  Make sure that we can use the off64_t 
