@@ -788,11 +788,8 @@ extern int mca_btl_sm_free(
     mca_btl_base_descriptor_t* des)
 {
     mca_btl_sm_frag_t* frag = (mca_btl_sm_frag_t*)des;
-    if(frag->size == mca_btl_sm_component.eager_limit) {
-        MCA_BTL_SM_FRAG_RETURN1(frag);
-    } else {
-        MCA_BTL_SM_FRAG_RETURN2(frag);
-    }
+    MCA_BTL_SM_FRAG_RETURN(frag);
+    
     return OMPI_SUCCESS;
 }
 
@@ -830,7 +827,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     if(rc < 0) {
-        MCA_BTL_SM_FRAG_RETURN2(frag);
+        MCA_BTL_SM_FRAG_RETURN(frag);
         return NULL;
     }
     frag->segment.seg_len = reserve + max_data;
