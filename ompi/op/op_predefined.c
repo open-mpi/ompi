@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -142,7 +142,6 @@ FUNC_FUNC(max, unsigned, unsigned)
 FUNC_FUNC(max, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(max, long_long_int, long long int)
-FUNC_FUNC(max, long_long, long long)
 FUNC_FUNC(max, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
@@ -202,7 +201,6 @@ FUNC_FUNC(min, unsigned, unsigned)
 FUNC_FUNC(min, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(min, long_long_int, long long int)
-FUNC_FUNC(min, long_long, long long)
 FUNC_FUNC(min, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
@@ -259,7 +257,6 @@ OP_FUNC(sum, unsigned, unsigned, +=)
 OP_FUNC(sum, unsigned_long, unsigned long, +=)
 #if HAVE_LONG_LONG
 OP_FUNC(sum, long_long_int, long long int, +=)
-OP_FUNC(sum, long_long, long long, +=)
 OP_FUNC(sum, unsigned_long_long, unsigned long long, +=)
 #endif
 /* Fortran integer */
@@ -332,7 +329,6 @@ OP_FUNC(prod, unsigned, unsigned, *=)
 OP_FUNC(prod, unsigned_long, unsigned long, *=)
 #if HAVE_LONG_LONG
 OP_FUNC(prod, long_long_int, long long int, +=)
-OP_FUNC(prod, long_long, long long, +=)
 OP_FUNC(prod, unsigned_long_long, unsigned long long, +=)
 #endif
 /* Fortran integer */
@@ -407,7 +403,6 @@ FUNC_FUNC(land, unsigned, unsigned)
 FUNC_FUNC(land, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(land, long_long_int, long long int)
-FUNC_FUNC(land, long_long, long long)
 FUNC_FUNC(land, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
@@ -434,7 +429,6 @@ FUNC_FUNC(lor, unsigned, unsigned)
 FUNC_FUNC(lor, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(lor, long_long_int, long long int)
-FUNC_FUNC(lor, long_long, long long)
 FUNC_FUNC(lor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
@@ -461,7 +455,6 @@ FUNC_FUNC(lxor, unsigned, unsigned)
 FUNC_FUNC(lxor, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(lxor, long_long_int, long long int)
-FUNC_FUNC(lxor, long_long, long long)
 FUNC_FUNC(lxor, unsigned_long_long, unsigned long long)
 #endif
 /* Logical */
@@ -488,7 +481,6 @@ FUNC_FUNC(band, unsigned, unsigned)
 FUNC_FUNC(band, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(band, long_long_int, long long int)
-FUNC_FUNC(band, long_long, long long)
 FUNC_FUNC(band, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
@@ -530,7 +522,6 @@ FUNC_FUNC(bor, unsigned, unsigned)
 FUNC_FUNC(bor, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(bor, long_long_int, long long int)
-FUNC_FUNC(bor, long_long, long long)
 FUNC_FUNC(bor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
@@ -572,7 +563,6 @@ FUNC_FUNC(bxor, unsigned, unsigned)
 FUNC_FUNC(bxor, unsigned_long, unsigned long)
 #if HAVE_LONG_LONG
 FUNC_FUNC(bxor, long_long_int, long long int)
-FUNC_FUNC(bxor, long_long, long long)
 FUNC_FUNC(bxor, unsigned_long_long, unsigned long long)
 #endif
 /* Fortran integer */
