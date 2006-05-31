@@ -55,7 +55,7 @@ do
 	    ;;
 	*) 
 	    case $subdir_arg in
-	    *\'*) subdir_arg=`echo "$subdir_arg | sed "s/'/'\\\\\\\\''/g"` ;;
+	    *\'*) subdir_arg=`echo "$subdir_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
 	    esac
 	    subdirs_args="$subdirs_args '$subdirs_arg'" 
 	    ;;
