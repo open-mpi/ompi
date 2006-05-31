@@ -1,0 +1,54 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+# This is the US/English general help file for Open RTE's RDS component.
+#
+[rds:no-hostfile]
+Open RTE was unable to open the hostfile:
+    %s
+Check to make sure the path and filename are correct.
+[rds:slots]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The slots parameter is less than 0:
+    slots=%d
+[rds:max_slots]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The max_slots parameter is less than 0:
+    max_slots=%d
+[rds:max_slots_lt]
+Open RTE detected a bad parameter in the hostfile:
+    %s
+The max_slots parameter is less than the slots parameter:
+    slots=%d
+    max_slots=%d
+[rds:parse_error_string]
+Open RTE detected a parse error in the hostfile:
+    %s
+It occured on line number %d on token %d:
+    %s
+[rds:parse_error_int]
+Open RTE detected a parse error in the hostfile:
+    %s
+It occured on line number %d on token %d:
+    %d
+[rds:parse_error]
+Open RTE detected a parse error in the hostfile:
+    %s
+It occured on line number %d on token %d.
