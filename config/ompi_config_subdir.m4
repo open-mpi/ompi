@@ -131,8 +131,8 @@ dnl    esac
     export LDFLAGS LIBS
     sub_configure="$SHELL '$subdir_srcdir/configure'"
     AC_MSG_NOTICE([running $sub_configure $subdir_args --cache-file=$subdir_cache_file --srcdir=$subdir_srcdir])
-    eval $sub_configure $subdir_args \
-	--cache-file=$subdir_cache_file --srcdir=$subdir_srcdir
+    eval "$sub_configure $subdir_args \
+	--cache-file=\"\$subdir_cache_file\" --srcdir=\"$subdir_srcdir\""
     if test "$?" = "0"; then
 	eval $subdir_success
 	AC_MSG_NOTICE([$sub_configure succeeded for $subdir_dir])
