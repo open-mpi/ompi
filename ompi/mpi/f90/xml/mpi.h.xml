@@ -3683,8 +3683,10 @@
     
     <!-- 
       -  METHOD: int MPI_File_read_ordered_begin(MPI_File, void *, int, MPI_Datatype) C
+      - name shortened to keep character count down
       -->
-    <method name="MPI_File_read_ordered_begin" kind="final" template="yes">
+    <method name="MPI_File_read_ordered_begin" kind="final" template="yes"
+            alias="MPI_File_read_ord_begin">
 
       <!-- ARGUMENT : fh -->
       <arg name="fh" intent="inout">
@@ -4327,8 +4329,10 @@
     
     <!-- 
       -  METHOD: int MPI_File_write_at_all_begin(MPI_File, int64_t, void *, int, MPI_Datatype) C
+      - name shortened to keep character count down
       -->
-    <method name="MPI_File_write_at_all_begin" kind="final" template="yes">
+    <method name="MPI_File_write_at_all_begin" kind="final" template="yes"
+            alias="MPI_File_wr_at_all_begin">
 
       <!-- ARGUMENT : fh -->
       <arg name="fh" intent="inout">
