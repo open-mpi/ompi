@@ -19,7 +19,7 @@
 
 module mpi
 
-  include "mpif.h"
+  include "mpif-common.h"
 
 ! The MPI attribute callback functions need to be explictly called out
 ! so that they don't end up in the MPI namespace.  See a longer
