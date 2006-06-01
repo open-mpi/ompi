@@ -223,17 +223,9 @@ int mca_btl_openib_free(
         btl->btl_mpool->mpool_release(btl->btl_mpool, 
                                       (mca_mpool_base_registration_t*) 
                                       frag->openib_reg); 
-        MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-                 
-    } 
-    else if(frag->size == mca_btl_openib_component.max_send_size){ 
-        MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
-    } else if(frag->size == mca_btl_openib_component.eager_limit){ 
-        MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
-    } else { 
-        BTL_ERROR(("invalid descriptor")); 
-    } 
-    
+    }
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*) btl), frag);
+        
     return OMPI_SUCCESS; 
 }
 
@@ -326,7 +318,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                reserve == 0) {
         /* The user buffer is contigous and we are asked to send more than the max send size.  */            
         
-        MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
+        MCA_BTL_IB_FRAG_ALLOC_FRAG(openib_btl, frag, rc); 
         if(NULL == frag){
             return NULL; 
         } 
@@ -348,7 +340,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                             (mca_mpool_base_registration_t**) &openib_reg); 
         if(OMPI_SUCCESS != rc || NULL == openib_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
-            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag); 
+            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
             return NULL;
         }
         
@@ -386,7 +378,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after); 
         *size  = max_data; 
         if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag); 
+            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
             return NULL; 
         } 
         
@@ -416,7 +408,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
         *size  = max_data; 
 
         if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag); 
+            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
             return NULL; 
         } 
         
@@ -493,7 +485,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
         if(OMPI_SUCCESS != rc || NULL == openib_reg) {
             BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu", 
                 frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
-            MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
+            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
             return NULL;
         }
     }

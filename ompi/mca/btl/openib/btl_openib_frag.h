@@ -135,12 +135,6 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 
-#define MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_openib_module_t*)btl)->send_free_eager, (opal_list_item_t*)(frag)); \
-}
-
-
 #define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                               \
 {                                                                      \
                                                                        \
@@ -148,12 +142,6 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
     OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_max, item, rc);       \
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
-
-#define MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_openib_module_t*)btl)->send_free_max, (opal_list_item_t*)(frag)); \
-}
-
 
 #define MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc)                               \
 {                                                                      \
@@ -163,9 +151,22 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 
-#define MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag)                                  \
-{                                                                      \
-    OMPI_FREE_LIST_RETURN(&((mca_btl_openib_module_t*)btl)->send_free_frag, (opal_list_item_t*)(frag)); \
+#define MCA_BTL_IB_FRAG_RETURN(btl, frag)                                  \
+{   do {                                                                   \
+        ompi_free_list_t* my_list;                                         \
+        switch(frag->type) {                                               \
+         case MCA_BTL_OPENIB_FRAG_EAGER_RDMA:                              \
+         case MCA_BTL_OPENIB_FRAG_EAGER:                                   \
+          my_list = &btl->send_free_eager;                                 \
+          break;                                                           \
+         case MCA_BTL_OPENIB_FRAG_MAX:                                     \
+          my_list = &btl->send_free_max;                                   \
+          break;                                                           \
+         case MCA_BTL_OPENIB_FRAG_FRAG:                                    \
+          my_list = &btl->send_free_frag;                                  \
+        }                                                                  \
+        OMPI_FREE_LIST_RETURN(my_list, (opal_list_item_t*)(frag));         \
+    } while(0);                                                            \
 }
 
 

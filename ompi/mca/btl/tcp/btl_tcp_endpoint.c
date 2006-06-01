@@ -606,7 +606,13 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
             frag = btl_endpoint->endpoint_recv_frag;
             if(NULL == frag) {
                 int rc;
-                MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
+                if(mca_btl_tcp_module.super.btl_max_send_size > 
+                   mca_btl_tcp_module.super.btl_eager_limit) { 
+                    MCA_BTL_TCP_FRAG_ALLOC_MAX(frag, rc);
+                } else { 
+                    MCA_BTL_TCP_FRAG_ALLOC_EAGER(frag, rc);
+                }
+                
                 if(NULL == frag) {
                     OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
                     return;
@@ -642,7 +648,7 @@ static void mca_btl_tcp_endpoint_recv_handler(int sd, short flags, void* user)
                     goto data_still_pending_on_endpoint;
                 }
 #endif  /* MCA_BTL_TCP_ENDPOINT_CACHE */
-                MCA_BTL_TCP_FRAG_RETURN_MAX(frag);
+                MCA_BTL_TCP_FRAG_RETURN(frag);
             }
             OPAL_THREAD_UNLOCK(&btl_endpoint->endpoint_recv_lock);
 #if MCA_BTL_TCP_ENDPOINT_CACHE
