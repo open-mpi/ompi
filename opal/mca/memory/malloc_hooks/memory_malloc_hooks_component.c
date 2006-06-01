@@ -22,8 +22,10 @@
 #include "opal/include/constants.h"
 
 extern void opal_memory_malloc_hooks_init(void);
+extern void opal_memory_malloc_hooks_finalize(void);
 
 static int opal_memory_malloc_open(void);
+static int opal_memory_malloc_close(void);
 
 const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
     /* First, the mca_component_t struct containing meta information
@@ -41,7 +43,7 @@ const opal_memory_base_component_1_0_0_t mca_memory_malloc_hooks_component = {
 
         /* Component open and close functions */
         opal_memory_malloc_open,
-        NULL
+        opal_memory_malloc_close
     },
 
     /* Next the MCA v1.0.0 component meta data */
@@ -56,5 +58,12 @@ static int
 opal_memory_malloc_open(void)
 {
     opal_memory_malloc_hooks_init();
+    return OPAL_SUCCESS;
+}
+
+static int
+opal_memory_malloc_close(void)
+{
+    opal_memory_malloc_hooks_finalize();
     return OPAL_SUCCESS;
 }

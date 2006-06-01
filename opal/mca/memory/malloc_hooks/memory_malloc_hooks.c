@@ -27,6 +27,7 @@
      
 /* Prototypes for our hooks.  */
 void opal_memory_malloc_hooks_init(void);
+void opal_memory_malloc_hooks_finalize(void);
 static void opal_mem_free_free_hook (void*, const void *);
 static void* opal_mem_free_realloc_hook (void*, size_t, const void *);
      
@@ -59,6 +60,18 @@ opal_memory_malloc_hooks_init(void)
     opal_mem_free_set_free_support(1);
 }
 
+
+void
+opal_memory_malloc_hooks_finalize(void)
+{
+    if (initialized == 0) {
+        return;
+    }
+
+    __free_hook = old_free_hook;
+    __realloc_hook = old_realloc_hook;
+    initialized = 0;
+}
 
 static void
 opal_mem_free_free_hook (void *ptr, const void *caller)
