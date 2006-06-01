@@ -57,7 +57,7 @@ struct mca_btl_openib_component_t {
     int                                ib_max_btls;
     /**< maximum number of hcas available to the IB component */
     
-    uint32_t                                ib_num_btls;
+    int                                ib_num_btls;
     /**< number of hcas available to the IB component */
 
     struct mca_btl_openib_module_t             *openib_btls;
