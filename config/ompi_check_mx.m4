@@ -114,6 +114,10 @@ AC_DEFUN([OMPI_CHECK_MX],[
     LDFLAGS="$ompi_check_mx_$1_save_LDFLAGS"
     LIBS="$ompi_check_mx_$1_save_LIBS"
 
+    AS_IF([test "$ompi_check_mx_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+          [AC_MSG_WARN([MX driver does not currently support progress threads.  Disabling BTL.])
+           ompi_check_mx_happy="no"])
+
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_mx" -a "$with_mx" != "no"],
