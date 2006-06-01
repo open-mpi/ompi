@@ -16,8 +16,7 @@ int ADIOI_TESTFS_ReadDone(ADIO_Request *request, ADIO_Status *status, int
     *error_code = MPI_SUCCESS;
 
     if (*request == ADIO_REQUEST_NULL) {
-	FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_ReadDone called on ADIO_REQUEST_NULL\n", 
-		myrank, nprocs);
+	FPRINTF(stdout, "ADIOI_TESTFS_ReadDone called on ADIO_REQUEST_NULL\n");
 	return 1;
     }
 
@@ -43,8 +42,7 @@ int ADIOI_TESTFS_WriteDone(ADIO_Request *request, ADIO_Status *status, int
     *error_code = MPI_SUCCESS;
 
     if (*request == ADIO_REQUEST_NULL) {
-	FPRINTF(stdout, "[%d/%d] ADIOI_TESTFS_WriteDone called on ADIO_REQUEST_NULL\n", 
-		myrank, nprocs);
+	FPRINTF(stdout, "ADIOI_TESTFS_WriteDone called on ADIO_REQUEST_NULL\n");
 	return 1;
     }
 
