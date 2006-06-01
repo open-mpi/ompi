@@ -353,6 +353,15 @@ mca_btl_base_module_t** mca_btl_mvapi_component_init(int *num_btl_modules,
     /* initialization */
     *num_btl_modules = 0;
 
+    /* mvapi BTL does not currently support progress threads, so
+       disable the component if they were requested */
+    if (enable_progress_threads) {
+        mca_btl_base_error_no_nics("MVAPI", "HCA");
+        mca_btl_mvapi_component.ib_num_btls = 0;
+        mca_btl_mvapi_modex_send();
+        return NULL;
+    }
+
     /* Determine the number of hca's available on the host */
     vapi_ret=EVAPI_list_hcas(0, &num_hcas, NULL);
     if( VAPI_EAGAIN != vapi_ret || 0 == num_hcas ) {
