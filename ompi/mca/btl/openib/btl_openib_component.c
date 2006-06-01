@@ -339,6 +339,15 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
     *num_btl_modules = 0;
     num_devs = 0; 
 
+    /* openib BTL does not currently support progress threads, so
+       disable the component if they were requested */
+    if (enable_progress_threads) {
+        mca_btl_base_error_no_nics("OpenIB", "HCA");
+        mca_btl_openib_component.ib_num_btls = 0;
+        mca_btl_openib_modex_send();
+        return NULL;
+    }
+
     seedv[0] = orte_process_info.my_name->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
     seedv[2] = opal_sys_timer_get_cycles();

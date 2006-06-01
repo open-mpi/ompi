@@ -74,6 +74,10 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
                         [ompi_check_mvapi_happy="yes"],
                         [ompi_check_mvapi_happy="no"])])
 
+           AS_IF([test "$ompi_check_mvapi_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+                 [AC_MSG_WARN([MVAPI driver does not currently support progress threads.  Disabling BTL.])
+                  ompi_check_mvapi_happy="no"])
+
            CPPFLAGS="$ompi_check_mvapi$1_save_CPPFLAGS"],
           [ompi_check_mvapi_happy="no"])
 

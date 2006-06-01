@@ -230,6 +230,11 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     *num_btl_modules = 0;
 
+    if (enable_progress_threads) { 
+        opal_output( 0, "mca_btl_mx_component_init: progress threads requested but not supported");
+        return NULL;
+    }
+
     /* set the MX error handle to always return. This function is the only MX function
      * allowed to be called before mx_init in order to make sure that if the MX is not
      * up and running the MX library does not exit the application.
