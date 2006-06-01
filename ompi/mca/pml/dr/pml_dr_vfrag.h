@@ -45,7 +45,7 @@ struct mca_pml_dr_vfrag_t {
     size_t     vf_max_send_size;
     uint64_t   vf_ack;
     uint64_t   vf_mask;
-    uint64_t   vf_pending;
+    int64_t    vf_pending;
     uint32_t   vf_state;
     struct mca_bml_base_btl_t* bml_btl;
 
