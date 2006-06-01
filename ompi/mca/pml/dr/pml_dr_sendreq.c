@@ -125,7 +125,7 @@ static void mca_pml_dr_error_completion(
     }
 
     /* update pending counts */
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
     OPAL_THREAD_ADD64(&vfrag->vf_pending,-1);
 
     /* reset vfrag state - select new BTL */
@@ -163,7 +163,7 @@ static void mca_pml_dr_match_completion(
     }
 
     /* wait for local completion */
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
     if(OPAL_THREAD_ADD64(&vfrag->vf_pending,-1) > 0) 
         return;
 
@@ -227,7 +227,7 @@ static void mca_pml_dr_rndv_completion(
     }
 
     /* local completion */
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-1);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
     if(OPAL_THREAD_ADD64(&vfrag->vf_pending,-1) > 0)
         return;
     

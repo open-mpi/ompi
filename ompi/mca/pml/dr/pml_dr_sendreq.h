@@ -363,7 +363,7 @@ do {                                                                 \
     OPAL_OUTPUT((0, "%s:%d:%s: retransmitting eager\n", __FILE__, __LINE__, __func__)); \
     assert(sendreq->req_descriptor->des_src != NULL);                \
                                                                      \
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);          \
     OPAL_THREAD_ADD64(&(vfrag)->vf_pending,1);                       \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
                                                                      \
@@ -392,7 +392,7 @@ do {                                                                 \
     mca_pml_dr_hdr_t *hdr;                                           \
                                                                      \
     opal_output(0, "%s:%d:%s: (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,1);               \
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);          \
     OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
                                                                      \
