@@ -104,7 +104,7 @@ static opal_list_item_t* get_next_mapped(opal_list_item_t *node_item,
                                          int num_mapped, 
                                          opal_list_t* nodes) 
 {
-    opal_list_item_t *item;
+    opal_list_item_t *item, *initial_item = NULL;
 
     /* Wrap around to beginning if we are at the end of the list */
     if (opal_list_get_end(nodes) == opal_list_get_next(node_item)) {
@@ -129,6 +129,11 @@ static opal_list_item_t* get_next_mapped(opal_list_item_t *node_item,
             return NULL;
         }
         
+        /* save the node we started with */
+        if( NULL == initial_item ) {
+            initial_item = item; 
+        }
+        
         /* Access next item in Round Robin Manner */
         if (opal_list_get_end(nodes) ==  opal_list_get_next(item)) {
             item = opal_list_get_first(nodes);
@@ -137,6 +142,12 @@ static opal_list_item_t* get_next_mapped(opal_list_item_t *node_item,
             item = opal_list_get_next(item);
         }
 
+        /* Check to make sure we didn't loop back around without
+         * finding a node in the mapping */
+        if( initial_item == item) {
+            return NULL;
+        }
+        
     } while( true );
 }
 
