@@ -131,6 +131,10 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
          LIBS="$ompi_check_openib_$1_save_LIBS"],
         [ompi_check_openib_happy="no"])  
 
+    AS_IF([test "$ompi_check_openib_happy" = "yes" -a "$enable_progress_threads" = "yes"],
+          [AC_MSG_WARN([OpenIB driver does not currently support progress threads.  Disabling BTL.])
+           ompi_check_openib_happy="no"])
+
     AS_IF([test "$ompi_check_openib_happy" = "yes"],
           [$2],
           [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
