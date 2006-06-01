@@ -1049,7 +1049,8 @@ static void mca_btl_openib_endpoint_credits_lp(
             mca_btl_openib_endpoint_send_credits_lp(endpoint);
         }
     }
-    MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_openib_module_t*)btl, (mca_btl_openib_frag_t*)descriptor);
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
+                           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 /**
@@ -1095,7 +1096,7 @@ void mca_btl_openib_endpoint_send_credits_lp(
                          &bad_wr)) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, -1);
         OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, frag->hdr->credits);
-        MCA_BTL_IB_FRAG_RETURN_EAGER(openib_btl, frag);
+        MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
         BTL_ERROR(("error posting send request errno %d says %s", strerror(errno)));
         return;
     }
@@ -1126,7 +1127,8 @@ static void mca_btl_openib_endpoint_credits_hp(
             mca_btl_openib_endpoint_send_credits_hp(endpoint);
         } 
     }
-    MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_openib_module_t*)btl, (mca_btl_openib_frag_t*)descriptor);
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
+                           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 /**
@@ -1176,7 +1178,7 @@ void mca_btl_openib_endpoint_send_credits_hp(
                          &bad_wr)) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_hp, -1);
         OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, frag->hdr->credits);
-        MCA_BTL_IB_FRAG_RETURN_EAGER(openib_btl, frag);
+        MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
         BTL_ERROR(("error posting send request errno %d says %s", errno, 
                     strerror(errno)));
         return;
@@ -1189,8 +1191,8 @@ static void mca_btl_openib_endpoint_eager_rdma(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    MCA_BTL_IB_FRAG_RETURN_EAGER((mca_btl_openib_module_t*)btl,
-            (mca_btl_openib_frag_t*)descriptor);
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl),
+                           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 static int mca_btl_openib_endpoint_send_eager_rdma(
@@ -1220,7 +1222,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     frag->segment.seg_len = sizeof(mca_btl_openib_eager_rdma_header_t);
     if (mca_btl_openib_endpoint_post_send(openib_btl, endpoint, frag) !=
             OMPI_SUCCESS) {
-        MCA_BTL_IB_FRAG_RETURN_EAGER(openib_btl, frag);
+        MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
         BTL_ERROR(("Error sending RDMA buffer", strerror(errno)));
         return -1;
     }

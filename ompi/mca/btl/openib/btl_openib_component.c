@@ -237,8 +237,7 @@ int mca_btl_openib_component_close(void)
 static int
 mca_btl_openib_modex_send(void)
 {
-    int         rc;
-    size_t      i;
+    int         rc, i;
     size_t      size;
     mca_btl_openib_port_info_t *ports = NULL;
 
@@ -322,15 +321,16 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                                                   bool enable_mpi_threads)
 {
     struct ibv_device **ib_devs; 
-    uint32_t num_devs; 
     mca_btl_base_module_t** btls;
-    uint32_t i,j, length;
+    int i,j, length, num_devs;
     struct mca_mpool_base_resources_t mpool_resources; 
     opal_list_t btl_list; 
     mca_btl_openib_module_t * openib_btl; 
     mca_btl_base_selected_module_t* ib_selected; 
     opal_list_item_t* item; 
+#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST == 0
     struct dlist *dev_list; 
+#endif
     struct ibv_device* ib_dev; 
     unsigned short seedv[3];
     
@@ -718,7 +718,7 @@ int mca_btl_openib_handle_incoming_hp(
 
 int mca_btl_openib_component_progress()
 {
-    uint32_t i, j, c;
+    int i, j, c;
     int count = 0,ne = 0, ret;
     int32_t credits;
     mca_btl_openib_frag_t* frag; 
