@@ -40,7 +40,7 @@ struct mca_pml_dr_endpoint_t {
     ompi_seq_tracker_t seq_sends; /**< Tracks the send vfrags that have been acked */ 
     ompi_seq_tracker_t seq_recvs; /**< Tracks the receive vfrags that have been acked */ 
     ompi_seq_tracker_t seq_recvs_matched; /**< Tracks the received vfrags that have been matched */ 
-    uint32_t vfrag_seq;             /**< current virtual fragment identifier sequence */
+    int32_t vfrag_seq;             /**< current virtual fragment identifier sequence */
 };
 typedef struct mca_pml_dr_endpoint_t mca_pml_dr_endpoint_t;
 OBJ_CLASS_DECLARATION(mca_pml_dr_endpoint_t);

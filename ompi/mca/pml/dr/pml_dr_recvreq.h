@@ -363,7 +363,7 @@ do {                                                                          \
        int rc;                                                                \
                                                                               \
        vfrag = NULL;                                                          \
-       OPAL_THREAD_LOCK(&(recvreq)->req_mutex);                               \
+       OPAL_THREAD_LOCK(recvreq->req_mutex);                                  \
        for(item =  opal_list_get_first(&(recvreq)->req_vfrags);               \
            item != opal_list_get_end(&(recvreq)->req_vfrags);                 \
            item =  opal_list_get_next(item)) {                                \
@@ -388,7 +388,7 @@ do {                                                                          \
                (recvreq)->req_vfrag = vfrag;                                  \
            }                                                                  \
        }                                                                      \
-       OPAL_THREAD_UNLOCK(&(recvreq)->req_mutex);                             \
+       OPAL_THREAD_UNLOCK(recvreq->req_mutex);                                \
    }                                                                          \
 } while(0)
 

@@ -73,7 +73,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     OPAL_OUTPUT((0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
 
     /* update pending counts */
-    OPAL_THREAD_ADD32(&sendreq->req_pipeline_depth,-vfrag->vf_pending);
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-vfrag->vf_pending);
     OPAL_THREAD_ADD64(&vfrag->vf_pending,-vfrag->vf_pending);
 
     /* check for hung btl */
