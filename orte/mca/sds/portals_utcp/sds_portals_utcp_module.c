@@ -19,6 +19,8 @@
 
 #include "orte_config.h"
 
+#include <string.h>
+
 #include "orte/orte_constants.h"
 #include "orte/mca/sds/sds.h"
 #include "orte/mca/sds/base/base.h"
