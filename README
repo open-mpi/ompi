@@ -215,7 +215,7 @@ base as of this writing (27 Feb 2006):
   eliminate the extra overhead of software MPI message matching where
   possible.
 
-- The Fortran 90 MPI bindings can now be built in one of four sizes
+- The Fortran 90 MPI bindings can now be built in one of three sizes
   using --with-mpi-f90-size=SIZE (see description below).  These sizes
   reflect the number of MPI functions included in the "mpi" Fortran 90
   module and therefore which functions will be subject to strict type
@@ -241,22 +241,20 @@ base as of this writing (27 Feb 2006):
     dimensions specified by --with-f90-max-array-dim (default value is
     4).
 
-  - large: All MPI functions (i.e., all the functions in "medium" plus
-    all MPI functions that take two choice buffers, such as
-    MPI_SCATTER, MPI_GATHER, etc.).  All the two-choice-buffer
-    functions will have variants for each of the MPI-supported Fortran
-    intrinsic types up to the number of dimensions specified by
-    --with-f90-max-array-dim, but both buffers will be of the same
-    type.
-
   Increasing the size of the F90 module (in order from trivial, small,
-  medium, and large) will generally increase the length of time
-  required to compile user MPI applications.  Specifically, "trivial"-
-  and "small"-sized F90 modules generally allow user MPI applications
-  to be compiled fairly quickly but lose type safety for all MPI
-  functions with choice buffers.  "medium"- and "large"-sized F90
-  modules generally take longer to compile user applications but
-  provide greater type safety for MPI functions.
+  and medium) will generally increase the length of time required to
+  compile user MPI applications.  Specifically, "trivial"- and
+  "small"-sized F90 modules generally allow user MPI applications to
+  be compiled fairly quickly but lose type safety for all MPI
+  functions with choice buffers.  "medium"-sized F90 modules generally
+  take longer to compile user applications but provide greater type
+  safety for MPI functions.
+
+  Note that MPI functions with two choice buffers (e.g., MPI_GATHER)
+  are not currently included in Open MPI's F90 interface.  Calls to
+  these functions will automatically fall through to Open MPI's F77
+  interface.  A "large" size that includes the two choice buffer MPI
+  functions is possible in future versions of Open MPI.
 
 ===========================================================================
 
@@ -345,9 +343,7 @@ for a full list); a summary of the more commonly used ones follows:
   handful of MPI-2 F90-specific  functions are included in the F90
   module), small (trivial + all MPI functions that take no choice
   buffers), medium (small + all MPI functions that take 1 choice
-  buffer), and large (medium + all MPI functions that take 2 choice
-  buffers, but only where the types of both choice buffers are the
-  same).  This parameter is only used if the F90 bindings are
+  buffer).  This parameter is only used if the F90 bindings are
   enabled.
 
 --with-f90-max-array-dim=<DIM>

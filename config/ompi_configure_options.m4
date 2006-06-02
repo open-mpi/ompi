@@ -180,7 +180,7 @@ fi
 AC_MSG_CHECKING([desired Fortran 90 bindings "size"])
 AC_ARG_WITH(mpi-f90-size,
     AC_HELP_STRING([--with-mpi-f90-size=SIZE],
-                   [specify the types of functions in the Fortran 90 MPI module, where size is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer), large (medium + all MPI functions with 2 choice buffers, but only when both buffers are the same type)]))
+                   [specify the types of functions in the Fortran 90 MPI module, where size is one of: trivial (MPI-2 F90-specific functions only), small (trivial + all MPI functions without choice buffers), medium (small + all MPI functions with one choice buffer)]))
 
 if test "$OMPI_WANT_F90_BINDINGS" = "0"; then
     AC_MSG_RESULT([disabled (Fortran 90 bindings disabled)])
@@ -200,8 +200,6 @@ else
         OMPI_F90_BUILD_SIZE=small
     elif test "$with_mpi_f90_size" = "medium"; then
         OMPI_F90_BUILD_SIZE=medium
-    elif test "$with_mpi_f90_size" = "large"; then
-        OMPI_F90_BUILD_SIZE=large
     else
         AC_MSG_RESULT([Unrecognized size: $with_mpi_f90_size])
         AC_MSG_ERROR([Cannot continue])
@@ -214,6 +212,8 @@ AM_CONDITIONAL([OMPI_WANT_BUILD_F90_SMALL],
                [test "$OMPI_F90_BUILD_SIZE" = "small"])
 AM_CONDITIONAL([OMPI_WANT_BUILD_F90_MEDIUM], 
                [test "$OMPI_F90_BUILD_SIZE" = "medium"])
+# This is effectively ignored in v1.1 because the "large" bindings are
+# not ready for prime time
 AM_CONDITIONAL([OMPI_WANT_BUILD_F90_LARGE], 
                [test "$OMPI_F90_BUILD_SIZE" = "large"])
 
