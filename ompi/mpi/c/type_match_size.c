@@ -40,13 +40,13 @@ int MPI_Type_match_size(int typeclass, int size, MPI_Datatype *type)
 
     switch( typeclass ) {
     case MPI_TYPECLASS_REAL:
-        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_FLOAT, DT_FLAG_DATA_C );
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_FLOAT, DT_FLAG_DATA_FORTRAN );
         break;
     case MPI_TYPECLASS_INTEGER:
-        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_INT, DT_FLAG_DATA_C );
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_INT, DT_FLAG_DATA_FORTRAN );
         break;
     case MPI_TYPECLASS_COMPLEX:
-        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_C );
+        *type = (MPI_Datatype)ompi_ddt_match_size( size, DT_FLAG_DATA_COMPLEX, DT_FLAG_DATA_FORTRAN );
         break;
     default:
         *type = &ompi_mpi_datatype_null;
