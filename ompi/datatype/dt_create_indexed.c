@@ -100,7 +100,10 @@ int32_t ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
 
    if( (count == 0) || (bLength == 0) ) {
       *newType = ompi_ddt_create(1);
-      ompi_ddt_add( *newType, oldType, 0, pDisp[0] * extent, extent );
+      if( 0 == count )
+          ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0 );
+      else
+          ompi_ddt_add( *newType, oldType, 0, pDisp[0] * extent, extent );
       return OMPI_SUCCESS;
    }
    pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
