@@ -63,8 +63,15 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
 int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType,
 				    ompi_datatype_t** newType )
 {
-   ompi_datatype_t* pdt = ompi_ddt_create( oldType->desc.used + 2 );
-   ompi_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
-   *newType = pdt;
-   return OMPI_SUCCESS;
+    ompi_datatype_t* pdt;
+
+    if( 0 == count ) {
+        pdt = ompi_ddt_create( 0 );
+        ompi_ddt_add( pdt, &ompi_mpi_datatype_null, 0, 0, 0 );
+    } else {
+        pdt = ompi_ddt_create( oldType->desc.used + 2 );
+        ompi_ddt_add( pdt, oldType, count, 0, (oldType->ub - oldType->lb) );
+    }
+    *newType = pdt;
+    return OMPI_SUCCESS;
 }
