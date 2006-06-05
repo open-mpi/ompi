@@ -22,6 +22,8 @@
 
 AM_CPPFLAGS=$(btl_openib_CPPFLAGS) 
 
+dist_pkgdata_DATA=help-mpi-btl-openib.txt
+
 sources = \
     btl_openib.c \
     btl_openib.h \

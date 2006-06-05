@@ -23,6 +23,7 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -876,6 +877,10 @@ int mca_btl_openib_component_progress()
                 BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d\n", 
                                              mca_btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
+                if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
+                    opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
+                }
+
                 return OMPI_ERROR;
             }
 
