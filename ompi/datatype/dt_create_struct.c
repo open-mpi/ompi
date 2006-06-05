@@ -30,6 +30,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( disp );
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 
