@@ -21,11 +21,17 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
 
-static inline
-const ompi_datatype_t* ompi_ddt_match_size_internal( int size, uint16_t datakind, uint16_t datalang )
+const ompi_datatype_t*
+ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
 {
     uint32_t i;
     const ompi_datatype_t* datatype;
+
+    /* If we're not looking for a complex C++ type then set the default type to C */
+    if( datalang == DT_FLAG_DATA_CPP ) {
+        if( datakind != DT_FLAG_DATA_COMPLEX )
+            datalang = DT_FLAG_DATA_C;
+    }
 
     for( i = 0; i < DT_MAX_PREDEFINED; i++ ) {
         datatype = ompi_ddt_basicDatatypes[i];
@@ -38,14 +44,4 @@ const ompi_datatype_t* ompi_ddt_match_size_internal( int size, uint16_t datakind
         }
     }
     return &ompi_mpi_datatype_null;
-}
-
-const ompi_datatype_t* ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
-{
-    if( datalang == DT_FLAG_DATA_CPP ) {
-        if( datakind == DT_FLAG_DATA_COMPLEX )
-            return ompi_ddt_match_size_internal( size, datakind, datalang );
-        datalang = DT_FLAG_DATA_C;
-    }
-    return ompi_ddt_match_size_internal( size, datakind, datalang );
 }
