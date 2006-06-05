@@ -143,8 +143,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     } else {
         /* both of them have the LB flag or both of them dont have it */
         lb = LMIN( pdtBase->lb, lb );
-        /*printf( "LB problem: original (%ld, %ld) new data (%ld, %ld) displacement %ld result (%ld, %ld)\n",
-          pdtBase->lb, pdtBase->ub, pdtAdd->lb, pdtBase->ub, disp, lb, ub );*/
     }
 
     /* the same apply for the upper bound except for the case where
@@ -161,8 +159,12 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         /* we should compute the extent depending on the alignement */
         ub = LMAX( pdtBase->ub, ub );
     }
-    pdtBase->lb = LMIN( lb, ub );
-    pdtBase->ub = LMAX( lb, ub );
+    /* While the true_lb and true_ub have to be ordered to have the true_lb lower
+     * than the true_ub, the ub and lb does not have to be ordered. They should be
+     * as the user define them.
+     */
+    pdtBase->lb = lb;
+    pdtBase->ub = ub;
     if( 0 == pdtBase->nbElems ) old_true_ub = disp;
     else                        old_true_ub = pdtBase->true_ub;
     pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
