@@ -76,6 +76,12 @@ int ompi_ddt_dfd = -1;
     INIT_BASIC_TYPE( TYPE, NAME )
 #endif  /* OMPI_WANT_F77_BINDINGS */
 
+/**
+ * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
+ * as it include all the optional datatypes (such as MPI_INTEGER?, MPI_REAL?).
+ */
+int32_t ompi_ddt_number_of_predefined_data = 0;
+
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_datatype_null =
     { BASEOBJ_DATA, 0, 0, 0, 0,
       0, 0, DT_FLAG_PREDEFINED, 0, 1,
@@ -124,13 +130,13 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real = INIT_BASIC_FORTRAN_TYPE( DT_REAL, 
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblprec = INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DBLPREC, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT );
 
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
 #else
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE );
 #endif  /* HAVE_LONG_DOUBLE */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_float_int = INIT_BASIC_TYPE( DT_FLOAT_INT, FLOAT_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_double_int = INIT_BASIC_TYPE( DT_DOUBLE_INT, DOUBLE_INT );
 #if HAVE_LONG_DOUBLE
@@ -354,6 +360,8 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         /* just memcpy as it's easier this way */                       \
         memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );         \
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
+        /* forget the language flag */                                  \
+        (PDATA)->flags &= ~DT_FLAG_DATA_LANGUAGE;                       \
     } while(0)
 
 int ompi_ddt_register_params(void)
@@ -510,8 +518,13 @@ int32_t ompi_ddt_init( void )
     /* This macro makes everything significantly easier to read below.
        All hail the moog!  :-) */
 
-#define MOOG(name) ompi_mpi_##name.d_f_to_c_index = \
-    ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name);
+#define MOOG(name)                                                      \
+    {                                                                   \
+        ompi_mpi_##name.d_f_to_c_index =                                \
+            ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name); \
+        if( ompi_ddt_number_of_predefined_data < (ompi_mpi_##name).d_f_to_c_index ) \
+            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
+    }
 
     MOOG(datatype_null);
     MOOG(byte);
