@@ -38,23 +38,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (June 5, 2006):
-
-- THIS IS A BETA RELEASE.  It is NOT a final 1.1 release.  There are
-  definitely still some known issues.  In particular, there *may* be
-  issues with MPI subarray datatypes and certain datatype constructors
-  invoked with zero-length descriptor arrays.  The following bugs
-  contain more details:
-
-  49, 59 through 69
-
-  Bugs can be viewed through a web interface:
-
-    https://svn.open-mpi.org/trac/ompi/ticket/<bug number>
-
-  For example
-
-    https://svn.open-mpi.org/trac/ompi/ticket/49
+base as of this writing (April 6, 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
