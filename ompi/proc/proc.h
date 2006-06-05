@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -46,6 +47,8 @@ struct ompi_proc_t {
     struct ompi_convertor_t*  proc_convertor;
     /** process-wide lock */
     opal_mutex_t              proc_lock;
+    /** Keep the hostname around for debugging purposes */
+    char *proc_hostname;
     /** flags for this proc */
     uint8_t                   proc_flags;
 };

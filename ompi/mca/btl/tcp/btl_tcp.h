@@ -80,6 +80,9 @@ struct mca_btl_tcp_component_t {
     ompi_free_list_t tcp_frag_eager;
     ompi_free_list_t tcp_frag_max;
     ompi_free_list_t tcp_frag_user;
+
+    /** Verbosity level */
+    int    tcp_verbose_level;
 }; 
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 

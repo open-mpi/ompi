@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -33,6 +34,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/runtime/params.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
@@ -67,6 +69,10 @@ void ompi_proc_construct(ompi_proc_t* proc)
 
     proc->proc_flags = 0;
 
+    /* By default, put NULL in the hostname.  It may or may not get
+       filled in later -- consumer of this field beware! */
+    proc->proc_hostname = NULL;
+
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -84,6 +90,9 @@ void ompi_proc_destruct(ompi_proc_t* proc)
      * destroyed here. It will be destroyed later when the ompi_ddt_finalize is called.
      */
     OBJ_RELEASE( proc->proc_convertor );
+    if (NULL != proc->proc_hostname) {
+        free(proc->proc_hostname);
+    }
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_remove_item(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
@@ -535,6 +544,11 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                             proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
                         }
 
+                        /* Save the hostname */
+                        if (ompi_mpi_keep_peer_hostnames) {
+                            proc->proc_hostname = str;
+                            str = NULL;
+                        }
                     }
                 }
             }
