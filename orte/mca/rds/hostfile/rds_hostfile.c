@@ -27,6 +27,8 @@
 #include "opal/util/argv.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/show_help.h"
+
 #include "orte/orte_constants.h"
 #include "orte/util/sys_info.h"
 #include "orte/mca/ns/ns.h"
@@ -42,22 +44,34 @@
 
 static orte_cellid_t local_cellid;
 static bool need_cellid = true;
+static char *cur_hostfile_name = NULL;
 
 static void orte_rds_hostfile_parse_error(int token)
 {
     switch (token) {
     case ORTE_RDS_HOSTFILE_STRING:
-        opal_output(0, "Error reading hostfile at line %d: token:%d %s\n",
-            orte_rds_hostfile_line, token, orte_rds_hostfile_value.sval);
+        opal_show_help("help-rds-hostfile.txt", "rds:parse_error_string",
+                       true,
+                       cur_hostfile_name, 
+                       orte_rds_hostfile_line, 
+                       token, 
+                       orte_rds_hostfile_value.sval);
         break;
     case ORTE_RDS_HOSTFILE_IPV4:
     case ORTE_RDS_HOSTFILE_INT:
-        opal_output(0, "Error reading hostfile at line %d: token:%d %d\n",
-            orte_rds_hostfile_line, token, orte_rds_hostfile_value.ival);
+        opal_show_help("help-rds-hostfile.txt", "rds:parse_error_int",
+                       true,
+                       cur_hostfile_name, 
+                       orte_rds_hostfile_line, 
+                       token, 
+                       orte_rds_hostfile_value.ival);
         break;
      default:
-        opal_output(0, "Error reading hostfile at line %d token:%d\n",
-            orte_rds_hostfile_line, token);
+        opal_show_help("help-rds-hostfile.txt", "rds:parse_error",
+                       true,
+                       cur_hostfile_name, 
+                       orte_rds_hostfile_line, 
+                       token );
         break;
     }
 }
@@ -220,6 +234,9 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
         case ORTE_RDS_HOSTFILE_SLOTS:
             rc = orte_rds_hostfile_parse_int();
             if (rc < 0) {
+                opal_show_help("help-rds-hostfile.txt", "rds:slots",
+                               true,
+                               cur_hostfile_name, rc);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -236,6 +253,9 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
         case ORTE_RDS_HOSTFILE_SLOTS_MAX:
             rc = orte_rds_hostfile_parse_int();
             if (rc < 0) {
+                opal_show_help("help-rds-hostfile.txt", "rds:max_slots",
+                               true,
+                               cur_hostfile_name, ((size_t) rc));
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
             }
@@ -246,6 +266,9 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
                     update = true;
                 }
             } else {
+                opal_show_help("help-rds-hostfile.txt", "rds:max_slots_lt",
+                               true,
+                               cur_hostfile_name, node->node_slots, rc);
                 ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
                 OBJ_RELEASE(node);
                 return ORTE_ERROR;
@@ -282,10 +305,15 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     int rc = ORTE_SUCCESS;
 
     OPAL_LOCK(&mca_rds_hostfile_component.lock);
-
+    
+    cur_hostfile_name = strdup(hostfile);
+    
     orte_rds_hostfile_done = false;
     orte_rds_hostfile_in = fopen(hostfile, "r");
     if (NULL == orte_rds_hostfile_in) {
+        opal_show_help("help-rds-hostfile.txt", "rds:no-hostfile",
+                       true,
+                       cur_hostfile_name);
         rc = ORTE_ERR_NOT_FOUND;
         goto unlock;
     }
@@ -326,6 +354,11 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     orte_rds_hostfile_in = NULL;
 
 unlock:
+    if(NULL != cur_hostfile_name) {
+        free(cur_hostfile_name);
+        cur_hostfile_name = NULL;
+    }
+
     OPAL_UNLOCK(&mca_rds_hostfile_component.lock);
     return rc;
 }
