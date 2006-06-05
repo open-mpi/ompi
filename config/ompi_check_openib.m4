@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -55,6 +56,14 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
          AS_IF([test "$ompi_check_openib_sysfs" != "yes"],
                [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
                       [AC_MSG_ERROR([OpenIB support requested but required sysfs not found.  Aborting])])])
+
+         AC_CHECK_HEADER([sysfs/libsysfs.h],
+                         [ompi_check_openib_sysfs_h=yes],
+                         [ompi_check_openib_sysfs_h=no])
+
+         AS_IF([test "$ompi_check_openib_sysfs_h" != "yes"],
+               [AS_IF([test ! -z "$with_openib" -a "$with_openib" != "no"],
+                      [AC_MSG_ERROR([OpenIB support requested but required sysfs/libsysfs.h not found.  Aborting])])])
     
          AS_IF([test "$ompi_check_openib_libdir" = ""], 
 	       [ompi_check_openib_my_libdir=$ompi_check_openib_dir], 
