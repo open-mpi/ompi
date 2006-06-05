@@ -23,6 +23,7 @@
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
+#include "ompi/proc/proc.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
@@ -34,6 +35,7 @@
 #include "btl_openib_frag.h"
 #include "btl_openib_endpoint.h" 
 #include "btl_openib_eager_rdma.h"
+#include "btl_openib_proc.h"
 #include "ompi/mca/btl/base/base.h"
 
 
@@ -712,6 +714,80 @@ int mca_btl_openib_handle_incoming_hp(
     return OMPI_SUCCESS;
 }
 
+static char* mca_btl_openib_component_status_to_string(enum ibv_wc_status status) { 
+  switch(status) { 
+  case IBV_WC_SUCCESS:
+      return "SUCCESS"; 
+      break;
+  case IBV_WC_LOC_LEN_ERR:
+      return "LOCAL LENGTH ERROR"; 
+      break;
+  case IBV_WC_LOC_QP_OP_ERR:
+      return "LOCAL QP OPERATION ERROR";
+      break;
+  case IBV_WC_LOC_EEC_OP_ERR:
+      return "LOCAL EEC OPERATION ERROR";
+      break;
+  case IBV_WC_LOC_PROT_ERR:
+      return "LOCAL PROTOCOL ERROR";
+      break;
+  case IBV_WC_WR_FLUSH_ERR:
+      return "WORK REQUEST FLUSHED ERROR";
+      break;
+  case IBV_WC_MW_BIND_ERR:
+      return "MEMORY WINDOW BIND ERROR";
+      break;
+  case IBV_WC_BAD_RESP_ERR:
+      return "BAD RESPONSE ERROR";
+      break;
+  case IBV_WC_LOC_ACCESS_ERR:
+      return "LOCAL ACCESS ERROR";
+      break;
+  case IBV_WC_REM_INV_REQ_ERR:
+      return "INVALID REQUEST ERROR";
+      break;
+  case IBV_WC_REM_ACCESS_ERR:
+      return "REMOTE ACCESS ERROR";
+      break;
+  case IBV_WC_REM_OP_ERR:
+      return "REMOTE OPERATION ERROR";
+      break;
+  case IBV_WC_RETRY_EXC_ERR:
+      return "RETRY EXCEEDED ERROR";
+      break;
+  case IBV_WC_RNR_RETRY_EXC_ERR:
+      return "RECEIVER NOT READY RETRY EXCEEEDED ERROR";
+      break;
+  case IBV_WC_LOC_RDD_VIOL_ERR:
+      return "LOCAL RDD VIOLATION ERROR";
+      break;
+  case IBV_WC_REM_INV_RD_REQ_ERR:
+      return "INVALID READ REQUEST ERROR";
+      break;
+  case IBV_WC_REM_ABORT_ERR:
+      return "REMOTE ABORT ERROR";
+      break;
+  case IBV_WC_INV_EECN_ERR:
+      return "INVALID EECN ERROR";
+      break;
+  case IBV_WC_INV_EEC_STATE_ERR:
+      return "INVALID EEC STATE ERROR";
+      break;
+  case IBV_WC_FATAL_ERR: 
+      return "FATAL ERROR";
+      break;
+  case IBV_WC_RESP_TIMEOUT_ERR:
+      return "RESPONSE TIMEOUT ERROR";
+      break;
+  case IBV_WC_GENERAL_ERR:
+      return "GENERAL ERROR";
+      break;
+  default:
+      return "STATUS UNDEFINED";
+      break;
+  }
+  
+}
 /*
  *  IB component progress.
  */
@@ -787,8 +863,19 @@ int mca_btl_openib_component_progress()
         } 
         else if(1 == ne) { 
             if(wc.status != IBV_WC_SUCCESS) { 
-                BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n", 
-                           wc.status, wc.wr_id, wc.opcode)); 
+                ompi_proc_t* remote_proc = NULL; 
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
+                if(frag) { 
+                    endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
+                    if(endpoint && 
+                       endpoint->endpoint_proc && 
+                       endpoint->endpoint_proc->proc_ompi) {
+                        remote_proc = endpoint->endpoint_proc->proc_ompi; 
+                    }
+                }
+                BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d\n", 
+                                             mca_btl_openib_component_status_to_string(wc.status), 
+                                             wc.status, wc.wr_id, wc.opcode)); 
                 return OMPI_ERROR;
             }
 
@@ -874,8 +961,19 @@ int mca_btl_openib_component_progress()
         } 
         else if(1 == ne) {             
             if(wc.status != IBV_WC_SUCCESS) { 
-                BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d", 
-                          wc.status, wc.wr_id, wc.opcode)); 
+                ompi_proc_t* remote_proc = NULL; 
+                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
+                if(frag) { 
+                    endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
+                    if(endpoint && 
+                       endpoint->endpoint_proc && 
+                       endpoint->endpoint_proc->proc_ompi) {
+                        remote_proc = endpoint->endpoint_proc->proc_ompi; 
+                    }
+                }
+                BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
+                                             mca_btl_openib_component_status_to_string(wc.status), 
+                                             wc.status, wc.wr_id, wc.opcode)); 
                 return OMPI_ERROR;
             }
 
