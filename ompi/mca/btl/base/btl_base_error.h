@@ -22,6 +22,7 @@
 #include "ompi_config.h"
 #include <stdio.h>
 #include "orte/util/proc_info.h"
+#include "orte/util/sys_info.h"
 
 extern int mca_btl_base_debug;
 
@@ -44,7 +45,20 @@ do {                                                         \
             ORTE_NAME_ARGS(orte_process_info.my_name),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_err args;                                   \
-    mca_btl_base_out("\n");                                  \
+    mca_btl_base_err("\n");                                  \
+} while(0);
+
+#define BTL_PEER_ERROR(proc, args)                               \
+do {                                                             \
+    mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] from %s ",         \
+                     ORTE_NAME_ARGS(orte_process_info.my_name),  \
+                     __FILE__, __LINE__, __func__,               \
+                     orte_system_info.nodename);                 \
+    if(proc && proc->proc_hostname) {                            \
+        mca_btl_base_err("to: %s ", proc->proc_hostname);        \
+    }                                                            \
+    mca_btl_base_err args;                                       \
+    mca_btl_base_err("\n");                                      \
 } while(0);
 
 
