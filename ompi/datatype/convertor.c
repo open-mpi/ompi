@@ -184,36 +184,35 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
          * minimal informations, we only use the bConverted to manage the conversion.
          */
         uint32_t i;
+        size_t initial_bConverted = pConv->bConverted;
+        size_t pending_length = pConv->local_size - pConv->bConverted;
         char* base_pointer;
 
-        *max_data = pConv->bConverted;
+        if( (*max_data) < pending_length )
+            pending_length = (*max_data);
+
         for( i = 0; i < *out_size; i++ ) {
             base_pointer = pConv->pBaseBuf + pConv->bConverted;
+
+            if( iov[i].iov_len > pending_length )
+                iov[i].iov_len = pending_length;
+
             if( NULL == iov[i].iov_base ) {
                 iov[i].iov_base = base_pointer;
-                pConv->bConverted += iov[i].iov_len;
-                if( pConv->bConverted >= pConv->local_size ) {
-                    iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
-                    goto predefined_data_pack;
-                }
             } else {
-                pConv->bConverted += iov[i].iov_len;
-                if( pConv->bConverted >= pConv->local_size ) {
-                    iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
-                    MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
-                    goto predefined_data_pack;
-                }
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             }
+            pConv->bConverted += iov[i].iov_len;
+            pending_length -= iov[i].iov_len;
+            if( 0 == pending_length ) break;
         }
-        *max_data = pConv->bConverted - (*max_data);
-        return 0;
-    predefined_data_pack:
         *out_size = i;
-        *max_data = pConv->bConverted - (*max_data);
-        pConv->bConverted = pConv->local_size;
-        pConv->flags |= CONVERTOR_COMPLETED;
-        return 1;
+        *max_data = pConv->bConverted - initial_bConverted;
+        if( pConv->bConverted == pConv->local_size ) {
+            pConv->flags |= CONVERTOR_COMPLETED;
+            return 1;
+        }
+        return 0;
     }
 
     /* There is no specific memory allocation. If the convertor notice that some memory
