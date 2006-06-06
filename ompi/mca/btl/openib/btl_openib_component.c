@@ -874,7 +874,7 @@ int mca_btl_openib_component_progress()
                         remote_proc = endpoint->endpoint_proc->proc_ompi; 
                     }
                 }
-                BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d\n", 
+                BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d", 
                                              mca_btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
                 if(wc.status == IBV_WC_RETRY_EXC_ERR) { 

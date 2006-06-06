@@ -23,6 +23,8 @@
 CFLAGS = $(btl_mvapi_CFLAGS)
 AM_CPPFLAGS = $(btl_mvapi_CPPFLAGS)
 
+dist_pkgdata_DATA=help-mpi-btl-mvapi.txt
+
 sources = \
     btl_mvapi.c \
     btl_mvapi.h \
