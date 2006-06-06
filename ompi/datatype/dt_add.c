@@ -295,12 +295,13 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
-        if( (pdtBase->flags & DT_FLAG_CONTIGUOUS) && (pdtAdd->flags & DT_FLAG_CONTIGUOUS)
-            && (pdtBase->size == (uint32_t)(pdtBase->true_ub - pdtBase->true_lb)) 
-            && (((long)pdtAdd->size) == extent) ) {
+        localFlags = pdtBase->flags & pdtAdd->flags;
+        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);     /* consider it as not contiguous */
+        if( (localFlags & DT_FLAG_CONTIGUOUS)      /* both have to be contiguous */
+            && ( (((long)pdtAdd->size) == extent)  /* the size and the extent of the added
+                                                    * type have to match */
+                 || (count < 2)) ) {               /*  - if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
-        } else {
-            UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
         }
     }
 
