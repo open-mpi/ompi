@@ -28,6 +28,12 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
     int i, dLength, endat, disp;
     long extent = oldType->ub - oldType->lb;
 
+    if( 0 == count ) {
+        *newType = ompi_ddt_create( 0 );
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        return OMPI_SUCCESS;
+    }
+
     disp = pDisp[0];
     dLength = pBlockLength[0];
     endat = disp + dLength;
@@ -63,6 +69,12 @@ int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long
     int i, dLength;
     long extent = oldType->ub - oldType->lb;
     long disp, endat;
+
+    if( 0 == count ) {
+        *newType = ompi_ddt_create( 0 );
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
+        return OMPI_SUCCESS;
+    }
 
     pdt = ompi_ddt_create( count * (2 + oldType->desc.used) );
     disp = pDisp[0];
