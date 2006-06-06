@@ -355,10 +355,9 @@ void mca_pml_dr_recv_request_matched_probe(
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_TAG = hdr->hdr_match.hdr_tag;
     recvreq->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = recvreq->req_proc->comm_rank;
-    recvreq->req_recv.req_base.req_ompi.req_status._count = bytes_packed;
-    recvreq->req_recv.req_base.req_pml_complete = true; 
-    recvreq->req_recv.req_base.req_ompi.req_complete = true;
-
+    recvreq->req_bytes_received = bytes_packed;
+    recvreq->req_bytes_delivered = bytes_packed;
+    
     ompi_request_completed++;
     if(ompi_request_waiting) {
         opal_condition_broadcast(&ompi_request_cond);
