@@ -53,9 +53,11 @@ int MPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
         }
     }
 
+    OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
+
     /* the resulting convertor will be set to the position ZERO */
-    ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              datatype, outcount, NULL, 0, &local_convertor );
+    ompi_convertor_copy_and_prepare_for_recv( ompi_mpi_external32_convertor,
+                                              datatype, outcount, outbuf, 0, &local_convertor );
 
     /* Check for truncation */
     ompi_convertor_get_packed_size( &local_convertor, &size );
