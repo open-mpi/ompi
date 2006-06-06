@@ -296,7 +296,8 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
         if( (pdtBase->flags & DT_FLAG_CONTIGUOUS) && (pdtAdd->flags & DT_FLAG_CONTIGUOUS)
-            && (pdtBase->size == (uint32_t)(pdtBase->true_ub - pdtBase->true_lb)) ) {
+            && (pdtBase->size == (uint32_t)(pdtBase->true_ub - pdtBase->true_lb)) 
+            && (((long)pdtAdd->size) == extent) ) {
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
         } else {
             UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
