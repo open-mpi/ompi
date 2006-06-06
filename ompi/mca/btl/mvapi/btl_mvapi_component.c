@@ -33,7 +33,8 @@
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
-
+#include "ompi/proc/proc.h"
+#include "opal/util/show_help.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
@@ -41,6 +42,7 @@
 #include "btl_mvapi_frag.h"
 #include "btl_mvapi_endpoint.h" 
 #include "btl_mvapi_eager_rdma.h"
+#include "btl_mvapi_proc.h"
 #include "ompi/mca/btl/base/base.h" 
 #include <vapi.h> 
 #include <vapi_common.h> 
@@ -774,9 +776,22 @@ int mca_btl_mvapi_component_progress( void )
         ret = VAPI_poll_cq(mvapi_btl->nic, mvapi_btl->cq_hndl_hp, &comp); 
         if(VAPI_OK == ret) { 
             if(comp.status != VAPI_SUCCESS) { 
-                BTL_ERROR(("Got error : %s, Vendor code : %d Frag : %p", 
-                          VAPI_wc_status_sym(comp.status), 
-                          comp.vendor_err_syndrome, comp.id));  
+                ompi_proc_t* remote_proc = NULL;
+                frag = (mca_btl_mvapi_frag_t*) (unsigned long) comp.id;
+                if(frag) { 
+                    endpoint = (mca_btl_mvapi_endpoint_t*) frag->endpoint; 
+                    if(endpoint && 
+                       endpoint->endpoint_proc && 
+                       endpoint->endpoint_proc->proc_ompi) { 
+                        remote_proc = endpoint->endpoint_proc->proc_ompi; 
+                    }
+                }
+                BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for Frag : %p", 
+                                             VAPI_wc_status_sym(comp.status), 
+                                             comp.status, comp.id));  
+                if(comp.status == VAPI_RETRY_EXC_ERR) { 
+                    opal_show_help("help-mpi-btl-mvapi.txt", "btl_mvapi:retry-exceeded", true);
+                }
                 return OMPI_ERROR; 
             }
             
