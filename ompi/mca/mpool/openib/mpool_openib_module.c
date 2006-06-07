@@ -182,9 +182,8 @@ void mca_mpool_openib_free(mca_mpool_base_module_t* mpool, void * addr,
 {
     if(registration){
         mpool->mpool_deregister(mpool, registration); 
+        free(registration->alloc_base); 
     }
-    free(registration->alloc_base); 
-    
     
 }
 

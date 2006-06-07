@@ -167,8 +167,8 @@ void mca_mpool_gm_free(mca_mpool_base_module_t* mpool, void * addr,
 {
     if(registration){ 
         mpool->mpool_deregister(mpool, registration);
+        free(addr);
     }
-    free(addr);
 }
 
 int mca_mpool_gm_find(
