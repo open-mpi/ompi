@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -167,8 +167,8 @@ void mca_mpool_gm_free(mca_mpool_base_module_t* mpool, void * addr,
 {
     if(registration){ 
         mpool->mpool_deregister(mpool, registration);
-        free(addr);
     }
+    free(addr);
 }
 
 int mca_mpool_gm_find(
