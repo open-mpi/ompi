@@ -191,7 +191,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         if( (*max_data) < pending_length )
             pending_length = (*max_data);
 
-        for( i = 0; i < *out_size; i++ ) {
+        for( i = 0; (i < *out_size) && (0 != pending_length); i++ ) {
             base_pointer = pConv->pBaseBuf + pConv->bConverted;
 
             if( iov[i].iov_len > pending_length )
@@ -204,7 +204,6 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             }
             pConv->bConverted += iov[i].iov_len;
             pending_length -= iov[i].iov_len;
-            if( 0 == pending_length ) break;
         }
         *out_size = i;
         *max_data = pConv->bConverted - initial_bConverted;
