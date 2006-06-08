@@ -70,6 +70,13 @@ static int orte_rmgr_urm_terminate_job(
 static int orte_rmgr_urm_terminate_proc(
     const orte_process_name_t* proc_name);
 
+static int orte_rmgr_urm_signal_job(
+        orte_jobid_t jobid, int32_t signal);
+
+static int orte_rmgr_urm_signal_proc(
+        const orte_process_name_t* proc_name,
+        int32_t signal);
+
 static int orte_rmgr_urm_spawn(
     orte_app_context_t** app_context,
     size_t num_context,
@@ -89,6 +96,8 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_urm_launch,
     orte_rmgr_urm_terminate_job,
     orte_rmgr_urm_terminate_proc,
+    orte_rmgr_urm_signal_job,
+    orte_rmgr_urm_signal_proc,
     orte_rmgr_urm_spawn,
     orte_rmgr_base_proc_stage_gate_init,
     orte_rmgr_base_proc_stage_gate_mgr,
@@ -216,7 +225,7 @@ static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
 {
     OPAL_TRACE(1);
 
-    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name, 
+    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name,
                               orte_process_info.my_name)) &&
         (orte_process_info.singleton)) {
         /* if we're trying to get ourselves killed and we're a
@@ -227,6 +236,45 @@ static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
     }
 
     return mca_rmgr_urm_component.urm_pls->terminate_proc(proc_name);
+}
+
+
+static int orte_rmgr_urm_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    int ret;
+    orte_jobid_t my_jobid;
+
+    OPAL_TRACE(1);
+
+    ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+    if (ORTE_SUCCESS == ret) {
+        /** if our jobid is the one we're trying to signal AND we're a
+         * singleton, then calling the urm_pls isn't going to be able
+         * to do anything - we already have the signal! */
+        if (orte_process_info.singleton && jobid == my_jobid) {
+            return ORTE_SUCCESS;
+        }
+    }
+
+    return mca_rmgr_urm_component.urm_pls->signal_job(jobid, signal);
+}
+
+static int orte_rmgr_urm_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
+{
+    OPAL_TRACE(1);
+
+    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name,
+         orte_process_info.my_name)) &&
+         (orte_process_info.singleton)) {
+        /** if we're trying to signal ourselves and we're a
+         * singleton, calling signal_proc isn't going to work
+         * properly -- there's no pls setup properly for us. Besides, we
+         * already have the signal!
+         */
+        return ORTE_SUCCESS;
+    }
+
+    return mca_rmgr_urm_component.urm_pls->signal_proc(proc_name, signal);
 }
 
 

@@ -70,6 +70,8 @@
 static int pls_tm_launch(orte_jobid_t jobid);
 static int pls_tm_terminate_job(orte_jobid_t jobid);
 static int pls_tm_terminate_proc(const orte_process_name_t *name);
+static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
@@ -84,6 +86,8 @@ orte_pls_base_module_1_0_0_t orte_pls_tm_module = {
     pls_tm_launch,
     pls_tm_terminate_job,
     pls_tm_terminate_proc,
+    pls_tm_signal_job,
+    pls_tm_signal_proc,
     pls_tm_finalize
 };
 
@@ -446,6 +450,20 @@ pls_tm_terminate_proc(const orte_process_name_t *name)
     opal_output(orte_pls_base.pls_output,
                 "pls:tm:terminate_proc: not supported");
     return ORTE_ERR_NOT_SUPPORTED;
+}
+
+
+static int
+pls_tm_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    return orte_pls_base_proxy_signal_job(jobid, signal);
+}
+
+
+static int
+pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal)
+{
+    return orte_pls_base_proxy_signal_proc(name, signal);
 }
 
 

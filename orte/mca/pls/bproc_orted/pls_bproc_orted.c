@@ -58,6 +58,8 @@ orte_pls_base_module_1_0_0_t orte_pls_bproc_orted_module = {
     orte_pls_bproc_orted_launch,
     orte_pls_bproc_orted_terminate_job,
     orte_pls_bproc_orted_terminate_proc,
+    orte_pls_bproc_orted_signal_job,
+    orte_pls_bproc_orted_signal_proc,
     orte_pls_bproc_orted_finalize
 };
 
@@ -404,7 +406,7 @@ int orte_pls_bproc_orted_launch(orte_jobid_t jobid) {
 #endif
 
     /**
-     * hack for bproc4, change process group so that we do not receive signals 
+     * hack for bproc4, change process group so that we do not receive signals
      * from the parent/front-end process, as bproc4 does not currently allow the
      * process to intercept the signal
     */
@@ -549,6 +551,33 @@ int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc)
     orte_iof.iof_flush();
     return ORTE_SUCCESS;
 }
+
+/**
+ * Function to signal a job. Since this component only runs on remote nodes
+ * and doesn't actually launch any processes, this function is not needed
+ * so is a noop.
+ * @param jobid The job to signal
+ * @param signal The signal to send
+ * @retval ORTE_SUCCESS
+ */
+int orte_pls_bproc_orted_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    return ORTE_SUCCESS;
+}
+
+/**
+ * Function to signal a process. Since this component only runs on remote nodes
+ * and doesn't actually launch any processes, this function is not needed
+ * so is a noop.
+ * @param proc the process's name
+ * @param signal The signal to send
+ * @retval ORTE_SUCCESS
+ */
+int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc, int32_t signal)
+{
+    return ORTE_SUCCESS;
+}
+
 
 /**
  * Finalizes the bproc_orted module. Cleanup tmp directory/files

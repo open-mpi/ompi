@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -70,6 +70,8 @@
 static int pls_slurm_launch(orte_jobid_t jobid);
 static int pls_slurm_terminate_job(orte_jobid_t jobid);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_slurm_finalize(void);
 
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
@@ -83,6 +85,8 @@ orte_pls_base_module_1_0_0_t orte_pls_slurm_module = {
     pls_slurm_launch,
     pls_slurm_terminate_job,
     pls_slurm_terminate_proc,
+    pls_slurm_signal_job,
+    pls_slurm_signal_proc,
     pls_slurm_finalize
 };
 
@@ -205,7 +209,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     /* add the daemon command (as specified by user) */
     opal_argv_append(&argc, &argv, mca_pls_slurm_component.orted);
     opal_argv_append(&argc, &argv, "--no-daemonize");
-    
+
     /* check for debug flags */
     orte_pls_base_proxy_mca_argv(&argc, &argv);
 
@@ -218,8 +222,8 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "slurm");
 
     /* set orte process name to be the base of the name list for the daemons */
-    rc = orte_ns.create_process_name(&name, 
-                                     orte_process_info.my_name->cellid, 
+    rc = orte_ns.create_process_name(&name,
+                                     orte_process_info.my_name->cellid,
                                      0, vpid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -252,7 +256,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
              orte_universe_info.host, orte_universe_info.name);
     opal_argv_append(&argc, &argv, param);
     free(param);
-    
+
     /* setup ns contact info */
     opal_argv_append(&argc, &argv, "--nsreplica");
     if (NULL != orte_process_info.ns_replica_uri) {
@@ -320,7 +324,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
             char * app_prefix_dir = map->app->prefix_dir;
 
-            /* Increment the number of processes allocated to this node 
+            /* Increment the number of processes allocated to this node
              * This allows us to accurately test for oversubscription */
             num_processes += map->num_procs;
 
@@ -354,7 +358,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
         }
 
         /* save the daemons name on the node */
-        if (ORTE_SUCCESS != 
+        if (ORTE_SUCCESS !=
             (rc = orte_pls_base_proxy_set_node_name(node, jobid, name))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -363,7 +367,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
         vpid++;
         free(name);
     }
-    
+
     /* setup environment */
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
@@ -391,7 +395,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     }
     free(var);
 #endif
-    
+
     /* exec the daemon */
     rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
     if (ORTE_SUCCESS != rc) {
@@ -401,7 +405,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
 
     /* JMS: short we stash the srun pid in the gpr somewhere for cleanup? */
     /* JMS: how do we catch when srun dies? */
-    
+
 cleanup:
     while (NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
@@ -423,7 +427,7 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid)
         /* JMS need appropriate code here to reap */
         srun_pid = 0;
     }
-    return orte_pls_base_proxy_terminate_job(jobid);
+    return ORTE_SUCCESS;
 }
 
 
@@ -436,6 +440,27 @@ static int pls_slurm_terminate_proc(const orte_process_name_t *name)
     opal_output(orte_pls_base.pls_output,
                 "pls:slurm:terminate_proc: not supported");
     return ORTE_ERR_NOT_SUPPORTED;
+}
+
+
+/**
+ * Signal all the processes in the child srun by sending the signal directly to it
+ */
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    if (0 != srun_pid) {
+        kill(srun_pid, (int)signal);
+   }
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * Signal a specific process
+ */
+static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal)
+{
+    return orte_pls_base_proxy_signal_proc(name, signal);
 }
 
 
@@ -465,7 +490,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
         char *bin_base = NULL, *lib_base = NULL;
-        
+
         /* Figure out the basenames for the libdir and bindir.  There
            is a lengthy comment about this in pls_rsh_module.c
            explaining all the rationale for how / why we're doing
@@ -479,7 +504,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
            the child process, so it's ok to modify environ. */
         if (NULL != prefix) {
             char *oldenv, *newenv;
-            
+
             /* Reset PATH */
             oldenv = getenv("PATH");
             if (NULL != oldenv) {
@@ -492,7 +517,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
                 opal_output(0, "pls:slurm: reset PATH: %s", newenv);
             }
             free(newenv);
-            
+
             /* Reset LD_LIBRARY_PATH */
             oldenv = getenv("LD_LIBRARY_PATH");
             if (NULL != oldenv) {

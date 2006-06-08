@@ -5,15 +5,15 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -100,6 +100,8 @@ orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
 #endif
     orte_pls_rsh_terminate_job,
     orte_pls_rsh_terminate_proc,
+    orte_pls_rsh_signal_job,
+    orte_pls_rsh_signal_proc,
     orte_pls_rsh_finalize
 };
 
@@ -463,7 +465,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     } else {
         orte_pls_rsh_shell shell;
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)opal_list_get_first(&mapping);
-        orte_rmaps_base_node_t* rmaps_node = 
+        orte_rmaps_base_node_t* rmaps_node =
             (orte_rmaps_base_node_t*)opal_list_get_first(&map->nodes);
         orte_ras_node_t* node = rmaps_node->node;
 
@@ -763,7 +765,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         }
                     } else {
                         if (NULL != prefix_dir) {
-                            asprintf(&exec_path, "%s/%s/orted", 
+                            asprintf(&exec_path, "%s/%s/orted",
                                      prefix_dir, bin_base);
                         }
                         /* If we yet did not fill up the execpath, do so now */
@@ -785,7 +787,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset PATH */
                         oldenv = getenv("PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/%s:%s", prefix_dir, 
+                            asprintf(&newenv, "%s/%s:%s", prefix_dir,
                                      bin_base, oldenv);
                         } else {
                             asprintf(&newenv, "%s/%s", prefix_dir, bin_base);
@@ -799,7 +801,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         /* Reset LD_LIBRARY_PATH */
                         oldenv = getenv("LD_LIBRARY_PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/%s:%s", prefix_dir, 
+                            asprintf(&newenv, "%s/%s:%s", prefix_dir,
                                      lib_base, oldenv);
                         } else {
                             asprintf(&newenv, "%s/%s", prefix_dir, lib_base);
@@ -858,7 +860,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                       "PATH=%s/%s:$PATH ; export PATH ; "
                                       "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
                                       "%s/%s/%s",
-                                      prefix_dir, bin_base, 
+                                      prefix_dir, bin_base,
                                       prefix_dir, lib_base,
                                       prefix_dir, bin_base,
                                       mca_pls_rsh_component.orted);
@@ -882,8 +884,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                                       "setenv LD_LIBRARY_PATH %s/%s:$LD_LIBRARY_PATH ; "
                                       "%s/%s/%s",
                                       prefix_dir, bin_base,
-                                      prefix_dir, lib_base, 
-                                      prefix_dir, lib_base, 
+                                      prefix_dir, lib_base,
+                                      prefix_dir, lib_base,
                                       prefix_dir, bin_base,
                                       mca_pls_rsh_component.orted);
                         }
@@ -1020,6 +1022,16 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 {
     return orte_pls_base_proxy_terminate_proc(proc);
+}
+
+int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    return orte_pls_base_proxy_signal_job(jobid, signal);
+}
+
+int orte_pls_rsh_signal_proc(const orte_process_name_t* proc, int32_t signal)
+{
+    return orte_pls_base_proxy_signal_proc(proc, signal);
 }
 
 int orte_pls_rsh_finalize(void)

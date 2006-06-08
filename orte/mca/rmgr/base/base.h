@@ -90,6 +90,16 @@ OMPI_DECLSPEC int orte_rmgr_base_pack_terminate_proc_cmd(
     orte_buffer_t* buffer,
     const orte_process_name_t* name);
 
+OMPI_DECLSPEC int orte_rmgr_base_pack_signal_job_cmd(
+    orte_buffer_t* buffer,
+    orte_jobid_t job,
+    int32_t signal);
+
+OMPI_DECLSPEC int orte_rmgr_base_pack_signal_proc_cmd(
+    orte_buffer_t* buffer,
+    const orte_process_name_t* name,
+    int32_t signal);
+
 OMPI_DECLSPEC int orte_rmgr_base_unpack_rsp(
     orte_buffer_t* buffer);
 
@@ -115,6 +125,8 @@ int orte_rmgr_base_map_not_available(orte_jobid_t);
 int orte_rmgr_base_launch_not_available(orte_jobid_t);
 int orte_rmgr_base_terminate_job_not_available(orte_jobid_t);
 int orte_rmgr_base_terminate_proc_not_available(const orte_process_name_t*);
+int orte_rmgr_base_signal_job_not_available(orte_jobid_t, int32_t);
+int orte_rmgr_base_signal_proc_not_available(const orte_process_name_t*, int32_t);
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
 int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t, void*, orte_proc_state_t);
 int orte_rmgr_base_proc_stage_gate_mgr(

@@ -1,19 +1,19 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  *
@@ -50,6 +50,8 @@ int orte_pls_bproc_seed_finalize(void);
 int orte_pls_bproc_seed_launch(orte_jobid_t);
 int orte_pls_bproc_seed_terminate_job(orte_jobid_t);
 int orte_pls_bproc_seed_terminate_proc(const orte_process_name_t* proc_name);
+int orte_pls_bproc_seed_signal_job(orte_jobid_t, int32_t);
+int orte_pls_bproc_seed_signal_proc(const orte_process_name_t* proc_name, int32_t);
 
 
 /**
@@ -68,7 +70,7 @@ struct orte_pls_bproc_seed_component_t {
     opal_condition_t condition;
 };
 typedef struct orte_pls_bproc_seed_component_t orte_pls_bproc_seed_component_t;
-                                                                                                          
+
 ORTE_DECLSPEC extern orte_pls_bproc_seed_component_t mca_pls_bproc_seed_component;
 ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_bproc_seed_module;
 

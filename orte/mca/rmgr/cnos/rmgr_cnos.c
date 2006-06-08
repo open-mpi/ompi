@@ -62,6 +62,12 @@ static int orte_rmgr_cnos_terminate_job(
 static int orte_rmgr_cnos_terminate_proc(
     const orte_process_name_t* proc_name);
 
+static int orte_rmgr_cnos_signal_job(
+        orte_jobid_t jobid);
+
+static int orte_rmgr_cnos_signal_proc(
+        const orte_process_name_t* proc_name);
+
 static int orte_rmgr_cnos_spawn(
     orte_app_context_t** app_context,
     size_t num_context,
@@ -80,6 +86,8 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_launch,
     orte_rmgr_cnos_terminate_job,
     orte_rmgr_cnos_terminate_proc,
+    orte_rmgr_cnos_signal_job,
+    orte_rmgr_cnos_signal_proc,
     orte_rmgr_cnos_spawn,
     orte_rmgr_base_proc_stage_gate_init,
     orte_rmgr_base_proc_stage_gate_mgr,
@@ -174,6 +182,17 @@ static int orte_rmgr_cnos_terminate_proc(const orte_process_name_t* proc_name)
 #endif
 
     return ORTE_SUCCESS;
+}
+
+
+static int orte_rmgr_cnos_signal_job(orte_jobid_t jobid)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_signal_proc(const orte_process_name_t* proc_name)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
