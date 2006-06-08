@@ -253,7 +253,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
         *max_data = pConv->bConverted - (*max_data);
         return 0;
     predefined_data_unpack:
-        *out_size = i;
+        *out_size = i + 1;
         *max_data = pConv->bConverted - (*max_data);
         pConv->bConverted = pConv->local_size;
         pConv->flags |= CONVERTOR_COMPLETED;
