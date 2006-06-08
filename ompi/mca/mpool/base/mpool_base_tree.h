@@ -71,4 +71,11 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base);
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void); 
 
+/* 
+ * put tree item back into the free list 
+ */
+void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item); 
+
+
+
 #endif /* MCA_MPOOL_BASE_TREE_H */

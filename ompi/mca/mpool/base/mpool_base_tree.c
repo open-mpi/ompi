@@ -80,8 +80,7 @@ int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) {
     int rc; 
     rc = ompi_rb_tree_delete(&mca_mpool_base_tree, item->key); 
     if(OMPI_SUCCESS == rc) { 
-        OMPI_FREE_LIST_RETURN(&mca_mpool_base_tree_item_free_list, 
-                              item); 
+        mca_mpool_base_tree_item_put(item); 
     }
     return rc;
 }
@@ -107,4 +106,12 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) {
     } else { 
         return NULL;
     }
+}
+
+/*
+ * put an item back into the free list
+ */
+void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item) { 
+    OMPI_FREE_LIST_RETURN(&mca_mpool_base_tree_item_free_list,
+                          item);
 }
