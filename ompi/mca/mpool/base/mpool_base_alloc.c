@@ -255,14 +255,16 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
 int mca_mpool_base_free(void * base)
 {
     int i = 0, rc = OMPI_SUCCESS;
-    mca_mpool_base_tree_item_t* mpool_tree_item = 
-        mca_mpool_base_tree_find(base); 
+    mca_mpool_base_tree_item_t* mpool_tree_item = NULL;
     mca_mpool_base_module_t* mpool;
     mca_mpool_base_registration_t* reg;
     
     if(!base) { 
         return OMPI_ERROR;
     }
+
+    mpool_tree_item = mca_mpool_base_tree_find(base); 
+    
     if(!mpool_tree_item) { 
         /* nothing in the tree this was just 
            plain old malloc'd memory */ 
