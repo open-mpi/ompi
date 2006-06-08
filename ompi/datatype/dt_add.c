@@ -23,7 +23,8 @@
 
 /* macros to play with the flags */
 #define SET_CONTIGUOUS_FLAG( INT_VALUE )     (INT_VALUE) = (INT_VALUE) | (DT_FLAG_CONTIGUOUS)
-#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS))
+#define SET_NO_GAP_FLAG( INT_VALUE )         (INT_VALUE) = (INT_VALUE) | (DT_FLAG_NO_GAPS)
+#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS | DT_FLAG_NO_GAPS))
 
 #if defined(__GNUC__) && !defined(__STDC__)
 #define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
@@ -259,7 +260,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pLoop = pLast;
                 CREATE_LOOP_START( pLast, count, (long)pdtAdd->desc.used + 1, extent,
                                    (pdtAdd->flags & ~(DT_FLAG_COMMITED)) );
-                localFlags = DT_FLAG_IN_LOOP;
                 pdtBase->btypes[DT_LOOP] += 2;
                 pdtBase->desc.used += 2;
                 pLast++;
@@ -267,7 +267,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
 
             for( i = 0; i < pdtAdd->desc.used; i++ ) {
                 pLast->elem               = pdtAdd->desc.desc[i].elem;
-                pLast->elem.common.flags |= localFlags;
                 if( DT_FLAG_DATA & pLast->elem.common.flags )
                     pLast->elem.disp += disp;
                 else if( DT_END_LOOP == pLast->elem.common.type ) {
@@ -302,9 +301,13 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                                                     * type have to match */
                  || (count < 2)) ) {               /*  - if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
+            if( ((long)pdtAdd->size) == extent )
+                SET_NO_GAP_FLAG(pdtBase->flags);
         }
     }
-
+    /* If the NO_GAP flag is set the contiguous have to be set too */
+    if( pdtBase->flags & DT_FLAG_NO_GAPS )
+        assert( pdtBase->flags & DT_FLAG_CONTIGUOUS );
     pdtBase->nbElems += (count * pdtAdd->nbElems);
 
     return OMPI_SUCCESS;
