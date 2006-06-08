@@ -36,6 +36,7 @@
  */
 #include "ompi/mca/mpool/base/static-components.h"
 
+#include "mpool_base_tree.h"
 /*
  * Global variables
  */
@@ -145,6 +146,10 @@ int mca_mpool_base_open(void)
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 
     mca_mpool_base_page_size_log = my_log2(mca_mpool_base_page_size); 
+
+    /* setup tree for tracking MPI_Alloc_mem */ 
+    mca_mpool_base_tree_init();
+    
     return OMPI_SUCCESS;
 }
 
