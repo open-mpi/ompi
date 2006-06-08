@@ -49,7 +49,7 @@ orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    
+
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
@@ -81,7 +81,7 @@ orte_pls_base_proxy_set_node_name(orte_ras_node_t* node,
     OBJ_RELEASE(values[0]);
     free(jobid_string);
     free(key);
-    
+
     return rc;
 }
 
@@ -258,6 +258,158 @@ cleanup:
 
 int
 orte_pls_base_proxy_terminate_proc(const orte_process_name_t *proc)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+/**
+ * This function gets called when the remote node notifies us that it has sent
+ * the signal to its respective child processes.
+ */
+static void orte_pls_rsh_signal_job_rsp(
+        int status,
+        orte_process_name_t* peer,
+        orte_buffer_t* rsp,
+        orte_rml_tag_t tag,
+        void* cbdata)
+{
+    int rc;
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_unpack_rsp(rsp))) {
+        ORTE_ERROR_LOG(rc);
+    }
+}
+
+/**
+ * This function gets called when the corresponding send completes. It then generates
+ * a non-blocking receive so we can be notified when the action was actually completed
+ * on the remote node.
+ */
+static void orte_pls_rsh_signal_job_cb(
+        int status,
+        orte_process_name_t* peer,
+        orte_buffer_t* req,
+        orte_rml_tag_t tag,
+        void* cbdata)
+{
+    /* wait for response */
+    int rc;
+    if (status < 0) {
+        ORTE_ERROR_LOG(status);
+        OBJ_RELEASE(req);
+        return;
+    }
+
+    if (0 > (rc = orte_rml.recv_buffer_nb(peer, ORTE_RML_TAG_RMGR_CLNT, 0, orte_pls_rsh_signal_job_rsp, NULL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    OBJ_RELEASE(req);
+}
+
+
+int
+orte_pls_base_proxy_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    char *keys[2];
+    char *jobid_string;
+    orte_gpr_value_t** values = NULL;
+    size_t i, j, num_values = 0;
+    orte_process_name_t proc, *pnptr;
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    asprintf(&keys[0], "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+    keys[1] = NULL;
+
+    rc = orte_gpr.get(
+            ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+            ORTE_NODE_SEGMENT,
+            NULL,
+            keys,
+            &num_values,
+            &values
+            );
+    if (rc != ORTE_SUCCESS) {
+        free(jobid_string);
+        return rc;
+    }
+    if (0 == num_values) {
+        rc = ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+    for(i=0; i<num_values; i++) {
+        orte_gpr_value_t* value = values[i];
+        for(j=0; j<value->cnt; j++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[j];
+            orte_buffer_t *cmd = OBJ_NEW(orte_buffer_t);
+            int ret;
+            if (cmd == NULL) {
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            if (strcmp(keyval->key, keys[0]) != 0)
+                continue;
+
+            /** construct command */
+            ret = orte_rmgr_base_pack_signal_job_cmd(cmd, jobid, signal);
+            if (ORTE_SUCCESS != ret) {
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+
+            /** get the process name from the returned keyval */
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pnptr, values[i]->keyvals[0]->value, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+            proc = *pnptr;
+
+            /** send a signal message to the bootproxy on each node */
+            if (0 > (ret = orte_rml.send_buffer_nb(
+                &proc,
+                cmd,
+                ORTE_RML_TAG_RMGR_SVC,
+                0,
+                orte_pls_rsh_signal_job_cb,
+                NULL))) {
+
+                ORTE_ERROR_LOG(ret);
+                OBJ_RELEASE(cmd);
+                rc = ret;
+                continue;
+            }
+        }
+    }
+
+cleanup:
+
+    free(jobid_string);
+    free(keys[0]);
+
+    if (NULL != values) {
+        for(i=0; i<num_values; i++) {
+            if (NULL != values[i]) {
+                OBJ_RELEASE(values[i]);
+            }
+        }
+        if (NULL != values ) free(values);
+    }
+    return rc;
+}
+
+
+int
+orte_pls_base_proxy_signal_proc(const orte_process_name_t *proc, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

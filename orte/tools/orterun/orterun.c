@@ -80,11 +80,17 @@ extern char** environ;
  */
 static struct opal_event term_handler;
 static struct opal_event int_handler;
+static struct opal_event sigusr1_handler;
+static struct opal_event sigusr2_handler;
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
 static char *abort_msg = NULL;
 static size_t abort_msg_len = 0;
+static char *sigusr1_msg = NULL;
+static size_t sigusr1_msg_len = 0;
+static char *sigusr2_msg = NULL;
+static size_t sigusr2_msg_len = 0;
 static char *orterun_basename = NULL;
 static int max_display_aborted = 1;
 static int num_aborted = 0;
@@ -245,7 +251,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
  * Local functions
  */
 static void exit_callback(int fd, short event, void *arg);
-static void signal_callback(int fd, short flags, void *arg);
+static void abort_signal_callback(int fd, short flags, void *arg);
+static void sigusr1_callback(int fd, short flags, void *arg);
+static void sigusr2_callback(int fd, short flags, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
                       bool *made_app, char ***app_env);
 static int init_globals(void);
@@ -272,6 +280,12 @@ int orterun(int argc, char *argv[])
     orterun_basename = opal_basename(argv[0]);
     asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
     abort_msg_len = strlen(abort_msg);
+
+    /** Setup the user signal message (for use in the signal handler) */
+    asprintf(&sigusr1_msg, "%s: received SIGUSR1 signal\n", orterun_basename);
+    sigusr1_msg_len = strlen(sigusr1_msg);
+    asprintf(&sigusr2_msg, "%s: received SIGUSR2 signal\n", orterun_basename);
+    sigusr2_msg_len = strlen(sigusr2_msg);
 
     /* Check for some "global" command line params */
 
@@ -389,12 +403,21 @@ int orterun(int argc, char *argv[])
 
     /* Prep to start the application */
 
+    /** setup callbacks for abort signals */
     opal_signal_set(&term_handler, SIGTERM,
-                   signal_callback, NULL);
+                    abort_signal_callback, NULL);
     opal_signal_add(&term_handler, NULL);
     opal_signal_set(&int_handler, SIGINT,
-                   signal_callback, NULL);
+                    abort_signal_callback, NULL);
     opal_signal_add(&int_handler, NULL);
+
+    /** setup callbacks for user signals */
+    opal_signal_set(&sigusr1_handler, SIGUSR1,
+                     sigusr1_callback, NULL);
+    opal_signal_add(&sigusr1_handler, NULL);
+    opal_signal_set(&sigusr2_handler, SIGUSR2,
+                     sigusr2_callback, NULL);
+    opal_signal_add(&sigusr2_handler, NULL);
 
     orte_totalview_init_before_spawn();
 
@@ -661,6 +684,10 @@ static void exit_callback(int fd, short event, void *arg)
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
 
+    /** Remove the USR signal handlers */
+    opal_signal_del(&sigusr1_handler);
+    opal_signal_del(&sigusr2_handler);
+
     /* Trigger the normal exit conditions */
 
     orterun_globals.exit = true;
@@ -674,7 +701,7 @@ static void exit_callback(int fd, short event, void *arg)
  * the job has been aborted.
  */
 
-static void signal_callback(int fd, short flags, void *arg)
+static void abort_signal_callback(int fd, short flags, void *arg)
 {
     int ret;
     struct timeval tv = { 5, 0 };
@@ -700,6 +727,53 @@ static void signal_callback(int fd, short flags, void *arg)
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
     }
+}
+
+
+/**
+ * Pass user signals to the remote application processes
+ */
+
+static void sigusr1_callback(int fd, short flags, void *arg)
+{
+    int ret;
+    static int signalled = 0;
+
+    OPAL_TRACE(1);
+
+    if (0 != signalled++) { /** protect against multiple entry */
+        return;
+    }
+
+    write (2, sigusr1_msg, sigusr1_msg_len);
+
+    /** send the signal out to the processes */
+
+    if (ORTE_SUCCESS != (ret = orte_rmgr.signal_job(jobid, SIGUSR1))) {
+        fprintf(stderr, "SIGUSR1 could not be sent to the job\n");
+    }
+
+}
+
+static void sigusr2_callback(int fd, short flags, void *arg)
+{
+    int ret;
+    static int signalled = 0;
+
+    OPAL_TRACE(1);
+
+    if (0 != signalled++) { /** protect against multiple entry */
+        return;
+    }
+
+    write (2, sigusr2_msg, sigusr2_msg_len);
+
+    /** send the signal out to the processes */
+
+    if (ORTE_SUCCESS != (ret = orte_rmgr.signal_job(jobid, SIGUSR2))) {
+        fprintf(stderr, "SIGUSR2 could not be sent to the job\n");
+    }
+
 }
 
 

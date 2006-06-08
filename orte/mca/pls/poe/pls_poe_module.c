@@ -5,14 +5,14 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  * These symbols are in a file by themselves to provide nice linker
@@ -56,12 +56,16 @@ extern char **environ;
 static int pls_poe_launch(orte_jobid_t jobid);
 static int pls_poe_terminate_job(orte_jobid_t jobid);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
+static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_poe_finalize(void);
 
 orte_pls_base_module_1_0_0_t orte_pls_poe_module = {
     pls_poe_launch,
     pls_poe_terminate_job,
     pls_poe_terminate_proc,
+    pls_poe_signal_job,
+    pls_poe_signal_proc,
     pls_poe_finalize
 };
 
@@ -72,7 +76,7 @@ poe_set_handler_default - set signal handler to default
 static void poe_set_handler_default(int sig)
 {
     struct sigaction act;
-                                                                                                      
+
     act.sa_handler = SIG_DFL;
     act.sa_flags = 0;
     sigemptyset(&act.sa_mask);
@@ -87,7 +91,7 @@ poe_argv_append_int - append integer variable to argument variable
 @param min minimum value [IN]
 @param argname argument name [IN]
 */
-static inline int poe_argv_append_int(int *argc, char ***argv, int varname, int min, char *argname) 
+static inline int poe_argv_append_int(int *argc, char ***argv, int varname, int min, char *argname)
 {
     char *tmp_string;
     if(varname >= min) {
@@ -97,7 +101,7 @@ static inline int poe_argv_append_int(int *argc, char ***argv, int varname, int 
         free(tmp_string);
     } else {
         return ORTE_ERR_BAD_PARAM;
-    } 
+    }
     return ORTE_SUCCESS;
 }
 
@@ -145,11 +149,11 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
-                                                                                                       
+
     /*
      * Allocate a range of vpids for the daemons.
      */
-     
+
     num_nodes = opal_list_get_size(&nodes);
     if(num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
@@ -158,7 +162,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     if(ORTE_SUCCESS != rc) {
         goto cleanup;
     }
-     
+
     /* application */
     argv = opal_argv_copy(opal_argv_split(mca_pls_poe_component.orted, ' '));
     argc = opal_argv_count(argv);
@@ -166,7 +170,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
          opal_argv_append(&argc, &argv, "--debug");
     }
     opal_argv_append(&argc, &argv, "--debug-daemons");
-     
+
     opal_argv_append(&argc, &argv, "--no-daemonize");
     opal_argv_append(&argc, &argv, "--bootproxy");
     /* need integer value for command line parameter - NOT hex */
@@ -187,7 +191,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, tmp_string);
     free(tmp_string);
 
-                                        
+
     /* setup ns contact info */
     opal_argv_append(&argc, &argv, "--nsreplica");
     if(NULL != orte_process_info.ns_replica_uri) {
@@ -198,7 +202,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     asprintf(&param, "\"%s\"", uri);
     opal_argv_append(&argc, &argv, param);
     free(uri);
-                                           
+
     /* setup gpr contact info */
     opal_argv_append(&argc, &argv, "--gprreplica");
     if(NULL != orte_process_info.gpr_replica_uri) {
@@ -209,24 +213,24 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
     asprintf(&param, "\"%s\"", uri);
     opal_argv_append(&argc, &argv, param);
     free(uri);
-     
+
     /*
      * Iterate through each of the nodes and spin
      * up a daemon.
      */
-     
+
     for(item =  opal_list_get_first(&nodes);
         item != opal_list_get_end(&nodes);
         item =  opal_list_get_next(item)) {
         orte_ras_node_t* node = (orte_ras_node_t*)item;
         orte_process_name_t* name;
         pid_t pid;
-     
+
         /* setup node name */
         argv[node_name_index2] = node->node_name;
 
-        fprintf(hfp,"%s\n",node->node_name); 
-     
+        fprintf(hfp,"%s\n",node->node_name);
+
         /* initialize daemons process name */
         rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
         if(ORTE_SUCCESS != rc) {
@@ -242,17 +246,17 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
         }
         argv[proc_name_index] = name_string;
         for(i=0;i<argc;i++) {
-           fprintf(cfp,"%s ",argv[i]); 
+           fprintf(cfp,"%s ",argv[i]);
         }
         fprintf(cfp,"\n");
 
         if (mca_pls_poe_component.verbose) {
            opal_output(0, "%s:cmdfile %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
-        }  
+        }
         vpid++;
         free(name);
     }
-   
+
     fclose(cfp);
     fclose(hfp);
 
@@ -283,21 +287,21 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 
     if (mca_pls_poe_component.verbose) {
        opal_output(0, "%s:cmdline %s\n", __FUNCTION__, opal_argv_join(argv, ' '));
-    }  
+    }
 
     pid = fork();
     if(pid < 0) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
-     
+
     /* child */
     if(pid == 0) {
        execv(mca_pls_poe_component.path, argv);
        opal_output(0, "orte_pls_poe: execv failed with errno=%d\n", errno);
        exit(-1);
-    } 
-     
+    }
+
 cleanup:
     while(NULL != (item = opal_list_remove_first(&nodes))) {
         OBJ_RELEASE(item);
@@ -340,7 +344,7 @@ static void poe_wait_job(pid_t pid, int status, void* cbdata)
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
         size_t i;
-                
+
         for(i = 0 ; i < map->num_procs ; ++i) {
             orte_session_dir_finalize(&(map->procs[i])->proc_name);
             rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name),
@@ -426,16 +430,16 @@ static int poe_create_cmd_file(
     fprintf(cfp,"%s",mca_pls_poe_component.env);
     while(environ_copy[i]!=NULL) {
         fprintf(cfp," %s",environ_copy[i++]);
-    } 
+    }
     opal_argv_free(environ_copy);
     fprintf(cfp," %s",context->app);
     i=1;
     while(context->argv[i]!=NULL) {
         fprintf(cfp," %s",context->argv[i++]);
-    } 
+    }
 
     /* POE will upset if the file doesn't contain end of line. */
-    fprintf(cfp,"\n"); 
+    fprintf(cfp,"\n");
 
     return ORTE_SUCCESS;
 }
@@ -457,7 +461,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
     int rc, pid;
     sigset_t sigs;
 
-    if( (NULL==(mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))) || 
+    if( (NULL==(mca_pls_poe_component.cmdfile=tempnam(NULL,NULL))) ||
         (NULL==(cfp=fopen(mca_pls_poe_component.cmdfile,"w"))) ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -469,7 +473,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
     OBJ_CONSTRUCT(&mapping_list, opal_list_t);
     rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-     
+
     num_nodes = opal_list_get_size(&nodes);
 
     if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
@@ -484,14 +488,14 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
             item != opal_list_get_end(&nodes);
             item =  opal_list_get_next(item)) {
             orte_ras_node_t* node = (orte_ras_node_t*)item;
-            fprintf(hfp,"%s\n",node->node_name); 
+            fprintf(hfp,"%s\n",node->node_name);
         }
         fclose(hfp);
     }
 
     rc = orte_rmgr_base_get_job_slots(jobid, &num_procs);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-    
+
     OBJ_CONSTRUCT(&map, opal_list_t);
     rc = orte_rmaps_base_get_map(jobid,&map);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
@@ -547,7 +551,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
 
     if(mca_pls_poe_component.verbose>10) {
         opal_output(0, "POE cmdline %s\n", opal_argv_join(argv, ' '));
-    }  
+    }
 
     /* Start job with POE */
 
@@ -570,7 +574,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
     } else {
         orte_wait_cb(pid, poe_wait_job, NULL);
     }
-   
+
 
 cleanup:
     while(NULL != (item = opal_list_remove_first(&map))) {
@@ -611,6 +615,17 @@ static int pls_poe_terminate_job(orte_jobid_t jobid)
 
 
 static int pls_poe_terminate_proc(const orte_process_name_t *name)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+
+static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

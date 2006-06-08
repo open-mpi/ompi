@@ -59,6 +59,8 @@ orte_pls_base_module_t* orte_pls_xcpu_init(int *priority); /* in component file 
 int orte_pls_xcpu_launch(orte_jobid_t);
 int orte_pls_xcpu_terminate_job(orte_jobid_t);
 int orte_pls_xcpu_terminate_proc(const orte_process_name_t* proc_name);
+int orte_pls_xcpu_signal_job(orte_jobid_t, int32_t);
+int orte_pls_xcpu_signal_proc(const orte_process_name_t* proc_name, int32_t);
 int orte_pls_xcpu_finalize(void);
 
 

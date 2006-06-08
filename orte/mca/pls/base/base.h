@@ -120,6 +120,8 @@ extern "C" {
     int orte_pls_base_proxy_mca_argv(int *argc, char ***argv);
     int orte_pls_base_proxy_terminate_job(orte_jobid_t jobid);
     int orte_pls_base_proxy_terminate_proc(const orte_process_name_t *proc);
+    int orte_pls_base_proxy_signal_job(orte_jobid_t jobid, int32_t signal);
+    int orte_pls_base_proxy_signal_proc(const orte_process_name_t *proc, int32_t signal);
 
     /**
      * Check that the cwd in an app context exists and is accessible.

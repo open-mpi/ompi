@@ -126,6 +126,18 @@ typedef int (*orte_rmgr_base_module_terminate_job_fn_t)(orte_jobid_t job);
  */
 typedef int (*orte_rmgr_base_module_terminate_proc_fn_t)(const orte_process_name_t* proc_name);
 
+
+/**
+ * Transmit a signal to an entire job
+ */
+typedef int (*orte_rmgr_base_module_signal_job_fn_t)(orte_jobid_t job, int32_t signal);
+
+/**
+ * Transmit a signal to a specific process
+ */
+typedef int (*orte_rmgr_base_module_signal_proc_fn_t)(const orte_process_name_t* proc_name, int32_t signal);
+
+
 /*
  * Callback function for resource manager
  */
@@ -193,6 +205,8 @@ struct orte_rmgr_base_module_1_0_0_t {
     orte_rmgr_base_module_launch_fn_t launch;
     orte_rmgr_base_module_terminate_job_fn_t terminate_job;
     orte_rmgr_base_module_terminate_proc_fn_t terminate_proc;
+    orte_rmgr_base_module_signal_job_fn_t signal_job;
+    orte_rmgr_base_module_signal_proc_fn_t signal_proc;
     orte_rmgr_base_module_spawn_fn_t spawn;
     orte_rmgr_base_module_proc_stage_gate_init_fn_t stage_gate_init;
     orte_rmgr_base_module_proc_stage_gate_mgr_fn_t stage_gate_mgr;
