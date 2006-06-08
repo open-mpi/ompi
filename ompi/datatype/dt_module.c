@@ -654,7 +654,7 @@ static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
     if( usflags & DT_FLAG_USER_LB )                  ptr[4]  = 'l';
     if( usflags & DT_FLAG_USER_UB )                  ptr[5]  = 'u';
     if( usflags & DT_FLAG_PREDEFINED )               ptr[6]  = 'P';
-    if( usflags & DT_FLAG_IN_LOOP )                  ptr[7]  = 'L';
+    if( !(usflags & DT_FLAG_NO_GAPS) )               ptr[7]  = 'G';
     if( usflags & DT_FLAG_DATA )                     ptr[8]  = 'D';
     if( (usflags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) ptr[9]  = 'B';
     /* Which kind of datatype is that */
