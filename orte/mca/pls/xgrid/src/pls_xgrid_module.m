@@ -49,6 +49,8 @@
 int orte_pls_xgrid_launch(orte_jobid_t jobid);
 int orte_pls_xgrid_terminate_job(orte_jobid_t jobid);
 int orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc);
+int orte_pls_xgrid_signal_job(orte_jobid_t, int32_t);
+int orte_pls_xgrid_signal_proc(const orte_process_name_t* proc_name, int32_t);
 int orte_pls_xgrid_finalize(void);
 
 
@@ -56,6 +58,8 @@ orte_pls_base_module_1_0_0_t orte_pls_xgrid_module = {
     orte_pls_xgrid_launch,
     orte_pls_xgrid_terminate_job,
     orte_pls_xgrid_terminate_proc,
+    orte_pls_xgrid_signal_job,
+    orte_pls_xgrid_signal_proc,
     orte_pls_xgrid_finalize
 };
 
@@ -222,6 +226,20 @@ cleanup:
 
 int
 orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+int
+orte_pls_xgrid_signal_job(orte_jobid_t jobid, int32_t sig)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+
+int
+orte_pls_xgrid_signal_proc(const orte_process_name_t* proc_name, 
+                           int32_t sig)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
