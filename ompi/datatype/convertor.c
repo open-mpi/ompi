@@ -39,7 +39,7 @@ static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
     convertor->pStack            = convertor->static_stack;
     convertor->stack_size        = DT_STATIC_STACK_SIZE;
-    convertor->storage.length    = 0;
+    convertor->partial_length    = 0;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -318,7 +318,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     dt_elem_desc_t* pElems;
 
     convertor->stack_pos      = 1;
-    convertor->storage.length = 0;
+    convertor->partial_length = 0;
     convertor->bConverted     = 0;
     /* Fill the first position on the stack. This one correspond to the
      * last fake DT_END_LOOP that we add to the data representation and
@@ -573,7 +573,7 @@ void ompi_convertor_dump( ompi_convertor_t* convertor )
             convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
     printf( "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n",
             (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
-            convertor->flags, convertor->stack_size, convertor->storage.length );
+            convertor->flags, convertor->stack_size, convertor->partial_length );
     ompi_ddt_dump( convertor->pDesc );
     printf( "Actual stack representation\n" );
     ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,
