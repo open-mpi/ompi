@@ -217,7 +217,6 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
             }
             return NULL;
         } else { 
-            mpool_tree_item->key = mem;
             mpool_tree_item->mpools[j] = mpool;
             mpool_tree_item->regs[j++] = registration;
             num_modules++;
