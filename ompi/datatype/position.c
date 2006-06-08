@@ -102,18 +102,12 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
     uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
     uint16_t type;            /* type at current position */
-    dt_elem_desc_t* description;
+    dt_elem_desc_t* description = pConvertor->use_desc->desc;
     dt_elem_desc_t* pElem;
-    char *base_pointer;
-    uint32_t iov_len_local, required_space = 0;
+    char *base_pointer = pConvertor->pBaseBuf;
+    uint32_t iov_len_local;
 
-
-    DUMP( "ompi_convertor_generic_simple_pack( %p, &%ld )\n",
-          (void*)pConvertor, (long)*position );
-
-    description = pConvertor->use_desc->desc;
-
-    base_pointer = pConvertor->pBaseBuf;
+    DUMP( "ompi_convertor_generic_simple_pack( %p, &%ld )\n", (void*)pConvertor, (long)*position );
 
     /* We dont want to have to parse the datatype multiple times. What we are interested in
      * here is to compute the number of completed datatypes that we can move forward, update
@@ -152,10 +146,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                                    pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConvertor->stack_pos == 0 ) {
-                    /* we lie about the size of the next element in order to
-                     * make sure we exit the main loop.
-                     */
-                    required_space = 0xffffffff;
                     pConvertor->flags |= CONVERTOR_COMPLETED;
                     goto complete_loop;  /* completed */
                 }
@@ -202,7 +192,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                                           base_pointer, iov_len_local );
             if( 0 != count_desc ) {  /* completed */
                 type = pElem->elem.common.type;
-                required_space = ompi_ddt_basicDatatypes[type]->size;
                 goto complete_loop;
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
@@ -213,10 +202,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
  complete_loop:
     (*position) -= iov_len_local;
     pConvertor->bConverted = *position;  /* update the already converted bytes */
-    if( (pConvertor->storage.length != iov_len_local) &&
-        (pConvertor->flags & CONVERTOR_RECV) ) {
-        opal_output( 0, "Missing some data ?" );
-    }
+
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,

@@ -278,7 +278,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
     char *user_memory_base, *packed_buffer;
-    uint32_t iov_len_local, iov_count, required_space = 0;
+    uint32_t iov_len_local, iov_count;
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
                            (void*)pConvertor, iov[0].iov_base, (size_t)iov[0].iov_len, *out_size ); );
@@ -289,7 +289,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
      * main while loop we will set back the source_base to the correct value. This is
      * due to the fact that the convertor can stop in the middle of a data with a count
      */
-    user_memory_base = pConvertor->pBaseBuf;
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc          = pStack->index;
     user_memory_base += pStack->disp;
@@ -297,7 +296,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]); 
-    user_memory_base += pStack->disp;
+    user_memory_base = pConvertor->pBaseBuf + pStack->disp;
 
     DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
@@ -305,8 +304,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        if( required_space > ((*max_data) - total_unpacked) )
-            break;  /* do not pack over the boundaries even if there are more iovecs */
 
         packed_buffer = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
@@ -347,13 +344,11 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                     continue;
                 }
                 type = pElem->elem.common.type;
-                assert (type < DT_MAX_PREDEFINED);
-                required_space = ompi_ddt_basicDatatypes[type]->size;
+                assert( type < DT_MAX_PREDEFINED );
                 if( 0 != iov_len_local ) {
                     /* We have some partial data here. Let's copy it into the convertor
                      * and keep it hot until the next round.
                      */
-                    assert (type < DT_MAX_PREDEFINED);
                     assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
                     MEMCPY_CSUM( pConvertor->storage.data, packed_buffer, iov_len_local, pConvertor );
                     DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
@@ -367,10 +362,8 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                                        pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
-                        /* we lie about the size of the next element in order to
-                         * make sure we exit the main loop.
-                         */
-                        required_space = 0xffffffff;
+                        /* Force the conversion to stop by lowering the number of iovecs. */
+                        *out_size = iov_count;
                         goto complete_loop;  /* completed */
                     }
                     pConvertor->stack_pos--;
