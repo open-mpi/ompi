@@ -24,7 +24,8 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include "ompi/mca/mpool/mpool.h"
-#include "ompi/mca/mpool/base/base.h"
+#include "base.h"
+#include "mpool_base_tree.h"
 #include "opal/threads/mutex.h" 
 
 /**
@@ -75,20 +76,26 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     opal_list_item_t * item;
     int num_modules = opal_list_get_size(&mca_mpool_base_modules);
     int reg_module_num = 0;
-    int i, num_keys;
+    int i, j, num_keys;
     mca_mpool_base_selected_module_t * current;
     mca_mpool_base_selected_module_t * no_reg_function = NULL;
     mca_mpool_base_selected_module_t ** has_reg_function = NULL;
     mca_mpool_base_registration_t * registration;
+    mca_mpool_base_tree_item_t* mpool_tree_item;
+    
     void * mem = NULL;
     char * key;
     bool match_found;
-
+    
     if (num_modules > 0) {
         has_reg_function = (mca_mpool_base_selected_module_t **)
                            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
     }
 
+    mpool_tree_item = mca_mpool_base_tree_item_get();
+    if(NULL == mpool_tree_item){ 
+        return NULL;
+    }
     if(&ompi_mpi_info_null == info)
     {
         for(item = opal_list_get_first(&mca_mpool_base_modules);
@@ -178,13 +185,16 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     }
     
     
-    i = 0;
+    i = j = 0;
     num_modules = 0;
     if(NULL != no_reg_function)
     {
         mca_mpool_base_module_t* mpool = no_reg_function->mpool_module;
         mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
         num_modules++;
+        mpool_tree_item->key = mem;
+        mpool_tree_item->mpools[j] = mpool;
+        mpool_tree_item->regs[j++] = registration;
     }
     else
     {
@@ -192,6 +202,9 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         mem = mpool->mpool_alloc(mpool, size, 0, MCA_MPOOL_FLAGS_PERSIST, &registration);
         i++;
         num_modules++;
+        mpool_tree_item->key = mem;
+        mpool_tree_item->mpools[j] = mpool;
+        mpool_tree_item->regs[j++] = registration;
     }
     
     while(i < reg_module_num)
@@ -203,14 +216,25 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 free(has_reg_function);
             }
             return NULL;
+        } else { 
+            mpool_tree_item->key = mem;
+            mpool_tree_item->mpools[j] = mpool;
+            mpool_tree_item->regs[j++] = registration;
+            num_modules++;
         }
-        num_modules++;
         i++;
     }
 
     if (NULL != has_reg_function) {
         free(has_reg_function);
     }
+    
+    /* null terminated array */
+    mpool_tree_item->mpools[j] = NULL;
+    mpool_tree_item->regs[j] = NULL;
+
+    mca_mpool_base_tree_insert(mpool_tree_item);
+    
     return mem;
 }
 
@@ -224,71 +248,31 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
  */
 int mca_mpool_base_free(void * base)
 {
-    int rc = OMPI_SUCCESS;
-    opal_list_item_t * item;
-    mca_mpool_base_selected_module_t * current = NULL;
-    mca_mpool_base_selected_module_t * free_function = NULL;
-    uint32_t i, cnt;
-    ompi_pointer_array_t regs;
-    OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
-                                                                                                       
-    for(item = opal_list_get_first(&mca_mpool_base_modules);
-        item != opal_list_get_end(&mca_mpool_base_modules);
-        item = opal_list_get_next(item)) {
-        current = ((mca_mpool_base_selected_module_t *) item);
-        /* 
-         * Check if a mpool has been used for allocating the memory. This 
-         * approach only works for the case that the user specified MPI_INFO_NULL
-         * in MPI_Alloc_mem.
-         * Maybe all possible mpools should be asked if they can free the 
-         * memory until the right returns OK ?
-         */
-        if(current->mpool_module->flags & MCA_MPOOL_FLAGS_MPI_ALLOC_MEM) {
-            if(NULL == current->mpool_module->mpool_register){
-                free_function = current;
-            } else {
-                if ( NULL == free_function ) {
-                    free_function = current;
-                }
-            }
-        }
-        if(NULL != current->mpool_module->mpool_find)  {
-            rc = current->mpool_module->mpool_find(
-                current->mpool_module,
-                base,
-                1,
-                &regs,
-                &cnt
-                );
-            if(OMPI_SUCCESS != rc) {
-                continue;
-            }
-            for(i = 0; i < cnt; i++) {
-                mca_mpool_base_registration_t* reg = (mca_mpool_base_registration_t*)
-                    ompi_pointer_array_get_item(&regs, i);
-                                                                                                       
-                rc = current->mpool_module->mpool_deregister(current->mpool_module, reg);
-                if(OMPI_SUCCESS != rc) {
-                    goto cleanup;
-                }
-            }
-            ompi_pointer_array_remove_all(&regs);
+    int i = 0, rc = OMPI_SUCCESS;
+    mca_mpool_base_tree_item_t* mpool_tree_item = 
+        mca_mpool_base_tree_find(base); 
+    mca_mpool_base_module_t* mpool;
+    mca_mpool_base_registration_t* reg;
+    
+    if(!mpool_tree_item) { 
+        return OMPI_ERROR;
+    }
+    mpool = mpool_tree_item->mpools[0];
+    reg =  mpool_tree_item->regs[0];
+    mpool->mpool_free(mpool, base, reg);
+    
+    for(i = 1; i < MCA_MPOOL_BASE_TREE_MAX; i++) {
+        mpool = mpool_tree_item->mpools[i];
+        reg = mpool_tree_item->regs[i];
+        if(mpool) { 
+            mpool->mpool_deregister(mpool, reg); 
+        } else { 
+            break;
         }
     }
-
-    /* free the memory */
-    if ( NULL == free_function ) {
-        /* If there is no mpool the memory has been allocated with malloc */
-        free(base);
-    } else {
-        /* free the memory with the mpool that was responsible for the allocation.
-         * The registration is NULL because the buffer has been unregistered above.
-         */
-        free_function->mpool_module->mpool_free(free_function->mpool_module, base, NULL);
-    }
-
-cleanup:
-    OBJ_DESTRUCT(&regs);
+    
+    rc = mca_mpool_base_tree_delete(mpool_tree_item);
+    
     return rc;
 }
 
