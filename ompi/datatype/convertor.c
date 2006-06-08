@@ -179,9 +179,10 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( (pConv->flags & DT_FLAG_PREDEFINED) == DT_FLAG_PREDEFINED ) {
-        /* We are doing conversion on a predefined datatype. The convertor contain
-         * minimal informations, we only use the bConverted to manage the conversion.
+    if( (pConv->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) {
+        /* We are doing conversion on a predefined contiguous datatype. The
+         * convertor contain minimal informations, we only use the bConverted
+         * to manage the conversion.
          */
         uint32_t i;
         size_t initial_bConverted = pConv->bConverted;
@@ -228,10 +229,11 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( (pConv->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) == 
-        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
-        /* We are doing conversion on a predefined datatype. The convertor contain
-         * minimal informations, we only use the bConverted to manage the conversion.
+    if( (pConv->flags & (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS)) == 
+        (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS) ) {
+        /* We are doing conversion on a contiguous datatype on a homogeneous
+         * environment. The convertor contain minimal informations, we only
+         * use the bConverted to manage the conversion.
          */
         uint32_t i;
         char* base_pointer;
@@ -396,27 +398,35 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
                                                                         \
         if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
             convertor->remote_size = convertor->local_size;             \
-            /* For predefined datatypes (contiguous) do nothing more */ \
-            if( (convertor->flags & DT_FLAG_PREDEFINED) == DT_FLAG_PREDEFINED ) { \
-                convertor->bConverted = 0;                              \
-                return OMPI_SUCCESS;                                    \
-            }                                                           \
             convertor->use_desc = &(datatype->opt_desc);                \
+            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
         } else {                                                        \
             int i;                                                      \
             uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;          \
+            ompi_convertor_master_t* master;                            \
+            master = convertor->master;                                 \
             convertor->remote_size = 0;                                 \
             for( i = DT_CHAR; bdt_mask != 0; i++, bdt_mask >>= 1 ) {    \
                 if( bdt_mask & ((unsigned long long)1) ) {              \
-                    /* TODO replace with the remote size */             \
                     convertor->remote_size += (datatype->btypes[i] *    \
-                                               ompi_ddt_basicDatatypes[i]->size); \
+                                               master->remote_sizes[i]);\
                 }                                                       \
             }                                                           \
             convertor->remote_size *= convertor->count;                 \
             convertor->use_desc = &(datatype->desc);                    \
+            if( convertor->flags & CONVERTOR_SEND ) {                   \
+                convertor->bConverted = 0;                              \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
         }                                                               \
         assert( NULL != convertor->use_desc->desc );                    \
+        /* For predefined datatypes (contiguous) do nothing more */     \
+        if( ((convertor->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) &&    \
+            ((convertor->flags & CONVERTOR_SEND) ||                     \
+             (convertor->flags & CONVERTOR_HOMOGENEOUS) ) ) {           \
+            convertor->bConverted = 0;                                  \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
                                                                         \
         {                                                               \
             uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1; \
@@ -448,7 +458,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (convertor->remoteArch != ompi_mpi_local_arch) {
+        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general_checksum;
         } else
 #endif
@@ -460,7 +470,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
         }
     } else {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (convertor->remoteArch != ompi_mpi_local_arch) {
+        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general;
         } else
 #endif
@@ -488,9 +498,8 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
-                convertor->fAdvance = ompi_pack_homogeneous_contig_checksum;
-            else if( 1 >= convertor->count )  /* gaps or no gaps */
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+                || (1 >= convertor->count) )
                 convertor->fAdvance = ompi_pack_homogeneous_contig_checksum;
             else
                 convertor->fAdvance = ompi_pack_homogeneous_contig_with_gaps_checksum;
@@ -500,9 +509,8 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
     } else {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
-                convertor->fAdvance = ompi_pack_homogeneous_contig;
-            else if( 1 >= convertor->count )  /* gaps or no gaps */
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+                || (1 >= convertor->count) )
                 convertor->fAdvance = ompi_pack_homogeneous_contig;
             else
                 convertor->fAdvance = ompi_pack_homogeneous_contig_with_gaps;
