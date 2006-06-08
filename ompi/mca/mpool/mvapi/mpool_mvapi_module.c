@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -27,6 +27,10 @@
 #include "ompi/mca/rcache/rcache.h" 
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
+
+#ifdef HAVE_MALLOC_H
+#include <malloc.h>
+#endif
 
 extern uint32_t mca_mpool_base_page_size;
 extern uint32_t mca_mpool_base_page_size_log; 
@@ -69,7 +73,6 @@ void* mca_mpool_mvapi_alloc(
     uint32_t flags, 
     mca_mpool_base_registration_t** registration)
 {
-    
     void* addr_malloc = (void*)malloc(size + mca_mpool_base_page_size); 
     void* addr = (void*)  up_align_addr(addr_malloc, mca_mpool_base_page_size_log); 
     if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
@@ -197,9 +200,7 @@ void* mca_mpool_mvapi_realloc(
 void mca_mpool_mvapi_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    if(registration){     
-        mpool->mpool_deregister(mpool, registration); 
-    }
+    mpool->mpool_deregister(mpool, registration); 
     free(registration->alloc_base); 
 }
 
