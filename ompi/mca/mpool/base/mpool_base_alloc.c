@@ -98,7 +98,6 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     mpool_tree_item = mca_mpool_base_tree_item_get();
     
     if(NULL == mpool_tree_item){ 
-        mca_mpool_base_tree_item_put(mpool_tree_item);
         if(has_reg_function) { 
             free(has_reg_function);
         }
