@@ -90,12 +90,21 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     if (num_modules > 0) {
         has_reg_function = (mca_mpool_base_selected_module_t **)
                            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
+        if(!has_reg_function){ 
+            return NULL;
+        }
     }
 
     mpool_tree_item = mca_mpool_base_tree_item_get();
+    
     if(NULL == mpool_tree_item){ 
+        mca_mpool_base_tree_item_put(mpool_tree_item);
+        if(has_reg_function) { 
+            free(has_reg_function);
+        }
         return NULL;
     }
+    
     if(&ompi_mpi_info_null == info)
     {
         for(item = opal_list_get_first(&mca_mpool_base_modules);
@@ -136,7 +145,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                            /* there was more than one requested mpool that lacks 
                             * a registration function, so return failure */
                             free(key);
-                            if (NULL != has_reg_function) {
+                            if(has_reg_function) { 
                                 free(has_reg_function);
                             }
                             return NULL;
@@ -154,7 +163,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 /* one of the keys given to us by the user did not match any
                  * mpools, so return an error */
                 free(key);
-                if (NULL != has_reg_function) {
+                if(has_reg_function) { 
                     free(has_reg_function);
                 }
                 return NULL;
@@ -165,7 +174,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     
     if(NULL == no_reg_function && 0 == reg_module_num)
     {
-        if (NULL != has_reg_function) {
+        if(has_reg_function) { 
             free(has_reg_function);
         }
         if(&ompi_mpi_info_null == info)
@@ -173,11 +182,11 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
             /* if the info argument was NULL and there were no useable mpools,
              * just malloc the memory and return it */
             mem = malloc(size);
-            if(NULL != mem)
-                {
-                    return mem;
-                }
-            
+            if(NULL != mem){
+                /* don't need the tree */
+                mca_mpool_base_tree_item_put(mpool_tree_item);
+                return mem;
+            }
         }
         /* the user passed info but we were not able to use any of the mpools 
          * specified */
@@ -212,7 +221,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         mca_mpool_base_module_t* mpool = has_reg_function[i]->mpool_module;
         if(OMPI_SUCCESS != mpool->mpool_register(mpool, mem, size, MCA_MPOOL_FLAGS_PERSIST,  &registration))
         {
-            if (NULL != has_reg_function) {
+            if (has_reg_function) {
                 free(has_reg_function);
             }
             return NULL;
@@ -223,8 +232,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         }
         i++;
     }
-
-    if (NULL != has_reg_function) {
+    if(has_reg_function) { 
         free(has_reg_function);
     }
     
@@ -253,12 +261,15 @@ int mca_mpool_base_free(void * base)
     mca_mpool_base_module_t* mpool;
     mca_mpool_base_registration_t* reg;
     
-    if(!mpool_tree_item) { 
+    if(!base) { 
         return OMPI_ERROR;
     }
-    mpool = mpool_tree_item->mpools[0];
-    reg =  mpool_tree_item->regs[0];
-    mpool->mpool_free(mpool, base, reg);
+    if(!mpool_tree_item) { 
+        /* nothing in the tree this was just 
+           plain old malloc'd memory */ 
+        free(base);
+        return OMPI_SUCCESS;
+    }
     
     for(i = 1; i < MCA_MPOOL_BASE_TREE_MAX; i++) {
         mpool = mpool_tree_item->mpools[i];
@@ -269,6 +280,10 @@ int mca_mpool_base_free(void * base)
             break;
         }
     }
+    
+    mpool = mpool_tree_item->mpools[0];
+    reg =  mpool_tree_item->regs[0];
+    mpool->mpool_free(mpool, base, reg);
     
     rc = mca_mpool_base_tree_delete(mpool_tree_item);
     
