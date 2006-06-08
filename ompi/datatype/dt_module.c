@@ -75,7 +75,7 @@ int ompi_ddt_dfd = -1;
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                  \
     { BASEOBJ_DATA, SIZE, ALIGN, 0/*true_lb*/, SIZE/*true_ub*/,                                    \
             0/*lb*/, SIZE/*ub*/,                                                                   \
-            DT_FLAG_CONTIGUOUS | DT_FLAG_PREDEFINED | DT_FLAG_DATA | DT_FLAG_COMMITED | DT_FLAG_DATA_FORTRAN | (FLAGS), \
+            DT_FLAG_BASIC | DT_FLAG_DATA_FORTRAN | (FLAGS), \
             (TYPE), 1, (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                          \
@@ -340,8 +340,6 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ptype->opt_desc.desc = NULL;                                    \
         OBJ_RELEASE( ptype );                                           \
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
-        if( (PDATA)->flags & DT_FLAG_CONTIGUOUS )                       \
-            (PDATA)->flags |= DT_FLAG_BASIC;                            \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -357,8 +355,6 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ptype->opt_desc.desc = NULL;                                                 \
         OBJ_RELEASE( ptype );                                                        \
         strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
-        if( (PDATA)->flags & DT_FLAG_CONTIGUOUS )                                    \
-            (PDATA)->flags |= DT_FLAG_BASIC;                                         \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)           \
