@@ -73,8 +73,8 @@ void* mca_mpool_mvapi_alloc(
     uint32_t flags, 
     mca_mpool_base_registration_t** registration)
 {
-    void* addr_malloc =  (void*)memalign(mca_mpool_base_page_size, size);
-    void* addr = addr_malloc;
+    void* addr_malloc = (void*)malloc(size + mca_mpool_base_page_size); 
+    void* addr = (void*)  up_align_addr(addr_malloc, mca_mpool_base_page_size_log); 
     if(OMPI_SUCCESS !=  mpool->mpool_register(mpool, addr, size, flags, registration)) { 
         free(addr_malloc);
         return NULL; 
