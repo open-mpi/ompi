@@ -92,8 +92,12 @@ noinst_SCRIPTS = \
      mpi_sizeof.f90.sh \
      mpi_ssend_f90.f90.sh \
      mpi_ssend_init_f90.f90.sh \
+     mpi_testall_f90.f90.sh \
+     mpi_testsome_f90.f90.sh \
      mpi_unpack_external_f90.f90.sh \
      mpi_unpack_f90.f90.sh \
+     mpi_waitall_f90.f90.sh \
+     mpi_waitsome_f90.f90.sh \
      mpi_win_create_f90.f90.sh
 
 EXTRA_DIST = $(noinst_SCRIPTS)

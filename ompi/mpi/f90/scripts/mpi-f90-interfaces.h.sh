@@ -7384,14 +7384,22 @@ output_206() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, flag, array_of_statuses, ierr)
+subroutine ${procedure}_normal(count, array_of_requests, flag, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
   integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}
+end subroutine ${procedure}_normal
+
+subroutine ${procedure}_ignore(count, array_of_requests, flag, array_of_statuses, ierr)
+  integer, intent(in) :: count
+  integer, dimension(count), intent(inout) :: array_of_requests
+  logical, intent(out) :: flag
+  double complex, intent(in) :: array_of_statuses
+  integer, intent(out) :: ierr
+end subroutine ${procedure}_ignore
 
 EOF
 }
@@ -7438,7 +7446,7 @@ output_208() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine ${procedure}_normal(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
@@ -7447,7 +7455,17 @@ subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, 
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(incount, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}
+end subroutine ${procedure}_normal
+
+subroutine ${procedure}_ignore(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+        , ierr)
+  integer, intent(in) :: incount
+  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, intent(out) :: outcount
+  integer, dimension(*), intent(out) :: array_of_indices
+  double complex, intent(in) :: array_of_statuses
+  integer, intent(out) :: ierr
+end subroutine ${procedure}_ignore
 
 EOF
 }
@@ -8516,13 +8534,20 @@ output_248() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(count, array_of_requests, array_of_statuses, ierr)
+subroutine ${procedure}_normal(count, array_of_requests, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}
+end subroutine ${procedure}_normal
+
+subroutine ${procedure}_ignore(count, array_of_requests, array_of_statuses, ierr)
+  integer, intent(in) :: count
+  integer, dimension(count), intent(inout) :: array_of_requests
+  double complex, intent(in) :: array_of_statuses
+  integer, intent(out) :: ierr
+end subroutine ${procedure}_ignore
 
 EOF
 }
@@ -8567,7 +8592,7 @@ output_250() {
     procedure=$1
     cat <<EOF
 
-subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine ${procedure}_normal(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
@@ -8576,7 +8601,17 @@ subroutine ${procedure}(incount, array_of_requests, outcount, array_of_indices, 
   integer, dimension(*), intent(out) :: array_of_indices
   integer, dimension(incount, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}
+end subroutine ${procedure}_normal
+
+subroutine ${procedure}_ignore(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+        , ierr)
+  integer, intent(in) :: incount
+  integer, dimension(incount), intent(inout) :: array_of_requests
+  integer, intent(out) :: outcount
+  integer, dimension(*), intent(out) :: array_of_indices
+  double complex, intent(in) :: array_of_statuses
+  integer, intent(out) :: ierr
+end subroutine ${procedure}_ignore
 
 EOF
 }

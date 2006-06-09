@@ -168,13 +168,21 @@
       character MPI_ARGV_NULL(1)
 !     MPI_ARGVS_NULL must not be a character array so that we can match
 !     an appropriate F90 MPI bindings interface function; see comments
-!     in mpi-f90-interfaces.h for a full explanation.
+!     in mpi-f90-interfaces.h for a full explanation.  It's an analogous
+!     situation for MPI_STATUSES_IGNORE -- we make it of a type that no
+!     one should ever try to pass to (for example) MPI_WAITSOME so that
+!     we get the desired type matching (i.e., we wouldn't want to make
+!     MPI_STATUSED_IGNORE an integer array size of MPI_STATUS_SIZE
+!     because someone may accidentally pass in a 1D integer array of
+!     size MPI_STATUS_SIZE [vs. an array of integer arrays, like they're
+!     supposed to] -- and that's the type of mistake that these
+!     strong-typing bindings are supposed to catch :-) ).
       integer MPI_ARGVS_NULL
+      double complex MPI_STATUSES_IGNORE
 !     These must be integer arrays so that we can match the proper
 !     prototypes in the F90 MPI bindings.
       integer MPI_ERRCODES_IGNORE(1)
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
-      integer MPI_STATUSES_IGNORE(MPI_STATUS_SIZE)
       
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE
