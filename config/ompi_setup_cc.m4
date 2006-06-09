@@ -8,7 +8,7 @@ dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
-dnl Copyright (c) 2004-2005 The Regents of the University of California.
+dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
 dnl $COPYRIGHT$
 dnl 
@@ -152,6 +152,38 @@ AC_DEFUN([OMPI_SETUP_CC],[
         fi
         unset add
     fi
+
+    # see if the C compiler supports __builtin_expect
+    AC_CACHE_CHECK([if $CC supports __builtin_expect],
+        [ompi_cv_cc_supports___builtin_expect],
+        [AC_TRY_COMPILE([],
+          [void *ptr = (void*) 0;
+           if (__builtin_expect (ptr != NULL, 1)) return 0;],
+          [ompi_cv_cc_supports___builtin_expect="yes"],
+          [ompi_cv_cc_supports___builtin_expect="no"])])
+    if test "$ompi_cv_cc_supports___builtin_expect" = "yes" ; then
+        have_builtin_expect=1
+    else
+        have_builtin_expect=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_C_HAVE_BUILTIN_EXPECT], [$have_builtin_expect],
+          [Whether C compiler supports __builtin_expect])
+
+    # see if the C compiler supports __builtin_prefetch
+    AC_CACHE_CHECK([if $CC supports __builtin_prefetch],
+        [ompi_cv_cc_supports___builtin_prefetch],
+        [AC_TRY_COMPILE([],
+          [int ptr;
+           __builtin_prefetch(&ptr);],
+          [ompi_cv_cc_supports___builtin_prefetch="yes"],
+          [ompi_cv_cc_supports___builtin_prefetch="no"])])
+    if test "$ompi_cv_cc_supports___builtin_prefetch" = "yes" ; then
+        have_builtin_prefetch=1
+    else
+        have_builtin_prefetch=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_C_HAVE_BUILTIN_PREFETCH], [$have_builtin_prefetch],
+          [Whether C compiler supports __builtin_prefetch])
 
     # Preload the optflags for the case where the user didn't specify
     # any.  If we're using GNU compilers, use -O3 (since it GNU
