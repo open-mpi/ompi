@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,8 +35,6 @@ uint64_t mca_mpool_udapl_mem_registered;
  */ 
 void mca_mpool_udapl_module_init(mca_mpool_udapl_module_t* mpool)
 {
-    OPAL_OUTPUT((0, "mpool_udapl_module_init\n"));
-
     mpool->super.mpool_component = &mca_mpool_udapl_component.super; 
     mpool->super.mpool_base = NULL; /* no base .. */ 
     mpool->super.mpool_alloc = mca_mpool_udapl_alloc; 
@@ -64,8 +64,6 @@ void* mca_mpool_udapl_alloc(
     mca_mpool_base_registration_t** registration)
 {
     void* addr = malloc(size+align);
-
-    /* TODO - align addr to dat_optimal_alignment */
     if(NULL == addr)
         return NULL;
     if(OMPI_SUCCESS != mca_mpool_udapl_register(mpool,
@@ -94,8 +92,6 @@ int mca_mpool_udapl_register(
     DAT_VADDR dat_addr;
     int rc;
 
-    OPAL_OUTPUT((0, "mpool_udapl_register\n"));
-
     udapl_mpool = (mca_mpool_udapl_module_t*)mpool;
     reg = OBJ_NEW(mca_mpool_udapl_registration_t);
     if(NULL == reg) {
@@ -107,7 +103,6 @@ int mca_mpool_udapl_register(
     reg->base_reg.flags = flags; 
     reg->base_reg.bound = up_align_addr((void*)((unsigned long) addr + size -1),
                     mca_mpool_base_page_size_log);
-
 
     region.for_va = addr;
     reg->lmr_triplet.virtual_address = (DAT_VADDR)addr;
@@ -146,20 +141,12 @@ int mca_mpool_udapl_deregister(mca_mpool_base_module_t* mpool,
 {
     int rc;
 
-    OPAL_OUTPUT((0, "mpool_udapl_deregister\n"));
-
     if(reg->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
-        mpool->rcache->rcache_delete(mpool->rcache, 
-                                     reg, 
-                                     reg->flags); 
+        mpool->rcache->rcache_delete(mpool->rcache, reg, reg->flags);
+        reg->flags = 0;
     }
-    if((rc = mca_mpool_udapl_release(mpool, reg)) != OMPI_SUCCESS) { 
-        OPAL_OUTPUT((0, "[%s:%d] error(%d) deregistering udapl memory\n", __FILE__, __LINE__, rc));
-        assert(0);
-        return OMPI_ERR_OUT_OF_RESOURCE;
 
-    }
-    return OMPI_SUCCESS;
+    return mca_mpool_udapl_release(mpool, reg);
 }
 
 /**
@@ -171,15 +158,15 @@ void* mca_mpool_udapl_realloc(
     size_t size, 
     mca_mpool_base_registration_t** registration)
 {
-    void *new_addr = mca_mpool_udapl_alloc(mpool,size,0, (*registration)->flags, registration);
-
-    OPAL_OUTPUT((0, "mpool_udapl_realloc\n"));
-
+    mca_mpool_base_registration_t* old_reg = *registration;
+    void *new_addr = mca_mpool_udapl_alloc(mpool,
+            size, 0, (*registration)->flags, registration);
     if(new_addr == NULL) {
         return NULL;
     }
-    memcpy(new_addr,addr,size);
-    mca_mpool_udapl_free(mpool,addr,*registration);
+
+    memcpy(new_addr, addr, size);
+    mca_mpool_udapl_free(mpool, addr, old_reg);
     return new_addr;
 }
 
@@ -189,9 +176,7 @@ void* mca_mpool_udapl_realloc(
 void mca_mpool_udapl_free(mca_mpool_base_module_t* mpool, void * addr,
                          mca_mpool_base_registration_t* registration)
 {
-    if(registration){     
-        mpool->mpool_deregister(mpool, registration);
-    }
+    mpool->mpool_deregister(mpool, registration);
     free(addr);
 }
 
@@ -202,13 +187,7 @@ int mca_mpool_udapl_find(
     ompi_pointer_array_t *regs,
     uint32_t* cnt)
 {
-    OPAL_OUTPUT((0, "mpool_udapl_find\n"));
-
-    return mpool->rcache->rcache_find(mpool->rcache, 
-                                      addr, 
-                                      size, 
-                                      regs, 
-                                      cnt); 
+    return mpool->rcache->rcache_find(mpool->rcache, addr, size, regs, cnt); 
 }
  
 int mca_mpool_udapl_release(
@@ -235,7 +214,6 @@ int mca_mpool_udapl_retain(
     struct mca_mpool_base_module_t* mpool, 
     mca_mpool_base_registration_t* registration)
 {
-    OPAL_OUTPUT((0, "mpool_udapl_retain\n"));
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
