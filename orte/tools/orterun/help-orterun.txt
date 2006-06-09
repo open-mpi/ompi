@@ -26,6 +26,8 @@ Usage: %s [OPTION]...  [PROGRAM]...
 Start the given program using Open RTE
 
 %s
+[orterun:version]
+%s (%s) %s
 [orterun:allocate-resources]
 %s was unable to allocate enough resources to start your application.
 This might be a transient error (too many nodes in the cluster were
