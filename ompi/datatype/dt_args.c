@@ -43,6 +43,13 @@ typedef struct __dt_args {
     MPI_Datatype* d;
 } ompi_ddt_args_t;
 
+/**
+ * Some architecture require that 64 bits pointers (to pointers) has to
+ * be 64 bits aligned. As in the ompi_ddt_args_t structure we have 2 such
+ * pointers and one to an array of ints, if we start by setting the 64
+ * bits aligned one we will not have any trouble. Problem arise on
+ * SPARC 64.
+ */
 #define ALLOC_ARGS(PDATA, IC, AC, DC)					\
     do {                                                                \
         int length = sizeof(ompi_ddt_args_t) + (IC) * sizeof(int) +     \
@@ -53,11 +60,6 @@ typedef struct __dt_args {
         pArgs->ca = (AC);                                               \
         pArgs->cd = (DC);                                               \
         buf += sizeof(ompi_ddt_args_t);					\
-        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
-        else {								\
-            pArgs->i = (int*)buf;                                       \
-            buf += pArgs->ci * sizeof(int);                             \
-        }                                                               \
         if( pArgs->ca == 0 ) pArgs->a = NULL;				\
         else {								\
             pArgs->a = (MPI_Aint*)buf;					\
@@ -65,6 +67,11 @@ typedef struct __dt_args {
         }                                                               \
         if( pArgs->cd == 0 ) pArgs->d = NULL;				\
         else pArgs->d = (MPI_Datatype*)buf;                             \
+        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
+        else {								\
+            pArgs->i = (int*)buf;                                       \
+            buf += pArgs->ci * sizeof(int);                             \
+        }                                                               \
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
