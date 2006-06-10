@@ -42,7 +42,6 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
 
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
-    frag->type = mca_btl_portals_frag_type_rdma;
 
     /* setup the send */
     assert(1 == frag->base.des_src_cnt);
@@ -58,7 +57,6 @@ mca_btl_portals_put(struct mca_btl_base_module_t* btl_base,
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,
                     "PtlPut failed with error %d", ret);
-        PtlMDUnlink(frag->md_h);
         return OMPI_ERROR;
     }
 
@@ -83,7 +81,6 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
 
     frag->endpoint = btl_peer;
     frag->hdr.tag = MCA_BTL_TAG_MAX;
-    frag->type = mca_btl_portals_frag_type_rdma;
 
     ret = PtlGet(frag->md_h,
                  *((mca_btl_base_endpoint_t*) btl_peer),
@@ -94,7 +91,6 @@ mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
     if (ret != PTL_OK) {
         opal_output(mca_btl_portals_component.portals_output,
                     "PtlGet failed with error %d", ret);
-        PtlMDUnlink(frag->md_h);
         return OMPI_ERROR;
     }
 

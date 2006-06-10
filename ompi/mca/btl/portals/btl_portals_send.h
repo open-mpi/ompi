@@ -24,8 +24,8 @@
 
 #define MCA_BTL_PORTALS_PROGRESS_QUEUED_SENDS() \
     if ((0 != opal_list_get_size(&(mca_btl_portals_module.portals_queued_sends))) && \
-        (mca_btl_portals_module.portals_outstanding_sends <                          \
-         mca_btl_portals_module.portals_max_outstanding_sends)) {                    \
+        (mca_btl_portals_module.portals_outstanding_ops <                            \
+         mca_btl_portals_module.portals_max_outstanding_ops)) {                      \
         mca_btl_portals_frag_t *qfrag = (mca_btl_portals_frag_t*)                    \
             opal_list_remove_first(&(mca_btl_portals_module.portals_queued_sends));  \
         OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,           \

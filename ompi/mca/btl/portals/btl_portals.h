@@ -31,6 +31,7 @@
 #include "orte/class/orte_proc_table.h"
 
 #include "btl_portals_endpoint.h"
+#include "btl_portals_frag.h"
 
 #define OMPI_BTL_PORTALS_SEND_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 0)
 #define OMPI_BTL_PORTALS_RDMA_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 1)
@@ -66,12 +67,15 @@ struct mca_btl_portals_component_t {
     int portals_free_list_max_num;
     /* numer of elements to grow free lists */
     int portals_free_list_inc_num;
+
+    /* number of eager fragments */
+    int portals_free_list_eager_max_num;
 };
 typedef struct mca_btl_portals_component_t mca_btl_portals_component_t;
 
 
 #define OMPI_BTL_PORTALS_EQ_SEND  0
-#define OMPI_BTL_PORTALS_EQ       1
+#define OMPI_BTL_PORTALS_EQ_RECV  1
 #define OMPI_BTL_PORTALS_EQ_SIZE  2
 
 struct mca_btl_portals_module_t {
@@ -89,12 +93,14 @@ struct mca_btl_portals_module_t {
     ompi_free_list_t portals_frag_eager;
     ompi_free_list_t portals_frag_max;
     ompi_free_list_t portals_frag_user;
-    ompi_free_list_t portals_frag_recv;
 
     /* incoming send message receive memory descriptors */
     int portals_recv_mds_num;
     int portals_recv_mds_size;
     opal_list_t portals_recv_blocks;
+
+    /* frag for receive callbacks */
+    mca_btl_portals_frag_recv_t portals_recv_frag;
 
     /* event queues.  Keep sends on own eq, since we can't control
        space for the ack otherwise */
@@ -104,11 +110,11 @@ struct mca_btl_portals_module_t {
     /* "reject" entry for recv match list */
     ptl_handle_me_t portals_recv_reject_me_h;
 
-    /* number outstanding sends */
-    volatile int32_t portals_outstanding_sends;
-    int32_t portals_max_outstanding_sends;
+    /* number outstanding sends and local rdma */
+    volatile int32_t portals_outstanding_ops;
+    int32_t portals_max_outstanding_ops;
 
-    /* queued sends */
+    /* sends queued until there's time to send */
     opal_list_t portals_queued_sends;
 
     /* key to use for next rdma operation */
