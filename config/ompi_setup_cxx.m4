@@ -141,7 +141,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
         [ompi_cv_cxx_supports___builtin_expect],
         [AC_TRY_COMPILE([],
           [void *ptr = (void*) 0;
-           if (__builtin_expect (ptr != NULL, 1)) return 0;],
+           if (__builtin_expect (ptr != (void*) 0, 1)) return 0;],
           [ompi_cv_cxx_supports___builtin_expect="yes"],
           [ompi_cv_cxx_supports___builtin_expect="no"])])
     if test "$ompi_cv_cxx_supports___builtin_expect" = "yes" ; then
