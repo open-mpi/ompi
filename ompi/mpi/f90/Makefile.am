@@ -161,7 +161,11 @@ trivial_sources = \
      mpi_sizeof.f90 
 
 small_sources = \
-     mpi_comm_spawn_multiple_f90.f90
+     mpi_comm_spawn_multiple_f90.f90 \
+     mpi_testall_f90.f90 \
+     mpi_testsome_f90.f90 \
+     mpi_waitall_f90.f90 \
+     mpi_waitsome_f90.f90
 
 medium_sources = \
      mpi_address_f90.f90 \
