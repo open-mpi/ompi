@@ -113,5 +113,5 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) {
  */
 void mca_mpool_base_tree_item_put(mca_mpool_base_tree_item_t* item) { 
     OMPI_FREE_LIST_RETURN(&mca_mpool_base_tree_item_free_list,
-                          item);
+                          &(item->super));
 }

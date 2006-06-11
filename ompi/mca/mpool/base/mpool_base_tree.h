@@ -21,7 +21,7 @@
 #define MCA_MPOOL_BASE_TREE_MAX 8
 #include "opal/mca/mca.h"
 #include "ompi/info/info.h"
-#include "opal/class/opal_list.h" 
+#include "ompi/class/ompi_free_list.h" 
 #include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/mpool/mpool.h"
 
@@ -35,7 +35,7 @@
  */
 struct mca_mpool_base_tree_item_t
 {
-    opal_list_item_t super;   /**< the parent class */
+    ompi_free_list_item_t super;   /**< the parent class */
     void* key; /* the address this was alloc'd on */
     mca_mpool_base_module_t* mpools[MCA_MPOOL_BASE_TREE_MAX]; /**< the mpools */
     mca_mpool_base_registration_t* regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */  

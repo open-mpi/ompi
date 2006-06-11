@@ -24,7 +24,7 @@
 #define MCA_RCACHE_RB_TREE_H
 #include "opal/mca/mca.h"
 #include "ompi/info/info.h"
-#include "opal/class/opal_list.h" 
+#include "ompi/class/ompi_free_list.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "rcache_rb.h"
 /*
@@ -46,7 +46,7 @@ typedef struct mca_rcache_rb_tree_key_t mca_rcache_rb_tree_key_t;
  */
 struct mca_rcache_rb_tree_item_t
 {
-    opal_list_item_t super;   /**< the parent class */
+    ompi_free_list_item_t super;   /**< the parent class */
     mca_rcache_rb_tree_key_t key; /**< the key which holds the memory pointers */
     mca_mpool_base_registration_t* reg; /**< the registration */  
 };
