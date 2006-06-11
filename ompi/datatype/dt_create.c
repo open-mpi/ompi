@@ -111,5 +111,7 @@ int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long e
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
+    (*newType)->true_lb += lb;
+    (*newType)->true_ub += lb;
     return OMPI_SUCCESS;
 }
