@@ -66,12 +66,12 @@ typedef struct __dt_args {
             buf += pArgs->ca * sizeof(MPI_Aint);                        \
         }                                                               \
         if( pArgs->cd == 0 ) pArgs->d = NULL;				\
-        else pArgs->d = (MPI_Datatype*)buf;                             \
-        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
-        else {								\
-            pArgs->i = (int*)buf;                                       \
-            buf += pArgs->ci * sizeof(int);                             \
+        else {                                                          \
+            pArgs->d = (MPI_Datatype*)buf;                              \
+            buf += pArgs->cd * sizeof(MPI_Datatype);                    \
         }                                                               \
+        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
+        else pArgs->i = (int*)buf;                                      \
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
