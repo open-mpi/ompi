@@ -31,9 +31,9 @@
 #endif
 
 #if OMPI_CXX_HAVE_BUILTIN_PREFETCH
-#define OPAL_PREFETCH(address) __builtin_prefetch(address)
+#define OPAL_PREFETCH(address,rw,locality) __builtin_prefetch(address,rw,locality)
 #else
-#define OPAL_PREFETCH(address)
+#define OPAL_PREFETCH(address,rw,locality)
 #endif
 
 #else
@@ -48,9 +48,9 @@
 #endif
 
 #if OMPI_C_HAVE_BUILTIN_PREFETCH
-#define OPAL_PREFETCH(address) __builtin_prefetch(address)
+#define OPAL_PREFETCH(address,rw,locality) __builtin_prefetch(address,rw,locality)
 #else
-#define OPAL_PREFETCH(address)
+#define OPAL_PREFETCH(address,rw,locality)
 #endif
 
 #endif

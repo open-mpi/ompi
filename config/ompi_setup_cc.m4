@@ -174,7 +174,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
         [ompi_cv_cc_supports___builtin_prefetch],
         [AC_TRY_COMPILE([],
           [int ptr;
-           __builtin_prefetch(&ptr);],
+           __builtin_prefetch(&ptr,0,0);],
           [ompi_cv_cc_supports___builtin_prefetch="yes"],
           [ompi_cv_cc_supports___builtin_prefetch="no"])])
     if test "$ompi_cv_cc_supports___builtin_prefetch" = "yes" ; then
