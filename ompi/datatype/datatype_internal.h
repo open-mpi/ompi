@@ -250,19 +250,19 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
                                                                const ompi_datatype_t* pData,
                                                                int count );
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT ) \
-{ \
-    char *__lower_bound = (char*)(INITPTR), *__upper_bound; \
-    assert( ((LENGTH) != 0) && ((COUNT) != 0) ); \
-    __lower_bound += (PDATA)->true_lb; \
-    __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub; \
-    if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
-        ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
-        opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
-                     __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
-                     (INITPTR), (COUNT) ); \
-        ompi_ddt_dump( (PDATA) ); \
-    } \
-}
+    {                                                                   \
+        char *__lower_bound = (char*)(INITPTR), *__upper_bound;         \
+        assert( ((LENGTH) != 0) && ((COUNT) != 0) );                    \
+        __lower_bound += (PDATA)->true_lb - (PDATA)->lb;                \
+        __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub - (PDATA)->lb; \
+        if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
+            ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
+            opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+                         __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
+                         (INITPTR), (COUNT) );                          \
+            ompi_ddt_dump( (PDATA) );                                   \
+        }                                                               \
+    }
 
 #else
 #define OMPI_DDT_SAFEGUARD_POINTER( ACTPTR, LENGTH, INITPTR, PDATA, COUNT )

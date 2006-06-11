@@ -374,7 +374,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  */
 #define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
-        convertor->pBaseBuf        = (void*)pUserBuf;                   \
+        convertor->pBaseBuf        = (char*)pUserBuf + datatype->lb;    \
         convertor->count           = count;                             \
                                                                         \
         /* Grab the datatype part of the flags */                       \

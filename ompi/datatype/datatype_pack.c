@@ -762,7 +762,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 i++;  /* just to compute the correct source pointer */
                 total_bytes_converted += done;
             }
-            user_memory = pConv->pBaseBuf + pData->true_lb + i * extent;
+            user_memory = pConv->pBaseBuf + i * extent;
             counter = max_allowed / pData->size;
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
@@ -827,10 +827,9 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
      * main while loop we will set back the source_base to the correct value. This is
      * due to the fact that the convertor can stop in the middle of a data with a count
      */
-    source_base  = pConvertor->pBaseBuf;
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc     = pStack->index;
-    source_base += pStack->disp;
+    source_base  = pConvertor->pBaseBuf + pStack->disp;
     count_desc   = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
