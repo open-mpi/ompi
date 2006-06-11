@@ -226,18 +226,21 @@ int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
     printf( "type %d count ints %d count disp %d count datatype %d\n",
             pArgs->create_type, pArgs->ci, pArgs->ca, pArgs->cd );
     if( pArgs->i != NULL ) {
+        printf( "ints:     " );
         for( i = 0; i < pArgs->ci; i++ ) {
             printf( "%d ", pArgs->i[i] );
         }
         printf( "\n" );
     }
     if( pArgs->a != NULL ) {
+        printf( "MPI_Aint: " );
         for( i = 0; i < pArgs->ca; i++ ) {
             printf( "%ld ", (long)pArgs->a[i] );
         }
         printf( "\n" );
     }
     if( pArgs->d != NULL ) {
+        printf( "types:    " );
         for( i = 0; i < pArgs->cd; i++ ) {
             ompi_datatype_t* temp = pArgs->d[i];
             if( temp->flags & DT_FLAG_PREDEFINED ) {
