@@ -72,7 +72,8 @@ int MPI_Type_create_subarray(int ndims,
             *newtype = &ompi_mpi_datatype_null;
             return MPI_SUCCESS;
         }
-        ompi_ddt_create_contiguous( subsize_array[0], oldtype, newtype );
+        ompi_ddt_create_contiguous( subsize_array[0], oldtype, &last_type );
+        ompi_ddt_create_resized( last_type, start_array[0] * extent, size_array[0] * extent, newtype );
         return MPI_SUCCESS;
     }
 
@@ -99,12 +100,12 @@ int MPI_Type_create_subarray(int ndims,
     size = size_array[i] * size_array[i+step];
     displ = start_array[i] + start_array[i+step] * size_array[i];
     for( i += 2 * step; i != end_loop; i += step ) {
-        last_type = *newtype;
         ompi_ddt_create_vector( subsize_array[i], 1, size_array[i],
                                 last_type, newtype );
         ompi_ddt_destroy( &last_type );
         displ += size * start_array[i];
         size *= size_array[i];
+        last_type = *newtype;
     }
     
     ompi_ddt_create_resized( last_type, displ * extent,
