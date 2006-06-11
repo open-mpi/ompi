@@ -106,6 +106,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* pElem;
     char *base_pointer = pConvertor->pBaseBuf;
     uint32_t iov_len_local;
+    long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
 
     DUMP( "ompi_convertor_generic_simple_pack( %p, &%ld )\n", (void*)pConvertor, (long)*position );
 
@@ -116,8 +117,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
      */
     iov_len_local = *position - pConvertor->bConverted;
     if( iov_len_local > pConvertor->pDesc->size ) {
-        long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
-
         count_desc = iov_len_local / pConvertor->pDesc->size;
         for( type = 0; type <= pConvertor->stack_pos; type++ )
             pConvertor->pStack[type].disp += extent;
@@ -154,7 +153,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                 pos_desc++;
             } else {
                 if( pStack->index == -1 ) {
-                    pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
+                    pStack->disp += extent;
                 } else {
                     assert( DT_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;
