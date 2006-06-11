@@ -191,7 +191,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
-        user_memory = pConv->pBaseBuf + pData->true_lb;
+        user_memory = pConv->pBaseBuf;
 
         /*opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %d\n",
           user_memory, packed_buffer, remaining );*/
@@ -240,7 +240,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                 MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
                 user_memory += remaining;
             }
-            stack->disp = user_memory - pData->true_lb - pConv->pBaseBuf;  /* save the position */
+            stack->disp = user_memory - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
     }
@@ -332,12 +332,12 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
      */
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc          = pStack->index;
-    user_memory_base += pStack->disp;
+    user_memory_base  = pConvertor->pBaseBuf + pStack->disp;
     count_desc        = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]); 
-    user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+    user_memory_base += pStack->disp;
 
     DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
