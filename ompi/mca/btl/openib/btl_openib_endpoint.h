@@ -233,7 +233,7 @@ do { \
     int32_t num_post = cnt; \
     struct ibv_recv_wr* bad_wr; \
     for(i = 0; i < num_post; i++) { \
-        opal_list_item_t* item; \
+        ompi_free_list_item_t* item; \
         mca_btl_openib_frag_t* frag; \
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
         frag = (mca_btl_openib_frag_t*) item; \

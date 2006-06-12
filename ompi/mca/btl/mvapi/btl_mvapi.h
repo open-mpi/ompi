@@ -245,7 +245,7 @@ struct mca_btl_mvapi_module_t {
     VAPI_ret_t ret; \
     uint32_t rwqe_posted = 0; \
     int rc; \
-    opal_list_item_t* item = NULL; \
+    ompi_free_list_item_t* item = NULL; \
     mca_btl_mvapi_frag_t* frag = NULL; \
     VAPI_rr_desc_t* desc_post = mvapi_btl->rr_desc_post; \
     for(i = 0; i < cnt; i++) { \

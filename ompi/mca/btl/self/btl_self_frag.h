@@ -48,38 +48,39 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 
 #define MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag, rc)                              \
 {                                                                            \
-    opal_list_item_t* item;                                                  \
+    ompi_free_list_item_t* item;                                             \
     OMPI_FREE_LIST_WAIT(&mca_btl_self_component.self_frags_eager, item, rc); \
     frag = (mca_btl_self_frag_t*)item;                                       \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_EAGER(frag)                                 \
 {                                                                            \
-    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_eager, (opal_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_eager,          \
+                          (ompi_free_list_item_t*)(frag));                   \
 }
 
 #define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc)                               \
 {                                                                            \
-    opal_list_item_t* item;                                                  \
+    ompi_free_list_item_t* item;                                             \
     OMPI_FREE_LIST_WAIT(&mca_btl_self_component.self_frags_send, item, rc);  \
     frag = (mca_btl_self_frag_t*)item;                                       \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_SEND(frag)                                  \
 {                                                                            \
-    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_send, (opal_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_send, (ompi_free_list_item_t*)(frag)); \
 }
 
 #define MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc)                               \
 {                                                                            \
-    opal_list_item_t* item;                                                  \
+    ompi_free_list_item_t* item;                                                  \
     OMPI_FREE_LIST_WAIT(&mca_btl_self_component.self_frags_rdma, item, rc);  \
     frag = (mca_btl_self_frag_t*)item;                                       \
 }
 
 #define MCA_BTL_SELF_FRAG_RETURN_RDMA(frag)                                  \
 {                                                                            \
-    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_rdma, (opal_list_item_t*)(frag)); \
+    OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_rdma, (ompi_free_list_item_t*)(frag)); \
 }
 
 #endif

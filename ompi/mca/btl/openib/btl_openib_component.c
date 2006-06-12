@@ -646,7 +646,7 @@ int mca_btl_openib_handle_incoming_hp(
 
     if (!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
         OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_eager),
-                (opal_list_item_t*) frag); 
+                (ompi_free_list_item_t*) frag); 
     } else {
         mca_btl_openib_frag_t *tf;
         OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
@@ -1101,7 +1101,7 @@ int mca_btl_openib_component_progress()
                                                           frag->hdr->tag, 
                                                           &frag->base, 
                                                           openib_btl->ib_reg[frag->hdr->tag].cbdata);         
-                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (opal_list_item_t*) frag); 
+                OMPI_FREE_LIST_RETURN(&(openib_btl->recv_free_max), (ompi_free_list_item_t*) frag); 
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                 if(mca_btl_openib_component.use_srq) { 

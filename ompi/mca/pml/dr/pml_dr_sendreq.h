@@ -75,7 +75,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 {                                                                          \
     ompi_proc_t *proc =                                                    \
          comm->c_pml_procs[dst]->proc_ompi;                                \
-    opal_list_item_t* item;                                                \
+    ompi_free_list_item_t* item;                                           \
                                                                            \
     if(NULL == proc) {                                                     \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                     \
@@ -267,7 +267,7 @@ do {                                                                            
     /*  Let the base handle the reference counts */                     \
     MCA_PML_BASE_SEND_REQUEST_FINI((&(sendreq)->req_send));             \
     OMPI_FREE_LIST_RETURN( &mca_pml_dr.send_requests,                   \
-                           (opal_list_item_t*)sendreq );                \
+                           (ompi_free_list_item_t*)sendreq );           \
 } while(0)
 
 /*

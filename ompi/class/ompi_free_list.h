@@ -143,7 +143,7 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
  */
 
 #define OMPI_FREE_LIST_WAIT(fl, item, rc)                                  \
-    rc = __ompi_free_list_wait( (fl), (ompi_free_list_item_t**)&(item) )
+    rc = __ompi_free_list_wait( (fl), &(item) )
 
 static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
                                          ompi_free_list_item_t** item )
@@ -187,7 +187,7 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
         opal_list_item_t* original;                                     \
                                                                         \
         original = opal_atomic_lifo_push( &(fl)->super,                 \
-                                          (opal_list_item_t*)item );    \
+                                          &(item)->super);              \
         if( &(fl)->super.opal_lifo_ghost == original ) {                \
             OPAL_THREAD_LOCK(&(fl)->fl_lock);                           \
             if((fl)->fl_num_waiting > 0) {                              \

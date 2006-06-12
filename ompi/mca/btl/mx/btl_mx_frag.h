@@ -67,7 +67,7 @@ extern "C" {
 
 #define MCA_BTL_MX_FRAG_ALLOC_EAGER(btl, frag, rc)                              \
 {                                                                               \
-    opal_list_item_t *item;                                                     \
+    ompi_free_list_item_t *item;                                                \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_eager_frags, item, rc);  \
     frag = (mca_btl_mx_frag_t*) item;                                           \
     frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_eager_frags);  \
@@ -78,7 +78,7 @@ extern "C" {
 #if 0
 #define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                             \
 {                                                                             \
-    opal_list_item_t *item;                                                   \
+    ompi_free_list_item_t *item;                                              \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
     frag = (mca_btl_mx_frag_t*) item;                                         \
     frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_user_frags);  \
@@ -93,7 +93,7 @@ extern "C" {
 #define MCA_BTL_MX_FRAG_RETURN(btl, frag)                                   \
 {                                                                           \
     /*opal_output( 0, "return item to %p\n", frag->mx_frag_list );*/            \
-    OMPI_FREE_LIST_RETURN( frag->mx_frag_list, (opal_list_item_t*)(frag));  \
+    OMPI_FREE_LIST_RETURN( frag->mx_frag_list, (ompi_free_list_item_t*)(frag));  \
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

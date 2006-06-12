@@ -52,7 +52,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_frag_t);
 
 #define MCA_PML_OB1_RECV_FRAG_ALLOC(frag,rc)                    \
 do {                                                            \
-    opal_list_item_t* item;                                     \
+    ompi_free_list_item_t* item;                                \
     OMPI_FREE_LIST_WAIT(&mca_pml_ob1.recv_frags, item, rc);     \
     frag = (mca_pml_ob1_recv_frag_t*)item;                      \
 } while(0)
@@ -70,7 +70,7 @@ do {                                                            \
     frag->num_segments = cnt;                                   \
     /* copy over data */                                        \
     for(i=0; i<cnt; i++) {                                      \
-        opal_list_item_t* item;                                 \
+        ompi_free_list_item_t* item;                            \
         mca_pml_ob1_buffer_t* buff;                             \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
         buff = (mca_pml_ob1_buffer_t*)item;                     \
@@ -92,13 +92,13 @@ do {                                                            \
     /* return buffers */                                        \
     for(i=0; i<frag->num_segments; i++) {                       \
         OMPI_FREE_LIST_RETURN(&mca_pml_ob1.buffers,             \
-           (opal_list_item_t*)frag->buffers[i]);                \
+           (ompi_free_list_item_t*)frag->buffers[i]);           \
     }                                                           \
     frag->num_segments = 0;                                     \
                                                                 \
     /* return recv_frag */                                      \
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.recv_frags,              \
-        (opal_list_item_t*)frag);                               \
+        (ompi_free_list_item_t*)frag);                          \
 } while(0)
 
 

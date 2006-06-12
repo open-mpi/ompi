@@ -172,7 +172,7 @@ do {                                                                            
 { \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);  \
     OMPI_FREE_LIST_RETURN( &mca_pml_ob1.recv_requests,     \
-                           (opal_list_item_t*)(recvreq));  \
+                      (ompi_free_list_item_t*)(recvreq));  \
 }
 
 /**

@@ -68,7 +68,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_vfrag_t);
 
 #define MCA_PML_DR_VFRAG_ALLOC(vfrag,rc)                                   \
 do {                                                                       \
-    opal_list_item_t* item;                                                \
+    ompi_free_list_item_t* item;                                           \
     OMPI_FREE_LIST_WAIT(&mca_pml_dr.vfrags, item, rc);                     \
     vfrag = (mca_pml_dr_vfrag_t*)item;                                     \
 } while(0)
@@ -76,7 +76,8 @@ do {                                                                       \
 
 #define MCA_PML_DR_VFRAG_RETURN(vfrag)                                     \
 do {                                                                       \
-    OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, (opal_list_item_t*)vfrag);   \
+    OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags,                              \
+                          (ompi_free_list_item_t*)vfrag);                  \
 } while(0)
 
 #define MCA_PML_DR_VFRAG_INIT(vfrag)                                       \
