@@ -101,8 +101,8 @@ int MPI_Type_create_subarray(int ndims,
     size = size_array[i] * size_array[i+step];
     displ = start_array[i] + start_array[i+step] * size_array[i];
     for( i += 2 * step; i != end_loop; i += step ) {
-        ompi_ddt_create_vector( subsize_array[i], 1, size_array[i],
-                                last_type, newtype );
+        ompi_ddt_create_hvector( subsize_array[i], 1, size * extent,
+                                 last_type, newtype );
         ompi_ddt_destroy( &last_type );
         displ += size * start_array[i];
         size *= size_array[i];
