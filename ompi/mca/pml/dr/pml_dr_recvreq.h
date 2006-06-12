@@ -66,7 +66,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_recv_request_t);
  */
 #define MCA_PML_DR_RECV_REQUEST_ALLOC(recvreq, rc)                 \
 do {                                                               \
-   opal_list_item_t* item;                                         \
+   ompi_free_list_item_t* item;                                    \
    rc = OMPI_SUCCESS;                                              \
    OMPI_FREE_LIST_GET(&mca_pml_dr.recv_requests, item, rc);        \
    recvreq = (mca_pml_dr_recv_request_t*)item;                     \

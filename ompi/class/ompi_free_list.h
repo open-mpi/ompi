@@ -57,6 +57,8 @@ struct ompi_free_list_item_t
 }; 
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
+OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
+
 /**
  * Initialize a free list.
  *
@@ -110,18 +112,18 @@ OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
 #define OMPI_FREE_LIST_GET(fl, item, rc) \
 { \
     if(opal_using_threads()) { \
-        item = opal_atomic_lifo_pop(&((fl)->super)); \
+        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         if(NULL == item) { \
             opal_mutex_lock(&((fl)->fl_lock)); \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
             opal_mutex_unlock(&((fl)->fl_lock)); \
-            item = opal_atomic_lifo_pop(&((fl)->super)); \
+            item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         } \
     } else { \
-        item = opal_atomic_lifo_pop(&((fl)->super)); \
+        item = (ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         if(NULL == item) { \
             ompi_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item = opal_atomic_lifo_pop(&((fl)->super)); \
+            item =(ompi_free_list_item_t*) opal_atomic_lifo_pop(&((fl)->super)); \
         } \
     }  \
     rc = (NULL == item) ?  OMPI_ERR_TEMP_OUT_OF_RESOURCE : OMPI_SUCCESS; \

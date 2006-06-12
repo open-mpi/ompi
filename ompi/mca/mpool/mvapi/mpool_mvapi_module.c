@@ -99,7 +99,7 @@ int mca_mpool_mvapi_register(
     mca_mpool_mvapi_registration_t * vapi_reg; 
     VAPI_mrw_t mr_in, mr_out;
     VAPI_ret_t ret; 
-    opal_list_item_t *item;
+    ompi_free_list_item_t *item;
     int rc;
     
         
@@ -240,7 +240,7 @@ int mca_mpool_mvapi_release(
             opal_output(0, "%s: error unpinning vapi memory\n", __func__); 
             return OMPI_ERROR; 
         }
-        OMPI_FREE_LIST_RETURN(&mpool_mvapi->reg_list, (opal_list_item_t*) vapi_reg);
+        OMPI_FREE_LIST_RETURN(&mpool_mvapi->reg_list, (ompi_free_list_item_t*) vapi_reg);
     }
     return OMPI_SUCCESS; 
 }

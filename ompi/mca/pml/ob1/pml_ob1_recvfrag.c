@@ -38,7 +38,7 @@
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_buffer_t,
-    opal_list_item_t,
+    ompi_free_list_item_t,
     NULL,
     NULL
 );

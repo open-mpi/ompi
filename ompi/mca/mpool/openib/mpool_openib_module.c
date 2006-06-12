@@ -90,7 +90,7 @@ int mca_mpool_openib_register(mca_mpool_base_module_t* mpool,
     
     mca_mpool_openib_module_t * mpool_module = (mca_mpool_openib_module_t*) mpool; 
     mca_mpool_openib_registration_t * vapi_reg; 
-    opal_list_item_t *item;
+    ompi_free_list_item_t *item;
     int rc;
     
     OMPI_FREE_LIST_GET(&mpool_module->reg_list, item, rc); 
@@ -217,7 +217,7 @@ int mca_mpool_openib_release(
             opal_output(0, "%s: error unpinning openib memory errno says %s\n", __func__, strerror(errno)); 
             return OMPI_ERROR; 
         }
-        OMPI_FREE_LIST_RETURN(&mpool_openib->reg_list, (opal_list_item_t*) openib_reg);
+        OMPI_FREE_LIST_RETURN(&mpool_openib->reg_list, (ompi_free_list_item_t*) openib_reg);
     }
     return OMPI_SUCCESS; 
 }

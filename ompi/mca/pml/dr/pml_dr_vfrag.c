@@ -56,7 +56,7 @@ static void mca_pml_dr_vfrag_destruct(mca_pml_dr_vfrag_t* vfrag)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_dr_vfrag_t,
-    opal_list_item_t,
+    ompi_free_list_item_t,
     mca_pml_dr_vfrag_construct,
     mca_pml_dr_vfrag_destruct
 );

@@ -122,7 +122,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 {
     int err;
     mca_io_base_module_request_once_init_fn_t func;
-    opal_list_item_t *item;
+    ompi_free_list_item_t *item;
 
     /* See if we've got a request on the module's freelist (which is
        cached on the file, since there's only one module per

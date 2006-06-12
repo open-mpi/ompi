@@ -24,7 +24,7 @@
 #include "ompi/class/ompi_rb_tree.h"
 
 /* declare the instance of the classes  */
-OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, opal_list_item_t, NULL, NULL);
+OBJ_CLASS_INSTANCE(ompi_rb_tree_node_t, ompi_free_list_item_t, NULL, NULL);
 OBJ_CLASS_INSTANCE(ompi_rb_tree_t, opal_object_t, ompi_rb_tree_construct,
                    ompi_rb_tree_destruct);
 
@@ -71,7 +71,7 @@ int ompi_rb_tree_init(ompi_rb_tree_t * tree,
 {
     int rc;
 
-    opal_list_item_t * node;
+    ompi_free_list_item_t * node;
     /* we need to get memory for the root pointer from the free list */
     OMPI_FREE_LIST_GET(&(tree->free_list), node, rc);
     tree->root_ptr = (ompi_rb_tree_node_t *) node;
@@ -110,7 +110,7 @@ int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value)
 {
     ompi_rb_tree_node_t * y;
     ompi_rb_tree_node_t * node;
-    opal_list_item_t * item;
+    ompi_free_list_item_t * item;
     int rc;
 
     /* get the memory for a node */
@@ -266,17 +266,17 @@ int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key)
 /* Destroy the hashmap    */
 int ompi_rb_tree_destroy(ompi_rb_tree_t *tree)
 {
-    opal_list_item_t * item;
+    ompi_free_list_item_t * item;
     /* Recursive inorder traversal for delete    */
 
     inorder_destroy(tree, tree->root_ptr);
     /* Now free the root -- root does not get free'd in the above
      * inorder destroy    */
-    item = (opal_list_item_t *) tree->root_ptr;
+    item = (ompi_free_list_item_t *) tree->root_ptr;
     OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
 
     /* free the tree->nill node */
-    item = (opal_list_item_t *) tree->nill;
+    item = (ompi_free_list_item_t *) tree->nill;
     OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
     return(OMPI_SUCCESS);
 }
@@ -411,7 +411,7 @@ void btree_delete_fixup(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * x)
 void
 inorder_destroy(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
 {
-    opal_list_item_t * item;
+    ompi_free_list_item_t * item;
 
     if (node == tree->nill) {
         return;
@@ -420,14 +420,14 @@ inorder_destroy(ompi_rb_tree_t *tree, ompi_rb_tree_node_t * node)
     inorder_destroy(tree, node->left);
 
     if (node->left != tree->nill) {
-        item = (opal_list_item_t *) node->left;
+        item = (ompi_free_list_item_t *) node->left;
         --tree->tree_size;
         OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
     }
 
     inorder_destroy(tree, node->right);
     if (node->right != tree->nill) {
-        item = (opal_list_item_t *) node->right;
+        item = (ompi_free_list_item_t *) node->right;
         --tree->tree_size;
         OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
     }

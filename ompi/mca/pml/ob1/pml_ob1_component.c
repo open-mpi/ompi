@@ -133,6 +133,7 @@ int mca_pml_ob1_component_open(void)
         NULL);
                                                                                                             
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_frags, ompi_free_list_t);
+
     ompi_free_list_init(
         &mca_pml_ob1.recv_frags,
         sizeof(mca_pml_ob1_recv_frag_t),
