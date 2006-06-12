@@ -671,13 +671,12 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
         max_allowed = (*max_data);
 
     i = pConv->bConverted / pData->size;  /* how many we already pack */
-    user_memory = pConv->pBaseBuf + pStack->disp;  /* actual starting point for the conversion */
 
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
-    user_memory = pConv->pBaseBuf + pStack[0].disp + pStack[1].disp;
+    user_memory = pConv->pBaseBuf + pData->true_lb + pStack[0].disp + pStack[1].disp;
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         if( 0 == max_allowed ) break;  /* we're done this time */
         if( iov[iov_count].iov_base == NULL ) {
@@ -713,7 +712,6 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                         iov[index].iov_base = user_memory;
                         iov[index].iov_len = max_allowed;
                         max_allowed = 0;
-                        printf( "%s:%d Possible problem here\n", __FILE__, __LINE__ );
                         COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
                         break;
                     } else {
@@ -762,7 +760,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 i++;  /* just to compute the correct source pointer */
                 total_bytes_converted += done;
             }
-            user_memory = pConv->pBaseBuf + i * extent;
+            user_memory = pConv->pBaseBuf + pData->true_lb + i * extent;
             counter = max_allowed / pData->size;
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
@@ -779,7 +777,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
          * the pStack[0].disp field. BEWARE here we remove the pStack[1].disp as
          * it's supposed to be useless from now.
          */
-        user_memory = pConv->pBaseBuf + pStack[0].disp;
+        user_memory = pConv->pBaseBuf + pData->true_lb + pStack[0].disp;
     }
     *max_data = total_bytes_converted;
     pConv->bConverted += total_bytes_converted;
