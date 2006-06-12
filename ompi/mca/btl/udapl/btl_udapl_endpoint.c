@@ -53,22 +53,39 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
     int rc = OMPI_SUCCESS;
     DAT_DTO_COOKIE cookie;
 
-    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+    /* Fix up the segment length before we do anything with the frag */
+    frag->triplet.segment_length =
+            frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     switch(endpoint->endpoint_state) {
         case MCA_BTL_UDAPL_CONNECTED:
             /* just send it already.. */
-            OPAL_OUTPUT((0, "sending %d bytes\n", frag->triplet.segment_length));
             cookie.as_ptr = frag;
             if(frag->size ==
                     mca_btl_udapl_component.udapl_eager_frag_size) {
-                rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
-                    &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-            } else if(frag->size ==
-                    mca_btl_udapl_component.udapl_max_frag_size) {
-                rc = dat_ep_post_send(endpoint->endpoint_max, 1,
-                    &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
+
+                if(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_sends, -1) < 0) {
+                    OPAL_THREAD_ADD32(&endpoint->endpoint_eager_sends, 1);
+                    opal_list_append(&endpoint->endpoint_eager_frags,
+                            (opal_list_item_t*)frag);
+                } else {
+                    rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
+                            &frag->triplet, cookie,
+                            DAT_COMPLETION_DEFAULT_FLAG);
+                }
             } else {
-                OPAL_OUTPUT((0, "btl_udapl ERROR unknown frag size\n"));
+                assert(frag->size ==
+                        mca_btl_udapl_component.udapl_max_frag_size);
+                if(OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, -1) < 0) {
+                    OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, 1);
+                    opal_list_append(&endpoint->endpoint_max_frags,
+                            (opal_list_item_t*)frag);
+                } else {
+                    rc = dat_ep_post_send(endpoint->endpoint_max, 1,
+                            &frag->triplet, cookie,
+                            DAT_COMPLETION_DEFAULT_FLAG);
+                }
             }
 
             if(DAT_SUCCESS != rc) {
@@ -89,15 +106,24 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         case MCA_BTL_UDAPL_CONN_EAGER:
         case MCA_BTL_UDAPL_CONN_MAX:
             /* Add this send to a queue */
-            OPAL_OUTPUT((0, "queueing send %d bytes\n", frag->triplet.segment_length));
-            opal_list_append(&endpoint->endpoint_frags,
-                             (opal_list_item_t*)frag);
+            if(frag->size ==
+                    mca_btl_udapl_component.udapl_eager_frag_size) {
+                opal_list_append(&endpoint->endpoint_eager_frags,
+                        (opal_list_item_t*)frag);
+            } else {
+                assert(frag->size ==
+                        mca_btl_udapl_component.udapl_max_frag_size);
+                OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, -1);
+                opal_list_append(&endpoint->endpoint_max_frags,
+                        (opal_list_item_t*)frag);
+            }
+
             break;
         case MCA_BTL_UDAPL_FAILED:
             rc = OMPI_ERR_UNREACH;
             break;
     }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     return rc;
 }
@@ -186,7 +212,6 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
                 /* Does this endpoint match? */
                 if(!memcmp(&addr, &ep->endpoint_addr,
                         sizeof(mca_btl_udapl_addr_t))) {
-                    OPAL_OUTPUT((0, "btl_udapl found endpoint!\n"));
                     OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
                     mca_btl_udapl_endpoint_connect(ep);
                     return;
@@ -195,7 +220,6 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
         }
     }
     OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
-    OBJ_RELEASE(buffer);
 }
 
 
@@ -215,7 +239,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     mca_btl_udapl_module_t* btl = endpoint->endpoint_btl;
     int rc;
 
-    OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
 
     /* Nasty test to prevent deadlock and unwanted connection attempts */
     /* This right here is the whole point of using the ORTE/RML handshake */
@@ -225,7 +249,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
                     &ompi_proc_local()->proc_name)) ||
             (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
              MCA_BTL_UDAPL_CONN_EAGER != endpoint->endpoint_state)) {
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return;
     }
 
@@ -247,7 +271,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     }
 
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONN_EAGER;
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     return;
 
 failure:
@@ -255,7 +279,7 @@ failure:
 failure_create:
     endpoint->endpoint_eager = DAT_HANDLE_NULL;
     endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     return;
 }
 
@@ -299,9 +323,8 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
             if(ep->endpoint_btl == btl &&
                     !memcmp(param.remote_ia_address_ptr,
                             &ep->endpoint_addr.addr, sizeof(DAT_SOCK_ADDR))) {
-                OPAL_OUTPUT((0, "btl_udapl matched endpoint!\n"));
 
-                OPAL_THREAD_LOCK(&endpoint->endpoint_send_lock);
+                OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {
                     ep->endpoint_eager = endpoint;
                     rc = mca_btl_udapl_endpoint_finish_eager(ep);
@@ -338,10 +361,10 @@ static int mca_btl_udapl_endpoint_finish_eager(
     int rc;
 
     endpoint->endpoint_state = MCA_BTL_UDAPL_CONN_MAX;
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* Only one side does dat_ep_connect() */
-    if(0 > orte_ns.compare(ORTE_NS_CMP_ALL,
+    if(0 < orte_ns.compare(ORTE_NS_CMP_ALL,
                 &endpoint->endpoint_proc->proc_guid,
                 &ompi_proc_local()->proc_name)) {
     
@@ -385,31 +408,59 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
 
     
     /* post queued sends */
-    while(NULL != (frag = (mca_btl_udapl_frag_t*)
-            opal_list_remove_first(&endpoint->endpoint_frags))) {
+    assert(endpoint->endpoint_eager_sends ==
+            mca_btl_udapl_component.udapl_num_sends);
+    while(OPAL_THREAD_ADD32(&endpoint->endpoint_eager_sends, -1) >= 0 &&
+            NULL != (frag = (mca_btl_udapl_frag_t*)
+                opal_list_remove_first(&endpoint->endpoint_eager_frags))) {
         cookie.as_ptr = frag;
             
-        if(frag->size ==
-                mca_btl_udapl_component.udapl_eager_frag_size) {
-            rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
-                &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        } else if(frag->size == mca_btl_udapl_component.udapl_max_frag_size) {
-            rc = dat_ep_post_send(endpoint->endpoint_max, 1,
-                &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        } else {
-            OPAL_OUTPUT((0, "btl_udapl ERROR unknown frag size\n"));
-            rc = !DAT_SUCCESS;
-        }
-
+        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->hdr);
+        assert(frag->triplet.segment_length ==
+                frag->segment.seg_len + sizeof(mca_btl_base_header_t));
+        assert(frag->size ==
+                mca_btl_udapl_component.udapl_eager_frag_size);
+        rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
-            MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send");
+            MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send (eager)");
             endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
             ret = OMPI_ERROR;
             break;
         }
     }
 
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_send_lock);
+    if(endpoint->endpoint_eager_sends < 0) {
+        OPAL_THREAD_ADD32(&endpoint->endpoint_eager_sends, 1);
+    }
+
+    assert(endpoint->endpoint_max_sends ==
+            mca_btl_udapl_component.udapl_num_sends);
+    while(OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, -1) >= 0 &&
+            NULL != (frag = (mca_btl_udapl_frag_t*)
+                opal_list_remove_first(&endpoint->endpoint_max_frags))) {
+        cookie.as_ptr = frag;
+            
+        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->hdr);
+        assert(frag->triplet.segment_length ==
+                frag->segment.seg_len + sizeof(mca_btl_base_header_t));
+        assert(frag->size ==
+                mca_btl_udapl_component.udapl_eager_frag_size);
+
+        rc = dat_ep_post_send(endpoint->endpoint_max, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
+        if(DAT_SUCCESS != rc) {
+            MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send (max)");
+            endpoint->endpoint_state = MCA_BTL_UDAPL_FAILED;
+            ret = OMPI_ERROR;
+            break;
+        }
+    }
+
+    if(endpoint->endpoint_max_sends < 0) {
+        OPAL_THREAD_ADD32(&endpoint->endpoint_max_sends, 1);
+    }
+    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
     return ret;
 }
 
@@ -423,17 +474,21 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
 {
     mca_btl_udapl_frag_t* frag = NULL;
     DAT_DTO_COOKIE cookie;
+    DAT_EP_HANDLE ep;
     int rc;
     int i;
 
-    OPAL_THREAD_LOCK(&endpoint->endpoint_recv_lock);
-    for(i = 0; i < mca_btl_udapl_component.udapl_num_repost; i++) {
+    for(i = 0; i < mca_btl_udapl_component.udapl_num_recvs; i++) {
         if(size == mca_btl_udapl_component.udapl_eager_frag_size) {
             MCA_BTL_UDAPL_FRAG_ALLOC_EAGER(endpoint->endpoint_btl, frag, rc);
-        } else if(size == mca_btl_udapl_component.udapl_max_frag_size) {
+            ep = endpoint->endpoint_eager;
+        } else {
+            assert(size == mca_btl_udapl_component.udapl_max_frag_size);
             MCA_BTL_UDAPL_FRAG_ALLOC_MAX(endpoint->endpoint_btl, frag, rc);
+            ep = endpoint->endpoint_max;
         } 
     
+        assert(size == frag->size);
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
         frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
@@ -443,27 +498,20 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
         frag->endpoint = endpoint;
         frag->base.des_dst = &frag->segment;
         frag->base.des_dst_cnt = 1;
+        frag->base.des_src = NULL;
+        frag->base.des_src_cnt = 0;
+        frag->base.des_flags = 0;
         frag->type = MCA_BTL_UDAPL_RECV;
 
         cookie.as_ptr = frag;
 
-        if(size == mca_btl_udapl_component.udapl_eager_frag_size) {
-            rc = dat_ep_post_recv(frag->endpoint->endpoint_eager, 1,
-                    &frag->triplet,cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        } else if(size == mca_btl_udapl_component.udapl_max_frag_size) {
-            rc = dat_ep_post_recv(frag->endpoint->endpoint_max, 1,
-                    &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
-        } else {
-            rc = !DAT_SUCCESS;
-        }
-
+        rc = dat_ep_post_recv(ep, 1,
+                &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
         if(DAT_SUCCESS != rc) {
             MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
-            OPAL_THREAD_UNLOCK(&endpoint->endpoint_recv_lock);
             return OMPI_ERROR;
         }
     }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_recv_lock);
 
     return OMPI_SUCCESS;
 }
@@ -478,13 +526,17 @@ static void mca_btl_udapl_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
+
+    endpoint->endpoint_eager_sends = mca_btl_udapl_component.udapl_num_sends;
+    endpoint->endpoint_max_sends = mca_btl_udapl_component.udapl_num_sends;
+
     endpoint->endpoint_state = MCA_BTL_UDAPL_CLOSED;
     endpoint->endpoint_eager = DAT_HANDLE_NULL;
     endpoint->endpoint_max = DAT_HANDLE_NULL;
 
-    OBJ_CONSTRUCT(&endpoint->endpoint_frags, opal_list_t);
-    OBJ_CONSTRUCT(&endpoint->endpoint_send_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&endpoint->endpoint_recv_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_eager_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_max_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);
 }
 
 
@@ -495,9 +547,9 @@ static void mca_btl_udapl_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
 static void mca_btl_udapl_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
-    OBJ_DESTRUCT(&endpoint->endpoint_frags);
-    OBJ_DESTRUCT(&endpoint->endpoint_send_lock);
-    OBJ_DESTRUCT(&endpoint->endpoint_recv_lock);
+    OBJ_DESTRUCT(&endpoint->endpoint_eager_frags);
+    OBJ_DESTRUCT(&endpoint->endpoint_max_frags);
+    OBJ_DESTRUCT(&endpoint->endpoint_lock);
 }
 
 

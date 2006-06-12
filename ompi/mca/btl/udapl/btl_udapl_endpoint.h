@@ -74,16 +74,19 @@ struct mca_btl_base_endpoint_t {
     mca_btl_udapl_endpoint_state_t endpoint_state;
     /**< current state of the endpoint connection */
 
-    opal_list_t endpoint_frags;
+    opal_list_t endpoint_eager_frags;
+    opal_list_t endpoint_max_frags;
     /**< pending send frags on this endpoint */
 
-    opal_mutex_t endpoint_send_lock;
-    /**< lock for concurrent access to endpoint state */
+    int32_t endpoint_eager_sends;
+    int32_t endpoint_max_sends;
+    /**< number of sends that may be posted */
 
-    opal_mutex_t endpoint_recv_lock;
+    opal_mutex_t endpoint_lock;
     /**< lock for concurrent access to endpoint state */
 
     mca_btl_udapl_addr_t endpoint_addr;
+    /**< remote address on the other side of this endpoint */
 
     DAT_EP_HANDLE endpoint_eager;
     DAT_EP_HANDLE endpoint_max;

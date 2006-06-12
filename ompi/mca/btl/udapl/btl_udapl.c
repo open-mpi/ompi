@@ -171,10 +171,6 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     OBJ_CONSTRUCT(&btl->udapl_frag_eager, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_max, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->udapl_frag_user, ompi_free_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_frag_recv, ompi_free_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_pending, opal_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_repost, opal_list_t);
-    OBJ_CONSTRUCT(&btl->udapl_mru_reg, opal_list_t);
     OBJ_CONSTRUCT(&btl->udapl_lock, opal_mutex_t);
     
     /* initialize free lists */
@@ -221,8 +217,6 @@ int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) base_btl; 
 
-    OPAL_OUTPUT((0, "udapl_finalize\n"));
-
     /* release uDAPL resources */
     dat_evd_free(udapl_btl->udapl_evd_dto);
     dat_evd_free(udapl_btl->udapl_evd_conn);
@@ -253,8 +247,6 @@ int mca_btl_udapl_add_procs(
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*)btl;
     int i, rc;
-
-    OPAL_OUTPUT((0, "udapl_add_procs\n"));
 
     for(i = 0; i < (int) nprocs; i++) {
 
@@ -309,7 +301,6 @@ int mca_btl_udapl_del_procs(struct mca_btl_base_module_t* btl,
         struct ompi_proc_t **procs, 
         struct mca_btl_base_endpoint_t ** peers)
 {
-    OPAL_OUTPUT((0, "udapl_del_procs\n"));
     /* TODO */
     return OMPI_SUCCESS;
 }
@@ -329,7 +320,6 @@ int mca_btl_udapl_register(
     udapl_btl->udapl_reg[tag].cbfunc = cbfunc; 
     udapl_btl->udapl_reg[tag].cbdata = cbdata; 
 
-    OPAL_OUTPUT((0, "udapl_register %d %p\n", tag, cbfunc));
     return OMPI_SUCCESS;
 }
 
@@ -368,6 +358,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
     frag->triplet.segment_length =
         frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+    assert(frag->triplet.lmr_context ==
+            ((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet.lmr_context);
     
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
@@ -375,6 +367,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+
     return &frag->base;
 }
 
@@ -426,13 +419,13 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     int32_t free_after;
     int rc;
 
+#if 0
     /*
      * If the data has already been pinned and is contigous than we can
      * use it in place.
     */
-#if 0
     if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
-        //size_t reg_len;
+        size_t reg_len;
         OPAL_OUTPUT((0, "udapl_prepare_src 1\n"));
 
         MCA_BTL_UDAPL_FRAG_ALLOC_USER(btl, frag, rc);
@@ -459,6 +452,8 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
          */
         btl->btl_mpool->mpool_retain(btl->btl_mpool, registration);
         frag->registration = registration;
+        frag->triplet.lmr_context =
+            ((mca_mpool_udapl_registration_t*)registration)->lmr_triplet.lmr_context;
 
     /*
      * if the data is not already pinned - but the leave pinned option is set,
@@ -483,10 +478,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         ompi_convertor_pack(convertor, &iov,
                 &iov_count, &max_data, &free_after);
 
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-        frag->triplet.segment_length = max_data;
-        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
 
         rc = mpool->mpool_register(
                                    mpool,
@@ -503,6 +494,11 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         frag->registration = registration;
         frag->triplet.lmr_context =
             ((mca_mpool_udapl_registration_t*)registration)->lmr_triplet.lmr_context;
+        /* TODO - should our base addr be frag->hdr? */
+        frag->segment.seg_len = max_data;
+        frag->segment.seg_addr.pval = iov.iov_base;
+        frag->triplet.segment_length = max_data;
+        frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
     } 
 
     /*
@@ -517,7 +513,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             return NULL;
         }
 
-        //OPAL_OUTPUT((0, "udapl_prepare_src 3\n"));
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
         
@@ -540,7 +535,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
      * that is the max send size.
      */
     else {
-        //OPAL_OUTPUT((0, "udapl_prepare_src 4\n"));
         MCA_BTL_UDAPL_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -668,8 +662,6 @@ int mca_btl_udapl_send(
 {
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
-    OPAL_OUTPUT((0, "udapl_send %d\n", tag));
-    
     frag->btl = (mca_btl_udapl_module_t*)btl;
     frag->endpoint = endpoint;
     frag->hdr->tag = tag;

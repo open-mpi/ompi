@@ -53,9 +53,9 @@ struct mca_btl_udapl_component_t {
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
     struct  mca_btl_udapl_module_t **udapl_btls; /**< array of available BTL modules */
-    size_t  udapl_num_mru;
     size_t  udapl_evd_qlen;
-    int32_t udapl_num_repost;
+    int32_t udapl_num_recvs;    /**< number of recv buffers to keep posted */
+    int32_t udapl_num_sends;    /**< number of sends to post on endpoint */
     int32_t udapl_timeout;      /**< connection timeout, in microseconds */
 
     size_t udapl_eager_frag_size;
@@ -101,11 +101,7 @@ struct mca_btl_udapl_module_t {
     ompi_free_list_t udapl_frag_eager;
     ompi_free_list_t udapl_frag_max;
     ompi_free_list_t udapl_frag_user;
-    ompi_free_list_t udapl_frag_recv;
 
-    opal_list_t udapl_pending;  /**< list of pending send fragments */
-    opal_list_t udapl_repost;   /**< list of pending recv fragments */
-    opal_list_t udapl_mru_reg;  /**< list of most recently used registrations */
     opal_mutex_t udapl_lock;    /* lock for accessing module state */
 }; 
 typedef struct mca_btl_udapl_module_t mca_btl_udapl_module_t;
@@ -341,50 +337,6 @@ extern mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
     size_t reserve,
     size_t* size); 
 
-
-/** 
- * Acquire a send token - queue the fragment if none available
- */
-
-#define MCA_BTL_UDAPL_ACQUIRE_TOKEN(btl, frag)                                                  \
-do {                                                                                            \
-    /* queue the descriptor if there are no send tokens */                                      \
-    if(OPAL_THREAD_ADD32(&udapl_btl->udapl_num_send_tokens, -1) < 0) {                          \
-        OPAL_THREAD_LOCK(&udapl_btl->udapl_lock);                                               \
-        opal_list_append(&udapl_btl->udapl_pending, (opal_list_item_t*)frag);                   \
-        OPAL_THREAD_UNLOCK(&udapl_btl->udapl_lock);                                             \
-        OPAL_THREAD_ADD32(&udapl_btl->udapl_num_send_tokens, 1);                                \
-        return OMPI_SUCCESS;                                                                    \
-    }                                                                                           \
-} while (0)                                                                                     \
-
-/**
- * Return send token and dequeue and pending fragments 
- */
-
-#define MCA_BTL_UDAPL_RETURN_TOKEN(btl)                                                         \
-do {                                                                                            \
-   OPAL_THREAD_ADD32( &btl->udapl_num_send_tokens, 1 );                                         \
-   if(opal_list_get_size(&btl->udapl_pending)) {                                                \
-       mca_btl_udapl_frag_t* frag;                                                              \
-       OPAL_THREAD_LOCK(&btl->udapl_lock);                                                      \
-       frag = (mca_btl_udapl_frag_t*)opal_list_remove_first(&btl->udapl_pending);               \
-       OPAL_THREAD_UNLOCK(&btl->udapl_lock);                                                    \
-       if(NULL != frag) {                                                                       \
-           switch(frag->type) {                                                                 \
-           case MCA_BTL_UDAPL_SEND:                                                             \
-               mca_btl_udapl_send(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);    \
-               break;                                                                           \
-           case MCA_BTL_UDAPL_PUT:                                                              \
-               mca_btl_udapl_put(&btl->super, frag->endpoint, &frag->base);                     \
-               break;                                                                           \
-           case MCA_BTL_UDAPL_GET:                                                              \
-               mca_btl_udapl_get(&btl->super, frag->endpoint, &frag->base);                     \
-               break;                                                                           \
-           }                                                                                    \
-       }                                                                                        \
-    }                                                                                           \
-} while (0)
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
