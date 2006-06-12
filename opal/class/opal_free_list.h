@@ -29,8 +29,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern opal_class_t opal_free_list_t_class;
-
 
 struct opal_free_list_t
 {
@@ -46,13 +44,14 @@ struct opal_free_list_t
     opal_list_t fl_allocations;
 };
 typedef struct opal_free_list_t opal_free_list_t;
+OBJ_CLASS_DECLARATION(opal_free_list_t);
 
 struct opal_free_list_item_t
 { 
     opal_list_item_t super; 
-    void* user_data; 
 }; 
 typedef struct opal_free_list_item_t opal_free_list_item_t; 
+OBJ_CLASS_DECLARATION(opal_free_list_item_t);
 
 /**
  * Initialize a free list.
