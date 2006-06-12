@@ -24,7 +24,7 @@
 #include "mpool_base_tree.h"
 
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, ompi_free_list_item_t, NULL, NULL); 
+OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_list_item_t, NULL, NULL); 
 
 /* 
  * use globals for the tree and the tree_item free list.. 
