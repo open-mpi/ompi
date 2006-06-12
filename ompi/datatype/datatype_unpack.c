@@ -184,6 +184,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
+    ddt_endloop_desc_t* _end_loop = &(pConv->use_desc->desc[pConv->use_desc->used].end_loop);
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         packed_buffer = (char*)iov[iov_count].iov_base;
@@ -191,7 +192,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
-        user_memory = pConv->pBaseBuf;
+        user_memory = pConv->pBaseBuf + _end_loop->first_elem_disp;
 
         /*opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %d\n",
           user_memory, packed_buffer, remaining );*/

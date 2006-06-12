@@ -193,7 +193,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             pending_length = (*max_data);
 
         for( i = 0; (i < *out_size) && (0 != pending_length); i++ ) {
-            base_pointer = pConv->pBaseBuf + pConv->bConverted;
+            base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
 
             if( iov[i].iov_len > pending_length )
                 iov[i].iov_len = pending_length;
@@ -240,7 +240,7 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 
         *max_data = pConv->bConverted;
         for( i = 0; i < *out_size; i++ ) {
-            base_pointer = pConv->pBaseBuf + pConv->bConverted;
+            base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
             pConv->bConverted += iov[i].iov_len;
             if( pConv->bConverted >= pConv->local_size ) {
                 pConv->bConverted = pConv->local_size;
