@@ -298,7 +298,7 @@ do {                                                                            
             MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                                 \
         } else {                                                                        \
             if(sendreq->req_send.req_base.req_ompi.req_persistent &&                    \
-               (0 != sendreq->req_send.req_base.req_count) ) {                          \
+               (0 != sendreq->req_send.req_bytes_packed) ) {                            \
                 /* rewind convertor */                                                  \
                 size_t offset = 0;                                                      \
                 ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset); \
