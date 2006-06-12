@@ -1036,7 +1036,10 @@ static void mca_pml_ob1_put_completion(
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
         >= sendreq->req_send.req_bytes_packed) {
-        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        /* if we've got completion on rndv packet */
+        if (OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {
+            MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+        }
     }
 
 cleanup:
