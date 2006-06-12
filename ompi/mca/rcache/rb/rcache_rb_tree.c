@@ -24,7 +24,7 @@
 #include "rcache_rb_tree.h"
 
 
-OBJ_CLASS_INSTANCE(mca_rcache_rb_tree_item_t, opal_list_item_t, NULL, NULL); 
+OBJ_CLASS_INSTANCE(mca_rcache_rb_tree_item_t, ompi_free_list_item_t, NULL, NULL); 
 
 
 int mca_rcache_rb_tree_node_compare(void * key1, void * key2); 
@@ -106,7 +106,7 @@ int mca_rcache_rb_tree_insert(
                           mca_mpool_base_registration_t* reg
                           )
 {
-    opal_list_item_t *item; 
+    ompi_free_list_item_t *item; 
     int rc; 
     mca_rcache_rb_tree_item_t* rb_tree_item; 
     
@@ -151,7 +151,8 @@ int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module,
     assert(reg == tree_item->reg);
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
    
-    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, (opal_list_item_t*) tree_item);
+    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, 
+                          (ompi_free_list_item_t*) tree_item);
 
     return rc;
 }

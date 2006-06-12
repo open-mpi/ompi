@@ -77,7 +77,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 #define MCA_BTL_GM_FRAG_ALLOC_EAGER(btl, frag, rc)                 \
 {                                                                  \
                                                                    \
-    opal_list_item_t *item;                                        \
+    ompi_free_list_item_t *item;                                   \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_eager, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
     frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_eager;   \
@@ -86,7 +86,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 #define MCA_BTL_GM_FRAG_ALLOC_MAX(btl, frag, rc)                   \
 {                                                                  \
                                                                    \
-    opal_list_item_t *item;                                        \
+    ompi_free_list_item_t *item;                                        \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_max, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
     frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_max;     \
@@ -94,7 +94,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 
 #define MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc)                  \
 {                                                                  \
-    opal_list_item_t *item;                                        \
+    ompi_free_list_item_t *item;                                   \
     OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_user, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
     frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_user;    \
@@ -103,7 +103,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 #define MCA_BTL_GM_FRAG_RETURN(btl, frag)                          \
 {                                                                  \
     OMPI_FREE_LIST_RETURN(frag->my_list,                           \
-        (opal_list_item_t*)(frag));                                \
+        (ompi_free_list_item_t*)(frag));                           \
 }
 
 

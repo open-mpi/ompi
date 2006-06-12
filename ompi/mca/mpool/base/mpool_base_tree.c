@@ -24,7 +24,7 @@
 #include "mpool_base_tree.h"
 
 
-OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, opal_list_item_t, NULL, NULL); 
+OBJ_CLASS_INSTANCE(mca_mpool_base_tree_item_t, ompi_free_list_item_t, NULL, NULL); 
 
 /* 
  * use globals for the tree and the tree_item free list.. 
@@ -96,7 +96,7 @@ mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) {
  * get a tree item from the free list 
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_item_get(void) { 
-    opal_list_item_t* item = NULL;
+    ompi_free_list_item_t* item = NULL;
     int rc;
     OMPI_FREE_LIST_GET(&mca_mpool_base_tree_item_free_list, 
                        item, 

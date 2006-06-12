@@ -25,7 +25,7 @@
 #define OMPI_REQUEST_H
 
 #include "mpi.h"
-#include "opal/class/opal_list.h"
+#include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_pointer_array.h"
 #include "ompi/errhandler/errhandler.h"
 #include "opal/threads/condition.h"
@@ -83,7 +83,7 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
  * Main top-level request struct definition 
  */
 struct ompi_request_t {
-    opal_list_item_t super;                    /**< Base type */
+    ompi_free_list_item_t super;                    /**< Base type */
     ompi_request_type_t req_type;              /**< Enum indicating the type of the request */
     ompi_status_public_t req_status;           /**< Completion status */
     volatile bool req_complete;                /**< Flag indicating wether request has completed */

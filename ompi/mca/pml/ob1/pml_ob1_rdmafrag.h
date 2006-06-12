@@ -34,7 +34,7 @@ typedef enum {
 } mca_pml_ob1_rdma_state_t;
 
 struct mca_pml_ob1_rdma_frag_t {
-    opal_list_item_t super;
+    ompi_free_list_item_t super;
     mca_btl_base_module_t* rdma_btl;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;
@@ -50,7 +50,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 #define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc)                    \
 do {                                                            \
-    opal_list_item_t* item;                                     \
+    ompi_free_list_item_t* item;                                \
     OMPI_FREE_LIST_WAIT(&mca_pml_ob1.rdma_frags, item, rc);     \
     frag = (mca_pml_ob1_rdma_frag_t*)item;                      \
 } while(0)
@@ -59,7 +59,7 @@ do {                                                            \
 do {                                                            \
     /* return fragment */                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.rdma_frags,              \
-        (opal_list_item_t*)frag);                               \
+        (ompi_free_list_item_t*)frag);                          \
 } while(0)
 
 

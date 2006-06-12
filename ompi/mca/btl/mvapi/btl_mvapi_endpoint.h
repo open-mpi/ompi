@@ -226,7 +226,7 @@ do { \
     mca_btl_mvapi_module_t *mvapi_btl = my_endpoint->endpoint_btl; \
     VAPI_rr_desc_t* desc_post = mvapi_btl->rr_desc_post; \
     for(i = 0; i < num_post; i++) { \
-        opal_list_item_t* item; \
+        ompi_free_list_item_t* item; \
         mca_btl_mvapi_frag_t* frag = NULL; \
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
         frag = (mca_btl_mvapi_frag_t*) item; \

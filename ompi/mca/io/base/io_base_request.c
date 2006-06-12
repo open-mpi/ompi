@@ -122,7 +122,7 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 {
     int err;
     mca_io_base_module_request_once_init_fn_t func;
-    opal_list_item_t *item;
+    ompi_free_list_item_t *item;
 
     /* See if we've got a request on the module's freelist (which is
        cached on the file, since there's only one module per
@@ -222,10 +222,10 @@ void mca_io_base_request_free(ompi_file_t *file,
  */
 void mca_io_base_request_return(ompi_file_t *file)
 {
-    opal_list_item_t *next;
+    ompi_free_list_item_t *next;
 
     OPAL_THREAD_LOCK(&file->f_io_requests_lock);
-    while (NULL != (next = opal_list_remove_first(&file->f_io_requests))) {
+    while (NULL != (next = (ompi_free_list_item_t*) opal_list_remove_first(&file->f_io_requests))) {
         OMPI_FREE_LIST_RETURN(&mca_io_base_requests, next);
     }
     OPAL_THREAD_UNLOCK(&file->f_io_requests_lock);
