@@ -48,14 +48,20 @@ int MPI_File_get_info(MPI_File fh, MPI_Info *info_used)
         OMPI_ERRHANDLER_CHECK(rc, fh, rc, FUNC_NAME);
     }
 
-    /* Copy the handle and increase the refcount if it's not NULL */
+    /* Call the back-end io component function */
 
-    *info_used = fh->f_info;
-    if (NULL != fh->f_info) {
-        OBJ_RETAIN(fh->f_info);
+    switch (fh->f_io_version) {
+    case MCA_IO_BASE_V_1_0_0:
+        rc = fh->f_io_selected_module.v1_0_0.
+            io_module_file_get_info(fh, info_used);
+        break;
+
+    default:
+        rc = MPI_ERR_INTERN;
+        break;
     }
 
-    /* One of the few times that we know that we can succeed.  Woot! */
-
-    return MPI_SUCCESS;
+    /* All done */
+    
+    OMPI_ERRHANDLER_RETURN(rc, fh, rc, FUNC_NAME);
 }
