@@ -25,14 +25,13 @@
 static void opal_free_list_construct(opal_free_list_t* fl);
 static void opal_free_list_destruct(opal_free_list_t* fl);
 
-
-opal_class_t opal_free_list_t_class = {
-    "opal_free_list_t", 
-    OBJ_CLASS(opal_list_t),
-    (opal_construct_t)opal_free_list_construct, 
-    (opal_destruct_t)opal_free_list_destruct
-};
-
+OBJ_CLASS_INSTANCE(opal_free_list_t,
+                   opal_list_t,
+                   opal_free_list_construct,
+                   opal_free_list_destruct);
+OBJ_CLASS_INSTANCE(opal_free_list_item_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
 static void opal_free_list_construct(opal_free_list_t* fl)
 {
@@ -110,7 +109,6 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
 
     for(i=0; i<num_elements; i++) {
         opal_free_list_item_t* item = (opal_free_list_item_t*)ptr;
-        item->user_data = NULL; 
         if (NULL != flist->fl_elem_class) {
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
         }
