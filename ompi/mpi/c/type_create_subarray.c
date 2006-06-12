@@ -66,6 +66,9 @@ int MPI_Type_create_subarray(int ndims,
             } 
         }
     }
+
+    ompi_ddt_type_extent( oldtype, &extent );
+
     /* If the ndims is zero then return the NULL datatype */
     if( ndims < 2 ) {
         if( 0 == ndims ) {
@@ -86,8 +89,6 @@ int MPI_Type_create_subarray(int ndims,
         step = 1;
         end_loop = ndims - 1;
     }
-
-    ompi_ddt_type_extent( oldtype, &extent );
 
     /* As we know that the ndims is at least 1 we can start by creating the first dimension data
      * outside the loop, such that we dont have to create a duplicate of the oldtype just to be able
