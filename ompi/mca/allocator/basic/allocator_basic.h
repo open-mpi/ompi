@@ -36,7 +36,7 @@
  */
 
 struct mca_allocator_basic_segment_t {
-    opal_list_item_t seg_item;
+    ompi_free_list_item_t seg_item;
     unsigned char* seg_addr;
     size_t seg_size;
 };

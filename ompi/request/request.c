@@ -65,7 +65,7 @@ static int ompi_request_empty_free(ompi_request_t** request)
 
 OBJ_CLASS_INSTANCE(
     ompi_request_t,
-    opal_list_item_t,
+    ompi_free_list_item_t,
     ompi_request_construct,
     ompi_request_destruct);
 

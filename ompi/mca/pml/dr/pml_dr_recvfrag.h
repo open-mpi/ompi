@@ -27,7 +27,7 @@
 #include "pml_dr_hdr.h"
 
 struct mca_pml_dr_buffer_t {
-    opal_list_item_t super;
+    ompi_free_list_item_t super;
     size_t len;
     unsigned char addr[1];
 };
@@ -37,7 +37,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_buffer_t);
 
 
 struct mca_pml_dr_recv_frag_t {
-    opal_list_item_t super;
+    ompi_free_list_item_t super;
     mca_pml_dr_hdr_t hdr;
     struct mca_pml_dr_recv_request_t* request;
     size_t num_segments;

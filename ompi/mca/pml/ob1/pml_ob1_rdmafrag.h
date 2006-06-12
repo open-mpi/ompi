@@ -34,7 +34,7 @@ typedef enum {
 } mca_pml_ob1_rdma_state_t;
 
 struct mca_pml_ob1_rdma_frag_t {
-    opal_list_item_t super;
+    ompi_free_list_item_t super;
     mca_btl_base_module_t* rdma_btl;
     mca_pml_ob1_hdr_t rdma_hdr;
     mca_pml_ob1_rdma_state_t rdma_state;

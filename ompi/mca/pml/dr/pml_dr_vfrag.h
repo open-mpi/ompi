@@ -34,7 +34,7 @@ extern "C" {
 #define MCA_PML_DR_VFRAG_RETRANS 0x04
 
 struct mca_pml_dr_vfrag_t {
-    opal_list_item_t super;
+    ompi_free_list_item_t super;
     ompi_ptr_t vf_send;
     ompi_ptr_t vf_recv;
     uint32_t   vf_id;

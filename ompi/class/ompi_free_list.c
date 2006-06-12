@@ -43,6 +43,9 @@ static OBJ_CLASS_INSTANCE(ompi_free_list_memory_t,
                           opal_list_item_t,
                           NULL, NULL);
 
+OBJ_CLASS_INSTANCE(ompi_free_list_item_t, 
+                   opal_list_item_t,
+                   NULL, NULL); 
 
 static void ompi_free_list_construct(ompi_free_list_t* fl)
 {
