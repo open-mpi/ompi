@@ -114,16 +114,18 @@ do {                                                               \
 
 #define MCA_PML_DR_RECV_REQUEST_PML_COMPLETE(recvreq)                                  \
 do {                                                                                   \
-    opal_list_item_t* item;                                                            \
+    ompi_free_list_item_t* item;                                                       \
     assert( false == recvreq->req_recv.req_base.req_pml_complete );                    \
     OPAL_THREAD_LOCK((recvreq)->req_mutex);                                            \
-    while(NULL != (item = opal_list_remove_first(&(recvreq)->req_vfrags))) {           \
+    while(NULL != (item = (ompi_free_list_item_t*)                                     \
+          opal_list_remove_first(&(recvreq)->req_vfrags))) {                           \
         OMPI_FREE_LIST_RETURN(&mca_pml_dr.vfrags, item);                               \
     }                                                                                  \
     OPAL_THREAD_UNLOCK((recvreq)->req_mutex);                                          \
                                                                                        \
     OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
-    opal_list_remove_item(&(recvreq)->req_proc->matched_receives, (opal_list_item_t*)(recvreq)); \
+    opal_list_remove_item(&(recvreq)->req_proc->matched_receives,                      \
+                          (opal_list_item_t*)(recvreq));                               \
                                                                                        \
     /* initialize request status */                                                    \
     recvreq->req_recv.req_base.req_pml_complete = true;                                \
@@ -148,7 +150,7 @@ do {                                                                            
 do {                                                                                \
     /* decrement reference counts */                                                \
     MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);                           \
-    OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_requests, (opal_list_item_t*)(recvreq)); \
+    OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_requests, (ompi_free_list_item_t*)(recvreq)); \
 } while(0)
 
 /**

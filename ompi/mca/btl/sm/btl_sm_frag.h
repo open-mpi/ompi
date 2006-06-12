@@ -59,7 +59,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
 #define MCA_BTL_SM_FRAG_ALLOC1(frag, rc)                                 \
 {                                                                        \
-    opal_list_item_t* item;                                              \
+    ompi_free_list_item_t* item;                                              \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags1, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
     frag->my_list = &mca_btl_sm_component.sm_frags1;                     \
@@ -67,7 +67,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
 #define MCA_BTL_SM_FRAG_ALLOC2(frag, rc)                                 \
 {                                                                        \
-    opal_list_item_t* item;                                              \
+    ompi_free_list_item_t* item;                                              \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags2, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
     frag->my_list = &mca_btl_sm_component.sm_frags2;                     \
@@ -75,7 +75,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
 #define MCA_BTL_SM_FRAG_RETURN(frag)                                      \
 {                                                                         \
-    OMPI_FREE_LIST_RETURN(frag->my_list, (opal_list_item_t*)(frag));      \
+    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag));      \
 }
 #endif
 

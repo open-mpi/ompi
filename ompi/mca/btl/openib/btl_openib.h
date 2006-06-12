@@ -463,7 +463,7 @@ int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl);
     do { \
     int32_t i; \
     int32_t num_post = cnt; \
-    opal_list_item_t* item = NULL; \
+    ompi_free_list_item_t* item = NULL; \
     mca_btl_openib_frag_t* frag = NULL; \
     struct ibv_recv_wr *bad_wr; \
     int32_t rc; \

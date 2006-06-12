@@ -218,7 +218,7 @@ int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key)
     ompi_rb_tree_node_t * p;
     ompi_rb_tree_node_t * todelete;
     ompi_rb_tree_node_t * y;
-    opal_list_item_t * item;
+    ompi_free_list_item_t * item;
 
     p = ompi_rb_tree_find_node(tree, key);
     if (NULL == p) {
@@ -256,7 +256,7 @@ int ompi_rb_tree_delete(ompi_rb_tree_t *tree, void *key)
     if (todelete->color == BLACK) {
         btree_delete_fixup(tree, y);
     }
-    item = (opal_list_item_t *) todelete;
+    item = (ompi_free_list_item_t *) todelete;
     OMPI_FREE_LIST_RETURN(&(tree->free_list), item);
     --tree->tree_size;
     return(OMPI_SUCCESS);

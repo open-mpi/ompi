@@ -151,7 +151,8 @@ int mca_rcache_rb_tree_delete(mca_rcache_rb_module_t* rb_module,
     assert(reg == tree_item->reg);
     rc =  ompi_rb_tree_delete(&rb_module->rb_tree, &tree_item->key); 
    
-    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, (opal_list_item_t*) tree_item);
+    OMPI_FREE_LIST_RETURN(&rb_module->rb_tree_item_list, 
+                          (ompi_free_list_item_t*) tree_item);
 
     return rc;
 }
