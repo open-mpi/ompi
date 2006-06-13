@@ -318,7 +318,7 @@ do {                                                                            
 do {                                                                              \
     /* has an acknowledgment been received */                                     \
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {                          \
-        if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {  \
+        if(sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed) {  \
             MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);                       \
         } else {                                                                  \
             /* additional data to schedule */                                     \
@@ -326,6 +326,19 @@ do {                                                                            
         }                                                                         \
     }                                                                             \
 } while (0)
+
+
+/*
+ * Advance a pending send request. Note that the initial descriptor must complete
+ * and the acknowledment received before the request can complete or be scheduled.
+ * However, these events may occur in either order.
+ */
+
+#define MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq)                     \
+do {                                                                              \
+    OPAL_THREAD_ADD32(&sendreq->req_state, 1);                                    \
+} while (0)
+
 
 /*
  * Release resources associated with a request

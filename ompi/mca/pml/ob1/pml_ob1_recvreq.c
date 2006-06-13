@@ -589,6 +589,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
         ompi_proc_t* proc = recvreq->req_recv.req_base.req_proc;
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
         mca_bml_base_btl_t* bml_btl; 
+        bool ack = false;
         do {
             size_t bytes_remaining = recvreq->req_recv.req_bytes_packed - recvreq->req_rdma_offset;
             while(bytes_remaining > 0 && recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
@@ -629,6 +630,11 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      */
                     } else {
                         size = (size_t)(bml_btl->btl_weight * bytes_remaining);
+                    }
+                    if(recvreq->req_rdma_idx == 0) { 
+                        ack = true; 
+                    } else { 
+                        ack = false;
                     }
                      
                 } else {
@@ -712,7 +718,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 /* fill in rdma header */
                 hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
                 hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
-                hdr->hdr_common.hdr_flags = 0;
+                hdr->hdr_common.hdr_flags = ack ? MCA_PML_OB1_HDR_TYPE_ACK : 0; 
                 hdr->hdr_req = recvreq->req_send;
                 hdr->hdr_des.pval = dst;
                 hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
