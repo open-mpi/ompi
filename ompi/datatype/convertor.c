@@ -37,9 +37,10 @@ extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* conve
 
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
-    convertor->pStack            = convertor->static_stack;
-    convertor->stack_size        = DT_STATIC_STACK_SIZE;
-    convertor->partial_length    = 0;
+    convertor->pStack         = convertor->static_stack;
+    convertor->stack_size     = DT_STATIC_STACK_SIZE;
+    convertor->partial_length = 0;
+    convertor->remoteArch     = ompi_mpi_local_arch;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -374,7 +375,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  */
 #define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
-        convertor->pBaseBuf        = (char*)pUserBuf + datatype->lb;    \
+        convertor->pBaseBuf        = (char*)pUserBuf;                   \
         convertor->count           = count;                             \
                                                                         \
         /* Grab the datatype part of the flags */                       \
