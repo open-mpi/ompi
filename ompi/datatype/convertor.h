@@ -267,7 +267,8 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
     if( (convertor->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
-        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) ) {
+        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) &&
+        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) ) {
         /* basic predefined datatype (contiguous) */
         convertor->bConverted = *position;
         return OMPI_SUCCESS;
