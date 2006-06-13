@@ -5,9 +5,9 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
- * Copyright (c) 2004-2005 The Regents of the University of California.
+ * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
  * 
@@ -87,11 +87,6 @@ static int orte_soh_xcpu_open(void)
 
 static orte_soh_base_module_t* orte_soh_xcpu_init(int *priority)
 {
-    if (!orte_process_info.seed){
-        fprintf(stderr, "soh_xcpu: no seed found\n");
-	return NULL;
-    }
-
     *priority = mca_soh_xcpu_component.priority;
     orte_soh_xcpu_module_init();/*do we need this???*/
     return &orte_soh_xcpu_module;
