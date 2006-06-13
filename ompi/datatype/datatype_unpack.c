@@ -378,11 +378,8 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
             uint32_t count;
 
             assert( pElem->elem.common.flags & DT_FLAG_DATA );
-#if defined(CHECKSUM)
-            pConvertor->checksum -= OPAL_CSUM(user_memory_base, pConvertor->partial_length);
-#endif
-
-            memcpy( partial_data + pConvertor->partial_length, packed_buffer, missing_length);
+            MEMCPY_CSUM( partial_data + pConvertor->partial_length, packed_buffer,
+                         missing_length, pConvertor );
             count = ompi_unpack_partial_datatype( pConvertor, pElem,
                                                   partial_data,
                                                   pConvertor->partial_length, element_length,
