@@ -8,7 +8,7 @@
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
+# Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -21,9 +21,9 @@
 # -----------------------------------------------------------
 AC_DEFUN([MCA_pls_xcpu_CONFIG],[
     OMPI_CHECK_XCPU([pls_xcpu], [pls_xcpu_good=1], [pls_xcpu_good=0])
-    # if xcpu is present and working, pls_xcpu_good=1.  
+         
+    # if check worked, set wrapper flags.  
     # Evaluate succeed / fail
-
     AS_IF([test "$pls_xcpu_good" = "1"],
           [pls_xcpu_WRAPPER_EXTRA_LDFLAGS="$pls_xcpu_LDFLAGS"
            pls_xcpu_WRAPPER_EXTRA_LIBS="$pls_xcpu_LIBS"

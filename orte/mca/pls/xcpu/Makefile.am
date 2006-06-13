@@ -7,7 +7,7 @@
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
 #                         University of Stuttgart.  All rights reserved.
-# Copyright (c) 2004-2005 The Regents of the University of California.
+# Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
 # $COPYRIGHT$
 # 
@@ -15,8 +15,6 @@
 # 
 # $HEADER$
 #
-
-#dist_pkgdata_DATA = help-pls-bproc.txt
 
 AM_CPPFLAGS = $(pls_xcpu_CPPFLAGS)
 
