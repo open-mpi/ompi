@@ -679,8 +679,9 @@ rematch:
             if(mca_pml_dr.enable_csum && csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
-                OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
-                             __FILE__, __LINE__, csum, hdr->hdr_csum));
+                OPAL_OUTPUT((0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %d length %d)\n", 
+                             __FILE__, __LINE__, csum, hdr->hdr_csum, num_segments,
+                             segments[0].seg_len - mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type)));
                 MCA_PML_DR_RECV_FRAG_RETURN(frag);
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return false;
