@@ -1032,12 +1032,12 @@ static void mca_pml_ob1_put_completion(
         }
         goto cleanup;
     }
-
+    
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
         >= sendreq->req_send.req_bytes_packed) {
         /* if we've got completion on rndv packet */
-        if (OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2) {
+        if (sendreq->req_state == 2) {
             MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
     }
@@ -1077,6 +1077,10 @@ void mca_pml_ob1_send_request_put(
     
     bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);  
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
+    if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) { 
+        MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
+    }
+    
     if(NULL == frag) {
         /* TSW - FIX */
         ORTE_ERROR_LOG(rc);
