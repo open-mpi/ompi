@@ -140,11 +140,11 @@ opal_mem_hooks_alloc_hook(void *buf, size_t length, int from_alloc)
     item = opal_list_get_first(&alloc_cb_list);
     while(item != opal_list_get_end(&alloc_cb_list)) {
         opal_list_item_t* next = opal_list_get_next(item);
-        callback_list_item_t cbitem = *(callback_list_item_t*) item;
+        callback_list_item_t *cbitem = (callback_list_item_t*) item;
         item = next;
 
         opal_atomic_unlock(&alloc_lock);
-        cbitem.cbfunc(buf, length, cbitem.cbdata, (bool) from_alloc);
+        cbitem->cbfunc(buf, length, cbitem->cbdata, (bool) from_alloc);
         opal_atomic_lock(&alloc_lock);
     }
     opal_atomic_unlock(&alloc_lock);
@@ -173,11 +173,11 @@ opal_mem_hooks_release_hook(void *buf, size_t length, int from_alloc)
     item = opal_list_get_first(&release_cb_list);
     while(item != opal_list_get_end(&release_cb_list)) {
         opal_list_item_t* next = opal_list_get_next(item);
-        callback_list_item_t cbitem = *(callback_list_item_t*) item;
+        callback_list_item_t *cbitem = (callback_list_item_t*) item;
         item = next;
 
         opal_atomic_unlock(&release_lock);
-        cbitem.cbfunc(buf, length, cbitem.cbdata, (bool) from_alloc);
+        cbitem->cbfunc(buf, length, cbitem->cbdata, (bool) from_alloc);
         opal_atomic_lock(&release_lock);
     }
     opal_atomic_unlock(&release_lock);
