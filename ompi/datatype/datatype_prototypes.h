@@ -16,30 +16,6 @@
 #include "ompi_config.h"
 
 OMPI_DECLSPEC int32_t
-ompi_pack_general( ompi_convertor_t* pConvertor,
-                   struct iovec* iov, uint32_t* out_size,
-                   size_t* max_data, int32_t* freeAfter );
-OMPI_DECLSPEC int32_t
-ompi_pack_general_checksum( ompi_convertor_t* pConvertor,
-                            struct iovec* iov, uint32_t* out_size,
-                            size_t* max_data, int32_t* freeAfter );
-OMPI_DECLSPEC int32_t
-ompi_pack_homogeneous_with_memcpy( ompi_convertor_t* pConv,
-                                   struct iovec* iov, uint32_t* out_size,
-                                   size_t* max_data, int32_t* freeAfter );
-OMPI_DECLSPEC int32_t
-ompi_pack_homogeneous_with_memcpy_checksum( ompi_convertor_t* pConv,
-                                            struct iovec* iov, uint32_t* out_size,
-                                            size_t* max_data, int32_t* freeAfter );
-int32_t
-ompi_pack_no_conversion( ompi_convertor_t* pConv,
-                         struct iovec* iov, uint32_t *out_size,
-                         size_t* max_data, int32_t* freeAfter );
-int32_t
-ompi_pack_no_conversion_checksum( ompi_convertor_t* pConv,
-                                  struct iovec* iov, uint32_t *out_size,
-                                  size_t* max_data, int32_t* freeAfter );
-OMPI_DECLSPEC int32_t
 ompi_pack_homogeneous_contig( ompi_convertor_t* pConv,
                           struct iovec* iov, uint32_t* out_size,
                           size_t* max_data, int32_t* freeAfter );
