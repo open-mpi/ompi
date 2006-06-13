@@ -51,7 +51,8 @@ struct ompi_file_t {
     /** Amode that this file was created with */
     int f_amode;
 
-    /** MPI_Info that this file was created with */
+    /** MPI_Info that this file was created with.  Note that this is
+        *NOT* what should be returned from OMPI_FILE_GET_INFO! */
     struct ompi_info_t *f_info;
 
     /** Bit flags */
