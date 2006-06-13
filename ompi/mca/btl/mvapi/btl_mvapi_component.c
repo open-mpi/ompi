@@ -126,6 +126,7 @@ static inline void  mca_btl_mvapi_param_register_int(
 
 int mca_btl_mvapi_component_open(void)
 {
+    char *msg;
     int tmp_int;
 
     /* initialize state */
@@ -165,8 +166,16 @@ int mca_btl_mvapi_component_open(void)
                                       0, (int*) &mca_btl_mvapi_component.ib_psn); 
     mca_btl_mvapi_param_register_int("ib_qp_ous_rd_atom", "IB outstanding atomic reads", 
                                      4, (int*) &mca_btl_mvapi_component.ib_qp_ous_rd_atom); 
-    mca_btl_mvapi_param_register_int("ib_mtu", "IB MTU", 
-                                     MTU1024, (int*) &mca_btl_mvapi_component.ib_mtu); 
+    tmp_int = MTU1024;
+    asprintf(&msg, "IB MTU, in bytes.  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes.",
+             MTU256,
+             MTU512,
+             MTU1024,
+             MTU2048,
+             MTU4096);
+    mca_btl_mvapi_param_register_int("ib_mtu", msg,
+                                     tmp_int, (int*) &mca_btl_mvapi_component.ib_mtu); 
+    free(msg);
        
     mca_btl_mvapi_param_register_int("ib_min_rnr_timer", "IB min rnr timer", 
                                       5, (int*) &mca_btl_mvapi_component.ib_min_rnr_timer);

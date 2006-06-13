@@ -123,6 +123,9 @@ static inline void  mca_btl_openib_param_register_int(
 
 int mca_btl_openib_component_open(void)
 {
+    char *msg;
+    int val;
+
     /* initialize state */
     mca_btl_openib_component.ib_num_btls=0;
     mca_btl_openib_component.openib_btls=NULL;
@@ -155,8 +158,16 @@ int mca_btl_openib_component_open(void)
                                       0, (int*) &mca_btl_openib_component.ib_psn); 
     mca_btl_openib_param_register_int("ib_qp_ous_rd_atom", "IB outstanding atomic reads", 
                                       4, (int*) &mca_btl_openib_component.ib_qp_ous_rd_atom); 
-    mca_btl_openib_param_register_int("ib_mtu", "IB MTU", 
-                                      IBV_MTU_1024, (int*) &mca_btl_openib_component.ib_mtu); 
+    val = IBV_MTU_1024;
+    asprintf(&msg, "IB MTU, in bytes.  Valid values are: %d=256 bytes, %d=512 bytes, %d=1024 bytes, %d=2048 bytes, %d=4096 bytes.",
+             IBV_MTU_256,
+             IBV_MTU_512,
+             IBV_MTU_1024,
+             IBV_MTU_2048,
+             IBV_MTU_4096);
+    mca_btl_openib_param_register_int("ib_mtu", msg,
+                                      val, (int*) &mca_btl_openib_component.ib_mtu); 
+    free(msg);
     mca_btl_openib_param_register_int("ib_min_rnr_timer", "IB min rnr timer", 
                                       5, (int*) &mca_btl_openib_component.ib_min_rnr_timer);
     mca_btl_openib_param_register_int("ib_timeout", "IB transmit timeout", 
