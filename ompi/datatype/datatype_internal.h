@@ -253,8 +253,9 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
     {                                                                   \
         char *__lower_bound = (char*)(INITPTR), *__upper_bound;         \
         assert( ((LENGTH) != 0) && ((COUNT) != 0) );                    \
-        __lower_bound += (PDATA)->true_lb - (PDATA)->lb;                \
-        __upper_bound = (INITPTR) + ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1) + (PDATA)->true_ub - (PDATA)->lb; \
+        __lower_bound += (PDATA)->true_lb;                              \
+        __upper_bound = (INITPTR) + (PDATA)->true_ub +                  \
+            ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1);                \
         if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
             ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
             opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \

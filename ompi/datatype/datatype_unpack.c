@@ -70,7 +70,8 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     int bConverted = 0;    /* number of bytes converted this time */
     const ompi_convertor_master_t* master = pConvertor->master;
     dt_elem_desc_t* pElems;
-    int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
+    long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
+    int oCount = extent * pConvertor->count;
     char* pInput;
     int iCount, rc;
     uint32_t iov_count, total_bytes_converted = 0;
@@ -104,7 +105,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
                 }
 
                 if( pStack->index == -1 ) {
-                    pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
+                    pStack->disp += extent;
                 } else {
                     assert( DT_LOOP == pElems[pStack->index].elem.common.type );
                     pStack->disp += pElems[pStack->index].loop.extent;
@@ -171,6 +172,15 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     return 0;
 }
 
+/**
+ * This function will be used to unpack all datatypes that have the contiguous flag set.
+ * Several types of datatypes match this criterion, not only the contiguous one, but
+ * the ones that have gaps in the beginning and/or at the end but where the data to
+ * be unpacked is contiguous. However, this function only work for homogeneous cases
+ * and the datatype that are contiguous and where the extent is equal to the size are
+ * taken in account directly in the ompi_convertor_unpack function (in convertor.c) for
+ * the homogeneous case.
+ */
 int32_t
 ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                          struct iovec* iov,
@@ -184,7 +194,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
-    ddt_endloop_desc_t* _end_loop = &(pConv->use_desc->desc[pConv->use_desc->used].end_loop);
+    long initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         packed_buffer = (char*)iov[iov_count].iov_base;
@@ -192,7 +202,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
-        user_memory = pConv->pBaseBuf + _end_loop->first_elem_disp;
+        user_memory = pConv->pBaseBuf + initial_displ;
 
         /*opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %d\n",
           user_memory, packed_buffer, remaining );*/
@@ -254,6 +264,18 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     return 0;
 }
 
+/**
+ * This function handle partial types. Depending on the send operation it might happens
+ * that we receive only a partial type (always predefined type). In fact the outcome is
+ * that the unpack has to be done in 2 steps. As there is no way to know if the other
+ * part of the datatype is already received, we need to use a trick to handle this special
+ * case. The trick is to fill the missing part with some well known value, unpack the data
+ * as if it was completely received, and then move into the user memory only the bytes
+ * that don't match th wekk known value. This approach work as long as there is no need
+ * for more than structural changes. They will not work for cases where we will have to
+ * change the content of the data (as in all conversions that require changing the size
+ * of the exponent or mantissa).
+ */
 static inline uint32_t
 ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pElem,
                               char* partial_data,

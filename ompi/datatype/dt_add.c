@@ -166,6 +166,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     pdtBase->lb = lb;
     pdtBase->ub = ub;
+
     if( 0 == pdtBase->nbElems ) old_true_ub = disp;
     else                        old_true_ub = pdtBase->true_ub;
     pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
