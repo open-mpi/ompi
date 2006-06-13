@@ -109,8 +109,21 @@ int MPI_Type_create_subarray(int ndims,
         last_type = *newtype;
     }
     
-    ompi_ddt_create_resized( last_type, displ * extent,
-                             (size - start_array[start_loop]) * extent, newtype );
+    /**
+     * We cannot use resized here. Resized will only set the soft lb and ub markers
+     * without moving the real data inside. What we need is to force the displacement
+     * of the data create upward to the right position AND set the LB and UB. A type
+     * struct is the function we need.
+     */
+    {
+        MPI_Aint displs[3];
+        MPI_Datatype types[3];
+        int blength[3] = { 1, 1, 1 };
+
+        displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
+        types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
+        ompi_ddt_create_struct( 3, blength, displs, types, newtype );
+    }
     ompi_ddt_destroy( &last_type );
     
     {
