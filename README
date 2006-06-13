@@ -72,7 +72,7 @@ base as of this writing (27 Feb 2006):
     interface)
   - SLURM
   - XGrid
-  - Yod
+  - Cray XT-3 / Red Storm
 
 - The majority of Open MPI's documentation is here in this file and on
   the web site FAQ (http://www.open-mpi.org/).  This will eventually
@@ -165,26 +165,24 @@ base as of this writing (27 Feb 2006):
   during MPI_FINALIZE.
 
 - Running on nodes with different endian and/or different datatype
-  sizes within a single parallel application is not supported in this
-  release.
+  sizes within a single parallel job is supported as of 1.1.  However,
+  we do not properly resize data when datatypes differ in size (for
+  example, sending a 4 byte MPI_LONG and receiving an 8 byte MPI_LONG
+  will fail).
 
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
 
-- Asynchronous message passing progress support is not included in
-  this release.
+- Asynchronous message passing progress using threads can be turned on
+  with the --enable-progress-threads option to configure.
+  Asynchronous message passing progress is only supported for TCP,
+  shared memory, and Myrinet/GM.  Myrinet/GM has only been lightly
+  tested.
 
 - Due to limitations in the Libtool 1.5 series, Fortran 90 MPI
   bindings support can only be built as a static library.  It is
   expected that Libtool 2.0 (and therefore future releases of Open
   MPI) will be able to support shared libraries for the Fortran 90
   bindings.
-
-- On Linux, if either the malloc_hooks or malloc_interpose memory
-  hooks are enabled, it will not be possible to link against a static
-  libc.a.  libmpi can still be built statically - it is only the final
-  application link step that can not be static.  If applications must be
-  statically linked, it is recommended you compile Open MPI with the
-  --without-memory-manager configure option.
 
 - The XGrid support is experimental - see the Open MPI FAQ and this
   post on the Open MPI user's mailing list for more information:
