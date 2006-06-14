@@ -310,6 +310,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
+    assert( 0 == pConvertor->partial_length );
     return OMPI_SUCCESS;
 }
 
