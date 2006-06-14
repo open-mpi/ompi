@@ -52,6 +52,7 @@ struct mca_pml_ob1_send_request_t {
     size_t req_bytes_delivered;
     size_t req_send_offset;
     size_t req_rdma_offset;
+    bool req_got_put_ack;
     mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST]; 
     uint32_t req_rdma_cnt; 
 };
@@ -144,6 +145,7 @@ do {                                                                            
     sendreq->req_bytes_delivered = 0;                                                          \
     sendreq->req_state = 0;                                                                    \
     sendreq->req_send_offset = 0;                                                              \
+    sendreq->req_got_put_ack = false;                                                          \
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(                               \
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);                    \
     sendreq->req_endpoint = endpoint;                                                          \
