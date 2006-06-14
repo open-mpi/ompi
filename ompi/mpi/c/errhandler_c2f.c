@@ -41,11 +41,8 @@ MPI_Fint MPI_Errhandler_c2f(MPI_Errhandler errhandler)
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
 	/* mapping an invalid handle to a null handle */
-	/* also checks errhandler type matches */
-	/* not invoking an error handler */
-    if (NULL == errhandler ||
-        OMPI_ERRHANDLER_TYPE_COMM != errhandler->eh_mpi_object_type) {
-            return OMPI_INT_2_FINT(-1);
+    if (NULL == errhandler) {
+        return OMPI_INT_2_FINT(-1);
     }
   }
 
