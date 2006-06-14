@@ -146,6 +146,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConvertor->stack_pos == 0 ) {
                     pConvertor->flags |= CONVERTOR_COMPLETED;
+                    pConvertor->partial_length = 0;
                     goto complete_loop;  /* completed */
                 }
                 pConvertor->stack_pos--;
@@ -191,6 +192,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                                           base_pointer, iov_len_local );
             if( 0 != count_desc ) {  /* completed */
                 type = pElem->elem.common.type;
+                pConvertor->partial_length = iov_len_local;
                 goto complete_loop;
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
@@ -199,11 +201,6 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
         }
     }
  complete_loop:
-    if( 0 != pConvertor->partial_length )
-        assert( iov_len_local == pConvertor->partial_length );
-    pConvertor->partial_length = iov_len_local;
-
-    (*position) -= iov_len_local;
     pConvertor->bConverted = *position;  /* update the already converted bytes */
 
     if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
