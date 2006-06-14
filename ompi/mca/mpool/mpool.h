@@ -23,7 +23,7 @@
 #define MCA_MPOOL_H
 #include "opal/mca/mca.h"
 #include "ompi/info/info.h"
-#include "opal/class/opal_list.h" 
+#include "ompi/class/ompi_free_list.h" 
 #include "ompi/class/ompi_pointer_array.h" 
 
 #define MCA_MPOOL_FLAGS_CACHE 0x1
@@ -33,7 +33,7 @@
 struct mca_mpool_base_resources_t;
 
 struct mca_mpool_base_registration_t { 
-    opal_list_item_t super; 
+    ompi_free_list_item_t super; 
     struct mca_mpool_base_module_t *mpool; 
     unsigned char* base;
     unsigned char* bound; 
@@ -185,8 +185,8 @@ struct mca_mpool_base_module_t {
     mca_mpool_base_module_register_fn_t mpool_register;  /**< register memory */
     mca_mpool_base_module_deregister_fn_t mpool_deregister; /**< deregister memory */
     mca_mpool_base_module_find_fn_t mpool_find; /**< find regisrations in the cache */
-    mca_mpool_base_module_retain_fn_t mpool_retain; /**< retain a regisrtation from the cache */ 
-    mca_mpool_base_module_release_fn_t mpool_release; /**< release a regisrtation from the cache */ 
+    mca_mpool_base_module_retain_fn_t mpool_retain; /**< retain a registration from the cache */ 
+    mca_mpool_base_module_release_fn_t mpool_release; /**< release a registration from the cache */ 
     mca_mpool_base_module_finalize_fn_t mpool_finalize;  /**< finalize */
     struct mca_rcache_base_module_t *rcache; /* the rcache associated with this mpool */ 
     uint32_t flags; /**< mpool flags */

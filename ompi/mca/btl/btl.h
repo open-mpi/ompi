@@ -112,7 +112,7 @@
 #define MCA_BTL_H
 
 #include "ompi/types.h"
-#include "ompi/class/ompi_free_list.h"
+#include "ompi/mca/mpool/mpool.h"
 
 /*
  * BTL types
