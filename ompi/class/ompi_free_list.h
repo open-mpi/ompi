@@ -24,7 +24,6 @@
 #include "opal/threads/threads.h"
 #include "opal/threads/condition.h"
 #include "ompi/constants.h"
-#include "ompi/mca/mpool/mpool.h"
 #include "opal/sys/cache.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -43,7 +42,7 @@ struct ompi_free_list_t
     size_t fl_num_waiting;
     size_t fl_elem_size;
     opal_class_t* fl_elem_class;
-    mca_mpool_base_module_t* fl_mpool;
+    struct mca_mpool_base_module_t* fl_mpool;
     opal_mutex_t fl_lock;
     opal_condition_t fl_condition; 
     opal_list_t fl_allocations;
@@ -78,7 +77,7 @@ OMPI_DECLSPEC int ompi_free_list_init(
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
-    mca_mpool_base_module_t*);
+    struct mca_mpool_base_module_t*);
 
 OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
 

@@ -253,26 +253,3 @@ int mca_mpool_mvapi_retain(struct mca_mpool_base_module_t* mpool,
     return OMPI_SUCCESS; 
 }
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

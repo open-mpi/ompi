@@ -47,7 +47,7 @@ static void mca_mpool_base_registration_destructor( mca_mpool_base_registration_
 
 OBJ_CLASS_INSTANCE(
     mca_mpool_base_registration_t,
-    opal_list_item_t,
+    ompi_free_list_item_t,
     mca_mpool_base_registration_constructor,
     mca_mpool_base_registration_destructor);
 
