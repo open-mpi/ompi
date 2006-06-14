@@ -280,41 +280,50 @@ static inline uint32_t
 ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pElem,
                               char* partial_data,
                               uint32_t start_position, uint32_t end_position,
-                              char* user_buffer )
+                              char** user_buffer )
 {
-    char unused_byte = 0x7F;
-    char unpacked_buffer[16], *unpacked_data = unpacked_buffer;
+    char unused_byte = 0x7F, saved_data[16];
+    char temporary[16], *temporary_buffer = temporary;
+    char* real_data = *user_buffer + pElem->elem.disp;
     uint32_t i, count_desc = 1;
     uint32_t data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
 
-    /* First find a byte that is not used in the partial buffer */
+    DO_DEBUG( opal_output( 0, "unpack partial data start %d end %d data_length %d user %p\n"
+                           "\tbConverted %d total_length %d count %d\n",
+                           start_position, end_position, data_length, *user_buffer,
+                           pConvertor->bConverted,pConvertor->local_size, pConvertor->count ); );
+
+    /* Find a byte that is not used in the partial buffer */
  find_unused_byte:
-    for( i = start_position; i < end_position; i++ ) {
+    for( i = 0; i < (end_position - start_position); i++ ) {
         if( unused_byte == partial_data[i] ) {
             unused_byte--;
             goto find_unused_byte;
         }
     }
 
-    /* Fill the rest of the buffer with the unused byte */
-    for( i = 0; i < start_position; i++ )
-        partial_data[i] = unused_byte;
-    for( i = end_position; i < data_length; i++ )
-        partial_data[i] = unused_byte;
+    /* Copy and fill the rest of the buffer with the unused byte */
+    memset( temporary, unused_byte, data_length );
+    MEMCPY( temporary + start_position, partial_data, (end_position - start_position) );
 
-    /* Then unpack it */
+    /* Save the content of the user memory */
+    MEMCPY( saved_data, real_data, data_length );
+
+    /* Then unpack the data into the user memory */
     UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                partial_data, unpacked_data, data_length );
+                                temporary_buffer, *user_buffer, data_length );
 
-    /* For every occurence of something different than the unused byte
-     * move it from the unpacked buffer into the user memory.
+    /* reload the length as it is reset by the macro */
+    data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+
+    /* For every occurence of the unused byte move data from the saved
+     * buffer back into the user memory.
      */
     for( i = 0; i < data_length; i++ ) {
-        if( unused_byte != unpacked_data[i] ) {
-            user_buffer[i] = unpacked_data[i];
-        }
+        if( unused_byte == real_data[i] )
+            real_data[i] = saved_data[i];
     }
-    return count_desc;
+    return 0;
 }
 
 /* The pack/unpack functions need a cleanup. I have to create a proper interface to access
@@ -372,28 +381,23 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
         packed_buffer = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         if( 0 != pConvertor->partial_length ) {
-            char partial_buffer[16], *partial_data = partial_buffer;
             uint32_t element_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
             uint32_t missing_length = element_length - pConvertor->partial_length;
-            uint32_t count;
 
             assert( pElem->elem.common.flags & DT_FLAG_DATA );
-            MEMCPY_CSUM( partial_data + pConvertor->partial_length, packed_buffer,
-                         missing_length, pConvertor );
-            count = ompi_unpack_partial_datatype( pConvertor, pElem,
-                                                  partial_data,
-                                                  pConvertor->partial_length, element_length,
-                                                  user_memory_base );
-            count_desc -= count;
+            COMPUTE_CSUM( packed_buffer, missing_length, pConvertor );
+            ompi_unpack_partial_datatype( pConvertor, pElem,
+                                          packed_buffer,
+                                          pConvertor->partial_length, element_length,
+                                          &user_memory_base );
+            --count_desc;
             if( 0 == count_desc ) {
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
-            assert( 0 == element_length );
-            packed_buffer = (char*)iov[iov_count].iov_base + missing_length;
+            packed_buffer += missing_length;
             iov_len_local -= missing_length;
-            pConvertor->bConverted += element_length;
             pConvertor->partial_length = 0;  /* nothing more inside */
         }
         while( 1 ) {
@@ -410,19 +414,18 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 type = pElem->elem.common.type;
                 assert( type < DT_MAX_PREDEFINED );
                 if( 0 != iov_len_local ) {
-                    char partial_data[16];
-
+                    char* temp = user_memory_base;
                     /* We have some partial data here. Let's copy it into the convertor
                      * and keep it hot until the next round.
                      */
                     assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
-                    MEMCPY_CSUM( partial_data, packed_buffer, iov_len_local, pConvertor );
+                    COMPUTE_CSUM( packed_buffer, iov_len_local, pConvertor );
                     /*opal_output( 0, "Saving %d bytes for the next call at address %p\n",
                       iov_len_local, user_memory_base );*/
 
                     ompi_unpack_partial_datatype( pConvertor, pElem,
-                                                  partial_data, 0, iov_len_local,
-                                                  user_memory_base );
+                                                  packed_buffer, 0, iov_len_local,
+                                                  &temp );
 
                     pConvertor->partial_length = iov_len_local;
                     iov_len_local = 0;
@@ -480,9 +483,9 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     complete_loop:
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
-        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
     }
     *max_data = total_unpacked;
+    pConvertor->bConverted += total_unpacked;  /* update the already converted bytes */
     *out_size = iov_count;
     if( pConvertor->bConverted == pConvertor->remote_size ) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
