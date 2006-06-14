@@ -28,6 +28,7 @@
 #include <string.h>
 #include "support.h"
 #include "ompi/class/ompi_rb_tree.h"
+#include "ompi/mca/mpool/base/base.h"
 
 #define NUM_KEYS 10000
 #define SEED  1
