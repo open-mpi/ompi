@@ -1036,6 +1036,15 @@ static void mca_pml_ob1_put_completion(
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
         >= sendreq->req_send.req_bytes_packed) {
+        /* bump up the req_state after the last fin was sent.. 
+           if rndv completion occurs after this (can happen!) then 
+           the rndv completion will properly clean up after the request 
+           we can't just do this on the first RDMA PUT + ACK ctl message in 
+           mca_pml_ob1_send_request_put because then we might fall into sender 
+           side scheduleing (pml pipeline protocol) */ 
+        if(true == sendreq->req_got_put_ack) { 
+            MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
+        }
         /* if we've got completion on rndv packet */
         if (sendreq->req_state == 2) {
             MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
@@ -1078,7 +1087,7 @@ void mca_pml_ob1_send_request_put(
     bml_btl = mca_bml_base_btl_array_find(&bml_endpoint->btl_rdma, btl);  
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) { 
-        MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
+        sendreq->req_got_put_ack = true;
     }
     
     if(NULL == frag) {
