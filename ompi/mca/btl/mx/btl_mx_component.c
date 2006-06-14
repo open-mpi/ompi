@@ -232,6 +232,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 
     if (enable_progress_threads) { 
         opal_output( 0, "mca_btl_mx_component_init: progress threads requested but not supported");
+        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+                                NULL, 0);
         return NULL;
     }
 
@@ -247,6 +249,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     if( MX_SUCCESS != (status = mx_init()) ) {
         opal_output( 0, "mca_btl_mx_component_init: mx_init() failed with status = %d (%s)\n",
                      status, mx_strerror(status) );
+        mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
+                                NULL, 0);
         return NULL;
     }
 
