@@ -223,6 +223,10 @@ int mca_btl_mvapi_free(
                     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
+    if (MCA_BTL_MVAPI_FRAG_FRAG == frag->type) {
+        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->vapi_reg); 
+    }
+
     MCA_BTL_IB_FRAG_RETURN(btl, frag); 
     
     return OMPI_SUCCESS; 
