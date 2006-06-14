@@ -46,7 +46,6 @@ extern "C" {
 #define CONVERTOR_CLONE            0x00100000
 #define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_TYPE_MASK        0x00FF0000
-#define CONVERTOR_STATE_MASK       0xFF000000
 #define CONVERTOR_STATE_START      0x01000000
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
@@ -54,11 +53,6 @@ extern "C" {
 #define CONVERTOR_COMPUTE_CRC      0x10000000
 
 typedef struct ompi_convertor_t ompi_convertor_t;
-
-typedef int32_t (*conversion_fct_t)( ompi_convertor_t* pConvertor, uint32_t count,
-                                     const void* from, uint32_t from_len, long from_extent,
-                                     void* to, uint32_t to_length, long to_extent, 
-                                     uint32_t *advance );
 
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             struct iovec* iov,
@@ -81,10 +75,6 @@ typedef struct dt_stack {
 /**
  *
  */
-typedef struct {
-    char     data[16];
-    uint32_t length;
-} ompi_convertor_storage_t;
 
 #define DT_STATIC_STACK_SIZE   5
 
@@ -104,14 +94,13 @@ struct ompi_convertor_t {
     memalloc_fct_t                memAlloc_fn;  /**< pointer to the memory allocation function */
     void*                         memAlloc_userdata;  /**< user data for the malloc function */
     struct ompi_convertor_master_t* master;     /* the master convertor */
-    conversion_fct_t*             pFunctions;   /**< the convertor functions pointer */
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
     size_t                        bConverted;   /**< # of bytes already converted */
+    uint32_t                      partial_length;  /**< amount of data left over from the last unpack */
     uint32_t                      checksum;     /**< checksum computed by pack/unpack operation */
     uint32_t                      csum_ui1;     /**< partial checksum computed by pack/unpack operation */
     uint32_t                      csum_ui2;     /**< partial checksum computed by pack/unpack operation */
-    ompi_convertor_storage_t      storage;      /**< pending data from the last conversion */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
 };
 OBJ_CLASS_DECLARATION( ompi_convertor_t );
@@ -121,9 +110,6 @@ OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_external32_convertor;
 OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_local_convertor;
 OMPI_DECLSPEC extern uint32_t          ompi_mpi_local_arch;
 
-extern conversion_fct_t ompi_ddt_copy_functions[];
-extern conversion_fct_t ompi_ddt_heterogeneous_copy_functions[];
-
 /*
  *
  */
@@ -131,47 +117,6 @@ static inline uint32_t
 ompi_convertor_get_checksum( ompi_convertor_t* convertor )
 {
     return convertor->checksum;
-}
-
-/**
- * Export the partially converted data to an outside entity.
- */
-static inline int32_t ompi_convertor_export_storage( const ompi_convertor_t* convertor,
-                                                     ompi_convertor_storage_t* storage )
-{
-    /* The storage has a meaning only for receive side. */
-    assert( convertor->flags & CONVERTOR_RECV );
-    storage->length = convertor->storage.length;
-    assert( storage->length < 16 );  /* that's the maximum data length */
-    if( 0 != convertor->storage.length ) {
-        memcpy( storage->data, convertor->storage.data, storage->length );
-    }
-    return storage->length;
-}
-
-/**
- * Import partially unpacked data back in the convertor, in order to use it
- * on the next unpack operation.
- */
-static inline int32_t ompi_convertor_import_storage( ompi_convertor_t* convertor,
-                                                     const ompi_convertor_storage_t* storage )
-{
-    /* The storage has a meaning only for receive side. */
-    assert( convertor->flags & CONVERTOR_RECV );
-    convertor->storage.length = storage->length;
-    assert( storage->length < 16 );  /* that's the maximum data length */
-    if( 0 != storage->length ) {
-        memcpy( convertor->storage.data, storage->data, storage->length );
-    }
-    return storage->length;
-}
-
-/**
- * Reset the pending data attached to the convertor by reseting the length.
- */
-static inline void ompi_convertor_reset_storage( ompi_convertor_t* convertor )
-{
-    convertor->storage.length = 0;
 }
 
 /*
@@ -199,19 +144,24 @@ ompi_convertor_unpack( ompi_convertor_t* pConv,
  */
 OMPI_DECLSPEC ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode );
 
-/*
- *
+/**
+ * The cleanup function will put the convertor in exactly the same state as after a call
+ * to ompi_convertor_construct. Therefore, all PML can call OBJ_DESTRUCT on the request's
+ * convertors without having to call OBJ_CONSTRUCT everytime they grab a new one from the
+ * cache. The OBJ_CONSTRUCT on the convertor should be called only on the first creation
+ * of a request (not when extracted from the cache).
  */
-OMPI_DECLSPEC int ompi_convertor_cleanup( ompi_convertor_t* convertor );
-
-/*
- *
- */
-OMPI_DECLSPEC int32_t
-ompi_convertor_personalize( ompi_convertor_t* pConv, uint32_t flags,
-                            size_t* starting_point,
-                            memalloc_fct_t allocfn,
-                            void* userdata );
+static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
+{
+    if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
+        free( convertor->pStack );
+        convertor->pStack     = convertor->static_stack;
+        convertor->stack_size = DT_STATIC_STACK_SIZE;
+    }
+    convertor->pDesc     = NULL;
+    convertor->stack_pos = 0;
+    return OMPI_SUCCESS;
+}
 
 /*
  *
@@ -243,16 +193,6 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
 }
 
 /*
- * This function is internal to the data type engine. It should not be called from
- * outside. The data preparation should use the specialized prepare_for_send and
- * prepare_for_recv functions.
- */
-OMPI_DECLSPEC
-int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                            const struct ompi_datatype_t* datatype, int32_t count,
-                            const void* pUserBuf );
-
-/*
  *
  */
 OMPI_DECLSPEC int32_t
@@ -269,9 +209,8 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->pFunctions = pSrcConv->pFunctions;
-    convertor->flags      = (pSrcConv->flags | flags) & ~CONVERTOR_STATE_MASK;
-    
+    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->master     = pSrcConv->master;
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
 
@@ -292,9 +231,9 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->pFunctions = pSrcConv->pFunctions;
-    convertor->flags      = (pSrcConv->flags | flags) & ~CONVERTOR_STATE_MASK;
-        
+    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->master     = pSrcConv->master;
+
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
 
@@ -312,7 +251,45 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
      * If the convertor is already at the correct position we are happy.
      */
     if( (*position) == convertor->bConverted ) return OMPI_SUCCESS;
+
+    /*
+     * Do not allow the convertor to go outside the data boundaries. This test include
+     * the check for datatype with size zero as well as for convertors with a count of zero.
+     */
+    if( convertor->local_size <= *position) {
+        convertor->flags |= CONVERTOR_COMPLETED;
+        convertor->bConverted = convertor->local_size;
+        *position = convertor->bConverted;
+        return OMPI_SUCCESS;
+    }
+
+    /* Remove the completed flag if it's already set */
+    convertor->flags &= ~CONVERTOR_COMPLETED;
+
+    if( (convertor->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
+        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) &&
+        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) ) {
+        /* basic predefined datatype (contiguous) */
+        convertor->bConverted = *position;
+        return OMPI_SUCCESS;
+    }
+
     return ompi_convertor_set_position_nocheck( convertor, position );
+}
+
+/*
+ *
+ */
+static inline int32_t
+ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
+                            size_t* position,
+                            memalloc_fct_t allocfn, void* userdata )
+{
+    convertor->flags |= flags;
+    convertor->memAlloc_fn = allocfn;
+    convertor->memAlloc_userdata = userdata;
+
+    return ompi_convertor_set_position( convertor, position );
 }
 
 /*

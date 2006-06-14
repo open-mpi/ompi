@@ -47,6 +47,9 @@ int MPI_Pack_external_size(char *datarep, int incount,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         }
     }
+
+    OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
+
     /* the resulting convertor will be set to the position ZERO */
     ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
                                               datatype, incount, NULL, 0, &local_convertor );
@@ -55,5 +58,5 @@ int MPI_Pack_external_size(char *datarep, int incount,
     *size = (MPI_Aint)length;
     OBJ_DESTRUCT( &local_convertor );
     
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return OMPI_SUCCESS;
 }

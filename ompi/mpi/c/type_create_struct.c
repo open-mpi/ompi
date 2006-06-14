@@ -45,9 +45,9 @@ int MPI_Type_create_struct(int count,
         if( count < 0 ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT,
                                           FUNC_NAME);
-        } else if(NULL == array_of_blocklengths ||
-                  NULL == array_of_displacements ||
-                  NULL == array_of_types) {
+        } else if( (count > 0) && (NULL == array_of_blocklengths ||
+                                   NULL == array_of_displacements ||
+                                   NULL == array_of_types) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == newtype) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);

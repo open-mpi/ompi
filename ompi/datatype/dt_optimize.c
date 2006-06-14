@@ -171,6 +171,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                 pos_desc += loop->items + 1;
                 changes++;
             } else {
+                ddt_elem_desc_t* elem = (ddt_elem_desc_t*)&(pData->desc.desc[pos_desc+1]);
                 if( last_length != 0 ) {
                     CREATE_ELEM( pElemDesc, last_type, DT_FLAG_BASIC, last_length, last_disp, last_extent );
                     pElemDesc++; nbElems++;
@@ -178,11 +179,20 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                     last_length = 0;
                     last_type   = DT_LOOP;
                 }
-                CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
-                pElemDesc++; nbElems++;
-                PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, total_disp, pos_desc + loop->extent );
-                pos_desc++;
-                DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
+                if( (2 == loop->items) && (1 == elem->count)
+                    && (elem->extent == (long)ompi_ddt_basicDatatypes[elem->common.type]->size) ) {
+                    CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags & ~DT_FLAG_CONTIGUOUS,
+                                 loop->loops, elem->disp, loop->extent );
+                    pElemDesc++; nbElems++;
+                    pos_desc += loop->items + 1;
+                    changes++; optimized++;
+                } else {
+                    CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
+                    pElemDesc++; nbElems++;
+                    PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, total_disp, pos_desc + loop->extent );
+                    pos_desc++;
+                    DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
+                }
             }
             total_disp = pStack->disp;  /* update the displacement */
             continue;

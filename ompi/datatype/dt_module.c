@@ -57,6 +57,12 @@ int ompi_ddt_dfd = -1;
             0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
             DT_##NAME, 1, (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
 
+#define INIT_BASIC_DATA_WITH_NAME( TYPE, ALIGN, INTERNAL_NAME, NAME, FLAGS )       \
+    { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
+            0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
+            DT_##INTERNAL_NAME, 1, (((unsigned long long)1)<<(DT_##INTERNAL_NAME)),\
+            EMPTY_DATA(NAME) }
+
 #define INIT_UNAVAILABLE_DATA( NAME )                                           \
     { BASEOBJ_DATA, 0, 0, 0, 0, 0, 0, DT_FLAG_UNAVAILABLE | DT_FLAG_PREDEFINED, \
             DT_UNAVAILABLE, 1, 0, EMPTY_DATA( "UNAVAILABLE_" # NAME ) }
@@ -69,12 +75,18 @@ int ompi_ddt_dfd = -1;
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                  \
     { BASEOBJ_DATA, SIZE, ALIGN, 0/*true_lb*/, SIZE/*true_ub*/,                                    \
             0/*lb*/, SIZE/*ub*/,                                                                   \
-            DT_FLAG_CONTIGUOUS | DT_FLAG_PREDEFINED | DT_FLAG_DATA | DT_FLAG_COMMITED | DT_FLAG_DATA_FORTRAN | (FLAGS), \
+            DT_FLAG_BASIC | DT_FLAG_DATA_FORTRAN | (FLAGS), \
             (TYPE), 1, (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                          \
     INIT_BASIC_TYPE( TYPE, NAME )
 #endif  /* OMPI_WANT_F77_BINDINGS */
+
+/**
+ * This is the number of predefined datatypes. It is different than the MAX_PREDEFINED
+ * as it include all the optional datatypes (such as MPI_INTEGER?, MPI_REAL?).
+ */
+int32_t ompi_ddt_number_of_predefined_data = 0;
 
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_datatype_null =
     { BASEOBJ_DATA, 0, 0, 0, 0,
@@ -93,11 +105,11 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_byte = INIT_BASIC_DATA( unsigned char, OM
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_short = INIT_BASIC_DATA( short, OMPI_ALIGNMENT_SHORT, SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_short = INIT_BASIC_DATA( unsigned short, OMPI_ALIGNMENT_SHORT, UNSIGNED_SHORT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_int = INIT_BASIC_DATA( int, OMPI_ALIGNMENT_INT, INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned = INIT_BASIC_DATA( unsigned int, OMPI_ALIGNMENT_INT, UNSIGNED_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned = INIT_BASIC_DATA_WITH_NAME( unsigned int, OMPI_ALIGNMENT_INT, UNSIGNED_INT, UNSIGNED, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long = INIT_BASIC_DATA( long, OMPI_ALIGNMENT_LONG, LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long = INIT_BASIC_DATA( unsigned long, OMPI_ALIGNMENT_LONG, UNSIGNED_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 #if HAVE_LONG_LONG
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_BASIC_DATA( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_BASIC_DATA_WITH_NAME( long long, OMPI_ALIGNMENT_LONG_LONG, LONG_LONG_INT, LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_unsigned_long_long = INIT_BASIC_DATA( unsigned long long, OMPI_ALIGNMENT_LONG_LONG, UNSIGNED_LONG_LONG, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
 #else
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_long_long_int = INIT_UNAVAILABLE_DATA( LONG_LONG_INT );
@@ -121,16 +133,16 @@ OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cxx_bool = INIT_BASIC_DATA( bool, OMPI_AL
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_logic = INIT_BASIC_FORTRAN_TYPE( DT_LOGIC, LOGIC, OMPI_SIZEOF_FORTRAN_LOGICAL, OMPI_ALIGNMENT_FORTRAN_LOGICAL, 0 );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_integer = INIT_BASIC_FORTRAN_TYPE( DT_INTEGER, INTEGER, OMPI_SIZEOF_FORTRAN_INTEGER, OMPI_ALIGNMENT_FORTRAN_INTEGER, DT_FLAG_DATA_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_real = INIT_BASIC_FORTRAN_TYPE( DT_REAL, REAL, OMPI_SIZEOF_FORTRAN_REAL, OMPI_ALIGNMENT_FORTRAN_REAL, DT_FLAG_DATA_FLOAT );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblprec = INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DBLPREC, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblprec = INIT_BASIC_FORTRAN_TYPE( DT_DBLPREC, DOUBLE_PRECISION, OMPI_SIZEOF_FORTRAN_DOUBLE_PRECISION, OMPI_ALIGNMENT_FORTRAN_DOUBLE_PRECISION, DT_FLAG_DATA_FLOAT );
 
 #if HAVE_LONG_DOUBLE
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_BASIC_DATA( ompi_complex_long_double_t, OMPI_ALIGNMENT_LONG_DOUBLE, COMPLEX_LONG_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
 #else
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_ldblcplex = INIT_UNAVAILABLE_DATA( COMPLEX_LONG_DOUBLE );
 #endif  /* HAVE_LONG_DOUBLE */
 
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
-OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_C | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_cplex = INIT_BASIC_DATA( ompi_complex_float_t, OMPI_ALIGNMENT_FLOAT, COMPLEX_FLOAT, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
+OMPI_DECLSPEC ompi_datatype_t ompi_mpi_dblcplex = INIT_BASIC_DATA( ompi_complex_double_t, OMPI_ALIGNMENT_DOUBLE, COMPLEX_DOUBLE, DT_FLAG_DATA_FORTRAN | DT_FLAG_DATA_COMPLEX );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_float_int = INIT_BASIC_TYPE( DT_FLOAT_INT, FLOAT_INT );
 OMPI_DECLSPEC ompi_datatype_t ompi_mpi_double_int = INIT_BASIC_TYPE( DT_DOUBLE_INT, DOUBLE_INT );
 #if HAVE_LONG_DOUBLE
@@ -281,11 +293,16 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         (PDST)->id       = (PSRC)->id;                                  \
         (PDST)->nbElems  = (PSRC)->nbElems;                             \
         (PDST)->bdt_used = (PSRC)->bdt_used;                            \
-        if( (PDST)->desc.desc != NULL )                                 \
+        if( NULL != (PDST)->desc.desc )                                 \
             free( (PDST)->desc.desc );                                  \
-        (PDST)->desc     = (PSRC)->desc;                                \
-        if( (PDST)->opt_desc.desc != NULL )                             \
+        /* Don't re-assing the (PDST)->desc because we need the pointer \
+         * value in the following if statement. In the case of          \
+         * predefined datatypes both descriptors point to the same      \
+         * memory and if we free the memory twice bad things happen.*/  \
+        if( (NULL != (PDST)->opt_desc.desc) &&                          \
+            ((PDST)->opt_desc.desc != (PDST)->desc.desc) )              \
             free( (PDST)->opt_desc.desc );                              \
+        (PDST)->desc     = (PSRC)->desc;                                \
         (PDST)->opt_desc = (PSRC)->opt_desc;                            \
         (PDST)->packed_description = (PSRC)->packed_description;        \
         (PSRC)->packed_description = NULL;                              \
@@ -323,8 +340,6 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ptype->opt_desc.desc = NULL;                                    \
         OBJ_RELEASE( ptype );                                           \
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
-        if( (PDATA)->flags & DT_FLAG_CONTIGUOUS )                       \
-            (PDATA)->flags |= DT_FLAG_BASIC;                            \
     } while(0)
 
 #define DECLARE_MPI2_COMPOSED_BLOCK_DDT( PDATA, MPIDDT, MPIDDTNAME, MPIType, FLAGS ) \
@@ -340,8 +355,6 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ptype->opt_desc.desc = NULL;                                                 \
         OBJ_RELEASE( ptype );                                                        \
         strncpy( (PDATA)->name, (MPIDDTNAME), MPI_MAX_OBJECT_NAME );                 \
-        if( (PDATA)->flags & DT_FLAG_CONTIGUOUS )                                    \
-            (PDATA)->flags |= DT_FLAG_BASIC;                                         \
     } while(0)
 
 #define DECLARE_MPI_SYNONYM_DDT( PDATA, MPIDDTNAME, PORIGDDT)           \
@@ -349,6 +362,8 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         /* just memcpy as it's easier this way */                       \
         memcpy( (PDATA), (PORIGDDT), sizeof(ompi_datatype_t) );         \
         strncpy( (PDATA)->name, MPIDDTNAME, MPI_MAX_OBJECT_NAME );      \
+        /* forget the language flag */                                  \
+        (PDATA)->flags &= ~DT_FLAG_DATA_LANGUAGE;                       \
     } while(0)
 
 int ompi_ddt_register_params(void)
@@ -396,6 +411,11 @@ int32_t ompi_ddt_init( void )
 
         datatype->desc.length       = 1;
         datatype->desc.used         = 1;
+        /* By default the optimized descritption is the same as the default
+         * description for predefined datatypes.
+         */
+        datatype->opt_desc          = datatype->desc;
+
         datatype->btypes[i]         = 1;
     }
 
@@ -500,8 +520,13 @@ int32_t ompi_ddt_init( void )
     /* This macro makes everything significantly easier to read below.
        All hail the moog!  :-) */
 
-#define MOOG(name) ompi_mpi_##name.d_f_to_c_index = \
-    ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name);
+#define MOOG(name)                                                      \
+    {                                                                   \
+        ompi_mpi_##name.d_f_to_c_index =                                \
+            ompi_pointer_array_add(ompi_datatype_f_to_c_table, &ompi_mpi_##name); \
+        if( ompi_ddt_number_of_predefined_data < (ompi_mpi_##name).d_f_to_c_index ) \
+            ompi_ddt_number_of_predefined_data = (ompi_mpi_##name).d_f_to_c_index; \
+    }
 
     MOOG(datatype_null);
     MOOG(byte);
@@ -629,7 +654,7 @@ static int _dump_data_flags( unsigned short usflags, char* ptr, size_t length )
     if( usflags & DT_FLAG_USER_LB )                  ptr[4]  = 'l';
     if( usflags & DT_FLAG_USER_UB )                  ptr[5]  = 'u';
     if( usflags & DT_FLAG_PREDEFINED )               ptr[6]  = 'P';
-    if( usflags & DT_FLAG_IN_LOOP )                  ptr[7]  = 'L';
+    if( !(usflags & DT_FLAG_NO_GAPS) )               ptr[7]  = 'G';
     if( usflags & DT_FLAG_DATA )                     ptr[8]  = 'D';
     if( (usflags & DT_FLAG_BASIC) == DT_FLAG_BASIC ) ptr[9]  = 'B';
     /* Which kind of datatype is that */
@@ -737,10 +762,15 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += __dt_contain_basic_datatypes( pData, buffer + index, length - index );
         index += snprintf( buffer + index, length - index, "\n" );
     }
-    index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index, length - index );
     if( pData->opt_desc.desc != NULL ) {
+        /* If the data is already committed print everything including the last
+         * fake DT_END_LOOP entry.
+         */
+        index += __dump_data_desc( pData->desc.desc, pData->desc.used + 1, buffer + index, length - index );
         index += snprintf( buffer + index, length - index, "Optimized description \n" );
-        index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used, buffer + index, length - index );
+        index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used + 1, buffer + index, length - index );
+    } else {
+        index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index, length - index );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
     opal_output( 0, "%s\n", buffer );

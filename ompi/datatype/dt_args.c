@@ -43,6 +43,13 @@ typedef struct __dt_args {
     MPI_Datatype* d;
 } ompi_ddt_args_t;
 
+/**
+ * Some architecture require that 64 bits pointers (to pointers) has to
+ * be 64 bits aligned. As in the ompi_ddt_args_t structure we have 2 such
+ * pointers and one to an array of ints, if we start by setting the 64
+ * bits aligned one we will not have any trouble. Problem arise on
+ * SPARC 64.
+ */
 #define ALLOC_ARGS(PDATA, IC, AC, DC)					\
     do {                                                                \
         int length = sizeof(ompi_ddt_args_t) + (IC) * sizeof(int) +     \
@@ -53,18 +60,18 @@ typedef struct __dt_args {
         pArgs->ca = (AC);                                               \
         pArgs->cd = (DC);                                               \
         buf += sizeof(ompi_ddt_args_t);					\
-        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
-        else {								\
-            pArgs->i = (int*)buf;                                       \
-            buf += pArgs->ci * sizeof(int);                             \
-        }                                                               \
         if( pArgs->ca == 0 ) pArgs->a = NULL;				\
         else {								\
             pArgs->a = (MPI_Aint*)buf;					\
             buf += pArgs->ca * sizeof(MPI_Aint);                        \
         }                                                               \
         if( pArgs->cd == 0 ) pArgs->d = NULL;				\
-        else pArgs->d = (MPI_Datatype*)buf;                             \
+        else {                                                          \
+            pArgs->d = (MPI_Datatype*)buf;                              \
+            buf += pArgs->cd * sizeof(MPI_Datatype);                    \
+        }                                                               \
+        if( pArgs->ci == 0 ) pArgs->i = NULL;				\
+        else pArgs->i = (int*)buf;                                      \
         pArgs->ref_count = 1;                                           \
         pArgs->total_pack_size = (4 + (IC)) * sizeof(int) +             \
             (AC) * sizeof(MPI_Aint) + (DC) * sizeof(int);               \
@@ -219,18 +226,21 @@ int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
     printf( "type %d count ints %d count disp %d count datatype %d\n",
             pArgs->create_type, pArgs->ci, pArgs->ca, pArgs->cd );
     if( pArgs->i != NULL ) {
+        printf( "ints:     " );
         for( i = 0; i < pArgs->ci; i++ ) {
             printf( "%d ", pArgs->i[i] );
         }
         printf( "\n" );
     }
     if( pArgs->a != NULL ) {
+        printf( "MPI_Aint: " );
         for( i = 0; i < pArgs->ca; i++ ) {
             printf( "%ld ", (long)pArgs->a[i] );
         }
         printf( "\n" );
     }
     if( pArgs->d != NULL ) {
+        printf( "types:    " );
         for( i = 0; i < pArgs->cd; i++ ) {
             ompi_datatype_t* temp = pArgs->d[i];
             if( temp->flags & DT_FLAG_PREDEFINED ) {

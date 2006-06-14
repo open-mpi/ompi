@@ -23,7 +23,8 @@
 
 /* macros to play with the flags */
 #define SET_CONTIGUOUS_FLAG( INT_VALUE )     (INT_VALUE) = (INT_VALUE) | (DT_FLAG_CONTIGUOUS)
-#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS))
+#define SET_NO_GAP_FLAG( INT_VALUE )         (INT_VALUE) = (INT_VALUE) | (DT_FLAG_NO_GAPS)
+#define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS | DT_FLAG_NO_GAPS))
 
 #if defined(__GNUC__) && !defined(__STDC__)
 #define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
@@ -143,8 +144,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     } else {
         /* both of them have the LB flag or both of them dont have it */
         lb = LMIN( pdtBase->lb, lb );
-        /*printf( "LB problem: original (%ld, %ld) new data (%ld, %ld) displacement %ld result (%ld, %ld)\n",
-          pdtBase->lb, pdtBase->ub, pdtAdd->lb, pdtBase->ub, disp, lb, ub );*/
     }
 
     /* the same apply for the upper bound except for the case where
@@ -161,8 +160,13 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         /* we should compute the extent depending on the alignement */
         ub = LMAX( pdtBase->ub, ub );
     }
-    pdtBase->lb = LMIN( lb, ub );
-    pdtBase->ub = LMAX( lb, ub );
+    /* While the true_lb and true_ub have to be ordered to have the true_lb lower
+     * than the true_ub, the ub and lb does not have to be ordered. They should be
+     * as the user define them.
+     */
+    pdtBase->lb = lb;
+    pdtBase->ub = ub;
+
     if( 0 == pdtBase->nbElems ) old_true_ub = disp;
     else                        old_true_ub = pdtBase->true_ub;
     pdtBase->true_lb = LMIN( true_lb, pdtBase->true_lb );
@@ -257,7 +261,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pLoop = pLast;
                 CREATE_LOOP_START( pLast, count, (long)pdtAdd->desc.used + 1, extent,
                                    (pdtAdd->flags & ~(DT_FLAG_COMMITED)) );
-                localFlags = DT_FLAG_IN_LOOP;
                 pdtBase->btypes[DT_LOOP] += 2;
                 pdtBase->desc.used += 2;
                 pLast++;
@@ -265,7 +268,6 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
 
             for( i = 0; i < pdtAdd->desc.used; i++ ) {
                 pLast->elem               = pdtAdd->desc.desc[i].elem;
-                pLast->elem.common.flags |= localFlags;
                 if( DT_FLAG_DATA & pLast->elem.common.flags )
                     pLast->elem.disp += disp;
                 else if( DT_END_LOOP == pLast->elem.common.type ) {
@@ -293,14 +295,20 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
         UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
-        if( (pdtBase->flags & DT_FLAG_CONTIGUOUS) && (pdtAdd->flags & DT_FLAG_CONTIGUOUS)
-            && (pdtBase->size == (uint32_t)(pdtBase->true_ub - pdtBase->true_lb)) ) {
+        localFlags = pdtBase->flags & pdtAdd->flags;
+        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);     /* consider it as not contiguous */
+        if( (localFlags & DT_FLAG_CONTIGUOUS)      /* both have to be contiguous */
+            && ( (((long)pdtAdd->size) == extent)  /* the size and the extent of the added
+                                                    * type have to match */
+                 || (count < 2)) ) {               /*  - if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
-        } else {
-            UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
+            if( ((long)pdtAdd->size) == extent )
+                SET_NO_GAP_FLAG(pdtBase->flags);
         }
     }
-
+    /* If the NO_GAP flag is set the contiguous have to be set too */
+    if( pdtBase->flags & DT_FLAG_NO_GAPS )
+        assert( pdtBase->flags & DT_FLAG_CONTIGUOUS );
     pdtBase->nbElems += (count * pdtAdd->nbElems);
 
     return OMPI_SUCCESS;

@@ -35,32 +35,12 @@ extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
-/* The cleanup function will put the convertor in exactly the same state as after a call
- * to ompi_convertor_construct. Therefore, all PML can call OBJ_DESTRUCT on the request's
- * convertors without having to call OBJ_CONSTRUCT everytime they grab a new one from the
- * cache. The OBJ_CONSTRUCT on the convertor should be called only on the first creation
- * of a request (not when extracted from the cache).
- */
-inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
-{
-    if( convertor->stack_size > DT_STATIC_STACK_SIZE ) {
-        free( convertor->pStack );
-        convertor->pStack     = convertor->static_stack;
-        convertor->stack_size = DT_STATIC_STACK_SIZE;
-    }
-    convertor->pDesc     = NULL;
-    convertor->flags     = CONVERTOR_HOMOGENEOUS;
-    convertor->stack_pos = 0;
-    return OMPI_SUCCESS;
-}
-
 static void ompi_convertor_construct( ompi_convertor_t* convertor )
 {
-    convertor->flags             = CONVERTOR_HOMOGENEOUS;
-    convertor->pStack            = convertor->static_stack;
-    convertor->stack_size        = DT_STATIC_STACK_SIZE;
-    convertor->remoteArch        = 0;
-    convertor->storage.length    = 0;
+    convertor->pStack         = convertor->static_stack;
+    convertor->stack_size     = DT_STATIC_STACK_SIZE;
+    convertor->partial_length = 0;
+    convertor->remoteArch     = ompi_mpi_local_arch;
 }
 
 static void ompi_convertor_destruct( ompi_convertor_t* convertor )
@@ -84,6 +64,9 @@ void ompi_convertor_destroy_masters( void )
     }
 }
 
+extern conversion_fct_t ompi_ddt_heterogeneous_copy_functions[DT_MAX_PREDEFINED];
+extern conversion_fct_t ompi_ddt_copy_functions[DT_MAX_PREDEFINED];
+
 ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_arch )
 {
     ompi_convertor_master_t* master = ompi_convertor_master_list;
@@ -102,7 +85,7 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     master->next = ompi_convertor_master_list;
     ompi_convertor_master_list = master;
     master->remote_arch = remote_arch;
-
+    master->flags       = 0;
     /* Most of the sizes will be identical, so for now just make a copy of
      * the local ones. As master->remote_sizes is defined as being an array of
      * consts we have to manually cast it before using it for writing purposes.
@@ -142,7 +125,15 @@ ompi_convertor_master_t* ompi_convertor_find_or_create_master( uint32_t remote_a
     } else {
         opal_output( 0, "Unknown sizeof(fortran logical) for the remote architecture\n" );
     }
-    /* We're done so far, return th mater convertor */
+
+    if( master->remote_arch == ompi_mpi_local_arch ) {
+        master->pFunctions = ompi_ddt_copy_functions;
+        master->flags |= CONVERTOR_HOMOGENEOUS;
+    } else {
+        master->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+    }
+
+    /* We're done so far, return the mater convertor */
     return master;
 }
 
@@ -154,8 +145,9 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
     master = ompi_convertor_find_or_create_master( remote_arch );
 
     convertor->remoteArch = remote_arch;
-    convertor->pFunctions = ompi_ddt_copy_functions;
     convertor->stack_pos  = 0;
+    convertor->flags      = master->flags;
+    convertor->master     = master;
 
     return convertor;
 }
@@ -188,6 +180,43 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
+    if( ((pConv->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) &&
+        !(pConv->flags & CONVERTOR_WITH_CHECKSUM) ) {
+        /* We are doing conversion on a predefined contiguous datatype. The
+         * convertor contain minimal informations, we only use the bConverted
+         * to manage the conversion.
+         */
+        uint32_t i;
+        size_t initial_bConverted = pConv->bConverted;
+        size_t pending_length = pConv->local_size - pConv->bConverted;
+        char* base_pointer;
+
+        if( (*max_data) < pending_length )
+            pending_length = (*max_data);
+
+        for( i = 0; (i < *out_size) && (0 != pending_length); i++ ) {
+            base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
+
+            if( iov[i].iov_len > pending_length )
+                iov[i].iov_len = pending_length;
+
+            if( NULL == iov[i].iov_base ) {
+                iov[i].iov_base = base_pointer;
+            } else {
+                MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+            }
+            pConv->bConverted += iov[i].iov_len;
+            pending_length -= iov[i].iov_len;
+        }
+        *out_size = i;
+        *max_data = pConv->bConverted - initial_bConverted;
+        if( pConv->bConverted == pConv->local_size ) {
+            pConv->flags |= CONVERTOR_COMPLETED;
+            return 1;
+        }
+        return 0;
+    }
+
     /* There is no specific memory allocation. If the convertor notice that some memory
      * is required in order to perform the operation (depend on the way the convertor
      * was configured) it will call the attached function to get some memory. Any failure
@@ -201,6 +230,38 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                       size_t* max_data, int32_t* freeAfter )
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
+
+    if( ((pConv->flags & (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS)) == 
+        (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS)) &&
+        !(pConv->flags & CONVERTOR_WITH_CHECKSUM) ) {
+        /* We are doing conversion on a contiguous datatype on a homogeneous
+         * environment. The convertor contain minimal informations, we only
+         * use the bConverted to manage the conversion.
+         */
+        uint32_t i;
+        char* base_pointer;
+
+        *max_data = pConv->bConverted;
+        for( i = 0; i < *out_size; i++ ) {
+            base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
+            pConv->bConverted += iov[i].iov_len;
+            if( pConv->bConverted >= pConv->local_size ) {
+                pConv->bConverted = pConv->local_size;
+                iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
+                MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+                goto predefined_data_unpack;
+            }
+            MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+        }
+        *max_data = pConv->bConverted - (*max_data);
+        return 0;
+    predefined_data_unpack:
+        *out_size = i + 1;
+        *max_data = pConv->bConverted - (*max_data);
+        pConv->bConverted = pConv->local_size;
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
+    }
 
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
@@ -249,6 +310,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
+    assert( 0 == pConvertor->partial_length );
     return OMPI_SUCCESS;
 }
 
@@ -260,7 +322,7 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     dt_elem_desc_t* pElems;
 
     convertor->stack_pos      = 1;
-    convertor->storage.length = 0;
+    convertor->partial_length = 0;
     convertor->bConverted     = 0;
     /* Fill the first position on the stack. This one correspond to the
      * last fake DT_END_LOOP that we add to the data representation and
@@ -292,20 +354,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     int32_t rc;
 
     /*
-     * Do not allow the convertor to go outside the data boundaries. This test include
-     * the check for datatype with size zero as well as for convertors with a count of zero.
-     */
-    if( convertor->local_size <= *position) {
-        convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->bConverted = convertor->local_size;
-        *position = convertor->bConverted;
-        return OMPI_SUCCESS;
-    }
-
-    /* Remove the completed flag if it's already set */
-    convertor->flags &= ~CONVERTOR_COMPLETED;
-
-    /*
      * If we plan to rollback the convertor then first we have to set it
      * at the beginning.
      */
@@ -323,88 +371,83 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     return rc;
 }
 
-int32_t
-ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
-                            size_t* position, memalloc_fct_t allocfn, void* userdata )
-{
-    convertor->flags |= flags;
-    convertor->memAlloc_fn = allocfn;
-    convertor->memAlloc_userdata = userdata;
-
-    return ompi_convertor_set_position( convertor, position );
-}
-
-/* This function will initialize a convertor based on a previously created convertor. The idea
+/* This macro will initialize a convertor based on a previously created convertor. The idea
  * is the move outside these function the heavy selection of architecture features for the convertors.
  *
  * I consider here that the convertor is clean, either never initialized or already cleanup.
  */
-int ompi_convertor_prepare( ompi_convertor_t* convertor,
-                            const ompi_datatype_t* datatype, int32_t count,
-                            const void* pUserBuf )
-{
-    uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1;
-
-    if( !(datatype->flags & DT_FLAG_COMMITED) ) {
-        /* this datatype is improper for conversion. Commit it first */
-        return OMPI_ERROR;
+#define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
+    {                                                                   \
+        convertor->pBaseBuf        = (char*)pUserBuf;                   \
+        convertor->count           = count;                             \
+                                                                        \
+        /* Grab the datatype part of the flags */                       \
+        convertor->flags         &= CONVERTOR_TYPE_MASK;                \
+        convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
+        convertor->pDesc          = (ompi_datatype_t*)datatype;         \
+                                                                        \
+        /* Compute the local and remote sizes */                        \
+        convertor->local_size = convertor->count * datatype->size;      \
+        /* If the data is empty we just mark the convertor as           \
+         * completed. With this flag set the pack and unpack functions  \
+         * will not do anything. In order to decrease the data          \
+         * dependencies (and to speed-up this code) we will not test    \
+         * the convertor->local_size but we can test the 2 components.  \
+         */                                                             \
+        if( (0 == convertor->count) || (0 == datatype->size) ) {        \
+            convertor->flags |= CONVERTOR_COMPLETED;                    \
+            convertor->local_size = convertor->remote_size = 0;         \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
+                                                                        \
+        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
+            convertor->remote_size = convertor->local_size;             \
+            convertor->use_desc = &(datatype->opt_desc);                \
+            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
+        } else {                                                        \
+            int i;                                                      \
+            uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;          \
+            ompi_convertor_master_t* master;                            \
+            master = convertor->master;                                 \
+            convertor->remote_size = 0;                                 \
+            for( i = DT_CHAR; bdt_mask != 0; i++, bdt_mask >>= 1 ) {    \
+                if( bdt_mask & ((unsigned long long)1) ) {              \
+                    convertor->remote_size += (datatype->btypes[i] *    \
+                                               master->remote_sizes[i]);\
+                }                                                       \
+            }                                                           \
+            convertor->remote_size *= convertor->count;                 \
+            convertor->use_desc = &(datatype->desc);                    \
+            if( convertor->flags & CONVERTOR_SEND ) {                   \
+                convertor->bConverted = 0;                              \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
+        }                                                               \
+        assert( NULL != convertor->use_desc->desc );                    \
+        /* For predefined datatypes (contiguous) do nothing more */     \
+        /* if checksum is enabled the always continue */                \
+        if( ((convertor->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) &&    \
+            !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
+            ((convertor->flags & CONVERTOR_SEND) ||                     \
+             (convertor->flags & CONVERTOR_HOMOGENEOUS) ) ) {           \
+            convertor->bConverted = 0;                                  \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
+                                                                        \
+        {                                                               \
+            uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1; \
+                                                                        \
+            if( required_stack_length > convertor->stack_size ) {       \
+                convertor->stack_size = required_stack_length;          \
+                convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * \
+                                                            convertor->stack_size ); \
+            } else {                                                    \
+                convertor->pStack = convertor->static_stack;            \
+                convertor->stack_size = DT_STATIC_STACK_SIZE;           \
+            }                                                           \
+        }                                                               \
+        ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes ); \
     }
-
-    convertor->pBaseBuf        = (void*)pUserBuf;
-    convertor->count           = count;
-
-    assert( datatype != NULL );
-    /* As we change (or set) the datatype on this convertor we should reset the datatype
-     * part of the convertor flags to the default value.
-     */
-    convertor->flags         &= CONVERTOR_TYPE_MASK;
-    convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags);
-    convertor->pDesc          = (ompi_datatype_t*)datatype;
-
-    /* Decide which data representation will be used for the conversion. */
-    if( (NULL != datatype->opt_desc.desc) && (convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
-        convertor->use_desc = &(datatype->opt_desc);
-    } else {
-        convertor->use_desc = &(datatype->desc);
-    }
-
-    if( required_stack_length > convertor->stack_size ) {
-        convertor->stack_size = required_stack_length;
-        convertor->pStack     = (dt_stack_t*)malloc(sizeof(dt_stack_t) * convertor->stack_size );
-    } else {
-        convertor->pStack = convertor->static_stack;
-        convertor->stack_size = DT_STATIC_STACK_SIZE;
-    }
-
-    /* Compute the local and remote sizes */
-    convertor->local_size = convertor->count * datatype->size;
-    /* If the data is empty we don't have to anything except mark the convertor as
-     * completed. With this flag set the pack and unpack functions will not do
-     * anything.
-     */
-    if( 0 == convertor->local_size ) {
-        convertor->flags |= CONVERTOR_COMPLETED;
-        convertor->remote_size = 0;
-        return OMPI_SUCCESS;
-    }
-
-    if( convertor->remoteArch == ompi_mpi_local_arch ) {
-        convertor->remote_size = convertor->local_size;
-    } else {
-        int i;
-        uint64_t bdt_mask = datatype->bdt_used >> DT_CHAR;
-        convertor->remote_size = 0;
-        for( i = DT_CHAR; bdt_mask != 0; i++, bdt_mask >>= 1 ) { 
-            if( bdt_mask & ((unsigned long long)1) ) {
-                /* TODO replace with the remote size */
-                convertor->remote_size += (datatype->btypes[i] * ompi_ddt_basicDatatypes[i]->size);
-            }
-        }   
-        convertor->remote_size *= convertor->count;
-    }
-
-    return ompi_convertor_create_stack_at_begining( convertor, ompi_ddt_local_sizes );
-}
 
 int32_t
 ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
@@ -414,18 +457,14 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 {
     /* Here I should check that the data is not overlapping */
 
-    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
-                                                count, pUserBuf ) ) {
-        return OMPI_ERROR;
-    }
-
     convertor->flags      |= CONVERTOR_RECV;
     convertor->memAlloc_fn = NULL;
 
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (convertor->remoteArch != ompi_mpi_local_arch) {
-            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general_checksum;
         } else
 #endif
@@ -437,8 +476,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
         }
     } else {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (convertor->remoteArch != ompi_mpi_local_arch) {
-            convertor->pFunctions = ompi_ddt_heterogeneous_copy_functions;
+        if( !(convertor->flags & CONVERTOR_HOMOGENEOUS) ) {
             convertor->fAdvance = ompi_unpack_general;
         } else
 #endif
@@ -458,34 +496,30 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  int32_t count,
                                  const void* pUserBuf )
 {
-    if( OMPI_SUCCESS != ompi_convertor_prepare( convertor, datatype,
-                                                count, pUserBuf ) ) {
-        return OMPI_ERROR;
-    }
-
     convertor->flags            |= CONVERTOR_SEND;
     convertor->memAlloc_fn       = NULL;
+
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
-                convertor->fAdvance = ompi_pack_no_conv_contig_checksum;
-            else if( 1 >= convertor->count )  /* gaps or no gaps */
-                convertor->fAdvance = ompi_pack_no_conv_contig_checksum;
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+                || (1 >= convertor->count) )
+                convertor->fAdvance = ompi_pack_homogeneous_contig_checksum;
             else
-                convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps_checksum;
+                convertor->fAdvance = ompi_pack_homogeneous_contig_with_gaps_checksum;
         } else {
             convertor->fAdvance = ompi_generic_simple_pack_checksum;
         }
     } else {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
             assert( convertor->flags & DT_FLAG_CONTIGUOUS );
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) )
-                convertor->fAdvance = ompi_pack_no_conv_contig;
-            else if( 1 >= convertor->count )  /* gaps or no gaps */
-                convertor->fAdvance = ompi_pack_no_conv_contig;
+            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+                || (1 >= convertor->count) )
+                convertor->fAdvance = ompi_pack_homogeneous_contig;
             else
-                convertor->fAdvance = ompi_pack_no_conv_contig_with_gaps;
+                convertor->fAdvance = ompi_pack_homogeneous_contig_with_gaps;
         } else {
             convertor->fAdvance = ompi_generic_simple_pack;
         }
@@ -516,7 +550,7 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
     destination->fAdvance          = source->fAdvance;
     destination->memAlloc_fn       = source->memAlloc_fn;
     destination->memAlloc_userdata = source->memAlloc_userdata;
-    destination->pFunctions        = source->pFunctions;
+    destination->master            = source->master;
     destination->local_size        = source->local_size;
     destination->remote_size       = source->remote_size;
     /* create the stack */
@@ -545,7 +579,7 @@ void ompi_convertor_dump( ompi_convertor_t* convertor )
             convertor->count, convertor->stack_pos, (unsigned long)convertor->bConverted );
     printf( "\tlocal_size %ld remote_size %ld flags %X stack_size %d pending_length %d\n",
             (unsigned long)convertor->local_size, (unsigned long)convertor->remote_size,
-            convertor->flags, convertor->stack_size, convertor->storage.length );
+            convertor->flags, convertor->stack_size, convertor->partial_length );
     ompi_ddt_dump( convertor->pDesc );
     printf( "Actual stack representation\n" );
     ompi_ddt_dump_stack( convertor->pStack, convertor->stack_pos,

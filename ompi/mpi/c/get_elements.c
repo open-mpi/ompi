@@ -43,7 +43,7 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
    *count = 0;
    if( ompi_ddt_type_size( datatype, &size ) == MPI_SUCCESS ) {
       if( size == 0 ) {
-         *count = MPI_UNDEFINED;
+          /* If the size of the datatype is zero let's return a count of zero */
          return MPI_SUCCESS;
       }
       *count = status->_count / size;

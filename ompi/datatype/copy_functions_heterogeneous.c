@@ -20,7 +20,7 @@
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
 #include "ompi/datatype/datatype_checksum.h"
-
+#include "ompi/datatype/convertor_internal.h"
 
 static inline void
 ompi_dt_swap_bytes(void *to_p, const void *from_p, const long size)

@@ -18,8 +18,7 @@
  */
 
 #include "ompi_config.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor.h"
+#include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/datatype_internal.h"
 
 #if OMPI_ENABLE_DEBUG
@@ -35,12 +34,10 @@ extern int ompi_unpack_debug;
 
 #if defined(CHECKSUM)
 #define ompi_unpack_general_function            ompi_unpack_general_checksum
-#define ompi_unpack_homogeneous_function        ompi_unpack_homogeneous_checksum
 #define ompi_unpack_homogeneous_contig_function ompi_unpack_homogeneous_contig_checksum
 #define ompi_generic_simple_unpack_function     ompi_generic_simple_unpack_checksum
 #else
 #define ompi_unpack_general_function            ompi_unpack_general
-#define ompi_unpack_homogeneous_function        ompi_unpack_homogeneous
 #define ompi_unpack_homogeneous_contig_function ompi_unpack_homogeneous_contig
 #define ompi_generic_simple_unpack_function     ompi_generic_simple_unpack
 #endif  /* defined(CHECKSUM) */
@@ -71,8 +68,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     uint32_t advance;      /* number of bytes that we should advance the buffer */
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
+    const ompi_convertor_master_t* master = pConvertor->master;
     dt_elem_desc_t* pElems;
-    int oCount = (pConvertor->pDesc->ub - pConvertor->pDesc->lb) * pConvertor->count;
+    long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
+    int oCount = extent * pConvertor->count;
     char* pInput;
     int iCount, rc;
     uint32_t iov_count, total_bytes_converted = 0;
@@ -99,7 +98,6 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
             if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
-                        pConvertor->flags |= CONVERTOR_COMPLETED;
                         goto save_and_return;  /* completed */
                     }
                     pConvertor->stack_pos--;
@@ -107,7 +105,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
                 }
 
                 if( pStack->index == -1 ) {
-                    pStack->disp += (pConvertor->pDesc->ub - pConvertor->pDesc->lb);
+                    pStack->disp += extent;
                 } else {
                     assert( DT_LOOP == pElems[pStack->index].elem.common.type );
                     pStack->disp += pElems[pStack->index].loop.extent;
@@ -131,10 +129,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
             while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
                 type = pElems[pos_desc].elem.common.type;
-                rc = pConvertor->pFunctions[type]( pConvertor, count_desc,
-                                                   pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
-                                                   pConvertor->pBaseBuf + pStack->disp + disp_desc,
-                                                   oCount, pElems[pos_desc].elem.extent, &advance );
+                rc = master->pFunctions[type]( pConvertor, count_desc,
+                                               pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
+                                               pConvertor->pBaseBuf + pStack->disp + disp_desc,
+                                               oCount, pElems[pos_desc].elem.extent, &advance );
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;
@@ -162,7 +160,10 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     /* out of the loop: we have complete the data conversion or no more space
      * in the buffer.
      */
-    if( pConvertor->flags & CONVERTOR_COMPLETED ) return 1;  /* data succesfully converted */
+    if( pConvertor->remote_size == pConvertor->bConverted ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;  /* I'm done */
+    }
 
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, type,
@@ -171,155 +172,15 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     return 0;
 }
 
-int32_t
-ompi_unpack_homogeneous_function( ompi_convertor_t* pConv,
-                                  struct iovec* iov,
-                                  uint32_t* out_size,
-                                  size_t* max_data,
-                                  int32_t* freeAfter )
-{
-    dt_stack_t* pStack;    /* pointer to the position on the stack */
-    uint32_t pos_desc;     /* actual position in the description of the derived datatype */
-    uint32_t i;            /* counter for basic datatype with extent */
-    int bConverted = 0;    /* number of bytes converted this time */
-    long lastDisp = 0;
-    size_t space = iov[0].iov_len, last_count = 0, last_blength = 0;
-    char* pSrcBuf;
-    const ompi_datatype_t* pData = pConv->pDesc;
-    dt_elem_desc_t* pElems;
-
-    pSrcBuf = iov[0].iov_base;
-
-    pElems = pConv->use_desc->desc;
-    pStack = pConv->pStack + pConv->stack_pos;
-    pos_desc = pStack->index;
-    lastDisp = pStack->disp;
-    last_count = pStack->count;
-    /*opal_output( 0, "ompi_convertor_unpack_homogeneous stack_pos %d index %d count %d lastDisp %ld bConverted %d\n",
-                   pConv->stack_pos, pStack->index, pStack->count, lastDisp, pConv->bConverted );*/
-    pStack--;
-    pConv->stack_pos--;
-
-    while( 1 ) {  /* loop forever. The exit condition is detected inside the while loop */
-        if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
-            if( --(pStack->count) == 0 ) { /* end of loop */
-                if( pConv->stack_pos == 0 ) {
-                    last_blength = 0;  /* nothing to copy anymore */
-                    pConv->flags |= CONVERTOR_COMPLETED;
-                    goto end_loop;
-                }
-                pStack--;
-                pConv->stack_pos--;
-                pos_desc++;
-            } else {
-                if( pStack->index == -1 ) {
-                    pStack->disp += (pData->ub - pData->lb);
-                } else {
-                    assert( DT_LOOP == pElems[pStack->index].elem.common.type );
-                    pStack->disp += pElems[pStack->index].loop.extent;
-                }
-                pos_desc = pStack->index + 1;
-            }
-            lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-            continue;
-        }
-        while( DT_LOOP == pElems[pos_desc].elem.common.type ) {
-            int stop_in_loop = 0;
-            if( pElems[pos_desc].loop.common.flags & DT_FLAG_CONTIGUOUS ) {
-                ddt_endloop_desc_t* end_loop = &(pElems[pos_desc + pElems[pos_desc].loop.items].end_loop);
-                last_count = pElems[pos_desc].loop.loops;
-                if( (end_loop->size * last_count) > space ) {
-                    stop_in_loop = last_count;
-                    last_count = space / end_loop->size;
-                }
-                for( i = 0; i < last_count; i++ ) {
-                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, end_loop->size,
-                                                pConv->pBaseBuf, pData, pConv->count );
-                    /*opal_output( 0, "3. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, end_loop->size );*/
-                    MEMCPY_CSUM( pConv->pBaseBuf + lastDisp, pSrcBuf, end_loop->size, pConv );
-                    pSrcBuf += end_loop->size;
-                    lastDisp += pElems[pos_desc].loop.extent;
-                }
-                space -= (end_loop->size * last_count);
-                bConverted += (end_loop->size * last_count);
-                if( stop_in_loop == 0 ) {
-                    pos_desc += pElems[pos_desc].loop.items + 1;
-                    last_count = pElems[pos_desc].elem.count;
-                    continue;
-                }
-                last_count = stop_in_loop - last_count;
-                last_blength = 0;
-                /* Save the stack with the correct last_count value. */
-            }
-            PUSH_STACK( pStack, pConv->stack_pos, pos_desc, DT_LOOP, last_count,
-                        pStack->disp, pos_desc + pElems[pos_desc].loop.items );
-            pos_desc++;
-            lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-        }
-        /* now here we have a basic datatype */
-        while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
-            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
-            /* do we have enough space in the buffer ? */
-            last_blength = last_count * basic_type->size;
-            if( pElems[pos_desc].elem.common.flags & DT_FLAG_CONTIGUOUS ) {
-                if( space < last_blength ) {
-                    last_blength = space / basic_type->size;
-                    last_count -= last_blength;
-                    last_blength *= basic_type->size;
-                    space -= last_blength;
-                    goto end_loop;  /* or break whatever but go out of this while */
-                }
-                OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
-                                            pConv->pBaseBuf, pData, pConv->count );
-                /*opal_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
-                MEMCPY_CSUM( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, pConv );
-                bConverted += last_blength;
-                space -= last_blength;
-                pSrcBuf += last_blength;
-            } else {
-                uint32_t i;
-
-                last_blength = basic_type->size;
-                for( i = 0; i < last_count; i++ ) {
-                    OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
-                                                pConv->pBaseBuf, pData, pConv->count );
-                    /*opal_output( 0, "2. memcpy %p, %p, %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength );*/
-                    MEMCPY_CSUM( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, pConv );
-                    lastDisp += pElems[pos_desc].elem.extent;
-                    pSrcBuf += basic_type->size;
-                }
-                bConverted += basic_type->size * last_count;
-            }
-            pos_desc++;  /* advance to the next data */
-            lastDisp = pStack->disp + pElems[pos_desc].elem.disp;
-            last_count = pElems[pos_desc].elem.count;
-        }
-    }
- end_loop:
-    if( last_blength != 0 ) { /* save the internal state */
-        /* update corresponding the the datatype length */
-        OMPI_DDT_SAFEGUARD_POINTER( pConv->pBaseBuf + lastDisp, last_blength,
-                                    pConv->pBaseBuf, pData, pConv->count );
-        MEMCPY_CSUM( pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, pConv );
-        /*opal_output( 0, "1. memcpy %p, %p, %d -> %d", pConv->pBaseBuf + lastDisp, pSrcBuf, last_blength, bConverted );*/
-        bConverted += last_blength;
-        lastDisp += last_blength;
-    }
-
-    pConv->bConverted += bConverted;  /* update the converted field */
-    iov[0].iov_len = bConverted;      /* update the iovec length */
-    *max_data = bConverted;
-
-    if( pConv->flags & CONVERTOR_COMPLETED ) {  /* finish thus do not update the stack */
-        return 1;
-    }
-    PUSH_STACK( pStack, pConv->stack_pos, pos_desc, pElems[pos_desc].elem.common.type,
-                last_count, lastDisp, pos_desc );
-    return 0;
-}
-
+/**
+ * This function will be used to unpack all datatypes that have the contiguous flag set.
+ * Several types of datatypes match this criterion, not only the contiguous one, but
+ * the ones that have gaps in the beginning and/or at the end but where the data to
+ * be unpacked is contiguous. However, this function only work for homogeneous cases
+ * and the datatype that are contiguous and where the extent is equal to the size are
+ * taken in account directly in the ompi_convertor_unpack function (in convertor.c) for
+ * the homogeneous case.
+ */
 int32_t
 ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                          struct iovec* iov,
@@ -333,6 +194,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     long extent = pData->ub - pData->lb;
     uint32_t bConverted, length, remaining, i;
     dt_stack_t* stack = &(pConv->pStack[1]);
+    long initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         packed_buffer = (char*)iov[iov_count].iov_base;
@@ -340,7 +202,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
         if( remaining > (uint32_t)iov[iov_count].iov_len )
             remaining = iov[iov_count].iov_len;
         bConverted = remaining; /* how much will get unpacked this time */
-        user_memory = pConv->pBaseBuf + pData->true_lb;
+        user_memory = pConv->pBaseBuf + initial_displ;
 
         /*opal_output( 0, "unpack_homogeneous_contig( user_memory %p, packed_buffer %p length %d\n",
           user_memory, packed_buffer, remaining );*/
@@ -389,7 +251,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                 MEMCPY_CSUM( user_memory, packed_buffer, remaining, pConv );
                 user_memory += remaining;
             }
-            stack->disp = user_memory - pData->true_lb - pConv->pBaseBuf;  /* save the position */
+            stack->disp = user_memory - pConv->pBaseBuf;  /* save the position */
         }
         pConv->bConverted += bConverted;
     }
@@ -398,6 +260,68 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     if( pConv->bConverted == pConv->local_size ) {
         pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
+    }
+    return 0;
+}
+
+/**
+ * This function handle partial types. Depending on the send operation it might happens
+ * that we receive only a partial type (always predefined type). In fact the outcome is
+ * that the unpack has to be done in 2 steps. As there is no way to know if the other
+ * part of the datatype is already received, we need to use a trick to handle this special
+ * case. The trick is to fill the missing part with some well known value, unpack the data
+ * as if it was completely received, and then move into the user memory only the bytes
+ * that don't match th wekk known value. This approach work as long as there is no need
+ * for more than structural changes. They will not work for cases where we will have to
+ * change the content of the data (as in all conversions that require changing the size
+ * of the exponent or mantissa).
+ */
+static uint32_t
+ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pElem,
+                              char* partial_data,
+                              uint32_t start_position, uint32_t end_position,
+                              char** user_buffer )
+{
+    char unused_byte = 0x7F, saved_data[16];
+    char temporary[16], *temporary_buffer = temporary;
+    char* real_data = *user_buffer + pElem->elem.disp;
+    uint32_t i, count_desc = 1;
+    uint32_t data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+
+    DO_DEBUG( opal_output( 0, "unpack partial data start %d end %d data_length %d user %p\n"
+                           "\tbConverted %d total_length %d count %d\n",
+                           start_position, end_position, data_length, *user_buffer,
+                           pConvertor->bConverted,pConvertor->local_size, pConvertor->count ); );
+
+    /* Find a byte that is not used in the partial buffer */
+ find_unused_byte:
+    for( i = 0; i < (end_position - start_position); i++ ) {
+        if( unused_byte == partial_data[i] ) {
+            unused_byte--;
+            goto find_unused_byte;
+        }
+    }
+
+    /* Copy and fill the rest of the buffer with the unused byte */
+    memset( temporary, unused_byte, data_length );
+    MEMCPY( temporary + start_position, partial_data, (end_position - start_position) );
+
+    /* Save the content of the user memory */
+    MEMCPY( saved_data, real_data, data_length );
+
+    /* Then unpack the data into the user memory */
+    UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                temporary_buffer, *user_buffer, data_length );
+
+    /* reload the length as it is reset by the macro */
+    data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
+
+    /* For every occurence of the unused byte move data from the saved
+     * buffer back into the user memory.
+     */
+    for( i = 0; i < data_length; i++ ) {
+        if( unused_byte == real_data[i] )
+            real_data[i] = saved_data[i];
     }
     return 0;
 }
@@ -427,7 +351,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
     char *user_memory_base, *packed_buffer;
-    uint32_t iov_len_local, iov_count, required_space = 0;
+    uint32_t iov_len_local, iov_count;
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
                            (void*)pConvertor, iov[0].iov_base, (size_t)iov[0].iov_len, *out_size ); );
@@ -438,10 +362,9 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
      * main while loop we will set back the source_base to the correct value. This is
      * due to the fact that the convertor can stop in the middle of a data with a count
      */
-    user_memory_base = pConvertor->pBaseBuf;
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc          = pStack->index;
-    user_memory_base += pStack->disp;
+    user_memory_base  = pConvertor->pBaseBuf + pStack->disp;
     count_desc        = pStack->count;
     pStack--;
     pConvertor->stack_pos--;
@@ -454,46 +377,68 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        if( required_space > ((*max_data) - total_unpacked) )
-            break;  /* do not pack over the boundaries even if there are more iovecs */
 
         packed_buffer = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
-        if( 0 != pConvertor->storage.length ) {
+        if( 0 != pConvertor->partial_length ) {
             uint32_t element_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
-            uint32_t missing_length = element_length - pConvertor->storage.length;
+            uint32_t missing_length = element_length - pConvertor->partial_length;
 
             assert( pElem->elem.common.flags & DT_FLAG_DATA );
-#if defined(CHECKSUM)
-            pConvertor->checksum -= OPAL_CSUM(pConvertor->storage.data, pConvertor->storage.length);
-#endif
-            memcpy(pConvertor->storage.data + pConvertor->storage.length, packed_buffer, missing_length);
-            packed_buffer = pConvertor->storage.data;
-            DO_DEBUG( opal_output( 0, "unpack pending from the last unpack %d out of %d bytes\n",
-                                   pConvertor->storage.length, ompi_ddt_basicDatatypes[pElem->elem.common.type]->size ); );
-            UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                        packed_buffer, user_memory_base, element_length );
+            COMPUTE_CSUM( packed_buffer, missing_length, pConvertor );
+            ompi_unpack_partial_datatype( pConvertor, pElem,
+                                          packed_buffer,
+                                          pConvertor->partial_length, element_length,
+                                          &user_memory_base );
+            --count_desc;
             if( 0 == count_desc ) {
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
             }
-            assert( 0 == element_length );
-            packed_buffer = (char*)iov[iov_count].iov_base + missing_length;
+            packed_buffer += missing_length;
             iov_len_local -= missing_length;
-            pConvertor->storage.length = 0;  /* nothing more inside */
+            pConvertor->partial_length = 0;  /* nothing more inside */
         }
         while( 1 ) {
+            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+                /* now here we have a basic datatype */
+                UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
+                                            packed_buffer, user_memory_base, iov_len_local );
+                if( 0 == count_desc ) {  /* completed */
+                    user_memory_base = pConvertor->pBaseBuf + pStack->disp;
+                    pos_desc++;  /* advance to the next data */
+                    UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+                    continue;
+                }
+                type = pElem->elem.common.type;
+                assert( type < DT_MAX_PREDEFINED );
+                if( 0 != iov_len_local ) {
+                    char* temp = user_memory_base;
+                    /* We have some partial data here. Let's copy it into the convertor
+                     * and keep it hot until the next round.
+                     */
+                    assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
+                    COMPUTE_CSUM( packed_buffer, iov_len_local, pConvertor );
+                    /*opal_output( 0, "Saving %d bytes for the next call at address %p\n",
+                      iov_len_local, user_memory_base );*/
+
+                    ompi_unpack_partial_datatype( pConvertor, pElem,
+                                                  packed_buffer, 0, iov_len_local,
+                                                  &temp );
+
+                    pConvertor->partial_length = iov_len_local;
+                    iov_len_local = 0;
+                }
+                goto complete_loop;
+            }
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
                 DO_DEBUG( opal_output( 0, "unpack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
                                        pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
-                        /* we lie about the size of the next element in order to
-                         * make sure we exit the main loop.
-                         */
-                        required_space = 0xffffffff;
-                        pConvertor->flags |= CONVERTOR_COMPLETED;
+                        /* Force the conversion to stop by lowering the number of iovecs. */
+                        *out_size = iov_count;
                         goto complete_loop;  /* completed */
                     }
                     pConvertor->stack_pos--;
@@ -534,46 +479,22 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElem, "advance loop" );
                 continue;
             }
-            while( pElem->elem.common.flags & DT_FLAG_DATA ) {
-                /* now here we have a basic datatype */
-                UNPACK_PREDEFINED_DATATYPE( pConvertor, pElem, count_desc,
-                                            packed_buffer, user_memory_base, iov_len_local );
-                if( 0 != count_desc ) {  /* completed */
-                    type = pElem->elem.common.type;
-                    assert (type < DT_MAX_PREDEFINED);
-                    required_space = ompi_ddt_basicDatatypes[type]->size;
-                    goto complete_loop;
-                }
-                user_memory_base = pConvertor->pBaseBuf + pStack->disp;
-                pos_desc++;  /* advance to the next data */
-                UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            }
         }
     complete_loop:
-        if( !(pConvertor->flags & CONVERTOR_COMPLETED) && (0 != iov_len_local) ) {
-            /* We have some partial data here. Let's copy it into the convertor
-             * and keep it hot until the next round.
-             */
-            assert (type < DT_MAX_PREDEFINED);
-            assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
-            MEMCPY_CSUM( pConvertor->storage.data, packed_buffer, iov_len_local, pConvertor );
-            DO_DEBUG( opal_output( 0, "Saving %d bytes for the next call\n", iov_len_local ); );
-            pConvertor->storage.length = iov_len_local;
-            iov_len_local = 0;
-        }
         iov[iov_count].iov_len -= iov_len_local;  /* update the amount of valid data */
         total_unpacked += iov[iov_count].iov_len;
-        pConvertor->bConverted += iov[iov_count].iov_len;  /* update the already converted bytes */
     }
     *max_data = total_unpacked;
+    pConvertor->bConverted += total_unpacked;  /* update the already converted bytes */
     *out_size = iov_count;
-    if( !(pConvertor->flags & CONVERTOR_COMPLETED) ) {
-        /* I complete an element, next step I should go to the next one */
-        PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
-                    user_memory_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
-        DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
-                               pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
-        return 0;
+    if( pConvertor->bConverted == pConvertor->remote_size ) {
+        pConvertor->flags |= CONVERTOR_COMPLETED;
+        return 1;
     }
-    return 1;
+    /* I complete an element, next step I should go to the next one */
+    PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
+                user_memory_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
+    DO_DEBUG( opal_output( 0, "unpack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+                           pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
+    return 0;
 }

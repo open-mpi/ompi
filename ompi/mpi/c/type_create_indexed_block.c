@@ -45,7 +45,7 @@ int MPI_Type_create_indexed_block(int count,
       if( count < 0 ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, 
                                       FUNC_NAME);
-      } else if( blocklength < 0 || NULL == array_of_displacements) {
+      } else if( (count > 0) && (blocklength < 0 || NULL == array_of_displacements) ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                       FUNC_NAME );
       } else if (NULL == oldtype || MPI_DATATYPE_NULL == oldtype ||

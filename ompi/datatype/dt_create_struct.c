@@ -29,17 +29,14 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
     ompi_datatype_t *pdt, *lastType;
 
     if( 0 == count ) {
-        *newType = ompi_ddt_create( disp );
+        *newType = ompi_ddt_create( 0 );
+        ompi_ddt_add( *newType, &ompi_mpi_datatype_null, 0, 0, 0);
         return OMPI_SUCCESS;
     }
 
     /* if we compute the total number of elements before we can
      * avoid increasing the size of the desc array often.
      */
-    for( i = 0; i < count; i++ ) {
-        disp += pTypes[i]->desc.used;
-        if( pBlockLength[i] != 1 ) disp += 2;
-    }
     lastType = (ompi_datatype_t*)pTypes[0];
     lastBlock = pBlockLength[0];
     lastExtent = lastType->ub - lastType->lb;

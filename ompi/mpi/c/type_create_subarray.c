@@ -42,8 +42,8 @@ int MPI_Type_create_subarray(int ndims,
 
 {
     MPI_Datatype last_type; 
-    int32_t i, step, end_loop;
-    int32_t block_length[2], start[2];
+    int32_t i, step, start_loop, end_loop;
+    MPI_Aint size, displ, extent;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -66,18 +66,26 @@ int MPI_Type_create_subarray(int ndims,
             } 
         }
     }
+
+    ompi_ddt_type_extent( oldtype, &extent );
+
     /* If the ndims is zero then return the NULL datatype */
-    if( ndims < 1 ) {
-        *newtype = &ompi_mpi_datatype_null;
+    if( ndims < 2 ) {
+        if( 0 == ndims ) {
+            *newtype = &ompi_mpi_datatype_null;
+            return MPI_SUCCESS;
+        }
+        ompi_ddt_create_contiguous( subsize_array[0], oldtype, &last_type );
+        ompi_ddt_create_resized( last_type, start_array[0] * extent, size_array[0] * extent, newtype );
         return MPI_SUCCESS;
     }
 
     if( MPI_ORDER_C == order ) {
-        i = ndims - 1;
+        start_loop = i = ndims - 1;
         step = -1;
         end_loop = -1;
     } else {
-        i = 0;
+        start_loop = i = 0;
         step = 1;
         end_loop = ndims - 1;
     }
@@ -86,22 +94,38 @@ int MPI_Type_create_subarray(int ndims,
      * outside the loop, such that we dont have to create a duplicate of the oldtype just to be able
      * to free it.
      */
-    block_length[0] = subsize_array[i];
-    block_length[1] = 0;
-    start[0] = start_array[i];
-    start[1] = size_array[i];
-    ompi_ddt_create_indexed( 2, block_length, start, oldtype, newtype );
+    ompi_ddt_create_vector( subsize_array[i+step], subsize_array[i], size_array[i],
+                            oldtype, newtype );
+
     last_type = *newtype;
-    for( i += step; i != end_loop; i += step ) {
-        block_length[0] = subsize_array[i];
-        block_length[1] = 0;
-        start[0] = start_array[i];
-        start[1] = size_array[i];
-        ompi_ddt_create_indexed( 2, block_length, start, last_type, newtype );
+    size = size_array[i] * size_array[i+step];
+    displ = start_array[i] + start_array[i+step] * size_array[i];
+    for( i += 2 * step; i != end_loop; i += step ) {
+        ompi_ddt_create_hvector( subsize_array[i], 1, size * extent,
+                                 last_type, newtype );
         ompi_ddt_destroy( &last_type );
+        displ += size * start_array[i];
+        size *= size_array[i];
         last_type = *newtype;
     }
+    
+    /**
+     * We cannot use resized here. Resized will only set the soft lb and ub markers
+     * without moving the real data inside. What we need is to force the displacement
+     * of the data create upward to the right position AND set the LB and UB. A type
+     * struct is the function we need.
+     */
+    {
+        MPI_Aint displs[3];
+        MPI_Datatype types[3];
+        int blength[3] = { 1, 1, 1 };
 
+        displs[0] = 0; displs[1] = displ * extent; displs[2] = size * extent;
+        types[0] = MPI_LB; types[1] = last_type; types[2] = MPI_UB;
+        ompi_ddt_create_struct( 3, blength, displs, types, newtype );
+    }
+    ompi_ddt_destroy( &last_type );
+    
     {
         int* a_i[5];
 
