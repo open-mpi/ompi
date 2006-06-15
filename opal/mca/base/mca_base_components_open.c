@@ -76,7 +76,7 @@ int mca_base_components_open(const char *type_name, int output_id,
   int param_type = -1;
   int verbose_level;
   char *str;
-  bool include_mode;
+  bool include_mode = false;
   bool distilled = false;
 
   /* Register MCA parameters */
