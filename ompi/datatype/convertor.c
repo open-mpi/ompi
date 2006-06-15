@@ -239,26 +239,31 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
          * use the bConverted to manage the conversion.
          */
         uint32_t i;
+        size_t next_length;
         char* base_pointer;
 
         *max_data = pConv->bConverted;
         for( i = 0; i < *out_size; i++ ) {
             base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
-            pConv->bConverted += iov[i].iov_len;
-            if( pConv->bConverted >= pConv->local_size ) {
+            next_length = pConv->bConverted + iov[i].iov_len;
+            if( next_length >= pConv->local_size ) {
                 pConv->bConverted = pConv->local_size;
-                iov[i].iov_len -= (pConv->bConverted - pConv->local_size);
+                iov[i].iov_len -= (next_length - pConv->local_size);
                 MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+                /*opal_output( 0, "copy at %p %d bytes [initial ptr %p] *last*\n", base_pointer,
+                  iov[i].iov_len, pConv->pBaseBuf );*/
                 goto predefined_data_unpack;
             }
             MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
+            /*opal_output( 0, "copy at %p %d bytes [initial ptr %p]\n", base_pointer,
+              iov[i].iov_len, pConv->pBaseBuf );*/
+            pConv->bConverted = next_length;
         }
         *max_data = pConv->bConverted - (*max_data);
         return 0;
     predefined_data_unpack:
         *out_size = i + 1;
         *max_data = pConv->bConverted - (*max_data);
-        pConv->bConverted = pConv->local_size;
         pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
