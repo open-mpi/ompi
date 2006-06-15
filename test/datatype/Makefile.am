@@ -9,12 +9,14 @@
 # $HEADER$
 #
 
-check_PROGRAMS = ddt_test
+check_PROGRAMS = ddt_test checksum
 
 TESTS = $(check_PROGRAMS)
 
 ddt_test_SOURCES = ddt_test.c
 ddt_test_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
-ddt_test_DEPENDENCIES = $(mpi_peruse_LDADD)
 
+checksum_SOURCES = checksum.c
+checksum_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+checksum_LDADD = $(top_builddir)/ompi/libmpi.la
