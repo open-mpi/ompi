@@ -13,6 +13,7 @@
 #include "ompi_config.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/datatype/datatype_checksum.h"
 
 #include <stdlib.h>
 
@@ -32,8 +33,8 @@ int main( int argc, char* argv[] )
     uint32_t iov_count;
     size_t max_data, position;
     int32_t free_after;
-    uint32_t pack_checksum, contiguous_checksum, sparse_checksum;
-    struct iovec iov;
+    uint32_t pack_checksum, contiguous_checksum, sparse_checksum, manual_checksum;
+    struct iovec iov[2];
     ompi_convertor_t* convertor;
 
     ompi_ddt_init();
@@ -63,12 +64,12 @@ int main( int argc, char* argv[] )
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
     ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
 
-    iov.iov_base = packed;
-    iov.iov_len = sizeof(int) * SIZE;
-    max_data = iov.iov_len;
+    iov[0].iov_base = packed;
+    iov[0].iov_len = sizeof(int) * SIZE;
+    max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, &iov, &iov_count, &max_data, &free_after );
+    ompi_convertor_pack( convertor, iov, &iov_count, &max_data, &free_after );
     pack_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -82,31 +83,34 @@ int main( int argc, char* argv[] )
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
     ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
 
-    iov.iov_base = array;
-    iov.iov_len = sizeof(int) * SIZE;
-    max_data = iov.iov_len;
+    iov[0].iov_base = array;
+    iov[0].iov_len = sizeof(int) * SIZE;
+    max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, &iov, &iov_count, &max_data, &free_after );
+    ompi_convertor_pack( convertor, iov, &iov_count, &max_data, &free_after );
     contiguous_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
 
     /**
      * And now we're on the receiver side. We just get one fragment from
-     * the network and now we unpack it in the user memory.
+     * the network and now we unpack it in the user memory using 2
+     * separate iovec.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
     position = 0;
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
     ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
 
-    iov.iov_base = array;
-    iov.iov_len = sizeof(int) * SIZE;
-    max_data = iov.iov_len;
+    max_data = sizeof(int) * SIZE;
+    iov[0].iov_base = array;
+    iov[0].iov_len = max_data / 2;
+    iov[1].iov_base = (char*)array + iov[0].iov_len;
+    iov[1].iov_len = max_data - iov[0].iov_len;
 
-    iov_count = 1;
-    ompi_convertor_unpack( convertor, &iov, &iov_count, &max_data, &free_after );
+    iov_count = 2;
+    ompi_convertor_unpack( convertor, iov, &iov_count, &max_data, &free_after );
     sparse_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -129,5 +133,14 @@ int main( int argc, char* argv[] )
     }
     printf( "COOL the 3 checksum match\n" );
 
+    /**
+     * Now that the packed buffer contain the data we want, let's try to call
+     * the checksum directly to see if there is any difference.
+     */
+    {
+        uint32_t ui1 = 0, ui2 = 0;
+        manual_checksum = OPAL_CSUM_PARTIAL( packed, sizeof(int) * SIZE, &ui1, &ui2 );
+    }
+    printf( "manual checksum     %x\n", manual_checksum );
     return 0;
 }
