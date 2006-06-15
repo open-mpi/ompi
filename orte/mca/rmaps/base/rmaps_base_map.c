@@ -48,8 +48,10 @@ static void orte_rmaps_base_node_construct(orte_rmaps_base_node_t* node)
 static void orte_rmaps_base_node_destruct(orte_rmaps_base_node_t* node)
 {
     opal_list_item_t* item;
-    if(NULL != node->node)
+    if(NULL != node->node) {
         OBJ_RELEASE(node->node);
+        node->node = NULL;
+    }
     while(NULL != (item = opal_list_remove_first(&node->node_procs))) {
         OBJ_RELEASE(item);
     }
@@ -76,7 +78,10 @@ static void orte_rmaps_base_proc_construct(orte_rmaps_base_proc_t* proc)
 
 static void orte_rmaps_base_proc_destruct(orte_rmaps_base_proc_t* proc)
 {
-    if (NULL != proc->app) free(proc->app);
+    if (NULL != proc->app) {
+        free(proc->app);
+        proc->app = NULL;
+    }
 }
 
 OBJ_CLASS_INSTANCE(
@@ -110,9 +115,11 @@ static void orte_rmaps_base_map_destruct(orte_rmaps_base_map_t* map)
         OBJ_RELEASE(item);
     if(NULL != map->procs) {
         free(map->procs);
+        map->procs = NULL;
     }
     if(NULL != map->app) {
         OBJ_RELEASE(map->app);
+        map->app = NULL;
     }
     OBJ_DESTRUCT(&map->nodes);
 }
@@ -450,8 +457,19 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
             OBJ_RELEASE(proc);
             continue;
         }
-        map->procs[map->num_procs++] = proc;
-        proc->proc_node = orte_rmaps_lookup_node(&map->nodes, &nodes, node_name, proc);
+        /*
+         * This seems like a dummy check, but it ensures that we fail
+         * rather than overrun our array. This can happen if the 
+         * indicies on the app schemas are incorrect
+         */
+        if(map->num_procs < map->app->num_procs) {
+            map->procs[map->num_procs++] = proc;
+            proc->proc_node = orte_rmaps_lookup_node(&map->nodes, &nodes, node_name, proc);
+        }
+        else {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            goto cleanup;
+        }
     }
 
     /* cleanup any nodes allocated and not mapped */
