@@ -76,18 +76,23 @@ int MPI_Type_create_subarray(int ndims,
             return MPI_SUCCESS;
         }
         ompi_ddt_create_contiguous( subsize_array[0], oldtype, &last_type );
-        ompi_ddt_create_resized( last_type, start_array[0] * extent, size_array[0] * extent, newtype );
-        return MPI_SUCCESS;
+        size = size_array[0];
+        displ = start_array[0];
+        goto replace_subarray_type;
     }
 
     if( MPI_ORDER_C == order ) {
         start_loop = i = ndims - 1;
         step = -1;
         end_loop = -1;
+        if( end_loop > (start_loop + 2 * step) )
+            end_loop = start_loop + 2 * step;
     } else {
         start_loop = i = 0;
         step = 1;
-        end_loop = ndims - 1;
+        end_loop = ndims;
+        if( end_loop < (start_loop + 2 * step) )
+            end_loop = start_loop + 2 * step;
     }
 
     /* As we know that the ndims is at least 1 we can start by creating the first dimension data
@@ -108,7 +113,8 @@ int MPI_Type_create_subarray(int ndims,
         size *= size_array[i];
         last_type = *newtype;
     }
-    
+
+  replace_subarray_type:    
     /**
      * We cannot use resized here. Resized will only set the soft lb and ub markers
      * without moving the real data inside. What we need is to force the displacement
