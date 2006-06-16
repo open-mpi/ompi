@@ -631,7 +631,12 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     } else {
                         size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                     }
-                    if(recvreq->req_rdma_idx == 0) { 
+                    /* This is the first time we're trying to complete
+                       an RDMA pipeline message.  If this is the first
+                       put request (ei, we're the only BTL or the
+                       first in the array), set ack to true and ack
+                       the message. */
+                    if(num_btl_avail == 1 || recvreq->req_rdma_idx == 1) { 
                         ack = true; 
                     } else { 
                         ack = false;
