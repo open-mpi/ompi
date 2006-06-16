@@ -23,12 +23,12 @@
 
 #define MEMCPY_CSUM( DST, SRC, BLENGTH, CONVERTOR ) \
 do { \
-    (CONVERTOR)->checksum = OPAL_CSUM_BCOPY_PARTIAL( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
+    (CONVERTOR)->checksum += OPAL_CSUM_BCOPY_PARTIAL( (SRC), (DST), (BLENGTH), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
 } while (0)
 
 #define COMPUTE_CSUM( SRC, BLENGTH, CONVERTOR ) \
 do { \
-    (CONVERTOR)->checksum = OPAL_CSUM_PARTIAL( (SRC), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
+    (CONVERTOR)->checksum += OPAL_CSUM_PARTIAL( (SRC), (BLENGTH), &(CONVERTOR)->csum_ui1, &(CONVERTOR)->csum_ui2 ); \
 } while (0)
 
 #else
