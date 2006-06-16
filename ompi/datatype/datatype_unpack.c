@@ -395,6 +395,8 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            } else {
+                user_memory_base += pElem->elem.extent;
             }
             packed_buffer += missing_length;
             iov_len_local -= missing_length;

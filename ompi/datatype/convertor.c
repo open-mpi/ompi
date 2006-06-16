@@ -217,11 +217,6 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         return 0;
     }
 
-    /* There is no specific memory allocation. If the convertor notice that some memory
-     * is required in order to perform the operation (depend on the way the convertor
-     * was configured) it will call the attached function to get some memory. Any failure
-     * of this function will stop the conversion process.
-     */
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 

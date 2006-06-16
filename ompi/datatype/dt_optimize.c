@@ -77,6 +77,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
     uint16_t last_flags = 0xFFFF;  /* keep all for the first datatype */
     long total_disp = 0;
     int32_t optimized = 0, continuity;
+    uint32_t i;
 
     pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
@@ -179,21 +180,40 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                     last_length = 0;
                     last_type   = DT_LOOP;
                 }
-                if( (2 == loop->items) && (1 == elem->count)
-                    && (elem->extent == (long)ompi_ddt_basicDatatypes[elem->common.type]->size) ) {
-                    CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags & ~DT_FLAG_CONTIGUOUS,
-                                 loop->loops, elem->disp, loop->extent );
-                    pElemDesc++; nbElems++;
-                    pos_desc += loop->items + 1;
-                    changes++; optimized++;
-                } else {
-                    CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
-                    pElemDesc++; nbElems++;
-                    PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, total_disp, pos_desc + loop->extent );
-                    pos_desc++;
-                    DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
+                if( 2 == loop->items ) { /* small loop */
+                    if( (1 == elem->count)
+                        && (elem->extent == (long)ompi_ddt_basicDatatypes[elem->common.type]->size) ) {
+                        CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags & ~DT_FLAG_CONTIGUOUS,
+                                     loop->loops, elem->disp, loop->extent );
+                        pElemDesc++; nbElems++;
+                        pos_desc += loop->items + 1;
+                        changes++; optimized++;
+                        goto complete_loop;
+                    } else if( (elem->extent * (int32_t)elem->count) == loop->extent ) {
+                        CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags,
+                                     loop->loops * elem->count, elem->disp, loop->extent );
+                        pElemDesc++; nbElems++;
+                        pos_desc += loop->items + 1;
+                        changes++; optimized++;
+                        goto complete_loop;
+                    } else if( loop->loops < 3 ) {
+                        for( i = 0; i < loop->loops; i++ ) {
+                            CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags,
+                                         elem->count, elem->disp, loop->extent );
+                            pElemDesc++; nbElems++;
+                        }
+                        pos_desc += loop->items + 1;
+                        changes += loop->loops; optimized += loop->loops;
+                        goto complete_loop;
+                    }
                 }
+                CREATE_LOOP_START( pElemDesc, loop->loops, loop->items, loop->extent, loop->common.flags );
+                pElemDesc++; nbElems++;
+                PUSH_STACK( pStack, stack_pos, nbElems, DT_LOOP, loop->loops, total_disp, pos_desc + loop->extent );
+                pos_desc++;
+                DDT_DUMP_STACK( pStack, stack_pos, pData->desc.desc, "advance loops" );
             }
+        complete_loop:
             total_disp = pStack->disp;  /* update the displacement */
             continue;
         }

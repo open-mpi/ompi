@@ -381,6 +381,24 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     }
     *max_data = total_packed;
     *out_size = iov_count;
+
+#if 0
+    if( pConvertor->flags & CONVERTOR_WITH_CHECKSUM ) {
+        uint32_t ui1 = 0, ui2 = 0, csum = OPAL_CSUM_ZERO;
+        /**
+         * Check the checksum correctness.
+         */
+        for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
+            csum += opal_uicsum_partial( iov[iov_count].iov_base, iov[iov_count].iov_len,
+                                         &ui1, &ui2 );
+        }
+        if( csum != pConvertor->checksum ) {
+            opal_output( 0, "error in the pack function the checksum does not match\n"
+                         "(%d != %d)\n", csum, pConvertor->checksum );
+        }
+    }
+#endif
+
     if( pConvertor->bConverted == pConvertor->local_size ) {
         pConvertor->flags |= CONVERTOR_COMPLETED;
         return 1;
