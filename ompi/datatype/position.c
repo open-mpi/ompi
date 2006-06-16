@@ -118,11 +118,17 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     iov_len_local = *position - pConvertor->bConverted;
     if( iov_len_local > pConvertor->pDesc->size ) {
         count_desc = iov_len_local / pConvertor->pDesc->size;
+        DO_DEBUG( opal_output( 0, "position before %ld asked %ld data size %d"
+                               " iov_len_local %d count_desc %d\n",
+                               pConvertor->bConverted, *position, pConvertor->pDesc->size,
+                               iov_len_local, count_desc ); );
         for( type = 0; type <= pConvertor->stack_pos; type++ )
-            pConvertor->pStack[type].disp += extent;
+            pConvertor->pStack[type].disp += count_desc * extent;
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
         pConvertor->pStack[0].count -= count_desc;
+        DO_DEBUG( opal_output( 0, "after bConverted %ld remaining count %d iov_len_local %d\n",
+                               pConvertor->bConverted, pConvertor->pStack[0].count, iov_len_local ); );
     }
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
@@ -159,6 +165,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
                     assert( DT_LOOP == description[pStack->index].loop.common.type );
                     pStack->disp += description[pStack->index].loop.extent;
                 }
+                pos_desc = pStack->index + 1;
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
