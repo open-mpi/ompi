@@ -16,6 +16,7 @@
 #include "ompi/datatype/datatype_checksum.h"
 
 #include <stdlib.h>
+#include <time.h>
 
 #define SIZE 1024
 
@@ -38,7 +39,8 @@ int main( int argc, char* argv[] )
     ompi_convertor_t* convertor;
 
     ompi_ddt_init();
-    srandomdev();
+    srandom( (int)time(NULL) );
+    /*srandomdev();*/
 
     ompi_ddt_create_vector( SIZE, 1, 2, MPI_INT, &sparse );
     ompi_ddt_commit( &sparse );
