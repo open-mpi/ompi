@@ -54,74 +54,56 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_recv_frag_t);
 
 #define MCA_PML_DR_RECV_FRAG_ALLOC(frag,rc)                          \
 do {                                                                 \
-    ompi_free_list_item_t* item;                                          \
+    ompi_free_list_item_t* item;                                     \
     OMPI_FREE_LIST_WAIT(&mca_pml_dr.recv_frags, item, rc);           \
     frag = (mca_pml_dr_recv_frag_t*)item;                            \
 } while(0)
 
 
-#define MCA_PML_DR_RECV_FRAG_INIT(frag,oproc,hdr,segs,cnt,btl,csum)  \
-do {                                                                 \
-    size_t i;                                                        \
-    uint32_t ui1 = 0;                                                \
-    uint32_t ui2 = 0;                                                \
-    mca_btl_base_segment_t* macro_segments = frag->segments;         \
-    mca_pml_dr_buffer_t** buffers = frag->buffers;                   \
-                                                                     \
-    /* init recv_frag */                                             \
-    frag->btl = btl;                                                 \
-    frag->hdr = *(mca_pml_dr_hdr_t*)hdr;                             \
-    frag->num_segments = cnt;                                        \
-    frag->csum = 0;                                                  \
-    frag->proc = oproc;                                              \
-                                                                     \
-    /* copy over data */                                             \
-    for(i=0; i<cnt; i++) {                                           \
-        ompi_free_list_item_t* item;                                      \
-        mca_pml_dr_buffer_t* buff;                                   \
-        OMPI_FREE_LIST_WAIT(&mca_pml_dr.buffers, item, rc);          \
-        buff = (mca_pml_dr_buffer_t*)item;                           \
-        buffers[i] = buff;                                           \
-        macro_segments[i].seg_addr.pval = buff->addr;                \
-        macro_segments[i].seg_len = segs[i].seg_len;                 \
-        if(i == 0) {                                                 \
-            size_t hdr_len = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type); \
-            memcpy(                                                  \
-               buff->addr,                                           \
-               segs[i].seg_addr.pval,                                \
-               hdr_len);                                             \
-            if(mca_pml_dr.enable_csum) {                             \
-                     csum += OPAL_CSUM_BCOPY_PARTIAL(                \
-                     ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,\
-                     ((unsigned char*)buff->addr)+hdr_len,           \
-                     segs[i].seg_len-hdr_len,                        \
-                     segs[i].seg_len-hdr_len,                        \
-                     &ui1,                                           \
-                     &ui2);                                          \
-            } else {                                                 \
-                     memcpy(((unsigned char*) buff->addr)+hdr_len,   \
-                      ((unsigned char*) segs[i].seg_addr.pval)+hdr_len, \
-                      segs[i].seg_len-hdr_len);                      \
-               csum = OPAL_CSUM_ZERO;                                \
-           }                                                         \
-        } else {                                                     \
-            if(mca_pml_dr.enable_csum) {                             \
-                csum += OPAL_CSUM_BCOPY_PARTIAL(                     \
-                   segs[i].seg_addr.pval,                            \
-                   buff->addr,                                       \
-                   segs[i].seg_len,                                  \
-                   segs[i].seg_len,                                  \
-                   &ui1,                                             \
-                   &ui2);                                            \
-            } else {                                                 \
-                memcpy(                                              \
-                   buff->addr,                                       \
-                   segs[i].seg_addr.pval,                            \
-                   segs[i].seg_len);                                 \
-               csum = OPAL_CSUM_ZERO;                                \
-           }                                                         \
-        }                                                            \
-    }                                                                \
+#define MCA_PML_DR_RECV_FRAG_INIT(frag,oproc,hdr,segs,cnt,btl,csum)     \
+do {                                                                    \
+    size_t i, length = 0;                                               \
+    uint32_t ui1 = 0;                                                   \
+    uint32_t ui2 = 0;                                                   \
+    mca_pml_dr_buffer_t** buffers = frag->buffers;                      \
+                                                                        \
+    /* init recv_frag */                                                \
+    frag->btl = btl;                                                    \
+    frag->hdr = *(mca_pml_dr_hdr_t*)hdr;                                \
+    frag->num_segments = cnt;                                           \
+    frag->proc = oproc;                                                 \
+                                                                        \
+    csum = OPAL_CSUM_ZERO;                                              \
+    /* copy over data */                                                \
+    for( i = 0; i < cnt; i++ ) {                                        \
+        ompi_free_list_item_t* item;                                    \
+        mca_pml_dr_buffer_t* buff;                                      \
+        OMPI_FREE_LIST_WAIT(&mca_pml_dr.buffers, item, rc);             \
+        buff = (mca_pml_dr_buffer_t*)item;                              \
+        buffers[i] = buff;                                              \
+        frag->segments[i].seg_addr.pval = buff->addr;                   \
+        frag->segments[i].seg_len = segs[i].seg_len;                    \
+        if( mca_pml_dr.enable_csum ) {                                  \
+            size_t hdr_len = 0;                                         \
+            if( 0 == i ) {                                              \
+                hdr_len = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);\
+                memcpy( buff->addr,                                     \
+                        segs[i].seg_addr.pval,                          \
+                        hdr_len );                                      \
+            }                                                           \
+            csum = OPAL_CSUM_BCOPY_PARTIAL(                             \
+                     ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,   \
+                     ((unsigned char*)buff->addr)+hdr_len,              \
+                     segs[i].seg_len-hdr_len, segs[i].seg_len-hdr_len,  \
+                     &ui1, &ui2);                                       \
+            length += segs[i].seg_len - hdr_len;                        \
+        } else {                                                        \
+            memcpy( buff->addr,                                         \
+                    segs[i].seg_addr.pval,                              \
+                    segs[i].seg_len );                                  \
+        }                                                               \
+    }                                                                   \
+    frag->csum = csum;                                                  \
 } while(0)
 
 
@@ -132,13 +114,13 @@ do {                                                            \
     /* return buffers */                                        \
     for(i=0; i<frag->num_segments; i++) {                       \
         OMPI_FREE_LIST_RETURN(&mca_pml_dr.buffers,              \
-           (ompi_free_list_item_t*)frag->buffers[i]);                \
+                 (ompi_free_list_item_t*)frag->buffers[i]);     \
     }                                                           \
     frag->num_segments = 0;                                     \
                                                                 \
     /* return recv_frag */                                      \
     OMPI_FREE_LIST_RETURN(&mca_pml_dr.recv_frags,               \
-        (ompi_free_list_item_t*)frag);                               \
+        (ompi_free_list_item_t*)frag);                          \
 } while(0)
 
 
