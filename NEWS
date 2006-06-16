@@ -22,14 +22,40 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.2
+---
+
+- Addition of OpenIB-based unreliable datagram BTL ("ud").
+- Addition of UDAPL BTL ("udapl").
+
+
+Post 1.1 -- not yet decided if 1.2 or 1.1.1
+-------------------------------------------
+
+- Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
+  back-end MPI processes.
+- Add -V/--version switch to mpirun.
+
+
 1.1
 ---
 
+- Various MPI datatype fixes, optimizations.
+- Fixed various problems on the SPARC architecture (e.g., not
+  correctly aligning addresses within structs).
+- Addition of "dr" pml component (data reliability) for running in
+  unreliable networks (such as those at high altitudes).  Includes
+  functionality for retransmission due to problems with end-to-end
+  data content checking or loss of data in the network.
+- Improvements in various run-time error messages to be more clear
+  about what they mean and where the errors are occurring.
+- Various fixes to mpirun's handling of --prefix.
+- Updates and fixes for Cray/Red Storm support.
 - Major improvements to the Fortran 90 MPI bindings:
   - General improvements in compile/linking time and portability
     between different F90 compilers.
-  - Addition of "trivial", "small" (the default), "medium", and
-    "large" Fortran 90 MPI module sizes (v1.0.x's F90 module was
+  - Addition of "trivial", "small" (the default), and "medium"
+    Fortran 90 MPI module sizes (v1.0.x's F90 module was
     equivalent to "medium").  See the README file for more
     explanation.
   - Fix various MPI F90 interface functions and constant types to
@@ -65,6 +91,15 @@ version 1.0.
 1.0.3
 -----
 
+- Require that the openib BTL find <sysfs/libsysfs.h>.  Thanks to Josh
+  Aune for the suggestion.
+- Include updates to support the upcoming Autoconf 2.60 and Libtool
+  2.0.  Thanks to Ralf Wildenhues for all the work!
+- Fix bug with infinite loop in the "round robin" process mapper.
+  Thanks to Paul Donohue for reporting the problem.
+- Enusre that memory hooks are removed properly during MPI_FINALIZE.
+  Thanks to Neil Ludban for reporting the problem.
+- Various fixes to the included support for ROMIO.
 - Fix to ensure that MPI_LONG_LONG and MPI_LONG_LONG_INT are actually
   synonyms, as defined by the MPI standard.  Thanks to Martin Audet
   for reporting this.
