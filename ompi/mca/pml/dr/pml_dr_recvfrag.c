@@ -598,7 +598,7 @@ bool mca_pml_dr_recv_frag_match(
     opal_list_t additional_matches;
     ompi_proc_t* ompi_proc = proc->ompi_proc;
     int rc;
-    uint32_t csum = OPAL_CSUM_ZERO;
+    uint32_t csum;
     mca_pml_dr_endpoint_t* ep = (mca_pml_dr_endpoint_t*) proc->endpoint;
     
     /* source sequence number */
