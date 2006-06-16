@@ -78,6 +78,8 @@ int orte_rmgr_base_put_app_context(
 
     for(i=0; i<num_context; i++) {
         orte_app_context_t* app = app_context[i];
+        app->idx = i;
+
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i]),
                                                          ORTE_JOB_APP_CONTEXT_KEY,
                                                          ORTE_APP_CONTEXT,
@@ -85,8 +87,8 @@ int orte_rmgr_base_put_app_context(
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+
         OBJ_RETAIN(app);
-        app->idx = i;
         job_slots += app->num_procs;
     }
 
