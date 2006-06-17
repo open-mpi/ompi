@@ -727,10 +727,8 @@ int mca_btl_mvapi_component_progress( void )
     
     mca_btl_mvapi_frag_t* frag;
     mca_btl_mvapi_endpoint_t* endpoint; 
-    /* Poll for completions */
+    /* Poll for RDMA completions - if any succeed, we don't process the slower queues */
     for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
-        VAPI_ret_t ret; 
-        VAPI_wc_desc_t comp; 
         mca_btl_mvapi_module_t* mvapi_btl = &mca_btl_mvapi_component.mvapi_btls[i];
 
         OPAL_THREAD_LOCK(&mvapi_btl->eager_rdma_lock);
@@ -774,10 +772,13 @@ int mca_btl_mvapi_component_progress( void )
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
         }
+    }
+    if (count) return count;
 
-        if(count)
-           break;
-
+    for(i = 0; i < mca_btl_mvapi_component.ib_num_btls; i++) {
+        VAPI_ret_t ret; 
+        VAPI_wc_desc_t comp; 
+        mca_btl_mvapi_module_t* mvapi_btl = &mca_btl_mvapi_component.mvapi_btls[i];
         /* we have two completion queues, one for "high" priority and one for "low". 
          *   we will check the high priority and process them until there are none left. 
          *   note that low priority messages are only processed one per progress call. 

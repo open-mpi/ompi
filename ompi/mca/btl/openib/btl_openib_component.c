@@ -812,16 +812,9 @@ int mca_btl_openib_component_progress()
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
 
-    /* Poll for completions */
+    /* Poll for RDMA completions - if any succeed, we don't process the slower queues */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        
-        struct ibv_wc wc; 
         mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
-        
-        /* we have two completion queues, one for "high" priority and one for "low". 
-         *   we will check the high priority and process them until there are none left. 
-         *   note that low priority messages are only processed one per progress call. 
-         */
 
         OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);
         c = openib_btl->eager_rdma_buffers_count;
@@ -864,9 +857,17 @@ int mca_btl_openib_component_progress()
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
         }
+    }
+    if(count) return count;
 
-        if(count)
-           break;
+    for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
+        struct ibv_wc wc; 
+        mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
+        
+        /* we have two completion queues, one for "high" priority and one for "low". 
+         *   we will check the high priority and process them until there are none left. 
+         *   note that low priority messages are only processed one per progress call. 
+         */
 
         ne=ibv_poll_cq(openib_btl->ib_cq_hp, 1, &wc );
         if(ne < 0 ){ 
