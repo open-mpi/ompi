@@ -762,7 +762,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += __dt_contain_basic_datatypes( pData, buffer + index, length - index );
         index += snprintf( buffer + index, length - index, "\n" );
     }
-    if( pData->opt_desc.desc != NULL ) {
+    if( pData->opt_desc.desc != pData->desc.desc ) {
         /* If the data is already committed print everything including the last
          * fake DT_END_LOOP entry.
          */
@@ -771,6 +771,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += __dump_data_desc( pData->opt_desc.desc, pData->opt_desc.used + 1, buffer + index, length - index );
     } else {
         index += __dump_data_desc( pData->desc.desc, pData->desc.used, buffer + index, length - index );
+        index += snprintf( buffer + index, length - index, "No optimized description\n" );
     }
     buffer[index] = '\0';  /* make sure we end the string with 0 */
     opal_output( 0, "%s\n", buffer );
