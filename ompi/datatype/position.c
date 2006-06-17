@@ -117,18 +117,23 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
      */
     iov_len_local = *position - pConvertor->bConverted;
     if( iov_len_local > pConvertor->pDesc->size ) {
+        pStack = pConvertor->pStack;  /* we're working with the full stack */
         count_desc = iov_len_local / pConvertor->pDesc->size;
         DO_DEBUG( opal_output( 0, "position before %ld asked %ld data size %d"
                                " iov_len_local %d count_desc %d\n",
                                pConvertor->bConverted, *position, pConvertor->pDesc->size,
                                iov_len_local, count_desc ); );
-        for( type = 0; type <= pConvertor->stack_pos; type++ )
-            pConvertor->pStack[type].disp += count_desc * extent;
+        /**
+         * Update all the stack except the last one which is supposed to be for
+         * the last partial element description.
+         */
+        for( type = 0; type < pConvertor->stack_pos; type++ )
+            pStack[type].disp += count_desc * extent;
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
-        pConvertor->pStack[0].count -= count_desc;
+        pStack[0].count -= count_desc;
         DO_DEBUG( opal_output( 0, "after bConverted %ld remaining count %d iov_len_local %d\n",
-                               pConvertor->bConverted, pConvertor->pStack[0].count, iov_len_local ); );
+                               pConvertor->bConverted, pStack[0].count, iov_len_local ); );
     }
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
@@ -140,14 +145,14 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     pElem = &(description[pos_desc]); 
     base_pointer += pStack->disp;
     
-    DO_DEBUG( opal_output( 0, "unpack start pos_desc %d count_desc %d disp %ld\n"
+    DO_DEBUG( opal_output( 0, "position start pos_desc %d count_desc %d disp %ld\n"
                            "stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pos_desc, count_desc, base_pointer - pConvertor->pBaseBuf,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
     while( 1 ) {
         if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
-            DO_DEBUG( opal_output( 0, "pack end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+            DO_DEBUG( opal_output( 0, "position end_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
                                    pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
             if( --(pStack->count) == 0 ) { /* end of loop */
                 if( pConvertor->stack_pos == 0 ) {
@@ -169,7 +174,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
             }
             base_pointer = pConvertor->pBaseBuf + pStack->disp;
             UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            DO_DEBUG( opal_output( 0, "pack new_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
+            DO_DEBUG( opal_output( 0, "position new_loop count %d stack_pos %d pos_desc %d disp %ld space %d\n",
                                    pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
         }
         if( DT_LOOP == pElem->elem.common.type ) {
@@ -214,7 +219,7 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
         /* I complete an element, next step I should go to the next one */
         PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
                     base_pointer - pStack->disp - pConvertor->pBaseBuf, pos_desc );
-        DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
+        DO_DEBUG( opal_output( 0, "position save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                                pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
         return 0;
     }
