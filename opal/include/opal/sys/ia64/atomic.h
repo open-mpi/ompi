@@ -24,11 +24,7 @@
  */
 
 
-#if OMPI_WANT_SMP_LOCKS
-#define MB() __asm__ __volatile__("": : :"memory")
-#else
-#define MB()
-#endif
+#define MB() __asm__ __volatile__("mf": : :"memory")
 
 
 /**********************************************************************
