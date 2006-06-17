@@ -859,13 +859,12 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
                 if test "$have_v8plus" = "0" ; then
                     OMPI_ASM_SUPPORT_64BIT=0
                     ompi_cv_asm_arch="SPARC"
-AC_MSG_WARN([Using SPARC V8 assembly for atomic operations.  This])
-AC_MSG_WARN([may result in reduced performance on UltraSparc platforms.])
-AC_MSG_WARN([If you are compiling for the UltraSparc, consider ])
-AC_MSG_WARN([specifying the architecture v8plus (cc: -xarch=v8plus, ])
-AC_MSG_WARN([gcc: -mv8plus) when compiling Open MPI, as you may see a])
-AC_MSG_WARN([significant performance increase.])
-
+AC_MSG_WARN([Sparc v8 target is not supported in this release of Open MPI.])
+AC_MSG_WARN([You must specify the target architecture v8plus])
+AC_MSG_WARN([(cc: -xarch=v8plus, gcc: -mv8plus) for CFLAGS, CCXXFLAGS,])
+AC_MSG_WARN([FFLAGS, and FCFLAGS to compile Open MPI in32 bit mode on])
+AC_MSG_WARN([Sparc processors])
+AC_MSG_ERROR([Can not continue.])
                 else
                     OMPI_ASM_SUPPORT_64BIT=1
                     ompi_cv_asm_arch="SPARCV9_32"
