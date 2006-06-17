@@ -25,22 +25,34 @@ version 1.0.
 1.1
 ---
 
+- Various MPI datatype fixes, optimizations.
+- Fixed various problems on the SPARC architecture (e.g., not
+  correctly aligning addresses within structs).
+- Improvements in various run-time error messages to be more clear
+  about what they mean and where the errors are occurring.
+- Various fixes to mpirun's handling of --prefix.
+- Updates and fixes for Cray/Red Storm support.
 - Major improvements to the Fortran 90 MPI bindings:
   - General improvements in compile/linking time and portability
     between different F90 compilers.
-  - Addition of "trivial", "small" (the default), "medium", and
-    "large" Fortran 90 MPI module sizes (v1.0.x's F90 module was
+  - Addition of "trivial", "small" (the default), and "medium"
+    Fortran 90 MPI module sizes (v1.0.x's F90 module was
     equivalent to "medium").  See the README file for more
     explanation.
   - Fix various MPI F90 interface functions and constant types to
     match.  Thanks to Michael Kluskens for pointing out the problems
     to us.
+- Allow short messagees to use RDMA (vs. send/receive semantics) to a
+  limited number peers in both the mvapi and openib BTL components.
+  This reduces communication latency over IB channels.
+- Numerous performance improvements throughout the entire code base.
+- Many minor threading fixes.
 - Add a define OMPI_SKIP_CXX to allow the user to skip the mpicxx.h from
   being included in mpi.h. It allows the user to compile C code with a CXX
   compiler without including the CXX bindings.
-- The PERUSE support is now available directly on the trunk. In order to
-  activate it add --enable-peruse to the configure options. All events
-  described in the PERUSE 2.0 draft are supported, plus one Open MPI
+- PERUSE support has been added. In order to activate it add
+  --enable-peruse to the configure options. All events described in
+  the PERUSE 2.0 draft are supported, plus one Open MPI
   extension. PERUSE_COMM_REQ_XFER_CONTINUE allow to see how the data
   is segmented internally, using multiple interfaces or the pipeline
   engine. However, this version only support one event of each type
@@ -60,6 +72,15 @@ version 1.0.
 1.0.3
 -----
 
+- Require that the openib BTL find <sysfs/libsysfs.h>.  Thanks to Josh
+  Aune for the suggestion.
+- Include updates to support the upcoming Autoconf 2.60 and Libtool
+  2.0.  Thanks to Ralf Wildenhues for all the work!
+- Fix bug with infinite loop in the "round robin" process mapper.
+  Thanks to Paul Donohue for reporting the problem.
+- Enusre that memory hooks are removed properly during MPI_FINALIZE.
+  Thanks to Neil Ludban for reporting the problem.
+- Various fixes to the included support for ROMIO.
 - Fix to ensure that MPI_LONG_LONG and MPI_LONG_LONG_INT are actually
   synonyms, as defined by the MPI standard.  Thanks to Martin Audet
   for reporting this.
