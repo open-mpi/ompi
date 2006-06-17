@@ -24,6 +24,15 @@ version 1.0.
 1.0.3
 -----
 
+- Require that the openib BTL find <sysfs/libsysfs.h>.  Thanks to Josh
+  Aune for the suggestion.
+- Include updates to support the upcoming Autoconf 2.60 and Libtool
+  2.0.  Thanks to Ralf Wildenhues for all the work!
+- Fix bug with infinite loop in the "round robin" process mapper.
+  Thanks to Paul Donohue for reporting the problem.
+- Enusre that memory hooks are removed properly during MPI_FINALIZE.
+  Thanks to Neil Ludban for reporting the problem.
+- Various fixes to the included support for ROMIO.
 - Fix to ensure that MPI_LONG_LONG and MPI_LONG_LONG_INT are actually
   synonyms, as defined by the MPI standard.  Thanks to Martin Audet
   for reporting this.
