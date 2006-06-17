@@ -40,7 +40,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (27 Feb 2006):
+base as of this writing (17 Jun 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -93,11 +93,14 @@ base as of this writing (27 Feb 2006):
   inoperable (see notes about MCA parameters later in this file).  In
   particular, some parameters have required options that must be
   included.
-  - The "btl" parameter must include the "self" component, or Open MPI
-    will not be able to deliver messages to the same rank as the
-    sender.
-  - The "btl_tcp_if_exclude" paramater must include "lo", or Open MPI
-    will not be able to route MPI messages using the TCP BTL.
+  - If specified, the "btl" parameter must include the "self"
+    component, or Open MPI will not be able to deliver messages to the
+    same rank as the sender.  For example: "mpirun --mca btl tcp,self
+    ..."
+  - If specified, the "btl_tcp_if_exclude" paramater must include the
+    loopback device ("lo" on many Linux platforms), or Open MPI will
+    not be able to route MPI messages using the TCP BTL.  For example:
+    "mpirun --mca btl_tcp_if_exclude lo,eth1 ..."
 
 - Building shared libraries on AIX with the xlc compilers is only
   supported if you supply the following command line option to
@@ -165,10 +168,10 @@ base as of this writing (27 Feb 2006):
   during MPI_FINALIZE.
 
 - Running on nodes with different endian and/or different datatype
-  sizes within a single parallel job is supported as of 1.1.  However,
-  we do not properly resize data when datatypes differ in size (for
-  example, sending a 4 byte MPI_LONG and receiving an 8 byte MPI_LONG
-  will fail).
+  sizes within a single parallel job is supported starting with Open
+  MPI v1.1.  However, Open MPI does not resize data when datatypes
+  differ in size (for example, sending a 4 byte MPI_LONG and receiving
+  an 8 byte MPI_LONG will fail).
 
 - MPI_THREAD_MULTIPLE support is included, but is only lightly tested.
 
@@ -213,7 +216,7 @@ base as of this writing (27 Feb 2006):
   eliminate the extra overhead of software MPI message matching where
   possible.
 
-- The Fortran 90 MPI bindings can now be built in one of four sizes
+- The Fortran 90 MPI bindings can now be built in one of three sizes
   using --with-mpi-f90-size=SIZE (see description below).  These sizes
   reflect the number of MPI functions included in the "mpi" Fortran 90
   module and therefore which functions will be subject to strict type
@@ -239,22 +242,20 @@ base as of this writing (27 Feb 2006):
     dimensions specified by --with-f90-max-array-dim (default value is
     4).
 
-  - large: All MPI functions (i.e., all the functions in "medium" plus
-    all MPI functions that take two choice buffers, such as
-    MPI_SCATTER, MPI_GATHER, etc.).  All the two-choice-buffer
-    functions will have variants for each of the MPI-supported Fortran
-    intrinsic types up to the number of dimensions specified by
-    --with-f90-max-array-dim, but both buffers will be of the same
-    type.
-
   Increasing the size of the F90 module (in order from trivial, small,
-  medium, and large) will generally increase the length of time
-  required to compile user MPI applications.  Specifically, "trivial"-
-  and "small"-sized F90 modules generally allow user MPI applications
-  to be compiled fairly quickly but lose type safety for all MPI
-  functions with choice buffers.  "medium"- and "large"-sized F90
-  modules generally take longer to compile user applications but
-  provide greater type safety for MPI functions.
+  and medium) will generally increase the length of time required to
+  compile user MPI applications.  Specifically, "trivial"- and
+  "small"-sized F90 modules generally allow user MPI applications to
+  be compiled fairly quickly but lose type safety for all MPI
+  functions with choice buffers.  "medium"-sized F90 modules generally
+  take longer to compile user applications but provide greater type
+  safety for MPI functions.
+
+  Note that MPI functions with two choice buffers (e.g., MPI_GATHER)
+  are not currently included in Open MPI's F90 interface.  Calls to
+  these functions will automatically fall through to Open MPI's F77
+  interface.  A "large" size that includes the two choice buffer MPI
+  functions is possible in future versions of Open MPI.
 
 ===========================================================================
 
@@ -290,8 +291,11 @@ for a full list); a summary of the more commonly used ones follows:
   located.  This enables mVAPI support in Open MPI.
 
 --with-openib=<directory>
-  Specify the directory where the Open IB libraries and header files are
-  located.  This enables mVAPI support in Open MPI.
+  Specify the directory where the Open Fabrics (previously known as
+  OpenIB) libraries and header files are located.  This enables Open
+  Fabrics support in Open MPI.  This option will likely be be
+  deprecated in favor of "--with-openfrabrics" in a future version of
+  Open MPI.
 
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
@@ -339,13 +343,11 @@ for a full list); a summary of the more commonly used ones follows:
   --with-f90-max-array-dim and --with-mpi-f90-size options.
 
 --with-mpi-f90-size=<SIZE>
-  Four sizes of the MPI F90 module can be built: trivial (only a
-  handful of MPI-2 F90-specific  functions are included in the F90
+  Three sizes of the MPI F90 module can be built: trivial (only a
+  handful of MPI-2 F90-specific functions are included in the F90
   module), small (trivial + all MPI functions that take no choice
-  buffers), medium (small + all MPI functions that take 1 choice
-  buffer), and large (medium + all MPI functions that take 2 choice
-  buffers, but only where the types of both choice buffers are the
-  same).  This parameter is only used if the F90 bindings are
+  buffers), and medium (small + all MPI functions that take 1 choice
+  buffer).  This parameter is only used if the F90 bindings are
   enabled.
 
 --with-f90-max-array-dim=<DIM>
@@ -358,11 +360,15 @@ for a full list); a summary of the more commonly used ones follows:
   By default, libmpi is built as a shared library, and all components
   are built as dynamic shared objects (DSOs).  This switch disables
   this default; it is really only useful when used with
-  --enable-static.
+  --enable-static.  Specifically, this option does *not* imply
+  --disable-shared; enabling static libraries and disabling shared
+  libraries are two independent options.
 
 --enable-static
   Build libmpi as a static library, and statically link in all
-  components.
+  components.  Note that this option does *not* imply
+  --disable-shared; enabling static libraries and disabling shared
+  libraries are two independent options.
 
 There are several other options available -- see "./configure --help".
 
