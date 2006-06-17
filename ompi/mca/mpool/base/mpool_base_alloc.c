@@ -27,6 +27,9 @@
 #include "base.h"
 #include "mpool_base_tree.h"
 #include "opal/threads/mutex.h" 
+#include "mpool_base_mem_cb.h"
+
+extern int mca_mpool_base_use_mem_hooks; 
 
 /**
  * Memory Pool Registration
@@ -87,6 +90,24 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     char * key;
     bool match_found;
     
+
+    if (mca_mpool_base_use_mem_hooks && 
+        0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+        /* if we're using memory hooks, it's possible (likely, based
+           on testing) that for some tests the memory returned from
+           any of the malloc functions below will be part of a larger
+           (lazily) freed chunk and therefore already be pinned.
+           Which causes our caches to get a little confused, as the
+           alloc/free pair are supposed to always have an exact match
+           in the rcache.  This wasn't happening, leading to badness.
+           Instead, just malloc and we'll get to the pinning later,
+           when we try to first use it.  Since we're leaving things
+           pinned, there's no advantage to doing it now over first
+           use, and it works if we wait ... */
+        return malloc(size);
+    }
+
+
     if (num_modules > 0) {
         has_reg_function = (mca_mpool_base_selected_module_t **)
                            malloc(num_modules * sizeof(mca_mpool_base_module_t *));
@@ -261,6 +282,13 @@ int mca_mpool_base_free(void * base)
     
     if(!base) { 
         return OMPI_ERROR;
+    }
+
+    /* see comment in alloc function above */
+    if (mca_mpool_base_use_mem_hooks && 
+        0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
+        free(base);
+        return OMPI_SUCCESS;
     }
 
     mpool_tree_item = mca_mpool_base_tree_find(base); 
