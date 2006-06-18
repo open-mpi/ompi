@@ -8,6 +8,7 @@ START_FILE
 opal_atomic_mb:
 	.prologue
 	.body
+	mf
 	br.ret.sptk.many b0
 	;;
 	.endp opal_atomic_mb#
@@ -17,6 +18,7 @@ opal_atomic_mb:
 opal_atomic_rmb:
 	.prologue
 	.body
+	mf
 	br.ret.sptk.many b0
 	;;
 	.endp opal_atomic_rmb#
@@ -26,6 +28,7 @@ opal_atomic_rmb:
 opal_atomic_wmb:
 	.prologue
 	.body
+	mf
 	br.ret.sptk.many b0
 	;;
 	.endp opal_atomic_wmb#
