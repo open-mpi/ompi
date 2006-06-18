@@ -240,14 +240,41 @@ int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
         printf( "\n" );
     }
     if( pArgs->d != NULL ) {
+        int count = 1;
+        ompi_datatype_t *temp, *old;
+
         printf( "types:    " );
-        for( i = 0; i < pArgs->cd; i++ ) {
-            ompi_datatype_t* temp = pArgs->d[i];
-            if( temp->flags & DT_FLAG_PREDEFINED ) {
-                printf( "%s ", temp->name );
-            } else {
-                printf( "%p ", (void*)temp );
+        old = pArgs->d[0];
+        for( i = 1; i < pArgs->cd; i++ ) {
+            temp = pArgs->d[i];
+            if( old == temp ) {
+                count++;
+                continue;
             }
+            if( count <= 1 ) {
+                if( old->flags & DT_FLAG_PREDEFINED )
+                    printf( "%s ", old->name );
+                else
+                    printf( "%p ", (void*)old );
+            } else {
+                if( old->flags & DT_FLAG_PREDEFINED )
+                    printf( "(%d * %s) ", count, old->name );
+                else
+                    printf( "(%d * %p) ", count, (void*)old );
+            }
+            count = 1;
+            old = temp;
+        }
+        if( count <= 1 ) {
+            if( old->flags & DT_FLAG_PREDEFINED )
+                printf( "%s ", old->name );
+            else
+                printf( "%p ", (void*)old );
+        } else {
+            if( old->flags & DT_FLAG_PREDEFINED )
+                printf( "(%d * %s) ", count, old->name );
+            else
+                printf( "(%d * %p) ", count, (void*)old );
         }
         printf( "\n" );
     }
