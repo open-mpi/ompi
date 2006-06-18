@@ -106,6 +106,12 @@ base as of this writing (17 Jun 2006):
   supported if you supply the following command line option to
   configure: LDFLAGS=-Wl,-brtl.
 
+- Open MPI does not support the Sparc v8 CPU target, which is the
+  default on Sun Solaris.  The v8plus (32 bit) or v9 (64 bit)
+  targets must be used to build Open MPI on Solaris.  This can be
+  done by including a flag in CFLAGS, CXXFLAGS, FFLAGS, and FCFLAGS,
+  -xarch=v8plus for the Sun compilers, -mv8plus for GCC.
+
 - At least some versions of the Intel 8.1 compiler seg fault while
   compiling certain Open MPI source code files.  As such, it is not
   supported.
