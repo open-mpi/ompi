@@ -62,9 +62,9 @@ int main( int argc, char* argv[] )
      * of the buffered operation.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, CONVERTOR_WITH_CHECKSUM );
+    ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
     position = 0;
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
-    ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
 
     iov[0].iov_base = packed;
     iov[0].iov_len = sizeof(int) * SIZE;
@@ -81,9 +81,9 @@ int main( int argc, char* argv[] )
      * be sent over the network (still simulation).
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, CONVERTOR_WITH_CHECKSUM );
+    ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
     position = 0;
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
-    ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
 
     iov[0].iov_base = array;
     iov[0].iov_len = sizeof(int) * SIZE;
@@ -101,9 +101,9 @@ int main( int argc, char* argv[] )
      * separate iovec.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
+    ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
     position = 0;
     ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
-    ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
 
     max_data = sizeof(int) * SIZE;
     iov[0].iov_base = array;
