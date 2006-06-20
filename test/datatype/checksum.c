@@ -32,7 +32,7 @@ int main( int argc, char* argv[] )
     my_data_t* sparse_array;
     int i;
     uint32_t iov_count;
-    size_t max_data, position;
+    size_t max_data;
     int32_t free_after;
     uint32_t pack_checksum, contiguous_checksum, sparse_checksum, manual_checksum;
     struct iovec iov[2];
@@ -61,10 +61,9 @@ int main( int argc, char* argv[] )
      * Pack the sparse data into the packed array. This simulate the first step
      * of the buffered operation.
      */
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, CONVERTOR_WITH_CHECKSUM );
+    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
     ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
-    position = 0;
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
 
     iov[0].iov_base = packed;
     iov[0].iov_len = sizeof(int) * SIZE;
@@ -80,10 +79,9 @@ int main( int argc, char* argv[] )
      * Now move the data from the packed array into the fragment to
      * be sent over the network (still simulation).
      */
-    convertor = ompi_convertor_create( ompi_mpi_local_arch, CONVERTOR_WITH_CHECKSUM );
+    convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
     ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
-    position = 0;
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
 
     iov[0].iov_base = array;
     iov[0].iov_len = sizeof(int) * SIZE;
@@ -101,9 +99,8 @@ int main( int argc, char* argv[] )
      * separate iovec.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
     ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
-    position = 0;
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, &position, NULL, NULL );
 
     max_data = sizeof(int) * SIZE;
     iov[0].iov_base = array;
@@ -128,7 +125,7 @@ int main( int argc, char* argv[] )
     printf( "contiguous checksum %x\n", contiguous_checksum );
     printf( "packed checksum     %x\n", pack_checksum );
     printf( "sparse checksum     %x\n", sparse_checksum );
-    if( (sparse_checksum != contiguous_checksum) &&
+    if( (sparse_checksum != contiguous_checksum) ||
         (pack_checksum != sparse_checksum) ) {
         printf( "ERROR!!! the checksum algorithm does not work as expected\n" );
         return 1;
