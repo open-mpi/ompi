@@ -44,3 +44,15 @@ respect to the retry count:
      4.096 microseconds * (2^btl_openib_ib_timeout)
 
   See the InfiniBand spec 1.2 (section 12.7.34) for more details.
+[btl_openib:leave_pinned_multi_port]
+# Until ticket #142 is fixed
+This release of Open MPI does not support setting the
+"mpi_leave_pinned" parameter to a true value when using multiple HCA
+ports.  This warning is emitted when multiple HCA ports are detected
+and "mpi_leave_pinned" is set to a true value, and is to inform you
+that Open MPI is going to automatically disregard all HCA ports beyond
+the first one (i.e., the MCA parameter "btl_openib_max_btls" parameter
+has been overridden and set to 1).
+
+You may silence this warning by setting the
+"btl_openib_warn_leave_pinned_multi_port" MCA parameter to 0.

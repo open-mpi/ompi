@@ -40,7 +40,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (17 Jun 2006):
+base as of this writing (19 Jun 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -213,6 +213,11 @@ base as of this writing (17 Jun 2006):
   MCA parameter btl_mx_max_send_size can be used to vary the maximum
   size of subsequent fragments.
 
+- Using multiple OpenIB HCA ports combined with setting the MCA
+  parameters mpi_leave_pinned to 1 is not supported in this release.
+  If mpi_leave_pinned is set to 1, the openib BTL component will
+  automatically limit itself to use 1 HCA port.
+
 - The current version of the Open MPI point-to-point engine does not
   yet support hardware-level MPI message matching.  As such, MPI
   message matching must be performed in software, artificially
@@ -283,25 +288,37 @@ for a full list); a summary of the more commonly used ones follows:
   Install Open MPI into the base directory named <directory>.  Hence,
   Open MPI will place its executables in <directory>/bin, its header
   files in <directory>/include, its libraries in <directory>/lib, etc.
+  More fine-grained control over directory names is available; see the
+  output of "./configure --help" for more details.
 
 --with-gm=<directory>
   Specify the directory where the GM libraries and header files are
   located.  This enables GM support in Open MPI.
 
+--with-gm-libdir=<directory>
+  JMS
+
 --with-mx=<directory>
   Specify the directory where the MX libraries and header files are
   located.  This enables MX support in Open MPI.
+
+--with-mx-libdir=<directory>
+  JMS
 
 --with-mvapi=<directory>
   Specify the directory where the mVAPI libraries and header files are
   located.  This enables mVAPI support in Open MPI.
 
+--with-mvapi-libdir=<directory>
+  JMS
+
 --with-openib=<directory>
   Specify the directory where the Open Fabrics (previously known as
   OpenIB) libraries and header files are located.  This enables Open
-  Fabrics support in Open MPI.  This option will likely be be
-  deprecated in favor of "--with-openfrabrics" in a future version of
-  Open MPI.
+  Fabrics support in Open MPI.
+
+--with-openib-libdir=<directory>
+  JMS
 
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
