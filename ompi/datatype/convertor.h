@@ -50,7 +50,6 @@ extern "C" {
 #define CONVERTOR_STATE_COMPLETE   0x02000000
 #define CONVERTOR_STATE_ALLOC      0x04000000
 #define CONVERTOR_COMPLETED        0x08000000
-#define CONVERTOR_COMPUTE_CRC      0x10000000
 
 typedef struct ompi_convertor_t ompi_convertor_t;
 
@@ -289,6 +288,8 @@ ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
     convertor->memAlloc_fn = allocfn;
     convertor->memAlloc_userdata = userdata;
 
+    if( NULL == position )
+        return OMPI_SUCCESS;
     return ompi_convertor_set_position( convertor, position );
 }
 
