@@ -679,7 +679,7 @@ int mca_pml_ob1_send_request_start_rdma(
 
          /* update lengths with number of bytes actually packed */
          segment->seg_len = sizeof(mca_pml_ob1_rendezvous_hdr_t);
-         sendreq->req_send_offset = 0;
+         sendreq->req_rdma_offset = 0;
     
          /* first fragment of a long message */
          des->des_cbfunc = mca_pml_ob1_rndv_completion;
