@@ -324,7 +324,7 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                     !memcmp(param.remote_ia_address_ptr,
                             &ep->endpoint_addr.addr, sizeof(DAT_SOCK_ADDR))) {
 
-                OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+                OPAL_THREAD_LOCK(&ep->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {
                     ep->endpoint_eager = endpoint;
                     rc = mca_btl_udapl_endpoint_finish_eager(ep);
