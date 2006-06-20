@@ -120,6 +120,9 @@ struct mca_btl_openib_component_t {
     uint32_t eager_rdma_num;
     uint32_t max_eager_rdma;
 
+    /** Until ticket #142 is fixed; do we print a warning if
+        mpi_leave_pinned is true and multiple HCA ports are found? */
+    int warn_leave_pinned_multi_port;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 extern mca_btl_openib_component_t mca_btl_openib_component;
