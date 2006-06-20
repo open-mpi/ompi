@@ -19,23 +19,28 @@
 # This is the US/English general help file for Open MPI.
 #
 [btl_openib:retry-exceeded]
-The retry count is a down counter initialized on creation of the QP. Retry
-count is defined in the InfiniBand Spec 1.2 (12.7.38): 
-The total number of times that the sender wishes the receiver to retry tim- 
-eout, packet sequence, etc. errors before posting a completion error.
+The InfiniBand retry count between two MPI processes has been
+exceeded.  "Retry count" is defined in the InfiniBand spec 1.2
+(section 12.7.38):
 
-Note that two mca parameters are involved here: 
-btl_openib_ib_retry_count - The number of times the sender will attempt to
-retry (defaulted to 7, the maximum value). 
+    The total number of times that the sender wishes the receiver to
+    retry timeout, packet sequence, etc. errors before posting a
+    completion error.
 
-btl_openib_ib_timeout - The local ack timeout parameter (defaulted to 10). The
-actual timeout value used is calculated as: 
- (4.096 micro-seconds *2^btl_openib_ib_timeout). 
-See InfiniBand Spec 1.2 (12.7.34) for more details.
+This error typically means that there is something awry within the
+InfiniBand fabric itself.  You should note the hosts on which this
+error has occurred; it has been observed that rebooting or removing a
+particular host from the job can sometimes resolve this issue.  
 
+Two MCA parameters can be used to control Open MPI's behavior with
+respect to the retry count:
 
-What to do next: 
-One item to note is the hosts on which this error has occured, it has been
-observed that rebooting or removing a particular host from the job can resolve
-this issue. Should you be able to identify a specific cause or additional
-trouble shooting information please report  this to devel@open-mpi.org.
+* btl_openib_ib_retry_count - The number of times the sender will
+  attempt to retry (defaulted to 7, the maximum value).
+
+* btl_openib_ib_timeout - The local ACK timeout parameter (defaulted
+  to 10).  The actual timeout value used is calculated as:
+
+     4.096 microseconds * (2^btl_openib_ib_timeout)
+
+  See the InfiniBand spec 1.2 (section 12.7.34) for more details.
