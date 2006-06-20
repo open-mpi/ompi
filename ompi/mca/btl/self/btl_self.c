@@ -303,8 +303,16 @@ int mca_btl_self_send(
     struct mca_btl_base_descriptor_t* des,
     mca_btl_base_tag_t tag)
 {
+    /**
+     * We have to set the dst before the call to the function and reset them
+     * after.
+     */
+    des->des_dst     = des->des_src;
+    des->des_dst_cnt = des->des_src_cnt;
     /* upcall */
     mca_btl_self_component.self_reg[tag].cbfunc(btl,tag,des,OMPI_SUCCESS);
+    des->des_dst     = NULL;
+    des->des_dst_cnt = 0;
     /* send completion */
     des->des_cbfunc(btl,endpoint,des,OMPI_SUCCESS);
     return OMPI_SUCCESS;
