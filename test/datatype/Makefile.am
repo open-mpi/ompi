@@ -9,7 +9,7 @@
 # $HEADER$
 #
 
-check_PROGRAMS = ddt_test checksum
+check_PROGRAMS = ddt_test checksum position to_self
 
 TESTS = $(check_PROGRAMS)
 
@@ -20,3 +20,11 @@ ddt_test_LDADD = $(top_builddir)/ompi/libmpi.la
 checksum_SOURCES = checksum.c
 checksum_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 checksum_LDADD = $(top_builddir)/ompi/libmpi.la
+
+position_SOURCES = position.c
+position_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+position_LDADD = $(top_builddir)/ompi/libmpi.la
+
+to_self_SOURCES = to_self.c
+to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+to_self_LDADD = $(top_builddir)/ompi/libmpi.la
