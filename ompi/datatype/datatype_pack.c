@@ -265,7 +265,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
     char *source_base, *destination;
-    uint32_t iov_len_local, iov_count, required_space = 0;
+    uint32_t iov_len_local, iov_count;
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_pack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
                            iov[0].iov_base, iov[0].iov_len, *out_size ); );
@@ -291,8 +291,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        if( required_space > ((*max_data) - total_packed) )
-            break;  /* do not pack over the boundaries even if there are more iovecs */
         if( iov[iov_count].iov_base == NULL ) {
             /*
              *  ALLOCATE SOME MEMORY ...
@@ -321,7 +319,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                     continue;
                 }
                 type = pElem->elem.common.type;
-                required_space = ompi_ddt_basicDatatypes[type]->size;
                 goto complete_loop;
             }
             if( DT_END_LOOP == pElem->elem.common.type ) { /* end of the current loop */
@@ -332,7 +329,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                         /* we lie about the size of the next element in order to
                          * make sure we exit the main loop.
                          */
-                        required_space = 0xffffffff;
+                        *out_size = iov_count;
                         goto complete_loop;  /* completed */
                     }
                     pConvertor->stack_pos--;
