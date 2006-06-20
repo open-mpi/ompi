@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sandia National Laboratories. All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +24,7 @@
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
 #include "btl_udapl.h"
+#include "btl_udapl_endpoint.h"
 #include "btl_udapl_proc.h"
 
 static void mca_btl_udapl_proc_construct(mca_btl_udapl_proc_t* proc);
