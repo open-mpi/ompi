@@ -474,7 +474,6 @@ void mca_pml_ob1_recv_request_progress(
 
             bytes_received -= sizeof(mca_pml_ob1_match_hdr_t);
             recvreq->req_recv.req_bytes_packed = bytes_received;
-            recvreq->req_bytes_delivered = bytes_received;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             MCA_PML_OB1_RECV_REQUEST_UNPACK(
                 recvreq,
@@ -490,24 +489,29 @@ void mca_pml_ob1_recv_request_progress(
 
             bytes_received -= sizeof(mca_pml_ob1_rendezvous_hdr_t);
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-            recvreq->req_bytes_delivered = hdr->hdr_rndv.hdr_msg_length;
             recvreq->req_send = hdr->hdr_rndv.hdr_src_req;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_ack(recvreq, &hdr->hdr_rndv, bytes_received);
-            MCA_PML_OB1_RECV_REQUEST_UNPACK(
-                recvreq,
-                segments,
-                num_segments,
-                sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                data_offset,
-                bytes_received,
-                bytes_delivered);
+            /**
+             * The PUT protocol do not attach any data to the original request.
+             * Therefore, we might want to avoid unpacking if there is nothing to
+             * unpack.
+             */
+            if( 0 < bytes_received ) {
+                MCA_PML_OB1_RECV_REQUEST_UNPACK(
+                    recvreq,
+                    segments,
+                    num_segments,
+                    sizeof(mca_pml_ob1_rendezvous_hdr_t),
+                    data_offset,
+                    bytes_received,
+                    bytes_delivered);
+            }
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RGET:
 
             recvreq->req_recv.req_bytes_packed = hdr->hdr_rndv.hdr_msg_length;
-            recvreq->req_bytes_delivered = hdr->hdr_rndv.hdr_msg_length;
             MCA_PML_OB1_RECV_REQUEST_MATCHED(recvreq,&hdr->hdr_match);
             mca_pml_ob1_recv_request_rget(recvreq, btl, &hdr->hdr_rget);
             return;
