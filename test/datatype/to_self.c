@@ -16,12 +16,8 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-#ifdef HAVE_OPEN_MPI
-#include "ompi_config.h"
-#include "ompi/datatype/convertor.h"
-#include "ompi/datatype/datatype.h"
-#include "ompi/datatype/convertor_internal.h"
-#include "ompi/datatype/datatype_internal.h"
+#ifdef OPEN_MPI
+extern void ompi_ddt_dump( MPI_Datatype ddt );
 #define MPI_DDT_DUMP(ddt) ompi_ddt_dump( (ddt) )
 #else
 #define MPI_DDT_DUMP(ddt)
@@ -315,6 +311,10 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
     for( i = 1; i <= (length/extent); i *= 2 ) {
         isend_recv( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
+    printf( "# Isend Irecv Wait\n" );
+    for( i = 1; i <= (length/extent); i *= 2 ) {
+        isend_irecv_wait( 10, sddt, i, sbuf, rddt, i, rbuf );
+    }
     printf( "# Irecv send\n" );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         irecv_send( 10, sddt, i, sbuf, rddt, i, rbuf );
@@ -322,10 +322,6 @@ static int do_test_for_ddt( MPI_Datatype sddt, MPI_Datatype rddt, int length )
     printf( "# Irecv Isend Wait\n" );
     for( i = 1; i <= (length/extent); i *= 2 ) {
         irecv_isend_wait( 10, sddt, i, sbuf, rddt, i, rbuf );
-    }
-    printf( "# Irecv Isend Wait\n" );
-    for( i = 1; i <= (length/extent); i *= 2 ) {
-        isend_irecv_wait( 10, sddt, i, sbuf, rddt, i, rbuf );
     }
     free( sbuf );
     free( rbuf );
@@ -364,7 +360,7 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_INDEXED_GAP ) {
         printf( "\nindexed gap\n\n" );
         ddt = create_indexed_gap_ddt();
-        /*MPI_DDT_DUMP( ddt );*/
+        MPI_DDT_DUMP( ddt );
         do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
@@ -372,7 +368,7 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_OPTIMIZED_INDEXED_GAP ) {
         printf( "\noptimized indexed gap\n\n" );
         ddt = create_indexed_gap_optimized_ddt();
-        /*MPI_DDT_DUMP( ddt );*/
+        MPI_DDT_DUMP( ddt );
         do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
@@ -380,7 +376,7 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_CONSTANT_GAP ) {
         printf( "\nconstant indexed gap\n\n" );
         ddt = create_indexed_constant_gap_ddt( 80, 100, 1 );
-        /*MPI_DDT_DUMP( ddt );*/
+        MPI_DDT_DUMP( ddt );
         do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
@@ -388,7 +384,7 @@ int main( int argc, char* argv[] )
     if( run_tests & DO_CONSTANT_GAP ) {
         printf( "\noptimized constant indexed gap\n\n" );
         ddt = create_optimized_indexed_constant_gap_ddt( 80, 100, 1 );
-        /*MPI_DDT_DUMP( ddt );*/
+        MPI_DDT_DUMP( ddt );
         do_test_for_ddt( ddt, ddt, length );
         MPI_Type_free( &ddt );
     }
