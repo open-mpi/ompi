@@ -74,6 +74,6 @@
 !     
 !     double precision functions
 !     
-      external MPI_WTIME, MPI_WTICK
-      double precision MPI_WTIME, MPI_WTICK
+      external MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
+      double precision MPI_WTIME, MPI_WTICK @MPIF_H_PMPI_W_FUNCS@
       
