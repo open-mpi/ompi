@@ -624,7 +624,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      *  If more than one NIC is available - try to use both for anything
                      *  larger than the eager limit
                      */
-                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_eager_limit) {
+                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_max_rdma_size) {
                         size = bytes_remaining;
 
                     /* otherwise attempt to give the BTL a percentage of the message
@@ -662,7 +662,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                      *  If more than one NIC is available - try to use both for anything
                      *  larger than the eager limit
                      */
-                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_eager_limit) {
+                    if(num_btl_avail == 1 || bytes_remaining < bml_btl->btl_max_rdma_size) {
                         size = bytes_remaining;
 
                     /* otherwise attempt to give the BTL a percentage of the message
@@ -675,7 +675,7 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     }
     
                     /* makes sure that we don't exceed BTL max rdma size */
-                    if (bml_btl->btl_max_rdma_size != 0 && size > bml_btl->btl_max_rdma_size) {
+                    if( size > bml_btl->btl_max_rdma_size ) {
                         size = bml_btl->btl_max_rdma_size;
                     }
                     if(mca_pml_ob1.leave_pinned_pipeline) { 
