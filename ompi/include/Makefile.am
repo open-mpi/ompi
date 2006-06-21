@@ -20,7 +20,6 @@
 # See big comments in these files for an explanation.
 
 headers = \
-        mpif.h \
         mpif-common.h
 nodist_headers = \
 	ompi_config.h
@@ -33,6 +32,7 @@ include_HEADERS = $(headers)
 # counterparts, which AM automatically ships.
 nodist_include_HEADERS = \
         mpi.h \
+        mpif.h \
         mpif-config.h
 
 if WANT_INSTALL_HEADERS 

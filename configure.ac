@@ -1107,6 +1107,7 @@ AC_CONFIG_FILES([
     ompi/Makefile
     ompi/etc/Makefile
     ompi/include/Makefile
+    ompi/include/mpif.h
     ompi/include/mpif-config.h
 
     ompi/datatype/Makefile
