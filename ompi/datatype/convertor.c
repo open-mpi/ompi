@@ -180,8 +180,8 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( ((pConv->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) &&
-        !(pConv->flags & CONVERTOR_WITH_CHECKSUM) ) {
+    if( !(pConv->flags & CONVERTOR_WITH_CHECKSUM) &&
+        (pConv->flags & DT_FLAG_NO_GAPS) ) {
         /* We are doing conversion on a predefined contiguous datatype. The
          * convertor contain minimal informations, we only use the bConverted
          * to manage the conversion.
@@ -226,9 +226,9 @@ inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( ((pConv->flags & (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS)) == 
-        (DT_FLAG_BASIC | CONVERTOR_HOMOGENEOUS)) &&
-        !(pConv->flags & CONVERTOR_WITH_CHECKSUM) ) {
+    if( !(pConv->flags & CONVERTOR_WITH_CHECKSUM) &&
+        ((pConv->flags & (CONVERTOR_HOMOGENEOUS | DT_FLAG_NO_GAPS)) ==
+         (CONVERTOR_HOMOGENEOUS | DT_FLAG_NO_GAPS)) ) {
         /* We are doing conversion on a contiguous datatype on a homogeneous
          * environment. The convertor contain minimal informations, we only
          * use the bConverted to manage the conversion.
@@ -426,10 +426,10 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled the always continue */                \
-        if( ((convertor->flags & DT_FLAG_BASIC) == DT_FLAG_BASIC) &&    \
-            !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
+        if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
+            (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
             ((convertor->flags & CONVERTOR_SEND) ||                     \
-             (convertor->flags & CONVERTOR_HOMOGENEOUS) ) ) {           \
+             (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {            \
             convertor->bConverted = 0;                                  \
             return OMPI_SUCCESS;                                        \
         }                                                               \

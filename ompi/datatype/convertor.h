@@ -265,14 +265,14 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
     /* Remove the completed flag if it's already set */
     convertor->flags &= ~CONVERTOR_COMPLETED;
 
-    if( (convertor->flags & (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS)) ==
-        (DT_FLAG_PREDEFINED | CONVERTOR_HOMOGENEOUS) &&
-        !(convertor->flags & CONVERTOR_WITH_CHECKSUM) ) {
-        /* basic predefined datatype (contiguous) */
+    if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
+        (convertor->flags & DT_FLAG_NO_GAPS) &&
+        ((convertor->flags & CONVERTOR_SEND) ||
+         (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {
+        /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
         return OMPI_SUCCESS;
     }
-
     return ompi_convertor_set_position_nocheck( convertor, position );
 }
 

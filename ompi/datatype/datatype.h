@@ -190,10 +190,10 @@ static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, unsigned 
  */
 static inline int32_t ompi_ddt_is_contiguous_memory_layout( const ompi_datatype_t* datatype, int32_t count )
 {
-    if( !(datatype->flags & DT_FLAG_CONTIGUOUS) ) return 0;
-    if( count == 1 ) return 1;  /* only one data ignore the gaps around */
-    if( (long)datatype->size != (datatype->ub - datatype->lb) ) return 0;
-    return 1;
+   if( !(datatype->flags & DT_FLAG_CONTIGUOUS) ) return 0;
+   if( (count == 1) || (datatype->flags & DT_FLAG_NO_GAPS) ) return 1;
+   assert( (long)datatype->size != (datatype->ub - datatype->lb) );
+   return 0;
 }
 
 OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, int32_t iSize );
