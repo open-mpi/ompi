@@ -98,6 +98,8 @@ noinst_SCRIPTS = \
      mpi_unpack_f90.f90.sh \
      mpi_waitall_f90.f90.sh \
      mpi_waitsome_f90.f90.sh \
-     mpi_win_create_f90.f90.sh
+     mpi_win_create_f90.f90.sh \
+     mpi_wtick_f90.f90.sh \
+     mpi_wtime_f90.f90.sh
 
 EXTRA_DIST = $(noinst_SCRIPTS)
