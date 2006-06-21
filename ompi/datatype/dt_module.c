@@ -391,7 +391,7 @@ int ompi_ddt_register_params(void)
 
 int32_t ompi_ddt_init( void )
 {
-    int i;
+    int32_t i;
 
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_ddt_basicDatatypes[i];
@@ -417,6 +417,10 @@ int32_t ompi_ddt_init( void )
         datatype->opt_desc          = datatype->desc;
 
         datatype->btypes[i]         = 1;
+        /* Check if the data contain gaps */
+        if( (datatype->ub - datatype->lb) == (long)datatype->size ) {
+            datatype->desc.desc[0].elem.common.flags |= DT_FLAG_NO_GAPS;
+        }
     }
 
     /* Create the f2c translation table */
@@ -453,8 +457,7 @@ int32_t ompi_ddt_init( void )
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_short_int, DT_SHORT_INT, "MPI_SHORT_INT",
 				      short, int, DT_SHORT, DT_INT, DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
     DECLARE_MPI2_COMPOSED_STRUCT_DDT( &ompi_mpi_longdbl_int, DT_LONG_DOUBLE_INT, "MPI_LONG_DOUBLE_INT",
-				      long double, int, DT_LONG_DOUBLE, DT_INT,
-                                      DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
+				      long double, int, DT_LONG_DOUBLE, DT_INT, DT_FLAG_DATA_C );
 
     DECLARE_MPI2_COMPOSED_BLOCK_DDT( &ompi_mpi_2int, DT_2INT, "MPI_2INT", DT_INT,
 				     DT_FLAG_DATA_C | DT_FLAG_DATA_INT );
@@ -587,6 +590,16 @@ int32_t ompi_ddt_init( void )
     MOOG(cxx_cplex);
     MOOG(cxx_dblcplex);
     MOOG(cxx_ldblcplex);
+
+    for( i = 0; i < ompi_mpi_cxx_ldblcplex.d_f_to_c_index; i++ ) {
+        ompi_datatype_t* datatype = ompi_pointer_array_get_item( ompi_datatype_f_to_c_table, i );
+
+        if( (datatype->ub - datatype->lb) == (long)datatype->size ) {
+            datatype->flags |= DT_FLAG_NO_GAPS;
+        } else {
+            datatype->flags &= ~DT_FLAG_NO_GAPS;
+        }
+    }
 
     ompi_ddt_default_convertors_init();
     return OMPI_SUCCESS;
