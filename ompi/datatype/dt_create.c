@@ -111,5 +111,10 @@ int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long e
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
+
+    (*newType)->flags &= ~DT_FLAG_NO_GAPS;
+    if( (extent == (long)oldType->size) && (oldType->flags & DT_FLAG_CONTIGUOUS) ) {
+        (*newType)->flags |= DT_FLAG_NO_GAPS;
+    }
     return OMPI_SUCCESS;
 }

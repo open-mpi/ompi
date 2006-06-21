@@ -97,6 +97,9 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pdtBase->lb = disp;
                 pdtBase->flags |= DT_FLAG_USER_LB;
             }
+            if( (pdtBase->ub - pdtBase->lb) != (long)pdtBase->size ) {
+                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
+            }
             return OMPI_SUCCESS;
         } else if( pdtAdd == ompi_ddt_basicDatatypes[DT_UB] ) {
             pdtBase->bdt_used |= (1<< DT_UB);
@@ -105,6 +108,9 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             } else {
                 pdtBase->ub = disp;
                 pdtBase->flags |= DT_FLAG_USER_UB;
+            }
+            if( (pdtBase->ub - pdtBase->lb) != (long)pdtBase->size ) {
+                pdtBase->flags &= ~DT_FLAG_NO_GAPS;
             }
             return OMPI_SUCCESS;
         }
@@ -217,7 +223,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     if( (pdtAdd->flags & (DT_FLAG_PREDEFINED | DT_FLAG_DATA)) == (DT_FLAG_PREDEFINED | DT_FLAG_DATA) ) {
         pdtBase->btypes[pdtAdd->id] += count;
         if( (extent != (long)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
-            localFlags = pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS);
+            localFlags = pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS | DT_FLAG_NO_GAPS);
             CREATE_LOOP_START( pLast, count, 2, extent, localFlags );
             pLast++;
             pLast->elem.common.type  = pdtAdd->id;
@@ -291,12 +297,11 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      * In other words to avoid having internal gaps between elements. If any of the data are
      * overlapping then this method will not work.
      */
+    localFlags = pdtBase->flags & pdtAdd->flags;
+    UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     if( disp != old_true_ub ) { /* is there a gap between the 2 datatypes ? */
         if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
-        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
     } else {
-        localFlags = pdtBase->flags & pdtAdd->flags;
-        UNSET_CONTIGUOUS_FLAG(pdtBase->flags);     /* consider it as not contiguous */
         if( (localFlags & DT_FLAG_CONTIGUOUS)      /* both have to be contiguous */
             && ( (((long)pdtAdd->size) == extent)  /* the size and the extent of the added
                                                     * type have to match */
@@ -307,8 +312,9 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
         }
     }
     /* If the NO_GAP flag is set the contiguous have to be set too */
-    if( pdtBase->flags & DT_FLAG_NO_GAPS )
+    if( pdtBase->flags & DT_FLAG_NO_GAPS ) {
         assert( pdtBase->flags & DT_FLAG_CONTIGUOUS );
+    }
     pdtBase->nbElems += (count * pdtAdd->nbElems);
 
     return OMPI_SUCCESS;
