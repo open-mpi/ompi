@@ -64,6 +64,7 @@ headers = \
 libmpi_f77_la_SOURCES   = \
         constants_f.c \
         attr_fn_f.c \
+        f90_accessors.c \
         strings.c \
         test_constants_f.c
 

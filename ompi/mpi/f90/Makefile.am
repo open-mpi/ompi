@@ -165,7 +165,9 @@ small_sources = \
      mpi_testall_f90.f90 \
      mpi_testsome_f90.f90 \
      mpi_waitall_f90.f90 \
-     mpi_waitsome_f90.f90
+     mpi_waitsome_f90.f90 \
+     mpi_wtick_f90.f90 \
+     mpi_wtime_f90.f90
 
 medium_sources = \
      mpi_address_f90.f90 \
