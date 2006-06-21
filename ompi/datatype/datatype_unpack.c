@@ -69,7 +69,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     long disp_desc = 0;    /* compute displacement for truncated data */
     int bConverted = 0;    /* number of bytes converted this time */
     const ompi_convertor_master_t* master = pConvertor->master;
-    dt_elem_desc_t* pElems;
+    dt_elem_desc_t* description;
     long extent = pConvertor->pDesc->ub - pConvertor->pDesc->lb;
     int oCount = extent * pConvertor->count;
     char* pInput;
@@ -77,7 +77,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     uint32_t iov_count, total_bytes_converted = 0;
 
     /* For the general case always use the user data description */
-    pElems = pConvertor->pDesc->desc.desc;
+    description = pConvertor->use_desc->desc;
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc   = pStack->index;
@@ -86,67 +86,66 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     pStack--;
     pConvertor->stack_pos--;
 
-    DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElems, "starting" );
-    DUMP( "remember position on stack %d last_elem at %d\n", pConvertor->stack_pos, pos_desc );
-    DUMP( "top stack info {index = %d, count = %d}\n", pStack->index, pStack->count );
+    DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, description, "starting" );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
         bConverted = 0;
         pInput = iov[iov_count].iov_base;
         iCount = iov[iov_count].iov_len;
         while( 1 ) {
-            if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
+            if( DT_END_LOOP == description[pos_desc].elem.common.type ) { /* end of the current loop */
                 if( --(pStack->count) == 0 ) { /* end of loop */
                     if( pConvertor->stack_pos == 0 ) {
                         goto save_and_return;  /* completed */
                     }
                     pConvertor->stack_pos--;
                     pStack--;
-                }
-
-                if( pStack->index == -1 ) {
-                    pStack->disp += extent;
+                    pos_desc++;
                 } else {
-                    assert( DT_LOOP == pElems[pStack->index].elem.common.type );
-                    pStack->disp += pElems[pStack->index].loop.extent;
+                    pos_desc = pStack->index + 1;
+                    if( pStack->index == -1 ) {
+                        pStack->disp += extent;
+                    } else {
+                        assert( DT_LOOP == description[pStack->index].elem.common.type );
+                        pStack->disp += description[pStack->index].loop.extent;
+                    }
                 }
-                pos_desc = pStack->index + 1;
-                count_desc = pElems[pos_desc].elem.count;
-                disp_desc = pElems[pos_desc].elem.disp;
+                count_desc = description[pos_desc].elem.count;
+                disp_desc = description[pos_desc].elem.disp;
             }
-            if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
+            if( DT_LOOP == description[pos_desc].elem.common.type ) {
                 do {
                     PUSH_STACK( pStack, pConvertor->stack_pos,
-                                pos_desc, DT_LOOP, pElems[pos_desc].loop.loops,
-                                pStack->disp, pos_desc + pElems[pos_desc].loop.items + 1 );
+                                pos_desc, DT_LOOP, description[pos_desc].loop.loops,
+                                pStack->disp, pos_desc + description[pos_desc].loop.items + 1 );
                     pos_desc++;
-                } while( DT_LOOP == pElems[pos_desc].loop.common.type ); /* let's start another loop */
-                DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, pElems, "advance loops" );
+                } while( DT_LOOP == description[pos_desc].loop.common.type ); /* let's start another loop */
+                DDT_DUMP_STACK( pConvertor->pStack, pConvertor->stack_pos, description, "advance loops" );
                 /* update the current state */
-                count_desc = pElems[pos_desc].elem.count;
-                disp_desc = pElems[pos_desc].elem.disp;
+                count_desc = description[pos_desc].elem.count;
+                disp_desc = description[pos_desc].elem.disp;
             }
-            while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
+            while( description[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
                 /* now here we have a basic datatype */
-                type = pElems[pos_desc].elem.common.type;
+                type = description[pos_desc].elem.common.type;
                 rc = master->pFunctions[type]( pConvertor, count_desc,
                                                pInput, iCount, ompi_ddt_basicDatatypes[type]->size,
                                                pConvertor->pBaseBuf + pStack->disp + disp_desc,
-                                               oCount, pElems[pos_desc].elem.extent, &advance );
+                                               oCount, description[pos_desc].elem.extent, &advance );
                 iCount -= advance;      /* decrease the available space in the buffer */
                 pInput += advance;      /* increase the pointer to the buffer */
                 bConverted += advance;
                 if( rc != count_desc ) {
                     /* not all data has been converted. Keep the state */
                     count_desc -= rc;
-                    disp_desc += rc * pElems[pos_desc].elem.extent;
+                    disp_desc += rc * description[pos_desc].elem.extent;
                     if( iCount != 0 )
                         printf( "unpack there is still room in the input buffer %d bytes\n", iCount );
                     goto save_and_return;
                 }
                 pos_desc++;  /* advance to the next data */
-                count_desc = pElems[pos_desc].elem.count;
-                disp_desc = pElems[pos_desc].elem.disp;
+                count_desc = description[pos_desc].elem.count;
+                disp_desc = description[pos_desc].elem.disp;
                 if( iCount == 0 )
                     goto save_and_return;  /* break if there is no more data in the buffer */
             }
@@ -395,6 +394,8 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
+            } else {
+                user_memory_base += pElem->elem.extent;
             }
             packed_buffer += missing_length;
             iov_len_local -= missing_length;
