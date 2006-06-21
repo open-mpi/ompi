@@ -450,9 +450,3 @@
       parameter (MPI_MAXLOC=11)
       parameter (MPI_MINLOC=12)
       parameter (MPI_REPLACE=13)
-      
-!     
-!     double precision functions
-!     
-      double precision MPI_WTIME, MPI_WTICK , PMPI_WTICK, PMPI_WTIME
-      

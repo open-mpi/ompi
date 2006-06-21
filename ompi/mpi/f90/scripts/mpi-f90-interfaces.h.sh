@@ -53,6 +53,29 @@ EOF
     fi
 }
 
+# A few hard-coded functions that cannot pass through to the F77
+# equivalents
+
+start MPI_Wtick small
+cat <<EOF
+
+function MPI_Wtick()
+    double precision MPI_Wtick
+end function MPI_Wtick
+
+EOF
+end MPI_Wtick
+
+start MPI_Wtime small
+cat <<EOF
+
+function MPI_Wtime()
+    double precision MPI_Wtime
+end function MPI_Wtime
+
+EOF
+end MPI_Wtime
+
 #------------------------------------------------------------------------
 
 output_1() {
