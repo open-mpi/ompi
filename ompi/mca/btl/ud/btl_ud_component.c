@@ -21,6 +21,7 @@
 
 #include "ompi_config.h"
 #include "ompi/constants.h"
+#include "opal/prefetch.h"
 #include "opal/event/event.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
@@ -261,7 +262,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 {
     struct ibv_device **ib_devs;
     struct ibv_device* ib_dev;
-    int32_t num_devs;
+    int32_t num_devs, rc;
     mca_btl_base_module_t** btls;
     uint32_t i,j, length;
     struct mca_mpool_base_resources_t mpool_resources;
@@ -502,13 +503,14 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 
         /* Post receive descriptors */
         do {
-            int32_t i;
-            int rc;
             struct ibv_recv_wr* bad_wr;
 
-            for(i = 0; i < ud_btl->rd_num; i++) {
+            for(j = 0; j < (uint32_t)ud_btl->rd_num; j++) {
                 mca_btl_ud_frag_t* frag;
-                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_eager, frag, rc);
+                ompi_free_list_item_t* item;
+                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_eager, item, rc);
+                frag = (mca_btl_ud_frag_t*)item;
+
                 frag->sg_entry.length = frag->size +
                     sizeof(mca_btl_ud_header_t) +
                     sizeof(mca_btl_ud_ib_header_t);
@@ -519,7 +521,9 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
                     return NULL;
                 }
 
-                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_max, frag, rc);
+                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_max, item, rc);
+                frag = (mca_btl_ud_frag_t*)item;
+
                 frag->sg_entry.length = frag->size +
                     sizeof(mca_btl_ud_header_t) +
                     sizeof(mca_btl_ud_ib_header_t);
@@ -564,203 +568,162 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 }
 
 
-static inline int mca_btl_ud_handle_incoming_hp(mca_btl_ud_module_t *,
-        mca_btl_ud_frag_t *, size_t);
-
-static inline int mca_btl_ud_handle_incoming_hp(
-        mca_btl_ud_module_t *ud_btl,
-        mca_btl_ud_frag_t *frag,
-        size_t byte_len)
-{
-    struct ibv_recv_wr* bad_wr;
-
-    /* advance the segment address past the header and adjust the length..*/
-    frag->segment.seg_addr.pval = frag->hdr + 1;
-    frag->segment.seg_len = byte_len -
-        sizeof(mca_btl_ud_header_t) - sizeof(mca_btl_ud_ib_header_t);
-
-    /* call registered callback */
-    ud_btl->ib_reg[frag->hdr->tag].cbfunc(&ud_btl->super,
-            frag->hdr->tag, &frag->base,
-            ud_btl->ib_reg[frag->hdr->tag].cbdata);
-
-    /* TODO - not resetting segment values here.. problem? */
-    if(ibv_post_recv(ud_btl->qp_hp, &frag->wr_desc.rd_desc, &bad_wr)) {
-        BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
-        return OMPI_ERROR;
-    }
-
-#if 0
-    OMPI_FREE_LIST_RETURN(&(ud_btl->recv_free_eager),
-            (opal_list_item_t*) frag);
-
-    /* repost receive descriptors */
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    if(mca_btl_ud_component.use_srq) {
-        OPAL_THREAD_ADD32((int32_t*) &ud_btl->srd_posted_hp, -1);
-        MCA_BTL_UD_POST_SRR_HIGH(ud_btl, 0);
-    } else {
-#endif
-        OPAL_THREAD_ADD32((int32_t*) &ud_btl->rd_posted_hp, -1);
-        MCA_BTL_UD_ENDPOINT_POST_RR_HIGH(ud_btl, 0);
-
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    }
-#endif
-#endif
-    return OMPI_SUCCESS;
-}
-
 /*
  *  IB component progress.
  */
 
+#define MCA_BTL_UD_NUM_WC 64
+
 int mca_btl_ud_component_progress()
 {
     uint32_t i;
-    int count = 0,ne = 0, ret;
+    int count = 0, ne, j;
     mca_btl_ud_frag_t* frag;
     struct ibv_recv_wr* bad_wr;
+    struct ibv_recv_wr* head_wr;
+    mca_btl_ud_module_t* ud_btl;
+    mca_btl_base_recv_reg_t* reg;
+    struct ibv_wc wc[MCA_BTL_UD_NUM_WC];
 
     /* Poll for completions */
     for(i = 0; i < mca_btl_ud_component.ib_num_btls; i++) {
-        struct ibv_wc wc;
-        mca_btl_ud_module_t* ud_btl = &mca_btl_ud_component.ud_btls[i];
+        ud_btl = &mca_btl_ud_component.ud_btls[i];
 
-        ne=ibv_poll_cq(ud_btl->ib_cq_hp, 1, &wc);
-        if(ne < 0 ) {
+        ne = ibv_poll_cq(ud_btl->ib_cq_hp, MCA_BTL_UD_NUM_WC, wc);
+        if(OPAL_UNLIKELY(ne < 0)) {
             BTL_ERROR(("error polling HP CQ with %d errno says %s\n",
                     ne, strerror(errno)));
             return OMPI_ERROR;
         }
-        else if(1 == ne) {
-            if(wc.status != IBV_WC_SUCCESS) {
+
+        head_wr = NULL;
+
+        for(j = 0; j < ne; j++) {
+            if(OPAL_UNLIKELY(wc[j].status != IBV_WC_SUCCESS)) {
                 BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n",
-                           wc.status, wc.wr_id, wc.opcode));
+                           wc[j].status, wc[j].wr_id, wc[j].opcode));
                 return OMPI_ERROR;
             }
 
             /* Handle work completions */
-            switch(wc.opcode) {
+            switch(wc[j].opcode) {
             case IBV_WC_SEND :
-                frag = (mca_btl_ud_frag_t*)(unsigned long)wc.wr_id;
+                frag = (mca_btl_ud_frag_t*)(unsigned long)wc[j].wr_id;
 
-#if MCA_BTL_UD_ENABLE_PROFILE
-                mca_btl_ud_profile.avg_full_send +=
-                    opal_sys_timer_get_cycles() - frag->tm;
-                mca_btl_ud_profile.cnt_full_send++;
-#endif
-
-                /* Process a completed send */
                 frag->base.des_cbfunc(&ud_btl->super,
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
 
+                /* Increment send counter, post if any sends are queued */
                 OPAL_THREAD_ADD32(&ud_btl->sd_wqe_hp, 1);
-                if(!opal_list_is_empty(&ud_btl->pending_frags_hp)) {
+                if(OPAL_UNLIKELY(!opal_list_is_empty(&ud_btl->pending_frags_hp))) {
                     frag = (mca_btl_ud_frag_t*)
                         opal_list_remove_first(&ud_btl->pending_frags_hp);
                     mca_btl_ud_endpoint_post_send(ud_btl, frag->endpoint, frag);
                 }
 
-                count++;
                 break;
 
             case IBV_WC_RECV:
-                /* Process a RECV */
-                frag = (mca_btl_ud_frag_t*)(unsigned long) wc.wr_id;
-                ret = mca_btl_ud_handle_incoming_hp(ud_btl, frag, wc.byte_len);
+                frag = (mca_btl_ud_frag_t*)(unsigned long) wc[j].wr_id;
+                reg = &ud_btl->ib_reg[frag->hdr->tag];
 
-                if (ret != OMPI_SUCCESS)
-                    return ret;
-                count++;
+                frag->segment.seg_addr.pval = frag->hdr + 1;
+                frag->segment.seg_len = wc[j].byte_len -
+                        sizeof(mca_btl_ud_header_t) -
+                        sizeof(mca_btl_ud_ib_header_t);
+
+                reg->cbfunc(&ud_btl->super,
+                        frag->hdr->tag, &frag->base, reg->cbdata);
+
+                /* Add recv to linked list for reposting */
+                frag->wr_desc.rd_desc.next = head_wr;
+                head_wr = &frag->wr_desc.rd_desc;
                 break;
 
             default:
-                BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
+                BTL_ERROR(("Unhandled work completion opcode is %d", wc[j].opcode));
                 break;
             }
         }
 
-        ne=ibv_poll_cq(ud_btl->ib_cq_lp, 1, &wc );
-        if(ne < 0){
+        count += ne;
+
+        /* Repost any HP recv buffers all at once */
+        if(OPAL_LIKELY(head_wr)) {
+            if(OPAL_UNLIKELY(ibv_post_recv(ud_btl->qp_hp, head_wr, &bad_wr))) {
+                BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
+                return OMPI_ERROR;
+            }
+
+            head_wr = NULL;
+        }
+
+        ne = ibv_poll_cq(ud_btl->ib_cq_lp, MCA_BTL_UD_NUM_WC, wc);
+        if(OPAL_UNLIKELY(ne < 0)){
             BTL_ERROR(("error polling LP CQ with %d errno says %s",
                         ne, strerror(errno)));
             return OMPI_ERROR;
         }
-        else if(1 == ne) {
-            if(wc.status != IBV_WC_SUCCESS) {
+
+        for(j = 0; j < ne; j++) {
+            if(OPAL_UNLIKELY(wc[j].status != IBV_WC_SUCCESS)) {
                 BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d",
-                          wc.status, wc.wr_id, wc.opcode));
+                          wc[j].status, wc[j].wr_id, wc[j].opcode));
                 return OMPI_ERROR;
             }
 
             /* Handle n/w completions */
-            switch(wc.opcode) {
+            switch(wc[j].opcode) {
             case IBV_WC_SEND:
-                frag = (mca_btl_ud_frag_t*) (unsigned long) wc.wr_id;
+                frag = (mca_btl_ud_frag_t*) (unsigned long) wc[j].wr_id;
 
-                /* Process a completed send - receiver must return tokens */
                 frag->base.des_cbfunc(&ud_btl->super,
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
 
+                /* Increment send counter, post if any sends are queued */
                 OPAL_THREAD_ADD32(&ud_btl->sd_wqe_lp, 1);
-                if(!opal_list_is_empty(&ud_btl->pending_frags_lp)) {
+                if(OPAL_UNLIKELY(!opal_list_is_empty(&ud_btl->pending_frags_lp))) {
                     frag = (mca_btl_ud_frag_t*)
                         opal_list_remove_first(&ud_btl->pending_frags_lp);
                     mca_btl_ud_endpoint_post_send(ud_btl, frag->endpoint, frag);
                 }
 
-                count++;
                 break;
 
             case IBV_WC_RECV:
                 /* Process a RECV */
-                frag = (mca_btl_ud_frag_t*) (unsigned long) wc.wr_id;
+                frag = (mca_btl_ud_frag_t*) (unsigned long) wc[j].wr_id;
+                reg = &ud_btl->ib_reg[frag->hdr->tag];
 
                 frag->segment.seg_addr.pval = frag->hdr + 1;
                 frag->segment.seg_len =
-                        wc.byte_len - sizeof(mca_btl_ud_header_t) -
+                        wc[j].byte_len - sizeof(mca_btl_ud_header_t) -
                         sizeof(mca_btl_ud_ib_header_t);
 
                 /* call registered callback */
-                ud_btl->ib_reg[frag->hdr->tag].cbfunc(&ud_btl->super,
-                        frag->hdr->tag, &frag->base,
-                        ud_btl->ib_reg[frag->hdr->tag].cbdata);
-
-                if(ibv_post_recv(ud_btl->qp_lp,
-                            &frag->wr_desc.rd_desc, &bad_wr)) {
-                    BTL_ERROR(("error posting recv, errno %s\n",
-                                strerror(errno)));
-                    return OMPI_ERROR;
-                }
-#if 0
-                OMPI_FREE_LIST_RETURN(
-                        &(ud_btl->recv_free_max), (opal_list_item_t*) frag);
-
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-                if(mca_btl_ud_component.use_srq) {
-                    /* repost receive descriptors */
-                    OPAL_THREAD_ADD32((int32_t*) &ud_btl->srd_posted_lp, -1);
-                    MCA_BTL_UD_POST_SRR_LOW(ud_btl, 0);
-                } else {
-#endif
-                    /* repost receive descriptors */
-                    OPAL_THREAD_ADD32((int32_t*) &ud_btl->rd_posted_lp, -1);
-                    MCA_BTL_UD_ENDPOINT_POST_RR_LOW(ud_btl, 0);
-
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-                }
-#endif
-#endif
-                count++;
+                reg->cbfunc(&ud_btl->super,
+                        frag->hdr->tag, &frag->base, reg->cbdata);
+                
+                /* Add recv to linked list for reposting */
+                frag->wr_desc.rd_desc.next = head_wr;
+                head_wr = &frag->wr_desc.rd_desc;
                 break;
 
             default:
-                BTL_ERROR(("Unhandled work completion opcode %d", wc.opcode));
+                BTL_ERROR(("Unhandled work completion opcode %d", wc[j].opcode));
                 break;
             }
         }
 
+        count += ne;
+
+        /* Repost any LP recv buffers all at once */
+        if(OPAL_LIKELY(head_wr)) {
+            if(OPAL_UNLIKELY(ibv_post_recv(ud_btl->qp_lp, head_wr, &bad_wr))) {
+                BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
+                return OMPI_ERROR;
+            }
+        }
     }
 
     return count;

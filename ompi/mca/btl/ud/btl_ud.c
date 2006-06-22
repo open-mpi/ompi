@@ -21,6 +21,7 @@
 #include "ompi_config.h"
 #include <string.h>
 #include <inttypes.h>
+#include "opal/prefetch.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
@@ -186,7 +187,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_alloc(
     mca_btl_ud_frag_t* frag;
     int rc;
 
-    if(size <= mca_btl_ud_component.eager_limit){
+    if(size <= mca_btl_ud_component.eager_limit) {
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
         frag->segment.seg_len = size;
     } else if(size <= mca_btl_ud_component.max_send_size) {
@@ -196,6 +197,11 @@ mca_btl_base_descriptor_t* mca_btl_ud_alloc(
         return NULL;
     }
 
+    /* TODO - how much of this is needed? */
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -214,10 +220,8 @@ int mca_btl_ud_free(struct mca_btl_base_module_t* btl,
 
     if(frag->size == 0) {
         btl->btl_mpool->mpool_release(btl->btl_mpool,
-                                      (mca_mpool_base_registration_t*)
-                                      frag->ud_reg);
+                (mca_mpool_base_registration_t*)frag->ud_reg);
         MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
-
     }
     else if(frag->size == mca_btl_ud_component.max_send_size){
         MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag);
@@ -275,10 +279,8 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
     ud_btl = (mca_btl_ud_module_t*) btl;
     ud_reg = (mca_mpool_openib_registration_t*) registration;
 
-    if(NULL != ud_reg &&  0 == ompi_convertor_need_buffers(convertor)){
-        size_t reg_len;
-
-       /* the memory is already pinned and we have contiguous user data */
+    if(OPAL_UNLIKELY(NULL != ud_reg && 0 == ompi_convertor_need_buffers(convertor))) {
+        /* the memory is already pinned and we have contiguous user data */
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
         if(NULL == frag){
@@ -288,17 +290,15 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
 
-        reg_len = (unsigned char*)ud_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1;
-
-        frag->sg_entry.length = max_data;
+        /*frag->sg_entry.length = max_data;*/
         frag->sg_entry.lkey = ud_reg->mr->lkey;
-
-        frag->sg_entry.addr = (unsigned long) iov.iov_base;
+        frag->sg_entry.addr = (unsigned long)iov.iov_base;
 
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
@@ -306,44 +306,40 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0;
         frag->ud_reg = ud_reg;
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) ud_reg);
+        btl->btl_mpool->mpool_retain(btl->btl_mpool, registration);
         return &frag->base;
 
-    } else if( max_data > btl->btl_max_send_size &&
-               ompi_convertor_need_buffers(convertor) == 0 &&
-               reserve == 0) {
-        /* The user buffer is contigous and we are asked to send more than the max send size.  */
+    } else if(OPAL_UNLIKELY(max_data > btl->btl_max_send_size &&
+            ompi_convertor_need_buffers(convertor) == 0 && reserve == 0)) {
+        /* The user buffer is contigous and we are asked to send more than
+           the max send size. */
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
-        if(NULL == frag){
+        if(NULL == frag) {
             return NULL;
         }
 
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->base.des_flags = 0;
 
-
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                            iov.iov_base,
-                                            max_data,
-                                            0,
-                                            (mca_mpool_base_registration_t**) &ud_reg);
+        rc = btl->btl_mpool->mpool_register(btl->btl_mpool, iov.iov_base,
+                max_data, 0, (mca_mpool_base_registration_t**) &ud_reg);
         if(OMPI_SUCCESS != rc || NULL == ud_reg) {
-            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
+            BTL_ERROR(("mpool_register(%p,%lu) failed",
+                    iov.iov_base, max_data));
             MCA_BTL_IB_FRAG_RETURN_FRAG(btl, frag);
             return NULL;
         }
 
-
-        frag->sg_entry.length = max_data;
+        /*frag->sg_entry.length = max_data;*/
         frag->sg_entry.lkey = ud_reg->mr->lkey;
-
         frag->sg_entry.addr = (unsigned long) iov.iov_base;
 
         frag->base.des_src = &frag->segment;
@@ -351,54 +347,56 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->ud_reg = ud_reg;
-
         return &frag->base;
 
     } else
-    if (max_data+reserve <=  btl->btl_eager_limit) {
+    if (max_data + reserve <= btl->btl_eager_limit) {
         /* the data is small enough to fit in the eager frag and
            either we received no prepinned memory or leave pinned is
-           not set
-        */
+           not set */
         MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
 
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
-        if( rc < 0 ) {
+        rc = ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
+        if(OPAL_UNLIKELY(rc < 0)) {
             MCA_BTL_IB_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
 
         frag->segment.seg_len = max_data + reserve;
+        frag->sg_entry.length = max_data + reserve + sizeof(mca_btl_ud_header_t);
+
         frag->base.des_src = &frag->segment;
         frag->base.des_src_cnt = 1;
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0;
+        *size  = max_data;
 
         return &frag->base;
 
     } else {
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
-        if(NULL == frag) {
+        if(OPAL_UNLIKELY(NULL == frag)) {
             return NULL;
         }
-        if(max_data + reserve > btl->btl_max_send_size){
+
+        if(OPAL_UNLIKELY(max_data + reserve > btl->btl_max_send_size)) {
             max_data = btl->btl_max_send_size - reserve;
         }
+
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
-        *size  = max_data;
-
-        if( rc < 0 ) {
+        rc = ompi_convertor_pack(convertor,
+                &iov, &iov_count, &max_data, &free_after);
+        if(OPAL_UNLIKELY(rc < 0)) {
             MCA_BTL_IB_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
@@ -409,6 +407,7 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
         frag->base.des_dst = NULL;
         frag->base.des_dst_cnt = 0;
         frag->base.des_flags=0;
+        *size  = max_data;
 
         return &frag->base;
     }
@@ -418,9 +417,6 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
 
 int mca_btl_ud_finalize(struct mca_btl_base_module_t* btl)
 {
-    mca_btl_ud_module_t* ud_btl;
-    ud_btl = (mca_btl_ud_module_t*) btl;
-
     return OMPI_SUCCESS;
 }
 
@@ -438,6 +434,7 @@ int mca_btl_ud_send(
     int rc;
 
     mca_btl_ud_frag_t* frag = (mca_btl_ud_frag_t*)descriptor;
+    OPAL_PREFETCH(frag, 1, 1);
     MCA_BTL_UD_START_TIME(post_send);
     frag->endpoint = endpoint;
     frag->hdr->tag = tag;
