@@ -124,6 +124,14 @@ MPI::Is_initialized()
   return (bool) t;
 }
 
+inline bool
+MPI::Is_finalized()
+{
+  int t;
+  (void)MPI_Finalized(&t);
+  return (bool) t;
+}
+
 
 //
 // External Interfaces
