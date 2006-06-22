@@ -22,6 +22,7 @@
 #include "ompi_config.h"
 #include <sys/time.h>
 #include <time.h>
+#include "opal/prefetch.h"
 #include "ompi/types.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "orte/mca/ns/base/base.h"
@@ -51,6 +52,7 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
 {
     struct ibv_qp* ib_qp;
     struct ibv_send_wr* bad_wr;
+    int rc;
 
     /* Have to be careful here - UD adds a 40 byte header, but it is not
        included on the sending side. */
@@ -58,7 +60,7 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
     frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED;
 
     if(frag->size == ud_btl->super.btl_eager_limit) {
-        if(OPAL_THREAD_ADD32(&ud_btl->sd_wqe_hp, -1) < 0) {
+        if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ud_btl->sd_wqe_hp, -1) < 0)) {
             OPAL_THREAD_ADD32(&ud_btl->sd_wqe_hp, 1);
             opal_list_append(&ud_btl->pending_frags_hp,
                     (opal_list_item_t*)frag);
@@ -75,7 +77,7 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
                 IBV_SEND_SIGNALED|IBV_SEND_INLINE;
         }
     } else {
-        if(OPAL_THREAD_ADD32(&ud_btl->sd_wqe_lp, -1) < 0) {
+        if(OPAL_UNLIKELY(OPAL_THREAD_ADD32(&ud_btl->sd_wqe_lp, -1) < 0)) {
             OPAL_THREAD_ADD32(&ud_btl->sd_wqe_lp, 1);
             opal_list_append(&ud_btl->pending_frags_lp,
                     (opal_list_item_t*)frag);
@@ -98,7 +100,7 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
 #endif
 
     MCA_BTL_UD_START_TIME(ibv_post_send);
-    if(ibv_post_send(ib_qp, &frag->wr_desc.sr_desc, &bad_wr)) {
+    if(OPAL_UNLIKELY(ibv_post_send(ib_qp, &frag->wr_desc.sr_desc, &bad_wr) != 0)) {
         BTL_ERROR(("error posting send request errno says %d %s\n",
                     errno, strerror(errno)));
         return OMPI_ERROR;
@@ -427,9 +429,8 @@ int mca_btl_ud_endpoint_send(mca_btl_base_endpoint_t* endpoint,
     bool call_progress = false;
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-    switch(endpoint->endpoint_state) {
-    case MCA_BTL_IB_CONNECTED:
-    {
+    
+    if(OPAL_LIKELY(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED)) {    
         MCA_BTL_UD_START_TIME(endpoint_send_conn);
         rc = mca_btl_ud_endpoint_post_send(
                 endpoint->endpoint_btl, endpoint, frag);
@@ -437,6 +438,8 @@ int mca_btl_ud_endpoint_send(mca_btl_base_endpoint_t* endpoint,
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return rc;
     }
+
+    switch(endpoint->endpoint_state) {
     case MCA_BTL_IB_CLOSED:
         /* Send connection info over to remote endpoint */
         endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;

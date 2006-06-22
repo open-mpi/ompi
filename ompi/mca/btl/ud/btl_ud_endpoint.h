@@ -70,14 +70,12 @@ typedef enum {
 } mca_btl_ud_endpoint_state_t;
 
 struct mca_btl_ud_rem_info_t {
-
     uint32_t                    rem_qp_num_hp;
     uint32_t                    rem_qp_num_lp;
     /* Remote QP number  (Low and High priority) */
 
     uint16_t                    rem_lid;
     /* Local identifier of the remote process */
-
 
     uint32_t                    rem_psn_hp;
     uint32_t                    rem_psn_lp;
@@ -119,7 +117,7 @@ struct mca_btl_base_endpoint_t {
 
     struct ibv_ah*              rmt_ah_hp;
     struct ibv_ah*              rmt_ah_lp;
-    /* Local Address Handle (Low and High) */
+    /* Remote Address Handle (Low and High) */
 
     uint16_t subnet; /**< subnet of this endpoint*/
 };
