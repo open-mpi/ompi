@@ -26,6 +26,6 @@ position_SOURCES = position.c
 position_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
 position_LDADD = $(top_builddir)/ompi/libmpi.la
 
-to_self_SOURCES = to_self.c
-to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
-to_self_LDADD = $(top_builddir)/ompi/libmpi.la
+#to_self_SOURCES = to_self.c
+#to_self_LDFLAGS = $(WRAPPER_EXTRA_LDFLAGS)
+#to_self_LDADD = $(top_builddir)/ompi/libmpi.la
