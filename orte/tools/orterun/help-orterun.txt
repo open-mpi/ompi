@@ -22,12 +22,18 @@
 Open RTE was unable to initialize properly.  The error occured while
 attempting to %s.  Returned value %d instead of ORTE_SUCCESS.
 [orterun:usage]
+%s (%s) %s
+
 Usage: %s [OPTION]...  [PROGRAM]...
 Start the given program using Open RTE
 
 %s
+
+Report bugs to %s
 [orterun:version]
 %s (%s) %s
+
+Report bugs to %s
 [orterun:allocate-resources]
 %s was unable to allocate enough resources to start your application.
 This might be a transient error (too many nodes in the cluster were

@@ -837,7 +837,8 @@ static int parse_globals(int argc, char* argv[])
 
     /* print version if requested.  Do this before check for help so
        that --version --help works as one might expect. */
-    if (orterun_globals.version) {
+    if (orterun_globals.version && 
+        !(1 == argc || orterun_globals.help)) {
         char *project_name = NULL;
         if (0 == strcmp(orterun_basename, "mpirun")) {
             project_name = "Open MPI";
@@ -845,7 +846,8 @@ static int parse_globals(int argc, char* argv[])
             project_name = "OpenRTE";
         }
         opal_show_help("help-orterun.txt", "orterun:version", false,
-                       orterun_basename, project_name, OPAL_VERSION);
+                       orterun_basename, project_name, OPAL_VERSION,
+                       PACKAGE_BUGREPORT);
         /* if we were the only argument, exit */
         if (2 == argc) exit(0);
     }
@@ -854,9 +856,17 @@ static int parse_globals(int argc, char* argv[])
 
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
+        char *project_name = NULL;
+        if (0 == strcmp(orterun_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-orterun.txt", "orterun:usage", false,
-                       orterun_basename, args);
+                       orterun_basename, project_name, OPAL_VERSION,
+                       orterun_basename, args,
+                       PACKAGE_BUGREPORT);
         free(args);
 
         /* If someone asks for help, that should be all we do */
