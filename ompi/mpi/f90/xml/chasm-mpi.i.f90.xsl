@@ -653,23 +653,27 @@ allranks="0 $ranks"
 # equivalents
 
 start MPI_Wtick small
-cat <<EOF
+if test "$output" = "1"; then
+    cat <<EOF
 
 function MPI_Wtick()
     double precision MPI_Wtick
 end function MPI_Wtick
 
 EOF
+fi
 end MPI_Wtick
 
 start MPI_Wtime small
-cat <<EOF
+if test "$output" = "1"; then
+    cat <<EOF
 
 function MPI_Wtime()
     double precision MPI_Wtime
 end function MPI_Wtime
 
 EOF
+fi
 end MPI_Wtime
 
 #------------------------------------------------------------------------
