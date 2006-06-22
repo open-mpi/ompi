@@ -104,7 +104,11 @@ int ompi_free_list_init(
     int num_elements_per_alloc,
     mca_mpool_base_module_t* mpool)
 {
-    flist->fl_elem_size = elem_size;
+    if( elem_size % CACHE_LINE_SIZE )
+        flist->fl_elem_size = elem_size;
+    else {
+        flist->fl_elem_size = (elem_size + CACHE_LINE_SIZE) % CACHE_LINE_SIZE;
+    }
     flist->fl_elem_class = elem_class;
     flist->fl_max_to_alloc = max_elements_to_alloc;
     flist->fl_num_allocated = 0;
@@ -144,11 +148,9 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
        have ptr point to memory right after the list item structure */
     OBJ_CONSTRUCT(alloc_ptr, ompi_free_list_memory_t);
     opal_list_append(&(flist->fl_allocations), (opal_list_item_t*) alloc_ptr);
-    if (NULL != flist->fl_mpool) {
-        alloc_ptr->registration = user_out;
-    } else {
-        alloc_ptr->registration = NULL;
-    }
+
+    alloc_ptr->registration = user_out;
+
     ptr = (unsigned char*) alloc_ptr + sizeof(ompi_free_list_memory_t);
 
     mod = (unsigned long)ptr % CACHE_LINE_SIZE;
