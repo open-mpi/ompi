@@ -151,8 +151,10 @@ int mca_btl_ud_component_open(void)
                                          "openib", &mca_btl_ud_component.ib_mpool_name);
     mca_btl_ud_param_register_int("reg_mru_len",  "length of the registration cache most recently used list",
                                       16, (int*) &mca_btl_ud_component.reg_mru_len);
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     mca_btl_ud_param_register_int("use_srq", "if 1 use the IB shared receive queue to post receive descriptors",
                                       0, (int*) &mca_btl_ud_component.use_srq);
+#endif
     mca_btl_ud_param_register_int("ib_cq_size", "size of the IB completion queue",
                                       2000, (int*) &mca_btl_ud_component.ib_cq_size);
     mca_btl_ud_param_register_int("ib_sg_list_size", "size of IB segment list",
@@ -173,8 +175,6 @@ int mca_btl_ud_component_open(void)
                                       16, (int*) &mca_btl_ud_component.sd_num);
     mca_btl_ud_param_register_int("rd_num", "number of receive descriptors to post to a QP",
                                       500, (int*) &mca_btl_ud_component.rd_num);
-    mca_btl_ud_param_register_int("rd_low", "low water mark before reposting occurs",
-                                      300,  (int*) &mca_btl_ud_component.rd_low);
     mca_btl_ud_param_register_int("srq_rd_max", "Max number of receive descriptors posted per SRQ.",
                                       1000, (int*) &mca_btl_ud_component.srq_rd_max);
     mca_btl_ud_param_register_int("srq_rd_per_peer", "Number of receive descriptors posted per peer. (SRQ)",
@@ -262,10 +262,9 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 {
     struct ibv_device **ib_devs;
     struct ibv_device* ib_dev;
-    int32_t num_devs, rc;
+    int32_t num_devs;
     mca_btl_base_module_t** btls;
-    uint32_t i,j, length;
-    struct mca_mpool_base_resources_t mpool_resources;
+    uint32_t i, j;
     opal_list_t btl_list;
     mca_btl_ud_module_t* ud_btl;
     mca_btl_base_selected_module_t* ib_selected;
@@ -319,7 +318,7 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
         ib_devs[i++] =  ib_dev;
 #endif
 
-    /** We must loop through all the hca id's, get there handles and
+    /** We must loop through all the hca id's, get their handles and
         for each hca we query the number of ports on the hca and set up
         a distinct btl module for each hca port */
 
@@ -347,7 +346,6 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 
 
         /* Note ports are 1 based hence j = 1 */
-
         for(j = 1; j <= ib_dev_attr.phys_port_cnt; j++){
             struct ibv_port_attr* ib_port_attr;
             ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr));
@@ -383,11 +381,11 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
     /* Allocate space for btl modules */
     mca_btl_ud_component.ud_btls = (mca_btl_ud_module_t*)
         malloc(sizeof(mca_btl_ud_module_t) * mca_btl_ud_component.ib_num_btls);
-
     if(NULL == mca_btl_ud_component.ud_btls) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
+
     btls = (struct mca_btl_base_module_t**)
         malloc(mca_btl_ud_component.ib_num_btls * sizeof(mca_btl_ud_module_t*));
     if(NULL == btls) {
@@ -400,29 +398,17 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
         item = opal_list_remove_first(&btl_list);
         ib_selected = (mca_btl_base_selected_module_t*)item;
         ud_btl = (mca_btl_ud_module_t*) ib_selected->btl_module;
-        memcpy(&(mca_btl_ud_component.ud_btls[i]), ud_btl , sizeof(mca_btl_ud_module_t));
+        memcpy(&(mca_btl_ud_component.ud_btls[i]), ud_btl, sizeof(mca_btl_ud_module_t));
         free(ib_selected);
         free(ud_btl);
 
         ud_btl = &mca_btl_ud_component.ud_btls[i];
         ud_btl->rd_num = mca_btl_ud_component.rd_num;
-        ud_btl->rd_low = mca_btl_ud_component.rd_low;
 
         ud_btl->sd_wqe_lp = mca_btl_ud_component.sd_num;
         ud_btl->sd_wqe_hp = mca_btl_ud_component.sd_num;
 
         /* Initialize module state */
-        OBJ_CONSTRUCT(&ud_btl->ib_lock, opal_mutex_t);
-        OBJ_CONSTRUCT(&ud_btl->send_free_eager, ompi_free_list_t);
-        OBJ_CONSTRUCT(&ud_btl->send_free_max, ompi_free_list_t);
-        OBJ_CONSTRUCT(&ud_btl->send_free_frag, ompi_free_list_t);
-
-        OBJ_CONSTRUCT(&ud_btl->recv_free_eager, ompi_free_list_t);
-        OBJ_CONSTRUCT(&ud_btl->recv_free_max, ompi_free_list_t);
-
-        OBJ_CONSTRUCT(&ud_btl->pending_frags_hp, opal_list_t);
-        OBJ_CONSTRUCT(&ud_btl->pending_frags_lp, opal_list_t);
-
         if(mca_btl_ud_module_init(ud_btl) != OMPI_SUCCESS) {
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
 	        ibv_free_device_list(ib_devs);
@@ -432,125 +418,6 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 	        return NULL;
         }
 	
-        mpool_resources.ib_pd = ud_btl->ib_pd;
-
-        /* initialize the memory pool using the hca */
-        ud_btl->super.btl_mpool =
-            mca_mpool_base_module_create(mca_btl_ud_component.ib_mpool_name,
-                                         &ud_btl->super,
-                                         &mpool_resources);
-
-        if(NULL == ud_btl->super.btl_mpool) {
-            BTL_ERROR(("error creating openib memory pool! aborting ud btl initialization"));
-            return NULL;
-        }
-
-        /* Initialize pool of send fragments */
-        length = sizeof(mca_btl_ud_frag_t) +
-            sizeof(mca_btl_ud_header_t) +
-            ud_btl->super.btl_eager_limit +
-            2*MCA_BTL_IB_FRAG_ALIGN;
-
-        ompi_free_list_init(&ud_btl->send_free_eager,
-                            length,
-                            OBJ_CLASS(mca_btl_ud_send_frag_eager_t),
-                            mca_btl_ud_component.ib_free_list_num,
-                            mca_btl_ud_component.ib_free_list_max,
-                            mca_btl_ud_component.ib_free_list_inc,
-                            ud_btl->super.btl_mpool);
-
-        ompi_free_list_init(&ud_btl->recv_free_eager,
-                            length + sizeof(mca_btl_ud_ib_header_t),
-                            OBJ_CLASS(mca_btl_ud_recv_frag_eager_t),
-                            mca_btl_ud_component.ib_free_list_num,
-                            mca_btl_ud_component.ib_free_list_max,
-                            mca_btl_ud_component.ib_free_list_inc,
-                            ud_btl->super.btl_mpool);
-
-        length = sizeof(mca_btl_ud_frag_t) +
-            sizeof(mca_btl_ud_header_t) +
-            ud_btl->super.btl_max_send_size +
-            2*MCA_BTL_IB_FRAG_ALIGN;
-
-        ompi_free_list_init(&ud_btl->send_free_max,
-                            length,
-                            OBJ_CLASS(mca_btl_ud_send_frag_max_t),
-                            mca_btl_ud_component.ib_free_list_num,
-                            mca_btl_ud_component.ib_free_list_max,
-                            mca_btl_ud_component.ib_free_list_inc,
-                            ud_btl->super.btl_mpool);
-
-        /* Initialize pool of receive fragments */
-        ompi_free_list_init (&ud_btl->recv_free_max,
-                             length + sizeof(mca_btl_ud_ib_header_t),
-                             OBJ_CLASS (mca_btl_ud_recv_frag_max_t),
-                             mca_btl_ud_component.ib_free_list_num,
-                             mca_btl_ud_component.ib_free_list_max,
-                             mca_btl_ud_component.ib_free_list_inc,
-                             ud_btl->super.btl_mpool);
-
-        length = sizeof(mca_btl_ud_frag_t) +
-            sizeof(mca_btl_ud_header_t)+
-            2*MCA_BTL_IB_FRAG_ALIGN;
-
-        ompi_free_list_init(&ud_btl->send_free_frag,
-                            length,
-                            OBJ_CLASS(mca_btl_ud_send_frag_frag_t),
-                            mca_btl_ud_component.ib_free_list_num,
-                            mca_btl_ud_component.ib_free_list_max,
-                            mca_btl_ud_component.ib_free_list_inc,
-                            ud_btl->super.btl_mpool);
-
-        /* Post receive descriptors */
-        do {
-            struct ibv_recv_wr* bad_wr;
-
-            for(j = 0; j < (uint32_t)ud_btl->rd_num; j++) {
-                mca_btl_ud_frag_t* frag;
-                ompi_free_list_item_t* item;
-                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_eager, item, rc);
-                frag = (mca_btl_ud_frag_t*)item;
-
-                frag->sg_entry.length = frag->size +
-                    sizeof(mca_btl_ud_header_t) +
-                    sizeof(mca_btl_ud_ib_header_t);
-                if(ibv_post_recv(ud_btl->qp_hp,
-                            &frag->wr_desc.rd_desc, &bad_wr)) {
-                    BTL_ERROR(("error posting recv, errno %s\n",
-                                strerror(errno)));
-                    return NULL;
-                }
-
-                OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_max, item, rc);
-                frag = (mca_btl_ud_frag_t*)item;
-
-                frag->sg_entry.length = frag->size +
-                    sizeof(mca_btl_ud_header_t) +
-                    sizeof(mca_btl_ud_ib_header_t);
-                if(ibv_post_recv(ud_btl->qp_lp,
-                            &frag->wr_desc.rd_desc, &bad_wr)) {
-                    BTL_ERROR(("error posting recv, errno %s\n",
-                                strerror(errno)));
-                    return NULL;
-                }
-            }
-        } while(0);
-
-
-            /* TODO - Put this somewhere else or clean up our macros */
-#if 0
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-            if(mca_btl_ud_component.use_srq) {
-                MCA_BTL_UD_POST_SRR_HIGH(ud_btl, 1);
-                MCA_BTL_UD_POST_SRR_LOW(ud_btl, 1);
-            } else {
-#endif
-                MCA_BTL_UD_ENDPOINT_POST_RR_HIGH(ud_btl, 0);
-                MCA_BTL_UD_ENDPOINT_POST_RR_LOW(ud_btl, 0);
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-            }
-#endif
-#endif
         btls[i] = &ud_btl->super;
     }
 
@@ -584,6 +451,7 @@ int mca_btl_ud_component_progress()
     mca_btl_ud_module_t* ud_btl;
     mca_btl_base_recv_reg_t* reg;
     struct ibv_wc wc[MCA_BTL_UD_NUM_WC];
+    struct ibv_wc* cwc;
 
     /* Poll for completions */
     for(i = 0; i < mca_btl_ud_component.ib_num_btls; i++) {
@@ -599,16 +467,17 @@ int mca_btl_ud_component_progress()
         head_wr = NULL;
 
         for(j = 0; j < ne; j++) {
-            if(OPAL_UNLIKELY(wc[j].status != IBV_WC_SUCCESS)) {
+            cwc = &wc[j];
+            if(OPAL_UNLIKELY(cwc->status != IBV_WC_SUCCESS)) {
                 BTL_ERROR(("error polling HP CQ with status %d for wr_id %llu opcode %d\n",
-                           wc[j].status, wc[j].wr_id, wc[j].opcode));
+                           cwc->status, cwc->wr_id, cwc->opcode));
                 return OMPI_ERROR;
             }
 
             /* Handle work completions */
-            switch(wc[j].opcode) {
+            switch(cwc->opcode) {
             case IBV_WC_SEND :
-                frag = (mca_btl_ud_frag_t*)(unsigned long)wc[j].wr_id;
+                frag = (mca_btl_ud_frag_t*)(unsigned long)cwc->wr_id;
 
                 frag->base.des_cbfunc(&ud_btl->super,
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
@@ -624,11 +493,11 @@ int mca_btl_ud_component_progress()
                 break;
 
             case IBV_WC_RECV:
-                frag = (mca_btl_ud_frag_t*)(unsigned long) wc[j].wr_id;
+                frag = (mca_btl_ud_frag_t*)(unsigned long)cwc->wr_id;
                 reg = &ud_btl->ib_reg[frag->hdr->tag];
 
                 frag->segment.seg_addr.pval = frag->hdr + 1;
-                frag->segment.seg_len = wc[j].byte_len -
+                frag->segment.seg_len = cwc->byte_len -
                         sizeof(mca_btl_ud_header_t) -
                         sizeof(mca_btl_ud_ib_header_t);
 
@@ -641,7 +510,7 @@ int mca_btl_ud_component_progress()
                 break;
 
             default:
-                BTL_ERROR(("Unhandled work completion opcode is %d", wc[j].opcode));
+                BTL_ERROR(("Unhandled work completion opcode is %d", cwc->opcode));
                 break;
             }
         }
@@ -666,16 +535,17 @@ int mca_btl_ud_component_progress()
         }
 
         for(j = 0; j < ne; j++) {
-            if(OPAL_UNLIKELY(wc[j].status != IBV_WC_SUCCESS)) {
+            cwc = &wc[j];
+            if(OPAL_UNLIKELY(cwc->status != IBV_WC_SUCCESS)) {
                 BTL_ERROR(("error polling LP CQ with status %d for wr_id %llu opcode %d",
-                          wc[j].status, wc[j].wr_id, wc[j].opcode));
+                          cwc->status, cwc->wr_id, cwc->opcode));
                 return OMPI_ERROR;
             }
 
             /* Handle n/w completions */
-            switch(wc[j].opcode) {
+            switch(cwc->opcode) {
             case IBV_WC_SEND:
-                frag = (mca_btl_ud_frag_t*) (unsigned long) wc[j].wr_id;
+                frag = (mca_btl_ud_frag_t*) (unsigned long) cwc->wr_id;
 
                 frag->base.des_cbfunc(&ud_btl->super,
                         frag->endpoint, &frag->base, OMPI_SUCCESS);
@@ -692,12 +562,12 @@ int mca_btl_ud_component_progress()
 
             case IBV_WC_RECV:
                 /* Process a RECV */
-                frag = (mca_btl_ud_frag_t*) (unsigned long) wc[j].wr_id;
+                frag = (mca_btl_ud_frag_t*) (unsigned long) cwc->wr_id;
                 reg = &ud_btl->ib_reg[frag->hdr->tag];
 
                 frag->segment.seg_addr.pval = frag->hdr + 1;
                 frag->segment.seg_len =
-                        wc[j].byte_len - sizeof(mca_btl_ud_header_t) -
+                        cwc->byte_len - sizeof(mca_btl_ud_header_t) -
                         sizeof(mca_btl_ud_ib_header_t);
 
                 /* call registered callback */
@@ -710,7 +580,7 @@ int mca_btl_ud_component_progress()
                 break;
 
             default:
-                BTL_ERROR(("Unhandled work completion opcode %d", wc[j].opcode));
+                BTL_ERROR(("Unhandled work completion opcode %d", cwc->opcode));
                 break;
             }
         }

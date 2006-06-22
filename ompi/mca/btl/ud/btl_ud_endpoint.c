@@ -52,7 +52,6 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
 {
     struct ibv_qp* ib_qp;
     struct ibv_send_wr* bad_wr;
-    int rc;
 
     /* Have to be careful here - UD adds a 40 byte header, but it is not
        included on the sending side. */
@@ -107,19 +106,6 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
     }
     MCA_BTL_UD_END_TIME(ibv_post_send);
 
-#if 0
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    if(mca_btl_ud_component.use_srq) {
-        MCA_BTL_UD_POST_SRR_HIGH(ud_btl, 1);
-        MCA_BTL_UD_POST_SRR_LOW(ud_btl, 1);
-    } else {
-#endif
-        MCA_BTL_UD_ENDPOINT_POST_RR_HIGH(ud_btl, 1);
-        MCA_BTL_UD_ENDPOINT_POST_RR_LOW(ud_btl, 1);
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    }
-#endif
-#endif
     return OMPI_SUCCESS;
 }
 
@@ -479,7 +465,6 @@ int mca_btl_ud_endpoint_send(mca_btl_base_endpoint_t* endpoint,
  *  queue pair creation and we need to get the remote queue pair
  *  info from the peer before the qp is usable,
  */
-/* TODO - maybe start to push this off into its own file? */
 
 int mca_btl_ud_endpoint_init_qp(
                                       mca_btl_base_module_t* btl,

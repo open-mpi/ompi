@@ -132,7 +132,6 @@ int mca_btl_ud_add_procs(
         ud_btl->rd_num = mca_btl_ud_component.rd_num + log2(nprocs) * mca_btl_ud_component.srq_rd_per_peer;
         if(ud_btl->rd_num > mca_btl_ud_component.srq_rd_max)
            ud_btl->rd_num = mca_btl_ud_component.srq_rd_max;
-        ud_btl->rd_low = ud_btl->rd_num - 1;
     }
 #endif
     return OMPI_SUCCESS;
@@ -154,8 +153,7 @@ int mca_btl_ud_del_procs(struct mca_btl_base_module_t* btl,
 /*
  *Register callback function to support send/recv semantics
  */
-int mca_btl_ud_register(
-                        struct mca_btl_base_module_t* btl,
+int mca_btl_ud_register(struct mca_btl_base_module_t* btl,
                         mca_btl_base_tag_t tag,
                         mca_btl_base_module_recv_cb_fn_t cbfunc,
                         void* cbdata)
@@ -197,12 +195,6 @@ mca_btl_base_descriptor_t* mca_btl_ud_alloc(
         return NULL;
     }
 
-    /* TODO - how much of this is needed? */
-    frag->base.des_src = &frag->segment;
-    frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-    frag->base.des_flags = 0;
     return (mca_btl_base_descriptor_t*)frag;
 }
 
@@ -279,7 +271,8 @@ mca_btl_base_descriptor_t* mca_btl_ud_prepare_src(
     ud_btl = (mca_btl_ud_module_t*) btl;
     ud_reg = (mca_mpool_openib_registration_t*) registration;
 
-    if(OPAL_UNLIKELY(NULL != ud_reg && 0 == ompi_convertor_need_buffers(convertor))) {
+    if(OPAL_UNLIKELY(NULL != ud_reg &&
+            0 == ompi_convertor_need_buffers(convertor))) {
         /* the memory is already pinned and we have contiguous user data */
 
         MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
@@ -450,10 +443,13 @@ int mca_btl_ud_send(
  */
 int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
 {
-    /* Allocate Protection Domain */
-    struct ibv_context *ctx;
-
-    ctx = ud_btl->ib_dev_context;
+    struct mca_mpool_base_resources_t mpool_resources;
+    struct ibv_context *ctx = ud_btl->ib_dev_context;
+    struct ibv_recv_wr* bad_wr;
+    mca_btl_ud_frag_t* frag;
+    ompi_free_list_item_t* item;
+    uint32_t length;
+    int32_t rc, i;
 
     ud_btl->ib_pd = ibv_alloc_pd(ctx);
     if(NULL == ud_btl->ib_pd) {
@@ -462,6 +458,17 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
                   strerror(errno)));
         return OMPI_ERROR;
     }
+        
+    mpool_resources.ib_pd = ud_btl->ib_pd;
+    ud_btl->super.btl_mpool =
+            mca_mpool_base_module_create(mca_btl_ud_component.ib_mpool_name,
+                    &ud_btl->super, &mpool_resources);
+
+    if(NULL == ud_btl->super.btl_mpool) {
+        BTL_ERROR(("error creating openib memory pool! aborting ud btl initialization"));
+        return OMPI_ERROR;
+    }
+
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     if(mca_btl_ud_component.use_srq) {
@@ -494,32 +501,26 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
     ud_btl->ib_cq_lp =
         ibv_create_cq(ctx, mca_btl_ud_component.ib_cq_size, NULL);
+    
+    ud_btl->ib_cq_hp =
+        ibv_create_cq(ctx, mca_btl_ud_component.ib_cq_size, NULL);
 #else
-    ud_btl->ib_cq_lp =
-        ibv_create_cq(ctx, mca_btl_ud_component.ib_cq_size,
-                      NULL, NULL, 0);
+    ud_btl->ib_cq_lp = ibv_create_cq(ctx,
+            mca_btl_ud_component.ib_cq_size, NULL, NULL, 0);
+    
+    ud_btl->ib_cq_hp = ibv_create_cq(ctx,
+            mca_btl_ud_component.ib_cq_size, NULL, NULL, 0);
 #endif
 
     if(NULL == ud_btl->ib_cq_lp) {
         BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
-                  ibv_get_device_name(ud_btl->ib_dev),
-                  strerror(errno)));
+                ibv_get_device_name(ud_btl->ib_dev), strerror(errno)));
         return OMPI_ERROR;
     }
 
-#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
-    ud_btl->ib_cq_hp =
-        ibv_create_cq(ctx, mca_btl_ud_component.ib_cq_size, NULL);
-#else
-    ud_btl->ib_cq_hp =
-        ibv_create_cq(ctx, mca_btl_ud_component.ib_cq_size,
-                      NULL, NULL, 0);
-#endif
-
     if(NULL == ud_btl->ib_cq_hp) {
         BTL_ERROR(("error creating high priority cq for %s errno says %s\n",
-                  ibv_get_device_name(ud_btl->ib_dev),
-                  strerror(errno)));
+                ibv_get_device_name(ud_btl->ib_dev), strerror(errno)));
         return OMPI_ERROR;
     }
 
@@ -542,6 +543,95 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
             &ud_btl->qp_lp,
             ud_btl->psn_lp)) {
         return OMPI_ERROR;
+    }
+
+    OBJ_CONSTRUCT(&ud_btl->ib_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&ud_btl->send_free_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ud_btl->send_free_max, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ud_btl->send_free_frag, ompi_free_list_t);
+
+    OBJ_CONSTRUCT(&ud_btl->recv_free_eager, ompi_free_list_t);
+    OBJ_CONSTRUCT(&ud_btl->recv_free_max, ompi_free_list_t);
+
+    OBJ_CONSTRUCT(&ud_btl->pending_frags_hp, opal_list_t);
+    OBJ_CONSTRUCT(&ud_btl->pending_frags_lp, opal_list_t);
+
+    /* Initialize pool of send fragments */
+    length = sizeof(mca_btl_ud_frag_t) + sizeof(mca_btl_ud_header_t) +
+        ud_btl->super.btl_eager_limit + 2*MCA_BTL_IB_FRAG_ALIGN;
+
+    ompi_free_list_init(&ud_btl->send_free_eager,
+                        length,
+                        OBJ_CLASS(mca_btl_ud_send_frag_eager_t),
+                        mca_btl_ud_component.ib_free_list_num,
+                        mca_btl_ud_component.ib_free_list_max,
+                        mca_btl_ud_component.ib_free_list_inc,
+                        ud_btl->super.btl_mpool);
+
+    ompi_free_list_init(&ud_btl->recv_free_eager,
+                        length + sizeof(mca_btl_ud_ib_header_t),
+                        OBJ_CLASS(mca_btl_ud_recv_frag_eager_t),
+                        mca_btl_ud_component.ib_free_list_num,
+                        mca_btl_ud_component.ib_free_list_max,
+                        mca_btl_ud_component.ib_free_list_inc,
+                        ud_btl->super.btl_mpool);
+
+    length = sizeof(mca_btl_ud_frag_t) + sizeof(mca_btl_ud_header_t) +
+        ud_btl->super.btl_max_send_size + 2*MCA_BTL_IB_FRAG_ALIGN;
+
+    ompi_free_list_init(&ud_btl->send_free_max,
+                        length,
+                        OBJ_CLASS(mca_btl_ud_send_frag_max_t),
+                        mca_btl_ud_component.ib_free_list_num,
+                        mca_btl_ud_component.ib_free_list_max,
+                        mca_btl_ud_component.ib_free_list_inc,
+                        ud_btl->super.btl_mpool);
+
+    /* Initialize pool of receive fragments */
+    ompi_free_list_init (&ud_btl->recv_free_max,
+                         length + sizeof(mca_btl_ud_ib_header_t),
+                         OBJ_CLASS (mca_btl_ud_recv_frag_max_t),
+                         mca_btl_ud_component.ib_free_list_num,
+                         mca_btl_ud_component.ib_free_list_max,
+                         mca_btl_ud_component.ib_free_list_inc,
+                         ud_btl->super.btl_mpool);
+
+    length = sizeof(mca_btl_ud_frag_t) +
+        sizeof(mca_btl_ud_header_t) + 2*MCA_BTL_IB_FRAG_ALIGN;
+
+    ompi_free_list_init(&ud_btl->send_free_frag,
+                        length,
+                        OBJ_CLASS(mca_btl_ud_send_frag_frag_t),
+                        mca_btl_ud_component.ib_free_list_num,
+                        mca_btl_ud_component.ib_free_list_max,
+                        mca_btl_ud_component.ib_free_list_inc,
+                        ud_btl->super.btl_mpool);
+
+    /* Post receive descriptors */
+    for(i = 0; i < ud_btl->rd_num; i++) {
+        OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_eager, item, rc);
+        frag = (mca_btl_ud_frag_t*)item;
+
+        frag->sg_entry.length = frag->size +
+            sizeof(mca_btl_ud_header_t) +
+            sizeof(mca_btl_ud_ib_header_t);
+        if(ibv_post_recv(ud_btl->qp_hp,
+                    &frag->wr_desc.rd_desc, &bad_wr)) {
+            BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
+            return OMPI_ERROR;
+        }
+
+        OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_max, item, rc);
+        frag = (mca_btl_ud_frag_t*)item;
+
+        frag->sg_entry.length = frag->size +
+            sizeof(mca_btl_ud_header_t) +
+            sizeof(mca_btl_ud_ib_header_t);
+        if(ibv_post_recv(ud_btl->qp_lp,
+                    &frag->wr_desc.rd_desc, &bad_wr)) {
+            BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
+            return OMPI_ERROR;
+        }
     }
 
     return OMPI_SUCCESS;
