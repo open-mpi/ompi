@@ -333,6 +333,7 @@ orte_pls_xcpu_pthread_tindex *orte_pls_xcpu_launch_procs(int argc, char **argv, 
     }else{
         close(temp_fd);
         g_current_m=m_nodes;
+        ntids=1;
     }
     /* logic ends */
             
