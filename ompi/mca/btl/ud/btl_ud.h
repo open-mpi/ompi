@@ -76,10 +76,10 @@ struct mca_btl_ud_component_t {
     int ib_free_list_inc;
     /**< number of elements to alloc when growing free lists */
 
-    opal_list_t                             ib_procs;
+    opal_list_t ib_procs;
     /**< list of ib proc structures */
 
-    opal_mutex_t                            ib_lock;
+    opal_mutex_t ib_lock;
     /**< lock for accessing module state */
 
     char* ib_mpool_name;
@@ -87,7 +87,6 @@ struct mca_btl_ud_component_t {
 
     int32_t sd_num; /**< maximum number of send descriptors to post to a QP */
     int32_t rd_num; /**< number of receive descriptors to post to each QP */
-    int32_t rd_low; /**< low water mark to reach before re-posting receive descriptors */
 
     int32_t srq_rd_max; /* maximum number of receive descriptors posted */
     int32_t srq_rd_per_peer; /* number of receive descriptors to post per log2(peers) in SRQ mode */
@@ -96,7 +95,9 @@ struct mca_btl_ud_component_t {
     size_t eager_limit;
     size_t max_send_size;
     uint32_t reg_mru_len;
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     uint32_t use_srq;
+#endif
 
     uint32_t ib_cq_size;   /**< Max outstanding CQE on the CQ */
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/
@@ -118,7 +119,7 @@ typedef mca_btl_base_recv_reg_t mca_btl_ud_recv_reg_t;
  */
 
 #if OMPI_ENABLE_DEBUG
-#define MCA_BTL_UD_ENABLE_PROFILE 1
+#define MCA_BTL_UD_ENABLE_PROFILE 0
 #else
 #define MCA_BTL_UD_ENABLE_PROFILE 0
 #endif
@@ -152,11 +153,11 @@ struct mca_btl_ud_module_t {
     mca_btl_ud_recv_reg_t ib_reg[256];
     mca_btl_ud_port_info_t port_info;  /* contains only the subnet right now */
     uint8_t port_num;           /**< ID of the PORT */
-    struct ibv_device *ib_dev;  /* the ib device */
-    struct ibv_context *ib_dev_context;
-    struct ibv_pd *ib_pd;
-    struct ibv_cq *ib_cq_hp;
-    struct ibv_cq *ib_cq_lp;
+    struct ibv_device* ib_dev;  /* the ib device */
+    struct ibv_context* ib_dev_context;
+    struct ibv_pd* ib_pd;
+    struct ibv_cq* ib_cq_hp;
+    struct ibv_cq* ib_cq_lp;
     struct ibv_port_attr* ib_port_attr;
 
     ompi_free_list_t send_free_eager;  /**< free list of eager buffer descriptors */
@@ -183,11 +184,12 @@ struct mca_btl_ud_module_t {
     int32_t srd_posted_lp;
 #endif
 
-    int32_t  rd_num;
-    int32_t  rd_low;
+    int32_t rd_num;
 
+#if 0
     int32_t rd_posted_hp;   /**< number of high priority descriptors posted */
     int32_t rd_posted_lp;   /**< number of low priority descriptors posted */
+#endif
 
     int32_t sd_wqe_hp;      /**< number of available send wqe entries */
     int32_t sd_wqe_lp;      /**< number of available send wqe entries */
