@@ -104,10 +104,9 @@ int ompi_free_list_init(
     int num_elements_per_alloc,
     mca_mpool_base_module_t* mpool)
 {
-    if( elem_size % CACHE_LINE_SIZE )
-        flist->fl_elem_size = elem_size;
-    else {
-        flist->fl_elem_size = (elem_size + CACHE_LINE_SIZE) % CACHE_LINE_SIZE;
+    flist->fl_elem_size = elem_size;
+    if( elem_size % CACHE_LINE_SIZE ) {
+        flist->fl_elem_size += CACHE_LINE_SIZE - (elem_size % CACHE_LINE_SIZE);
     }
     flist->fl_elem_class = elem_class;
     flist->fl_max_to_alloc = max_elements_to_alloc;
