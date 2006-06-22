@@ -2,6 +2,7 @@
 # Copyright (c) 2004-2005 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -9,7 +10,7 @@
 # $HEADER$
 #
 
-check_PROGRAMS = ddt_test checksum position to_self
+check_PROGRAMS = ddt_test checksum position
 
 TESTS = $(check_PROGRAMS)
 
