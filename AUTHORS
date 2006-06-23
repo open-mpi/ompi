@@ -1,60 +1,53 @@
 Open MPI Authors
 ================
 
-The IDs in parenthesis are those used in Subversion commit notices.
+The following list contains the names and Subversion IDs of
+individuals who have committed code to the Open MPI repository.  Those
+marked with (*) are no longer active in the project.
 
-Current Authors
----------------
+Username    Name                        Affiliation(s)
+----------- --------------------------- -------------------------
+afriedle    Andrew Friedley             IU, SNL
+angskun     Thara Angskun               UTK
+bosilca     George Bosilca              UTK
+brbarret    Brian Barrett               IU, LANL
+casswell    Laura Casswell (*)          LANL
+ddd         David Daniel                LANL
+dgdimick    Denis Dimick (*)            LANL
+edgar       Edgar Gabriel               HLRS, UH, UTK
+gef         Graham Fagg                 UTK
+gingery     Ginger Young (*)            LANL
+gleb        Gleb Natapov                Voltaire
+gshipman    Galen Shipman               LANL
+gwatson     Greg Watson                 LANL
+hpcstork    Sven Stork                  HLRS
+jjhursey    Josh Hursey                 IU, LANL
+jsquyres    Jeff Squyres                Cisco, IU
+mitch       Mitch Sukalski (*)          SNL
+mschaara    Mohamad Chaarawi            UH
+mt          Mark Taylor (*)             LANL
+pkambadu    Prabhanjan Kambadur (*)     IU
+rasmussn    Craig Rasmussen             LANL
+rhc         Ralph Castain               LANL
+rlgraham    Rich Graham                 LANL
+rta         Rob Awles (*)               LANL
+rusraink    Rainer Keller               HLRS
+santhana    Gopal Santhanaraman (*)     OSU
+surs        Sayantan Sur (*)            OSU
+sushant     Sushant Sharma              LANL
+tprins      Tim Prins (*)               LANL
+twoodall    Tim Woodall                 LANL
+vsahay      Vishal Sahay (*)            IU
+yuw         Weikuan Yu (*)              LANL, OSU
 
-Indiana University:
-- Andrew Friedley (afriedle)
-- Brian Barrett (brbarret)
-- Josh Hursey (jjhursey)
-- Jeff Squyres (jsquyres)
+Affiliaion abbreviations:
+-------------------------
 
-University of Tennessee:
-- Thara Angskun (angskun)
-- George Bosilca (bosilca)
-- Graham Fagg (gef)
-
-Los Alamos National Laboratory:
-- David Daniel (ddd)
-- Galen Shipman (gshipman)
-- Greg Watson (gwatson)
-- Craig Rasmussen (rasmussn)
-- Ralph Castain (rhc)
-- Rich Graham (rlgraham)
-- Tim Woodall (twoodall)
-
-High Performance Computing Center, Stuttgart:
-- Rainer Keller (rusraink)
-
-Prior Authors
--------------
-
-University of Tennessee:
-- Edgar Gabriel (edgar)
-
-High Performance Computing Center, Stuttgart:
-- Edgar Gabriel (edgar)
-
-Los Alamos National Laboratory:
-- Laura Casswell (casswell)
-- Denis Dimick (dgdimick)
-- Ginger Young (gingery)
-- Mark Taylor (mt)
-- Rob Awles (rta)
-- Tim Prins (tprins)
-- Weikuan Yu (yuw)
-
-Sandia National Laboratory:
-- Mitch Sukalski (mitch)
-
-Indiana University:
-- Prabajan Kambandur (pkambadu)
-- Vishal Sahay (vsahay)
-
-Ohio State University:
-- Gopal Santhanaraman (santhana)
-- Sayantan (surs)
-- Weikuan Yu (yuw)
+Cisco = Cisco Systems, Inc.
+HLRS = High Performance Computing Center, Stuttgart
+IU = Indiana University
+LANL = Los Alamos National Laboratory
+OSU = The Ohio State University
+SNL = Sandia National Laboratory
+UTK = University of Tennessee, Knoxville
+Voltaire = Voltaire
