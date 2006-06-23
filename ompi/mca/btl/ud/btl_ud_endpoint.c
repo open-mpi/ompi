@@ -69,7 +69,7 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
         ib_qp = ud_btl->qp_hp;
         frag->wr_desc.sr_desc.wr.ud.ah = endpoint->rmt_ah_hp;
         frag->wr_desc.sr_desc.wr.ud.remote_qpn =
-                endpoint->rem_info.rem_qp_num_hp;
+                endpoint->rem_addr.qp_num_hp;
 
         if(frag->sg_entry.length <= ud_btl->ib_inline_max) {
             frag->wr_desc.sr_desc.send_flags =
@@ -86,20 +86,21 @@ inline int mca_btl_ud_endpoint_post_send(mca_btl_ud_module_t* ud_btl,
         ib_qp = ud_btl->qp_lp;
         frag->wr_desc.sr_desc.wr.ud.ah = endpoint->rmt_ah_lp;
         frag->wr_desc.sr_desc.wr.ud.remote_qpn =
-                endpoint->rem_info.rem_qp_num_lp;
+                endpoint->rem_addr.qp_num_lp;
     }
 
-    /*BTL_VERBOSE(("Send to : %d, len : %d %d %d, frag : %p",
-                  endpoint->endpoint_proc->proc_guid.vpid,
+    /*OPAL_OUTPUT((0, "Send to LID %d QP %d, len: %d %d %d, frag: %p",
+                  endpoint->rem_addr.lid,
+                  frag->wr_desc.sr_desc.wr.ud.remote_qpn,
                   frag->sg_entry.length, frag->segment.seg_len,
-                  ud_btl->ib_inline_max, frag)); */
+                  ud_btl->ib_inline_max, frag));*/
 
 #if MCA_BTL_UD_ENABLE_PROFILE
     frag->tm = opal_sys_timer_get_cycles();
 #endif
 
     MCA_BTL_UD_START_TIME(ibv_post_send);
-    if(OPAL_UNLIKELY(ibv_post_send(ib_qp, &frag->wr_desc.sr_desc, &bad_wr) != 0)) {
+    if(OPAL_UNLIKELY(ibv_post_send(ib_qp, &frag->wr_desc.sr_desc, &bad_wr))) {
         BTL_ERROR(("error posting send request errno says %d %s\n",
                     errno, strerror(errno)));
         return OMPI_ERROR;
@@ -122,14 +123,11 @@ OBJ_CLASS_INSTANCE(mca_btl_ud_endpoint_t,
 
 static void mca_btl_ud_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-    endpoint->endpoint_btl = 0;
-    endpoint->endpoint_proc = 0;
-    endpoint->endpoint_state = MCA_BTL_IB_CLOSED;
-    OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
+    /*OBJ_CONSTRUCT(&endpoint->endpoint_lock, opal_mutex_t);*/
 
-    memset(&endpoint->rem_info, 0, sizeof(struct mca_btl_ud_rem_info_t));
+    memset(&endpoint->rem_addr, 0, sizeof(struct mca_btl_ud_addr_t));
 }
+
 
 /*
  * Destroy a endpoint
@@ -138,325 +136,6 @@ static void mca_btl_ud_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 
 static void mca_btl_ud_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
-}
-
-/*
- * Send connection information to remote endpoint using OOB
- *
- */
-
-static void mca_btl_ud_endpoint_send_cb(int status, orte_process_name_t* endpoint,
-        orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata)
-{
-    OBJ_RELEASE(buffer);
-}
-
-
-static int mca_btl_ud_endpoint_send_connect_data(mca_btl_ud_endpoint_t* endpoint)
-{
-    mca_btl_ud_module_t* ud_btl = endpoint->endpoint_btl;
-    orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
-    int rc;
-
-    if(NULL == buffer) {
-         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-         return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-
-    /* pack the info in the send buffer */
-    rc = orte_dss.pack(buffer, &ud_btl->qp_hp->qp_num, 1, ORTE_UINT32);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dss.pack(buffer, &ud_btl->qp_lp->qp_num, 1, ORTE_UINT32);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dss.pack(buffer, &ud_btl->psn_hp, 1, ORTE_UINT32);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dss.pack(buffer, &ud_btl->psn_lp, 1, ORTE_UINT32);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dss.pack(buffer, &ud_btl->ib_port_attr->lid, 1, ORTE_UINT16);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    rc = orte_dss.pack(buffer,
-            &((mca_btl_ud_endpoint_t*)endpoint)->subnet, 1, ORTE_UINT16);
-    if(rc != ORTE_SUCCESS) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /* send to endpoint */
-    rc = orte_rml.send_buffer_nb(&endpoint->endpoint_proc->proc_guid,
-            buffer, ORTE_RML_TAG_DYNAMIC-1, 0, mca_btl_ud_endpoint_send_cb, NULL);
-
-    BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
-              ud_btl->qp_hp->qp_num,
-              ud_btl->qp_lp->qp_num,
-              endpoint->endpoint_btl->ib_port_attr->lid));
-
-    if(rc < 0) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    return OMPI_SUCCESS;
-}
-
-
-/*
- * Non blocking OOB recv callback.
- * Read incoming QP and other info, and if this endpoint
- * is trying to connect, reply with our QP info,
- * otherwise try to modify QP's and establish
- * reliable connection
- *
- */
-
-static void mca_btl_ud_endpoint_recv(
-    int status,
-    orte_process_name_t* endpoint,
-    orte_buffer_t* buffer,
-    orte_rml_tag_t tag,
-    void* cbdata)
-{
-    struct ibv_ah_attr ah_attr;
-    mca_btl_ud_proc_t *ib_proc;
-    mca_btl_ud_endpoint_t *ib_endpoint = NULL;
-    mca_btl_ud_rem_info_t rem_info;
-    mca_btl_ud_module_t* ud_btl;
-    int rc;
-    uint32_t i;
-    size_t cnt = 1;
-
-    /* start by unpacking data first so we know who is knocking at
-       our door */
-
-    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_hp, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_qp_num_lp, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_hp, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_lid, &cnt, ORTE_UINT16);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT16);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-
-    /*BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
-                 rem_info.rem_qp_num_hp,
-                 rem_info.rem_qp_num_lp,
-                 rem_info.rem_lid));*/
-
-    for(ib_proc = (mca_btl_ud_proc_t*)
-            opal_list_get_first(&mca_btl_ud_component.ib_procs);
-            ib_proc != (mca_btl_ud_proc_t*)
-            opal_list_get_end(&mca_btl_ud_component.ib_procs);
-            ib_proc  = (mca_btl_ud_proc_t*)opal_list_get_next(ib_proc)) {
-
-        if(orte_ns.compare(ORTE_NS_CMP_ALL,
-                    &ib_proc->proc_guid, endpoint) == 0) {
-            bool found = false;
-
-            /* Try to get the endpoint instance of this proc */
-            for(i = 0; i < ib_proc->proc_endpoint_count; i++) {
-                ib_endpoint = ib_proc->proc_endpoints[i];
-                if(ib_endpoint->rem_info.rem_lid &&
-                   ib_endpoint->rem_info.rem_lid  == rem_info.rem_lid) {
-                    /* we've seen them before! */
-                    found = true;
-                    break;
-                }
-            }
-            /* If we haven't seen this remote lid before then try to match on
-               endpoint */
-            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) {
-                ib_endpoint = ib_proc->proc_endpoints[i];
-                if(!ib_endpoint->rem_info.rem_lid &&
-                   ib_endpoint->subnet == rem_info.rem_subnet) {
-                    /* found a match based on subnet! */
-                    found = true;
-                    break;
-                }
-            }
-            /* try finding an open port, even if subnets don't match */
-            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) {
-                ib_endpoint = ib_proc->proc_endpoints[i];
-                if(!ib_endpoint->rem_info.rem_lid) {
-                    /* found an unused end-point */
-                    found = true;
-                    break;
-                }
-            }
-
-            if(!found) {
-                BTL_ERROR(("can't find suitable endpoint for this peer\n"));
-                return;
-            }
-
-            OPAL_THREAD_LOCK(&ib_endpoint->endpoint_lock);
-
-            /* Update status */
-            if(ib_endpoint->endpoint_state == MCA_BTL_IB_CLOSED) {
-                if(OMPI_SUCCESS !=
-                        mca_btl_ud_endpoint_send_connect_data(ib_endpoint)) {
-                    BTL_ERROR(("error sending connect request, error code %d", rc));
-                    ib_endpoint->endpoint_state = MCA_BTL_IB_FAILED;
-                    OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
-                    return;
-                }
-            }
-
-            /* Always 'CONNECTED' at this point */
-            ud_btl = ib_endpoint->endpoint_btl;
-            memcpy(&ib_endpoint->rem_info,
-                    &rem_info, sizeof(mca_btl_ud_rem_info_t));
-
-            ah_attr.is_global = 0;
-            ah_attr.dlid = rem_info.rem_lid;
-            ah_attr.sl = mca_btl_ud_component.ib_service_level;
-            ah_attr.src_path_bits = mca_btl_ud_component.ib_src_path_bits;
-            ah_attr.port_num = ud_btl->port_num;
-
-            ib_endpoint->rmt_ah_hp = ibv_create_ah(ud_btl->ib_pd, &ah_attr);
-            if(NULL == ib_endpoint->rmt_ah_hp) {
-                BTL_ERROR(("error creating address handle errno says %s\n",
-                            strerror(errno)));
-                ib_endpoint->endpoint_state = MCA_BTL_IB_FAILED;
-                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
-                return;
-            }
-
-            ib_endpoint->rmt_ah_lp = ibv_create_ah(ud_btl->ib_pd, &ah_attr);
-            if(NULL == ib_endpoint) {
-                BTL_ERROR(("error creating address handle errno says %s\n",
-                            strerror(errno)));
-                ib_endpoint->endpoint_state = MCA_BTL_IB_FAILED;
-                OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
-                return;
-            }
-
-            ib_endpoint->endpoint_state = MCA_BTL_IB_CONNECTED;
-
-            /*BTL_VERBOSE(("connected! QP num = %d, Low Priority QP num %d,  LID = %d",
-                 ib_endpoint->rem_info.rem_qp_num_hp,
-                 ib_endpoint->rem_info.rem_qp_num_lp,
-                 ib_endpoint->rem_info.rem_lid));*/
-
-            /* Post our queued sends */
-            while(!opal_list_is_empty(&(ib_endpoint->pending_send_frags))) {
-                mca_btl_ud_frag_t* frag = (mca_btl_ud_frag_t*)
-                    opal_list_remove_first(&(ib_endpoint->pending_send_frags));
-                if(OMPI_SUCCESS != mca_btl_ud_endpoint_post_send(
-                            ud_btl, ib_endpoint, frag)) {
-                    BTL_ERROR(("ERROR posting send"));
-                    ib_endpoint->endpoint_state = MCA_BTL_IB_FAILED;
-                    break;
-                }
-            }
-
-            OPAL_THREAD_UNLOCK(&ib_endpoint->endpoint_lock);
-            break;
-        }
-    }
-}
-
-/*
- *  Post the OOB recv (for receiving the peers information)
- */
-void mca_btl_ud_post_recv()
-{
-    orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY,
-        ORTE_RML_TAG_DYNAMIC-1,
-        ORTE_RML_PERSISTENT,
-        mca_btl_ud_endpoint_recv,
-        NULL);
-}
-
-/*
- * Attempt to send a fragment using a given endpoint. If the endpoint is not
- * connected, queue the fragment and start the connection as required.
- */
-
-int mca_btl_ud_endpoint_send(mca_btl_base_endpoint_t* endpoint,
-                             mca_btl_ud_frag_t* frag)
-{
-    int rc = OMPI_SUCCESS;
-    bool call_progress = false;
-
-    OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-    
-    if(OPAL_LIKELY(endpoint->endpoint_state == MCA_BTL_IB_CONNECTED)) {    
-        MCA_BTL_UD_START_TIME(endpoint_send_conn);
-        rc = mca_btl_ud_endpoint_post_send(
-                endpoint->endpoint_btl, endpoint, frag);
-        MCA_BTL_UD_END_TIME(endpoint_send_conn);
-        OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-        return rc;
-    }
-
-    switch(endpoint->endpoint_state) {
-    case MCA_BTL_IB_CLOSED:
-        /* Send connection info over to remote endpoint */
-        endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
-        rc = mca_btl_ud_endpoint_send_connect_data(endpoint);
-        if(OMPI_SUCCESS != rc) {
-            BTL_ERROR(("error sending connect request, error code %d", rc));
-            endpoint->endpoint_state = MCA_BTL_IB_FAILED;
-            return rc;
-        }
-
-        /**
-         * As long as we expect a message from the peer (in order to setup
-         * the connection) let the event engine pool the OOB events. Note:
-         * we increment it once per active connection.
-         */
-        opal_progress_event_increment();
-        call_progress = true;
-
-        /* No break here - fall through */
-    case MCA_BTL_IB_CONNECTING:
-        opal_list_append(&endpoint->pending_send_frags,
-                (opal_list_item_t *)frag);
-        break;
-    case MCA_BTL_IB_FAILED:
-        BTL_ERROR(("endpoint FAILED"));
-    default:
-        rc = OMPI_ERR_UNREACH;
-    }
-    OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
-    if(call_progress) opal_progress();
-    return rc;
 }
 
 

@@ -36,7 +36,7 @@ OBJ_CLASS_INSTANCE(mca_btl_ud_proc_t,
 void mca_btl_ud_proc_construct(mca_btl_ud_proc_t* proc)
 {
     proc->proc_ompi = 0;
-    proc->proc_port_count = 0;
+    proc->proc_addr_count = 0;
     proc->proc_endpoints = 0;
     proc->proc_endpoint_count = 0;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);
@@ -111,27 +111,20 @@ mca_btl_ud_proc_t* mca_btl_ud_proc_create(ompi_proc_t* ompi_proc)
         return module_proc;
     }
 
-    /* Oops! First time, gotta create a new IB proc
-     * out of the ompi_proc ... */
+    /* Oops! First time, gotta create a new IB proc out of the ompi_proc ... */
     module_proc = OBJ_NEW(mca_btl_ud_proc_t);
     /* Initialize number of peer */
     module_proc->proc_endpoint_count = 0;
     module_proc->proc_ompi = ompi_proc;
 
-    /* build a unique identifier (of arbitrary
-     * size) to represent the proc */
+    /* build a unique identifier (of arbitrary size) to represent the proc */
     module_proc->proc_guid = ompi_proc->proc_name;
 
 
     /* query for the peer address info */
-    rc = mca_pml_base_modex_recv(
-                                 &mca_btl_ud_component.super.btl_version,
-                                 ompi_proc,
-                                 (void*)&module_proc->proc_ports,
-                                 &size
-                                 );
-
-
+    rc = mca_pml_base_modex_recv(&mca_btl_ud_component.super.btl_version,
+                                 ompi_proc, (void*)&module_proc->proc_addrs,
+                                 &size);
 
     if(OMPI_SUCCESS != rc) {
         opal_output(0, "[%s:%d] mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
@@ -140,7 +133,7 @@ mca_btl_ud_proc_t* mca_btl_ud_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    if((size % sizeof(mca_btl_ud_port_info_t)) != 0) {
+    if((size % sizeof(mca_btl_ud_addr_t)) != 0) {
         opal_output(0, "[%s:%d] invalid module address for peer [%d,%d,%d]",
             __FILE__,__LINE__,ORTE_NAME_ARGS(&ompi_proc->proc_name));
         OBJ_RELEASE(module_proc);
@@ -148,14 +141,15 @@ mca_btl_ud_proc_t* mca_btl_ud_proc_create(ompi_proc_t* ompi_proc)
     }
 
 
-    module_proc->proc_port_count = size/sizeof(mca_btl_ud_port_info_t);
+    module_proc->proc_addr_count = size / sizeof(mca_btl_ud_addr_t);
 
 
-    if (0 == module_proc->proc_port_count) {
+    if (0 == module_proc->proc_addr_count) {
         module_proc->proc_endpoints = NULL;
     } else {
         module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
-            malloc(module_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
+            malloc(module_proc->proc_addr_count *
+                    sizeof(mca_btl_base_endpoint_t*));
     }
 
     if(NULL == module_proc->proc_endpoints) {
@@ -175,7 +169,10 @@ int mca_btl_ud_proc_insert(mca_btl_ud_proc_t* module_proc,
         mca_btl_base_endpoint_t* module_endpoint)
 {
     /* insert into endpoint array */
-    module_endpoint->endpoint_proc = module_proc;
-    module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
+    module_endpoint->rem_addr =
+            module_proc->proc_addrs[module_proc->proc_endpoint_count];
+    module_proc->proc_endpoints[module_proc->proc_endpoint_count++] =
+            module_endpoint;
     return OMPI_SUCCESS;
 }
+
