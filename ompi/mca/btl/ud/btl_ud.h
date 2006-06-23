@@ -103,7 +103,6 @@ struct mca_btl_ud_component_t {
     uint32_t ib_sg_list_size; /**< Max scatter/gather descriptor entries on the WQ*/
     uint32_t ib_pkey_ix;
     uint32_t ib_qkey;
-    uint32_t ib_psn;
     uint32_t ib_service_level;
     uint32_t ib_src_path_bits;
 
@@ -151,31 +150,40 @@ extern mca_btl_ud_profile_t mca_btl_ud_profile;
 struct mca_btl_ud_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     mca_btl_ud_recv_reg_t ib_reg[256];
-    mca_btl_ud_port_info_t port_info;  /* contains only the subnet right now */
     uint8_t port_num;           /**< ID of the PORT */
     struct ibv_device* ib_dev;  /* the ib device */
     struct ibv_context* ib_dev_context;
     struct ibv_pd* ib_pd;
     struct ibv_cq* ib_cq_hp;
     struct ibv_cq* ib_cq_lp;
-    struct ibv_port_attr* ib_port_attr;
 
-    ompi_free_list_t send_free_eager;  /**< free list of eager buffer descriptors */
-    ompi_free_list_t send_free_max;    /**< free list of max buffer descriptors */
-    ompi_free_list_t send_free_frag;   /**< free list of frags only... used for pining memory */
+    struct mca_btl_ud_addr_t addr;
+    /**< local address information */
 
-    ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
-    ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */
+    ompi_free_list_t send_free_eager;
+    /**< free list of eager buffer descriptors */
 
-    opal_list_t                 pending_frags_hp;
+    ompi_free_list_t send_free_max;
+    /**< free list of max buffer descriptors */
+
+    ompi_free_list_t send_free_frag;
+    /**< free list of frags only... used for pining memory */
+
+    ompi_free_list_t recv_free_eager;
+    /**< High priority free list of buffer descriptors */
+
+    ompi_free_list_t recv_free_max;
+    /**< Low priority free list of buffer descriptors */
+
+    opal_list_t pending_frags_hp;
     /**< list of pending high priority frags */
 
-    opal_list_t                 pending_frags_lp;
+    opal_list_t pending_frags_lp;
     /**< list of pending low priority frags */
 
-    opal_mutex_t ib_lock;          /**< module level lock */
+    opal_mutex_t ib_lock;   /**< module level lock */
 
-    size_t ib_inline_max; /**< max size of inline send*/
+    size_t ib_inline_max;   /**< max size of inline send*/
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     struct ibv_srq *srq_hp;
@@ -193,10 +201,6 @@ struct mca_btl_ud_module_t {
 
     int32_t sd_wqe_hp;      /**< number of available send wqe entries */
     int32_t sd_wqe_lp;      /**< number of available send wqe entries */
-
-    uint32_t psn_hp;
-    uint32_t psn_lp;
-    /* Local processes port sequence number (Low and High) */
 
     struct ibv_qp* qp_hp;
     struct ibv_qp* qp_lp;
@@ -219,7 +223,7 @@ extern int mca_btl_ud_component_close(void);
 /**
  * IB component initialization.
  *
- * @param num_btl_modules (OUT)                  Number of BTLs returned in BTL array.
+ * @param num_btl_modules (OUT)           Number of BTLs returned in BTL array.
  * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
  * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
  *

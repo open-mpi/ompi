@@ -163,8 +163,6 @@ int mca_btl_ud_component_open(void)
                                       0, (int*) &mca_btl_ud_component.ib_pkey_ix);
     mca_btl_ud_param_register_int("ib_qkey", "IB qkey",
                                       0x01330133, (int*) &mca_btl_ud_component.ib_qkey);
-    mca_btl_ud_param_register_int("ib_psn", "IB Packet sequence starting number",
-                                      0, (int*) &mca_btl_ud_component.ib_psn);
     mca_btl_ud_param_register_int("ib_service_level", "IB service level",
                                       0, (int*) &mca_btl_ud_component.ib_service_level);
     mca_btl_ud_param_register_int("ib_src_path_bits", "IB source path bits",
@@ -221,29 +219,35 @@ int mca_btl_ud_component_close(void)
  *  will make this available to all peers.
  */
 
+/* TODO - We need to publish an addr_t (formerly rem_info_t) here */
 static int
 mca_btl_ud_modex_send(void)
 {
     int         rc;
     size_t      i;
     size_t      size;
-    mca_btl_ud_port_info_t *ports = NULL;
+    mca_btl_ud_addr_t* addrs = NULL;
 
-    size = mca_btl_ud_component.ib_num_btls * sizeof (mca_btl_ud_port_info_t);
+    size = mca_btl_ud_component.ib_num_btls * sizeof(mca_btl_ud_addr_t);
     if (size != 0) {
-        ports = (mca_btl_ud_port_info_t *)malloc (size);
-        if (NULL == ports) {
+        addrs = (mca_btl_ud_addr_t *)malloc(size);
+        if (NULL == addrs) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
         for (i = 0; i < mca_btl_ud_component.ib_num_btls; i++) {
-            mca_btl_ud_module_t *btl = &mca_btl_ud_component.ud_btls[i];
-            ports[i] = btl->port_info;
+            mca_btl_ud_module_t* btl = &mca_btl_ud_component.ud_btls[i];
+            addrs[i] = btl->addr;
+    
+            BTL_VERBOSE(("modex_send HP QP num %d, LP QP num %d, LID = %d",
+              addrs[i].qp_num_hp,
+              addrs[i].qp_num_lp,
+              addrs[i].lid));
         }
     }
-    rc = mca_pml_base_modex_send (&mca_btl_ud_component.super.btl_version, ports, size);
-    if (NULL != ports) {
-        free (ports);
+    rc = mca_pml_base_modex_send(&mca_btl_ud_component.super.btl_version, addrs, size);
+    if(NULL != addrs) {
+        free (addrs);
     }
     return rc;
 }
@@ -346,33 +350,32 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
 
 
         /* Note ports are 1 based hence j = 1 */
-        for(j = 1; j <= ib_dev_attr.phys_port_cnt; j++){
-            struct ibv_port_attr* ib_port_attr;
-            ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr));
-            if(ibv_query_port(ib_dev_context, (uint8_t) j, ib_port_attr)){
+        for(j = 1; j <= ib_dev_attr.phys_port_cnt; j++) {
+            struct ibv_port_attr ib_port_attr;
+            if(ibv_query_port(ib_dev_context, (uint8_t)j, &ib_port_attr)) {
                 BTL_ERROR(("error getting port attributes for device %s port number %d errno says %s",
                           ibv_get_device_name(ib_dev), j, strerror(errno)));
                 return NULL;
             }
 
-            if( IBV_PORT_ACTIVE == ib_port_attr->state ){
-                ud_btl = (mca_btl_ud_module_t*) malloc(sizeof(mca_btl_ud_module_t));
-                memcpy(ud_btl, &mca_btl_ud_module, sizeof(mca_btl_ud_module));
+            if(IBV_PORT_ACTIVE == ib_port_attr.state) {
+                ud_btl =
+                    (mca_btl_ud_module_t*)malloc(sizeof(mca_btl_ud_module_t));
+                memcpy(ud_btl, &mca_btl_ud_module, sizeof(mca_btl_ud_module_t));
 
                 ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
-                ib_selected->btl_module = (mca_btl_base_module_t*) ud_btl;
+                ib_selected->btl_module = (mca_btl_base_module_t*)ud_btl;
+
                 ud_btl->ib_dev = ib_dev;
                 ud_btl->ib_dev_context = ib_dev_context;
-                ud_btl->port_num = (uint8_t) j;
-                ud_btl->ib_port_attr = ib_port_attr;
-                ud_btl->port_info.subnet = ib_port_attr->sm_lid; /* store the sm_lid for multi-nic support */
+                ud_btl->port_num = (uint8_t)j;
+                ud_btl->addr.subnet = ib_port_attr.sm_lid;
+                ud_btl->addr.lid = ib_port_attr.lid;
 
                 opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
-                if(++mca_btl_ud_component.ib_num_btls >= mca_btl_ud_component.ib_max_btls)
+                if(++mca_btl_ud_component.ib_num_btls >=
+                        mca_btl_ud_component.ib_max_btls)
                     break;
-            }
-            else{
-                free(ib_port_attr);
             }
         }
     }
@@ -397,8 +400,9 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
     for(i = 0; i < mca_btl_ud_component.ib_num_btls; i++){
         item = opal_list_remove_first(&btl_list);
         ib_selected = (mca_btl_base_selected_module_t*)item;
-        ud_btl = (mca_btl_ud_module_t*) ib_selected->btl_module;
-        memcpy(&(mca_btl_ud_component.ud_btls[i]), ud_btl, sizeof(mca_btl_ud_module_t));
+        ud_btl = (mca_btl_ud_module_t*)ib_selected->btl_module;
+        memcpy(&(mca_btl_ud_component.ud_btls[i]),
+                ud_btl, sizeof(mca_btl_ud_module_t));
         free(ib_selected);
         free(ud_btl);
 
@@ -421,8 +425,6 @@ mca_btl_base_module_t** mca_btl_ud_component_init(int *num_btl_modules,
         btls[i] = &ud_btl->super;
     }
 
-    /* Post OOB receive to support dynamic connection setup */
-    mca_btl_ud_post_recv();
     mca_btl_ud_modex_send();
 
     *num_btl_modules = mca_btl_ud_component.ib_num_btls;

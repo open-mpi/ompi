@@ -18,6 +18,7 @@
  * $HEADER$
  */
 
+#include "btl_ud.h"
 #include "btl_ud_frag.h"
 #include "ompi/mca/mpool/openib/mpool_openib.h"
 

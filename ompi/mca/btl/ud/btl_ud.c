@@ -84,6 +84,7 @@ int mca_btl_ud_add_procs(
     ompi_bitmap_t* reachable)
 {
     mca_btl_ud_module_t* ud_btl = (mca_btl_ud_module_t*)btl;
+    struct ibv_ah_attr ah_attr;
     int i, rc;
 
     for(i = 0; i < (int) nprocs; i++) {
@@ -114,11 +115,37 @@ int mca_btl_ud_add_procs(
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        ib_peer->endpoint_btl = ud_btl;
-        ib_peer->subnet = ud_btl->port_info.subnet;
         rc = mca_btl_ud_proc_insert(ib_proc, ib_peer);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(ib_peer);
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            continue;
+        }
+
+        BTL_VERBOSE(("modex_recv HP QP num %d, LP QP num %d, LID = %d",
+          ib_peer->rem_addr.qp_num_hp,
+          ib_peer->rem_addr.qp_num_lp,
+          ib_peer->rem_addr.lid));
+
+        /* Set up IB address handles for the endpoint */
+        ah_attr.is_global = 0;
+        ah_attr.dlid = ib_peer->rem_addr.lid;
+        ah_attr.sl = mca_btl_ud_component.ib_service_level;
+        ah_attr.src_path_bits = mca_btl_ud_component.ib_src_path_bits;
+        ah_attr.port_num = ud_btl->port_num;
+
+        ib_peer->rmt_ah_hp = ibv_create_ah(ud_btl->ib_pd, &ah_attr);
+        if(NULL == ib_peer->rmt_ah_hp) {
+            BTL_ERROR(("error creating address handle errno says %s\n",
+                        strerror(errno)));
+            OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
+            continue;
+        }
+
+        ib_peer->rmt_ah_lp = ibv_create_ah(ud_btl->ib_pd, &ah_attr);
+        if(NULL == ib_peer) {
+            BTL_ERROR(("error creating address handle errno says %s\n",
+                        strerror(errno)));
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
         }
@@ -127,9 +154,11 @@ int mca_btl_ud_add_procs(
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
     }
+
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     if(mca_btl_ud_component.use_srq) {
-        ud_btl->rd_num = mca_btl_ud_component.rd_num + log2(nprocs) * mca_btl_ud_component.srq_rd_per_peer;
+        ud_btl->rd_num = mca_btl_ud_component.rd_num +
+            log2(nprocs) * mca_btl_ud_component.srq_rd_per_peer;
         if(ud_btl->rd_num > mca_btl_ud_component.srq_rd_max)
            ud_btl->rd_num = mca_btl_ud_component.srq_rd_max;
     }
@@ -422,7 +451,6 @@ int mca_btl_ud_send(
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor,
     mca_btl_base_tag_t tag)
-
 {
     int rc;
 
@@ -431,7 +459,12 @@ int mca_btl_ud_send(
     MCA_BTL_UD_START_TIME(post_send);
     frag->endpoint = endpoint;
     frag->hdr->tag = tag;
-    rc = mca_btl_ud_endpoint_send(endpoint, frag);
+
+    /*OPAL_THREAD_LOCK(&endpoint->endpoint_lock);*/
+    rc = mca_btl_ud_endpoint_post_send(
+            (mca_btl_ud_module_t*)btl, endpoint, frag);
+    /*OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);*/
+    
     MCA_BTL_UD_END_TIME(post_send);
     return rc;
 }
@@ -454,8 +487,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     ud_btl->ib_pd = ibv_alloc_pd(ctx);
     if(NULL == ud_btl->ib_pd) {
         BTL_ERROR(("error allocating pd for %s errno says %s\n",
-                  ibv_get_device_name(ud_btl->ib_dev),
-                  strerror(errno)));
+                ibv_get_device_name(ud_btl->ib_dev), strerror(errno)));
         return OMPI_ERROR;
     }
         
@@ -524,6 +556,10 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
         return OMPI_ERROR;
     }
 
+    /* Set up our packet sequence numbers */
+    ud_btl->addr.psn_hp = lrand48() & 0xffffff;
+    ud_btl->addr.psn_lp = lrand48() & 0xffffff;
+
     /* Set up the QPs for this BTL */
     if(OMPI_SUCCESS != mca_btl_ud_endpoint_init_qp(&ud_btl->super,
             ud_btl->ib_cq_hp,
@@ -531,7 +567,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
             ud_btl->srq_hp,
 #endif
             &ud_btl->qp_hp,
-            ud_btl->psn_hp)) {
+            ud_btl->addr.psn_hp)) {
         return OMPI_ERROR;
     }
 
@@ -541,9 +577,13 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
             ud_btl->srq_lp,
 #endif
             &ud_btl->qp_lp,
-            ud_btl->psn_lp)) {
+            ud_btl->addr.psn_lp)) {
         return OMPI_ERROR;
     }
+
+    /* Place our QP numbers in our local address information */
+    ud_btl->addr.qp_num_hp = ud_btl->qp_hp->qp_num;
+    ud_btl->addr.qp_num_lp = ud_btl->qp_lp->qp_num;
 
     OBJ_CONSTRUCT(&ud_btl->ib_lock, opal_mutex_t);
     OBJ_CONSTRUCT(&ud_btl->send_free_eager, ompi_free_list_t);
@@ -609,24 +649,24 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
 
     /* Post receive descriptors */
     for(i = 0; i < ud_btl->rd_num; i++) {
+        /* High Priority (eager) */
         OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_eager, item, rc);
         frag = (mca_btl_ud_frag_t*)item;
 
         frag->sg_entry.length = frag->size +
-            sizeof(mca_btl_ud_header_t) +
-            sizeof(mca_btl_ud_ib_header_t);
+                sizeof(mca_btl_ud_header_t) + sizeof(mca_btl_ud_ib_header_t);
         if(ibv_post_recv(ud_btl->qp_hp,
                     &frag->wr_desc.rd_desc, &bad_wr)) {
             BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
             return OMPI_ERROR;
         }
 
+        /* Low Priority (max) */
         OMPI_FREE_LIST_WAIT(&ud_btl->recv_free_max, item, rc);
         frag = (mca_btl_ud_frag_t*)item;
 
         frag->sg_entry.length = frag->size +
-            sizeof(mca_btl_ud_header_t) +
-            sizeof(mca_btl_ud_ib_header_t);
+                sizeof(mca_btl_ud_header_t) + sizeof(mca_btl_ud_ib_header_t);
         if(ibv_post_recv(ud_btl->qp_lp,
                     &frag->wr_desc.rd_desc, &bad_wr)) {
             BTL_ERROR(("error posting recv, errno %s\n", strerror(errno)));
@@ -637,6 +677,7 @@ int mca_btl_ud_module_init(mca_btl_ud_module_t *ud_btl)
     return OMPI_SUCCESS;
 }
 
+
 /*
  * Dump profiling information
  */
@@ -645,7 +686,6 @@ void mca_btl_ud_dump(
     struct mca_btl_base_endpoint_t* endpoint,
     int verbose)
 {
-
     mca_btl_base_dump(btl, endpoint, verbose);
 }
 
