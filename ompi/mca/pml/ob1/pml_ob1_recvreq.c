@@ -220,9 +220,8 @@ static void mca_pml_ob1_recv_request_ack(
                 if(recvreq->req_rdma_offset > hdr->hdr_msg_length) {
                     recvreq->req_rdma_offset = hdr->hdr_msg_length;
                 } else {
-                    ompi_convertor_set_position(
-                                                &recvreq->req_recv.req_convertor,
-                                                &recvreq->req_rdma_offset);
+                    ompi_convertor_set_position( &recvreq->req_recv.req_convertor,
+                                                 &recvreq->req_rdma_offset );
                 }
                 
                 
@@ -236,9 +235,8 @@ static void mca_pml_ob1_recv_request_ack(
                 if(recvreq->req_rdma_offset < recvreq->req_bytes_received) {
                     recvreq->req_rdma_offset = recvreq->req_bytes_received;
                 }
-                ompi_convertor_set_position(
-                                            &recvreq->req_recv.req_convertor,
-                                            &recvreq->req_rdma_offset);
+                ompi_convertor_set_position( &recvreq->req_recv.req_convertor,
+                                             &recvreq->req_rdma_offset );
             }
         }
     }
@@ -442,6 +440,9 @@ static void mca_pml_ob1_recv_request_rget(
     descriptor->des_cbdata = frag;
     descriptor->des_cbfunc = mca_pml_ob1_rget_completion;
 
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                             &(recvreq->req_recv.req_base), PERUSE_RECV );
+
     /* queue up get request */
     rc = mca_bml_base_get(bml_btl,descriptor);
     if(rc != OMPI_SUCCESS) {
@@ -635,6 +636,10 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     } else {
                         size = (size_t)(bml_btl->btl_weight * bytes_remaining);
                     }
+                    /* makes sure that we don't exceed BTL max rdma size */
+                    if( size > bml_btl->btl_max_rdma_size ) {
+                        size = bml_btl->btl_max_rdma_size;
+                    }
                     /* This is the first time we're trying to complete
                        an RDMA pipeline message.  If this is the first
                        put request (ei, we're the only BTL or the
@@ -645,7 +650,6 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                     } else { 
                         ack = false;
                     }
-                     
                 } else {
                     char* base; 
                     long lb;
@@ -752,6 +756,9 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 /* update request state */
                 recvreq->req_rdma_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,1);
+
+                PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                         &(recvreq->req_recv.req_base), PERUSE_RECV );
 
                 /* send rdma request to peer */
                 rc = mca_bml_base_send(bml_btl, ctl, MCA_BTL_TAG_PML);
