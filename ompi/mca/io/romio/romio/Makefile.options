@@ -23,6 +23,8 @@ AUTOMAKE_OPTIONS	= foreign dist-bzip2
 # is in the build tree.
 AM_CPPFLAGS = \
         -DOMPI_BUILDING=1 \
-        -I$(top_ompi_builddir)/ompi/include \
-	-I$(top_srcdir)/include \
-	-I$(top_srcdir)/adio/include
+        -I$(top_ompi_builddir) \
+        -I$(top_ompi_builddir)/opal/include \
+        -I$(top_ompi_builddir)/ompi/include
+#	-I$(top_srcdir)/include \
+#	-I$(top_srcdir)/adio/include
