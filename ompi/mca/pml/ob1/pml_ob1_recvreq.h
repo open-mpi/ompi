@@ -245,11 +245,11 @@ do {                                                                            
         }                                                                          \
         ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
                                           &(request)->req_bytes_delivered );       \
+        PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
+                                 &((request)->req_recv.req_base), PERUSE_RECV);    \
     } else {                                                                       \
         (request)->req_bytes_delivered = (request)->req_recv.req_bytes_packed;     \
     }                                                                              \
-    PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                           \
-                             &((request)->req_recv.req_base), PERUSE_RECV);        \
 } while (0)
 
 
