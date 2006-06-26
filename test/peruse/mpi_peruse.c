@@ -7,7 +7,7 @@
 #include "mpi.h"
 #include "ompi/peruse/peruse.h"
 
-#define ARRAY_SIZE 10000
+#define ARRAY_SIZE (((128*1024 - 20)*5 + 65496) / sizeof(int))
 #define SHORT_OUTPUT 0
 
 typedef struct peruse_timed_events {
@@ -78,6 +78,7 @@ static int collective_start_experiment( void )
         printf( "\n\nStarting Experiment %d:\n\n\n", experiment++ );
     }
     MPI_Barrier (comm_result);
+    return 0;
 }
 
 static int collective_dump_events_trace( void )
@@ -169,10 +170,10 @@ int main (int argc, char * argv[])
         MPI_Finalize();
         return -1;
     }
-
+    /*sleep(20);*/
     MPI_Comm_dup (MPI_COMM_WORLD, &comm_result);
     printf ("(Rank:%d) MPI_COMM_WORLD:%p comm_result:%p\n",
-            comm_rank, MPI_COMM_WORLD, comm_result);
+            comm_rank, (void*)MPI_COMM_WORLD, (void*)comm_result);
 
     PERUSE_Init ();
     PERUSE_Query_supported_events (&peruse_num_supported,
@@ -225,10 +226,11 @@ int main (int argc, char * argv[])
 
     collective_dump_events_trace();
 
-    collective_start_experiment();
     /*
      * Experiment number 2
      */
+    collective_start_experiment();
+
     if (comm_rank == 0) {
         /*
          * Delay the send, so that the MPI_RECV is posted for sure in order
@@ -245,8 +247,10 @@ int main (int argc, char * argv[])
     collective_dump_events_trace();
 
     /*
-     * Experiment number 2
+     * Experiment number 3
      */
+    collective_start_experiment();
+
     if (comm_rank == 0) {
         /*
          * Delay the probei/recv, so that the MPI_SEND is posted for sure in order
