@@ -343,6 +343,7 @@ int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
          if( *mat1 != *mat2 ) {
             printf( "error in position (%d, %d) expect %f and find %f\n",
                     i, j, *mat1, *mat2 );
+            printf( "hex %lx != %lx\n", *(long*)mat1, *(long*)mat2 );
             return OMPI_ERROR;
          }
          mat1++; mat2++;
@@ -402,7 +403,7 @@ extern long conversion_elapsed;
 int test_upper( unsigned int length )
 {
     double *mat1, *mat2, *inbuf;
-    ompi_datatype_t *pdt, *pdt1;
+    ompi_datatype_t *pdt;
     ompi_convertor_t * pConv;
     char *ptr;
     int rc, freeAfter;
@@ -414,7 +415,6 @@ int test_upper( unsigned int length )
 
     printf( "test upper matrix\n" );
     pdt = upper_matrix( length );
-    pdt1 = lower_matrix( length );
     /*dt_dump( pdt );*/
 
     mat1 = malloc( length * length * sizeof(double) );
@@ -425,11 +425,13 @@ int test_upper( unsigned int length )
     inbuf = (double*)malloc( total_length );
     ptr = (char*)inbuf;
     /* copy upper matrix in the array simulating the input buffer */
-    for( i = 0; i < length; i++ )
-        for( j = i; j < length; j++ ) {
-            *inbuf = mat1[i * length + j];
+    for( i = 0; i < length; i++ ) {
+        uint32_t pos = i * length;
+        for( j = i; j < length; j++, pos++ ) {
+            *inbuf = mat1[pos];
             inbuf++;
         }
+    }
     inbuf = (double*)ptr;
     pConv = ompi_convertor_create( remote_arch, 0 );
     if( OMPI_SUCCESS != ompi_convertor_prepare_for_recv( pConv, pdt, 1, mat2 ) ) {
@@ -465,7 +467,6 @@ int test_upper( unsigned int length )
 
     /* test the automatic destruction pf the data */
     ompi_ddt_destroy( &pdt ); assert( pdt == NULL );
-    ompi_ddt_destroy( &pdt1 ); assert( pdt1 == NULL );
 
     OBJ_RELEASE( pConv );
     return rc;
@@ -819,7 +820,7 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     while( (done1 & done2) != 1 ) {
         /* They are supposed to finish in exactly the same time. */
         if( done1 | done2 ) {
-            printf( "WRONG !!! the send is %s but the receive is %s\n",
+            printf( "WRONG !!! the send is %s but the receive is %s in local_copy_with_convertor_2datatypes\n",
                     (done1 ? "finish" : "not finish"),
                     (done2 ? "finish" : "not finish") );
         }
@@ -905,7 +906,7 @@ int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
     while( (done1 & done2) != 1 ) {
         /* They are supposed to finish in exactly the same time. */
         if( done1 | done2 ) {
-            printf( "WRONG !!! the send is %s but the receive is %s\n",
+            printf( "WRONG !!! the send is %s but the receive is %s in local_copy_with_convertor\n",
                     (done1 ? "finish" : "not finish"),
                     (done2 ? "finish" : "not finish") );
         }
