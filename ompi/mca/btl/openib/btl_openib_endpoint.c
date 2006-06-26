@@ -1038,6 +1038,9 @@ static void mca_btl_openib_endpoint_credits_lp(
 {
     int32_t credits;
 
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
+                           ((mca_btl_openib_frag_t*)descriptor));
+
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1);
 
@@ -1049,8 +1052,6 @@ static void mca_btl_openib_endpoint_credits_lp(
             mca_btl_openib_endpoint_send_credits_lp(endpoint);
         }
     }
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
-                           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 /**
@@ -1115,6 +1116,9 @@ static void mca_btl_openib_endpoint_credits_hp(
 {
     int32_t credits;
 
+    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
+                           ((mca_btl_openib_frag_t*)descriptor));
+
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1);
 
@@ -1127,8 +1131,6 @@ static void mca_btl_openib_endpoint_credits_hp(
             mca_btl_openib_endpoint_send_credits_hp(endpoint);
         } 
     }
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
-                           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 /**
