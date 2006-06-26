@@ -440,8 +440,8 @@ static void mca_pml_ob1_recv_request_rget(
     descriptor->des_cbdata = frag;
     descriptor->des_cbfunc = mca_pml_ob1_rget_completion;
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                             &(recvreq->req_recv.req_base), PERUSE_RECV );
+    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                  &(recvreq->req_recv.req_base), size, PERUSE_RECV );
 
     /* queue up get request */
     rc = mca_bml_base_get(bml_btl,descriptor);
@@ -757,8 +757,8 @@ void mca_pml_ob1_recv_request_schedule(mca_pml_ob1_recv_request_t* recvreq)
                 recvreq->req_rdma_offset += size;
                 OPAL_THREAD_ADD_SIZE_T(&recvreq->req_pipeline_depth,1);
 
-                PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                         &(recvreq->req_recv.req_base), PERUSE_RECV );
+                PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                              &(recvreq->req_recv.req_base), size, PERUSE_RECV );
 
                 /* send rdma request to peer */
                 rc = mca_bml_base_send(bml_btl, ctl, MCA_BTL_TAG_PML);
