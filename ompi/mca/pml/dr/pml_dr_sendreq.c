@@ -179,6 +179,9 @@ static void mca_pml_dr_match_completion(
 
         /* update statistics and complete */
         sendreq->req_bytes_delivered = sendreq->req_send.req_bytes_packed;
+        MCA_PML_DR_DEBUG(1, (0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                     __FILE__, __LINE__, vfrag->vf_id));
+        
         ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
         MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
 
@@ -240,6 +243,9 @@ static void mca_pml_dr_rndv_completion(
         }
 
         /* update statistics and complete */
+        MCA_PML_DR_DEBUG(1, (0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                             __FILE__, __LINE__, vfrag->vf_id));
+            
         ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
         if(sendreq->req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
@@ -308,8 +314,11 @@ static void mca_pml_dr_frag_completion(
             } 
 
             /* record vfrag id to drop duplicate acks */
+            MCA_PML_DR_DEBUG(1, (0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                                 __FILE__, __LINE__, vfrag->vf_id));
+            
             ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
-
+            
             /* return this vfrag */
             MCA_PML_DR_VFRAG_RETURN(vfrag);
 
@@ -963,6 +972,8 @@ void mca_pml_dr_send_request_match_ack(
             
             /* update statistics */
             sendreq->req_bytes_delivered = vfrag->vf_size;
+            MCA_PML_DR_DEBUG(1, (0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                                 __FILE__, __LINE__, vfrag->vf_id));
             ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
             MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
@@ -1029,6 +1040,9 @@ void mca_pml_dr_send_request_rndv_ack(
             } 
 
             /* stash the vfrag id for duplicate acks.. */
+            MCA_PML_DR_DEBUG(1, (0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                                 __FILE__, __LINE__, vfrag->vf_id));
+            
             ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
             OPAL_THREAD_UNLOCK(&ompi_request_lock);
             
@@ -1074,7 +1088,7 @@ void mca_pml_dr_send_request_frag_ack(
 
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
-        opal_output(0, "got a vfrag NACK, retransmitting %x\n", ~vfrag->vf_ack);
+        MCA_PML_DR_DEBUG(0,(0, "got a vfrag NACK, retransmitting %x\n", ~vfrag->vf_ack));
         MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq,vfrag);
         schedule = true;
 
@@ -1086,6 +1100,9 @@ void mca_pml_dr_send_request_frag_ack(
         assert(sendreq->req_bytes_delivered <= sendreq->req_send.req_bytes_packed);
 
         /* stash the vfid for duplicate acks.. */
+        MCA_PML_DR_DEBUG(1,(0, "%s:%d: inserting vid %d into sequence tracker\n", 
+                            __FILE__, __LINE__, vfrag->vf_id));
+            
         ompi_seq_tracker_insert(&sendreq->req_endpoint->seq_sends, vfrag->vf_id);
         /* return vfrag */
         MCA_PML_DR_VFRAG_RETURN(vfrag);

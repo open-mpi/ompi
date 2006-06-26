@@ -241,3 +241,10 @@ MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des,  \
 
 #endif
 
+
+#define MCA_PML_DR_DEBUG_LEVEL 0
+#define MCA_PML_DR_DEBUG(level,msg)             \
+    if(level <= MCA_PML_DR_DEBUG_LEVEL){        \
+        OPAL_OUTPUT(msg);                       \
+    }
+

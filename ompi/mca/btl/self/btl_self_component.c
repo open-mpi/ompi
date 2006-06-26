@@ -109,7 +109,7 @@ int mca_btl_self_component_open(void)
                             MCA_BTL_EXCLUSIVITY_HIGH, (int*)&mca_btl_self.btl_exclusivity );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "flags",
                             "Active behavior flags", false, false,
-                            MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_RELIABLE,
+                            MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE,
                             (int*)&mca_btl_self.btl_flags );
 
     /* initialize objects */

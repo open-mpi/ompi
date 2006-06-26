@@ -45,15 +45,17 @@ if(mca_pml_dr.enable_csum && csum != hdr->hdr_match.hdr_csum) {      \
         &hdr->hdr_common,                                            \
         hdr->hdr_match.hdr_src_ptr.pval,                             \
         0, 0);                                                       \
-    OPAL_OUTPUT((0, "%s:%d: [rank %d -> rank %d] "                   \
-        "data checksum failed 0x%08x != 0x%08x\n",                   \
-        __FILE__, __LINE__,                                          \
-        hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst,            \
-        csum, hdr->hdr_match.hdr_csum));                             \
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d: [rank %d -> rank %d] "            \
+                        "data checksum failed 0x%08x != 0x%08x\n",   \
+                        __FILE__, __LINE__,                          \
+                        hdr->hdr_common.hdr_src, hdr->hdr_common.hdr_dst, \
+                        csum, hdr->hdr_match.hdr_csum));                \
     bytes_received = bytes_delivered = 0;                            \
 } else if (recvreq->req_acked == false) {                            \
-        mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common,       \
-                     hdr->hdr_match.hdr_src_ptr, bytes_received, 1); \
+    MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",           \
+                        __FILE__, __LINE__, recvreq->req_vfrag0.vf_id)); \
+    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common,              \
+                                hdr->hdr_match.hdr_src_ptr, bytes_received, 1); \
 }
 
 
@@ -241,6 +243,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_delivered,
                  csum);
              MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
+                
              break;
 
          case MCA_PML_DR_HDR_TYPE_RNDV:
@@ -258,6 +261,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_delivered,
                  csum);
              MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
+             
             break;
 
         case MCA_PML_DR_HDR_TYPE_FRAG:
@@ -265,6 +269,8 @@ void mca_pml_dr_recv_request_progress(
             MCA_PML_DR_RECV_REQUEST_VFRAG_LOOKUP(recvreq, &hdr->hdr_frag, vfrag);
             if(vfrag->vf_ack & bit) { 
                 if(vfrag->vf_ack == vfrag->vf_mask) { 
+                    MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",
+                                        __FILE__, __LINE__, vfrag->vf_id));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
                                                 hdr->hdr_frag.hdr_src_ptr, 
                                                 vfrag->vf_size, 
@@ -298,11 +304,14 @@ void mca_pml_dr_recv_request_progress(
                     /* we have received all the pieces of the vfrag, ack 
                        everything that passed the checksum */ 
                     ompi_seq_tracker_insert(&recvreq->req_endpoint->seq_recvs, vfrag->vf_id);
+                    MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",
+                                        __FILE__, __LINE__, vfrag->vf_id));
                     mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
-                        hdr->hdr_frag.hdr_src_ptr, vfrag->vf_size, vfrag->vf_mask);
+                                                hdr->hdr_frag.hdr_src_ptr, 
+                                                vfrag->vf_size, vfrag->vf_mask);
                 }
             } else {
-                OPAL_OUTPUT((0, "%s:%d received corrupted fragment 0x%08x != 0x%08x\n",
+                MCA_PML_DR_DEBUG(0,(0, "%s:%d received corrupted fragment 0x%08x != 0x%08x\n",
                     __FILE__,__LINE__,csum,hdr->hdr_frag.hdr_frag_csum));
                 bytes_received = bytes_delivered = 0;
             }
