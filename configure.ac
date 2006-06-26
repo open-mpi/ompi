@@ -1132,6 +1132,7 @@ AC_CONFIG_FILES([
     ompi/tools/wrappers/mpif90-wrapper-data.txt
 
     test/Makefile
+    test/event/Makefile
     test/asm/Makefile
     test/class/Makefile
     test/dss/Makefile
