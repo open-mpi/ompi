@@ -81,11 +81,11 @@ extern char** environ;
  */
 static struct opal_event term_handler;
 static struct opal_event int_handler;
+static struct opal_event sigusr1_handler;
+static struct opal_event sigusr2_handler;
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
-static char *abort_msg = NULL;
-static size_t abort_msg_len = 0;
 static char *orterun_basename = NULL;
 static int max_display_aborted = 1;
 static int num_aborted = 0;
@@ -250,7 +250,8 @@ opal_cmd_line_init_t cmd_line_init[] = {
  * Local functions
  */
 static void exit_callback(int fd, short event, void *arg);
-static void signal_callback(int fd, short flags, void *arg);
+static void abort_signal_callback(int fd, short event, void *arg);
+static void signal_forward_callback(int fd, short event, void *arg);
 static int create_app(int argc, char* argv[], orte_app_context_t **app,
                       bool *made_app, char ***app_env);
 static int init_globals(void);
@@ -272,11 +273,9 @@ int orterun(int argc, char *argv[])
     mca_base_param_init();
     orte_register_params(false);
 
-    /* Setup the abort message (for use in the signal handler) */
-
+    /* find our basename (the name of the executable) so that we can
+       use it in pretty-print error messages */
     orterun_basename = opal_basename(argv[0]);
-    asprintf(&abort_msg, "%s: killing job...\n", orterun_basename);
-    abort_msg_len = strlen(abort_msg);
 
     /* Check for some "global" command line params */
 
@@ -394,12 +393,21 @@ int orterun(int argc, char *argv[])
 
     /* Prep to start the application */
 
+    /** setup callbacks for abort signals */
     opal_signal_set(&term_handler, SIGTERM,
-                   signal_callback, NULL);
+                    abort_signal_callback, &term_handler);
     opal_signal_add(&term_handler, NULL);
     opal_signal_set(&int_handler, SIGINT,
-                   signal_callback, NULL);
+                    abort_signal_callback, &int_handler);
     opal_signal_add(&int_handler, NULL);
+
+    /** setup callbacks for signals we should foward */
+    opal_signal_set(&sigusr1_handler, SIGUSR1,
+                    signal_forward_callback, &sigusr1_handler);
+    opal_signal_add(&sigusr1_handler, NULL);
+    opal_signal_set(&sigusr2_handler, SIGUSR2,
+                    signal_forward_callback, &sigusr2_handler);
+    opal_signal_add(&sigusr2_handler, NULL);
 
     orte_totalview_init_before_spawn();
 
@@ -453,7 +461,6 @@ int orterun(int argc, char *argv[])
     free(apps);
     OBJ_RELEASE(apps_pa);
     orte_finalize();
-    free(abort_msg);
     free(orterun_basename);
     free(proc_infos);
     return rc;
@@ -666,6 +673,10 @@ static void exit_callback(int fd, short event, void *arg)
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
 
+    /** Remove the USR signal handlers */
+    opal_signal_del(&sigusr1_handler);
+    opal_signal_del(&sigusr2_handler);
+
     /* Trigger the normal exit conditions */
 
     orterun_globals.exit = true;
@@ -679,7 +690,7 @@ static void exit_callback(int fd, short event, void *arg)
  * the job has been aborted.
  */
 
-static void signal_callback(int fd, short flags, void *arg)
+static void abort_signal_callback(int fd, short flags, void *arg)
 {
     int ret;
     struct timeval tv = { 5, 0 };
@@ -692,7 +703,7 @@ static void signal_callback(int fd, short flags, void *arg)
     if (0 != signalled++) {
          return;
     }
-    write(2, abort_msg, abort_msg_len);
+    fprintf(stderr, "%s: killing job...", orterun_basename);
 
     if (jobid != ORTE_JOBID_MAX) {
         ret = orte_rmgr.terminate_job(jobid);
@@ -704,6 +715,28 @@ static void signal_callback(int fd, short flags, void *arg)
     if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
+    }
+}
+
+
+/**
+ * Pass user signals to the remote application processes
+ */
+static void  signal_forward_callback(int fd, short event, void *arg)
+{
+    struct opal_event *signal = arg;
+    int signum, ret;
+
+    OPAL_TRACE(1);
+
+    signum = OPAL_EVENT_SIGNAL(signal);
+    fprintf(stderr, "%s: Forwarding signal %d to job",
+                orterun_basename, signum);
+
+    /** send the signal out to the processes */
+    if (ORTE_SUCCESS != (ret = orte_rmgr.signal_job(jobid, signum))) {
+        fprintf(stderr, "Signal %d could not be sent to the job (returned %d)",
+                signum, ret);
     }
 }
 

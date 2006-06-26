@@ -6,21 +6,21 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 /**
  * @file
  *
  * The Open RTE Process Launch Subsystem
- * 
+ *
  * The process launch subsystem (PLS) is responsible for actually
  * launching a specified application's processes across the indicated
  * resource. The PLS is invoked by the controlling program (mpirun or
@@ -35,22 +35,22 @@
  * not be available when the PLS is invoked. Thus, the PLS components
  * must include the ability to sense their environment where
  * necessary.
- * 
+ *
  * The PLS obtains its input information from several sources:
- * 
+ *
  * - the ORTE_JOB_SEGMENT of the registry. Information on this segment
  * includes: the application to be executed; the number of processes
  * of each application to be run; the context (argv and enviro arrays)
  * for each process.
- * 
+ *
  * - the ORTE_RESOURCE_SEGMENT of the registry. This includes:
  * identification of the launcher to be used on the indicated
  * resource; location of temporary directory and other filesystem
  * directory locations;
- * 
+ *
  * - MCA parameters. This includes any directive from the user as to
  * the launcher to be used and/or its configuration.
- * 
+ *
  * The PLS uses this information to launch the processes upon the
  * indicated resource(s).  PLS components are free to ignore
  * information that is not pertinent to their operation. For example,
@@ -60,11 +60,11 @@
  * corresponding information that the mapper placed on the registry -
  * it is irrelevant to that launcher's operation (although a warning
  * to the user, in this case, might be appropriate).
- * 
+ *
  * The PLS is tightly coupled to the PLSNDS - the PLS name discovery
  * service - that each process uses to "discover" its official
  * name. Each PLS MUST:
- * 
+ *
  * - set the MCA parameter "pls_base_nds" to indicate the which name
  * discoverty service should be used on the remote side to discover
  * the process' name.  The contents of the MCA parameter should be one
@@ -79,10 +79,10 @@
  * - where necessary, provide a function in the orte_plsnds directory
  * that can define the process name from whatever info that
  * corresponding launcher provided
- * 
+ *
  * More information on the requirements for the PLSNDS can be found in
  * the header file src/plsnds/plsnds.h.
- * 
+ *
  * Unless otherwise directed by the user and/or the system
  * configuration, the PLS will utilize a daemon-based launch to
  * maximize the availability of ORTE services. To accomplish this, the
@@ -91,17 +91,17 @@
  * sequence (with the first step being daemon launch, followed by the
  * secondary application launch). In turn, the PLS must provide a
  * component with the ability to launch via an existing daemon.
- * 
+ *
  * NOTE: The RMGR may override local launcher specification to utilize
  * the daemon-based launch component - it is expected that the daemons
  * in the local environment will know how to launch in that
  * environment. It is vital, therefore, that the PLS components NOT be
  * directly called by any ORTE function - instead, all PLS
  * functionality is to be accessed via the RMGR.
- * 
+ *
  * As part of the launch procedure, PLS components must provide the
  * following capabilities:
- * 
+ *
  * - set the "pls_base_nds" MCA parameter indicating which NDS is to
  * be used. This information is subsequently used by the name
  * discovery service to determine a process' official name, as
@@ -118,7 +118,7 @@
  * Since I/O forwarding is still under develpoment, this is not yet
  * well-defined.
  * </JMS>
- * 
+ *
  * - pass context info to each process. The argv and enviro arrays are
  * stored on the registry by the resource allocation subsystem (RAS) -
  * this includes any process- specific deviations from the
@@ -130,13 +130,13 @@
  * that allow it, PLS components should utilize methods that support
  * scalable launch of applications involving large numbers of
  * processes.
- * 
+ *
  * - detect that required libraries are present on involved compute
  * nodes. This is a secondary feature for future implementations.
- * 
+ *
  * - preposition files and libraries where required and possible. This
  * is a secondary feature for future implementations.
- * 
+ *
  * When launching an application, the PLS shall update the registry
  * with information on batch jobid, assigned jobname, etc. that may
  * have been provided by the local resource's launcher. This
@@ -146,22 +146,22 @@
  * process by a spawning daemon to detect completion of process
  * startup) should be stored on the ORTE_JOB_SEGMENT in the respective
  * process' container.
- * 
+ *
  * Once a process is launched, two options exist for subsequent
  * operations:
- * 
+ *
  * - if it is an ORTE process (i.e., one that calls orte_init), the
  * process will register itself on the ORTE_JOB_SEGMENT of the
  * registry. This includes providing information on the nodename where
  * the process is located, contact information for the runtime message
  * library (RML) and other subsystems, local pid, etc.
- * 
+ *
  * - if it is NOT an ORTE process, then registration will not take
  * place. In this case, the ability to subsequently monitor the
  * progress/state-of-health of the process and/or provide other
  * services *may* be limited. The PLS has no further responsibilities
  * for such processes.
- * 
+ *
  * Once the PLS has completed launch of the application, it notifies
  * the state-of-health (SOH) monitor that a jobid has been launched
  * and is now available for monitoring.  It is the SOH's
@@ -194,7 +194,7 @@
  */
 
 /**
- * Launch the indicated jobid 
+ * Launch the indicated jobid
  */
 typedef int (*orte_pls_base_module_launch_fn_t)(orte_jobid_t);
 
@@ -210,6 +210,17 @@ typedef int (*orte_pls_base_module_terminate_job_fn_t)(orte_jobid_t);
 typedef int (*orte_pls_base_module_terminate_proc_fn_t)(const orte_process_name_t*);
 
 /**
+ * Signal any processes launched for the respective jobid by
+ * this component.
+ */
+typedef int (*orte_pls_base_module_signal_job_fn_t)(orte_jobid_t, int32_t);
+
+/**
+ * Signal a specific process.
+ */
+typedef int (*orte_pls_base_module_signal_proc_fn_t)(const orte_process_name_t*, int32_t);
+
+/**
  * Cleanup all resources held by the module
  */
 typedef int (*orte_pls_base_module_finalize_fn_t)(void);
@@ -221,6 +232,8 @@ struct orte_pls_base_module_1_0_0_t {
    orte_pls_base_module_launch_fn_t launch;
    orte_pls_base_module_terminate_job_fn_t terminate_job;
    orte_pls_base_module_terminate_proc_fn_t terminate_proc;
+   orte_pls_base_module_signal_job_fn_t signal_job;
+   orte_pls_base_module_signal_proc_fn_t signal_proc;
    orte_pls_base_module_finalize_fn_t finalize;
 };
 
@@ -238,10 +251,10 @@ typedef struct orte_pls_base_module_1_0_0_t orte_pls_base_module_t;
  * @param priority (OUT) Relative priority or ranking use by MCA to
  *                       select a module.
  */
-typedef struct orte_pls_base_module_1_0_0_t* 
+typedef struct orte_pls_base_module_1_0_0_t*
 (*orte_pls_base_component_init_fn_t)(int *priority);
 
-/** 
+/**
  * pls component v1.0.0
  */
 struct orte_pls_base_component_1_0_0_t {

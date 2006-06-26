@@ -1,19 +1,19 @@
 /* -*- C -*-
- * 
+ *
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  *
  *
@@ -22,16 +22,16 @@
  * @file:
  * Header file for the bproc launcher. This launcher is actually split into 2
  * modules: pls_bproc & pls_bproc_orted. The general idea behind this launcher is:
- * -# pls_bproc is called by orterun. It figures out the process mapping and 
+ * -# pls_bproc is called by orterun. It figures out the process mapping and
  *    launches orted's on the nodes
  * -# pls_bproc_orted is called by orted. This module intializes either a pty or
  *    pipes, places symlinks to them in well know points of the filesystem, and
  *    sets up the io forwarding. It then sends an ack back to orterun.
  * -# pls_bproc waits for an ack to come back from the orteds, then does several
- *    parallel launches of the application processes. The number of launches is 
+ *    parallel launches of the application processes. The number of launches is
  *    equal to the maximum number of processes on a node. For example, if there
  *    were 2 processes assigned to node 1, and 1 process asigned to node 2, we
- *    would do a parallel launch that launches on process on each node, then 
+ *    would do a parallel launch that launches on process on each node, then
  *    another which launches another process on node 1.
  */
 
@@ -68,6 +68,8 @@ int orte_pls_bproc_finalize(void);
 int orte_pls_bproc_launch(orte_jobid_t);
 int orte_pls_bproc_terminate_job(orte_jobid_t);
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name);
+int orte_pls_bproc_signal_job(orte_jobid_t, int32_t);
+int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t);
 
 /**
  * PLS bproc Component
@@ -77,7 +79,7 @@ struct orte_pls_bproc_component_t {
     /**< The base class */
     bool done_launching;
     /**< Is true if we are done launching the user's app. */
-    char * orted;         
+    char * orted;
     /**< The orted executeable. This can be an absolute path, or if not found
      * we will look for it in the user's path */
     int debug;

@@ -5,12 +5,12 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -30,15 +30,15 @@
 
 
 /*
- * 
+ *
  */
 
 static int orte_rmgr_base_cmd_query(orte_buffer_t* req, orte_buffer_t* rsp)
 {
     int32_t rc = orte_rmgr.query();
-    
+
     OPAL_TRACE(4);
-    
+
     return orte_dss.pack(rsp, &rc, 1, ORTE_INT32);
 }
 
@@ -51,7 +51,7 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t i, cnt, num_context;
 
     OPAL_TRACE(4);
-    
+
     cnt = 1;
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &num_context, &cnt, ORTE_SIZE))) {
         ORTE_ERROR_LOG(rc);
@@ -62,7 +62,7 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-   
+
     cnt = num_context;
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, context, &cnt, ORTE_APP_CONTEXT))) {
         ORTE_ERROR_LOG(rc);
@@ -96,7 +96,7 @@ static int orte_rmgr_base_cmd_allocate(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -112,7 +112,7 @@ static int orte_rmgr_base_cmd_deallocate(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -128,7 +128,7 @@ static int orte_rmgr_base_cmd_map(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -144,7 +144,7 @@ static int orte_rmgr_base_cmd_launch(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -161,7 +161,7 @@ static int orte_rmgr_base_cmd_term_job(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -178,7 +178,7 @@ static int orte_rmgr_base_cmd_term_proc(orte_buffer_t* req, orte_buffer_t* rsp)
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &name, &cnt, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
     } else {
@@ -188,6 +188,54 @@ static int orte_rmgr_base_cmd_term_proc(orte_buffer_t* req, orte_buffer_t* rsp)
 }
 
 
+static int orte_rmgr_base_cmd_signal_job(orte_buffer_t* req, orte_buffer_t* rsp)
+{
+    int rc;
+    orte_jobid_t jobid;
+    size_t cnt = 1;
+    int32_t signal;
+
+    OPAL_TRACE(4);
+
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &jobid, &cnt, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &signal, &cnt, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_rmgr.signal_job(jobid, signal);
+
+    return orte_dss.pack(rsp, &rc, 1, ORTE_INT32);
+}
+
+
+static int orte_rmgr_base_cmd_signal_proc(orte_buffer_t* req, orte_buffer_t* rsp)
+{
+    int rc;
+    orte_process_name_t name;
+    size_t cnt = 1;
+    int32_t signal;
+
+    OPAL_TRACE(4);
+
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &name, &cnt, ORTE_NAME))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(req, &signal, &cnt, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_rmgr.signal_proc(&name, signal);
+
+    return orte_dss.pack(rsp, &rc, 1, ORTE_INT32);
+}
+
 
 int orte_rmgr_base_cmd_dispatch(orte_buffer_t* req, orte_buffer_t* rsp)
 {
@@ -196,7 +244,7 @@ int orte_rmgr_base_cmd_dispatch(orte_buffer_t* req, orte_buffer_t* rsp)
     int rc;
 
     OPAL_TRACE(4);
-    
+
     rc = orte_dss.unpack(req, &cmd, &cnt, ORTE_RMGR_CMD);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -220,6 +268,10 @@ int orte_rmgr_base_cmd_dispatch(orte_buffer_t* req, orte_buffer_t* rsp)
             return orte_rmgr_base_cmd_term_job(req,rsp);
         case ORTE_RMGR_CMD_TERM_PROC:
             return orte_rmgr_base_cmd_term_proc(req,rsp);
+        case ORTE_RMGR_CMD_SIGNAL_JOB:
+            return orte_rmgr_base_cmd_signal_job(req,rsp);
+        case ORTE_RMGR_CMD_SIGNAL_PROC:
+            return orte_rmgr_base_cmd_signal_proc(req,rsp);
         default:
             ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
             return ORTE_ERR_BAD_PARAM;

@@ -76,8 +76,8 @@ extern char **environ;
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 int orte_pls_bproc_launch_threaded(orte_jobid_t);
 #endif
-                                                                                                                               
-                                                                                                                               
+
+
 /**
  * Initialization of the bproc module with all the needed function pointers
  */
@@ -89,6 +89,8 @@ orte_pls_base_module_t orte_pls_bproc_module = {
 #endif
     orte_pls_bproc_terminate_job,
     orte_pls_bproc_terminate_proc,
+    orte_pls_bproc_signal_job,
+    orte_pls_bproc_signal_proc,
     orte_pls_bproc_finalize
 };
 
@@ -1030,9 +1032,57 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
 }
 
 /**
+ * Signal all processes associated with this job
+ */
+int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal) {
+    pid_t* pids;
+    size_t i, num_pids;
+    int rc;
+
+    /* signal application process */
+    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pids(jobid, &pids, &num_pids)))
+        return rc;
+    for(i=0; i<num_pids; i++) {
+        if(mca_pls_bproc_component.debug) {
+            opal_output(0, "orte_pls_bproc: signaling proc: %d\n", pids[i]);
+        }
+        kill(pids[i], (int)signal);
+    }
+    if(NULL != pids)
+        free(pids);
+
+    /** dont signal daemons - this is strictly for signalling application processes */
+    return ORTE_SUCCESS;
+}
+
+/**
+ * Signal a specific process.
+ */
+int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t signal) {
+    int rc;
+    pid_t pid;
+
+    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pid(proc_name, &pid)))
+        return rc;
+    if(kill(pid, (int)signal) != 0) {
+        switch(errno) {
+            case EINVAL:
+                return ORTE_ERR_BAD_PARAM;
+            case ESRCH:
+                return ORTE_ERR_NOT_FOUND;
+            case EPERM:
+                return ORTE_ERR_PERM;
+            default:
+                return ORTE_ERROR;
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+/**
  * Module cleanup
  */
-int orte_pls_bproc_finalize(void) 
+int orte_pls_bproc_finalize(void)
 {
     /* wait for all daemons */
     OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
@@ -1047,9 +1097,9 @@ int orte_pls_bproc_finalize(void)
 /*
  * Handle threading issues.
  */
-                                                                                                                               
+
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
-                                                                                                                               
+
 struct orte_pls_bproc_stack_t {
     opal_condition_t cond;
     opal_mutex_t mutex;
@@ -1058,7 +1108,7 @@ struct orte_pls_bproc_stack_t {
     int rc;
 };
 typedef struct orte_pls_bproc_stack_t orte_pls_bproc_stack_t;
-                                                                                                                               
+
 static void orte_pls_bproc_stack_construct(orte_pls_bproc_stack_t* stack)
 {
     OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
@@ -1066,23 +1116,23 @@ static void orte_pls_bproc_stack_construct(orte_pls_bproc_stack_t* stack)
     stack->rc = 0;
     stack->complete = false;
 }
-                                                                                                                               
+
 static void orte_pls_bproc_stack_destruct(orte_pls_bproc_stack_t* stack)
 {
     OBJ_DESTRUCT(&stack->mutex);
     OBJ_DESTRUCT(&stack->cond);
 }
-                                                                                                                               
+
 static OBJ_CLASS_INSTANCE(
     orte_pls_bproc_stack_t,
     opal_object_t,
     orte_pls_bproc_stack_construct,
     orte_pls_bproc_stack_destruct);
-                                                                                                                               
-                                                                                                                               
+
+
 static void orte_pls_bproc_launch_cb(int fd, short event, void* args)
 {
-    
+
     orte_pls_bproc_stack_t *stack = (orte_pls_bproc_stack_t*)args;
     stack->rc = orte_pls_bproc_launch(stack->jobid);
     OPAL_THREAD_LOCK(&stack->mutex);
@@ -1096,13 +1146,13 @@ int orte_pls_bproc_launch_threaded(orte_jobid_t jobid)
     struct timeval tv = { 0, 0 };
     struct opal_event event;
     struct orte_pls_bproc_stack_t stack;
-                                                                                                                               
+
     OBJ_CONSTRUCT(&stack, orte_pls_bproc_stack_t);
-                                                                                                                               
+
     stack.jobid = jobid;
     opal_evtimer_set(&event, orte_pls_bproc_launch_cb, &stack);
     opal_evtimer_add(&event, &tv);
-                                                                                                                               
+
     OPAL_THREAD_LOCK(&stack.mutex);
     while(stack.complete == false)
          opal_condition_wait(&stack.cond, &stack.mutex);
@@ -1110,6 +1160,6 @@ int orte_pls_bproc_launch_threaded(orte_jobid_t jobid)
     OBJ_DESTRUCT(&stack);
     return stack.rc;
 }
-                                                                                                                               
+
 #endif
 

@@ -31,15 +31,17 @@ extern "C" {
 /*
  * Constants for command values
  */
-#define ORTE_RMGR_CMD_QUERY       1
-#define ORTE_RMGR_CMD_CREATE      2
-#define ORTE_RMGR_CMD_ALLOCATE    3
-#define ORTE_RMGR_CMD_DEALLOCATE  4
-#define ORTE_RMGR_CMD_MAP         5
-#define ORTE_RMGR_CMD_LAUNCH      6
-#define ORTE_RMGR_CMD_TERM_JOB    7
-#define ORTE_RMGR_CMD_TERM_PROC   8
-#define ORTE_RMGR_CMD_SPAWN       9
+#define ORTE_RMGR_CMD_QUERY          1
+#define ORTE_RMGR_CMD_CREATE         2
+#define ORTE_RMGR_CMD_ALLOCATE       3
+#define ORTE_RMGR_CMD_DEALLOCATE     4
+#define ORTE_RMGR_CMD_MAP            5
+#define ORTE_RMGR_CMD_LAUNCH         6
+#define ORTE_RMGR_CMD_TERM_JOB       7
+#define ORTE_RMGR_CMD_TERM_PROC      8
+#define ORTE_RMGR_CMD_SPAWN          9
+#define ORTE_RMGR_CMD_SIGNAL_JOB    10
+#define ORTE_RMGR_CMD_SIGNAL_PROC   11
 
 #define ORTE_RMGR_CMD  ORTE_UINT32
 typedef uint32_t orte_rmgr_cmd_t;

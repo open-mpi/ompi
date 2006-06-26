@@ -5,12 +5,12 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * $COPYRIGHT$
- * 
+ *
  * Additional copyrights may follow
- * 
+ *
  * $HEADER$
  */
 #include "orte_config.h"
@@ -29,15 +29,15 @@
 
 
 /*
- * 
+ *
  */
 
 int orte_rmgr_base_pack_cmd(orte_buffer_t* buffer, orte_rmgr_cmd_t cmd, orte_jobid_t jobid)
 {
      int rc;
-     
+
      OPAL_TRACE(4);
-    
+
      rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -62,11 +62,11 @@ int orte_rmgr_base_pack_create_cmd(
     size_t num_context)
 {
      int rc;
-     
+
      orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_CREATE;
 
      OPAL_TRACE(4);
-    
+
      rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -86,17 +86,17 @@ int orte_rmgr_base_pack_create_cmd(
      return ORTE_SUCCESS;
 }
 
-                                                                                                                           
+
 int orte_rmgr_base_pack_terminate_proc_cmd(
     orte_buffer_t* buffer,
     const orte_process_name_t* name)
 {
      int rc;
-     
-     orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_CREATE;
+
+     orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_TERM_PROC;
 
      OPAL_TRACE(4);
-    
+
      rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
@@ -111,7 +111,73 @@ int orte_rmgr_base_pack_terminate_proc_cmd(
      return ORTE_SUCCESS;
 }
 
-                                                                                                                           
+
+int orte_rmgr_base_pack_signal_job_cmd(
+    orte_buffer_t* buffer,
+    orte_jobid_t job,
+    int32_t signal)
+{
+    int rc;
+
+    orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_SIGNAL_JOB;
+
+    OPAL_TRACE(4);
+
+    rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buffer, &job, 1, ORTE_JOBID);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buffer, (void*)&signal, 1, ORTE_INT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+int orte_rmgr_base_pack_signal_proc_cmd(
+    orte_buffer_t* buffer,
+    const orte_process_name_t* name,
+    int32_t signal)
+{
+    int rc;
+
+    orte_rmgr_cmd_t cmd = ORTE_RMGR_CMD_SIGNAL_PROC;
+
+    OPAL_TRACE(4);
+
+    rc = orte_dss.pack(buffer, &cmd, 1, ORTE_RMGR_CMD);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buffer, (void*)name, 1, ORTE_NAME);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buffer, (void*)&signal, 1, ORTE_INT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
 int orte_rmgr_base_unpack_rsp(
     orte_buffer_t* buffer)
 {
@@ -119,14 +185,14 @@ int orte_rmgr_base_unpack_rsp(
     size_t cnt = 1;
 
     OPAL_TRACE(4);
-    
+
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer,&rc,&cnt,ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     return rc;
 }
-                                                                                                                           
+
 int orte_rmgr_base_unpack_create_rsp(
     orte_buffer_t* buffer,
     orte_jobid_t* jobid)
@@ -135,7 +201,7 @@ int orte_rmgr_base_unpack_create_rsp(
     size_t cnt;
 
     OPAL_TRACE(4);
-    
+
     cnt = 1;
     if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer,jobid,&cnt,ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);

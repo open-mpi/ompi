@@ -59,6 +59,13 @@ static int orte_rmgr_proxy_terminate_job(
 static int orte_rmgr_proxy_terminate_proc(
     const orte_process_name_t* proc_name);
 
+static int orte_rmgr_proxy_signal_job(
+        orte_jobid_t jobid, int32_t signal);
+
+static int orte_rmgr_proxy_signal_proc(
+        const orte_process_name_t* proc_name,
+        int32_t signal);
+
 static int orte_rmgr_proxy_spawn(
     orte_app_context_t** app_context,
     size_t num_context,
@@ -75,6 +82,8 @@ orte_rmgr_base_module_t orte_rmgr_proxy_module = {
     orte_rmgr_proxy_launch,
     orte_rmgr_proxy_terminate_job,
     orte_rmgr_proxy_terminate_proc,
+    orte_rmgr_proxy_signal_job,
+    orte_rmgr_proxy_signal_proc,
     orte_rmgr_proxy_spawn,
     orte_rmgr_base_proc_stage_gate_init,
     orte_rmgr_base_proc_stage_gate_mgr,
@@ -229,6 +238,90 @@ static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     rc = orte_rmgr_base_pack_terminate_proc_cmd(&cmd, proc_name);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+
+    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    OBJ_DESTRUCT(&cmd);
+
+    /* wait for response */
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return rc;
+    }
+
+    rc = orte_rmgr_base_unpack_rsp(&rsp);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return rc;
+    }
+    OBJ_DESTRUCT(&rsp);
+    return ORTE_SUCCESS;
+}
+
+static int orte_rmgr_proxy_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    orte_buffer_t cmd;
+    orte_buffer_t rsp;
+    int rc;
+
+    OPAL_TRACE(1);
+
+    /* construct command */
+    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+    rc = orte_rmgr_base_pack_signal_job_cmd(&cmd, jobid, signal);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+
+    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    OBJ_DESTRUCT(&cmd);
+
+    /* wait for response */
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return rc;
+    }
+
+    rc = orte_rmgr_base_unpack_rsp(&rsp);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&rsp);
+        return rc;
+    }
+    OBJ_DESTRUCT(&rsp);
+    return ORTE_SUCCESS;
+}
+
+static int orte_rmgr_proxy_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
+{
+    orte_buffer_t cmd;
+    orte_buffer_t rsp;
+    int rc;
+
+    OPAL_TRACE(1);
+
+    /* construct command */
+    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+    rc = orte_rmgr_base_pack_signal_proc_cmd(&cmd, proc_name, signal);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);

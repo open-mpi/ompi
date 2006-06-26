@@ -70,6 +70,8 @@ orte_pls_base_module_t orte_pls_bproc_seed_module = {
 #endif
     orte_pls_bproc_seed_terminate_job,
     orte_pls_bproc_seed_terminate_proc,
+    orte_pls_bproc_seed_signal_job,
+    orte_pls_bproc_seed_signal_proc,
     orte_pls_bproc_seed_finalize
 };
 
@@ -713,6 +715,58 @@ int orte_pls_bproc_seed_terminate_proc(const orte_process_name_t* proc_name)
     if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, mca_pls_bproc_seed_component.terminate_sig) != 0) {
+        switch(errno) {
+            case EINVAL:
+                return ORTE_ERR_BAD_PARAM;
+            case ESRCH:
+                return ORTE_ERR_NOT_FOUND;
+            case EPERM:
+                return ORTE_ERR_PERM;
+            default:
+                return ORTE_ERROR;
+        }
+    }
+    return ORTE_SUCCESS;
+}
+
+/**
+ * Signal all processes associated with this job. Daemons are not included as this function
+ * only applies to application processes.
+ */
+
+int orte_pls_bproc_seed_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    pid_t* pids;
+    pid_t my_pid = getpid();
+    size_t i, num_pids;
+    int rc;
+
+    /** signal application process */
+    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pids(jobid, &pids, &num_pids)))
+        return rc;
+    for(i=0; i<num_pids; i++) {
+        if(mca_pls_bproc_seed_component.debug) {
+            opal_output(0, "orte_pls_bproc: killing proc: %d\n", pids[i]);
+        }
+        kill(pids[i], (int)signal);
+    }
+    if(NULL != pids)
+        free(pids);
+
+    return ORTE_SUCCESS;
+}
+
+
+/**
+ * Signal a specific process.
+ */
+int orte_pls_bproc_seed_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
+{
+    int rc;
+    pid_t pid;
+    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pid(proc_name, &pid)))
+        return rc;
+    if(kill(pid, (int)signal) != 0) {
         switch(errno) {
             case EINVAL:
                 return ORTE_ERR_BAD_PARAM;

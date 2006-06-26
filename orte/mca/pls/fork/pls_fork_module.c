@@ -91,13 +91,15 @@ orte_pls_base_module_1_0_0_t orte_pls_fork_module = {
 #endif
     orte_pls_fork_terminate_job,
     orte_pls_fork_terminate_proc,
+    orte_pls_fork_signal_job,
+    orte_pls_fork_signal_proc,
     orte_pls_fork_finalize
 };
 
 static void set_handler_default(int sig);
 
 
-static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout) 
+static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout)
 {
     time_t end;
     pid_t ret;
@@ -140,14 +142,14 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
 
         /* The kill succeeded.  Wait up to timeout_before_sigkill
            seconds to see if it died. */
-        
+
         if (!orte_pls_fork_child_died(pid, mca_pls_fork_component.timeout_before_sigkill)) {
             kill(pid, SIGKILL);
             /* Double check that it actually died */
             if (!orte_pls_fork_child_died(pid, mca_pls_fork_component.timeout_before_sigkill)) {
                 char hostname[MAXHOSTNAMELEN];
                 gethostname(hostname, sizeof(hostname));
-                
+
                 opal_show_help("help-orte-pls-fork.txt",
                                "orte-pls-fork:could-not-kill",
                                true, hostname, pid);
@@ -300,7 +302,7 @@ static int orte_pls_fork_proc(
             write(p[1], &i, sizeof(int));
             exit(-1);
         }
-        
+
         /* setup base environment: copy the current environ and merge
            in the app context environ */
         if (NULL != context->env) {
@@ -466,7 +468,7 @@ static int orte_pls_fork_proc(
         }
 
         /* save the pid in the registry */
-        if (ORTE_SUCCESS != 
+        if (ORTE_SUCCESS !=
             (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -542,7 +544,7 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
                    processes to be launched to ABORTED.  This will
                    cause the entire job to abort. */
                 for (; i < map->num_procs; ++i) {
-                    orte_soh.set_proc_soh(&map->procs[i]->proc_name, 
+                    orte_soh.set_proc_soh(&map->procs[i]->proc_name,
                                           ORTE_PROC_STATE_ABORTED, 0);
                 }
 
@@ -642,6 +644,114 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
 
 
 int orte_pls_fork_terminate_proc(const orte_process_name_t* proc)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+/**
+ *  Query for all processes allocated to the job and signal
+ *  those on the current node.
+ */
+
+int orte_pls_fork_signal_job(orte_jobid_t jobid, int32_t signal)
+{
+    /* query for the pids allocated on this node */
+    char *segment;
+    char *keys[3];
+    orte_gpr_value_t** values = NULL;
+    size_t i, k, num_values = 0;
+    int rc;
+    opal_value_array_t pids;
+    pid_t pid;
+
+    /* setup the pid array */
+    OBJ_CONSTRUCT(&pids, opal_value_array_t);
+    opal_value_array_init(&pids, sizeof(pid_t));
+
+    /* query the job segment on the registry */
+    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    keys[0] = ORTE_NODE_NAME_KEY;
+    keys[1] = ORTE_PROC_PID_KEY;
+    keys[2] = NULL;
+
+    rc = orte_gpr.get(
+            ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
+            segment,
+            NULL,
+            keys,
+            &num_values,
+            &values
+            );
+    if(rc != ORTE_SUCCESS) {
+        free(segment);
+        return rc;
+    }
+
+    for(i=0; i<num_values; i++) {
+        orte_gpr_value_t* value = values[i];
+        pid_t pid = 0, *pidptr;
+        for(k=0; k<value->cnt; k++) {
+            orte_gpr_keyval_t* keyval = value->keyvals[k];
+            if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) {
+                if(orte_dss.compare(keyval->value->data, orte_system_info.nodename, ORTE_STRING) != ORTE_EQUAL) {
+                    break;
+                }
+            } else if (strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pidptr, keyval->value, ORTE_PID))) {
+                    ORTE_ERROR_LOG(rc);
+                    free(segment);
+                    return rc;
+                }
+                pid = *pidptr;
+            }
+        }
+        if (0 != pid) {
+            opal_value_array_append_item(&pids, &pid);
+        }
+        OBJ_RELEASE(value);
+    }
+
+    rc = ORTE_SUCCESS;
+    /* If we have processes to signal, go signal them */
+    for (i = 0; i < opal_value_array_get_size(&pids); ++i) {
+        pid = OPAL_VALUE_ARRAY_GET_ITEM(&pids, pid_t, i);
+        if(kill(pid, (int)signal) != 0) {
+            switch(errno) {
+                case EINVAL:
+                    ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                    rc = ORTE_ERR_BAD_PARAM;
+                    break;
+                case ESRCH:
+                    ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+                    rc = ORTE_ERR_NOT_FOUND;
+                    break;
+                case EPERM:
+                    ORTE_ERROR_LOG(ORTE_ERR_PERM);
+                    rc = ORTE_ERR_PERM;
+                    break;
+                default:
+                    ORTE_ERROR_LOG(ORTE_ERROR);
+                    rc = ORTE_ERROR;
+            }
+        }
+    }
+
+    OBJ_DESTRUCT(&pids);
+
+    if(NULL != values) {
+        free(values);
+    }
+    free(segment);
+
+    return rc;
+}
+
+
+int orte_pls_fork_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
