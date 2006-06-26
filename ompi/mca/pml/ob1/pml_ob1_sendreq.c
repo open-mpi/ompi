@@ -899,8 +899,8 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                  */
 #if OMPI_WANT_PERUSE
                 if( 0 != sendreq->req_send_offset ) {
-                    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                             &(sendreq->req_send.req_base), PERUSE_SEND );
+                    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                                  &(sendreq->req_send.req_base), size, PERUSE_SEND );
                 }
 #endif  /* OMPI_WANT_PERUSE */
 
@@ -1153,8 +1153,8 @@ void mca_pml_ob1_send_request_put(
     des->des_cbfunc = mca_pml_ob1_put_completion;
     des->des_cbdata = frag;
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+    PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                                  &(sendreq->req_send.req_base), size, PERUSE_SEND );
 
     if(OMPI_SUCCESS != (rc = mca_bml_base_put(bml_btl, des))) {
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {

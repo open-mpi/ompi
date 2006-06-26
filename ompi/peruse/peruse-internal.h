@@ -83,6 +83,24 @@ do {                                                                            
     }                                                                                  \
 } while(0)
 
+#define PERUSE_TRACE_COMM_OMPI_EVENT(event, base_req, size, op)                        \
+do {                                                                                   \
+    if( NULL != (base_req)->req_comm->c_peruse_handles ) {                             \
+        ompi_peruse_handle_t * _ptr = (base_req)->req_comm->c_peruse_handles[(event)]; \
+        if (NULL != _ptr && _ptr->active) {                                            \
+            peruse_comm_spec_t _comm_spec;                                             \
+            _comm_spec.comm      = (base_req)->req_comm;                               \
+            _comm_spec.buf       = (base_req)->req_addr;                               \
+            _comm_spec.count     = size;                                               \
+            _comm_spec.datatype  = MPI_PACKED;                                         \
+            _comm_spec.peer      = (base_req)->req_peer;                               \
+            _comm_spec.tag       = (base_req)->req_tag;                                \
+            _comm_spec.operation = (op);                                               \
+            _ptr->fn(_ptr, (MPI_Aint)(base_req), &_comm_spec, _ptr->param);            \
+        }                                                                              \
+    }                                                                                  \
+} while(0)
+
 #define PERUSE_TRACE_MSG_EVENT(event, comm_ptr, hdr_peer, hdr_tag, op)            \
     do {                                                                          \
         if( NULL != (comm_ptr)->c_peruse_handles ) {                              \
@@ -103,6 +121,7 @@ do {                                                                            
 
 #else
 #define PERUSE_TRACE_COMM_EVENT(event, base_req, op)
+#define PERUSE_TRACE_COMM_OMPI_EVENT(event, base_req, size, op)
 #define PERUSE_TRACE_MSG_EVENT(event, comm_ptr, hdr_peer, hdr_tag, op)
 #endif
 

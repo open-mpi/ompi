@@ -67,7 +67,7 @@ enum {
     /* Queue events*/
     PERUSE_COMM_SEARCH_POSTED_Q_BEGIN,
     PERUSE_COMM_SEARCH_POSTED_Q_END,
-    PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,    /* XXX Devation from 1.11 */
+    PERUSE_COMM_SEARCH_UNEX_Q_BEGIN,    /* XXX Deviation from 1.11 */
     PERUSE_COMM_SEARCH_UNEX_Q_END,
 
     /* Collective events */
