@@ -119,7 +119,7 @@ do {                                                                            
     (sendreq)->req_send.req_base.req_ompi.req_status._cancelled = 0;                \
                                                                                     \
     /* initialize datatype convertor for this request */                            \
-    if(count > 0) {                                                                 \
+/*     if(count > 0) {      */                                                            \
         /* We will create a convertor specialized for the        */                 \
         /* remote architecture and prepared with the datatype.   */                 \
         ompi_convertor_copy_and_prepare_for_send(                                   \
@@ -131,9 +131,9 @@ do {                                                                            
                             &(sendreq)->req_send.req_convertor );                   \
         ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
-    } else {                                                                        \
-         (sendreq)->req_send.req_bytes_packed = 0;                                  \
-    }                                                                               \
+   /*  } else {   */                                                                      \
+   /*       (sendreq)->req_send.req_bytes_packed = 0;   */                                \
+   /*  }  */                                                                              \
 } while(0)
 
 
@@ -308,7 +308,7 @@ do {                                                                            
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
     vfrag->vf_max_send_size = max_send_size;                                            \
     vfrag->vf_send.pval = sendreq;                                                      \
-    sendreq->req_vfrag = vfrag;                                                         \
+    sendreq->req_vfrag = vfrag;                                         \
 } while(0)
 
 /*
@@ -357,28 +357,31 @@ do {                                                                  \
  * Requeue first fragment of message for retransmission 
  */
 
-#define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)          \
-do {                                                                 \
-    mca_btl_base_descriptor_t *des_old, *des_new;                    \
-    OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
-    OPAL_OUTPUT((0, "%s:%d:%s: retransmitting eager\n", __FILE__, __LINE__, __func__)); \
-    assert(sendreq->req_descriptor->des_src != NULL);                \
-                                                                     \
-    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);          \
-    OPAL_THREAD_ADD64(&(vfrag)->vf_pending,1);                       \
-    (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \
-                                                                     \
-    des_old = sendreq->req_descriptor;                               \
-    mca_bml_base_alloc(vfrag->bml_btl, &des_new, des_old->des_src->seg_len);\
-    sendreq->req_descriptor = des_new;                               \
-    memcpy(des_new->des_src->seg_addr.pval,                          \
-           des_old->des_src->seg_addr.pval,                          \
-           des_old->des_src->seg_len);                               \
-    des_new->des_flags = des_old->des_flags;                         \
-    des_new->des_cbdata = des_old->des_cbdata;                       \
-    des_new->des_cbfunc = des_old->des_cbfunc;                       \
-    mca_bml_base_send(vfrag->bml_btl, des_new, MCA_BTL_TAG_PML);     \
-} while(0)        
+#define MCA_PML_DR_SEND_REQUEST_EAGER_RETRY(sendreq, vfrag)             \
+    do {                                                                \
+        mca_btl_base_descriptor_t *des_old, *des_new;                   \
+        OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                        \
+        MCA_PML_DR_DEBUG(0,                                             \
+                         (0, "%s:%d:%s: retransmitting eager\n",        \
+                          __FILE__, __LINE__, __func__));               \
+        assert(sendreq->req_descriptor->des_src != NULL);               \
+                                                                        \
+        OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);         \
+        OPAL_THREAD_ADD64(&(vfrag)->vf_pending,1);                      \
+        (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                  \
+                                                                        \
+        des_old = sendreq->req_descriptor;                              \
+        mca_bml_base_alloc(vfrag->bml_btl, &des_new,                    \
+                           des_old->des_src->seg_len);                  \
+        sendreq->req_descriptor = des_new;                              \
+        memcpy(des_new->des_src->seg_addr.pval,                         \
+               des_old->des_src->seg_addr.pval,                         \
+               des_old->des_src->seg_len);                              \
+        des_new->des_flags = des_old->des_flags;                        \
+        des_new->des_cbdata = des_old->des_cbdata;                      \
+        des_new->des_cbfunc = des_old->des_cbfunc;                      \
+        mca_bml_base_send(vfrag->bml_btl, des_new, MCA_BTL_TAG_PML);    \
+    } while(0)        
 
 /*
  * Requeue first fragment of message for retransmission 
@@ -392,7 +395,8 @@ do {                                                                 \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \
                                                                      \
-    opal_output(0, "%s:%d:%s: (re)transmitting rndv probe\n", __FILE__, __LINE__, __func__); \
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: (re)transmitting rndv probe\n",   \
+                        __FILE__, __LINE__, __func__));                 \
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);          \
     OPAL_THREAD_ADD64(&vfrag->vf_pending,1);                         \
     (vfrag)->vf_state &= ~MCA_PML_DR_VFRAG_NACKED;                   \

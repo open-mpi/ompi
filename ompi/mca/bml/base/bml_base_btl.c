@@ -96,7 +96,6 @@ int mca_bml_base_send(
     mca_btl_base_descriptor_t* des, 
     mca_btl_base_tag_t tag) 
 { 
-    static int count;
     des->des_context = bml_btl;
     if(mca_bml_base_error_count <= 0 && mca_bml_base_error_rate_ceiling > 0) {
         mca_bml_base_error_count = (int) ((mca_bml_base_error_rate_ceiling * rand())/(RAND_MAX+1.0));

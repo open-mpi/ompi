@@ -388,7 +388,7 @@ do {                                                                          \
                    (vfrag)->vf_mask = (((uint64_t)1 << (hdr)->hdr_vlen)-1);   \
                }                                                              \
                opal_list_append(&(recvreq)->req_vfrags, (opal_list_item_t*)vfrag); \
-               (recvreq)->req_vfrag = vfrag;                                  \
+               (recvreq)->req_vfrag = vfrag;                            \
            }                                                                  \
        }                                                                      \
        OPAL_THREAD_UNLOCK(recvreq->req_mutex);                                \

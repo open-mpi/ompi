@@ -70,7 +70,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
 
-    OPAL_OUTPUT((0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
 
     /* update pending counts */
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-vfrag->vf_pending);
@@ -80,7 +80,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     if(++vfrag->vf_wdog_cnt == mca_pml_dr.wdog_retry_max) {
         /* declare btl dead */
         opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
-            vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+                    vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
         mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         mca_pml_dr_vfrag_reset(vfrag);
     } 
@@ -106,7 +106,8 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    OPAL_OUTPUT((0, "%s:%d:%s: ack timeout: %0x08x", __FILE__, __LINE__, __func__, vfrag));
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: ack timeout: %0x08x", 
+                        __FILE__, __LINE__, __func__, vfrag));
 
     /* stop ack timer */
     MCA_PML_DR_VFRAG_ACK_STOP(vfrag);

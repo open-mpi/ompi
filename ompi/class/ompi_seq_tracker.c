@@ -86,6 +86,7 @@ bool ompi_seq_tracker_check_duplicate(
 /*
  * insert item into sequence tracking list,
  *   compacts continuous regions into a single entry
+ * GMS::: Use a free list for the items (don't do OBJ_NEW)! 
  */
 void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker, 
                                                 uint32_t seq_id) 
@@ -146,9 +147,10 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
                 /* we have gone back in the list, and we went one item too far */ 
                 new_item = OBJ_NEW(ompi_seq_tracker_range_t);
                 new_item->seq_id_low = new_item->seq_id_high = seq_id; 
+                next_item = (ompi_seq_tracker_range_t*) opal_list_get_next(item);
                 /* insert new_item directly before item */
                 opal_list_insert_pos(seq_ids, 
-                                     (opal_list_item_t*) item, 
+                                     (opal_list_item_t*) next_item, 
                                      (opal_list_item_t*) new_item); 
                 seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) new_item;
                 return;
@@ -160,14 +162,11 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
             if(direction == 1) { 
                 /* we have gone forward in the list, and we went one item too far */ 
                 new_item = OBJ_NEW(ompi_seq_tracker_range_t); 
-                next_item = (ompi_seq_tracker_range_t*) opal_list_get_next(item);
-                if(NULL == next_item) { 
-                    opal_list_append(seq_ids, (opal_list_item_t*) new_item);
-                } else { 
-                    opal_list_insert_pos(seq_ids, 
-                                         (opal_list_item_t*) next_item, 
-                                         (opal_list_item_t*) new_item); 
-                }
+                new_item->seq_id_low = new_item->seq_id_high = seq_id; 
+                opal_list_insert_pos(seq_ids, 
+                                     (opal_list_item_t*) item, 
+                                     (opal_list_item_t*) new_item); 
+                
                 seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) new_item;
                 return;
             } else { 
