@@ -68,6 +68,9 @@ Finalize();
 bool
 Is_initialized();
 
+bool
+Is_finalized();
+
 //
 // External Interfaces
 //
