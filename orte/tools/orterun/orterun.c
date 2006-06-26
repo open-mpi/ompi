@@ -99,6 +99,7 @@ struct globals_t {
     bool help;
     bool version;
     bool verbose;
+    bool quiet;
     bool exit;
     bool no_wait_for_job_completion;
     bool by_node;
@@ -134,6 +135,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
+    { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
+      &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
+      "Suppress helpful messages" },
 
     /* Use an appfile */
     { NULL, NULL, NULL, '\0', NULL, "app", 1,
@@ -703,7 +707,9 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     if (0 != signalled++) {
          return;
     }
-    fprintf(stderr, "%s: killing job...", orterun_basename);
+    if (!orterun_globals.quiet){
+        fprintf(stderr, "%s: killing job...", orterun_basename);
+    }
 
     if (jobid != ORTE_JOBID_MAX) {
         ret = orte_rmgr.terminate_job(jobid);
@@ -730,8 +736,10 @@ static void  signal_forward_callback(int fd, short event, void *arg)
     OPAL_TRACE(1);
 
     signum = OPAL_EVENT_SIGNAL(signal);
-    fprintf(stderr, "%s: Forwarding signal %d to job",
+    if (!orterun_globals.quiet){
+        fprintf(stderr, "%s: Forwarding signal %d to job",
                 orterun_basename, signum);
+    }
 
     /** send the signal out to the processes */
     if (ORTE_SUCCESS != (ret = orte_rmgr.signal_job(jobid, signum))) {
@@ -744,6 +752,7 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 static int init_globals(void)
 {
     struct globals_t tmp = {
+        false,
         false,
         false,
         false,
