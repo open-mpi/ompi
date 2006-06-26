@@ -17,8 +17,6 @@
  */
 
 
-/*%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%*/
-
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
@@ -1154,6 +1152,9 @@ void mca_pml_ob1_send_request_put(
     des->des_dst_cnt = hdr->hdr_seg_cnt;
     des->des_cbfunc = mca_pml_ob1_put_completion;
     des->des_cbdata = frag;
+
+    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
+                             &(sendreq->req_send.req_base), PERUSE_SEND );
 
     if(OMPI_SUCCESS != (rc = mca_bml_base_put(bml_btl, des))) {
         if(rc == OMPI_ERR_OUT_OF_RESOURCE) {
