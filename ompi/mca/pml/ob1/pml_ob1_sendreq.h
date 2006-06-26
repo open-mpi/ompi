@@ -15,9 +15,7 @@
  * 
  * $HEADER$
  */
-/**
- * @file
- */
+
 #ifndef OMPI_PML_OB1_SEND_REQUEST_H
 #define OMPI_PML_OB1_SEND_REQUEST_H
 
