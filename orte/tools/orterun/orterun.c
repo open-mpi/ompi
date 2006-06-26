@@ -50,6 +50,7 @@
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
+#include "opal/version.h"
 
 #include "orte/orte_constants.h"
 
@@ -96,6 +97,7 @@ static char **global_mca_env = NULL;
  */
 struct globals_t {
     bool help;
+    bool version;
     bool verbose;
     bool exit;
     bool no_wait_for_job_completion;
@@ -126,6 +128,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'h', NULL, "help", 0,
       &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
+    { NULL, NULL, NULL, 'V', NULL, "version", 0,
+      &orterun_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
+      "Print version and exit" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
@@ -713,6 +718,7 @@ static int init_globals(void)
         false,
         false,
         false,
+        false,
         0,
         0,
         NULL,
@@ -755,13 +761,38 @@ static int parse_globals(int argc, char* argv[])
         return ret;
     }
 
+    /* print version if requested.  Do this before check for help so
+       that --version --help works as one might expect. */
+    if (orterun_globals.version && 
+        !(1 == argc || orterun_globals.help)) {
+        char *project_name = NULL;
+        if (0 == strcmp(orterun_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
+        opal_show_help("help-orterun.txt", "orterun:version", false,
+                       orterun_basename, project_name, OPAL_VERSION,
+                       PACKAGE_BUGREPORT);
+        /* if we were the only argument, exit */
+        if (2 == argc) exit(0);
+    }
+
     /* Check for help request */
 
     if (1 == argc || orterun_globals.help) {
         char *args = NULL;
+        char *project_name = NULL;
+        if (0 == strcmp(orterun_basename, "mpirun")) {
+            project_name = "Open MPI";
+        } else {
+            project_name = "OpenRTE";
+        }
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-orterun.txt", "orterun:usage", false,
-                       orterun_basename, args);
+                       orterun_basename, project_name, OPAL_VERSION,
+                       orterun_basename, args,
+                       PACKAGE_BUGREPORT);
         free(args);
 
         /* If someone asks for help, that should be all we do */
