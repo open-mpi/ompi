@@ -300,10 +300,30 @@ int mca_bml_r2_add_procs(
                 bml_btl->btl_prepare_src = btl->btl_prepare_src;
                 bml_btl->btl_prepare_dst = btl->btl_prepare_dst;
                 bml_btl->btl_send = btl->btl_send;
-                bml_btl->btl_put = btl->btl_put;
-                bml_btl->btl_get = btl->btl_get;
                 bml_btl->btl_flags = btl->btl_flags; 
+                bml_btl->btl_put = btl->btl_put;
+                if( (bml_btl->btl_flags & MCA_BTL_FLAGS_PUT) && (NULL == bml_btl->btl_put) ) {
+                    opal_output(0, "mca_bml_r2_add_procs: The PUT flag is specified for"
+                                " the %s BTL without any PUT function attached. Disard the flag !",
+                                bml_btl->btl->btl_component->btl_version.mca_component_name);
+                    bml_btl->btl_flags ^= MCA_BTL_FLAGS_PUT;
+                }
+                bml_btl->btl_get = btl->btl_get;
+                if( (bml_btl->btl_flags & MCA_BTL_FLAGS_GET) && (NULL == bml_btl->btl_get) ) {
+                    opal_output(0, "mca_bml_r2_add_procs: The GET flag is specified for"
+                                " the %s BTL without any GET function attached. Disard the flag !",
+                                bml_btl->btl->btl_component->btl_version.mca_component_name);
+                    bml_btl->btl_flags ^= MCA_BTL_FLAGS_GET;
+                }
                 bml_btl->btl_mpool = btl->btl_mpool;
+                if( (bml_btl->btl_flags & (MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_GET | MCA_BTL_FLAGS_SEND)) == 0 ) {
+                    /**
+                     * If no protocol specified, we have 2 choices: we ignore the BTL
+                     * as we don't know which protocl to use, or we suppose that all
+                     * BTLs support the send protocol. 
+                     */
+                    bml_btl->btl_flags |= MCA_BTL_FLAGS_SEND;
+                }
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
