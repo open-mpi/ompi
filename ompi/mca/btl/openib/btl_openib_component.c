@@ -9,7 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -231,11 +230,7 @@ int mca_btl_openib_component_open(void)
     
     mca_btl_openib_component.max_send_size = mca_btl_openib_module.super.btl_max_send_size; 
     mca_btl_openib_component.eager_limit = mca_btl_openib_module.super.btl_eager_limit; 
-
-    /* Until ticket #142 is fixed */
-    mca_btl_openib_param_register_int("warn_leave_pinned_multi_port", 
-                                      "If set to a true value, emit a warning when the MCA parameter mpi_leave_pinned is set to a true value and multiple HCA ports are found.",
-                                      1, &mca_btl_openib_component.warn_leave_pinned_multi_port);
+    
     return OMPI_SUCCESS;
 }
 
@@ -395,21 +390,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_modex_send();
         return NULL; 
     }
-
-    /* JMS: Workaround until ticket #142 is fixed.  If
-       mpi_leave_pinned == true, then override ib_max_btls and set it
-       to 1.  If btl_openib_warn_leave_pinned_multi_port is true, emit
-       a warning that we did this. */
-    i = mca_base_param_find("mpi", NULL, "leave_pinned");
-    mca_base_param_lookup_int(i, &j);
-    if (num_devs > 1 && 0 != j) {
-        mca_btl_openib_component.ib_max_btls = 1;
-        if (mca_btl_openib_component.warn_leave_pinned_multi_port) {
-            opal_show_help("help-mpi-btl-openib.txt", 
-                           "btl_openib:leave_pinned_multi_port", true);
-        }
-    }
-
+       
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST == 0
     /* Allocate space for the ib devices */ 
     ib_devs = (struct ibv_device**) malloc(num_devs * sizeof(struct ibv_dev*));
