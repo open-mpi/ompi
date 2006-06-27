@@ -240,6 +240,8 @@ do {                                                                            
 
 #define MCA_PML_DR_RECV_REQUEST_BYTES_PACKED(request, bytes_packed)                  \
 do {                                                                                 \
+    bool do_csum = mca_pml_dr.enable_csum &&                                         \
+        (request->req_endpoint->base.btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);        \
     (request)->req_recv.req_bytes_packed = bytes_packed;                             \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
         ompi_proc_t *proc = (request)->req_proc->ompi_proc;                          \
@@ -247,7 +249,7 @@ do {                                                                            
                                          (request)->req_recv.req_base.req_datatype,  \
                                          (request)->req_recv.req_base.req_count,     \
                                          (request)->req_recv.req_base.req_addr,      \
-                                         (mca_pml_dr.enable_csum ? CONVERTOR_WITH_CHECKSUM: 0),  \
+                                         (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),     \
                                          &(request)->req_recv.req_convertor );       \
     }                                                                                \
 } while (0)
@@ -273,6 +275,8 @@ do {                                                                            
         size_t max_data = bytes_received;                                         \
         int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
+        bool do_csum = mca_pml_dr.enable_csum &&                                  \
+            (request->req_endpoint->base.btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM); \
                                                                                   \
         for(n=0; n<num_segments; n++) {                                           \
             mca_btl_base_segment_t* segment = segments+n;                         \
@@ -297,7 +301,7 @@ do {                                                                            
             &free_after);                                                         \
         bytes_delivered = max_data;                                               \
         if(bytes_received && !bytes_delivered) assert(0);                         \
-        csum = (mca_pml_dr.enable_csum ?                                          \
+        csum = (do_csum ?                                                         \
                   request->req_recv.req_convertor.checksum : OPAL_CSUM_ZERO);     \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \

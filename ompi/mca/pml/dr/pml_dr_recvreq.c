@@ -31,8 +31,13 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 
-#define MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received) \
-if(mca_pml_dr.enable_csum && csum != hdr->hdr_match.hdr_csum) {      \
+/* 
+ * this macro is needed for MATCH/RNDV headers, 
+ *  as we need to put the match back on the list if the checksum 
+ *  fails for later matching 
+ */ 
+#define MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum,recvreq,hdr,csum,bytes_received) \
+if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
     /* failed the csum, put the request back on the list for         \
      * matching later on retransmission                              \
      */                                                              \
@@ -167,9 +172,12 @@ void mca_pml_dr_recv_request_ack(
     mca_bml_base_btl_t* bml_btl;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
+    bool do_csum;
     
     /* allocate descriptor */
     bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->base.btl_eager);
+    do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
     if(NULL == des) {
         return;
@@ -187,7 +195,7 @@ void mca_pml_dr_recv_request_ack(
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr = src_ptr;
     ack->hdr_dst_ptr.pval = recvreq;
-    ack->hdr_common.hdr_csum = (mca_pml_dr.enable_csum? 
+    ack->hdr_common.hdr_csum = (do_csum? 
                                 opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
                                 OPAL_CSUM_ZERO);
 
@@ -223,7 +231,10 @@ void mca_pml_dr_recv_request_progress(
      uint32_t csum = OPAL_CSUM_ZERO;
      uint64_t bit;
      mca_pml_dr_vfrag_t* vfrag;
+     bool do_csum = mca_pml_dr.enable_csum && 
+         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
 
+     
      for(i=0; i<num_segments; i++)
          bytes_received += segments[i].seg_len;
 
@@ -233,6 +244,7 @@ void mca_pml_dr_recv_request_progress(
              bytes_received -= sizeof(mca_pml_dr_match_hdr_t);
              recvreq->req_vfrag0.vf_send = hdr->hdr_match.hdr_src_ptr;
              MCA_PML_DR_RECV_REQUEST_BYTES_PACKED(recvreq, bytes_received);
+
              MCA_PML_DR_RECV_REQUEST_UNPACK(
                  recvreq,
                  segments,
@@ -242,7 +254,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
+             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum, recvreq,hdr,csum,bytes_received);
                 
              break;
 
@@ -260,7 +272,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             MCA_PML_DR_RECV_REQUEST_ACK(recvreq,hdr,csum,bytes_received);
+             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum, recvreq,hdr,csum,bytes_received);
              
             break;
 
@@ -295,7 +307,7 @@ void mca_pml_dr_recv_request_progress(
              * note that it might still fail the checksum though 
              */
             vfrag->vf_pending |= bit;
-            if(!mca_pml_dr.enable_csum || csum == hdr->hdr_frag.hdr_frag_csum) { 
+            if(!do_csum || csum == hdr->hdr_frag.hdr_frag_csum) { 
                 /* this part of the vfrag passed the checksum, 
                    mark it so that we ack it after receiving the 
                    entire vfrag */

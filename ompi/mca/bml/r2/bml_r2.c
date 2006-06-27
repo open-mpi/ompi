@@ -265,7 +265,9 @@ int mca_bml_r2_add_procs(
                     bml_endpoint->btl_rdma_size = -1;
                     bml_endpoint->super.proc_ompi = proc;
                     proc->proc_pml = (struct mca_pml_proc_t*) bml_endpoint; 
-                    
+                 
+                    bml_endpoint->btl_flags_and = 0;
+                    bml_endpoint->btl_flags_or = 0;
                 }
 
                 bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
@@ -324,6 +326,11 @@ int mca_bml_r2_add_procs(
                      */
                     bml_btl->btl_flags |= MCA_BTL_FLAGS_SEND;
                 }
+                /**
+                 * calculate the bitwise OR and AND of the btl flags 
+                 */
+                bml_endpoint->btl_flags_or |= bml_btl->btl_flags;
+                bml_endpoint->btl_flags_and &= bml_btl->btl_flags;
             }
         }
         if(btl_inuse > 0 && NULL != btl->btl_component->btl_progress) {
@@ -372,7 +379,7 @@ int mca_bml_r2_add_procs(
                 latency = btl->btl_latency;
             }
         }
-
+        
         /* (1) set the weight of each btl as a percentage of overall bandwidth
          * (2) copy all btl instances at the highest priority ranking into the
          *     list of btls used for first fragments
