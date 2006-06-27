@@ -299,9 +299,7 @@ for a full list); a summary of the more commonly used ones follows:
 --with-openib=<directory>
   Specify the directory where the Open Fabrics (previously known as
   OpenIB) libraries and header files are located.  This enables Open
-  Fabrics support in Open MPI.  This option will likely be be
-  deprecated in favor of "--with-openfrabrics" in a future version of
-  Open MPI.
+  Fabrics support in Open MPI.
 
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
