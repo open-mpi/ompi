@@ -19,12 +19,18 @@
 
 AUTOMAKE_OPTIONS	= foreign dist-bzip2
 
-# All we need from Open MPI is mpi.h, which is created by configure, so
-# is in the build tree.
+# $(top_ompi_srcdir)                - mca_base_param.h
+# $(top_ompi_srcdir)/opal/include   - opal_config_bottom.h
+# $(top_ompi_builddir)/opal/include - opal_config.h
+# $(top_ompi_builddir)/ompi/include - mpi.h
+# $(top_srcdir)/include             - vpath support
+# $(top_srcdir)/adio/include        - vpath support
+
 AM_CPPFLAGS = \
         -DOMPI_BUILDING=1 \
-        -I$(top_ompi_builddir) \
+        -I$(top_ompi_srcdir) \
+        -I$(top_ompi_srcdir)/opal/include \
         -I$(top_ompi_builddir)/opal/include \
-        -I$(top_ompi_builddir)/ompi/include
-#	-I$(top_srcdir)/include \
-#	-I$(top_srcdir)/adio/include
+        -I$(top_ompi_builddir)/ompi/include \
+	-I$(top_srcdir)/include \
+	-I$(top_srcdir)/adio/include
