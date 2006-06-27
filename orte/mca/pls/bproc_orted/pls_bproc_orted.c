@@ -573,7 +573,7 @@ int orte_pls_bproc_orted_signal_job(orte_jobid_t jobid, int32_t signal)
  * @param signal The signal to send
  * @retval ORTE_SUCCESS
  */
-int orte_pls_bproc_orted_terminate_proc(const orte_process_name_t* proc, int32_t signal)
+int orte_pls_bproc_orted_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
     return ORTE_SUCCESS;
 }
