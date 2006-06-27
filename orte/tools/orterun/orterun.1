@@ -206,6 +206,11 @@ the target process.  See the "Remote Execution" section, below.
 .
 .
 .TP
+.B -q\fR,\fP --quiet
+Suppress informative messages from orterun during application execution.
+.
+.
+.TP
 .B --tmpdir \fR<dir>\fP
 Set the root for the session directory tree for mpirun only.
 .
@@ -225,6 +230,10 @@ For this application, set the universe name as:
 .TP
 .B -v\fR,\fP --verbose
 Be verbose
+.TP
+.B -V\fR,\fP --version
+Print version number.  If no other arguments are given, this will also
+cause orterun to exit.
 .
 .
 .TP
@@ -475,6 +484,18 @@ receive the stream from \fImy_input\fP on stdin.  The stdin on all the other
 nodes will be tied to /dev/null.  However, the stdout from all nodes will
 be collected into the \fImy_output\fP file. 
 .
+.
+.
+.SS Signal Propagation
+.
+When orterun receives a SIGTERM and SIGINT, it will attempt to kill
+the entire job by sending all processes in the job a SIGTERM, waiting
+a small number of seconds, then sending all processes in the job a
+SIGKILL.
+.
+SIGUSR1 and SIGUSR2 signals received by orterun are propagated to
+all processes in the job.  Other signals are not currently propagated
+by orterun.
 .
 .
 .SS Process Termination / Signal Handling
