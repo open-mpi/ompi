@@ -155,9 +155,15 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
                 opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));
                 (fl)->fl_num_waiting--;
             } else {
-                ompi_free_list_grow((fl), (fl)->fl_num_per_alloc);
-                if( 0 < (fl)->fl_num_waiting ) {
-                    opal_condition_signal(&((fl)->fl_condition));
+                if(ompi_free_list_grow((fl), (fl)->fl_num_per_alloc)
+                        == OMPI_SUCCESS) {
+                    if( 0 < (fl)->fl_num_waiting ) {
+                        opal_condition_signal(&((fl)->fl_condition));
+                    }
+                } else {
+                    (fl)->fl_num_waiting++;
+                    opal_condition_wait(&((fl)->fl_condition), &((fl)->fl_lock));
+                    (fl)->fl_num_waiting--;
                 }
             }
         } else {
