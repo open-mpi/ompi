@@ -29,13 +29,15 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
     frag->hdr = (mca_btl_openib_header_t*) (frag+1);    /* initialize the btl header to start at end of frag */ 
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
     /* init the segment address to start after the btl header */ 
-    
-    frag->mr = registration->mr; 
+
+    if(registration) {    
+        frag->mr = registration->mr; 
+        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
+        frag->sg_entry.lkey = frag->mr->lkey;
+    }
     frag->segment.seg_len = frag->size;
-    frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->lkey; 
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
     frag->sg_entry.length = frag->size; 
-    frag->sg_entry.lkey = frag->mr->lkey; 
     frag->base.des_flags = 0; 
 }
 

@@ -615,7 +615,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                             mca_btl_openib_component.ib_free_list_num,
                             mca_btl_openib_component.ib_free_list_max,
                             mca_btl_openib_component.ib_free_list_inc,
-                            openib_btl->super.btl_mpool);
+                            NULL);
 
         orte_pointer_array_init(&openib_btl->eager_rdma_buffers, 
                 mca_btl_openib_component.max_eager_rdma,
