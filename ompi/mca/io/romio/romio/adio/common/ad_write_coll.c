@@ -77,7 +77,7 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     ADIO_Offset *offset_list = NULL, *st_offsets = NULL, *fd_start = NULL,
 	*fd_end = NULL, *end_offsets = NULL;
     int *buf_idx = NULL, *len_list = NULL;
-    char *value;
+    char value[MPI_MAX_INFO_VAL];
     int info_flag, ompi_parallel_opts = 0;
     unsigned long long min_pe_request = ULONG_MAX;
     unsigned long long max_pe_request =         0;
