@@ -374,6 +374,8 @@ int mca_pml_dr_send_request_start_buffered(
     int32_t free_after;
     int rc;
     uint32_t csum; 
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_rendezvous_hdr_t) + size);
@@ -446,7 +448,7 @@ int mca_pml_dr_send_request_start_buffered(
     hdr->hdr_match.hdr_csum = csum;
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+    hdr->hdr_common.hdr_csum = (do_csum ? 
                                 opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)) :
                                 OPAL_CSUM_ZERO);
     
@@ -489,7 +491,9 @@ int mca_pml_dr_send_request_start_copy(
     size_t max_data;
     int32_t free_after;
     int rc;
-    
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
+
     /* allocate descriptor */
     mca_bml_base_alloc(bml_btl, &descriptor, sizeof(mca_pml_dr_match_hdr_t) + size);
     if(NULL == descriptor) {
@@ -525,11 +529,11 @@ int mca_pml_dr_send_request_start_copy(
     hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = (size > 0 && mca_pml_dr.enable_csum ? 
+    hdr->hdr_match.hdr_csum = (size > 0 && do_csum ? 
                                sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO);
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
-    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+    hdr->hdr_common.hdr_csum = (do_csum ? 
                                 opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t)) :
                                 OPAL_CSUM_ZERO);
     
@@ -572,6 +576,8 @@ int mca_pml_dr_send_request_start_prepare(
     mca_btl_base_segment_t* segment;
     mca_pml_dr_hdr_t* hdr;
     int rc;
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
 
     /* prepare descriptor */
     mca_bml_base_prepare_src(
@@ -597,11 +603,11 @@ int mca_pml_dr_send_request_start_prepare(
     hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
-    hdr->hdr_match.hdr_csum = (size > 0 && mca_pml_dr.enable_csum ? 
+    hdr->hdr_match.hdr_csum = (size > 0 && do_csum ? 
                                sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO); 
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
-    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+    hdr->hdr_common.hdr_csum = (do_csum ? 
                                 opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t)) :
                                 OPAL_CSUM_ZERO);
 
@@ -640,7 +646,9 @@ int mca_pml_dr_send_request_start_rndv(
     mca_btl_base_segment_t* segment;
     mca_pml_dr_hdr_t* hdr;
     int rc;
-
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
+    
     
     /* prepare descriptor */
     if(size == 0) {
@@ -673,12 +681,13 @@ int mca_pml_dr_send_request_start_rndv(
     hdr->hdr_common.hdr_src = sendreq->req_endpoint->src;
     hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;
+    hdr->hdr_common.hdr_csum = 0;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
     hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;
     hdr->hdr_match.hdr_csum = size > 0 ? sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+    hdr->hdr_common.hdr_csum = (do_csum ? 
                                 opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)) :
                                 OPAL_CSUM_ZERO);
     
@@ -749,7 +758,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         size_t offset_in_msg = vfrag->vf_offset + offset_in_vfrag;
                         size_t size;
                         int rc;
-
+                        bool do_csum = mca_pml_dr.enable_csum && 
+                            (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
+                        
                         if(vfrag->vf_idx == vfrag->vf_len - 1) {
                             size = vfrag->vf_size - offset_in_vfrag;
                         } else {
@@ -790,7 +801,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                         hdr->hdr_frag_offset = offset_in_msg;
                         hdr->hdr_src_ptr.pval = vfrag;
                         hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
-                        hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                        hdr->hdr_common.hdr_csum = (do_csum ? 
                                                     opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)) : 
                                                     OPAL_CSUM_ZERO);
                         
@@ -841,11 +852,12 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 mca_bml_base_btl_t* bml_btl = NULL; 
                 mca_pml_dr_vfrag_t* vfrag = sendreq->req_vfrag;
                 size_t size = bytes_remaining;
-
+                
                 /* offset tells us how much of the vfrag has been scheduled */
                 size_t bytes_sent = sendreq->req_send_offset - vfrag->vf_offset;
                 int rc;
-
+                bool do_csum;
+                    
                 /* do we need to allocate a new vfrag 
                    (we scheduled all the vfrag already) */
                 if(vfrag->vf_size == bytes_sent) {
@@ -865,6 +877,9 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     bml_btl = vfrag->bml_btl;
                 }
 
+                do_csum = mca_pml_dr.enable_csum && 
+                    (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
+                
                 /* makes sure that we don't exceed vfrag size */
                 if (size > vfrag->vf_max_send_size) {
                     size = vfrag->vf_max_send_size;
@@ -903,12 +918,12 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 hdr->hdr_common.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
                 hdr->hdr_vlen = vfrag->vf_len;
                 hdr->hdr_frag_idx = vfrag->vf_idx;
-                hdr->hdr_frag_csum =  (mca_pml_dr.enable_csum ? 
+                hdr->hdr_frag_csum =  (do_csum ? 
                                        sendreq->req_send.req_convertor.checksum : OPAL_CSUM_ZERO);
                 hdr->hdr_frag_offset = sendreq->req_send_offset;
                 hdr->hdr_src_ptr.pval = vfrag;
                 hdr->hdr_dst_ptr = sendreq->req_vfrag0.vf_recv;
-                hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+                hdr->hdr_common.hdr_csum = (do_csum ? 
                                             opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t)): OPAL_CSUM_ZERO);
                 
                 assert(hdr->hdr_frag_offset < sendreq->req_send.req_bytes_packed);

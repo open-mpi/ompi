@@ -252,6 +252,8 @@ struct mca_bml_base_endpoint_t {
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
     mca_bml_base_endpoint_copy_fn_t copy;
+    uint32_t btl_flags_or;                      /**< the bitwise OR of the btl flags */
+    uint32_t btl_flags_and;                     /**< the bitwise AND of the btl flags */
 };
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
                               

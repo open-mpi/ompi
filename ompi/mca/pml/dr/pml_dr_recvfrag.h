@@ -66,7 +66,8 @@ do {                                                                    \
     uint32_t ui1 = 0;                                                   \
     uint32_t ui2 = 0;                                                   \
     mca_pml_dr_buffer_t** buffers = frag->buffers;                      \
-                                                                        \
+    bool do_csum = mca_pml_dr.enable_csum &&                            \
+        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);                     \
     /* init recv_frag */                                                \
     frag->btl = btl;                                                    \
     frag->hdr = *(mca_pml_dr_hdr_t*)hdr;                                \
@@ -83,7 +84,7 @@ do {                                                                    \
         buffers[i] = buff;                                              \
         frag->segments[i].seg_addr.pval = buff->addr;                   \
         frag->segments[i].seg_len = segs[i].seg_len;                    \
-        if( mca_pml_dr.enable_csum ) {                                  \
+        if( do_csum ) {                                                 \
             size_t hdr_len = 0;                                         \
             if( 0 == i ) {                                              \
                 hdr_len = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);\

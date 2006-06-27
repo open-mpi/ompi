@@ -28,6 +28,7 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/mca/bml/bml.h" 
+#include "ompi/mca/btl/btl.h"
 
 #include "pml_dr_proc.h"
 #include "pml_dr_comm.h"
@@ -99,6 +100,10 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
     sendmode,                                                                       \
     persistent)                                                                     \
 do {                                                                                \
+    mca_pml_dr_endpoint_t* endpoint =                                               \
+        (mca_pml_dr_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml;      \
+    bool do_csum = mca_pml_dr.enable_csum &&                                        \
+        (endpoint->base.btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);                    \
     /* increment reference counts */                                                \
     OBJ_RETAIN(comm);                                                               \
     OBJ_RETAIN(datatype);                                                           \
@@ -127,7 +132,7 @@ do {                                                                            
                             (sendreq)->req_send.req_base.req_datatype,              \
                             (sendreq)->req_send.req_base.req_count,                 \
                             (sendreq)->req_send.req_base.req_addr,                  \
-                            (mca_pml_dr.enable_csum ? CONVERTOR_WITH_CHECKSUM: 0),  \
+                            (do_csum ? CONVERTOR_WITH_CHECKSUM: 0),                 \
                             &(sendreq)->req_send.req_convertor );                   \
         ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
@@ -394,7 +399,8 @@ do {                                                                 \
         mca_bml_base_btl_array_get_next(&endpoint->base.btl_eager);  \
     mca_btl_base_descriptor_t *des_old, *des_new;                    \
     mca_pml_dr_hdr_t *hdr;                                           \
-                                                                     \
+    bool do_csum = mca_pml_dr.enable_csum &&                         \
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);              \
     MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: (re)transmitting rndv probe\n",   \
                         __FILE__, __LINE__, __func__));                 \
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);          \
@@ -418,7 +424,7 @@ do {                                                                 \
     hdr->hdr_match.hdr_csum = OPAL_CSUM_ZERO;                                   \
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;                       \
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;          \
-    hdr->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ?                        \
+    hdr->hdr_common.hdr_csum = (do_csum ?                                       \
           opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t)): OPAL_CSUM_ZERO); \
     des_new->des_flags = des_old->des_flags;                                    \
     des_new->des_cbdata = des_old->des_cbdata;                                  \

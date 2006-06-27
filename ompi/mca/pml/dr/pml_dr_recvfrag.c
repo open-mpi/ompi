@@ -40,14 +40,14 @@
 
 
     
-#define MCA_PML_DR_HDR_VALIDATE_ACK(hdr, type)                                                 \
+#define MCA_PML_DR_HDR_VALIDATE_ACK(do_csum, hdr, type)                                        \
 do {                                                                                           \
     mca_pml_dr_endpoint_t* ep;                                                                 \
-    if(mca_pml_dr.enable_csum) {                                                               \
+    if(do_csum) {                                                                              \
         uint16_t csum = opal_csum(hdr, sizeof(type));                                          \
         if(hdr->hdr_common.hdr_csum != csum) {                                                 \
-            MCA_PML_DR_DEBUG(0, (0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n", \
-                                 __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum)); \
+            MCA_PML_DR_DEBUG(0, (0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",      \
+                                 __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));         \
             return;                                                                            \
         }                                                                                      \
     }                                                                                          \
@@ -109,6 +109,8 @@ void mca_pml_dr_recv_frag_callback(
     mca_pml_dr_endpoint_t *ep;
     ompi_communicator_t* ompi_comm;
     uint16_t csum;
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
         return;
@@ -117,7 +119,7 @@ void mca_pml_dr_recv_frag_callback(
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
-            if(mca_pml_dr.enable_csum) { 
+            if(do_csum) { 
                 csum = opal_csum(hdr, sizeof(mca_pml_dr_match_hdr_t));                                              
                 if(hdr->hdr_common.hdr_csum != csum) {                                                     
                     MCA_PML_DR_DEBUG(0,(0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
@@ -160,18 +162,19 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_MATCH_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            MCA_PML_DR_HDR_VALIDATE_ACK(do_csum, hdr, mca_pml_dr_ack_hdr_t);
             mca_pml_dr_send_request_match_ack(btl, &hdr->hdr_ack);
             break;
         }
     case MCA_PML_DR_HDR_TYPE_RNDV:
         {
-            if(mca_pml_dr.enable_csum) { 
+            if(do_csum) {
                 csum = opal_csum(hdr, sizeof(mca_pml_dr_rendezvous_hdr_t));                                              
                 
                 if(hdr->hdr_common.hdr_csum != csum) {                                                     
                     MCA_PML_DR_DEBUG(0, (0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
                                          __FILE__, __LINE__, hdr->hdr_common.hdr_csum, csum));                              
+                    assert(0);
                     return;                                                                                
                 } 
             }
@@ -243,7 +246,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_RNDV_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            MCA_PML_DR_HDR_VALIDATE_ACK(do_csum, hdr, mca_pml_dr_ack_hdr_t);
             mca_pml_dr_send_request_rndv_ack(btl, &hdr->hdr_ack);
             break;
         }
@@ -251,7 +254,7 @@ void mca_pml_dr_recv_frag_callback(
         {
             mca_pml_dr_recv_request_t* recvreq;
             
-            if(mca_pml_dr.enable_csum) { 
+            if(do_csum) { 
                 csum = opal_csum(hdr, sizeof(mca_pml_dr_frag_hdr_t));                                              
                 if(hdr->hdr_common.hdr_csum != csum) {                                                     
                     MCA_PML_DR_DEBUG(0,(0, "%s:%d: invalid header checksum: 0x%04x != 0x%04x\n",                  
@@ -294,7 +297,7 @@ void mca_pml_dr_recv_frag_callback(
         }
     case MCA_PML_DR_HDR_TYPE_FRAG_ACK:
         {
-            MCA_PML_DR_HDR_VALIDATE_ACK(hdr, mca_pml_dr_ack_hdr_t);
+            MCA_PML_DR_HDR_VALIDATE_ACK(do_csum, hdr, mca_pml_dr_ack_hdr_t);
             mca_pml_dr_send_request_frag_ack(btl, &hdr->hdr_ack);
             break;
         }
@@ -608,6 +611,8 @@ bool mca_pml_dr_recv_frag_match(
     int rc;
     uint32_t csum;
     mca_pml_dr_endpoint_t* ep = (mca_pml_dr_endpoint_t*) proc->endpoint;
+    bool do_csum = mca_pml_dr.enable_csum && 
+        (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
     
     /* source sequence number */
     frag_msg_seq = hdr->hdr_seq;
@@ -684,7 +689,7 @@ rematch:
                 return rc;
             }
             MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
-            if(mca_pml_dr.enable_csum && csum != hdr->hdr_csum) { 
+            if(do_csum && csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
                 MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %d length %d)\n", 
@@ -720,7 +725,7 @@ rematch:
             return rc;
         }
         MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
-        if(mca_pml_dr.enable_csum && csum != hdr->hdr_csum) { 
+        if(do_csum && csum != hdr->hdr_csum) { 
             mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_pml, 
                                      &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
             MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
@@ -775,8 +780,11 @@ void mca_pml_dr_recv_frag_ack(
     mca_pml_dr_recv_frag_t* frag;
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
+    bool do_csum;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
-    
+    do_csum = mca_pml_dr.enable_csum && 
+        (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
+
     /* allocate descriptor */
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
     if(NULL == des) {
@@ -796,7 +804,7 @@ void mca_pml_dr_recv_frag_ack(
     ack->hdr_src_ptr.pval = src_ptr;
     assert(ack->hdr_src_ptr.pval);
     ack->hdr_dst_ptr.pval = NULL;
-    ack->hdr_common.hdr_csum = (mca_pml_dr.enable_csum ? 
+    ack->hdr_common.hdr_csum = (do_csum ? 
                                 opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
                                 OPAL_CSUM_ZERO);
     

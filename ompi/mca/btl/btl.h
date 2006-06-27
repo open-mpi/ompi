@@ -146,7 +146,7 @@ typedef uint8_t mca_btl_base_tag_t;
 
 /* btl transport is reliable */
 #define MCA_BTL_FLAGS_NEED_ACK 0x10
-#define MCA_BTL_FLAGS_NEED_CSUM 0xB
+#define MCA_BTL_FLAGS_NEED_CSUM 0x20
 
 /* Default exclusivity levels */
 #define MCA_BTL_EXCLUSIVITY_HIGH     64*1024   /* internal loopback */
