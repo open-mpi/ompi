@@ -333,7 +333,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         return rc;
     }
     
-    rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->ib_port_attr->lid, 1, ORTE_UINT16);
+    rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->lid, 1, ORTE_UINT16);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -354,7 +354,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
     BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
               endpoint->lcl_qp_hp->qp_num,
               endpoint->lcl_qp_lp->qp_num,
-              endpoint->endpoint_btl->ib_port_attr->lid));
+              endpoint->endpoint_btl->lid));
     
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
@@ -401,7 +401,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     
     /* Create the High Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
-                                                               openib_btl->ib_pd, 
+                                                               openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_hp, 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_hp, 
@@ -416,7 +416,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     
     /* Create the Low Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
-                                                               openib_btl->ib_pd, 
+                                                               openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_lp, 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_lp, 
@@ -431,7 +431,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_hp->qp_num,
               endpoint->lcl_qp_lp->qp_num, 
-              openib_btl->ib_port_attr->lid)); 
+              openib_btl->lid)); 
 
     /* Send connection info over to remote endpoint */
     endpoint->endpoint_state = MCA_BTL_IB_CONNECTING;
@@ -455,7 +455,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
         
     /* Create the High Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
-                                                               openib_btl->ib_pd, 
+                                                               openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_hp,  
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_hp, 
@@ -471,7 +471,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
     
     /* Create the Low Priority Queue Pair */
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
-                                                               openib_btl->ib_pd, 
+                                                               openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_lp, 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_lp, 
@@ -487,7 +487,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
     BTL_VERBOSE(("Initialized High Priority QP num = %d, Low Priority QP num = %d,  LID = %d",
               endpoint->lcl_qp_hp->qp_num,
               endpoint->lcl_qp_lp->qp_num, 
-              openib_btl->ib_port_attr->lid)); 
+              openib_btl->lid)); 
 
 
     /* Set the remote side info */
@@ -654,7 +654,8 @@ static void mca_btl_openib_endpoint_recv(
                 port_info = ib_proc->proc_ports[i]; 
                 ib_endpoint = ib_proc->proc_endpoints[i]; 
                 if(ib_endpoint->rem_info.rem_lid && 
-                   ib_endpoint->rem_info.rem_lid  == rem_info.rem_lid) { 
+                   (ib_endpoint->rem_info.rem_lid == rem_info.rem_lid && 
+                    ib_endpoint->rem_info.rem_qp_num_hp == rem_info.rem_qp_num_hp)) { 
                     /* we've seen them before! */ 
                     found = true; 
                     break;
@@ -992,7 +993,7 @@ int mca_btl_openib_endpoint_qp_init_query(
     attr->ah_attr.is_global = 0; 
     attr->ah_attr.dlid = rem_lid; 
     attr->ah_attr.sl = mca_btl_openib_component.ib_service_level; 
-    attr->ah_attr.src_path_bits = mca_btl_openib_component.ib_src_path_bits; 
+    attr->ah_attr.src_path_bits = openib_btl->src_path_bits;
     attr->ah_attr.port_num = port_num; 
     
     if(ibv_modify_qp(qp, attr, 
