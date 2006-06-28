@@ -1103,6 +1103,7 @@ AC_CONFIG_FILES([
     orte/tools/wrappers/Makefile
     orte/tools/wrappers/ortecc-wrapper-data.txt
     orte/tools/wrappers/ortec++-wrapper-data.txt
+    orte/tools/orte-ps/Makefile
 
     ompi/Makefile
     ompi/etc/Makefile

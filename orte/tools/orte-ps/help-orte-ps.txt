@@ -1,4 +1,4 @@
-# -*- makefile -*-
+# -*- text -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -16,23 +16,18 @@
 # 
 # $HEADER$
 #
+# This is the US/English help file for Open MPI PS tool
+#
+[usage]
+ompi-ps [OPTIONS]
+  Open MPI Job and Process Status Tool
 
-# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+%s
 
-SUBDIRS += \
-	tools/console \
-	tools/openmpi \
-	tools/orted \
-	tools/orteprobe \
-	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps
+[vpid-usage]
+Error: You specified a vpid (%d) without also specifying a jobid.
+       Use the '-j' option to specify a jobid.
 
-DIST_SUBDIRS += \
-	tools/console \
-	tools/openmpi \
-	tools/orted \
-	tools/orteprobe \
-	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps
+[invalid-vpid]
+Error: The specified vpid (%d) is not valid for job %d.
+
