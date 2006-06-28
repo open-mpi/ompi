@@ -213,11 +213,15 @@ mca_btl_base_descriptor_t* mca_btl_gm_alloc(
  * Return a segment
  */
 
-int mca_btl_gm_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des) 
+int mca_btl_gm_free( struct mca_btl_base_module_t* btl, 
+		     mca_btl_base_descriptor_t* des )
 {
-    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des;
+
+    if( NULL != frag->registration ) {
+        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->registration);
+    }
+
     MCA_BTL_GM_FRAG_RETURN(btl, frag); 
     return OMPI_SUCCESS; 
 }
@@ -296,12 +300,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
 
-        rc = mpool->mpool_register(
-                                   mpool,
-                                   iov.iov_base,
-                                   max_data,
-                                   0,
-                                   &registration);
+        rc = mpool->mpool_register( mpool, iov.iov_base, max_data, 0, &registration );
 
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_GM_FRAG_RETURN(btl,frag);
@@ -324,10 +323,10 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag) {
             return NULL;
         }
-                                                                                                    
+
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
+
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         *size  = max_data;
         if( rc < 0 ) {
