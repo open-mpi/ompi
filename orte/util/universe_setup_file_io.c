@@ -97,7 +97,7 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
     } else {
         fprintf(fp, "%s\n", info->seed_uri);
     }
-    
+
     fclose(fp);
 
     return ORTE_SUCCESS;
@@ -109,9 +109,6 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
     FILE *fp;
     int rc;
 
-    /* initialize the universe structure */
-    memset(info, 0, sizeof(orte_universe_t));
-    
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
 	   fp = fopen(filename, "r");

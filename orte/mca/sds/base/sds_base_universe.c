@@ -40,8 +40,8 @@ orte_sds_base_basic_contact_universe(void)
 {
     int ret, rc, exit_if_not_exist;
     orte_universe_t univ;
-    char *universe;
-    pid_t pid;
+    
+    OBJ_CONSTRUCT(&univ, orte_universe_t);
 
     /* if we were NOT given registry and name service replicas (i.e., we
      * weren't told a universe contact point), check for some
@@ -49,15 +49,19 @@ orte_sds_base_basic_contact_universe(void)
     if (NULL == orte_process_info.ns_replica_uri || NULL == orte_process_info.gpr_replica_uri) {
         if (ORTE_SUCCESS == (ret = orte_universe_exists(&univ))) {
             /* copy universe info into our universe structure */
-            orte_universe_info.name = univ.name;
-            orte_universe_info.host = univ.host;
-            orte_universe_info.uid = univ.uid;
+            orte_universe_info.name = strdup(univ.name);
+            orte_universe_info.host = strdup(univ.host);
+            orte_universe_info.uid  = strdup(univ.uid);
             orte_universe_info.persistence = univ.persistence;
-            orte_universe_info.scope = univ.scope;
-            orte_universe_info.console = univ.console;
-            orte_universe_info.seed_uri = univ.seed_uri;
+            orte_universe_info.scope = strdup(univ.scope);
+            /* JJH XXX This will inadvertently overwrite the console MCA param */
+            /* orte_universe_info.console = univ.console; JJH XXX */
+            orte_universe_info.seed_uri = strdup(univ.seed_uri);
             orte_universe_info.console_connected = univ.console_connected;
-            orte_universe_info.scriptfile = univ.scriptfile;
+            if( NULL != univ.scriptfile)
+                orte_universe_info.scriptfile = strdup(univ.scriptfile);
+            else 
+                orte_universe_info.scriptfile = NULL;
             /* define the replica contact points */
             orte_process_info.ns_replica_uri = strdup(univ.seed_uri);
             orte_process_info.gpr_replica_uri = strdup(univ.seed_uri);
@@ -80,33 +84,11 @@ orte_sds_base_basic_contact_universe(void)
                 return ORTE_ERR_UNREACH;
             }
             if (ORTE_ERR_NOT_FOUND != ret) {
-                /* if it exists but no contact could be established,
-                 * we first check to see if this was a default universe
-                 * or one that the user specifically requested. If
-                 * it's the default, then we quietly generate a unique
-                 * new name and start a new universe behind the scenes.
-                 * If it was not the default (i.e., the user specifically
-                 * directed us to a named universe), then we return an
-                 * error code and abort.
-                 */
-                if (0 == strcmp(ORTE_DEFAULT_UNIVERSE, orte_universe_info.name)) {
-                    /* default universe - generate unique name and proceed */
-                    universe = strdup(orte_universe_info.name);
-                    free(orte_universe_info.name);
-                    orte_universe_info.name = NULL;
-                    pid = getpid();
-                    if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, (int)pid)) {
-                        opal_output(0, "orte_init: failed to create unique universe name");
-                        free(universe);
-                        return ret;
-                    }
-                    free(universe);
-                } else { /* user-specified name - abort */
+                /* user-specified name - abort */
                     opal_output(0, "orte_init: could not contact the specified universe name %s",
                         orte_universe_info.name);
                     return ORTE_ERR_UNREACH;
                 }
-            }
             orte_process_info.seed = true;
             /* since we are seed, ensure that all replica info is NULL'd */
             if (NULL != orte_process_info.ns_replica_uri) {
@@ -128,6 +110,8 @@ orte_sds_base_basic_contact_universe(void)
             }
         }
     }
+
+    OBJ_DESTRUCT(&univ);
 
     return ORTE_SUCCESS;
 }

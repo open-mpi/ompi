@@ -136,6 +136,17 @@ OMPI_DECLSPEC	 int orte_monitor_procs_registered(void);
 OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
 
     /**
+     * Obtain a listing of all the universes on the machine
+     * 
+     * @param univ_list An opal_list_t is returned to the user.
+     *        This is not initalized in the function, the caller retains
+     *        the responsibility for this variable.
+     * @retval ORTE_SUCCESS Upon successful search.
+     * @retval ORTE_ERROR Upon unsuccessful search.
+     */
+    OMPI_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
+
+    /**
      * Check for universe existence
      *
      * Checks to see if a specified universe exists. If so, attempts
