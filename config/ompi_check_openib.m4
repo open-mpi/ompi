@@ -30,8 +30,7 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
              [Build OpenIB (InfiniBand) support, searching for libraries in DIR])])
     AC_ARG_WITH([openib-libdir],
        [AC_HELP_STRING([--with-openib-libdir=DIR],
-             [Search for OpenIB (InfiniBand) libraries in DIR/lib and DIR/lib64 
-               in addition to other search paths])])
+             [Search for OpenIB (InfiniBand) libraries in DIR])])
 
     AS_IF([test ! -z "$with_openib" -a "$with_openib" != "yes"],
           [ompi_check_openib_dir="$with_openib"])

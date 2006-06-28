@@ -54,7 +54,7 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_HEADER], [
 
 
 # _OMPI_CHECK_PACKAGE_LIB(prefix, library, function, extra-libraries,
-#                         dir-prefix, libdir-prefix,
+#                         dir-prefix, libdir,
 #                         [action-if-found], [action-if-not-found]])
 # --------------------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
@@ -69,48 +69,57 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
     unset ompi_Lib
     ompi_check_package_lib_happy="no"
     AS_IF([test "$6" != ""],
-          [ompi_check_package_libdir="$6"],
-          [ompi_check_package_libdir="$5"])
-
-    AS_IF([test "$ompi_check_package_libdir" = "" -o "$ompi_check_package_libdir" = "/usr" -o "$ompi_check_package_libdir" = "/usr/local"],
-          [ # try as is...
-           AC_VERBOSE([looking for library without search path])
+          [ # libdir was specified - search only there
+           $1_LDFLAGS="$$1_LDFLAGS -L$6"
+           LDFLAGS="$LDFLAGS -L$6"
            AC_CHECK_LIB([$2], [$3], 
                         [ompi_check_package_lib_happy="yes"], 
                         [ompi_check_package_lib_happy="no"], [$4])
            AS_IF([test "$ompi_check_package_lib_happy" = "no"],
-                 [ # no go on the as is..  see what happens later...
-                  LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+                 [LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
                   $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
-                  unset ompi_Lib])])
+                  unset ompi_Lib])],
+          [ # libdir was not specified - go through search path
+           ompi_check_package_libdir="$5"
+           AS_IF([test "$ompi_check_package_libdir" = "" -o "$ompi_check_package_libdir" = "/usr" -o "$ompi_check_package_libdir" = "/usr/local"],
+               [ # try as is...
+                AC_VERBOSE([looking for library without search path])
+                AC_CHECK_LIB([$2], [$3], 
+                        [ompi_check_package_lib_happy="yes"], 
+                        [ompi_check_package_lib_happy="no"], [$4])
+                AS_IF([test "$ompi_check_package_lib_happy" = "no"],
+                    [ # no go on the as is..  see what happens later...
+                     LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+                     $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
+                     unset ompi_Lib])])
 
-    AS_IF([test "$ompi_check_package_lib_happy" = "no"],
-          [AS_IF([test "$ompi_check_package_libdir" != ""],
-                 [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib"
-                  LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib"
-                  AC_VERBOSE([looking for library in lib])
-                  AC_CHECK_LIB([$2], [$3], 
+           AS_IF([test "$ompi_check_package_lib_happy" = "no"],
+               [AS_IF([test "$ompi_check_package_libdir" != ""],
+                    [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib"
+                     LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib"
+                     AC_VERBOSE([looking for library in lib])
+                     AC_CHECK_LIB([$2], [$3], 
                                [ompi_check_package_lib_happy="yes"], 
                                [ompi_check_package_lib_happy="no"], [$4])
-                  AS_IF([test "$ompi_check_package_lib_happy" = "no"],
-                        [ # no go on the as is..  see what happens later...
-                         LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
-                         $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
-                         unset ompi_Lib])])])
+                     AS_IF([test "$ompi_check_package_lib_happy" = "no"],
+                         [ # no go on the as is..  see what happens later...
+                          LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+                          $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
+                          unset ompi_Lib])])])
 
-    AS_IF([test "$ompi_check_package_lib_happy" = "no"],
-          [AS_IF([test "$ompi_check_package_libdir" != ""],
-                 [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib64"
-                  LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib64"
-                  AC_VERBOSE([looking for library in lib64])
-                  AC_CHECK_LIB([$2], [$3], 
+           AS_IF([test "$ompi_check_package_lib_happy" = "no"],
+               [AS_IF([test "$ompi_check_package_libdir" != ""],
+                    [$1_LDFLAGS="$$1_LDFLAGS -L$ompi_check_package_libdir/lib64"
+                     LDFLAGS="$LDFLAGS -L$ompi_check_package_libdir/lib64"
+                     AC_VERBOSE([looking for library in lib64])
+                     AC_CHECK_LIB([$2], [$3], 
                                [ompi_check_package_lib_happy="yes"], 
                                [ompi_check_package_lib_happy="no"], [$4])
-                  AS_IF([test "$ompi_check_package_lib_happy" = "no"],
-                        [ # no go on the as is..  see what happens later...
-                         LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
-                         $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
-                         unset ompi_Lib])])])
+                     AS_IF([test "$ompi_check_package_lib_happy" = "no"],
+                         [ # no go on the as is..  see what happens later...
+                          LDFLAGS="$ompi_check_package_$1_save_LDFLAGS"
+                          $1_LDFLAGS="$ompi_check_package_$1_orig_LDFLAGS"
+                          unset ompi_Lib])])])])
 
     AS_IF([test "$ompi_check_package_lib_happy" = "yes"],
           [$7], [$8])
@@ -119,8 +128,13 @@ AC_DEFUN([_OMPI_CHECK_PACKAGE_LIB], [
 ])
     
 
-# OMPI_CHECK_PACKAGE(prefix, header, library, function, extra-libraries, 
-#                    dir-prefix, libdir-prefix,
+# OMPI_CHECK_PACKAGE(prefix, 
+#                    header, 
+#                    library, 
+#                    function, 
+#                    extra-libraries, 
+#                    dir-prefix,
+#                    libdir-prefix,
 #                    [action-if-found], [action-if-not-found]
 # -----------------------------------------------------------
 # check for package defined by header and libs, and probably
