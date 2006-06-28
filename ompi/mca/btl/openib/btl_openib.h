@@ -25,6 +25,7 @@
 /* Standard system includes */
 #include <sys/types.h>
 #include <string.h>
+#include <infiniband/verbs.h>
 
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
@@ -114,11 +115,12 @@ struct mca_btl_openib_component_t {
     uint32_t ib_max_rdma_dst_ops; 
     uint32_t ib_service_level; 
     uint32_t ib_static_rate; 
-    uint32_t ib_src_path_bits; 
     uint32_t use_eager_rdma;
     uint32_t eager_rdma_threshold;
     uint32_t eager_rdma_num;
     uint32_t max_eager_rdma;
+    uint32_t btls_per_lid;
+    uint32_t max_lmc;
 
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
@@ -127,7 +129,15 @@ extern mca_btl_openib_component_t mca_btl_openib_component;
 typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
     
 
-
+struct mca_btl_openib_hca_t {
+    struct ibv_device *ib_dev;  /* the ib device */
+    struct ibv_context *ib_dev_context;
+    struct ibv_device_attr ib_dev_attr;
+    struct ibv_pd *ib_pd;
+    mca_mpool_base_module_t *mpool;
+    uint8_t btls;              /** < number of btls using this HCA */
+};
+typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
 /**
  * IB PTL Interface
  */
@@ -136,14 +146,14 @@ struct mca_btl_openib_module_t {
     bool btl_inited; 
     mca_btl_openib_recv_reg_t ib_reg[256]; 
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet right now */ 
+    mca_btl_openib_hca_t *hca;
     uint8_t port_num;           /**< ID of the PORT */ 
-    struct ibv_device *ib_dev;  /* the ib device */ 
-    struct ibv_context *ib_dev_context; 
-    struct ibv_pd *ib_pd; 
     struct ibv_cq *ib_cq_hp;
     struct ibv_cq *ib_cq_lp; 
-    struct ibv_port_attr* ib_port_attr; 
+    struct ibv_port_attr ib_port_attr; 
     struct ibv_recv_wr* rd_desc_post;
+    uint16_t lid;                      /**< lid that is actually used (for LMC) */
+    uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
     ompi_free_list_t send_free_eager;  /**< free list of eager buffer descriptors */
     ompi_free_list_t send_free_max;    /**< free list of max buffer descriptors */ 

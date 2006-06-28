@@ -182,8 +182,6 @@ int mca_btl_openib_component_open(void)
                                       0, (int*) &mca_btl_openib_component.ib_service_level); 
     mca_btl_openib_param_register_int("ib_static_rate", "IB static rate", 
                                       0, (int*) &mca_btl_openib_component.ib_static_rate); 
-    mca_btl_openib_param_register_int("ib_src_path_bits", "IB source path bits", 
-                                      0, (int*) &mca_btl_openib_component.ib_src_path_bits); 
     mca_btl_openib_param_register_int ("exclusivity", "BTL exclusivity", 
                                        MCA_BTL_EXCLUSIVITY_DEFAULT, (int*) &mca_btl_openib_module.super.btl_exclusivity);
     mca_btl_openib_param_register_int("rd_num", "number of receive descriptors to post to a QP",
@@ -211,6 +209,10 @@ int mca_btl_openib_component_open(void)
     mca_btl_openib_param_register_int("eager_rdma_num", "Number of RDMA buffers for eager messages",
                                       16, (int*)&mca_btl_openib_component.eager_rdma_num);
     mca_btl_openib_component.eager_rdma_num+=1;
+    mca_btl_openib_param_register_int("btls_per_lid", "Number of BTLs to create for each LID",
+                                      1, (int*)&mca_btl_openib_component.btls_per_lid);
+    mca_btl_openib_param_register_int("max_lmc", "Maximum LIDs to use for each port (0 - all available)",
+                                      0, (int*)&mca_btl_openib_component.max_lmc); 
     mca_btl_openib_param_register_int ("eager_limit", "eager send limit", 
                                        (12*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
     mca_btl_openib_param_register_int ("min_send_size", "minimum send size", 
@@ -321,8 +323,130 @@ static void mca_btl_openib_control(
     }
 }
 
+static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
+        uint8_t port_num, struct ibv_port_attr *ib_port_attr)
+{
+    uint16_t lid, i, lmc;
+    mca_btl_openib_module_t *openib_btl;
+    mca_btl_base_selected_module_t *ib_selected;
 
+    lmc = (1 << ib_port_attr->lmc);
 
+    if(mca_btl_openib_component.max_lmc && 
+            mca_btl_openib_component.max_lmc < lmc)
+        lmc = mca_btl_openib_component.max_lmc;
+
+    for(lid = ib_port_attr->lid;
+            lid < ib_port_attr->lid + lmc; lid++){
+        for(i = 0; i < mca_btl_openib_component.btls_per_lid; i++){
+            openib_btl = malloc(sizeof(mca_btl_openib_module_t));
+            if(NULL == openib_btl) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return -1;
+            }
+            memcpy(openib_btl, &mca_btl_openib_module,
+                    sizeof(mca_btl_openib_module));
+            memcpy(&openib_btl->ib_port_attr, ib_port_attr,
+                    sizeof(struct ibv_port_attr));
+            ib_selected = OBJ_NEW(mca_btl_base_selected_module_t);
+            ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl;
+            openib_btl->hca = hca;
+            openib_btl->port_num = (uint8_t) port_num;
+            openib_btl->lid = lid;
+            openib_btl->src_path_bits = lid - ib_port_attr->lid;
+            /* store the sm_lid for multi-nic support */
+            openib_btl->port_info.subnet = ib_port_attr->sm_lid;
+            openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc =
+               mca_btl_openib_control;
+            openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
+            opal_list_append(btl_list, (opal_list_item_t*) ib_selected);
+            hca->btls++;
+            if(++mca_btl_openib_component.ib_num_btls >=
+                    mca_btl_openib_component.ib_max_btls)
+                return 0;
+        }
+    }
+
+    return 1;
+}
+
+static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
+{
+    struct mca_mpool_base_resources_t mpool_resources;
+    mca_btl_openib_hca_t *hca;
+    uint8_t i;
+    int ret = -1;
+
+    hca = malloc(sizeof(mca_btl_openib_hca_t));
+    if(NULL == hca){
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return -1;
+    }
+    
+    hca->ib_dev = ib_dev;
+    hca->ib_dev_context = ibv_open_device(ib_dev);
+    hca->btls = 0;
+    if(NULL == hca->ib_dev_context){ 
+        BTL_ERROR(("error obtaining device context for %s errno says %s\n",
+                    ibv_get_device_name(ib_dev), strerror(errno))); 
+        goto free_hca;
+    } 
+       
+    if(ibv_query_device(hca->ib_dev_context, &hca->ib_dev_attr)){ 
+        BTL_ERROR(("error obtaining device attributes for %s errno says %s\n",
+                    ibv_get_device_name(ib_dev), strerror(errno))); 
+        goto close_hca;
+    }
+
+    hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
+    if(NULL == hca->ib_pd){
+        BTL_ERROR(("error allocating pd for %s errno says %s\n",
+                    ibv_get_device_name(ib_dev), strerror(errno)));
+        goto close_hca;
+    }
+
+    mpool_resources.ib_pd = hca->ib_pd;
+    hca->mpool =
+        mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
+                hca, &mpool_resources);
+    if(NULL == hca->mpool){
+         BTL_ERROR(("error creating IB memory pool for %s errno says %s\n",
+                     ibv_get_device_name(ib_dev), strerror(errno)));
+         goto dealloc_pd;
+    }
+   
+    ret = 1; 
+    /* Note ports are 1 based hence j = 1 */
+    for(i = 1; i <= hca->ib_dev_attr.phys_port_cnt; i++){
+        struct ibv_port_attr ib_port_attr;
+
+        if(ibv_query_port(hca->ib_dev_context, i, &ib_port_attr)){
+            BTL_ERROR(("error getting port attributes for device %s "
+                        "port number %d errno says %s",
+                        ibv_get_device_name(ib_dev), i, strerror(errno)));
+            break; 
+        }
+
+        if(IBV_PORT_ACTIVE == ib_port_attr.state){
+            ret = init_one_port(btl_list, hca, i, &ib_port_attr);
+
+            if (ret <= 0)
+                break;
+        }
+    }
+
+    if (hca->btls != 0)
+        return ret;
+
+    mca_mpool_base_module_destroy(hca->mpool);
+dealloc_pd:
+    ibv_dealloc_pd(hca->ib_pd);
+close_hca:
+    ibv_close_device(hca->ib_dev_context);
+free_hca:
+    free(hca);
+    return ret;
+}
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters
@@ -337,16 +461,15 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 {
     struct ibv_device **ib_devs; 
     mca_btl_base_module_t** btls;
-    int i,j, length, num_devs;
-    struct mca_mpool_base_resources_t mpool_resources; 
+    int i, length, num_devs;
     opal_list_t btl_list; 
     mca_btl_openib_module_t * openib_btl; 
     mca_btl_base_selected_module_t* ib_selected; 
     opal_list_item_t* item; 
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST == 0
     struct dlist *dev_list; 
-#endif
     struct ibv_device* ib_dev; 
+#endif
     unsigned short seedv[3];
     
 
@@ -415,73 +538,23 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
 
     for(i = 0; i < num_devs 
-            && mca_btl_openib_component.ib_num_btls < mca_btl_openib_component.ib_max_btls; i++){  
-        struct ibv_device_attr ib_dev_attr; 
-        struct ibv_context* ib_dev_context;
- 
-        ib_dev = ib_devs[i]; 
+            && mca_btl_openib_component.ib_num_btls <
+            mca_btl_openib_component.ib_max_btls; i++){
+      if (init_one_hca(&btl_list, ib_devs[i]) <= 0)
+         break;
+    } 
         
-        ib_dev_context = ibv_open_device(ib_dev); 
-        if(!ib_dev_context) { 
-            BTL_ERROR((" error obtaining device context for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno))); 
-            return NULL; 
-        } 
-       
-        if(ibv_query_device(ib_dev_context, &ib_dev_attr)){ 
-            BTL_ERROR(("error obtaining device attributes for %s errno says %s\n", ibv_get_device_name(ib_dev), strerror(errno))); 
-            return NULL; 
-        } 
-        
-        
-        /* Note ports are 1 based hence j = 1 */
-        
-        for(j = 1; j <= ib_dev_attr.phys_port_cnt; j++){ 
-            struct ibv_port_attr* ib_port_attr; 
-            ib_port_attr = (struct ibv_port_attr*) malloc(sizeof(struct ibv_port_attr)); 
-            if(ibv_query_port(ib_dev_context, (uint8_t) j, ib_port_attr)){ 
-                BTL_ERROR(("error getting port attributes for device %s port number %d errno says %s", 
-                          ibv_get_device_name(ib_dev), j, strerror(errno))); 
-                return NULL; 
-            }
-
-            if( IBV_PORT_ACTIVE == ib_port_attr->state ){ 
-                
-                openib_btl = (mca_btl_openib_module_t*) malloc(sizeof(mca_btl_openib_module_t)); 
-                memcpy(openib_btl, &mca_btl_openib_module, sizeof(mca_btl_openib_module));
-                 
-                 ib_selected = OBJ_NEW(mca_btl_base_selected_module_t); 
-                 ib_selected->btl_module = (mca_btl_base_module_t*) openib_btl; 
-                 openib_btl->ib_dev = ib_dev; 
-                 openib_btl->ib_dev_context = ib_dev_context; 
-                 openib_btl->port_num = (uint8_t) j; 
-                 openib_btl->ib_port_attr = ib_port_attr; 
-                 openib_btl->port_info.subnet = ib_port_attr->sm_lid; /* store the sm_lid for multi-nic support */
-                 openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = mca_btl_openib_control;
-                 openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
-
-                 opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
-                 if(++mca_btl_openib_component.ib_num_btls >= mca_btl_openib_component.ib_max_btls)
-                     break;
-                 
-            } 
-            else{
-                free(ib_port_attr); 
-            } 
-        }
- 
-    }
-    
-    
     /* Allocate space for btl modules */
-    mca_btl_openib_component.openib_btls = (mca_btl_openib_module_t*) malloc(sizeof(mca_btl_openib_module_t) * 
-                                                                             mca_btl_openib_component.ib_num_btls);
+    mca_btl_openib_component.openib_btls =
+        malloc(sizeof(mca_btl_openib_module_t) *
+                mca_btl_openib_component.ib_num_btls);
     
     if(NULL == mca_btl_openib_component.openib_btls) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
     }
-    btls = (struct mca_btl_base_module_t**) 
-        malloc(mca_btl_openib_component.ib_num_btls * sizeof(struct mca_btl_openib_module_t*));
+    btls = malloc(mca_btl_openib_component.ib_num_btls *
+            sizeof(struct mca_btl_openib_module_t*));
     if(NULL == btls) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return NULL;
@@ -493,15 +566,18 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         item = opal_list_remove_first(&btl_list); 
         ib_selected = (mca_btl_base_selected_module_t*)item; 
         openib_btl = (mca_btl_openib_module_t*) ib_selected->btl_module; 
-        memcpy(&(mca_btl_openib_component.openib_btls[i]), openib_btl , sizeof(mca_btl_openib_module_t)); 
+        memcpy(&(mca_btl_openib_component.openib_btls[i]), openib_btl,
+                sizeof(mca_btl_openib_module_t)); 
         free(ib_selected); 
         free(openib_btl); 
 
         openib_btl = &mca_btl_openib_component.openib_btls[i];
-        openib_btl->rd_num = mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv;
+        openib_btl->rd_num = mca_btl_openib_component.rd_num +
+            mca_btl_openib_component.rd_rsv;
         openib_btl->rd_low = mca_btl_openib_component.rd_low;
         openib_btl->num_peers = 0; 
-        openib_btl->sd_tokens_hp = openib_btl->sd_tokens_lp = mca_btl_openib_component.srq_sd_max;
+        openib_btl->sd_tokens_hp = openib_btl->sd_tokens_lp =
+            mca_btl_openib_component.srq_sd_max;
 
         /* Initialize module state */
 
@@ -518,25 +594,15 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
         if(mca_btl_openib_module_init(openib_btl) != OMPI_SUCCESS) {
 #if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
-	    ibv_free_device_list(ib_devs);
+    	    ibv_free_device_list(ib_devs);
 #else
-	    free(ib_devs);
+    	    free(ib_devs);
 #endif
-	    return NULL;
+    	    return NULL;
         }
 	
-        mpool_resources.ib_pd = openib_btl->ib_pd; 
-                
         /* initialize the memory pool using the hca */ 
-        openib_btl->super.btl_mpool = 
-            mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
-                                         &openib_btl->super, 
-                                         &mpool_resources); 
-        
-        if(NULL == openib_btl->super.btl_mpool) { 
-            BTL_ERROR(("error creating vapi memory pool! aborting openib btl initialization")); 
-            return NULL; 
-        }
+        openib_btl->super.btl_mpool = openib_btl->hca->mpool;
 
         /* Initialize pool of send fragments */ 
         length = sizeof(mca_btl_openib_frag_t) + 
