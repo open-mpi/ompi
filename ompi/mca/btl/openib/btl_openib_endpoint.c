@@ -167,7 +167,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE;
         MCA_BTL_OPENIB_RDMA_FRAG_SET_SIZE(ftr, frag->sg_entry.length);
         MCA_BTL_OPENIB_RDMA_MAKE_LOCAL(ftr);
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
         ((mca_btl_openib_footer_t*)(((char*)frag->segment.seg_addr.pval) +
                                     frag->segment.seg_len))->seq = 
             endpoint->eager_rdma_remote.seq++;

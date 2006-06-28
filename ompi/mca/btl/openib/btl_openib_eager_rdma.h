@@ -25,7 +25,7 @@ struct mca_btl_openib_eager_rdma_local_t {
 	uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
 	int32_t credits; /**< number of RDMA credits */
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
 	opal_mutex_t lock; /**< guard access to RDMA buffer */
@@ -37,7 +37,7 @@ struct mca_btl_openib_eager_rdma_remote_t {
 	uint32_t rkey; /**< RKey for accessing remote buffer */
 	uint16_t head; /**< RDMA buffer to post to */
 	int32_t tokens; /**< number of rdam tokens */
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
 };
