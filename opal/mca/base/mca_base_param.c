@@ -477,6 +477,15 @@ int mca_base_param_unset(int index)
 }
 
 
+char *mca_base_param_env_var(const char *param_name)
+{
+    char *name;
+
+    asprintf(&name, "%s%s", mca_prefix, param_name);
+
+    return name;
+}
+
 /*
  * Make a string suitable for the environment, setting an MCA param
  */
