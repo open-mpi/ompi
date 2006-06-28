@@ -18,22 +18,22 @@
 
 #include "btl_gm_frag.h" 
 
-static void mca_btl_gm_frag_common_constructor(mca_btl_gm_frag_t* frag) 
-{ 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
-}
+#define MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag) \
+do {                                             \
+    frag->base.des_src = NULL;                   \
+    frag->base.des_src_cnt = 0;                  \
+    frag->base.des_dst = NULL;                   \
+    frag->base.des_dst_cnt = 0;                  \
+    frag->registration = NULL;                   \
+} while(0)
 
 static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag) 
 { 
     frag->hdr = (mca_btl_base_header_t*)(frag + 1);
     frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_eager_limit - sizeof(mca_btl_base_header_t);
-    frag->registration = NULL;
-    frag->size = mca_btl_gm_component.gm_eager_frag_size;  
-    mca_btl_gm_frag_common_constructor(frag); 
+    frag->size = mca_btl_gm_component.gm_eager_frag_size;
+    MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);
 }
 
 static void mca_btl_gm_frag_max_constructor(mca_btl_gm_frag_t* frag) 
@@ -41,16 +41,15 @@ static void mca_btl_gm_frag_max_constructor(mca_btl_gm_frag_t* frag)
     frag->hdr = (mca_btl_base_header_t*)(frag + 1);
     frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_max_send_size - sizeof(mca_btl_base_header_t);
-    frag->registration = NULL;
     frag->size = mca_btl_gm_component.gm_max_frag_size;
-    mca_btl_gm_frag_common_constructor(frag); 
+    MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);
 }
 
 static void mca_btl_gm_frag_user_constructor(mca_btl_gm_frag_t* frag) 
 { 
     frag->hdr = NULL;
     frag->size = 0; 
-    mca_btl_gm_frag_common_constructor(frag); 
+    MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);
 }
 
 
