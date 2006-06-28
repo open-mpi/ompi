@@ -79,8 +79,7 @@ AC_DEFUN([OMPI_CHECK_MX],[
              [Build MX (Myrinet Express) support, searching for libraries in DIR])])
     AC_ARG_WITH([mx-libdir],
         [AC_HELP_STRING([--with-mx-libdir=DIR],
-             [Search for MX (Myrinet Express) libraries in DIR/lib and DIR/lib64 
-               in addition to other search paths])])
+             [Search for MX (Myrinet Express) libraries in DIR])])
 
     ompi_check_mx_$1_save_CPPFLAGS="$CPPFLAGS"
     ompi_check_mx_$1_save_LDFLAGS="$LDFLAGS"

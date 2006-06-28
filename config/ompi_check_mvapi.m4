@@ -29,8 +29,7 @@ AC_DEFUN([OMPI_CHECK_MVAPI],[
              [Build MVAPI (InfiniBand) support, searching for libraries in DIR])])
     AC_ARG_WITH([mvapi-libdir],
        [AC_HELP_STRING([--with-mvapi-libdir=DIR],
-             [Search for MVAPI (InfiniBand) libraries in DIR/lib and DIR/lib64 
-               in addition to other search paths])])
+             [Search for MVAPI (InfiniBand) libraries in DIR])])
 
     AS_IF([test ! -z "$with_mvapi" -a "$with_mvapi" != "yes"],
           [ompi_check_mvapi_dir="$with_mvapi"])

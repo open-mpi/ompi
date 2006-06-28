@@ -288,18 +288,38 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the GM libraries and header files are
   located.  This enables GM support in Open MPI.
 
+--with-gm-libdir=<directory>
+  Look in directory for the GM libraries.  By default, Open MPI will
+  look in <gm directory>/lib and <gm directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
+
 --with-mx=<directory>
   Specify the directory where the MX libraries and header files are
   located.  This enables MX support in Open MPI.
+
+--with-mx-libdir=<directory>
+  Look in directory for the MX libraries.  By default, Open MPI will
+  look in <mx directory>/lib and <mx directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
 
 --with-mvapi=<directory>
   Specify the directory where the mVAPI libraries and header files are
   located.  This enables mVAPI support in Open MPI.
 
+--with-mvapi-libdir=<directory>
+  Look in directory for the MVAPI libraries.  By default, Open MPI will
+  look in <mvapi directory>/lib and <mvapi directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
+
 --with-openib=<directory>
   Specify the directory where the Open Fabrics (previously known as
   OpenIB) libraries and header files are located.  This enables Open
   Fabrics support in Open MPI.
+
+--with-openib-libdir=<directory>
+  Look in directory for the OPENIB libraries.  By default, Open MPI will
+  look in <openib directory>/lib and <openib directory>/lib64, which covers
+  most cases.  This option is only needed for special configurations.
 
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
