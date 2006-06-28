@@ -33,6 +33,9 @@
 #include <sys/types.h>
 #endif
 
+#include "opal/class/opal_object.h"
+#include "opal/class/opal_list.h"
+
 #ifndef _ORTE_UNIV_INFO_H_
 #define _ORTE_UNIV_INFO_H_
 
@@ -53,6 +56,9 @@ extern "C" {
      * instanced in ompi_rte_init.c */
     
     struct orte_universe_t {
+        /** This is an object, so it must have a super */
+        opal_list_item_t super;
+
         orte_universe_state_t state; /**< Indicates state of the universe */
         char *name;
         char *host;
@@ -65,6 +71,8 @@ extern "C" {
         char *scriptfile;           /**< Name of file containing commands to be executed */
     };
     typedef struct orte_universe_t orte_universe_t;
+
+    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_universe_t);
 
 OMPI_DECLSPEC extern orte_universe_t orte_universe_info;
 

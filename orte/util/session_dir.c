@@ -58,7 +58,10 @@
 
 #include "orte/util/session_dir.h"
 
-static int orte_check_dir(bool create, char *directory);
+/*******************************
+ * Local function Declarations
+ *******************************/
+static int orte_create_dir(char *directory);
 
 static void orte_dir_empty(char *pathname);
 static void orte_dir_empty_all(char *pathname);
@@ -73,7 +76,43 @@ static bool orte_is_empty(char *pathname);
 
 #define OMPI_PRINTF_FIX_STRING(a) ((NULL == a) ? "(null)" : a)
 
-static int orte_check_dir(bool create, char *directory)
+/****************************
+ * Funcationality
+ ****************************/
+/*
+ * Check and create the directory requested
+ */
+static int orte_create_dir(char *directory)
+{
+#ifndef __WINDOWS__
+    mode_t my_mode = S_IRWXU;  /* at the least, I need to be able to do anything */
+#else
+    mode_t my_mode = _S_IREAD | _S_IWRITE | _S_IEXEC;
+#endif
+    int ret;
+
+    /* Sanity check before creating the directory with the proper mode,
+     * Make sure it doesn't exist already */
+    if( ORTE_ERR_NOT_FOUND != (ret = orte_session_dir_check_dir(directory)) ) {
+        /* Failure because orte_session_dir_check_dir() indicated that either:
+         * - The directory exists and we can access it (no need to create it again), 
+         *    return ORTE_SUCCESS, or
+         * - don't have access rights, return ORTE_ERROR
+         */
+        return(ret);
+    }
+    /* The directory doesn't exist so create it */
+    else {
+	    return(opal_os_create_dirpath(directory, my_mode));
+    }
+}
+
+/*
+ * Check that the directory:
+ *  - exists
+ *  - if exists, then we have permission to interact with it
+ */
+int orte_session_dir_check_dir(char *directory)
 {
 #ifndef __WINDOWS__
     struct stat buf;
@@ -91,221 +130,368 @@ static int orte_check_dir(bool create, char *directory)
         if ((buf.st_mode & my_mode) == my_mode) { /* okay, I can work here */
             return(ORTE_SUCCESS);
         }
+        else {
+            /* Don't have access rights to the existing directory */
+            return(ORTE_ERROR);
+        }
     }
-    if (create) {
-	return(opal_os_create_dirpath(directory, my_mode)); /* try to create it with proper mode */
+    else {
+        /* We could not find the directory */
+        return( ORTE_ERR_NOT_FOUND );
     }
-    return(ORTE_ERROR);  /* couldn't find it, or don't have access rights, and not asked to create it */
 }
 
-int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
-		     char *batchid, char *univ, char *job, char *proc)
-{
-    char *fulldirpath=NULL, *tmp=NULL, *hostname=NULL, *batchname=NULL;
-    char *sessions=NULL, *frontend=NULL, *user=NULL, *universe=NULL;
-    char *prefix=NULL, *sav=NULL;
-    int return_code;
-
-    /* ensure that system info is set */
+/*
+ * Construct the fullpath to the session directory
+ */
+int
+orte_session_dir_get_name(char **fulldirpath,
+                          char **prefix,  /* This will come back as the valid tmp dir */
+                          char **frontend,
+                          char *usr, char *hostid,
+                          char *batchid, char *univ, 
+                          char *job, char *proc) {
+    char *hostname  = NULL, 
+        *batchname = NULL,
+        *sessions  = NULL, 
+        *user      = NULL, 
+        *universe  = NULL;
+    int exit_status = ORTE_SUCCESS;
+    
+    /* Ensure that system info is set */
     orte_sys_info();
 
-    if (NULL == usr) {  /* check if user set elsewhere */
-    	if (NULL == orte_system_info.user) { /* error condition */
-    	    return ORTE_ERROR;
-    	} else {
-    	    user = strdup(orte_system_info.user);
-    	}
-    } else {
-    	user = strdup(usr);
+    /*
+     * set the 'user' value
+     */
+    if( NULL != usr) { /* User specified version */
+        user = strdup(usr);
+    }
+    else {             /* check if it is set elsewhere */
+        if( NULL != orte_system_info.user)
+            user = strdup(orte_system_info.user);
+        else {
+            /* Couldn't find it, so fail */
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
     }
 
-    if (NULL == univ) { /* see if universe set elsewhere */
-    	if (NULL == orte_universe_info.name) {  /* error condition */
-    	    return ORTE_ERROR;
-    	} else {
-    	    universe = strdup(orte_universe_info.name);
-    	}
-    } else {
-    	universe = strdup(univ);
+    /*
+     * set the 'hostname'
+     */
+    if( NULL != hostid) { /* User specified version */
+        hostname = strdup(hostid);
     }
-
-    if (NULL == job && NULL != proc) { /* can't give a proc without a job */
-    	return ORTE_ERROR;
-    }
-
-    if (NULL == hostid) {  /* check if hostname set elsewhere */
-    	if (NULL == orte_system_info.nodename) { /* don't have a hostname anywhere  - error */
-    	    return_code = ORTE_ERROR;
-    	    goto CLEANUP;
-    	} else {
-    	    hostname = strdup(orte_system_info.nodename);
-    	}
-    } else {
-    	hostname = strdup(hostid);
-    }
-
-    if (NULL == batchid) {
-    	batchname = strdup("0");
-    } else {
-    	batchname = batchid;
-    }
-
-    if (NULL == orte_process_info.top_session_dir) {
-    	if (0 > asprintf(&frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
-    	    return_code = ORTE_ERROR;
-    	    goto CLEANUP;
-    	}
-    } else {
-    	frontend = strdup(orte_process_info.top_session_dir);
-    }
-
-
-    if (NULL != proc) {
-    	if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", frontend,
-    			 orte_system_info.path_sep, universe,
-    		         orte_system_info.path_sep, job,
-    			 orte_system_info.path_sep, proc)) {
-    	    return_code = ORTE_ERROR;
-    	    goto CLEANUP;
-    	}
-    } else if (NULL != job) {
-    	if (0 > asprintf(&sessions, "%s%s%s%s%s", frontend,
-    			 orte_system_info.path_sep, universe,
-    			 orte_system_info.path_sep, job)) {
-    	    return_code = ORTE_ERROR;
-    	    goto CLEANUP;
-    	}
-    } else {
-    	if (0 > asprintf(&sessions, "%s%s%s", frontend, orte_system_info.path_sep, universe)) {
-    	    return_code = ORTE_ERROR;
-    	    goto CLEANUP;
-    	}
-    }
-
-
-    if (NULL != prefix) {  /* if a prefix is specified, start looking here */
-    	tmp = strdup(prefix);
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL)); /* make sure it's an absolute pathname */
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-   }
-
-    /* didn't find it, so first clear fulldirpath and tmp */
-    if (NULL != fulldirpath) {
-        free(fulldirpath); fulldirpath = NULL;
-    }
-    if (NULL != tmp) {
-        free(tmp); tmp = NULL;
+    else {            /* check if it is set elsewhere */
+        if( NULL != orte_system_info.nodename)
+            hostname = strdup(orte_system_info.nodename);
+        else {
+            /* Couldn't find it, so fail */
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
     }
     
-    /* no prefix was specified, so check other options in order */
-    if (NULL != orte_process_info.tmpdir_base) {  /* stored value previously */
-    	tmp = strdup(orte_process_info.tmpdir_base);
-    	fulldirpath = opal_os_path(false, tmp, sessions, NULL);
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-        free(tmp); tmp = NULL;
-        free(fulldirpath); fulldirpath = NULL;
-   } else if (NULL != getenv("OMPI_PREFIX_ENV")) {  /* we have prefix enviro var - try that next */
-    	tmp = strdup(getenv("OMPI_PREFIX_ENV"));
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-        free(tmp); tmp = NULL;
-        free(fulldirpath); fulldirpath = NULL;
-    } else if (NULL != getenv("TMPDIR")) {
-    	tmp = strdup(getenv("TMPDIR"));
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-        free(tmp); tmp = NULL;
-        free(fulldirpath); fulldirpath = NULL;
-    } else if (NULL != getenv("TMP")) {
-    	tmp = strdup(getenv("TMP"));
-    	fulldirpath = strdup(opal_os_path(false, tmp, sessions, NULL));
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-        free(tmp); tmp = NULL;
-        free(fulldirpath); fulldirpath = NULL;
-    } else {
-    	tmp = strdup(OMPI_DEFAULT_TMPDIR);
-    	fulldirpath = opal_os_path(false, tmp, sessions, NULL);
-    	if (ORTE_SUCCESS == orte_check_dir(create, fulldirpath)) { /* check for existence and access, or create it */
-    	    return_code = ORTE_SUCCESS;
-    	    goto COMPLETE;
-    	}
-        free(tmp); tmp = NULL;
-        free(fulldirpath); fulldirpath = NULL;
-   }
+    /*
+     * set the 'batchid'
+     */
+    if (NULL != batchid)
+        batchname = strdup(batchid);
+    else 
+        batchname = strdup("0");
 
-    /* couldn't find anything - return error */
-	return_code = ORTE_ERROR;
-	goto CLEANUP;
+    /*
+     * set the 'universe'
+     */
+    if( NULL != univ) { /* User specified version */
+         universe = strdup(univ);
+     }
+     else {            /* check if it is set elsewhere */
+         if( NULL != orte_universe_info.name)
+             universe = strdup(orte_universe_info.name);
+         else {
+             /* Couldn't find it, so fail */
+             exit_status = ORTE_ERROR;
+             goto cleanup;
+         }
+     }
 
+    /*
+     * Check: Can't give a proc without a job
+     */
+    if( NULL == job &&
+        NULL != proc) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+    
+    /*
+     * get the front part of the session directory
+     * Will look something like:
+     *    openmpi-sessions-USERNAME@HOSTNAME_BATCHID
+     */
+    if (NULL != orte_process_info.top_session_dir) {
+        *frontend = strdup(orte_process_info.top_session_dir);
+    }
+    else { /* If not set then construct it */
+        if (0 > asprintf(frontend, "openmpi-sessions-%s@%s_%s", user, hostname, batchname)) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+    }
 
- COMPLETE:
-    if (create) {  /* if creating the dir tree, overwrite the fields */
+    /*
+     * Construct the session directory
+     */
+    /* If we were given a 'proc' then we can construct it fully into:
+     *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID/PROC
+     */
+    if( NULL != proc) {
+        if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", 
+                         *frontend,
+                         orte_system_info.path_sep, universe,
+                         orte_system_info.path_sep, job,
+                         orte_system_info.path_sep, proc)) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+    }
+    /* If we were given a 'job' then we can construct it partially into:
+     *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID
+     */
+    else if(NULL != job) {
+        if (0 > asprintf(&sessions, "%s%s%s%s%s",
+                         *frontend,
+                         orte_system_info.path_sep, universe,
+                         orte_system_info.path_sep, job)) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+    }
+    /* If we were given neither then we can construct it partially into:
+     *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE
+     */
+    else {
+        if (0 > asprintf(&sessions, "%s%s%s",
+                         *frontend,
+                         orte_system_info.path_sep, universe )) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+    }
+    
+    /*
+     * If the user specified an invalid prefix, or no prefix at all
+     * we need to keep looking
+     */
+    if( NULL != *fulldirpath) {
+        free(*fulldirpath);
+        *fulldirpath = NULL;
+    }
+
+    if( NULL != *prefix) { /* use the user specified one, if available */
+        ;
+    }
+    /* Try to find a proper alternative prefix */
+    else if (NULL != orte_process_info.tmpdir_base) { /* stored value */
+        *prefix = strdup(orte_process_info.tmpdir_base);
+    }
+    else if( NULL != getenv("OMPI_PREFIX_ENV") ) { /* OMPI Environment var */
+        *prefix = strdup(getenv("OMPI_PREFIX_ENV"));
+    }
+    else if( NULL != getenv("TMPDIR") ) { /* General Environment var */
+        *prefix = strdup(getenv("TMPDIR"));
+    }
+    else if( NULL != getenv("TMP") ) { /* Another general environment var */
+        *prefix = strdup(getenv("TMP"));
+    }
+    else { /* ow. just use the default tmp directory */
+        *prefix = strdup(OMPI_DEFAULT_TMPDIR);
+    }
+    
+    /*
+     * Construct the absolute final path
+     */
+    *fulldirpath = strdup(opal_os_path(false, *prefix, sessions, NULL));
+
+    
+ cleanup:
+    if(NULL != hostname)
+        free(hostname);
+    if(NULL != batchname)
+        free(batchname);
+    if(NULL != sessions)
+        free(sessions);
+    if(NULL != user)
+        free(user);
+    if(NULL != universe)
+        free(universe);
+    
+    return exit_status;
+}
+
+/*
+ * Construct the session directory and create it if necessary
+ */
+int orte_session_dir(bool create, 
+                     char *prefix, char *usr, char *hostid,
+                     char *batchid, char *univ, char *job, char *proc)
+{
+    char *fulldirpath = NULL,
+        *frontend     = NULL,
+        *sav          = NULL;
+    int return_code = ORTE_SUCCESS, rtn;
+    /* This indicates if the prefix was set, and so if it fails then we
+     * should try with the default prefixes.*/
+    bool dbl_check_prefix = false;
+    
+    if( NULL != prefix)
+        dbl_check_prefix = true;
+
+ try_again:
+    /*
+     * If the first attempt at the path creation failed, try with a null
+     * prefix. unless the original prefix was null, then we fail.
+     */
+    if(!dbl_check_prefix && /* an indicator that we are trying a second time */
+       NULL != prefix) {
+        free(prefix);
+        prefix = NULL;
+    }
+    
+    /*
+     * Get the session directory full name
+     * First try it with the specified prefix.
+     */
+    if( ORTE_SUCCESS != ( rtn = orte_session_dir_get_name(&fulldirpath, 
+                                                          &prefix,
+                                                          &frontend,
+                                                          usr, hostid, 
+                                                          batchid, univ, job,
+                                                          proc) ) ) {
+        return_code = rtn;
+        /*
+         * If the first attempt at the path creation failed, try with a null
+         * prefix. unless the original prefix was null, then we fail :(
+         */
+        if(dbl_check_prefix) {
+            dbl_check_prefix = false;
+            goto try_again;
+        }
+        else {
+            goto cleanup;
+        }
+    }
+
+    /*
+     * Now that we have the full path, go ahead and create it if necessary
+     */
+    if( create ) {
+        if( ORTE_SUCCESS != (rtn = orte_create_dir(fulldirpath) ) ) {
+            return_code = rtn;
+            
+            if(dbl_check_prefix) {
+                dbl_check_prefix = false;
+                goto try_again;
+            }
+            else {
+                goto cleanup;
+            }
+        }
+    }
+    /*
+     * if we are not creating, then just verify that the path is OK
+     */
+    else {
+        if( ORTE_SUCCESS != (rtn = orte_session_dir_check_dir(fulldirpath) )) {
+            /* It is not valid so we give up and return an error */
+            return_code = rtn;
+            
+            if(dbl_check_prefix) {
+                dbl_check_prefix = false;
+                goto try_again;
+            }
+            else {
+                goto cleanup;
+            }
+        }
+    }
+
+    return_code = ORTE_SUCCESS;
+
+    /*
+     * If we are creating the directory tree, the overwrite the
+     * global structure fields
+     */
+    if (create) {
     	if (NULL != orte_process_info.tmpdir_base) {
     	    free(orte_process_info.tmpdir_base);
     	    orte_process_info.tmpdir_base = NULL;
     	}
-    
     	if (NULL != orte_process_info.top_session_dir) {
     	    free(orte_process_info.top_session_dir);
     	    orte_process_info.top_session_dir = NULL;
     	}
     }
 
-    if (NULL == orte_process_info.tmpdir_base) {
-    	orte_process_info.tmpdir_base = strdup(tmp); /* fill in if empty */
-    }
+    /* 
+     * Update some of the global structures if they are empty
+     */
+    if (NULL == orte_process_info.tmpdir_base)
+        orte_process_info.tmpdir_base = strdup(prefix);
 
-    if (NULL == orte_process_info.top_session_dir) {
-    	orte_process_info.top_session_dir = strdup(frontend);
-    }
+    if (NULL == orte_process_info.top_session_dir)
+        orte_process_info.top_session_dir = strdup(frontend);
+    
 
+    /*
+     * Set the process session directory
+     */
     if (NULL != proc) {
     	if (create) { /* overwrite if creating */
     	    if (NULL != orte_process_info.proc_session_dir) {
-    		free(orte_process_info.proc_session_dir);
-    		orte_process_info.proc_session_dir = NULL;
+                free(orte_process_info.proc_session_dir);
+                orte_process_info.proc_session_dir = NULL;
     	    }
     	}
     	if (NULL == orte_process_info.proc_session_dir) {
     	    orte_process_info.proc_session_dir = strdup(fulldirpath);
     	}
-    	sav = strdup(fulldirpath);
-    	free(fulldirpath);
-    	fulldirpath = strdup(dirname(sav));
-    	free(sav);
+
+        /* Strip off last part of directory structure */
+        sav = strdup(fulldirpath);
+        free(fulldirpath);
+        fulldirpath = strdup(dirname(sav));
+        free(sav);
+        sav = NULL;
     }
 
+    /*
+     * Set the job session directory
+     */
     if (NULL != job) {
     	if (create) { /* overwrite if creating */
     	    if (NULL != orte_process_info.job_session_dir) {
-    		free(orte_process_info.job_session_dir);
-    		orte_process_info.job_session_dir = NULL;
+                free(orte_process_info.job_session_dir);
+                orte_process_info.job_session_dir = NULL;
     	    }
     	}
     	if (NULL == orte_process_info.job_session_dir) {
     	    orte_process_info.job_session_dir = strdup(fulldirpath);
     	}
-    	sav = strdup(fulldirpath);
-    	free(fulldirpath);
-    	fulldirpath = strdup(dirname(sav));
-    	free(sav);
+
+        /* Strip off last part of directory structure */
+        sav = strdup(fulldirpath);
+        free(fulldirpath);
+        fulldirpath = strdup(dirname(sav));
+        free(sav); 
+        sav = NULL;
     }
 
+    /*
+     * Set the universe session directory
+     */
     if (create) { /* overwrite if creating */
     	if (NULL != orte_process_info.universe_session_dir) {
     	    free(orte_process_info.universe_session_dir);
@@ -329,39 +515,20 @@ int orte_session_dir(bool create, char *prfx, char *usr, char *hostid,
                     OMPI_PRINTF_FIX_STRING(orte_process_info.tmpdir_base));
     }
 
- CLEANUP:
-    if (tmp) {
-        free(tmp);
-    }
-    if (fulldirpath) {
+ cleanup:
+    if(NULL != fulldirpath)
         free(fulldirpath);
-    }
-    if (frontend) {
-	   free(frontend);
-    }
-    if (batchname) {
-	   free(batchname);
-    }
-    if (hostname) {
-	   free(hostname);
-    }
-    if (universe) {
-       free(universe);
-    }
-    if (sessions) {
-	   free(sessions);
-    }
-    if (user) {
-        free(user);
-    }
-    
+    if(NULL != frontend)
+        free(frontend);
+    if(NULL != sav)
+        free(sav);
+
     return return_code;
 }
 
 /*
- * A job has aborted - so force cleanup.
+ * A job has aborted - so force cleanup of the session directory
  */
-
 int
 orte_session_dir_cleanup(orte_jobid_t jobid)
 {

@@ -29,6 +29,9 @@
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
+#include <sys/types.h>
+#include <dirent.h>
+#include <libgen.h>
 
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
@@ -48,6 +51,103 @@
 
 static struct timeval ompi_rte_ping_wait = {2, 0};
 
+int orte_universe_search(opal_list_t *universe_list) {
+    int ret, exit_status = ORTE_SUCCESS;
+    DIR *cur_dirp = NULL;
+    struct dirent * dir_entry;
+    char *univ_setup_filename = NULL;
+    char *fulldirpath = NULL;
+    char *prefix = NULL;
+    char *frontend = NULL;
+    
+    /*
+     * Get the session directory
+     */
+    if( ORTE_SUCCESS != (ret = orte_session_dir_get_name(&fulldirpath,
+                                                         &prefix,
+                                                         &frontend,
+                                                         orte_system_info.user,
+                                                         orte_system_info.nodename,
+                                                         NULL, /* batch ID -- Not used */
+                                                         strdup("dummy"), /* Universe Name -- appened below */
+                                                         NULL, /* jobid */
+                                                         NULL  /* vpid */
+                                                         ) ) ) {
+        exit_status = ret;
+        goto cleanup;
+    }
+    
+    /* Strip off dummy the universe name */
+    fulldirpath = dirname(fulldirpath);
+
+    /*
+     * Check to make sure we have access to this directory
+     */
+    if( ORTE_SUCCESS != (ret = orte_session_dir_check_dir(fulldirpath) )) {
+        exit_status = ret;
+        goto cleanup;
+    }
+
+    /*
+     * Open up the base directory so we can get a listing
+     */
+    if( NULL == (cur_dirp = opendir(fulldirpath)) ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+    
+    /*
+     * For each directory/universe
+     */
+    while( NULL != (dir_entry = readdir(cur_dirp))) {
+        orte_universe_t *univ = NULL;
+        char * tmp_str = NULL;
+
+        /*
+         * Skip non-universe directories
+         */
+        if( 0 == strncmp(dir_entry->d_name, ".", strlen(".")) ||
+            0 == strncmp(dir_entry->d_name, ".", strlen("..")) ) {
+            continue;
+        }
+
+        /*
+         * Read the setup file
+         */
+        tmp_str = strdup(dir_entry->d_name);
+        asprintf(&univ_setup_filename, "%s/%s/%s", 
+                 fulldirpath,
+                 tmp_str,
+                 "universe-setup.txt");
+        
+        univ = OBJ_NEW(orte_universe_t);
+        OBJ_RETAIN(univ);
+        if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
+            printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        opal_list_append(universe_list, &(univ->super));
+
+        if( NULL != tmp_str)
+            free(tmp_str);
+    }
+    
+ cleanup:
+    if( NULL != cur_dirp )
+        closedir(cur_dirp);
+    if( NULL != univ_setup_filename)
+        free(univ_setup_filename);
+    if( NULL != fulldirpath)
+        free(fulldirpath);
+    if( NULL != prefix)
+        free(prefix);
+    if( NULL != frontend)
+        free(frontend);
+
+    return exit_status;
+}
 
 int orte_universe_exists(orte_universe_t *univ)
 {
