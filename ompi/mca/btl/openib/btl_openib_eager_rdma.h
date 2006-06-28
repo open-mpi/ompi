@@ -78,9 +78,11 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
             ((char*)(E)->eager_rdma_local.base.pval +                    \
             (I) * (E)->endpoint_btl->eager_rdma_frag_size)
 
-#define MCA_BTL_OPENIB_RDMA_NEXT_INDEX(I) do {                       \
-                            (I) = ((I) + 1) %                        \
-                            mca_btl_openib_component.eager_rdma_num; \
+#define MCA_BTL_OPENIB_RDMA_NEXT_INDEX(I) do {                              \
+                            (I) = ((I) + 1);                                \
+                            if((I) ==                                       \
+                                   mca_btl_openib_component.eager_rdma_num) \
+                                (I) = 0;                                    \
                         } while (0)
 #if defined(c_plusplus) || defined(__cplusplus)
 }
