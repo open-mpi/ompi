@@ -20,4 +20,4 @@
 
 # support needs to be first for dependencies
 SUBDIRS = support asm class dss mca memory threads util peruse datatype
-DIST_SUBDIRS = runtime $(SUBDIRS)
+DIST_SUBDIRS = event runtime $(SUBDIRS)
