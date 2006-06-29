@@ -356,7 +356,7 @@ int mca_bml_r2_add_procs(
         ompi_proc_t *proc = new_procs[p];
         mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml;
         double total_bandwidth = 0;
-        uint32_t latency = 0;
+        uint32_t latency = 0xffffffff;
         size_t n_index;
         size_t n_size;
 
@@ -375,7 +375,7 @@ int mca_bml_r2_add_procs(
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
             total_bandwidth += bml_btl->btl->btl_bandwidth; 
-            if(btl->btl_latency > latency) {
+            if(btl->btl_latency < latency) {
                 latency = btl->btl_latency;
             }
         }
