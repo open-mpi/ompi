@@ -220,7 +220,6 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_frag_user, ompi_free_list_t);
     OBJ_CONSTRUCT(&btl->gm_pending, opal_list_t);
     OBJ_CONSTRUCT(&btl->gm_repost, opal_list_t);
-    OBJ_CONSTRUCT(&btl->gm_mru_reg, opal_list_t);
 #if OMPI_ENABLE_PROGRESS_THREADS
     OBJ_CONSTRUCT(&btl->gm_thread, opal_thread_t);
 #endif
