@@ -493,45 +493,14 @@ MOVEON:
                 infrastructure = false;
             }
 
-            /* need to restart the local system so it can connect to the remote daemon.
-             * we only want to clear the run-time itself - we cannot close the OPAL
-             * utilities, though, or we will lose all of our MCA parameters
-             */
-            orte_system_finalize();
-
-            /*
-             * now set the relevant MCA parameters to point us at the remote daemon...
-             */
-            rc = opal_setenv("OMPI_MCA_gpr_replica_uri",
-                             orte_setup_hnp_orted_uri, true, &environ);
-            if (ORTE_SUCCESS != rc) {
-                fprintf(stderr, "orte_setup_hnp: could not set gpr_replica_uri in environ\n");
-                return rc;
-            }
-
-            rc = opal_setenv("OMPI_MCA_ns_replica_uri",
-                             orte_setup_hnp_orted_uri, true, &environ);
-            if (ORTE_SUCCESS != rc) {
-                fprintf(stderr, "orte_setup_hnp: could not set ns_replica_uri in environ\n");
-                return rc;
-            }
-
-            opal_unsetenv("OMPI_MCA_seed", &environ);
-
-            rc = opal_setenv("OMPI_MCA_universe_uri",
-                             orte_setup_hnp_orted_uri, true, &environ);
-            if (ORTE_SUCCESS != rc) {
-                fprintf(stderr, "orte_setup_hnp: could not set universe_uri in environ\n");
-                return rc;
-            }
-
-            /*
-             * ...re-init ourselves...
-             */
-            rc = orte_system_init(infrastructure);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
+            /* need to restart the local system so it can connect to the remote daemon. */
+            if (ORTE_SUCCESS != (rc = orte_restart(orte_setup_hnp_cbdata.name, orte_setup_hnp_orted_uri))) {
+               /** can't use ORTE_ERROR_LOG here as it may no longer be valid. Since we may
+                * have gotten part way through the shutdown/restart process, we can't have
+                * any idea of our current state - all we can really do at this point is
+                * abort
+                */
+                fprintf(stderr, "orte_setup_hnp: aborted during restart of local process\n");
             }
 
             /*
