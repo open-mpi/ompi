@@ -58,7 +58,6 @@ struct mca_btl_gm_component_t {
     struct  mca_btl_gm_module_t **gm_btls; /**< array of available BTL modules */
     size_t  gm_max_ports;  /**< maximum number of ports per board */
     size_t  gm_max_boards; /**< maximum number of boards */
-    size_t  gm_num_mru;
     size_t  gm_eager_frag_size;
     size_t  gm_max_frag_size;
     char*   gm_port_name; 
