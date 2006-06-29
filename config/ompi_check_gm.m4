@@ -126,8 +126,7 @@ AC_DEFUN([OMPI_CHECK_GM],[
              [Build GM (Myrinet) support, searching for libraries in DIR])])
     AC_ARG_WITH([gm-libdir],
         [AC_HELP_STRING([--with-gm-libdir=DIR],
-             [Search for GM (Myrinet) libraries in DIR/lib and DIR/lib64 
-               in addition to other search paths])])
+             [Search for GM (Myrinet) libraries in DIR])])
 
     AS_IF([test "$with_gm" != "no"],
           [AS_IF([test ! -z "$with_gm" -a "$with_gm" != "yes"],

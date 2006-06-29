@@ -29,8 +29,7 @@ AC_DEFUN([OMPI_CHECK_UDAPL],[
              [Build uDAPL support, searching for libraries in DIR])])
     AC_ARG_WITH([udapl-libdir],
        [AC_HELP_STRING([--with-udapl-libdir=DIR],
-             [Search for uDAPL libraries in DIR/lib and DIR/lib64 
-               in addition to other search paths])])
+             [Search for uDAPL libraries in DIR])])
 
     AS_IF([test ! -z "$with_udapl" -a "$with_udapl" != "yes"],
           [ompi_check_udapl_dir="$with_udapl"])
