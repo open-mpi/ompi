@@ -565,6 +565,12 @@ static int mca_btl_gm_send_nl(
 			       mca_btl_gm_send_callback,
 			       frag );
     }
+    if(opal_list_get_size(&gm_btl->gm_repost)) {
+        mca_btl_gm_frag_t* frag;
+        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
+            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
+        }
+    }
 
     return OMPI_SUCCESS;
 }
@@ -622,6 +628,12 @@ int mca_btl_gm_send(
 			       frag );
     }
 
+    if(opal_list_get_size(&gm_btl->gm_repost)) {
+        mca_btl_gm_frag_t* frag;
+        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
+            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
+        }
+    }
     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return OMPI_SUCCESS;
 }
