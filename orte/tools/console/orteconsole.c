@@ -914,6 +914,9 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
         return ORTE_SUCCESS;
     }
 
+    /** initialize the buffer */
+    buffer = OBJ_NEW(orte_buffer_t);
+    
     /* Start the exchange */
     ret = orte_console_send_command(ORTE_DAEMON_CONTACT_QUERY_CMD);
     if (ORTE_SUCCESS != ret ){
@@ -936,6 +939,9 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
 
     printf(str_response);
     printf("\n");
+    
+    /** cleanup the buffer */
+    OBJ_RELEASE(buffer);
 
     return ORTE_SUCCESS;
 }
