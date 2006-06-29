@@ -52,7 +52,15 @@ fi
 #
 
 first="`basename $tarball | cut -d- -f2`"
-version="`echo $first | sed -e 's/\.tar\.gz//'`"
+if test "`echo $first | fgrep .tar.gz`" != ""; then
+    version="`echo $first | sed -e 's/\.tar\.gz//'`"
+elif test "`echo $first | fgrep .tar.bz2`" != ""; then
+    version="`echo $first | sed -e 's/\.tar\.bz2//'`"
+else
+    echo Unable to determine version number from filename
+    echo This script only supports .tar.gz and .tar.bz2 filenames
+    exit 1
+fi
 unset first
 echo "--> Found Open MPI version: $version"
 
