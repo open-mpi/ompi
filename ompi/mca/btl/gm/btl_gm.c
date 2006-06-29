@@ -425,12 +425,11 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 
     }  else {
 
-        rc = mpool->mpool_register(
-                                   mpool,
-                                   frag->segment.seg_addr.pval,
-                                   frag->segment.seg_len,
-                                   0,
-                                   &registration);
+        rc = mpool->mpool_register( mpool,
+				    frag->segment.seg_addr.pval,
+				    frag->segment.seg_len,
+				    0,
+				    &registration );
         if(rc != OMPI_SUCCESS) {
             MCA_BTL_GM_FRAG_RETURN(btl,frag);
             return NULL;
@@ -546,35 +545,27 @@ static int mca_btl_gm_send_nl(
     /* post the send descriptor */
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&  
        frag->size == mca_btl_gm_component.gm_eager_frag_size) {
-        gm_send_with_callback(
-            gm_btl->port,
-            frag->hdr,
-            mca_btl_gm_component.gm_eager_frag_size,
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-            GM_HIGH_PRIORITY,
-            endpoint->endpoint_addr.node_id,
-            endpoint->endpoint_addr.port_id,
-            mca_btl_gm_send_callback,
-            frag);
+        gm_send_with_callback( gm_btl->port,
+			       frag->hdr,
+			       mca_btl_gm_component.gm_eager_frag_size,
+			       frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+			       GM_HIGH_PRIORITY,
+			       endpoint->endpoint_addr.node_id,
+			       endpoint->endpoint_addr.port_id,
+			       mca_btl_gm_send_callback,
+			       frag );
     } else {
-        gm_send_with_callback(
-            gm_btl->port,
-            frag->hdr,
-            mca_btl_gm_component.gm_max_frag_size,
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-            GM_LOW_PRIORITY,
-            endpoint->endpoint_addr.node_id,
-            endpoint->endpoint_addr.port_id,
-            mca_btl_gm_send_callback,
-            frag);
+        gm_send_with_callback( gm_btl->port,
+			       frag->hdr,
+			       mca_btl_gm_component.gm_max_frag_size,
+			       frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+			       GM_LOW_PRIORITY,
+			       endpoint->endpoint_addr.node_id,
+			       endpoint->endpoint_addr.port_id,
+			       mca_btl_gm_send_callback,
+			       frag );
     }
 
-    if(opal_list_get_size(&gm_btl->gm_repost)) {
-        mca_btl_gm_frag_t* frag;
-        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
-            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
-        }
-    }
     return OMPI_SUCCESS;
 }
 
@@ -610,35 +601,27 @@ int mca_btl_gm_send(
     /* post the send descriptor */
     if(frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY &&  
        frag->size == mca_btl_gm_component.gm_eager_frag_size) {
-        gm_send_with_callback(
-            gm_btl->port,
-            frag->hdr,
-            mca_btl_gm_component.gm_eager_frag_size,
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-            GM_HIGH_PRIORITY,
-            endpoint->endpoint_addr.node_id,
-            endpoint->endpoint_addr.port_id,
-            mca_btl_gm_send_callback,
-            frag);
+        gm_send_with_callback( gm_btl->port,
+			       frag->hdr,
+			       mca_btl_gm_component.gm_eager_frag_size,
+			       frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+			       GM_HIGH_PRIORITY,
+			       endpoint->endpoint_addr.node_id,
+			       endpoint->endpoint_addr.port_id,
+			       mca_btl_gm_send_callback,
+			       frag );
     } else {
-        gm_send_with_callback(
-            gm_btl->port,
-            frag->hdr,
-            mca_btl_gm_component.gm_max_frag_size,
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t),
-            GM_LOW_PRIORITY,
-            endpoint->endpoint_addr.node_id,
-            endpoint->endpoint_addr.port_id,
-            mca_btl_gm_send_callback,
-            frag);
+        gm_send_with_callback( gm_btl->port,
+			       frag->hdr,
+			       mca_btl_gm_component.gm_max_frag_size,
+			       frag->segment.seg_len + sizeof(mca_btl_base_header_t),
+			       GM_LOW_PRIORITY,
+			       endpoint->endpoint_addr.node_id,
+			       endpoint->endpoint_addr.port_id,
+			       mca_btl_gm_send_callback,
+			       frag );
     }
 
-    if(opal_list_get_size(&gm_btl->gm_repost)) {
-        mca_btl_gm_frag_t* frag;
-        while(NULL != (frag = (mca_btl_gm_frag_t*)opal_list_remove_first(&gm_btl->gm_repost))) {
-            gm_provide_receive_buffer(gm_btl->port, frag->hdr, frag->size, frag->priority);
-        }
-    }
     OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
     return OMPI_SUCCESS;
 }
