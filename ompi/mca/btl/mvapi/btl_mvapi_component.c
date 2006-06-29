@@ -824,7 +824,7 @@ int mca_btl_mvapi_component_progress( void )
                 /* return send wqe */
                 OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp, 1);
 
-                /* check to see if we need to progress any pending desciptors */
+                /* check to see if we need to progress any pending descriptors */
                 while (!opal_list_is_empty(&endpoint->pending_frags_hp) &&
                         endpoint->sd_wqe_hp > 0 && (endpoint->sd_tokens_hp > 0 || endpoint->eager_rdma_remote.tokens > 0)) {
                     opal_list_item_t *frag_item;
