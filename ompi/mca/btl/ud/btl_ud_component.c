@@ -131,10 +131,12 @@ static inline void  mca_btl_ud_param_register_int(
 
 int mca_btl_ud_component_open(void)
 {
+    int val;
+    
     /* initialize state */
     mca_btl_ud_component.ib_num_btls=0;
     mca_btl_ud_component.ud_btls=NULL;
-
+    
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_ud_component.ib_procs, opal_list_t);
 
@@ -182,11 +184,14 @@ int mca_btl_ud_component_open(void)
 
     /* TODO - this assumes a 2k UD MTU - should query/do something more intelligent */
     mca_btl_ud_param_register_int ("eager_limit", "eager send limit",
-            2047, (int*)&mca_btl_ud_module.super.btl_eager_limit);
+                                   2047, &val); 
+    mca_btl_ud_module.super.btl_eager_limit = val;
     mca_btl_ud_param_register_int ("min_send_size", "minimum send size",
-            2048, (int*)&mca_btl_ud_module.super.btl_min_send_size);
+                                   2048, &val);
+    mca_btl_ud_module.super.btl_min_send_size = val;
     mca_btl_ud_param_register_int ("max_send_size", "maximum send size",
-            2048, (int*) &mca_btl_ud_module.super.btl_max_send_size);
+                                   2048, &val);
+    mca_btl_ud_module.super.btl_max_send_size = val;
     mca_btl_ud_param_register_int("bandwidth", "Approximate maximum bandwidth of interconnect",
             800, (int*) &mca_btl_ud_module.super.btl_bandwidth);
 
