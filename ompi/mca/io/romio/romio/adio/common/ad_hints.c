@@ -58,8 +58,14 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	 */
 	MPI_Info_set(info, "romio_cb_read", "automatic"); 
 	fd->hints->cb_read = ADIOI_HINT_AUTO;
-	MPI_Info_set(info, "romio_cb_write", "automatic"); 
-	fd->hints->cb_write = ADIOI_HINT_AUTO;
+
+        if (ompi_parallel_opts != 0) {
+            MPI_Info_set(info, "romio_cb_write", "enable"); 
+            fd->hints->cb_write = ADIOI_HINT_ENABLE;
+        } else {
+            MPI_Info_set(info, "romio_cb_write", "automatic"); 
+            fd->hints->cb_write = ADIOI_HINT_AUTO;
+        }
 
 	fd->hints->cb_config_list = NULL;
 
