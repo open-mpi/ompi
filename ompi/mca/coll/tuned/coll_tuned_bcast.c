@@ -785,7 +785,7 @@ ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
 int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
     int rc;
-    int max_alg = 6;
+    int max_alg = 5;
 
   ompi_coll_tuned_forced_max_algorithms[BCAST] = max_alg;
 
@@ -797,7 +797,7 @@ rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
 
 mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm",
-                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
+                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree.",
                            false, false, 0, NULL);
 
 mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
