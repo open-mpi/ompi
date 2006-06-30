@@ -188,15 +188,21 @@ int mca_btl_openib_component_open(void)
                                       8,  &mca_btl_openib_component.srq_sd_max);
 
     mca_btl_openib_param_register_int ("eager_limit", "eager send limit", 
-                                       (32*1024),(int*) &mca_btl_openib_module.super.btl_eager_limit);  
+                                       (32*1024), &val);
+    mca_btl_openib_module.super.btl_eager_limit = val;
     mca_btl_openib_param_register_int ("min_send_size", "minimum send size", 
-                                       (64*1024),(int*)  &mca_btl_openib_module.super.btl_min_send_size);
+                                       (64*1024), &val);
+    mca_btl_openib_module.super.btl_min_send_size = val;
     mca_btl_openib_param_register_int ("max_send_size", "maximum send size", 
-                                       (64*1024), (int*) &mca_btl_openib_module.super.btl_max_send_size); 
+                                       (64*1024), &val); 
+    mca_btl_openib_module.super.btl_max_send_size = val; 
+    
     mca_btl_openib_param_register_int("min_rdma_size", "minimum rdma size", 
-                                      1024*1024, (int*) &mca_btl_openib_module.super.btl_min_rdma_size);
+                                      1024*1024, &val);
+    mca_btl_openib_module.super.btl_min_rdma_size = val;
     mca_btl_openib_param_register_int("max_rdma_size", "maximium rdma size", 
-                                      1024*1024, (int*) &mca_btl_openib_module.super.btl_max_rdma_size); 
+                                      1024*1024, &val); 
+    mca_btl_openib_module.super.btl_max_rdma_size = val; 
     mca_btl_openib_param_register_int("flags", "BTL flags, SEND=0, PUT=1, GET=2", 
                                       MCA_BTL_FLAGS_PUT, (int*) &mca_btl_openib_module.super.btl_flags); 
     
