@@ -26,20 +26,9 @@ orte_clean_SOURCES = \
 	orte-clean.c
 
 # Manual pages
-man_MANS = orte-clean.1 ompi-clean.1
+man_MANS = orte-clean.1
 EXTRA_DIST = orte-clean.1
 
 orte_clean_LDADD = $(top_builddir)/orte/liborte.la
 orte_clean_DEPENDENCIES = $(top_builddir)/orte/liborte.la
 
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f ompi-clean$(EXEEXT); $(LN_S) orte-clean$(EXEEXT) ompi-clean$(EXEEXT))
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/ompi-clean$(EXEEXT)
-
-ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
-	cp -f $(top_srcdir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
-
-distclean-local:
-	rm -f ompi-clean.1

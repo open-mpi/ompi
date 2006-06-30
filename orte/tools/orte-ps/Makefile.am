@@ -26,20 +26,9 @@ orte_ps_SOURCES = \
 	orte-ps.c
 
 # Manual pages
-man_MANS = orte-ps.1 ompi-ps.1
+man_MANS = orte-ps.1
 EXTRA_DIST = orte-ps.1
 
 orte_ps_LDADD = $(top_builddir)/orte/liborte.la
 orte_ps_DEPENDENCIES = $(top_builddir)/orte/liborte.la
 
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f ompi-ps$(EXEEXT); $(LN_S) orte-ps$(EXEEXT) ompi-ps$(EXEEXT))
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/ompi-ps$(EXEEXT)
-
-ompi-ps.1: $(top_srcdir)/orte/tools/orte-ps/orte-ps.1
-	cp -f $(top_srcdir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
-
-distclean-local:
-	rm -f ompi-ps.1
