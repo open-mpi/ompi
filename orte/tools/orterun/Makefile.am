@@ -46,24 +46,7 @@ dist_pkgdata_DATA = help-orterun.txt
 
 # AM 1.9.6 seems to have a bug in it's dependencies for install-man if
 #dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
-man_MANS = orterun.1 mpirun.1 mpiexec.1
+man_MANS = orterun.1
 EXTRA_DIST = orterun.1
-
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpiexec$(EXEEXT))
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
-		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT)
-
-mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
-	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpirun.1
-
-mpiexec.1: $(top_srcdir)/orte/tools/orterun/orterun.1
-	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpiexec.1
-
-distclean-local:
-	rm -f mpirun.1 mpiexec.1
 
 endif
