@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -68,36 +68,35 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                     struct ompi_datatype_t *rdtype, 
                                     struct ompi_communicator_t *comm)
 {
-    int size;
+    int comsize;
     int rank;
     int err;
-    int dsize;
-    MPI_Aint sext;
-    long lb;
+    unsigned long dsize;
+    unsigned long total_dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
-    size = ompi_comm_size(comm);
+    comsize = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* special case */
-    if (size==2) {
+    if (comsize==2) {
         return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
 
     /* else we need data size for decision function */
-    err = ompi_ddt_get_extent (sdtype, &lb, &sext);
+    err = ompi_ddt_get_size (sdtype, &dsize);
     if (err != MPI_SUCCESS) { 
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
-    dsize = sext * scount * size;   /* needed for decision */
+    total_dsize = dsize * scount * (unsigned long)comsize;   /* needed for decision */
 
-    if (size >= 12 && dsize <= 768) {
+    if (comsize >= 12 && total_dsize <= 768) {
         return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
-    else if (dsize <= 131072) {
+    else if (total_dsize <= 131072) {
         return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     else {
@@ -115,13 +114,13 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  */
 int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 {
-    int size;
+    int comsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed"));
 
-    size = ompi_comm_size(comm);
+    comsize = ompi_comm_size(comm);
 
-    if (2==size)
+    if (2==comsize)
         return ompi_coll_tuned_barrier_intra_two_procs(comm);
     else
 /*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
@@ -143,49 +142,48 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                    struct ompi_datatype_t *datatype, int root,
                                    struct ompi_communicator_t *comm)
 {
-    int size;
+    int comsize;
     int rank;
     int err;
-    int msgsize;
-    MPI_Aint ext;
-    long lb;
+    unsigned long msgsize;
+    unsigned long dsize;
     int segsize = 0;
 
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed"));
 
-    size = ompi_comm_size(comm);
+    comsize = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* else we need data size for decision function */
-    err = ompi_ddt_get_extent (datatype, &lb, &ext);
+    err = ompi_ddt_get_size (datatype, &dsize);
     if (err != MPI_SUCCESS) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
-    msgsize = ext * count;   /* needed for decision */
+    msgsize = dsize * (unsigned long)count;   /* needed for decision */
 
     /* this is based on gige measurements */
 
-    if ((size  < 4)) {
+    if ((comsize  < 4)) {
         segsize = 0;
         return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    else if (size == 4) {
+    else if (comsize == 4) {
        if (msgsize < 524288) segsize = 0;
        else msgsize = 16384;
        return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    else if (size > 4 && size <= 8 && msgsize < 4096) {
+    else if (comsize > 4 && comsize <= 8 && msgsize < 4096) {
        segsize = 0;
        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    else if (size > 8 && msgsize >= 32768 && msgsize < 524288) {
+    else if (comsize > 8 && msgsize >= 32768 && msgsize < 524288) {
        segsize = 16384;
        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    else if (size > 4 && msgsize >= 524288) {
+    else if (comsize > 4 && msgsize >= 524288) {
        segsize = 16384;
        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
     }
@@ -211,30 +209,30 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                           struct ompi_op_t* op, int root,
                                           struct ompi_communicator_t* comm)
 {
-    int size;
+    int comsize;
     int rank;
     int err;
 /*     int contig; */
-    int msgsize;
-    MPI_Aint ext;
-    long lb;
+    unsigned long msgsize;
+    unsigned long dsize;
     int segsize = 0;
 /*     int fanout = 0; */
 
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
 
-    size = ompi_comm_size(comm);
+    comsize = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
-    err = ompi_ddt_get_extent (datatype, &lb, &ext);
+    err = ompi_ddt_get_size (datatype, &dsize);
     if (err != MPI_SUCCESS) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
-    msgsize = ext * count;   /* needed for decision */
+    msgsize = dsize * (unsigned long)count;   /* needed for decision */
+
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm);
 #ifdef coconuts
      /* for small messages use linear algorithm */
