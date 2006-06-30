@@ -258,7 +258,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
 int
 main(int argc, char *argv[])
 {
-    int ret, exit_status;
+    int ret, exit_status = ORTE_SUCCESS;
     opal_list_t universe_list;
     opal_list_item_t* item = NULL;
     opal_list_t universe_search_result;
