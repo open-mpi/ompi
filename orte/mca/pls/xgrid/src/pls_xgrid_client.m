@@ -52,10 +52,10 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    value = values[0];
     value->cnt = 1;
     value->addr_mode = ORTE_GPR_OVERWRITE;
     value->segment = strdup(ORTE_NODE_SEGMENT);
-    value = values[0];
     value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
     if (NULL == value->keyvals) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
