@@ -32,6 +32,8 @@ version 1.0.
 Post 1.1 -- not yet decided if 1.2 or 1.1.1
 -------------------------------------------
 
+- Fix bus error in XGrid process starter.  Thanks to Eric Thibodeau
+  for the fix.
 - Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
   back-end MPI processes.
 - Add -V/--version switch to mpirun.
