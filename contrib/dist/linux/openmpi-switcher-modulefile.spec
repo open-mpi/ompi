@@ -215,7 +215,9 @@ fi
 #############################################################################
 %files
 %defattr(-,root,root)
-%{_pkgdatadir}/openmpi-%{version}
+# Just list the prefix so that a) it grabs the whole tree, and b) it
+# removes directories when the RPM is removed.
+%{_prefix}
 
 
 #############################################################################
@@ -224,6 +226,15 @@ fi
 #
 #############################################################################
 %changelog
-* Wed Dec 31 2003 Jeff Squyres <jsquyres@lam-mpi.rg>
+* Sun Jul 02 2006 Jeff Squyres <jsquyres@cisco.com>
+- Just use the prefix in the % files list so that we a) grab the whole
+  tree and b) it removes all the directories when the RPM is removed.
+  Thanks to Bernard Li for reporting the problem.
+
+* Wed Apr 26 2006 Jeff Squyres <jsquyres@cisco.com>
+- Adapted for Open MPI.  Still the way to go, despite claims to the
+  contrary in the original log statement. :-)
+
+* Wed Dec 31 2003 Jeff Squyres <jsquyres@lam-mpi.org>
 - First version.  Hopefully, this RPM won't need to live very long
   because LAM/MPI 7.1 will obviate the need for it.
