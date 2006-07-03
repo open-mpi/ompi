@@ -653,7 +653,7 @@ static int pretty_print(orte_ps_universe_info_t* universe) {
 
         printf("%*d | ",  6,  job->id);
         printf("%s | ",       pretty_job_state(job->state));
-        printf("%*lu | ", 6,  job->slots);
+        printf("%*d | ",  6,  (uint)job->slots);
         printf("%*d | ",  10, job->vpid_start);
         printf("%*d | ",  10, job->vpid_range);
 #if 0
@@ -808,7 +808,7 @@ static int pretty_print(orte_ps_universe_info_t* universe) {
             }
 
             printf("%*s | ",  len_opn, proc_name);
-            printf("%*lu | ", len_r,  vpid->rank);
+            printf("%*d | ",  len_r,  (uint)vpid->rank);
             printf("%*d | ",  len_p,  vpid->pid);
             printf("%*s | ",  len_n,  vpid->node);
             printf("%s | ",  pretty_vpid_state(vpid->state));
