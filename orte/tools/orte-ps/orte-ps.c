@@ -71,6 +71,10 @@
 #include "orte/mca/snapc/base/base.h"
 #endif
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/ras/ras_types.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_base_node.h"
 
 #include "opal/runtime/opal.h"
 #if OPAL_ENABLE_FT == 1
@@ -167,6 +171,9 @@ struct orte_ps_universe_info_t {
     
     /** List of Jobs */
     opal_list_t job_list;
+    
+    /** List of nodes on orte-node segment */
+    opal_list_t nodes;
 };
 typedef struct orte_ps_universe_info_t orte_ps_universe_info_t;
 
@@ -190,8 +197,18 @@ static int parse_args(int argc, char *argv[]);
 static int connect_to_universe(orte_universe_t universe_info);
 
 static int gather_information(orte_ps_universe_info_t* universe);
+static int gather_active_jobs(orte_ps_universe_info_t* universe);
+static int gather_nodes(orte_ps_universe_info_t* universe);
+static int gather_job_info(orte_ps_universe_info_t* universe);
+static int gather_vpid_info(orte_ps_universe_info_t* universe);
 
 static int pretty_print(orte_ps_universe_info_t* universe);
+static int pretty_print_nodes(opal_list_t *nodes);
+static int pretty_print_jobs(opal_list_t *jobs);
+static int pretty_print_vpids(orte_ps_job_info_t *job);
+
+static char *pretty_univ_state(orte_universe_state_t state);
+static char *pretty_node_state(orte_node_state_t state);
 static char *pretty_job_state(orte_job_state_t state);
 static char *pretty_vpid_state(orte_proc_state_t state);
 
@@ -206,6 +223,7 @@ typedef struct {
     int  vpid;
     bool gpr_dump;
     bool attached;
+    bool nodes;
 } orte_ps_globals_t;
 
 orte_ps_globals_t orte_ps_globals;
@@ -246,6 +264,12 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       1,
       &orte_ps_globals.vpid, OPAL_CMD_LINE_TYPE_INT,
       "Specify a specific vpid. Must specify a --jobid as well" },
+
+    { NULL, NULL, NULL, 
+      'n', NULL, "nodes", 
+      0,
+      &orte_ps_globals.nodes, OPAL_CMD_LINE_TYPE_INT,
+      "Print Node Information" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -373,6 +397,13 @@ main(int argc, char *argv[])
                 goto cleanup;
             }
         }
+        
+        /*
+         * Since connecting and disconnecting from a universe is
+         * not well defined, only allow connection to the first
+         * universe found.
+         */
+        break;
     }
 
     /***************
@@ -402,7 +433,14 @@ static int parse_args(int argc, char *argv[]) {
     int i, ret, len;
     opal_cmd_line_t cmd_line;
     char **app_env = NULL, **global_env = NULL;
-    orte_ps_globals_t tmp = { false, false, NULL, -1, -1, false};
+    orte_ps_globals_t tmp = { false, 
+                              false, 
+                              NULL, 
+                              -1, 
+                              -1, 
+                              false,
+                              false,
+                              false};
 
     /* Parse the command line options */
     
@@ -523,310 +561,460 @@ static int orte_ps_init(void) {
 }
 
 static int pretty_print(orte_ps_universe_info_t* universe) {
-    opal_list_item_t* job_item = NULL;
-    opal_list_item_t* vpid_item = NULL;
-    int len_opn = 0, 
-        len_pn = 0, 
-        len_r  = 0, 
-        len_p  = 0,
-        len_s  = 0,
-#if OPAL_ENABLE_FT == 1
-        len_cs = 0,
-        len_cr = 0,
-        len_cl = 0,
-#endif
-        len_n  = 0;
-
     int i, line_len;
+    int len_name  = 0,
+        len_host  = 0,
+        len_uid   = 0,
+        len_scope = 0,
+        len_per   = 0,
+        len_state = 0;
 
-    printf("------------------------------------------------------\n");
-    printf("------------------------------------------------------\n");
-    printf("%*s | ", (int)strlen(universe->universe_info.name) , "Universe Name");
-    printf("%*s | ", (int)strlen(universe->universe_info.host) , "Hostname");
-    printf("%*s | ", (int)strlen(universe->universe_info.uid)  , "uid");
-    printf("%*s | ", 11  , "Persistent");
-    printf("%*s | ", (int)strlen(universe->universe_info.scope)  , "Scope");
-    printf(" State");
+    /*
+     * Calculate segment lengths
+     */
+    len_name  = (int) (strlen(universe->universe_info.name) < strlen("Universe Name") ? 
+                       strlen("Universe Name") : 
+                       strlen(universe->universe_info.name) );
+    len_host  = (int) (strlen(universe->universe_info.host) < strlen("Hostname") ?
+                       strlen("Hostname") :
+                       strlen(universe->universe_info.host));
+    len_uid   = (int) (strlen(universe->universe_info.uid) < strlen("UID") ?
+                       strlen("UID") :
+                       strlen(universe->universe_info.uid));
+    len_per   = (int) strlen("Persistent");
+    len_scope = (int) (strlen(universe->universe_info.scope) < strlen("Scope") ?
+                       strlen("Scope") :
+                       strlen(universe->universe_info.scope));
+    len_state = (int) (strlen(pretty_univ_state(universe->universe_info.state)) < strlen("State") ?
+                       strlen("State") :
+                       strlen(pretty_univ_state(universe->universe_info.state)) );
+
+    line_len = (len_name   + 3 +
+                len_host   + 3 +
+                len_uid    + 3 +
+                len_per    + 3 +
+                len_scope  + 3 +
+                len_state) + 3 ;
+
+    /*
+     * Print header
+     */
+    printf("%*s | ", len_name , "Universe Name");
+    printf("%*s | ", len_host , "Hostname");
+    printf("%*s | ", len_uid  , "UID");
+    printf("%*s | ", len_per  , "Persistent");
+    printf("%*s | ", len_scope, "Scope");
+    printf("%*s |" , len_state, "State");
     printf("\n");
 
-    line_len = (strlen(universe->universe_info.name) + 3 +
-                strlen(universe->universe_info.host) + 3 +
-                strlen(universe->universe_info.uid)  + 3 +
-                11 + 3 +
-                strlen(universe->universe_info.scope) + 3 +
-                6 + 3);
     for(i = 0; i < line_len; ++i) {
         printf("-");
     }
     printf("\n");
 
-    printf("%s | ", universe->universe_info.name);
-    printf("%s | ", universe->universe_info.host);
-    printf("%s | ", universe->universe_info.uid);
-
+    /*
+     * Print Info
+     */
+    printf("%*s | ", len_name,  universe->universe_info.name);
+    printf("%*s | ", len_host,  universe->universe_info.host);
+    printf("%*s | ", len_uid,   universe->universe_info.uid);
     if(universe->universe_info.persistence)
-        printf("%*s | ", 11, "true");
+        printf("%*s | ", len_per, "true");
     else 
-        printf("%*s | ", 11, "false");
-
-    printf("%s | ", universe->universe_info.scope);
-
-    switch(universe->universe_info.state) {
-    case ORTE_UNIVERSE_STATE_PRE_INIT:
-        printf("Pre-Init");
-        break;
-    case ORTE_UNIVERSE_STATE_INIT:
-        printf("Initializing");
-        break;
-    case ORTE_UNIVERSE_STATE_RUNNING:
-        printf("Running");
-        break;
-    case ORTE_UNIVERSE_STATE_FINALIZE:
-        printf("Finalized");
-        break;
-    default:
-        printf("Unknown");
-        break;
-    }
+        printf("%*s | ", len_per, "false");
+    printf("%*s | ", len_scope, universe->universe_info.scope);
+    printf("%*s |",  len_state, pretty_univ_state(universe->universe_info.state));
     printf("\n");
-
-#if 0
-    printf("\tSeed URI   :\t %s\n", universe->universe_info.seed_uri);
-    printf("\tScriptfile :\t %s\n", universe->universe_info.scriptfile);
-#endif
 
     printf("\n");
 
     /*
-     * Print job information
+     * Print Node Information
      */
-    for(job_item  = opal_list_get_first(&(universe->job_list));
-        job_item != opal_list_get_end(&(universe->job_list));
+    if( orte_ps_globals.nodes )
+        pretty_print_nodes(&universe->nodes);
+
+    /*
+     * Print Job Information
+     */
+    pretty_print_jobs(&universe->job_list);
+
+    return ORTE_SUCCESS;
+}
+
+static int pretty_print_nodes(opal_list_t *nodes) {
+    opal_list_item_t* node_item = NULL;
+    int i, line_len;
+    int len_name    = 0,
+        len_arch    = 0,
+        len_cell    = 0,
+        len_state   = 0,
+        len_slots   = 0,
+        len_slots_i = 0,
+        len_slots_a = 0,
+        len_slots_m = 0;
+
+    /*
+     * Caculate segment lengths
+     */
+    len_name    = (int) strlen("Node Name");
+    len_arch    = (int) strlen("Arch");
+    len_cell    = (int) strlen("Cell ID");
+    len_state   = (int) strlen("State");
+    len_slots   = (int) strlen("Slots");
+    len_slots_i = (int) strlen("Slots In Use");
+    len_slots_a = (int) strlen("Slots Alloc");
+    len_slots_m = (int) strlen("Slots Max");
+    for(node_item  = opal_list_get_first(nodes);
+        node_item != opal_list_get_end(nodes);
+        node_item  = opal_list_get_next(node_item) ) {
+        orte_ras_node_t *node;
+        node = (orte_ras_node_t *)node_item;
+        
+        if( NULL != node->node_name &&
+            (int)strlen(node->node_name) > len_name)
+            len_name = (int) strlen(node->node_name);
+
+        if( NULL != node->node_arch &&
+            (int)strlen(node->node_arch) > len_arch)
+            len_arch = (int) strlen(node->node_arch);
+        
+        if( (int)strlen(pretty_node_state(node->node_state)) > len_state )
+            len_state = (int)strlen(pretty_node_state(node->node_state));
+    }
+
+    /*
+     * JJH Since node_slots_inuse and node_slots_alloc are not used properly
+     * JJH   do not display them to the user.
+     */
+    line_len = (len_name    + 3 +
+                len_arch    + 3 +
+                len_cell    + 3 +
+                len_state   + 3 +
+                len_slots   + 3 +
+#if 0
+                len_slots_i + 3 +
+                len_slots_a + 3 +
+#endif
+                len_slots_m + 3);
+
+    /*
+     * Print the header
+     */
+    printf("%*s | ", len_name,    "Node Name");
+    printf("%*s | ", len_arch,    "Arch");
+    printf("%*s | ", len_cell,    "Cell ID");
+    printf("%*s | ", len_state,   "State");
+    printf("%*s | ", len_slots,   "Slots");
+    printf("%*s | ", len_slots_m, "Slots Max");
+#if 0
+    printf("%*s | ", len_slots_i, "Slots In Use");
+    printf("%*s | ", len_slots_a, "Slots Alloc");
+#endif
+    printf("\n");
+
+    for(i = 0; i < line_len; ++i) {
+        printf("-");
+    }
+    printf("\n");
+    
+    /*
+     * Print Info
+     */
+    for(node_item  = opal_list_get_first(nodes);
+        node_item != opal_list_get_end(nodes);
+        node_item  = opal_list_get_next(node_item) ) {
+        orte_ras_node_t *node;
+        node = (orte_ras_node_t *)node_item;
+
+        printf("%*s | ", len_name,    node->node_name);
+        printf("%*s | ", len_arch,    (NULL == node->node_arch ?
+                                       "" :
+                                       node->node_arch));
+        printf("%*d | ", len_cell,    node->node_cellid);
+        printf("%*s | ", len_state,   pretty_node_state(node->node_state));
+        printf("%*d | ", len_slots,   (uint)node->node_slots);
+        printf("%*d | ", len_slots_m, (uint)node->node_slots_max);
+#if 0
+        printf("%*d | ", len_slots_i, (uint)node->node_slots_inuse);
+        printf("%*d | ", len_slots_a, (uint)node->node_slots_alloc);
+#endif
+        printf("\n");
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+static int pretty_print_jobs(opal_list_t *jobs) {
+    opal_list_item_t* job_item = NULL;
+    int len_jobid = 0,
+        len_state = 0,
+        len_slots = 0,
+        len_vpid_s = 0,
+        len_vpid_r = 0,
+        len_ckpt_s = 0,
+        len_ckpt_r = 0,
+        len_ckpt_l = 0;
+    int i, line_len;
+
+    for(job_item  = opal_list_get_first(jobs);
+        job_item != opal_list_get_end(jobs);
         job_item  = opal_list_get_next(job_item) ) {
         orte_ps_job_info_t *job;
         job = (orte_ps_job_info_t *)job_item;
 
-        printf("\n");
-        printf("%*s | ", 6 , "JobID");
-        printf("%*s | ", (int)strlen(pretty_job_state(job->state)) , "State");
-        printf("%*s | ", 6 , "Slots");
-        printf("%*s | ", 10 , "VPID start");
-        printf("%*s | ", 10 , "VPID range");
-#if 0
-        printf("%*s | ", 10 , "Num Init");
-        printf("%*s | ", 10 , "Num Launched");
-        printf("%*s | ", 10 , "Num Running");
-        printf("%*s | ", 10 , "Num Finalized");
-        printf("%*s | ", 10 , "Num Terminated");
-        printf("%*s | ", 10 , "Num aborted");
-#endif
+        /*
+         * Caculate segment lengths
+         */
+        len_jobid  = 6;
+        len_state  = (int) (strlen(pretty_job_state(job->state)) < strlen("State") ?
+                            strlen("State") :
+                            strlen(pretty_job_state(job->state)));
+        len_slots  = 6;
+        len_vpid_s = (int) strlen("VPID Start");
+        len_vpid_r = (int) strlen("VPID Range");
 #if OPAL_ENABLE_FT == 1
-        printf("%*s | ", (int)strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) , "Ckpt State");
-        printf("%*s | ", (int)(NULL == job->ckpt_ref ? strlen("Ckpt Ref") : strlen(job->ckpt_ref)) , "Ckpt Ref");
-        printf("%*s",    (int)(NULL == job->ckpt_loc ? strlen("Ckpt Loc") : strlen(job->ckpt_loc)) , "Ckpt Loc");
+        len_ckpt_s = (int) (strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) < strlen("Ckpt State") ?
+                            strlen("Ckpt State") ?
+                            strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) );
+        len_ckpt_r = (int) (NULL == job->ckpt_ref ? strlen("Ckpt Ref") :
+                            (strlen(job->ckpt_ref) < strlen("Ckpt Ref") ?
+                             strlen("Ckpt Ref") ?
+                             strlen(job->ckpt_ref) ) );
+        len_ckpt_l = (int) (NULL == job->ckpt_loc ? strlen("Ckpt Loc") :
+                            (strlen(job->ckpt_loc) < strlen("Ckpt Loc") ?
+                             strlen("Ckpt Loc") ?
+                             strlen(job->ckpt_loc) ) );
+#else
+        len_ckpt_s = 0;
+        len_ckpt_r = 0;
+        len_ckpt_l = 0;
+#endif
+        line_len = (len_jobid  + 3 +
+                    len_state  + 3 +
+                    len_slots  + 3 +
+                    len_vpid_s + 3 +
+                    len_vpid_r + 3 +
+                    len_ckpt_s + 3 +
+                    len_ckpt_r + 3 +
+                    len_ckpt_l
+#if OPAL_ENABLE_FT != 1
+                    - 6
+#endif
+                    );
+        /*
+         * Print Header
+         */
+        printf("\n");
+        printf("%*s | ", len_jobid  , "JobID");
+        printf("%*s | ", len_state  , "State");
+        printf("%*s | ", len_slots  , "Slots");
+        printf("%*s | ", len_vpid_s , "VPID Start");
+        printf("%*s | ", len_vpid_r , "VPID Range");
+#if OPAL_ENABLE_FT == 1
+        printf("%*s | ", len_ckpt_s , "Ckpt State");
+        printf("%*s | ", len_ckpt_r , "Ckpt Ref");
+        printf("%*s |",  len_ckpt_l , "Ckpt Loc");
 #endif
         printf("\n");
 
-        line_len = (6  + 3 +
-                    strlen(pretty_job_state(job->state)) + 3 +
-                    6  + 3 +
-                    10 + 3 +
-                    10 + 3 +
-#if OPAL_ENABLE_FT == 1
-                    (strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) < strlen("Ckpt State") ?
-                     strlen("Ckpt State") : 
-                     strlen(orte_snapc_ckpt_state_str(job->ckpt_state))) + 3 +
-                    (NULL == job->ckpt_ref || strlen(job->ckpt_ref) < strlen("Ckpt Ref") ? 
-                     strlen("Ckpt Ref") : 
-                     strlen(job->ckpt_ref)) + 3 +
-                    (NULL == job->ckpt_loc || strlen(job->ckpt_loc) < strlen("Ckpt Loc") ? 
-                     strlen("Ckpt Loc") : 
-                     strlen(job->ckpt_loc)) + 3
-#else
-                    0
-#endif
-                    );
         for(i = 0; i < line_len; ++i) {
             printf("-");
         }
         printf("\n");
 
-        printf("%*d | ",  6,  job->id);
-        printf("%s | ",       pretty_job_state(job->state));
-        printf("%*d | ",  6,  (uint)job->slots);
-        printf("%*d | ",  10, job->vpid_start);
-        printf("%*d | ",  10, job->vpid_range);
-#if 0
-        printf("%*lu | ", 10, job->num_init);
-        printf("%*lu | ", 10, job->num_launched);
-        printf("%*lu | ", 10, job->num_running);
-        printf("%*lu | ", 10, job->num_finalized);
-        printf("%*lu | ", 10, job->num_terminated);
-        printf("%*lu | ", 10, job->num_aborted);
-#endif
+        /*
+         * Print Info
+         */
+        printf("%*d | ",  len_jobid ,  job->id);
+        printf("%*s | ",  len_state ,  pretty_job_state(job->state));
+        printf("%*d | ",  len_slots ,  (uint)job->slots);
+        printf("%*d | ",  len_vpid_s,  job->vpid_start);
+        printf("%*d | ",  len_vpid_r,  job->vpid_range);
 #if OPAL_ENABLE_FT == 1
-        printf("%*s | ", 
-               (strlen("Ckpt State") > strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) ?
-                (int)strlen("Ckpt State") : (int)strlen(orte_snapc_ckpt_state_str(job->ckpt_state)) ),
-               orte_snapc_ckpt_state_str(job->ckpt_state));
-        if( NULL == job->ckpt_ref ) {
-            printf("%*s", (int)strlen("Ckpt Ref"), "");
-        }
-        else {
-            printf("%*s", 
-                   (strlen("Ckpt Ref") > strlen(job->ckpt_ref) ?
-                    (int)strlen("Ckpt Ref") : (int)strlen(job->ckpt_ref) ),
-                   job->ckpt_ref);
-        }
-        printf(" | ");
-        if( NULL == job->ckpt_loc ) {
-            printf("%*s", (int)strlen("Ckpt Loc"), "");
-        }
-        else {
-            printf("%*s", 
-                   (strlen("Ckpt Loc") > strlen(job->ckpt_loc) ?
-                    (int)strlen("Ckpt Loc") : (int)strlen(job->ckpt_loc) ),
-                   job->ckpt_loc);
-        }
+        printf("%*s | ",  len_ckpt_s,  orte_snapc_ckpt_state_str(job->ckpt_state));
+        printf("%*s | ",  len_ckpt_r,  (NULL == job->ckpt_ref ? 
+                                        "" :
+                                        job->ckpt_ref) );
+        printf("%*s |",   len_ckpt_l,  (NULL == job->ckpt_loc ? 
+                                        "" :
+                                        job->ckpt_loc) );
 #endif
         printf("\n");
 
+        /*
+         * Pretty print all VPID's in job
+         */
         if(0 == job->id) { /* No vpids for the HNP */
             continue;
         }
 
-        /*
-         * For each VPID in the job
-         */
-        /* First time through to get the max len */
-        len_pn  = strlen("Process Name");
-        len_opn = strlen("ORTE Name");
-        len_r   = 6;
-        len_p   = 6;
-        len_s   = 0;
+        pretty_print_vpids(job);
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+static int pretty_print_vpids(orte_ps_job_info_t *job) {
+    opal_list_item_t* vpid_item = NULL;
+    int len_o_proc_name = 0, 
+        len_proc_name   = 0, 
+        len_rank        = 0, 
+        len_pid         = 0,
+        len_state       = 0,
+        len_node        = 0,
+        len_ckpt_s      = 0,
+        len_ckpt_r      = 0,
+        len_ckpt_l      = 0;
+    int i, line_len;
+
+    /*
+     * Caculate segment lengths
+     */
+    len_o_proc_name = strlen("ORTE Name");
+    len_proc_name   = strlen("Process Name");
+    len_rank        = 6;
+    len_pid         = 6;
+    len_state       = 0;
+    len_node        = 0;
 #if OPAL_ENABLE_FT == 1
-        len_cs  = strlen("Ckpt State");
-        len_cr  = strlen("Ckpt Ref");
-        len_cl  = strlen("Ckpt Loc");
-#endif
-        for(vpid_item  = opal_list_get_first(&(job->vpid_list));
-            vpid_item != opal_list_get_end(&(job->vpid_list));
-            vpid_item  = opal_list_get_next(vpid_item) ) {
-            orte_ps_vpid_info_t *vpid;
-            char *proc_name = NULL;
-            vpid = (orte_ps_vpid_info_t *)vpid_item;
-
-            /*
-             * Find my app context
-             */
-            for( i = 0; i < (int)job->num_app_context; ++i) {
-                if( job->app_context[i]->idx == vpid->app_context_idx ) {
-                    if( (int)strlen(job->app_context[i]->app) > len_pn) 
-                        len_pn = strlen(job->app_context[i]->app);
-                    break;
-                }
-            }
-
-            asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
-            if( (int)strlen(proc_name) > len_opn )
-                len_opn = strlen(proc_name);
-            
-            if( (int)strlen(vpid->node) > len_n)
-                len_n = strlen(vpid->node);
-
-            if( (int)strlen(pretty_vpid_state(vpid->state)) > len_s)
-                len_s = strlen(pretty_vpid_state(vpid->state));
-
-#if OPAL_ENABLE_FT == 1
-            if( (int)strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state)) > len_cs)
-                len_cs = strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state));
-
-            if( NULL != vpid->ckpt_ref &&
-                (int)strlen(vpid->ckpt_ref) > len_cr) 
-                len_cr = strlen(vpid->ckpt_ref);
-
-            if( NULL != vpid->ckpt_loc &&
-                (int)strlen(vpid->ckpt_loc) > len_cl) 
-                len_cl = strlen(vpid->ckpt_loc);
-#endif
-            if( NULL != proc_name) {
-                free(proc_name);
-                proc_name = NULL;
-            }
-        }
-
-        printf("\t");
-        printf("%*s | ", len_pn , "Process Name");
-        printf("%*s | ", len_opn, "ORTE Name");
-        printf("%*s | ", len_r  , "Rank");
-        printf("%*s | ", len_p  , "PID");
-        printf("%*s | ", len_n  , "Node");
-        printf("%*s | ", len_s  , "State");
-#if OPAL_ENABLE_FT == 1
-        printf("%*s | ", len_cs , "Ckpt State");
-        printf("%*s | ", len_cr , "Ckpt Ref");
-        printf("%*s",    len_cl , "Ckpt Loc");
-#endif
-        printf("\n");
-
-        line_len = (len_pn + 3 +
-                    len_opn + 3 +
-                    len_r  + 3 +
-                    len_p  + 3 +
-                    len_s  + 3 +
-                    len_n  + 3 +
-#if OPAL_ENABLE_FT == 1
-                    len_cs + 3 +
-                    len_cr + 3 +
-                    len_cl + 3
+    len_ckpt_s      = strlen("Ckpt State");
+    len_ckpt_r      = strlen("Ckpt Ref");
+    len_ckpt_l      = strlen("Ckpt Loc");
 #else
-                    0
+    len_ckpt_s      = 0;
+    len_ckpt_r      = 0;
+    len_ckpt_l      = 0;
 #endif
-                    );
-        printf("\t");
-        for(i = 0; i < line_len; ++i) {
-            printf("-");
+
+    for(vpid_item  = opal_list_get_first(&(job->vpid_list));
+        vpid_item != opal_list_get_end(&(job->vpid_list));
+        vpid_item  = opal_list_get_next(vpid_item) ) {
+        orte_ps_vpid_info_t *vpid;
+        char *proc_name = NULL;
+        vpid = (orte_ps_vpid_info_t *)vpid_item;
+        
+        /*
+         * Find my app context
+         */
+        for( i = 0; i < (int)job->num_app_context; ++i) {
+            if( job->app_context[i]->idx == vpid->app_context_idx ) {
+                if( (int)strlen(job->app_context[i]->app) > len_proc_name) 
+                    len_proc_name = strlen(job->app_context[i]->app);
+                break;
+            }
         }
-        printf("\n");
-
-        for(vpid_item  = opal_list_get_first(&(job->vpid_list));
-            vpid_item != opal_list_get_end(&(job->vpid_list));
-            vpid_item  = opal_list_get_next(vpid_item) ) {
-            orte_ps_vpid_info_t *vpid;
-            char *proc_name = NULL;
-            vpid = (orte_ps_vpid_info_t *)vpid_item;
-
-            asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
-            
-            printf("\t");
-
-            for( i = 0; i < (int)job->num_app_context; ++i) {
-                if( job->app_context[i]->idx == vpid->app_context_idx ) {
-                    printf("%*s | ", len_pn, job->app_context[i]->app);
-                    break;
-                }
-            }
-
-            printf("%*s | ",  len_opn, proc_name);
-            printf("%*d | ",  len_r,  (uint)vpid->rank);
-            printf("%*d | ",  len_p,  vpid->pid);
-            printf("%*s | ",  len_n,  vpid->node);
-            printf("%s | ",  pretty_vpid_state(vpid->state));
-
+        
+        asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
+        if( (int)strlen(proc_name) > len_o_proc_name )
+            len_o_proc_name = strlen(proc_name);
+        
+        if( (int)strlen(vpid->node) > len_node)
+            len_node = strlen(vpid->node);
+        
+        if( (int)strlen(pretty_vpid_state(vpid->state)) > len_state)
+            len_state = strlen(pretty_vpid_state(vpid->state));
+        
 #if OPAL_ENABLE_FT == 1
-            printf("%*s | ",  len_cs, orte_snapc_ckpt_state_str(vpid->ckpt_state));
-            printf("%*s | ",  len_cr, (NULL == vpid->ckpt_ref ? "" : vpid->ckpt_ref));
-            printf("%*s",     len_cl, (NULL == vpid->ckpt_loc ? "" : vpid->ckpt_loc));
+        if( (int)strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state)) > len_ckpt_s)
+            len_ckpt_s = strlen(orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        
+        if( NULL != vpid->ckpt_ref &&
+            (int)strlen(vpid->ckpt_ref) > len_ckpt_r) 
+            len_ckpt_r = strlen(vpid->ckpt_ref);
+        
+        if( NULL != vpid->ckpt_loc &&
+            (int)strlen(vpid->ckpt_loc) > len_ckpt_l) 
+            len_ckpt_l = strlen(vpid->ckpt_loc);
 #endif
-            printf("\n");
 
-            if( NULL != proc_name) {
-                free(proc_name);
-                proc_name = NULL;
-            }
+        if( NULL != proc_name) {
+            free(proc_name);
+            proc_name = NULL;
         }
     }
 
+    line_len = (len_o_proc_name + 3 +
+                len_proc_name   + 3 +
+                len_rank        + 3 +
+                len_pid         + 3 +
+                len_state       + 3 +
+                len_node        + 3 +
+                len_ckpt_s      + 3 +
+                len_ckpt_r      + 3 +
+                len_ckpt_l
+#if OPAL_ENABLE_FT != 1
+                - 6
+#endif
+                );
+
+    /*
+     * Print Header
+     */
+    printf("\t");
+    printf("%*s | ", len_proc_name   , "Process Name");
+    printf("%*s | ", len_o_proc_name , "ORTE Name");
+    printf("%*s | ", len_rank        , "Rank");
+    printf("%*s | ", len_pid         , "PID");
+    printf("%*s | ", len_node        , "Node");
+    printf("%*s | ", len_state       , "State");
+#if OPAL_ENABLE_FT == 1
+    printf("%*s | ", len_ckpt_s      , "Ckpt State");
+    printf("%*s | ", len_ckpt_r      , "Ckpt Ref");
+    printf("%*s |",  len_ckpt_l      , "Ckpt Loc");
+#endif
+    printf("\n");
+    
+    printf("\t");
+    for(i = 0; i < line_len; ++i) {
+        printf("-");
+    }
+    printf("\n");
+    
+    /*
+     * Print Info
+     */
+    for(vpid_item  = opal_list_get_first(&(job->vpid_list));
+        vpid_item != opal_list_get_end(&(job->vpid_list));
+        vpid_item  = opal_list_get_next(vpid_item) ) {
+        orte_ps_vpid_info_t *vpid;
+        char *proc_name = NULL;
+        vpid = (orte_ps_vpid_info_t *)vpid_item;
+        
+        printf("\t");
+
+        asprintf(&proc_name, "%d.%d.%d", vpid->name.cellid, vpid->name.jobid, vpid->name.vpid);
+
+        for( i = 0; i < (int)job->num_app_context; ++i) {
+            if( job->app_context[i]->idx == vpid->app_context_idx ) {
+                printf("%*s | ", len_proc_name, job->app_context[i]->app);
+                break;
+            }
+        }
+        
+        printf("%*s | ",  len_o_proc_name, proc_name);
+        printf("%*d | ",  len_rank       , (uint)vpid->rank);
+        printf("%*d | ",  len_pid        , vpid->pid);
+        printf("%*s | ",  len_node       , vpid->node);
+        printf("%*s | ",  len_state      , pretty_vpid_state(vpid->state));
+        
+#if OPAL_ENABLE_FT == 1
+        printf("%*s | ",  len_ckpt_s, orte_snapc_ckpt_state_str(vpid->ckpt_state));
+        printf("%*s | ",  len_ckpt_r, (NULL == vpid->ckpt_ref ? 
+                                       "" : 
+                                       vpid->ckpt_ref));
+        printf("%*s |",   len_ckpt_l, (NULL == vpid->ckpt_loc ? 
+                                       "" : 
+                                       vpid->ckpt_loc));
+#endif
+        printf("\n");
+        
+        if( NULL != proc_name) {
+            free(proc_name);
+            proc_name = NULL;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -883,11 +1071,6 @@ static int connect_to_universe(orte_universe_t universe_info) {
 
     return exit_status;
 }
-
-static int gather_active_jobs(orte_ps_universe_info_t* universe);
-static int gather_nodes(orte_ps_universe_info_t* universe);
-static int gather_job_info(orte_ps_universe_info_t* universe);
-static int gather_vpid_info(orte_ps_universe_info_t* universe);
 
 static int gather_information(orte_ps_universe_info_t* universe) {
     int ret, exit_status = ORTE_SUCCESS;
@@ -981,7 +1164,13 @@ static int gather_active_jobs(orte_ps_universe_info_t* universe) {
 }
 
 static int gather_nodes(orte_ps_universe_info_t* universe) {
-    return ORTE_SUCCESS;
+    int ret, exit_status = ORTE_SUCCESS;
+
+    if( ORTE_SUCCESS != (ret = orte_ras_base_node_query(&(universe->nodes)))) {
+        exit_status = ret;
+    }
+    
+    return exit_status;
 }
 
 static int gather_job_info(orte_ps_universe_info_t* universe) {
@@ -1404,6 +1593,7 @@ void orte_ps_job_info_destruct( orte_ps_job_info_t *obj) {
 
 void orte_ps_universe_info_construct(orte_ps_universe_info_t *obj) {
     OBJ_CONSTRUCT(&obj->job_list, opal_list_t);
+    OBJ_CONSTRUCT(&obj->nodes,    opal_list_t);
     OBJ_CONSTRUCT(&obj->universe_info, orte_universe_t);
 }
 
@@ -1414,6 +1604,11 @@ void orte_ps_universe_info_destruct( orte_ps_universe_info_t *obj) {
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&obj->job_list);
+
+    while (NULL != (item = opal_list_remove_first(&obj->nodes))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&obj->nodes);
     
     OBJ_DESTRUCT(&obj->universe_info);
 }
@@ -1484,6 +1679,48 @@ static char *pretty_vpid_state(orte_proc_state_t state) {
         return strdup("Aborted");
         break;
     default:
+        break;
+    }
+    
+    return NULL;
+}
+
+static char *pretty_univ_state(orte_universe_state_t state) {
+    switch(state) {
+    case ORTE_UNIVERSE_STATE_PRE_INIT:
+        return strdup("Pre-Init");
+        break;
+    case ORTE_UNIVERSE_STATE_INIT:
+        return strdup("Initializing");
+        break;
+    case ORTE_UNIVERSE_STATE_RUNNING:
+        return strdup("Running");
+        break;
+    case ORTE_UNIVERSE_STATE_FINALIZE:
+        return strdup("Finalized");
+        break;
+    default:
+        return strdup("Unknown");
+        break;
+    }
+
+    return NULL;
+}
+
+static char *pretty_node_state(orte_node_state_t state) {
+    switch(state) {
+    case ORTE_NODE_STATE_DOWN:
+        return strdup("Down");
+        break;
+    case ORTE_NODE_STATE_UP:
+        return strdup("Up");
+        break;
+    case ORTE_NODE_STATE_REBOOT:
+        return strdup("Reboot");
+        break;
+    case ORTE_NODE_STATE_UNKNOWN:
+    default:
+        return strdup("Unknown");
         break;
     }
     
