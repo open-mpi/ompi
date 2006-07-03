@@ -31,7 +31,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/condition.h"
-#include "opal/util/os_create_dirpath.h"
+#include "opal/util/os_dirpath.h"
 #include "opal/util/os_path.h"
 #include "opal/util/output.h"
 
@@ -94,7 +94,7 @@ static int pls_bproc_orted_make_dir(char *directory)
         pls_bproc_orted_delete_dir_tree(directory);
     }
     /* try to create it with proper mode */
-    return(opal_os_create_dirpath(directory, my_mode));
+    return(opal_os_dirpath_create(directory, my_mode));
 }
 
 /**

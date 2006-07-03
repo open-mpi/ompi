@@ -39,6 +39,7 @@
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/os_path.h"
+#include "opal/util/os_dirpath.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/universe_setup_file_io.h"
 
@@ -83,7 +84,7 @@ int orte_universe_search(opal_list_t *universe_list) {
     /*
      * Check to make sure we have access to this directory
      */
-    if( ORTE_SUCCESS != (ret = orte_session_dir_check_dir(fulldirpath) )) {
+    if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(fulldirpath, 0) )) {
         exit_status = ret;
         goto cleanup;
     }

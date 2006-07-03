@@ -159,7 +159,6 @@ main(int argc, char *argv[])
         /*
          * Try to connect to the universe
          */
-
         if( orte_clean_globals.verbose ) {
             printf("orte_clean: Connecting to universe: %s\n", search_result->name);
         }
@@ -174,6 +173,9 @@ main(int argc, char *argv[])
          * If unable to connect to the universe,
          * clean it up!
          */
+        if( orte_clean_globals.verbose ) {
+            printf("orte_clean: Cleaning the session directory for universe: %s\n", search_result->name);
+        }
         if( ORTE_SUCCESS != (ret = orte_clean_universe(search_result)) ){
             exit_status = ret;
             goto cleanup;

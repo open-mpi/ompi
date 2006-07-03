@@ -140,18 +140,6 @@ OMPI_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char *batchid, char *univ, 
                                             char *job, char *proc);
 
-/*
- * Check the session directory string passed 
- *  to check if the session directory exists, and can be accessed
- *
- * @param directory 'fulldirpath' returned value from orte_session_dir_get_name()
- * @retval ORTE_SUCCESS If the directory exists, and can be accessed
- * @retval ORTE_ERR_NOT_FOUND If the directory does not exist
- * @retval ORTE_ERROR If the directory cannot be accessed, but does exist
- */
-OMPI_DECLSPEC int orte_session_dir_check_dir(char *directory);
-
-
 /** The orte_session_dir_finalize() function performs a cleanup of the
  * session directory tree. It first removes the session directory for
  * the calling process. It then checks to see if the job-level session

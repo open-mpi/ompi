@@ -38,7 +38,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 #include "opal/util/os_path.h"
-#include "opal/util/os_create_dirpath.h"
+#include "opal/util/os_dirpath.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
