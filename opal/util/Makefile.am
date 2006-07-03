@@ -40,7 +40,7 @@ headers = \
         malloc.h \
         numtostr.h \
         opal_environ.h \
-        os_create_dirpath.h \
+        os_dirpath.h \
         os_path.h \
         output.h \
         path.h \
@@ -69,7 +69,7 @@ libopalutil_la_SOURCES = \
         malloc.c \
         numtostr.c \
         opal_environ.c \
-        os_create_dirpath.c \
+        os_dirpath.c \
         os_path.c \
         output.c \
         path.c \
