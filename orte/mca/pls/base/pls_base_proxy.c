@@ -143,14 +143,17 @@ static void orte_pls_rsh_terminate_job_cb(
     int rc;
     if (status < 0) {
         ORTE_ERROR_LOG(status);
-        OBJ_RELEASE(req);
+        if(NULL != req)
+            OBJ_RELEASE(req);
         return;
     }
 
     if (0 > (rc = orte_rml.recv_buffer_nb(peer, ORTE_RML_TAG_RMGR_CLNT, 0, orte_pls_rsh_terminate_job_rsp, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
-    OBJ_RELEASE(req);
+
+    if(NULL != req)
+        OBJ_RELEASE(req);
 }
 
 
