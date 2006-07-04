@@ -9,12 +9,14 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
  */
+
 #include "orte_config.h"
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
@@ -24,11 +26,14 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+#include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
+#include "opal/util/if.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
+#include "orte/util/sys_info.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -416,7 +421,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     int rc = ORTE_SUCCESS;
     bool bynode = true;
     char **mapped_nodes = NULL;
-    int  num_mapped_nodes = 0;
+    int num_mapped_nodes = 0;
+    int id, value;
 
     /* query for the application context and allocated nodes */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context))) {
@@ -435,6 +441,24 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes, jobid))) {
         OBJ_DESTRUCT(&nodes);
         return rc;
+    }
+
+    /* If the "no local" option was set, then remove the local node
+       from the list */
+
+    id = mca_base_param_find("rmaps", NULL, "base_schedule_local");
+    mca_base_param_lookup_int(id, &value);
+    if (0 == value) {
+        for (item  = opal_list_get_first(&nodes);
+             item != opal_list_get_end(&nodes);
+             item  = opal_list_get_next(item) ) {
+            if (0 == strcmp(((orte_ras_node_t *) item)->node_name, 
+                            orte_system_info.nodename) ||
+                opal_ifislocal(((orte_ras_node_t *) item)->node_name)) {
+                opal_list_remove_item(&nodes, item);
+                break;
+            }
+        }
     }
 
     /* Sanity check to make sure we have been allocated nodes */
@@ -489,7 +513,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
            end, bounce back to the front (as would happen in the loop
            below)
            
-           But do a bozo check to ensure that we don't have a empty node list.*/
+           But do a bozo check to ensure that we don't have a empty
+           node list.*/
         if (0 == opal_list_get_size(&nodes)) {
             rc = ORTE_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;

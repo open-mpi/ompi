@@ -105,6 +105,7 @@ struct globals_t {
     bool by_node;
     bool by_slot;
     bool debugger;
+    bool no_local_schedule;
     size_t num_procs;
     int exit_status;
     char *hostfile;
@@ -208,6 +209,11 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'H', "host", "host", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "List of hosts to invoke processes on" },
+
+    /* OSC mpiexec-like arguments */
+    { NULL, NULL, NULL, '\0', "nolocal", "nolocal", 0,
+      &orterun_globals.no_local_schedule, OPAL_CMD_LINE_TYPE_BOOL,
+      "Do not run any MPI applications on the local node" },
 
     /* User-level debugger arguments */
     { NULL, NULL, NULL, '\0', "tv", "tv", 0,
@@ -761,6 +767,7 @@ static int init_globals(void)
         false,
         false,
         false,
+        false,
         0,
         0,
         NULL,
@@ -855,7 +862,7 @@ static int parse_globals(int argc, char* argv[])
      * since it really should be initialized in rmaps_base_open */
     if (orterun_globals.by_node || orterun_globals.by_slot) {
         char *policy = NULL;
-        id = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
+        id = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                             "Scheduling policy for RMAPS. [slot | node]",
                                             false, false, "slot", &policy);
 
@@ -871,6 +878,17 @@ static int parse_globals(int argc, char* argv[])
     else {
         /* Default */
         orterun_globals.by_slot = true;
+    }
+
+    /* Do we want to allow MPI applications on the same node as
+       mpirun? */
+    id = mca_base_param_reg_int_name("rmaps", "base_schedule_local",
+                                     "If nonzero, allow scheduling MPI applications on the same node as mpirun (default).  If zero, do not schedule any MPI applications on the same node as mpirun",
+                                     false, false, 1, &ret);
+    if (orterun_globals.no_local_schedule) {
+        mca_base_param_set_int(id, 0);
+    } else {
+        mca_base_param_set_int(id, 1);
     }
 
     /* If we don't want to wait, we don't want to wait */
