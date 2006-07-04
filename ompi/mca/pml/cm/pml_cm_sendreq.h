@@ -41,6 +41,7 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
                                                                         \
     if(NULL == proc) {                                                  \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
+        sendreq = NULL;                                                 \
     } else {                                                            \
         rc = OMPI_SUCCESS;                                              \
         OMPI_FREE_LIST_WAIT(&ompi_pml_cm.cm_send_requests, item, rc);   \
