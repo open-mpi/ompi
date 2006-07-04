@@ -17,6 +17,8 @@
 # $HEADER$
 #
 
+EXTRA_DIST = post_configure.sh
+
 ob1_sources  = \
 	pml_ob1.c \
 	pml_ob1.h \
