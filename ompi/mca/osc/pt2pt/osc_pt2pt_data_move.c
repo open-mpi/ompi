@@ -173,7 +173,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     }
 
     /* Get a BTL so we have the eager limit */
-    endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_pml;
+    endpoint = (mca_bml_base_endpoint_t*) sendreq->req_target_proc->proc_bml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     descriptor = bml_btl->btl_alloc(bml_btl->btl,
                                     needed_len < bml_btl->btl_eager_limit ? needed_len :
@@ -383,7 +383,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
     size_t written_data = 0;
         
     /* Get a BTL and a fragment to go with it */
-    endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_pml;
+    endpoint = (mca_bml_base_endpoint_t*) replyreq->rep_origin_proc->proc_bml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     descriptor = bml_btl->btl_alloc(bml_btl->btl,
                                     bml_btl->btl_eager_limit);
@@ -781,7 +781,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     ompi_osc_pt2pt_control_header_t *header = NULL;
         
     /* Get a BTL and a fragment to go with it */
-    endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml;
+    endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
     bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
     descriptor = bml_btl->btl_alloc(bml_btl->btl,
                                     sizeof(ompi_osc_pt2pt_control_header_t));

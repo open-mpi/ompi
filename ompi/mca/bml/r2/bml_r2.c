@@ -195,9 +195,9 @@ int mca_bml_r2_add_procs(
         proc = procs[p_index]; 
         OBJ_RETAIN(proc); 
         
-        if(NULL !=  proc->proc_pml) { 
+        if(NULL !=  proc->proc_bml) { 
             bml_endpoints[p_index] = 
-                (mca_bml_base_endpoint_t*) proc->proc_pml; 
+                (mca_bml_base_endpoint_t*) proc->proc_bml; 
         } else { 
             new_procs[n_new_procs++] = proc; 
         }
@@ -239,7 +239,7 @@ int mca_bml_r2_add_procs(
         for(p=0; p<n_new_procs; p++) {
             if(ompi_bitmap_is_set_bit(reachable, p)) {
                 ompi_proc_t *proc = new_procs[p]; 
-                mca_bml_base_endpoint_t * bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml; 
+                mca_bml_base_endpoint_t * bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
                 mca_bml_base_btl_t* bml_btl; 
                 size_t size;
                 
@@ -249,8 +249,7 @@ int mca_bml_r2_add_procs(
                     
                     
                     /* allocate bml specific proc data */
-                    bml_endpoint = (mca_bml_base_endpoint_t*) 
-                        opal_obj_new(mca_bml_r2.endpoint_class);
+                    bml_endpoint = OBJ_NEW(mca_bml_base_endpoint_t);
                     if (NULL == bml_endpoint) {
                         opal_output(0, "mca_bml_r2_add_procs: unable to allocate resources");
                         free(btl_endpoints);
@@ -263,14 +262,14 @@ int mca_bml_r2_add_procs(
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                     bml_endpoint->btl_max_send_size = -1;
                     bml_endpoint->btl_rdma_size = -1;
-                    bml_endpoint->super.proc_ompi = proc;
-                    proc->proc_pml = (struct mca_pml_proc_t*) bml_endpoint; 
+                    bml_endpoint->btl_proc = proc;
+                    proc->proc_bml = bml_endpoint; 
                  
                     bml_endpoint->btl_flags_and = 0;
                     bml_endpoint->btl_flags_or = 0;
                 }
 
-                bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_pml; 
+                bml_endpoints[p] =(mca_bml_base_endpoint_t*)  proc->proc_bml; 
                 
                 
                 /* dont allow an additional BTL with a lower exclusivity ranking */
@@ -354,7 +353,7 @@ int mca_bml_r2_add_procs(
     /* iterate back through procs and compute metrics for registered r2s */
     for(p=0; p<n_new_procs; p++) {
         ompi_proc_t *proc = new_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
         double total_bandwidth = 0;
         uint32_t latency = 0xffffffff;
         size_t n_index;
@@ -457,7 +456,7 @@ int mca_bml_r2_del_procs(size_t nprocs,
     
     for(p = 0; p < n_del_procs; p++) {
         ompi_proc_t *proc = del_procs[p];
-        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_pml;
+        mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml;
         size_t f_index, f_size;
         size_t n_index, n_size;
  
@@ -590,7 +589,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
 
 int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
 {
-    mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_pml;
+    mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_bml;
     double total_bandwidth = 0;
     size_t b;
 

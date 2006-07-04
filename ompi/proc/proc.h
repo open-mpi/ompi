@@ -37,8 +37,10 @@ struct ompi_proc_t {
     opal_list_item_t          super;
     /** this process' name */
     orte_process_name_t       proc_name;
+    /** BML specific proc data */
+    struct mca_bml_base_endpoint_t* proc_bml;
     /** PML specific proc data */
-    struct mca_pml_proc_t*    proc_pml;
+    struct mca_pml_base_endpoint_t* proc_pml;
     /** MCA module exchange data */
     opal_object_t*            proc_modex;
     /** architecture of this process */

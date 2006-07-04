@@ -33,7 +33,9 @@ extern "C" {
  *   add whatever else is needed
  */
 struct mca_pml_dr_endpoint_t {
-    mca_bml_base_endpoint_t base; 
+    opal_object_t super;
+    ompi_proc_t *proc_ompi; /* back pointer to proc structure */
+    mca_bml_base_endpoint_t *bml_endpoint; /* pointer to related bml endpoint */
     int32_t local;  /* local view of the rank */
     int32_t src;   /* peers view of the src rank */
     int32_t dst;   /* peers destination rank */

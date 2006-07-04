@@ -128,7 +128,7 @@ do {                                                                            
 do {                                                                                           \
     mca_pml_ob1_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;                \
     mca_bml_base_endpoint_t* endpoint = (mca_bml_base_endpoint_t*)                             \
-                                        sendreq->req_send.req_base.req_proc->proc_pml;         \
+                                        sendreq->req_send.req_base.req_proc->proc_bml;         \
     mca_bml_base_btl_t* bml_btl;                                                               \
     size_t size = sendreq->req_send.req_bytes_packed;                                          \
     size_t eager_limit;                                                                        \

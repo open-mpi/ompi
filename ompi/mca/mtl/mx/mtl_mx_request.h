@@ -16,29 +16,25 @@
  * $HEADER$
  */
 
+#ifndef OMPI_MTL_MX_REQUEST_H
+#define OMPI_MTL_MX_REQUEST_H
 
-#ifndef OMPI_BTL_PORTALS_COMPAT_H
-#define OMPI_BTL_PORTALS_COMPAT_H
+#include "ompi/datatype/convertor.h"
 
-#if OMPI_BTL_PORTALS_UTCP
 
-#include <portals3.h>
+typedef enum {
+    OMPI_MTL_MX_ISEND,
+    OMPI_MTL_MX_IRECV
+} mca_mtl_mx_request_type_t;
 
-#include <stdio.h>
-#include <p3nal_utcp.h>
-#include <p3rt/p3rt.h>
-#include <p3api/debug.h>
-
-#elif OMPI_BTL_PORTALS_REDSTORM
-
-#include <portals/portals3.h>
-
-#define PTL_EQ_HANDLER_NONE NULL
-
-#else
-
-#error "Unknown Portals library configuration"
+struct mca_mtl_mx_request_t { 
+    struct mca_mtl_request_t super;
+    mx_request_t mx_request;
+    mx_segment_t mx_segment[1];
+    struct ompi_convertor_t *convertor;
+    bool free_after;
+    mca_mtl_mx_request_type_t type;
+}; 
+typedef struct mca_mtl_mx_request_t mca_mtl_mx_request_t;
 
 #endif
-
-#endif /* OMPI_BTL_PORTALS_NAL_H */

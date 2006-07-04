@@ -861,7 +861,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                 /* do we need to allocate a new vfrag 
                    (we scheduled all the vfrag already) */
                 if(vfrag->vf_size == bytes_sent) {
-                    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->base.btl_send); 
+                    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->bml_endpoint->btl_send); 
                     MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);
                     if(NULL == vfrag) {
                         OPAL_THREAD_LOCK(&mca_pml_dr.lock);

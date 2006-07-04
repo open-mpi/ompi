@@ -223,8 +223,8 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
     
         /* setup request to reflect the contigous buffer */
         sendreq->req_count = sendreq->req_bytes_packed;
-        sendreq->req_datatype = MPI_BYTE;
 
+#if 0
         /* In case we reuse an old request recreate the correct convertor, the one
          * using the user buffers. Otherwise at the end of this function we replace
          * it with a convertor using the allocator buffer !!!
@@ -234,6 +234,11 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 
         /* increment count of pending requests */
         mca_pml_bsend_count++;
+#endif
+
+        sendreq->req_datatype = MPI_BYTE;
+
+
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* The convertor is already initialized in the begining so we just have to
@@ -243,8 +248,10 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         iov.iov_len = sendreq->req_count;
         iov_count = 1;
         max_data = iov.iov_len;
-        if((rc = ompi_convertor_pack( &sendreq->req_convertor, &iov, &iov_count, 
-                                      &max_data, &freeAfter )) <= 0) {
+        if((rc = ompi_convertor_pack( &sendreq->req_convertor, 
+                                      &iov, 
+                                      &iov_count, 
+                                      &max_data, &freeAfter )) < 0) {
             return OMPI_ERROR;
         }
  
@@ -264,6 +271,8 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
 int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
+
+    if (sendreq->req_count == 0) return OMPI_SUCCESS;
 
     /* has a buffer been provided */
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);

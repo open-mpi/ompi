@@ -113,7 +113,7 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 {
     ompi_bitmap_t reachable;
-    struct mca_pml_dr_endpoint_t ** endpoints = NULL;
+    struct mca_bml_base_endpoint_t **bml_endpoints = NULL;
     int rc;
     size_t i;
 
@@ -125,16 +125,16 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    endpoints = (struct mca_pml_dr_endpoint_t **) malloc ( nprocs *
-                    sizeof(struct mca_pml_dr_endpoint_t*));
-    if ( NULL == endpoints ) {
-	return OMPI_ERR_OUT_OF_RESOURCE;
+    bml_endpoints = malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
+    if (NULL == bml_endpoints) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
     }
     
+    /* initialize bml endpoint data */
     rc = mca_bml.bml_add_procs(
                                nprocs,
                                procs,
-                               (mca_bml_base_endpoint_t**) endpoints,
+                               bml_endpoints,
                                &reachable
                                );
     if(OMPI_SUCCESS != rc)
@@ -154,28 +154,34 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_dr.free_list_max,
                         mca_pml_dr.free_list_inc,
                         NULL);
-    
-    for(i = 0; i < nprocs; i++) {
+
+    /* initialize pml endpoint data */
+    for (i = 0 ; i < nprocs ; ++i) {
         int idx;
+        mca_pml_dr_endpoint_t *endpoint;
+
+
+        endpoint = OBJ_NEW(mca_pml_dr_endpoint_t);
+        endpoint->src = mca_pml_dr.my_rank;
+        endpoint->proc_ompi = procs[i];
+        procs[i]->proc_pml = (struct mca_pml_base_endpoint_t*) endpoint;
+
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
         idx = ompi_pointer_array_add(&mca_pml_dr.endpoints,
-                                     (void*) endpoints[i]);
+                                     (void*) endpoint);
         if(orte_ns.compare(ORTE_NS_CMP_ALL,
                            orte_process_info.my_name,
-                           &endpoints[i]->base.super.proc_ompi->proc_name) == 0) {
+                           &(endpoint->proc_ompi->proc_name)) == 0) {
             mca_pml_dr.my_rank = idx;
         }
-        endpoints[i]->local = endpoints[i]->dst = idx;
+        endpoint->local = endpoint->dst = idx;
+        endpoint->bml_endpoint = bml_endpoints[i];
     }
-        
-    for(i = 0; i < nprocs; i++) { 
-        endpoints[i]->src = mca_pml_dr.my_rank;
-    }
-    
+
     /* no longer need this */
-    if ( NULL != endpoints ) {
-	free ( endpoints) ;
+    if ( NULL != bml_endpoints ) {
+	free ( bml_endpoints) ;
     } 
     return rc;
 }
@@ -187,6 +193,15 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 
 int mca_pml_dr_del_procs(ompi_proc_t** procs, size_t nprocs)
 {
+    size_t i;
+
+    /* clean up pml endpoint data */
+    for (i = 0 ; i < nprocs ; ++i) {
+        if (NULL != procs[i]->proc_pml) {
+            OBJ_RELEASE(procs[i]->proc_pml);
+        }
+    }
+
     return mca_bml.bml_del_procs(nprocs, procs);
 }
 

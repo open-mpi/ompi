@@ -96,20 +96,20 @@ int mca_pml_dr_comm_init(mca_pml_dr_comm_t* dr_comm, ompi_communicator_t* ompi_c
     }
     for(i=0; i<size; i++) {
         mca_pml_dr_comm_proc_t* proc;
-        mca_pml_dr_endpoint_t* ep;
+        mca_pml_dr_endpoint_t* pml_ep;
         ompi_proc_t* ompi_proc;
         proc = dr_comm->procs+i;
         OBJ_CONSTRUCT(proc, mca_pml_dr_comm_proc_t);
         proc->comm_rank = i;
         ompi_proc = ompi_comm->c_remote_group->grp_proc_pointers[i];
         proc->ompi_proc = ompi_proc;
-        ep = (mca_pml_dr_endpoint_t*) ompi_proc->proc_pml;
+        pml_ep = (mca_pml_dr_endpoint_t*) ompi_proc->proc_pml;
         ompi_pointer_array_set_item(&dr_comm->sparse_procs, 
-                                    ep->dst,  /* from our view this is the 
+                                    pml_ep->dst,  /* from our view this is the 
                                                   peers source 'global rank' */
                                     proc); 
-        proc->endpoint = ep;
-        
+        proc->pml_endpoint = pml_ep;
+        proc->bml_endpoint = ompi_proc->proc_bml;
     }
     dr_comm->num_procs = size;
     return OMPI_SUCCESS;

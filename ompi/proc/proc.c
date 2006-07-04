@@ -55,6 +55,7 @@ OBJ_CLASS_INSTANCE(
 
 void ompi_proc_construct(ompi_proc_t* proc)
 {
+    proc->proc_bml = NULL;
     proc->proc_pml = NULL;
     proc->proc_modex = NULL;
     OBJ_CONSTRUCT(&proc->proc_lock, opal_mutex_t);

@@ -241,7 +241,7 @@ do {                                                                            
 #define MCA_PML_DR_RECV_REQUEST_BYTES_PACKED(request, bytes_packed)                  \
 do {                                                                                 \
     bool do_csum = mca_pml_dr.enable_csum &&                                         \
-        (request->req_endpoint->base.btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);        \
+        (request->req_endpoint->bml_endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM); \
     (request)->req_recv.req_bytes_packed = bytes_packed;                             \
     if((request)->req_recv.req_bytes_packed != 0) {                                  \
         ompi_proc_t *proc = (request)->req_proc->ompi_proc;                          \
@@ -276,7 +276,7 @@ do {                                                                            
         int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
         bool do_csum = mca_pml_dr.enable_csum &&                                  \
-            (request->req_endpoint->base.btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM); \
+            (request->req_endpoint->bml_endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM); \
                                                                                   \
         for(n=0; n<num_segments; n++) {                                           \
             mca_btl_base_segment_t* segment = segments+n;                         \

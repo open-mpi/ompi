@@ -115,6 +115,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     struct mca_bml_base_endpoint_t ** bml_endpoints = NULL;
     int rc;
+    size_t i;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
@@ -154,6 +155,12 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                         mca_pml_ob1.free_list_inc,
                         NULL);
 
+    /* we don't have any endpoint data we need to cache on the
+       ompi_proc_t, so set proc_pml to NULL */
+    for (i = 0 ; i < nprocs ; ++i) {
+        procs[i]->proc_pml = NULL;
+    }
+
     if ( NULL != bml_endpoints ) {
 	free ( bml_endpoints) ;
     }
@@ -189,7 +196,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     /* iterate through all procs on communicator */
     for(i=0; i<pml_comm->num_procs; i++) {
         mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
-        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_ompi->proc_pml;
+        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_ompi->proc_bml;
         size_t n;
 
         opal_output(0, "[Rank %d]\n", i);

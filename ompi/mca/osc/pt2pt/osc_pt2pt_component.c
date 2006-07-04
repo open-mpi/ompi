@@ -204,7 +204,9 @@ ompi_osc_pt2pt_component_finalize(void)
                     num_modules);
     }
 
+#if 0
     mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT, NULL, NULL);
+#endif
 
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_longreqs);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_replyreqs);

@@ -74,12 +74,38 @@ extern "C" {
 
 typedef uint64_t mca_pml_sequence_t;
 
+/**
+ * Base PML proc structure
+ *
+ * Base PML structure for caching proc information on a communicator.
+ * A PML should maintain an array of pointers to mca_pml_proc_t
+ * structures in the c_pml_procs structure of every communicator.
+ * Note that the mca_pml_proc_t structure can not be instantiated
+ * directly, so each PML *must* provide a class that inherits from
+ * this class and provides the necessary integration logic.
+ */
 struct mca_pml_proc_t {
     opal_list_item_t super;
     struct ompi_proc_t *proc_ompi;    /**< back-pointer to ompi_proc_t */
     opal_mutex_t proc_lock;           /**< lock to protect against concurrent access */
 };
 typedef struct mca_pml_proc_t mca_pml_proc_t; 
+
+
+/** 
+ * Base PML endpoint structure
+ *
+ * Base PML structure for caching endpoint information on a proc.  A
+ * pointer to an mca_pml_endpoint_t is maintained on each ompi_proc_t,
+ * in the proc_pml field, to provide per-process cache information.
+ * The data is opaque to the active PML -- no other subsystem will
+ * attempt to access the information in the cache.
+ *
+ * The PML is responsible for allocation and deallocation of the
+ * endpoint data during pml_add_procs and pml_del_procs.
+ */
+struct mca_pml_endpoint_t;
+
 
 typedef enum {
     MCA_PML_BASE_SEND_STANDARD,

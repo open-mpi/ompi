@@ -46,7 +46,8 @@ struct mca_pml_dr_comm_proc_t {
     opal_list_t unexpected_frags;  /**< unexpected fragment queues */
     opal_list_t matched_receives;  /**< list of in-progress matched receives */
     ompi_proc_t* ompi_proc;        /**< back pointer to ompi_proc_t */
-    mca_pml_dr_endpoint_t* endpoint; /**< back pointer to the endpoint */
+    mca_pml_dr_endpoint_t* pml_endpoint; /**< back pointer to the PML endpoint */
+    mca_bml_base_endpoint_t* bml_endpoint; /**< back pointer to the BML endpoint */
     int32_t comm_rank;               /**< rank in the communicator */
 };
 typedef struct mca_pml_dr_comm_proc_t mca_pml_dr_comm_proc_t;

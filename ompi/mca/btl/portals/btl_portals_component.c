@@ -21,18 +21,15 @@
 #include <sys/types.h>
 #include <unistd.h>
 #include <limits.h>
-#if OMPI_BTL_PORTALS_REDSTORM
-#include <catamount/cnos_mpi_os.h>
-#endif
 
 #include "ompi/constants.h"
 
 #include "opal/util/output.h"
 #include "opal/threads/threads.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "ompi/mca/common/portals/common_portals.h"
 
 #include "btl_portals.h"
-#include "btl_portals_compat.h"
 #include "btl_portals_frag.h"
 #include "btl_portals_send.h"
 #include "btl_portals_recv.h"
@@ -78,6 +75,8 @@ mca_btl_portals_component_open(void)
     int i;
     int dummy;
 
+    ompi_common_portals_register_mca();
+
     /*
      * get configured state for component 
      */
@@ -94,25 +93,10 @@ mca_btl_portals_component_open(void)
                            false,
                            0, 
                            &(portals_output_stream.lds_verbose_level));
-#if OMPI_BTL_PORTALS_REDSTORM
     asprintf(&(portals_output_stream.lds_prefix),
-             "btl: portals (%5d): ", cnos_get_rank());
-#else
-    asprintf(&(portals_output_stream.lds_prefix), 
-             "btl: portals (%5d): ", getpid());
-#endif
+             "btl: portals (%s): ", ompi_common_portals_nodeid());
     mca_btl_portals_component.portals_output = 
         opal_output_open(&portals_output_stream);
-
-#if OMPI_BTL_PORTALS_UTCP
-    mca_base_param_reg_string(&mca_btl_portals_component.super.btl_version,
-                              "ifname",
-                              "Interface name to use for communication",
-                              false,
-                              false,
-                              "eth0",
-                              &(mca_btl_portals_component.portals_ifname));
-#endif
 
     mca_base_param_reg_int(&mca_btl_portals_component.super.btl_version,
                            "free_list_init_num",
@@ -277,12 +261,6 @@ int
 mca_btl_portals_component_close(void)
 {
     /* release resources */
-#if OMPI_BTL_PORTALS_UTCP
-    if (NULL != mca_btl_portals_component.portals_ifname) {
-        free(mca_btl_portals_component.portals_ifname);
-    }
-#endif
-
     if (NULL != portals_output_stream.lds_prefix) {
         free(portals_output_stream.lds_prefix);
     }
@@ -311,14 +289,12 @@ mca_btl_portals_component_init(int *num_btls,
 
     /* initialize portals btl.  note that this is in the compat code because
        it's fairly non-portable between implementations */
-    if (OMPI_SUCCESS != mca_btl_portals_init_compat(&mca_btl_portals_component)) {
+    if (OMPI_SUCCESS != ompi_common_portals_initialize()) {
         opal_output_verbose(20, mca_btl_portals_component.portals_output,
                             "disabled because compatibility init failed");
         return NULL;
     }
 
-    /* fill in all the portable parts of the module structs - the
-       compat code filled in the other bits already */
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_eager), ompi_free_list_t);
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_max), ompi_free_list_t);
     OBJ_CONSTRUCT(&(mca_btl_portals_module.portals_frag_user), ompi_free_list_t);

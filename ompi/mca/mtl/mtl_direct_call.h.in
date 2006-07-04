@@ -1,0 +1,20 @@
+/*
+ * Copyright (c) 2006 The Regents of the University of California.
+ *                    All rights reserved.
+ *
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+
+#ifndef MCA_PML_DIRECT_CALL_H_
+#define MCA_PML_DIRECT_CALL_H_
+
+#if MCA_pml_DIRECT_CALL
+#include @MCA_pml_DIRECT_CALL_HEADER@
+#endif
+
+#endif

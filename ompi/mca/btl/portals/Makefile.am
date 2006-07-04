@@ -32,13 +32,8 @@ component_noinst = libmca_btl_portals.la
 component_install =
 endif
 
-EXTRA_DIST = \
-	btl_portals_compat_utcp.c \
-	btl_portals_compat_redstorm.c
-
 portals_SOURCES = \
 	btl_portals.h \
-	btl_portals_compat.h \
 	btl_portals_endpoint.h \
 	btl_portals_frag.h \
 	btl_portals_send.h \
@@ -50,9 +45,6 @@ portals_SOURCES = \
 	btl_portals_recv.c \
 	btl_portals_rdma.c
 
-portals_nodist_SOURCES = \
-	btl_portals_compat.c
-
 AM_CPPFLAGS = $(btl_portals_CPPFLAGS)
 
 mcacomponentdir = $(libdir)/openmpi
@@ -61,6 +53,7 @@ mca_btl_portals_la_SOURCES = $(portals_SOURCES)
 nodist_mca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
 mca_btl_portals_la_LIBADD = \
     $(btl_portals_LIBS) \
+    $(top_ompi_builddir)/ompi/mca/common/portals/libmca_common_portals.la \
     $(top_ompi_builddir)/ompi/libmpi.la \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
@@ -71,6 +64,3 @@ libmca_btl_portals_la_SOURCES = $(portals_SOURCES)
 nodist_libmca_btl_portals_la_SOURCES = $(portals_nodist_SOURCES)
 libmca_btl_portals_la_LIBADD = $(btl_portals_LIBS)
 libmca_btl_portals_la_LDFLAGS = -module -avoid-version $(btl_portals_LDFLAGS)
-
-dist-clean-local:
-	rm -f btl_portals_compat.c

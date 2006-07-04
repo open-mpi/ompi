@@ -151,15 +151,15 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
     sendreq->req_endpoint = (mca_pml_dr_endpoint_t*)sendreq->req_send.req_base.req_proc->proc_pml; 
 
     /* make sure a path is available */
-    if(mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->base.btl_eager) == 0 ||
-       mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->base.btl_eager) == 0) {
+    if(mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0 ||
+       mca_bml_base_btl_array_get_size(&sendreq->req_endpoint->bml_endpoint->btl_eager) == 0) {
         opal_output(0, "%s:%d:%s: no path to peer", __FILE__, __LINE__, __func__);
         orte_errmgr.abort();
     }
     if(vfrag->vf_offset == 0) {
-        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->base.btl_eager);
+        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->bml_endpoint->btl_eager);
     } else {
-        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->base.btl_send);
+        vfrag->bml_btl = mca_bml_base_btl_array_get_next(&sendreq->req_endpoint->bml_endpoint->btl_send);
     }
     opal_output(0, "%s:%d:%s: selected new BTL: %s", __FILE__, __LINE__, __func__, 
         vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);

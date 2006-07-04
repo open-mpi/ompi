@@ -58,6 +58,8 @@
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
+#include "ompi/mca/mtl/mtl.h"
+#include "ompi/mca/mtl/base/base.h"
 #include "ompi/mca/topo/topo.h"
 #include "ompi/mca/topo/base/base.h"
 #include "ompi/mca/osc/osc.h"
@@ -249,6 +251,9 @@ void ompi_info::open_components()
   mca_btl_base_open();
   component_map["btl"] = &mca_btl_base_components_opened;
 
+  ompi_mtl_base_open();
+  component_map["mtl"] = &ompi_mtl_base_components_opened;
+
   mca_topo_base_open();
   component_map["topo"] = &mca_topo_base_components_opened;
 
@@ -270,6 +275,7 @@ void ompi_info::close_components()
         mca_topo_base_close();
         // the PML has to call the base PTL close function.
         mca_btl_base_close();
+        ompi_mtl_base_close();
         mca_pml_base_close();
         mca_mpool_base_close();
         mca_rcache_base_close();
