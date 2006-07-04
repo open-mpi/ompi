@@ -38,7 +38,7 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_recv_request_t);
  */
 #define MCA_PML_CM_RECV_REQUEST_ALLOC(recvreq, rc)                   \
 do {                                                                 \
-    opal_list_item_t *item;                                          \
+    ompi_free_list_item_t*item;                                      \
     OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_recv_requests, item, rc);     \
     recvreq = (mca_pml_cm_recv_request_t*) item;                     \
  } while (0)
@@ -147,11 +147,11 @@ do {                                                                    \
 /**
  *  Free the PML receive request
  */
-#define MCA_PML_CM_RECV_REQUEST_RETURN(recvreq)            \
-{                                                          \
-    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);  \
-    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_recv_requests,  \
-                           (opal_list_item_t*)(recvreq));  \
+#define MCA_PML_CM_RECV_REQUEST_RETURN(recvreq)                \
+{                                                              \
+    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);      \
+    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_recv_requests,      \
+                           (ompi_free_list_item_t*)(recvreq)); \
 }
 
 
