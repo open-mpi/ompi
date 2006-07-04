@@ -182,8 +182,10 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("bml");
   ompi_info::mca_types.push_back("rcache");
   ompi_info::mca_types.push_back("btl");
+  ompi_info::mca_types.push_back("mtl");
   ompi_info::mca_types.push_back("topo");
   ompi_info::mca_types.push_back("osc");
+  ompi_info::mca_types.push_back("common");
 
   ompi_info::mca_types.push_back("errmgr");
   ompi_info::mca_types.push_back("gpr");

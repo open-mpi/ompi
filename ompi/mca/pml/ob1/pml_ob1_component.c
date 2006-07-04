@@ -224,8 +224,7 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
 
     
     if(OMPI_SUCCESS != mca_bml_base_init( enable_progress_threads, 
-                                          enable_mpi_threads, 
-                                          OBJ_CLASS(mca_bml_base_endpoint_t))) {  
+                                          enable_mpi_threads)) {
         return NULL;
     }
     /* As our own progress function does nothing except calling the BML

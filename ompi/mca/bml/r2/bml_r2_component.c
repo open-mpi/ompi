@@ -83,8 +83,7 @@ int mca_bml_r2_component_close(void)
 mca_bml_base_module_t* mca_bml_r2_component_init( 
                                                  int* priority, 
                                                  bool enable_progress_threads,
-                                                 bool enable_mpi_threads,
-                                                 opal_class_t* endpoint_class
+                                                 bool enable_mpi_threads
                                                  )
 {
     /* initialize BTLs */
@@ -94,6 +93,5 @@ mca_bml_base_module_t* mca_bml_r2_component_init(
     
     *priority = 100; 
     mca_bml_r2.btls_added = false; 
-    mca_bml_r2.endpoint_class = endpoint_class;
     return &mca_bml_r2.super;
 }

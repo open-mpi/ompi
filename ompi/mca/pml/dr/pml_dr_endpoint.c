@@ -47,7 +47,7 @@ static void mca_pml_dr_endpoint_construct(mca_pml_dr_endpoint_t* ep)
     OBJ_CONSTRUCT(&ep->seq_recvs, ompi_seq_tracker_t);
     OBJ_CONSTRUCT(&ep->seq_recvs_matched, ompi_seq_tracker_t);
     ep->vfrag_seq = 0;
-    ep->base.copy = (mca_bml_base_endpoint_copy_fn_t)mca_pml_dr_endpoint_copy;
+    ep->bml_endpoint = NULL;
 }
 
 
@@ -61,6 +61,6 @@ static void mca_pml_dr_endpoint_destruct(mca_pml_dr_endpoint_t* ep)
 
 OBJ_CLASS_INSTANCE(
     mca_pml_dr_endpoint_t,
-    mca_bml_base_endpoint_t,
+    opal_object_t,
     mca_pml_dr_endpoint_construct,
     mca_pml_dr_endpoint_destruct);

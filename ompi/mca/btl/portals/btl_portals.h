@@ -21,7 +21,7 @@
 #ifndef OMPI_BTL_PORTALS_H
 #define OMPI_BTL_PORTALS_H
 
-#include "btl_portals_compat.h"
+#include "ompi/mca/common/portals/common_portals.h"
 
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
@@ -32,9 +32,6 @@
 
 #include "btl_portals_endpoint.h"
 #include "btl_portals_frag.h"
-
-#define OMPI_BTL_PORTALS_SEND_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 0)
-#define OMPI_BTL_PORTALS_RDMA_TABLE_ID (OMPI_BTL_PORTALS_STARTING_TABLE_ID + 1)
 
 /*
  * Portals BTL component.
@@ -54,12 +51,6 @@ struct mca_btl_portals_component_t {
      *  - 100: lots and lots of performance impacting output
      */
     int portals_output;
-
-#if OMPI_BTL_PORTALS_UTCP
-    /* ethernet interface to use - only has meaning with utcp
-        reference */
-    char *portals_ifname;
-#endif
 
     /* initial size of free lists */
     int portals_free_list_init_num;

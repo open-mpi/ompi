@@ -1,0 +1,144 @@
+/*
+ * Copyright (c) 2004-2006 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include "pml_cm.h"
+#include "opal/event/event.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "ompi/datatype/convertor.h"
+#include "ompi/mca/mtl/mtl.h"
+#include "ompi/mca/mtl/base/base.h"
+#include "ompi/mca/pml/base/pml_base_bsend.h"
+
+#include "pml_cm_sendreq.h"
+#include "pml_cm_recvreq.h"
+
+static int mca_pml_cm_component_open(void);
+static int mca_pml_cm_component_close(void);
+static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
+                            bool enable_progress_threads, bool enable_mpi_threads);
+static int mca_pml_cm_component_fini(void);
+
+
+mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
+
+    /* First, the mca_base_component_t struct containing meta
+     * information about the component itself */
+
+    {
+        /* Indicate that we are a pml v1.0.0 component (which also implies
+	 *          a specific MCA version) */
+
+         MCA_PML_BASE_VERSION_1_0_0,
+
+         "cm", /* MCA component name */
+         OMPI_MAJOR_VERSION,  /* MCA component major version */
+         OMPI_MINOR_VERSION,  /* MCA component minor version */
+         OMPI_RELEASE_VERSION,  /* MCA component release version */
+         mca_pml_cm_component_open,  /* component open */
+         mca_pml_cm_component_close  /* component close */
+     },
+
+     /* Next the MCA v1.0.0 component meta data */
+
+     {
+         /* Whether the component is checkpointable or not */
+         false
+     },
+
+     mca_pml_cm_component_init,  /* component init */
+     mca_pml_cm_component_fini   /* component finalize */
+};
+
+
+static int
+mca_pml_cm_component_open(void)
+{
+    int ret;
+
+    ret = ompi_mtl_base_open();
+    if (OMPI_SUCCESS != ret) return ret;
+
+    /* BWB - FIX ME - register MCA parameters here */
+
+    return OMPI_SUCCESS;
+}
+
+
+static int
+mca_pml_cm_component_close(void)
+{
+    return ompi_mtl_base_close();
+}
+
+
+static mca_pml_base_module_t*
+mca_pml_cm_component_init(int* priority,
+                           bool enable_progress_threads,
+                           bool enable_mpi_threads)
+{
+    int ret;
+
+    *priority = 1;
+
+    /* find a useable MTL */
+    ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);
+    if (OMPI_SUCCESS != ret) return NULL;
+
+    /* update our tag / context id max values based on MTL
+       information */
+    ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
+    ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
+
+    /* BWB - FIX ME - add mca parameters for free list water marks */
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_send_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_send_requests,
+                        sizeof(mca_pml_cm_send_request_t) +
+                        ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_send_request_t),
+                        1, -1, 1,
+                        NULL);
+
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_recv_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_recv_requests,
+                        sizeof(mca_pml_cm_recv_request_t) + 
+                        ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_recv_request_t),
+                        1, -1, 1,
+                        NULL);
+
+    /* initialize buffered send code */
+    if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
+        opal_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
+        return NULL;
+    }
+
+
+    return &ompi_pml_cm.super;
+}
+
+
+static int
+mca_pml_cm_component_fini(void)
+{
+    /* shut down buffered send code */
+    mca_pml_base_bsend_fini();
+
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_send_requests);
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_recv_requests);
+
+    if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
+        return ompi_mtl->mtl_finalize(ompi_mtl);
+    }
+
+    return OMPI_SUCCESS;
+}
+

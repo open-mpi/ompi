@@ -31,7 +31,6 @@
 #include "ompi/datatype/datatype.h"
 
 #include "btl_portals.h"
-#include "btl_portals_compat.h"
 #include "btl_portals_endpoint.h"
 #include "btl_portals_recv.h"
 #include "btl_portals_frag.h"
@@ -89,13 +88,14 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
                         "Adding %d procs (%d)", nprocs,
                         mca_btl_portals_module.portals_num_procs);
 
-    /* make sure our environment is fully initialized.  At end of this
-       call, we have a working network handle on our module and
-       portals_procs will have the portals process identifier for each
-       proc (ordered, in theory) */
-    ret = mca_btl_portals_add_procs_compat(&mca_btl_portals_module,
-                                           nprocs, procs, 
-                                           &portals_procs);
+    /* if we havne't already, get our network handle */
+    if (mca_btl_portals_module.portals_ni_h == PTL_INVALID_HANDLE) {
+        ret = ompi_common_portals_ni_initialize(&mca_btl_portals_module.portals_ni_h);
+        if (OMPI_SUCCESS != ret) return ret;
+    }
+
+    portals_procs = malloc(nprocs * sizeof(ptl_process_id_t));
+    ret = ompi_common_portals_get_procs(nprocs, procs, portals_procs);
     if (OMPI_SUCCESS != ret) return ret;
 
     if (0 == mca_btl_portals_module.portals_num_procs) {
@@ -538,14 +538,8 @@ mca_btl_portals_finalize(struct mca_btl_base_module_t *btl_base)
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_max);
     OBJ_DESTRUCT(&mca_btl_portals_module.portals_frag_user);
 
-    if (PTL_INVALID_HANDLE != mca_btl_portals_module.portals_ni_h) {
-        ret = PtlNIFini(mca_btl_portals_module.portals_ni_h);
-        if (PTL_OK != ret) {
-            opal_output_verbose(20, mca_btl_portals_component.portals_output,
-                                "PtlNIFini returned %d", ret);
-            return OMPI_ERROR;
-        }
-    }
+    ompi_common_portals_ni_finalize();
+    ompi_common_portals_finalize();
 
     opal_output_verbose(20, mca_btl_portals_component.portals_output,
                         "successfully finalized module");

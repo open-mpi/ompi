@@ -53,7 +53,6 @@ struct mca_bml_r2_module_t {
     mca_btl_base_component_progress_fn_t * btl_progress; 
     mca_bml_r2_recv_reg_t r2_reg[256]; 
     bool btls_added;
-    opal_class_t * endpoint_class;
 };
 
 typedef struct mca_bml_r2_module_t mca_bml_r2_module_t;
@@ -66,8 +65,7 @@ extern int mca_bml_r2_component_close(void);
 extern mca_bml_base_module_t* mca_bml_r2_component_init( 
                                                         int* priority,
                                                         bool enable_progress_threads, 
-                                                        bool enable_mpi_threads, 
-                                                        opal_class_t* endpoint_class
+                                                        bool enable_mpi_threads
                                                         ); 
 
 extern int mca_bml_r2_progress(void); 

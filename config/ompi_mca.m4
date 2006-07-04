@@ -214,6 +214,7 @@ AC_DEFUN([OMPI_MCA],[
 
     # BWB - fix me...  need to automate this somehow
     MCA_SETUP_DIRECT_CALL(pml, ompi)
+    MCA_SETUP_DIRECT_CALL(mtl, ompi)
 
     # make all the config output statements for the no configure
     # components

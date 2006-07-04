@@ -231,19 +231,12 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_find(
 }
 
 /**
- * Hook to copy derived class info.
- */
-
-typedef void (*mca_bml_base_endpoint_copy_fn_t)(
-    struct mca_bml_base_endpoint_t* dst, 
-    struct mca_bml_base_endpoint_t* src);
-
-/**
  *  Structure associated w/ ompi_proc_t that contains the set
  *  of BTLs used to reach a destination
  */
 struct mca_bml_base_endpoint_t {
-    mca_pml_proc_t           super;
+    opal_list_item_t         super;             /**< base_endpoint is a list item */
+    struct ompi_proc_t*      btl_proc;          /**< backpointer to target ompi_proc_t */
     size_t                   btl_rdma_offset;   /**< max of min rdma size for available rmda btls */
     size_t                   btl_max_send_size; /**< min of max send size for available send btls */
     size_t                   btl_rdma_size;     /**< max of min rdma size for available rmda btls */
@@ -251,7 +244,6 @@ struct mca_bml_base_endpoint_t {
     mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
-    mca_bml_base_endpoint_copy_fn_t copy;
     uint32_t btl_flags_or;                      /**< the bitwise OR of the btl flags */
     uint32_t btl_flags_and;                     /**< the bitwise AND of the btl flags */
 };
@@ -434,8 +426,7 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
 typedef struct mca_bml_base_module_t* (*mca_bml_base_component_init_fn_t)(
                                                                           int* priority,
                                                                           bool enable_progress_threads,
-                                                                          bool enable_mpi_threads, 
-                                                                          opal_class_t* endpoint_class
+                                                                          bool enable_mpi_threads
                                                                           );
 
 /**

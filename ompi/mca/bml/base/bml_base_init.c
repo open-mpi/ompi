@@ -39,8 +39,7 @@ mca_bml_base_component_t mca_bml_component;
 
 
 int mca_bml_base_init( bool enable_progress_threads, 
-                       bool enable_mpi_threads, 
-                       opal_class_t* endpoint_class) {
+                       bool enable_mpi_threads) {
     opal_list_item_t *item = NULL;
     mca_bml_base_component_t *component = NULL, *best_component = NULL; 
     mca_bml_base_module_t *module = NULL, *best_module = NULL; 
@@ -60,8 +59,7 @@ int mca_bml_base_init( bool enable_progress_threads,
         }
         module = component->bml_init(&priority, 
                                      enable_progress_threads, 
-                                     enable_mpi_threads, 
-                                     endpoint_class); 
+                                     enable_mpi_threads); 
 
         if(NULL == module) { 
             continue; 

@@ -46,7 +46,7 @@ if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
     } else {                                                         \
         mca_pml_dr_recv_request_match_specific(recvreq);             \
     }                                                                \
-    mca_pml_dr_recv_frag_ack(&recvreq->req_endpoint->base,           \
+    mca_pml_dr_recv_frag_ack(recvreq->req_endpoint->bml_endpoint,   \
         &hdr->hdr_common,                                            \
         hdr->hdr_match.hdr_src_ptr.pval,                             \
         0, 0);                                                       \
@@ -175,7 +175,7 @@ void mca_pml_dr_recv_request_ack(
     bool do_csum;
     
     /* allocate descriptor */
-    bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->base.btl_eager);
+    bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->bml_endpoint->btl_eager);
     do_csum = mca_pml_dr.enable_csum && 
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
