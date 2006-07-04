@@ -27,12 +27,14 @@
 AC_DEFUN([OMPI_INSTALL_DIRS], [
     ompi_exec_prefix_save="$exec_prefix"
     ompi_prefix_save="$prefix"
+    ompi_datarootdir_save="$datarootdir"
 
     # need to temporarily expand this out as almost exactly as it will
     # be done later so that NONE doesn't show up in the
     # {exec_}prefix-based variables.
     test "x$prefix" = xNONE && prefix=$ac_default_prefix
     test "x$exec_prefix" = xNONE && exec_prefix="$prefix"
+    eval datarootdir="$datarootdir"
 
     OPAL_PREFIX="$prefix"
     OPAL_EXEC_PREFIX="$exec_prefix"
@@ -64,6 +66,7 @@ AC_DEFUN([OMPI_INSTALL_DIRS], [
 
     prefix="$ompi_prefix_save"
     exec_prefix="$ompi_exec_prefix_save"
+    datarootdir="$ompi_datarootdir_save"
 
     AC_CONFIG_FILES([$1])
 ])dnl

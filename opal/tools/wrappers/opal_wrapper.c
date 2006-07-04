@@ -43,6 +43,7 @@
 #include "opal/runtime/opal.h"
 #include "opal/constants.h"
 #include "opal/util/argv.h"
+#include "opal/util/error.h"
 #include "opal/util/keyval_parse.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
@@ -295,6 +296,7 @@ main(int argc, char *argv[])
 
     base_argv0 = strdup(basename(argv[0]));
     if (OPAL_SUCCESS != (ret = data_init(base_argv0))) {
+        fprintf(stderr, "Error parsing data file: %s\n", opal_strerror(ret));
         return ret;
     }
 
