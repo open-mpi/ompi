@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,6 +33,7 @@ extern "C" {
         orte_pls_base_component_t super;
         int priority;
         int debug;
+        int verbose;
         bool want_path_check;
         char *orted;
         char **checked_paths;

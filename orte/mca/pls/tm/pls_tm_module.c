@@ -38,6 +38,7 @@
 #include <tm.h>
 
 #include "opal/install_dirs.h"
+#include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
@@ -62,6 +63,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 #include "pls_tm.h"
+
 
 
 /*
@@ -98,8 +100,8 @@ extern char **environ;
 static int 
 pls_tm_launch(orte_jobid_t jobid)
 {
-    opal_list_t nodes, mapping_list;
-    opal_list_item_t *item, *item2;
+    opal_list_t mapping;
+    opal_list_item_t *m_item, *n_item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index;
@@ -110,27 +112,31 @@ pls_tm_launch(orte_jobid_t jobid)
     int argc;
     int rc;
     bool connected = false;
-    opal_list_t map;
-    char *cur_prefix;
+    int launched = 0, i; 
     char *bin_base = NULL, *lib_base = NULL;
     
-    /* Query the list of nodes allocated and mapped to this job.
+   /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
      *  - need to know if we are launching on a subset of the allocated nodes
-     * All other mapping responsibilities fall to orted in the fork PLS
      */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
+    OBJ_CONSTRUCT(&mapping, opal_list_t);
+    rc = orte_rmaps_base_get_map(jobid, &mapping);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
+    }
+
+    num_nodes = 0;
+    for(m_item = opal_list_get_first(&mapping);
+        m_item != opal_list_get_end(&mapping);
+        m_item = opal_list_get_next(m_item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
+        num_nodes += opal_list_get_size(&map->nodes);
     }
 
     /*
      * Allocate a range of vpids for the daemons.
      */
-    num_nodes = opal_list_get_size(&nodes);
     if (num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -226,100 +232,23 @@ pls_tm_launch(orte_jobid_t jobid)
     bin_base = opal_basename(OPAL_BINDIR);
 
     /*
-     * Iterate through each of the nodes and spin
-     * up a daemon.
+     * iterate through each of the contexts
      */
-    for(item =  opal_list_get_first(&nodes);
-        item != opal_list_get_end(&nodes);
-        item =  opal_list_get_next(item)) {
-        orte_ras_node_t* node = (orte_ras_node_t*)item;
-        orte_process_name_t* name;
-        char* name_string;
+    for (m_item = opal_list_get_first(&mapping);
+         m_item != opal_list_get_end(&mapping);
+         m_item = opal_list_get_next(m_item)) {
+        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
         char** env;
         char* var;
-        size_t num_processes;
-
-        OBJ_CONSTRUCT(&map, opal_list_t);
-        /* Get the mapping of this very node */
-        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
-                                          jobid,
-                                          node->node_name,
-                                          &map);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* Copy the prefix-directory specified within the
-           corresponding app_context.  If there are multiple,
-           different prefix's for this node, complain */
-        cur_prefix = NULL;
-        num_processes = 0;
-        for (item2 =  opal_list_get_first(&map);
-             item2 != opal_list_get_end(&map);
-             item2 =  opal_list_get_next(item2)) {
-            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
-            char * app_prefix_dir = map->app->prefix_dir;
-
-            /* Increment the number of processes allocated to this node 
-             * This allows us to accurately test for oversubscription */
-            num_processes += map->num_procs;
-
-            /* Check for already set cur_prefix -- if different,
-               complain */
-            if (NULL != app_prefix_dir) {
-                if (NULL != cur_prefix &&
-                    0 != strcmp (cur_prefix, app_prefix_dir)) {
-                    opal_show_help("help-pls-tm.txt", "multiple-prefixes",
-                                   true, node->node_name, 
-                                   cur_prefix, app_prefix_dir);
-                    return ORTE_ERR_FATAL;
-                }
-
-                /* If not yet set, copy it; iff set, then it's the
-                   same anyway */
-                if (NULL == cur_prefix) {
-                    cur_prefix = strdup(map->app->prefix_dir);
-                    if (mca_pls_tm_component.debug) {
-                        opal_output (0, "pls:tm: Set prefix:%s",
-                                     cur_prefix);
-                    }
-                }
-            }
-        }
-
-        /* setup node name */
-        argv[node_name_index] = node->node_name;
-
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* setup per-node options */
-        if (mca_pls_tm_component.debug) {
-            opal_output(0, "pls:tm: launching on node %s", 
-                        node->node_name);
-        }
-        
-        /* setup process name */
-        rc = orte_ns.get_proc_name_string(&name_string, name);
-        if (ORTE_SUCCESS != rc) {
-            opal_output(0, "pls:tm: unable to create process name");
-            return rc;
-        }
-        argv[proc_name_index] = name_string;
-
+		
         /* setup environment */
         env = opal_argv_copy(environ);
         var = mca_base_param_environ_variable("seed",NULL,NULL);
         opal_setenv(var, "0", true, &env);
-
+        
         /* If we have a prefix, then modify the PATH and
            LD_LIBRARY_PATH environment variables.  */
-        if (NULL != cur_prefix) {
+        if (NULL != map->app->prefix_dir) {
             int i;
             char *newenv;
             
@@ -327,7 +256,7 @@ pls_tm_launch(orte_jobid_t jobid)
                 /* Reset PATH */
                 if (0 == strncmp("PATH=", env[i], 5)) {
                     asprintf(&newenv, "%s/%s:%s", 
-                             cur_prefix, bin_base, env[i] + 5);
+                             map->app->prefix_dir, bin_base, env[i] + 5);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting PATH: %s", 
                                     newenv);
@@ -335,11 +264,11 @@ pls_tm_launch(orte_jobid_t jobid)
                     opal_setenv("PATH", newenv, true, &env);
                     free(newenv);
                 } 
-
+                
                 /* Reset LD_LIBRARY_PATH */
                 else if (0 == strncmp("LD_LIBRARY_PATH=", env[i], 16)) {
                     asprintf(&newenv, "%s/%s:%s", 
-                             cur_prefix, lib_base, env[i] + 16);
+                             map->app->prefix_dir, lib_base, env[i] + 16);
                     if (mca_pls_tm_component.debug) {
                         opal_output(0, "pls:tm: resetting LD_LIBRARY_PATH: %s", 
                                     newenv);
@@ -348,9 +277,8 @@ pls_tm_launch(orte_jobid_t jobid)
                     free(newenv);
                 } 
             }
-            free(cur_prefix);
         }
-
+        
         /* Do a quick sanity check to ensure that we can find the
            orted in the PATH */
         
@@ -361,68 +289,122 @@ pls_tm_launch(orte_jobid_t jobid)
                            true, argv[0]);
             goto cleanup;
         }
-
-        /* set the progress engine schedule for this node.
-         * if node_slots is set to zero, then we default to
-         * NOT being oversubscribed
+        
+        /* Iterate through each of the nodes and spin
+         * up a daemon.
          */
-        if (node->node_slots > 0 &&
-            num_processes > node->node_slots) {
+        for (n_item =  opal_list_get_first(&map->nodes);
+             n_item != opal_list_get_end(&map->nodes);
+             n_item =  opal_list_get_next(n_item)) {
+            orte_rmaps_base_node_t* rmaps_node = (orte_rmaps_base_node_t*)n_item;
+            orte_ras_node_t* node = rmaps_node->node;
+            orte_process_name_t* name;
+            char* name_string;
+            size_t num_processes = 0;
+            
+            /* already launched on this node */
+            if (0 != node->node_launched++) {
+                continue;
+            }
+            
+            /* setup node name */
+            argv[node_name_index] = node->node_name;
+            
+            /* initialize daemons process name */
+            rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
+            if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            
+            /* setup per-node options */
+            if (mca_pls_tm_component.debug ||
+                mca_pls_tm_component.verbose) {
+                opal_output(0, "pls:tm: launching on node %s", 
+                            node->node_name);
+            }
+            
+            /* setup process name */
+            rc = orte_ns.get_proc_name_string(&name_string, name);
+            if (ORTE_SUCCESS != rc) {
+                opal_output(0, "pls:tm: unable to create process name");
+                return rc;
+            }
+            argv[proc_name_index] = name_string;
+            
+            /* set the progress engine schedule for this node.
+             * if node_slots is set to zero, then we default to
+             * NOT being oversubscribed
+             */
+            if (node->node_slots > 0 &&
+                opal_list_get_size(&rmaps_node->node_procs) > node->node_slots) {
+                if (mca_pls_tm_component.debug) {
+                    opal_output(0, "pls:tm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
+                                node->node_slots, 
+                                opal_list_get_size(&rmaps_node->node_procs));
+                }
+                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+                opal_setenv(var, "1", true, &env);
+            } else {
+                if (mca_pls_tm_component.debug) {
+                    opal_output(0, "pls:tm: not oversubscribed -- setting mpi_yield_when_idle to 0");
+                }
+                var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+                opal_setenv(var, "0", true, &env);
+            }
+            free(var);
+            
+            /* save the daemons name on the node */
+            if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(node,jobid,name))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+	    
+            /* exec the daemon */
             if (mca_pls_tm_component.debug) {
-                opal_output(0, "pls:tm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
-                            node->node_slots, num_processes);
+                param = opal_argv_join(argv, ' ');
+                if (NULL != param) {
+                    opal_output(0, "pls:tm: executing: %s", param);
+                    free(param);
+                }
             }
-            var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(var, "1", true, &env);
-        } else {
-            if (mca_pls_tm_component.debug) {
-                opal_output(0, "pls:tm: not oversubscribed -- setting mpi_yield_when_idle to 0");
+            
+            rc = pls_tm_start_proc(node->node_name, argc, argv, env);
+            if (ORTE_SUCCESS != rc) {
+                opal_output(0, "pls:tm: start_procs returned error %d", rc);
+                goto cleanup;
             }
-            var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(var, "0", true, &env);
+            launched++;
+            vpid++;
+            free(name);
+            opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         }
-        free(var);
-
-        /* save the daemons name on the node */
-        if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(node,jobid,name))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-    
-        /* exec the daemon */
-        if (mca_pls_tm_component.debug) {
-            param = opal_argv_join(argv, ' ');
-            if (NULL != param) {
-                opal_output(0, "pls:tm: executing: %s", param);
-                free(param);
-            }
-        }
-
-        rc = pls_tm_start_proc(node->node_name, argc, argv, env);
-        if (ORTE_SUCCESS != rc) {
-            opal_output(0, "pls:tm: start_procs returned error %d", rc);
-            goto cleanup;
-        }
-
-        vpid++;
-        free(name);
+        
     }
 
-cleanup:
+    /* loop through all those that are launched and poll for
+       completion status */
+
+    for(i = 0; i < launched; i++){ 
+        int ret, local_err;
+        tm_event_t event;
+        ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
+        if (TM_SUCCESS != ret) {
+            errno = local_err;
+            opal_output(0, "pls:tm: failed to start a proc error %d", ret);
+            goto cleanup;
+        }
+    }
+    
+ cleanup:
     if (connected) {
         pls_tm_disconnect();
     }
-
-    while (NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
+    
+    while (NULL != (m_item = opal_list_remove_first(&mapping))) {
+        OBJ_RELEASE(m_item);
     }
-    OBJ_DESTRUCT(&nodes);
-
-    while (NULL != (item = opal_list_remove_first(&mapping_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mapping_list);
-
+    OBJ_DESTRUCT(&mapping);
     if (NULL != lib_base) {
         free(lib_base);
     }
@@ -520,6 +502,8 @@ static tm_node_id *tm_node_ids = NULL;
 static int num_tm_hostnames, num_node_ids;
 
 
+
+/* we don't call this anymore */
 /*
  * For a given TM node ID, get the string hostname corresponding to
  * it.
@@ -527,10 +511,10 @@ static int num_tm_hostnames, num_node_ids;
 static char*
 get_tm_hostname(tm_node_id node)
 {
-    int ret, local_errno;
     char *hostname;
-    tm_event_t event;
     char buffer[256];
+    int ret, local_errno;
+    tm_event_t event;
     char **argv;
 
     /* Get the info string corresponding to this TM node ID */
@@ -565,6 +549,7 @@ get_tm_hostname(tm_node_id node)
 }
 
 
+/* we don't call this anymore!*/
 static int
 query_tm_hostnames(void)
 {
@@ -598,7 +583,7 @@ query_tm_hostnames(void)
     return ORTE_SUCCESS;
 }
 
-
+/* we don't call this anymore! */
 static int
 do_tm_resolve(char *hostname, tm_node_id *tnodeid)
 {
@@ -637,7 +622,7 @@ do_tm_resolve(char *hostname, tm_node_id *tnodeid)
 static int
 pls_tm_start_proc(char *nodename, int argc, char **argv, char **env)
 {
-    int ret, local_err;
+    int ret;
     tm_node_id node_id;
     tm_task_id task_id;
     tm_event_t event;
@@ -648,12 +633,6 @@ pls_tm_start_proc(char *nodename, int argc, char **argv, char **env)
 
     ret = tm_spawn(argc, argv, env, node_id, &task_id, &event);
     if (TM_SUCCESS != ret) return ORTE_ERROR;
-
-    ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
-    if (TM_SUCCESS != ret) {
-        errno = local_err;
-        return ORTE_ERR_IN_ERRNO;
-    }
 
     return ORTE_SUCCESS;
 }

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -173,7 +174,10 @@ static int discover(opal_list_t* nodelist)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-    /* Iterate through all the nodes and make an entry for each */
+    /* Iterate through all the nodes and make an entry for each.  TM
+       node ID's will never be duplicated, but they may end up
+       resolving to the same hostname (i.e., vcpu's on a single
+       host). */
 
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     for (i = 0; i < num_node_ids; ++i) {
@@ -296,6 +300,6 @@ static int get_tm_hostname(tm_node_id node, char **hostname, char **arch)
     /* All done */
 
     opal_output(orte_ras_base.ras_output, 
-                "ras:tm:hostname: got hostname %s", hostname);
+                "ras:tm:hostname: got hostname %s", *hostname);
     return ORTE_SUCCESS;
 }
