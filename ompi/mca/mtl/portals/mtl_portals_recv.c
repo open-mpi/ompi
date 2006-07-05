@@ -46,7 +46,7 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
     case PTL_EVENT_PUT_END:
         /* make sure the data is in the right place */
         ompi_mtl_datatype_unpack(&recvreq->req_convertor,
-                                 ev->md.start, ev->md.length);
+                                 ev->md.start, ev->mlength);
 
         /* set the status */
         recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
@@ -64,7 +64,7 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
     case PTL_EVENT_REPLY_END:
         /* make sure the data is in the right place */
         ompi_mtl_datatype_unpack(&recvreq->req_convertor,
-                                 ev->md.start, ev->md.length);
+                                 ev->md.start, ev->mlength);
 
         PtlMDUnlink(ev->md_handle);
 
