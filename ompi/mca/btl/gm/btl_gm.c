@@ -217,7 +217,12 @@ int mca_btl_gm_free(
     struct mca_btl_base_module_t* btl, 
     mca_btl_base_descriptor_t* des) 
 {
-    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des; 
+    mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des;
+    if( NULL != frag->registration ){
+        btl->btl_mpool->mpool_release(btl->btl_mpool, 
+                                      (mca_mpool_base_registration_t*) frag->registration);
+    }
+
     MCA_BTL_GM_FRAG_RETURN(btl, frag); 
     return OMPI_SUCCESS; 
 }
