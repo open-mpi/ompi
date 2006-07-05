@@ -139,8 +139,10 @@ do {                                                                            
                                                                                 \
     assert( false == recvreq->req_recv.req_base.req_pml_complete );             \
                                                                                 \
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                          \
-                             &(recvreq->req_recv.req_base), PERUSE_RECV );      \
+    if((recvreq)->req_recv.req_bytes_packed > 0) {                              \
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                      \
+                                 &(recvreq->req_recv.req_base), PERUSE_RECV );  \
+    }                                                                           \
                                                                                 \
     for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
         mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \

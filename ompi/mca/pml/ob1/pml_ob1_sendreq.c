@@ -98,8 +98,10 @@ void mca_pml_ob1_match_completion_cache(
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+    if( sendreq->req_send.req_bytes_packed > 0 ) {
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+    }
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -128,8 +130,10 @@ void mca_pml_ob1_match_completion_free(
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+    if( sendreq->req_send.req_bytes_packed > 0 ) {
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+    }
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -158,8 +162,10 @@ static void mca_pml_ob1_rndv_completion(
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
 
-    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                             &(sendreq->req_send.req_base), PERUSE_SEND );
+    if( sendreq->req_send.req_bytes_packed > 0 ) {
+        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                 &(sendreq->req_send.req_base), PERUSE_SEND );
+    }
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -635,8 +641,10 @@ int mca_pml_ob1_send_request_start_rdma(
           * If we generate the PERUSE event here, at least we will know when do we
           * sent the GET message ...
           */
-         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
-                                  &(sendreq->req_send.req_base), PERUSE_SEND );
+         if( sendreq->req_send.req_bytes_packed > 0 ) {
+             PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
+                                      &(sendreq->req_send.req_base), PERUSE_SEND );
+         }
 
       } else {
 
