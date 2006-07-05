@@ -137,7 +137,7 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
            the reaping of it.  If we get any other error back, just
            skip it and go on to the next process. */
         if (0 != kill(pid, SIGTERM) && ESRCH != errno) {
-            continue;
+            goto next_pid;
         }
 
         /* The kill succeeded.  Wait up to timeout_before_sigkill
@@ -154,7 +154,15 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
                                "orte-pls-fork:could-not-kill",
                                true, hostname, pid);
             }
+            goto next_pid;
         }
+
+    next_pid:
+        /* Release any waiting threads from this process */
+        OPAL_THREAD_LOCK(&mca_pls_fork_component.lock);
+        mca_pls_fork_component.num_children--;
+        opal_condition_signal(&mca_pls_fork_component.cond);
+        OPAL_THREAD_UNLOCK(&mca_pls_fork_component.lock);
     }
 }
 
