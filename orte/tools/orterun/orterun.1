@@ -181,6 +181,13 @@ Synonym for \fI-np\fP.
 .
 .
 .TP
+.B -nolocal\fR,\fP --nolocal
+Do not run any copies of the launched application on the same node as
+orterun is running.  This option will override listing the localhost
+with \fB--host\fR or any other host-specifying mechanism.
+.
+.
+.TP
 .B -np \fR<#>\fP
 Run this many copies of the program on the given nodes.  This option
 indicates that the specified file is an executable program and not an
@@ -407,6 +414,30 @@ on host a. And runs one copy of the executable
 .I uptime
 on hosts b and c.
 .
+.
+.
+.SS No Local Launch
+.
+Using the \fB--nolocal\fR option to orterun tells the system to not
+launch any of the application processes on the same node that orterun
+is running.  While orterun typically blocks and consumes few system
+resources, this option can be helpful for launching very large jobs
+where orterun may actually need to use noticable amounts of memory
+and/or processing time.  \fB--nolocal\fR allows orteun to run without
+sharing the local node with the launched applications, and likewise
+allows the launched applications to run unhindered by orterun's system
+usage.
+.PP
+Note that \fB--nolocal\fR will override any other specification to
+launch the application on the local node.  It will disqualify the
+localhost from being capable of running any processes in the
+application.
+.
+.
+.TP
+shell$ mpirun -np 1 --host localhost --nolocal hostname
+This example will result in an error because orterun will not find
+anywhere to launch the application.
 .
 .
 .SS Application Context or Executable Program?

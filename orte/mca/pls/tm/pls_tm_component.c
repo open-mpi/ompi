@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,8 +93,10 @@ static int pls_tm_open(void)
     int tmp;
     mca_base_component_t *comp = &mca_pls_tm_component.super.pls_version;
 
-    mca_base_param_reg_int(comp, "debug", "Enable debugging of TM pls",
+    mca_base_param_reg_int(comp, "debug", "Enable debugging of the TM pls",
                            false, false, 0, &mca_pls_tm_component.debug);
+    mca_base_param_reg_int(comp, "verbose", "Enable verbose output of the TM pls",
+                           false, false, 0, &mca_pls_tm_component.verbose);
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, &mca_pls_tm_component.priority);

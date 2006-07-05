@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -67,7 +68,7 @@ int orte_rmaps_base_open(void)
 
     /* Debugging / verbose output */
 
-    param = mca_base_param_reg_int_name("rmaps_base", "verbose",
+    param = mca_base_param_reg_int_name("rmaps", "base_verbose",
                                         "Verbosity level for the rmaps framework",
                                         false, false, 0, &value);
     if (value != 0) {
@@ -78,12 +79,18 @@ int orte_rmaps_base_open(void)
 
     /* Are we scheduling by node or by slot? */
 
-    param = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
+    param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot | node]",
                                            false, false, "slot", &policy);
     if (0 == strcmp(policy, "node")) {
         mca_base_param_set_string(param, "node");
     }
+
+    /* Should we schedule on the local node or not? */
+
+    mca_base_param_reg_int_name("rmaps", "base_schedule_local",
+                                "If nonzero, allow scheduling MPI applications on the same node as mpirun (default).  If zero, do not schedule any MPI applications on the same node as mpirun",
+                                false, false, 1, &value);
 
     /* Open up all the components that we can find */
 
