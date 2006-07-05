@@ -105,12 +105,12 @@ static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout)
     pid_t ret;
 
     end = time(NULL) + timeout;
-    while (time(NULL) < end) {
+    do {
         ret = waitpid(pid, NULL, WNOHANG);
         if (pid == ret) {
             /* It died -- return success */
             return true;
-        } else if (-1 == pid && ECHILD == errno) {
+        } else if (-1 == ret && ECHILD == errno) {
             /* The pid no longer exists, so we'll call this "good
                enough for government work" */
             return true;
@@ -118,7 +118,7 @@ static bool orte_pls_fork_child_died(pid_t pid, unsigned int timeout)
 
         /* Sleep for a second */
         sleep(1);
-    }
+    } while (time(NULL) < end);
 
     /* The child didn't die, so return false */
     return false;
@@ -131,13 +131,24 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
 
     for (i = 0; i < opal_value_array_get_size(pids); ++i) {
         pid = OPAL_VALUE_ARRAY_GET_ITEM(pids, pid_t, i);
+        
+        /* de-register the SIGCHILD callback for this pid */
+        orte_wait_cb_cancel(pid);
 
         /* Send a sigterm to the process.  If we get ESRCH back, that
            means the process is already dead, so just proceed on to
            the reaping of it.  If we get any other error back, just
            skip it and go on to the next process. */
         if (0 != kill(pid, SIGTERM) && ESRCH != errno) {
-            goto next_pid;
+            int err = errno;
+            char hostname[MAXHOSTNAMELEN];
+            gethostname(hostname, sizeof(hostname));
+
+            opal_show_help("help-orte-pls-fork.txt",
+                           "orte-pls-fork:could-not-send-kill",
+                           true, hostname, pid, err);
+            
+            continue;
         }
 
         /* The kill succeeded.  Wait up to timeout_before_sigkill
@@ -154,16 +165,15 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids)
                                "orte-pls-fork:could-not-kill",
                                true, hostname, pid);
             }
-            goto next_pid;
         }
-
-    next_pid:
-        /* Release any waiting threads from this process */
-        OPAL_THREAD_LOCK(&mca_pls_fork_component.lock);
-        mca_pls_fork_component.num_children--;
-        opal_condition_signal(&mca_pls_fork_component.cond);
-        OPAL_THREAD_UNLOCK(&mca_pls_fork_component.lock);
+        
     }
+
+    /* Release any waiting threads from this process */
+    OPAL_THREAD_LOCK(&mca_pls_fork_component.lock);
+    mca_pls_fork_component.num_children = 0;
+    opal_condition_signal(&mca_pls_fork_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_pls_fork_component.lock);
 }
 
 /*
@@ -178,7 +188,6 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
     /* Clean up the session directory as if we were the process
        itself.  This covers the case where the process died abnormally
        and didn't cleanup its own session directory. */
-
     orte_session_dir_finalize(&proc->proc_name);
     orte_iof.iof_flush();
 
