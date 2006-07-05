@@ -516,7 +516,7 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
                             ompi_attribute_fn_ptr_union_t delete_attr_fn,
                             int *key, void *extra_state, int flags)
 {
-    ompi_attrkey_item_t *attr;
+    ompi_attrkey_item_t *attrkey;
     int ret;
 
     /* Protect against the user calling ompi_attr_destroy and then
@@ -527,34 +527,34 @@ int ompi_attr_create_keyval(ompi_attribute_type_t type,
 
     /* Allocate space for the list item */
 
-    attr = OBJ_NEW(ompi_attrkey_item_t);
-    if (NULL == attr) {
+    attrkey = OBJ_NEW(ompi_attrkey_item_t);
+    if (NULL == attrkey) {
 	return MPI_ERR_SYSRESOURCE;
     }
+
+    /* Fill in the list item (must be done before we set the attrkey
+       on the keyval_hash in case some other thread immediately reads
+       it from the keyval_hash) */
+  
+    attrkey->copy_attr_fn = copy_attr_fn;
+    attrkey->delete_attr_fn = delete_attr_fn;
+    attrkey->extra_state = extra_state;
+    attrkey->attr_type = type;
+    attrkey->key = *key;
+    attrkey->attr_flag = flags;
 
     /* Create a new unique key and fill the hash */
   
     OPAL_THREAD_LOCK(&alock);
     ret = CREATE_KEY(key);
     if (OMPI_SUCCESS == ret) {
-        ret = opal_hash_table_set_value_uint32(keyval_hash, *key, attr);
+        ret = opal_hash_table_set_value_uint32(keyval_hash, *key, attrkey);
     }
     OPAL_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS != ret) {
 	return ret;
     }
 
-    /* Fill in the list item */
-  
-    attr->copy_attr_fn = copy_attr_fn;
-    attr->delete_attr_fn = delete_attr_fn;
-    attr->extra_state = extra_state;
-    attr->attr_type = type;
-    attr->key = *key;
-    attr->attr_flag = flags;
-
-    /* Other fields will be filled in by the create_attr function */
-  
     return MPI_SUCCESS;
 }
 
