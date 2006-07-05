@@ -269,9 +269,11 @@ do {                                                                            
                                                                                         \
         assert( false == sendreq->req_send.req_base.req_pml_complete );                 \
                                                                                         \
-        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                              \
-                                 &(sendreq->req_send.req_base),                         \
-                                 PERUSE_SEND );                                         \
+        if( sendreq->req_send.req_bytes_packed > 0 ) {                                  \
+            PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_END,                          \
+                                     &(sendreq->req_send.req_base),                     \
+                                     PERUSE_SEND );                                     \
+        }                                                                               \
                                                                                         \
         /* return mpool resources */                                                    \
         for( r = 0; r < sendreq->req_rdma_cnt; r++ ) {                                  \
