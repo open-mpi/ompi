@@ -197,9 +197,10 @@ int ompi_mtl_mx_progress( void ) {
             mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
         }
         if(OMPI_MTL_MX_IRECV == mtl_mx_request->type) { 
+            
             ompi_mtl_datatype_unpack(mtl_mx_request->convertor, 
                                      mtl_mx_request->mx_segment[0].segment_ptr, 
-                                     mtl_mx_request->mx_segment[0].segment_length);
+                                     mx_status.xfer_length);
             /* set the status */
             MX_GET_SRC(mx_status.match_info,
                        mtl_mx_request->super.ompi_req->req_status.MPI_SOURCE);
