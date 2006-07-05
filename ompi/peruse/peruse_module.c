@@ -21,6 +21,7 @@
 
 
 static opal_list_t peruse_handle_list;
+static opal_mutex_t peruse_handle_list_lock;
 static int ompi_peruse_initialized = 0;
 
 static void ompi_peruse_handle_construct (ompi_peruse_handle_t* p)
@@ -63,6 +64,7 @@ int ompi_peruse_init (void)
     ompi_peruse_initialized = 1;
 
     OBJ_CONSTRUCT (&peruse_handle_list, opal_list_t);
+    OBJ_CONSTRUCT (&peruse_handle_list_lock, opal_mutex_t);
 
     return OMPI_SUCCESS;
 }
@@ -71,5 +73,7 @@ int ompi_peruse_init (void)
 int ompi_peruse_finalize (void)
 {
     OBJ_DESTRUCT (&peruse_handle_list);
+    OBJ_DESTRUCT (&peruse_handle_list_lock);
+
     return OMPI_SUCCESS;
 }
