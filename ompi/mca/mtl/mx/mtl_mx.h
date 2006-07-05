@@ -115,13 +115,13 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
  *                  |                 |
  */
 
-#define MX_CONTEXT_MASK  0xFFFF000000000000
 #define MX_SOURCE_MASK   0x0000FFFF00000000
 #define MX_TAG_MASK      0x00000000FFFFFFFF
 
-#define MX_CONTEXT_IGNR  MX_CONTEXT_MASK
-#define MX_SOURCE_IGNR   MX_SOURCE_MASK
-#define MX_TAG_IGNR      0x00000000EFFFFFFF
+#define MX_SOURCE_IGNR   ~MX_SOURCE_MASK
+    /* we need to keep top bit (sign bit) of the tag 
+       collectives use this to distinguish the message */
+#define MX_TAG_IGNR      0xFFFFFFFF80000000 
 
 /* get the tag from the bits */ 
 #define MX_GET_TAG(match_bits, tag)                 \
@@ -149,25 +149,26 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
 /* receive posting */
 #define MX_SET_RECV_BITS(match_bits, mask_bits, contextid, source, tag) \
 {                                                                       \
-    match_bits = mask_bits = 0;                                         \
+    match_bits = 0;                                                     \
+    mask_bits = ~match_bits;                                            \
     match_bits = contextid;                                             \
     match_bits = (match_bits << 16);                                    \
                                                                         \
     if (MPI_ANY_SOURCE == source) {                                     \
         match_bits = (match_bits << 32);                                \
-        mask_bits |= MX_SOURCE_IGNR;                                    \
+        mask_bits &= MX_SOURCE_IGNR;                                    \
     } else {                                                            \
         match_bits |= source;                                           \
         match_bits = (match_bits << 32);                                \
     }                                                                   \
                                                                         \
     if (MPI_ANY_TAG == tag) {                                           \
-        mask_bits |= MX_TAG_IGNR;                                       \
+        mask_bits &= MX_TAG_IGNR;                                       \
     } else {                                                            \
         match_bits |= (MX_TAG_MASK & tag);                              \
     }                                                                   \
                                                                         \
-    mask_bits = ~mask_bits;                                             \
+    mask_bits = mask_bits;                                              \
 }
     
 
