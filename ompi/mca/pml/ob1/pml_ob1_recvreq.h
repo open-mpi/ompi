@@ -283,19 +283,17 @@ do {                                                                            
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
-        ompi_convertor_set_position(                                              \
-            &(request->req_recv.req_convertor),                                   \
-            &data_offset);                                                        \
-        ompi_convertor_unpack(                                                    \
-            &(request)->req_recv.req_convertor,                                   \
-            iov,                                                                  \
-            &iov_count,                                                           \
-            &max_data,                                                            \
-            &free_after);                                                         \
-        bytes_delivered = max_data;                                               \
         PERUSE_TRACE_COMM_OMPI_EVENT (PERUSE_COMM_REQ_XFER_CONTINUE,              \
                                       &(recvreq->req_recv.req_base), max_data,    \
                                       PERUSE_RECV);                               \
+        ompi_convertor_set_position( &(request->req_recv.req_convertor),          \
+                                     &data_offset );                              \
+        ompi_convertor_unpack( &(request)->req_recv.req_convertor,                \
+                               iov,                                               \
+                               &iov_count,                                        \
+                               &max_data,                                         \
+                               &free_after);                                      \
+        bytes_delivered = max_data;                                               \
     } else {                                                                      \
         bytes_delivered = 0;                                                      \
     }                                                                             \
