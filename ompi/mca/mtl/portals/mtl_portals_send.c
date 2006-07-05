@@ -159,8 +159,6 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        /* gets are all by unique key, so we don't really care
-           where in the list it goes */
         ptr.pval = ptl_request;
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_READ_TABLE_ID,
@@ -199,6 +197,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
             if (ptl_request->free_after) free(md.start);
             return ompi_common_portals_error_ptl_to_ompi(ret);
         }
+
     } else if (MCA_PML_BASE_SEND_SYNCHRONOUS) {
         /* short synchronous message */
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
