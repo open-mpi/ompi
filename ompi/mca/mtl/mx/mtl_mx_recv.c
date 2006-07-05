@@ -59,7 +59,7 @@ ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                      src,
                      tag);
     
-#if 0    
+#if 0
     printf("recv bits:   0x%016llx 0x%016llx\n", match_bits, mask_bits);
 #endif
     mx_return = mx_irecv( ompi_mtl_mx.mx_endpoint, 
