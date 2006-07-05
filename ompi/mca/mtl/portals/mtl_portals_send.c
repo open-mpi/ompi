@@ -28,31 +28,45 @@
 #include "mtl_portals_request.h"
 #include "mtl_portals_endpoint.h"
 
-/* called when a send should be progressed */
+/* called when no ack is necessary */
+static int
+ompi_mtl_portals_send_progress_no_ack(ptl_event_t *ev,
+                                      struct ompi_mtl_portals_request_t *ptl_request)
+{
+    switch (ev->type) {
+    case PTL_EVENT_SEND_END:
+        {
+            /* the get finished, so we're done. */
+            if (ptl_request->free_after) {
+                free(ev->md.start);
+            }
+            ptl_request->super.completion_callback(&ptl_request->super);
+        }
+
+    default:
+        break;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/* called when a send that should wait for an ack or longer shold be progressed */
 static int
 ompi_mtl_portals_send_progress(ptl_event_t *ev,
                                struct ompi_mtl_portals_request_t* ptl_request)
 {
     switch (ev->type) {
     case PTL_EVENT_ACK:
-        /* message received - if they receivd the entire message,
-           we're done.  If not, wait for the get */
-        if (ev->md.length == ev->mlength) {
-            if (ptl_request->free_after) {
-                free(ev->md.start);
-            }
-            PtlMDUnlink(ev->md_handle);
-            ptl_request->super.completion_callback(&ptl_request->super);
-        }
-        break;
-
     case PTL_EVENT_GET_END:
+    case PTL_EVENT_PUT_END:
+        /* we only receive an ack if the message was received into an
+           expected message.  Otherwise, we don't get an ack, but mark
+           completion when the message was pulled (long message) or
+           acked via an explicit put (short synchronous message). */
         {
-            /* the get finished, so we're done. */
             if (ptl_request->free_after) {
                 free(ev->md.start);
             }
-            PtlMDUnlink(ev->md_handle);
             ptl_request->super.completion_callback(&ptl_request->super);
         }
         break;
@@ -108,8 +122,9 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
 
     ptl_request->event_callback = ompi_mtl_portals_send_progress;
 
-    if (MCA_PML_BASE_SEND_READY == mode) {
-        /* ready send - same protocol regardless of length */
+    if ((MCA_PML_BASE_SEND_READY == mode)) {
+        /* ready send (length doesn't matter) or short non-sync send.
+           Eagerly send data and don't wait for completion */
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_READY_MSG);
@@ -124,12 +139,14 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
 
         ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h,
                         md,
-                        PTL_RETAIN,
+                        PTL_UNLINK,
                         &(md_h));
         if (OMPI_SUCCESS != ret) {
             if (ptl_request->free_after) free(md.start);
             return ompi_common_portals_error_ptl_to_ompi(ret);
         }
+
+        ptl_request->event_callback = ompi_mtl_portals_send_progress_no_ack;
 
         ret = PtlPut(md_h,
                      PTL_NO_ACK_REQ,
@@ -144,17 +161,17 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
             if (ptl_request->free_after) free(md.start);
             return ompi_common_portals_error_ptl_to_ompi(ret);
         }
-
-    } else if (md.length > ompi_mtl_portals.eager_limit) {
-        /* it's a long message - same protocol for all send modes */
+    } else {
+        /* it's a long message - same protocol for all send modes
+           other than ready */
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_LONG_MSG);
 #if OMPI_MTL_PORTALS_DEBUG
-        printf("long send bits: 0x%016llx\n", match_bits);
+        printf("long send bits: 0x%016llx (%d)\n", match_bits, dest);
 #endif
         
-        md.threshold = 3; /* send, ack, get */
+        md.threshold = 2; /* send, {ack, get} */
         md.options = PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
@@ -175,7 +192,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
 
         ret = PtlMDAttach(me_h,
                           md,
-                          PTL_RETAIN,
+                          PTL_UNLINK,
                           &(md_h));
 
         if (OMPI_SUCCESS != ret) {
@@ -192,57 +209,6 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                      match_bits,
                      0,
                      (ptl_hdr_data_t) ptr.lval);
-        if (OMPI_SUCCESS != ret) {
-            PtlMDUnlink(md_h);
-            if (ptl_request->free_after) free(md.start);
-            return ompi_common_portals_error_ptl_to_ompi(ret);
-        }
-
-    } else if (MCA_PML_BASE_SEND_SYNCHRONOUS) {
-        /* short synchronous message */
-        PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
-                          comm->c_my_rank,
-                          tag, PTL_SHORT_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("short ssend bits: 0x%016llx\n", match_bits);
-#endif
-
-        /* BWB - fix me */
-        return OMPI_ERR_NOT_IMPLEMENTED;
-
-    } else {
-        /* short message for something not ack-worthy */
-        PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
-                          comm->c_my_rank,
-                          tag, PTL_SHORT_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("short send bits: 0x%016llx\n", match_bits);
-#endif
-        return OMPI_ERR_NOT_IMPLEMENTED;
-
-
-        md.threshold = 1;
-        md.options = PTL_MD_EVENT_START_DISABLE;
-        md.user_ptr = ptl_request;
-        md.eq_handle = ompi_mtl_portals.ptl_eq_h;
-
-        ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h,
-                        md,
-                        PTL_RETAIN,
-                        &(md_h));
-        if (OMPI_SUCCESS != ret) {
-            if (ptl_request->free_after) free(md.start);
-            return ompi_common_portals_error_ptl_to_ompi(ret);
-        }
-
-        ret = PtlPut(md_h,
-                     PTL_NO_ACK_REQ,
-                     endpoint->ptl_proc,
-                     OMPI_MTL_PORTALS_SEND_TABLE_ID,
-                     0,
-                     match_bits,
-                     0,
-                     0);
         if (OMPI_SUCCESS != ret) {
             PtlMDUnlink(md_h);
             if (ptl_request->free_after) free(md.start);

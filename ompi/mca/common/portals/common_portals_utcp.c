@@ -168,7 +168,7 @@ ompi_common_portals_ni_initialize(ptl_handle_ni_t *ni_handle)
 {
     int ret;
 
-    OPAL_THREAD_ADD32(&usage_count, 1);
+    OPAL_THREAD_ADD32(&ni_usage_count, 1);
     if (PTL_INVALID_HANDLE != active_ni_h) {
         *ni_handle = active_ni_h;
         return OMPI_SUCCESS;
@@ -313,12 +313,10 @@ ompi_common_portals_ni_finalize(void)
 {
     if (OPAL_THREAD_ADD32(&ni_usage_count, -1) <= 0) {
         if (PTL_INVALID_HANDLE != active_ni_h) {
-#if 0
             if (PTL_OK != PtlNIFini(active_ni_h)) {
                 active_ni_h = PTL_INVALID_HANDLE;
                 return OMPI_ERROR;
             }
-#endif
             active_ni_h = PTL_INVALID_HANDLE;
         }
     }
@@ -331,7 +329,9 @@ int
 ompi_common_portals_finalize(void)
 {
     if (OPAL_THREAD_ADD32(&usage_count, -1) <= 0) {
-        if (init_called) PtlFini();
+        if (init_called) {
+            PtlFini();
+        }
     }
 
     return OMPI_SUCCESS;

@@ -31,37 +31,48 @@
 #include "mtl_portals_endpoint.h"
 #include "mtl_portals_request.h"
 
+#define CHECK_MATCH(incoming_bits, match_bits, ignore_bits)     \
+    (((incoming_bits ^ match_bits) & ~ignore_bits) == 0)
+
 /* called when a receive should be progressed */
 static int
 ompi_mtl_portals_recv_progress(ptl_event_t *ev,
                                struct ompi_mtl_portals_request_t* ptl_request)
 {
+    mca_pml_base_recv_request_t *recvreq = 
+        (mca_pml_base_recv_request_t*) ptl_request->super.ompi_req;
+
     switch (ev->type) {
     case PTL_EVENT_PUT_END:
-    case PTL_EVENT_REPLY_END:
-        {
-            mca_pml_base_recv_request_t *recvreq = 
-                (mca_pml_base_recv_request_t*) ptl_request->super.ompi_req;
+        /* make sure the data is in the right place */
+        ompi_mtl_datatype_unpack(&recvreq->req_convertor,
+                                 ev->md.start, ev->md.length);
 
-            /* make sure the data is in the right place */
-            ompi_mtl_datatype_unpack(&recvreq->req_convertor,
-                                     ev->md.start, ev->md.length);
-
-            /* set the status */
-            recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
-                PTL_GET_SOURCE(ev->match_bits);
-            recvreq->req_base.req_ompi.req_status.MPI_TAG = 
+        /* set the status */
+        recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
+            PTL_GET_SOURCE(ev->match_bits);
+        recvreq->req_base.req_ompi.req_status.MPI_TAG = 
                 PTL_GET_TAG(ev->match_bits);
-            /* BWB - fix me - this is right for put but not for
-               unexpected, I think */ 
-            recvreq->req_base.req_ompi.req_status.MPI_ERROR = 
-                (ev->rlength > ev->mlength) ?
-                MPI_ERR_TRUNCATE : MPI_SUCCESS;
-            recvreq->req_base.req_ompi.req_status._count = 
-                ev->mlength;
+        recvreq->req_base.req_ompi.req_status.MPI_ERROR = 
+            (ev->rlength > ev->mlength) ?
+            MPI_ERR_TRUNCATE : MPI_SUCCESS;
+        recvreq->req_base.req_ompi.req_status._count = 
+            ev->mlength;
+        
+        ptl_request->super.completion_callback(&ptl_request->super);
+        break;
+    case PTL_EVENT_REPLY_END:
+        /* make sure the data is in the right place */
+        ompi_mtl_datatype_unpack(&recvreq->req_convertor,
+                                 ev->md.start, ev->md.length);
 
-            ptl_request->super.completion_callback(&ptl_request->super);
-        }
+        PtlMDUnlink(ev->md_handle);
+
+        /* set the status */
+        recvreq->req_base.req_ompi.req_status._count = 
+            ev->mlength;
+        
+        ptl_request->super.completion_callback(&ptl_request->super);
         break;
 
     default:
@@ -87,18 +98,24 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         abort();
     } else {
         size_t buflen;
+        mca_pml_base_recv_request_t *recvreq = 
+            (mca_pml_base_recv_request_t*) ptl_request->super.ompi_req;
+
         ret = ompi_mtl_datatype_recv_buf(convertor, &md.start, &buflen,
                                          &ptl_request->free_after);
         if (OMPI_SUCCESS != ret) abort();
-        md.length = buflen;
+        md.length = (recv_event->ev.rlength > buflen) ? buflen : recv_event->ev.rlength;
         md.threshold = 2; /* send and get */
         md.options = PTL_MD_EVENT_START_DISABLE;
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
+        /* retain because it's unclear how many events we'll get here ... */
         ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h, md,
-                        PTL_UNLINK, &md_h);
+                        PTL_RETAIN, &md_h);
         if (PTL_OK != ret) abort();
+
+        ptl_request->event_callback = ompi_mtl_portals_recv_progress;
 
         ret = PtlGet(md_h, 
                      recv_event->ev.initiator, 
@@ -108,7 +125,13 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
                      0);
         if (PTL_OK != ret) abort();
 
-        ptl_request->event_callback = ompi_mtl_portals_recv_progress;
+        recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
+            PTL_GET_SOURCE(recv_event->ev.match_bits);
+        recvreq->req_base.req_ompi.req_status.MPI_TAG = 
+                PTL_GET_TAG(recv_event->ev.match_bits);
+        recvreq->req_base.req_ompi.req_status.MPI_ERROR = 
+            (recv_event->ev.rlength > buflen) ?
+            MPI_ERR_TRUNCATE : MPI_SUCCESS;
     }
 
     return OMPI_SUCCESS;
@@ -155,13 +178,13 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
         ompi_mtl_portals_event_t *recv_event = 
             (ompi_mtl_portals_event_t*) list_item;
 
-        if ((recv_event->ev.match_bits & ~ignore_bits) == 
-            (match_bits & ~ignore_bits)) {
+        if (CHECK_MATCH(recv_event->ev.match_bits, match_bits, ignore_bits)) {
             /* we have a match... */
             opal_list_remove_item(&(ompi_mtl_portals.unexpected_messages),
                                   list_item);
             ompi_mtl_portals_get_data(recv_event, convertor, ptl_request);
-            OMPI_FREE_LIST_RETURN(&ompi_mtl_portals.event_fl, list_item);
+            OMPI_FREE_LIST_RETURN(&ompi_mtl_portals.event_fl, 
+                                  (ompi_free_list_item_t*) list_item);
             goto cleanup;
         }
         list_item = next_item;
@@ -170,13 +193,15 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
     /* now check the unexpected queue */
  restart_search:
     while (true) {
+        ompi_free_list_item_t *item;
         ompi_mtl_portals_event_t *recv_event;
-        OMPI_FREE_LIST_GET(&ompi_mtl_portals.event_fl, recv_event, ret);
+
+        OMPI_FREE_LIST_GET(&ompi_mtl_portals.event_fl, item, ret);
+        recv_event = (ompi_mtl_portals_event_t*) item;
         ret = PtlEQGet(ompi_mtl_portals.ptl_unexpected_recv_eq_h,
                        &recv_event->ev);
         if (PTL_OK == ret) {
-            if ((recv_event->ev.match_bits & ~ignore_bits) == 
-                (match_bits & ~ignore_bits)) {
+            if (CHECK_MATCH(recv_event->ev.match_bits, match_bits, ignore_bits)) {
                 /* we have a match... */
                 ompi_mtl_portals_get_data(recv_event, convertor, ptl_request);
                 goto cleanup;
