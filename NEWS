@@ -29,14 +29,14 @@ version 1.0.
 - Addition of UDAPL BTL ("udapl").
 
 
-Post 1.1 -- not yet decided if 1.2 or 1.1.1
--------------------------------------------
+1.1.1
+-----
 
 - Fix bus error in XGrid process starter.  Thanks to Eric Thibodeau
   for the fix.
 - Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
   back-end MPI processes.
-- Add -V/--version switch to mpirun.
+- Add -V/--version and -q/--quiet switches to mpirun.
 
 
 1.1
