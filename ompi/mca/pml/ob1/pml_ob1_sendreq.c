@@ -377,8 +377,8 @@ int mca_pml_ob1_send_request_start_buffered(
 
     /* re-init convertor for packed data */
     ompi_convertor_prepare_for_send( &sendreq->req_send.req_convertor,
-                                     sendreq->req_send.req_datatype,
-                                     sendreq->req_send.req_count,
+                                     MPI_BYTE,
+                                     sendreq->req_send.req_bytes_packed,
                                      sendreq->req_send.req_addr );
     /* request is complete at mpi level */
     OPAL_THREAD_LOCK(&ompi_request_lock);

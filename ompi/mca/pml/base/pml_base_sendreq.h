@@ -39,9 +39,7 @@ OMPI_DECLSPEC extern opal_class_t mca_pml_base_send_request_t_class;
  */
 struct mca_pml_base_send_request_t {
     mca_pml_base_request_t req_base;         /** base request type - common data structure for use by wait/test */
-    struct ompi_datatype_t* req_datatype;    /**< pointer to datatype */
     void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
-    size_t req_count;                        /**< number of elements in send buffer */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
     ompi_convertor_t req_convertor;          /**< convertor that describes this datatype */
@@ -83,8 +81,6 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                                                                           \
       OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
       (request)->req_addr = addr;                                         \
-      (request)->req_count = count;                                       \
-      (request)->req_datatype = datatype;                                 \
       (request)->req_send_mode = mode;                                    \
       (request)->req_base.req_addr = addr;                                \
       (request)->req_base.req_count = count;                              \

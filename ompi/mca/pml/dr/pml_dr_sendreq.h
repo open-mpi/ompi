@@ -110,8 +110,6 @@ do {                                                                            
                                                                                     \
     OMPI_REQUEST_INIT(&(sendreq)->req_send.req_base.req_ompi, persistent);          \
     (sendreq)->req_send.req_addr = addr;                                            \
-    (sendreq)->req_send.req_count = count;                                          \
-    (sendreq)->req_send.req_datatype = datatype;                                    \
     (sendreq)->req_send.req_send_mode = sendmode;                                   \
     (sendreq)->req_send.req_base.req_addr = addr;                                   \
     (sendreq)->req_send.req_base.req_count = count;                                 \

@@ -201,7 +201,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
     size_t max_data;
     int rc, freeAfter;
 
-    if(sendreq->req_count > 0) {
+    if(sendreq->req_bytes_packed > 0) {
 
         /* has a buffer been provided */
         OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
@@ -221,31 +221,13 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
             return OMPI_ERR_BUFFER;
         }
     
-        /* setup request to reflect the contigous buffer */
-        sendreq->req_count = sendreq->req_bytes_packed;
-
-#if 0
-        /* In case we reuse an old request recreate the correct convertor, the one
-         * using the user buffers. Otherwise at the end of this function we replace
-         * it with a convertor using the allocator buffer !!!
-         */
-        ompi_convertor_prepare_for_send( &sendreq->req_convertor, sendreq->req_base.req_datatype,
-                                         sendreq->req_base.req_count, sendreq->req_base.req_addr );
-
-#endif
-        /* increment count of pending requests */
-        mca_pml_bsend_count++;
-
-        sendreq->req_datatype = MPI_BYTE;
-
-
         OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
 
         /* The convertor is already initialized in the begining so we just have to
          * pack the data in the newly allocated buffer.
          */
         iov.iov_base = sendreq->req_addr;
-        iov.iov_len = sendreq->req_count;
+        iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;
         if((rc = ompi_convertor_pack( &sendreq->req_convertor, 
@@ -258,6 +240,8 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         /* setup convertor to point to packed buffer (at position zero) */
         ompi_convertor_prepare_for_send( &sendreq->req_convertor, MPI_PACKED,
                                          max_data, sendreq->req_addr );
+        /* increment count of pending requests */
+        mca_pml_bsend_count++;
     }
     sendreq->req_base.req_ompi.req_complete = true;
     return OMPI_SUCCESS;
@@ -272,7 +256,7 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
 
-    if (sendreq->req_count == 0) return OMPI_SUCCESS;
+    assert( sendreq->req_bytes_packed > 0 );
 
     /* has a buffer been provided */
     OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
@@ -296,9 +280,6 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
     mca_pml_bsend_count++;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     
-    /* setup request to reflect the contigous buffer */
-    sendreq->req_count = sendreq->req_bytes_packed;
-    sendreq->req_datatype = MPI_PACKED;
     return OMPI_SUCCESS;
 }
 
@@ -309,7 +290,7 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
 int mca_pml_base_bsend_request_fini(ompi_request_t* request)
 {
     mca_pml_base_send_request_t* sendreq = (mca_pml_base_send_request_t*)request;
-    if(sendreq->req_count == 0 || 
+    if(sendreq->req_bytes_packed == 0 || 
        sendreq->req_addr == NULL || 
        sendreq->req_addr == sendreq->req_base.req_addr)
         return OMPI_SUCCESS;
