@@ -10,11 +10,11 @@
  */
 
 
-#ifndef MCA_PML_DIRECT_CALL_H_
-#define MCA_PML_DIRECT_CALL_H_
+#ifndef MCA_MTL_DIRECT_CALL_H_
+#define MCA_MTL_DIRECT_CALL_H_
 
-#if MCA_pml_DIRECT_CALL
-#include @MCA_pml_DIRECT_CALL_HEADER@
+#if MCA_mtl_DIRECT_CALL
+#include @MCA_mtl_DIRECT_CALL_HEADER@
 #endif
 
 #endif

@@ -18,6 +18,7 @@
 
 # Use the top-level Makefile.options
 
+EXTRA_DIST = post_configure.sh
 
 
 AM_CPPFLAGS = $(mtl_mx_CPPFLAGS)
