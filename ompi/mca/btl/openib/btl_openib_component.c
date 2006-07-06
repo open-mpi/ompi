@@ -948,7 +948,8 @@ int mca_btl_openib_component_progress()
             return OMPI_ERROR;
         } 
         else if(1 == ne) { 
-            if(wc.status != IBV_WC_SUCCESS) { 
+            if(wc.status != IBV_WC_SUCCESS) {
+                static int flush_err_printed = 0;
                 ompi_proc_t* remote_proc = NULL; 
                 frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
                 if(frag) { 
@@ -959,7 +960,8 @@ int mca_btl_openib_component_progress()
                         remote_proc = endpoint->endpoint_proc->proc_ompi; 
                     }
                 }
-                BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d", 
+                if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed++)
+                    BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d", 
                                              mca_btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
                 if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
@@ -1051,6 +1053,7 @@ int mca_btl_openib_component_progress()
         } 
         else if(1 == ne) {             
             if(wc.status != IBV_WC_SUCCESS) { 
+                static int flush_err_printed = 0;
                 ompi_proc_t* remote_proc = NULL; 
                 frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
                 if(frag) { 
@@ -1061,7 +1064,8 @@ int mca_btl_openib_component_progress()
                         remote_proc = endpoint->endpoint_proc->proc_ompi; 
                     }
                 }
-                BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
+                if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed++)
+                    BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
                                              mca_btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
                 return OMPI_ERROR;
