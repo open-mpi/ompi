@@ -25,7 +25,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/mca/pml/base/pml_base_recvreq.h"
 
 #include "mtl_portals.h"
 #include "mtl_portals_endpoint.h"
@@ -39,37 +38,34 @@ static int
 ompi_mtl_portals_recv_progress(ptl_event_t *ev,
                                struct ompi_mtl_portals_request_t* ptl_request)
 {
-    mca_pml_base_recv_request_t *recvreq = 
-        (mca_pml_base_recv_request_t*) ptl_request->super.ompi_req;
-
     switch (ev->type) {
     case PTL_EVENT_PUT_END:
         /* make sure the data is in the right place */
-        ompi_mtl_datatype_unpack(&recvreq->req_convertor,
+        ompi_mtl_datatype_unpack(ptl_request->convertor,
                                  ev->md.start, ev->mlength);
 
         /* set the status */
-        recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
+        ptl_request->super.ompi_req->req_status.MPI_SOURCE =
             PTL_GET_SOURCE(ev->match_bits);
-        recvreq->req_base.req_ompi.req_status.MPI_TAG = 
+        ptl_request->super.ompi_req->req_status.MPI_TAG = 
                 PTL_GET_TAG(ev->match_bits);
-        recvreq->req_base.req_ompi.req_status.MPI_ERROR = 
+        ptl_request->super.ompi_req->req_status.MPI_ERROR = 
             (ev->rlength > ev->mlength) ?
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
-        recvreq->req_base.req_ompi.req_status._count = 
+        ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
         
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
     case PTL_EVENT_REPLY_END:
         /* make sure the data is in the right place */
-        ompi_mtl_datatype_unpack(&recvreq->req_convertor,
+        ompi_mtl_datatype_unpack(ptl_request->convertor,
                                  ev->md.start, ev->mlength);
 
         PtlMDUnlink(ev->md_handle);
 
         /* set the status */
-        recvreq->req_base.req_ompi.req_status._count = 
+        ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
         
         ptl_request->super.completion_callback(&ptl_request->super);
@@ -98,8 +94,6 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         abort();
     } else {
         size_t buflen;
-        mca_pml_base_recv_request_t *recvreq = 
-            (mca_pml_base_recv_request_t*) ptl_request->super.ompi_req;
 
         ret = ompi_mtl_datatype_recv_buf(convertor, &md.start, &buflen,
                                          &ptl_request->free_after);
@@ -125,11 +119,11 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
                      0);
         if (PTL_OK != ret) abort();
 
-        recvreq->req_base.req_ompi.req_status.MPI_SOURCE =
+        ptl_request->super.ompi_req->req_status.MPI_SOURCE =
             PTL_GET_SOURCE(recv_event->ev.match_bits);
-        recvreq->req_base.req_ompi.req_status.MPI_TAG = 
+        ptl_request->super.ompi_req->req_status.MPI_TAG = 
                 PTL_GET_TAG(recv_event->ev.match_bits);
-        recvreq->req_base.req_ompi.req_status.MPI_ERROR = 
+        ptl_request->super.ompi_req->req_status.MPI_ERROR = 
             (recv_event->ev.rlength > buflen) ?
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
     }
@@ -156,6 +150,8 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
     ompi_mtl_portals_request_t *ptl_request = 
         (ompi_mtl_portals_request_t*) mtl_request;
     size_t buflen;
+
+    ptl_request->convertor = convertor;
 
     if  (MPI_ANY_SOURCE == src) {
         remote_proc.nid = PTL_NID_ANY;

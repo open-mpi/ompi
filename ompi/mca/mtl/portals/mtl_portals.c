@@ -177,6 +177,9 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
     assert(mtl == &ompi_mtl_portals.base);
 
     opal_progress_unregister(ompi_mtl_portals_progress);
+
+    while (0 != ompi_mtl_portals_progress()) { }
+
     ompi_common_portals_ni_finalize();
     ompi_common_portals_finalize();
 

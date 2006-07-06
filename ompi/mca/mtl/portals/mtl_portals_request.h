@@ -21,8 +21,8 @@
 
 struct ompi_mtl_portals_request_t {
     struct mca_mtl_request_t super;
-    ptl_handle_eq_t eq_h;
     bool free_after;
+    struct ompi_convertor_t *convertor;
 
     int (*event_callback)(ptl_event_t *ev, struct ompi_mtl_portals_request_t*);
 };
