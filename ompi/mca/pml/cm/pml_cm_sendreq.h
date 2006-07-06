@@ -93,10 +93,7 @@ do {                                                                    \
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );             \
     ret = OMPI_SUCCESS;                                                 \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
-        ret = mca_pml_base_bsend_request_alloc(&sendreq->req_send.req_base.req_ompi); \
-        if (OMPI_SUCCESS == ret) {                                      \
-            ret =mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi); \
-        }                                                               \
+        ret =mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi); \
     }                                                                   \
     if (OMPI_SUCCESS == ret) {                                          \
         ret = OMPI_MTL_CALL(isend(ompi_mtl,                             \
