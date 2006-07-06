@@ -24,7 +24,7 @@
 #include "ompi/constants.h"
 #include "ompi/datatype/convertor.h"
 
-int
+static inline int
 ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
                        void **buffer,
                        size_t *buffer_len,
@@ -57,7 +57,7 @@ ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
 }
 
 
-int
+static inline int
 ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
                            void ** buffer,
                            size_t *buffer_len,
@@ -83,7 +83,7 @@ ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
 }
 
 
-int
+static inline int
 ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
                          void *buffer,
                          size_t buffer_len)

@@ -23,6 +23,7 @@
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/mtl/base/mtl_base_datatype.h"
 #include "mtl_mx_endpoint.h"
 #include "mtl_mx_request.h"
 
