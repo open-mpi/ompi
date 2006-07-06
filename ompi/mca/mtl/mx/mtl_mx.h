@@ -49,6 +49,14 @@ extern int ompi_mtl_mx_del_procs(struct mca_mtl_base_module_t* mtl,
                                  struct ompi_proc_t** procs, 
                                  struct mca_mtl_base_endpoint_t **mtl_peer_data);
 
+int
+ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl, 
+                 struct ompi_communicator_t* comm,
+                 int dest,
+                 int tag,
+                 struct ompi_convertor_t *convertor,
+                 mca_pml_base_send_mode_t mode);
+
 extern int ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl, 
                              struct ompi_communicator_t* comm,
                              int dest,

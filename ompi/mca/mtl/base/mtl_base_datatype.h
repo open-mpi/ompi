@@ -42,14 +42,15 @@ ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
         iov.iov_base = malloc(max_data);
         if (NULL == iov.iov_base) return OMPI_ERR_OUT_OF_RESOURCE;
         *freeAfter = true;
+
     } else {
         iov.iov_base = NULL;
         *freeAfter = false;
     }
-
+    
     ompi_convertor_pack(convertor, &iov, &iov_count, &max_data,
                         &free_after);
-
+    
     *buffer = iov.iov_base;
     *buffer_len = iov.iov_len;
 
@@ -98,10 +99,10 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
     max_data = iov.iov_len;
 
     
-    ompi_convertor_unpack(convertor, &iov, &iov_count,
+    if (max_data > 0 && ompi_convertor_need_buffers(convertor)) {
+        ompi_convertor_unpack(convertor, &iov, &iov_count,
                           &max_data, &free_after);
 
-    if (max_data > 0 && ompi_convertor_need_buffers(convertor)) {
         free(buffer);
     }
 
