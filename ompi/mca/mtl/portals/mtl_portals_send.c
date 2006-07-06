@@ -22,7 +22,6 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/mca/mtl/base/base.h"
-#include "ompi/mca/pml/base/pml_base_sendreq.h"
 
 #include "mtl_portals.h"
 #include "mtl_portals_request.h"
