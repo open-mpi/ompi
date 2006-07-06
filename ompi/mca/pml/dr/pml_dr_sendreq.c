@@ -454,8 +454,8 @@ int mca_pml_dr_send_request_start_buffered(
     
     /* re-init convertor for packed data (it keep the flags) */
     ompi_convertor_prepare_for_send( &sendreq->req_send.req_convertor,
-                                     sendreq->req_send.req_datatype,
-                                     sendreq->req_send.req_count,
+                                     MPI_BYTE,
+                                     sendreq->req_send.req_bytes_packed,
                                      sendreq->req_send.req_addr );
 
     /* request is complete at mpi level */
