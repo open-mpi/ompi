@@ -22,6 +22,7 @@
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_request.h"
