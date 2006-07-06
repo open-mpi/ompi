@@ -25,6 +25,8 @@
 extern "C" {
 #endif
 
+struct mca_mtl_request_t;
+
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;
     /** free list of send request structures */
@@ -34,9 +36,6 @@ struct ompi_pml_cm_t {
 };
 typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;
-
-extern mca_pml_base_component_1_0_0_t mca_pml_cm_component;
-
 
 /* PML interface functions */
 extern int mca_pml_cm_add_procs(struct ompi_proc_t **procs, size_t nprocs);
