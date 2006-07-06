@@ -116,6 +116,7 @@ static int orte_ras_bjs_discover(
     opal_list_t new_nodes;
     int rc;
     
+#if 0
     /* query the nodelist from the registry */
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
@@ -159,7 +160,7 @@ static int orte_ras_bjs_discover(
         }
         item = next;
     }
-    
+#endif    
 
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
