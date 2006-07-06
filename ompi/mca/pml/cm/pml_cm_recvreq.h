@@ -137,6 +137,11 @@ do {                                                                    \
         MCA_PML_CM_RECV_REQUEST_RETURN( recvreq );                      \
     } else {                                                            \
         /* initialize request status */                                 \
+        if(recvreq->req_recv.req_base.req_ompi.req_persistent) {        \
+            /* rewind convertor */                                      \
+            size_t offset = 0;                                          \
+            ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &offset); \
+        }                                                               \
         recvreq->req_recv.req_base.req_pml_complete = true;             \
         MCA_PML_CM_RECV_REQUEST_MPI_COMPLETE( recvreq );                \
     }                                                                   \

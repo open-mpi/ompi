@@ -98,10 +98,10 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
     max_data = iov.iov_len;
 
     
+    ompi_convertor_unpack(convertor, &iov, &iov_count,
+                          &max_data, &free_after);
 
     if (max_data > 0 && ompi_convertor_need_buffers(convertor)) {
-        ompi_convertor_unpack(convertor, &iov, &iov_count,
-                          &max_data, &free_after);
         free(buffer);
     }
 
