@@ -88,13 +88,19 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
 }
 
 
-#define MCA_PML_CM_SEND_REQUEST_START(sendreq, ret)                     \
+#define MCA_PML_CM_SEND_REQUEST_START_SETUP(sendreq, ret)               \
 do {                                                                    \
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );             \
     ret = OMPI_SUCCESS;                                                 \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
         ret =mca_pml_base_bsend_request_start(&sendreq->req_send.req_base.req_ompi); \
     }                                                                   \
+} while (0)
+
+
+#define MCA_PML_CM_SEND_REQUEST_START(sendreq, ret)                     \
+do {                                                                    \
+    MCA_PML_CM_SEND_REQUEST_START_SETUP(sendreq, ret);                  \
     if (OMPI_SUCCESS == ret) {                                          \
         ret = OMPI_MTL_CALL(isend(ompi_mtl,                             \
                                   sendreq->req_send.req_base.req_comm,  \
