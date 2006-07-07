@@ -385,6 +385,48 @@ static int mca_btl_udapl_accept_connect(mca_btl_udapl_module_t* btl,
 }
 
 
+static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
+        DAT_EP_HANDLE* endpoint)
+{
+    mca_btl_udapl_frag_t* frag;
+    DAT_DTO_COOKIE cookie;
+    int rc;
+
+    /* Post a receive to get the peer's address data */
+    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
+            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
+    cookie.as_ptr = frag;
+
+    frag->type = MCA_BTL_UDAPL_CONN_RECV;
+
+    rc = dat_ep_post_recv(endpoint, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
+    if(DAT_SUCCESS != rc) {
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_recv");
+        return OMPI_ERROR;
+    }
+
+
+    /* Send our local address data over this EP */
+    frag = (mca_btl_udapl_frag_t*)mca_btl_udapl_alloc(
+            (mca_btl_base_module_t*)btl, sizeof(mca_btl_udapl_addr_t));
+    cookie.as_ptr = frag;
+
+    memcpy(frag->segment.seg_addr.pval,
+            &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
+    frag->type = MCA_BTL_UDAPL_CONN_SEND;
+
+    rc = dat_ep_post_send(endpoint, 1,
+            &frag->triplet, cookie, DAT_COMPLETION_DEFAULT_FLAG);
+    if(DAT_SUCCESS != rc) {
+        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_post_send");
+        return OMPI_ERROR;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+
 /*
  *  uDAPL component progress.
  */
@@ -422,8 +464,8 @@ int mca_btl_udapl_component_progress()
                     /* Was the DTO successful? */
                     if(DAT_DTO_SUCCESS != dto->status) {
                         OPAL_OUTPUT((0,
-                                "btl_udapl ***** DTO error %d *****\n",
-                                dto->status));
+                                "btl_udapl ***** DTO error %d %d %d %p*****\n",
+                                dto->status, frag->type, frag->size, dto->ep_handle));
                         break;
                     }
 
@@ -510,9 +552,6 @@ int mca_btl_udapl_component_progress()
                         /*OPAL_OUTPUT((0, "btl_udapl UDAPL_RECV %d",
                                     dto->transfered_length));*/
 
-        /*                OPAL_OUTPUT((0, "recv from %s %d %p\n", 
-                            inet_ntoa(addr->sin_addr), ntohs(addr->sin_port),
-                            frag->endpoint));*/
                         frag->segment.seg_addr.pval = frag->hdr + 1;
                         frag->segment.seg_len = dto->transfered_length -
                             sizeof(mca_btl_base_header_t);
@@ -543,6 +582,17 @@ int mca_btl_udapl_component_progress()
 
                         break;
                     }
+                    case MCA_BTL_UDAPL_CONN_RECV:
+                        mca_btl_udapl_endpoint_finish_connect(btl,
+                                frag->segment.seg_addr.pval,
+                                event.event_data.connect_event_data.ep_handle);
+                        /* No break - fall through to free */
+                    case MCA_BTL_UDAPL_CONN_SEND:
+                        frag->segment.seg_len =
+                                mca_btl_udapl_module.super.btl_eager_limit;
+                        mca_btl_udapl_free((mca_btl_base_module_t*)btl,
+                                (mca_btl_base_descriptor_t*)frag);
+                        break;
                     default:
                         OPAL_OUTPUT((0, "WARNING unknown frag type: %d\n",
                                     frag->type));
@@ -570,7 +620,7 @@ int mca_btl_udapl_component_progress()
                     /* Both the client and server side of a connection generate
                        this event */
 
-                    mca_btl_udapl_endpoint_finish_connect(btl,
+                    mca_btl_udapl_sendrecv(btl,
                             event.event_data.connect_event_data.ep_handle);
                     
                     count++;

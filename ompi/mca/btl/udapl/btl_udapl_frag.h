@@ -35,7 +35,9 @@ typedef enum {
     MCA_BTL_UDAPL_SEND,
     MCA_BTL_UDAPL_RECV,
     MCA_BTL_UDAPL_PUT,
-    MCA_BTL_UDAPL_GET
+    MCA_BTL_UDAPL_GET,
+    MCA_BTL_UDAPL_CONN_RECV,
+    MCA_BTL_UDAPL_CONN_SEND
 } mca_btl_udapl_frag_type_t;
 
 
