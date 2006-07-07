@@ -46,7 +46,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 static int mca_btl_udapl_endpoint_finish_eager(mca_btl_udapl_endpoint_t*);
 static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t*);
 
- 
+
 int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
                                 mca_btl_udapl_frag_t* frag)
 {
@@ -289,23 +289,13 @@ failure_create:
  */
 
 int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
+                                          mca_btl_udapl_addr_t* addr,
                                           DAT_EP_HANDLE endpoint)
 {
     mca_btl_udapl_proc_t* proc;
     mca_btl_base_endpoint_t* ep;
-    DAT_EP_PARAM param;
     size_t i;
     int rc;
-
-    /* Query the DAT EP for address information. */
-    /* TODO - refer to the hack comment about setting the port in btl_udapl.c */
-    rc = dat_ep_query(endpoint,
-            DAT_EP_FIELD_REMOTE_IA_ADDRESS_PTR | DAT_EP_FIELD_REMOTE_PORT_QUAL,
-            &param);
-    if(DAT_SUCCESS != rc) {
-        MCA_BTL_UDAPL_ERROR(rc, "dat_ep_query");
-        return OMPI_ERROR;
-    }
 
     /* Search for the matching BTL EP */
     OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
@@ -321,8 +311,7 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
             /* Does this endpoint match? */
             /* TODO - Check that the DAT_CONN_QUAL's match too */
             if(ep->endpoint_btl == btl &&
-                    !memcmp(param.remote_ia_address_ptr,
-                            &ep->endpoint_addr.addr, sizeof(DAT_SOCK_ADDR))) {
+                    !memcmp(addr, &ep->endpoint_addr, sizeof(DAT_SOCK_ADDR))) {
 
                 OPAL_THREAD_LOCK(&ep->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {

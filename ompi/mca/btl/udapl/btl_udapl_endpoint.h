@@ -117,6 +117,7 @@ void mca_btl_udapl_endpoint_post_oob_recv(void);
  */
 
 int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
+                                          mca_btl_udapl_addr_t* addr,
                                           DAT_EP_HANDLE endpoint);
 
 #if defined(c_plusplus) || defined(__cplusplus)
