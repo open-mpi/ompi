@@ -1645,8 +1645,8 @@ static char *pretty_job_state(orte_job_state_t state) {
     default:
         break;
     }
-    
-    return NULL;
+
+    return strdup("Unknown");
 }
 
 static char *pretty_vpid_state(orte_proc_state_t state) {
@@ -1682,7 +1682,7 @@ static char *pretty_vpid_state(orte_proc_state_t state) {
         break;
     }
     
-    return NULL;
+    return strdup("Unknown");
 }
 
 static char *pretty_univ_state(orte_universe_state_t state) {
@@ -1700,11 +1700,10 @@ static char *pretty_univ_state(orte_universe_state_t state) {
         return strdup("Finalized");
         break;
     default:
-        return strdup("Unknown");
         break;
     }
 
-    return NULL;
+    return strdup("Unknown");
 }
 
 static char *pretty_node_state(orte_node_state_t state) {
@@ -1720,9 +1719,8 @@ static char *pretty_node_state(orte_node_state_t state) {
         break;
     case ORTE_NODE_STATE_UNKNOWN:
     default:
-        return strdup("Unknown");
         break;
     }
     
-    return NULL;
+    return strdup("Unknown");
 }
