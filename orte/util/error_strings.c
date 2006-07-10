@@ -103,6 +103,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_INDETERMINATE_STATE_INFO:
         retval = "Request for state returned multiple responses";
         break;
+    case ORTE_ERR_NODE_FULLY_USED:
+        retval = "All the slots on a given node have been used";
+        break;
     default:
         retval = NULL;
     }

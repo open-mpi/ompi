@@ -1,4 +1,4 @@
-PROGS = no_op mpi_no_op hello hello_null sigusr_trap
+PROGS = no_op mpi_no_op hello hello_null sigusr_trap hello_nodename
 
 all: $(PROGS)
 

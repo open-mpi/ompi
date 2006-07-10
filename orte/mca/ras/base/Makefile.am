@@ -27,4 +27,11 @@ libmca_ras_la_SOURCES += \
         base/ras_base_find_available.c \
 	base/ras_base_node.h \
         base/ras_base_node.c \
-        base/ras_base_open.c
+        base/ras_base_open.c \
+	base/data_type_support/ras_data_type_compare_fns.c \
+	base/data_type_support/ras_data_type_copy_fns.c \
+	base/data_type_support/ras_data_type_packing_fns.c \
+	base/data_type_support/ras_data_type_print_fns.c \
+	base/data_type_support/ras_data_type_release_fns.c \
+	base/data_type_support/ras_data_type_size_fns.c \
+	base/data_type_support/ras_data_type_unpacking_fns.c

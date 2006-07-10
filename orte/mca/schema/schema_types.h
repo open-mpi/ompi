@@ -57,6 +57,7 @@
 #define ORTE_NODE_STATE_KEY             "orte-node-state"
 #define ORTE_NODE_SLOTS_KEY             "orte-node-slots"
 #define ORTE_NODE_SLOTS_ALLOC_KEY       "orte-node-slots-alloc"
+#define ORTE_NODE_SLOTS_IN_USE_KEY      "orte-node-slots-in-use"
 #define ORTE_NODE_SLOTS_MAX_KEY         "orte-node-slots-max"
 #define ORTE_NODE_ALLOC_KEY             "orte-node-alloc"
 #define ORTE_NODE_BOOTPROXY_KEY         "orte-node-bootproxy"

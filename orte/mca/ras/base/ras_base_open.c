@@ -24,6 +24,9 @@
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+
+#include "orte/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/base/base.h"
 
 
@@ -49,7 +52,8 @@ orte_ras_base_t orte_ras_base;
  */
 int orte_ras_base_open(void)
 {
-    int value;
+    int value, rc;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
 
@@ -67,6 +71,21 @@ int orte_ras_base_open(void)
 
     orte_ras_base.ras_opened_valid = false;
     orte_ras_base.ras_available_valid = false;
+
+    /** register the base system types with the DSS */
+    tmp = ORTE_RAS_NODE;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_ras_base_pack_node,
+                                                     orte_ras_base_unpack_node,
+                                                     (orte_dss_copy_fn_t)orte_ras_base_copy_node,
+                                                     (orte_dss_compare_fn_t)orte_ras_base_compare_node,
+                                                     (orte_dss_size_fn_t)orte_ras_base_size_node,
+                                                     (orte_dss_print_fn_t)orte_ras_base_print_node,
+                                                     (orte_dss_release_fn_t)orte_ras_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_RAS_NODE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     /* Open up all available components */
 
