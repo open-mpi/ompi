@@ -92,6 +92,18 @@ int orte_rmaps_base_open(void)
                                 "If nonzero, allow scheduling MPI applications on the same node as mpirun (default).  If zero, do not schedule any MPI applications on the same node as mpirun",
                                 false, false, 1, &value);
 
+    /* Should we oversubscribe or not? */
+    
+    mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
+                                "If nonzero, then do not allow oversubscription of nodes - mpirun will return an error if there aren't enough nodes to launch all processes without oversubscribing",
+                                false, false, 0, &value);
+    if (0 == value) {
+        orte_rmaps_base.oversubscribe = true;  /** default condition */
+    } else {
+        orte_rmaps_base.oversubscribe = false;
+    }
+    
+    
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 

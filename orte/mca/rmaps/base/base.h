@@ -53,6 +53,8 @@ extern "C" {
         opal_list_t rmaps_opened;
         /** Sorted list of available components (highest priority first) */
         opal_list_t rmaps_available;
+        /** whether or not we allow oversubscription of nodes */
+        bool oversubscribe;
     } orte_rmaps_base_t;
 
     /**

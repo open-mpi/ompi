@@ -18,11 +18,13 @@
 
 headers += \
         base/base.h \
+        base/rmaps_base_node.h \
         base/rmaps_base_map.h
 
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
 	base/rmaps_base_map.h \
         base/rmaps_base_map.c \
+        base/rmaps_base_node.c \
         base/rmaps_base_open.c \
         base/rmaps_base_select.c
