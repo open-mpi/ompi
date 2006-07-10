@@ -347,12 +347,20 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         orte_rmaps_base_map_t* map = OBJ_NEW(orte_rmaps_base_map_t);
         orte_app_context_t* app = app_context[i];
         map->app = app;
-        map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
-        if(NULL == map->procs) {
-            OBJ_RELEASE(map);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
+        if (0 < app->num_procs) {
+            map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
+            if(NULL == map->procs) {
+                OBJ_RELEASE(map);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+        } else {
+            if (1 < num_context) {  /** can't have multiple contexts if zero num_procs */
+                ORTE_ERROR_LOG(ORTE_ERR_INVALID_NUM_PROCS);
+                rc = ORTE_ERR_INVALID_NUM_PROCS;
+                goto cleanup;
+            }
         }
         map->num_procs = 0;
         mapping[i] = map;

@@ -45,11 +45,12 @@ extern "C" {
  * RMAPS 
  */
 
-int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid);
+int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid, size_t *total_num_slots);
 int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
 int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                                        orte_app_context_t *app,
-                                       opal_list_t *master_node_list);
+                                       opal_list_t *master_node_list,
+                                       size_t *total_num_slots);
 int orte_rmaps_base_claim_slot(orte_rmaps_base_map_t *map,
                                orte_ras_node_t *current_node,
                                orte_jobid_t jobid, orte_vpid_t vpid,
