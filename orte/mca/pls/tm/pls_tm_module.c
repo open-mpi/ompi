@@ -300,7 +300,6 @@ pls_tm_launch(orte_jobid_t jobid)
             orte_ras_node_t* node = rmaps_node->node;
             orte_process_name_t* name;
             char* name_string;
-            size_t num_processes = 0;
             
             /* already launched on this node */
             if (0 != node->node_launched++) {
