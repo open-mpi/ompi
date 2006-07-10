@@ -89,16 +89,21 @@ mca_pml_cm_send(void *buf,
                                  datatype, dst, tag, comm, 
                                  sendmode, true, false);
 
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED || 
-        NULL == ompi_mtl->mtl_send) {
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED ) { 
         MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
         if (OMPI_SUCCESS != ret) {
             MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
             return ret;
         }
-
+    } else if (NULL == ompi_mtl->mtl_send) {
+        MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
+        if (OMPI_SUCCESS != ret) {
+            MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
+            return ret;
+        }
+    
         if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
-            /* give up and sleep until completion */
+        /* give up and sleep until completion */
             if (opal_using_threads()) {
                 opal_mutex_lock(&ompi_request_lock);
                 ompi_request_waiting++;
