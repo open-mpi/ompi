@@ -97,8 +97,8 @@ int orte_rmaps_base_open(void)
     mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
                                 "If nonzero, then do not allow oversubscription of nodes - mpirun will return an error if there aren't enough nodes to launch all processes without oversubscribing",
                                 false, false, 0, &value);
-    if (0 == value) {
-        orte_rmaps_base.oversubscribe = true;  /** default condition */
+    if ((int)false == value) {
+        orte_rmaps_base.oversubscribe = true;  /** default condition that allows oversubscription */
     } else {
         orte_rmaps_base.oversubscribe = false;
     }

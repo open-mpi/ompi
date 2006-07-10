@@ -106,6 +106,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_NODE_FULLY_USED:
         retval = "All the slots on a given node have been used";
         break;
+    case ORTE_ERR_INVALID_NUM_PROCS:
+        retval = "Multiple applications were specified, but at least one failed to specify the number of processes to run";
+        break;
     default:
         retval = NULL;
     }

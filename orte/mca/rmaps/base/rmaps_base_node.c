@@ -96,12 +96,16 @@ static bool is_mapped(opal_list_item_t *item,
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid)
+int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, size_t *total_num_slots)
 {
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
     int id, rc, nolocal;
+    size_t num_slots=0;
 
+    /** set default answer */
+    *total_num_slots = 0;
+    
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(nodes, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -136,6 +140,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid)
         node = (orte_ras_node_t*)item;
         if (0 != node->node_slots_max && node->node_slots_inuse > node->node_slots_max) {
             opal_list_remove_item(nodes, item);
+        } else { /** otherwise, add its slots to the total */
+            num_slots += node->node_slots;
         }
 
         /** go on to next item */
@@ -148,6 +154,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid)
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
     }
     
+    *total_num_slots = num_slots;
+    
     return ORTE_SUCCESS;
 }
 
@@ -157,15 +165,19 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid)
  */
 int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                                        orte_app_context_t *app,
-                                       opal_list_t *master_node_list)
+                                       opal_list_t *master_node_list,
+                                       size_t *total_num_slots)
 {
     orte_app_context_map_t** loc_map = app->map_data;
     opal_list_item_t *item;
     orte_ras_node_t *node, *new_node;
     char **mapped_nodes = NULL;
     int num_mapped_nodes = 0;
-    size_t j, k;
+    size_t j, k, num_slots=0;
     int rc;
+    
+    /** set default answer */
+    *total_num_slots = 0;
     
     /* Accumulate all of the host name mappings */
     for(k = 0; k < app->num_map; ++k) {
@@ -193,7 +205,7 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
      * for our use - if not, then that's an error
      */
     if( !are_all_mapped_valid(mapped_nodes, num_mapped_nodes, master_node_list) ) {
-        opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:not-all-mapped-alloc",
+        opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:not-all-mapped-alloc",
                        true, app->app, opal_argv_join(mapped_nodes, ','));
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -212,21 +224,24 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
             /** we can't just add this item to the mapped_node_list as it cannot be
              * on two lists at the same time, so we need to copy it first
              */
-            if (ORTE_SUCCESS != (rc = orte_dss.copy(&new_node, node, ORTE_RAS_NODE))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&new_node, node, ORTE_RAS_NODE))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
             opal_list_append(mapped_node_list, &new_node->super);
+            num_slots += new_node->node_slots_alloc;
         }
     }
 
     /** check that anything is left! */
     if (0 == opal_list_get_size(mapped_node_list)) {
-        opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
+        opal_show_help("help-orte-rmaps-base.txt", "orte-rmaps-base:no-mapped-node",
                        true, app->num_procs, app->app);
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+
+    *total_num_slots = num_slots;
 
     return ORTE_SUCCESS;
 }

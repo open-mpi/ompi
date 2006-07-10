@@ -56,14 +56,11 @@ Double check that this file exists and is readable.
 No executable was specified on the %s command line.
 
 Aborting.
-[orterun:num-procs-unspecified]
-%s was unable to determine how many processes to launch for the
-following process:
-
-    %s
-
-You must specify how many processes to launch, via the -np
-argument.
+[orterun:multi-apps-and-zero-np]
+%s found multiple applications specified on the command line, with
+at least one that failed to specify the number of processes to execute.
+When specifying multiple applications, you must specify how many processes
+of each to launch via the -np argument.
 [orterun:nothing-to-do]
 %s could not find anything to do.
 

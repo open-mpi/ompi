@@ -252,10 +252,10 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
     orte_vpid_t vpid_start;
-    size_t num_procs = 0;
+    size_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rank = 0;
     int rc;
-    bool bynode = true;
+    bool bynode = true, modify_app_context = false;
 
     /* query for the application context and allocated nodes */
     if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context))) {
@@ -275,7 +275,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
      * mappings from the user
      */
     OBJ_CONSTRUCT(&master_node_list, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid))) {
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid, &total_num_slots))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&master_node_list);
         return rc;
@@ -288,7 +288,25 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
      */
     for(i=0; i<num_context; i++) {
         app = context[i];
-        num_procs += app->num_procs;
+        if (0 == app->num_procs) {
+            /** if the number of processes wasn't specified, then we know there can be only
+             * one app_context allowed in the launch, and that we are to launch it across
+             * all available slots. We'll double-check the single app_context rule first
+             */
+            if (1 < num_context) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:multi-apps-and-zero-np",
+                               true, num_context, NULL);
+                ORTE_ERROR_LOG(ORTE_ERR_INVALID_NUM_PROCS);
+                return ORTE_ERR_INVALID_NUM_PROCS;
+            }
+            /** okay, only one app_context - so set the num_procs to equal the number of slots */
+            app->num_procs = total_num_slots;
+            num_procs = total_num_slots;
+            modify_app_context = true;
+        } else {
+        /** have to add up all the num_procs to get the total being launched */
+            num_procs += app->num_procs;
+        }
     }
 
     /* allocate a vpid range for the job */
@@ -350,7 +368,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
             /** If the user has specified a mapping for this app_context, then we
             * create a working node list that contains only those nodes.
             */
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app, &master_node_list))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app, &master_node_list, &mapped_num_slots))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -380,7 +398,11 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
             goto cleanup;
         }
         
-        rank += app->num_procs;
+        if (0 < app->num_procs) {
+            rank += app->num_procs;
+        } else {
+            rank += total_num_slots;
+        }
         
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
@@ -475,6 +497,14 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_update_node_usage(&master_node_list))) {
         ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /** if the app_context was modified, update that information too */
+    if (modify_app_context) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr_base_put_app_context(jobid, context, 1))) {
+            ORTE_ERROR_LOG(rc);
+        }
     }
     
 

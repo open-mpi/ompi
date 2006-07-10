@@ -91,6 +91,8 @@ static int max_display_aborted = 1;
 static int num_aborted = 0;
 static int num_killed = 0;
 static char **global_mca_env = NULL;
+static bool have_zero_np = false;
+static size_t total_num_apps = 0;
 
 /*
  * setup globals for catching orterun command line options
@@ -104,6 +106,7 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool by_node;
     bool by_slot;
+    bool no_oversubscribe;
     bool debugger;
     bool no_local_schedule;
     size_t num_procs;
@@ -153,7 +156,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "n", "n", 1,
       &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_SIZE_T,
       "Number of processes to run" },
-
+    
     /* Set a hostfile */
     { "rds", "hostfile", "path", '\0', "hostfile", "hostfile", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -191,6 +194,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
+    { NULL, NULL, NULL, '\0', "no_oversubscribe", "no_oversubscribe", 0,
+      &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
+      "Nodes are not to be oversubscribed, even if the system supports such operation"},
 
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -758,23 +764,24 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 static int init_globals(void)
 {
     struct globals_t tmp = {
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        false,
-        0,
-        0,
-        NULL,
-        NULL,
-        NULL,
-        NULL,
-        NULL
+        /* help =           */  false,
+        /* version =        */  false,
+        /* verbose =        */  false,
+        /* quiet =          */  false,
+        /* exit =           */  false,
+        /* no_wait =        */  false,
+        /* by_node =        */  false,
+        /* by_slot =        */  false,
+        /* no_oversub =     */  false,
+        /* debugger =       */  false,
+        /* no_local =       */  false,
+        /* num_procs =      */  0,
+        /* exit_status =    */  0,
+        /* hostfile =       */  NULL,
+        /* env_val =        */  NULL,
+        /* appfile =        */  NULL,
+        /* wdir =           */  NULL,
+        /* path =           */  NULL
     };
 
     /* Only CONSTRUCT things once */
@@ -784,7 +791,7 @@ static int init_globals(void)
         OBJ_CONSTRUCT(&orterun_globals.cond, opal_condition_t);
     }
 
-    /* Reset this every time */
+    /* Reset the other fields every time */
 
     orterun_globals = tmp;
 
@@ -878,6 +885,16 @@ static int parse_globals(int argc, char* argv[])
     else {
         /* Default */
         orterun_globals.by_slot = true;
+    }
+    
+    /** Do we want to disallow oversubscription of nodes? */
+    id = mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
+                                     "If nonzero, do not allow oversubscription of processes on nodes. If zero (default), oversubscription is allowed.",
+                                     false, false, 0, &ret);
+    if (orterun_globals.no_oversubscribe) {
+        mca_base_param_set_int(id, (int)true);
+    } else {
+        mca_base_param_set_int(id, (int)false);
     }
 
     /* Do we want to allow MPI applications on the same node as
@@ -1348,16 +1365,32 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     app->num_procs = orterun_globals.num_procs;
 
-    /* If the user didn't specify a num procs or any map data, then we
-       really have no idea what the launch... */
-
-    if (app->num_procs == 0 && !map_data) {
-        opal_show_help("help-orterun.txt", "orterun:num-procs-unspecified",
-                       true, orterun_basename, app->argv[0]);
-        rc = ORTE_ERR_BAD_PARAM;
-        goto cleanup;
+    /* If the user didn't specify the number of processes to run, then we
+       default to launching an app process using every slot. We can't do
+       anything about that here - we leave it to the RMAPS framework's
+       components to note this and deal with it later.
+        
+       HOWEVER, we ONLY support this mode of operation if the number of
+       app_contexts is equal to ONE. If the user provides multiple applications,
+       we simply must have more information - in this case, generate an
+       error.
+    */
+    if (app->num_procs == 0) {
+        have_zero_np = true;  /** flag that we have a zero_np situation */
     }
-
+    if (0 < total_num_apps && have_zero_np) {
+        /** we have more than one app and a zero_np - that's no good.
+         * note that we have to do this as a two step logic check since
+         * the user may fail to specify num_procs for the first app, but
+         * then give us another application.
+         */
+        opal_show_help("help-orterun.txt", "orterun:multi-apps-and-zero-np",
+                       true, orterun_basename, NULL);
+        return ORTE_ERR_FATAL;
+    }
+    
+    total_num_apps++;
+    
     /* Do not try to find argv[0] here -- the starter is responsible
        for that because it may not be relevant to try to find it on
        the node where orterun is executing.  So just strdup() argv[0]

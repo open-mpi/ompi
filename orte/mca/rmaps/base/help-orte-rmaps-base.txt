@@ -18,15 +18,27 @@
 #
 # This is the US/English general help file for Open RTE's orterun.
 #
-[orte-rmaps-rr:alloc-error]
+[orte-rmaps-base:alloc-error]
 There are not enough slots available in the system to satisfy the %d slots 
 that were requested by the application:
   %s
 
 Either request fewer slots for your application, or make more slots available
 for use.
-[orte-rmaps-rr:multi-apps-and-zero-np]
-RMAPS found multiple applications to be launched, with
-at least one that failed to specify the number of processes to execute.
-When specifying multiple applications, you must specify how many processes
-of each to launch via the -np argument.
+[orte-rmaps-base:not-all-mapped-alloc]
+Some of the requested hosts are not included in the current allocation for the
+application:
+  %s
+The requested hosts were:
+  %s
+
+Verify that you have mapped the allocated resources properly using the 
+--host specification.
+[orte-rmaps-base:no-mapped-node]
+There are no allocated resources for the application 
+  %s
+that match the requested mapping:
+  %s
+
+OR the requested resources in that mapping have already been consumed. Verify that you have mapped the allocated resources properly using the 
+--host specification.
