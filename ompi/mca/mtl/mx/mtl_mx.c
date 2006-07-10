@@ -39,7 +39,7 @@ mca_mtl_mx_module_t ompi_mtl_mx = {
         ompi_mtl_mx_del_procs,
         ompi_mtl_mx_finalize,
         
-        ompi_mtl_mx_send,  /* don't use ompi_mtl_mx_send.. */
+        ompi_mtl_mx_send,
         ompi_mtl_mx_isend,
         
         ompi_mtl_mx_irecv,

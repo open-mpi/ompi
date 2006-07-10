@@ -89,7 +89,8 @@ mca_pml_cm_send(void *buf,
                                  datatype, dst, tag, comm, 
                                  sendmode, true, false);
 
-    if (NULL == ompi_mtl->mtl_send) {
+    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED || 
+        NULL == ompi_mtl->mtl_send) {
         MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
         if (OMPI_SUCCESS != ret) {
             MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
