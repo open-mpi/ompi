@@ -110,8 +110,12 @@ do {                                                                    \
                                   sendreq->req_send.req_send_mode,      \
                                   sendreq->req_blocking,                \
                                   &sendreq->req_mtl));                  \
+        if(OMPI_SUCCESS == ret &&                                       \
+           sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+            MCA_PML_CM_SEND_REQUEST_MPI_COMPLETE(sendreq);              \
+        }                                                               \
     }                                                                   \
- } while (0)
+} while (0)
 
 
 /*

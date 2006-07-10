@@ -243,7 +243,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         /* increment count of pending requests */
         mca_pml_bsend_count++;
     }
-    sendreq->req_base.req_ompi.req_complete = true;
+    
     return OMPI_SUCCESS;
 }
 
