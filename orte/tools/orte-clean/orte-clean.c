@@ -18,11 +18,6 @@
 
 #include "orte_config.h"
 
-/*
- * JJH Temp workaround until this symbol is exported
- */
-#define OPAL_ENABLE_FT 0
-
 #include <stdio.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
@@ -69,9 +64,6 @@
 #include "orte/mca/rml/rml.h"
 
 #include "opal/runtime/opal.h"
-#if OPAL_ENABLE_FT == 1
-#include "opal/runtime/opal_cr.h"
-#endif
 #include "orte/runtime/runtime.h"
 
 extern char **environ;
@@ -254,19 +246,6 @@ static int orte_clean_init(void) {
     opal_setenv(mca_base_param_env_var("universe_console"),
                 "1",
                 true, &environ);
-
-#if OPAL_ENABLE_FT == 1
-    /* Disable the checkpoint notification routine for this
-     * tool. As we will never need to checkpoint this tool.
-     * Note: This must happen before opal_init().
-     */
-    opal_cr_is_enabled(false);
-    
-    /* Select the none component, since we don't actually use a checkpointer */
-    opal_setenv(mca_base_param_env_var("crs"),
-                "none",
-                true, &environ);
-#endif
 
     /***************************
      * We need all of OPAL
