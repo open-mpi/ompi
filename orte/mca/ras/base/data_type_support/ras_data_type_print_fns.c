@@ -37,7 +37,6 @@
 int orte_ras_base_print_node(char **output, char *prefix, orte_ras_node_t *src, orte_data_type_t type)
 {
     char *tmp, *tmp2, *pfx2;
-    size_t j;
 
     /* set default result */
     *output = NULL;
