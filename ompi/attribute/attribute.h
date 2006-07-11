@@ -48,11 +48,12 @@
 extern "C" {
 #endif
 enum ompi_attribute_type_t {
-    COMM_ATTR = 1, /**< The attribute belongs to a comm object. Starts
-		      with 1 so that we can have it initialized to 0
-		      using memset in the constructor */
-    TYPE_ATTR /**< The attribute belongs to datatype object */
-    , WIN_ATTR /**< The attribute belongs to a win object */
+    UNUSED_ATTR = 0, /**< Make the compilers happy when we have to construct an attribute */
+    COMM_ATTR,       /**< The attribute belongs to a comm object. Starts
+		      * with 1 so that we can have it initialized to 0
+		      * using memset in the constructor */
+    TYPE_ATTR,       /**< The attribute belongs to datatype object */
+    WIN_ATTR         /**< The attribute belongs to a win object */
 };
 typedef enum ompi_attribute_type_t ompi_attribute_type_t;
 

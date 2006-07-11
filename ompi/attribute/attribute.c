@@ -436,7 +436,7 @@ static void attribute_value_construct(attribute_value_t *item)
 static void
 ompi_attrkey_item_construct(ompi_attrkey_item_t *item) 
 {
-    item->attr_type = 0;
+    item->attr_type = UNUSED_ATTR;
     item->attr_flag = 0;
     item->copy_attr_fn.attr_communicator_copy_fn = NULL;
     item->delete_attr_fn.attr_communicator_copy_fn = NULL;
