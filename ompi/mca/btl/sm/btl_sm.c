@@ -232,7 +232,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         mca_btl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
     }
 
-    if( n_local_procs == 0) {
+    /* There is always at least a local proc (myself). */
+    if( n_local_procs == 1) {
         return_code = OMPI_SUCCESS;
         goto CLEANUP;
     }
