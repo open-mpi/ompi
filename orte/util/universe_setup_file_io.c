@@ -50,7 +50,7 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
     fp = fopen(filename, "w");
     if (NULL == fp) {
         ORTE_ERROR_LOG(ORTE_ERR_FILE_OPEN_FAILURE);
-	    return ORTE_ERR_FILE_OPEN_FAILURE;
+        return ORTE_ERR_FILE_OPEN_FAILURE;
     }
 
     if (NULL == info->name) {
@@ -63,7 +63,7 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
     }
 
     if (NULL == info->host) {
-	   fprintf(fp, "LOCALHOST\n");
+        fprintf(fp, "LOCALHOST\n");
     } else {
         fprintf(fp, "%s\n", info->host);
     }
@@ -75,9 +75,9 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
     }
 
     if (info->persistence) {
-	   fprintf(fp, "persistent\n");
+        fprintf(fp, "persistent\n");
     } else {
-	   fprintf(fp, "non-persistent\n");
+        fprintf(fp, "non-persistent\n");
     }
 
     if (NULL == info->scope) {
@@ -87,9 +87,9 @@ int orte_write_universe_setup_file(char *filename, orte_universe_t *info)
     }
 
     if (info->console) {
-	   fprintf(fp, "console\n");
+        fprintf(fp, "console\n");
     } else {
-	   fprintf(fp, "silent\n");
+        fprintf(fp, "silent\n");
     }
 
     if (NULL == info->seed_uri) {
@@ -111,10 +111,10 @@ int orte_read_universe_setup_file(char *filename, orte_universe_t *info)
 
     fp = fopen(filename, "r");
     if (NULL == fp) { /* failed on first read - wait and try again */
-	   fp = fopen(filename, "r");
-	   if (NULL == fp) { /* failed twice - give up */
-	       return ORTE_ERR_FILE_OPEN_FAILURE;
-	   }
+        fp = fopen(filename, "r");
+        if (NULL == fp) { /* failed twice - give up */
+            return ORTE_ERR_FILE_OPEN_FAILURE;
+        }
     }
 
     /* fill in universe info */
