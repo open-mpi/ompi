@@ -295,6 +295,18 @@ main(int argc, char *argv[])
      ****************************************************/
 
     base_argv0 = strdup(basename(argv[0]));
+#if defined(EXEEXT)
+    if( 0 != strlen(EXEEXT) ) {
+        char* temp = strstr( base_argv0, EXEEXT );
+        char* old_match = temp;
+        while( NULL != temp ) {
+            old_match = temp;
+            temp = strstr( temp + 1, EXEEXT );
+        }
+        *old_match = '\0';
+    }
+#endif  /* defined(EXEEXT) */
+
     if (OPAL_SUCCESS != (ret = data_init(base_argv0))) {
         fprintf(stderr, "Error parsing data file: %s\n", opal_strerror(ret));
         return ret;
