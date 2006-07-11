@@ -251,7 +251,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     opal_list_t mapping;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
-    orte_vpid_t vpid_start, job_vpid_start;
+    orte_vpid_t vpid_start, job_vpid_start=0;
     size_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rank = 0;
     int rc;
