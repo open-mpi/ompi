@@ -71,7 +71,8 @@ int orte_universe_search(opal_list_t *universe_list) {
     char *fulldirpath = NULL;
     char *prefix = NULL;
     char *frontend = NULL;
-    
+    char *frontend_abs = NULL;
+
     /*
      * Get the session directory
      */
@@ -89,10 +90,12 @@ int orte_universe_search(opal_list_t *universe_list) {
         goto cleanup;
     }
     
+    asprintf(&frontend_abs, "%s/%s", prefix, frontend);
+
     /*
      * Check to make sure we have access to this directory
      */
-    if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(fulldirpath, 0) )) {
+    if( ORTE_SUCCESS != (ret = opal_os_dirpath_access(frontend_abs, 0) )) {
         exit_status = ret;
         goto cleanup;
     }
@@ -101,12 +104,12 @@ int orte_universe_search(opal_list_t *universe_list) {
      * Open up the base directory so we can get a listing
      */
 #ifndef __WINDOWS__
-    if( NULL == (cur_dirp = opendir(fulldirpath)) ) {
+    if( NULL == (cur_dirp = opendir(frontend_abs)) ) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
 #else
-    hFind = FindFirstFile( fulldirpath, &file_data );
+    hFind = FindFirstFile( frontend_abs, &file_data );
 #endif  /* __WINDOWS__ */
 
     /*
@@ -130,7 +133,7 @@ int orte_universe_search(opal_list_t *universe_list) {
          */
         tmp_str = strdup(dir_entry->d_name);
         asprintf(&univ_setup_filename, "%s/%s/%s", 
-                 fulldirpath,
+                 frontend_abs,
                  tmp_str,
                  "universe-setup.txt");
         
@@ -165,7 +168,7 @@ int orte_universe_search(opal_list_t *universe_list) {
          */
         tmp_str = strdup(file_data.cFileName);
         asprintf(&univ_setup_filename, "%s/%s/%s", 
-                 fulldirpath,
+                 frontend_abs,
                  tmp_str,
                  "universe-setup.txt");
         
@@ -199,6 +202,8 @@ int orte_universe_search(opal_list_t *universe_list) {
         free(prefix);
     if( NULL != frontend)
         free(frontend);
+    if( NULL != frontend_abs)
+        free(frontend_abs);
 
     return exit_status;
 }
