@@ -779,10 +779,9 @@ ompi_coll_tuned_bcast_intra_basic_linear (void *buff, int count,
 
 int ompi_coll_tuned_bcast_intra_check_forced ( )
 {
-
 mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                            "bcast_algorithm",
-                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree, 6: BM tree.",
+                           "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree.",
                            false, false, ompi_coll_tuned_bcast_forced_choice,
                            &ompi_coll_tuned_bcast_forced_choice);
 
