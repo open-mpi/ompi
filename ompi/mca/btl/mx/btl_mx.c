@@ -218,7 +218,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
 
 /**
  * Return a segment
-xo */
+ */
 
 int mca_btl_mx_free( struct mca_btl_base_module_t* btl, 
                      mca_btl_base_descriptor_t* des )
