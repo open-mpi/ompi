@@ -16,7 +16,7 @@
 # $HEADER$
 #
 
-dist_pkgdata_DATA = help-orte-rmaps-base.txt
+dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
 
 headers += \
         base/base.h \
@@ -25,7 +25,7 @@ headers += \
 
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
-	base/rmaps_base_map.h \
+        base/rmaps_base_map.h \
         base/rmaps_base_map.c \
         base/rmaps_base_node.c \
         base/rmaps_base_open.c \
