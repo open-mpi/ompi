@@ -50,7 +50,7 @@ ompi_check_linker_flags_work() {
     OMPI_LOG_MSG([$cmd], [yes])
     eval $cmd >&5 2>&5
     if test -n "[$]1"; then
-	output=`eval $cmd 2>/dev/null | head -n 1 | sed 's,^libtool:\( \| link: \),,'`
+	output=`eval $cmd 2>/dev/null | head -n 1 | sed -e 's,^libtool: *,,' -e 's,^link: *,,'`
     fi
     status="$?"
     OMPI_LOG_MSG([\$? = $status], [yes])
