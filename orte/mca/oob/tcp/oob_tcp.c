@@ -1001,7 +1001,8 @@ char* mca_oob_tcp_get_addr(void)
             strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
             continue;
         opal_ifindextoaddr(i, (struct sockaddr*)&addr, sizeof(addr));
-        if(opal_ifcount() > 1 && addr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(opal_ifcount() > 1 && 
+           opal_ifislocalhost((struct sockaddr*) &addr))
             continue;
         if(ptr != contact_info) {
             ptr += sprintf(ptr, ";");
