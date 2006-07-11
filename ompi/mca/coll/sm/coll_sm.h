@@ -42,8 +42,8 @@
 #ifdef HAVE_SCHED_YIELD
 #  include <sched.h>
 #  define SPIN sched_yield()
-#elif __WINDOWS__
-#  define SPIN SwitchToThread()
+#elif defined(__WINDOWS__)
+#  define SPIN /*SwitchToThread() - Not until I figure out which library define it */
 #else  /* no switch available */
 #  define SPIN
 #endif
