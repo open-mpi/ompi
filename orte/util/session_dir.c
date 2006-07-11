@@ -171,17 +171,26 @@ orte_session_dir_get_name(char **fulldirpath,
          universe = strdup(univ);
      }
      else {            /* check if it is set elsewhere */
-         if( NULL != orte_universe_info.name)
+         if( NULL != orte_universe_info.name) {
              universe = strdup(orte_universe_info.name);
+         }
          else {
-             /* Couldn't find it, so fail */
-             exit_status = ORTE_ERROR;
-             goto cleanup;
+             ;/* Couldn't find it, so continue with caution */
          }
      }
 
     /*
-     * Check: Can't give a proc without a job
+     * Check: Can't give proc or job without universe
+     */
+    if( NULL == universe &&
+        (NULL != proc ||
+         NULL != job) ) {
+        exit_status = ORTE_ERROR;
+        goto cleanup;
+    }
+
+    /*
+     * Check: Can't give a proc without a job and universe
      */
     if( NULL == job &&
         NULL != proc) {
@@ -235,10 +244,20 @@ orte_session_dir_get_name(char **fulldirpath,
     /* If we were given neither then we can construct it partially into:
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE
      */
-    else {
+    else if(NULL != universe) {
         if (0 > asprintf(&sessions, "%s%s%s",
                          *frontend,
                          orte_system_info.path_sep, universe )) {
+            exit_status = ORTE_ERROR;
+            goto cleanup;
+        }
+    }
+    /* If we were not given 'universe' then we can construct it into:
+     *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID
+     */
+    else {
+        if (0 > asprintf(&sessions, "%s",
+                         *frontend) ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }

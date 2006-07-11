@@ -621,7 +621,11 @@ static int pretty_print_nodes(opal_list_t *nodes) {
     len_state   = (int) strlen("State");
     len_slots   = (int) strlen("Slots");
     len_slots_i = (int) strlen("Slots In Use");
+#if 0
     len_slots_a = (int) strlen("Slots Alloc");
+#else
+    len_slots_a = -3;
+#endif
     len_slots_m = (int) strlen("Slots Max");
     for(node_item  = opal_list_get_first(nodes);
         node_item != opal_list_get_end(nodes);
@@ -650,10 +654,8 @@ static int pretty_print_nodes(opal_list_t *nodes) {
                 len_cell    + 3 +
                 len_state   + 3 +
                 len_slots   + 3 +
-#if 0
                 len_slots_i + 3 +
                 len_slots_a + 3 +
-#endif
                 len_slots_m + 3);
 
     /*
@@ -665,8 +667,8 @@ static int pretty_print_nodes(opal_list_t *nodes) {
     printf("%*s | ", len_state,   "State");
     printf("%*s | ", len_slots,   "Slots");
     printf("%*s | ", len_slots_m, "Slots Max");
-#if 0
     printf("%*s | ", len_slots_i, "Slots In Use");
+#if 0
     printf("%*s | ", len_slots_a, "Slots Alloc");
 #endif
     printf("\n");
@@ -693,10 +695,11 @@ static int pretty_print_nodes(opal_list_t *nodes) {
         printf("%*s | ", len_state,   pretty_node_state(node->node_state));
         printf("%*d | ", len_slots,   (uint)node->node_slots);
         printf("%*d | ", len_slots_m, (uint)node->node_slots_max);
-#if 0
         printf("%*d | ", len_slots_i, (uint)node->node_slots_inuse);
+#if 0
         printf("%*d | ", len_slots_a, (uint)node->node_slots_alloc);
 #endif
+
         printf("\n");
     }
     
