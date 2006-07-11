@@ -25,8 +25,9 @@
 
 #include <stdio.h>
 #include <errno.h>
+#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#include <libgen.h>
+#endif  /* HAVE_UNISTD_H */
 #ifdef HAVE_STDLIB_H
 #include <stdlib.h>
 #endif  /*  HAVE_STDLIB_H */
@@ -46,7 +47,6 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include <sys/types.h>
-#include <dirent.h>
 
 #include "orte/orte_constants.h"
 
@@ -331,11 +331,7 @@ static int orte_clean_universe(orte_universe_t *universe) {
         goto cleanup;
     }
 
-    /*
-     * JJH XXX Temporary solution, will never make it into the trunk like this.
-     */
-    asprintf(&command, "rm -rf %s", fulldirpath);
-    system(command);
+    opal_os_dirpath_destroy( fulldirpath, true, NULL );
 
     /********************
      * If the session directory is empty, then remove that too
