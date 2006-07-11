@@ -295,6 +295,7 @@ static int orte_clean_universe(orte_universe_t *universe) {
     char *prefix = NULL;
     char *frontend = NULL;
     char *command = NULL;
+    char *session_dir = NULL;
 
     if( ORTE_SUCCESS != (ret = orte_session_dir_get_name(&fulldirpath,
                                                          &prefix,
@@ -314,6 +315,11 @@ static int orte_clean_universe(orte_universe_t *universe) {
 
     /********************
      * If the session directory is empty, then remove that too
+     ********************/
+    asprintf(&session_dir, "%s/%s", prefix, frontend);
+    opal_os_dirpath_destroy(session_dir, false, NULL );
+
+    /********************
      * Need to check
      *  - openmpi-sessions-UID@gethostbyname()_0
      *  - openmpi-sessions-UID@localhost_0

@@ -211,6 +211,7 @@ int opal_os_dirpath_destroy(const char *path,
         }
         
         /* Check to see if it is a directory */
+        is_dir = false;
 #ifdef HAVE_STRUCT_DIRENT_D_TYPE
         if (DT_DIR == ep->d_type) {
             is_dir = true;
@@ -297,6 +298,7 @@ int opal_os_dirpath_destroy(const char *path,
             continue;
         }
         
+        is_dir = false;
         if(file_data.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) {
             is_dir = true;
         } 
