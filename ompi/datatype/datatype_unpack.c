@@ -290,7 +290,7 @@ ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pEle
     DO_DEBUG( opal_output( 0, "unpack partial data start %d end %d data_length %d user %p\n"
                            "\tbConverted %d total_length %d count %d\n",
                            start_position, end_position, data_length, *user_buffer,
-                           pConvertor->bConverted,pConvertor->local_size, pConvertor->count ); );
+                           pConvertor->bConverted, pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */
  find_unused_byte:
@@ -394,8 +394,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                 user_memory_base = pConvertor->pBaseBuf + pStack->disp;
                 pos_desc++;  /* advance to the next data */
                 UPDATE_INTERNAL_COUNTERS( description, pos_desc, pElem, count_desc );
-            } else {
-                user_memory_base += pElem->elem.extent;
             }
             packed_buffer += missing_length;
             iov_len_local -= missing_length;
@@ -421,8 +419,6 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                      */
                     assert( iov_len_local < ompi_ddt_basicDatatypes[type]->size );
                     COMPUTE_CSUM( packed_buffer, iov_len_local, pConvertor );
-                    /*opal_output( 0, "Saving %d bytes for the next call at address %p\n",
-                      iov_len_local, user_memory_base );*/
 
                     ompi_unpack_partial_datatype( pConvertor, pElem,
                                                   packed_buffer, 0, iov_len_local,
