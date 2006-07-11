@@ -81,8 +81,10 @@ extern char** environ;
  */
 static struct opal_event term_handler;
 static struct opal_event int_handler;
+#ifndef __WINDOWS__
 static struct opal_event sigusr1_handler;
 static struct opal_event sigusr2_handler;
+#endif  /* __WINDOWS__ */
 static orte_jobid_t jobid = ORTE_JOBID_MAX;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
@@ -417,6 +419,7 @@ int orterun(int argc, char *argv[])
                     abort_signal_callback, &int_handler);
     opal_signal_add(&int_handler, NULL);
 
+#ifndef __WINDOWS__
     /** setup callbacks for signals we should foward */
     opal_signal_set(&sigusr1_handler, SIGUSR1,
                     signal_forward_callback, &sigusr1_handler);
@@ -424,7 +427,7 @@ int orterun(int argc, char *argv[])
     opal_signal_set(&sigusr2_handler, SIGUSR2,
                     signal_forward_callback, &sigusr2_handler);
     opal_signal_add(&sigusr2_handler, NULL);
-
+#endif  /* __WINDOWS__ */
     orte_totalview_init_before_spawn();
 
     /* Spawn the job */
@@ -688,13 +691,13 @@ static void exit_callback(int fd, short event, void *arg)
     /* Remove the TERM and INT signal handlers */
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
-
+#ifndef __WINDOWS__
     /** Remove the USR signal handlers */
     opal_signal_del(&sigusr1_handler);
     opal_signal_del(&sigusr2_handler);
+#endif  /* __WINDOWS__ */
 
     /* Trigger the normal exit conditions */
-
     orterun_globals.exit = true;
     orterun_globals.exit_status = 1;
     opal_condition_signal(&orterun_globals.cond);
