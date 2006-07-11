@@ -30,8 +30,12 @@
 #include <sys/time.h>
 #endif
 #include <sys/types.h>
+#ifdef HAVE_DIRENT_H
 #include <dirent.h>
+#endif  /* HAVE_DIRENT_H */
+#ifdef HAVE_LIBGEN_H
 #include <libgen.h>
+#endif  /* HAVE_LIBGEN_H */
 
 #include "orte/orte_constants.h"
 #include "opal/util/output.h"
@@ -48,14 +52,21 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
-
+#ifdef _WINDOWS_
+#include "opal/win32/ompi_util.h"
+#endif  /* _WINDOWS_ */
 
 static struct timeval ompi_rte_ping_wait = {2, 0};
 
 int orte_universe_search(opal_list_t *universe_list) {
     int ret, exit_status = ORTE_SUCCESS;
+#ifndef __WINDOWS__
     DIR *cur_dirp = NULL;
     struct dirent * dir_entry;
+#else
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATA file_data;
+#endif  /* __WINDOWS__ */
     char *univ_setup_filename = NULL;
     char *fulldirpath = NULL;
     char *prefix = NULL;
@@ -70,7 +81,7 @@ int orte_universe_search(opal_list_t *universe_list) {
                                                          orte_system_info.user,
                                                          orte_system_info.nodename,
                                                          NULL, /* batch ID -- Not used */
-                                                         strdup("dummy"), /* Universe Name -- appened below */
+                                                         NULL, /* Universe Name -- NONE */
                                                          NULL, /* jobid */
                                                          NULL  /* vpid */
                                                          ) ) ) {
@@ -78,9 +89,6 @@ int orte_universe_search(opal_list_t *universe_list) {
         goto cleanup;
     }
     
-    /* Strip off dummy the universe name */
-    fulldirpath = dirname(fulldirpath);
-
     /*
      * Check to make sure we have access to this directory
      */
@@ -92,15 +100,20 @@ int orte_universe_search(opal_list_t *universe_list) {
     /*
      * Open up the base directory so we can get a listing
      */
+#ifndef __WINDOWS__
     if( NULL == (cur_dirp = opendir(fulldirpath)) ) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-    
+#else
+    hFind = FindFirstFile( fulldirpath, &file_data );
+#endif  /* __WINDOWS__ */
+
     /*
      * For each directory/universe
      */
-    while( NULL != (dir_entry = readdir(cur_dirp))) {
+#ifndef __WINDOWS__
+    while( NULL != (dir_entry = readdir(cur_dirp)) ) {
         orte_universe_t *univ = NULL;
         char * tmp_str = NULL;
 
@@ -134,10 +147,50 @@ int orte_universe_search(opal_list_t *universe_list) {
         if( NULL != tmp_str)
             free(tmp_str);
     }
+#else
+    do {
+        orte_universe_t *univ = NULL;
+        char * tmp_str = NULL;
+
+        /*
+         * Skip non-universe directories
+         */
+        if( 0 == strncmp(file_data.cFileName, ".", strlen(".")) ||
+            0 == strncmp(file_data.cFileName, ".", strlen("..")) ) {
+            continue;
+        }
+
+        /*
+         * Read the setup file
+         */
+        tmp_str = strdup(file_data.cFileName);
+        asprintf(&univ_setup_filename, "%s/%s/%s", 
+                 fulldirpath,
+                 tmp_str,
+                 "universe-setup.txt");
+        
+        univ = OBJ_NEW(orte_universe_t);
+        OBJ_RETAIN(univ);
+        if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
+            printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
+            exit_status = ret;
+            goto cleanup;
+        }
+
+        opal_list_append(universe_list, &(univ->super));
+
+        if( NULL != tmp_str)
+            free(tmp_str);
+    } while( 0 != FindNextFile( hFind, &file_data ) );
+#endif  /* __WINDOWS__ */
     
  cleanup:
+#ifndef __WINDOWS__
     if( NULL != cur_dirp )
         closedir(cur_dirp);
+#else
+    FindClose(hFind);
+#endif  /* __WINDOWS__ */
     if( NULL != univ_setup_filename)
         free(univ_setup_filename);
     if( NULL != fulldirpath)
