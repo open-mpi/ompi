@@ -880,6 +880,9 @@ int ompi_attr_copy_all(ompi_attribute_type_t type, void *old_object,
 
         new_attr = OBJ_NEW(attribute_value_t);
         switch (type) {
+        case UNUSED_ATTR:  /* keep the compiler happy */
+            assert(0);
+            break;
         case COMM_ATTR:
             /* Now call the copy_attr_fn */
             COPY_ATTR_CALLBACKS(communicator, old_object, hash_value, 
