@@ -40,7 +40,6 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     size_t length;
     mx_status_t mx_status;
     uint32_t result;
-    uint32_t timeout = 1000;    
     
     mca_mtl_mx_endpoint_t* mx_endpoint = 
         (mca_mtl_mx_endpoint_t*) comm->c_pml_procs[dest]->proc_ompi->proc_pml;
