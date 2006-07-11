@@ -114,6 +114,19 @@ OMPI_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
 OMPI_DECLSPEC bool opal_ifislocal(char *hostname);
 
 /**
+ * Determine if given IP address is in the localhost range
+ *
+ * Determine if the given IP address is in the localhost range
+ * (127.0.0.0/8), meaning that it can't be used to connect to machines
+ * outside the current host.
+ *
+ * @param addr             struct sockaddr_in of IP address
+ * @return                 true if \c addr is a localhost address,
+ *                         false otherwise.
+ */
+OMPI_DECLSPEC bool opal_ifislocalhost(struct sockaddr *addr);
+
+/**
  * Finalize the functions to release malloc'd data
  * 
  * @param none

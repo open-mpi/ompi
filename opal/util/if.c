@@ -633,6 +633,31 @@ int opal_ifindextoname(int if_index, char* if_name, int length)
     return OPAL_ERROR;
 }
 
+
+bool
+opal_ifislocalhost(struct sockaddr *addr)
+{
+    switch (addr->sa_family) {
+    case AF_INET:
+        {
+            struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
+            /* if it's in the 127. domain, it shouldn't be routed */
+            if (0x74000000 & htonl(inaddr->sin_addr.s_addr)) {
+                return true;
+            }
+            return false;
+        }
+        break;
+
+    default:
+        opal_output(0, "unhandled sa_family %d passed to opal_ifislocalhost",
+                    addr->sa_family);
+        return false;
+        break;
+    }
+}
+
+
 #define ADDRLEN 100
 bool
 opal_ifislocal(char *hostname)
@@ -717,6 +742,12 @@ opal_ifindextomask(int if_index, struct sockaddr* if_addr, int length)
 
 bool
 opal_ifislocal(char *hostname)
+{
+    return false;
+}
+
+bool
+opal_ifislocalhost(struct sockaddr *addr)
 {
     return false;
 }

@@ -72,7 +72,8 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in inaddr;
         opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(opal_ifcount() > 1 && 
+           opal_ifislocalhost((struct sockaddr*) &inaddr))
             continue;
         count++;
     } 
@@ -83,7 +84,8 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in inaddr;
         opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
-        if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+        if(opal_ifcount() > 1 && 
+           opal_ifislocalhost((struct sockaddr*) &inaddr))
             continue;
         inaddr.sin_port = mca_oob_tcp_component.tcp_listen_port;
         orte_dss.pack(buffer,&inaddr,sizeof(inaddr),ORTE_BYTE);
@@ -155,7 +157,8 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_in* retv
                     strstr(mca_oob_tcp_component.tcp_exclude,name) != NULL)
                     continue;
                 opal_ifindextoaddr(ifindex, (struct sockaddr*)&inaddr, sizeof(inaddr));
-                if(opal_ifcount() > 1 && inaddr.sin_addr.s_addr == inet_addr("127.0.0.1"))
+                if(opal_ifcount() > 1 && 
+                   opal_ifislocalhost((struct sockaddr*) &inaddr))
                     continue;
                 opal_ifindextomask(ifindex, (struct sockaddr*)&inmask, sizeof(inmask));
 
