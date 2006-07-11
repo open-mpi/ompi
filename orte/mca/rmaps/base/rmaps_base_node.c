@@ -229,7 +229,7 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                 return rc;
             }
             opal_list_append(mapped_node_list, &new_node->super);
-            num_slots += new_node->node_slots_alloc;
+            num_slots += new_node->node_slots;
         }
     }
 
