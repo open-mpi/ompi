@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA = help-orte-rmaps-base.txt
+
 headers += \
         base/base.h \
         base/rmaps_base_node.h \
