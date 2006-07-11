@@ -56,12 +56,12 @@ int orte_ras_base_print_node(char **output, char *prefix, orte_ras_node_t *src, 
     free(tmp);
     tmp = tmp2;
 
-    asprintf(&tmp2, "%s\n%s\tNum slots: %s\tSlots in use: %lu", tmp, pfx2,
+    asprintf(&tmp2, "%s\n%s\tNum slots: %lu\tSlots in use: %lu", tmp, pfx2,
              (unsigned long)src->node_slots, (unsigned long)src->node_slots_inuse);
     free(tmp);
     tmp = tmp2;
 
-    asprintf(&tmp2, "%s\n%s\tNum slots allocated: %s\tMax slots: %lu", tmp, pfx2,
+    asprintf(&tmp2, "%s\n%s\tNum slots allocated: %lu\tMax slots: %lu", tmp, pfx2,
              (unsigned long)src->node_slots_alloc, (unsigned long)src->node_slots_max);
     free(tmp);
     tmp = tmp2;
