@@ -386,8 +386,8 @@ pls_tbird_launch(orte_jobid_t jobid)
 
     for(i = 0; i < launched; i++){ 
         int ret, local_err;
-        tbird_event_t event;
-        ret = tbird_poll(TM_NULL_EVENT, &event, 1, &local_err);
+        tm_event_t event;
+        ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
         if (TM_SUCCESS != ret) {
             errno = local_err;
             opal_output(0, "pls:tbird: failed to start a proc error %d", ret);
@@ -465,13 +465,13 @@ static int
 pls_tbird_connect(void)
 {
     int ret;
-    struct tbird_roots tbird_root;
+    struct tm_roots tm_root;
     int count, progress;
 
     /* try a couple times to connect - might get busy signals every
        now and then */
     for (count = 0 ; count < 10; ++count) {
-        ret = tbird_init(NULL, &tbird_root);
+        ret = tm_init(NULL, &tbird_root);
         if (TM_SUCCESS == ret) {
             return ORTE_SUCCESS;
         }
@@ -491,13 +491,13 @@ pls_tbird_connect(void)
 static int
 pls_tbird_disconnect(void)
 {
-    tbird_finalize();
+    tm_finalize();
 
     return ORTE_SUCCESS;
 }
 
 static char **tbird_hostnames = NULL;
-static tbird_node_id *tbird_node_ids = NULL;
+static tm_node_id *tbird_node_ids = NULL;
 static int num_tbird_hostnames, num_node_ids;
 
 
@@ -513,19 +513,19 @@ get_tbird_hostname(tbird_node_id node)
     char *hostname;
     char buffer[256];
     int ret, local_errno;
-    tbird_event_t event;
+    tm_event_t event;
     char **argv;
 
     /* Get the info string corresponding to this TM node ID */
 
-    ret = tbird_rescinfo(node, buffer, sizeof(buffer) - 1, &event);
+    ret = tm_rescinfo(node, buffer, sizeof(buffer) - 1, &event);
     if (TM_SUCCESS != ret) {
         return NULL;
     }
 
     /* Now wait for that event to happen */
 
-    ret = tbird_poll(TM_NULL_EVENT, &event, 1, &local_errno);
+    ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
     if (TM_SUCCESS != ret) {
         return NULL;
     }
@@ -557,7 +557,7 @@ query_tbird_hostnames(void)
 
     /* Get the list of nodes allocated in this PBS job */
 
-    ret = tbird_nodeinfo(&tbird_node_ids, &num_node_ids);
+    ret = tm_nodeinfo(&tbird_node_ids, &num_node_ids);
     if (TM_SUCCESS != ret) {
         return ORTE_ERR_NOT_FOUND;
     }
@@ -569,7 +569,7 @@ query_tbird_hostnames(void)
        slightly inefficient, but no big deal); just mentioned for
        completeness... */
 
-    tbird_hostnames = NULL;
+    tm_hostnames = NULL;
     num_tbird_hostnames = 0;
     for (i = 0; i < num_node_ids; ++i) {
         h = get_tbird_hostname(tbird_node_ids[i]);
@@ -584,12 +584,12 @@ query_tbird_hostnames(void)
 
 /* we don't call this anymore! */
 static int
-do_tbird_resolve(char *hostname, tbird_node_id *tnodeid)
+do_tbird_resolve(char *hostname, tm_node_id *tnodeid)
 {
     int i, ret;
 
     /* Have we already queried TM for all the node info? */
-    if (NULL == tbird_hostnames) {
+    if (NULL == tm_hostnames) {
         ret = query_tbird_hostnames();
         if (ORTE_SUCCESS != ret) {
             return ret;
@@ -598,11 +598,11 @@ do_tbird_resolve(char *hostname, tbird_node_id *tnodeid)
 
     /* Find the TM ID of the hostname that we're looking for */
     for (i = 0; i < num_tbird_hostnames; ++i) {
-        if (0 == strcmp(hostname, tbird_hostnames[i])) {
-            *tnodeid = tbird_node_ids[i];
+        if (0 == strcmp(hostname, tm_hostnames[i])) {
+            *tnodeid = tm_node_ids[i];
             opal_output(orte_pls_base.pls_output,
                         "pls:tbird:launch: resolved host %s to node ID %d",
-                        hostname, tbird_node_ids[i]);
+                        hostname, tm_node_ids[i]);
             break;
         }
     }
@@ -622,15 +622,15 @@ static int
 pls_tbird_start_proc(char *nodename, int argc, char **argv, char **env)
 {
     int ret;
-    tbird_node_id node_id;
-    tbird_task_id task_id;
-    tbird_event_t event;
+    tm_node_id node_id;
+    tm_task_id task_id;
+    tm_event_t event;
 
     /* get the tbird node id for this node */
     ret = do_tbird_resolve(nodename, &node_id);
     if (ORTE_SUCCESS != ret) return ret;
 
-    ret = tbird_spawn(argc, argv, env, node_id, &task_id, &event);
+    ret = tm_spawn(argc, argv, env, node_id, &task_id, &event);
     if (TM_SUCCESS != ret) return ORTE_ERROR;
 
     return ORTE_SUCCESS;
