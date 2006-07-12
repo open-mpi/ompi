@@ -27,6 +27,10 @@ version 1.0.
 
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
+- Added capability to "mpirun a.out" (without specifying -np) that
+  will run on all currently-allocated resources (e.g., within a batch
+  job such as SLURM, Torque, etc.).
+- Addition of "dr" (data reliability) PML.
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
 - Addition of UDAPL BTL ("udapl").
 
@@ -34,11 +38,33 @@ version 1.0.
 1.1.1
 -----
 
+- Fix a bug with one particular case of MPI_BCAST.  Thanks to Doug
+  Gregor for identifying the problem.
+- Ensure that the shared memory mapped file is only created when there
+  is more than one process on a node.
+- Fixed problems with BProc stdin forwarding.
+- Fixed problem with MPI_TYPE_INDEXED datatypes.  Thanks to Yven
+  Fournier for identifying this problem.
+- Fix some thread safety issues in MPI attributes and the openib BTL.
+- Fix the BProc allocator to not potentially use the same resources
+  across multiple ORTE universes.
+- Fix gm resource leak.
+- More latency reduction throughout the code base.
+- Make the TM PLS (PBS Pro, Torque, Open PBS) more scalable.  Thanks
+  to the Thunderbird crew at Sandia National Laboratories for access
+  to testing facilities to make this happen.
+- Added new command line options to mpirun:
+  --nolocal: Do not run any MPI processes on the same node as mpirun
+    (compatibility with the OSC mpiexec launcher)
+  --quiet / -q: do not show spurious status messages
+  --version / -V: show the version of Open MPI
 - Fix bus error in XGrid process starter.  Thanks to Eric Thibodeau
   for the fix.
+- Fix data size mismatches that caused memory errors on PPC64
+  platforms during the startup of the openib BTL.
 - Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
   back-end MPI processes.
-- Add -V/--version and -q/--quiet switches to mpirun.
+- Add missing MPI::Is_finalized() function.
 
 
 1.1
