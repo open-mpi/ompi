@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,7 +22,6 @@
 
 SUBDIRS += \
 	tools/console \
-	tools/openmpi \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
@@ -31,7 +31,6 @@ SUBDIRS += \
 
 DIST_SUBDIRS += \
 	tools/console \
-	tools/openmpi \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
