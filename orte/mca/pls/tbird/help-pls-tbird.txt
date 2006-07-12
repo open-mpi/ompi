@@ -1,0 +1,44 @@
+# -*- text -*-
+#
+# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+#                         University Research and Technology
+#                         Corporation.  All rights reserved.
+# Copyright (c) 2004-2005 The University of Tennessee and The University
+#                         of Tennessee Research Foundation.  All rights
+#                         reserved.
+# Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
+# Copyright (c) 2004-2005 The Regents of the University of California.
+#                         All rights reserved.
+# $COPYRIGHT$
+# 
+# Additional copyrights may follow
+# 
+# $HEADER$
+#
+[multiple-prefixes]
+Multiple different --prefix options were specified to mpirun for the
+same node.  This is a fatal error for the TM (PBS / Torque) process
+starter in Open MPI.
+
+The first two prefix values supplied for node %s were:
+    %s
+and %s
+#
+[daemon-not-found]
+The TM (PBS / Torqus) process starter in Open MPI was unable to find
+its daemon executable (orted) on the node where mpirun was executed.  
+
+This sanity check is performed because the back-end PBS / Torque
+process launcher does not provide any kind of error to Open MPI if it
+tries to launch its daemon on a remote node, but the daemon cannot be
+found.  Open MPI's check for the daemon locally is somewhat of a lame
+workaround / sanity check.
+
+If you do not understand this error mesage, please try the following:
+
+1. Try to add the Open MPI executables to your PATH
+2. Use the --prefix option to mpirun to indicate where Open MPI can
+   find its executables
+3. Set the MCA parameter "pls_tm_want_path_check" to 0
+4. Talk to your local system administration
