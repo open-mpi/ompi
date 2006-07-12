@@ -17,7 +17,7 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
 	base/mtl_base_datatype.h
 
 libmca_mtl_la_SOURCES += \
