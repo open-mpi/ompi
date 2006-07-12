@@ -17,6 +17,9 @@
  */
 
 #include "ompi_config.h"
+#if HAVE_UNISTD_H
+#include <unistd.h>
+#endif  /* HAVE_UNISTD_H*/
 #include "opal/util/output.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -30,6 +33,7 @@
  * Local functions
  */
 static int mca_mpool_sm_open(void);
+static int mca_mpool_sm_close( void );
 static mca_mpool_base_module_t* mca_mpool_sm_init(
     struct mca_mpool_base_resources_t* resources);
 
@@ -49,7 +53,7 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
         OMPI_MINOR_VERSION,  /* MCA component minor version */
         OMPI_RELEASE_VERSION,  /* MCA component release version */
         mca_mpool_sm_open,  /* component open  */
-        NULL
+        mca_mpool_sm_close
       },
 
       /* Next the MCA v1.0.0 component meta data */
@@ -97,6 +101,16 @@ static int mca_mpool_sm_open(void)
     return OMPI_SUCCESS;
 }
 
+static int mca_mpool_sm_close( void )
+{
+    if( NULL != mca_common_sm_mmap ) {
+        if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
+            unlink( mca_common_sm_mmap->map_path );
+        }
+        OBJ_DESTRUCT( mca_common_sm_mmap );
+    }
+    return OMPI_SUCCESS;
+}
 
 static mca_mpool_base_module_t* mca_mpool_sm_init(
     struct mca_mpool_base_resources_t* resources)
@@ -126,7 +140,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     
     mpool_module = (mca_mpool_sm_module_t*)malloc(sizeof(mca_mpool_sm_module_t)); 
     mca_mpool_sm_module_init(mpool_module); 
-    
+
     /* create initial shared memory mapping */
     len = asprintf( &file_name, "%sshared_mem_pool.%s",
                     orte_process_info.job_session_dir,
@@ -147,10 +161,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     }
     free(file_name);
 
-    /* setup function pointers */
-
-
-    /* setup allocator  TODO fix up */
+    /* setup allocator */
     mpool_module->sm_allocator = 
       allocator_component->allocator_init(true,
                                           mca_common_sm_mmap_seg_alloc, NULL, NULL);

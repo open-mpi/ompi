@@ -176,7 +176,7 @@ int mca_btl_sm_component_open(void)
 
 int mca_btl_sm_component_close(void)
 {
-    int return_value=OMPI_SUCCESS;
+    int return_value = OMPI_SUCCESS;
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags1);
@@ -185,7 +185,7 @@ int mca_btl_sm_component_close(void)
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.mmap_file != NULL) {
         return_value = mca_common_sm_mmap_fini( mca_btl_sm_component.mmap_file );
-        if(-1 == return_value) {
+        if( OMPI_SUCCESS != return_value ) {
             return_value=OMPI_ERROR;
             opal_output(0," munmap failed :: file - %s :: errno - %d \n",
                     mca_btl_sm_component.mmap_file->map_addr,
