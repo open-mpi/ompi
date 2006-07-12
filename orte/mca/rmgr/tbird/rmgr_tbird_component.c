@@ -1,0 +1,251 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/util/proc_info.h"
+#include "opal/util/output.h"
+#include "orte/dss/dss_types.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rds/base/base.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rml/rml.h"
+#include "rmgr_tbird.h"
+
+/*
+ * Local functions
+ */
+
+static int orte_rmgr_tbird_open(void);
+static int orte_rmgr_tbird_close(void);
+static orte_rmgr_base_module_t* orte_rmgr_tbird_init(int *priority);
+
+
+orte_rmgr_tbird_component_t mca_rmgr_tbird_component = {
+    {
+      /* First, the mca_base_component_t struct containing meta
+         information about the component itself */
+
+      {
+        /* Indicate that we are a iof v1.0.0 component (which also
+           implies a specific MCA version) */
+
+        ORTE_RMGR_BASE_VERSION_1_0_0,
+
+        "tbird", /* MCA component name */
+        ORTE_MAJOR_VERSION,  /* MCA component major version */
+        ORTE_MINOR_VERSION,  /* MCA component minor version */
+        ORTE_RELEASE_VERSION,  /* MCA component release version */
+        orte_rmgr_tbird_open,  /* component open  */
+        orte_rmgr_tbird_close  /* component close */
+      },
+
+      /* Next the MCA v1.0.0 component meta data */
+      {
+        /* Whether the component is checkpointable or not */
+        false
+      },
+
+      orte_rmgr_tbird_init
+    }
+};
+
+
+/**
+  * component open/close/init function
+  */
+static int orte_rmgr_tbird_open(void)
+{
+    int rc;
+
+    /**
+     * Open Resource Discovery Subsystem (RDS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rds_base_open())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Open Resource Allocation Subsystem (RAS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras_base_open())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Open Resource Mapping Subsystem (RMAPS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_open())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Open Process Launch Subsystem (PLS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_open())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
+static void orte_rmgr_tbird_recv(
+    int status,
+    orte_process_name_t* peer,
+    orte_buffer_t* req,
+    orte_rml_tag_t tag,
+    void* cbdata)
+{
+    int rc;
+    orte_buffer_t rsp;
+    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
+                                                                                                                          
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_cmd_dispatch(req,&rsp))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+                                                                                                                          
+    rc = orte_rml.send_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT, 0);
+    if (rc < 0) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+
+cleanup:
+    OBJ_DESTRUCT(&rsp);
+}
+
+
+static orte_rmgr_base_module_t *orte_rmgr_tbird_init(int* priority)
+{
+    int rc;
+    char* pls = NULL;
+    if(orte_process_info.seed == false) {
+        /* if we are bootproxy - need to be selected */
+        int id = mca_base_param_register_int("rmgr","bootproxy","jobid",NULL,0);
+        int jobid = 0;
+        mca_base_param_lookup_int(id,&jobid);
+        if(jobid == 0) {
+            return NULL;
+        }
+        /* use fork pls for bootproxy */
+        id = mca_base_param_register_string("rmgr","bootproxy","pls",NULL,"fork");
+        mca_base_param_lookup_string(id,&pls);
+    }
+
+    /**
+     * Select RDS components.
+     */
+    if (ORTE_SUCCESS != (rc = orte_rds_base_select())) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+    mca_rmgr_tbird_component.tbird_rds = false;
+
+    /**
+     * Find available RAS components
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras_base_find_available())) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+
+    /**
+     * Select RMAPS component
+     */
+    if (NULL == (mca_rmgr_tbird_component.tbird_rmaps = orte_rmaps_base_select(NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+
+    /**
+     * Select PLS component
+     */
+    if (NULL == (mca_rmgr_tbird_component.tbird_pls = orte_pls_base_select(pls))) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+        return NULL;
+    }
+
+    /* Post non-blocking receive */
+
+    if (0 > (rc = orte_rml.recv_buffer_nb(
+        ORTE_RML_NAME_ANY,
+        ORTE_RML_TAG_RMGR_SVC,
+        ORTE_RML_PERSISTENT,
+        orte_rmgr_tbird_recv,
+        NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+
+    *priority = 100;
+    return &orte_rmgr_tbird_module;
+}
+
+
+/**
+ *  Close all subsystems.
+ */
+static int orte_rmgr_tbird_close(void)
+{
+    int rc;
+
+    /**
+     * Close Process Launch Subsystem (PLS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_close())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Close Resource Mapping Subsystem (RMAPS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_close())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Close Resource Allocation Subsystem (RAS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_ras_base_close())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /**
+     * Close Resource Discovery Subsystem (RDS)
+     */
+    if (ORTE_SUCCESS != (rc = orte_rds_base_close())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    return ORTE_SUCCESS;
+}
