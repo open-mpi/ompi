@@ -753,13 +753,15 @@ int mca_oob_tcp_init(void)
     char *tmp, *tmp2, *tmp3;
     size_t i, num_tokens;
 
+    /** turn this off for scalability testing */
+#if 0
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)
     sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
 #else
     usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
 #endif
-
+#endif
     /* get my jobid */
     if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid,
                                                 orte_process_info.my_name))) {
