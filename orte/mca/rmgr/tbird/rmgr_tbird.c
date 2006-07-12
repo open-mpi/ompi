@@ -42,7 +42,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/soh/soh.h"
 
-#include "orte/mca/rmgr/tbird/rmgr_urm.h"
+#include "orte/mca/rmgr/tbird/rmgr_tbird.h"
 
 
 static int orte_rmgr_tbird_query(void);
@@ -158,21 +158,21 @@ static int orte_rmgr_tbird_allocate(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
 
-    return orte_ras_base_allocate(jobid, &mca_rmgr_tbird_component.urm_ras);
+    return orte_ras_base_allocate(jobid, &mca_rmgr_tbird_component.tbird_ras);
 }
 
 static int orte_rmgr_tbird_deallocate(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
 
-    return mca_rmgr_tbird_component.urm_ras->deallocate(jobid);
+    return mca_rmgr_tbird_component.tbird_ras->deallocate(jobid);
 }
 
 static int orte_rmgr_tbird_map(orte_jobid_t jobid)
 {
     OPAL_TRACE(1);
 
-    return mca_rmgr_tbird_component.urm_rmaps->map(jobid);
+    return mca_rmgr_tbird_component.tbird_rmaps->map(jobid);
 }
 
 static int orte_rmgr_tbird_launch(orte_jobid_t jobid)
@@ -182,7 +182,7 @@ static int orte_rmgr_tbird_launch(orte_jobid_t jobid)
     OPAL_TRACE(1);
 
     if (ORTE_SUCCESS !=
-        (ret = mca_rmgr_tbird_component.urm_pls->launch(jobid))) {
+        (ret = mca_rmgr_tbird_component.tbird_pls->launch(jobid))) {
         ORTE_ERROR_LOG(ret);
         ret2 = orte_soh.set_job_soh(jobid, ORTE_JOB_STATE_ABORTED);
         if (ORTE_SUCCESS != ret2) {
@@ -211,7 +211,7 @@ static int orte_rmgr_tbird_terminate_job(orte_jobid_t jobid)
         }
     }
 
-    return mca_rmgr_tbird_component.urm_pls->terminate_job(jobid);
+    return mca_rmgr_tbird_component.tbird_pls->terminate_job(jobid);
 }
 
 static int orte_rmgr_tbird_terminate_proc(const orte_process_name_t* proc_name)
@@ -228,7 +228,7 @@ static int orte_rmgr_tbird_terminate_proc(const orte_process_name_t* proc_name)
         exit(1);
     }
 
-    return mca_rmgr_tbird_component.urm_pls->terminate_proc(proc_name);
+    return mca_rmgr_tbird_component.tbird_pls->terminate_proc(proc_name);
 }
 
 
@@ -249,7 +249,7 @@ static int orte_rmgr_tbird_signal_job(orte_jobid_t jobid, int32_t signal)
         }
     }
 
-    return mca_rmgr_tbird_component.urm_pls->signal_job(jobid, signal);
+    return mca_rmgr_tbird_component.tbird_pls->signal_job(jobid, signal);
 }
 
 static int orte_rmgr_tbird_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
@@ -267,7 +267,7 @@ static int orte_rmgr_tbird_signal_proc(const orte_process_name_t* proc_name, int
         return ORTE_SUCCESS;
     }
 
-    return mca_rmgr_tbird_component.urm_pls->signal_proc(proc_name, signal);
+    return mca_rmgr_tbird_component.tbird_pls->signal_proc(proc_name, signal);
 }
 
 
@@ -415,12 +415,12 @@ static int orte_rmgr_tbird_spawn(
     /*
      * Perform resource discovery.
      */
-    if (mca_rmgr_tbird_component.urm_rds == false &&
+    if (mca_rmgr_tbird_component.tbird_rds == false &&
         ORTE_SUCCESS != (rc = orte_rds_base_query())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     } else {
-        mca_rmgr_tbird_component.urm_rds = true;
+        mca_rmgr_tbird_component.tbird_rds = true;
     }
 
     /*

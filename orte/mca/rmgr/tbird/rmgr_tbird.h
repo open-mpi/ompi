@@ -18,10 +18,10 @@
 /**
  * @file
  *
- * Universal Resource Manager (URM)
+ * Universal Resource Manager (tbird)
  */
-#ifndef ORTE_RMGR_URM_H
-#define ORTE_RMGR_URM_H
+#ifndef ORTE_RMGR_tbird_H
+#define ORTE_RMGR_tbird_H
 
 #include "orte/mca/rmgr/rmgr.h"
 
@@ -30,7 +30,7 @@ extern "C" {
 #endif
 
 /**
-* URM component structure -- add some stuff beyond what is in the
+* tbird component structure -- add some stuff beyond what is in the
 * normal rmgr component.
 */
 struct orte_rmgr_tbird_component_t {
@@ -48,9 +48,9 @@ struct orte_rmgr_tbird_component_t {
 /** Convenience typedef */
 typedef struct orte_rmgr_tbird_component_t orte_rmgr_tbird_component_t;
 
-/** Global URM component */
+/** Global tbird component */
 OMPI_COMP_EXPORT extern orte_rmgr_tbird_component_t mca_rmgr_tbird_component;
-/** Global URM module */
+/** Global tbird module */
 OMPI_COMP_EXPORT extern orte_rmgr_base_module_t orte_rmgr_tbird_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
