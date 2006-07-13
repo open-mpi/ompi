@@ -61,11 +61,12 @@ bool ompi_seq_tracker_check_duplicate(
     uint32_t seq_id) 
 { 
     ompi_seq_tracker_range_t* item;
+    const ompi_seq_tracker_range_t* sentinel = (ompi_seq_tracker_range_t*)opal_list_get_end(&seq_tracker->seq_ids);
     int8_t direction = 0; /* 1 is next, -1 is previous */
 
     item = seq_tracker->seq_ids_current;
     while(true) { 
-        if(NULL == item) { 
+        if(sentinel == item) { 
             return false;
         } else if(item->seq_id_high >= seq_id && item->seq_id_low <= seq_id) { 
             seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) item;
@@ -98,7 +99,7 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
     const ompi_seq_tracker_range_t* sentinel = (ompi_seq_tracker_range_t*)opal_list_get_end(seq_ids);
 
     while( true ) { 
-        if( item == NULL || item == sentinel )  { 
+        if( item == sentinel )  { 
             new_item = OBJ_NEW(ompi_seq_tracker_range_t);
             new_item->seq_id_low = new_item->seq_id_high = seq_id;
             if( -1 == direction ) {
