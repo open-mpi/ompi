@@ -205,8 +205,6 @@ extern int mca_pml_ob1_dump(
     int verbose
 );
 
-extern int mca_pml_ob1_progress(void);
-
 extern int mca_pml_ob1_start(
     size_t count,
     ompi_request_t** requests
