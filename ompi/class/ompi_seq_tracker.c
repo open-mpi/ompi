@@ -32,7 +32,7 @@ OBJ_CLASS_INSTANCE(ompi_seq_tracker_range_t,
 
 static void ompi_seq_tracker_construct(ompi_seq_tracker_t* seq_tracker) { 
     OBJ_CONSTRUCT(&seq_tracker->seq_ids, opal_list_t);
-    seq_tracker->seq_ids_current = NULL;
+    seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*)opal_list_get_end(&seq_tracker->seq_ids);
 }
 
 
@@ -95,13 +95,17 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
     ompi_seq_tracker_range_t* item = seq_tracker->seq_ids_current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     ompi_seq_tracker_range_t *new_item, *next_item, *prev_item;
-    ompi_seq_tracker_range_t* sentinel = (ompi_seq_tracker_range_t*)&seq_ids->opal_list_sentinel;
+    const ompi_seq_tracker_range_t* sentinel = (ompi_seq_tracker_range_t*)opal_list_get_end(seq_ids);
 
     while( true ) { 
         if( item == NULL || item == sentinel )  { 
             new_item = OBJ_NEW(ompi_seq_tracker_range_t);
-            new_item->seq_id_low = new_item->seq_id_high = seq_id; 
-            opal_list_append(seq_ids, (opal_list_item_t*) new_item);
+            new_item->seq_id_low = new_item->seq_id_high = seq_id;
+            if( -1 == direction ) {
+                opal_list_prepend(seq_ids, (opal_list_item_t*) new_item);
+            } else {
+                opal_list_append(seq_ids, (opal_list_item_t*) new_item);
+            }
             seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) new_item;
             return;
 
@@ -114,7 +118,7 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
             
             next_item = (ompi_seq_tracker_range_t*) opal_list_get_next(item); 
             /* try to consolidate */ 
-            if(next_item && next_item->seq_id_low == (seq_id+1)) { 
+            if( (sentinel != next_item) && next_item->seq_id_low == (seq_id+1)) { 
                 item->seq_id_high = next_item->seq_id_high;
                 opal_list_remove_item(seq_ids, (opal_list_item_t*) next_item);
                 OBJ_RELEASE(next_item);
@@ -128,7 +132,7 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
             
             prev_item = (ompi_seq_tracker_range_t*) opal_list_get_prev(item);
             /* try to consolidate */
-            if(prev_item && prev_item->seq_id_high == (seq_id-1)) {  
+            if( (sentinel != prev_item) && prev_item->seq_id_high == (seq_id-1)) {  
                 item->seq_id_low = prev_item->seq_id_low;
                 opal_list_remove_item(seq_ids, (opal_list_item_t*) prev_item);
                 OBJ_RELEASE(prev_item);
