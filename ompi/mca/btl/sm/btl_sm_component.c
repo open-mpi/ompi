@@ -179,8 +179,13 @@ int mca_btl_sm_component_close(void)
     int return_value = OMPI_SUCCESS;
 
     OBJ_DESTRUCT(&mca_btl_sm_component.sm_lock);
-    OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags1);
-    OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags2);
+    /**
+     * We don't have to destroy the fragment lists. They are allocated
+     * directly into the mmapped file, they will auto-magically dissapear
+     * when the file get unmapped.
+     */
+    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags1);*/
+    /*OBJ_DESTRUCT(&mca_btl_sm_component.sm_frags2);*/
 
     /* unmap the shared memory control structure */
     if(mca_btl_sm_component.mmap_file != NULL) {
