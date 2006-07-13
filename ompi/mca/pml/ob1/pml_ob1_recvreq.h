@@ -231,6 +231,7 @@ do {                                                                            
 do {                                                                               \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
+    (request)->req_bytes_delivered = (request)->req_recv.req_bytes_packed;         \
                                                                                    \
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
@@ -249,8 +250,6 @@ do {                                                                            
                                           &(request)->req_bytes_delivered );       \
         PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
                                  &((request)->req_recv.req_base), PERUSE_RECV);    \
-    } else {                                                                       \
-        (request)->req_bytes_delivered = (request)->req_recv.req_bytes_packed;     \
     }                                                                              \
 } while (0)
 
@@ -268,6 +267,7 @@ do {                                                                            
     bytes_received,                                                               \
     bytes_delivered)                                                              \
 do {                                                                              \
+    bytes_delivered = 0;                                                          \
     if(request->req_recv.req_bytes_packed > 0) {                                  \
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
@@ -296,8 +296,6 @@ do {                                                                            
                                &max_data,                                         \
                                &free_after);                                      \
         bytes_delivered = max_data;                                               \
-    } else {                                                                      \
-        bytes_delivered = 0;                                                      \
     }                                                                             \
 } while (0)
 

@@ -113,23 +113,6 @@ OMPI_DECLSPEC void mca_pml_ob1_recv_frag_callback(
                                                   void* cbdata
                                                   );
                                                                                                                
-/**
- * Match incoming recv_frags against posted receives.  
- * Supports out of order delivery.
- * 
- * @param frag_header (IN)          Header of received recv_frag.
- * @param frag_desc (IN)            Received recv_frag descriptor.
- * @param match_made (OUT)          Flag indicating wether a match was made.
- * @param additional_matches (OUT)  List of additional matches 
- * @return                          OMPI_SUCCESS or error status on failure.
- */
-OMPI_DECLSPEC int mca_pml_ob1_recv_frag_match(
-                                              mca_btl_base_module_t* btl, 
-                                              mca_pml_ob1_match_hdr_t *hdr,
-                                              mca_btl_base_segment_t* segments,
-                                              size_t num_segments);
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

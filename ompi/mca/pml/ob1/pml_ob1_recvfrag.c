@@ -50,7 +50,24 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
+/**
+ * Static functions.
+ */
 
+/**
+ * Match incoming recv_frags against posted receives.  
+ * Supports out of order delivery.
+ * 
+ * @param frag_header (IN)          Header of received recv_frag.
+ * @param frag_desc (IN)            Received recv_frag descriptor.
+ * @param match_made (OUT)          Flag indicating wether a match was made.
+ * @param additional_matches (OUT)  List of additional matches 
+ * @return                          OMPI_SUCCESS or error status on failure.
+ */
+static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl, 
+                                        mca_pml_ob1_match_hdr_t *hdr,
+                                        mca_btl_base_segment_t* segments,
+                                        size_t num_segments );
 
 /**
  *  Callback from BTL on receive.
@@ -429,11 +446,10 @@ static bool mca_pml_ob1_check_cantmatch_for_match(
  *   - fragments may be corrupt
  *   - this routine may be called simultaneously by more than one thread
  */
-int mca_pml_ob1_recv_frag_match(
-                                mca_btl_base_module_t *btl, 
-                                mca_pml_ob1_match_hdr_t *hdr,
-                                mca_btl_base_segment_t* segments,
-                                size_t num_segments)
+static int mca_pml_ob1_recv_frag_match( mca_btl_base_module_t *btl, 
+                                        mca_pml_ob1_match_hdr_t *hdr,
+                                        mca_btl_base_segment_t* segments,
+                                        size_t num_segments )
 {
     /* local variables */
     uint16_t next_msg_seq_expected, frag_msg_seq;
