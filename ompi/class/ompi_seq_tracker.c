@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -95,20 +95,16 @@ void ompi_seq_tracker_insert(ompi_seq_tracker_t* seq_tracker,
     ompi_seq_tracker_range_t* item = seq_tracker->seq_ids_current;
     int8_t direction = 0; /* 1 is next, -1 is previous */
     ompi_seq_tracker_range_t *new_item, *next_item, *prev_item;
-    while(true) { 
-        if( item == NULL || item == (ompi_seq_tracker_range_t*) &seq_ids->opal_list_tail )  { 
+    ompi_seq_tracker_range_t* sentinel = (ompi_seq_tracker_range_t*)&seq_ids->opal_list_sentinel;
+
+    while( true ) { 
+        if( item == NULL || item == sentinel )  { 
             new_item = OBJ_NEW(ompi_seq_tracker_range_t);
             new_item->seq_id_low = new_item->seq_id_high = seq_id; 
             opal_list_append(seq_ids, (opal_list_item_t*) new_item);
             seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) new_item;
             return;
-        } else if( item == (ompi_seq_tracker_range_t*) &seq_ids->opal_list_head ) { 
-            new_item = OBJ_NEW(ompi_seq_tracker_range_t);
-            new_item->seq_id_low = new_item->seq_id_high = seq_id; 
-            opal_list_prepend(seq_ids, (opal_list_item_t*) new_item); 
-            seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) new_item;
-            return; 
-            
+
         } else if(item->seq_id_high >= seq_id && item->seq_id_low <= seq_id ) { 
 
             seq_tracker->seq_ids_current = (ompi_seq_tracker_range_t*) item;
