@@ -17,7 +17,7 @@
 # $HEADER$
 #
 
-EXTRA_DIST = post_configure.sh
+EXTRA_DIST = post_configure.sh pml_ob1_endpoint.c pml_ob1_endpoint.h
 
 ob1_sources  = \
 	pml_ob1.c \
@@ -26,8 +26,6 @@ ob1_sources  = \
 	pml_ob1_comm.h \
 	pml_ob1_component.c \
 	pml_ob1_component.h \
-	pml_ob1_endpoint.c \
-	pml_ob1_endpoint.h \
 	pml_ob1_hdr.h \
 	pml_ob1_iprobe.c \
 	pml_ob1_irecv.c \

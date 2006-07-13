@@ -828,34 +828,8 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
 
                 /* makes sure that we don't exceed BTL max send size */
                 if (bml_btl->btl_max_send_size != 0 && 
-                    size > bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t)) {
+                    size > (bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t))) {
                     size = bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
-#if defined(GEORGE_HAVE_TO_MAKE_SURE_THAT_WE_DONT_NEED_IT)
-                    /* very expensive - however for buffered sends we need to send on a 
-                     * boundary that the receiver will be able to unpack completely
-                     * using the native datatype
-                     */
-                    if(sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) {
-                        ompi_convertor_t convertor;
-                        size_t position = sendreq->req_send_offset + size;
-                        /*
-                         * We need this local convertor in order to correctly compute
-                         * the correct position. Therefore we have to correctly construct and
-                         * destruct it.
-                         */
-                        OBJ_CONSTRUCT( &convertor, ompi_convertor_t );
-                        ompi_convertor_copy_and_prepare_for_send(
-                            &sendreq->req_send.req_convertor,
-                            sendreq->req_send.req_base.req_datatype,
-                            sendreq->req_send.req_base.req_count,
-                            sendreq->req_send.req_base.req_addr,
-                            0,
-                            &convertor);
-                        ompi_convertor_set_position(&convertor, &position);
-                        OBJ_DESTRUCT( &convertor );
-                        size = position - sendreq->req_send_offset;
-                    }
-#endif
                 }
                 
                 /* pack into a descriptor */
@@ -930,7 +904,7 @@ int mca_pml_ob1_send_request_schedule(mca_pml_ob1_send_request_t* sendreq)
                     OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
                     break;
                 }
-                mca_pml_ob1_progress(); 
+                mca_bml.bml_progress();
             }
         } while (OPAL_THREAD_ADD32(&sendreq->req_lock,-1) > 0);
     }
