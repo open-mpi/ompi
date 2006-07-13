@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,18 +83,13 @@ static void opal_list_construct(opal_list_t *list)
        should never be removed from this list, added to another list,
        etc.  So set them to sentinel values. */
 
-    OBJ_CONSTRUCT( &(list->opal_list_head), opal_list_item_t );
-    list->opal_list_head.opal_list_item_refcount  = 1;
-    list->opal_list_head.opal_list_item_belong_to = list;
-    OBJ_CONSTRUCT( &(list->opal_list_tail), opal_list_item_t );
-    list->opal_list_tail.opal_list_item_refcount  = 1;
-    list->opal_list_tail.opal_list_item_belong_to = list;
+    OBJ_CONSTRUCT( &(list->opal_list_sentinel), opal_list_item_t );
+    list->opal_list_sentinel.opal_list_item_refcount  = 1;
+    list->opal_list_sentinel.opal_list_item_belong_to = list;
 #endif
 
-    list->opal_list_head.opal_list_prev = NULL;
-    list->opal_list_head.opal_list_next = &list->opal_list_tail;
-    list->opal_list_tail.opal_list_prev = &list->opal_list_head;
-    list->opal_list_tail.opal_list_next = NULL;
+    list->opal_list_sentinel.opal_list_next = &list->opal_list_sentinel;
+    list->opal_list_sentinel.opal_list_prev = &list->opal_list_sentinel;
     list->opal_list_length = 0;
 }
 
@@ -125,9 +120,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
     if ( 0 == idx )
     {
         opal_list_prepend(list, item);
-    }
-    else
-    {
+    } else {
 #if OMPI_ENABLE_DEBUG
         /* Spot check: ensure that this item is previously on no
            lists */
@@ -135,7 +128,7 @@ bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, long long idx)
         assert(0 == item->opal_list_item_refcount);
 #endif
         /* pointer to element 0 */
-        ptr = list->opal_list_head.opal_list_next;
+        ptr = list->opal_list_sentinel.opal_list_next;
         for ( i = 0; i < idx-1; i++ )
             ptr = ptr->opal_list_next;
 
