@@ -77,10 +77,26 @@ ompi_mtl_portals_component_open(void)
                            "Cross-over point from eager to rendezvous sends",
                            false,
                            false,
-                           0,
+                           1024,
                            &tmp);
 
     ompi_mtl_portals.eager_limit = tmp;
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "short_recv_mds_num",
+                           "Number of short message receive blocks",
+                           false,
+                           false,
+                           3,
+                           &ompi_mtl_portals.ptl_recv_short_mds_num);
+
+    mca_base_param_reg_int(&mca_mtl_portals_component.mtl_version,
+                           "short_recv_mds_size",
+                           "Size of short message receive blocks",
+                           false,
+                           false,
+                           15 * 1024 * 1024,
+                           &ompi_mtl_portals.ptl_recv_short_mds_size);
 
     ompi_mtl_portals.ptl_ni_h = PTL_INVALID_HANDLE;
 
@@ -112,6 +128,8 @@ ompi_mtl_portals_component_init(bool enable_progress_threads,
                         sizeof(ompi_mtl_portals_event_t),
                         OBJ_CLASS(ompi_mtl_portals_event_t),
                         1, -1, 1, NULL);
+
+    OBJ_CONSTRUCT(&ompi_mtl_portals.ptl_recv_short_blocks, opal_list_t);
     OBJ_CONSTRUCT(&ompi_mtl_portals.unexpected_messages, opal_list_t);
 
     return &ompi_mtl_portals.base;

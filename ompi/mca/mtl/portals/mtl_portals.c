@@ -25,6 +25,7 @@
 #include "mtl_portals.h"
 #include "mtl_portals_endpoint.h"
 #include "mtl_portals_request.h"
+#include "mtl_portals_recv_short.h"
 
 
 mca_mtl_portals_module_t ompi_mtl_portals = {
@@ -53,8 +54,6 @@ OBJ_CLASS_INSTANCE(ompi_mtl_portals_event_t, opal_list_item_t,
                    NULL, NULL);
 
 
-static int ompi_mtl_portals_progress(void);
-
 
 int
 ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
@@ -76,7 +75,7 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
     if (PTL_INVALID_HANDLE == ompi_mtl_portals.ptl_ni_h) {
         ptl_md_t md;
         ptl_handle_md_t md_h;
-        ptl_process_id_t anyproc;
+        ptl_process_id_t ptlproc;
         uint64_t match_bits = 0;
 
         ret = ompi_common_portals_ni_initialize(&(ompi_mtl_portals.ptl_ni_h));
@@ -95,15 +94,28 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
                          &(ompi_mtl_portals.ptl_unexpected_recv_eq_h));
         assert(ret == PTL_OK);
 
+        /* create insertion point for matched receives */
+        ptlproc.nid = 0;
+        ptlproc.pid = 0;
+
+        ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
+                          OMPI_MTL_PORTALS_SEND_TABLE_ID,
+                          ptlproc,
+                          ~match_bits,
+                          match_bits,
+                          PTL_RETAIN,
+                          PTL_INS_AFTER,
+                          &(ompi_mtl_portals.ptl_match_ins_me_h));
+        assert(ret == PTL_OK);
+
         /* create unexpected message match entry */
-        anyproc.nid = PTL_NID_ANY;
-        anyproc.pid = PTL_PID_ANY;
+        ptlproc.nid = PTL_NID_ANY;
+        ptlproc.pid = PTL_PID_ANY;
 
         /* unexpected message match entry should receive from anyone,
            so ignore bits are all 1 */
-        ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
-                          OMPI_MTL_PORTALS_SEND_TABLE_ID,
-                          anyproc,
+        ret = PtlMEInsert(ompi_mtl_portals.ptl_match_ins_me_h,
+                          ptlproc,
                           match_bits,
                           ~match_bits, 
                           PTL_RETAIN,
@@ -123,6 +135,8 @@ ompi_mtl_portals_add_procs(struct mca_mtl_base_module_t *mtl,
                           PTL_RETAIN, 
                           &md_h);
         assert(ret == PTL_OK);
+
+        ret = ompi_mtl_portals_recv_short_enable((mca_mtl_portals_module_t*) mtl);
 
         opal_progress_register(ompi_mtl_portals_progress);
     }
@@ -176,6 +190,8 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
 {
     assert(mtl == &ompi_mtl_portals.base);
 
+    ompi_mtl_portals_recv_short_disable((mca_mtl_portals_module_t *) mtl);
+
     opal_progress_unregister(ompi_mtl_portals_progress);
 
     while (0 != ompi_mtl_portals_progress()) { }
@@ -187,7 +203,7 @@ ompi_mtl_portals_finalize(struct mca_mtl_base_module_t *mtl)
 }
 
 
-static int
+int
 ompi_mtl_portals_progress(void)
 {
     int count = 0, ret;
@@ -199,10 +215,13 @@ ompi_mtl_portals_progress(void)
         if (PTL_OK == ret) {
             if (ev.type == PTL_EVENT_UNLINK) continue;
 
-            ptl_request = ev.md.user_ptr;
-            ret = ptl_request->event_callback(&ev, ptl_request);
-            if (OMPI_SUCCESS != ret) {
-                abort();
+            if (NULL != ev.md.user_ptr) {
+                ptl_request = ev.md.user_ptr;
+                ret = ptl_request->event_callback(&ev, ptl_request);
+
+                if (OMPI_SUCCESS != ret) {
+                    abort();
+                }
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
