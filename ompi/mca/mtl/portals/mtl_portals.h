@@ -48,10 +48,17 @@ struct mca_mtl_portals_module_t {
     ptl_handle_eq_t ptl_eq_h;
     ptl_handle_eq_t ptl_unexpected_recv_eq_h;
 
+    /* insert all posted receives before this handle */
+    ptl_handle_me_t ptl_match_ins_me_h;
+    /* last handle in the SEND table entry */
     ptl_handle_me_t ptl_unexpected_me_h;
 
     ompi_free_list_t event_fl;
 
+    int ptl_recv_short_mds_num;
+    int ptl_recv_short_mds_size;
+    
+    opal_list_t ptl_recv_short_blocks;
     opal_list_t unexpected_messages;
 };
 typedef struct mca_mtl_portals_module_t mca_mtl_portals_module_t;
@@ -88,11 +95,11 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals_event_t);
 
 #define PTL_SHORT_MSG     0x1000000000000000ULL
 #define PTL_LONG_MSG      0x2000000000000000ULL
-#define PTL_READY_MSG     0x3000000000000000ULL
+#define PTL_READY_MSG     0x4000000000000000ULL
 
 /* send posting */
 #define PTL_SET_SEND_BITS(match_bits, contextid, source, tag, type)     \
-    {                                                                   \
+{                                                                       \
     match_bits = contextid;                                             \
     match_bits = (match_bits << 16);                                    \
     match_bits |= source;                                               \
@@ -124,10 +131,12 @@ OBJ_CLASS_DECLARATION(ompi_mtl_portals_event_t);
     }                                                               \
 }
 
-#define PTL_IS_SHORT_MSG(match_bits, ret)       \
-{                                               \
-    ret = (0 != (PTL_SHORT_MSG & match_bits));  \
-}
+#define PTL_IS_SHORT_MSG(match_bits)            \
+    (0 != (PTL_SHORT_MSG & match_bits))
+#define PTL_IS_READY_MSG(match_bits)            \
+    (0 != (PTL_READY_MSG & match_bits))
+#define PTL_IS_SYNC_MSG(event) \
+    (0 != event.hdr_data)
 
 #define PTL_GET_TAG(match_bits) ((int)(match_bits & PTL_TAG_MASK))
 #define PTL_GET_SOURCE(match_bits) ((int)((match_bits & PTL_SOURCE_MASK) >> 32))
@@ -178,6 +187,9 @@ extern int ompi_mtl_portals_iprobe(struct mca_mtl_base_module_t* mtl,
 extern int ompi_mtl_portals_cancel(struct mca_mtl_base_module_t* mtl,
                           mca_mtl_request_t *mtl_request,
                           int flag);
+
+extern int ompi_mtl_portals_progress(void);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

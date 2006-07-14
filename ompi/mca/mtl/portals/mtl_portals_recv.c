@@ -30,6 +30,7 @@
 #include "mtl_portals.h"
 #include "mtl_portals_endpoint.h"
 #include "mtl_portals_request.h"
+#include "mtl_portals_recv_short.h"
 
 #define CHECK_MATCH(incoming_bits, match_bits, ignore_bits)     \
     (((incoming_bits ^ match_bits) & ~ignore_bits) == 0)
@@ -55,9 +56,14 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
         ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
+
+#if OMPI_MTL_PORTALS_DEBUG
+            printf("recv complete: 0x%016llx\n", ev->match_bits);
+#endif
         
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
+
     case PTL_EVENT_REPLY_END:
         /* make sure the data is in the right place */
         ompi_mtl_datatype_unpack(ptl_request->convertor,
@@ -68,6 +74,10 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
         /* set the status */
         ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
+
+#if OMPI_MTL_PORTALS_DEBUG
+            printf("recv complete: 0x%016llx\n", ev->match_bits);
+#endif
         
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
@@ -88,14 +98,86 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
     int ret;
     ptl_md_t md;
     ptl_handle_md_t md_h;
-
-    PTL_IS_SHORT_MSG(recv_event->ev.match_bits, ret);
-    if (ret) {
+    size_t buflen;
+    
+    if (PTL_IS_SHORT_MSG(recv_event->ev.match_bits)) {
         /* the buffer is sitting in the short message queue */
-        abort();
-    } else {
-        size_t buflen;
 
+        struct iovec iov;
+        uint32_t iov_count = 1;
+        int32_t free_after;
+        size_t max_data;
+
+        ompi_mtl_portals_recv_short_block_t *block = 
+            recv_event->ev.md.user_ptr;
+
+        iov.iov_base = (((char*) recv_event->ev.md.start) + recv_event->ev.offset);
+        iov.iov_len = recv_event->ev.mlength;
+        max_data = iov.iov_len;
+
+        /* see if this message filled the receive block */
+        if (recv_event->ev.md.length - (recv_event->ev.offset + 
+                                        recv_event->ev.mlength) <
+            recv_event->ev.md.max_size) {
+            block->full = true;
+        }
+
+        /* pull out the data */
+        if (iov.iov_len > 0) {
+            ompi_convertor_unpack(convertor, &iov, &iov_count,
+                                  &max_data, &free_after);
+        }
+
+        /* if synchronous, return an ack */
+        if (PTL_IS_SYNC_MSG(recv_event->ev)) {
+            md.length = 0;
+            md.start = (((char*) recv_event->ev.md.start) + recv_event->ev.offset);
+            md.threshold = 1; /* send */
+            md.options = PTL_MD_EVENT_START_DISABLE;
+            md.user_ptr = NULL;
+            md.eq_handle = ompi_mtl_portals.ptl_eq_h;
+
+            ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h, md,
+                            PTL_UNLINK, &md_h);
+            if (PTL_OK != ret) abort();
+
+#if OMPI_MTL_PORTALS_DEBUG
+            printf("acking recv: 0x%016llx\n", recv_event->ev.match_bits);
+#endif
+
+            ret = PtlPut(md_h,
+                         PTL_NO_ACK_REQ,
+                         recv_event->ev.initiator,
+                         OMPI_MTL_PORTALS_ACK_TABLE_ID,
+                         0,
+                         recv_event->ev.hdr_data,
+                         0,
+                         0);
+            if (PTL_OK != ret) abort();
+        }
+
+        /* finished with our buffer space */
+        ompi_mtl_portals_return_block_part(&ompi_mtl_portals, block);
+
+        ompi_convertor_get_packed_size(convertor, &buflen);
+
+        ptl_request->super.ompi_req->req_status.MPI_SOURCE =
+            PTL_GET_SOURCE(recv_event->ev.match_bits);
+        ptl_request->super.ompi_req->req_status.MPI_TAG = 
+            PTL_GET_TAG(recv_event->ev.match_bits);
+        ptl_request->super.ompi_req->req_status.MPI_ERROR = 
+            (recv_event->ev.rlength > buflen) ?
+            MPI_ERR_TRUNCATE : MPI_SUCCESS;
+        ptl_request->super.ompi_req->req_status._count = 
+            recv_event->ev.mlength;
+
+#if OMPI_MTL_PORTALS_DEBUG
+        printf("recv complete: 0x%016llx\n", recv_event->ev.match_bits);
+#endif
+        
+        ptl_request->super.completion_callback(&ptl_request->super);
+
+    } else {
         ret = ompi_mtl_datatype_recv_buf(convertor, &md.start, &buflen,
                                          &ptl_request->free_after);
         if (OMPI_SUCCESS != ret) abort();
@@ -105,7 +187,9 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        /* retain because it's unclear how many events we'll get here ... */
+        /* retain because it's unclear how many events we'll get here.
+           Some implementations give just the REPLY, others give SEND
+           and REPLY */
         ret = PtlMDBind(ompi_mtl_portals.ptl_ni_h, md,
                         PTL_RETAIN, &md_h);
         if (PTL_OK != ret) abort();
@@ -123,7 +207,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         ptl_request->super.ompi_req->req_status.MPI_SOURCE =
             PTL_GET_SOURCE(recv_event->ev.match_bits);
         ptl_request->super.ompi_req->req_status.MPI_TAG = 
-                PTL_GET_TAG(recv_event->ev.match_bits);
+            PTL_GET_TAG(recv_event->ev.match_bits);
         ptl_request->super.ompi_req->req_status.MPI_ERROR = 
             (recv_event->ev.rlength > buflen) ?
             MPI_ERR_TRUNCATE : MPI_SUCCESS;
@@ -198,14 +282,27 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
         ret = PtlEQGet(ompi_mtl_portals.ptl_unexpected_recv_eq_h,
                        &recv_event->ev);
         if (PTL_OK == ret) {
-            if (CHECK_MATCH(recv_event->ev.match_bits, match_bits, ignore_bits)) {
-                /* we have a match... */
-                ompi_mtl_portals_get_data(recv_event, convertor, ptl_request);
-                goto cleanup;
-            } else {
-                /* not ours - put in unexpected queue */
-                opal_list_append(&(ompi_mtl_portals.unexpected_messages),
-                                 (opal_list_item_t*) recv_event);
+            switch (recv_event->ev.type) {
+            case PTL_EVENT_PUT_START:
+                if (PTL_IS_SHORT_MSG(recv_event->ev.match_bits)) {
+                    ompi_mtl_portals_recv_short_block_t *block =
+                        recv_event->ev.md.user_ptr;
+                    OPAL_THREAD_ADD32(&block->pending, 1);
+                }
+                break;
+            case PTL_EVENT_PUT_END:
+                if (CHECK_MATCH(recv_event->ev.match_bits, match_bits, ignore_bits)) {
+                    /* we have a match... */
+                    ompi_mtl_portals_get_data(recv_event, convertor, ptl_request);
+                    goto cleanup;
+                } else {
+                    /* not ours - put in unexpected queue */
+                    opal_list_append(&(ompi_mtl_portals.unexpected_messages),
+                                     (opal_list_item_t*) recv_event);
+                }
+                break;
+            default:
+                break;
             }
         } else if (PTL_EQ_EMPTY == ret) {
             break;
@@ -219,7 +316,7 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
                                      &ptl_request->free_after);
     md.length = buflen;
 
-    PtlMEInsert(ompi_mtl_portals.ptl_unexpected_me_h,
+    PtlMEInsert(ompi_mtl_portals.ptl_match_ins_me_h,
                 remote_proc,
                 match_bits,
                 ignore_bits,
