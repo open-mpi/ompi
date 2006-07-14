@@ -89,8 +89,9 @@ typedef uint8_t orte_data_type_t ;
     /* Resource Manager types */
 #define    ORTE_APP_CONTEXT         (orte_data_type_t)   42 /**< argv and enviro arrays */
 #define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   43 /**< application context mapping array */
+#define    ORTE_RAS_NODE			(orte_data_type_t)	 44 /**< node information */
     /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   44 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   45 /**< command flag for communicating with the daemon */
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DSS_ID_DYNAMIC 60
