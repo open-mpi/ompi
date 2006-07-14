@@ -199,7 +199,12 @@ each node.
 .B -np \fR<#>\fP
 Run this many copies of the program on the given nodes.  This option
 indicates that the specified file is an executable program and not an
-application context.
+application context. If no value is provided for the number of copies to
+execute (i.e., neither the "-np" nor its synonyms are provided on the command
+line), Open MPI will automatically execute a copy of the program on
+each process slot (see below for description of a "process slot"). This
+feature, however, can only be used in the SPMD model and will return an
+error (without beginning execution of the application) otherwise. 
 .
 .
 .TP
@@ -329,7 +334,10 @@ programs (e.g. --hostfile), while others are specific to a single program
 .
 Open MPI uses "slots" to represent a potential location for a process.
 Hence, a node with 2 slots means that 2 processes can be launched on
-that node.
+that node. For performance, the community typically equates a "slot"
+with a physical CPU, thus ensuring that any process assigned to that
+slot has a dedicated processor. This is not, however, a requirement for
+the operation of Open MPI.
 .PP
 Slots can be specified in hostfiles after the hostname.  For example:
 .
@@ -338,12 +346,17 @@ host1.example.com slots=4
 Indicates that there are 4 process slots on host1.
 .
 .PP
+If no slots value is specified, then Open MPI will automatically assign
+a default value of "slots=1" to that host.
+.
+.PP
 When running under resource managers (e.g., SLURM, Torque, etc.), Open
 MPI will obtain both the hostnames and the number of slots directly
 from the resource manger.  For example, if running under a SLURM job,
 Open MPI will automatically receive the hosts that SLURM has allocated
-to the job as well as how many processors on each node that SLURM says
-are usable.
+to the job as well as how many slots on each node that SLURM says
+are usable - in most high-performance environments, the slots will
+equate to the number of processors on the node.
 .
 .PP
 When deciding where to launch processes, Open MPI will first fill up
@@ -351,7 +364,8 @@ all available slots before oversubscribing (see "Location
 Nomenclature", below, for more details on the scheduling algorithms
 available).  Unless told otherwise, Open MPI will arbitrarily
 oversubscribe nodes.  For example, if the only node available is the
-localhost, Open MPI will run as many processes as specified on the
+localhost, Open MPI will run as many processes as specified by the
+-n (or one of its variants) command line option on the
 localhost (although they may run quite slowly, since they'll all be
 competing for CPU and other resources).
 .
@@ -380,6 +394,19 @@ Note that Open MPI's support for resource managers does not currently
 set the "max_slots" values for hosts.  If you wish to prevent
 oversubscription in such scenarios, use the \fI--nooversubscribe\fR
 option.
+.
+.PP
+In scenarios where the user wishes to launch an application across
+all available slots by not providing a "-n" option on the mpirun
+command line, Open MPI will launch a process on each process slot
+for each host within the provided environment. For example, if a
+hostfile has been provided, then Open MPI will spawn processes
+on each identified host up to the "slots=x" limit if oversubscription
+is not allowed. If oversubscription is allowed (the default), then
+Open MPI will spawn processes on each host up to the "max_slots=y" limit
+if that value is provided. In all cases, the "-bynode" and "-byslot"
+mapping directives will be enforced to ensure proper placement of
+process ranks.
 .
 .
 .
