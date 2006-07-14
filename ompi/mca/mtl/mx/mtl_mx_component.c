@@ -24,6 +24,7 @@
 #include "ompi/datatype/convertor.h"
 
 #include "mtl_mx.h"
+#include "mtl_mx_types.h"
 #include "mtl_mx_request.h"
 
 #include "myriexpress.h"
@@ -112,6 +113,13 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
     mx_return_t mx_return;
+
+    /* set the MX error handle to always return. This function is the
+     * only MX function allowed to be called before mx_init in order
+     * to make sure that if the MX is not up and running the MX
+     * library does not exit the application.
+     */
+    mx_set_error_handler(MX_ERRORS_RETURN);
     
     /* initialize the mx library */
     mx_return = mx_init(); 
@@ -120,7 +128,6 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
         opal_output(0, "Error in mx_init (error %s)\n", mx_strerror(mx_return));
         return NULL;
     }
-
         
     ompi_mtl_mx_module_init();
     
