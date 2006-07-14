@@ -43,10 +43,11 @@ enum {
 typedef int orte_iof_base_tag_t;
 
 /* endpoint mode */
-typedef enum {
-    ORTE_IOF_SOURCE,
+enum {
+    ORTE_IOF_SOURCE = 0,
     ORTE_IOF_SINK
-} orte_iof_base_mode_t;
+};
+typedef int orte_iof_base_mode_t;
 
 
 /**

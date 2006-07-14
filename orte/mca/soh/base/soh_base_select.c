@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -33,6 +33,7 @@
 int orte_soh_base_select(void)
 {
   opal_list_item_t *item;
+  opal_list_item_t *best_item = NULL;
   mca_base_component_list_item_t *cli;
   orte_soh_base_component_t *component, *best_component = NULL;
   orte_soh_base_module_t *module, *best_module = NULL;
@@ -56,28 +57,27 @@ int orte_soh_base_select(void)
        module with the highest priority */
 
     if (NULL == module) {
-		continue;
-	}
+        continue;
+    }
 
     /* If this is the best one, save it */
 
     if (priority > best_priority) {
+        /* If there was a previous best one, finalize */
+        if (NULL != best_module) {
+            best_module->finalize();
+            OBJ_RELEASE (best_item);
+        }
 
-    	/* If there was a previous best one, finalize */
+        /* Save the new best one */
+        best_item = item;
+        best_module = module;
+        best_component = component;
 
-	   if (NULL != best_module) {
-		  best_module->finalize();
-	   }
+        /* update the best priority */
+        best_priority = priority;
 
-	   /* Save the new best one */
-
-	   best_module = module;
-	   best_component = component;
-
-	   /* update the best priority */
-	   best_priority = priority;
-
-	} /* if best by priority */ 
+        } /* if best by priority */ 
 
     /* If it's not the best one, finalize it */
 
