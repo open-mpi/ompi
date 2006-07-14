@@ -27,10 +27,6 @@ version 1.0.
 
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
-- Added capability to "mpirun a.out" (without specifying -np) that
-  will run on all currently-allocated resources (e.g., within a batch
-  job such as SLURM, Torque, etc.).
-- Addition of "dr" (data reliability) PML.
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
 - Addition of UDAPL BTL ("udapl").
 
@@ -38,6 +34,10 @@ version 1.0.
 1.1.1
 -----
 
+- Addition of "dr" (data reliability) PML.
+- Added capability to "mpirun a.out" (without specifying -np) that
+  will run on all currently-allocated resources (e.g., within a batch
+  job such as SLURM, Torque, etc.).
 - Fix a bug with one particular case of MPI_BCAST.  Thanks to Doug
   Gregor for identifying the problem.
 - Ensure that the shared memory mapped file is only created when there
