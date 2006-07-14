@@ -64,7 +64,7 @@ is equivalent to
 If you are simply looking for how to run an MPI application, you
 probably want to use a command line of the following form:
 
-    \fBshell$\fP mpirun -np X [ --hostfile <filename> ]  <program>
+    \fBshell$\fP mpirun [ -np X ] [ --hostfile <filename> ]  <program>
 
 This will run X copies of \fI<program>\fR in your current run-time
 environment (if running under a supported resource manager, Open MPI's
@@ -185,6 +185,14 @@ Synonym for \fI-np\fP.
 Do not run any copies of the launched application on the same node as
 orterun is running.  This option will override listing the localhost
 with \fB--host\fR or any other host-specifying mechanism.
+.
+.
+.TP
+.B -nooversubscribe\fR,\fP --nooversubscribe
+Do not oversubscribe any nodes; error (without starting any processes)
+if the requested number of processes would cause oversubscription.
+This option implicitly sets "max_slots" equal to the "slots" value for
+each node.
 .
 .
 .TP
@@ -317,16 +325,74 @@ programs (e.g. --hostfile), while others are specific to a single program
 .
 .
 .
+.SS Process Slots
+.
+Open MPI uses "slots" to represent a potential location for a process.
+Hence, a node with 2 slots means that 2 processes can be launched on
+that node.
+.PP
+Slots can be specified in hostfiles after the hostname.  For example:
+.
+.TP 4
+host1.example.com slots=4
+Indicates that there are 4 process slots on host1.
+.
+.PP
+When running under resource managers (e.g., SLURM, Torque, etc.), Open
+MPI will obtain both the hostnames and the number of slots directly
+from the resource manger.  For example, if running under a SLURM job,
+Open MPI will automatically receive the hosts that SLURM has allocated
+to the job as well as how many processors on each node that SLURM says
+are usable.
+.
+.PP
+When deciding where to launch processes, Open MPI will first fill up
+all available slots before oversubscribing (see "Location
+Nomenclature", below, for more details on the scheduling algorithms
+available).  Unless told otherwise, Open MPI will arbitrarily
+oversubscribe nodes.  For example, if the only node available is the
+localhost, Open MPI will run as many processes as specified on the
+localhost (although they may run quite slowly, since they'll all be
+competing for CPU and other resources).
+.
+.PP
+Limits can be placed on oversubscription with the "max_slots"
+attribute in the hostfile.  For example:
+.
+.TP 4
+host2.example.com slots=4 max_slots=6
+Indicates that there are 4 process slots on host2.  Further, Open MPI
+is limited to launching a maximum of 6 processes on host2.
+.
+.TP
+host3.example.com slots=2 max_slots=2
+Indicates that there are 2 process slots on host3 and that no
+oversubscription is allowed (similar to the \fI--nooversubscribe\fR
+option).
+.
+.TP
+host4.example.com max_slots=2
+Shorthand; same as listing "slots=2 max_slots=2".
+.
+.
+.PP
+Note that Open MPI's support for resource managers does not currently
+set the "max_slots" values for hosts.  If you wish to prevent
+oversubscription in such scenarios, use the \fI--nooversubscribe\fR
+option.
+.
+.
+.
 .SS Location Nomenclature
 .
-As described above, \fImpirun\fP can specify arbitrary locations in the current
-Open MPI universe.
-Locations can be specified either by CPU or by node.
+As described above, \fImpirun\fP can specify arbitrary locations in
+the current Open MPI universe.  Locations can be specified either by
+CPU or by node.
 
 .B Note:
-Open MPI does not bind processes to CPUs -- specifying a location "by CPU" is
-really a convenience mechanism for SMPs that ultimately maps down to a specific
-node.
+This nomenclature does not force Open MPI to bind processes to CPUs --
+specifying a location "by CPU" is really a convenience mechanism for
+SMPs that ultimately maps down to a specific node.
 .PP
 Specifying locations by node will launch one copy of an executable per
 specified node.
@@ -438,6 +504,17 @@ application.
 shell$ mpirun -np 1 --host localhost --nolocal hostname
 This example will result in an error because orterun will not find
 anywhere to launch the application.
+.
+.
+.
+.SS No Oversubscription
+.
+Using the \fI--nooversubscribe\fR option causes Open MPI to implicitly
+set the "max_slots" value to be the same as the "slots" value for each
+node.  This can be especially helpful when running jobs under a
+resource manager because Open MPI currently only sets the "slots"
+value for each node that it obtains from the resource manager.
+.
 .
 .
 .SS Application Context or Executable Program?
