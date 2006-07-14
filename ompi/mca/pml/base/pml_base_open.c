@@ -39,6 +39,8 @@ int mca_pml_base_progress(void)
     return OMPI_SUCCESS;
 }
 
+#define xstringify(pml) #pml
+#define stringify(pml) xstringify(pml)
 
 /*
  * Global variables
@@ -87,7 +89,17 @@ int mca_pml_base_open(void)
     mca_pml_base_selected_component.pmlm_finalize = NULL;
 
     mca_base_param_lookup_string(
-        mca_base_param_register_string("pml",NULL,NULL,NULL,"ob1"), &mca_pml_base_pml);
+        mca_base_param_register_string("pml",
+                                       NULL,
+                                       NULL,
+                                       NULL,
+#if MCA_pml_DIRECT_CALL
+                                       stringify(MCA_pml_DIRECT_CALL_COMPONENT)
+#else
+                                       "ob1"
+#endif
+                                       ),
+        &mca_pml_base_pml);
 
     return OMPI_SUCCESS;
 }
