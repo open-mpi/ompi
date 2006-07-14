@@ -129,9 +129,15 @@ do {                                                                            
                                                                                        \
     /* initialize request status */                                                    \
     recvreq->req_recv.req_base.req_pml_complete = true;                                \
-    recvreq->req_recv.req_base.req_ompi.req_status._count =                            \
-        (recvreq->req_bytes_received < recvreq->req_bytes_delivered ?                  \
-         recvreq->req_bytes_received : recvreq->req_bytes_delivered);                  \
+    if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {   \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =         \
+            recvreq->req_bytes_delivered;                               \
+        recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =      \
+            MPI_ERR_TRUNCATE;                                           \
+    } else {                                                            \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =         \
+            recvreq->req_bytes_received;                                \
+    }                                                                   \
     MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) );       \
                                                                                        \
     if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
