@@ -168,27 +168,35 @@ mca_pml_cm_dump(struct ompi_communicator_t* comm, int verbose)
 
 
 void
-mca_pml_cm_request_completion(struct mca_mtl_request_t *mtl_request)
+mca_pml_cm_thin_send_request_completion(struct mca_mtl_request_t *mtl_request)
 {
-    mca_pml_base_request_t *base_request = 
-        (mca_pml_base_request_t*) mtl_request->ompi_req;
-    
-    switch (base_request->req_type) {
-    case MCA_PML_REQUEST_SEND:
-        {
-            mca_pml_cm_send_request_t* sendreq = 
-                (mca_pml_cm_send_request_t*) base_request;
-            MCA_PML_CM_SEND_REQUEST_PML_COMPLETE(sendreq);
-        }
-        break;
-    case MCA_PML_REQUEST_RECV:
-        {
-            mca_pml_cm_recv_request_t* recvreq = 
-                (mca_pml_cm_recv_request_t*) base_request;
-            MCA_PML_CM_RECV_REQUEST_PML_COMPLETE(recvreq);
-        }
-        break;
-    default:
-        break;
-    }
+    mca_pml_cm_send_request_t *base_request = 
+        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
+    MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_send_request_t*) base_request));
 }
+void
+mca_pml_cm_hvy_send_request_completion(struct mca_mtl_request_t *mtl_request)
+{
+    mca_pml_cm_send_request_t *base_request = 
+        (mca_pml_cm_send_request_t*) mtl_request->ompi_req;
+    MCA_PML_CM_HVY_SEND_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_send_request_t*) base_request));
+}
+
+
+
+void
+mca_pml_cm_thin_recv_request_completion(struct mca_mtl_request_t *mtl_request)
+{
+    mca_pml_cm_request_t *base_request = 
+        (mca_pml_cm_request_t*) mtl_request->ompi_req;
+    MCA_PML_CM_THIN_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_thin_recv_request_t*) base_request));
+}
+
+void
+mca_pml_cm_hvy_recv_request_completion(struct mca_mtl_request_t *mtl_request)
+{
+    mca_pml_cm_request_t *base_request = 
+        (mca_pml_cm_request_t*) mtl_request->ompi_req;
+    MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(((mca_pml_cm_hvy_recv_request_t*) base_request));
+}
+

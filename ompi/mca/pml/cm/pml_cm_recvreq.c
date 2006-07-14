@@ -23,16 +23,35 @@
 
 
 static int
-mca_pml_cm_recv_request_free(struct ompi_request_t** request)
+mca_pml_cm_thin_recv_request_free(struct ompi_request_t** request)
 {
-    mca_pml_cm_recv_request_t* recvreq = *(mca_pml_cm_recv_request_t**)request; 
+    mca_pml_cm_request_t* recvreq = *(mca_pml_cm_request_t**)request; 
 
-    assert( false == recvreq->req_recv.req_base.req_free_called );
+    assert( false == recvreq->req_free_called );
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
-    recvreq->req_recv.req_base.req_free_called = true;
-    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        MCA_PML_CM_RECV_REQUEST_RETURN( recvreq );
+    recvreq->req_free_called = true;
+    if( true == recvreq->req_pml_complete ) {
+        MCA_PML_CM_THIN_RECV_REQUEST_RETURN((mca_pml_cm_thin_recv_request_t*)  recvreq );
+    }
+
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);
+
+    *request = MPI_REQUEST_NULL;
+    return OMPI_SUCCESS;
+} 
+
+static int
+mca_pml_cm_hvy_recv_request_free(struct ompi_request_t** request)
+{
+    mca_pml_cm_request_t* recvreq = *(mca_pml_cm_request_t**)request; 
+    
+    assert( false == recvreq->req_free_called );
+    
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    recvreq->req_free_called = true;
+    if( true == recvreq->req_pml_complete ) {
+        MCA_PML_CM_HVY_RECV_REQUEST_RETURN((mca_pml_cm_hvy_recv_request_t*)  recvreq );
     }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
@@ -43,25 +62,35 @@ mca_pml_cm_recv_request_free(struct ompi_request_t** request)
 
 
 static void 
-recvreq_construct(mca_pml_cm_recv_request_t* recvreq)
+mca_pml_cm_thin_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 {
     recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;
-    recvreq->req_mtl.completion_callback = mca_pml_cm_request_completion;
+    recvreq->req_mtl.completion_callback = mca_pml_cm_thin_recv_request_completion;
 
-    recvreq->req_recv.req_base.req_ompi.req_free = mca_pml_cm_recv_request_free;
-    recvreq->req_recv.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+    recvreq->req_base.req_ompi.req_free = mca_pml_cm_thin_recv_request_free;
+    recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
 }
 
 
 static void 
-recvreq_destruct(mca_pml_cm_recv_request_t* recvreq)
+mca_pml_cm_hvy_recv_request_construct(mca_pml_cm_hvy_recv_request_t* recvreq)
 {
-    recvreq->req_mtl.ompi_req = NULL;
-    recvreq->req_mtl.completion_callback = NULL;
+    recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;
+    recvreq->req_mtl.completion_callback = mca_pml_cm_hvy_recv_request_completion;
+
+    recvreq->req_base.req_ompi.req_free = mca_pml_cm_hvy_recv_request_free;
+    recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
 }
 
 
-OBJ_CLASS_INSTANCE(mca_pml_cm_recv_request_t,
-                   mca_pml_base_recv_request_t,
-                   recvreq_construct,
-                   recvreq_destruct);
+
+OBJ_CLASS_INSTANCE(mca_pml_cm_thin_recv_request_t,
+                   mca_pml_cm_request_t,
+                   mca_pml_cm_thin_recv_request_construct,
+                   NULL);
+
+
+OBJ_CLASS_INSTANCE(mca_pml_cm_hvy_recv_request_t,
+                   mca_pml_cm_request_t,
+                   mca_pml_cm_hvy_recv_request_construct,
+                   NULL);

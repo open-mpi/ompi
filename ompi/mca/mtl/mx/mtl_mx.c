@@ -203,6 +203,19 @@ int ompi_mtl_mx_progress( void ) {
                 if(mtl_mx_request->free_after) { 
                     free(mtl_mx_request->mx_segment[0].segment_ptr);
                 }
+                switch (mx_status.code) {
+                case MX_STATUS_SUCCESS:
+                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
+                        OMPI_SUCCESS;
+                    break;
+                case MX_STATUS_TRUNCATED:
+                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
+                        MPI_ERR_TRUNCATE;
+                    break;
+                default:
+                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
+                        MPI_ERR_INTERN;
+                }
                 mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
             }
             if(OMPI_MTL_MX_IRECV == mtl_mx_request->type) { 

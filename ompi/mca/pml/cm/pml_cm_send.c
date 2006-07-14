@@ -28,14 +28,17 @@ mca_pml_cm_isend_init(void* buf,
                         ompi_request_t** request)
 {
     int ret;
-    mca_pml_cm_send_request_t *sendreq;
-
-    MCA_PML_CM_SEND_REQUEST_ALLOC(comm, dst, sendreq, ret);
+    mca_pml_cm_hvy_send_request_t *sendreq;
+    ompi_proc_t* ompi_proc;
+    
+    MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
     if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
     
-    MCA_PML_CM_SEND_REQUEST_INIT(sendreq, buf, count,
-                                 datatype, dst, tag, comm, 
-                                 sendmode, false, true);
+    MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst, 
+                                     datatype, sendmode, true, false, buf, count);
+    
+    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND;
+    
     *request = (ompi_request_t*) sendreq;
 
     return OMPI_SUCCESS;
@@ -53,19 +56,60 @@ mca_pml_cm_isend(void* buf,
                    ompi_request_t** request)
 {
     int ret;
-    mca_pml_cm_send_request_t *sendreq;
-
-    MCA_PML_CM_SEND_REQUEST_ALLOC(comm, dst, sendreq, ret);
-    if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
-    
-    MCA_PML_CM_SEND_REQUEST_INIT(sendreq, buf, count,
-                                 datatype, dst, tag, comm, 
-                                 sendmode, false, false);
-
-    MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
-
-    if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) sendreq;
-
+  
+    if(sendmode == MCA_PML_BASE_SEND_BUFFERED ) { 
+        mca_pml_cm_hvy_send_request_t* sendreq;
+        ompi_proc_t* ompi_proc;
+        
+        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
+        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        
+        MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, 
+                                         ompi_proc, 
+                                         comm, 
+                                         tag, 
+                                         dst, 
+                                         datatype,
+                                         sendmode,
+                                         false,
+                                         false,
+                                         buf, 
+                                         count);
+        
+        MCA_PML_CM_HVY_SEND_REQUEST_START( sendreq, ret);
+        
+        if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) sendreq;
+       
+        
+    } else { 
+        mca_pml_cm_thin_send_request_t* sendreq;
+        ompi_proc_t* ompi_proc;
+        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
+        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        
+        MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq, 
+                                          ompi_proc, 
+                                          comm, 
+                                          tag, 
+                                          dst, 
+                                          datatype,
+                                          sendmode,
+                                          buf, 
+                                          count);
+        
+        MCA_PML_CM_THIN_SEND_REQUEST_START(
+                                           sendreq, 
+                                           comm,
+                                           tag,
+                                           dst,
+                                           sendmode,
+                                           false, 
+                                           ret);
+        
+        if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) sendreq;
+        
+    }
+       
     return ret;
 }
 
@@ -80,62 +124,95 @@ mca_pml_cm_send(void *buf,
                 ompi_communicator_t* comm)
 {
     int ret;
-    mca_pml_cm_send_request_t *sendreq;
-
-    MCA_PML_CM_SEND_REQUEST_ALLOC(comm, dst, sendreq, ret);
-    if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
-    
-    MCA_PML_CM_SEND_REQUEST_INIT(sendreq, buf, count,
-                                 datatype, dst, tag, comm, 
-                                 sendmode, true, false);
-
-    if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED ) { 
-        MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
+    if(sendmode == MCA_PML_BASE_SEND_BUFFERED) { 
+        mca_pml_cm_hvy_send_request_t *sendreq;
+        ompi_proc_t * ompi_proc;
+        MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
+        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        
+        MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq,
+                                         ompi_proc,
+                                         comm,
+                                         tag,
+                                         dst, 
+                                         datatype,
+                                         sendmode,
+                                         false,
+                                         false,
+                                         buf,
+                                         count);
+        MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret);
         if (OMPI_SUCCESS != ret) {
-            MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
+            MCA_PML_CM_HVY_SEND_REQUEST_RETURN(sendreq);
             return ret;
         }
-    } else if (NULL == ompi_mtl->mtl_send) {
-        MCA_PML_CM_SEND_REQUEST_START(sendreq, ret);
-        if (OMPI_SUCCESS != ret) {
-            MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
-            return ret;
-        }
-    
-        if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
-        /* give up and sleep until completion */
-            if (opal_using_threads()) {
-                opal_mutex_lock(&ompi_request_lock);
-                ompi_request_waiting++;
-                while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                    opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-                ompi_request_waiting--;
-                opal_mutex_unlock(&ompi_request_lock);
-            } else {
-                ompi_request_waiting++;
-                while (sendreq->req_send.req_base.req_ompi.req_complete == false)
-                    opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
-                ompi_request_waiting--;
+        
+        ompi_request_free( (ompi_request_t**)&sendreq );
+
+        return ret;
+    } else { 
+        mca_pml_cm_thin_send_request_t *sendreq;
+        ompi_proc_t * ompi_proc;
+        MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
+        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        
+        MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq,
+                                          ompi_proc,
+                                          comm,
+                                          tag,
+                                          dst, 
+                                          datatype,
+                                          sendmode,
+                                          buf,
+                                          count);
+        if (NULL == ompi_mtl->mtl_send) {
+            MCA_PML_CM_THIN_SEND_REQUEST_START(sendreq,
+                                               comm,
+                                               tag, 
+                                               dst,
+                                               sendmode,
+                                               false,
+                                               ret);
+            if (OMPI_SUCCESS != ret) {
+                MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq);
+                return ret;
             }
+            
+            if (sendreq->req_send.req_base.req_ompi.req_complete == false) {
+                /* give up and sleep until completion */
+                if (opal_using_threads()) {
+                    opal_mutex_lock(&ompi_request_lock);
+                    ompi_request_waiting++;
+                    while (sendreq->req_send.req_base.req_ompi.req_complete == false)
+                        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                    ompi_request_waiting--;
+                    opal_mutex_unlock(&ompi_request_lock);
+                } else {
+                    ompi_request_waiting++;
+                    while (sendreq->req_send.req_base.req_ompi.req_complete == false)
+                        opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
+                    ompi_request_waiting--;
+                }
+            }
+        } else {
+            MCA_PML_CM_SEND_REQUEST_START_SETUP((&sendreq->req_send));
+            if (OMPI_SUCCESS != ret) {
+                MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq);
+                return ret;
+            }
+            
+            ret = OMPI_MTL_CALL(send(ompi_mtl,                             
+                                     comm, 
+                                     dst, 
+                                     tag,  
+                                     &sendreq->req_send.req_base.req_convertor,
+                                     sendmode));
+            MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
-    } else {
-        MCA_PML_CM_SEND_REQUEST_START_SETUP(sendreq, ret);
-        if (OMPI_SUCCESS != ret) {
-            MCA_PML_CM_SEND_REQUEST_RETURN(sendreq);
-            return ret;
-        }
-
-        ret = OMPI_MTL_CALL(send(ompi_mtl,                             
-                                 sendreq->req_send.req_base.req_comm, 
-                                 sendreq->req_send.req_base.req_peer, 
-                                 sendreq->req_send.req_base.req_tag,  
-                                 &sendreq->req_send.req_convertor,
-                                 sendreq->req_send.req_send_mode));
-        MCA_PML_CM_SEND_REQUEST_PML_COMPLETE(sendreq);
+        
+        ompi_request_free( (ompi_request_t**)&sendreq );
+        
+        return ret;
     }
-
-    ompi_request_free( (ompi_request_t**)&sendreq );
-
-    return ret;
+    return OMPI_ERROR;
 }
-
