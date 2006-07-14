@@ -50,9 +50,10 @@ version 1.0.
   across multiple ORTE universes.
 - Fix gm resource leak.
 - More latency reduction throughout the code base.
-- Make the TM PLS (PBS Pro, Torque, Open PBS) more scalable.  Thanks
-  to the Thunderbird crew at Sandia National Laboratories for access
-  to testing facilities to make this happen.
+- Make the TM PLS (PBS Pro, Torque, Open PBS) more scalable, and fix
+  some latent bugs that crept in v1.1.  Thanks to the Thunderbird crew
+  at Sandia National Laboratories and Martin Schaffoner for access to
+  testing facilities to make this happen.
 - Added new command line options to mpirun:
   --nolocal: Do not run any MPI processes on the same node as mpirun
     (compatibility with the OSC mpiexec launcher)
