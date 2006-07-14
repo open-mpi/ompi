@@ -19,11 +19,13 @@
 #include "ompi_config.h"
 
 #include "ompi/mca/mtl/mtl.h"
-#include "mtl_mx.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
+
+#include "mtl_mx.h"
+#include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h"
 #include "mtl_mx_request.h"
 

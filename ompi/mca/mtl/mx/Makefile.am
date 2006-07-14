@@ -16,10 +16,7 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
 EXTRA_DIST = post_configure.sh
-
 
 AM_CPPFLAGS = $(mtl_mx_CPPFLAGS)
 
@@ -33,7 +30,8 @@ mtl_mx_sources = \
 	       mtl_mx_probe.c \
 	       mtl_mx_recv.c \
 	       mtl_mx_request.h \
-	       mtl_mx_send.c
+	       mtl_mx_send.c \
+	       mtl_mx_types.h
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la

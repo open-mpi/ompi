@@ -25,6 +25,7 @@
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
 
 #include "mtl_mx.h"
+#include "mtl_mx_types.h"
 #include "mtl_mx_request.h"
 
 int

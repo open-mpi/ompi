@@ -27,6 +27,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "opal/util/output.h"
 #include "mtl_mx.h"
+#include "mtl_mx_types.h"
 #include "mtl_mx_endpoint.h" 
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
