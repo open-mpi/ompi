@@ -30,9 +30,11 @@ struct mca_mtl_request_t;
 struct ompi_pml_cm_t {
     mca_pml_base_module_t super;
     /** free list of send request structures */
-    ompi_free_list_t cm_send_requests;
+    ompi_free_list_t cm_thin_send_requests;
+    ompi_free_list_t cm_hvy_send_requests;
     /** free list of recv request structures */
-    ompi_free_list_t cm_recv_requests;
+    ompi_free_list_t cm_thin_recv_requests;
+    ompi_free_list_t cm_hvy_recv_requests;
 };
 typedef struct ompi_pml_cm_t ompi_pml_cm_t;
 extern ompi_pml_cm_t ompi_pml_cm;
@@ -116,7 +118,11 @@ extern int mca_pml_cm_dump(struct ompi_communicator_t* comm,
 
 extern int mca_pml_cm_cancel(struct ompi_request_t *request, int flag);
 
-extern void mca_pml_cm_request_completion(struct mca_mtl_request_t *mtl_request);
+extern void mca_pml_cm_thin_send_request_completion(struct mca_mtl_request_t *mtl_request);
+extern void mca_pml_cm_hvy_send_request_completion(struct mca_mtl_request_t *mtl_request);
+
+extern void mca_pml_cm_thin_recv_request_completion(struct mca_mtl_request_t *mtl_request);
+extern void mca_pml_cm_hvy_recv_request_completion(struct mca_mtl_request_t *mtl_request);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

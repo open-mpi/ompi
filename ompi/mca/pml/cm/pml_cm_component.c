@@ -99,19 +99,37 @@ mca_pml_cm_component_init(int* priority,
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
 
     /* BWB - FIX ME - add mca parameters for free list water marks */
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_send_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_send_requests,
-                        sizeof(mca_pml_cm_send_request_t) +
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_send_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_thin_send_requests,
+                        sizeof(mca_pml_cm_thin_send_request_t) +
                         ompi_mtl->mtl_request_size,
-                        OBJ_CLASS(mca_pml_cm_send_request_t),
+                        OBJ_CLASS(mca_pml_cm_thin_send_request_t),
                         1, -1, 1,
                         NULL);
 
-    OBJ_CONSTRUCT(&ompi_pml_cm.cm_recv_requests, ompi_free_list_t);
-    ompi_free_list_init(&ompi_pml_cm.cm_recv_requests,
-                        sizeof(mca_pml_cm_recv_request_t) + 
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_send_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_hvy_send_requests,
+                        sizeof(mca_pml_cm_hvy_send_request_t) +
                         ompi_mtl->mtl_request_size,
-                        OBJ_CLASS(mca_pml_cm_recv_request_t),
+                        OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
+                        1, -1, 1,
+                        NULL);
+
+
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_recv_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_thin_recv_requests,
+                        sizeof(mca_pml_cm_thin_recv_request_t) + 
+                        ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_thin_recv_request_t),
+                        1, -1, 1,
+                        NULL);
+
+
+    OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_recv_requests, ompi_free_list_t);
+    ompi_free_list_init(&ompi_pml_cm.cm_hvy_recv_requests,
+                        sizeof(mca_pml_cm_hvy_recv_request_t) + 
+                        ompi_mtl->mtl_request_size,
+                        OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
                         1, -1, 1,
                         NULL);
 
@@ -132,8 +150,10 @@ mca_pml_cm_component_fini(void)
     /* shut down buffered send code */
     mca_pml_base_bsend_fini();
 
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_send_requests);
-    OBJ_DESTRUCT(&ompi_pml_cm.cm_recv_requests);
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_thin_send_requests);
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_hvy_send_requests);
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_thin_recv_requests);
+    OBJ_DESTRUCT(&ompi_pml_cm.cm_hvy_recv_requests);
 
     if (NULL != ompi_mtl && NULL != ompi_mtl->mtl_finalize) {
         return ompi_mtl->mtl_finalize(ompi_mtl);

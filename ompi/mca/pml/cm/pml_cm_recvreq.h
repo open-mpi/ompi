@@ -19,16 +19,33 @@
 #ifndef PML_CM_RECVREQ_H
 #define PML_CM_RECVREQ_H
 
+#include "pml_cm_request.h"
 #include "ompi/mca/pml/base/pml_base_recvreq.h"
 #include "ompi/mca/mtl/mtl.h"
 
-struct mca_pml_cm_recv_request_t {
-    mca_pml_base_recv_request_t req_recv;
-    mca_mtl_request_t req_mtl;
+struct mca_pml_cm_thin_recv_request_t {
+    mca_pml_cm_request_t req_base;
+    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
 };
-typedef struct mca_pml_cm_recv_request_t mca_pml_cm_recv_request_t;
-OBJ_CLASS_DECLARATION(mca_pml_cm_recv_request_t);
+typedef struct mca_pml_cm_thin_recv_request_t mca_pml_cm_thin_recv_request_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
 
+struct mca_pml_cm_hvy_recv_request_t {
+    mca_pml_cm_request_t req_base;
+    void *req_addr;                       /**< pointer to application buffer */
+    size_t req_count;                     /**< count of user datatype elements */
+    int32_t req_peer;                     /**< peer process - rank w/in this communicator */
+    int32_t req_tag;                      /**< user defined tag */
+    struct ompi_communicator_t *req_comm; /**< communicator pointer */
+    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
+    void *req_buff;                  /**< pointer to send buffer - may not be application buffer */
+    size_t req_bytes_packed;         /**< packed size of a message given the datatype and count */
+    bool req_blocking;
+    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
+}; 
+typedef struct mca_pml_cm_hvy_recv_request_t mca_pml_cm_hvy_recv_request_t;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_recv_request_t);
 
 /**
  *  Allocate a recv request from the modules free list.
@@ -36,11 +53,18 @@ OBJ_CLASS_DECLARATION(mca_pml_cm_recv_request_t);
  *  @param rc (OUT)  OMPI_SUCCESS or error status on failure.
  *  @return          Receive request.
  */
-#define MCA_PML_CM_RECV_REQUEST_ALLOC(recvreq, rc)                   \
+#define MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, rc)              \
 do {                                                                 \
     ompi_free_list_item_t*item;                                      \
-    OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_recv_requests, item, rc);     \
-    recvreq = (mca_pml_cm_recv_request_t*) item;                     \
+    OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_thin_recv_requests, item, rc);   \
+    recvreq = (mca_pml_cm_thin_recv_request_t*) item;                   \
+ } while (0)
+
+#define MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq, rc)                  \
+do {                                                                    \
+    ompi_free_list_item_t*item;                                         \
+    OMPI_FREE_LIST_GET(&ompi_pml_cm.cm_hvy_recv_requests, item, rc);    \
+    recvreq = (mca_pml_cm_hvy_recv_request_t*) item;                    \
  } while (0)
 
 
@@ -56,40 +80,70 @@ do {                                                                 \
  * @param comm (IN)          Communicator.
  * @param persistent (IN)    Is this a ersistent request.
  */
-#define MCA_PML_CM_RECV_REQUEST_INIT( request,                          \
-                                      addr,                             \
-                                      count,                            \
-                                      datatype,                         \
-                                      src,                              \
-                                      tag,                              \
-                                      comm,                             \
-                                      persistent)                       \
+#define MCA_PML_CM_THIN_RECV_REQUEST_INIT( request,                     \
+                                           ompi_proc,                   \
+                                           comm,                        \
+                                           tag,                         \
+                                           src,                         \
+                                           datatype,                    \
+                                           addr,                        \
+                                           count )                      \
 do {                                                                    \
-    MCA_PML_BASE_RECV_REQUEST_INIT( &(request)->req_recv,               \
-                                    addr,                               \
-                                    count,                              \
-                                    datatype,                           \
-                                    src,                                \
-                                    tag,                                \
-                                    comm,                               \
-                                    persistent);                        \
-    /* BWB - fix me - need real remote proc */                          \
-    if (MPI_ANY_SOURCE == src) {                                        \
-        (request)->req_recv.req_base.req_proc =                         \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, false);            \
+    (request)->req_base.req_pml_complete = false;                       \
+    (request)->req_base.req_free_called = false;                        \
+                                                                        \
+    if( MPI_ANY_SOURCE == src ) {                                       \
+        ompi_proc =                                                     \
             comm->c_pml_procs[comm->c_my_rank]->proc_ompi;              \
     } else {                                                            \
-        (request)->req_recv.req_base.req_proc =                         \
+        ompi_proc =                                                     \
             comm->c_pml_procs[src]->proc_ompi;                          \
     }                                                                   \
-                                                                        \
     ompi_convertor_copy_and_prepare_for_recv(                           \
-             (request)->req_recv.req_base.req_proc->proc_convertor,     \
-             (request)->req_recv.req_base.req_datatype,                 \
-             (request)->req_recv.req_base.req_count,                    \
-             (request)->req_recv.req_base.req_addr,                     \
-             0,                                                         \
-             &(request)->req_recv.req_convertor );                      \
+                                  ompi_proc->proc_convertor,            \
+                                  datatype,                             \
+                                  count,                                \
+                                  addr,                                 \
+                                  0,                                    \
+                                  &(request)->req_base.req_convertor ); \
 } while(0)
+
+#define MCA_PML_CM_HVY_RECV_REQUEST_INIT( request,                      \
+                                          ompi_proc,                    \
+                                          comm,                         \
+                                          tag,                          \
+                                          src,                          \
+                                          datatype,                     \
+                                          addr,                         \
+                                          count,                        \
+                                          persistent)                   \
+do {                                                                    \
+    OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
+    (request)->req_base.req_pml_complete = (persistent ? true : false); \
+    (request)->req_base.req_free_called = false;                        \
+    request->req_comm = comm;                                           \
+    request->req_tag = tag;                                             \
+    request->req_peer = src;                                            \
+    request->req_datatype = datatype;                                   \
+    request->req_addr = addr;                                           \
+    request->req_count = count;                                         \
+                                                                        \
+    if( MPI_ANY_SOURCE == src ) {                                       \
+        ompi_proc =                                                     \
+            comm->c_pml_procs[comm->c_my_rank]->proc_ompi;              \
+    } else {                                                            \
+        ompi_proc =                                                     \
+            comm->c_pml_procs[src]->proc_ompi;                          \
+    }                                                                   \
+    ompi_convertor_copy_and_prepare_for_recv(                           \
+                                  ompi_proc->proc_convertor,            \
+                                  datatype,                             \
+                                  count,                                \
+                                  addr,                                 \
+                                  0,                                    \
+                                  &(request)->req_base.req_convertor ); \
+ } while(0)
 
 
 /**
@@ -98,16 +152,50 @@ do {                                                                    \
  * @param request  Receive request.
  * @return         OMPI_SUCESS or error status on failure.
  */
-#define MCA_PML_CM_RECV_REQUEST_START(request, ret)                     \
+#define MCA_PML_CM_THIN_RECV_REQUEST_START(request, comm, tag, src, ret) \
 do {                                                                    \
     /* init/re-init the request */                                      \
-    MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );           \
+    request->req_base.req_pml_complete = false;                         \
+    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
+                                                                        \
+    /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
+     * request. This field is used if cancelled to find out if the request \
+     * has been matched or not.                                         \
+     */                                                                 \
+    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
+    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
+    request->req_base.req_ompi.req_status._cancelled = 0;               \
     ret = OMPI_MTL_CALL(irecv(ompi_mtl,                                 \
-                             recvreq->req_recv.req_base.req_comm,       \
-                             recvreq->req_recv.req_base.req_peer,       \
-                             recvreq->req_recv.req_base.req_tag,        \
-                             &recvreq->req_recv.req_convertor,          \
-                             &recvreq->req_mtl));                       \
+                              comm,                                     \
+                              src,                                      \
+                              tag,                                      \
+                              &recvreq->req_base.req_convertor,         \
+                              &recvreq->req_mtl));                      \
+} while (0)
+
+
+#define MCA_PML_CM_HVY_RECV_REQUEST_START(request, ret)                 \
+do {                                                                    \
+/*     opal_output(0, "posting hvy request %d\n", request);                */ \
+    /* init/re-init the request */                                      \
+    request->req_base.req_pml_complete = false;                         \
+    request->req_base.req_ompi.req_complete = false;                    \
+    request->req_base.req_ompi.req_state = OMPI_REQUEST_ACTIVE;         \
+                                                                        \
+    /* always set the req_status.MPI_TAG to ANY_TAG before starting the \
+     * request. This field is used if cancelled to find out if the request \
+     * has been matched or not.                                         \
+     */                                                                 \
+    request->req_base.req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;       \
+    request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
+    request->req_base.req_ompi.req_status._cancelled = 0;               \
+    ret = OMPI_MTL_CALL(irecv(ompi_mtl,                                 \
+                              request->req_comm,                        \
+                              request->req_peer,                        \
+                              request->req_tag,                         \
+                              &recvreq->req_base.req_convertor,         \
+                              &recvreq->req_mtl));                      \
 } while (0)
 
 
@@ -116,10 +204,33 @@ do {                                                                    \
  *
  *  @param recvreq (IN)  Receive request.
  */
-#define MCA_PML_CM_RECV_REQUEST_MPI_COMPLETE( recvreq )                 \
+#define MCA_PML_CM_THIN_RECV_REQUEST_MPI_COMPLETE( recvreq )            \
 do {                                                                    \
-    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_recv.req_base.req_ompi) ); \
+    MCA_PML_BASE_REQUEST_MPI_COMPLETE(  &(recvreq->req_base.req_ompi) ); \
  } while (0)
+    
+
+/**
+ *  Return a recv request to the modules free list.
+ *
+ *  @param recvreq (IN)  Receive request.
+ */
+#define MCA_PML_CM_THIN_RECV_REQUEST_PML_COMPLETE(recvreq)              \
+do {                                                                    \
+    assert( false == recvreq->req_base.req_pml_complete );              \
+                                                                        \
+    OPAL_THREAD_LOCK(&ompi_request_lock);                               \
+                                                                        \
+    if( true == recvreq->req_base.req_free_called ) {                   \
+        MCA_PML_CM_THIN_RECV_REQUEST_RETURN( recvreq );                 \
+    } else {                                                            \
+        recvreq->req_base.req_pml_complete = true;                      \
+        MCA_PML_BASE_REQUEST_MPI_COMPLETE( &(recvreq->req_base.req_ompi) ); \
+    }                                                                   \
+    OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
+ } while(0)
+
+
 
 
 /**
@@ -127,23 +238,23 @@ do {                                                                    \
  *
  *  @param recvreq (IN)  Receive request.
  */
-#define MCA_PML_CM_RECV_REQUEST_PML_COMPLETE(recvreq)                   \
+#define MCA_PML_CM_HVY_RECV_REQUEST_PML_COMPLETE(recvreq)               \
 do {                                                                    \
-    assert( false == recvreq->req_recv.req_base.req_pml_complete );     \
+    assert( false == recvreq->req_base.req_pml_complete );              \
                                                                         \
     OPAL_THREAD_LOCK(&ompi_request_lock);                               \
                                                                         \
-    if( true == recvreq->req_recv.req_base.req_free_called ) {          \
-        MCA_PML_CM_RECV_REQUEST_RETURN( recvreq );                      \
+    if( true == recvreq->req_base.req_free_called ) {                   \
+        MCA_PML_CM_HVY_RECV_REQUEST_RETURN( recvreq );                  \
     } else {                                                            \
         /* initialize request status */                                 \
-        if(recvreq->req_recv.req_base.req_ompi.req_persistent) {        \
+        if(recvreq->req_base.req_ompi.req_persistent) {                 \
             /* rewind convertor */                                      \
             size_t offset = 0;                                          \
-            ompi_convertor_set_position(&recvreq->req_recv.req_convertor, &offset); \
+            ompi_convertor_set_position(&recvreq->req_base.req_convertor, &offset); \
         }                                                               \
-        recvreq->req_recv.req_base.req_pml_complete = true;             \
-        MCA_PML_CM_RECV_REQUEST_MPI_COMPLETE( recvreq );                \
+        recvreq->req_base.req_pml_complete = true;                      \
+        MCA_PML_BASE_REQUEST_MPI_COMPLETE(  &(recvreq->req_base.req_ompi) ); \
     }                                                                   \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                             \
  } while(0)
@@ -152,11 +263,23 @@ do {                                                                    \
 /**
  *  Free the PML receive request
  */
-#define MCA_PML_CM_RECV_REQUEST_RETURN(recvreq)                \
+#define MCA_PML_CM_HVY_RECV_REQUEST_RETURN(recvreq)            \
 {                                                              \
-    MCA_PML_BASE_RECV_REQUEST_FINI(&(recvreq)->req_recv);      \
-    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_recv_requests,      \
+    OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
+    ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
+    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_hvy_recv_requests,      \
                            (ompi_free_list_item_t*)(recvreq)); \
+}
+
+/**
+ *  Free the PML receive request
+ */
+#define MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq)           \
+{                                                              \
+    OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
+    ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
+    OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_thin_recv_requests,          \
+                           (ompi_free_list_item_t*)(recvreq));          \
 }
 
 

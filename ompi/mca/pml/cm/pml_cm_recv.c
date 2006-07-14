@@ -21,21 +21,25 @@
 
 int
 mca_pml_cm_irecv_init(void *addr,
-                        size_t count,
-                        ompi_datatype_t * datatype,
-                        int src,
-                        int tag,
-                        struct ompi_communicator_t *comm,
-                        struct ompi_request_t **request)
+                      size_t count,
+                      ompi_datatype_t * datatype,
+                      int src,
+                      int tag,
+                      struct ompi_communicator_t *comm,
+                      struct ompi_request_t **request)
 {
     int ret;
-    mca_pml_cm_recv_request_t *recvreq;
-
-    MCA_PML_CM_RECV_REQUEST_ALLOC(recvreq, ret);
+    mca_pml_cm_hvy_recv_request_t *recvreq;
+    ompi_proc_t* ompi_proc;
+    
+    MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq, ret);
     if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
     
-    MCA_PML_CM_RECV_REQUEST_INIT(recvreq, addr, count,
-                                 datatype, src, tag, comm, true);
+    MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src, 
+                                     datatype, addr, count, true); 
+    
+    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV;
+    
     *request = (ompi_request_t*) recvreq;
 
     return OMPI_SUCCESS;
@@ -44,23 +48,30 @@ mca_pml_cm_irecv_init(void *addr,
 
 int
 mca_pml_cm_irecv(void *addr,
-                   size_t count,
-                   ompi_datatype_t * datatype,
-                   int src,
-                   int tag,
-                   struct ompi_communicator_t *comm,
-                   struct ompi_request_t **request)
+                 size_t count,
+                 ompi_datatype_t * datatype,
+                 int src,
+                 int tag,
+                 struct ompi_communicator_t *comm,
+                 struct ompi_request_t **request)
 {
     int ret;
-    mca_pml_cm_recv_request_t *recvreq;
-
-    MCA_PML_CM_RECV_REQUEST_ALLOC(recvreq, ret);
+    mca_pml_cm_thin_recv_request_t *recvreq;
+    ompi_proc_t* ompi_proc;
+    
+    MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
     if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
     
-    MCA_PML_CM_RECV_REQUEST_INIT(recvreq, addr, count,
-                                 datatype, src, tag, comm, false);
-
-    MCA_PML_CM_RECV_REQUEST_START(recvreq, ret);
+    MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
+                                      ompi_proc,
+                                      comm,
+                                      tag,
+                                      src,
+                                      datatype,
+                                      addr,
+                                      count);
+    
+    MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
 
     if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) recvreq;
 
@@ -69,7 +80,7 @@ mca_pml_cm_irecv(void *addr,
 
 
 int
-mca_pml_cm_recv(void *buf,
+mca_pml_cm_recv(void *addr,
                 size_t count,
                 ompi_datatype_t * datatype,
                 int src,
@@ -78,41 +89,49 @@ mca_pml_cm_recv(void *buf,
                 ompi_status_public_t * status)
 {
     int ret;
-    mca_pml_cm_recv_request_t *recvreq;
-
-    MCA_PML_CM_RECV_REQUEST_ALLOC(recvreq, ret);
+    mca_pml_cm_thin_recv_request_t *recvreq;
+    ompi_proc_t* ompi_proc;
+    
+    MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
     if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
 
-    MCA_PML_CM_RECV_REQUEST_INIT(recvreq, buf, count,
-                                 datatype, src, tag, comm, false);
-
-    MCA_PML_CM_RECV_REQUEST_START(recvreq, ret);
+    MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
+                                      ompi_proc,
+                                      comm, 
+                                      tag,
+                                      src,
+                                      datatype,
+                                      addr,
+                                      count);
+    
+    
+    MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
     if (OMPI_SUCCESS != ret) {
         /* BWB - XXX - need cleanup of request here */
-        MCA_PML_CM_RECV_REQUEST_RETURN(recvreq);
+        MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);
     }
 
-    if (recvreq->req_recv.req_base.req_ompi.req_complete == false) {
+    if (recvreq->req_base.req_ompi.req_complete == false) {
         /* give up and sleep until completion */
         if (opal_using_threads()) {
             opal_mutex_lock(&ompi_request_lock);
             ompi_request_waiting++;
-            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
+            while (recvreq->req_base.req_ompi.req_complete == false)
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
             opal_mutex_unlock(&ompi_request_lock);
         } else {
             ompi_request_waiting++;
-            while (recvreq->req_recv.req_base.req_ompi.req_complete == false)
+            while (recvreq->req_base.req_ompi.req_complete == false)
                 opal_condition_wait(&ompi_request_cond, &ompi_request_lock);
             ompi_request_waiting--;
         }
     }
 
     if (NULL != status) {  /* return status */
-        *status = recvreq->req_recv.req_base.req_ompi.req_status;
+        *status = recvreq->req_base.req_ompi.req_status;
     }
-    ret = recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR;
+    ret = recvreq->req_base.req_ompi.req_status.MPI_ERROR;
     ompi_request_free( (ompi_request_t**)&recvreq );
 
     return ret;

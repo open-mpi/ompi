@@ -283,6 +283,57 @@ int mca_pml_base_bsend_request_alloc(ompi_request_t* request)
     return OMPI_SUCCESS;
 }
 
+/* 
+ * allocate buffer
+ */
+
+void*  mca_pml_base_bsend_request_alloc_buf( size_t length )
+{
+    void* buf = NULL;
+    /* has a buffer been provided */
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+    if(NULL == mca_pml_bsend_addr) {
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        return NULL;
+    }
+
+    /* allocate a buffer to hold packed message */
+    buf = mca_pml_bsend_allocator->alc_alloc(
+        mca_pml_bsend_allocator, length, 0, NULL);
+    if(NULL == buf) {
+        /* release resources when request is freed */
+        OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+        return NULL;
+    }
+
+    /* increment count of pending requests */
+    mca_pml_bsend_count++;
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    
+    return buf;
+}
+
+
+/*
+ *  Request completed - free buffer and decrement pending count 
+ */
+int mca_pml_base_bsend_request_free(void* addr)
+{
+    /* remove from list of pending requests */
+    OPAL_THREAD_LOCK(&mca_pml_bsend_mutex);
+
+    /* free buffer */
+    mca_pml_bsend_allocator->alc_free(mca_pml_bsend_allocator, addr);
+    
+    /* decrement count of buffered requests */
+    if(--mca_pml_bsend_count == 0)
+        opal_condition_signal(&mca_pml_bsend_condition);
+
+    OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
+    return OMPI_SUCCESS;
+}
+                                                                                                             
+
 
 /*
  *  Request completed - free buffer and decrement pending count 
