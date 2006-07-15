@@ -124,6 +124,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fix a problem in the launch system that could cause inconsistent
+  launch behavior, particularly when launching large jobs.
 - Require that the openib BTL find <sysfs/libsysfs.h>.  Thanks to Josh
   Aune for the suggestion.
 - Include updates to support the upcoming Autoconf 2.60 and Libtool
