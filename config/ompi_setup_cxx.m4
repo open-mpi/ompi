@@ -217,9 +217,20 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     OMPI_CXX_ABSOLUTE="`which $CXX`"
     AC_SUBST(OMPI_CXX_ABSOLUTE)
 
-    # make sure the compiler actually works, if not cross-compiling.
-    # Don't just use the AC macro so that we can have a pretty
-    # message.
-    OMPI_CHECK_COMPILER_WORKS([C++], [return 0], [], 
+    # Make sure that the C++ compiler both works and is actually a C++
+    # compiler (if not cross-compiling).  Don't just use the AC macro
+    # so that we can have a pretty message.  Do something here that
+    # should force the linking of C++-specific things (e.g., STL
+    # strings) so that we can force a hard check of compiling,
+    # linking, and running a C++ application Note that some C
+    # compilers, such as at least some versions of the GNU and Intel
+    # compilers, will detect that the file extension is ".cc" and
+    # therefore switch into a pseudo-C++ personality which works for
+    # *compiling*, but does not work for *linking*.  So in this test,
+    # we want to cover the entire spectrum (compiling, linking,
+    # running).
+
+    OMPI_CHECK_COMPILER_WORKS([C++], [#include <string>], 
+           [std::string foo = "Hello, world"; return 0], [], 
            [AC_MSG_ERROR([Could not run a simple C++ program.  Aborting.])])
 ])

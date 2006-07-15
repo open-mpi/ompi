@@ -10,24 +10,25 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_CHECK_COMPILER_WORKS(language, language_exit,
+# OMPI_CHECK_COMPILER_WORKS(language, headers, body,
 #            [action-if-found], [action-if-not-found])
 # ----------------------------------------------------
-# Try to compile and run a simple "exit(0)" application in
-# 'language'.  A warning is always printed if the application
-# fails to run.  Action-if-found is evaluated if the application
-# runs successfully (or compiles if cross-compiling), and
-# action-if-not-found is evaluated if the application fails to
-# run.
+# Try to compile and run a simple application in 'language'.  A
+# warning is always printed if the application fails to run.
+# Action-if-found is evaluated if the application runs successfully
+# (or compiles if cross-compiling), and action-if-not-found is
+# evaluated if the application fails to run.
 #
-# language-exit should be how to exit cleanly in 'language'.
-# You probably want exit(0) for C/C++ and empty for Fortran.
+# headers are any headers needed to compile the body (e.g., #include
+# statements), and body is the program to compile.  It should include
+# a clean exit from the application (e.g., "return 0" in C/C++, empty in
+# fortran).
 AC_DEFUN([OMPI_CHECK_COMPILER_WORKS],
 [   AS_VAR_PUSHDEF([lang_var], [ompi_cv_$1_works])
 
     AC_CACHE_CHECK([if $1 compiler works], lang_var,
         [AC_LANG_PUSH($1)
-         AC_RUN_IFELSE([AC_LANG_PROGRAM([], [$2])],
+         AC_RUN_IFELSE([AC_LANG_PROGRAM([$2], [$3])],
                        [AS_VAR_SET(lang_var, ["yes"])],
                        [AS_VAR_SET(lang_var, ["no"])],
                        [AS_VAR_SET(lang_var, ["cross compiling"])])
@@ -44,7 +45,7 @@ AC_DEFUN([OMPI_CHECK_COMPILER_WORKS],
 * available in the config.log file in this directory.
 **********************************************************************
 EOF
-           $4], [$3])
+           $5], [$4])
 
     AS_VAR_POPDEF([lang_var])dnl
 ])
