@@ -78,7 +78,8 @@ static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
 static int pls_tm_disconnect(void);
-static int pls_tm_start_proc(char *nodename, int argc, char **argv, char **env);
+static int pls_tm_start_proc(char *nodename, int argc, char **argv, 
+                             char **env, tm_event_t *event);
 static int pls_tm_check_path(char *exe, char **env);
 
 /*
@@ -114,6 +115,7 @@ pls_tm_launch(orte_jobid_t jobid)
     bool connected = false;
     int launched = 0, i; 
     char *bin_base = NULL, *lib_base = NULL;
+    tm_event_t *events = NULL;
     
    /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
@@ -142,6 +144,13 @@ pls_tm_launch(orte_jobid_t jobid)
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+    /* Allocate a bunch of TM events to use for tm_spawn()ing */
+    events = malloc(sizeof(tm_event_t) * num_nodes);
+    if (NULL == events) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
 
@@ -227,7 +236,6 @@ pls_tm_launch(orte_jobid_t jobid)
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in pls_rsh_module.c explaining all
        the rationale for how / why we're doing this. */
-
     lib_base = opal_basename(OPAL_LIBDIR);
     bin_base = opal_basename(OPAL_BINDIR);
 
@@ -368,7 +376,8 @@ pls_tm_launch(orte_jobid_t jobid)
                 }
             }
             
-            rc = pls_tm_start_proc(node->node_name, argc, argv, env);
+            rc = pls_tm_start_proc(node->node_name, argc, argv, env,
+                                   events + launched);
             if (ORTE_SUCCESS != rc) {
                 opal_output(0, "pls:tm: start_procs returned error %d", rc);
                 goto cleanup;
@@ -398,6 +407,9 @@ pls_tm_launch(orte_jobid_t jobid)
  cleanup:
     if (connected) {
         pls_tm_disconnect();
+    }
+    if (NULL != events) {
+        free(events);
     }
     
     while (NULL != (m_item = opal_list_remove_first(&mapping))) {
@@ -619,18 +631,18 @@ do_tm_resolve(char *hostname, tm_node_id *tnodeid)
 
 
 static int
-pls_tm_start_proc(char *nodename, int argc, char **argv, char **env)
+pls_tm_start_proc(char *nodename, int argc, char **argv, char **env,
+                  tm_event_t *event)
 {
     int ret;
     tm_node_id node_id;
     tm_task_id task_id;
-    tm_event_t event;
 
     /* get the tm node id for this node */
     ret = do_tm_resolve(nodename, &node_id);
     if (ORTE_SUCCESS != ret) return ret;
 
-    ret = tm_spawn(argc, argv, env, node_id, &task_id, &event);
+    ret = tm_spawn(argc, argv, env, node_id, &task_id, event);
     if (TM_SUCCESS != ret) return ORTE_ERROR;
 
     return ORTE_SUCCESS;
