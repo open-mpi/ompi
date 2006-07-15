@@ -73,7 +73,7 @@ fi
 # Don't just use the AC macro so that we can have a pretty
 # message.
 AS_IF([test $OMPI_WANT_F77_BINDINGS -eq 1],
-       [OMPI_CHECK_COMPILER_WORKS([Fortran 77], [], [], 
+       [OMPI_CHECK_COMPILER_WORKS([Fortran 77], [], [], [], 
            [AC_MSG_ERROR([Could not run a simple Fortran 77 program.  Aborting.])])])
 
 AC_DEFINE_UNQUOTED(OMPI_WANT_F77_BINDINGS, $OMPI_WANT_F77_BINDINGS,
