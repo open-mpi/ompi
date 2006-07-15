@@ -119,7 +119,9 @@ int orte_gpr_proxy_exec_compound_cmd(void)
         rc = ORTE_ERR_COMM_FAILURE;
 	    goto CLEANUP;
     }
-
+    orte_gpr_proxy_globals.compound_cmd_mode = false;
+    OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
+        
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -158,9 +160,6 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     }
     
  CLEANUP:
-    orte_gpr_proxy_globals.compound_cmd_mode = false;
-    OBJ_RELEASE(orte_gpr_proxy_globals.compound_cmd);
-
     if (orte_gpr_proxy_globals.compound_cmd_waiting) {
 	   opal_condition_signal(&orte_gpr_proxy_globals.compound_cmd_condition);
     }
