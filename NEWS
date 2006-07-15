@@ -25,6 +25,8 @@ version 1.0.
 1.2
 ---
 
+- Really check that the $CXX given to configure is a C++ compiler
+  (not a C compiler that "sorta works" as a C++ compiler).
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
