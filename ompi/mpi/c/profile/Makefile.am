@@ -355,7 +355,7 @@ nodist_libmpi_c_pmpi_la_SOURCES = \
 $(nodist_libmpi_c_pmpi_la_SOURCES):
 	if test ! -r $@ ; then \
 		pname=`echo $@ | cut -b '2-'` ; \
-		ln -s $(top_srcdir)/ompi/mpi/c/$$pname $@ ; \
+		$(LN_S) $(top_srcdir)/ompi/mpi/c/$$pname $@ ; \
 	fi
 
 # Conditionally install the header files
