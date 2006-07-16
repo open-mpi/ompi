@@ -69,6 +69,6 @@ extern "C" {
 #endif
 
 /* include implementation to call */
-#include "opal/mca/memcpy/base/base_impl.h"
+#include MCA_timer_IMPLEMENTATION_HEADER
 
 #endif /* OPAL_BASE_MEMCPY_H */

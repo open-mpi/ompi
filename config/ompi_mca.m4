@@ -717,7 +717,7 @@ AC_DEFUN([MCA_PROCESS_COMPONENT],[
         if test "$DIRECT_$2" = "$component" ; then
             if test "`grep DIRECT_CALL_HEADER $infile`" != "" ; then
                 line="`grep DIRECT_CALL_HEADER $infile | cut -d= -f2-`"
-                str="MCA_${framework}_DIRECT_CALL_HEADER=\\\"$line\\\""
+                str="MCA_${framework}_DIRECT_CALL_HEADER=$line"
                 eval $str
             else
 AC_MSG_ERROR([*** ${framework} component ${component} was supposed to be direct-called, but
@@ -886,24 +886,9 @@ AC_DEFUN([MCA_SETUP_DIRECT_CALL],[
             [Defined to 1 if $1 should use direct calls instead of components])
     AC_DEFINE_UNQUOTED([MCA_$1_DIRECT_CALL_COMPONENT], [$MCA_$1_DIRECT_CALL_COMPONENT],
             [name of component to use for direct calls, if MCA_$1_DIRECT_CALL is 1])
-    MCA_WRITE_DIRECT_CALL_HEADER($1, $2)
-])
-AC_DEFUN([MCA_WRITE_DIRECT_CALL_HEADER],[
-    AC_CONFIG_FILES($2/mca/$1/$1_direct_call.h.tmp:$2/mca/$1/$1_direct_call.h.in)
-    AC_CONFIG_COMMANDS($1-direct,
-[if test -f "$2/mca/$1/$1_direct_call"; then
-  diff "$2/mca/$1/$1_direct_call.h" "$2/mca/$1/$1_direct_call.h.tmp" > /dev/null 2>&1
-  if test "$?" != "0"; then
-    cp "$2/mca/$1/$1_direct_call.h.tmp" "$2/mca/$1/$1_direct_call.h"
-    echo "config.status: regenerating $2/mca/$1/$1_direct_call.h"
-  else
-    echo "config.status: $2/mca/$1/$1_direct_call.h unchanged"
-  fi
-else
-  cp "$2/mca/$1/$1_direct_call.h.tmp" "$2/mca/$1/$1_direct_call.h"
-  echo "config.status: creating $2/mca/$1/$1_direct_call.h"
-fi
-rm $2/mca/$1/$1_direct_call.h.tmp])
+    AC_DEFINE_UNQUOTED([MCA_$1_DIRECT_CALL_HEADER],
+                       ["[$MCA_]$1[_DIRECT_CALL_HEADER]"],
+                       [Header $1 includes to be direct called])
 ])
 
 
