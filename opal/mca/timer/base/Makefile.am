@@ -23,5 +23,3 @@ headers += \
 libmca_timer_la_SOURCES += \
         base/timer_base_close.c \
         base/timer_base_open.c
-
-nodist_headers += base/base_impl.h

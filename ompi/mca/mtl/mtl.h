@@ -395,7 +395,7 @@ typedef struct mca_mtl_base_module_t mca_mtl_base_module_t;
  */
 #if MCA_mtl_DIRECT_CALL
 
-#include "ompi/mca/mtl/mtl_direct_call.h"
+#include MCA_mtl_DIRECT_CALL_HEADER
 
 #define OMPI_MTL_CALL_STAMP(a, b) ompi_mtl_ ## a ## _ ## b
 #define OMPI_MTL_CALL_EXPANDER(a, b) OMPI_MTL_CALL_STAMP(a,b)

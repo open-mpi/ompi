@@ -26,7 +26,6 @@ nobase_nodist_ompi_HEADERS =
 
 # local files
 headers = mtl.h
-nodist_headers = 
 libmca_mtl_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
@@ -41,4 +40,4 @@ endif
 include base/Makefile.am
 
 distclean-local:
-	rm -f base/static-components.h mtl_direct_call.h
+	rm -f base/static-components.h

@@ -31,5 +31,7 @@ AC_DEFUN([MCA_timer_CONFIG],[
             timer_base_include="base/timer_base_null.h"
         fi
 
-        AC_CONFIG_LINKS([opal/mca/timer/base/base_impl.h:opal/mca/timer/$timer_base_include])
+        AC_DEFINE_UNQUOTED([MCA_timer_IMPLEMENTATION_HEADER],
+                           ["opal/mca/timer/$timer_base_include"],
+                           [Header to include for timer implementation])
 ])

@@ -26,7 +26,6 @@ nobase_nodist_ompi_HEADERS =
 
 # local files
 headers = pml.h
-nodist_headers = pml_direct_call.h
 libmca_pml_la_SOURCES += $(headers) $(nodist_headers)
 
 # Conditionally install the header files
@@ -41,4 +40,4 @@ endif
 include base/Makefile.am
 
 distclean-local:
-	rm -f base/static-components.h pml_direct_call.h
+	rm -f base/static-components.h 

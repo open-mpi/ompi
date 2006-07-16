@@ -530,7 +530,7 @@ typedef mca_pml_base_module_1_0_0_t mca_pml_base_module_t;
      */
 #if MCA_pml_DIRECT_CALL
 
-#include "ompi/mca/pml/pml_direct_call.h"
+#include MCA_pml_DIRECT_CALL_HEADER
 
 #define MCA_PML_CALL_STAMP(a, b) mca_pml_ ## a ## _ ## b
 #define MCA_PML_CALL_EXPANDER(a, b) MCA_PML_CALL_STAMP(a,b)
