@@ -70,7 +70,8 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
                 sendreq->req_module->p2p_comm->c_my_rank,
                 sendreq->req_target_rank);
 
-    opal_list_remove_item(&(sendreq->req_module->p2p_long_msgs), &(longreq->super));
+    opal_list_remove_item(&(sendreq->req_module->p2p_long_msgs), 
+                          &(longreq->super.super));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -137,7 +138,8 @@ ompi_osc_pt2pt_sendreq_send_cb(struct mca_btl_base_module_t* btl,
 
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(sendreq->req_module->p2p_lock));
-            opal_list_append(&(sendreq->req_module->p2p_long_msgs), &(longreq->super));
+            opal_list_append(&(sendreq->req_module->p2p_long_msgs), 
+                             &(longreq->super.super));
             OPAL_THREAD_UNLOCK(&(sendreq->req_module->p2p_lock));
         }
     }
@@ -304,7 +306,8 @@ ompi_osc_pt2pt_replyreq_send_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_replyreq_t *replyreq = 
         (ompi_osc_pt2pt_replyreq_t*) longreq->req_comp_cbdata;
 
-    opal_list_remove_item(&(replyreq->rep_module->p2p_long_msgs), &(longreq->super));
+    opal_list_remove_item(&(replyreq->rep_module->p2p_long_msgs), 
+                          &(longreq->super.super));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -360,7 +363,8 @@ ompi_osc_pt2pt_replyreq_send_cb(struct mca_btl_base_module_t* btl,
 
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(replyreq->rep_module->p2p_lock));
-            opal_list_append(&(replyreq->rep_module->p2p_long_msgs), &(longreq->super));
+            opal_list_append(&(replyreq->rep_module->p2p_long_msgs),
+                             &(longreq->super.super));
             OPAL_THREAD_UNLOCK(&(replyreq->rep_module->p2p_lock));
     }
     
@@ -470,7 +474,8 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
 static void
 ompi_osc_pt2pt_sendreq_recv_put_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
 {
-    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
+    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), 
+                          &(longreq->super.super));
 
     OBJ_RELEASE(longreq->req_datatype);
     ompi_osc_pt2pt_longreq_free(longreq);
@@ -541,7 +546,8 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
 
             /* put the send request in the waiting list */
             OPAL_THREAD_LOCK(&(module->p2p_lock));
-            opal_list_append(&(module->p2p_long_msgs), &(longreq->super));
+            opal_list_append(&(module->p2p_long_msgs), 
+                             &(longreq->super.super));
             OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 
@@ -567,7 +573,8 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     /* lock the window for accumulates */
     OPAL_THREAD_LOCK(&longreq->req_module->p2p_acc_lock);
 
-    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
+    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), 
+                          &(longreq->super.super));
 
     /* copy the data from the temporary buffer into the user window */
     ret = ompi_osc_pt2pt_process_op(longreq->req_module, 
@@ -671,7 +678,8 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
 
         /* put the send request in the waiting list */
         OPAL_THREAD_LOCK(&(module->p2p_lock));
-        opal_list_append(&(module->p2p_long_msgs), &(longreq->super));
+        opal_list_append(&(module->p2p_long_msgs), 
+                         &(longreq->super.super));
         OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 
@@ -690,7 +698,8 @@ ompi_osc_pt2pt_replyreq_recv_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_sendreq_t *sendreq =
         (ompi_osc_pt2pt_sendreq_t*) longreq->req_comp_cbdata;
 
-    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs), &(longreq->super));
+    opal_list_remove_item(&(longreq->req_module->p2p_long_msgs),
+                          &(longreq->super.super));
 
     ompi_osc_pt2pt_longreq_free(longreq);
 
@@ -745,7 +754,8 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
         
         /* put the send request in the waiting list */
         OPAL_THREAD_LOCK(&(module->p2p_lock));
-        opal_list_append(&(module->p2p_long_msgs), &(longreq->super));
+        opal_list_append(&(module->p2p_long_msgs),
+                         &(longreq->super.super));
         OPAL_THREAD_UNLOCK(&(module->p2p_lock));
     }
 

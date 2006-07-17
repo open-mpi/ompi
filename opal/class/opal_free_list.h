@@ -87,25 +87,29 @@ OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elemen
  * returned to the caller.
  */
  
-#define OPAL_FREE_LIST_GET(fl, item, rc) \
-{ \
-    if(opal_using_threads()) { \
-        opal_mutex_lock(&((fl)->fl_lock)); \
-        item = opal_list_remove_first(&((fl)->super)); \
-        if(NULL == item) { \
-            opal_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item = opal_list_remove_first(&((fl)->super)); \
-        } \
-        opal_mutex_unlock(&((fl)->fl_lock)); \
-    } else { \
-        item = opal_list_remove_first(&((fl)->super)); \
-        if(NULL == item) { \
-            opal_free_list_grow((fl), (fl)->fl_num_per_alloc); \
-            item = opal_list_remove_first(&((fl)->super)); \
-        } \
-    }  \
+#define OPAL_FREE_LIST_GET(fl, item, rc)                                \
+{                                                                       \
+    if(opal_using_threads()) {                                          \
+        opal_mutex_lock(&((fl)->fl_lock));                              \
+        item = (opal_free_list_item_t*)                                 \
+            opal_list_remove_first(&((fl)->super));                     \
+        if(NULL == item) {                                              \
+            opal_free_list_grow((fl), (fl)->fl_num_per_alloc);          \
+            item = (opal_free_list_item_t*)                             \
+                opal_list_remove_first(&((fl)->super));                 \
+        }                                                               \
+        opal_mutex_unlock(&((fl)->fl_lock));                            \
+    } else {                                                            \
+        item = (opal_free_list_item_t*)                                 \
+            opal_list_remove_first(&((fl)->super));                     \
+        if(NULL == item) {                                              \
+            opal_free_list_grow((fl), (fl)->fl_num_per_alloc);          \
+            item = (opal_free_list_item_t*)                             \
+                opal_list_remove_first(&((fl)->super));                 \
+        }                                                               \
+    }                                                                   \
     rc = (NULL == item) ?  OPAL_ERR_TEMP_OUT_OF_RESOURCE : OPAL_SUCCESS; \
-} 
+}
 
 /**
  * Blocking call to obtain an item from a free list.

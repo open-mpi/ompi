@@ -95,7 +95,7 @@ static void orte_iof_base_endpoint_send_cb(
 {
     orte_iof_base_frag_t* frag = (orte_iof_base_frag_t*)cbdata;
     orte_iof_base_endpoint_t* endpoint = frag->frag_owner;
-    opal_list_remove_item(&endpoint->ep_frags, &frag->super);
+    opal_list_remove_item(&endpoint->ep_frags, &frag->super.super);
     ORTE_IOF_BASE_FRAG_RETURN(frag);
 }
 
@@ -138,7 +138,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
 
     /* Do not append the fragment before we know that we have some data (even 0 bytes it's OK) */
     frag->frag_owner = endpoint;
-    opal_list_append(&endpoint->ep_frags, &frag->super);
+    opal_list_append(&endpoint->ep_frags, &frag->super.super);
     frag->frag_iov[1].iov_len = frag->frag_len = rc;
 
     /* fill in the header */
@@ -210,7 +210,7 @@ static void orte_iof_base_endpoint_write_handler(int sd, short flags, void *user
         if(frag->frag_len > 0) {
             break;
         }
-        opal_list_remove_item(&endpoint->ep_frags, &frag->super);
+        opal_list_remove_item(&endpoint->ep_frags, &frag->super.super);
         OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
         orte_iof_base_frag_ack(frag);
         OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
@@ -545,7 +545,7 @@ int orte_iof_base_endpoint_forward(
              */
             frag->frag_ptr = frag->frag_data;
             memcpy(frag->frag_ptr, data+rc, frag->frag_len);
-            opal_list_append(&endpoint->ep_frags, &frag->super);
+            opal_list_append(&endpoint->ep_frags, &frag->super.super);
             if(opal_list_get_size(&endpoint->ep_frags) == 1) {
                 opal_event_add(&endpoint->ep_event,0);
             }

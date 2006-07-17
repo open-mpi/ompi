@@ -53,7 +53,7 @@ typedef enum {
  * This structure describes a peer
  */
 struct mca_oob_tcp_peer_t {
-    opal_list_item_t super;           /**< allow this to be on a list */
+    opal_free_list_item_t super;      /**< allow this to be on a list */
     orte_process_name_t peer_name;    /**< the name of the peer */
     mca_oob_tcp_state_t peer_state;   /**< the state of the connection */
     int peer_retries;                 /**< number of times connection attempt has failed */
@@ -81,22 +81,23 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 /**
  * Get a new peer data structure
  */ 
-#define MCA_OOB_TCP_PEER_ALLOC(peer, rc) \
-    { \
-    opal_list_item_t* item; \
+#define MCA_OOB_TCP_PEER_ALLOC(peer, rc)                                \
+{                                                                       \
+    opal_free_list_item_t* item;                                        \
     OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_peer_free, item, rc); \
-    peer = (mca_oob_tcp_peer_t*)item; \
-    }
+    peer = (mca_oob_tcp_peer_t*)item;                                   \
+}
 
 /**
  * Return a peer data structure
  */
-#define MCA_OOB_TCP_PEER_RETURN(peer) \
-    { \
-    mca_oob_tcp_peer_shutdown(peer); \
+#define MCA_OOB_TCP_PEER_RETURN(peer)                                   \
+{                                                                       \
+    mca_oob_tcp_peer_shutdown(peer);                                    \
     orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name); \
-    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free, (opal_list_item_t*)peer); \
-    }
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_peer_free,         \
+                          &peer->super);                                \
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

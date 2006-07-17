@@ -71,7 +71,7 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg);
 
 OBJ_CLASS_INSTANCE(
     mca_oob_tcp_peer_t,
-    opal_list_item_t,
+    opal_free_list_item_t,
     mca_oob_tcp_peer_construct,
     mca_oob_tcp_peer_destruct);
 

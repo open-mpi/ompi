@@ -476,7 +476,7 @@ static void mca_oob_tcp_msg_data(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
 
         if(post->msg_flags & MCA_OOB_PEEK) {
             /* will need message for actual receive */
-            opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super);
+            opal_list_append(&mca_oob_tcp_component.tcp_msg_recv, &msg->super.super);
         } else {
             MCA_OOB_TCP_MSG_RETURN(msg);
         }
@@ -591,7 +591,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
         if((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & MCA_OOB_PERSISTENT) == 0) {
-                    opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
+                    opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);
                 }
                 return msg;
             }

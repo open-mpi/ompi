@@ -321,7 +321,7 @@ int mca_oob_tcp_recv_cancel(
         cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, name);
         if ((0 == cmpval1) || (0 == cmpval2)) {
             if (msg->msg_hdr.msg_tag == tag) {
-                opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super);
+                opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);
                 MCA_OOB_TCP_MSG_RETURN(msg);
                 matched++;
             }

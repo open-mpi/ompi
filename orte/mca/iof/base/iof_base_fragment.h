@@ -15,7 +15,7 @@
  */
 
 struct orte_iof_base_frag_t {
-    opal_list_item_t super;
+    opal_free_list_item_t super;
     orte_iof_base_header_t frag_hdr;
     orte_process_name_t frag_src;
     unsigned char frag_data[ORTE_IOF_BASE_MSG_MAX];
@@ -34,7 +34,7 @@ OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
  */
 
 #define ORTE_IOF_BASE_FRAG_ALLOC(frag,rc) { \
-    opal_list_item_t* item; \
+    opal_free_list_item_t* item; \
     OPAL_FREE_LIST_GET(&orte_iof_base.iof_fragments, item,rc); \
     if((frag = (orte_iof_base_frag_t*)item) == NULL) { \
         opal_output(0, "ORTE_IOF_BASE_FRAG_ALLOC failed with status=%d\n", rc); \
@@ -45,7 +45,8 @@ OBJ_CLASS_DECLARATION(orte_iof_base_frag_t);
 }
 
 #define ORTE_IOF_BASE_FRAG_RETURN(frag) \
-    OPAL_FREE_LIST_RETURN(&orte_iof_base.iof_fragments, (opal_list_item_t*)frag)
+    OPAL_FREE_LIST_RETURN(&orte_iof_base.iof_fragments, \
+                          &frag->super);
 
 
 /**
