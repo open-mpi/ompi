@@ -44,6 +44,15 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
     /* initialize to nothing */
     *seg = NULL;
     
+    if (NULL == segment) {
+        /* this is an allowed value - the index function, for example,
+         * will pass this to us if we want the index of the global level
+         * of the registry (i.e., the index of segment names). Just return
+         * NULL and we'll be okay
+         */
+        return ORTE_SUCCESS;
+    }
+    
     len = strlen(segment);
 
     /* search the registry segments to find which one is being referenced */
