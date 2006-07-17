@@ -72,7 +72,7 @@ ompi_osc_pt2pt_replyreq_alloc(ompi_osc_pt2pt_module_t *module,
                            ompi_osc_pt2pt_replyreq_t **replyreq)
 {
     int ret;
-    opal_list_item_t *item;
+    opal_free_list_item_t *item;
     ompi_proc_t *proc = module->p2p_comm->c_pml_procs[origin_rank]->proc_ompi;
 
     /* BWB - FIX ME - is this really the right return code? */

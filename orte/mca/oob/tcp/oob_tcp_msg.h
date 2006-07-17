@@ -45,7 +45,7 @@ typedef enum { MCA_OOB_TCP_POSTED, MCA_OOB_TCP_UNEXPECTED } mca_oob_tcp_type_t;
  * describes each message being progressed.
  */
 struct mca_oob_tcp_msg_t {
-    opal_list_item_t      super;         /**< allow this item to be put on a list */
+    opal_free_list_item_t      super;    /**< allow this item to be put on a list */
     mca_oob_tcp_type_t    msg_type;      /**< posted receive or unexpected */
     int                   msg_flags;     /**< flags to send/recv */
     int                   msg_rc;        /**< the return code for the send/recv (amount sent/recvd or errno) */
@@ -76,25 +76,26 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_msg_t);
 /**
  * Get a new structure for use with a message
  */
-#define MCA_OOB_TCP_MSG_ALLOC(msg, rc) \
-    { \
-    opal_list_item_t* item; \
+#define MCA_OOB_TCP_MSG_ALLOC(msg, rc)                             \
+{                                                                  \
+    opal_free_list_item_t* item;                                   \
     OPAL_FREE_LIST_GET(&mca_oob_tcp_component.tcp_msgs, item, rc); \
-    msg = (mca_oob_tcp_msg_t*)item; \
-    }
+    msg = (mca_oob_tcp_msg_t*)item;                                \
+}
 
 /**
  * return a message structure that is no longer needed
  */
-#define MCA_OOB_TCP_MSG_RETURN(msg) \
-    { \
-    /* frees the iovec allocated during the send/receive */ \
-    if(NULL != msg->msg_rwiov) \
-        mca_oob_tcp_msg_iov_return(msg,msg->msg_rwiov); \
-    if(NULL != msg->msg_rwbuf) \
-        free(msg->msg_rwbuf); \
-    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs, (opal_list_item_t*)msg); \
-    }
+#define MCA_OOB_TCP_MSG_RETURN(msg)                                     \
+{                                                                       \
+    /* frees the iovec allocated during the send/receive */             \
+    if(NULL != msg->msg_rwiov)                                          \
+        mca_oob_tcp_msg_iov_return(msg,msg->msg_rwiov);                 \
+    if(NULL != msg->msg_rwbuf)                                          \
+        free(msg->msg_rwbuf);                                           \
+    OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_msgs,              \
+                          &msg->super);                                 \
+}
 
 /**
  *  Wait for a msg to complete.

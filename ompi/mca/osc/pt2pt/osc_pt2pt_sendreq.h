@@ -88,7 +88,7 @@ ompi_osc_pt2pt_sendreq_alloc(ompi_osc_pt2pt_module_t *module,
                              ompi_osc_pt2pt_sendreq_t **sendreq)
 {
     int ret;
-    opal_list_item_t *item;
+    opal_free_list_item_t *item;
     ompi_proc_t *proc = module->p2p_comm->c_pml_procs[target_rank]->proc_ompi;
 
     /* BWB - FIX ME - is this really the right return code? */

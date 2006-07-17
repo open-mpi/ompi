@@ -29,7 +29,7 @@ typedef struct ompi_osc_pt2pt_longreq_t ompi_osc_pt2pt_longreq_t;
 typedef void (*ompi_osc_pt2pt_longreq_comp_cb_t)(ompi_osc_pt2pt_longreq_t *longreq);
 
 struct ompi_osc_pt2pt_longreq_t {
-    opal_list_item_t super;
+    opal_free_list_item_t super;
 
     /* warning - this doesn't always have a sane value */
     ompi_osc_pt2pt_module_t *req_module;
@@ -50,7 +50,7 @@ OBJ_CLASS_DECLARATION(ompi_osc_pt2pt_longreq_t);
 static inline int
 ompi_osc_pt2pt_longreq_alloc(ompi_osc_pt2pt_longreq_t **longreq)
 {
-    opal_list_item_t *item;
+    opal_free_list_item_t *item;
     int ret;
 
     OPAL_FREE_LIST_GET(&mca_osc_pt2pt_component.p2p_c_longreqs,
@@ -64,7 +64,7 @@ static inline int
 ompi_osc_pt2pt_longreq_free(ompi_osc_pt2pt_longreq_t *longreq)
 {
     OPAL_FREE_LIST_RETURN(&mca_osc_pt2pt_component.p2p_c_longreqs,
-                          (opal_list_item_t*) longreq);
+                          &longreq->super.super);
     return OMPI_SUCCESS;
 }
 
