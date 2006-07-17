@@ -170,6 +170,13 @@ int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
     *cnt = 0;
     
     if (NULL == seg) { /* looking for index of global registry */
+        /* it is possible that no segments might exist - for example, if someone
+         * requested an index immediately after system start. Protect against
+         * that case
+         */
+        if (0 == orte_gpr_replica.num_segs) {
+            return ORTE_SUCCESS;
+        }
         *index = (char**)malloc(orte_gpr_replica.num_segs * sizeof(char*));
         if (NULL == *index) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
