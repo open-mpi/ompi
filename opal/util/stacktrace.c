@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -298,6 +299,8 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         fprintf(stderr, "[%d] func:%s\n", i, messages[i]);
         fflush(stderr);
     }
+#elif HAVE_PRINTSTACK
+    printstack(fileno(stderr));
 #endif
 
     write(fileno(stderr), eof_msg, sizeof(eof_msg));
