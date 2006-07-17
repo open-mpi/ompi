@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -42,9 +43,14 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
+#include "opal/event/event.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
+/*
+ * Local functions
+ */
+static void noop(int fd, short event, void *arg);
 
 /*
  * Ping a peer to see if it is alive.
@@ -64,6 +70,9 @@ int mca_oob_tcp_ping(
     fd_set fdset;
     mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
+#ifndef __WINDOWS__
+    struct opal_event sigpipe_handler;
+#endif
 
     /* parse uri string */
     if(ORTE_SUCCESS != (rc = mca_oob_tcp_parse_uri(uri, &inaddr))) {
@@ -139,9 +148,22 @@ int mca_oob_tcp_ping(
     }
     hdr.msg_dst = *name;
     hdr.msg_type = MCA_OOB_TCP_PROBE;
-
     MCA_OOB_TCP_HDR_HTON(&hdr);
-    if((rc = write(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
+
+#ifndef __WINDOWS__
+    /* Ignore SIGPIPE in the write -- determine success or failure in
+       the ping by looking at the return code from write() */
+    opal_signal_set(&sigpipe_handler, SIGPIPE,
+                    noop, &sigpipe_handler);
+    opal_signal_add(&sigpipe_handler, NULL);
+#endif
+    /* Do the write and see what happens */
+    rc = write(sd, &hdr, sizeof(hdr));
+#ifndef __WINDOWS__
+    /* Now de-register the handler */
+    opal_signal_del(&sigpipe_handler);
+#endif
+    if (rc != sizeof(hdr)) {
         close(sd);
         return ORTE_ERR_UNREACH;
     }
@@ -168,3 +190,7 @@ int mca_oob_tcp_ping(
 }
 
 
+static void noop(int fd, short event, void *arg)
+{
+    /* Nothing */
+}
