@@ -299,7 +299,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         fprintf(stderr, "[%d] func:%s\n", i, messages[i]);
         fflush(stderr);
     }
-#elif HAVE_PRINTSTACK
+#elif defined(HAVE_PRINTSTACK)
     printstack(fileno(stderr));
 #endif
 
