@@ -420,7 +420,7 @@ static int mca_oob_tcp_listen_progress(void)
 
     if (opal_list_get_size(&mca_oob_tcp_component.tcp_pending_connections)) {
         opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
-        while (NULL != (item = (opal_list_item_t*) 
+        while (NULL != (item = (mca_oob_tcp_pending_connection_t*) 
                         opal_list_remove_first(&mca_oob_tcp_component.tcp_pending_connections))) {
 
             /* setup socket options */
