@@ -158,7 +158,7 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
                 if(ompi_free_list_grow((fl), (fl)->fl_num_per_alloc)
                         == OMPI_SUCCESS) {
                     if( 0 < (fl)->fl_num_waiting ) {
-                        opal_condition_signal(&((fl)->fl_condition));
+                        opal_condition_broadcast(&((fl)->fl_condition));
                     }
                 } else {
                     (fl)->fl_num_waiting++;
