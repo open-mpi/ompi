@@ -121,12 +121,12 @@ main(int argc, char *argv[])
         return ret;
     }
 
+    OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
+
     if (ORTE_SUCCESS != (ret = orte_clean_init())) {
         exit_status = ret;
         goto cleanup;
     }
-
-    OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
 
     /*
      * Get the list of universes on this machine

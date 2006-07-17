@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -271,13 +272,14 @@ main(int argc, char *argv[])
         return ret;
     }
 
+    OBJ_CONSTRUCT(&universe_list, opal_list_t);
+    OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
+    orte_ps_globals.attached = false;
+
     if (ORTE_SUCCESS != (ret = orte_ps_init())) {
         exit_status = ret;
         goto cleanup;
     }
-
-    OBJ_CONSTRUCT(&universe_list, opal_list_t);
-    OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
 
     /*
      * Get the directory listing
