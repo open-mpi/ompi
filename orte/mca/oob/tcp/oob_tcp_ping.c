@@ -43,6 +43,9 @@
 #ifdef HAVE_NETINET_TCP_H
 #include <netinet/tcp.h>
 #endif
+#ifndef __WINDOWS__
+#include <signal.h>
+#endif
 #include "opal/event/event.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/oob/tcp/oob_tcp.h"
