@@ -107,7 +107,7 @@ static int mca_mpool_sm_close( void )
         if( OMPI_SUCCESS == mca_common_sm_mmap_fini( mca_common_sm_mmap ) ) {
             unlink( mca_common_sm_mmap->map_path );
         }
-        OBJ_DESTRUCT( mca_common_sm_mmap );
+        OBJ_RELEASE( mca_common_sm_mmap );
     }
     return OMPI_SUCCESS;
 }
