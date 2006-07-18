@@ -293,9 +293,9 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     }
 
     /* Is the data still contiguous ?
-     * The only way for the data to be contiguous is to have the true extent equal to his size.
-     * In other words to avoid having internal gaps between elements. If any of the data are
-     * overlapping then this method will not work.
+     * The only way for the data to be contiguous is to have the true extent
+     * equal to his size. In other words to avoid having internal gaps between
+     * elements. If any of the data are overlapping then this method will not work.
      */
     localFlags = pdtBase->flags & pdtAdd->flags;
     UNSET_CONTIGUOUS_FLAG(pdtBase->flags);
@@ -307,7 +307,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                                                     * type have to match */
                  || (count < 2)) ) {               /*  - if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
-            if( ((long)pdtAdd->size) == extent )
+            if( ((long)pdtBase->size) == (pdtBase->ub - pdtBase->lb) )
                 SET_NO_GAP_FLAG(pdtBase->flags);
         }
     }
