@@ -1,4 +1,21 @@
 !
+! Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+!                         University Research and Technology
+!                         Corporation.  All rights reserved.
+! Copyright (c) 2004-2005 The University of Tennessee and The University
+!                         of Tennessee Research Foundation.  All rights
+!                         reserved.
+! Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
+!                         University of Stuttgart.  All rights reserved.
+! Copyright (c) 2004-2005 The Regents of the University of California.
+!                         All rights reserved.
+! $COPYRIGHT$
+!
+! Additional copyrights may follow
+!
+! $HEADER$
+!
+!
 ! C-interop interfaces for mpi.h
 !
 
@@ -90,6 +107,142 @@ end function MPI_Address
 end interface MPI_Address
 
 
+interface MPI_Allgather
+
+integer(C_INT) function &
+MPI_Allgather(sendbuf, sendcount, sendtype,
+              recvbuf, recvcount, recvtype,
+              comm, ierr) &
+  BIND(C, name="MPI_Allgather")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Allgather
+
+end interface MPI_Allgather
+
+
+interface MPI_Allgatherv
+
+integer(C_INT) function &
+MPI_Allgatherv(sendbuf, sendcount, sendtype,
+               recvbuf, recvcount, recvtype,
+               comm, ierr) &
+  BIND(C, name="MPI_Allgatherv")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Allgatherv
+
+end interface MPI_Allgatherv
+
+
+interface MPI_Alloc_mem
+
+integer(C_INT) function &
+MPI_Alloc_mem(size, info, baseptr, ierr) &
+  BIND(C, name="MPI_Alloc_mem")
+  use MPI_C_BINDING
+  integer(kind=MPI_ADDRESS_KIND), value, intent(in) :: size
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  type(C_PTR), value, intent(out) :: baseptr
+end function MPI_Alloc_mem
+
+end interface MPI_Alloc_mem
+
+
+interface MPI_Allreduce
+
+integer(C_INT) function &
+MPI_Allreduce(sendbuf, recvbuf, count,
+              datatype, op, comm, ierr) &
+  BIND(C, name="MPI_Allreduce")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: count
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: op
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Allreduce
+
+end interface MPI_Allreduce
+
+
+interface MPI_Alltoall
+
+integer(C_INT) function &
+MPI_Alltoall(sendbuf, sendcount, sendtype,
+             recvbuf, recvcount, recvtype,
+             comm, ierr) &
+  BIND(C, name="MPI_Alltoall")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(out) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Alltoall
+
+end interface MPI_Alltoall
+
+
+interface MPI_Alltoallv
+
+integer(C_INT) function &
+MPI_Alltoallv(sendbuf, sendcount, sdispls, sendtype,
+              recvbuf, recvcount, rdispls, recvtype,
+              comm, ierr) &
+  BIND(C, name="MPI_Alltoallv")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), dimension(*), value, intent(in) :: sendcount
+  integer(INT_C), dimension(*), value, intent(in) :: sdispls
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(out) :: recvbuf
+  integer(INT_C), dimension(*), value, intent(in) :: recvcount
+  integer(INT_C), dimension(*), value, intent(in) :: rdispls
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Alltoallv
+
+end interface MPI_Alltoallv
+
+
+interface MPI_Alltoallw
+
+integer(C_INT) function &
+MPI_Alltoallw(sendbuf, sendcounts, sdispls, sendtypes,
+              recvbuf, recvcounts, rdispls, recvtypes,
+              comm, ierr) &
+  BIND(C, name="MPI_Alltoallw")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), dimension(*), value, intent(in) :: sendcounts
+  integer(INT_C), dimension(*), value, intent(in) :: sdispls
+  integer(MPI_HANDLE_KIND), dimension(*), value, intent(in) :: sendtypes
+  type(C_PTR), value, intent(out) :: recvbuf
+  integer(INT_C), dimension(*), value, intent(in) :: recvcounts
+  integer(INT_C), dimension(*), value, intent(in) :: rdispls
+  integer(MPI_HANDLE_KIND), dimension(*), value, intent(in) :: recvtypes
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Alltoallw
+
+end interface MPI_Alltoallw
+
+
 interface MPI_Attr_delete
 
 integer(C_INT) function &
@@ -150,7 +303,7 @@ integer(C_INT) function &
 MPI_Bcast(buffer, count, datatype, root, comm, ierr) &
   BIND(C, name="MPI_Bcast")
   use MPI_C_BINDING
-  type(C_PTR), value, intent(in) :: buffer
+  type(C_PTR), value, intent(inout) :: buffer
   integer(INT_C), value, intent(in) :: count
   integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
   integer(INT_C), value, intent(in) :: root
@@ -355,6 +508,34 @@ end function MPI_Cartdim_get
 end interface MPI_Cartdim_get
 
 
+interface MPI_Close_port
+
+integer(C_INT) function &
+MPI_Close_port(port_name, ierr) &
+  BIND(C, name="MPI_Close_port")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: port_name
+end function MPI_Close_port
+
+end interface MPI_Close_port
+
+
+interface MPI_Comm_accept
+
+integer(C_INT) function &
+MPI_Comm_accept(port_name, info, root, comm, newcomm, ierr) &
+  BIND(C, name="MPI_Comm_accept")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: port_name
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+  integer(MPI_HANDLE_KIND), value, intent(out) :: newcomm
+end function MPI_Comm_accept
+
+end interface MPI_Comm_accept
+
+
 interface MPI_Comm_call_errhandler
 
 integer(C_INT) function &
@@ -380,6 +561,22 @@ MPI_Comm_compare(comm1, comm2, result, ierr) &
 end function MPI_Comm_compare
 
 end interface MPI_Comm_compare
+
+
+interface MPI_Comm_connect
+
+integer(C_INT) function &
+MPI_Comm_connect(port_name, info, root, comm, newcomm, ierr) &
+  BIND(C, name="MPI_Comm_connect")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: port_name
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+  integer(MPI_HANDLE_KIND), value, intent(out) :: newcomm
+end function MPI_Comm_connect
+
+end interface MPI_Comm_connect
 
 
 interface MPI_Comm_create
@@ -435,6 +632,18 @@ MPI_Comm_delete_attr(comm, comm_keyval, ierr) &
 end function MPI_Comm_delete_attr
 
 end interface MPI_Comm_delete_attr
+
+
+interface MPI_Comm_disconnect
+
+integer(C_INT) function &
+MPI_Comm_disconnect(comm, ierr) &
+  BIND(C, name="MPI_Comm_disconnect")
+  use MPI_C_BINDING
+  integer(MPI_HANDLE_KIND), value, intent(inout) :: comm
+end function MPI_Comm_disconnect
+
+end interface MPI_Comm_disconnect
 
 
 interface MPI_Comm_dup
@@ -516,6 +725,18 @@ end function MPI_Comm_get_name
 end interface MPI_Comm_get_name
 
 
+interface MPI_Comm_get_parent
+
+integer(C_INT) function &
+MPI_Comm_get_parent(parent, ierr) &
+  BIND(C, name="MPI_Comm_get_parent")
+  use MPI_C_BINDING
+  integer(MPI_HANDLE_KIND), value, intent(out) :: parent
+end function MPI_Comm_get_parent
+
+end interface MPI_Comm_get_parent
+
+
 interface MPI_Comm_group
 
 integer(C_INT) function &
@@ -527,6 +748,19 @@ MPI_Comm_group(comm, group, ierr) &
 end function MPI_Comm_group
 
 end interface MPI_Comm_group
+
+
+interface MPI_Comm_join
+
+integer(C_INT) function &
+MPI_Comm_join(fd, intercomm, ierr) &
+  BIND(C, name="MPI_Comm_join")
+  use MPI_C_BINDING
+  integer(INT_C), value, intent(in) :: fd
+  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
+end function MPI_Comm_join
+
+end interface MPI_Comm_join
 
 
 interface MPI_Comm_rank
@@ -619,6 +853,47 @@ MPI_Comm_size(comm, size, ierr) &
 end function MPI_Comm_size
 
 end interface MPI_Comm_size
+
+
+interface MPI_Comm_spawn
+
+integer(C_INT) function &
+MPI_Comm_spawn(command, argv, maxprocs, info, root, comm, intercomm, &
+        array_of_errcodes, ierr) &
+  BIND(C, name="MPI_Comm_spawn")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: command
+  character(len=*), dimension(*), value, intent(in) :: argv
+  integer(INT_C), value, intent(in) :: maxprocs
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
+  integer(INT_C), dimension(*), value, intent(out) :: array_of_errcodes
+end function MPI_Comm_spawn
+
+end interface MPI_Comm_spawn
+
+
+interface MPI_Comm_spawn_multiple
+
+integer(C_INT) function &
+MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, &
+        intercomm, array_of_errcodes, ierr) &
+  BIND(C, name="MPI_Comm_spawn_multiple")
+  use MPI_C_BINDING
+  integer(INT_C), value, intent(in) :: count
+  character(len=*), dimension(*), value, intent(in) :: array_of_commands
+  character(len=*), dimension(count,*), value, intent(in) :: array_of_argv
+  integer(INT_C), dimension(*), value, intent(in) :: array_of_maxprocs
+  integer(MPI_HANDLE_KIND), dimension(*), value, intent(in) :: array_of_info
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
+  integer(INT_C), dimension(*), value, intent(out) :: array_of_errcodes
+end function MPI_Comm_spawn_multiple
+
+end interface MPI_Comm_spawn_multiple
 
 
 interface MPI_Comm_split
@@ -739,6 +1014,24 @@ MPI_Error_string(errorcode, string, resultlen, ierr) &
 end function MPI_Error_string
 
 end interface MPI_Error_string
+
+
+interface MPI_Exscan
+
+integer(C_INT) function &
+MPI_Exscan(sendbuf, recvbuf, count,
+           datatype, op, comm, ierr) &
+  BIND(C, name="MPI_Exscan")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  type(C_PTR), value, intent(out) :: recvbuf
+  integer(INT_C), value, intent(in) :: count
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: op
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Exscan
+
+end interface MPI_Exscan
 
 
 interface MPI_File_call_errhandler
@@ -1571,6 +1864,61 @@ end function MPI_Finalized
 end interface MPI_Finalized
 
 
+interface MPI_Free_mem
+
+integer(C_INT) function &
+MPI_Free_mem(baseptr, ierr) &
+  BIND(C, name="MPI_Free_mem")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(inout) :: baseptr
+end function MPI_Free_mem
+
+end interface MPI_Free_mem
+
+
+interface MPI_Gather
+
+integer(C_INT) function &
+MPI_Gather(sendbuf, sendcount, sendtype,
+           recvbuf, recvcount, recvtype,
+           root, comm, ierr) &
+  BIND(C, name="MPI_Gather")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Gather
+
+end interface MPI_Gather
+
+
+interface MPI_Gatherv
+
+integer(C_INT) function &
+MPI_Gatherv(sendbuf, sendcounts, sendtype,
+            recvbuf, recvcounts, displs, recvtype,
+            root, comm, ierr) &
+  BIND(C, name="MPI_Gatherv")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcounts
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcounts
+  integer(INT_C), dimension(*), value, intent(in) :: displs
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Gatherv
+
+end interface MPI_Gatherv
+
+
 interface MPI_Get
 
 integer(C_INT) function &
@@ -1589,6 +1937,19 @@ MPI_Get(origin_addr, origin_count, origin_datatype, target_rank, target_disp, ta
 end function MPI_Get
 
 end interface MPI_Get
+
+
+interface MPI_Get_address
+
+integer(C_INT) function &
+MPI_Get_address(location, address, ierr) &
+  BIND(C, name="MPI_Get_address")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: location
+  integer(kind=MPI_ADDRESS_KIND), value, intent(out) :: address
+end function MPI_Get_address
+
+end interface MPI_Get_address
 
 
 interface MPI_Get_count
@@ -2274,6 +2635,20 @@ end function MPI_Keyval_free
 end interface MPI_Keyval_free
 
 
+interface MPI_Lookup_name
+
+integer(C_INT) function &
+MPI_Lookup_name(service_name, info, port_name, ierr) &
+  BIND(C, name="MPI_Lookup_name")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: service_name
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  character(len=*), value, intent(out) :: port_name
+end function MPI_Lookup_name
+
+end interface MPI_Lookup_name
+
+
 interface MPI_Op_create
 
 integer(C_INT) function &
@@ -2298,6 +2673,38 @@ MPI_Op_free(op, ierr) &
 end function MPI_Op_free
 
 end interface MPI_Op_free
+
+
+interface MPI_Open_port
+
+integer(C_INT) function &
+MPI_Open_port(info, port_name, ierr) &
+  BIND(C, name="MPI_Open_port")
+  use MPI_C_BINDING
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  character(len=*), value, intent(out) :: port_name
+end function MPI_Open_port
+
+end interface MPI_Open_port
+
+
+interface MPI_Pack
+
+integer(C_INT) function &
+MPI_Pack(inbuf, incount, datatype,
+         outbuf, outsize, position, comm, ierr) &
+  BIND(C, name="MPI_Pack")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: inbuf
+  integer(INT_C), value, intent(in) :: incount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  type(C_PTR), value, intent(out) :: outbuf
+  integer(INT_C), value, intent(in) :: outsize
+  integer(INT_C), value, intent(inout) :: position
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Pack
+
+end interface MPI_Pack
 
 
 interface MPI_Pack_external_size
@@ -2354,6 +2761,20 @@ MPI_Probe(source, tag, comm, status, ierr) &
 end function MPI_Probe
 
 end interface MPI_Probe
+
+
+interface MPI_Publish_name
+
+integer(C_INT) function &
+MPI_Publish_name(service_name, info, port_name, ierr) &
+  BIND(C, name="MPI_Publish_name")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: service_name
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  character(len=*), value, intent(in) :: port_name
+end function MPI_Publish_name
+
+end interface MPI_Publish_name
 
 
 interface MPI_Put
@@ -2426,10 +2847,48 @@ end function MPI_Recv_init
 end interface MPI_Recv_init
 
 
+interface MPI_Reduce
+
+integer(C_INT) function &
+MPI_Reduce(sendbuf, recvbuf, count,
+           datatype, op, root, comm, ierr) &
+  BIND(C, name="MPI_Reduce")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: count
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: op
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Reduce
+
+end interface MPI_Reduce
+
+
+interface MPI_Reduce_scatter
+
+integer(C_INT) function &
+MPI_Reduce_scatter(sendbuf, recvbuf, recvcounts,
+                   datatype, op, comm, ierr) &
+  BIND(C, name="MPI_Reduce_scatter")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), dimension(*), value, intent(in) :: recvcounts
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: op
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Reduce_scatter
+
+end interface MPI_Reduce_scatter
+
+
 interface MPI_Register_datarep
 
 integer(C_INT) function &
-MPI_Register_datarep(datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr) &
+MPI_Register_datarep(datarep, read_conversion_fn, write_conversion_fn,
+                     dtype_file_extent_fn, extra_state, ierr) &
   BIND(C, name="MPI_Register_datarep")
   use MPI_C_BINDING
   character(len=*), value, intent(in) :: datarep
@@ -2502,6 +2961,67 @@ MPI_Rsend_init(buf, count, datatype, dest, tag, comm, request&
 end function MPI_Rsend_init
 
 end interface MPI_Rsend_init
+
+
+interface MPI_Scan
+
+integer(C_INT) function &
+MPI_Scan(sendbuf, recvbuf, count,
+         datatype, op, comm, ierr) &
+  BIND(C, name="MPI_Scan")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: count
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: op
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Scan
+
+end interface MPI_Scan
+
+
+interface MPI_Scatter
+
+integer(C_INT) function &
+MPI_Scatter(sendbuf, sendcount, sendtype,
+            recvbuf, recvcount, recvtype,
+            root, comm, ierr) &
+  BIND(C, name="MPI_Scatter")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), value, intent(in) :: sendcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Scatter
+
+end interface MPI_Scatter
+
+
+interface MPI_Scatterv
+
+integer(C_INT) function &
+MPI_Scatterv(sendbuf, sendcounts, displs, sendtype,
+             recvbuf, recvcount, recvtype,
+             root, comm, ierr) &
+  BIND(C, name="MPI_Scatterv")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: sendbuf
+  integer(INT_C), dimension(*), value, intent(in) :: sendcounts
+  integer(INT_C), dimension(*), value, intent(in) :: displs
+  integer(MPI_HANDLE_KIND), value, intent(in) :: sendtype
+  type(C_PTR), value, intent(inout) :: recvbuf
+  integer(INT_C), value, intent(in) :: recvcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: recvtype
+  integer(INT_C), value, intent(in) :: root
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Scatterv
+
+end interface MPI_Scatterv
 
 
 interface MPI_Send
@@ -3266,6 +3786,59 @@ end function MPI_Type_vector
 end interface MPI_Type_vector
 
 
+interface MPI_Unpack
+
+integer(C_INT) function &
+MPI_Unpack(inbuf, insize, position,
+           outbuf, outcount, datatype,
+           comm, ierr) &
+  BIND(C, name="MPI_Unpack")
+  use MPI_C_BINDING
+  type(C_PTR), value, intent(in) :: inbuf
+  integer(INT_C), value, intent(in) :: insize
+  integer(INT_C), value, intent(inout) :: position
+  type(C_PTR), value, intent(out) :: outbuf
+  integer(INT_C), value, intent(in) :: outcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
+end function MPI_Unpack
+
+end interface MPI_Unpack
+
+
+interface MPI_Unpack_external
+
+integer(C_INT) function &
+MPI_Unpack_external(datarep, inbuf, insize, position,
+                    outbuf, outcount, datatype, ierr) &
+  BIND(C, name="MPI_Unpack_external")
+  use MPI_C_BINDING
+  character(len=*), value, intent(out) :: datarep
+  type(C_PTR), value, intent(in) :: inbuf
+  integer(kind=MPI_ADDRESS_KIND), value, intent(in) :: insize
+  integer(kind=MPI_ADDRESS_KIND), value, intent(inout) :: position
+  type(C_PTR), value, intent(out) :: outbuf
+  integer(INT_C), value, intent(in) :: outcount
+  integer(MPI_HANDLE_KIND), value, intent(in) :: datatype
+end function MPI_Unpack_external
+
+end interface MPI_Unpack_external
+
+
+interface MPI_Unpublish_name
+
+integer(C_INT) function &
+MPI_Unpublish_name(service_name, info, port_name, ierr) &
+  BIND(C, name="MPI_Unpublish_name")
+  use MPI_C_BINDING
+  character(len=*), value, intent(in) :: service_name
+  integer(MPI_HANDLE_KIND), value, intent(in) :: info
+  character(len=*), value, intent(in) :: port_name
+end function MPI_Unpublish_name
+
+end interface MPI_Unpublish_name
+
+
 interface MPI_Wait
 
 integer(C_INT) function &
@@ -3620,179 +4193,23 @@ end function MPI_Win_wait
 end interface MPI_Win_wait
 
 
-interface MPI_Close_port
+interface MPI_Wtick
 
-integer(C_INT) function &
-MPI_Close_port(port_name, ierr) &
-  BIND(C, name="MPI_Close_port")
+real(C_DOUBLE) function &
+MPI_Wtick(ierr) &
+  BIND(C, name="MPI_Wtick")
   use MPI_C_BINDING
-  character(len=*), value, intent(in) :: port_name
-end function MPI_Close_port
+end function MPI_Wtick
 
-end interface MPI_Close_port
+end interface MPI_Wtick
 
 
-interface MPI_Lookup_name
+interface MPI_Wtime
 
-integer(C_INT) function &
-MPI_Lookup_name(service_name, info, port_name, ierr) &
-  BIND(C, name="MPI_Lookup_name")
+real(C_DOUBLE) function &
+MPI_Wtime(ierr) &
+  BIND(C, name="MPI_Wtime")
   use MPI_C_BINDING
-  character(len=*), value, intent(in) :: service_name
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  character(len=*), value, intent(out) :: port_name
-end function MPI_Lookup_name
+end function MPI_Wtime
 
-end interface MPI_Lookup_name
-
-
-interface MPI_Open_port
-
-integer(C_INT) function &
-MPI_Open_port(info, port_name, ierr) &
-  BIND(C, name="MPI_Open_port")
-  use MPI_C_BINDING
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  character(len=*), value, intent(out) :: port_name
-end function MPI_Open_port
-
-end interface MPI_Open_port
-
-
-interface MPI_Publish_name
-
-integer(C_INT) function &
-MPI_Publish_name(service_name, info, port_name, ierr) &
-  BIND(C, name="MPI_Publish_name")
-  use MPI_C_BINDING
-  character(len=*), value, intent(in) :: service_name
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  character(len=*), value, intent(in) :: port_name
-end function MPI_Publish_name
-
-end interface MPI_Publish_name
-
-
-interface MPI_Unpublish_name
-
-integer(C_INT) function &
-MPI_Unpublish_name(service_name, info, port_name, ierr) &
-  BIND(C, name="MPI_Unpublish_name")
-  use MPI_C_BINDING
-  character(len=*), value, intent(in) :: service_name
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  character(len=*), value, intent(in) :: port_name
-end function MPI_Unpublish_name
-
-end interface MPI_Unpublish_name
-
-
-interface MPI_Comm_disconnect
-
-integer(C_INT) function &
-MPI_Comm_disconnect(comm, ierr) &
-  BIND(C, name="MPI_Comm_disconnect")
-  use MPI_C_BINDING
-  integer(MPI_HANDLE_KIND), value, intent(inout) :: comm
-end function MPI_Comm_disconnect
-
-end interface MPI_Comm_disconnect
-
-
-interface MPI_Comm_get_parent
-
-integer(C_INT) function &
-MPI_Comm_get_parent(parent, ierr) &
-  BIND(C, name="MPI_Comm_get_parent")
-  use MPI_C_BINDING
-  integer(MPI_HANDLE_KIND), value, intent(out) :: parent
-end function MPI_Comm_get_parent
-
-end interface MPI_Comm_get_parent
-
-
-interface MPI_Comm_join
-
-integer(C_INT) function &
-MPI_Comm_join(fd, intercomm, ierr) &
-  BIND(C, name="MPI_Comm_join")
-  use MPI_C_BINDING
-  integer(INT_C), value, intent(in) :: fd
-  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
-end function MPI_Comm_join
-
-end interface MPI_Comm_join
-
-
-interface MPI_Comm_accept
-
-integer(C_INT) function &
-MPI_Comm_accept(port_name, info, root, comm, newcomm, ierr) &
-  BIND(C, name="MPI_Comm_accept")
-  use MPI_C_BINDING
-  character(len=*), value, intent(in) :: port_name
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  integer(INT_C), value, intent(in) :: root
-  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
-  integer(MPI_HANDLE_KIND), value, intent(out) :: newcomm
-end function MPI_Comm_accept
-
-end interface MPI_Comm_accept
-
-
-interface MPI_Comm_connect
-
-integer(C_INT) function &
-MPI_Comm_connect(port_name, info, root, comm, newcomm, ierr) &
-  BIND(C, name="MPI_Comm_connect")
-  use MPI_C_BINDING
-  character(len=*), value, intent(in) :: port_name
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  integer(INT_C), value, intent(in) :: root
-  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
-  integer(MPI_HANDLE_KIND), value, intent(out) :: newcomm
-end function MPI_Comm_connect
-
-end interface MPI_Comm_connect
-
-
-interface MPI_Comm_spawn
-
-integer(C_INT) function &
-MPI_Comm_spawn(command, argv, maxprocs, info, root, comm, intercomm, &
-        array_of_errcodes, ierr) &
-  BIND(C, name="MPI_Comm_spawn")
-  use MPI_C_BINDING
-  character(len=*), value, intent(in) :: command
-  character(len=*), dimension(*), value, intent(in) :: argv
-  integer(INT_C), value, intent(in) :: maxprocs
-  integer(MPI_HANDLE_KIND), value, intent(in) :: info
-  integer(INT_C), value, intent(in) :: root
-  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
-  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
-  integer(INT_C), dimension(*), value, intent(out) :: array_of_errcodes
-end function MPI_Comm_spawn
-
-end interface MPI_Comm_spawn
-
-
-interface MPI_Comm_spawn_multiple
-
-integer(C_INT) function &
-MPI_Comm_spawn_multiple(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, root, comm, &
-        intercomm, array_of_errcodes, ierr) &
-  BIND(C, name="MPI_Comm_spawn_multiple")
-  use MPI_C_BINDING
-  integer(INT_C), value, intent(in) :: count
-  character(len=*), dimension(*), value, intent(in) :: array_of_commands
-  character(len=*), dimension(count,*), value, intent(in) :: array_of_argv
-  integer(INT_C), dimension(*), value, intent(in) :: array_of_maxprocs
-  integer(MPI_HANDLE_KIND), dimension(*), value, intent(in) :: array_of_info
-  integer(INT_C), value, intent(in) :: root
-  integer(MPI_HANDLE_KIND), value, intent(in) :: comm
-  integer(MPI_HANDLE_KIND), value, intent(out) :: intercomm
-  integer(INT_C), dimension(*), value, intent(out) :: array_of_errcodes
-end function MPI_Comm_spawn_multiple
-
-end interface MPI_Comm_spawn_multiple
-
+end interface MPI_Wtime

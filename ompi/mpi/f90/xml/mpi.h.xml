@@ -260,7 +260,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void">
@@ -323,7 +323,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void">
@@ -425,7 +425,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -843,7 +843,7 @@
     <method name="MPI_Bcast" kind="final" template="yes">
 
       <!-- ARGUMENT : buffer -->
-      <arg name="buffer" intent="in">
+      <arg name="buffer" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -4676,7 +4676,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -4745,7 +4745,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -7341,7 +7341,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -7404,7 +7404,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -7712,7 +7712,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -7781,7 +7781,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" idl="choice">
           <indirect depth="1" kind="pointer">
             <type kind="void" >
@@ -7864,7 +7864,7 @@
       </arg>
 
       <!-- ARGUMENT : recvbuf -->
-      <arg name="recvbuf" intent="out">
+      <arg name="recvbuf" intent="inout">
         <type kind="ptr" >
           <indirect depth="1" kind="pointer">
             <type kind="void" >
