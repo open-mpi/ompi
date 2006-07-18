@@ -216,6 +216,7 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
     ompi_request_t *request = *rptr;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
+    int rc;
 
  recheck_request_status:
 #endif
@@ -234,9 +235,14 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
         }
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
-            return OMPI_SUCCESS;
+            return request->req_status.MPI_ERROR;
         }
-        return ompi_request_free(rptr);
+        rc = request->req_status.MPI_ERROR;
+        if (OMPI_SUCCESS != ompi_request_free(rptr)) {
+            return OMPI_ERROR;
+        } else {
+            return rc;
+        }
     }
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     if( 0 == do_it_once ) {
