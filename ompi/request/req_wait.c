@@ -26,6 +26,7 @@ int ompi_request_wait(
     ompi_status_public_t * status)
 {
     ompi_request_t *req = *req_ptr;
+    int rc;
 
     if(req->req_complete == false) {
 
@@ -58,11 +59,15 @@ finished:
     }
     if( req->req_persistent ) {
         req->req_state = OMPI_REQUEST_INACTIVE;
-        return OMPI_SUCCESS;
+        return req->req_status.MPI_ERROR;
     }
 
     /* return request to pool */
-    return ompi_request_free(req_ptr);
+    rc = req->req_status.MPI_ERROR;
+    if (OMPI_SUCCESS != ompi_request_free(req_ptr)) {
+        return OMPI_ERROR;
+    }
+    return rc;
 }
 
 
@@ -159,9 +164,14 @@ finished:
         }
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
+            rc = request->req_status.MPI_ERROR;
         } else {
+            int tmp;
+
             /* return request to pool */
-            rc = ompi_request_free(rptr);
+            rc = request->req_status.MPI_ERROR;
+            tmp = ompi_request_free(rptr);
+            if (OMPI_SUCCESS != tmp) rc = tmp;
         }
         *index = completed;
     }

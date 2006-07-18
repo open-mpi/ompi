@@ -32,6 +32,7 @@ int ompi_request_test_any(
     size_t num_requests_null_inactive = 0;
     ompi_request_t **rptr;
     ompi_request_t *request;
+    int rc;
 
     opal_atomic_mb();
     rptr = requests;
@@ -51,7 +52,11 @@ int ompi_request_test_any(
                 request->req_state = OMPI_REQUEST_INACTIVE;
                 return OMPI_SUCCESS;
             }
-            return ompi_request_free(rptr);
+            rc = request->req_status.MPI_ERROR;
+            if (OMPI_SUCCESS != ompi_request_free(rptr)) {
+                return OMPI_ERROR;
+            }
+            return rc;
         }
     }
 
