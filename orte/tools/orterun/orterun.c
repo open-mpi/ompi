@@ -737,6 +737,12 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
     }
+
+    /* make the output a little prettier - move the prompt to its own line */
+    if (!orterun_globals.quiet){
+        fprintf(stderr, "\n\n");
+    }
+        
 }
 
 
