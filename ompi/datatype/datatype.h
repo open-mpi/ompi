@@ -59,7 +59,7 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 #define DT_FLAG_USER_LB       0x0010  /**< has a user defined LB */
 #define DT_FLAG_USER_UB       0x0020  /**< has a user defined UB */
 #define DT_FLAG_PREDEFINED    0x0040  /**< cannot be removed: initial and predefined datatypes */
-#define DT_FLAG_NO_GAPS       0x0080  /**< we are inside a loop */
+#define DT_FLAG_NO_GAPS       0x0080  /**< no gaps around the datatype */
 #define DT_FLAG_DATA          0x0100  /**< data or control structure */
 #define DT_FLAG_ONE_SIDED     0x0200  /**< datatype can be used for one sided operations */
 #define DT_FLAG_UNAVAILABLE   0x0400  /**< datatypes unavailable on the build (OS or compiler dependant) */
