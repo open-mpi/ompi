@@ -159,8 +159,7 @@ static int parse_requested(int mca_param, bool *include_mode,
                            char ***requested_component_names)
 {
   int i;
-  char *requested;
-  char *tmp;
+  char *requested, *requested_orig;
 
   *requested_component_names = NULL;
   *include_mode = true;
@@ -173,22 +172,39 @@ static int parse_requested(int mca_param, bool *include_mode,
   if (NULL == requested || 0 == strlen(requested)) {
     return OPAL_SUCCESS;
   }
-  *requested_component_names = opal_argv_split(requested, ',');
+  requested_orig = requested;
 
-  /* Are we including or excluding? */
+  /* Are we including or excluding?  We only allow the negate
+     character to be the *first* character of the value (but be nice
+     and allow any number of negate characters in the beginning). */
 
-  for (i = 0; NULL != (*requested_component_names)[i]; ++i) {
-      if (negate == *((*requested_component_names)[i])) {
-          tmp = strdup((*requested_component_names)[i] + 1);
-          free((*requested_component_names)[i]);
-          (*requested_component_names)[i] = tmp;
-
-          *include_mode = false;
-      }
+  while (negate == requested[0] && '\0' != requested[0]) {
+      *include_mode = false;
+      ++requested;
   }
+
+  /* Double check to ensure that the user did not specify the negate
+     character anywhere else in the value. */
+
+  i = 0;
+  while ('\0' != requested[i]) {
+      if (negate == requested[i]) {
+          opal_show_help("help-mca-base.txt", 
+                         "framework-param:too-many-negates",
+                         true, requested_orig);
+          free(requested_orig);
+          return OPAL_ERROR;
+      }
+      ++i;
+  }
+
+  /* Split up the value into individual component names */
+
+  *requested_component_names = opal_argv_split(requested, ',');
 
   /* All done */
 
+  free(requested_orig);
   return OPAL_SUCCESS;
 }
 
