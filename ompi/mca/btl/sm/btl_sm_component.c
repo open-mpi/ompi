@@ -203,6 +203,7 @@ int mca_btl_sm_component_close(void)
          * to call this, so that in an abnormal termination scenario,
          * this file will still get cleaned up */
         unlink(mca_btl_sm_component.mmap_file->map_path);
+        OBJ_RELEASE(mca_btl_sm_component.mmap_file);
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
