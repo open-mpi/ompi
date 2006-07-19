@@ -103,7 +103,7 @@ mca_coll_sm_component_t mca_coll_sm_component = {
     4096,
 
     /* (default) bootstrap filename */
-    "coll-sm-bootstrap",
+    "shared_mem_sm_bootstrap",
 
     /* (default) number of segments in bootstrap file */
     8,
