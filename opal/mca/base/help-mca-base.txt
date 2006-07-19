@@ -35,3 +35,21 @@ The %s component was not found!
 
 This means that this component is either not installed, or unable to be 
 used on your system.
+[framework-param:too-many-negates]
+MCA framework parameters can only take a single negation operator
+("^"), and it must be at the beginning of the value.  The following
+value violates this rule:
+
+    %s
+
+When used, the negation operator sets the "exclusive" behavior mode,
+meaning that it will exclude all specified components (and implicitly
+include all others).  If the negation operator is not specified, the
+"inclusive" mode is assumed, meaning that all specified components
+will be included (and implicitly exclude all others).
+
+For example, "^a,b" specifies the exclusive behavior and means "use
+all components *except* a and b", while "c,d" specifies the inclusive
+behavior and means "use *only* components c and d."
+
+You cannot mix inclusive and exclusive behavior.
