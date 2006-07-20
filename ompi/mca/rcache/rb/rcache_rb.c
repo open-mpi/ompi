@@ -58,7 +58,12 @@ int mca_rcache_rb_find (
     }
     OPAL_THREAD_LOCK(&rcache->lock);
     *cnt = 0;
-    
+
+    if(ompi_rb_tree_size(&((mca_rcache_rb_module_t*)rcache)->rb_tree) == 0) {
+       OPAL_THREAD_UNLOCK(&rcache->lock);
+       return OMPI_SUCCESS;
+    }
+
     base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
         
