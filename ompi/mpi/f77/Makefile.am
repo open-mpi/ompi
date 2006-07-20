@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -62,14 +63,13 @@ headers = \
 #
 
 libmpi_f77_la_SOURCES   = \
-        constants_f.c \
         attr_fn_f.c \
         f90_accessors.c \
         strings.c \
         test_constants_f.c
 
 #
-# libmpi_c_mpi.la is only built in some cases (see above)
+# These files are only built and added to libmpi_f77.la in certain cases.
 #
 
 libmpi_f77_mpi_la_SOURCES = \
