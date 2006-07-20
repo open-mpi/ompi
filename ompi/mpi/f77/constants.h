@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,8 +41,10 @@
 
 #if defined(HAVE_LONG_DOUBLE) && OMPI_ALIGNMENT_LONG_DOUBLE == 16
 typedef struct { long double bogus[1]; } ompi_fortran_common_t;
+#define OMPI_FORTRAN_COMMON_INIT {{ 0 }}
 #else
 typedef struct { double bogus[2]; } ompi_fortran_common_t;
+#define OMPI_FORTRAN_COMMON_INIT {{ 0, 0 }}
 #endif
 
 /*
