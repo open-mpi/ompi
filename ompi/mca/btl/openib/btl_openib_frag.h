@@ -127,7 +127,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
  *
  */
 
-#define MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc)                               \
+#define MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(btl, frag, rc)                               \
 {                                                                      \
                                                                        \
     ompi_free_list_item_t *item;                                            \
@@ -135,11 +135,19 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 
+#define MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc)                               \
+{                                                                      \
+                                                                       \
+    ompi_free_list_item_t *item;                                            \
+    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_eager, item, rc);       \
+    frag = (mca_btl_openib_frag_t*) item;                                  \
+}
+
 #define MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc)                               \
 {                                                                      \
                                                                        \
     ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_max, item, rc);       \
+    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_max, item, rc);       \
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 
@@ -147,7 +155,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
 {                                                                      \
                                                                        \
     ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_frag, item, rc);       \
+    OMPI_FREE_LIST_GET(&((mca_btl_openib_module_t*)btl)->send_free_frag, item, rc);       \
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 

@@ -34,6 +34,8 @@
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/datatype/datatype.h"
+#include "pml_ob1_hdr.h"
+#include "ompi/mca/bml/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -63,10 +65,11 @@ struct mca_pml_ob1_t {
     ompi_free_list_t recv_requests;
     ompi_free_list_t rdma_frags;
     ompi_free_list_t recv_frags;
+    ompi_free_list_t pending_pckts;
     ompi_free_list_t buffers;
 
     /* list of pending operations */
-    opal_list_t acks_pending;
+    opal_list_t pckt_pending;
     opal_list_t send_pending;
     opal_list_t recv_pending;
     opal_list_t rdma_pending;
@@ -231,6 +234,78 @@ typedef struct mca_pml_ob1_rdma_reg_t mca_pml_ob1_rdma_reg_t;
 
 #define MCA_PML_OB1_MAX_REGISTRATIONS 4
 
+struct mca_pml_ob1_pckt_pending_t {
+    ompi_free_list_item_t super;
+    ompi_proc_t* proc;
+    mca_pml_ob1_hdr_t hdr;
+};
+typedef struct mca_pml_ob1_pckt_pending_t mca_pml_ob1_pckt_pending_t;
+OBJ_CLASS_DECLARATION(mca_pml_ob1_pckt_pending_t);
+
+#define MCA_PML_OB1_PCKT_PENDING_ALLOC(pckt,rc)                 \
+do {                                                            \
+    ompi_free_list_item_t* item;                                \
+    OMPI_FREE_LIST_WAIT(&mca_pml_ob1.pending_pckts, item, rc);  \
+    pckt = (mca_pml_ob1_pckt_pending_t*)item;                   \
+} while (0)
+
+#define MCA_PML_OB1_PCKT_PENDING_RETURN(pckt)                   \
+do {                                                            \
+    /* return packet */                                         \
+    OMPI_FREE_LIST_RETURN(&mca_pml_ob1.pending_pckts,           \
+        (ompi_free_list_item_t*)pckt);                          \
+} while(0)
+
+#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D)                   \
+    do {                                                            \
+        mca_pml_ob1_pckt_pending_t *_pckt;                          \
+        int _rc;                                                    \
+                                                                    \
+        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
+        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
+        _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
+        _pckt->proc = (P);                                          \
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                        \
+        opal_list_append(&mca_pml_ob1.pckt_pending,                 \
+                (opal_list_item_t*)_pckt);                          \
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                      \
+    } while(0)
+
+
+int mca_pml_ob1_send_fin_btl(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
+        void *hdr_des);
+static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc, void *hdr_des)
+{
+    size_t i;
+    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_endpoint_t* endpoint =
+        (mca_bml_base_endpoint_t*)proc->proc_bml;
+
+    for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
+        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+        if(mca_pml_ob1_send_fin_btl(proc, bml_btl, hdr_des) == OMPI_SUCCESS)
+            return OMPI_SUCCESS;
+    }
+
+    MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des);
+
+    return OMPI_ERR_OUT_OF_RESOURCE;
+}
+
+void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl);
+void mca_pml_ob1_process_pending_rdma(void);
+
+#define MCA_PML_OB1_PROGRESS_PENDING(bml_btl)                   \
+    do {                                                        \
+        if(opal_list_get_size(&mca_pml_ob1.pckt_pending))       \
+            mca_pml_ob1_process_pending_packets(bml_btl);       \
+        if(opal_list_get_size(&mca_pml_ob1.recv_pending))       \
+            mca_pml_ob1_recv_request_process_pending();         \
+        if(opal_list_get_size(&mca_pml_ob1.send_pending))       \
+            mca_pml_ob1_send_request_process_pending(bml_btl);  \
+        if(opal_list_get_size(&mca_pml_ob1.rdma_pending))       \
+            mca_pml_ob1_process_pending_rdma();                 \
+    } while (0)
 /*
  * Compute the total number of bytes on supplied descriptor
  */
@@ -245,4 +320,3 @@ do {                                                                        \
 } while(0)
 
 #endif
-

@@ -211,3 +211,138 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     return OMPI_SUCCESS;
 }
 
+static void mca_pml_ob1_fin_completion(
+    mca_btl_base_module_t* btl,
+    struct mca_btl_base_endpoint_t* ep,
+    struct mca_btl_base_descriptor_t* des,
+    int status)
+{
+    
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context; 
+    
+    MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
+
+    /* check for pending requests */
+    MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
+}
+
+int mca_pml_ob1_send_fin_btl(
+        ompi_proc_t* proc,
+        mca_bml_base_btl_t* bml_btl,
+        void *hdr_des
+        )
+{
+    mca_btl_base_descriptor_t* fin;
+    mca_pml_ob1_fin_hdr_t* hdr;
+    int rc;
+
+    MCA_PML_OB1_DES_ALLOC(bml_btl, fin, sizeof(mca_pml_ob1_fin_hdr_t));
+    if(NULL == fin) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    fin->des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
+    fin->des_cbfunc = mca_pml_ob1_fin_completion;
+    fin->des_cbdata = NULL;
+
+    /* fill in header */
+    hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_src->seg_addr.pval;
+    hdr->hdr_common.hdr_flags = 0;
+    hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
+    hdr->hdr_des.pval = hdr_des;
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+#ifdef WORDS_BIGENDIAN
+    hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+#else
+    /* if we are little endian and the remote side is big endian,
+       we're responsible for making sure the data is in network byte
+       order */
+    if (proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
+        MCA_PML_OB1_FIN_HDR_HTON(*hdr);
+    }
+#endif
+#endif
+
+    /* queue request */
+    rc = mca_bml_base_send(
+                           bml_btl,
+                           fin,
+                           MCA_BTL_TAG_PML
+                           );
+    if(OMPI_SUCCESS != rc) {
+        MCA_BML_BASE_BTL_DES_RETURN(bml_btl, fin);
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+    
+
+    return OMPI_SUCCESS;
+}
+
+void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
+{
+    mca_pml_ob1_pckt_pending_t *pckt;
+    int i, rc, s = opal_list_get_size(&mca_pml_ob1.pckt_pending);
+
+    for(i = 0; i < s; i++) {
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+        pckt = (mca_pml_ob1_pckt_pending_t*)
+            opal_list_remove_first(&mca_pml_ob1.pckt_pending);
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+        if(NULL == pckt)
+            break;
+        switch(pckt->hdr.hdr_common.hdr_type) {
+            case MCA_PML_OB1_HDR_TYPE_ACK:
+                rc = mca_pml_ob1_recv_request_ack_send_btl(pckt->proc,
+                        bml_btl,
+                        pckt->hdr.hdr_ack.hdr_src_req.pval,
+                        pckt->hdr.hdr_ack.hdr_dst_req.pval,
+                        pckt->hdr.hdr_ack.hdr_rdma_offset);
+                MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
+                if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
+                    MCA_PML_OB1_ADD_ACK_TO_PENDING(pckt->proc,
+                            pckt->hdr.hdr_ack.hdr_src_req.pval,
+                            pckt->hdr.hdr_ack.hdr_dst_req.pval,
+                            pckt->hdr.hdr_ack.hdr_rdma_offset);
+                    return;
+                }
+                break;
+            case MCA_PML_OB1_HDR_TYPE_FIN:
+                rc = mca_pml_ob1_send_fin_btl(pckt->proc, bml_btl,
+                        pckt->hdr.hdr_fin.hdr_des.pval);
+                MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
+                if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
+                     MCA_PML_OB1_ADD_FIN_TO_PENDING(pckt->proc,
+                             pckt->hdr.hdr_fin.hdr_des.pval);
+                     return;
+                }
+                break;
+            default:
+                opal_output(0, "[%s:%d] wrong header type\n",
+                        __FILE__, __LINE__);
+                break;
+        }
+    }
+}
+
+void mca_pml_ob1_process_pending_rdma(void)
+{
+    mca_pml_ob1_rdma_frag_t* frag;
+    int i, rc, s = opal_list_get_size(&mca_pml_ob1.rdma_pending);
+
+    for(i = 0; i < s; i++) {
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+        frag = (mca_pml_ob1_rdma_frag_t*)
+            opal_list_remove_first(&mca_pml_ob1.rdma_pending);
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+        if(NULL == frag)
+            break;
+        if(frag->rdma_state == MCA_PML_OB1_RDMA_PUT) {
+            rc = mca_pml_ob1_send_request_put_frag(frag);
+        } else {
+            rc = mca_pml_ob1_recv_request_get_frag(frag);
+        }
+        if(OMPI_ERR_OUT_OF_RESOURCE == rc)
+            break;
+    }
+}

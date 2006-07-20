@@ -355,8 +355,10 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         } else {                                                        \
             des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
         }                                                               \
-        des->des_src->seg_len = seg_size;                               \
-        des->des_context = (void*) bml_btl;                             \
+        if(des != NULL) {                                               \
+            des->des_src->seg_len = seg_size;                           \
+            des->des_context = (void*) bml_btl;                         \
+        }                                                               \
     } while(0)
 #else
 #define MCA_BML_BASE_BTL_DES_ALLOC(bml_btl, des, alloc_size, seg_size)  \
@@ -366,8 +368,10 @@ static inline void mca_bml_base_prepare_dst(mca_bml_base_btl_t* bml_btl,
         } else {                                                        \
             des = bml_btl->btl_alloc(bml_btl->btl, alloc_size);         \
         }                                                               \
-        des->des_src->seg_len = seg_size;                               \
-        des->des_context = (void*) bml_btl;                             \
+        if(des != NULL) {                                               \
+            des->des_src->seg_len = seg_size;                           \
+            des->des_context = (void*) bml_btl;                         \
+        }                                                               \
     } while(0)
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 

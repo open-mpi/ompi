@@ -885,6 +885,9 @@ int mca_btl_openib_endpoint_connect(
         return rc;
     }
              
+    MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(openib_btl, endpoint->hp_credit_frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(openib_btl, endpoint->lp_credit_frag, rc);
+
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
     if(mca_btl_openib_component.use_srq) { 
         MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
@@ -1039,9 +1042,6 @@ static void mca_btl_openib_endpoint_credits_lp(
 {
     int32_t credits;
 
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
-                           ((mca_btl_openib_frag_t*)descriptor));
-
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1);
 
@@ -1067,11 +1067,7 @@ void mca_btl_openib_endpoint_send_credits_lp(
     struct ibv_send_wr* bad_wr; 
     int rc;
 
-    MCA_BTL_IB_FRAG_ALLOC_EAGER(openib_btl, frag, rc);
-    if(NULL == frag) {
-        BTL_ERROR(("error allocating fragment"));
-        return;
-    }
+    frag = endpoint->lp_credit_frag;
 
     frag->base.des_cbfunc = mca_btl_openib_endpoint_credits_lp;
     frag->base.des_cbdata = NULL;
@@ -1117,9 +1113,6 @@ static void mca_btl_openib_endpoint_credits_hp(
 {
     int32_t credits;
 
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl), 
-                           ((mca_btl_openib_frag_t*)descriptor));
-
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1);
 
@@ -1146,11 +1139,7 @@ void mca_btl_openib_endpoint_send_credits_hp(
     struct ibv_send_wr* bad_wr; 
     int rc;
 
-    MCA_BTL_IB_FRAG_ALLOC_EAGER(openib_btl, frag, rc);
-    if(NULL == frag) {
-        BTL_ERROR(("error allocating fragment"));
-        return;
-    }
+    frag = endpoint->hp_credit_frag;
 
     frag->base.des_cbfunc = mca_btl_openib_endpoint_credits_hp;
     frag->base.des_cbdata = NULL;
@@ -1208,7 +1197,6 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
 
     MCA_BTL_IB_FRAG_ALLOC_EAGER(openib_btl, frag, rc);
     if(NULL == frag) {
-        BTL_ERROR(("error allocating fragment"));
         return -1;
     }
 
