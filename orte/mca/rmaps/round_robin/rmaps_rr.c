@@ -60,13 +60,11 @@ static int map_app_by_node(
     orte_rmaps_base_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
-    int rank,
     opal_list_t* nodes,
     opal_list_t* max_used_nodes)
 {
     int rc = ORTE_SUCCESS;
     size_t num_alloc = 0;
-    size_t proc_index = 0;
     opal_list_item_t *next;
     orte_ras_node_t *node;
     
@@ -113,14 +111,12 @@ static int map_app_by_node(
         
         /* Allocate a slot on this node */
         node = (orte_ras_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + rank, proc_index,
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, num_alloc,
                                              nodes, max_used_nodes))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        ++rank;
-        ++proc_index;
         ++num_alloc;
 
         cur_node_item = next;
@@ -141,16 +137,15 @@ static int map_app_by_slot(
     orte_rmaps_base_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
-    int rank,
     opal_list_t* nodes,
     opal_list_t* max_used_nodes)
 {
     int rc = ORTE_SUCCESS;
     size_t i, num_slots_to_take;
     size_t num_alloc = 0;
-    size_t proc_index = 0;
     orte_ras_node_t *node;
     opal_list_item_t *next;
+    int vpid_offset=0;
 
 
     /* This loop continues until all procs have been mapped or we run
@@ -202,7 +197,7 @@ static int map_app_by_slot(
         num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
         
         for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + rank, proc_index,
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, num_alloc,
                                                  nodes, max_used_nodes))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
@@ -215,10 +210,8 @@ static int map_app_by_slot(
                 }
             }
             
-            /* Record the number of procs allocated */
+            /* Update the number of procs allocated */
             ++num_alloc;
-            ++rank;
-            ++proc_index;
 
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
@@ -253,7 +246,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     orte_ras_node_t *node, *node2;
     orte_vpid_t vpid_start, job_vpid_start=0;
     size_t num_procs = 0, total_num_slots, mapped_num_slots;
-    int rank = 0;
     int rc;
     bool bynode = true, modify_app_context = false;
 
@@ -391,9 +383,9 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
 
         /* Make assignments */
         if (bynode) {
-            rc = map_app_by_node(app, map, jobid, vpid_start, rank, working_node_list, &max_used_nodes);
+            rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
-            rc = map_app_by_slot(app, map, jobid, vpid_start, rank, working_node_list, &max_used_nodes);
+            rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         }
 
         
@@ -402,9 +394,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
             goto cleanup;
         }
 
-        /** keep track of the rank */
-        rank += app->num_procs;
-        
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
             /** before we get rid of the mapped_node_list, we first need to update
