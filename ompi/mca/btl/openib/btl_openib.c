@@ -186,21 +186,20 @@ mca_btl_base_descriptor_t* mca_btl_openib_alloc(
     struct mca_btl_base_module_t* btl,
     size_t size)
 {
-    mca_btl_openib_frag_t* frag;
+    mca_btl_openib_frag_t* frag = NULL;
     mca_btl_openib_module_t* openib_btl; 
     int rc;
     openib_btl = (mca_btl_openib_module_t*) btl; 
     
     if(size <= mca_btl_openib_component.eager_limit){ 
-        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
-        frag->segment.seg_len = size; 
+        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
     } else if(size <= mca_btl_openib_component.max_send_size) { 
         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
-        frag->segment.seg_len = size;
-    } else { 
-        return NULL;
     }
     
+    if(NULL == frag)
+        return NULL;
+
     frag->segment.seg_len = size <= openib_btl->super.btl_eager_limit ? size : openib_btl->super.btl_eager_limit;  
     frag->base.des_flags = 0; 
     
@@ -339,7 +338,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
                                             0,
                                             (mca_mpool_base_registration_t**) &openib_reg); 
         if(OMPI_SUCCESS != rc || NULL == openib_reg) {
-            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
             MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
             return NULL;
         }
@@ -483,8 +481,6 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
                                        0,
                                        (mca_mpool_base_registration_t**) &openib_reg);
         if(OMPI_SUCCESS != rc || NULL == openib_reg) {
-            BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu", 
-                frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
             MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
             return NULL;
         }

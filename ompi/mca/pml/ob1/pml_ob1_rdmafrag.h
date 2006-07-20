@@ -26,11 +26,8 @@
 #include "pml_ob1_hdr.h"
 
 typedef enum {
-    MCA_PML_OB1_RMDA_INIT,
-    MCA_PML_OB1_RDMA_PREPARE,
     MCA_PML_OB1_RDMA_PUT,
-    MCA_PML_OB1_RDMA_GET,
-    MCA_PML_OB1_RDMA_FIN
+    MCA_PML_OB1_RDMA_GET
 } mca_pml_ob1_rdma_state_t;
 
 struct mca_pml_ob1_rdma_frag_t {

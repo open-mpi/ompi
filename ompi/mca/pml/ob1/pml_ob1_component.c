@@ -35,6 +35,13 @@
 #include "ompi/mca/bml/base/base.h" 
 
 
+OBJ_CLASS_INSTANCE(
+    mca_pml_ob1_pckt_pending_t,
+    ompi_free_list_item_t,
+    NULL,
+    NULL
+);
+
 mca_pml_base_component_1_0_0_t mca_pml_ob1_component = {
 
     /* First, the mca_base_component_t struct containing meta
@@ -143,12 +150,22 @@ int mca_pml_ob1_component_open(void)
         mca_pml_ob1.free_list_inc,
         NULL);
                                                                                                             
+    OBJ_CONSTRUCT(&mca_pml_ob1.pending_pckts, ompi_free_list_t);
+    ompi_free_list_init(
+        &mca_pml_ob1.pending_pckts,
+        sizeof(mca_pml_ob1_pckt_pending_t),
+        OBJ_CLASS(mca_pml_ob1_pckt_pending_t),
+        mca_pml_ob1.free_list_num,
+        mca_pml_ob1.free_list_max,
+        mca_pml_ob1.free_list_inc,
+        NULL);
+
     OBJ_CONSTRUCT(&mca_pml_ob1.buffers, ompi_free_list_t);
                                                                                                             
     /* pending operations */
     OBJ_CONSTRUCT(&mca_pml_ob1.send_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
-    OBJ_CONSTRUCT(&mca_pml_ob1.acks_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
     
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
@@ -181,7 +198,7 @@ int mca_pml_ob1_component_close(void)
     if(OMPI_SUCCESS != (rc = mca_bml_base_close()))
         return rc;
 
-    OBJ_DESTRUCT(&mca_pml_ob1.acks_pending);
+    OBJ_DESTRUCT(&mca_pml_ob1.pckt_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.recv_pending);
     OBJ_DESTRUCT(&mca_pml_ob1.send_requests);

@@ -24,6 +24,7 @@
 #include "pml_ob1.h"
 #include "pml_ob1_proc.h"
 #include "pml_ob1_rdma.h"
+#include "pml_ob1_rdmafrag.h"
 #include "ompi/proc/proc.h"
 #include "ompi/mca/pml/ob1/pml_ob1_comm.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -50,6 +51,7 @@ struct mca_pml_ob1_recv_request_t {
     mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST];
     uint32_t req_rdma_cnt;
     uint32_t req_rdma_idx;
+    bool req_pending;
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -217,6 +219,7 @@ do {                                                                            
     (request)->req_lock = 0;                                                      \
     (request)->req_pipeline_depth = 0;                                            \
     (request)->req_rdma_idx = 0;                                                  \
+    (request)->req_pending = false;                                               \
                                                                                   \
     MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );                     \
                                                                                   \
@@ -305,7 +308,6 @@ do {                                                                            
     }                                                                             \
 } while (0)
 
-
 /**
  *
  */
@@ -330,9 +332,62 @@ void mca_pml_ob1_recv_request_matched_probe(
  *
  */
 
-void mca_pml_ob1_recv_request_schedule(
+int mca_pml_ob1_recv_request_schedule_exclusive(
     mca_pml_ob1_recv_request_t* req);
 
+static inline void mca_pml_ob1_recv_request_schedule(
+        mca_pml_ob1_recv_request_t* req)
+{
+    if(OPAL_THREAD_ADD32(&req->req_lock,1) == 1)
+        mca_pml_ob1_recv_request_schedule_exclusive(req);
+}
+
+#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                          \
+    do {                                                                    \
+        mca_pml_ob1_pckt_pending_t *_pckt;                                  \
+        int _rc;                                                            \
+                                                                            \
+        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                          \
+        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;          \
+        _pckt->hdr.hdr_ack.hdr_src_req.pval = (S);                          \
+        _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                          \
+        _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                           \
+        _pckt->proc = (P);                                                  \
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                                \
+        opal_list_append(&mca_pml_ob1.pckt_pending,                         \
+                (opal_list_item_t*)_pckt);                                  \
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                              \
+    } while(0)
+
+int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
+        mca_bml_base_btl_t* bml_btl, void *hdr_src_req, void *hdr_dst_req,
+        uint64_t hdr_rdma_offset);
+
+static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
+        void *hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
+{
+    size_t i;
+    mca_bml_base_btl_t* bml_btl;
+    mca_bml_base_endpoint_t* endpoint =
+        (mca_bml_base_endpoint_t*)proc->proc_bml;
+
+    for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
+        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+        if(mca_pml_ob1_recv_request_ack_send_btl(proc, bml_btl, hdr_src_req,
+                    hdr_dst_req, hdr_rdma_offset) == OMPI_SUCCESS)
+            return OMPI_SUCCESS;
+    }
+
+    MCA_PML_OB1_ADD_ACK_TO_PENDING(proc, hdr_src_req, hdr_dst_req,
+            hdr_rdma_offset);
+
+    return OMPI_ERR_OUT_OF_RESOURCE;
+}
+
+int mca_pml_ob1_recv_request_get_frag(
+        mca_pml_ob1_rdma_frag_t* frag);
+
+void mca_pml_ob1_recv_request_process_pending(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
