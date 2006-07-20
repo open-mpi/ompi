@@ -23,16 +23,27 @@
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/mpool.h"
 
+static inline size_t align_to(size_t val, size_t alignment);
+static inline size_t align_to(size_t val, size_t alignment)
+{
+    size_t mod;
+   
+    if(0 == alignment)
+        return val;
+
+    mod = val % alignment;
+    
+    if(mod)
+        val += (alignment - mod);
+
+    return val;
+}
+
 static void ompi_free_list_construct(ompi_free_list_t* fl);
 static void ompi_free_list_destruct(ompi_free_list_t* fl);
 
-
-opal_class_t ompi_free_list_t_class = {
-    "ompi_free_list_t", 
-    OBJ_CLASS(opal_atomic_lifo_t),
-    (opal_construct_t)ompi_free_list_construct, 
-    (opal_destruct_t)ompi_free_list_destruct
-};
+OBJ_CLASS_INSTANCE(ompi_free_list_t, opal_atomic_lifo_t,
+        ompi_free_list_construct, ompi_free_list_destruct);
 
 struct ompi_free_list_memory_t {
     opal_list_item_t super;
@@ -55,8 +66,10 @@ static void ompi_free_list_construct(ompi_free_list_t* fl)
     fl->fl_num_allocated = 0;
     fl->fl_num_per_alloc = 0;
     fl->fl_num_waiting = 0;
-    fl->fl_elem_size = 0;
-    fl->fl_elem_class = 0;
+    fl->fl_elem_size = sizeof(ompi_free_list_item_t);
+    fl->fl_elem_class = OBJ_CLASS(ompi_free_list_item_t);
+    fl->fl_header_space = 0;
+    fl->fl_alignment = 0;
     fl->fl_mpool = 0;
     OBJ_CONSTRUCT(&(fl->fl_allocations), opal_list_t);
 }
@@ -95,36 +108,38 @@ static void ompi_free_list_destruct(ompi_free_list_t* fl)
     OBJ_DESTRUCT(&fl->fl_lock);
 }
 
-int ompi_free_list_init(
+int ompi_free_list_init_ex(
     ompi_free_list_t *flist,
     size_t elem_size,
+    size_t header_space,
+    size_t alignment,
     opal_class_t* elem_class,
     int num_elements_to_alloc,
     int max_elements_to_alloc,
     int num_elements_per_alloc,
     mca_mpool_base_module_t* mpool)
 {
-    flist->fl_elem_size = elem_size;
-    if( elem_size % CACHE_LINE_SIZE ) {
-        flist->fl_elem_size += CACHE_LINE_SIZE - (elem_size % CACHE_LINE_SIZE);
-    }
-    flist->fl_elem_class = elem_class;
+    if(elem_size > flist->fl_elem_size)
+        flist->fl_elem_size = elem_size;
+    if(elem_class)
+        flist->fl_elem_class = elem_class;
     flist->fl_max_to_alloc = max_elements_to_alloc;
     flist->fl_num_allocated = 0;
     flist->fl_num_per_alloc = num_elements_per_alloc;
     flist->fl_mpool = mpool;
+    flist->fl_header_space = header_space;
+    flist->fl_alignment = alignment;
+    flist->fl_elem_size = align_to(flist->fl_elem_size, flist->fl_alignment);
     if(num_elements_to_alloc)
         return ompi_free_list_grow(flist, num_elements_to_alloc);
     return OMPI_SUCCESS;
 }
 
-
 int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 {
     unsigned char* ptr;
     ompi_free_list_memory_t *alloc_ptr;
-    size_t i;
-    size_t mod;
+    size_t i, alloc_size;
     mca_mpool_base_registration_t* user_out = NULL; 
 
     if (flist->fl_max_to_alloc > 0)
@@ -134,12 +149,16 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     if (num_elements == 0)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
+    alloc_size = num_elements * flist->fl_elem_size +
+        sizeof(ompi_free_list_memory_t) + flist->fl_header_space +
+        flist->fl_alignment;
+
     if (NULL != flist->fl_mpool)
         alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
-                                                 (num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE + sizeof(ompi_free_list_memory_t), 
-                                                 0, 0, &user_out);
+                                                 alloc_size, 0, 0, &user_out);
     else
-        alloc_ptr = malloc((num_elements * flist->fl_elem_size) + CACHE_LINE_SIZE + sizeof(ompi_free_list_memory_t));
+        alloc_ptr = malloc(alloc_size);
+
     if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
 
@@ -152,32 +171,19 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
 
     ptr = (unsigned char*) alloc_ptr + sizeof(ompi_free_list_memory_t);
 
-    mod = (unsigned long)ptr % CACHE_LINE_SIZE;
-    if(mod != 0) {
-        ptr += (CACHE_LINE_SIZE - mod);
+    ptr = (unsigned char*)(align_to((size_t)ptr + flist->fl_header_space,
+                flist->fl_alignment) - flist->fl_header_space);
+
+    for(i=0; i<num_elements; i++) {
+        ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
+        item->user_data = user_out; 
+
+        OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
+
+        opal_atomic_lifo_push(&(flist->super), &(item->super));
+        ptr += flist->fl_elem_size;
     }
 
-    if (NULL != flist->fl_elem_class) {
-        for(i=0; i<num_elements; i++) {
-            ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
-            item->user_data = user_out; 
-
-            OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
-
-            opal_atomic_lifo_push(&(flist->super), &(item->super));
-            ptr += flist->fl_elem_size;
-        }
-    } else {
-        for(i=0; i<num_elements; i++) {
-            ompi_free_list_item_t* item = (ompi_free_list_item_t*)ptr;
-            item->user_data = user_out; 
-
-            OBJ_CONSTRUCT(&item->super, opal_list_item_t); 
-
-            opal_atomic_lifo_push(&(flist->super), &(item->super));
-            ptr += flist->fl_elem_size;
-        }
-    }
     flist->fl_num_allocated += num_elements;
     return OMPI_SUCCESS;
 }
@@ -201,11 +207,12 @@ int ompi_free_list_parse( ompi_free_list_t* list,
     /* If the request will be the first on this memory region, it's easy. */
     if( NULL == position->last_item ) {
         unsigned long ptr = (unsigned long)position->last_memory;
-        /* move it on the cache boundary */
-        if( ptr % CACHE_LINE_SIZE ) {
-            ptr = (ptr + CACHE_LINE_SIZE) & (CACHE_LINE_SIZE - 1);
-        }
-        *return_item = (opal_list_item_t*)(ptr + sizeof(ompi_free_list_memory_t));
+
+        ptr += sizeof(ompi_free_list_memory_t);
+
+        ptr = align_to(ptr + list->fl_header_space, list->fl_alignment) -
+            list->fl_header_space;
+        *return_item = (opal_list_item_t*)ptr;
         return 0;
     }
     /* else go to the next request */
@@ -215,8 +222,10 @@ int ompi_free_list_parse( ompi_free_list_t* list,
         /* otherwise go to the next one. Once there make sure we're still on the
          * memory fragment, otherwise go to the next fragment.
          */
-        size_t frag_length = (list->fl_elem_size * list->fl_num_per_alloc + CACHE_LINE_SIZE
-                              + sizeof(ompi_free_list_memory_t));
+        size_t frag_length = (list->fl_elem_size * list->fl_num_per_alloc + 
+                              + sizeof(ompi_free_list_memory_t) +
+                              list->fl_header_space + list->fl_alignment);
+
         if( position->last_item < (position->last_memory + frag_length) ) {
             *return_item = (opal_list_item_t*)position->last_item;
             return 0;

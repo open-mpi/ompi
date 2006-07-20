@@ -121,6 +121,7 @@ struct mca_btl_openib_component_t {
     uint32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
+    uint32_t buffer_alignment;
 
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
