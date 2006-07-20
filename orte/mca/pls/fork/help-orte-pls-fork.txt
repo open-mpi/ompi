@@ -52,3 +52,14 @@ Host: %s
 PID:  %d
 
 This process may still be running and/or consuming resources.
+
+[orte-pls-fork:could-not-kill]
+WARNING: A process refused the kill SIGTERM signal!
+         This should never happen unless the application is changing the
+         parent/child relationship permissions.
+
+Host:  %s
+PID:   %d
+Errno: %d
+
+This process may still be running and/or consuming resources.

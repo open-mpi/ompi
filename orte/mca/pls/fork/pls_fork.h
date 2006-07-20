@@ -60,7 +60,7 @@ struct orte_pls_fork_component_t {
     int priority;
     int reap;
     int timeout_before_sigkill;
-    size_t num_children;
+    int num_children;
     opal_mutex_t lock;
     opal_condition_t cond;
 };
