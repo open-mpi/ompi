@@ -20,7 +20,8 @@
 
 headers += \
 	opal/constants.h \
-	opal/types.h
+	opal/types.h	 \
+	opal/prefetch.h
 
 nodist_headers += \
 	opal/install_dirs.h \
