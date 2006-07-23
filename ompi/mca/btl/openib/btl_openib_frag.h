@@ -19,8 +19,6 @@
 #ifndef MCA_BTL_IB_FRAG_H
 #define MCA_BTL_IB_FRAG_H
 
-
-#define MCA_BTL_IB_FRAG_ALIGN (8)
 #include "ompi_config.h"
 #include "btl_openib.h" 
 
