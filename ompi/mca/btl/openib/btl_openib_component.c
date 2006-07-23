@@ -616,11 +616,9 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         length = sizeof(mca_btl_openib_frag_t) + 
             sizeof(mca_btl_openib_header_t) + 
             sizeof(mca_btl_openib_footer_t) + 
-            openib_btl->super.btl_eager_limit+ 
-            2*MCA_BTL_IB_FRAG_ALIGN; 
+            openib_btl->super.btl_eager_limit;
 	
-        openib_btl->eager_rdma_frag_size = 
-            length & ~(2 * MCA_BTL_IB_FRAG_ALIGN - 1);
+        openib_btl->eager_rdma_frag_size = length;
  
         ompi_free_list_init_ex(&openib_btl->send_free_eager,
                             length,
@@ -644,8 +642,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
 
         length = sizeof(mca_btl_openib_frag_t) + 
             sizeof(mca_btl_openib_header_t) + 
-            openib_btl->super.btl_max_send_size +
-            2*MCA_BTL_IB_FRAG_ALIGN; 
+            openib_btl->super.btl_max_send_size;
         
 
         ompi_free_list_init_ex(&openib_btl->send_free_max,
@@ -668,9 +665,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                              mca_btl_openib_component.ib_free_list_max,
                              mca_btl_openib_component.ib_free_list_inc, openib_btl->super.btl_mpool);
 
-        length = sizeof(mca_btl_openib_frag_t) + 
-            sizeof(mca_btl_openib_header_t)+ 
-            2*MCA_BTL_IB_FRAG_ALIGN; 
+        length = sizeof(mca_btl_openib_frag_t);
 
         ompi_free_list_init(&openib_btl->send_free_frag,
                             length, 
