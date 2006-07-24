@@ -163,8 +163,6 @@ struct mca_btl_openib_module_t {
     ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */ 
 
-    opal_list_t reg_mru_list;      /**< a most recently used list of mca_mpool_openib_registration_t 
-                                       entries, this allows us to keep a working set of memory pinned */ 
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
     
