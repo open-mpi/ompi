@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -34,14 +34,10 @@ static const char FUNC_NAME[] = "MPI_Bsend_init";
 
 
 int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
-                   int dest, int tag, MPI_Comm comm, MPI_Request *request) 
+                   int dest, int tag, MPI_Comm comm, MPI_Request *request)
 {
     int rc;
-    if (dest == MPI_PROC_NULL) {
-        *request = &ompi_request_empty;
-        return MPI_SUCCESS;
-    }
-    
+
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -59,6 +55,11 @@ int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
             rc = MPI_ERR_REQUEST;
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+    }
+
+    if (MPI_PROC_NULL == dest) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
     }
 
     rc = MCA_PML_CALL(isend_init(buf,count,type,dest,tag,MCA_PML_BASE_SEND_BUFFERED,comm,request));

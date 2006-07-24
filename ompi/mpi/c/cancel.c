@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  *
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -43,7 +43,7 @@ int MPI_Cancel(MPI_Request *request)
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (request == NULL) {
+        if (NULL == request) {
             rc = MPI_ERR_REQUEST;
         }
         /* JMS: Tim will fix to invoke on the communicator/window/file
@@ -52,7 +52,7 @@ int MPI_Cancel(MPI_Request *request)
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Cancel");
     }
 
-    if (NULL == *request) {
+    if (MPI_REQUEST_NULL == *request) {
         return MPI_SUCCESS;
     }
     rc = ompi_request_cancel(*request);
