@@ -28,6 +28,10 @@
 #include <execinfo.h>
 #endif
 
+#ifdef HAVE_UCONTEXT_H
+#include <ucontext.h>
+#endif
+
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
