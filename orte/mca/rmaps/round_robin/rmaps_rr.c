@@ -145,7 +145,6 @@ static int map_app_by_slot(
     size_t num_alloc = 0;
     orte_ras_node_t *node;
     opal_list_item_t *next;
-    int vpid_offset=0;
 
 
     /* This loop continues until all procs have been mapped or we run
