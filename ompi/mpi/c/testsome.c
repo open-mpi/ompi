@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -33,12 +33,11 @@
 static const char FUNC_NAME[] = "MPI_Testsome";
 
 
-int MPI_Testsome(int incount, MPI_Request requests[],
-                 int *outcount, int indices[],
-                 MPI_Status statuses[]) 
+int MPI_Testsome(int incount, MPI_Request *requests,
+                 int *outcount, int *indices,
+                 MPI_Status *statuses)
 {
-    int rc, index, completed;
-    ompi_status_public_t *pstatus;
+    int rc;
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
@@ -46,30 +45,13 @@ int MPI_Testsome(int incount, MPI_Request requests[],
         if( 0 != incount ) {
             if( NULL == requests) {
                 rc = MPI_ERR_REQUEST;
-            } else if (NULL == indices) {
+            } else if ((NULL == outcount) || (NULL == indices)) {
                 rc = MPI_ERR_ARG;
             }
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    if( MPI_STATUSES_IGNORE != statuses ) {
-        pstatus = statuses;
-    } else {
-        pstatus = MPI_STATUS_IGNORE;
-    }
-    /* optimize this in the future */
-    rc = ompi_request_test_any(incount, requests, &index, &completed, pstatus);
-    if(completed) {
-        if( MPI_UNDEFINED == index ) {
-            *outcount = MPI_UNDEFINED;
-        } else {
-            *outcount = 1;
-            indices[0] = index;
-        }
-    } else {
-        *outcount = 0;
-    }
+    rc = ompi_request_test_some(incount, requests, outcount, indices, statuses);
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
-
