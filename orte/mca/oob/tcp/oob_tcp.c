@@ -1093,7 +1093,7 @@ int mca_oob_tcp_fini(void)
         } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
             void *data;
             close(mca_oob_tcp_component.tcp_listen_sd);
-            opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, data);
+            opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, &data);
             opal_progress_unregister(mca_oob_tcp_listen_progress);
         }
 
