@@ -231,7 +231,10 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
     if (request->req_complete) {
         *completed = true;
         if (MPI_STATUS_IGNORE != status) {
+            /* See MPI-1.2, sec 3.2.5, p.22 */
+            int old_error = status->MPI_ERROR;
             *status = request->req_status;
+            status->MPI_ERROR = old_error;
         }
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
@@ -302,6 +305,27 @@ OMPI_DECLSPEC int ompi_request_test_all(
     ompi_status_public_t * statuses);
 
 
+
+/**
+ * Non-blocking test for some of N requests to complete.
+ *
+ * @param count (IN)        Number of requests
+ * @param requests (INOUT)  Array of requests
+ * @param outcount (OUT)    Number of finished requests
+ * @param indices (OUT)     Indices of the finished requests
+ * @param statuses (OUT)    Array of completion statuses.
+ * @return                  OMPI_SUCCESS, OMPI_ERR_IN_STATUS or failure status.
+ *
+ */
+
+OMPI_DECLSPEC int ompi_request_test_some(
+    size_t count,
+    ompi_request_t ** requests,
+    int * outcount,
+    int * indices,
+    ompi_status_public_t * statuses);
+
+
 /**
  * Wait (blocking-mode) for one requests to complete.
  *
@@ -345,6 +369,26 @@ OMPI_DECLSPEC int ompi_request_wait_any(
 OMPI_DECLSPEC int ompi_request_wait_all(
     size_t count,
     ompi_request_t ** requests,
+    ompi_status_public_t * statuses);
+
+
+/**
+ * Wait (blocking-mode) for some of N requests to complete.
+ *
+ * @param count (IN)        Number of requests
+ * @param requests (INOUT)  Array of requests
+ * @param outcount (OUT)    Number of finished requests
+ * @param indices (OUT)     Indices of the finished requests
+ * @param statuses (OUT)    Array of completion statuses.
+ * @return                  OMPI_SUCCESS, OMPI_ERR_IN_STATUS or failure status.
+ *
+ */
+
+OMPI_DECLSPEC int ompi_request_wait_some(
+    size_t count,
+    ompi_request_t ** requests,
+    int * outcount,
+    int * indices,
     ompi_status_public_t * statuses);
 
 

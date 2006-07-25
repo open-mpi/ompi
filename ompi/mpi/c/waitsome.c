@@ -7,7 +7,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -39,31 +39,21 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
                  MPI_Status *statuses) 
 {
-    int index, rc;
-    MPI_Status *pstatus;
+    int rc;
 
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if( (requests == NULL) && (0 != incount) ) {
+        if ((0 != incount) && (NULL == requests)) {
             rc = MPI_ERR_REQUEST;
+        }
+        if ((NULL == outcount) || (NULL == indices)) {
+            rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    if( MPI_STATUSES_IGNORE != statuses ) {
-        pstatus = statuses;
-    } else {
-        pstatus = MPI_STATUS_IGNORE;
-    }
-    /* optimize this in the future */
-    rc = ompi_request_wait_any( incount, requests, &index, pstatus );
-    if( MPI_UNDEFINED == index ) {
-       *outcount = MPI_UNDEFINED;
-    } else {
-       *outcount = 1;
-       indices[0] = index;
-    }
+    rc = ompi_request_wait_some( incount, requests, outcount, indices, statuses );
     OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

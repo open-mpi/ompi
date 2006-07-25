@@ -46,7 +46,10 @@ int ompi_request_test_any(
             *index = i;
             *completed = true;
             if (MPI_STATUS_IGNORE != status) {
+                /* See MPI-1.2, sec 3.2.5, p.22 */
+                int old_error = status->MPI_ERROR;
                 *status = request->req_status;
+                status->MPI_ERROR = old_error;
             }
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
@@ -146,3 +149,79 @@ int ompi_request_test_all(
     return OMPI_SUCCESS;
 }
 
+
+int ompi_request_test_some(
+    size_t count,
+    ompi_request_t ** requests,
+    int * outcount,
+    int * indices,
+    ompi_status_public_t * statuses)
+{
+    size_t i, num_requests_null_inactive=0, num_requests_done = 0;
+    int rc = OMPI_SUCCESS;
+    ompi_request_t **rptr;
+    ompi_request_t *request;
+
+    opal_atomic_mb();
+    rptr = requests;
+    for (i = 0; i < count; i++, rptr++) {
+        request = *rptr;
+        if (request->req_state == OMPI_REQUEST_INACTIVE) {
+            num_requests_null_inactive++;
+            continue;
+        }
+        if (true == request->req_complete) {
+            indices[num_requests_done++] = i;
+        }
+    }
+
+    /*
+     * If there are no active requests, no need to progress
+     */
+    if (num_requests_null_inactive == count) {
+        *outcount = MPI_UNDEFINED;
+        return OMPI_SUCCESS;
+    }
+
+    *outcount = num_requests_done;
+
+    if (num_requests_done == 0) {
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+        opal_progress();
+#endif
+        return OMPI_SUCCESS;
+    }
+
+    /* fill out completion status and free request if required */
+    for( i = 0; i < num_requests_done; i++) {
+        request = requests[indices[i]];
+
+        if (MPI_STATUSES_IGNORE != statuses) {
+            statuses[i] = request->req_status;
+        }
+
+        rc += request->req_status.MPI_ERROR;
+
+        if( request->req_persistent ) {
+            request->req_state = OMPI_REQUEST_INACTIVE;
+        } else {
+            int tmp;
+            /* return request to pool */
+            tmp = ompi_request_free(&(requests[indices[i]]));
+            /*
+              * If it fails, we are screwed. We cannot put the
+              * request_free return code into the status, possibly
+              * overwriting some other important error; therefore just quit.
+              */
+            if (OMPI_SUCCESS != tmp) {
+                return tmp;
+            }
+        }
+    }
+
+    if (OMPI_SUCCESS != rc) {
+        rc = MPI_ERR_IN_STATUS;
+    }
+
+    return rc;
+}
