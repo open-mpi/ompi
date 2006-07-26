@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -124,9 +125,15 @@ public:
 
   virtual Datatype Create_hvector(int count, int blocklength, Aint stride) const;
 
+  virtual Datatype Create_indexed_block(int count, int blocklength,
+					const int array_of_blocklengths[]) const;
+  virtual Datatype Create_resized(const Aint lb, const Aint extent) const;
+
   virtual int Get_size() const;
 
   virtual void Get_extent(Aint& lb, Aint& extent) const;
+
+  virtual void Get_true_extent(Aint&, Aint&) const;
 
   virtual void Commit();
   
