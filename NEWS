@@ -67,8 +67,8 @@ version 1.0.
     (compatibility with the OSC mpiexec launcher)
   --quiet / -q: do not show spurious status messages
   --version / -V: show the version of Open MPI
-- Fix bus error in XGrid process starter.  Thanks to Eric Thibodeau
-  for the fix.
+- Fix bus error in XGrid process starter.  Thanks to Frank from the
+  Open MPI user's list for identifying the problem.
 - Fix data size mismatches that caused memory errors on PPC64
   platforms during the startup of the openib BTL.
 - Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
