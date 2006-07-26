@@ -42,6 +42,7 @@ version 1.0.
 1.1.1
 -----
 
+- Fix OSX linker issue with Fortran bindings.
 - Addition of "dr" (data reliability) PML.
 - Added capability to "mpirun a.out" (without specifying -np) that
   will run on all currently-allocated resources (e.g., within a batch
