@@ -25,6 +25,12 @@ version 1.0.
 1.2
 ---
 
+- Fixed standards conformance issues with MPI_ERR_TRUNCATED and
+  setting MPI_ERROR during MPI_TEST/MPI_WAIT.
+- Added support for building the Fortran 90 bindings library as
+  a shared library.
+- Addition of "cm" PML to better support library-level matching
+  interconnects, with initial support for Myrinet/MX and Portals.
 - Really check that the $CXX given to configure is a C++ compiler
   (not a C compiler that "sorta works" as a C++ compiler).
 - Properly check for local host only addresses properly, looking 
