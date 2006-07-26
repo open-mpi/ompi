@@ -10,6 +10,8 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -90,6 +92,25 @@ MPI::Datatype::Create_hvector(int count, int blocklength,
   return newtype;
 }
 
+inline MPI::Datatype
+MPI::Datatype::Create_indexed_block(int count, int blocklength,
+				    const int array_of_displacements[]) const
+{
+  MPI_Datatype newtype;
+  (void)MPI_Type_create_indexed_block(count, blocklength, const_cast<int *>(array_of_displacements), 
+                                      mpi_datatype, &newtype);
+  return newtype;
+}
+
+inline MPI::Datatype
+MPI::Datatype::Create_resized(const MPI::Aint lb, const MPI::Aint extent) const
+{
+    MPI_Datatype newtype;
+
+    (void) MPI_Type_create_resized(mpi_datatype, lb, extent, &newtype);
+    return(newtype);
+}
+
 inline int
 MPI::Datatype::Get_size() const 
 {
@@ -102,6 +123,12 @@ inline void
 MPI::Datatype::Get_extent(MPI::Aint& lb, MPI::Aint& extent) const
 {
   (void)MPI_Type_get_extent(mpi_datatype, &lb, &extent); 
+}
+
+inline void
+MPI::Datatype::Get_true_extent(MPI::Aint& lb, MPI::Aint& extent) const
+{
+    (void) MPI_Type_get_true_extent(mpi_datatype, &lb, &extent);
 }
 
 inline void
@@ -144,7 +171,7 @@ MPI::Datatype::Pack_size(int incount, const MPI::Comm& comm) const
 
 
 //
-// Miscalleny
+// Miscellany
 //
 
 inline MPI::Datatype
