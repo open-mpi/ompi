@@ -42,6 +42,8 @@ version 1.0.
 1.1.1
 -----
 
+- Add missing C++ methods: MPI::Datatype::Create_indexed_block,
+  MPI::Datatype::Create_resized, MPI::Datatype::Get_true_extent.
 - Fix OSX linker issue with Fortran bindings.
 - Addition of "dr" (data reliability) PML.
 - Added capability to "mpirun a.out" (without specifying -np) that
