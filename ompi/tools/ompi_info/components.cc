@@ -31,6 +31,8 @@
 #include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/memory/memory.h"
+#include "opal/mca/backtrace/backtrace.h"
+#include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/paffinity/base/internal.h"
@@ -173,6 +175,9 @@ void ompi_info::open_components()
 
   // OPAL frameworks
 
+  opal_backtrace_base_open();
+  component_map["backtrace"] = &opal_backtrace_base_components_opened;
+
   opal_memory_base_open();
   component_map["memory"] = &opal_memory_base_components_opened;
 
@@ -303,6 +308,7 @@ void ompi_info::close_components()
         orte_rml_base_close();
         mca_oob_base_close();
     
+        opal_backtrace_base_close();
         opal_memory_base_close();
         opal_paffinity_base_close();
         opal_maffinity_base_close();
