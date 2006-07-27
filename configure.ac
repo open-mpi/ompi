@@ -570,8 +570,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h \
-    ucontext.h])
+    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -689,16 +688,13 @@ AC_CHECK_LIB([socket], [socket])
 # Solaris has sched_yeild in -lrt, usually in libc
 OMPI_CHECK_FUNC_LIB([sched_yield], [rt])
 
-# FreeBSD has backtrace in -lexecinfo, usually in libc
-OMPI_CHECK_FUNC_LIB([backtrace], [execinfo])
-
 # IRIX has dirname in -lgen, usually in libc
 OMPI_CHECK_FUNC_LIB([dirname], [gen])
 
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp printstack])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)

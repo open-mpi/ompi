@@ -24,14 +24,6 @@
 #include <unistd.h>
 #endif
 
-#ifdef HAVE_EXECINFO_H
-#include <execinfo.h>
-#endif
-
-#ifdef HAVE_UCONTEXT_H
-#include <ucontext.h>
-#endif
-
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif
@@ -42,6 +34,7 @@
 
 #include "opal/util/stacktrace.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/mca/backtrace/backtrace.h"
 #include "opal/constants.h"
 
 #ifndef _NSIG
@@ -67,12 +60,6 @@
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__)
 static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 {   
-#ifdef HAVE_BACKTRACE
-    int i;
-    int trace_size;
-    void * trace[32];
-    char ** messages = (char **)NULL;
-#endif
     char print_buffer[1024];
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
@@ -295,17 +282,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
     fflush(stderr);
 
-#ifdef HAVE_BACKTRACE
-    trace_size = backtrace (trace, 32);
-    messages = backtrace_symbols (trace, trace_size);
-
-    for (i = 0; i < trace_size; i++) {
-        fprintf(stderr, "[%d] func:%s\n", i, messages[i]);
-        fflush(stderr);
-    }
-#elif defined(HAVE_PRINTSTACK)
-    printstack(fileno(stderr));
-#endif
+    opal_backtrace_print(stderr);
 
     write(fileno(stderr), eof_msg, sizeof(eof_msg));
     fflush(stderr);

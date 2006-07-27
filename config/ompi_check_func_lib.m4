@@ -17,7 +17,7 @@ dnl
 dnl $HEADER$
 dnl
 
-# OMPI_CHECK_FUNC_LIB(func, lib)
+# OMPI_CHECK_FUNC_LIB(func, lib, [action-if-found], [action-if-not-found])
 # ------------------------------
 # Try to find function func, first with the present LIBS, second with
 # lib added to LIBS.  If func is found with the libraries listed in
@@ -42,6 +42,6 @@ AC_DEFUN([OMPI_CHECK_FUNC_LIB],[
     # see if we actually have $1.  Use AC_CHECK_FUNCS so that it
     # does the glibc "not implemented" check.  Will use the current LIBS,
     # so will check in -l$2 if we decided we needed it above
-    AC_CHECK_FUNCS([$1])
+    AC_CHECK_FUNCS([$1], $3, $4)
     AS_VAR_POPDEF([ompi_var])dnl
 ])
