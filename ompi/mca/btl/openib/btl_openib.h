@@ -163,6 +163,7 @@ struct mca_btl_openib_module_t {
     ompi_free_list_t recv_free_eager;  /**< High priority free list of buffer descriptors */
     ompi_free_list_t recv_free_max;    /**< Low priority free list of buffer descriptors */ 
 
+    ompi_free_list_t send_free_control; /**< frags for control massages */ 
     opal_mutex_t ib_lock;          /**< module level lock */ 
     
     
