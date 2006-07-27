@@ -16,8 +16,4 @@
 # $HEADER$
 #
 
-
-
-EXTRA_DIST = err.h
-
 SUBDIRS = sys
