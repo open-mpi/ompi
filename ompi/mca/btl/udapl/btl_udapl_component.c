@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -436,6 +438,9 @@ int mca_btl_udapl_component_progress()
     mca_btl_udapl_module_t* btl;
     static int32_t inprogress = 0;
     DAT_EVENT event;
+#if defined(__SVR4) && defined(__sun)
+    DAT_COUNT nmore;  /* used by dat_evd_wait, see comment below */
+#endif
     int count = 0;
     size_t i;
 
@@ -607,8 +612,16 @@ int mca_btl_udapl_component_progress()
 
         /* Check connection EVD */
         while(DAT_SUCCESS ==
+#if defined(__SVR4) && defined(__sun)
+	    /* There is a bug is Solaris udapl implementation
+	     * such that dat_evd_dequeue does not dequeue
+	     * DAT_CONNECTION_REQUEST_EVENT. Workaround is to use
+	     * wait. This should be removed when fix available.
+	     */
+	        dat_evd_wait(btl->udapl_evd_conn, 0, 1, &event, &nmore)) {
+#else
                 dat_evd_dequeue(btl->udapl_evd_conn, &event)) {
-
+#endif
             switch(event.event_number) {
                 case DAT_CONNECTION_REQUEST_EVENT:
                     /* Accept a new connection */
