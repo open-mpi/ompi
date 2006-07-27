@@ -114,6 +114,12 @@ static void mca_btl_openib_send_frag_frag_constructor(mca_btl_openib_frag_t* fra
     mca_btl_openib_send_frag_common_constructor(frag); 
 }
 
+static void mca_btl_openib_send_frag_control_constructor(mca_btl_openib_frag_t* frag) 
+{ 
+    frag->size =  sizeof(mca_btl_openib_eager_rdma_header_t);  
+    frag->type = MCA_BTL_OPENIB_FRAG_CONTROL;
+    mca_btl_openib_send_frag_common_constructor(frag); 
+}
 
 OBJ_CLASS_INSTANCE(
                    mca_btl_openib_frag_t, 
@@ -153,4 +159,9 @@ OBJ_CLASS_INSTANCE(
                    mca_btl_openib_recv_frag_max_constructor, 
                    NULL); 
 
+OBJ_CLASS_INSTANCE(
+                   mca_btl_openib_send_frag_control_t, 
+                   mca_btl_base_descriptor_t, 
+                   mca_btl_openib_send_frag_control_constructor, 
+                   NULL); 
 

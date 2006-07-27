@@ -69,7 +69,8 @@ enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_EAGER,
     MCA_BTL_OPENIB_FRAG_MAX,
     MCA_BTL_OPENIB_FRAG_FRAG,
-    MCA_BTL_OPENIB_FRAG_EAGER_RDMA
+    MCA_BTL_OPENIB_FRAG_EAGER_RDMA,
+    MCA_BTL_OPENIB_FRAG_CONTROL
 };
 typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
 
@@ -117,6 +118,10 @@ typedef struct mca_btl_openib_frag_t mca_btl_openib_recv_frag_max_t;
     
 OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t); 
 
+typedef struct mca_btl_openib_frag_t mca_btl_openib_send_frag_control_t; 
+    
+OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t); 
+
 
     
 
@@ -125,11 +130,11 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
  *
  */
 
-#define MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(btl, frag, rc)                               \
+#define MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(btl, frag, rc)                               \
 {                                                                      \
                                                                        \
     ompi_free_list_item_t *item;                                            \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_eager, item, rc);       \
+    OMPI_FREE_LIST_WAIT(&((mca_btl_openib_module_t*)btl)->send_free_control, item, rc);       \
     frag = (mca_btl_openib_frag_t*) item;                                  \
 }
 
@@ -168,10 +173,14 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_recv_frag_max_t);
          case MCA_BTL_OPENIB_FRAG_MAX:                                     \
           my_list = &btl->send_free_max;                                   \
           break;                                                           \
+         case MCA_BTL_OPENIB_FRAG_CONTROL:                                    \
+          my_list = &btl->send_free_control;                                  \
+          break;                                                           \
          case MCA_BTL_OPENIB_FRAG_FRAG:                                    \
           my_list = &btl->send_free_frag;                                  \
+          break;                                                           \
         }                                                                  \
-        OMPI_FREE_LIST_RETURN(my_list, (ompi_free_list_item_t*)(frag));         \
+        OMPI_FREE_LIST_RETURN(my_list, (ompi_free_list_item_t*)(frag));    \
     } while(0);                                                            \
 }
 

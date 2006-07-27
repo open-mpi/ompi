@@ -596,6 +596,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&openib_btl->send_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->send_free_max, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->send_free_frag, ompi_free_list_t);
+        OBJ_CONSTRUCT(&openib_btl->send_free_control, ompi_free_list_t);
         
         OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
@@ -664,6 +665,21 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                              mca_btl_openib_component.ib_free_list_num,
                              mca_btl_openib_component.ib_free_list_max,
                              mca_btl_openib_component.ib_free_list_inc, openib_btl->super.btl_mpool);
+
+        length = sizeof(mca_btl_openib_frag_t) +
+            sizeof(mca_btl_openib_header_t) +
+            sizeof(mca_btl_openib_footer_t) + 
+            sizeof(mca_btl_openib_eager_rdma_header_t);
+
+        ompi_free_list_init_ex(&openib_btl->send_free_control,
+                            length,
+                            sizeof(mca_btl_openib_frag_t),
+                            mca_btl_openib_component.buffer_alignment,
+                            OBJ_CLASS(mca_btl_openib_send_frag_control_t),
+                            mca_btl_openib_component.ib_free_list_num,
+                            -1,
+                            mca_btl_openib_component.ib_free_list_inc,
+                            openib_btl->super.btl_mpool);
 
         length = sizeof(mca_btl_openib_frag_t);
 

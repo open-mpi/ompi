@@ -179,7 +179,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
             openib_btl->eager_rdma_frag_size +
             sizeof(mca_btl_openib_frag_t) +
             sizeof(mca_btl_openib_header_t) +
-            frag->size +
+            mca_btl_openib_component.eager_limit +
             sizeof(mca_btl_openib_footer_t);
         frag->wr_desc.sr_desc.wr.rdma.remote_addr -= frag->sg_entry.length;
         MCA_BTL_OPENIB_RDMA_NEXT_INDEX (endpoint->eager_rdma_remote.head);
@@ -885,8 +885,8 @@ int mca_btl_openib_endpoint_connect(
         return rc;
     }
              
-    MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(openib_btl, endpoint->hp_credit_frag, rc);
-    MCA_BTL_IB_FRAG_ALLOC_EAGER_WAIT(openib_btl, endpoint->lp_credit_frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, endpoint->hp_credit_frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, endpoint->lp_credit_frag, rc);
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
     if(mca_btl_openib_component.use_srq) { 
@@ -1183,8 +1183,8 @@ static void mca_btl_openib_endpoint_eager_rdma(
     struct mca_btl_base_descriptor_t* descriptor,
     int status)
 {
-    MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl),
-                           ((mca_btl_openib_frag_t*)descriptor));
+   MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*)btl),
+           ((mca_btl_openib_frag_t*)descriptor));
 }
 
 static int mca_btl_openib_endpoint_send_eager_rdma(
@@ -1195,7 +1195,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     mca_btl_openib_frag_t* frag;
     int rc;
 
-    MCA_BTL_IB_FRAG_ALLOC_EAGER(openib_btl, frag, rc);
+    MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, frag, rc);
     if(NULL == frag) {
         return -1;
     }
