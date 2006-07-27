@@ -103,8 +103,10 @@ static const struct opal_eventop *eventops[] = {
 	&opal_epollops,
 #endif
 #endif
+#if 0 /* Sun reports /dev/poll borks up on 2 nodes with new Solaris */
 #ifdef HAVE_DEVPOLL
 	&devpollops,
+#endif
 #endif
 #if 0 /* no RTSIGS support for us */
 #if HAVE_RTSIG
