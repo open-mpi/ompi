@@ -323,6 +323,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     int have_wdir=0;
     int valuelen=OMPI_PATH_MAX, flag=0;
     char cwd[OMPI_PATH_MAX];
+    char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
 
     orte_jobid_t new_jobid;
     orte_app_context_t **apps=NULL;
@@ -424,15 +425,28 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             }
         }
 
-        /* Check for the 'wdir' and later potentially for the
-           'path' Info object */
+        /* Check for well-known info keys */
         have_wdir = 0;
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
+
+            /* check for 'wdir' */ 
             ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
             if ( flag ) {
                 apps[i]->cwd = cwd;
                 have_wdir = 1;
             }
+
+            /* check for 'host' */
+            ompi_info_get (array_of_info[i], "host", sizeof(host), host, &flag);
+            if ( flag ) {
+                apps[i]->num_map = 1;
+                apps[i]->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *));
+                apps[i]->map_data[0] = OBJ_NEW(orte_app_context_map_t);
+                apps[i]->map_data[0]->map_type = ORTE_APP_CONTEXT_MAP_HOSTNAME;
+                apps[i]->map_data[0]->map_data = strdup(host);
+            }
+ 
+            /* 'path', 'arch', 'file', 'soft' -- to be implemented */ 
         }
 
         /* default value: If the user did not tell us where to look for the
