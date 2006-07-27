@@ -9,13 +9,20 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
  */
+#include "opal_config.h"
 
+#include <stdio.h>
+#include <ucontext.h>
+
+#include "opal/constants.h"
+#include "opal/mca/backtrace/backtrace.h"
 
 void
 opal_backtrace_print(FILE *file)
@@ -25,14 +32,14 @@ opal_backtrace_print(FILE *file)
 
 
 int
-opal_backtrace_buffer(char ***message_out, int *len_out);
+opal_backtrace_buffer(char ***message_out, int *len_out)
 {
-    *messages_out = NULL;
+    *message_out = NULL;
     *len_out = 0;
 
     /* BWB - I think we can implement this in a similar way that
        printstack is implemented.  I just don't have time right
        now. */
 
-    return OMPI_ERR_NOT_IMPLEMENTED
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }
