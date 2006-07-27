@@ -28,6 +28,7 @@
 #include "orte/runtime/runtime.h"
 #include "ompi/tools/ompi_info/ompi_info.h"
 
+#include "opal/event/event.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/memory/memory.h"
 #include "opal/mca/paffinity/paffinity.h"
@@ -138,6 +139,10 @@ void ompi_info::open_components()
       putenv(target);
     }
   }
+
+  // some components require the event library be active, so activate
+  // it.
+  opal_event_init();
 
   // Open the DPS
 

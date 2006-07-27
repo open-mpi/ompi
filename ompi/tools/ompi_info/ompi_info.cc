@@ -38,6 +38,7 @@
 
 #include "opal/install_dirs.h"
 #include "opal/class/opal_object.h"
+#include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
 #include "opal/util/output.h"
 #include "opal/util/cmd_line.h"
@@ -78,6 +79,12 @@ int main(int argc, char *argv[])
   int i, len;
 
   // Initialize the argv parsing handle
+  if (OMPI_SUCCESS != opal_init_util()) {
+    opal_show_help("help-ompi_info.txt", "lib-call-fail", true, 
+                   "opal_init_util", __FILE__, __LINE__, NULL);
+    exit(ret);
+  }
+
 
   cmd_line = OBJ_NEW(opal_cmd_line_t);
   if (NULL == cmd_line) {
@@ -259,6 +266,8 @@ int main(int argc, char *argv[])
   ompi_info::close_components();
   OBJ_RELEASE(cmd_line);
   mca_base_close();
-  opal_class_finalize();
+
+  opal_finalize_util();
+
   return 0;
 }

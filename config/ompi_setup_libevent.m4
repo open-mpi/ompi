@@ -32,7 +32,7 @@ dnl AC_CHECK_LIB(socket, socket)
 
 dnl Checks for header files.
 AC_HEADER_STDC
-AC_CHECK_HEADERS(inttypes.h stdint.h poll.h signal.h unistd.h sys/epoll.h sys/time.h sys/queue.h sys/event.h)
+AC_CHECK_HEADERS(fcntl.h stdarg.h inttypes.h stdint.h poll.h signal.h unistd.h sys/epoll.h sys/time.h sys/queue.h sys/event.h sys/ioctl.h sys/devpoll.h)
 if test "x$ac_cv_header_sys_queue_h" = "xyes"; then
 	AC_MSG_CHECKING(for TAILQ_FOREACH in sys/queue.h)
 	AC_EGREP_CPP(yes,
@@ -66,7 +66,19 @@ dnl Checks for typedefs, structures, and compiler characteristics.
 AC_HEADER_TIME
 
 dnl Checks for library functions.
-AC_CHECK_FUNCS(gettimeofday)
+AC_CHECK_FUNCS(gettimeofday vasprintf fcntl)
+
+AC_MSG_CHECKING(for F_SETFD in fcntl.h)
+AC_EGREP_CPP(yes,
+[
+#define _GNU_SOURCE
+#include <fcntl.h>
+#ifdef F_SETFD
+yes
+#endif
+],      [ AC_DEFINE(HAVE_SETFD, 1,
+              [Define if F_SETFD is defined in <fcntl.h>])
+          AC_MSG_RESULT(yes) ], AC_MSG_RESULT(no))
 
 needsignal=no
 haveselect=no
@@ -189,6 +201,15 @@ if test "x$haveepoll" = "xyes" ; then
 	needsignal=yes
 fi
 
+havedevpoll=no
+if test "x$ac_cv_header_sys_devpoll_h" = "xyes"; then
+        AC_DEFINE(HAVE_DEVPOLL, 1,
+                    [Define if /dev/poll is available])
+        # OMPI: Don't use AC_LIBOBJ(devpoll)
+        sources="devpoll.c $sources"
+        needsignal=yes
+fi
+
 havekqueue=no
 if test "x$ac_cv_header_sys_event_h" = "xyes"; then
 	AC_CHECK_FUNCS(kqueue, [havekqueue=yes], )
@@ -292,7 +313,6 @@ fi
 # OMPI: AC_REPLACE_FUNCS doesn't have much meaning here because it
 # uses AC_LIBOBJ; use our own test
 #AC_REPLACE_FUNCS(err)
-AC_CHECK_FUNC(err, [], [sources="err.c $sources"])
 
 AC_TYPE_PID_T
 AC_TYPE_SIZE_T

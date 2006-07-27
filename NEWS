@@ -25,6 +25,7 @@ version 1.0.
 1.2
 ---
 
+- Update event library to libevent-1.1a
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
 - Added support for building the Fortran 90 bindings library as
