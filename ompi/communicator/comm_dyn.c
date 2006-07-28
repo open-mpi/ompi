@@ -371,7 +371,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         apps[i]->num_procs = array_of_maxprocs[i];
 
         /* copy over the argv array */
-    counter = 1;
+        counter = 1;
 
         if (MPI_ARGVS_NULL != array_of_argv &&
             MPI_ARGV_NULL != array_of_argv[i]) {
@@ -381,24 +381,24 @@ ompi_comm_start_processes(int count, char **array_of_commands,
                 j++;
             }
             counter += j;
-    }
-
-    /* now copy them over, ensuring to NULL terminate the array */
-    apps[i]->argv = (char**)malloc((1 + counter) * sizeof(char*));
-    if (NULL == apps[i]->argv) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        /* rollback what was already done */
-        for (j=0; j < i; j++) {
-        OBJ_RELEASE(apps[j]);
         }
+
+        /* now copy them over, ensuring to NULL terminate the array */
+        apps[i]->argv = (char**)malloc((1 + counter) * sizeof(char*));
+        if (NULL == apps[i]->argv) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            /* rollback what was already done */
+            for (j=0; j < i; j++) {
+                OBJ_RELEASE(apps[j]);
+            }
             opal_progress_event_decrement();
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    apps[i]->argv[0] = strdup(array_of_commands[i]);
-    for (j=1; j < counter; j++) {
-        apps[i]->argv[j] = strdup(array_of_argv[i][j-1]);
-    }
-    apps[i]->argv[counter] = NULL;
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        apps[i]->argv[0] = strdup(array_of_commands[i]);
+        for (j=1; j < counter; j++) {
+            apps[i]->argv[j] = strdup(array_of_argv[i][j-1]);
+        }
+        apps[i]->argv[counter] = NULL;
 
 
         /* the environment gets set by the launcher
@@ -407,7 +407,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
          */
         /* Add environment variable with the contact information for the
            child processes.
-    */
+        */
         counter = 1;
         apps[i]->env = (char**)malloc((1+counter) * sizeof(char*));
         if (NULL == apps[i]->env) {
