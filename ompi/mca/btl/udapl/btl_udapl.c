@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -121,23 +123,11 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     }
 
     /* create our public service point */
-    /* We have to specify a port, so we go through a range until we
-       find a port that works */
-    for(port = mca_btl_udapl_component.udapl_port_low;
-            port <= mca_btl_udapl_component.udapl_port_high; port++) {
-
-        rc = dat_psp_create(btl->udapl_ia, port, btl->udapl_evd_conn,
-                DAT_PSP_CONSUMER_FLAG, &btl->udapl_psp);
-        if(DAT_SUCCESS == rc) {
-            break;
-        } else if(DAT_CONN_QUAL_IN_USE != rc) {
-            MCA_BTL_UDAPL_ERROR(rc, "dat_psp_create");
-            goto failure;
-        }
-    }
-
-    if(port == mca_btl_udapl_component.udapl_port_high) {
-        goto failure;
+    rc = dat_psp_create_any(btl->udapl_ia, &port, btl->udapl_evd_conn,
+	DAT_PSP_CONSUMER_FLAG, &btl->udapl_psp);
+    if(DAT_SUCCESS != rc) {
+	MCA_BTL_UDAPL_ERROR(rc, "dat_psp_create_any");
+	goto failure;
     }
 
     /* Save the port with the address information */

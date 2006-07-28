@@ -158,10 +158,6 @@ int mca_btl_udapl_component_open(void)
         mca_btl_udapl_param_register_int("num_recvs", 8);
     mca_btl_udapl_component.udapl_num_sends = 
         mca_btl_udapl_param_register_int("num_sends", 8);
-    mca_btl_udapl_component.udapl_port_low = 
-        mca_btl_udapl_param_register_int("port_low", 45000);
-    mca_btl_udapl_component.udapl_port_high = 
-        mca_btl_udapl_param_register_int("port_high", 49000);
     mca_btl_udapl_component.udapl_timeout = 
         mca_btl_udapl_param_register_int("timeout", 10000000);
 
