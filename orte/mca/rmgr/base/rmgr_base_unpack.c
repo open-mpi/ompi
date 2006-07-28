@@ -71,6 +71,8 @@ static int orte_rmgr_base_cmd_create(orte_buffer_t* req, orte_buffer_t* rsp)
     }
 
     ret = orte_rmgr.create(context, num_context, &jobid);
+    ret = orte_rmgr_base_proc_stage_gate_init(jobid);
+
     if(ORTE_SUCCESS != (rc = orte_dss.pack(rsp, &jobid, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
