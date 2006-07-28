@@ -323,6 +323,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     int have_wdir=0;
     int valuelen=OMPI_PATH_MAX, flag=0;
     char cwd[OMPI_PATH_MAX];
+    char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
 
     orte_jobid_t new_jobid;
     orte_app_context_t **apps=NULL;
@@ -370,7 +371,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
         apps[i]->num_procs = array_of_maxprocs[i];
 
         /* copy over the argv array */
-    counter = 1;
+        counter = 1;
 
         if (MPI_ARGVS_NULL != array_of_argv &&
             MPI_ARGV_NULL != array_of_argv[i]) {
@@ -380,24 +381,24 @@ ompi_comm_start_processes(int count, char **array_of_commands,
                 j++;
             }
             counter += j;
-    }
-
-    /* now copy them over, ensuring to NULL terminate the array */
-    apps[i]->argv = (char**)malloc((1 + counter) * sizeof(char*));
-    if (NULL == apps[i]->argv) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        /* rollback what was already done */
-        for (j=0; j < i; j++) {
-        OBJ_RELEASE(apps[j]);
         }
+
+        /* now copy them over, ensuring to NULL terminate the array */
+        apps[i]->argv = (char**)malloc((1 + counter) * sizeof(char*));
+        if (NULL == apps[i]->argv) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            /* rollback what was already done */
+            for (j=0; j < i; j++) {
+                OBJ_RELEASE(apps[j]);
+            }
             opal_progress_event_decrement();
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    apps[i]->argv[0] = strdup(array_of_commands[i]);
-    for (j=1; j < counter; j++) {
-        apps[i]->argv[j] = strdup(array_of_argv[i][j-1]);
-    }
-    apps[i]->argv[counter] = NULL;
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        apps[i]->argv[0] = strdup(array_of_commands[i]);
+        for (j=1; j < counter; j++) {
+            apps[i]->argv[j] = strdup(array_of_argv[i][j-1]);
+        }
+        apps[i]->argv[counter] = NULL;
 
 
         /* the environment gets set by the launcher
@@ -406,7 +407,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
          */
         /* Add environment variable with the contact information for the
            child processes.
-    */
+        */
         counter = 1;
         apps[i]->env = (char**)malloc((1+counter) * sizeof(char*));
         if (NULL == apps[i]->env) {
@@ -424,15 +425,28 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             }
         }
 
-        /* Check for the 'wdir' and later potentially for the
-           'path' Info object */
+        /* Check for well-known info keys */
         have_wdir = 0;
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
+
+            /* check for 'wdir' */ 
             ompi_info_get (array_of_info[i], "wdir", valuelen, cwd, &flag);
             if ( flag ) {
                 apps[i]->cwd = cwd;
                 have_wdir = 1;
             }
+
+            /* check for 'host' */
+            ompi_info_get (array_of_info[i], "host", sizeof(host), host, &flag);
+            if ( flag ) {
+                apps[i]->num_map = 1;
+                apps[i]->map_data = (orte_app_context_map_t **) malloc(sizeof(orte_app_context_map_t *));
+                apps[i]->map_data[0] = OBJ_NEW(orte_app_context_map_t);
+                apps[i]->map_data[0]->map_type = ORTE_APP_CONTEXT_MAP_HOSTNAME;
+                apps[i]->map_data[0]->map_data = strdup(host);
+            }
+ 
+            /* 'path', 'arch', 'file', 'soft' -- to be implemented */ 
         }
 
         /* default value: If the user did not tell us where to look for the
