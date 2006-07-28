@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,9 +62,6 @@ struct mca_btl_udapl_component_t {
 
     size_t udapl_eager_frag_size;
     size_t udapl_max_frag_size;
-
-    DAT_CONN_QUAL udapl_port_low;   /**< first port for binding service point */
-    DAT_CONN_QUAL udapl_port_high;  /**< last port for binding service point */
 
     int udapl_free_list_num;   /**< initial size of free lists */
     int udapl_free_list_max;   /**< maximum size of free lists */
