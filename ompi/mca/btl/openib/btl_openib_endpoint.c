@@ -1065,7 +1065,6 @@ void mca_btl_openib_endpoint_send_credits_lp(
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     mca_btl_openib_frag_t* frag;
     struct ibv_send_wr* bad_wr; 
-    int rc;
 
     frag = endpoint->lp_credit_frag;
 
@@ -1137,7 +1136,6 @@ void mca_btl_openib_endpoint_send_credits_hp(
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     mca_btl_openib_frag_t* frag;
     struct ibv_send_wr* bad_wr; 
-    int rc;
 
     frag = endpoint->hp_credit_frag;
 

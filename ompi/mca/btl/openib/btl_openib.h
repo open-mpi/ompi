@@ -152,7 +152,6 @@ struct mca_btl_openib_module_t {
     struct ibv_cq *ib_cq_hp;
     struct ibv_cq *ib_cq_lp; 
     struct ibv_port_attr ib_port_attr; 
-    struct ibv_recv_wr* rd_desc_post;
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
 
@@ -424,7 +423,7 @@ extern void mca_btl_openib_send_frag_return(
                                             );
 
 
-int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl); 
+int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
 
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
