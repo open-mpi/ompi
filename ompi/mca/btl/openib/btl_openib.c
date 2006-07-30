@@ -122,21 +122,70 @@ int mca_btl_openib_add_procs(
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
     }
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
-    if( 0 == openib_btl->num_peers ) { 
+
+    do {
+        int min_cq_size;
+        int first_time = openib_btl->num_peers  == 0;
+        int rc;
         openib_btl->num_peers += nprocs; 
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
         if(mca_btl_openib_component.use_srq) { 
             openib_btl->rd_num = mca_btl_openib_component.rd_num + log2(nprocs) * mca_btl_openib_component.srq_rd_per_peer; 
             if(openib_btl->rd_num > mca_btl_openib_component.srq_rd_max)
-               openib_btl->rd_num = mca_btl_openib_component.srq_rd_max;
+                openib_btl->rd_num = mca_btl_openib_component.srq_rd_max;
             openib_btl->rd_low = openib_btl->rd_num - 1;
-            free(openib_btl->rd_desc_post); 
-            openib_btl->rd_desc_post = (struct ibv_recv_wr*) malloc((openib_btl->rd_num * sizeof(struct ibv_recv_wr))); 
-       
+            min_cq_size = openib_btl->rd_num * 2 * openib_btl->num_peers;
+            if(!first_time) { 
+                struct ibv_srq_attr srq_attr;
+                srq_attr.max_wr = openib_btl->rd_num;
+                rc = ibv_modify_srq( openib_btl->srq_hp, &srq_attr, IBV_SRQ_MAX_WR); 
+                if(rc) { 
+                    BTL_ERROR(("cannot resize high priority shared receive queue, error: %d", rc));
+                    return OMPI_ERROR;
+                }
+                rc = ibv_modify_srq(openib_btl->srq_lp, &srq_attr, IBV_SRQ_MAX_WR); 
+                if(rc) { 
+                    BTL_ERROR(("cannot resize low priority shared receive queue, error: %d", rc));
+                    return OMPI_ERROR;
+                }
+                
+            }
+            
+        } else 
+#endif
+        {
+            min_cq_size = ( mca_btl_openib_component.rd_num >  (int32_t) mca_btl_openib_component.eager_rdma_num  ? 
+                            mca_btl_openib_component.rd_num : (int32_t) mca_btl_openib_component.eager_rdma_num ) * 
+                2 * openib_btl->num_peers;
+            
         }
-    }
-#endif 
+
+#ifdef OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
+
+        if(min_cq_size > (int32_t) mca_btl_openib_component.ib_cq_size) { 
+            mca_btl_openib_component.ib_cq_size = min_cq_size;
+            if(!first_time) { 
+                rc = ibv_resize_cq(openib_btl->ib_cq_lp, min_cq_size);
+                if(rc) {
+                    BTL_ERROR(("cannot resize low priority completion queue, error: %d", rc));
+                    return OMPI_ERROR;
+                }
+                rc = ibv_resize_cq(openib_btl->ib_cq_hp, min_cq_size); 
+                if(rc) {
+                    BTL_ERROR(("cannot resize high priority completion queue, error: %d", rc));
+                    return OMPI_ERROR;
+                }
+            }
+        }
+#endif
+        if(first_time) { 
+            /* never been here before, setup cq and srq */
+            mca_btl_openib_create_cq_srq(openib_btl); 
+        }
+    } while(0);
+    
     return OMPI_SUCCESS;
+        
 }
 
 
@@ -693,10 +742,10 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
 }
 
 /* 
- * Initialize the btl module by allocating a protection domain 
- *  and creating both the high and low priority completion queues 
+ * create both the high and low priority completion queues 
+ * and the shared receive queue (if requested)
  */ 
-int mca_btl_openib_module_init(mca_btl_openib_module_t *openib_btl)
+int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 {
     /* Allocate Protection Domain */ 
     openib_btl->poll_cq = false; 

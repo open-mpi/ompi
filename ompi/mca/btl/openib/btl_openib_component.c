@@ -148,7 +148,9 @@ int mca_btl_openib_component_open(void)
                                       16, (int*) &mca_btl_openib_component.reg_mru_len); 
     mca_btl_openib_param_register_int("use_srq", "if 1 use the IB shared receive queue to post receive descriptors", 
                                       0, (int*) &mca_btl_openib_component.use_srq); 
-    mca_btl_openib_param_register_int("ib_cq_size", "size of the IB completion queue",
+    mca_btl_openib_param_register_int("ib_cq_size", "size of the IB completion " 
+                                      "queue, an override of this value may occur if set too small, " 
+                                      "the override is 2*Number of Peers* btl_openib_rd_num",
                                       1000, (int*) &mca_btl_openib_component.ib_cq_size); 
     mca_btl_openib_param_register_int("ib_sg_list_size", "size of IB segment list", 
                                       4, (int*) &mca_btl_openib_component.ib_sg_list_size); 
@@ -600,16 +602,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         
         OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
-        
-        if(mca_btl_openib_module_init(openib_btl) != OMPI_SUCCESS) {
-#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
-    	    ibv_free_device_list(ib_devs);
-#else
-    	    free(ib_devs);
-#endif
-    	    return NULL;
-        }
-	
+
         /* initialize the memory pool using the hca */ 
         openib_btl->super.btl_mpool = openib_btl->hca->mpool;
 
@@ -698,10 +691,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         openib_btl->eager_rdma_buffers_count = 0;
         OBJ_CONSTRUCT(&openib_btl->eager_rdma_lock, opal_mutex_t); 
         
-        /* Initialize the rd_desc_post array for posting of rr*/ 
-        openib_btl->rd_desc_post = (struct ibv_recv_wr *) 
-            malloc(((mca_btl_openib_component.rd_num + mca_btl_openib_component.rd_rsv) * sizeof(struct ibv_recv_wr))); 
-        
+                
         btls[i] = &openib_btl->super;
     }
 
@@ -987,6 +977,7 @@ int mca_btl_openib_component_progress()
                                              wc.status, wc.wr_id, wc.opcode)); 
                 if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
                     opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
+                    abort();
                 }
 
                 return OMPI_ERROR;
