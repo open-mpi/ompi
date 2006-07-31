@@ -773,7 +773,7 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
 	struct event_base *base = ev->ev_base;
 	const struct opal_eventop *evsel = base->evsel;
 	void *evbase = base->evbase;
-	int rc;
+	int rc = OPAL_SUCCESS;
 
 #if OPAL_HAVE_WORKING_EVENTOPS
         event_debug((
@@ -1063,7 +1063,10 @@ opal_event_queue_insert(struct event_base *base, struct opal_event *ev, int queu
 		TAILQ_INSERT_TAIL(&opal_signalqueue, ev, ev_signal_next);
 		break;
 	case OPAL_EVLIST_TIMEOUT: {
-		struct opal_event *tmp = RB_INSERT(opal_event_tree, &base->timetree, ev);
+#ifndef NDEBUG
+		struct opal_event *tmp = 
+#endif
+                    RB_INSERT(opal_event_tree, &base->timetree, ev);
 		assert(tmp == NULL);
 		break;
 	}
