@@ -213,10 +213,10 @@ static inline int ompi_request_test( ompi_request_t ** rptr,
                                      int *completed,
                                      ompi_status_public_t * status )
 {
+    int rc;
     ompi_request_t *request = *rptr;
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     int do_it_once = 0;
-    int rc;
 
  recheck_request_status:
 #endif
