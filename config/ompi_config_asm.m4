@@ -5,7 +5,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -143,6 +143,34 @@ AC_DEFUN([OMPI_CHECK_ASM_LSYM],[
     AC_SUBST(OMPI_ASM_LSYM)
 ])dnl
 
+dnl #################################################################
+dnl
+dnl OMPI_CHECK_ASM_PROC
+dnl
+dnl Sets a cv-flag, if the compiler needs a proc/endp-definition to
+dnl link with C.
+dnl
+dnl #################################################################
+AC_DEFUN([OMPI_CHECK_ASM_PROC],[
+    AC_CACHE_CHECK([if .proc/endp is needed],
+                   [ompi_cv_asm_need_proc],
+                   [ompi_cv_asm_need_proc="no"
+                    OMPI_TRY_ASSEMBLE([
+     .proc mysym
+mysym:
+     .endp mysym],
+                          [ompi_cv_asm_need_proc="yes"])
+                    rm -f conftest.out])
+
+    if test "$ompi_cv_asm_need_proc" = "yes" ; then
+       ompi_cv_asm_proc=".proc"
+       ompi_cv_asm_endproc=".endp"
+    else
+       ompi_cv_asm_proc="#"
+       ompi_cv_asm_endproc="#"
+    fi
+])dnl
+
 
 dnl #################################################################
 dnl
@@ -191,8 +219,11 @@ main(int argc, char *argv[[]])
 EOF
         OMPI_TRY_ASSEMBLE([
 $ompi_cv_asm_text
+$ompi_cv_asm_proc ${sym}gsym_test_func
 $ompi_cv_asm_global ${sym}gsym_test_func
-${sym}gsym_test_func${ompi_cv_asm_label_suffix}],
+${sym}gsym_test_func${ompi_cv_asm_label_suffix}
+$ompi_cv_asm_endproc ${sym}gsym_test_func
+            ],
             [ompi_compile="$CC $CFLAGS -I. conftest_c.c -c > conftest.cmpl 2>&1"
              if AC_TRY_EVAL(ompi_compile) ; then
                 # save the warnings
@@ -785,6 +816,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
     if test "$ompi_cv_c_compiler_vendor" = "microsoft" ; then
         ompi_cv_asm_arch="WINDOWS"
     else
+        OMPI_CHECK_ASM_PROC
         OMPI_CHECK_ASM_TEXT
         OMPI_CHECK_ASM_GLOBAL
         OMPI_CHECK_ASM_GNU_STACKEXEC
