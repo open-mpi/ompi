@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -31,10 +31,10 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then 
         if test "$ompi_cxx_vendor" = "gnu" ; then
-            AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
+            AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
             WANT_DEBUG=1
-            CXXFLAGS="-ftest-coverage -fprofile-arcs ${CXXFLAGS}"
-            WRAPPER_EXTRA_CXXFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CXXFLAGS}"
+            CXXFLAGS="${CXXFLAGS} $OMPI_COVERAGE_FLAGS"
+            WRAPPER_EXTRA_CXXFLAGS="${WRAPPER_EXTRA_CXXFLAGS} $OMPI_COVERAGE_FLAGS"
         else
             AC_MSG_WARN([Code coverage functionality is currently available only with GCC suite])
             AC_MSG_ERROR([Configure: cannot continue])

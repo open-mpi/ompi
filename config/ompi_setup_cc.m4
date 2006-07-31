@@ -33,13 +33,43 @@ AC_DEFUN([OMPI_SETUP_CC],[
     OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
 
     # Do we want code coverage
-    if test "$WANT_COVERAGE" = "1"; then 
+    if test "$WANT_COVERAGE" = "1"; then
         if test "$ompi_c_vendor" = "gnu" ; then
-            CLEANFILES="*.bb *.bbg *.da *.*.gcov ${CLEANFILES}"
-             AC_MSG_WARN([-fprofile-arcs -ftest-coverage has been added to CFLAGS (--enable-coverage)])
+            # For compilers > gcc-4.x, use --coverage for
+            # compiling and linking to circumvent trouble with
+            # libgcov.
+            CFLAGS_orig="$CFLAGS"
+            LDFLAGS_orig="$LDFLAGS"
+
+            CFLAGS="$CFLAGS_orig --coverage"
+            LDFLAGS="$LDFLAGS_orig --coverage"
+            OMPI_COVERAGE_FLAGS=
+
+            AC_CACHE_CHECK([if $CC supports --coverage],
+                      [ompi_cv_cc_coverage],
+                      [AC_TRY_COMPILE([], [],
+                                      [ompi_cv_cc_coverage="yes"],
+                                      [ompi_cv_cc_coverage="no"])])
+
+            if test "$ompi_cv_cc_coverage" = "yes" ; then
+                OMPI_COVERAGE_FLAGS="--coverage"
+                CLEANFILES="*.gcda *.gcno *.gcov ${CLEANFILES}"
+            else
+                OMPI_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
+                CLEANFILES="*.bb *.bbg *.da *.*.gcov ${CLEANFILES}"
+            fi
+            CFLAGS="$CFLAGS_orig $OMPI_COVERAGE_FLAGS"
+            LDFLAGS="$LDFLAGS_orig $OMPI_COVERAGE_FLAGS"
+            WRAPPER_EXTRA_CFLAGS="${WRAPPER_EXTRA_CFLAGS} $OMPI_COVERAGE_FLAGS"
+            WRAPPER_EXTRA_LDFLAGS="${WRAPPER_EXTRA_LDFLAGS} $OMPI_COVERAGE_FLAGS"
+
+            OMPI_UNIQ(CFLAGS)
+            OMPI_UNIQ(LDFLAGS)
+            OMPI_UNIQ(WRAPPER_EXTRA_CFLAGS)
+            OMPI_UNIQ(WRAPPER_EXTRA_LDFLAGS)
+            AC_MSG_WARN([$OMPI_COVERAGE_FLAGS has been added to CFLAGS (--enable-coverage)])
+
             WANT_DEBUG=1
-            CFLAGS="-ftest-coverage -fprofile-arcs ${CFLAGS}"
-            WRAPPER_EXTRA_CFLAGS="-ftest-coverage -fprofile-arcs ${WRAPPER_EXTRA_CFLAGS}"
         else
             AC_MSG_WARN([Code coverage functionality is currently available only with GCC])
             AC_MSG_ERROR([Configure: Cannot continue])
@@ -234,4 +264,3 @@ AC_DEFUN([_OMPI_PROG_CC],[
     OMPI_CC_ABSOLUTE="`which $CC`"
     AC_SUBST(OMPI_CC_ABSOLUTE)
 ])
-
