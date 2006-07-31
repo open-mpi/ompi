@@ -100,6 +100,14 @@ bool ompi_mpi_maffinity_setup = false;
  * rather than make a new .c file with the constants and a
  * corresponding dummy function that is invoked from this function).
  *
+ * Additionally, there can be/are strange linking paths such that
+ * ompi_info needs symbols symbols such as ompi_fortran_status_ignore,
+ * which, if they weren't here with a collection of other global
+ * symbols that are initialized (which seems to force this .o file to
+ * be pulled into the resolution process, because ompi_info certainly
+ * does not call ompi_mpi_init()), would not be able to be found by
+ * the OSX linker.
+ *
  * NOTE: See the big comment in ompi/mpi/f77/constants.h about why we
  * have four symbols for each of the common blocks (e.g., the Fortran
  * equivalent(s) of MPI_STATUS_IGNORE).  Here, we can only have *one*
@@ -138,6 +146,53 @@ MPI_Fint *MPI_F_STATUSES_IGNORE = (MPI_Fint*) &mpi_fortran_statuses_ignore__;
 MPI_Fint *MPI_F_STATUS_IGNORE = NULL;
 MPI_Fint *MPI_F_STATUSES_IGNORE = NULL;
 #endif  /* OMPI_WANT_F77_BINDINGS */
+
+
+/* Constants for the Fortran layer.  These values are referred to via
+   common blocks in the Fortran equivalents.  See
+   ompi/mpi/f77/constants.h for a more detailed explanation.
+
+   The values are *NOT* initialized.  We do not use the values of
+   these constants; only their addresses (because they're always
+   passed by reference by Fortran).  
+
+   Initializing upon instantiation these can reveal size and/or
+   alignment differences between Fortran and C (!) which can cause
+   warnings or errors upon linking (e.g., making static libraries with
+   the intel 9.0 compilers on 64 bit platforms shows alignment
+   differences between libmpi.a and the user's application, resulting
+   in a linker warning).  FWIW, if you initialize these variables in
+   functions (i.e., not at the instantiation in the global scope), the
+   linker somehow "figures it all out" (w.r.t. different alignments
+   between fortan common blocks and the corresponding C variables) and
+   no linker warnings occur.
+
+   Note that the rationale for the types of each of these variables is
+   discussed in ompi/include/mpif-common.h.  Do not change the types
+   without also modifying ompi/mpi/f77/constants.h and
+   ompi/include/mpif-common.h.
+ */
+
+#define INST(type, upper_case, lower_case, single_u, double_u)   \
+type lower_case; \
+type upper_case; \
+type single_u;  \
+type double_u
+
+INST(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
+     mpi_fortran_bottom_, mpi_fortran_bottom__);
+INST(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
+     mpi_fortran_in_place_, mpi_fortran_in_place__);
+INST(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
+     mpi_fortran_argv_null_, mpi_fortran_argv_null__);
+INST(double, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
+     mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
+INST(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
+     mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
+INST(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
+     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
+INST (double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
+      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 
 int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
