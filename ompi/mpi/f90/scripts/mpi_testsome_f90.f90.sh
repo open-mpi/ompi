@@ -30,32 +30,29 @@ fi
 
 # Ok, we should continue.
 
-cat <<EOF
+output() {
+    suffix=$1
+    status_type=$2
 
-subroutine MPI_Testsome_normal(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+    cat <<EOF
+
+subroutine MPI_Testsome${suffix}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(incount, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-  call MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr)
-end subroutine MPI_Testsome_normal
 
-subroutine MPI_Testsome_ignore(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
-! Note that we need mpif-common.h (not mpif-config.h) because we need
-! the global common variable MPI_STATUSES_IGNORE
-  include 'mpif-common.h'
-  integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
-  integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-  call MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, MPI_STATUSES_IGNORE, ierr)
-end subroutine MPI_Testsome_ignore
+  call MPI_Testsome(incount, array_of_requests, outcount, array_of_indices, array_of_statuses, ierr)
+end subroutine MPI_Testsome${suffix}
 
 EOF
+}
+
+# S = array of statuses, I = STATUSES_IGNORE
+
+output S "integer, dimension(incount, MPI_STATUS_SIZE)"
+output I "double precision"

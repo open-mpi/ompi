@@ -30,26 +30,25 @@ fi
 
 # Ok, we should continue.
 
-cat <<EOF
+output() {
+    suffix=$1
+    status_type=$2
 
-subroutine MPI_Waitall_normal(count, array_of_requests, array_of_statuses, ierr)
+    cat <<EOF
+
+subroutine MPI_Waitall${suffix}(count, array_of_requests, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
-  integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
   call MPI_Waitall(count, array_of_requests, array_of_statuses, ierr)
-end subroutine MPI_Waitall_normal
-
-subroutine MPI_Waitall_ignore(count, array_of_requests, array_of_statuses, ierr)
-! Note that we need mpif-common.h (not mpif-config.h) because we need
-! the global common variable MPI_STATUSES_IGNORE
-  include 'mpif-common.h'
-  integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-  call MPI_Waitall(count, array_of_requests, MPI_STATUSES_IGNORE, ierr)
-end subroutine MPI_Waitall_ignore
+end subroutine MPI_Waitall${suffix}
 
 EOF
+}
+
+# S = array of statuses, I = STATUSES_IGNORE
+
+output S "integer, dimension(count, MPI_STATUS_SIZE)"
+output I "double precision"
