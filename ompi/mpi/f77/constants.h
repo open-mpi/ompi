@@ -20,35 +20,32 @@
 #ifndef OMPI_F77_CONSTANTS_H
 #define OMPI_F77_CONSTANTS_H
 
-
 /*
  * Several variables are used to link against MPI F77 constants which
  * correspond to addresses, e.g. MPI_BOTTOM, and are implemented via
- * common blocks.  They must have the same size and alignment
- * constraints as the corresponding F77 common blocks.
+ * common blocks.  
  *
  * We use common blocks so that in the C wrapper functions, we can
  * compare the address that comes in against known addresses (e.g., if
  * the "status" argument in MPI_RECV is the address of the common
  * block for the fortran equivalent of MPI_STATUS_IGNORE, then we know
- * to pass the C MPI_STATUS_IGNORE to the C MPI_Recv function.
+ * to pass the C MPI_STATUS_IGNORE to the C MPI_Recv function).  As
+ * such, we never look at the *value* of these variables (indeed,
+ * they're never actually initialized), but instead only ever look at
+ * the *address* of these variables.
  *
- * This mojo makes a type that will be aligned on 16 bytes (same as
- * common blocks -- at least it seems to work with all the fortran
- * compilers that we care about... haven't found one yet that doesn't
- * work...)
- */
-
-#if defined(HAVE_LONG_DOUBLE) && OMPI_ALIGNMENT_LONG_DOUBLE == 16
-typedef struct { long double bogus[1]; } ompi_fortran_common_t;
-#define OMPI_FORTRAN_COMMON_INIT {{ 0 }}
-#else
-typedef struct { double bogus[2]; } ompi_fortran_common_t;
-#define OMPI_FORTRAN_COMMON_INIT {{ 0, 0 }}
-#endif
-
-/*
- * This part sucks.  :-(
+ * As such, it is not strictly necessary that the size and type of our
+ * C variables matches that of the common Fortran block variables.
+ * However, good programming form says that we should match, so we do.
+ *
+ * Note, however, that the alignments of the Fortran common block and
+ * the C variable may not match (e.g., Intel 9.0 compilers on 64 bit
+ * platforms will put the alignment of a double on 4 bytes, but put
+ * the alignment of all common blocks on 16 bytes).  This only matters
+ * (to some compilers!), however, if you initialize the C variable in
+ * the global scope.  If the C global instantiation is not
+ * initialized, the compiler/linker seems to "figure it all out" and
+ * make the alignments match.
  *
  * Since we made the fundamental decision to support all 4 common
  * fortran compiler symbol conventions within the same library for
@@ -63,7 +60,7 @@ typedef struct { double bogus[2]; } ompi_fortran_common_t;
  *
  * We do this by having a "common" block in mpif.h:
  *
- * DOUBLE PRECISION MPI_STATUS_IGNORE
+ * INTEGER MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
  * common /mpi_fortran_status_ignore/ MPI_STATUS_IGNORE
  *
  * This makes the fortran variable MPI_STATUS_IGNORE effectively be an
@@ -84,25 +81,30 @@ typedef struct { double bogus[2]; } ompi_fortran_common_t;
  * file.
  */
 
-#define DECL(upper_case, lower_case, single_u, double_u) \
-OMPI_DECLSPEC extern ompi_fortran_common_t upper_case; \
-OMPI_DECLSPEC extern ompi_fortran_common_t lower_case; \
-OMPI_DECLSPEC extern ompi_fortran_common_t single_u; \
-OMPI_DECLSPEC extern ompi_fortran_common_t double_u
+#define DECL(type, upper_case, lower_case, single_u, double_u)   \
+OMPI_DECLSPEC extern type upper_case; \
+OMPI_DECLSPEC extern type lower_case; \
+OMPI_DECLSPEC extern type single_u; \
+OMPI_DECLSPEC extern type double_u
 
-DECL(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
+/* Note that the rationale for the types of each of these variables is
+   discussed in ompi/include/mpif-common.h.  Do not change the types
+   without also changing ompi/mpi/runtime/ompi_mpi_init.c and
+   ompi/include/mpif-common.h. */
+
+DECL(int, MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
      mpi_fortran_bottom_, mpi_fortran_bottom__);
-DECL(MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
+DECL(int, MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
      mpi_fortran_in_place_, mpi_fortran_in_place__);
-DECL(MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
+DECL(char *, MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
      mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-DECL(MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
+DECL(double, MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
      mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-DECL(MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
+DECL(int *, MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
      mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-DECL(MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
+DECL(int *, MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
      mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-DECL(MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
+DECL(double, MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
 
 /*

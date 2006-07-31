@@ -38,7 +38,7 @@ fi
 output() {
     procedure=$1
     proc="$1$2"
-    type=$3
+    argv_type=$3
 
     cat <<EOF
 subroutine ${proc}(count, array_of_commands, array_of_argv, &
@@ -47,7 +47,7 @@ subroutine ${proc}(count, array_of_commands, array_of_argv, &
   include 'mpif-config.h'
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
-  $type, intent(in) :: array_of_argv
+  $argv_type, intent(in) :: array_of_argv
   integer, dimension(*), intent(in) :: array_of_maxprocs
   integer, dimension(*), intent(in) :: array_of_info
   integer, intent(in) :: root
@@ -64,5 +64,7 @@ end subroutine ${proc}
 EOF
 }
 
-output MPI_Comm_spawn_multiple N "character(len=*), dimension(count,*)"
-output MPI_Comm_spawn_multiple AN integer
+# A = real argv, N = ARGV_NULL
+
+output MPI_Comm_spawn_multiple A "character(len=*), dimension(count,*)"
+output MPI_Comm_spawn_multiple N "double precision"

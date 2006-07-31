@@ -5598,7 +5598,7 @@ subroutine ${procedure}(source, tag, comm, flag, status&
   integer, intent(in) :: tag
   integer, intent(in) :: comm
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -6161,7 +6161,7 @@ subroutine ${procedure}(source, tag, comm, status, ierr)
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -6276,7 +6276,7 @@ subroutine ${proc}(buf, count, datatype, source, tag, &
   integer, intent(in) :: source
   integer, intent(in) :: tag
   integer, intent(in) :: comm
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${proc}
 
@@ -6549,7 +6549,7 @@ subroutine ${procedure}(request, flag, status, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: request
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -6993,7 +6993,7 @@ subroutine ${proc}(sendbuf, sendcount, sendtype, dest, sendtag, &
   integer, intent(in) :: source
   integer, intent(in) :: recvtag
   integer, intent(in) :: comm
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${proc}
 
@@ -7054,7 +7054,7 @@ subroutine ${proc}(buf, count, datatype, dest, sendtag, &
   integer, intent(in) :: source
   integer, intent(in) :: recvtag
   integer, intent(in) :: comm
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${proc}
 
@@ -7366,7 +7366,7 @@ subroutine ${procedure}(request, flag, status, ierr)
   include 'mpif-config.h'
   integer, intent(inout) :: request
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -7408,31 +7408,25 @@ output_206() {
         return 0
     fi
 
-    procedure=$1
+    suffix=$1
+    status_type=$2
     cat <<EOF
 
-subroutine ${procedure}_normal(count, array_of_requests, flag, array_of_statuses, ierr)
+subroutine MPI_Testall${suffix}(count, array_of_requests, flag, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   logical, intent(out) :: flag
-  integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}_normal
-
-subroutine ${procedure}_ignore(count, array_of_requests, flag, array_of_statuses, ierr)
-  integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  logical, intent(out) :: flag
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine ${procedure}_ignore
+end subroutine MPI_Testall${suffix}
 
 EOF
 }
 
 start MPI_Testall small
-output_206 MPI_Testall
+output_206 S "integer, dimension(count, MPI_STATUS_SIZE)"
+output_206 I "double precision"
 end MPI_Testall
 
 #------------------------------------------------------------------------
@@ -7452,7 +7446,7 @@ subroutine ${procedure}(count, array_of_requests, index, flag, status&
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
   logical, intent(out) :: flag
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -7470,35 +7464,27 @@ output_208() {
         return 0
     fi
 
-    procedure=$1
+    suffix=$1
+    status_type=$2
     cat <<EOF
 
-subroutine ${procedure}_normal(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine MPI_Testsome${suffix}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(incount, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}_normal
-
-subroutine ${procedure}_ignore(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
-  integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
-  integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine ${procedure}_ignore
+end subroutine MPI_Testsome${suffix}
 
 EOF
 }
 
 start MPI_Testsome small
-output_208 MPI_Testsome
+output_208 S "integer, dimension(incount, MPI_STATUS_SIZE)"
+output_208 I "double precision"
 end MPI_Testsome
 
 #------------------------------------------------------------------------
@@ -8540,7 +8526,7 @@ output_247() {
 subroutine ${procedure}(request, status, ierr)
   include 'mpif-config.h'
   integer, intent(inout) :: request
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -8558,29 +8544,24 @@ output_248() {
         return 0
     fi
 
-    procedure=$1
+    suffix=$1
+    status_type=$2
     cat <<EOF
 
-subroutine ${procedure}_normal(count, array_of_requests, array_of_statuses, ierr)
+subroutine MPI_Waitall${suffix}(count, array_of_requests, array_of_statuses, ierr)
   include 'mpif-config.h'
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
-  integer, dimension(count, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}_normal
-
-subroutine ${procedure}_ignore(count, array_of_requests, array_of_statuses, ierr)
-  integer, intent(in) :: count
-  integer, dimension(count), intent(inout) :: array_of_requests
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine ${procedure}_ignore
+end subroutine MPI_Waitall${suffix}
 
 EOF
 }
 
 start MPI_Waitall small
-output_248 MPI_Waitall
+output_248 S "integer, dimension(count, MPI_STATUS_SIZE)"
+output_248 I "double precision"
 end MPI_Waitall
 
 #------------------------------------------------------------------------
@@ -8598,7 +8579,7 @@ subroutine ${procedure}(count, array_of_requests, index, status, ierr)
   integer, intent(in) :: count
   integer, dimension(count), intent(inout) :: array_of_requests
   integer, intent(out) :: index
-  integer, dimension(MPI_STATUS_SIZE), intent(inout) :: status
+  integer, dimension(MPI_STATUS_SIZE), intent(out) :: status
   integer, intent(out) :: ierr
 end subroutine ${procedure}
 
@@ -8616,35 +8597,27 @@ output_250() {
         return 0
     fi
 
-    procedure=$1
+    suffix=$1
+    status_type=$2
     cat <<EOF
 
-subroutine ${procedure}_normal(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
+subroutine MPI_Waitsome${suffix}(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
         , ierr)
   include 'mpif-config.h'
   integer, intent(in) :: incount
   integer, dimension(incount), intent(inout) :: array_of_requests
   integer, intent(out) :: outcount
   integer, dimension(*), intent(out) :: array_of_indices
-  integer, dimension(incount, MPI_STATUS_SIZE), intent(inout) :: array_of_statuses
+  $status_type, intent(out) :: array_of_statuses
   integer, intent(out) :: ierr
-end subroutine ${procedure}_normal
-
-subroutine ${procedure}_ignore(incount, array_of_requests, outcount, array_of_indices, array_of_statuses&
-        , ierr)
-  integer, intent(in) :: incount
-  integer, dimension(incount), intent(inout) :: array_of_requests
-  integer, intent(out) :: outcount
-  integer, dimension(*), intent(out) :: array_of_indices
-  double complex, intent(in) :: array_of_statuses
-  integer, intent(out) :: ierr
-end subroutine ${procedure}_ignore
+end subroutine MPI_Waitsome${suffix}
 
 EOF
 }
 
 start MPI_Waitsome small
-output_250 MPI_Waitsome
+output_250 S "integer, dimension(incount, MPI_STATUS_SIZE)"
+output_250 I "double precision"
 end MPI_Waitsome
 
 #------------------------------------------------------------------------
@@ -9472,13 +9445,14 @@ output_284() {
     fi
 
     procedure=$1
+    argv_type=$2
     cat <<EOF
 
 subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
         root, comm, intercomm, array_of_errcodes, ierr)
   integer, intent(in) :: count
   character(len=*), dimension(*), intent(in) :: array_of_commands
-  character(len=*), dimension(count,*), intent(in) :: array_of_argv
+  $argv_type, intent(in) :: array_of_argv
   integer, dimension(*), intent(in) :: array_of_maxprocs
   integer, dimension(*), intent(in) :: array_of_info
   integer, intent(in) :: root
@@ -9492,36 +9466,6 @@ EOF
 }
 
 start MPI_Comm_spawn_multiple small
-output_284 MPI_Comm_spawn_multipleN
-end MPI_Comm_spawn_multiple
-
-#------------------------------------------------------------------------
-
-output_285() {
-    if test "$output" = "0"; then
-        return 0
-    fi
-
-    procedure=$1
-    cat <<EOF
-
-subroutine ${procedure}(count, array_of_commands, array_of_argv, array_of_maxprocs, array_of_info, &
-        root, comm, intercomm, array_of_errcodes, ierr)
-  integer, intent(in) :: count
-  character(len=*), dimension(*), intent(in) :: array_of_commands
-  integer, intent(in) :: array_of_argv
-  integer, dimension(*), intent(in) :: array_of_maxprocs
-  integer, dimension(*), intent(in) :: array_of_info
-  integer, intent(in) :: root
-  integer, intent(in) :: comm
-  integer, intent(out) :: intercomm
-  integer, dimension(*), intent(out) :: array_of_errcodes
-  integer, intent(out) :: ierr
-end subroutine ${procedure}
-
-EOF
-}
-
-start MPI_Comm_spawn_multiple small
-output_285 MPI_Comm_spawn_multipleAN
+output_284 MPI_Comm_spawn_multipleA "character(len=*), dimension(count,*)"
+output_284 MPI_Comm_spawn_multipleN "double precision"
 end MPI_Comm_spawn_multiple

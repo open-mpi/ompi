@@ -162,27 +162,44 @@
       parameter (MPI_MODE_SEQUENTIAL=256)
       parameter (MPI_DISPLACEMENT_CURRENT=-54278278)
 !     
-!     global variables
-!     
-      double complex MPI_BOTTOM, MPI_IN_PLACE
+!     MPI sentinel values
+!
+!     Several of these types were chosen with care to match specific
+!     overloaded functions in the F90 bindings.  They should also match
+!     the types of their corresponding C variables.  Do not arbitrarily
+!     change their types without also updating the F90 bindings and
+!     their corresponding types in ompi/mpi/f77/constants.h and
+!     ompi/mpi/runtime/ompi_init.c!
+!
+!     MPI_BOTTOM is only used where choice buffers can be used (meaning
+!     that we already have overloaded F90 bindings for all available
+!     types), so any type is fine.
+      integer MPI_BOTTOM
+!     MPI_IN_PLACE has the same rationale as MPI_BOTTOM.
+      integer MPI_IN_PLACE
+!     Making MPI_ARGV_NULL be the same type as the parameter that is
+!     exepected in the F90 binding for MPI_COMM_SPAWN means that we
+!     don't need another binding for MPI_COMM_SPAWN.
       character MPI_ARGV_NULL(1)
-!     MPI_ARGVS_NULL must not be a character array so that we can match
-!     an appropriate F90 MPI bindings interface function; see comments
-!     in mpi-f90-interfaces.h for a full explanation.  It's an analogous
-!     situation for MPI_STATUSES_IGNORE -- we make it of a type that no
-!     one should ever try to pass to (for example) MPI_WAITSOME so that
-!     we get the desired type matching (i.e., we wouldn't want to make
-!     MPI_STATUSED_IGNORE an integer array size of MPI_STATUS_SIZE
-!     because someone may accidentally pass in a 1D integer array of
-!     size MPI_STATUS_SIZE [vs. an array of integer arrays, like they're
-!     supposed to] -- and that's the type of mistake that these
-!     strong-typing bindings are supposed to catch :-) ).
-      integer MPI_ARGVS_NULL
-      double complex MPI_STATUSES_IGNORE
-!     These must be integer arrays so that we can match the proper
-!     prototypes in the F90 MPI bindings.
+!     The array_of_argv parameter in the F90 bindings for
+!     MPI_COMM_SPAWN_MULTIPLE takes a variable number of dimensions
+!     (specified by the "count" parameter), so it's not possible to have
+!     a single variable match all possible values.  Hence, make it an
+!     entirely different type (one that would never likely be used by a
+!     correct program, e.g., double) and have a separate F90 binding for
+!     matching just this type.
+      double precision MPI_ARGVS_NULL
+!     MPI_ERRCODES_IGNORE has similar rationale to MPI_ARGV_NULL.  The
+!     F77 functions are all smart enough to check that the errcodes
+!     parameter is not ERRCODES_IGNORE before assigning values into it
+!     (hence, the fact that this is an array of only 1 element does not
+!     matter -- we'll never overrun it because we never assign values
+!     into it).
       integer MPI_ERRCODES_IGNORE(1)
+!     MPI_STATUS_IGNORE has similar rationale to MPI_ERRCODES_IGNORE.
       integer MPI_STATUS_IGNORE(MPI_STATUS_SIZE)
+!     MPI_STATUSES_IGNORE has similar rationale to MPI_ARGVS_NULL.
+      double precision MPI_STATUSES_IGNORE
       
       common/mpi_fortran_bottom/MPI_BOTTOM
       common/mpi_fortran_in_place/MPI_IN_PLACE

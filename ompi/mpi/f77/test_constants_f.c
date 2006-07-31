@@ -22,48 +22,6 @@
 #include "ompi/mpi/f77/bindings.h"
 #include "ompi/mpi/f77/constants.h"
 
-/**
- * This file contains two parts:
- *
- * 1. Various constants used in the Fortran bindings.
- * 2. A special, internal OMPI function used for testing constant
- *    values (i.e., not an MPI API function)
- *
- * The constants in #1 are in this file because certain linkers (e.g.,
- * OSX) need to have object files with functions in them or they won't
- * pull in global variables from that file.  Specifically, the
- * constants in #1 used to be in a .c file by themselves (with no
- * functions), which led to certain cases where the OSX linker
- * wouldn't "see" them because there were no functions in the
- * resulting .o file that would cause the constants to be pulled for
- * run-time/link-time resolution.
- */
-
-/* Constants for the Fortran layer.  These values are referred to via
-   common blocks in the Fortran equivalents.  See
-   ompi/mpi/f77/constants.h for a more detailed explanation. */
-
-#define INST(upper_case, lower_case, single_u, double_u) \
-ompi_fortran_common_t lower_case = OMPI_FORTRAN_COMMON_INIT; \
-ompi_fortran_common_t upper_case = OMPI_FORTRAN_COMMON_INIT; \
-ompi_fortran_common_t single_u = OMPI_FORTRAN_COMMON_INIT;  \
-ompi_fortran_common_t double_u = OMPI_FORTRAN_COMMON_INIT
-
-INST(MPI_FORTRAN_BOTTOM, mpi_fortran_bottom,
-     mpi_fortran_bottom_, mpi_fortran_bottom__);
-INST(MPI_FORTRAN_IN_PLACE, mpi_fortran_in_place,
-     mpi_fortran_in_place_, mpi_fortran_in_place__);
-INST(MPI_FORTRAN_ARGV_NULL, mpi_fortran_argv_null,
-     mpi_fortran_argv_null_, mpi_fortran_argv_null__);
-INST(MPI_FORTRAN_ARGVS_NULL, mpi_fortran_argvs_null,
-     mpi_fortran_argvs_null_, mpi_fortran_argvs_null__);
-INST(MPI_FORTRAN_ERRCODES_IGNORE, mpi_fortran_errcodes_ignore,
-     mpi_fortran_errcodes_ignore_, mpi_fortran_errcodes_ignore__);
-INST(MPI_FORTRAN_STATUS_IGNORE, mpi_fortran_status_ignore,
-     mpi_fortran_status_ignore_, mpi_fortran_status_ignore__);
-INST (MPI_FORTRAN_STATUSES_IGNORE, mpi_fortran_statuses_ignore,
-      mpi_fortran_statuses_ignore_, mpi_fortran_statuses_ignore__);
-
 /* This is an internal test function for Open MPI; it does not have a
    profiled equivalent. */
 
