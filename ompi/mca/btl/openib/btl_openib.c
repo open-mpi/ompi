@@ -131,7 +131,7 @@ int mca_btl_openib_add_procs(
 int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 
 {
     int min_cq_size;
-    int first_time = openib_btl->num_peers  == 0;
+    int first_time = (0 == openib_btl->num_peers);
     int rc;
     openib_btl->num_peers += nprocs; 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
