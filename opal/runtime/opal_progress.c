@@ -33,7 +33,7 @@
 /* 
  * default parameters 
  */
-static int opal_progress_event_flag = OPAL_EVLOOP_ONCE;
+static int opal_progress_event_flag = OPAL_EVLOOP_ONELOOP;
 #if OPAL_PROGRESS_USE_TIMERS
 static const opal_timer_t opal_progress_default_tick_rate = 10000; /* 10ms */
 #else

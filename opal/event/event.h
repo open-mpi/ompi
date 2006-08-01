@@ -174,6 +174,10 @@ int opal_event_base_set(struct event_base *, struct opal_event *);
 
 #define OPAL_EVLOOP_ONCE	0x01
 #define OPAL_EVLOOP_NONBLOCK	0x02
+    /* run once through the loop, but do have the default timeout.
+       Need to be both something special *AND* EVLOOP_ONCE */
+#define OPAL_EVLOOP_ONELOOP     0x03
+
 OMPI_DECLSPEC int opal_event_loop(int);
 int opal_event_base_loop(struct event_base *, int);
 int opal_event_loopexit(struct timeval *);	/* Causes the loop to exit */

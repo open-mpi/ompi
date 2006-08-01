@@ -114,16 +114,18 @@ int ompi_mpi_finalize(void)
     /* Proceed with MPI_FINALIZE */
 
     ompi_mpi_finalized = true;
+
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
+    opal_progress_events(OPAL_EVLOOP_ONELOOP);
 #endif
+
+    /* Change progress function priority back to RTE level stuff */
+    opal_progress_mpi_disable();
+
     /* If maffinity was setup, tear it down */
     if (ompi_mpi_maffinity_setup) {
         opal_maffinity_base_close();
     }
-
-    /* Change progress function priority back to RTE level stuff */
-    opal_progress_mpi_disable();
 
     /* begin recording compound command */
 /*    if (OMPI_SUCCESS != (ret = orte_gpr.begin_compound_cmd())) {

@@ -609,7 +609,8 @@ opal_event_base_loop(struct event_base *base, int flags)
 			opal_event_process_active(base);
 			if (!base->event_count_active && (flags & OPAL_EVLOOP_ONCE))
 				done = 1;
-		} else if (flags & OPAL_EVLOOP_NONBLOCK)
+		} else if ((flags & OPAL_EVLOOP_NONBLOCK) ||
+                           (flags & OPAL_EVLOOP_ONELOOP))
 			done = 1;
 
 		if (evsel->recalc(base, evbase, 0) == -1) {
