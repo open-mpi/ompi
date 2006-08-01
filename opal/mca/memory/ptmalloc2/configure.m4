@@ -60,6 +60,31 @@ AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
                  [memory_ptmalloc2_happy="yes"],
                  [memory_ptmalloc2_happy="no"])])
 
+    # Per ticket #227, Intel 9.0 v20051201 on ia64 with optimization
+    # of -O2 or higher will bork ptmalloc2 in strange in mysterious
+    # ways.  Doh!  So if the compiler vendor is intel and we're on an
+    # ia64 box, run "icc --version" and snarf the version string.  If
+    # it's 9.0 and the version is <= 20051201, then disable ptmalloc2.
+    # Executive decision: ignore optimization levels (even though -O1
+    # and -O0 seem to work).  The upgrade to 9.1 is free, so that's a
+    # better path than trying to make a much more complicated test
+    # here.
+
+    case $host in
+        ia64-*)
+            AS_IF([test "$ompi_c_vendor" = "intel"],
+                  [# check for v9.0 <= 20051201
+                   icc_major_ver="`$CC --version | head -n 1 | awk '{ print [$]3 }'`"
+                   icc_minor_ver="`$CC --version | head -n 1 | awk '{ print [$]4 }'`"
+                   AS_IF([test "$icc_major_ver" = "9.0" -a "`expr $icc_minor_ver \<= 20051201`" = "1"],
+                         [memory_ptmalloc2_happy="no"
+                          AC_MSG_WARN([*** Detected Intel C compiler v9.0 <= 20051201 on ia64])
+                          AC_MSG_WARN([*** This compiler/platform combination has known problems with ptmalloc2])
+                          AC_MSG_WARN([*** Automatically disabling ptmalloc2])]) 
+                   unset icc_major_ver icc_minor_ver])
+            ;;
+    esac
+
     AS_IF([test "$memory_ptmalloc2_happy" = "yes"],
           [# check for malloc.h
            AC_CHECK_HEADER([malloc.h],
