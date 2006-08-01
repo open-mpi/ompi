@@ -89,7 +89,9 @@ First checked in.  This code still has bugs, but I've written enough code that c
 // Some extra Mach interfaces that we don't need in the public header.
 // Again, we need C++ guards.
 
+#ifdef HAVE_MACH_MACH_VM_H
 #include <mach/mach_vm.h>
+#endif
 #include <mach/vm_region.h>
 
 // We want both PowerPC and Intel thread state information.
@@ -271,6 +273,7 @@ static bool TaskIs64Bits(task_t task)
 	// task can be 64-bit.
 	
 	result = false;
+#ifdef HAVE_MACH_VM_REGION
 	if ( mach_vm_region != NULL ) {
 		kern_return_t					err;
 		mach_vm_address_t				addr;
@@ -304,6 +307,7 @@ static bool TaskIs64Bits(task_t task)
 
 		assert(junkPort == MACH_PORT_NULL);
 	}
+#endif /* HAVE_MACH_VM_REGION */
 	return result;
 }
 
@@ -799,6 +803,7 @@ static int MachReadBytes(MoreBTContext *context, MoreBTAddr src, void *dst, size
 	// reverting to using [mach_]vm_read, which means I have to vm_deallocate 
 	// the space afterwards.  Such is life, kerplunk.
 	
+#ifdef HAVE_MACH_VM_READ
 	if (mach_vm_read != NULL) {
 		err = mach_vm_read(
 			context->task,
@@ -807,7 +812,9 @@ static int MachReadBytes(MoreBTContext *context, MoreBTAddr src, void *dst, size
 			&dataRead,
 			&sizeRead
 		);
-	} else {
+	} else 
+#endif /* HAVE_MACH_VM_READ */
+        {
 		#if MORE_DEBUG
 			// If I'm running 32-bits, vm_read's arguments are only 32-bits, 
 			// and thus an attempt to read a 64-bit address is bad.  This 
