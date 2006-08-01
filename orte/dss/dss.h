@@ -35,6 +35,28 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/**
+ * Set the buffer type.
+ *
+ * The pack/unpack functions can work with two types of buffer - fully
+ * described (i.e., every data object is preceeded by an identifier as
+ * to the type of the object) and non-described (i.e., no type
+ * identifier included). This function allows the caller to set the
+ * buffer type to the specified type - the function first checks to
+ * ensure the buffer is empty as the type cannot be changed once
+ * data has already entered the buffer.
+ *
+ * @param *buffer A pointer to the buffer
+ *
+ * @param type The new buffer type
+ *
+ * @retval ORTE_SUCCESS Operation successfully executed
+ *
+ * @retval ORTE_ERROR_VALUE An appropriate error code
+ */
+typedef int (*orte_dss_set_buffer_type_fn_t)(orte_buffer_t *buffer, orte_dss_buffer_type_t type);
+
 /**
  * Top-level itnerface function to pack one or more values into a
  * buffer.
@@ -87,7 +109,7 @@ extern "C" {
  * @endcode
  */
 typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, void *src,
-                                  size_t num_values,
+                                  orte_std_cntr_t num_values,
                                   orte_data_type_t type);
 
 /**
@@ -147,7 +169,7 @@ typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, void *src,
  * string in the array - the caller must only provide adequate memory
  * for the array of pointers.
  *
- * @param *num A pointer to a size_t value indicating the maximum
+ * @param *num A pointer to a orte_std_cntr_t value indicating the maximum
  * number of values that are to be unpacked, beginning at the location
  * pointed to by src. This is provided to help protect the caller from
  * memory overrun. Note that a string
@@ -180,7 +202,7 @@ typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, void *src,
  * orte_buffer_t *buffer;
  * int32_t dest;
  * char **string_array;
- * size_t num_values;
+ * orte_std_cntr_t num_values;
  *
  * num_values = 1;
  * status_code = orte_dss.unpack(buffer, (void*)&dest, &num_values, ORTE_INT32);
@@ -192,7 +214,7 @@ typedef int (*orte_dss_pack_fn_t)(orte_buffer_t *buffer, void *src,
  * @endcode
  */
 typedef int (*orte_dss_unpack_fn_t)(orte_buffer_t *buffer, void *dest,
-                                    size_t *max_num_values,
+                                    orte_std_cntr_t *max_num_values,
                                     orte_data_type_t type);
 
 /**
@@ -209,7 +231,7 @@ typedef int (*orte_dss_unpack_fn_t)(orte_buffer_t *buffer, void *dest,
  * type of the next item in the buffer is to be stored. Caller must
  * have memory backing this location.
  *
- * @param number A pointer to a size_t variable where the number of
+ * @param number A pointer to a orte_std_cntr_t variable where the number of
  * data values in the next item is to be stored. Caller must have
  * memory backing this location.
  *
@@ -221,7 +243,7 @@ typedef int (*orte_dss_unpack_fn_t)(orte_buffer_t *buffer, void *dest,
  */
 typedef int (*orte_dss_peek_next_item_fn_t)(orte_buffer_t *buffer,
                                             orte_data_type_t *type,
-                                            size_t *number);
+                                            orte_std_cntr_t *number);
 
 /**
  * Unload the data payload from a buffer.
@@ -452,7 +474,7 @@ typedef int (*orte_dss_get_fn_t)(void **data, orte_data_value_t *value, orte_dat
  * @retval ORTE_ERROR(s) An appropriate error code - usually caused by the specified type
  * not matching the data type within the stored object.
  */
-typedef int (*orte_dss_arith_fn_t)(orte_data_value_t *value, void *operand, orte_dss_arith_op_t operation, orte_data_type_t type);
+typedef int (*orte_dss_arith_fn_t)(orte_data_value_t *value, orte_data_value_t *operand, orte_dss_arith_op_t operation);
 
 /**
  * Increment a data value
@@ -553,6 +575,7 @@ struct orte_dss_t {
     orte_dss_arith_fn_t arith;
     orte_dss_increment_fn_t increment;
     orte_dss_decrement_fn_t decrement;
+    orte_dss_set_buffer_type_fn_t set_buffer_type;
     orte_dss_pack_fn_t pack;
     orte_dss_unpack_fn_t unpack;
     orte_dss_copy_fn_t copy;

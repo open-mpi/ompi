@@ -364,6 +364,27 @@ int orte_dss_print_null(char **output, char *prefix, void *src, orte_data_type_t
 
 /* PRINT FUNCTIONS FOR GENERIC ORTE TYPES */
 /*
+ * ORTE_STD_CNTR
+ */
+int orte_dss_print_std_cntr(char **output, char *prefix, orte_std_cntr_t *src, orte_data_type_t type)
+{
+    char *prefx;
+
+    /* deal with NULL prefix */
+    if (NULL == prefix) asprintf(&prefx, " ");
+    else prefx = prefix;
+
+    /* if src is NULL, just print data type and return */
+    if (NULL == src) {
+        asprintf(output, "%sData type: ORTE_STD_CNTR\tValue: NULL pointer", prefx);
+        return ORTE_SUCCESS;
+    }
+
+    asprintf(output, "%sData type: ORTE_STD_CNTR\tValue: %lu", prefx, (unsigned long) *src);
+    return ORTE_SUCCESS;
+}
+
+/*
  * ORTE_DATA_TYPE
  */
 int orte_dss_print_data_type(char **output, char *prefix, orte_data_type_t *src, orte_data_type_t type)

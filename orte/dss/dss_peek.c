@@ -24,11 +24,11 @@
 
 
 int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
-                  size_t *num_vals)
+                  orte_std_cntr_t *num_vals)
 {
     int ret;
     orte_buffer_t tmp;
-    size_t n=1;
+    orte_std_cntr_t n=1;
     orte_data_type_t local_type;
 
     /* check for errors */
@@ -44,6 +44,16 @@ int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
         *num_vals = 0;
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
+    
+    /* if this is NOT a fully described buffer, then that is as much as
+     * we can do - there is no way we can tell the caller what type is
+     * in the buffer since that info wasn't stored.
+     */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        *type = ORTE_UNDEF;
+        *num_vals = 0;
+        return ORTE_ERR_UNKNOWN_DATA_TYPE;
+    }
 
     /* cheat: unpack from a copy of the buffer -- leaving all the
        original pointers intact */
@@ -55,13 +65,13 @@ int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
         *num_vals = 0;
         return ret;
     }
-    if (ORTE_SIZE != local_type) { /* if the length wasn't first, then error */
+    if (ORTE_STD_CNTR != local_type) { /* if the length wasn't first, then error */
         ORTE_ERROR_LOG(ORTE_ERR_UNPACK_FAILURE);
         *type = ORTE_NULL;
         *num_vals = 0;
         return ORTE_ERR_UNPACK_FAILURE;
     }
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(&tmp, num_vals, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(&tmp, num_vals, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         *type = ORTE_NULL;
         *num_vals = 0;
@@ -87,6 +97,14 @@ int orte_dss_peek_type(orte_buffer_t *buffer, orte_data_type_t *type)
         return ORTE_ERR_BAD_PARAM;
     }
 
+    /* if this is NOT a fully described buffer, then there isn't anything
+     * we can do - there is no way we can tell the caller what type is
+     * in the buffer since that info wasn't stored.
+     */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        *type = ORTE_UNDEF;
+        return ORTE_ERR_UNKNOWN_DATA_TYPE;
+    }
     /* Double check and ensure that there is data left in the buffer. */
 
     if (buffer->unpack_ptr >= buffer->base_ptr + buffer->bytes_used) {

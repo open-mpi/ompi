@@ -15,7 +15,11 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_types.h"
+
+#include <sys/types.h>
+#if HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif
 
 #include "opal/util/output.h"
 
@@ -24,26 +28,23 @@
 #include "orte/dss/dss.h"
 #include "orte/dss/dss_internal.h"
 
-
-void orte_dss_dump_data_types(int output)
+int orte_dss_set_buffer_type(orte_buffer_t *buffer, orte_dss_buffer_type_t type)
 {
-    orte_dss_type_info_t **ptr;
-    orte_data_type_t j;
-    size_t i;
-
-    opal_output(output, "DUMP OF REGISTERED DATA TYPES");
-
-    ptr = (orte_dss_type_info_t**)(orte_dss_types->addr);
-    for (i=0, j=0; j < orte_dss_num_reg_types &&
-                   i < orte_dss_types->size; i++) {
-        if (NULL != ptr[i]) {
-            j++;
-            /* print out the info */
-            opal_output(output, "\tIndex: %lu\tData type: %lu\tName: %s",
-                        (unsigned long)j,
-                        (unsigned long)ptr[i]->odti_type,
-                        ptr[i]->odti_name);
-        }
+    /** check for error */
+    if (NULL == buffer) {
+        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+        return ORTE_ERR_BAD_PARAM;
     }
+
+    /** see if the buffer is empty - if not, generate error */
+    if (buffer->base_ptr == buffer->pack_ptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_BUFFER);
+        return ORTE_ERR_BUFFER;
+    }
+
+    /** set the type */
+    buffer->type = type;
+
+    return ORTE_SUCCESS;
 }
 

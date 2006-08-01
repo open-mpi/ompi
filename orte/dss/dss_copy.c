@@ -104,6 +104,10 @@ int orte_dss_std_copy(void **dest, void *src, orte_data_type_t type)
             datasize = 8;
             break;
 
+        case ORTE_STD_CNTR:
+            datasize = sizeof(orte_std_cntr_t);
+            break;
+
         case ORTE_DATA_TYPE:
             datasize = sizeof(orte_data_type_t);
             break;

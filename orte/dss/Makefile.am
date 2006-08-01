@@ -30,6 +30,7 @@ dss_libdss_la_SOURCES = \
         dss/dss_arith.c \
         dss/dss_compare.c \
         dss/dss_copy.c \
+        dss/dss_dump.c \
         dss/dss_get.c \
         dss/dss_load_unload.c \
         dss/dss_lookup.c \
@@ -39,6 +40,7 @@ dss_libdss_la_SOURCES = \
         dss/dss_register.c \
         dss/dss_release.c \
         dss/dss_set.c \
+        dss/dss_set_buffer_type.c \
         dss/dss_size.c \
         dss/dss_unpack.c \
         dss/dss_open_close.c

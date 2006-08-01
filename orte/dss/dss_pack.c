@@ -23,13 +23,14 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/types.h"
 #include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/dss/dss_internal.h"
 
-int orte_dss_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
+int orte_dss_pack(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
@@ -41,11 +42,13 @@ int orte_dss_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     }
 
     /* Pack the number of values */
-    if (ORTE_SUCCESS != (rc = orte_dss_store_data_type(buffer, ORTE_SIZE))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
+        if (ORTE_SUCCESS != (rc = orte_dss_store_data_type(buffer, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
-    if (ORTE_SUCCESS != (rc = orte_dss_pack_sizet(buffer, &num_vals, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_std_cntr(buffer, &num_vals, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -58,17 +61,20 @@ int orte_dss_pack(orte_buffer_t *buffer, void *src, size_t num_vals,
     return rc;
 }
 
-int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
                   orte_data_type_t type)
 {
     int rc;
     orte_dss_type_info_t *info;
 
     OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_pack_buffer( %p, %p, %lu, %d )\n", buffer, src, num_vals, (int)type ) );
+
     /* Pack the declared data type */
-    if (ORTE_SUCCESS != (rc = orte_dss_pack_data_type(buffer, &type, 1, type))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
+        if (ORTE_SUCCESS != (rc = orte_dss_store_data_type(buffer, type))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     /* Lookup the pack function for this type and call it */
@@ -92,7 +98,7 @@ int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
  * BOOL
  */
 int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
@@ -109,7 +115,7 @@ int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
  * INT
  */
 int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
-                      size_t num_vals, orte_data_type_t type)
+                      orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
@@ -126,7 +132,7 @@ int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
  * SIZE_T
  */
 int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
-                        size_t num_vals, orte_data_type_t type)
+                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
@@ -143,7 +149,7 @@ int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
  * PID_T
  */
 int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
-                      size_t num_vals, orte_data_type_t type)
+                      orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
@@ -163,7 +169,7 @@ int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
  * NULL
  */
 int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     char null=0x00;
     char *dst;
@@ -191,7 +197,7 @@ int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
  * BYTE, CHAR, INT8
  */
 int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     char *dst;
 
@@ -217,9 +223,9 @@ int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
  * INT16
  */
 int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
-                        size_t num_vals, orte_data_type_t type)
+                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
-    size_t i;
+    orte_std_cntr_t i;
     uint16_t tmp, *srctmp = (uint16_t*) src;
     char *dst;
 
@@ -246,9 +252,9 @@ int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
  * INT32
  */
 int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
-                        size_t num_vals, orte_data_type_t type)
+                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
-    size_t i;
+    orte_std_cntr_t i;
     uint32_t tmp, *srctmp = (uint32_t*) src;
     char *dst;
 
@@ -275,9 +281,9 @@ int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
  * INT64
  */
 int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
-                        size_t num_vals, orte_data_type_t type)
+                        orte_std_cntr_t num_vals, orte_data_type_t type)
 {
-    size_t i;
+    orte_std_cntr_t i;
     uint64_t tmp, *srctmp = (uint64_t*) src;
     char *dst;
     size_t bytes_packed = num_vals * sizeof(tmp);
@@ -305,10 +311,10 @@ int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
  * STRING
  */
 int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
-                         size_t num_vals, orte_data_type_t type)
+                         orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret = ORTE_SUCCESS;
-    size_t i, len;
+    orte_std_cntr_t i, len;
     char **ssrc = (char**) src;
 
     for (i = 0; i < num_vals; ++i) {
@@ -338,61 +344,45 @@ int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
 /* PACK FUNCTIONS FOR GENERIC ORTE TYPES */
 
 /*
+ * ORTE_STD_CNTR
+ */
+int orte_dss_pack_std_cntr(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
+                            orte_data_type_t type)
+{
+    int ret;
+    
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return ret;
+}
+
+/*
  * ORTE_DATA_TYPE
  */
-int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src, size_t num,
+int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
                              orte_data_type_t type)
 {
-    size_t required;
-    int rc;
-
-    required = sizeof(orte_data_type_t);
-    switch (required) {
-
-        case 1:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_byte(buffer, src, num, ORTE_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 2:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int16(buffer, src, num, ORTE_INT16))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 4:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int32(buffer, src, num, ORTE_INT32))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 8:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int64(buffer, src, num, ORTE_INT64))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        default:
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
+    int ret;
+    
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_DATA_TYPE_T))) {
+        ORTE_ERROR_LOG(ret);
     }
-
-    return rc;
+    
+    return ret;
 }
 
 /*
  * ORTE_DATA_VALUE
  */
-int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, size_t num, orte_data_type_t type)
+int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t num, orte_data_type_t type)
 {
     orte_dss_type_info_t *info;
     orte_data_value_t **sdv;
-    size_t i;
+    orte_std_cntr_t i;
     int ret;
 
     sdv = (orte_data_value_t **) src;
@@ -430,59 +420,27 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, size_t num, orte_
 /*
  * ORTE_DAEMON_CMD
  */
-int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src, size_t num,
+int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
                              orte_data_type_t type)
 {
-    size_t required;
-    int rc;
-
-    required = sizeof(orte_daemon_cmd_flag_t);
-    switch (required) {
-
-        case 1:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_byte(buffer, src, num, ORTE_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 2:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int16(buffer, src, num, ORTE_INT16))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 4:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int32(buffer, src, num, ORTE_INT32))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        case 8:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int64(buffer, src, num, ORTE_INT64))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-
-        default:
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
+    int ret;
+    
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_DAEMON_CMD_T))) {
+        ORTE_ERROR_LOG(ret);
     }
-
-    return rc;
+    
+    return ret;
 }
 
 /*
  * ORTE_BYTE_OBJECT
  */
-int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, size_t num,
+int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
                              orte_data_type_t type)
 {
     orte_byte_object_t **sbyteptr;
-    size_t i, n;
+    orte_std_cntr_t i, n;
     int ret;
 
     sbyteptr = (orte_byte_object_t **) src;

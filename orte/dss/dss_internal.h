@@ -157,21 +157,24 @@ extern orte_data_type_t orte_dss_num_reg_types;
     /*
      * Implementations of API functions
      */
+
     int orte_dss_set(orte_data_value_t *value, void *new_value, orte_data_type_t type);
 
     int orte_dss_get(void **data, orte_data_value_t *value, orte_data_type_t type);
 
-    int orte_dss_arith(orte_data_value_t *value, void *operand, orte_dss_arith_op_t operation, orte_data_type_t type);
+    int orte_dss_arith(orte_data_value_t *value, orte_data_value_t *operand, orte_dss_arith_op_t operation);
 
     int orte_dss_increment(orte_data_value_t *value);
 
     int orte_dss_decrement(orte_data_value_t *value);
 
+    int orte_dss_set_buffer_type(orte_buffer_t *buffer, orte_dss_buffer_type_t type);
+
     int orte_dss_pack(orte_buffer_t *buffer, void *src,
-                      size_t num_vals,
+                      orte_std_cntr_t num_vals,
                       orte_data_type_t type);
     int orte_dss_unpack(orte_buffer_t *buffer, void *dest,
-                        size_t *max_num_vals,
+                        orte_std_cntr_t *max_num_vals,
                         orte_data_type_t type);
 
     int orte_dss_copy(void **dest, void *src, orte_data_type_t type);
@@ -184,7 +187,7 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_size(size_t *size, void *src, orte_data_type_t type);
 
     int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
-                      size_t *number);
+                      orte_std_cntr_t *number);
 
     int orte_dss_peek_type(orte_buffer_t *buffer, orte_data_type_t *type);
 
@@ -211,10 +214,10 @@ extern orte_data_type_t orte_dss_num_reg_types;
     /*
      * Non-API functions
      */
-    int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, size_t num_vals,
+    int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
                   orte_data_type_t type);
 
-    int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, size_t *num_vals,
+    int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
                     orte_data_type_t type);
 
     /*
@@ -222,84 +225,90 @@ extern orte_data_type_t orte_dss_num_reg_types;
      */
 
     int orte_dss_pack_null(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
     int orte_dss_pack_byte(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
-                          size_t num_vals, orte_data_type_t type);
+                          orte_std_cntr_t num_vals, orte_data_type_t type);
     int orte_dss_pack_int16(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type);
+                            orte_std_cntr_t num_vals, orte_data_type_t type);
     int orte_dss_pack_int32(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type);
+                            orte_std_cntr_t num_vals, orte_data_type_t type);
     int orte_dss_pack_int64(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type);
+                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type);
+                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
-                          size_t num_vals, orte_data_type_t type);
+                          orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
-                             size_t num_vals, orte_data_type_t type);
+                             orte_std_cntr_t num_vals, orte_data_type_t type);
+
+    int orte_dss_pack_std_cntr(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
+                               orte_data_type_t type);
 
     int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src,
-                                 size_t num_vals, orte_data_type_t type);
+                                 orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
 
     int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src,
-                           size_t num_vals, orte_data_type_t type);
+                           orte_std_cntr_t num_vals, orte_data_type_t type);
 
     /*
      * Internal unpack functions
      */
 
     int orte_dss_unpack_null(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
     int orte_dss_unpack_byte(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_bool(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_int(orte_buffer_t *buffer, void *dest,
-                            size_t *num_vals, orte_data_type_t type);
+                            orte_std_cntr_t *num_vals, orte_data_type_t type);
     int orte_dss_unpack_int16(orte_buffer_t *buffer, void *dest,
-                              size_t *num_vals, orte_data_type_t type);
+                              orte_std_cntr_t *num_vals, orte_data_type_t type);
     int orte_dss_unpack_int32(orte_buffer_t *buffer, void *dest,
-                              size_t *num_vals, orte_data_type_t type);
+                              orte_std_cntr_t *num_vals, orte_data_type_t type);
     int orte_dss_unpack_int64(orte_buffer_t *buffer, void *dest,
-                              size_t *num_vals, orte_data_type_t type);
+                              orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_sizet(orte_buffer_t *buffer, void *dest,
-                              size_t *num_vals, orte_data_type_t type);
+                              orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_pid(orte_buffer_t *buffer, void *dest,
-                            size_t *num_vals, orte_data_type_t type);
+                            orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
-                               size_t *num_vals, orte_data_type_t type);
+                               orte_std_cntr_t *num_vals, orte_data_type_t type);
+
+    int orte_dss_unpack_std_cntr(orte_buffer_t *buffer, void *dest, orte_std_cntr_t *num,
+                             orte_data_type_t type);
 
     int orte_dss_unpack_data_type(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest,
-                                   size_t *num_vals, orte_data_type_t type);
+                                   orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest,
-                             size_t *num_vals, orte_data_type_t type);
+                             orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     /*
      * Internal copy functions
@@ -347,6 +356,8 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_compare_string(char *value1, char *value2, orte_data_type_t type);
 
+    int orte_dss_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, orte_data_type_t type);
+
     int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte_data_type_t type);
 
     int orte_dss_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type);
@@ -392,6 +403,7 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_print_int64(char **output, char *prefix, void *src, orte_data_type_t type);
 #endif
     int orte_dss_print_null(char **output, char *prefix, void *src, orte_data_type_t type);
+    int orte_dss_print_std_cntr(char **output, char *prefix, orte_std_cntr_t *src, orte_data_type_t type);
     int orte_dss_print_data_type(char **output, char *prefix, orte_data_type_t *src, orte_data_type_t type);
     int orte_dss_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
     int orte_dss_print_data_value(char **output, char *prefix, orte_data_value_t *src, orte_data_type_t type);
@@ -415,11 +427,11 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     bool orte_dss_too_small(orte_buffer_t *buffer, size_t bytes_reqd);
 
+    orte_dss_type_info_t* orte_dss_find_type(orte_data_type_t type);
+
     int orte_dss_store_data_type(orte_buffer_t *buffer, orte_data_type_t type);
 
     int orte_dss_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type);
-
-    orte_dss_type_info_t* orte_dss_find_type(orte_data_type_t type);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

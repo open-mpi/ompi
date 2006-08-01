@@ -43,68 +43,68 @@ static void orte_dss_arith_uint64(uint64_t *value, uint64_t *operand, orte_dss_a
 static void orte_dss_arith_data_type(orte_data_type_t *value, orte_data_type_t *operand, orte_dss_arith_op_t operation);
 static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon_cmd_flag_t *operand, orte_dss_arith_op_t operation);
 
-int orte_dss_arith(orte_data_value_t *value, void *operand, orte_dss_arith_op_t operation, orte_data_type_t type)
+int orte_dss_arith(orte_data_value_t *value, orte_data_value_t *operand, orte_dss_arith_op_t operation)
 {
     /* check for error */
     if (NULL == value || NULL == operand) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
-    if (type != value->type) {
+    if (operand->type != value->type) {
         ORTE_ERROR_LOG(ORTE_ERR_TYPE_MISMATCH);
         return ORTE_ERR_TYPE_MISMATCH;
     }
 
     /* Lookup the arith function for this type and call it */
 
-    switch(type) {
+    switch(operand->type) {
         case ORTE_INT:
-            orte_dss_arith_int(value->data, operand, operation);
+            orte_dss_arith_int(value->data, operand->data, operation);
             break;
 
         case ORTE_UINT:
-            orte_dss_arith_uint(value->data, operand, operation);
+            orte_dss_arith_uint(value->data, operand->data, operation);
             break;
 
         case ORTE_SIZE:
-            orte_dss_arith_size(value->data, operand, operation);
+            orte_dss_arith_size(value->data, operand->data, operation);
             break;
 
         case ORTE_PID:
-            orte_dss_arith_pid(value->data, operand, operation);
+            orte_dss_arith_pid(value->data, operand->data, operation);
             break;
 
         case ORTE_BYTE:
         case ORTE_UINT8:
-            orte_dss_arith_byte(value->data, operand, operation);
+            orte_dss_arith_byte(value->data, operand->data, operation);
             break;
 
         case ORTE_INT8:
-            orte_dss_arith_int8(value->data, operand, operation);
+            orte_dss_arith_int8(value->data, operand->data, operation);
             break;
 
         case ORTE_INT16:
-            orte_dss_arith_int16(value->data, operand, operation);
+            orte_dss_arith_int16(value->data, operand->data, operation);
             break;
 
         case ORTE_UINT16:
-            orte_dss_arith_uint16(value->data, operand, operation);
+            orte_dss_arith_uint16(value->data, operand->data, operation);
             break;
 
         case ORTE_INT32:
-            orte_dss_arith_int32(value->data, operand, operation);
+            orte_dss_arith_int32(value->data, operand->data, operation);
             break;
 
         case ORTE_UINT32:
-            orte_dss_arith_uint32(value->data, operand, operation);
+            orte_dss_arith_uint32(value->data, operand->data, operation);
             break;
 
         case ORTE_INT64:
-            orte_dss_arith_int64(value->data, operand, operation);
+            orte_dss_arith_int64(value->data, operand->data, operation);
             break;
 
         case ORTE_UINT64:
-            orte_dss_arith_uint64(value->data, operand, operation);
+            orte_dss_arith_uint64(value->data, operand->data, operation);
             break;
 
         default:
