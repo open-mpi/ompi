@@ -1253,6 +1253,7 @@ static int PowerPCCrossSignalFrame(MoreBTContext *context, MoreBTAddr thisFrame,
 	return err;
 }
 
+#ifdef CPU_TYPE_X86
 #pragma mark - Intel
 
 /*	Intel Stack Frame Basics
@@ -1478,6 +1479,7 @@ static int IntelCrossSignalFrame(MoreBTContext *context, MoreBTAddr thisFrame, M
 	
 	return err;
 }
+#endif /* #ifdef CPU_TYPE_X86 */
 
 // kArchitectures is an array of all the architectures we support.  
 // Things to notes:
@@ -1519,6 +1521,7 @@ static const MoreBTArchInfo kArchitectures[] = {
 		PPC_THREAD_STATE64,			// stateFlavor
 		PPC_THREAD_STATE64_COUNT	// stateCount
 	},
+#ifdef CPU_TYPE_X86
 	{	// Intel
 		CPU_TYPE_X86,				// cputype
 		0,							// subcputype
@@ -1537,6 +1540,7 @@ static const MoreBTArchInfo kArchitectures[] = {
 		i386_THREAD_STATE,			// stateFlavor
 		i386_THREAD_STATE_COUNT		// stateCount
 	}
+#endif /* #ifdef CPU_TYPE_X86 */
 	 /* null terminator */
 	
 };
