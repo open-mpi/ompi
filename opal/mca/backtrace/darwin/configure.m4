@@ -38,6 +38,10 @@ AC_DEFUN([MCA_backtrace_darwin_CONFIG],[
        fi
     fi
 
+    AS_IF([test "$backtrace_darwin_happy" = "yes"],
+          [AC_CHECK_HEADERS([mach/mach_vm.h])
+           AC_CHECK_FUNCS([mach_vm_region mach_vm_read])])
+
     AS_IF([test "$backtrace_darwin_happy" = "yes"], 
           [$1], [$2])
 ])
