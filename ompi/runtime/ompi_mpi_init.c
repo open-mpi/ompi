@@ -591,11 +591,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-     /* BWB - is this still needed? */
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
-#endif
-
     /* Second barrier -- wait for message from
        RMGR_PROC_STAGE_GATE_MGR to arrive */
 
@@ -623,6 +618,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                        "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         return ret;
     }
+
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    /* switch from letting us sit in the event library for a bit each
+       time through opal_progress() to completely non-blocking */
+    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
+#endif
 
     /* put the event library in "high performance MPI mode" */
     if (OMPI_SUCCESS != opal_progress_mpi_enable()) {
