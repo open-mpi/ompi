@@ -45,6 +45,10 @@ version 1.0.
 1.1.1
 -----
 
+- If using the Intel 9.0 v20051201 compiler on an IA64 platform, the
+  ptmalloc2 memory manager component will automatically disable
+  itself.  Other versions of the Intel compiler on this platform seem
+  to work fine (e.g., 9.1).
 - Added "host" MPI_Info key to MPI_COMM_SPAWN and
   MPI_COMM_SPAWN_MULTIPLE.
 - Add missing C++ methods: MPI::Datatype::Create_indexed_block,
