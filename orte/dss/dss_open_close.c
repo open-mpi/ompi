@@ -37,6 +37,7 @@ int orte_dss_verbose = -1;  /* by default disabled */
 int orte_dss_page_size;
 orte_pointer_array_t *orte_dss_types;
 orte_data_type_t orte_dss_num_reg_types;
+orte_dss_buffer_type_t default_buf_type;
 
 OMPI_DECLSPEC orte_dss_t orte_dss = {
     orte_dss_set,
@@ -44,6 +45,7 @@ OMPI_DECLSPEC orte_dss_t orte_dss = {
     orte_dss_arith,
     orte_dss_increment,
     orte_dss_decrement,
+    orte_dss_set_buffer_type,
     orte_dss_pack,
     orte_dss_unpack,
     orte_dss_copy,
@@ -55,7 +57,8 @@ OMPI_DECLSPEC orte_dss_t orte_dss = {
     orte_dss_unload,
     orte_dss_load,
     orte_dss_register,
-    orte_dss_lookup_data_type
+    orte_dss_lookup_data_type,
+    orte_dss_dump_data_types
 };
 
 /**
@@ -86,6 +89,9 @@ OBJ_CLASS_INSTANCE(
 
 static void orte_buffer_construct (orte_buffer_t* buffer)
 {
+    /** set the default buffer type */
+    buffer->type = default_buf_type;
+
     /* Make everything NULL to begin with */
 
     buffer->base_ptr = buffer->pack_ptr = buffer->unpack_ptr = NULL;
@@ -148,6 +154,9 @@ int orte_dss_open(void)
     } else {
         orte_dss_debug = false;
     }
+
+    /** set the default buffer type */
+    default_buf_type = ORTE_DSS_BUFFER_FULLY_DESC;
 
     /* setup the page size -this is for use by the BUFFER system, NOT the data type
        manager that keeps track of registered data types!! It must be converted to
@@ -375,6 +384,19 @@ int orte_dss_open(void)
                                           (orte_dss_release_fn_t)orte_dss_std_release,
                                           ORTE_DSS_STRUCTURED,
                                           "ORTE_STRING", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    tmp = ORTE_STD_CNTR;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_std_cntr,
+                                          orte_dss_unpack_std_cntr,
+                                          (orte_dss_copy_fn_t)orte_dss_std_copy,
+                                          (orte_dss_compare_fn_t)orte_dss_compare_std_cntr,
+                                          (orte_dss_size_fn_t)orte_dss_std_size,
+                                          (orte_dss_print_fn_t)orte_dss_print_std_cntr,
+                                          (orte_dss_release_fn_t)orte_dss_std_release,
+                                          ORTE_DSS_UNSTRUCTURED,
+                                          "ORTE_STD_CNTR", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

@@ -210,6 +210,16 @@ int orte_dss_compare_string(char *value1, char *value2, orte_data_type_t type)
 
 /* COMPARE FUNCTIONS FOR GENERIC ORTE TYPES */
 
+/* ORTE_STD_CNTR */
+int orte_dss_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, orte_data_type_t type)
+{
+    if (*value1 > *value2) return ORTE_VALUE1_GREATER;
+
+    if (*value2 > *value1) return ORTE_VALUE2_GREATER;
+
+    return ORTE_EQUAL;
+}
+
 /* ORTE_DATA_TYPE */
 int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte_data_type_t type)
 {
@@ -247,7 +257,7 @@ int orte_dss_compare_data_value(orte_data_value_t *value1, orte_data_value_t *va
 int orte_dss_compare_byte_object(orte_byte_object_t *value1, orte_byte_object_t *value2, orte_data_type_t type)
 {
     int checksum, diff;
-    size_t i;
+    orte_std_cntr_t i;
 
     /* compare the sizes first - bigger size object is "greater than" */
     if (value1->size > value2->size) return ORTE_VALUE1_GREATER;

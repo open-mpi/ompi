@@ -38,7 +38,7 @@ int orte_dss_register(orte_dss_pack_fn_t pack_fn,
 {
     int ret;
     orte_dss_type_info_t *info, **ptr;
-    size_t i;
+    orte_std_cntr_t i;
     orte_data_type_t j;
 
     /* Check for bozo cases */
@@ -79,6 +79,7 @@ int orte_dss_register(orte_dss_pack_fn_t pack_fn,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    info->odti_type = *type;
     info->odti_name = strdup(name);
     info->odti_pack_fn = pack_fn;
     info->odti_unpack_fn = unpack_fn;

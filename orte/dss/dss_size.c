@@ -99,6 +99,10 @@ int orte_dss_std_size(size_t *size, void *src, orte_data_type_t type)
             *size = sizeof(uint64_t);
             break;
 
+        case ORTE_STD_CNTR:
+            *size = sizeof(orte_std_cntr_t);
+            break;
+
         case ORTE_DATA_TYPE:
             *size = sizeof(orte_data_type_t);
             break;

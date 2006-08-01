@@ -27,6 +27,8 @@
 #endif
 
 #include "opal/util/output.h"
+
+#include "orte/class/orte_pointer_array.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/dss/dss_internal.h"
@@ -104,96 +106,41 @@ bool orte_dss_too_small(orte_buffer_t *buffer, size_t bytes_reqd)
     return false;
 }
 
-/*
- * Internal function to store data type in buffer
- */
 int orte_dss_store_data_type(orte_buffer_t *buffer, orte_data_type_t type)
 {
-    size_t required;
     int rc;
-    
-    required = sizeof(orte_data_type_t);
-    switch (required) {
-    
-        case 1:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_byte(buffer, &type, 1, ORTE_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 2:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int16(buffer, &type, 1, ORTE_INT16))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 4:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int32(buffer, &type, 1, ORTE_INT32))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 8:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_pack_int64(buffer, &type, 1, ORTE_INT64))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        default:
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
-    }
+    orte_dss_type_info_t *info;
 
+    /* Lookup the pack function for the actual orte_data_type type and call it */
+    
+    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
+        ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
+        return ORTE_ERR_PACK_FAILURE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = info->odti_pack_fn(buffer, &type, 1, ORTE_DATA_TYPE_T))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     return rc;
 }
 
-/*
- * Internal function to retrieve data type from buffer
- */
 int orte_dss_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type)
 {
-    size_t required, n=1;
     int rc;
+    orte_dss_type_info_t *info;
+    orte_std_cntr_t n=1;
     
-    required = sizeof(orte_data_type_t);
-    switch (required) {
+    /* Lookup the unpack function for the actual orte_data_type type and call it */
     
-        case 1:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_unpack_byte(buffer, type, &n, ORTE_BYTE))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 2:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_unpack_int16(buffer, type, &n, ORTE_INT16))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 4:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_unpack_int32(buffer, type, &n, ORTE_INT32))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        case 8:
-            if (ORTE_SUCCESS != (
-                rc = orte_dss_unpack_int64(buffer, type, &n, ORTE_INT64))) {
-                ORTE_ERROR_LOG(rc);
-            }
-            break;
-        
-        default:
-            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-            return ORTE_ERR_BAD_PARAM;
+    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
+        ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
+        return ORTE_ERR_PACK_FAILURE;
     }
-
+    
+    if (ORTE_SUCCESS != (rc = info->odti_unpack_fn(buffer, type, &n, ORTE_DATA_TYPE_T))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     return rc;
 }

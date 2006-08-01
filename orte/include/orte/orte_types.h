@@ -30,8 +30,36 @@
  * Supported datatypes for messaging and storage operations.
  */
 
-typedef uint8_t orte_data_type_t ;
-#define ORTE_DSS_ID_MAX UINT8_MAX
+typedef uint8_t orte_data_type_t;  /** data type indicators used in ORTE */
+#define ORTE_DATA_TYPE_T    ORTE_UINT8
+#define ORTE_DSS_ID_MAX     UINT8_MAX
+#define ORTE_DSS_ID_INVALID ORTE_DSS_ID_MAX
+
+typedef size_t orte_std_cntr_t;  /** standard counters used in ORTE */
+#define ORTE_STD_CNTR_T         ORTE_SIZE
+#define ORTE_STD_CNTR_MAX       SIZE_MAX
+#define ORTE_STD_CNTR_INVALID   -1
+
+/* define a structure to hold generic byte objects */
+typedef struct {
+    orte_std_cntr_t size;
+    uint8_t *bytes;
+} orte_byte_object_t;
+
+/* define the orted command flag type */
+typedef uint16_t orte_daemon_cmd_flag_t;
+#define ORTE_DAEMON_CMD_T   ORTE_UINT16
+
+/**
+ * handle differences in iovec
+ */
+
+#if defined(__APPLE__) || defined(__WINDOWS__)
+typedef char* orte_iov_base_ptr_t;
+#else
+typedef void* orte_iov_base_ptr_t;
+#endif
+
 
 #define    ORTE_UNDEF               (orte_data_type_t)    0 /**< type hasn't been defined yet */
 #define    ORTE_BYTE                (orte_data_type_t)    1 /**< a byte of data */
@@ -53,7 +81,7 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_UINT64              (orte_data_type_t)   15 /**< a 64-bit unsigned integer */
 
     /* we don't support floating point types */
-    
+
     /* orte-specific typedefs - grouped according to the subystem that handles
      * their packing/unpacking */
     /* General types - packing/unpacking handled within DSS */
@@ -61,48 +89,48 @@ typedef uint8_t orte_data_type_t ;
 #define    ORTE_DATA_TYPE           (orte_data_type_t)   17 /**< data type */
 #define    ORTE_NULL                (orte_data_type_t)   18 /**< don't interpret data type */
 #define    ORTE_DATA_VALUE          (orte_data_type_t)   19 /**< data value */
+#define    ORTE_ARITH_OP            (orte_data_type_t)   20 /**< arithmetic operation flag */
+#define    ORTE_STD_CNTR            (orte_data_type_t)   21 /**< standard counter type */
     /* Name Service types */
-#define    ORTE_NAME                (orte_data_type_t)   20 /**< an ompi_process_name_t */
-#define    ORTE_VPID                (orte_data_type_t)   21 /**< a vpid */
-#define    ORTE_JOBID               (orte_data_type_t)   22 /**< a jobid */
-#define    ORTE_JOBGRP              (orte_data_type_t)   23 /**< a job group */
-#define    ORTE_CELLID              (orte_data_type_t)   24 /**< a cellid */
-    /* SOH types */
-#define    ORTE_NODE_STATE          (orte_data_type_t)   25 /**< node status flag */
-#define    ORTE_PROC_STATE          (orte_data_type_t)   26 /**< process/resource status */
-#define    ORTE_JOB_STATE           (orte_data_type_t)   27 /**< job status flag */
-#define    ORTE_EXIT_CODE           (orte_data_type_t)   28 /**< process exit code */
+#define    ORTE_NAME                (orte_data_type_t)   22 /**< an orte_process_name_t */
+#define    ORTE_VPID                (orte_data_type_t)   23 /**< a vpid */
+#define    ORTE_JOBID               (orte_data_type_t)   24 /**< a jobid */
+#define    ORTE_PSET                (orte_data_type_t)   25 /**< a process set */
+#define    ORTE_CELLID              (orte_data_type_t)   26 /**< a cellid */
+#define    ORTE_NODEID              (orte_data_type_t)   27 /**< a node id */
+    /* SMR types */
+#define    ORTE_NODE_STATE          (orte_data_type_t)   28 /**< node status flag */
+#define    ORTE_PROC_STATE          (orte_data_type_t)   29 /**< process/resource status */
+#define    ORTE_PSET_STATE          (orte_data_type_t)   30 /**< process set state */
+#define    ORTE_JOB_STATE           (orte_data_type_t)   31 /**< job status flag */
+#define    ORTE_EXIT_CODE           (orte_data_type_t)   32 /**< process exit code */
     /* GPR types */
-#define    ORTE_GPR_KEYVAL          (orte_data_type_t)   29 /**< registry key-value pair */
-#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   30 /**< registry notify action */
-#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   31 /**< registry trigger action */
-#define    ORTE_GPR_CMD             (orte_data_type_t)   32 /**< registry command */
-#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   33 /**< registry notify id tag */
-#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   34 /**< registry notify id tag */
-#define    ORTE_GPR_VALUE           (orte_data_type_t)   35 /**< registry return value */
-#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   36 /**< Addressing mode for registry cmds */
-#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   37 /**< describes data returned by subscription */
-#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   38 /**< describes trigger conditions */
-#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   39 /**< data returned from a subscription */
-#define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   40 /**< notify message containing notify_data objects */
-#define    ORTE_GPR_NOTIFY_MSG_TYPE (orte_data_type_t)   41 /**< notify message type (subscription or trigger) */
-    /* Resource Manager types */
-#define    ORTE_APP_CONTEXT         (orte_data_type_t)   42 /**< argv and enviro arrays */
-#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   43 /**< application context mapping array */
-#define    ORTE_RAS_NODE			(orte_data_type_t)	 44 /**< node information */
+#define    ORTE_GPR_KEYVAL          (orte_data_type_t)   33 /**< registry key-value pair */
+#define    ORTE_GPR_NOTIFY_ACTION   (orte_data_type_t)   34 /**< registry notify action */
+#define    ORTE_GPR_TRIGGER_ACTION  (orte_data_type_t)   35 /**< registry trigger action */
+#define    ORTE_GPR_CMD             (orte_data_type_t)   36 /**< registry command */
+#define    ORTE_GPR_SUBSCRIPTION_ID (orte_data_type_t)   37 /**< registry notify id tag */
+#define    ORTE_GPR_TRIGGER_ID      (orte_data_type_t)   38 /**< registry notify id tag */
+#define    ORTE_GPR_VALUE           (orte_data_type_t)   39 /**< registry return value */
+#define    ORTE_GPR_ADDR_MODE       (orte_data_type_t)   40 /**< Addressing mode for registry cmds */
+#define    ORTE_GPR_SUBSCRIPTION    (orte_data_type_t)   41 /**< describes data returned by subscription */
+#define    ORTE_GPR_TRIGGER         (orte_data_type_t)   42 /**< describes trigger conditions */
+#define    ORTE_GPR_NOTIFY_DATA     (orte_data_type_t)   43 /**< data returned from a subscription */
+#define    ORTE_GPR_NOTIFY_MSG      (orte_data_type_t)   44 /**< notify message containing notify_data objects */
+#define    ORTE_GPR_NOTIFY_MSG_TYPE (orte_data_type_t)   45 /**< notify message type (subscription or trigger) */
+#define    ORTE_GPR_SEARCH          (orte_data_type_t)   46 /**< search criteria */
+#define    ORTE_GPR_UPDATE          (orte_data_type_t)   47 /**< update data on the registry */
+/* Resource Manager types */
+#define    ORTE_APP_CONTEXT         (orte_data_type_t)   48 /**< argv and enviro arrays */
+#define    ORTE_APP_CONTEXT_MAP     (orte_data_type_t)   49 /**< application context mapping array */
+#define    ORTE_NODE_DESC           (orte_data_type_t)   50 /**< describes capabilities of nodes */
+#define    ORTE_CELL_DESC           (orte_data_type_t)   51 /**< describe attributes of cells */
+#define    ORTE_SLOT_DESC           (orte_data_type_t)   52 /**< describes slot allocations/reservations */
+#define    ORTE_RAS_NODE			(orte_data_type_t)	 53 /**< node information */
     /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   45 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   54 /**< command flag for communicating with the daemon */
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DSS_ID_DYNAMIC 60
-
-/* define a structure to hold generic byte objects */
-typedef struct {
-    size_t size;
-    uint8_t *bytes;
-} orte_byte_object_t;
-
-/* define the orted command flag type */
-typedef uint16_t orte_daemon_cmd_flag_t;
 
 #endif
