@@ -137,6 +137,8 @@ version 1.0.
 1.0.3
 -----
 
+- Fix a problem noted by Chris Hennes where MPI_INFO_SET incorrectly
+  disallowed long values.
 - Fix a problem in the launch system that could cause inconsistent
   launch behavior, particularly when launching large jobs.
 - Require that the openib BTL find <sysfs/libsysfs.h>.  Thanks to Josh
