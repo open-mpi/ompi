@@ -163,7 +163,6 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
     int rc;
     orte_data_type_t local_type;
     orte_dss_type_info_t *info;
-    orte_std_cntr_t n=1;
 
     OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_buffer( %p, %p, %lu, %d )\n", buffer, dst, *num_vals, (int)type ) );
 
