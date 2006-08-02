@@ -170,7 +170,7 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
     if(min_cq_size > (int32_t) mca_btl_openib_component.ib_cq_size) { 
         mca_btl_openib_component.ib_cq_size = min_cq_size > openib_btl->hca->ib_dev_attr.max_cq ? 
             openib_btl->hca->ib_dev_attr.max_cq : min_cq_size;
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
+#if OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
         if(!first_time) { 
             rc = ibv_resize_cq(openib_btl->ib_cq_lp, mca_btl_openib_component.ib_cq_size);
             if(rc) {
