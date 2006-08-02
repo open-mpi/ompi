@@ -127,7 +127,11 @@ ompi_mtl_base_select(bool enable_progress_threads,
                            mtl_version.mca_component_name );
 
     /* All done */
-    return OMPI_SUCCESS;
+    if (NULL == module) {
+        return OMPI_ERR_NOT_FOUND;
+    } else {
+        return OMPI_SUCCESS;
+    }
 }
 
 
