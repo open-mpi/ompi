@@ -389,7 +389,8 @@ static int open_component(component_file_item_t *target_file,
   if (NULL == component_handle) {
     err = strdup(lt_dlerror());
     if (0 != show_errors) {
-        opal_output(0, "mca: base: component_find: unable to open: %s (ignored)", err);
+        opal_output(0, "mca: base: component_find: unable to open %s %s: %s (ignored)", 
+                    target_file->type, target_file->name, err);
     }
     opal_output_verbose(40, 0, "mca: base: component_find: unable to open: %s (ignored)", 
                         err, NULL);
