@@ -121,15 +121,16 @@ ompi_mtl_base_select(bool enable_progress_threads,
                               &ompi_mtl_base_components_opened, 
                               (mca_base_component_t *) ompi_mtl_base_selected_component);
 
-    opal_output_verbose( 10, ompi_mtl_base_output, 
-                         "select: component %s selected",
-                         ompi_mtl_base_selected_component->
-                           mtl_version.mca_component_name );
-
     /* All done */
     if (NULL == module) {
+        opal_output_verbose( 10, ompi_mtl_base_output, 
+                             "select: no component selected");
         return OMPI_ERR_NOT_FOUND;
     } else {
+        opal_output_verbose( 10, ompi_mtl_base_output, 
+                             "select: component %s selected",
+                             ompi_mtl_base_selected_component->
+                             mtl_version.mca_component_name );
         return OMPI_SUCCESS;
     }
 }
