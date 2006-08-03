@@ -24,14 +24,13 @@
 #include "osc_pt2pt_header.h"
 #include "osc_pt2pt_obj_convert.h"
 #include "osc_pt2pt_data_move.h"
+#include "osc_pt2pt_buffer.h"
 
 #include "opal/threads/mutex.h"
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
-#include "ompi/mca/btl/btl.h"
-#include "ompi/mca/bml/bml.h"
-#include "ompi/mca/bml/base/base.h"
+#include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
 
 static int ompi_osc_pt2pt_component_open(void);
@@ -41,9 +40,9 @@ ompi_osc_pt2pt_component_t mca_osc_pt2pt_component = {
         { /* ompi_base_component_t */
             OMPI_OSC_BASE_VERSION_1_0_0,
             "pt2pt",
-            1,
-            0,
-            0,
+            OMPI_MAJOR_VERSION,  /* MCA component major version */
+            OMPI_MINOR_VERSION,  /* MCA component minor version */
+            OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_osc_pt2pt_component_open,
             NULL
         },
@@ -78,12 +77,6 @@ ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_template = {
         ompi_osc_pt2pt_module_unlock,
     }
 };
-
-
-void ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
-                                          mca_btl_base_tag_t tag,
-                                          mca_btl_base_descriptor_t *descriptor,
-                                          void *cbdata);
 
 /* look up parameters for configuring this window.  The code first
    looks in the info structure passed by the user, then through mca
@@ -127,30 +120,23 @@ check_config_value_bool(char *key, ompi_info_t *info)
 }
 
 
-static int fence_sync_index;
-
-
 static int
 ompi_osc_pt2pt_component_open(void)
 {
-    fence_sync_index = 
-        mca_base_param_reg_string(&mca_osc_pt2pt_component.super.osc_version,
-                                  "fence_sync_method",
-                                  "How to synchronize fence: reduce_scatter, allreduce, alltoall",
-                                  false, false, "reduce_scatter", NULL);
+    int tmp;
 
-        mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
-                               "eager_send",
-                               "Attempt to start data movement during communication call, "
-                               "instead of at synchrnoization time.  "
-                               "Info key of same name overrides this value, "
-                               "if info key given.",
-                               false, false, 0, NULL);
+    mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
+                           "no_locks",
+                           "Enable optimizations available only if MPI_LOCK is not used.",
+                           false, false, 0, NULL);
 
-        mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
-                               "no_locks",
-                               "Enable optimizations available only if MPI_LOCK is not used.",
-                               false, false, 0, NULL);
+    mca_base_param_reg_int(&mca_osc_pt2pt_component.super.osc_version,
+                           "eager_limit",
+                           "Max size of eagerly sent data",
+                           false, false, 16 * 1024, 
+                           &tmp);
+
+    mca_osc_pt2pt_component.p2p_c_eager_size = tmp;
 
     return OMPI_SUCCESS;
 }
@@ -189,6 +175,13 @@ ompi_osc_pt2pt_component_init(bool enable_progress_threads,
                         OBJ_CLASS(ompi_osc_pt2pt_longreq_t),
                         1, -1, 1);
 
+    OBJ_CONSTRUCT(&mca_osc_pt2pt_component.p2p_c_buffers, opal_free_list_t);
+    opal_free_list_init(&mca_osc_pt2pt_component.p2p_c_buffers,
+                        mca_osc_pt2pt_component.p2p_c_eager_size +
+                        sizeof(ompi_osc_pt2pt_buffer_t),
+                        OBJ_CLASS(ompi_osc_pt2pt_buffer_t),
+                        1, -1, 1);
+
     return OMPI_SUCCESS;
 }
 
@@ -198,16 +191,13 @@ ompi_osc_pt2pt_component_finalize(void)
 {
     size_t num_modules;
 
-    if (0 != 
+    if (0 !=
         (num_modules = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules))) {
-        opal_output(0, "WARNING: There were %d Windows created but not freed.",
-                    num_modules);
+        opal_output(0, "WARNING: There were %d Windows created but not freed.",-                    num_modules);
+        opal_progress_unregister(ompi_osc_pt2pt_progress);
     }
 
-#if 0
-    mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT, NULL, NULL);
-#endif
-
+    OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_buffers);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_longreqs);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_replyreqs);
     OBJ_DESTRUCT(&mca_osc_pt2pt_component.p2p_c_sendreqs);
@@ -224,7 +214,7 @@ ompi_osc_pt2pt_component_query(ompi_win_t *win,
                               ompi_communicator_t *comm)
 {
     /* we can always run - return a low priority */
-    return 10;
+    return 5;
 }
 
 
@@ -235,7 +225,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 {
     ompi_osc_pt2pt_module_t *module;
     int ret, i;
-    char *sync_string;
 
     /* create module structure */
     module = malloc(sizeof(ompi_osc_pt2pt_module_t));
@@ -258,6 +247,20 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         free(module);
         return ret;
     }
+
+    module->p2p_control_buffer = malloc(mca_osc_pt2pt_component.p2p_c_eager_size);
+    if (NULL == module->p2p_control_buffer) {
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return OMPI_ERROR;
+    }
+
+    module->p2p_cb_request = NULL;
+
+    OBJ_CONSTRUCT(&module->p2p_pending_control_sends, opal_list_t);
 
     OBJ_CONSTRUCT(&module->p2p_pending_sendreqs, opal_list_t);
     module->p2p_num_pending_sendreqs = malloc(sizeof(short) * 
@@ -296,8 +299,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     memset(module->p2p_num_pending_sendreqs, 0, 
            sizeof(short) * ompi_comm_size(module->p2p_comm));
 
-    module->p2p_eager_send = check_config_value_bool("eager_send", info);
-
     /* fence data */
     module->p2p_fence_coll_counts = malloc(sizeof(int) * 
                                            ompi_comm_size(module->p2p_comm));
@@ -333,19 +334,6 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         return ret;
     }
 
-    /* figure out what sync method to use */
-    mca_base_param_lookup_string(fence_sync_index, &sync_string);
-    if (0 == strcmp(sync_string, "reduce_scatter")) {
-        module->p2p_fence_sync_type = OSC_SYNC_REDUCE_SCATTER;
-    } else if (0 == strcmp(sync_string, "allreduce")) {
-        module->p2p_fence_sync_type = OSC_SYNC_ALLREDUCE;
-    } else if (0 == strcmp(sync_string, "alltoall")) {
-        module->p2p_fence_sync_type = OSC_SYNC_ALLTOALL;
-    } else {
-        opal_output(0, "invalid value for fence_sync_method parameter: %s\n", sync_string);
-        return OMPI_ERROR;
-    }
-
     /* pwsc data */
     module->p2p_pw_group = NULL;
     module->p2p_sc_group = NULL;
@@ -361,6 +349,11 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     opal_hash_table_set_value_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
                                      module->p2p_comm->c_contextid,
                                      module);
+
+    if (1 == opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules)) {
+        /* start progress thread */
+        opal_progress_register(ompi_osc_pt2pt_progress);
+    }
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
     /* fill in window information */
@@ -372,47 +365,40 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    /* register to receive fragment callbacks */
-    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
-                               ompi_osc_pt2pt_component_fragment_cb,
-                               NULL);
-
-
-    if (module->p2p_eager_send) {
-        /* need to barrier if eager sending or we can receive before the
-           other side has been fully setup, causing much gnashing of
-           teeth. */
-        module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
-    }
+    /* start up receive for protocol headers */
+    ret = MCA_PML_CALL(irecv(module->p2p_control_buffer,
+                             mca_osc_pt2pt_component.p2p_c_eager_size,
+                             MPI_BYTE,
+                             MPI_ANY_SOURCE,
+                             -200,
+                             module->p2p_comm,
+                             &module->p2p_cb_request));
 
     return ret;
 }
 
 
-
 /* dispatch for callback on message completion */
-void
-ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
-                                mca_btl_base_tag_t tag,
-                                mca_btl_base_descriptor_t *descriptor,
-                                void *cbdata)
+static void
+ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
+                                     void *buffer,
+                                     size_t buffer_len)
 {
     int ret;
-    ompi_osc_pt2pt_module_t *module;
     void *payload;
 
-    assert(descriptor->des_dst[0].seg_len >= 
+    assert(buffer_len >=
            sizeof(ompi_osc_pt2pt_base_header_t));
 
     /* handle message */
-    switch (((ompi_osc_pt2pt_base_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {
+    switch (((ompi_osc_pt2pt_base_header_t*) buffer)->hdr_type) {
     case OMPI_OSC_PT2PT_HDR_PUT:
         {
             ompi_osc_pt2pt_send_header_t *header;
 
             /* get our header and payload */
             header = (ompi_osc_pt2pt_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -421,9 +407,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             ret = ompi_osc_pt2pt_sendreq_recv_put(module, header, payload);
         }
@@ -435,7 +419,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_pt2pt_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -444,9 +428,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             /* receive into temporary buffer */
             ret = ompi_osc_pt2pt_sendreq_recv_accum(module, header, payload);
@@ -462,7 +444,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_pt2pt_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -471,9 +453,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             /* create or get a pointer to our datatype */
             proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
@@ -503,7 +483,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_pt2pt_reply_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -524,7 +504,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
@@ -532,9 +512,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
         }
@@ -543,7 +521,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
@@ -551,9 +529,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             /* we've heard from one more place, and have value reqs to
                process */
@@ -566,7 +542,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
@@ -574,9 +550,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             if (header->hdr_value[1] > 0) {
                 ompi_osc_pt2pt_passive_lock(module, header->hdr_value[0], 
@@ -591,7 +565,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_pt2pt_control_header_t *header = 
                 (ompi_osc_pt2pt_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                buffer;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
@@ -599,9 +573,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 #endif
 
-            /* get our module pointer */
-            module = ompi_osc_pt2pt_windx_to_module(header->hdr_windx);
-            if (NULL == module) return;
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
             ompi_osc_pt2pt_passive_unlock(module, header->hdr_value[0],
                                           header->hdr_value[1]);
@@ -614,3 +586,90 @@ ompi_osc_pt2pt_component_fragment_cb(struct mca_btl_base_module_t *btl,
         abort();
    }
 }
+
+
+
+static int
+ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
+                            int *completed,
+                            ompi_status_public_t * status )
+{
+    ompi_request_t *request = *rptr;
+    int ret = OMPI_SUCCESS;
+
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    if (request->req_state == OMPI_REQUEST_INACTIVE ||
+        request->req_complete) {
+        ret = ompi_request_test(rptr, completed, status);
+    } else {
+        *completed = 0;
+    }
+#else
+    ret = ompi_request_test(rptr, completed, status);
+#endif
+
+    return ret;
+}
+
+int
+ompi_osc_pt2pt_progress(void)
+{
+    int ret, done, count = 0;
+    ompi_status_public_t status;
+    void *node;
+    uint32_t key;
+    ompi_osc_pt2pt_module_t *module;
+    opal_list_item_t *item;
+
+    ret = opal_hash_table_get_first_key_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
+                                               &key,
+                                               (void**) &module,
+                                               &node);
+    if (OMPI_SUCCESS != ret) return 0;
+
+    do {
+        ret = ompi_osc_pt2pt_request_test(&module->p2p_cb_request, &done, &status);
+        if (OMPI_SUCCESS == ret && done) {
+            /* process message */
+            ompi_osc_pt2pt_component_fragment_cb(module,
+                                                 module->p2p_control_buffer,
+                                                 status._count);
+
+            /* repost receive */
+            ret = MCA_PML_CALL(irecv(module->p2p_control_buffer,
+                                     mca_osc_pt2pt_component.p2p_c_eager_size,
+                                     MPI_BYTE,
+                                     MPI_ANY_SOURCE,
+                                     -200,
+                                     module->p2p_comm,
+                                     &module->p2p_cb_request));
+            assert(OMPI_SUCCESS == ret);
+            count++;
+        }
+
+        /* loop through sends */
+        for (item = opal_list_get_first(&module->p2p_pending_control_sends) ;
+             item != opal_list_get_end(&module->p2p_pending_control_sends) ;
+             item = opal_list_get_next(item)) {
+            ompi_osc_pt2pt_buffer_t *buffer = 
+                (ompi_osc_pt2pt_buffer_t*) item;
+
+            ret = ompi_osc_pt2pt_request_test(&buffer->request, &done, &status);
+            if (OMPI_SUCCESS == ret && done) {
+                item = opal_list_remove_item(&module->p2p_pending_control_sends, 
+                                             item);
+                buffer->cbfunc(buffer);
+            }           
+        }
+
+    } while (OMPI_SUCCESS ==
+             opal_hash_table_get_next_key_uint32(&mca_osc_pt2pt_component.p2p_c_modules,
+                                                 &key,
+                                                 (void**) &module,
+                                                 node,
+                                                 &node));
+
+    return count;
+}
+
+

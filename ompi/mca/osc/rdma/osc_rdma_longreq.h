@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OSC_PT2PT_LONGREQ_H
-#define OSC_PT2PT_LONGREQ_H
+#ifndef OSC_RDMA_LONGREQ_H
+#define OSC_RDMA_LONGREQ_H
 
 #include "osc_rdma.h"
 

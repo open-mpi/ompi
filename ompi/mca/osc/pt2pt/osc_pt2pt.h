@@ -22,7 +22,6 @@
 #include "opal/class/opal_hash_table.h"
 
 #include "ompi/mca/osc/osc.h"
-#include "ompi/mca/btl/btl.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
 
@@ -33,13 +32,16 @@ struct ompi_osc_pt2pt_component_t {
     /** store the state of progress threads for this instance of OMPI */
     bool p2p_c_have_progress_threads;
 
-    /** lock access to datastructures in the component structure */
-    opal_mutex_t p2p_c_lock;
+    /** lock access to datastructures in the component structure */ 
+    opal_mutex_t p2p_c_lock; 
 
-    /** List of ompi_osc_pt2pt_module_ts currently in existance.
-        Needed so that received fragments can be dispatched to the
-        correct module */
-    opal_hash_table_t p2p_c_modules;
+    /** List of ompi_osc_pt2pt_module_ts currently in existance. 
+        Needed so that received fragments can be dispatched to the 
+        correct module */ 
+    opal_hash_table_t p2p_c_modules; 
+
+    /** max size of eager message */
+    size_t p2p_c_eager_size;
 
     /** free list of ompi_osc_pt2pt_sendreq_t structures */
     opal_free_list_t p2p_c_sendreqs;
@@ -47,13 +49,15 @@ struct ompi_osc_pt2pt_component_t {
     opal_free_list_t p2p_c_replyreqs;
     /** free list of ompi_osc_pt2pt_longreq_t structures */
     opal_free_list_t p2p_c_longreqs;
+    /** free list for eager / control meessages */
+    opal_free_list_t p2p_c_buffers;
 };
 typedef struct ompi_osc_pt2pt_component_t ompi_osc_pt2pt_component_t;
 
 
 struct ompi_osc_pt2pt_module_t {
     /** Extend the basic osc module interface */
-    ompi_osc_base_module_t super;
+    ompi_osc_base_module_t super; 
 
     /** lock access to data structures in the current module */
     opal_mutex_t p2p_lock;
@@ -66,6 +70,14 @@ struct ompi_osc_pt2pt_module_t {
 
     /** communicator created with this window */
     ompi_communicator_t *p2p_comm;
+
+    /** eager message / control message receive buffer */
+    void *p2p_control_buffer;
+
+    /** control message receive request */
+    struct ompi_request_t *p2p_cb_request;
+
+    opal_list_t p2p_pending_control_sends;
 
     /** list of ompi_osc_pt2pt_sendreq_t structures, and includes all
         requests for this access epoch that have not already been
@@ -93,7 +105,7 @@ struct ompi_osc_pt2pt_module_t {
         atomic counter operations. */
     volatile int32_t p2p_num_pending_in;
 
-    /** cyclic counter for a unique tage for long messages.  Not
+    /** cyclic counter for a unique tag for long messages.  Not
         protected by the p2p_lock - must use create_send_tag() to
         create a send tag */
     volatile int32_t p2p_tag_counter;
@@ -105,8 +117,6 @@ struct ompi_osc_pt2pt_module_t {
     opal_list_t p2p_copy_pending_sendreqs;
     short *p2p_copy_num_pending_sendreqs;
 
-    bool p2p_eager_send;
-
     /* ********************* FENCE data ************************ */
     /* an array of <sizeof(p2p_comm)> ints, each containing the value
        1. */
@@ -114,8 +124,6 @@ struct ompi_osc_pt2pt_module_t {
     /* an array of <sizeof(p2p_comm)> shorts, for use in experimenting
        with different synchronization costs */
     short *p2p_fence_coll_results;
-
-    enum { OSC_SYNC_REDUCE_SCATTER, OSC_SYNC_ALLREDUCE, OSC_SYNC_ALLTOALL } p2p_fence_sync_type;
 
     /* ********************* PWSC data ************************ */
 
@@ -184,6 +192,7 @@ int ompi_osc_pt2pt_component_select(struct ompi_win_t *win,
                                    struct ompi_info_t *info,
                                    struct ompi_communicator_t *comm);
 
+int ompi_osc_pt2pt_progress(void);
 
 /*
  * Module interface function types 
@@ -252,6 +261,7 @@ int ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
 int ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
                                   int32_t origin,
                                   int32_t count);
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

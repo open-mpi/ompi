@@ -37,6 +37,13 @@ OMPI_DECLSPEC mca_bml_base_module_t mca_bml = {
 };
 mca_bml_base_component_t mca_bml_component;
 
+static bool init_called = false;
+
+bool
+mca_bml_base_inited(void)
+{
+    return init_called;
+}
 
 int mca_bml_base_init( bool enable_progress_threads, 
                        bool enable_mpi_threads) {
@@ -45,6 +52,8 @@ int mca_bml_base_init( bool enable_progress_threads,
     mca_bml_base_module_t *module = NULL, *best_module = NULL; 
     int priority = 0, best_priority = -1; 
     mca_base_component_list_item_t *cli = NULL; 
+
+    init_called = true;
 
     for (item = opal_list_get_first(&mca_bml_base_components_available); 
          opal_list_get_end(&mca_bml_base_components_available) != item; 

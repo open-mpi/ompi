@@ -21,6 +21,8 @@ include $(top_ompi_srcdir)/config/Makefile.options
 pt2pt_sources = \
 	osc_pt2pt.h \
 	osc_pt2pt.c \
+	osc_pt2pt_buffer.h \
+	osc_pt2pt_buffer.c \
 	osc_pt2pt_comm.c \
         osc_pt2pt_component.c \
 	osc_pt2pt_data_move.h \

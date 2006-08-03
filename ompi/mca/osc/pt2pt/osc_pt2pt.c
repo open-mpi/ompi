@@ -22,7 +22,6 @@
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/mca/btl/btl.h"
 #include "mpi.h"
 
 
@@ -47,6 +46,12 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
                                               module->p2p_comm->c_contextid);
     /* only take the output of hast_table_remove if there wasn't already an error */
     ret = (ret != OMPI_SUCCESS) ? ret : tmp;
+
+    if (0 == opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules)) {
+        /* stop progress thread */
+        opal_progress_unregister(ompi_osc_pt2pt_progress);
+    }
+
     OPAL_THREAD_UNLOCK(&mca_osc_pt2pt_component.p2p_c_lock);
 
     OBJ_DESTRUCT(&(module->p2p_locks_pending));
@@ -63,6 +68,9 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     free(module->p2p_num_pending_sendreqs);
 
     OBJ_DESTRUCT(&(module->p2p_pending_sendreqs));
+
+    free(module->p2p_control_buffer);
+    OBJ_DESTRUCT(&(module->p2p_pending_control_sends));
 
     ompi_comm_free(&(module->p2p_comm));
     module->p2p_comm = NULL;

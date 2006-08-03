@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_MCA_OSC_PT2PT_DATA_MOVE_H
-#define OMPI_MCA_OSC_PT2PT_DATA_MOVE_H
+#ifndef OMPI_MCA_OSC_RDMA_DATA_MOVE_H
+#define OMPI_MCA_OSC_RDMA_DATA_MOVE_H
 
 #include "osc_rdma_sendreq.h"
 #include "osc_rdma_replyreq.h"
