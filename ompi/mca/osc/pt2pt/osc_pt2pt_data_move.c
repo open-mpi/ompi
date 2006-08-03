@@ -778,7 +778,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     opal_free_list_item_t *item;
     ompi_osc_pt2pt_buffer_t *buffer = NULL;
     ompi_osc_pt2pt_control_header_t *header = NULL;
-    int rank, i;
+    int rank = -1, i;
 
     /* find the rank */
     for (i = 0 ; i < module->p2p_comm->c_remote_group->grp_proc_count ; ++i) {
