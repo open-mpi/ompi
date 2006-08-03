@@ -40,10 +40,10 @@ ompi_osc_rdma_component_t mca_osc_rdma_component = {
     { /* ompi_osc_base_component_t */
         { /* ompi_base_component_t */
             OMPI_OSC_BASE_VERSION_1_0_0,
-            "pt2pt",
-            1,
-            0,
-            0,
+            "rdma",
+            OMPI_MAJOR_VERSION,  /* MCA component major version */
+            OMPI_MINOR_VERSION,  /* MCA component minor version */
+            OMPI_RELEASE_VERSION,  /* MCA component release version */
             ompi_osc_rdma_component_open,
             NULL
         },
@@ -115,7 +115,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     return result;
 
  info_not_found:
-    param = mca_base_param_find("osc", "pt2pt", key);
+    param = mca_base_param_find("osc", "rdma", key);
     if (param == OPAL_ERROR) return false;
 
     ret = mca_base_param_lookup_int(param, &flag);
@@ -139,18 +139,18 @@ ompi_osc_rdma_component_open(void)
                                   "How to synchronize fence: reduce_scatter, allreduce, alltoall",
                                   false, false, "reduce_scatter", NULL);
 
-        mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                               "eager_send",
-                               "Attempt to start data movement during communication call, "
-                               "instead of at synchrnoization time.  "
-                               "Info key of same name overrides this value, "
-                               "if info key given.",
-                               false, false, 0, NULL);
+    mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
+                           "eager_send",
+                           "Attempt to start data movement during communication call, "
+                           "instead of at synchrnoization time.  "
+                           "Info key of same name overrides this value, "
+                           "if info key given.",
+                           false, false, 0, NULL);
 
-        mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
-                               "no_locks",
-                               "Enable optimizations available only if MPI_LOCK is not used.",
-                               false, false, 0, NULL);
+    mca_base_param_reg_int(&mca_osc_rdma_component.super.osc_version,
+                           "no_locks",
+                           "Enable optimizations available only if MPI_LOCK is not used.",
+                           false, false, 0, NULL);
 
     return OMPI_SUCCESS;
 }
@@ -160,6 +160,8 @@ int
 ompi_osc_rdma_component_init(bool enable_progress_threads,
                              bool enable_mpi_threads)
 {
+    if (!mca_bml_base_inited()) return OMPI_ERROR;
+
     /* we can run with either threads or not threads (may not be able
        to do win locks)... */
     mca_osc_rdma_component.p2p_c_have_progress_threads = 
@@ -204,9 +206,7 @@ ompi_osc_rdma_component_finalize(void)
                     num_modules);
     }
 
-#if 0
-    mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT, NULL, NULL);
-#endif
+    mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA, NULL, NULL);
 
     OBJ_DESTRUCT(&mca_osc_rdma_component.p2p_c_longreqs);
     OBJ_DESTRUCT(&mca_osc_rdma_component.p2p_c_replyreqs);
@@ -223,7 +223,10 @@ ompi_osc_rdma_component_query(ompi_win_t *win,
                               ompi_info_t *info,
                               ompi_communicator_t *comm)
 {
-    /* we can always run - return a low priority */
+    /* if we inited, then the BMLs are available and we have a path to
+       each peer.  Return slightly higher priority than the
+       point-to-point code */
+    
     return 10;
 }
 
@@ -373,7 +376,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     opal_atomic_mb();
 
     /* register to receive fragment callbacks */
-    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_PT2PT,
+    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA,
                                ompi_osc_rdma_component_fragment_cb,
                                NULL);
 
@@ -406,7 +409,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
     /* handle message */
     switch (((ompi_osc_rdma_base_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {
-    case OMPI_OSC_PT2PT_HDR_PUT:
+    case OMPI_OSC_RDMA_HDR_PUT:
         {
             ompi_osc_rdma_send_header_t *header;
 
@@ -416,8 +419,8 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
             }
 #endif
 
@@ -429,7 +432,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
         break;
 
-    case OMPI_OSC_PT2PT_HDR_ACC: 
+    case OMPI_OSC_RDMA_HDR_ACC: 
         {
             ompi_osc_rdma_send_header_t *header;
 
@@ -439,8 +442,8 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
             }
 #endif
 
@@ -453,7 +456,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
         break;
 
-    case OMPI_OSC_PT2PT_HDR_GET:
+    case OMPI_OSC_RDMA_HDR_GET:
         {
             ompi_datatype_t *datatype;
             ompi_osc_rdma_send_header_t *header;
@@ -466,8 +469,8 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
             }
 #endif
 
@@ -496,7 +499,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
         break;
 
-    case OMPI_OSC_PT2PT_HDR_REPLY:
+    case OMPI_OSC_RDMA_HDR_REPLY:
         {
             ompi_osc_rdma_reply_header_t *header;
             ompi_osc_rdma_sendreq_t *sendreq;
@@ -507,8 +510,8 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_REPLY_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_REPLY_HDR_NTOH(*header);
             }
 #endif
 
@@ -520,15 +523,15 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             ompi_osc_rdma_replyreq_recv(module, sendreq, header, payload);
         }
         break;
-    case OMPI_OSC_PT2PT_HDR_POST:
+    case OMPI_OSC_RDMA_HDR_POST:
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
             }
 #endif
 
@@ -539,15 +542,15 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
         }
         break;
-    case OMPI_OSC_PT2PT_HDR_COMPLETE:
+    case OMPI_OSC_RDMA_HDR_COMPLETE:
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
             }
 #endif
 
@@ -562,15 +565,15 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
         break;
 
-    case OMPI_OSC_PT2PT_HDR_LOCK_REQ:
+    case OMPI_OSC_RDMA_HDR_LOCK_REQ:
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
             }
 #endif
 
@@ -587,15 +590,15 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         }
         break;
 
-    case OMPI_OSC_PT2PT_HDR_UNLOCK_REQ:
+    case OMPI_OSC_RDMA_HDR_UNLOCK_REQ:
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
                 descriptor->des_dst[0].seg_addr.pval;
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+                OMPI_OSC_RDMA_CONTROL_HDR_NTOH(*header);
             }
 #endif
 

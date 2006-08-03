@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_OSC_PT2PT_H
-#define OMPI_OSC_PT2PT_H
+#ifndef OMPI_OSC_RDMA_H
+#define OMPI_OSC_RDMA_H
 
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_free_list.h"
@@ -257,4 +257,4 @@ int ompi_osc_rdma_passive_unlock(ompi_osc_rdma_module_t *module,
 }
 #endif
 
-#endif /* OMPI_OSC_PT2PT_H */
+#endif /* OMPI_OSC_RDMA_H */

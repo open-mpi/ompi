@@ -30,7 +30,7 @@
 
 /* should have p2p_lock before calling */
 static inline void
-ompi_osc_pt2pt_progress(ompi_osc_pt2pt_module_t *module)
+ompi_osc_pt2pt_progress_long(ompi_osc_pt2pt_module_t *module)
 {
     if (0 != opal_list_get_size(&(module->p2p_long_msgs))) {
         opal_list_item_t *item, *next;
@@ -109,50 +109,16 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 
         ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
 
-        switch (P2P_MODULE(win)->p2p_fence_sync_type) {
-
             /* find out how much data everyone is going to send us.  Need
                to have the lock during this period so that we have a sane
                view of the number of sendreqs */
-        case OSC_SYNC_REDUCE_SCATTER:
-            ret = P2P_MODULE(win)->p2p_comm->
-                c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
-                                           &incoming_reqs,
-                                           P2P_MODULE(win)->p2p_fence_coll_counts,
-                                           MPI_SHORT,
-                                           MPI_SUM,
-                                           P2P_MODULE(win)->p2p_comm);
-            break;
-
-        case OSC_SYNC_ALLREDUCE:
-            ret = P2P_MODULE(win)->p2p_comm->
-                c_coll.coll_allreduce(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
-                                      P2P_MODULE(win)->p2p_fence_coll_results,
-                                      ompi_comm_size(P2P_MODULE(win)->p2p_comm),
-                                      MPI_SHORT,
-                                      MPI_SUM,
-                                      P2P_MODULE(win)->p2p_comm);
-            incoming_reqs = P2P_MODULE(win)->
-                p2p_fence_coll_results[P2P_MODULE(win)->p2p_comm->c_my_rank];
-            break;
-
-        case OSC_SYNC_ALLTOALL:            
-            ret = P2P_MODULE(win)->p2p_comm->
-                c_coll.coll_alltoall(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
-                                     1,
-                                     MPI_SHORT,
-                                     P2P_MODULE(win)->p2p_fence_coll_results,
-                                     1,
-                                     MPI_SHORT,
-                                     P2P_MODULE(win)->p2p_comm);
-            incoming_reqs = 0;
-            for (i = 0 ; i < ompi_comm_size(P2P_MODULE(win)->p2p_comm) ; ++i) {
-                incoming_reqs += P2P_MODULE(win)->p2p_fence_coll_results[i];
-            }
-            break;
-        default:
-            assert(0 == 1);
-        }
+        ret = P2P_MODULE(win)->p2p_comm->
+            c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
+                                       &incoming_reqs,
+                                       P2P_MODULE(win)->p2p_fence_coll_counts,
+                                       MPI_SHORT,
+                                       MPI_SUM,
+                                       P2P_MODULE(win)->p2p_comm);
 
         if (OMPI_SUCCESS != ret) {
             /* put the stupid data back for the user.  This is not
@@ -201,7 +167,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
         /* now we know how many things we're waiting for - wait for them... */
         while (P2P_MODULE(win)->p2p_num_pending_in > 0 ||
                0 != P2P_MODULE(win)->p2p_num_pending_out) {
-            ompi_osc_pt2pt_progress(P2P_MODULE(win));
+            ompi_osc_pt2pt_progress_long(P2P_MODULE(win));
         }
     }
 
@@ -255,7 +221,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
     /* wait for all the post messages */
     while (0 != P2P_MODULE(win)->p2p_num_pending_in) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
 
     ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
@@ -311,7 +277,7 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
     /* wait for all the requests */
     while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
 
  cleanup:
@@ -374,7 +340,7 @@ ompi_osc_pt2pt_module_wait(ompi_win_t *win)
 
     while (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
            0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
 
     ompi_win_set_mode(win, 0);
@@ -400,7 +366,7 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
 
     if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
         0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
         if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
             0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
             *flag = 0;
@@ -472,7 +438,7 @@ ompi_osc_pt2pt_module_unlock(int target,
     ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
 
     while (0 == P2P_MODULE(win)->p2p_lock_received_ack) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
     P2P_MODULE(win)->p2p_lock_received_ack = 0;
 
@@ -501,7 +467,7 @@ ompi_osc_pt2pt_module_unlock(int target,
 
     /* wait for all the requests */
     while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
 
     /* send the unlock request */
@@ -586,7 +552,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
     OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), count);
 
     while (0 != module->p2p_num_pending_in) {
-        ompi_osc_pt2pt_progress(module);
+        ompi_osc_pt2pt_progress_long(module);
     }
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));

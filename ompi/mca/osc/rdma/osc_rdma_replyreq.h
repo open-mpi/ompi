@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_OSC_PT2PT_REPLYREQ_H
-#define OMPI_OSC_PT2PT_REPLYREQ_H
+#ifndef OMPI_OSC_RDMA_REPLYREQ_H
+#define OMPI_OSC_RDMA_REPLYREQ_H
 
 #include "osc_rdma.h"
 #include "osc_rdma_longreq.h"
@@ -136,4 +136,4 @@ ompi_osc_rdma_replyreq_free(ompi_osc_rdma_replyreq_t *replyreq)
     return OMPI_SUCCESS;
 }
 
-#endif /* OMPI_OSC_PT2PT_REPLYREQ_H */
+#endif /* OMPI_OSC_RDMA_REPLYREQ_H */

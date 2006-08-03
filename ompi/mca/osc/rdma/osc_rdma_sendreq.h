@@ -14,8 +14,8 @@
  * $HEADER$
  */
 
-#ifndef OMPI_OSC_PT2PT_SENDREQ_H
-#define OMPI_OSC_PT2PT_SENDREQ_H
+#ifndef OMPI_OSC_RDMA_SENDREQ_H
+#define OMPI_OSC_RDMA_SENDREQ_H
 
 #include "osc_rdma.h"
 #include "osc_rdma_longreq.h"
@@ -30,9 +30,9 @@
 #include "ompi/mca/pml/pml.h"
 
 typedef enum {
-    OMPI_OSC_PT2PT_GET,
-    OMPI_OSC_PT2PT_ACC,
-    OMPI_OSC_PT2PT_PUT
+    OMPI_OSC_RDMA_GET,
+    OMPI_OSC_RDMA_ACC,
+    OMPI_OSC_RDMA_PUT
 } ompi_osc_rdma_req_type_t;
 
 
@@ -118,7 +118,7 @@ ompi_osc_rdma_sendreq_init_origin(ompi_osc_rdma_sendreq_t *sendreq,
     sendreq->req_origin_datatype = origin_dt;
     sendreq->req_type = req_type;
 
-    if (req_type != OMPI_OSC_PT2PT_GET) {
+    if (req_type != OMPI_OSC_RDMA_GET) {
         ompi_convertor_copy_and_prepare_for_send(sendreq->req_target_proc->proc_convertor,
                                                  origin_dt,
                                                  origin_count,
@@ -172,4 +172,4 @@ ompi_osc_rdma_sendreq_free(ompi_osc_rdma_sendreq_t *sendreq)
     return OMPI_SUCCESS;
 }
 
-#endif /* OMPI_OSC_PT2PT_SENDREQ_H */
+#endif /* OMPI_OSC_RDMA_SENDREQ_H */

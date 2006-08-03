@@ -69,7 +69,7 @@ ompi_osc_rdma_module_accumulate(void *origin_addr, int origin_count,
     }
 
     /* create sendreq */
-    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_PT2PT_ACC,
+    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_RDMA_ACC,
                                             origin_addr,
                                             origin_count,
                                             origin_dt,
@@ -115,7 +115,7 @@ ompi_osc_rdma_module_get(void *origin_addr,
     }
 
     /* create sendreq */
-    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_PT2PT_GET,
+    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_RDMA_GET,
                                             origin_addr,
                                             origin_count,
                                             origin_dt,
@@ -173,7 +173,7 @@ ompi_osc_rdma_module_put(void *origin_addr, int origin_count,
     }
 
     /* create sendreq */
-    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_PT2PT_PUT,
+    ret = ompi_osc_rdma_sendreq_alloc_init(OMPI_OSC_RDMA_PUT,
                                             origin_addr,
                                             origin_count,
                                             origin_dt,

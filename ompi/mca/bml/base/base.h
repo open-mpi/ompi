@@ -52,6 +52,8 @@ OMPI_DECLSPEC  int mca_bml_base_open(void);
 OMPI_DECLSPEC  int mca_bml_base_init(bool enable_progress_threads, 
                                      bool enable_mpi_threads);
 OMPI_DECLSPEC  int mca_bml_base_close(void);
+OMPI_DECLSPEC  bool mca_bml_base_inited(void);
+
 
 
 /*

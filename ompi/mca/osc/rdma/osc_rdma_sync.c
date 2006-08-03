@@ -287,7 +287,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
                           P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
         ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                     P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
-                                    OMPI_OSC_PT2PT_HDR_COMPLETE,
+                                    OMPI_OSC_RDMA_HDR_COMPLETE,
                                     P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
                                     0);
     }
@@ -360,7 +360,7 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
     for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->p2p_pw_group) ; ++i) {
         ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                     group->grp_proc_pointers[i],
-                                    OMPI_OSC_PT2PT_HDR_POST, 1, 0);
+                                    OMPI_OSC_RDMA_HDR_POST, 1, 0);
     }    
 
     return OMPI_SUCCESS;
@@ -453,7 +453,7 @@ ompi_osc_rdma_module_lock(int lock_type,
     /* generate a lock request */
     ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                 proc,
-                                OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                 P2P_MODULE(win)->p2p_comm->c_my_rank,
                                 lock_type);
 
@@ -509,7 +509,7 @@ ompi_osc_rdma_module_unlock(int target,
                 P2P_MODULE(win)->p2p_comm->c_my_rank, target);
     ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                 proc,
-                                OMPI_OSC_PT2PT_HDR_UNLOCK_REQ,
+                                OMPI_OSC_RDMA_HDR_UNLOCK_REQ,
                                 P2P_MODULE(win)->p2p_comm->c_my_rank,
                                 out_count);
 
@@ -565,7 +565,7 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
         opal_output(-1, "%d sending lock ack to %d", 
                     module->p2p_comm->c_my_rank, origin);
         ompi_osc_rdma_control_send(module, proc,
-                                    OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                    OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                     module->p2p_comm->c_my_rank,
                                     OMPI_SUCCESS);
     }
@@ -610,7 +610,7 @@ ompi_osc_rdma_passive_unlock(ompi_osc_rdma_module_t *module,
         module->p2p_lock_status = new_pending->lock_type;
         ompi_osc_rdma_control_send(module,
                                     new_pending->proc,
-                                    OMPI_OSC_PT2PT_HDR_LOCK_REQ,
+                                    OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                     module->p2p_comm->c_my_rank,
                                     OMPI_SUCCESS);
         OBJ_DESTRUCT(new_pending);

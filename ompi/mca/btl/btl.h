@@ -131,7 +131,7 @@ typedef uint8_t mca_btl_base_tag_t;
 /* reserved tag values */
 #define MCA_BTL_TAG_BTL        0
 #define MCA_BTL_TAG_PML        1
-#define MCA_BTL_TAG_OSC_PT2PT  2
+#define MCA_BTL_TAG_OSC_RDMA   2
 #define MCA_BTL_TAG_USR        3
 #define MCA_BTL_TAG_MAX      255 /* 1 + highest allowed tag num */
 

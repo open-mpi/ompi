@@ -105,10 +105,10 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
        wait for this completion before exiting a synchronization point
        in the case of get, as we really don't care when it completes -
        only when the data arrives. */
-    if (OMPI_OSC_PT2PT_HDR_GET != header->hdr_base.hdr_type) {
+    if (OMPI_OSC_RDMA_HDR_GET != header->hdr_base.hdr_type) {
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-            OMPI_OSC_PT2PT_SEND_HDR_NTOH(*header);
+        if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+            OMPI_OSC_RDMA_SEND_HDR_NTOH(*header);
         }
 #endif
         /* do we need to post a send? */
@@ -170,7 +170,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
 
     /* we always need to send the ddt */
     needed_len += packed_ddt_len;
-    if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
+    if (OMPI_OSC_RDMA_GET != sendreq->req_type) {
         needed_len += sendreq->req_origin_bytes_packed;
     }
 
@@ -208,20 +208,20 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     header->hdr_target_count = sendreq->req_target_count;
 
     switch (sendreq->req_type) {
-    case OMPI_OSC_PT2PT_PUT:
-        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_PUT;
+    case OMPI_OSC_RDMA_PUT:
+        header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_PUT;
 #if OMPI_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
         break;
 
-    case OMPI_OSC_PT2PT_ACC:
-        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_ACC;
+    case OMPI_OSC_RDMA_ACC:
+        header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_ACC;
         header->hdr_target_op = sendreq->req_op_id;
         break;
 
-    case OMPI_OSC_PT2PT_GET:
-        header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_GET;
+    case OMPI_OSC_RDMA_GET:
+        header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_GET;
 #if OMPI_ENABLE_MEM_DEBUG
         header->hdr_target_op = 0;
 #endif
@@ -235,7 +235,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
            packed_ddt, packed_ddt_len);
     written_data += packed_ddt_len;
 
-    if (OMPI_OSC_PT2PT_GET != sendreq->req_type) {
+    if (OMPI_OSC_RDMA_GET != sendreq->req_type) {
         /* if sending data and it fits, pack payload */
         if (descriptor->des_src[0].seg_len >=
             written_data + sendreq->req_origin_bytes_packed) {
@@ -269,11 +269,11 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     }
 
 #ifdef WORDS_BIGENDIAN
-    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+    header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (sendreq->req_target_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
-        OMPI_OSC_PT2PT_SEND_HDR_HTON(*header);
+        header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+        OMPI_OSC_RDMA_SEND_HDR_HTON(*header);
     }
 #endif
 
@@ -282,7 +282,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
                 sendreq->req_module->p2p_comm->c_my_rank,
                 sendreq->req_target_rank);
                 
-    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
+    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
     goto done;
 
  cleanup:
@@ -335,8 +335,8 @@ ompi_osc_rdma_replyreq_send_cb(struct mca_btl_base_module_t* btl,
     }
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-        if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
-            OMPI_OSC_PT2PT_REPLY_HDR_NTOH(*header);
+        if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
+            OMPI_OSC_RDMA_REPLY_HDR_NTOH(*header);
         }
 #endif
 
@@ -410,7 +410,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     /* pack header */
     header = (ompi_osc_rdma_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_rdma_reply_header_t);
-    header->hdr_base.hdr_type = OMPI_OSC_PT2PT_HDR_REPLY;
+    header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_REPLY;
     header->hdr_base.hdr_flags = 0;
     header->hdr_origin_sendreq = replyreq->rep_origin_sendreq;
     header->hdr_target_tag = 0;
@@ -444,16 +444,16 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     }
 
 #ifdef WORDS_BIGENDIAN
-    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+    header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (replyreq->rep_origin_proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
-        OMPI_OSC_PT2PT_REPLY_HDR_HTON(*header);
+        header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+        OMPI_OSC_RDMA_REPLY_HDR_HTON(*header);
     }
 #endif
 
     /* send fragment */
-    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
+    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
     goto done;
 
  cleanup:
@@ -820,16 +820,16 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
     header->hdr_windx = module->p2p_comm->c_contextid;
 
 #ifdef WORDS_BIGENDIAN
-    header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
+    header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
 #elif OMPI_ENABLE_HETEROGENEOUS_SUPPORT
     if (proc->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
-        header->hdr_base.hdr_flags |= OMPI_OSC_PT2PT_HDR_FLAG_NBO;
-        OMPI_OSC_PT2PT_CONTROL_HDR_HTON(*header);
+        header->hdr_base.hdr_flags |= OMPI_OSC_RDMA_HDR_FLAG_NBO;
+        OMPI_OSC_RDMA_CONTROL_HDR_HTON(*header);
     }
 #endif
 
     /* send fragment */
-    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_PT2PT);
+    ret = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_OSC_RDMA);
     goto done;
 
  cleanup:
