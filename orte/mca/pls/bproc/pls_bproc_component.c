@@ -74,6 +74,8 @@ int orte_pls_bproc_component_open(void) {
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
     /* init the list to hold the daemon names */
     rc = orte_pointer_array_init(&mca_pls_bproc_component.daemon_names, 8, 200000, 8);
+    /* init the list to hold the daemon names */
+    rc = orte_pointer_array_init(&mca_pls_bproc_component.active_node_names, 8, 200000, 8);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }

@@ -100,6 +100,11 @@ struct orte_pls_bproc_component_t {
     orte_pointer_array_t * daemon_names;
     /**< Array of the process names of all the daemons. This is used to send
      * the daemons a termonation signal when all the user processes are done */
+    orte_pointer_array_t* active_node_names;
+    /**< Array of the bproc node  names of all the daemons. This is used to 
+     * track which bproc nodes belong to us*/
+    
+    
 };
 /**
  * Convenience typedef
