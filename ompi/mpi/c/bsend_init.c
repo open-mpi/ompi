@@ -49,7 +49,8 @@ int MPI_Bsend_init(void *buf, int count, MPI_Datatype type,
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest)) {
+        } else if (ompi_comm_peer_invalid(comm, dest) && 
+                   (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;

@@ -37,17 +37,6 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
 {
     int rc = MPI_SUCCESS;
 
-    if (MPI_PROC_NULL == source) {
-        if (MPI_STATUS_IGNORE != status) {
-            status->MPI_SOURCE = MPI_PROC_NULL;
-            status->MPI_TAG = MPI_ANY_TAG;
-            status->MPI_ERROR = MPI_SUCCESS;
-            status->_count = 0;
-            status->_cancelled = 0;
-        }
-        return MPI_SUCCESS;
-    }
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         OMPI_CHECK_DATATYPE_FOR_RECV(rc, type, count);
@@ -57,11 +46,24 @@ int MPI_Recv(void *buf, int count, MPI_Datatype type, int source,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COMM, FUNC_NAME);
         } else if (((tag < 0) && (tag != MPI_ANY_TAG)) || (tag > mca_pml.pml_max_tag)) {
             rc = MPI_ERR_TAG;
-        } else if (source != MPI_ANY_SOURCE && ompi_comm_peer_invalid(comm, source)) {
+        } else if ((source != MPI_ANY_SOURCE) && 
+                   (MPI_PROC_NULL != source) &&
+                   ompi_comm_peer_invalid(comm, source)) {
             rc = MPI_ERR_RANK;
         }
         
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+    }
+
+    if (MPI_PROC_NULL == source) {
+        if (MPI_STATUS_IGNORE != status) {
+            status->MPI_SOURCE = MPI_PROC_NULL;
+            status->MPI_TAG = MPI_ANY_TAG;
+            status->MPI_ERROR = MPI_SUCCESS;
+            status->_count = 0;
+            status->_cancelled = 0;
+        }
+        return MPI_SUCCESS;
     }
 
     rc = MCA_PML_CALL(recv(buf, count, type, source, tag, comm, status));
