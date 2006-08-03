@@ -40,7 +40,6 @@ int MPI_Get(void *origin_addr, int origin_count,
             MPI_Datatype target_datatype, MPI_Win win) 
 {
     int rc;
-    if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
 
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
@@ -51,7 +50,8 @@ int MPI_Get(void *origin_addr, int origin_count,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
         } else if (origin_count < 0 || target_count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (ompi_win_peer_invalid(win, target_rank)) {
+        } else if (ompi_win_peer_invalid(win, target_rank) &&
+                   (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
         } else if (!ompi_win_comm_allowed(win)) {
             rc = MPI_ERR_RMA_CONFLICT;
@@ -60,6 +60,8 @@ int MPI_Get(void *origin_addr, int origin_count,
         }
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
     }
+
+    if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
     rc = win->w_osc_module->osc_get(origin_addr, origin_count, origin_datatype,
                                     target_rank, target_disp, target_count,

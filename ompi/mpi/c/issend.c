@@ -38,11 +38,6 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
 {
     int rc = MPI_SUCCESS;
 
-    if (dest == MPI_PROC_NULL) {
-        *request = &ompi_request_empty;
-        return MPI_SUCCESS;
-    }
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -53,7 +48,8 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
             rc = MPI_ERR_TYPE;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest)) {
+        } else if (ompi_comm_peer_invalid(comm, dest) &&
+                   (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else if (request == NULL) {
             rc = MPI_ERR_REQUEST;
@@ -64,6 +60,11 @@ int MPI_Issend(void *buf, int count, MPI_Datatype type, int dest,
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
     }
     
+    if (MPI_PROC_NULL == dest) {
+        *request = &ompi_request_empty;
+        return MPI_SUCCESS;
+    }
+
     rc = MCA_PML_CALL(isend(buf,count,type,dest,tag,
                             MCA_PML_BASE_SEND_SYNCHRONOUS,comm,request));
     OMPI_ERRHANDLER_RETURN(rc, comm, rc, FUNC_NAME);

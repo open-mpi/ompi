@@ -43,8 +43,6 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
     int rc;
     ompi_win_t *ompi_win = (ompi_win_t*) win;
 
-    if (target_rank == MPI_PROC_NULL) return MPI_SUCCESS;
-
     if (MPI_PARAM_CHECK) {
         rc = OMPI_SUCCESS;
 
@@ -54,7 +52,8 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
         } else if (origin_count < 0 || target_count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (ompi_win_peer_invalid(win, target_rank)) {
+        } else if (ompi_win_peer_invalid(win, target_rank) &&
+                   (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
         } else if (MPI_OP_NULL == op) {
             rc = MPI_ERR_OP;
@@ -117,6 +116,8 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             }
         }
     }
+
+    if (MPI_PROC_NULL == target_rank) return MPI_SUCCESS;
 
     rc = ompi_win->w_osc_module->osc_accumulate(origin_addr, 
                                                 origin_count,
