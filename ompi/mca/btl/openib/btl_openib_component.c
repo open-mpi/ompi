@@ -463,7 +463,7 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
                  openib_btl->port_info.subnet = ib_port_attr->sm_lid; /* store the sm_lid for multi-nic support */
                  openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = mca_btl_openib_control;
                  openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
-
+                 openib_btl->ib_dev_attr = ib_dev_attr;
                  opal_list_append(&btl_list, (opal_list_item_t*) ib_selected);
                  if(++mca_btl_openib_component.ib_num_btls >= mca_btl_openib_component.ib_max_btls)
                      break;
@@ -521,16 +521,15 @@ mca_btl_base_module_t** mca_btl_openib_component_init(int *num_btl_modules,
         OBJ_CONSTRUCT(&openib_btl->recv_free_eager, ompi_free_list_t);
         OBJ_CONSTRUCT(&openib_btl->recv_free_max, ompi_free_list_t);
         
-        if(mca_btl_openib_module_init(openib_btl) != OMPI_SUCCESS) {
-#if OMPI_MCA_BTL_OPENIB_HAVE_DEVICE_LIST
-	    ibv_free_device_list(ib_devs);
-#else
-	    free(ib_devs);
-#endif
-	    return NULL;
+        mpool_resources.ib_pd = openib_btl->ib_pd = ibv_alloc_pd(openib_btl->ib_dev_context);
+    
+        if(NULL == openib_btl->ib_pd){
+            BTL_ERROR(("error allocating pd for %s errno says %s\n",
+                       ibv_get_device_name(openib_btl->ib_dev), strerror(errno)));
+            return NULL;
         }
-	
-        mpool_resources.ib_pd = openib_btl->ib_pd; 
+        
+        
                 
         /* initialize the memory pool using the hca */ 
         openib_btl->super.btl_mpool = 

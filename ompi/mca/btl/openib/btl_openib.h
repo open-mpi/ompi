@@ -25,6 +25,7 @@
 /* Standard system includes */
 #include <sys/types.h>
 #include <string.h>
+#include <infiniband/verbs.h>
 
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
@@ -137,7 +138,8 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_recv_reg_t ib_reg[256]; 
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet right now */ 
     uint8_t port_num;           /**< ID of the PORT */ 
-    struct ibv_device *ib_dev;  /* the ib device */ 
+    struct ibv_device *ib_dev;  /* the ib device */
+    struct ibv_device_attr ib_dev_attr;
     struct ibv_context *ib_dev_context; 
     struct ibv_pd *ib_pd; 
     struct ibv_cq *ib_cq_hp;
@@ -413,8 +415,6 @@ extern void mca_btl_openib_send_frag_return(
                                             struct mca_btl_openib_frag_t*
                                             );
 
-
-int mca_btl_openib_module_init(mca_btl_openib_module_t* openib_btl); 
 
 
 #ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
