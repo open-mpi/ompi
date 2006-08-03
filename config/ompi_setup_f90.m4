@@ -112,6 +112,39 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
      fi
 ])
 
+# BWB - FIX ME - remove once everyone updates to LT 2.0.
+# 
+AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
+      [if test $OMPI_F77 != $OMPI_F90; then
+           lt_ver=`grep '^VERSION' $srcdir/config/ltmain.sh | cut -f2 -d= | cut -f1 -d'.'`
+           if test $lt_ver -lt 2 ; then 
+               AC_MSG_ERROR([You appear to be trying to build the Fortran 90
+ layer with Libtool 1.5.x or earlier and a Fortran 77 / Fortran 90 compiler
+ combination that will not work with this configuration.  You must either
+ use a different Fortran 77 / Fortran 90 compiler (one where it is the same
+ compiler for both languages), upgrade to Libtool 2.x, or disable the
+ Fortran 90 bindings.])
+           fi
+       fi
+ ])
+
+# OS X does not allow undefined common symbols in shared libraries.
+# Because we can't figure out how to implement MPI_STATUSES_IGNORE and
+# friends wihtout common symbols, on OS X we can't build the F90
+# bindings as a shared library.
+AC_MSG_CHECKING([if need to force static library])
+case "$host" in
+    *apple-darwin*)
+        AC_MSG_RESULT([yes])
+        ompi_f90_force_static="yes"
+    ;;
+    *)
+        AC_MSG_RESULT([no])
+        ompi_f90_force_static="no"
+    ;;
+esac
+AM_CONDITIONAL(OMPI_F90_FORCE_STATIC, test "$ompi_f90_force_static" = "yes")
+
 # if we're still good, then save the extra file types.  Do this last
 # because it implies tests that should be invoked by the above tests
 # (e.g., running the fortran compiler).
