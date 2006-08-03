@@ -50,33 +50,19 @@
 
 SUBDIRS = scripts
 
-AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include $(OMPI_FC_MODULE_FLAG). -I$(srcdir)
-
-# Override the default f90 rules because we have to insert
-# $(FCFLAGS_f90) right before the source filename.  This is necessary
-# for cases where the compiler expects source files to end in .f, and
-# if we want our .f90 files to be compilable, we have to insert a
-# special flag right before the source filename (e.g., xlf).
-
-.f90.o:
-	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
-
-.f90.obj:
-	$(FCCOMPILE) -c -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
-
-.f90.lo:
-	$(LTFCCOMPILE) -c -o $@ $(FCFLAGS_f90) $<
-
+AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
+             $(OMPI_FC_MODULE_FLAG). -I$(srcdir) \
+             -I$(top_builddir)/ompi/mpi/f90
 
 # Do different things if the top-level configure decided that we're
 # going to build F90 bindings or not.
 
-lib_LIBRARIES =
+lib_LTLIBRARIES =
 if OMPI_WANT_F90_BINDINGS
 
 # Add the f90 library to the list of libraries to build
 
-lib_LIBRARIES += libmpi_f90.a
+lib_LTLIBRARIES += libmpi_f90.la
 
 # Ensure that the F90 interfaces are re-generated based on the values
 # that come in from configure
@@ -107,7 +93,7 @@ mpi-f90-interfaces.h: $(srcdir)/scripts/mpi-f90-interfaces.h.sh
 # So we have to pass in the pwd to the scripts so that they know where
 # some_script is.
 
-$(nodist_libmpi_f90_a_SOURCES): fortran_kinds.sh
+$(nodist_libmpi_f90_la_SOURCES): fortran_kinds.sh
 	@ p="`pwd`"; \
 	echo $(srcdir)/scripts/$@.sh $$p \> $@; \
 	$(srcdir)/scripts/$@.sh $$p > $@ ;
@@ -143,15 +129,17 @@ mpi.obj: mpi.f90 mpi-f90-interfaces.h
 	@echo "***************************************************************"
 	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
 
+BUILT_SOURCES = mpi-f90-interfaces.h
+
 else
-lib_LIBRARIES +=
+lib_LTLIBRARIES +=
 endif
 
 # mpi.f90 is the only f90 source file directly in libmpif90 that gets
 # distributed.  This file is always in the library, regardless of the
 # size that we're building.
 
-libmpi_f90_a_SOURCES = \
+libmpi_f90_la_SOURCES = \
      attr_fn-f90-interfaces.h \
      mpi.f90
 
@@ -249,15 +237,22 @@ large_sources = \
 # The rest of the files that are in the library depend on which size
 # we're building.
 
-nodist_libmpi_f90_a_SOURCES = $(trivial_sources)
+nodist_libmpi_f90_la_SOURCES = $(trivial_sources)
 if OMPI_WANT_BUILD_F90_SMALL
-nodist_libmpi_f90_a_SOURCES += $(small_sources)
+nodist_libmpi_f90_la_SOURCES += $(small_sources)
 endif
 if OMPI_WANT_BUILD_F90_MEDIUM
-nodist_libmpi_f90_a_SOURCES += $(small_sources) $(medium_sources)
+nodist_libmpi_f90_la_SOURCES += $(small_sources) $(medium_sources)
 endif
 if OMPI_WANT_BUILD_F90_LARGE
-nodist_libmpi_f90_a_SOURCES += $(small_sources) $(medium_sources) $(large_sources)
+nodist_libmpi_f90_la_SOURCES += $(small_sources) $(medium_sources) $(large_sources)
+endif
+
+# see note in config/ompi_setup_f90.m4
+if OMPI_F90_FORCE_STATIC
+libmpi_f90_la_LDFLAGS = -static
+else
+libmpi_f90_la_LDFLAGS = 
 endif
 
 #
@@ -265,7 +260,7 @@ endif
 #
 
 MOSTLYCLEANFILES = *.mod *.ompi_module
-DISTCLEANFILES = $(nodist_libmpi_f90_a_SOURCES)
+DISTCLEANFILES = $(nodist_libmpi_f90_la_SOURCES)
 
 #
 # Install the generated .mod files.  Unfortunately, each F90 compiler

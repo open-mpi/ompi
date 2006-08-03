@@ -25,13 +25,16 @@ version 1.0.
 1.2
 ---
 
+- Allow building the F90 MPI bindings as shared libraries for most
+  compilers / platforms.  Explicitly disallow building the F90
+  bindings as shared libraries on OS X because of complicated
+  situations with Fortran common blocks and lack of support for
+  unresolved common symbols in shared libraries.
 - Addition of "dr" (data reliability) PML.
 - Added stacktrace support for Solaris and Mac OS X.
 - Update event library to libevent-1.1a
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
-- Added support for building the Fortran 90 bindings library as
-  a shared library.
 - Addition of "cm" PML to better support library-level matching
   interconnects, with initial support for Myrinet/MX and Portals.
 - Really check that the $CXX given to configure is a C++ compiler
