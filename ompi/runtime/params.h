@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -99,6 +99,13 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      * Whether an MPI_ABORT should print out a stack trace or not.
      */
     OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
+
+    /**
+     * Whether we should force all connections to be created during
+     * MPI_INIT (vs. potentially making all the connection lazily upon
+     * first communication with an MPI peer process).
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_all;
 
     /**
      * Whether  MPI_ABORT  should  print  out an  identifying  message

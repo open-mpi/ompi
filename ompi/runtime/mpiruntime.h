@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,6 +104,12 @@ extern "C" {
      * Wait for a TotalView-like debugger if asked.
      */
     void ompi_mpi_wait_for_totalview(void);
+
+    /**
+     * Do a preconnect of MPI connections (i.e., force connections to
+     * be made if they will be made).
+     */
+    int ompi_init_do_preconnect(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
