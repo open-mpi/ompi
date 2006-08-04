@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -47,6 +47,7 @@ bool ompi_mpi_paffinity_alone = false;
 bool ompi_mpi_abort_print_stack = false;
 int ompi_mpi_abort_delay = 0;
 bool ompi_mpi_keep_peer_hostnames = true;
+bool ompi_mpi_preconnect_all = false;
 
 
 int ompi_mpi_register_params(void)
@@ -91,6 +92,8 @@ int ompi_mpi_register_params(void)
                                 "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
                                 false, false, 
                                 (int) ompi_debug_show_handle_leaks, &value);
+
+    
     ompi_debug_show_handle_leaks = (bool) value;
     
     /* Whether or not to free MPI handles.  Useless without run-time
@@ -178,6 +181,13 @@ int ompi_mpi_register_params(void)
     ompi_mpi_abort_print_stack = false;
 #endif
 
+    mca_base_param_reg_int_name("mpi", "preconnect_all",
+                                "Whether to force MPI processes to create connections / warmup with *all* peers during MPI_INIT (vs. making connections lazily -- upon the first MPI traffic between each process peer pair)",
+                                false, false, 
+                                (int) ompi_mpi_preconnect_all, &value);
+    
+    ompi_mpi_preconnect_all = (bool) value; 
+    
     /* The ddt engine has a few parameters */
 
     return ompi_ddt_register_params();

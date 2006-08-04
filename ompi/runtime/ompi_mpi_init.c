@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -626,9 +627,24 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 #endif
 
     /* put the event library in "high performance MPI mode" */
-    if (OMPI_SUCCESS != opal_progress_mpi_enable()) {
+    if (OMPI_SUCCESS != (ret = opal_progress_mpi_enable())) {
         error = "opal_progress_mpi_enable() failed";
+        /* This will loop back up above, but ret != OMPI_SUCCESS, so
+           we'll end up returning out of this function before getting
+           here (and therefore avoiding an infinite loop) */
         goto error;
+    }
+
+    /* If we want the connection warmup, go do it */
+   if (ompi_mpi_preconnect_all) { 
+       if (OMPI_SUCCESS != (ret = ompi_init_do_preconnect())) {
+           error = "ompi_mpi_do_preconnect_all() failed";
+           /* This will loop back up above, but ret != OMPI_SUCCESS,
+              so we'll end up returning out of this function before
+              getting here (and therefore avoiding an infinite
+              loop) */
+           goto error;
+       }
     }
 
     /* All done.  Wasn't that simple? */
