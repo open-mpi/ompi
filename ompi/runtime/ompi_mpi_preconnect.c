@@ -24,9 +24,7 @@
  */ 
 int ompi_init_do_preconnect(void)
 {
-    div_t result;
     int comm_size = ompi_comm_size(MPI_COMM_WORLD);
-    int comm_half;
     int my_rank =  ompi_comm_rank(MPI_COMM_WORLD);
     int i, j, ret;
     struct ompi_request_t **requests; 
