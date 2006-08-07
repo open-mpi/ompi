@@ -38,20 +38,21 @@ else
 ortedir = $(includedir)
 endif
 
-host_SOURCES = \
+soh_SOURCES = \
     soh_bproc.c \
     soh_bproc.h \
     soh_bproc_component.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_soh_bproc_la_SOURCES = $(host_SOURCES)
+mca_soh_bproc_la_SOURCES = $(soh_SOURCES)
 mca_soh_bproc_la_LIBADD = \
+    $(soh_bproc_LIBS) \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
-mca_soh_bproc_la_LDFLAGS = -module -avoid-version
+mca_soh_bproc_la_LDFLAGS = -module -avoid-version $(soh_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_soh_bproc_la_SOURCES = $(host_SOURCES)
-libmca_soh_bproc_la_LIBADD =
-libmca_soh_bproc_la_LDFLAGS = -module -avoid-version
+libmca_soh_bproc_la_SOURCES = $(soh_SOURCES)
+libmca_soh_bproc_la_LIBADD = $(soh_bproc_LIBS)
+libmca_soh_bproc_la_LDFLAGS = -module -avoid-version $(soh_bproc_LDFLAGS)
