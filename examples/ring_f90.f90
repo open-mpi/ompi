@@ -47,7 +47,7 @@ program ring
 
   if (rank .eq. 0) then
      message = message - 1
-     print *, 'Process 0 decremented value', message
+     print *, 'Process 0 decremented value:', message
   endif
 
   call MPI_SEND(message, 1, MPI_INTEGER, next, tag, MPI_COMM_WORLD, ierr)
