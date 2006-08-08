@@ -86,7 +86,7 @@ int MPI_Info_set(MPI_Info info, char *key, char *value)
 
         value_length = (value) ? strlen (value) : 0;
         if ((NULL == value) || (0 == value_length) || 
-            (MPI_MAX_INFO_KEY <= value_length)) {
+            (MPI_MAX_INFO_VAL <= value_length)) {
             return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_VALUE,
                                            FUNC_NAME);
         }
