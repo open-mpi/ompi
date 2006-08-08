@@ -31,9 +31,11 @@ C     the number of times to go around the ring in the message.
       if (rank .eq. 0) then
          message = 10
 
-         print *, 'Process 0 sending ', message, ' to ', next
+         print *, 'Process 0 sending ', message, ' to ', next, ' tag ',
+     &        tag, ' (', size, ' processes in ring)'
          call MPI_SEND(message, 1, MPI_INTEGER, next, tag, 
      &        MPI_COMM_WORLD, ierr)
+         print *, 'Process 0 sent to ', next
       endif
 
 C     Pass the message around the ring.  The exit mechanism works as
