@@ -945,9 +945,7 @@ int mca_btl_openib_endpoint_create_qp(
             return OMPI_ERROR; 
         }
         (*qp) = my_qp; 
-        if(0 == (openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data)) {
-            BTL_ERROR(("ibv_create_qp: returned 0 byte(s) for max inline data"));
-        }
+        
     }
     
     {
