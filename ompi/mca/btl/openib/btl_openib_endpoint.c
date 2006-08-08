@@ -945,7 +945,7 @@ int mca_btl_openib_endpoint_create_qp(
             return OMPI_ERROR; 
         }
         (*qp) = my_qp; 
-        
+        openib_btl->ib_inline_max = qp_init_attr.cap.max_inline_data; 
     }
     
     {
