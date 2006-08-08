@@ -30,7 +30,7 @@ program ring
   if (rank .eq. 0) then
      message = 10
 
-     print *, 'Process 0 sending ', message, ' to ',  next
+     print *, 'Process 0 sending ', message, ' to ', next, ' tag ', tag, ' (', size, ' processes in ring)'
      call MPI_SEND(message, 1, MPI_INTEGER, next, tag, MPI_COMM_WORLD, ierr)
      print *, 'Process 0 sent to ', next
   endif
@@ -47,7 +47,7 @@ program ring
 
   if (rank .eq. 0) then
      message = message - 1
-     print *, 'Process 0 decremented num'
+     print *, 'Process 0 decremented value', message
   endif
 
   call MPI_SEND(message, 1, MPI_INTEGER, next, tag, MPI_COMM_WORLD, ierr)
