@@ -17,11 +17,13 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
+
+#include "orte/util/sys_info.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/rmgr/base/base.h"
@@ -86,7 +88,10 @@ static int orte_ras_localhost_allocate(orte_jobid_t jobid)
     if (NULL == node) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    node->node_name = strdup("localhost");
+    /* use the same name we got in orte_system_info so we avoid confusion in
+     * the session directories
+     */
+    node->node_name = strdup(orte_system_info.nodename);
     node->node_arch = NULL;
     node->node_state = ORTE_NODE_STATE_UP;
     /* JMS: this should not be hard-wired to 0, but there's no
