@@ -108,7 +108,7 @@ int mca_oob_xcast(
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
-            if (state != ORTE_PROC_STATE_TERMINATED) {
+            if (state != ORTE_PROC_STATE_TERMINATED && state != ORTE_PROC_STATE_ABORTED) {
                 rc = mca_oob_send_packed_nb(peers+i, buffer, tag, 0, mca_oob_xcast_cb, xcast);
                 if (rc < 0) {
                     ORTE_ERROR_LOG(rc);
