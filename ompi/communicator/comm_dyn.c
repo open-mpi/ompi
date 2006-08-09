@@ -46,6 +46,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/soh/soh_types.h"
 #include "orte/mca/rml/rml.h"
 
@@ -321,10 +322,14 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 {
     int rc, i, j, counter;
     int have_wdir=0;
+    bool have_prefix;
     int valuelen=OMPI_PATH_MAX, flag=0;
     char cwd[OMPI_PATH_MAX];
     char host[OMPI_PATH_MAX];  /*** should define OMPI_HOST_MAX ***/
+    char prefix[OMPI_PATH_MAX];
+    char *base_prefix;
 
+    size_t num_apps, ai;
     orte_jobid_t new_jobid;
     orte_app_context_t **apps=NULL;
 
@@ -332,6 +337,8 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* parse the info object */
     /* check potentially for:
        - "host": desired host where to spawn the processes
+       - "prefix": the path to the root of the directory tree where ompi
+                   executables and libraries can be found
        - "arch": desired architecture
        - "wdir": directory, where executable can be found
        - "path": list of directories where to look for the executable
@@ -341,6 +348,30 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
     /* make sure the progress engine properly trips the event library */
     opal_progress_event_increment();
+    
+    /* we want to be able to default the prefix to the one used for this job
+     * so that the ompi executables and libraries can be found. the user can
+     * later override this value by providing an MPI_Info value. for now, though,
+     * let's get the default value off the registry
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    /* we'll just use the prefix from the first member of the app_context array.
+     * this shouldn't matter as they all should be the same. it could be NULL, of
+     * course (user might not have specified it), so we need to protect against that.
+     */
+    if (NULL != apps[0]->prefix_dir) {
+        base_prefix = strdup(apps[0]->prefix_dir);
+    } else {
+        base_prefix = NULL;
+    }
+    /* cleanup the memory we used */
+    for (ai = 0; ai < num_apps; ai++) {
+        OBJ_RELEASE(apps[ai]);
+    }
+    if (NULL != apps) free(apps);
 
     /* Convert the list of commands to an array of orte_app_context_t
        pointers */
@@ -427,6 +458,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
         /* Check for well-known info keys */
         have_wdir = 0;
+        have_prefix = false;
         if ( array_of_info != NULL && array_of_info[i] != MPI_INFO_NULL ) {
 
             /* check for 'wdir' */ 
@@ -447,6 +479,15 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             }
  
             /* 'path', 'arch', 'file', 'soft' -- to be implemented */ 
+            
+            /* check for 'ompi_prefix' (OMPI-specific -- to effect the same
+             * behavior as --prefix option to orterun)
+             */
+            ompi_info_get (array_of_info[i], "ompi_prefix", sizeof(prefix), prefix, &flag);
+            if ( flag ) {
+                apps[i]->prefix_dir = strdup(prefix);
+                have_prefix = true;
+            }
         }
 
         /* default value: If the user did not tell us where to look for the
@@ -455,11 +496,22 @@ ompi_comm_start_processes(int count, char **array_of_commands,
             getcwd(cwd, OMPI_PATH_MAX);
             apps[i]->cwd = strdup(cwd);
         }
+        
+        /* if the user told us a new prefix, then we leave it alone. otherwise, if
+         * a prefix had been provided before, copy that one into the new app_context
+         * for use by the spawned children
+         */
+        if ( !have_prefix && NULL != base_prefix) {
+            apps[i]->prefix_dir = strdup(base_prefix);
+        }
+        
         /* leave the map info alone - the launcher will
          * decide where to put things
          */
     } /* for (i = 0 ; i < count ; ++i) */
 
+    /* cleanup */
+    if (NULL != base_prefix) free(base_prefix);
 
     /* spawn procs */
     if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
