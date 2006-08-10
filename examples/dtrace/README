@@ -1,0 +1,401 @@
+Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+			Use is subject to license terms.
+
+This document discusses how to use the Solaris Dynamic Tracing utility (DTrace)
+with Open MPI.  DTrace is a comprehensive dynamic tracing utility that you can 
+use to monitor the behavior of applications programs as well as the operating 
+system itself.  You can use DTrace on live production systems to understand 
+those systems' behavior and to track down any problems that might be occurring.
+
+The D language is the programming language used to create the source code for 
+DTrace programs.
+
+The material in this chapter assumes knowledge of the D language and how to 
+use DTrace.  For more information about the D language and DTrace, refer to 
+the Solaris Dynamic Tracing Guide (Part Number 817-6223).  This guide is part 
+of the Solaris 10 OS Software Developer Collection.
+
+Solaris 10 OS documentation can be found on the web at the following location:
+
+http://www.sun.com/documentation
+
+Follow these links to the Solaris Dynamic Tracing Guide:
+
+Solaris Operating Systems -> Solaris 10 -> Solaris 10 Software Developer 
+                                           Collection
+
+Note: The sample program mpicommleak and other sample scripts are located at:
+
+/opt/SUNWhpc/examples/mpi/dtrace
+
+The following topics are covered in this chapter:
+
+1. mpirun Privileges
+2. Running DTrace with MPI Programs
+3. Simple MPI Tracing
+4. Tracking Down Resource Leaks
+
+1. mpirun Privileges
+
+Before you run a program under DTrace, you need to make sure that you have the 
+correct mpirun privileges.
+
+In order to run the script under mpirun, make sure that you have dtrace_proc and
+dtrace_user privileges.  Otherwise, DTrace will return the following error
+because it does not have sufficient privileges:
+
+dtrace:  failed to initialize dtrace:  DTrace requires additional privileges
+
+To determine whether you have the appropriate privileges on the entire cluster,
+perform the following steps:
+
+  1.  Use your favorite text editor to create the following shell script.
+      
+      myppriv.sh:
+
+	#!/bin/sh 
+	# myppriv.sh -  run ppriv under a shell so you can get the privileges 
+	#		of the process that mprun creates 
+	ppriv $$
+
+  2.  Type the following command but replace the hostnames in the example with the
+      names of the hosts in your cluster.
+
+	% mpirun -np 2 --host burl-ct-v440-4,burl-ct-v440-5 myppriv.sh
+
+
+If the output of ppriv shows that the E privilege set has the dtrace 
+privileges, then you will be able to run dtrace under mpirun (see the two 
+examples below).  Otherwise, you will need to adjust your system to get dtrace
+access.
+
+This example shows the ppriv output when the privileges have not been set:
+
+% ppriv $$ 
+4084:  -csh 
+flags = <none> 
+	E:  basic 
+	I:  basic 
+	P:  basic 
+	L:  all
+
+This example shows ppriv output when the privileges have been set:
+
+% ppriv $$ 
+2075:  tcsh 
+flags = <none> 
+	E:basic,dtrace_proc,dtrace_user 
+	I:basic,dtrace_proc,dtrace_user 
+	P:basic,dtrace_proc,dtrace_user 
+	L:  all
+
+NOTE:  To update your privileges, ask your system administrator to add the 
+dtrace_user and dtrace_proc privileges to your account in the /etc/user_attr 
+file.
+
+After the privileges have been changed, you can rerun the myppriv.sh script to 
+view the changed privileges.
+
+2. Running DTrace with MPI Programs
+
+There are two ways to use Dynamic Tracing with MPI programs:
+
+	- Run the program directly under DTrace, or 
+	- Attach DTrace to a running MPI program
+
+
+2.1 Running an MPI Program Under DTrace
+
+For illustration purposes, assume you have a program named mpiapp. To trace 
+the program mpiapp using the mpitrace.d script, type the following command:
+
+% mpirun -np 4 dtrace -s mpitrace.d -c mpiapp
+
+The advantage of tracing an MPI program in this way is that all the processes 
+in the job will be traced from the beginning.  This method is probably most 
+useful in doing performance measurements, when you need to start at the 
+beginning of an application and you need all the processes in a job to 
+participate in collecting data.
+
+This approach also has some disadvantages.  One disadvantage of running a
+program like the one in the above example is that all the tracing output for 
+all four processes is directed to standard output (stdout).  One way around 
+this problem is to create a script similar to the following.
+
+#!/bin/sh 
+# partrace.sh - a helper script to dtrace Open MPI jobs from the 
+#		start of the job.  
+dtrace -s $1 -c $2 -o $2.$OMPI_MCA_ns_nds_vpid.trace
+
+To trace a parallel program and get separate trace files, type the following
+command to run the partrace.sh shell script:
+
+% mpirun -np 4 partrace.sh mpitrace.d mpiapp
+
+This will run mpiapp under dtrace using the mpitrace.d script.  The script 
+saves the trace output for each process in a job under a separate file name, 
+based on the program name and rank of the process.  Note that subsequent
+runs will append the data into the existing trace files.
+
+
+2.2 Attaching to MPI Processes
+
+The second way to use dtrace with Open MPI is to attach dtrace to a running
+process.  Perform the following procedure:
+
+  1.  Figure out which node you are interested in a login to that node.
+
+  2.  Do something like the following to get the process ID (PID) of the running
+      processes on the node of interest.
+
+      % prstat 0 1 | grep mpiapp
+      24768 joeuser     526M 3492K sleep   59    0   0:00:08 0.1% mpiapp/1
+      24770 joeuser     518M 3228K sleep   59    0   0:00:08 0.1% mpiapp/1
+
+  3.  Decide which rank you want to use to attach dtrace.  The lower pid number
+      is usually the lower rank on the node.
+
+  4.  Type the following command to attach to the rank 1 process (identified by
+      its process ID, which is 24770 in the example) and run the DTrace script
+      mpitrace.d:
+
+	% dtrace -p 24770 -s mpitrace.d
+
+
+3. Simple MPI Tracing
+
+DTrace enables you to easily trace programs.  When used in conjunction with MPI
+and the more than 200 functions defined in the MPI standard, dtrace provides an
+easy way to determine which functions might be in error during the debugging
+process, or those functions which might be of interest.  After you determine 
+the function showing the error, it is easy to locate the desired job, process,
+and rank on which to run your scripts.  As demonstrated above, DTrace allows 
+you to perform these determinations while the program is running.
+
+Although the MPI standard provides the MPI profiling interface, using DTrace
+does provide a number of advantages.  The advantages of using DTrace include 
+the following:
+
+
+  1.  The PMPI interface requires you to restart a job every time you make 
+      changes to the interposing library.
+
+  2.  DTrace allows you to define probes that let you capture tracing 
+      information on MPI without having to code the specific details for each 
+      function you want to capture.
+
+  3.  DTrace's scripting language D has several built-in functions that help 
+      in debugging problematic programs.
+
+The following example shows a simple script that traces the entry and exit into
+all the MPI API calls.
+
+mpitrace.d:  
+pid$target:libmpi:MPI_*:entry 
+{ 
+printf("Entered %s...", probefunc);
+}
+
+pid$target:libmpi:MPI_*:return 
+{ 
+printf("exiting, return value = %d\n", arg1); 
+}
+
+When you use this example script to attach DTrace to a job that performs send
+and recv operations, the output looks similar to the following:
+
+% dtrace -q -p 6391 -s mpitrace.d 
+Entered MPI_Send...exiting, return value = 0
+Entered MPI_Recv...exiting, return value = 0 
+Entered MPI_Send...exiting, return value = 0 
+Entered MPI_Recv...exiting, return value = 0 
+Entered MPI_Send...exiting, return value = 0 ...
+
+You can easily modify the mpitrace.d script to include an argument list.  The
+resulting output resembles truss output.  For example:
+
+mpitruss.d:  
+pid$target:libmpi:MPI_Send:entry,
+pid$target:libmpi:MPI_*send:entry, 
+pid$target:libmpi:MPI_Recv:entry,
+pid$target:libmpi:MPI_*recv:entry 
+{ 
+printf("%s(0x%x, %d, 0x%x, %d, %d, 0x%x)",probefunc, arg0, arg1, arg2, arg3, 
+       arg4, arg5);
+}
+
+pid$target:libmpi:MPI_Send:return, 
+pid$target:libmpi:MPI_*send:return,
+pid$target:libmpi:MPI_Recv:return, 
+pid$target:libmpi:MPI_*recv:return 
+{
+printf("\t\t = %d\n", arg1); 
+}
+
+The mpitruss.d script shows how you can specify wildcard names to match the
+functions.  Both probes will match all send and receive type function calls in
+the MPI library.  The first probe shows the usage of the built-in arg variables
+to print out the arglist of the function being traced.
+
+Take care when wildcarding the entrypoint and the formatting argument output, 
+because you could end up printing either too many arguments, or not enough 
+arguments, for certain functions.  For example, in the above case, the 
+MPI_Irecv and MPI_Isend functions will not have their Request handle 
+parameters printed out.
+
+The following example shows a sample output of the mpitruss.d script:
+
+
+% dtrace -q -p 6391 -s mpitruss.d 
+MPI_Send(0x80470b0, 1, 0x8060f48, 0, 1,0x8060d48) = 0 
+MPI_Recv(0x80470a8, 1, 0x8060f48, 0, 0, 0x8060d48) = 0
+MPI_Send(0x80470b0, 1, 0x8060f48, 0, 1, 0x8060d48) = 0 
+MPI_Recv(0x80470a8, 1,0x8060f48, 0, 0, 0x8060d48) = 0 ...
+
+4. Tracking Down Resource Leaks
+
+One of the biggest issues with programming is the unintentional leaking of
+resources (such as memory).  With MPI, tracking and repairing resource leaks 
+can be somewhat more challenging because the objects being leaked are in the
+middleware, and thus are not easily detected by the use of memory checkers.
+
+DTrace helps with debugging such problems using variables, the profile 
+provider, and a callstack function.  The mpicommcheck.d script (shown in the 
+example below) probes for all the the MPI communicator calls that allocate and
+deallocate communicators, and keeps track of the stack each time the function 
+is called.  Every 10 seconds the script dumps out the current count of MPI
+communicator calls and the total calls for the allocation and deallocation of
+communicators.  When the dtrace session ends (usually by typing Ctrl-C, if you
+attached to a running MPI program), the script will print out the totals and 
+all the different stack traces, as well as the number of times those stack 
+traces were reached.
+
+In order to perform these tasks, the script uses DTrace features such as
+variables, associative arrays, built-in functions (count, ustack) and the
+predefined variable probefunc.
+
+The following example shows the mpicommcheck.d script.
+
+mpicommcheck.d:  
+BEGIN 
+{ 
+  allocations = 0; 
+  deallocations = 0; 
+  prcnt = 0; 
+}
+
+pid$target:libmpi:MPI_Comm_create:entry, 
+pid$target:libmpi:MPI_Comm_dup:entry,
+pid$target:libmpi:MPI_Comm_split:entry 
+{ 
+  ++allocations; 
+  @counts[probefunc] = count(); 
+  @stacks[ustack()] = count(); 
+}
+
+pid$target:libmpi:MPI_Comm_free:entry 
+{ 
+  ++deallocations; 
+  @counts[probefunc] = count(); 
+  @stacks[ustack()] = count(); 
+}
+
+profile:::tick-1sec 
+/++prcnt > 10/ 
+{
+  printf("=====================================================================");
+  printa(@counts); 
+  printf("Communicator Allocations = %d \n", allocations);
+  printf("Communicator Deallocations = %d\n", deallocations); 
+  prcnt = 0; 
+}
+
+END 
+{ 
+  printf("Communicator Allocations = %d, Communicator Deallocations = %d\n",
+  	allocations, deallocations); 
+}
+
+This script attaches dtrace to a suspect section of code in your program (that
+is, a section of code that might contain a resource leak).  If, during the
+process of running the script, you see that the printed totals for allocations
+and deallocations are starting to steadily diverge, you might have a resource
+leak.  Depending on how your program is designed, it might take some time and
+observation of the allocation/deallocation totals in order to definitively
+determine that the code contains a resource leak.  Once you do determine that a
+resource leak is definitely occurring, you can type Ctrl-C to break out of the
+dtrace session.  Next, using the stack traces dumped, you can try to determine
+where the issue might be occurring.
+
+The following example shows code containing a resource leak, and the output
+that is displayed using the mpicommcheck.d script.
+
+The sample MPI program containing the resource leak is called mpicommleak.
+This program performs three MPI_Comm_dup operations and two MPI_Comm_free
+operations.  The program thus "leaks" one communicator operation with each
+iteration of a loop.
+
+When you attach dtrace to mpicommleak using the mpicommcheck.d script above, 
+you will see a 10-second periodic output.  This output shows that the count of
+the allocated communicators is growing faster than the count of deallocations.
+
+When you finally end the dtrace session by typing Ctrl-C, the session will have
+output a total of five stack traces, showing the distinct three MPI_Comm_dup 
+and two MPI_Comm_free call stacks, as well as the number of times each call 
+stack was encountered.
+
+For example:
+
+% prstat 0 1 | grep mpicommleak
+ 24952 joeuser    518M 3212K sleep   59    0   0:00:01 1.8% mpicommleak/1
+ 24950 joeuser    518M 3212K sleep   59    0   0:00:00 0.2% mpicommleak/1
+% dtrace -q -p 24952  -s mpicommcheck.d
+=====================================================================
+  MPI_Comm_free                                                     4
+  MPI_Comm_dup                                                      6
+Communicator Allocations = 6
+Communicator Deallocations = 4
+=====================================================================
+  MPI_Comm_free                                                     8
+  MPI_Comm_dup                                                     12
+Communicator Allocations = 12
+Communicator Deallocations = 8
+=====================================================================
+  MPI_Comm_free                                                    12
+  MPI_Comm_dup                                                     18
+Communicator Allocations = 18
+Communicator Deallocations = 12
+^C
+Communicator Allocations = 21, Communicator Deallocations = 14
+
+
+              libmpi.so.0.0.0`MPI_Comm_free
+              mpicommleak`deallocate_comms+0x19
+              mpicommleak`main+0x6d
+              mpicommleak`0x805081a
+                7
+
+              libmpi.so.0.0.0`MPI_Comm_free
+              mpicommleak`deallocate_comms+0x26
+              mpicommleak`main+0x6d
+              mpicommleak`0x805081a
+                7
+
+              libmpi.so.0.0.0`MPI_Comm_dup
+              mpicommleak`allocate_comms+0x1e
+              mpicommleak`main+0x5b
+              mpicommleak`0x805081a
+                7
+
+              libmpi.so.0.0.0`MPI_Comm_dup
+              mpicommleak`allocate_comms+0x30
+              mpicommleak`main+0x5b
+              mpicommleak`0x805081a
+                7
+
+              libmpi.so.0.0.0`MPI_Comm_dup
+              mpicommleak`allocate_comms+0x42
+              mpicommleak`main+0x5b
+              mpicommleak`0x805081a
+                7
+
