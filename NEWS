@@ -10,6 +10,8 @@ Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
+Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+                        Use is subject to license terms.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -25,6 +27,8 @@ version 1.0.
 1.2
 ---
 
+- Added tight integration with Sun N1 Grid Engine (N1GE) 6 and the
+  open source Grid Engine.
 - Allow building the F90 MPI bindings as shared libraries for most
   compilers / platforms.  Explicitly disallow building the F90
   bindings as shared libraries on OS X because of complicated
