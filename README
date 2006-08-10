@@ -10,6 +10,8 @@ Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
+Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+                        Use is subject to license terms.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -73,6 +75,7 @@ base as of this writing (17 Jun 2006):
   - SLURM
   - XGrid
   - Cray XT-3 / Red Storm
+  - Sun N1 Grid Engine (N1GE) 6 and open source Grid Engine
 
 - The majority of Open MPI's documentation is here in this file and on
   the web site FAQ (http://www.open-mpi.org/).  This will eventually
