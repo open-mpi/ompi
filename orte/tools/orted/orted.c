@@ -177,7 +177,7 @@ extern char **environ;
 
 int main(int argc, char *argv[])
 {
-    int ret = 0, rc;
+    int ret = 0;
     int fd;
     opal_cmd_line_t *cmd_line = NULL;
     char *log_path = NULL;
