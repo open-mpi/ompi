@@ -124,7 +124,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     orte_app_context_t** context, size_t num_context)
 {    
     char *pe_hostfile = getenv("PE_HOSTFILE");
-    char buf[1024];
+    char buf[1024], *tok, *num, *queue, *arch, *ptr;
     int rc, gridengine_slot_cnt;
     opal_list_item_t* item;
     opal_list_t new_nodes;
@@ -150,8 +150,10 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
      * node is not found in nodelist, add it in */
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     while (fgets(buf, sizeof(buf), fp)) {
-        char *tok, *ptr = strtok_r(buf, " \n", &tok);
-        char *num = strtok_r(NULL, " \n", &tok);
+        ptr = strtok_r(buf, " \n", &tok);
+        num = strtok_r(NULL, " \n", &tok);
+        queue = strtok_r(NULL, " \n", &tok);
+        arch = strtok_r(NULL, " \n", &tok);
         orte_ras_node_t *node;
         
         /* is this node already in the list */ 
@@ -387,7 +389,7 @@ static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
  */
 static int get_slot_count(char* node_name, int* slot_cnt)
 {   
-    char buf[1024];
+    char buf[1024], *tok, *name, *num, *queue, *arch;
     char *pe_hostfile = getenv("PE_HOSTFILE");
     FILE *fp;
     
@@ -400,8 +402,10 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     }
         
     while (fgets(buf, sizeof(buf), fp)) {
-        char *tok, *name = strtok_r(buf, " \n", &tok);
-        char *num = strtok_r(NULL, " \n", &tok);
+        name = strtok_r(buf, " \n", &tok);
+        num = strtok_r(NULL, " \n", &tok);
+        queue = strtok_r(NULL, " \n", &tok);
+        arch = strtok_r(NULL, " \n", &tok);
         
         if(strcmp(node_name,name) == 0) {
             *slot_cnt = (int) strtol(num, (char **)NULL, 10);
