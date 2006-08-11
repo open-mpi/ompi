@@ -25,7 +25,6 @@
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
-#include <sys/systeminfo.h>
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -153,8 +152,6 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     while (fgets(buf, sizeof(buf), fp)) {
         char *tok, *ptr = strtok_r(buf, " \n", &tok);
         char *num = strtok_r(NULL, " \n", &tok);
-        char *queue = strtok_r(NULL, " \n", &tok);
-        char *arch = strtok_r(NULL, " \n", &tok);
         orte_ras_node_t *node;
         
         /* is this node already in the list */ 
@@ -405,9 +402,7 @@ static int get_slot_count(char* node_name, int* slot_cnt)
     while (fgets(buf, sizeof(buf), fp)) {
         char *tok, *name = strtok_r(buf, " \n", &tok);
         char *num = strtok_r(NULL, " \n", &tok);
-        char *queue = strtok_r(NULL, " \n", &tok);
-        char *arch = strtok_r(NULL, " \n", &tok);
-
+        
         if(strcmp(node_name,name) == 0) {
             *slot_cnt = (int) strtol(num, (char **)NULL, 10);
             opal_output(mca_ras_gridengine_component.verbose,
