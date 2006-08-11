@@ -407,6 +407,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
             pid_t pid;
             char *exec_path, *orted_path;
             char **exec_argv;
+            int remain_slot_cnt;
 
             /* already launched on this node */
             if(ras_node->node_launched++ != 0) {
@@ -420,7 +421,6 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
             /* query the registry for the remaining gridengine slot count on
              * this node, and update the registry for the count for the
              * current process launch */
-            int remain_slot_cnt;
             if (ORTE_SUCCESS != (rc =
                 update_slot_keyval(ras_node, &remain_slot_cnt))) {
                 ORTE_ERROR_LOG(rc);
@@ -712,6 +712,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
     orte_gpr_value_t** get_values;
     char **tokens;
     char *get_keys[] = {"orte-gridengine-slot-cnt", NULL};
+    orte_gpr_keyval_t *condition;
 
     /* get token */
     if (ORTE_SUCCESS != (rc = orte_schema.get_node_tokens(&tokens,
@@ -723,10 +724,9 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
     /* setup condition/filter for query - return only processes that
      * are assigned to the specified node name
      */
-    orte_gpr_keyval_t *condition;
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&condition, ORTE_NODE_NAME_KEY, ORTE_STRING, (void*)ras_node->node_name))) {
         ORTE_ERROR_LOG(rc);
-        return NULL;
+        return rc;
     }
     rc = orte_gpr.get_conditional(
         ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
@@ -750,6 +750,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
         /* looking in each GPR container for the keyval */
         for(k=0; k < value->cnt; k++) {
             orte_gpr_keyval_t* keyval = value->keyvals[k];
+            orte_data_value_t *put_value;
             
             if(strcmp(keyval->key, "orte-gridengine-slot-cnt") == 0) {
                 if (ORTE_SUCCESS != (rc = orte_dss.get(
@@ -771,7 +772,6 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
                         ras_node->node_name, *slot_cnt);
                 }
                 
-                orte_data_value_t *put_value;
                 put_value = OBJ_NEW(orte_data_value_t);
                 if (NULL == put_value) {
                     ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -796,7 +796,6 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
         }
     }
 
-  cleanup:
     for(i=1; i<get_cnt; i++)
         OBJ_RELEASE(get_values[i]);
     if (NULL != get_values) free(get_values);
