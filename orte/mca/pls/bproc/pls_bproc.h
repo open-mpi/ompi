@@ -103,7 +103,10 @@ struct orte_pls_bproc_component_t {
     orte_pointer_array_t* active_node_names;
     /**< Array of the bproc node  names of all the daemons. This is used to 
      * track which bproc nodes belong to us*/
-    
+    bool bynode;
+    /**< Indicates whether or not this application is to be mapped by node
+     * (if set to true) or by slot (default)
+     */
     
 };
 /**

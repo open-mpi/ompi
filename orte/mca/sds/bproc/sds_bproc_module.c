@@ -66,12 +66,14 @@ int orte_sds_bproc_set_name(void)
         orte_cellid_t cellid;
         orte_jobid_t jobid;
         orte_vpid_t vpid;
-        orte_vpid_t vpid_offset;
         orte_vpid_t vpid_start;
         char* cellid_string;
         char* jobid_string;
         char* vpid_string;
         int num_procs;
+        char *bproc_rank_string;
+        int bproc_rank;
+        int stride;
       
         id = mca_base_param_register_string("ns", "nds", "cellid", NULL, NULL);
         mca_base_param_lookup_string(id, &cellid_string);
@@ -95,21 +97,27 @@ int orte_sds_bproc_set_name(void)
             return(rc);
         }
 
-        /* BPROC_RANK is set by bproc when we do a parallel launch. So we can
-         * find our vpid by taking the base vpid from the launch and adding to
-         * it the value of BPROC_RANK */
-        vpid_string = getenv("BPROC_RANK");
-        if (NULL == vpid_string) {
+        /* BPROC_RANK is set by bproc when we do a parallel launch */
+        bproc_rank_string = getenv("BPROC_RANK");
+        if (NULL == bproc_rank_string) {
             opal_output(0, "orte_ns_nds_bproc_get: Error: Environment variable "
                            "BPROC_RANK not found.\n");
             ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
             return ORTE_ERR_NOT_FOUND;
         }
-        rc = orte_ns.convert_string_to_vpid(&vpid_offset, vpid_string);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            return(rc);
+        bproc_rank = (int)strtol(bproc_rank_string, NULL, 10);
+
+        /* to compute our process name, we need to know two other things: the
+         * stride (i.e., the size of the step between vpids in this launch
+         * wave) and the starting vpid of this launch. Get those values here
+         */
+        id = mca_base_param_register_int("pls", "bproc", "stride", NULL, -1);
+        mca_base_param_lookup_int(id, &stride);
+        if (stride < 0) {
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+            return ORTE_ERR_NOT_FOUND;
         }
+        
         id = mca_base_param_register_string("ns", "nds", "vpid_start", NULL, NULL);
         mca_base_param_lookup_string(id, &vpid_string);
         if (NULL == vpid_string) {
@@ -121,8 +129,11 @@ int orte_sds_bproc_set_name(void)
             ORTE_ERROR_LOG(rc);
             return(rc);
         }
-        vpid = vpid_offset + vpid_start;
         
+        /* compute our vpid */
+        vpid = vpid_start + (bproc_rank * stride);
+        
+        /* create our name */
         if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(
            &(orte_process_info.my_name),
            cellid,
