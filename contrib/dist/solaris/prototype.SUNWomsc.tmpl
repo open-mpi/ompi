@@ -1,0 +1,38 @@
+# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+#                         Use is subject to license terms.
+
+#
+# Misc Package
+#
+i pkginfo=pkginfo.SUNWomsc
+i copyright
+#
+# examples
+#
+d none SUNWhpc 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS/examples 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS/examples/mpi 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/README=examples/README 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/Makefile=examples/Makefile 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/Makefile.include=examples/Makefile.include 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/ring_c.c=examples/ring_c.c 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/ring_cxx.cc=examples/ring_cxx.cc 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/hello_c.c=examples/hello_c.c 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/ring_f77.f=examples/ring_f77.f 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/hello_cxx.cc=examples/hello_cxx.cc 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/hello_f77.f=examples/hello_f77.f 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/ring_f90.f90=examples/ring_f90.f90 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/hello_f90.f90=examples/hello_f90.f90 0444 root bin
+#
+# dtrace scripts
+#
+d none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/README=examples/dtrace/README 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/Makefile=examples/dtrace/Makefile 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/mpicommleak.c=examples/dtrace/mpicommleak.c 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/mpicommcheck.d=examples/dtrace/mpicommcheck.d 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/mpitrace.d=examples/dtrace/mpitrace.d 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/mpitruss.d=examples/dtrace/mpitruss.d 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/partrace.sh=examples/dtrace/partrace.sh 0555 root bin
+f none SUNWhpc/$SUNW_PRODVERS/examples/mpi/dtrace/myppriv.sh=examples/dtrace/myppriv.sh 0555 root bin
