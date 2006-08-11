@@ -1,0 +1,153 @@
+# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+#                         Use is subject to license terms.
+
+#
+# Runtime Environment Package
+#
+i pkginfo=pkginfo.SUNWorte
+i copyright
+#
+# bin
+#
+d none SUNWhpc 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS/bin 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/opal_wrapper=bin/opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpiCC=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpic++=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpicc=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpicxx=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpif77=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpif90=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/opalCC=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/opalc++=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/opalcc=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/orteCC=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/ortec++=./opal_wrapper 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/ortecc=./opal_wrapper 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orte-clean=bin/orte-clean 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orte-ps=bin/orte-ps 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orteconsole=bin/orteconsole 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orted=bin/orted 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orteprobe=bin/orteprobe 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/bin/orterun=bin/orterun 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpiexec=./orterun 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/bin/mpirun=./orterun 0755 root bin
+#
+# lib
+#
+d none SUNWhpc/$SUNW_PRODVERS/lib 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/libopal.so.0.0.0=lib/libopal.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/libopal.so=./libopal.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/libopal.so.0=./libopal.so.0.0.0 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/liborte.so.0.0.0=lib/liborte.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/liborte.so=./liborte.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/liborte.so.0=./liborte.so.0.0.0 0755 root bin
+#
+# lib/openmpi
+#
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_gpr_null.so=lib/openmpi/mca_gpr_null.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_gpr_proxy.so=lib/openmpi/mca_gpr_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_gpr_replica.so=lib/openmpi/mca_gpr_replica.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_iof_proxy.so=lib/openmpi/mca_iof_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_iof_svc.so=lib/openmpi/mca_iof_svc.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_maffinity_first_use.so=lib/openmpi/mca_maffinity_first_use.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ns_proxy.so=lib/openmpi/mca_ns_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ns_replica.so=lib/openmpi/mca_ns_replica.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_oob_tcp.so=lib/openmpi/mca_oob_tcp.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_paffinity_solaris.so=lib/openmpi/mca_paffinity_solaris.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_pls_fork.so=lib/openmpi/mca_pls_fork.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_pls_gridengine.so=lib/openmpi/mca_pls_gridengine.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_pls_rsh.so=lib/openmpi/mca_pls_rsh.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_pls_tm.so=lib/openmpi/mca_pls_tm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ras_dash_host.so=lib/openmpi/mca_ras_dash_host.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ras_gridengine.so=lib/openmpi/mca_ras_gridengine.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ras_hostfile.so=lib/openmpi/mca_ras_hostfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ras_localhost.so=lib/openmpi/mca_ras_localhost.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_ras_tm.so=lib/openmpi/mca_ras_tm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rds_hostfile.so=lib/openmpi/mca_rds_hostfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rds_resfile.so=lib/openmpi/mca_rds_resfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rmaps_round_robin.so=lib/openmpi/mca_rmaps_round_robin.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rmgr_proxy.so=lib/openmpi/mca_rmgr_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rml_oob.so=lib/openmpi/mca_rml_oob.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_rmgr_urm.so=lib/openmpi/mca_rmgr_urm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_sds_env.so=lib/openmpi/mca_sds_env.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_sds_pipe.so=lib/openmpi/mca_sds_pipe.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_sds_seed.so=lib/openmpi/mca_sds_seed.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/openmpi/mca_sds_singleton.so=lib/openmpi/mca_sds_singleton.so 0755 root bin
+#
+# libs (64 bit), LIB_ISAV9 will be changed to sparcv9 or amd64
+#
+d none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/libopal.so.0.0.0=lib/LIB_ISAV9/libopal.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/libopal.so=./libopal.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/libopal.so.0=./libopal.so.0.0.0 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/liborte.so.0.0.0=lib/LIB_ISAV9/liborte.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/liborte.so=./liborte.so.0.0.0 0755 root bin
+s none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/liborte.so.0=./liborte.so.0.0.0 0755 root bin
+#
+# libs/openmpi (64 bit), LIB_ISAV9 will be changed to sparcv9 or amd64
+#
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_gpr_null.so=lib/LIB_ISAV9/openmpi/mca_gpr_null.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_gpr_proxy.so=lib/LIB_ISAV9/openmpi/mca_gpr_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_gpr_replica.so=lib/LIB_ISAV9/openmpi/mca_gpr_replica.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_iof_proxy.so=lib/LIB_ISAV9/openmpi/mca_iof_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_iof_svc.so=lib/LIB_ISAV9/openmpi/mca_iof_svc.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_maffinity_first_use.so=lib/LIB_ISAV9/openmpi/mca_maffinity_first_use.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ns_proxy.so=lib/LIB_ISAV9/openmpi/mca_ns_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ns_replica.so=lib/LIB_ISAV9/openmpi/mca_ns_replica.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_oob_tcp.so=lib/LIB_ISAV9/openmpi/mca_oob_tcp.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_paffinity_solaris.so=lib/LIB_ISAV9/openmpi/mca_paffinity_solaris.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_pls_fork.so=lib/LIB_ISAV9/openmpi/mca_pls_fork.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_pls_gridengine.so=lib/openmpi/mca_pls_gridengine.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_pls_rsh.so=lib/LIB_ISAV9/openmpi/mca_pls_rsh.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_pls_tm.so=lib/LIB_ISAV9/openmpi/mca_pls_tm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ras_dash_host.so=lib/LIB_ISAV9/openmpi/mca_ras_dash_host.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ras_gridengine.so=lib/openmpi/mca_ras_gridengine.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ras_hostfile.so=lib/LIB_ISAV9/openmpi/mca_ras_hostfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ras_localhost.so=lib/LIB_ISAV9/openmpi/mca_ras_localhost.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_ras_tm.so=lib/LIB_ISAV9/openmpi/mca_ras_tm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rds_hostfile.so=lib/LIB_ISAV9/openmpi/mca_rds_hostfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rds_resfile.so=lib/LIB_ISAV9/openmpi/mca_rds_resfile.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rmaps_round_robin.so=lib/LIB_ISAV9/openmpi/mca_rmaps_round_robin.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rmgr_proxy.so=lib/LIB_ISAV9/openmpi/mca_rmgr_proxy.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rmgr_urm.so=lib/LIB_ISAV9/openmpi/mca_rmgr_urm.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_rml_oob.so=lib/LIB_ISAV9/openmpi/mca_rml_oob.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_sds_env.so=lib/LIB_ISAV9/openmpi/mca_sds_env.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_sds_pipe.so=lib/LIB_ISAV9/openmpi/mca_sds_pipe.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_sds_seed.so=lib/LIB_ISAV9/openmpi/mca_sds_seed.so 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/lib/LIB_ISAV9/openmpi/mca_sds_singleton.so=lib/LIB_ISAV9/openmpi/mca_sds_singleton.so 0755 root bin
+#
+# share
+#
+d none SUNWhpc/$SUNW_PRODVERS/share 0755 root bin
+d none SUNWhpc/$SUNW_PRODVERS/share/openmpi 0755 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-mca-base.txt=share/openmpi/help-mca-base.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-mca-coll-base.txt=share/openmpi/help-mca-coll-base.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-mca-param.txt=share/openmpi/help-mca-param.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-opal-runtime.txt=share/openmpi/help-opal-runtime.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-opal-wrapper.txt=share/openmpi/help-opal-wrapper.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orte-pls-fork.txt=share/openmpi/help-orte-pls-fork.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orte-rmaps-rr.txt=share/openmpi/help-orte-rmaps-rr.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orte-runtime.txt=share/openmpi/help-orte-runtime.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orteconsole.txt=share/openmpi/help-orteconsole.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orted.txt=share/openmpi/help-orted.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orteprobe.txt=share/openmpi/help-orteprobe.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-orterun.txt=share/openmpi/help-orterun.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-pls-base.txt=share/openmpi/help-pls-base.txt 0444 root bin
+#f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-pls-gridengine.txt=share/openmpi/help-pls-gridengine.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-pls-rsh.txt=share/openmpi/help-pls-rsh.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-pls-tm.txt=share/openmpi/help-pls-tm.txt 0444 root bin
+#f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/help-ras-gridengine.txt=share/openmpi/help-ras-gridengine.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpic++-wrapper-data.txt=share/openmpi/mpic++-wrapper-data.txt 0444 root bin
+s none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpiCC-wrapper-data.txt=./mpic++-wrapper-data.txt 0444 root bin
+s none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpicxx-wrapper-data.txt=./mpic++-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpicc-wrapper-data.txt=share/openmpi/mpicc-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpif77-wrapper-data.txt=share/openmpi/mpif77-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/mpif90-wrapper-data.txt=share/openmpi/mpif90-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/opalc++-wrapper-data.txt=share/openmpi/mpic++-wrapper-data.txt 0444 root bin
+s none SUNWhpc/$SUNW_PRODVERS/share/openmpi/opalCC-wrapper-data.txt=./opalc++-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/opalcc-wrapper-data.txt=share/openmpi/opalcc-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/ortec++-wrapper-data.txt=share/openmpi/ortec++-wrapper-data.txt 0444 root bin
+s none SUNWhpc/$SUNW_PRODVERS/share/openmpi/orteCC-wrapper-data.txt=./ortec++-wrapper-data.txt 0444 root bin
+f none SUNWhpc/$SUNW_PRODVERS/share/openmpi/ortecc-wrapper-data.txt=share/openmpi/ortecc-wrapper-data.txt 0444 root bin
