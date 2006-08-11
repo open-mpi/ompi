@@ -298,7 +298,6 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
     int rc;
 
     /* Search for the matching BTL EP */
-    OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
     for(proc = (mca_btl_udapl_proc_t*)
                 opal_list_get_first(&mca_btl_udapl_component.udapl_procs);
             proc != (mca_btl_udapl_proc_t*)
@@ -326,12 +325,10 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                     return OMPI_ERROR;
                 }
 
-                OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
                 return rc;
             }
         }
     }
-    OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
 
     /* If this point is reached, no matching endpoint was found */
     OPAL_OUTPUT((0, "btl_udapl ERROR could not match endpoint\n"));
