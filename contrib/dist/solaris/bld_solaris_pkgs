@@ -30,7 +30,7 @@
 #     --libdir=/opt/SUNWhpc/HPC7.0/lib --includedir=/opt/SUNWhpc/HPC7.0/include
 # % make DESTDIR=/path/to/ompi-trunk/vpath/proto install
 # % cd ../../contrib/dist/solaris
-# % ./bld_solaris_pkgs /path/to/vpath/proto/opt/SUNWhpc/HPC7.0
+# % ./bld_solaris_pkgs -p /path/to/vpath/proto/opt/SUNWhpc/HPC7.0
 #
 # (amd/i386 build)
 # % cd vpath/64
@@ -49,7 +49,11 @@
 #     --libdir=/opt/SUNWhpc/HPC7.0/lib --includedir=/opt/SUNWhpc/HPC7.0/include
 # % make DESTDIR=/path/to/ompi-trunk/vpath/proto install
 # % cd ../../contrib/dist/solaris
-# % ./bld_solaris_pkgs /path/to/vpath/proto/opt/SUNWhpc/HPC7.0
+# % ./bld_solaris_pkgs -p /path/to/vpath/proto/opt/SUNWhpc/HPC7.0
+#
+# The packages will be built into
+# .../ompi-trunk/contrib/dist/solaris/$PLATFORM/$ARCH/$DATE unless otherwise
+# specified by the -b option to bld_solaris_pkgs
 #
 # This is not the ideal case for long term use.  There needs to be changes to
 # build dynamic packages instead of the static packages we have now.
@@ -204,6 +208,11 @@ do
 		p) PROTO=$OPTARG;;
 	esac
 done
+
+if [ ! ${PROTO} ] ; then
+	usage
+	exit 1
+fi
 
 if [ ! -d ${PROTO} ]; then
 	print "Error: the proto space ${PROTO} does not exist."
