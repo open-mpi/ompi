@@ -33,7 +33,6 @@
 
 #include "ompi/types.h"
 #include "ompi/class/ompi_free_list.h"
-#include "ompi/mca/pml/pml.h"
 
 #define OMPI_ENABLE_DEBUG_RELIABILITY 0
 

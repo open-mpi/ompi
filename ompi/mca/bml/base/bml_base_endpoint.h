@@ -26,8 +26,8 @@
 #include "ompi/mca/bml/bml.h"
 #include "opal/util/output.h"
 #include "opal/threads/mutex.h"
-#include "ompi/mca/pml/pml.h" 
 #include "bml_base_btl.h" 
+
 /*
  * Global functions for the BML
  */

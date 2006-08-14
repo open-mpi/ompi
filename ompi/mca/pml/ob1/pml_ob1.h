@@ -36,6 +36,7 @@
 #include "ompi/datatype/datatype.h"
 #include "pml_ob1_hdr.h"
 #include "ompi/mca/bml/base/base.h"
+#include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
