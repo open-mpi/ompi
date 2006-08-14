@@ -117,8 +117,8 @@ poll_remove(struct rtsigop *op, struct event *ev)
 static void
 activate(struct event *ev, int flags)
 {
-    if (!(ev->ev_events & EV_PERSIST)) event_del(ev);
-    event_active(ev, flags, 1);
+    if (!(ev->ev_events & EV_PERSIST)) event_del_i(ev);
+    event_active_i(ev, flags, 1);
 }
 
 static void *rtsig_init(void);
@@ -391,12 +391,12 @@ rtsig_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 				flags |= EV_WRITE;
 
 			if (!(ev->ev_events & EV_PERSIST)) {
-				event_del(ev);
+				event_del_i(ev);
 				res--;
 			} else {
 				i++;
 			}
-			event_active(ev, flags, 1);
+			event_active_i(ev, flags, 1);
 		} else {
 #ifndef HAVE_WORKING_RTSIG
 			if (op->toev[i]->ev_flags & EVLIST_X_NORT) {
