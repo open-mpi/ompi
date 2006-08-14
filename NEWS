@@ -36,7 +36,7 @@ version 1.0.
   unresolved common symbols in shared libraries.
 - Addition of "dr" (data reliability) PML.
 - Added stacktrace support for Solaris and Mac OS X.
-- Update event library to libevent-1.1a
+- Update event library to libevent-1.1b
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
 - Addition of "cm" PML to better support library-level matching
