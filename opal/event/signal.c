@@ -82,7 +82,7 @@ evsignal_cb(int fd, short what, void *arg)
 	n = read(fd, signals, sizeof(signals));
 	if (n == -1)
 		event_err(1, "%s: read", __func__);
-	opal_event_add(ev, NULL);
+	opal_event_add_i(ev, NULL);
 }
 
 #ifdef HAVE_SETFD
@@ -212,7 +212,7 @@ opal_evsignal_recalc(sigset_t *evsigmask)
 	
 	if (!ev_signal_added) {
 		ev_signal_added = 1;
-		opal_event_add(&ev_signal, NULL);
+		opal_event_add_i(&ev_signal, NULL);
 	}
 
 	if (TAILQ_FIRST(&opal_signalqueue) == NULL && !opal_needrecalc)

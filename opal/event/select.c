@@ -262,13 +262,13 @@ select_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		}
 		if (r_ev && (res & r_ev->ev_events)) {
 			if (!(r_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del(r_ev);
-			opal_event_active(r_ev, res & r_ev->ev_events, 1);
+				opal_event_del_i(r_ev);
+			opal_event_active_i(r_ev, res & r_ev->ev_events, 1);
 		}
 		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
 			if (!(w_ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del(w_ev);
-			opal_event_active(w_ev, res & w_ev->ev_events, 1);
+				opal_event_del_i(w_ev);
+			opal_event_active_i(w_ev, res & w_ev->ev_events, 1);
 		}
 	}
 	check_selectop(sop);

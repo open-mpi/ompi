@@ -979,7 +979,7 @@ timeout_process(struct event_base *base)
 
 		event_debug(("timeout_process: call %p",
 			 ev->ev_callback));
-		opal_event_active(ev, OPAL_EV_TIMEOUT, 1);
+		opal_event_active_i(ev, OPAL_EV_TIMEOUT, 1);
 	}
 #endif
 }

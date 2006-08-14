@@ -286,15 +286,15 @@ devpoll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 			continue;
 
 		if (evread != NULL && !(evread->ev_events & OPAL_EV_PERSIST))
-			opal_event_del(evread);
+			opal_event_del_i(evread);
 		if (evwrite != NULL && evwrite != evread &&
 		    !(evwrite->ev_events & OPAL_EV_PERSIST))
-			opal_event_del(evwrite);
+			opal_event_del_i(evwrite);
 
 		if (evread != NULL)
-			opal_event_active(evread, OPAL_EV_READ, 1);
+			opal_event_active_i(evread, OPAL_EV_READ, 1);
 		if (evwrite != NULL)
-			opal_event_active(evwrite, OPAL_EV_WRITE, 1);
+			opal_event_active_i(evwrite, OPAL_EV_WRITE, 1);
 	}
 
 	return (0);
