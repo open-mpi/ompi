@@ -289,6 +289,7 @@ int orte_iof_base_endpoint_create(
 {
     orte_iof_base_endpoint_t* endpoint;
     int flags;
+    int rc;
  
     OPAL_THREAD_LOCK(&orte_iof_base.iof_lock);
     if((endpoint = orte_iof_base_endpoint_lookup(proc,mode,tag)) != NULL) {
@@ -362,7 +363,8 @@ int orte_iof_base_endpoint_create(
                            endpoint);
             if (tag != ORTE_IOF_STDIN || 
                 orte_iof_base_endpoint_stdin_check(endpoint->ep_fd)) {
-                opal_event_add(&endpoint->ep_event, 0);
+                rc = opal_event_add(&endpoint->ep_event, 0);
+                if (ORTE_SUCCESS != rc) return rc;
             }
             break;
         case ORTE_IOF_SINK:
