@@ -15,22 +15,22 @@
  * 
  * $HEADER$
  */
-#ifndef ORTE_GET_SOCKET_ERROR_H
-#define ORTE_GET_SOCKET_ERROR_H
+#ifndef OPAL_GET_SOCKET_ERROR_H
+#define OPAL_GET_SOCKET_ERROR_H
 
 /* In windows, sockets return differnt error codes than the linux counter parts. Although,
    one can find there are some similarities in the naming, there are definite differences.
-   ompi_socket_errno is defined to be errno under linux and ompi_get_socket_errno under
+   opal_socket_errno is defined to be errno under linux and opal_get_socket_errno under
    windows to ensure that the code which uses errno does not have to be changed. In windows,
-   the mapping is taken care of by ompi_get_socket_errno().
+   the mapping is taken care of by opal_get_socket_errno().
    
-   ANYONE USING SOCKET FUNCTIONS' RETURN VALUE PLEASE USE ompi_socket_errno INSTEAD
+   ANYONE USING SOCKET FUNCTIONS' RETURN VALUE PLEASE USE opal_socket_errno INSTEAD
    OF errno FOR COMPATIBILITY  */
 
 #include <errno.h>
-#include "orte/orte_constants.h"
+#include "opal/constants.h"
 #ifdef __WINDOWS__
-#define ompi_socket_errno ompi_get_socket_errno()
+#define opal_socket_errno opal_get_socket_errno()
 
 #define EWOULDBLOCK       WSAEWOULDBLOCK       
 #define EINPROGRESS       WSAEINPROGRESS     
@@ -50,7 +50,7 @@
 #define ENETDOWN          WSAENETDOWN        
 #define ENETUNREACH       WSAENETUNREACH     
 #define ENETRESET         WSAENETRESET       
-#define ECONNABORTED      WSAECONNABORTED    
+#define ECONNABOPALD      WSAECONNABOPALD    
 #define ECONNRESET        WSAECONNRESET      
 #define ENOBUFS           WSAENOBUFS         
 #define EISCONN           WSAEISCONN         
@@ -70,13 +70,13 @@
 
 
 /*
- * pound define ompi_get_error() to be ompi_errno. so, in windows land
+ * pound define opal_get_error() to be opal_errno. so, in windows land
  * this simply defaults to being errno
  */
 
 /* return directly from the case statments */
 
-static __inline int ompi_get_socket_errno(void) {
+static __inline int opal_get_socket_errno(void) {
     int ret = WSAGetLastError();
     switch (ret) {
       case WSAEINTR: return EINTR; 
@@ -103,7 +103,7 @@ static __inline int ompi_get_socket_errno(void) {
       case WSAENETDOWN: return ENETDOWN;       
       case WSAENETUNREACH: return ENETUNREACH;      
       case WSAENETRESET: return ENETRESET;      
-      case WSAECONNABORTED: return ECONNABORTED;     
+      case WSAECONNABOPALD: return ECONNABOPALD;     
       case WSAECONNRESET: return ECONNRESET;      
       case WSAENOBUFS: return ENOBUFS;         
       case WSAEISCONN: return EISCONN;         
@@ -122,12 +122,12 @@ static __inline int ompi_get_socket_errno(void) {
       case WSAEDQUOT: return EDQUOT;          
       case WSAESTALE: return ESTALE;          
       case WSAEREMOTE: return EREMOTE;         
-      default: printf("Feature not implemented: %d %s\n", __LINE__, __FILE__); return ORTE_ERROR;
+      default: printf("Feature not implemented: %d %s\n", __LINE__, __FILE__); return OPAL_ERROR;
     };                                
 }
 
 #else 
-#define ompi_socket_errno errno
+#define opal_socket_errno errno
 #endif
 
-#endif /* ORTE_GET_ERROR_H */
+#endif /* OPAL_GET_ERROR_H */

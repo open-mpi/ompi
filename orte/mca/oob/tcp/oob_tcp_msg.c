@@ -22,7 +22,7 @@
  */
 
 #include "orte_config.h"
-#include "orte/orte_socket_errno.h"
+#include "opal/opal_socket_errno.h"
 
 #include "orte/class/orte_proc_table.h"
 #include "orte/orte_constants.h"
@@ -233,19 +233,19 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
     while(1) {
         rc = writev(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(ompi_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR)
                 continue;
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
                under UNIX/Linux environments */
-            else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
+            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_send_handler: writev failed with errno=%d", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), 
                     ORTE_NAME_ARGS(&(peer->peer_name)), 
-                    ompi_socket_errno);
+                    opal_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 msg->msg_rc = ORTE_ERR_CONNECTION_FAILED;
                 return true;
@@ -332,19 +332,19 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
     while(msg->msg_rwnum) {
         rc = readv(peer->peer_sd, msg->msg_rwptr, msg->msg_rwnum);
         if(rc < 0) {
-            if(ompi_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR)
                 continue;
             /* In windows, many of the socket functions return an EWOULDBLOCK instead of \
                things like EAGAIN, EINPROGRESS, etc. It has been verified that this will \
                not conflict with other error codes that are returned by these functions \
                under UNIX/Linux environments */
-            else if (ompi_socket_errno == EAGAIN || ompi_socket_errno == EWOULDBLOCK)
+            else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed with errno=%d", 
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
-                    ompi_socket_errno);
+                    opal_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
                 return false;
@@ -354,7 +354,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: peer closed connection", 
                    ORTE_NAME_ARGS(orte_process_info.my_name),
                    ORTE_NAME_ARGS(&(peer->peer_name)),
-                   ompi_socket_errno);
+                   opal_socket_errno);
             }
             mca_oob_tcp_peer_close(peer);
             mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);

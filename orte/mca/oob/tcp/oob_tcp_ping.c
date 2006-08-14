@@ -33,7 +33,7 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#include "orte/orte_socket_errno.h"
+#include "opal/opal_socket_errno.h"
 #ifdef HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
@@ -94,7 +94,7 @@ int mca_oob_tcp_ping(
             "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed with errno=%d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(name),
-            ompi_socket_errno);
+            opal_socket_errno);
         return ORTE_ERR_UNREACH;
     }
 
@@ -103,14 +103,14 @@ int mca_oob_tcp_ping(
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_GETFL) failed with errno=%d\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(name),
-            ompi_socket_errno);
+            opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(name),
-                ompi_socket_errno);
+                opal_socket_errno);
         }
     }
 
@@ -118,7 +118,7 @@ int mca_oob_tcp_ping(
     FD_ZERO(&fdset);
     if(connect(sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         /* connect failed? */
-        if(ompi_socket_errno != EINPROGRESS && ompi_socket_errno != EWOULDBLOCK) {
+        if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
             close(sd);
             return ORTE_ERR_UNREACH;
         }
@@ -139,7 +139,7 @@ int mca_oob_tcp_ping(
          opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
              ORTE_NAME_ARGS(orte_process_info.my_name),
              ORTE_NAME_ARGS(name),
-             ompi_socket_errno);
+             opal_socket_errno);
     }
 
     /* send a probe message */
