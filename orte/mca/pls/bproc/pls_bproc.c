@@ -818,7 +818,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                                      int app_context, int * node_array,
                                      int node_array_len) {
     int * node_list = NULL;
-    int num_nodes, num_slots;
+    int num_nodes, num_slots, cycle;
     int rc, i, j, stride;
     int * pids = NULL;
     char * var, * param;
@@ -870,6 +870,23 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     opal_setenv(var, param, true, &map->app->env);
     free(param);
     free(var);
+    
+    /* initialize the cycle count. Computing the process name under Bproc
+     * is a complex matter when mapping by slot as Bproc's inherent
+     * methodology is to do everything by node. When mapping by slot, the
+     * first num_slots number of launch cycles all have a vpid_start that
+     * will differ by one - i.e., the processes on a given node will have
+     * vpids that differ by only one.
+     *
+     * However, when we oversubscribe, we enter into a cyclic arrangement.
+     * During each cycle, the above description of how names are assigned
+     * is accurate. However, each cycle (i.e., each collection of num_nodes
+     * processes that we launch) will have a vpid start that is offset by
+     * num_slots * num_nodes. We have to compensate for that here when we
+     * calculate and pass the vpid_start param so that the processes can
+     * correctly compute their name
+     */
+    cycle = 0;
     
     /* launch the processes */
     i = 1;
@@ -945,10 +962,17 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
              */
             vpid_start += num_nodes;
         } else {
-            /* we are mapping by slot, so the vpid start only increments
-             * by one
+            /* we are mapping by slot. Here is where we need to check our
+             * cyclic condition - if we are at the end of a cycle, then
+             * we need to increment the vpid_start by num_slots*num_nodes.
+             * Otherwise, we just increment it by one.
              */
-            vpid_start += 1;
+            if (cycle == num_slots) {
+                 /* end of cycle condition */
+                vpid_start += num_slots * num_nodes;
+            } else {
+                vpid_start += 1;
+            }
         }
         
         rc = orte_pls_bproc_node_list(node_array, node_array_len, &node_list,
