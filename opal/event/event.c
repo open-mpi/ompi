@@ -538,15 +538,12 @@ opal_event_base_loop(struct event_base *base, int flags)
 #if OPAL_HAVE_WORKING_EVENTOPS
 	opal_mutex_lock(&opal_event_lock);
 
-	/* Calculate the initial events that we are waiting for */
-	if (evsel->recalc(base, evbase, 0) == -1) {
-		opal_output(0, "opal_event_loop: opal_evsel->recalc() failed.");
-		opal_mutex_unlock(&opal_event_lock);
-		return (-1);
-	}
-
 	done = 0;
 	while (!done && opal_event_enabled) {
+		/* Calculate the initial events that we are waiting for */
+		if (evsel->recalc(base, evbase, 0) == -1)
+			return (-1);
+
 		/* Terminate the loop if we have been asked to */
 		if (base->event_gotterm) {
 			base->event_gotterm = 0;
@@ -612,13 +609,9 @@ opal_event_base_loop(struct event_base *base, int flags)
 		} else if ((flags & OPAL_EVLOOP_NONBLOCK) ||
                            (flags & OPAL_EVLOOP_ONELOOP))
 			done = 1;
-
-		if (evsel->recalc(base, evbase, 0) == -1) {
-			opal_output(0, "opal_event_loop: ompi_evesel->recalc() failed.");
-			opal_mutex_unlock(&opal_event_lock);
-			return (-1);
-		}
 	}
+
+	event_debug(("%s: asked to terminate loop.", __func__));
 
 	opal_mutex_unlock(&opal_event_lock);
 	return (base->event_count_active);

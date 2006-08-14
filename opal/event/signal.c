@@ -58,9 +58,10 @@
 
 #include "opal/util/output.h"
 
+
 extern struct opal_event_list opal_signalqueue;
 
-static short opal_evsigcaught[NSIG];
+static sig_atomic_t opal_evsigcaught[NSIG];
 static int opal_needrecalc;
 volatile sig_atomic_t opal_evsignal_caught = 0;
 
@@ -71,11 +72,12 @@ static int ev_signal_pair[2];
 static int ev_signal_added;
 
 /* Callback for when the signal handler write a byte to our signaling socket */
-static void evsignal_cb(int fd, short what, void *arg)
+static void
+evsignal_cb(int fd, short what, void *arg)
 {
 	static char signals[100];
 	struct opal_event *ev = arg;
-	int n;
+	ssize_t n;
 
 	n = read(fd, signals, sizeof(signals));
 	if (n == -1)
@@ -109,6 +111,8 @@ opal_evsignal_init(sigset_t *evsigmask)
 
 	FD_CLOSEONEXEC(ev_signal_pair[0]);
 	FD_CLOSEONEXEC(ev_signal_pair[1]);
+
+	fcntl(ev_signal_pair[0], F_SETFL, O_NONBLOCK);
 
 	opal_event_set(&ev_signal, ev_signal_pair[1], OPAL_EV_READ,
 	    evsignal_cb, &ev_signal);
@@ -187,11 +191,14 @@ opal_evsignal_del(sigset_t *evsigmask, struct opal_event *ev)
 void
 opal_evsignal_handler(int sig)
 {
+	int save_errno = errno;
+
 	opal_evsigcaught[sig]++;
 	opal_evsignal_caught = 1;
 
 	/* Wake up our notification mechanism */
 	write(ev_signal_pair[0], "a", 1);
+	errno = save_errno;
 }
 
 int
@@ -249,7 +256,7 @@ void
 opal_evsignal_process(void)
 {
 	struct opal_event *ev;
-	short ncalls;
+	sig_atomic_t ncalls;
 
 	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
 		ncalls = opal_evsigcaught[OPAL_EVENT_SIGNAL(ev)];
