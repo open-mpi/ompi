@@ -23,6 +23,8 @@ r2_sources  = \
 	bml_r2_btl.h \
 	bml_r2_component.c
 
+dist_pkgdata_DATA = help-mca-bml-r2.txt
+
 if OMPI_BUILD_bml_r2_DSO
 component_noinst =
 component_install = mca_bml_r2.la

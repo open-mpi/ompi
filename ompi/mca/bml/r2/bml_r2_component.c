@@ -51,22 +51,22 @@ mca_bml_base_component_1_0_0_t mca_bml_r2_component = {
     },
     mca_bml_r2_component_init
 };
-
-
-
-static inline int mca_bml_r2_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("bml","r2",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
                                                                                                                         
 
 int mca_bml_r2_component_open(void)
 {
+    int tmp;
+
+    mca_base_param_reg_int(&mca_bml_r2_component.bml_version,
+                           "show_unreach_errors",
+                           "Show error message when procs are unreachable",
+                           false,
+                           false,
+                           1,
+                           &tmp);
+    mca_bml_r2.show_unreach_errors = tmp;
+
+
     return OMPI_SUCCESS; 
 }
 

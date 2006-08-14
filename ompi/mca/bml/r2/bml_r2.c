@@ -21,6 +21,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "opal/util/show_help.h"
+#include "orte/mca/ns/ns.h"
 #include "ompi/class/ompi_bitmap.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/btl/btl.h"
@@ -174,6 +176,8 @@ int mca_bml_r2_add_procs(
     struct mca_btl_base_endpoint_t ** btl_endpoints = NULL;  
     struct ompi_proc_t** new_procs = NULL; 
     size_t n_new_procs = 0;
+    int ret = OMPI_SUCCESS;
+    struct ompi_proc_t *unreach_proc = NULL;
 
     if(0 == nprocs) {
         return OMPI_SUCCESS;
@@ -425,8 +429,38 @@ int mca_bml_r2_add_procs(
         }
     }
 
+    /* see if we have a connection to everyone else */
+    for(p=0; p<n_new_procs; p++) {
+        ompi_proc_t *proc = new_procs[p];
+
+        if (NULL == proc->proc_bml) {
+            if (NULL == unreach_proc) {
+                unreach_proc = proc;
+            }
+            ret = OMPI_ERR_UNREACH;
+        }
+    }
+
+    if (mca_bml_r2.show_unreach_errors && 
+        OMPI_ERR_UNREACH == ret) {
+        char *local, *remote;
+
+        orte_ns.get_proc_name_string(&local,
+                                     &(ompi_proc_local_proc->proc_name));
+        orte_ns.get_proc_name_string(&remote,
+                                     &(unreach_proc->proc_name));
+
+        opal_show_help("help-mca-bml-r2",
+                       "unreachable proc",
+                       true, local, remote, NULL);
+
+        free(local);
+        free(remote);
+    }
+
     free(new_procs); 
-    return OMPI_SUCCESS;
+
+    return ret;
 }
 
 /*

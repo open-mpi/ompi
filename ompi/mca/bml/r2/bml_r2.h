@@ -53,6 +53,7 @@ struct mca_bml_r2_module_t {
     mca_btl_base_component_progress_fn_t * btl_progress; 
     mca_bml_r2_recv_reg_t r2_reg[256]; 
     bool btls_added;
+    bool show_unreach_errors;
 };
 
 typedef struct mca_bml_r2_module_t mca_bml_r2_module_t;
