@@ -18,6 +18,68 @@
 #
 # This is the US/English general help file for Open MPI.
 #
+[ini file:file not found]
+The Open MPI OpenIB BTL component was unable to find or read an INI
+file that was requested via the btl_openib_hca_param_files MCA
+parameter.  Please check this file and/or modify the
+btl_openib_hca_param_files MCA parameter:
+
+    %s
+[ini file:not in a section]
+In parsing Open IB BTL parameter file, values were found that were not
+in a valid INI section.  These values will be ignored.  Please
+re-check this file:
+
+    %s
+
+At line %d, near the following text:
+
+    %s
+[ini file:unexpected token]
+In parsing Open IB BTL parameter file, unexpected tokens were found
+(this may cause significant portions of the INI file to be ignored).
+Please re-check this file:
+
+    %s
+
+At line %d, near the following text:
+
+    %s
+[ini file:expected equals]
+In parsing Open IB BTL parameter file, unexpected tokens were found
+(this may cause significant portions of the INI file to be ignored).
+An equals sign ("=") was expected but was not found.  Please re-check
+this file:
+
+    %s
+
+At line %d, near the following text:
+
+    %s
+[ini file:expected newline]
+In parsing Open IB BTL parameter file, unexpected tokens were found
+(this may cause significant portions of the INI file to be ignored).
+A newline was expected but was not found.  Please re-check this file:
+
+    %s
+
+At line %d, near the following text:
+
+    %s
+[no hca params found]
+WARNING: No HCA parameters were found for the HCA that Open MPI
+detected:
+
+    Hostname:           %s
+    HCA vendor ID:      0x%04x
+    HCA vendor part ID: %d
+
+Default HCA parameters will be used, which may result in lower
+performance.  You can edit any of the files specified by the
+btl_openib_hca_param_files MCA parameter to set values for your HCA.
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      btl_openib_warn_no_hca_params_found to 0.
 [btl_openib:retry-exceeded]
 The InfiniBand retry count between two MPI processes has been
 exceeded.  "Retry count" is defined in the InfiniBand spec 1.2

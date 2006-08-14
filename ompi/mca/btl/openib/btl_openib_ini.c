@@ -1,0 +1,571 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+
+#include "ompi_config.h"
+
+#include <string.h>
+#include <ctype.h>
+
+#include "opal/util/output.h"
+#include "opal/util/show_help.h"
+#include "opal/mca/base/mca_base_param.h"
+
+#include "btl_openib.h"
+#include "btl_openib_lex.h"
+#include "btl_openib_ini.h"
+
+static const char *ini_filename = NULL;
+static bool initialized = false;
+static opal_list_t hcas;
+static char *key_buffer = NULL;
+static size_t key_buffer_len = 0;
+
+
+/*
+ * Struct to hold the section name, vendor ID, and list of vendor part
+ * ID's and a corresponding set of values (parsed from an INI file).
+ */
+typedef struct parsed_section_values_t {
+    char *name;
+
+    uint32_t vendor_id;
+    bool vendor_id_set;
+
+    uint32_t *vendor_part_ids;
+    int vendor_part_ids_len;
+
+    ompi_btl_openib_ini_values_t values;
+} parsed_section_values_t;
+
+/*
+ * Struct to hold the final values.   Different from above in a few ways:
+ *
+ * - The vendor and part IDs will always be set properly
+ * - There will only be one part ID (i.e., the above struct is
+ *   exploded into multiple of these for each of searching)
+ * - There is a super of opal_list_item_t so that we can have a list
+ *   of these
+ */
+typedef struct hca_values_t {
+    opal_list_item_t super;
+
+    char *section_name;
+    uint32_t vendor_id;
+    uint32_t vendor_part_id;
+
+    ompi_btl_openib_ini_values_t values;
+} hca_values_t;
+
+static void hca_values_constructor(hca_values_t *s);
+static void hca_values_destructor(hca_values_t *s);
+
+OBJ_CLASS_INSTANCE(hca_values_t,
+                   opal_list_item_t,
+                   hca_values_constructor,
+                   hca_values_destructor);
+
+
+/*
+ * Local functions
+ */
+static int parse_file(char *filename);
+static int parse_line(parsed_section_values_t *item);
+static void reset_section(bool had_previous_value, parsed_section_values_t *s);
+static void reset_values(ompi_btl_openib_ini_values_t *v);
+static int save_section(parsed_section_values_t *s);
+static int intify(char *string);
+static inline void show_help(const char *topic);
+
+
+/*
+ * Read the INI files for HCA-specific values and save them in
+ * internal data structures for later lookup.
+ */
+int ompi_btl_openib_ini_init(void)
+{
+    int ret;
+    char *colon;
+
+    OBJ_CONSTRUCT(&hcas, opal_list_t);
+
+    colon = strchr(mca_btl_openib_component.hca_params_file_names, ':');
+    if (NULL == colon) {
+        /* If we've only got 1 file (i.e., no colons found), parse it
+           and be done */
+        ret = parse_file(mca_btl_openib_component.hca_params_file_names);
+    } else {
+        /* Otherwise, loop over all the files and parse them */
+        char *orig = strdup(mca_btl_openib_component.hca_params_file_names);
+        char *str = orig;
+
+        while (NULL != (colon = strchr(str, ':'))) {
+            *colon = '\0';
+            ret = parse_file(str);
+            /* Note that NOT_FOUND and SUCCESS are not fatal errors
+               and we keep going.  Other errors are treated as
+               fatal */
+            if (OMPI_ERR_NOT_FOUND != ret && OMPI_SUCCESS != ret) {
+                break;
+            }
+            str = colon + 1;
+        }
+        /* Parse the last file if we didn't have a fatal error above */
+        if (OMPI_ERR_NOT_FOUND != ret && OMPI_SUCCESS != ret) {
+            ret = parse_file(str);
+        }
+
+        /* All done */
+        free(orig);
+    }
+
+    /* Return SUCCESS unless we got a fatal error */
+
+    initialized = true;
+    return (OMPI_SUCCESS == ret || OMPI_ERR_NOT_FOUND == ret) ?
+        OMPI_SUCCESS : ret;
+}
+
+
+/*
+ * The component found an HCA and is querying to see if an INI file
+ * specified any parameters for it.
+ */
+int ompi_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
+                              ompi_btl_openib_ini_values_t *values)
+{
+    int ret;
+    hca_values_t *h;
+    opal_list_item_t *item;
+
+    if (!initialized) {
+        if (OMPI_SUCCESS != (ret = ompi_btl_openib_ini_init())) {
+            return ret;
+        }
+    }
+
+    if (mca_btl_openib_component.verbose) {
+        BTL_OUTPUT(("Querying INI files for vendor 0x%04x, part ID %d", 
+                    vendor_id, vendor_part_id));
+    }
+
+    reset_values(values);
+
+    /* Iterate over all the saved hcas */
+    for (item = opal_list_get_first(&hcas); 
+         item != opal_list_get_end(&hcas);
+         item = opal_list_get_next(item)) {
+        h = (hca_values_t*) item;
+        if (vendor_id == h->vendor_id &&
+            vendor_part_id == h->vendor_part_id) {
+            /* Found it! */
+            *values = h->values;
+            if (mca_btl_openib_component.verbose) {
+                BTL_OUTPUT(("Found corresponding INI values: %s",
+                            h->section_name));
+            }
+            return OMPI_SUCCESS;
+        }
+    }
+
+    /* If we fall through to here, we didn't find it */
+    if (mca_btl_openib_component.verbose) {
+        BTL_OUTPUT(("Did not find corresponding INI values"));
+    }
+    return OMPI_ERR_NOT_FOUND;
+}
+
+
+/*
+ * The component is shutting down; release all internal state
+ */
+int ompi_btl_openib_ini_finalize(void)
+{
+    opal_list_item_t *item;
+
+    if (initialized) {
+        for (item = opal_list_remove_first(&hcas);
+             NULL != item;
+             item = opal_list_remove_first(&hcas)) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&hcas);
+        initialized = true;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+/**************************************************************************/
+
+/*
+ * Parse a single file
+ */
+static int parse_file(char *filename)
+{
+    int val;
+    int ret = OMPI_SUCCESS;
+    bool showed_no_section_warning = false;
+    bool showed_unexpected_tokens_warning = false;
+    parsed_section_values_t section;
+
+    reset_section(false, &section);
+
+    /* Open the file */
+    ini_filename = filename;
+    btl_openib_ini_yyin = fopen(filename, "r");
+    if (NULL == btl_openib_ini_yyin) {
+        opal_show_help("help-mpi-btl-openib.txt", "ini file:file not found",
+                       true, filename);
+        ret = OMPI_ERR_NOT_FOUND;
+        goto cleanup;
+    }
+
+    /* Do the parsing */
+    btl_openib_ini_parse_done = false;
+    btl_openib_ini_yynewlines = 1;
+    btl_openib_ini_init_buffer(btl_openib_ini_yyin);
+    while (!btl_openib_ini_parse_done) {
+        val = btl_openib_ini_yylex();
+        switch (val) {
+        case BTL_OPENIB_INI_PARSE_DONE:
+            /* This will also set btl_openib_ini_parse_done to true, so just
+               break here */
+            break;
+
+        case BTL_OPENIB_INI_PARSE_NEWLINE:
+            /* blank line!  ignore it */
+            break;
+
+        case BTL_OPENIB_INI_PARSE_SECTION:
+            /* We're starting a new section; if we have previously
+               parsed a section, go see if we can use its values. */
+            save_section(&section);
+
+            reset_section(true, &section);
+            section.name = strdup(btl_openib_ini_yytext);
+            break;
+
+        case BTL_OPENIB_INI_PARSE_SINGLE_WORD:
+            if (NULL == section.name) {
+                /* Warn that there is no current section, and ignore
+                   this parameter */
+                if (!showed_no_section_warning) {
+                    show_help("ini file:not in a section");
+                    showed_no_section_warning = true;
+                }
+                /* Parse it and then dump it */
+                parse_line(&section);
+                reset_section(true, &section);
+            } else {
+                parse_line(&section);
+            }
+            break;
+
+        default:
+            /* anything else is an error */
+            if (!showed_unexpected_tokens_warning) {
+                show_help("ini file:unexpected token");
+                showed_unexpected_tokens_warning = true;
+            }
+            break;
+        }
+    }
+    save_section(&section);
+    fclose(btl_openib_ini_yyin);
+
+cleanup:
+    reset_section(true, &section);
+    if (NULL != key_buffer) {
+        free(key_buffer);
+        key_buffer = NULL;
+        key_buffer_len = 0;
+    }
+    return ret;
+}
+
+
+/*
+ * Parse a single line in the INI file
+ */
+static int parse_line(parsed_section_values_t *sv)
+{
+    int val, ret = OMPI_SUCCESS;
+    char *value, *comma;
+    bool showed_unknown_field_warning = false;
+
+    /* Save the name name */
+    if (key_buffer_len < strlen(btl_openib_ini_yytext) + 1) {
+        char *tmp;
+        key_buffer_len = strlen(btl_openib_ini_yytext) + 1;
+        tmp = realloc(key_buffer, key_buffer_len);
+        if (NULL == tmp) {
+            free(key_buffer);
+            key_buffer_len = 0;
+            key_buffer = NULL;
+            return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
+        }
+        key_buffer = tmp;
+    }
+    strncpy(key_buffer, btl_openib_ini_yytext, key_buffer_len);
+
+    /* The first thing we have to see is an "=" */
+    val = btl_openib_ini_yylex();
+    if (btl_openib_ini_parse_done || BTL_OPENIB_INI_PARSE_EQUAL != val) {
+        show_help("ini file:expected equals");
+        return OMPI_ERROR;
+    }
+
+    /* Next we get the value */
+    val = btl_openib_ini_yylex();
+    if (BTL_OPENIB_INI_PARSE_SINGLE_WORD == val ||
+        BTL_OPENIB_INI_PARSE_VALUE == val) {
+        value = strdup(btl_openib_ini_yytext);
+
+        /* Now we need to see the newline */
+        val = btl_openib_ini_yylex();
+        if (BTL_OPENIB_INI_PARSE_NEWLINE != val &&
+            BTL_OPENIB_INI_PARSE_DONE != val) {
+            show_help("ini file:expected newline");
+            free(value);
+            return OMPI_ERROR;
+        }
+    }
+
+    /* If we did not get EOL or EOF, something is wrong */
+    else if (BTL_OPENIB_INI_PARSE_DONE != val &&
+             BTL_OPENIB_INI_PARSE_NEWLINE != val) {
+        show_help("ini file:expected newline");
+        return OMPI_ERROR;
+    }
+
+    /* Ok, we got a good parse.  Now figure out what it is and save
+       the value.  Note that the flex already took care of trimming
+       all whitespace at the beginning and ending of the value. */
+
+    if (0 == strcasecmp(key_buffer, "vendor_id")) {
+        /* Single value */
+        sv->vendor_id = (uint32_t) intify(value);
+        sv->vendor_id_set = true;
+    }
+
+    else if (0 == strcasecmp(key_buffer, "vendor_part_id")) {
+        char *str = value;
+
+        /* Comma-delimited list of values */
+        comma = strchr(str, ',');
+        if (NULL == comma) {
+            /* If we only got one value (i.e., no comma found), then
+               just make an array of one value and save it */
+            sv->vendor_part_ids = malloc(sizeof(uint32_t));
+            if (NULL == sv->vendor_part_ids) {
+                return OMPI_ERR_OUT_OF_RESOURCE;
+            }
+            sv->vendor_part_ids[0] = (uint32_t) intify(str);
+            sv->vendor_part_ids_len = 1;
+        } else {
+            /* If we found a comma, loop over all the values.  Be a
+               little clever in that we alwasy alloc enough space for
+               an extra value so that when we exit the loop, we don't
+               have to realloc again to get space for the last item. */
+            do {
+                *comma = '\0';
+                sv->vendor_part_ids = realloc(sv->vendor_part_ids,
+                                              sizeof(uint32_t) *
+                                              (sv->vendor_part_ids_len + 2));
+                sv->vendor_part_ids[sv->vendor_part_ids_len] = 
+                    (int32_t) intify(str);
+                ++sv->vendor_part_ids_len;
+                str = comma + 1;
+                comma = strchr(str, ',');
+            } while (NULL != comma);
+            /* Get the last value (i.e., the value after the last
+               comma, because it won't have been snarfed in the
+               loop) */
+            sv->vendor_part_ids[sv->vendor_part_ids_len] = 
+                (uint32_t) intify(str);
+            ++sv->vendor_part_ids_len;
+        }
+    }
+
+    else if (0 == strcasecmp(key_buffer, "mtu")) {
+        /* Single value */
+        sv->values.mtu = (uint32_t) intify(value);
+        sv->values.mtu_set = true;
+    }
+
+    else {
+        /* Have no idea what this parameter is.  Not an error -- just
+           ignore it */
+        if (!showed_unknown_field_warning) {
+            show_help("ini file:unknown field");
+            showed_unknown_field_warning = true;
+        }
+    }
+
+    /* All done */
+
+    free(value);
+    return ret;
+}
+
+
+/*
+ * Construct an hca_values_t and set all of its values to known states
+ */
+static void hca_values_constructor(hca_values_t *s)
+{
+    s->section_name = NULL;
+    s->vendor_id = 0;
+    s->vendor_part_id = 0;
+    reset_values(&s->values);
+}
+
+
+/*
+ * Destruct an hca_values_t and free any memory that it has
+ */
+static void hca_values_destructor(hca_values_t *s)
+{
+    if (NULL != s->section_name) {
+        free(s->section_name);
+    }
+}
+
+
+/*
+ * Reset a parsed section; free any memory that it may have had
+ */
+static void reset_section(bool had_previous_value, parsed_section_values_t *s)
+{
+    if (had_previous_value) {
+        if (NULL != s->name) {
+            free(s->name);
+        }
+        if (NULL != s->vendor_part_ids) {
+            free(s->vendor_part_ids);
+        }
+    }
+
+    s->name = NULL;
+    s->vendor_id = 0;
+    s->vendor_id_set = false;
+    s->vendor_part_ids = NULL;
+    s->vendor_part_ids_len = 0;
+
+    reset_values(&s->values);
+}
+
+
+/*
+ * Reset the values to known states
+ */
+static void reset_values(ompi_btl_openib_ini_values_t *v)
+{
+    v->mtu = 0;
+    v->mtu_set = false;
+}
+
+
+/*
+ * If we have a valid section, see if we have a matching section
+ * somewhere (i.e., same vendor ID and vendor part ID).  If we do,
+ * update the values.  If not, save the values in a new instance and
+ * add it to the list.
+ */
+static int save_section(parsed_section_values_t *s)
+{
+    int i;
+    opal_list_item_t *item;
+    hca_values_t *h;
+    bool found;
+
+    /* Is the parsed section valid? */
+    if (NULL == s->name || !s->vendor_id_set || 0 == s->vendor_part_ids_len) {
+        return OMPI_ERR_BAD_PARAM;
+    }
+
+    /* Iterate over each of the part IDs in the parsed values */
+    for (i = 0; i < s->vendor_part_ids_len; ++i) {
+        found = false;
+
+        /* Iterate over all the saved hcas */
+        for (item = opal_list_get_first(&hcas); 
+             item != opal_list_get_end(&hcas);
+             item = opal_list_get_next(item)) {
+            h = (hca_values_t*) item;
+            if (s->vendor_id == h->vendor_id &&
+                s->vendor_part_ids[i] == h->vendor_part_id) {
+                /* Found a match.  Update any newly-set values. */
+                if (s->values.mtu_set) {
+                    h->values.mtu = s->values.mtu;
+                    h->values.mtu_set = true;
+                    found = true;
+                    break;
+                }
+            }
+        }
+
+        /* Did we find/update it in the exising list?  If not, create
+           a new one. */
+        if (!found) {
+            h = OBJ_NEW(hca_values_t);
+            h->section_name = strdup(s->name);
+            h->vendor_id = s->vendor_id;
+            h->vendor_part_id = s->vendor_part_ids[i];
+            h->values = s->values;
+            opal_list_append(&hcas, &h->super);
+        }
+    }
+
+    /* All done */
+
+    return OMPI_SUCCESS;
+}
+
+
+/*
+ * Do string-to-integer conversion, for both hex and decimal numbers
+ */
+static int intify(char *str)
+{
+    while (isspace(*str)) {
+        ++str;
+    }
+
+    /* If it's hex, use sscanf() */
+    if (strlen(str) > 3 && 0 == strncasecmp("0x", str, 2)) {
+        unsigned int i;
+        sscanf(str, "%X", &i);
+        return (int) i;
+    }
+
+    /* Nope -- just decimal, so use atoi() */
+    return atoi(str);
+}
+
+
+/*
+ * Trival helper function
+ */
+static inline void show_help(const char *topic)
+{
+    opal_show_help("help-mpi-btl-openib.txt", topic, true,
+                   ini_filename, btl_openib_ini_yynewlines,
+                   btl_openib_ini_yytext);
+}

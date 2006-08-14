@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +60,7 @@ int mca_btl_openib_endpoint_qp_init_query(
                                           uint32_t rem_qp_num, 
                                           uint32_t rem_psn,  
                                           uint16_t rem_lid, 
+                                          uint32_t rem_mtu,
                                           uint32_t port_num 
                                           ); 
                    
@@ -271,6 +273,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->rem_info.rem_psn_hp = 0;
     endpoint->rem_info.rem_psn_lp = 0; 
     endpoint->rem_info.rem_subnet = 0; 
+    endpoint->rem_info.rem_mtu = 0;
 }
 
 /*
@@ -340,7 +343,13 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
     }
 
     
-    rc = orte_dss.pack(buffer, &((mca_btl_openib_endpoint_t*) endpoint)->subnet, 1, ORTE_UINT16);
+    rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT16);
+    if(rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -607,6 +616,11 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
+    rc = orte_dss.unpack(buffer, &rem_info.rem_mtu, &cnt, ORTE_UINT32);
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return;
+    }
 #if 0
     rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
     if(rc != ORTE_SUCCESS) { 
@@ -860,6 +874,7 @@ int mca_btl_openib_endpoint_connect(
                                                endpoint->rem_info.rem_qp_num_hp, 
                                                endpoint->rem_info.rem_psn_hp, 
                                                endpoint->rem_info.rem_lid, 
+                                               endpoint->rem_info.rem_mtu, 
                                                openib_btl->port_num
                                                ); 
     
@@ -876,6 +891,7 @@ int mca_btl_openib_endpoint_connect(
                                                endpoint->rem_info.rem_qp_num_lp, 
                                                endpoint->rem_info.rem_psn_lp, 
                                                endpoint->rem_info.rem_lid, 
+                                               endpoint->rem_info.rem_mtu, 
                                                openib_btl->port_num
                                                ); 
     
@@ -980,13 +996,24 @@ int mca_btl_openib_endpoint_qp_init_query(
                                           uint32_t rem_qp_num, 
                                           uint32_t rem_psn,  
                                           uint16_t rem_lid, 
+                                          uint32_t rem_mtu,
                                           uint32_t port_num 
                                           )
      
      
 {
     attr->qp_state = IBV_QPS_RTR; 
-    attr->path_mtu = mca_btl_openib_component.ib_mtu; 
+    attr->path_mtu = (openib_btl->hca->mtu < rem_mtu) ? 
+        openib_btl->hca->mtu : rem_mtu;
+    if (mca_btl_openib_component.verbose) {
+        BTL_OUTPUT(("Set MTU to IBV value %d (%s bytes)", attr->path_mtu,
+                    (attr->path_mtu == IBV_MTU_256) ? "256" :
+                    (attr->path_mtu == IBV_MTU_512) ? "512" :
+                    (attr->path_mtu == IBV_MTU_1024) ? "1024" :
+                    (attr->path_mtu == IBV_MTU_2048) ? "2048" :
+                    (attr->path_mtu == IBV_MTU_4096) ? "4096" :
+                    "unknown (!)"));
+    }
     attr->dest_qp_num = rem_qp_num; 
     attr->rq_psn = rem_psn; 
     attr->max_dest_rd_atomic = mca_btl_openib_component.ib_max_rdma_dst_ops; 

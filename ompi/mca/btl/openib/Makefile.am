@@ -18,11 +18,13 @@
 
 # Use the top-level Makefile.options
 
+AM_CPPFLAGS = $(btl_openib_CPPFLAGS) -DPKGDATADIR=\"$(pkgdatadir)\"
+AM_LFLAGS = -Pbtl_openib_ini_yy
+LEX_OUTPUT_ROOT = lex.btl_openib_ini_yy
 
-
-AM_CPPFLAGS=$(btl_openib_CPPFLAGS) 
-
-dist_pkgdata_DATA=help-mpi-btl-openib.txt
+dist_pkgdata_DATA = \
+        help-mpi-btl-openib.txt \
+        mca-btl-openib-hca-params.ini
 
 sources = \
     btl_openib.c \
@@ -34,8 +36,14 @@ sources = \
     btl_openib_frag.h \
     btl_openib_proc.c \
     btl_openib_proc.h \
-    btl_openib_eager_rdma.h
-     
+    btl_openib_eager_rdma.h \
+    btl_openib_lex.h \
+    btl_openib_lex.l \
+    btl_openib_mca.c \
+    btl_openib_mca.h \
+    btl_openib_ini.c \
+    btl_openib_ini.h
+
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
@@ -61,7 +69,6 @@ mca_btl_openib_la_LIBADD = \
     $(top_ompi_builddir)/ompi/libmpi.la \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
-    
 
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_openib_la_SOURCES = $(lib_sources)
