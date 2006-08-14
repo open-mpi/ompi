@@ -38,7 +38,7 @@
 #ifdef HAVE_ARPA_INET_H
 #include <arpa/inet.h>
 #endif
-#include "orte/orte_socket_errno.h"
+#include "opal/opal_socket_errno.h"
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "orte/class/orte_proc_table.h"
@@ -258,10 +258,10 @@ static void mca_oob_tcp_accept(void)
 
         sd = accept(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
-            if(ompi_socket_errno == EINTR)
+            if(opal_socket_errno == EINTR)
                 continue;
-            if(ompi_socket_errno != EAGAIN || ompi_socket_errno != EWOULDBLOCK)
-                opal_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", ompi_socket_errno);
+            if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK)
+                opal_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", opal_socket_errno);
             return;
         }
 
@@ -296,7 +296,7 @@ static int mca_oob_tcp_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_oob_tcp_component.tcp_listen_sd < 0) {
-        opal_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", ompi_socket_errno);
+        opal_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", opal_socket_errno);
         return ORTE_ERROR;
     }
 
@@ -310,32 +310,32 @@ static int mca_oob_tcp_create_listen(void)
     inaddr.sin_port = 0;
 
     if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        opal_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", ompi_socket_errno);
+        opal_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", opal_socket_errno);
         return ORTE_ERROR;
     }
 
     /* resolve system assigned port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        opal_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", opal_socket_errno);
         return ORTE_ERROR;
     }
     mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
-        opal_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", opal_socket_errno);
         return ORTE_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", ompi_socket_errno);
+        opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", opal_socket_errno);
         return ORTE_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
-            opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", ompi_socket_errno);
+            opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", opal_socket_errno);
             return ORTE_ERROR;
         }
     }
@@ -368,11 +368,11 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
     while(cnt < sizeof(mca_oob_tcp_hdr_t)) {
         int retval = send(sd, (char *)ptr+cnt, sizeof(mca_oob_tcp_hdr_t)-cnt, 0);
         if(retval < 0) {
-            if(ompi_socket_errno != EINTR && ompi_socket_errno != EAGAIN && ompi_socket_errno != EWOULDBLOCK) {
+            if(opal_socket_errno != EINTR && opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_probe: send() failed with errno=%d\n",
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
-                    ompi_socket_errno);
+                    opal_socket_errno);
                 close(sd);
                 return;
             }
@@ -395,12 +395,12 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_GETFL) failed with errno=%d",
-                ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
+                ORTE_NAME_ARGS(orte_process_info.my_name), opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: fcntl(F_SETFL) failed with errno=%d",
-                ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
+                ORTE_NAME_ARGS(orte_process_info.my_name), opal_socket_errno);
         }
     }
 
@@ -475,9 +475,9 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
             close(sd);
             return;
         }
-        if(ompi_socket_errno != EINTR) {
+        if(opal_socket_errno != EINTR) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n",
-                ORTE_NAME_ARGS(orte_process_info.my_name), ompi_socket_errno);
+                ORTE_NAME_ARGS(orte_process_info.my_name), opal_socket_errno);
             close(sd);
             return;
         }

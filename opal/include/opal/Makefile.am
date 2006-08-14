@@ -20,6 +20,7 @@
 
 headers += \
 	opal/constants.h \
+	opal/opal_socket_errno.h \
 	opal/types.h	 \
 	opal/prefetch.h
 

@@ -33,7 +33,7 @@
 #include <unistd.h>
 #endif  /* HAVE_UNISTD_H */
 
-#include "orte/orte_socket_errno.h"
+#include "opal/opal_socket_errno.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_tcp_frag.h" 
 #include "btl_tcp_endpoint.h"
@@ -103,7 +103,7 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
     while(cnt < 0) {
         cnt = writev(sd, frag->iov_ptr, frag->iov_cnt);
         if(cnt < 0) {
-            switch(ompi_socket_errno) {
+            switch(opal_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
@@ -112,10 +112,10 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
             case EFAULT:
                 BTL_ERROR(("writev error (%p, %d)\n\t%s(%d)\n",
                     frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
-                    strerror(ompi_socket_errno), frag->iov_cnt));
+                    strerror(opal_socket_errno), frag->iov_cnt));
             default:
                 {
-                BTL_ERROR(("writev failed with errno=%d", ompi_socket_errno));
+                BTL_ERROR(("writev failed with errno=%d", opal_socket_errno));
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
                 }
@@ -185,7 +185,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
     while( cnt < 0 ) {
         cnt = readv(sd, frag->iov_ptr, num_vecs);
         if(cnt < 0) {
-            switch(ompi_socket_errno) {
+            switch(opal_socket_errno) {
             case EINTR:
                 continue;
             case EWOULDBLOCK:
@@ -193,10 +193,10 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             case EFAULT:
                 opal_output( 0, "mca_btl_tcp_frag_send: writev error (%p, %d)\n\t%s(%d)\n",
                              frag->iov_ptr[0].iov_base, frag->iov_ptr[0].iov_len,
-                             strerror(ompi_socket_errno), frag->iov_cnt );
+                             strerror(opal_socket_errno), frag->iov_cnt );
             default:
                 opal_output(0, "mca_btl_tcp_frag_send: writev failed with errno=%d",
-                            ompi_socket_errno);
+                            opal_socket_errno);
                 mca_btl_tcp_endpoint_close(btl_endpoint);
                 return false;
             }
