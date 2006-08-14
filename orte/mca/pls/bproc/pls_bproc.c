@@ -886,7 +886,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
      * calculate and pass the vpid_start param so that the processes can
      * correctly compute their name
      */
-    cycle = 0;
+    cycle = 1;
     
     /* launch the processes */
     i = 1;
@@ -969,9 +969,11 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
              */
             if (cycle == num_slots) {
                  /* end of cycle condition */
-                vpid_start += num_slots * num_nodes;
+                vpid_start += num_slots * num_nodes - 1;
+                cycle = 1;
             } else {
                 vpid_start += 1;
+                cycle++;
             }
         }
         
