@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,15 +9,16 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
  * $HEADER$
- */
-/**
+ *
  * @file
  */
+
 #ifndef MCA_PTL_IB_H
 #define MCA_PTL_IB_H
 
@@ -123,6 +123,15 @@ struct mca_btl_openib_component_t {
     uint32_t max_lmc;
     uint32_t buffer_alignment;
 
+    /** Colon-delimited list of filenames for HCA parameters */
+    char *hca_params_file_names;
+
+    /** Whether we're in verbose mode or not */
+    bool verbose;
+
+    /** Whether we want a warning if no HCA-specific parameters are
+        found in INI files */
+    bool warn_no_hca_params_found;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 extern mca_btl_openib_component_t mca_btl_openib_component;
@@ -136,6 +145,8 @@ struct mca_btl_openib_hca_t {
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
     mca_mpool_base_module_t *mpool;
+    /* MTU for this HCA */
+    uint32_t mtu;
     uint8_t btls;              /** < number of btls using this HCA */
 };
 typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
@@ -200,44 +211,6 @@ struct mca_btl_openib_module_t {
     
 struct mca_btl_openib_frag_t; 
 extern mca_btl_openib_module_t mca_btl_openib_module;
-
-/**
- * Register IB component parameters with the MCA framework
- */
-extern int mca_btl_openib_component_open(void);
-
-/**
- * Any final cleanup before being unloaded.
- */
-extern int mca_btl_openib_component_close(void);
-
-/**
- * IB component initialization.
- * 
- * @param num_btl_modules (OUT)                  Number of BTLs returned in BTL array.
- * @param allow_multi_user_threads (OUT)  Flag indicating wether BTL supports user threads (TRUE)
- * @param have_hidden_threads (OUT)       Flag indicating wether BTL uses threads (TRUE)
- *
- *  (1) read interface list from kernel and compare against component parameters
- *      then create a BTL instance for selected interfaces
- *  (2) setup IB listen socket for incoming connection attempts
- *  (3) publish BTL addressing info 
- *
- */
-extern mca_btl_base_module_t** mca_btl_openib_component_init(
-    int *num_btl_modules, 
-    bool allow_multi_user_threads,
-    bool have_hidden_threads
-);
-
-
-/**
- * IB component progress.
- */
-extern int mca_btl_openib_component_progress(
-                                             void
-                                             );
-
 
 /**
  * Register a callback function that is called on receipt
