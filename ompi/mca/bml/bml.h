@@ -498,6 +498,11 @@ typedef int (*mca_bml_base_module_finalize_fn_t)( void );
  * by the BML that is returned to the BML on subsequent calls to the BML data
  * transfer functions (e.g bml_send). This may be used by the BML to cache any addressing 
  * or connection information (e.g. TCP socket, IP queue pair).
+ *
+ * \note This function will return OMPI_ERR_UNREACH if one or more
+ * processes can not be reached by the currently active BTLs.  This is
+ * not a fatal error, and the calling layer is free to continue using
+ * the BML interface.
  */
 typedef int (*mca_bml_base_module_add_procs_fn_t)(
                                                   size_t nprocs,
