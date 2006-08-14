@@ -134,7 +134,7 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 	int sz;
 
 	for (;;) {
-		buffer = buf->buffer + buf->off;
+            buffer = (char*) buf->buffer + buf->off;
 		space = buf->totallen - buf->misalign - buf->off;
 
 #ifdef WIN32
@@ -145,7 +145,7 @@ evbuffer_add_vprintf(struct evbuffer *buf, const char *fmt, va_list ap)
 #endif
 		if (sz == -1)
 			return (-1);
-		if (sz < space) {
+		if ((size_t) sz < space) {
 			buf->off += sz;
 			if (buf->cb != NULL)
 				(*buf->cb)(buf, oldoff, buf->off, buf->cbarg);
@@ -199,12 +199,12 @@ evbuffer_readline(struct evbuffer *buffer)
 	char *line;
 	u_int i;
 
-	for (i = 0; i < (int) len; i++) {
+	for (i = 0; i < (u_int) len; i++) {
 		if (data[i] == '\r' || data[i] == '\n')
 			break;
 	}
 
-	if (i == (int) len)
+	if (i == (u_int) len)
 		return (NULL);
 
 	if ((line = malloc(i + 1)) == NULL) {
@@ -220,7 +220,7 @@ evbuffer_readline(struct evbuffer *buffer)
 	 * Some protocols terminate a line with '\r\n', so check for
 	 * that, too.
 	 */
-	if ( i < (int) len - 1 ) {
+	if ( i < (u_int) len - 1 ) {
 		char fch = data[i], sch = data[i+1];
 
 		/* Drain one more character if needed */
@@ -352,7 +352,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 		 * about it.  If the reader does not tell us how much
 		 * data we should read, we artifically limit it.
 		 */
-		if (n > buf->totallen << 2)
+		if ((size_t) n > buf->totallen << 2)
 			n = buf->totallen << 2;
 		if (n < EVBUFFER_MAX_READ)
 			n = EVBUFFER_MAX_READ;
