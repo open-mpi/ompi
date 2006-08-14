@@ -280,10 +280,8 @@ kq_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		if (!which)
 			continue;
 
-		if (!(ev->ev_events & OPAL_EV_PERSIST)) {
-			ev->ev_flags &= ~EVLIST_X_KQINKERNEL;
+		if (!(ev->ev_events & OPAL_EV_PERSIST))
 			opal_event_del_i(ev);
-		}
 
 		opal_event_active_i(ev, which,
 		    ev->ev_events & OPAL_EV_SIGNAL ? events[i].data : 1);

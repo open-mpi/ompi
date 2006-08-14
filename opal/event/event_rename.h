@@ -13,6 +13,7 @@
 /* buffer.c */
 #define evbuffer_add opal_evbuffer_add
 #define evbuffer_add_buffer opal_evbuffer_add_buffer
+#define evbuffer_add_vprintf opal_evbuffer_add_vprintf
 #define evbuffer_add_printf opal_evbuffer_add_printf
 #define evbuffer_drain opal_evbuffer_drain
 #define evbuffer_expand opal_evbuffer_expand
