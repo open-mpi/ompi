@@ -160,7 +160,9 @@ int mca_btl_gm_component_open(void)
         mca_btl_gm_param_register_int("max_rdma_size", 128*1024); 
 #if OMPI_MCA_BTL_GM_HAVE_RDMA_PUT 
     mca_btl_gm_module.super.btl_flags  = 
-        mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_PUT); 
+        mca_btl_gm_param_register_int("flags", MCA_BTL_FLAGS_PUT | 
+                                      MCA_BTL_FLAGS_NEED_ACK |
+                                      MCA_BTL_FLAGS_NEED_CSUM); 
 #else
     mca_btl_gm_module.super.btl_flags = MCA_BTL_FLAGS_SEND;
 #endif
