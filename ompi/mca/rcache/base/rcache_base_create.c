@@ -35,6 +35,7 @@ mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name)
     mca_rcache_base_module_t* module = NULL; 
     opal_list_item_t* item;
     mca_rcache_base_selected_module_t *sm;
+    bool found = false;
 
     for (item = opal_list_get_first(&mca_rcache_base_components);
          item != opal_list_get_end(&mca_rcache_base_components);
@@ -44,11 +45,12 @@ mca_rcache_base_module_t* mca_rcache_base_module_create(const char* name)
          component = 
              (mca_rcache_base_component_t *) cli->cli_component;
          if(0 == strcmp(component->rcache_version.mca_component_name, name)) {
+             found = true;
              break;
          }
     }
     
-    if (NULL == component) {
+    if (!found) {
         return NULL;
     }
     module = component->rcache_init();

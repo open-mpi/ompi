@@ -144,6 +144,19 @@ OMPI_DECLSPEC int ompi_rb_tree_init(ompi_rb_tree_t * tree, ompi_rb_tree_comp_fn_
 OMPI_DECLSPEC int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value);
 
 /**
+  * finds a value in the tree based on the passed key using passed
+  * compare function
+  *
+  * @param tree a pointer to the tree data structure
+  * @param key a pointer to the key
+  * @param compare function
+  *
+  * @retval pointer to the value if found
+  * @retval NULL if not found
+  */
+OMPI_DECLSPEC void * ompi_rb_tree_find_with(ompi_rb_tree_t *tree, void *key, ompi_rb_tree_comp_fn_t compfn);
+
+/**
   * finds a value in the tree based on the passed key
   *
   * @param tree a pointer to the tree data structure
@@ -152,7 +165,10 @@ OMPI_DECLSPEC int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * v
   * @retval pointer to the value if found
   * @retval NULL if not found
   */
-OMPI_DECLSPEC void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key);
+static inline void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key)
+{
+        return ompi_rb_tree_find_with(tree, key, tree->comp);
+}
 
 /**
   * deletes a node based on its key
