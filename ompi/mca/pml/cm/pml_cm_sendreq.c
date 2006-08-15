@@ -52,6 +52,7 @@ static void mca_pml_cm_thin_send_request_construct(mca_pml_cm_thin_send_request_
     sendreq->req_mtl.completion_callback = mca_pml_cm_thin_send_request_completion;
     sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_thin_send_request_free;
     sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_THIN;
 }
 
 
@@ -62,6 +63,7 @@ static void mca_pml_cm_hvy_send_request_construct(mca_pml_cm_hvy_send_request_t*
     sendreq->req_mtl.completion_callback = mca_pml_cm_hvy_send_request_completion;
     sendreq->req_send.req_base.req_ompi.req_free = mca_pml_cm_hvy_send_request_free;
     sendreq->req_send.req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND_HEAVY;
 }
 
 
