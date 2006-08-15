@@ -19,20 +19,15 @@
 dist_pkgdata_DATA = 
 
 man_MANS =  mpirun.1 \
-			mpiexec.1 \
-			ompi-ps.1 \
-			ompi-clean.1
+			mpiexec.1
 
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpirun$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpirun$(EXEEXT))
 	(cd $(DESTDIR)$(bindir); rm -f mpiexec$(EXEEXT); $(LN_S) orterun$(EXEEXT) mpiexec$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f ompi-ps$(EXEEXT); $(LN_S) orte-ps$(EXEEXT) ompi-ps$(EXEEXT))
-	(cd $(DESTDIR)$(bindir); rm -f ompi-clean$(EXEEXT); $(LN_S) orte-clean$(EXEEXT) ompi-clean$(EXEEXT))
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/mpirun$(EXEEXT) \
 		$(DESTDIR)$(bindir)/mpiexec$(EXEEXT) \
-		$(DESTDIR)$(bindir)/ompi-ps$(EXEEXT) \
 		$(DESTDIR)$(bindir)/ompi-clean$(EXEEXT)
 
 mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
@@ -40,12 +35,6 @@ mpirun.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 
 mpiexec.1: $(top_srcdir)/orte/tools/orterun/orterun.1
 	cp -f $(top_srcdir)/orte/tools/orterun/orterun.1 mpiexec.1
-
-ompi-ps.1: $(top_srcdir)/orte/tools/orte-ps/orte-ps.1
-	cp -f $(top_srcdir)/orte/tools/orte-ps/orte-ps.1 ompi-ps.1
-
-ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
-	cp -f $(top_srcdir)/orte/tools/orte-clean/orte-clean.1 ompi-clean.1
 
 distclean-local:
 	rm -f mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1

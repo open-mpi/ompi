@@ -25,15 +25,11 @@ SUBDIRS += \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps \
-	tools/orte-clean
+	tools/wrappers
 
 DIST_SUBDIRS += \
 	tools/console \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps \
-	tools/orte-clean
+	tools/wrappers
