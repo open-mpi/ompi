@@ -544,8 +544,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     ompi_mpi_thread_multiple = (ompi_mpi_thread_provided == 
                                 MPI_THREAD_MULTIPLE);
-    if (OMPI_ENABLE_PROGRESS_THREADS == 1 ||
-        OMPI_ENABLE_MPI_THREADS == 1) {
+    if ((OMPI_ENABLE_PROGRESS_THREADS == 1) ||
+        (*provided != MPI_THREAD_SINGLE)) {
         opal_set_using_threads(true);
     }
 
