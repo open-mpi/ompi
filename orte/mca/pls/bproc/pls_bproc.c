@@ -491,6 +491,8 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     int argc;
     char ** argv = NULL;
     char * param;
+    char * var;
+    int stride;
     char * orted_path;
     orte_jobid_t daemon_jobid;
     orte_process_name_t * proc_name;
@@ -515,9 +517,6 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
         for(j = 0; j < num_contexts; j++) {
             if(i < node_array_lens[j] && 0 < *(node_arrays[j] + i)) {
                 daemon_list[num_daemons++] = i;
-                rc = orte_pointer_array_add(&idx, mca_pls_bproc_component.active_node_names,
-                                            node->node_name));
-	
                 break;
             }
         }
@@ -538,8 +537,17 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
+    
+    /* daemons calculate their process name using a "stride" of one, so
+     * push that value into their environment */
+    stride = 1;
+    asprintf(&param, "%ld", (long)stride);
+    var = mca_base_param_environ_variable("pls", "bproc", "stride");
+    opal_setenv(var, param, true, envp);
+    free(param);
+    free(var);
 
-    /* set up the environment so the daemons can get their names once launched */
+    /* set up the base environment so the daemons can get their names once launched */
     rc = orte_ns_nds_bproc_put(cellid, daemon_jobid, daemon_vpid_start,
                                global_vpid_start, num_procs, envp);
     if(ORTE_SUCCESS != rc) {
@@ -783,7 +791,7 @@ orte_pls_bproc_monitor_nodes(void)
                                 ORTE_GPR_KEYS_OR,
                                 ORTE_NODE_SEGMENT,
                                 NULL,
-                                strdup(ORTE_NODE_STATE_KEY),
+                                ORTE_NODE_STATE_KEY,
                                 orte_pls_bproc_check_node_state,
 				NULL);
 }
@@ -810,16 +818,17 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                                      int app_context, int * node_array,
                                      int node_array_len) {
     int * node_list = NULL;
-    int num_nodes;
-    int rc, i, j;
+    int num_nodes, num_slots, cycle;
+    int rc, i, j, stride;
     int * pids = NULL;
     char * var, * param;
     orte_process_name_t * proc_name;
     struct bproc_io_t bproc_io[3];
+    orte_rmaps_base_node_t *node;
 
     if(NULL == (pids = (int*)malloc(sizeof(int) * node_array_len))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        goto cleanup;
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     /* set up app context */
@@ -829,6 +838,56 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     free(param);
     free(var);
 
+    /* in order for bproc processes to properly compute their name,
+     * we have to provide them with info on the number of slots
+     * on each node (which is a constant in bproc). We will pass this
+     * in an appropriate parameter which we set for each app_context
+     */
+    node = (orte_rmaps_base_node_t*)opal_list_get_first(&map->nodes);
+    if (NULL == node) {
+        ORTE_ERROR_LOG(ORTE_ERROR);
+        return ORTE_ERROR;
+    }
+    num_slots = node->node->node_slots;
+    
+    /* set the vpid-to-vpid stride based on the mapping mode */
+    if (mca_pls_bproc_component.bynode) {
+        /* we are mapping by node, so we want to set the stride
+         * length (i.e., the step size between vpids that is used
+         * to compute the process name) to 1
+         */
+        stride = 1;
+    } else {
+        /* we are mapping by slot, so we want to set the stride
+        * length (i.e., the step size between vpids that is used
+        * to compute the process name) to the number of slots
+        */
+        stride = num_slots;
+    }
+    /* and push that value into the process' environment */
+    asprintf(&param, "%ld", (long)stride);
+    var = mca_base_param_environ_variable("pls", "bproc", "stride");
+    opal_setenv(var, param, true, &map->app->env);
+    free(param);
+    free(var);
+    
+    /* initialize the cycle count. Computing the process name under Bproc
+     * is a complex matter when mapping by slot as Bproc's inherent
+     * methodology is to do everything by node. When mapping by slot, the
+     * first num_slots number of launch cycles all have a vpid_start that
+     * will differ by one - i.e., the processes on a given node will have
+     * vpids that differ by only one.
+     *
+     * However, when we oversubscribe, we enter into a cyclic arrangement.
+     * During each cycle, the above description of how names are assigned
+     * is accurate. However, each cycle (i.e., each collection of num_nodes
+     * processes that we launch) will have a vpid start that is offset by
+     * num_slots * num_nodes. We have to compensate for that here when we
+     * calculate and pass the vpid_start param so that the processes can
+     * correctly compute their name
+     */
+    cycle = 1;
+    
     /* launch the processes */
     i = 1;
     rc = orte_pls_bproc_node_list(node_array, node_array_len, &node_list,
@@ -897,7 +956,27 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
         free(node_list);
         node_list = NULL;
         i++;
-        vpid_start += num_nodes;
+        if (mca_pls_bproc_component.bynode) {
+            /* we are mapping by node, so the vpid_start must increment by
+             * the number of nodes
+             */
+            vpid_start += num_nodes;
+        } else {
+            /* we are mapping by slot. Here is where we need to check our
+             * cyclic condition - if we are at the end of a cycle, then
+             * we need to increment the vpid_start by num_slots*num_nodes.
+             * Otherwise, we just increment it by one.
+             */
+            if (cycle == num_slots) {
+                 /* end of cycle condition */
+                vpid_start += num_slots * num_nodes - 1;
+                cycle = 1;
+            } else {
+                vpid_start += 1;
+                cycle++;
+            }
+        }
+        
         rc = orte_pls_bproc_node_list(node_array, node_array_len, &node_list,
                                       &num_nodes, i);
         if(ORTE_SUCCESS != rc) {
@@ -930,7 +1009,7 @@ cleanup:
  * @retval error
  */
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
-    opal_list_item_t* item, *item2;
+    opal_list_item_t* item;
     opal_list_t mapping;
     orte_cellid_t cellid;
     orte_rmaps_base_map_t* map;

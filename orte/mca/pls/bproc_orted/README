@@ -1,6 +1,0 @@
-The bproc_orted and bproc pls components are the most recent BProc
-starters.  They make the old bproc_seed starter deprecated, but that
-starter is still left around because LANL needs it for some of their
-older clusters.
-
-All new work should be on the bproc_orted and bproc components.

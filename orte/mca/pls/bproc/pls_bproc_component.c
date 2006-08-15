@@ -55,6 +55,8 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
  */
 int orte_pls_bproc_component_open(void) {
     int rc;
+    char *policy;
+    
     /* init parameters */
     mca_base_component_t *c = &mca_pls_bproc_component.super.pls_version;
     mca_base_param_reg_int(c, "priority", NULL, false, false, 100,
@@ -72,6 +74,20 @@ int orte_pls_bproc_component_open(void) {
     mca_pls_bproc_component.done_launching = false;
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
+
+    /* we need to know the intended method for mapping processes
+     * so we can properly direct the bproc processes on how to compute
+     * their name
+     */
+    mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
+                                   "Scheduling Policy for RMAPS. [slot | node]",
+                                   false, false, "slot", &policy);
+    if (0 == strcmp(policy, "node")) {
+        mca_pls_bproc_component.bynode = true;
+    } else {
+        mca_pls_bproc_component.bynode = false;
+    }
+    
     /* init the list to hold the daemon names */
     rc = orte_pointer_array_init(&mca_pls_bproc_component.daemon_names, 8, 200000, 8);
     /* init the list to hold the daemon names */
