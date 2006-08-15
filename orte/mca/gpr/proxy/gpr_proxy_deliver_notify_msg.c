@@ -48,7 +48,7 @@ int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     orte_gpr_notify_data_t **data;
     orte_gpr_proxy_subscriber_t **subs, *sub;
     orte_gpr_proxy_trigger_t **trigs;
-    size_t i, j, k, n;
+    orte_std_cntr_t i, j, k, n;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.mutex);

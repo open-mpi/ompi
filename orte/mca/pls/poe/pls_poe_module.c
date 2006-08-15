@@ -115,7 +115,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 {
     opal_list_t nodes, mapping_list;
     opal_list_item_t* item;
-    size_t num_nodes;
+    orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
@@ -343,7 +343,7 @@ static void poe_wait_job(pid_t pid, int status, void* cbdata)
         item != opal_list_get_end(&map);
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-        size_t i;
+        orte_std_cntr_t i;
 
         for(i = 0 ; i < map->num_procs ; ++i) {
             orte_session_dir_finalize(&(map->procs[i])->proc_name);
@@ -454,7 +454,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
     opal_list_t map, nodes, mapping_list;
     opal_list_item_t* item;
     orte_vpid_t vpid_start, vpid_range;
-    size_t num_nodes, num_procs;
+    orte_std_cntr_t num_nodes, num_procs;
     FILE *hfp, *cfp;
     char** argv;
     int argc;
@@ -509,7 +509,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
         item != opal_list_get_end(&map);
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map2 = (orte_rmaps_base_map_t*)item;
-        size_t i;
+        orte_std_cntr_t i;
         for(i=0; i<map2->num_procs; i++) {
             rc = poe_create_cmd_file(cfp, map2->app, map2->procs[i], vpid_start, vpid_range);
             if(ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }

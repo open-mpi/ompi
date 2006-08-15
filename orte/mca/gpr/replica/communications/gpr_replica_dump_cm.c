@@ -59,7 +59,7 @@ int orte_gpr_replica_recv_dump_segments_cmd(orte_buffer_t *input_buffer, orte_bu
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SEGMENTS_CMD;
     char *segment;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
     
     OPAL_TRACE(3);
@@ -87,7 +87,7 @@ int orte_gpr_replica_recv_dump_triggers_cmd(orte_buffer_t *input_buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_TRIGGERS_CMD;
     orte_gpr_trigger_id_t start;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
     
     OPAL_TRACE(3);
@@ -116,7 +116,7 @@ int orte_gpr_replica_recv_dump_subscriptions_cmd(orte_buffer_t *input_buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SUBSCRIPTIONS_CMD;
     orte_gpr_subscription_id_t start;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
     
     OPAL_TRACE(3);
@@ -147,7 +147,7 @@ int orte_gpr_replica_recv_dump_a_trigger_cmd(orte_buffer_t *input_buffer,
     char *name;
     orte_gpr_trigger_id_t id;
     orte_gpr_replica_trigger_t **trigs;
-    size_t n, i, j;
+    orte_std_cntr_t n, i, j;
     int rc;
     
     OPAL_TRACE(3);
@@ -212,7 +212,7 @@ int orte_gpr_replica_recv_dump_a_subscription_cmd(orte_buffer_t *input_buffer,
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_A_SUBSCRIPTION_CMD;
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_subscription_id_t id;
-    size_t n, i, j;
+    orte_std_cntr_t n, i, j;
     char *name;
     int rc;
     
@@ -297,7 +297,7 @@ int orte_gpr_replica_recv_dump_segment_size_cmd(orte_buffer_t *input_buffer, ort
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_DUMP_SEGMENT_SIZE_CMD;
     char *segment;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     OPAL_TRACE(3);

@@ -69,7 +69,7 @@ typedef int (*orte_rmgr_base_module_query_fn_t)(void);
  */
 typedef int (*orte_rmgr_base_module_create_fn_t)(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t *jobid);
 
 /**
@@ -162,7 +162,7 @@ typedef void (*orte_rmgr_cb_fn_t)(orte_jobid_t jobid, orte_proc_state_t state);
  */
 typedef int (*orte_rmgr_base_module_spawn_fn_t)(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t *jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);

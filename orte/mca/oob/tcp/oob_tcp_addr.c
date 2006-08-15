@@ -98,7 +98,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
 {
     mca_oob_tcp_addr_t* addr = OBJ_NEW(mca_oob_tcp_addr_t);
     int rc;
-    size_t count;
+    orte_std_cntr_t count;
     if(NULL == addr) 
          return NULL;
 
@@ -117,7 +117,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
     }
 
     if(addr->addr_count != 0) {
-        size_t i;
+        orte_std_cntr_t i;
         addr->addr_inet = (struct sockaddr_in *)malloc(sizeof(struct sockaddr_in) * addr->addr_count);
         if(NULL == addr->addr_inet) {
              OBJ_RELEASE(addr);
@@ -125,7 +125,7 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
         }
         addr->addr_alloc = addr->addr_count;
         for(i=0; i<addr->addr_count; i++) {
-            size_t inaddr_size = sizeof(struct sockaddr_in);
+            orte_std_cntr_t inaddr_size = sizeof(struct sockaddr_in);
             rc = orte_dss.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
             if(rc != ORTE_SUCCESS) {
                 OBJ_RELEASE(addr);
@@ -142,7 +142,7 @@ int mca_oob_tcp_addr_get_next(mca_oob_tcp_addr_t* addr, struct sockaddr_in* retv
     if(addr == NULL || addr->addr_count == 0)
         return ORTE_ERROR;
     if(addr->addr_matched == false) {
-        size_t i=0;
+        orte_std_cntr_t i=0;
         for(i=0; i<addr->addr_count; i++) {
             int ifindex;
             for(ifindex=opal_ifbegin(); ifindex>0; ifindex=opal_ifnext(ifindex)) {

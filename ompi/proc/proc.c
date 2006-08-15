@@ -104,7 +104,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_process_name_t *peers;
-    size_t i, npeers, self, num_tokens;
+    orte_std_cntr_t i, npeers, self, num_tokens;
     orte_jobid_t jobid;
     char *segment, **tokens;
     orte_data_value_t value = { {OBJ_CLASS(orte_data_value_t),0}, ORTE_NULL, NULL};
@@ -367,7 +367,7 @@ int ompi_proc_get_proclist (orte_buffer_t* buf, int proclistsize, ompi_proc_t **
     }
 
     for ( i=0; i<proclistsize; i++ ){
-        size_t count=1;
+        orte_std_cntr_t count=1;
         int rc = orte_dss.unpack(buf, &name, &count, ORTE_NAME);
         if(rc != ORTE_SUCCESS) {
             return rc;
@@ -468,7 +468,7 @@ CLEANUP:
  */
 static void callback(orte_gpr_notify_data_t *data, void *cbdata)
 {
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     char *str = NULL;
     uint32_t arch = 0, *ui32;
     bool found_name, found_arch;

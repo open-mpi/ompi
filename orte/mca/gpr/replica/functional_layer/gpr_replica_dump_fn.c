@@ -77,7 +77,7 @@ int orte_gpr_replica_dump_all_fn(orte_buffer_t *buffer)
 int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer, char *segment)
 {
     orte_gpr_replica_segment_t **seg, *segptr;
-    size_t i, m;
+    orte_std_cntr_t i, m;
     int rc;
 
     /* if segment = NULL, loop through all segments */
@@ -114,8 +114,8 @@ int orte_gpr_replica_dump_segments_fn(orte_buffer_t *buffer, char *segment)
     orte_gpr_replica_itag_t *itaglist;
     orte_gpr_replica_itagval_t **iptr;
     char *token;
-    size_t num_objects;
-    size_t j, k, n, p;
+    orte_std_cntr_t num_objects;
+    orte_std_cntr_t j, k, n, p;
     char *tmp_out;
 
     tmp_out = (char*)malloc(1000);
@@ -202,7 +202,7 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
     orte_gpr_replica_action_taken_t **action;
     orte_gpr_replica_itag_t *itaglist;
     char *tmp_out, *token;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
 
     tmp_out = (char*)malloc(1000);
     if (NULL == tmp_out) {
@@ -343,7 +343,7 @@ int orte_gpr_replica_dump_triggers_fn(orte_buffer_t *buffer,
 {
     orte_gpr_replica_trigger_t **trig;
     char tmp_out[100], *tmp;
-    size_t j, k, m;
+    orte_std_cntr_t j, k, m;
     int rc;
 
     tmp = tmp_out;
@@ -381,7 +381,7 @@ int orte_gpr_replica_dump_trigger(orte_buffer_t *buffer,
                                   orte_gpr_replica_trigger_t *trig)
 {
     char *tmp_out, *token;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_replica_trigger_requestor_t **attached;
@@ -520,7 +520,7 @@ int orte_gpr_replica_dump_subscriptions_fn(orte_buffer_t *buffer,
                     orte_gpr_subscription_id_t start)
 {
     char *tmp_out, *tmp;
-    size_t i, m, n;
+    orte_std_cntr_t i, m, n;
     orte_gpr_replica_subscription_t **subs;
     int rc;
 
@@ -565,7 +565,7 @@ int orte_gpr_replica_dump_subscription(orte_buffer_t *buffer,
                                        orte_gpr_replica_subscription_t *sub)
 {
     char *tmp_out, *token, *tmp;
-    size_t j, k, n, p;
+    orte_std_cntr_t j, k, n, p;
     orte_gpr_replica_requestor_t **reqs;
     orte_gpr_replica_ivalue_t **ivals;
 
@@ -780,7 +780,8 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
 int orte_gpr_replica_dump_segment_size_fn(orte_buffer_t *buffer, char *segment)
 {
     orte_gpr_replica_segment_t **seg, *segptr;
-    size_t i, m, segsize, total;
+    orte_std_cntr_t i, m;
+    size_t segsize, total;
     char tmp[100], *tptr;
     int rc;
 
@@ -830,7 +831,8 @@ static void orte_gpr_replica_dump_load_string(orte_buffer_t *buffer, char **tmp)
 
 static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replica_segment_t *seg)
 {
-    size_t data_size, isize, i, j, k, m;
+    size_t data_size, isize;
+    orte_std_cntr_t i, j, k, m;
     char **dict;
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itagval_t **iptr;
@@ -849,23 +851,23 @@ static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replic
              }
          }
 
-         data_size += sizeof(size_t);  /* num_containers */
+         data_size += sizeof(orte_std_cntr_t);  /* num_containers */
          cptr = (orte_gpr_replica_container_t**)(seg->containers)->addr;
          for (i=0, j=0; j < (seg->num_containers) &&
               i < (seg->containers)->size; i++) {
                   if (NULL != cptr[i]) {
                       j++;
-                      data_size += sizeof(size_t);  /* index */
+                      data_size += sizeof(orte_std_cntr_t);  /* index */
                       data_size += cptr[i]->num_itags * sizeof(orte_gpr_replica_itag_t);  /* itags array */
-                      data_size += sizeof(size_t);  /* num_itags */
+                      data_size += sizeof(orte_std_cntr_t);  /* num_itags */
                       data_size += (cptr[i]->itagvals)->size * sizeof(void*);  /* account for size of pointer array */
-                      data_size += sizeof(size_t);  /* num_itagvals */
+                      data_size += sizeof(orte_std_cntr_t);  /* num_itagvals */
                       iptr = (orte_gpr_replica_itagval_t**)(cptr[i]->itagvals)->addr;
                       for (k=0, m=0; m < cptr[i]->num_itagvals &&
                            k < (cptr[i]->itagvals)->size; k++) {
                                if (NULL != iptr[k]) {
                                    m++;
-                                   data_size += sizeof(size_t);  /* index */
+                                   data_size += sizeof(orte_std_cntr_t);  /* index */
                                    data_size += sizeof(orte_gpr_replica_itag_t);
                                    data_size += sizeof(orte_data_type_t);
                                    if (ORTE_SUCCESS != (rc = orte_dss.size(&isize, iptr[k]->value->data, iptr[k]->value->type))) {
@@ -876,7 +878,7 @@ static int orte_gpr_replica_get_segment_size_fn(size_t *segsize, orte_gpr_replic
                                    data_size += isize;
                                }
                            }
-                           data_size += 3*sizeof(size_t);
+                           data_size += 3*sizeof(orte_std_cntr_t);
                            data_size += (cptr[i]->itaglist).array_size * sizeof(unsigned char*);
                   }
               }

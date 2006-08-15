@@ -907,7 +907,7 @@ static int orte_console_contactinfo(orte_console_input_command_t input_command) 
     orte_buffer_t *buffer = NULL;
     orte_process_name_t seed={0,0,0};
     int ret;
-    size_t n;
+    orte_std_cntr_t n;
 
     if(!daemon_is_active) {
         opal_show_help("help-orteconsole.txt", "orteconsole:no-daemon-started", false);

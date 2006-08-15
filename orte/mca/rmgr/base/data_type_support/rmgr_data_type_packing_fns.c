@@ -34,11 +34,11 @@
  * APP CONTEXT
  */
 int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
-                                 size_t num_vals, orte_data_type_t type)
+                                 orte_std_cntr_t num_vals, orte_data_type_t type)
 {
-    int rc, count;
+    int rc;
     int8_t have_prefix, user_specified;
-    size_t i;
+    orte_std_cntr_t i, count;
     orte_app_context_t **app_context;
 
     /* array of pointers to orte_app_context objects - need to pack the objects a set of fields at a time */
@@ -47,7 +47,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
     for (i=0; i < num_vals; i++) {
         /* pack the application index (for multiapp jobs) */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->idx)), 1, ORTE_SIZE))) {
+                        (void*)(&(app_context[i]->idx)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -61,14 +61,14 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
         /* pack the number of processes */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(app_context[i]->num_procs)), 1, ORTE_SIZE))) {
+                        (void*)(&(app_context[i]->num_procs)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of entries in the argv array */
         count = opal_argv_count(app_context[i]->argv);
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -76,7 +76,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
         /* if there are entries, pack the argv entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                            (void*)(app_context[i]->argv), (size_t)count, ORTE_STRING))) {
+                            (void*)(app_context[i]->argv), count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -84,7 +84,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
         /* pack the number of entries in the enviro array */
         count = opal_argv_count(app_context[i]->env);
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&count), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -92,7 +92,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
         /* if there are entries, pack the enviro entries */
         if (0 < count) {
             if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                (void*)(app_context[i]->env), (size_t)count, ORTE_STRING))) {
+                (void*)(app_context[i]->env), count, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -119,7 +119,7 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 
         /* Pack the map data */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                (void*)(&(app_context[i]->num_map)), 1, ORTE_SIZE))) {
+                (void*)(&(app_context[i]->num_map)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -161,11 +161,11 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
  * APP CONTEXT MAP
  */
 int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
-                                  size_t num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
     orte_app_context_map_t **app_context_map;
-    size_t i;
+    orte_std_cntr_t i;
 
     app_context_map = (orte_app_context_map_t**) src;
     for (i=0; i < num_vals; i++) {

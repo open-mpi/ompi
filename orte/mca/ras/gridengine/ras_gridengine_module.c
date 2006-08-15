@@ -43,7 +43,7 @@
  */
 static int orte_ras_gridengine_allocate(orte_jobid_t jobid);
 static int orte_ras_gridengine_discover(opal_list_t* nodelist,
-    orte_app_context_t** context, size_t num_context);
+    orte_app_context_t** context, orte_std_cntr_t num_context);
 static int orte_ras_gridengine_node_insert(opal_list_t* nodes);
 static int orte_ras_gridengine_node_query(opal_list_t* nodes);
 static int orte_ras_gridengine_deallocate(orte_jobid_t jobid);
@@ -74,7 +74,7 @@ static int orte_ras_gridengine_allocate(orte_jobid_t jobid)
     opal_list_item_t* item;
     int rc;
     orte_app_context_t **context = NULL;
-    size_t i, num_context;
+    orte_std_cntr_t i, num_context;
   
     /* get the context */
     rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
@@ -121,7 +121,7 @@ static int orte_ras_gridengine_allocate(orte_jobid_t jobid)
  *  - check for additional nodes that have already been allocated
  */
 static int orte_ras_gridengine_discover(opal_list_t* nodelist,
-    orte_app_context_t** context, size_t num_context)
+    orte_app_context_t** context, orte_std_cntr_t num_context)
 {    
     char *pe_hostfile = getenv("PE_HOSTFILE");
     char buf[1024], *tok, *num, *queue, *arch, *ptr;
@@ -129,6 +129,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     opal_list_item_t* item;
     opal_list_t new_nodes;
     FILE *fp;
+    orte_ras_node_t *node;
    
     /* query the nodelist from the registry */
     if(ORTE_SUCCESS != (rc = orte_ras_gridengine_node_query(nodelist))) {
@@ -154,7 +155,6 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         num = strtok_r(NULL, " \n", &tok);
         queue = strtok_r(NULL, " \n", &tok);
         arch = strtok_r(NULL, " \n", &tok);
-        orte_ras_node_t *node;
         
         /* is this node already in the list */ 
         for(item =  opal_list_get_first(nodelist);
@@ -272,7 +272,7 @@ static int put_slot_keyval(orte_ras_node_t* node, int slot_cnt)
     /* put our contact info into the registry */
     orte_data_value_t *put_value;
     int rc, ivalue;
-    size_t num_tokens;
+    orte_std_cntr_t num_tokens;
     char **tokens;
        
     opal_output(mca_ras_gridengine_component.verbose,
@@ -316,7 +316,7 @@ static int put_slot_keyval(orte_ras_node_t* node, int slot_cnt)
  */
 static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
     char **tokens;
-    size_t num_tokens, i, get_cnt=0;
+    orte_std_cntr_t num_tokens, i, get_cnt=0;
     int rc, *iptr;
     orte_gpr_keyval_t *condition;
     orte_gpr_value_t** get_values;
@@ -354,7 +354,7 @@ static int get_slot_keyval(orte_ras_node_t* node, int* slot_cnt) {
     /* parse the response */
     for(i=0; i<get_cnt; i++) {
         orte_gpr_value_t* value = get_values[i];
-        size_t k;
+        orte_std_cntr_t k;
 
         /* looking in each GPR container for keyvals */
         for(k=0; k < value->cnt; k++) {

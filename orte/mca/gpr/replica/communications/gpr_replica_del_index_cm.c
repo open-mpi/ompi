@@ -39,7 +39,7 @@ int orte_gpr_replica_recv_delete_segment_cmd(orte_buffer_t *buffer, orte_buffer_
     orte_gpr_cmd_flag_t command=ORTE_GPR_DELETE_SEGMENT_CMD;
     char *segment=NULL;
     orte_gpr_replica_segment_t *seg=NULL;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, ret;
 
     OPAL_TRACE(3);
@@ -82,7 +82,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     orte_gpr_replica_itag_t *token_itags=NULL, *key_itags=NULL;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    size_t num_tokens=0, num_keys=0, i, n;
+    orte_std_cntr_t num_tokens=0, num_keys=0, i, n;
     int rc, ret;
 
     OPAL_TRACE(3);
@@ -105,7 +105,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_tokens, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_tokens, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -126,7 +126,7 @@ int orte_gpr_replica_recv_delete_entries_cmd(orte_buffer_t *buffer, orte_buffer_
      }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_keys, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &num_keys, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -213,7 +213,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_INDEX_CMD;
     orte_data_type_t type;
-    size_t n, cnt;
+    orte_std_cntr_t n, cnt;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **index=NULL;
     int rc, ret;
@@ -249,7 +249,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         goto RETURN_ERROR;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
         goto RETURN_PACK_ERROR;
@@ -266,7 +266,7 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
  RETURN_ERROR:
     /* ensure that the minimum response is generated */
     cnt = 0;
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &cnt, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
     }

@@ -44,7 +44,7 @@ opal_class_t orte_value_array_t_class = {
 };
 
 
-int orte_value_array_set_size(orte_value_array_t* array, size_t size)
+int orte_value_array_set_size(orte_value_array_t* array, orte_std_cntr_t size)
 {
 #if OMPI_ENABLE_DEBUG
     if(array->array_item_sizeof == 0) {

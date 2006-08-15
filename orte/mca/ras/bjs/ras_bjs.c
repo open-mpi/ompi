@@ -240,7 +240,7 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     opal_list_item_t* item;
     int rc;
     orte_app_context_t **context = NULL;
-    size_t i, num_context;
+    orte_std_cntr_t i, num_context;
 
     rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
     if(ORTE_SUCCESS != rc) {

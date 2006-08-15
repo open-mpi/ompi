@@ -67,9 +67,9 @@ extern "C" {
 typedef uint8_t orte_gpr_notify_action_t;
 #define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT8
 
-typedef uint32_t orte_gpr_subscription_id_t;
-#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_UINT32
-#define ORTE_GPR_SUBSCRIPTION_ID_MAX (1UL << 31)
+typedef int32_t orte_gpr_subscription_id_t;
+#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_INT32
+#define ORTE_GPR_SUBSCRIPTION_ID_MAX INT32_MAX
 
 
 #define ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS    (uint8_t)0x01   /**< Include the trigger data in the notification msg */
@@ -84,9 +84,9 @@ typedef uint32_t orte_gpr_subscription_id_t;
 typedef uint8_t orte_gpr_trigger_action_t;
 #define ORTE_GPR_TRIGGER_ACTION_T ORTE_UINT8
 
-typedef uint32_t orte_gpr_trigger_id_t;
-#define ORTE_GPR_TRIGGER_ID_T ORTE_UINT32
-#define ORTE_GPR_TRIGGER_ID_MAX (1UL << 31)
+typedef int32_t orte_gpr_trigger_id_t;
+#define ORTE_GPR_TRIGGER_ID_T ORTE_INT32
+#define ORTE_GPR_TRIGGER_ID_MAX INT32_MAX
 
 
 /** Define the addressing mode bit-masks for registry operations.
@@ -145,9 +145,9 @@ typedef struct {
     opal_object_t super;                    /**< Makes this an object */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
     char *segment;                          /**< Name of the segment this came from */
-    size_t cnt;                             /**< Number of keyval objects returned */
+    orte_std_cntr_t cnt;                             /**< Number of keyval objects returned */
     orte_gpr_keyval_t **keyvals;            /**< Contiguous array of keyval object pointers */
-    size_t num_tokens;                      /**< Number of tokens from the container that held these keyvals */
+    orte_std_cntr_t num_tokens;                      /**< Number of tokens from the container that held these keyvals */
     char **tokens;                          /**< List of tokens that described the container */
 } orte_gpr_value_t;
 
@@ -164,7 +164,7 @@ typedef struct {
     char *target;                   /**< Name of the associated subscripton, if provided */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
     bool remove;                    /**< Remove this subscription from recipient's tracker */
-    size_t cnt;                     /**< Number of value objects returned, one per container */
+    orte_std_cntr_t cnt;                     /**< Number of value objects returned, one per container */
     orte_pointer_array_t *values;   /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
@@ -184,7 +184,7 @@ typedef struct {
     orte_gpr_trigger_id_t id;   /**< trigger id, if message comes from trigger
                                     (ORTE_GPR_TRIGGER_ID_MAX otherwise) */
     bool remove;                /**< Remove this trigger from recipient's tracker */
-    size_t cnt;                 /**< number of data objects */
+    orte_std_cntr_t cnt;                 /**< number of data objects */
     orte_pointer_array_t *data; /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
 
@@ -220,7 +220,7 @@ typedef struct {
     char *name;                             /**< A unique name for this subscription - can be NULL */
     orte_gpr_subscription_id_t id;          /**< id number of this subscription, as assigned by system */
     orte_gpr_notify_action_t action;        /**< what causes subscription to fire */
-    size_t cnt;                             /**< Number of values included */
+    orte_std_cntr_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the data to be returned */
     orte_gpr_notify_cb_fn_t cbfunc;         /**< the callback function */
@@ -241,7 +241,7 @@ typedef struct {
     char *name;                             /**< A unique name for this trigger - can be NULL */
     orte_gpr_trigger_id_t id;               /**< id number of this trigger, as assigned by system */
     orte_gpr_trigger_action_t action;       /**< trigger characteristics */
-    size_t cnt;                             /**< Number of values included */
+    orte_std_cntr_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the objects to be monitored */
     orte_gpr_trigger_cb_fn_t cbfunc;        /**< the callback function */

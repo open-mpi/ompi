@@ -246,7 +246,8 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_notify_data_t *data,
     void *cbdata)
 {
-    size_t i, j, k, *sptr;
+    orte_std_cntr_t i, j, k;
+    size_t *sptr;
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;

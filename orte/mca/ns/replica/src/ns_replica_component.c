@@ -348,7 +348,7 @@ int orte_ns_replica_finalize(void)
     orte_ns_replica_jobid_tracker_t **jptr;
     orte_ns_replica_tagitem_t **tag;
     orte_ns_replica_dti_t **dti;
-    size_t i;
+    orte_std_cntr_t i;
 
   /* free all tracking storage, but only if this component was initialized */
 
@@ -412,7 +412,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     char *tagname, *site, *resource;
     orte_rml_tag_t oob_tag;
     orte_data_type_t type;
-    size_t count;
+    orte_std_cntr_t count;
     int rc=ORTE_SUCCESS, ret;
 
     count = 1;
@@ -572,7 +572,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
               }
 
-              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_RML_TAG))) {
                   goto RETURN_ERROR;
               }
 

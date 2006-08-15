@@ -34,7 +34,8 @@
 int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_data_type_t type)
 {
     int j, rc, count;
-    size_t i, map_size;
+    orte_std_cntr_t i;
+    size_t map_size;
 
     /* account for the object itself */
     *size = sizeof(orte_app_context_t);
@@ -60,7 +61,7 @@ int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_
     if (0 < count) {
         /* account for array of char* */
         *size += count * sizeof(char*);
-        for (i=0; i < (size_t)count; i++) {
+        for (i=0; i < count; i++) {
             *size += strlen(src->env[i]);
         }
     }

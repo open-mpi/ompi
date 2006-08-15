@@ -91,7 +91,7 @@ static void orte_gpr_value_construct(orte_gpr_value_t* reg_val)
 static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
 {
     char **tokens;
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != reg_val->segment) free(reg_val->segment);
 
@@ -138,7 +138,7 @@ static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
 {
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_value_t **values;
 
     if (NULL != ptr->target) free(ptr->target);
@@ -180,7 +180,7 @@ static void orte_gpr_subscription_construct(orte_gpr_subscription_t* sub)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != sub->name) free(sub->name);
 
@@ -216,7 +216,7 @@ static void orte_gpr_trigger_construct(orte_gpr_trigger_t* trig)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_trigger_destructor(orte_gpr_trigger_t* trig)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != trig->name) free(trig->name);
 
@@ -252,7 +252,7 @@ static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
 {
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_notify_data_t **data;
 
     if (NULL != msg->target) free(msg->target);

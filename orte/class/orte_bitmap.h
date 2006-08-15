@@ -37,6 +37,7 @@
 #define ORTE_BITMAP_H
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
 #include <string.h>
 
@@ -49,8 +50,8 @@ extern "C" {
 struct orte_bitmap_t {
     opal_object_t super; /**< Subclass of opal_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
-    size_t array_size;  /**< The actual array size that maintains the bitmap */
-    size_t legal_numbits; /**< The number of bits which are legal (the
+    orte_std_cntr_t array_size;  /**< The actual array size that maintains the bitmap */
+    orte_std_cntr_t legal_numbits; /**< The number of bits which are legal (the
                 actual bitmap may contain more bits, since
                 it needs to be rounded to the nearest
                 char  */
@@ -72,7 +73,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
  * @return ORTE error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -85,7 +86,7 @@ OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -97,7 +98,7 @@ OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit);
  * @return ORTE error code if the bit is out of range, else success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -110,7 +111,7 @@ OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit);
   *         0 if the bit is not set
   *
   */
-OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit);
+OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -122,7 +123,7 @@ OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit);
  * @return err        ORTE_SUCCESS on success
  */
 OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
-                                                           size_t *position);
+                                                           orte_std_cntr_t *position);
 
 
 /**

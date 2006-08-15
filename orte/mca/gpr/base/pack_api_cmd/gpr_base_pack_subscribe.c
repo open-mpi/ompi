@@ -37,14 +37,14 @@
 #include "orte/mca/gpr/base/base.h"
 
 int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
-                 size_t num_subs,
+                 orte_std_cntr_t num_subs,
                  orte_gpr_subscription_t **subscriptions,
-                 size_t num_trigs,
+                 orte_std_cntr_t num_trigs,
                  orte_gpr_trigger_t **trigs)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t zero=0;
+    orte_std_cntr_t zero=0;
 
     OPAL_TRACE(3);
 
@@ -68,7 +68,7 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
             return rc;
         }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -84,7 +84,7 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
             return rc;
         }
     } else {
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

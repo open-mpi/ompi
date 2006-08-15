@@ -20,7 +20,6 @@ headers += \
         base/base.h
 
 libmca_oob_la_SOURCES += \
-        base/oob_base_barrier.c \
         base/oob_base_close.c \
         base/oob_base_except.c \
         base/oob_base_init.c \

@@ -32,10 +32,10 @@
  * NAME
  */
 int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type)
+                       orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
-    size_t i, num;
+    orte_std_cntr_t i, num;
     orte_process_name_t* proc;
     orte_cellid_t *cellid;
     orte_jobid_t *jobid;
@@ -118,13 +118,13 @@ int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
  * CELLID
  */
 int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type)
+                       orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -135,13 +135,13 @@ int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
  * JOBID
  */
 int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type)
+                       orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -152,13 +152,13 @@ int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
  * VPID
  */
 int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type)
+                       orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and unpack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 

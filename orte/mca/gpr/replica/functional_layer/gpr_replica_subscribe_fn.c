@@ -38,14 +38,14 @@
 #include "orte/mca/gpr/replica/functional_layer/gpr_replica_fn.h"
 
 int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
-                                  size_t num_subs,
+                                  orte_std_cntr_t num_subs,
                                   orte_gpr_subscription_t **subscriptions,
-                                  size_t num_trigs,
+                                  orte_std_cntr_t num_trigs,
                                   orte_gpr_trigger_t **trigs)
 {
     orte_gpr_replica_subscription_t *sub=NULL, **subs, **trigsubs;
     orte_gpr_replica_trigger_t *trig=NULL;
-    size_t i, j, k, m, n, index;
+    orte_std_cntr_t i, j, k, m, n, index;
     bool ignore;
     int rc=ORTE_SUCCESS;
 

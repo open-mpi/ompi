@@ -49,7 +49,7 @@ static int orte_rmgr_urm_query(void);
 
 static int orte_rmgr_urm_create(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 
 static int orte_rmgr_urm_allocate(
@@ -79,7 +79,7 @@ static int orte_rmgr_urm_signal_proc(
 
 static int orte_rmgr_urm_spawn(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
@@ -129,7 +129,7 @@ static int orte_rmgr_urm_query(void)
 
 static int orte_rmgr_urm_create(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid)
 {
     int rc;
@@ -298,7 +298,7 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
 
     OPAL_TRACE(1);
@@ -402,7 +402,7 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
 
 static int orte_rmgr_urm_spawn(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfunc,
     orte_proc_state_t cb_conditions)

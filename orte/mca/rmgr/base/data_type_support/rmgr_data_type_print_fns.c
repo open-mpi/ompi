@@ -36,7 +36,7 @@
 int orte_rmgr_base_print_app_context(char **output, char *prefix, orte_app_context_t *src, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *pfx2;
-    size_t j;
+    orte_std_cntr_t j;
     int i, rc, count;
 
     /* set default result */

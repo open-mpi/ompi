@@ -82,11 +82,11 @@ typedef struct {
     /** Parent object */
     opal_object_t super;
     /** Unique index when multiple apps per job */
-    size_t idx;
+    orte_std_cntr_t idx;
     /** Absolute pathname of argv[0] */
     char   *app;
     /** Number of copies of this process that are to be launched */
-    size_t num_procs;
+    orte_std_cntr_t num_procs;
     /** Standard argv-style array, including a final NULL pointer */
     char  **argv;
     /** Standard environ-style array, including a final NULL pointer */
@@ -96,7 +96,7 @@ typedef struct {
     /** Whether the cwd was set by the user or by the system */
     bool user_specified_cwd;
     /** Length of the map_data array, not including the final NULL entry */
-    size_t num_map;
+    orte_std_cntr_t num_map;
     /** Mapping data about how this app should be laid out across CPUs
         / nodes */
     orte_app_context_map_t **map_data;

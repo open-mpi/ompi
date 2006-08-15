@@ -89,7 +89,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 /* destructor - used to free any resources held by instance */
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != app_context->app) {
         free (app_context->app);

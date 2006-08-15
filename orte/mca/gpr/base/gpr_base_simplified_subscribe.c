@@ -48,7 +48,7 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
     orte_gpr_subscription_t sub = ORTE_GPR_SUBSCRIPTION_EMPTY;
     orte_gpr_trigger_t *trigs;
     orte_gpr_trigger_t trig = ORTE_GPR_TRIGGER_EMPTY;
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
 
     OPAL_TRACE(1);
@@ -111,14 +111,14 @@ int orte_gpr_base_subscribe_N(orte_gpr_subscription_id_t *id,
                               orte_gpr_addr_mode_t addr_mode,
                               char *segment,
                               char **tokens,
-                              size_t n,
+                              orte_std_cntr_t n,
                               char **keys,
                               orte_gpr_notify_cb_fn_t cbfunc,
                               void *user_tag)
 {
     orte_gpr_subscription_t *sub;
     orte_gpr_trigger_t *trig;
-    size_t i, num_tokens;
+    orte_std_cntr_t i, num_tokens;
     int rc;
 
     OPAL_TRACE(1);
@@ -207,13 +207,13 @@ int orte_gpr_base_define_trigger(orte_gpr_trigger_id_t *id,
                                  orte_gpr_addr_mode_t addr_mode,
                                  char *segment,
                                  char **tokens,
-                                 size_t n,
+                                 orte_std_cntr_t n,
                                  char **keys,
                                  orte_gpr_trigger_cb_fn_t cbfunc,
                                  void *user_tag)
 {
     orte_gpr_trigger_t *trig;
-    size_t i, num_tokens;
+    orte_std_cntr_t i, num_tokens;
     int rc;
 
     OPAL_TRACE(1);
@@ -294,14 +294,14 @@ int orte_gpr_base_define_trigger_level(orte_gpr_trigger_id_t *id,
                                  orte_gpr_addr_mode_t addr_mode,
                                  char *segment,
                                  char **tokens,
-                                 size_t n,
+                                 orte_std_cntr_t n,
                                  char **keys,
-                                 size_t *levels,
+                                 orte_std_cntr_t *levels,
                                  orte_gpr_trigger_cb_fn_t cbfunc,
                                  void *user_tag)
 {
     orte_gpr_trigger_t *trig;
-    size_t i, num_tokens;
+    orte_std_cntr_t i, num_tokens;
     int rc;
 
     OPAL_TRACE(1);
@@ -351,7 +351,7 @@ int orte_gpr_base_define_trigger_level(orte_gpr_trigger_id_t *id,
     }
 
     for (i=0; i < n; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_create_keyval(&(trig->values[0]->keyvals[i]), keys[i], ORTE_SIZE, &(levels[i])))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_create_keyval(&(trig->values[0]->keyvals[i]), keys[i], ORTE_STD_CNTR, &(levels[i])))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(trig);
             return rc;

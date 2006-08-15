@@ -43,8 +43,8 @@
 
 int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 {
-    size_t i, num_counters, num_named_trigs;
-    size_t zero=0;
+    orte_std_cntr_t i, num_counters, num_named_trigs;
+    orte_std_cntr_t zero=0;
     int rc;
     orte_gpr_value_t *value;
     char* keys[] = {
@@ -76,7 +76,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     };
     char *segment, *trig_name, *tokens[2], *trig_keys[2];
     orte_gpr_trigger_id_t id;
-    size_t trig_level;
+    orte_std_cntr_t trig_level;
 
     OPAL_TRACE(1);
 
@@ -100,7 +100,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     value->tokens[0] = strdup(ORTE_JOB_GLOBALS); /* put counters in the job's globals container */
 
     for (i=0; i < num_counters; i++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i]), keys[i], ORTE_SIZE, &zero))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[i]), keys[i], ORTE_STD_CNTR, &zero))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             return rc;
@@ -199,7 +199,7 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
     orte_buffer_t buffer;
     orte_process_name_t *recipients=NULL;
-    size_t n=0;
+    orte_std_cntr_t n=0;
     int rc;
     orte_jobid_t job;
 
@@ -316,7 +316,7 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
 
 int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc, void* cbdata, orte_proc_state_t cb_conditions)
 {
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
     char *segment, *trig_name, *tokens[2];
     orte_gpr_subscription_id_t id;
@@ -354,7 +354,7 @@ int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_c
         ORTE_NUM_TERMINATED_TRIGGER,
         ORTE_NUM_ABORTED_TRIGGER
     };
-    size_t num_counters = sizeof(keys)/sizeof(keys[0]);
+    orte_std_cntr_t num_counters = sizeof(keys)/sizeof(keys[0]);
 
     OPAL_TRACE(1);
 

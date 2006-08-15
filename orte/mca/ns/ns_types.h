@@ -33,6 +33,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -66,9 +67,9 @@
  * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
  * uses of it if these types change to be larger than (unsigned long)!
  */
-typedef uint32_t orte_jobid_t;
-typedef uint32_t orte_cellid_t;
-typedef uint32_t orte_vpid_t;
+typedef orte_std_cntr_t orte_jobid_t;
+typedef orte_std_cntr_t orte_cellid_t;
+typedef orte_std_cntr_t orte_vpid_t;
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 typedef uint8_t orte_ns_cmd_flag_t;
 
@@ -82,9 +83,9 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX ((orte_cellid_t)(1UL << 31))
-#define ORTE_JOBID_MAX  ((orte_jobid_t)(1UL << 31))
-#define ORTE_VPID_MAX   ((orte_vpid_t)(1UL << 31))
+#define ORTE_CELLID_MAX     ORTE_STD_CNTR_MAX
+#define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
+#define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
 
 extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all

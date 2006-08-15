@@ -165,7 +165,7 @@ int orte_gpr_replica_dump_a_trigger(
 {
     orte_buffer_t buffer;
     orte_gpr_replica_trigger_t **trigs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);
@@ -227,7 +227,7 @@ int orte_gpr_replica_dump_a_subscription(char *name,
 {
     orte_buffer_t buffer;
     orte_gpr_replica_subscription_t **subs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_gpr_replica_globals.mutex);

@@ -45,7 +45,7 @@ int orte_gpr_replica_process_command_buffer(orte_buffer_t *input_buffer,
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
     int rc, ret, rc2;
-    size_t n, num_vals;
+    orte_std_cntr_t n, num_vals;
     bool compound_cmd=false;
     orte_data_type_t type;
 

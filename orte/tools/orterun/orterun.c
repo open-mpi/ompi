@@ -94,7 +94,7 @@ static int num_aborted = 0;
 static int num_killed = 0;
 static char **global_mca_env = NULL;
 static bool have_zero_np = false;
-static size_t total_num_apps = 0;
+static orte_std_cntr_t total_num_apps = 0;
 
 /*
  * setup globals for catching orterun command line options
@@ -111,7 +111,7 @@ struct globals_t {
     bool no_oversubscribe;
     bool debugger;
     bool no_local_schedule;
-    size_t num_procs;
+    orte_std_cntr_t num_procs;
     int exit_status;
     char *hostfile;
     char *env_val;
@@ -494,7 +494,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
 {
     char *segment;
     orte_gpr_value_t** values = NULL;
-    size_t i, k, num_values = 0;
+    orte_std_cntr_t i, k, num_values = 0;
     int rc;
     int32_t exit_status = 0;
     bool exit_status_set;
@@ -533,7 +533,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
         orte_gpr_value_t* value = values[i];
         orte_process_name_t name, *nptr;
         pid_t pid = 0, *pidptr;
-        size_t rank = 0, *sptr;
+        orte_std_cntr_t rank = 0, *sptr;
         bool rank_found=false;
         char* node_name = NULL;
         orte_exit_code_t *ecptr;
@@ -935,7 +935,7 @@ static int parse_locals(int argc, char* argv[])
     char **temp_argv, **env;
     orte_app_context_t *app;
     bool made_app;
-    size_t j, size1;
+    orte_std_cntr_t j, size1;
 
     /* Make the apps */
 
@@ -972,7 +972,7 @@ static int parse_locals(int argc, char* argv[])
                     exit(1);
                 }
                 if (made_app) {
-                    size_t dummy;
+                    orte_std_cntr_t dummy;
                     app->idx = app_num;
                     ++app_num;
                     orte_pointer_array_add(&dummy, apps_pa, app);
@@ -998,7 +998,7 @@ static int parse_locals(int argc, char* argv[])
             exit(1);
         }
         if (made_app) {
-            size_t dummy;
+            orte_std_cntr_t dummy;
             app->idx = app_num;
             ++app_num;
             orte_pointer_array_add(&dummy, apps_pa, app);
@@ -1105,7 +1105,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     orte_app_context_t *app = NULL;
     extern char **environ;
 #if 0 /* Used only in the C/N notion case, remove to silence compiler warnings */
-    size_t l, len;
+    orte_std_cntr_t l, len;
 #endif
     bool map_data = false, save_arg, cmd_line_made = false;
     int new_argc = 0;
@@ -1546,7 +1546,7 @@ static int parse_appfile(char *filename, char ***env)
                 opal_argv_free(tmp_env);
             }
             if (made_app) {
-                size_t dummy;
+                orte_std_cntr_t dummy;
                 app->idx = app_num;
                 ++app_num;
                 orte_pointer_array_add(&dummy, apps_pa, app);

@@ -40,7 +40,7 @@
 int orte_gpr_base_unpack_subscribe(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     OPAL_TRACE(3);
@@ -69,7 +69,7 @@ int orte_gpr_base_unpack_subscribe(orte_buffer_t *buffer, int *ret)
 int orte_gpr_base_unpack_unsubscribe(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     OPAL_TRACE(3);
@@ -97,7 +97,7 @@ int orte_gpr_base_unpack_unsubscribe(orte_buffer_t *buffer, int *ret)
 int orte_gpr_base_unpack_cancel_trigger(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     OPAL_TRACE(3);

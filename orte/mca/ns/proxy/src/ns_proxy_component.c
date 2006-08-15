@@ -318,7 +318,7 @@ int orte_ns_proxy_finalize(void)
     orte_ns_proxy_cell_info_t **cptr;
     orte_ns_proxy_tagitem_t **tag;
     orte_ns_proxy_dti_t **dti;
-    size_t i;
+    orte_std_cntr_t i;
 
   /* free all tracking storage, but only if this component was initialized */
 

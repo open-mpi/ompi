@@ -116,7 +116,7 @@ orte_ns_base_create_my_name_not_available(void)
 }
 
 int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
-                                  size_t *num_procs, orte_jobid_t job)
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job)
 {
     *procs = NULL;
     *num_procs = 0;
@@ -609,9 +609,9 @@ int orte_ns_base_free_name(orte_process_name_t **name)
 }
 
 int orte_ns_base_get_peers(orte_process_name_t **procs,
-                           size_t *num_procs, size_t *self)
+                           orte_std_cntr_t *num_procs, orte_std_cntr_t *self)
 {
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
     orte_cellid_t mycellid;
     orte_jobid_t myjobid;
@@ -645,7 +645,7 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
     }
 
     *num_procs = orte_process_info.num_procs;
-    *self = (size_t)(myvpid - orte_process_info.vpid_start);
+    *self = (orte_std_cntr_t)(myvpid - orte_process_info.vpid_start);
 
     return ORTE_SUCCESS;
 }
@@ -657,7 +657,7 @@ int orte_ns_base_get_peers(orte_process_name_t **procs,
 int orte_ns_base_print_dump(orte_buffer_t *buffer)
 {
     char *line;
-    size_t n;
+    orte_std_cntr_t n;
     orte_data_type_t type;
     int rc;
 

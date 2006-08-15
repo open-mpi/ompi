@@ -43,12 +43,12 @@
 #include "orte/mca/gpr/replica/communications/gpr_replica_comm.h"
 #include "gpr_replica_fn.h"
 
-static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***values, size_t *num_vals,
+static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***values, orte_std_cntr_t *num_vals,
                                               orte_gpr_replica_subscription_t *sub);
 
 static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscription_t *sub,
                                                        orte_gpr_notify_message_t *msg,
-                                                       size_t cnt,
+                                                       orte_std_cntr_t cnt,
                                                        orte_gpr_value_t **values);
 
 int orte_gpr_replica_process_callbacks(void)
@@ -57,7 +57,7 @@ int orte_gpr_replica_process_callbacks(void)
     orte_gpr_replica_trigger_t **trigs;
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_replica_requestor_t **reqs;
-    size_t i, j, k, m;
+    orte_std_cntr_t i, j, k, m;
     int rc;
 
     /* check and set flag indicating callbacks being processed */
@@ -150,8 +150,8 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
     orte_gpr_replica_callbacks_t *cb;
     orte_gpr_replica_requestor_t **reqs;
     orte_gpr_value_t **values;
-    size_t cnt;
-    size_t i, j;
+    orte_std_cntr_t cnt;
+    orte_std_cntr_t i, j;
     bool cleanup_reqd;
     int rc=ORTE_SUCCESS;
 
@@ -242,7 +242,7 @@ int orte_gpr_replica_register_trigger_callback(orte_gpr_replica_trigger_t *trig)
     orte_gpr_replica_counter_t **cntr;
     orte_gpr_replica_subscription_t **subs;
     orte_gpr_value_t **values, *value;
-    size_t i, j, k, cnt;
+    orte_std_cntr_t i, j, k, cnt;
     int rc;
 
     /* set the callback's message
@@ -436,10 +436,10 @@ int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
 
 int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
-                                        size_t cnt,
+                                        orte_std_cntr_t cnt,
                                         orte_gpr_value_t **values)
 {
-    size_t i, j, k, index;
+    orte_std_cntr_t i, j, k, index;
     orte_gpr_notify_data_t **data, *dptr;
 
     /* check to see if this data is going to the same place as
@@ -509,10 +509,10 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
 
 static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscription_t *sub,
                                                        orte_gpr_notify_message_t *msg,
-                                                       size_t cnt,
+                                                       orte_std_cntr_t cnt,
                                                        orte_gpr_value_t **values)
 {
-    size_t i, j, k, index;
+    orte_std_cntr_t i, j, k, index;
     orte_gpr_notify_data_t **data, *dptr;
 
     /* check to see if this data is going to the same place as
@@ -584,12 +584,12 @@ static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscrip
     return ORTE_SUCCESS;
 }
 
-static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***ret_values, size_t *cnt,
+static int orte_gpr_replica_get_callback_data(orte_gpr_value_t ***ret_values, orte_std_cntr_t *cnt,
                                               orte_gpr_replica_subscription_t *sub)
 {
     orte_gpr_value_t **vals, **values;
     orte_gpr_replica_ivalue_t **ivals;
-    size_t i, j, k, num_tokens, num_keys, interim, count;
+    orte_std_cntr_t i, j, k, num_tokens, num_keys, interim, count;
     int rc;
 
     /* setup default error returns */

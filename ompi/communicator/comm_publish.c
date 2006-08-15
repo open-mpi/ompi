@@ -127,7 +127,7 @@ char* ompi_comm_namelookup ( char *service_name )
     char *token[2], *key[2];
     orte_gpr_keyval_t **keyvals=NULL;
     orte_gpr_value_t **values;
-    size_t cnt=0;
+    orte_std_cntr_t cnt=0;
     char *stmp=NULL;
     int ret;
 

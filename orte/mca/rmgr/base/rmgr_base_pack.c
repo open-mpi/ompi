@@ -59,7 +59,7 @@ int orte_rmgr_base_pack_cmd(orte_buffer_t* buffer, orte_rmgr_cmd_t cmd, orte_job
 int orte_rmgr_base_pack_create_cmd(
     orte_buffer_t* buffer,
     orte_app_context_t** context,
-    size_t num_context)
+    orte_std_cntr_t num_context)
 {
      int rc;
 
@@ -73,7 +73,7 @@ int orte_rmgr_base_pack_create_cmd(
          return rc;
      }
 
-     rc = orte_dss.pack(buffer, &num_context, 1, ORTE_SIZE);
+     rc = orte_dss.pack(buffer, &num_context, 1, ORTE_STD_CNTR);
      if(ORTE_SUCCESS != rc) {
          ORTE_ERROR_LOG(rc);
          return rc;
@@ -182,7 +182,7 @@ int orte_rmgr_base_unpack_rsp(
     orte_buffer_t* buffer)
 {
     int32_t rc;
-    size_t cnt = 1;
+    orte_std_cntr_t cnt = 1;
 
     OPAL_TRACE(4);
 
@@ -198,7 +198,7 @@ int orte_rmgr_base_unpack_create_rsp(
     orte_jobid_t* jobid)
 {
     int32_t rc;
-    size_t cnt;
+    orte_std_cntr_t cnt;
 
     OPAL_TRACE(4);
 

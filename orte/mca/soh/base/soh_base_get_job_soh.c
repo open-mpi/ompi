@@ -39,7 +39,7 @@ int orte_soh_base_get_job_soh(orte_job_state_t *state,
     orte_gpr_value_t **values;
     orte_gpr_keyval_t **keyvals;
     int rc;
-    size_t cnt, num_tokens, i, j;
+    orte_std_cntr_t cnt, num_tokens, i, j;
     char **tokens, *keys[2];
     orte_job_state_t *js;
 

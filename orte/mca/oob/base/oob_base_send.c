@@ -61,7 +61,7 @@ int mca_oob_send(orte_process_name_t* peer, struct iovec *msg, int count, int ta
 int mca_oob_send_packed (orte_process_name_t* peer, orte_buffer_t* buffer, int tag, int flags)
 {
     void *dataptr;
-    size_t datalen;
+    orte_std_cntr_t datalen;
     struct iovec msg[1];
     int rc;
 

@@ -33,6 +33,7 @@
  */
 
 typedef uint32_t orte_rml_tag_t;
+#define ORTE_RML_TAG    ORTE_UINT32
 
 #define ORTE_RML_TAG_NS          1
 #define ORTE_RML_TAG_GPR         2

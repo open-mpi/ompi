@@ -185,7 +185,7 @@ int orte_gpr_proxy_delete_entries_nb(
 }
 
 
-int orte_gpr_proxy_index(char *segment, size_t *cnt, char ***index)
+int orte_gpr_proxy_index(char *segment, orte_std_cntr_t *cnt, char ***index)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;

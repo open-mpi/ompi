@@ -82,13 +82,13 @@ struct orte_ps_vpid_info_t {
     opal_list_item_t super;
     
     /** General VPID Information */
-    size_t rank;
+    orte_std_cntr_t rank;
     pid_t pid;
     orte_process_name_t name;
     char * node;
     orte_proc_state_t state;
     
-    size_t app_context_idx;
+    orte_std_cntr_t app_context_idx;
 
 };
 typedef struct orte_ps_vpid_info_t orte_ps_vpid_info_t;
@@ -111,18 +111,18 @@ struct orte_ps_job_info_t {
     orte_jobid_t     id;
     orte_job_state_t state;
 
-    size_t num_init;
-    size_t num_launched;
-    size_t num_running;
-    size_t num_finalized;
-    size_t num_terminated;
-    size_t num_aborted;
-    size_t slots;
+    orte_std_cntr_t num_init;
+    orte_std_cntr_t num_launched;
+    orte_std_cntr_t num_running;
+    orte_std_cntr_t num_finalized;
+    orte_std_cntr_t num_terminated;
+    orte_std_cntr_t num_aborted;
+    orte_std_cntr_t slots;
     orte_vpid_t vpid_start;
     orte_vpid_t vpid_range;
 
     orte_app_context_t **app_context;
-    size_t num_app_context;
+    orte_std_cntr_t num_app_context;
 
     /** List of vpids */
     opal_list_t vpid_list;
@@ -1000,7 +1000,7 @@ static int gather_active_jobs(orte_ps_universe_info_t* universe) {
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL;
     orte_gpr_value_t** values = NULL;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
 
     /**********************
      * Job Info segment
@@ -1074,7 +1074,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL, *tokens[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
     opal_list_item_t* item = NULL;
 
     /*
@@ -1122,11 +1122,11 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
             
             for( j = 0; j < value->cnt; ++j) {
                 orte_gpr_keyval_t* keyval = value->keyvals[j];
-                size_t *tmp_num;
+                orte_std_cntr_t *tmp_num;
                 orte_vpid_t *tmp_vpid;
 
                 if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_AT_INIT, strlen(ORTE_PROC_NUM_AT_INIT)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1134,7 +1134,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_LAUNCHED, strlen(ORTE_PROC_NUM_LAUNCHED)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1142,7 +1142,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_RUNNING, strlen(ORTE_PROC_NUM_RUNNING)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1150,7 +1150,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_FINALIZED, strlen(ORTE_PROC_NUM_FINALIZED)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1158,7 +1158,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_TERMINATED, strlen(ORTE_PROC_NUM_TERMINATED)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1166,7 +1166,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_PROC_NUM_ABORTED, strlen(ORTE_PROC_NUM_ABORTED)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1174,7 +1174,7 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
                     continue;
                 }
                 else if( 0 == strncmp(keyval->key, ORTE_JOB_SLOTS_KEY, strlen(ORTE_JOB_SLOTS_KEY)) ) {
-                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_SIZE))) {
+                    if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_num, keyval->value, ORTE_STD_CNTR))) {
                         exit_status = ret;
                         goto cleanup;
                     }
@@ -1209,9 +1209,9 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
     int ret, exit_status = ORTE_SUCCESS;
     char *segment = NULL;
     orte_gpr_value_t** values = NULL;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
     opal_list_item_t* job_item  = NULL;
-    size_t v = 0;
+    orte_vpid_t v = 0;
 
     /*
      * For each Job in the universe
@@ -1236,7 +1236,7 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
             orte_ps_vpid_info_t *vpid = NULL;
             orte_process_name_t proc;
             char **tokens = NULL;
-            size_t num_tokens = 0;
+            orte_std_cntr_t num_tokens = 0;
 
             /*
              * If the user specified a vpid, then just get that one
@@ -1297,8 +1297,8 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                     orte_gpr_keyval_t* keyval = value->keyvals[j];
                     
                     if( 0 == strncmp(keyval->key, ORTE_PROC_RANK_KEY, strlen(ORTE_PROC_RANK_KEY)) ) {
-                        size_t *tmp_size;
-                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_SIZE))) {
+                        orte_std_cntr_t *tmp_size;
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_STD_CNTR))) {
                             exit_status = ret;
                             goto cleanup;
                         }
@@ -1307,8 +1307,8 @@ static int gather_vpid_info(orte_ps_universe_info_t* universe) {
                         continue;
                     }
                     else if( 0 == strncmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY, strlen(ORTE_PROC_APP_CONTEXT_KEY)) ) {
-                        size_t *tmp_size;
-                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_SIZE))) {
+                        orte_std_cntr_t *tmp_size;
+                        if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_size, keyval->value, ORTE_STD_CNTR))) {
                             exit_status = ret;
                             goto cleanup;
                         }
@@ -1393,7 +1393,7 @@ void orte_ps_job_info_construct(orte_ps_job_info_t *obj) {
 
 void orte_ps_job_info_destruct( orte_ps_job_info_t *obj) {
     opal_list_item_t* item = NULL;
-    size_t i;
+    orte_std_cntr_t i;
 
     for(i = 0; i < obj->num_app_context; ++i) {
         free(obj->app_context[i]);

@@ -102,7 +102,8 @@ int orte_gpr_base_size_keyval(size_t *size, orte_gpr_keyval_t *src, orte_data_ty
 /* VALUE */
 int orte_gpr_base_size_gpr_value(size_t *size, orte_gpr_value_t *src, orte_data_type_t type)
 {
-    size_t i, data_size;
+    orte_std_cntr_t i;
+    size_t data_size;
     int rc;
 
     /* account for the object itself */
@@ -147,7 +148,8 @@ int orte_gpr_base_size_gpr_value(size_t *size, orte_gpr_value_t *src, orte_data_
 /* SUBSCRIPTION */
 int orte_gpr_base_size_subscription(size_t *size, orte_gpr_subscription_t *src, orte_data_type_t type)
 {
-    size_t i, data_size;
+    orte_std_cntr_t i;
+    size_t data_size;
     int rc;
 
     /* account for the object itself */
@@ -180,7 +182,8 @@ int orte_gpr_base_size_subscription(size_t *size, orte_gpr_subscription_t *src, 
 /* TRIGGER */
 int orte_gpr_base_size_trigger(size_t *size, orte_gpr_trigger_t *src, orte_data_type_t type)
 {
-    size_t i, data_size;
+    orte_std_cntr_t i;
+    size_t data_size;
     int rc;
 
     /* account for the object itself */
@@ -213,7 +216,8 @@ int orte_gpr_base_size_trigger(size_t *size, orte_gpr_trigger_t *src, orte_data_
 /* NOTIFY DATA */
 int orte_gpr_base_size_notify_data(size_t *size, orte_gpr_notify_data_t *src, orte_data_type_t type)
 {
-    size_t j, k, data_size;
+    orte_std_cntr_t j, k;
+    size_t data_size;
     orte_gpr_value_t **val;
     int rc;
 
@@ -254,7 +258,8 @@ int orte_gpr_base_size_notify_data(size_t *size, orte_gpr_notify_data_t *src, or
 /* NOTIFY MSG */
 int orte_gpr_base_size_notify_msg(size_t *size, orte_gpr_notify_message_t *src, orte_data_type_t type)
 {
-    size_t j, k, data_size;
+    orte_std_cntr_t j, k;
+    size_t data_size;
     orte_gpr_notify_data_t **val;
     int rc;
 

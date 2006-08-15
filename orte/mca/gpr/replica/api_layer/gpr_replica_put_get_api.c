@@ -37,10 +37,10 @@
 
 #include "gpr_replica_api.h"
 
-int orte_gpr_replica_put(size_t cnt, orte_gpr_value_t **values)
+int orte_gpr_replica_put(orte_std_cntr_t cnt, orte_gpr_value_t **values)
 {
     int rc = ORTE_SUCCESS;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_value_t *val;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
@@ -114,7 +114,7 @@ CLEANUP:
 }
 
 
-int orte_gpr_replica_put_nb(size_t cnt, orte_gpr_value_t **values,
+int orte_gpr_replica_put_nb(orte_std_cntr_t cnt, orte_gpr_value_t **values,
                             orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     OPAL_TRACE(1);
@@ -125,11 +125,11 @@ int orte_gpr_replica_put_nb(size_t cnt, orte_gpr_value_t **values,
 
 int orte_gpr_replica_get(orte_gpr_addr_mode_t addr_mode,
                          char *segment, char **tokens, char **keys,
-                         size_t *cnt, orte_gpr_value_t ***values)
+                         orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 {
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
-    size_t num_tokens=0, num_keys=0;
+    orte_std_cntr_t num_tokens=0, num_keys=0;
     int rc;
 
     OPAL_TRACE(1);
@@ -186,13 +186,13 @@ CLEANUP:
 
 int orte_gpr_replica_get_conditional(orte_gpr_addr_mode_t addr_mode,
                          char *segment, char **tokens, char **keys,
-                         size_t num_conditions, orte_gpr_keyval_t **conditions,
-                         size_t *cnt, orte_gpr_value_t ***values)
+                         orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions,
+                         orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 {
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
     orte_gpr_replica_itagval_t **conds=NULL;
-    size_t num_tokens=0, num_keys=0, i;
+    orte_std_cntr_t num_tokens=0, num_keys=0, i;
     int rc;
 
     OPAL_TRACE(1);

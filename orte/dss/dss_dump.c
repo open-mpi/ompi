@@ -29,7 +29,7 @@ void orte_dss_dump_data_types(int output)
 {
     orte_dss_type_info_t **ptr;
     orte_data_type_t j;
-    size_t i;
+    orte_std_cntr_t i;
 
     opal_output(output, "DUMP OF REGISTERED DATA TYPES");
 

@@ -315,7 +315,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             item != opal_list_get_end(&map);
             item =  opal_list_get_next(item)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-            size_t i;
+            orte_std_cntr_t i;
 
             for (i = 0 ; i < map->num_procs ; ++i) {
                 /* Clean up the session directory as if we were the
@@ -726,7 +726,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                  * NOT being oversubscribed
                  */
                 if (ras_node->node_slots > 0 &&
-                    opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
+                    (orte_std_cntr_t)opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
                     if (mca_pls_rsh_component.debug) {
                         opal_output(0, "pls:rsh: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
                                     ras_node->node_slots, opal_list_get_size(&rmaps_node->node_procs));

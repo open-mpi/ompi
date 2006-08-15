@@ -34,11 +34,11 @@
  * APP_CONTEXT
  */
 int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
-                                 size_t *num_vals, orte_data_type_t type)
+                                 orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
-    int rc, count;
+    int rc;
     orte_app_context_t **app_context;
-    size_t i, max_n=1;
+    orte_std_cntr_t i, max_n=1, count;
     int8_t have_prefix, user_specified;
 
     /* unpack into array of app_context objects */
@@ -55,7 +55,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the app index number */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->idx),
-                    &max_n, ORTE_SIZE))) {
+                    &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -71,14 +71,14 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the number of processes */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_procs),
-                    &max_n, ORTE_SIZE))) {
+                    &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* get the number of argv strings that were packed */
         max_n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -93,7 +93,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
             app_context[i]->argv[count] = NULL;
 
             /* and unpack them */
-            max_n = (size_t)count;
+            max_n = count;
             if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, app_context[i]->argv, &max_n, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -102,7 +102,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 
         /* get the number of env strings */
         max_n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -147,7 +147,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* unpack the map data */
         max_n=1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_map),
-                   &max_n, ORTE_SIZE))) {
+                   &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -190,11 +190,11 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
  * APP_CONTEXT_MAP
  */
 int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
     orte_app_context_map_t **app_context_map;
-    size_t i, max_n=1;
+    orte_std_cntr_t i, max_n=1;
 
     /* unpack into array of app_context_map objects */
     app_context_map = (orte_app_context_map_t**) dest;

@@ -163,7 +163,7 @@ orte_pls_base_proxy_terminate_job(orte_jobid_t jobid)
     char *keys[2];
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
     orte_process_name_t proc, *pnptr;
     int rc;
 
@@ -315,7 +315,7 @@ orte_pls_base_proxy_signal_job(orte_jobid_t jobid, int32_t signal)
     char *keys[2];
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
     orte_process_name_t proc, *pnptr;
     int rc;
 

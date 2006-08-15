@@ -40,7 +40,7 @@ int orte_gpr_base_unpack_increment_value(orte_buffer_t *cmd, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -69,7 +69,7 @@ int orte_gpr_base_unpack_decrement_value(orte_buffer_t *cmd, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 

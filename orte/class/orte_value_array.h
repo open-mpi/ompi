@@ -23,6 +23,7 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
+
 #include "opal/class/opal_object.h"
 #if OMPI_ENABLE_DEBUG
 #include "opal/util/output.h"
@@ -45,9 +46,9 @@ struct orte_value_array_t
 {
     opal_object_t    super;
     unsigned char*  array_items;
-    size_t          array_item_sizeof;
-    size_t          array_size;
-    size_t          array_alloc_size;
+    orte_std_cntr_t          array_item_sizeof;
+    orte_std_cntr_t          array_size;
+    orte_std_cntr_t          array_alloc_size;
 };
 typedef struct orte_value_array_t orte_value_array_t;
 
@@ -66,7 +67,7 @@ typedef struct orte_value_array_t orte_value_array_t;
  * delete it.
  */
 
-static inline int orte_value_array_init(orte_value_array_t *array, size_t item_sizeof)
+static inline int orte_value_array_init(orte_value_array_t *array, orte_std_cntr_t item_sizeof)
 {
     array->array_item_sizeof = item_sizeof;
     array->array_alloc_size = 1; 
@@ -84,7 +85,7 @@ static inline int orte_value_array_init(orte_value_array_t *array, size_t item_s
  *  @return  ORTE error code.
  */
 
-static inline int orte_value_array_reserve(orte_value_array_t* array, size_t size)
+static inline int orte_value_array_reserve(orte_value_array_t* array, orte_std_cntr_t size)
 {
      if(size > array->array_alloc_size) {
          array->array_items = (unsigned char*)realloc(array->array_items, array->array_item_sizeof * size);
@@ -107,7 +108,7 @@ static inline int orte_value_array_reserve(orte_value_array_t* array, size_t siz
  *  @return  The number of elements currently in use.
  */
 
-static inline size_t orte_value_array_get_size(orte_value_array_t* array)
+static inline orte_std_cntr_t orte_value_array_get_size(orte_value_array_t* array)
 {
     return array->array_size;
 }
@@ -128,7 +129,7 @@ static inline size_t orte_value_array_get_size(orte_value_array_t* array)
  *  return the new size.
  */
 
-OMPI_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, size_t size);
+OMPI_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, orte_std_cntr_t size);
 
 
 /** 
@@ -160,7 +161,7 @@ OMPI_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, size_t si
  *  array size, the array is grown to satisfy the request.
  */
 
-static inline void* orte_value_array_get_item(orte_value_array_t *array, size_t index)
+static inline void* orte_value_array_get_item(orte_value_array_t *array, orte_std_cntr_t index)
 {
     if(index >= array->array_size && orte_value_array_set_size(array, index+1) != ORTE_SUCCESS)
         return NULL;
@@ -200,7 +201,7 @@ static inline void* orte_value_array_get_item(orte_value_array_t *array, size_t 
  * copied into the array by value.
  */
 
-static inline int orte_value_array_set_item(orte_value_array_t *array, size_t index, const void* item)
+static inline int orte_value_array_set_item(orte_value_array_t *array, orte_std_cntr_t index, const void* item)
 {
     int rc;
     if(index >= array->array_size && 
@@ -243,7 +244,7 @@ static inline int orte_value_array_append_item(orte_value_array_t *array, const 
  * All elements following this index are shifted down.
  */
 
-static inline int orte_value_array_remove_item(orte_value_array_t *array, size_t index)
+static inline int orte_value_array_remove_item(orte_value_array_t *array, orte_std_cntr_t index)
 {
 #if OMPI_ENABLE_DEBUG
     if (index >= array->array_size) {

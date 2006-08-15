@@ -30,8 +30,7 @@ static int orte_ras_poe_allocate(orte_jobid_t jobid)
 {
     char *poe_node_str;
     char **names; 
-    int i, j, ret, nnode;
-    int *slots;
+    int i, ret, nnode;
     opal_list_t nodes_list;
     orte_ras_node_t *node;
     opal_list_item_t* item;

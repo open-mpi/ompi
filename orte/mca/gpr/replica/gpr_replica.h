@@ -47,8 +47,8 @@ extern "C" {
  * typedefs needed in replica component
  */
 
-typedef size_t orte_gpr_replica_itag_t;
-#define ORTE_GPR_REPLICA_ITAG_MAX SIZE_MAX
+typedef orte_std_cntr_t orte_gpr_replica_itag_t;
+#define ORTE_GPR_REPLICA_ITAG_MAX ORTE_STD_CNTR_MAX
 
 
 typedef uint8_t orte_gpr_replica_addr_mode_t;
@@ -79,7 +79,7 @@ typedef uint8_t orte_gpr_replica_action_t;
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
-     size_t index;                          /**< location of this subscription in array */
+     orte_std_cntr_t index;                          /**< location of this subscription in array */
      char *name;
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -95,7 +95,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_local_subscriber_t);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_trigger_id_t id;              /**< id of this trigger */
-     size_t index;                          /**< location of this trigger in array */
+     orte_std_cntr_t index;                          /**< location of this trigger in array */
      char *name;
      orte_gpr_trigger_cb_fn_t callback;      /**< Function to be called for notification */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -108,18 +108,18 @@ typedef struct {
     int debug;
     int isolate;
     opal_mutex_t mutex;
-    size_t num_local_subs;
+    orte_std_cntr_t num_local_subs;
     orte_pointer_array_t *local_subscriptions;
-    size_t num_local_trigs;
+    orte_std_cntr_t num_local_trigs;
     orte_pointer_array_t *local_triggers;
-    size_t num_srch_cptr;
+    orte_std_cntr_t num_srch_cptr;
     orte_pointer_array_t *srch_cptr;
-    size_t num_overwritten;
+    orte_std_cntr_t num_overwritten;
     orte_pointer_array_t *overwritten;
     orte_pointer_array_t *sub_ptrs;
-    size_t num_srch_ival;
+    orte_std_cntr_t num_srch_ival;
     orte_pointer_array_t *srch_ival;
-    size_t num_acted_upon;
+    orte_std_cntr_t num_acted_upon;
     orte_pointer_array_t *acted_upon;
     orte_bitmap_t srch_itag;
 } orte_gpr_replica_globals_t;
@@ -138,7 +138,7 @@ typedef struct {
  */
 struct orte_gpr_replica_t {
     orte_pointer_array_t *segments;  /**< Managed array of pointers to segment objects */
-    size_t num_segs;
+    orte_std_cntr_t num_segs;
     orte_pointer_array_t *triggers;     /**< Managed array of pointers to triggers */
     orte_gpr_trigger_id_t num_trigs;
     orte_pointer_array_t *subscriptions; /**< Managed array of pointers to subscriptions */
@@ -164,7 +164,7 @@ struct orte_gpr_replica_segment_t {
     orte_gpr_replica_itag_t itag;       /**< itag of this segment */
     orte_gpr_replica_itag_t num_dict_entries;
     orte_pointer_array_t *dict;         /**< Managed array of dict structs */
-    size_t num_containers;
+    orte_std_cntr_t num_containers;
     orte_pointer_array_t *containers;   /**< Managed array of pointers to containers on this segment */
 };
 typedef struct orte_gpr_replica_segment_t orte_gpr_replica_segment_t;
@@ -193,11 +193,11 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_segment_t);
  */
 struct orte_gpr_replica_container_t {
     opal_object_t super;              /**< Make this an object */
-    size_t index;                        /**< Location in the pointer array */
+    orte_std_cntr_t index;                        /**< Location in the pointer array */
     orte_gpr_replica_itag_t *itags;   /**< Array of itags that define this container */
-    size_t num_itags;                    /**< Number of itags in array */
+    orte_std_cntr_t num_itags;                    /**< Number of itags in array */
     orte_pointer_array_t *itagvals;   /**< Array of itagval pointers */
-    size_t num_itagvals;                /**< Number of itagvals in container */
+    orte_std_cntr_t num_itagvals;                /**< Number of itagvals in container */
     orte_value_array_t itaglist;      /**< Array of itags from all itagvals - used for rapid search */
 };
 typedef struct orte_gpr_replica_container_t orte_gpr_replica_container_t;
@@ -209,7 +209,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_container_t);
  */
 typedef struct {
     opal_object_t super;                /**< required for this to be an object */
-    size_t index;                          /**< index of this itagval on the container array */
+    orte_std_cntr_t index;                          /**< index of this itagval on the container array */
     orte_gpr_replica_itag_t itag;       /**< itag for this value's key */
     orte_data_value_t *value;            /**< Actual stored value */
 } orte_gpr_replica_itagval_t;
@@ -221,7 +221,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_itagval_t);
  */
 typedef struct {
     opal_object_t super;    /**< Makes this an object */
-    size_t index;
+    orte_std_cntr_t index;
     /* the segment upon which this data is located */
     orte_gpr_replica_segment_t *seg;
     /* describe the data */
@@ -246,7 +246,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_counter_t);
 typedef struct {
     opal_object_t super;
     /* index of this entry in requestor array */
-    size_t index;
+    orte_std_cntr_t index;
     /* process name of the recipient - set to NULL if local */
     orte_process_name_t *requestor;
     /* idtag associated with this subscription */
@@ -258,9 +258,9 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_requestor_t);
 typedef struct {
     opal_object_t super;  /**< Makes this an object */
     /* index of this entry in subscription array */
-    size_t index;
+    orte_std_cntr_t index;
     /* idtag for the subscription - may be different than index since
-     * the data type can be different than size_t
+     * the data type can be different than orte_std_cntr_t
      */
     orte_gpr_subscription_id_t idtag;
     /* name of this subscription, if provided */
@@ -286,12 +286,12 @@ typedef struct {
     /* Array of ivalues that describe the data to be
      * returned when this subscription is "fired"
      */
-    size_t num_values;
+    orte_std_cntr_t num_values;
     orte_pointer_array_t *values;
     /*
      * Array of requestors that are "attached" to this subscription
      */
-    size_t num_requestors;
+    orte_std_cntr_t num_requestors;
     orte_pointer_array_t *requestors;
 } orte_gpr_replica_subscription_t;
 
@@ -301,7 +301,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_replica_subscription_t);
 typedef struct {
     opal_object_t super;
     /* index of this entry in array */
-    size_t index;
+    orte_std_cntr_t index;
     /* process name of the requestor - set to NULL if local */
     orte_process_name_t *requestor;
     /* requestor's id for this trigger */
@@ -316,11 +316,11 @@ struct orte_gpr_replica_trigger_t {
     /* name of this trigger, if provided */
     char *name;
     /* index of this trigger in the triggers array */
-    size_t index;
+    orte_std_cntr_t index;
     /* trigger id on the local system */
     orte_gpr_trigger_id_t idtag;
     /* array of requestors that have "attached" themselves to this trigger */
-    size_t num_attached;
+    orte_std_cntr_t num_attached;
     orte_pointer_array_t *attached;
     /* the "master" requestor - if someone asks to have all
      * output routed through them, we record their info here
@@ -344,13 +344,13 @@ struct orte_gpr_replica_trigger_t {
      * comparing values in two or more counters), store the trigger level for
      * each counter that we are monitoring until they reach a specified level.
      */
-    size_t num_counters;
+    orte_std_cntr_t num_counters;
     orte_pointer_array_t *counters;
     /* a pointer to the subscriptions associated with this trigger. These
      * describe the data that will be returned when the trigger fires, and to
      * whom and where it goes.
      */
-    size_t num_subscriptions;
+    orte_std_cntr_t num_subscriptions;
     orte_pointer_array_t *subscriptions;
 };
 typedef struct orte_gpr_replica_trigger_t orte_gpr_replica_trigger_t;

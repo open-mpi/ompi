@@ -64,7 +64,7 @@ static int map_app_by_node(
     opal_list_t* max_used_nodes)
 {
     int rc = ORTE_SUCCESS;
-    size_t num_alloc = 0;
+    orte_std_cntr_t num_alloc = 0;
     opal_list_item_t *next;
     orte_ras_node_t *node;
     
@@ -141,8 +141,8 @@ static int map_app_by_slot(
     opal_list_t* max_used_nodes)
 {
     int rc = ORTE_SUCCESS;
-    size_t i, num_slots_to_take;
-    size_t num_alloc = 0;
+    orte_std_cntr_t i, num_slots_to_take;
+    orte_std_cntr_t num_alloc = 0;
     orte_ras_node_t *node;
     opal_list_item_t *next;
 
@@ -238,13 +238,13 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
 {
     orte_app_context_t** context, *app;
     orte_rmaps_base_map_t* map;
-    size_t i, num_context;
+    orte_std_cntr_t i, num_context;
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
     opal_list_t mapping;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
     orte_vpid_t vpid_start, job_vpid_start=0;
-    size_t num_procs = 0, total_num_slots, mapped_num_slots;
+    orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
     bool bynode = true, modify_app_context = false;
 

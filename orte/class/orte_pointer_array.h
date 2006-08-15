@@ -25,6 +25,7 @@
 #define ORTE_POINTER_ARRAY_H
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
 #if HAVE_STRING_H
 #include <string.h>
@@ -49,15 +50,15 @@ struct orte_pointer_array_t {
         optimization to know where to search for the first free slot.
         It does \em not necessarily imply indices all above this index
         are not taken! */
-    size_t lowest_free;
+    orte_std_cntr_t lowest_free;
     /** number of free elements in the list */
-    size_t number_free;
+    orte_std_cntr_t number_free;
     /** size of list, i.e. number of elements in addr */
-    size_t size;
+    orte_std_cntr_t size;
     /** maximum size list is allowed to reach */
-    size_t max_size;
+    orte_std_cntr_t max_size;
     /** growth steps for list */
-    size_t block_size;
+    orte_std_cntr_t block_size;
     /** pointer to array of pointers */
     void **addr;
 };
@@ -84,8 +85,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_pointer_array_t);
  * 
  */
 OMPI_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
-                                    size_t initial_allocation,
-                                    size_t max_size, size_t block_size);
+                                    orte_std_cntr_t initial_allocation,
+                                    orte_std_cntr_t max_size, orte_std_cntr_t block_size);
                                     
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -96,7 +97,7 @@ OMPI_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
  * @param (OUT) Index of inserted array element.
  * @return Return value less than zero indicates an error.
  */
-OMPI_DECLSPEC int orte_pointer_array_add(size_t *index, orte_pointer_array_t *array, void *ptr);
+OMPI_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *index, orte_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -109,7 +110,7 @@ OMPI_DECLSPEC int orte_pointer_array_add(size_t *index, orte_pointer_array_t *ar
  * @return Error code.  (-1) indicates an error.
  */
 OMPI_DECLSPEC int orte_pointer_array_set_item(orte_pointer_array_t *array, 
-                                size_t index, void *value);
+                                orte_std_cntr_t index, void *value);
 
 /**
  * Get the value of an element in array
@@ -121,7 +122,7 @@ OMPI_DECLSPEC int orte_pointer_array_set_item(orte_pointer_array_t *array,
  */
 
 static inline void *orte_pointer_array_get_item(orte_pointer_array_t *table, 
-                                                size_t index)
+                                                orte_std_cntr_t index)
 {
     void *p;
     OPAL_THREAD_LOCK(&(table->lock));
@@ -141,7 +142,7 @@ static inline void *orte_pointer_array_get_item(orte_pointer_array_t *table,
  * Simple inline function to return the size of the array in order to
  * hide the member field from external users.
  */
-static inline size_t orte_pointer_array_get_size(orte_pointer_array_t *array)
+static inline orte_std_cntr_t orte_pointer_array_get_size(orte_pointer_array_t *array)
 {
   return array->size;
 }
@@ -157,7 +158,7 @@ static inline size_t orte_pointer_array_get_size(orte_pointer_array_t *array)
  * Simple function to set the size of the array in order to
  * hide the member field from external users.
  */
-OMPI_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, size_t size);
+OMPI_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t size);
 
 
 /**
@@ -193,7 +194,7 @@ static inline void orte_pointer_array_clear(orte_pointer_array_t *array)
  */
 static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
 {
-    size_t i;
+    orte_std_cntr_t i;
     OPAL_THREAD_LOCK(&(array->lock));
     for (i=0; i < array->size; i++) {
         if (NULL != array->addr[i]) free(array->addr[i]);
@@ -220,7 +221,7 @@ static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
 OMPI_DECLSPEC bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
-                                          size_t index,
+                                          orte_std_cntr_t index,
                                           void *value);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
