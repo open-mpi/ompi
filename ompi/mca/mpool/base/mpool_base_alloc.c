@@ -87,9 +87,11 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     mca_mpool_base_tree_item_t* mpool_tree_item;
     
     void * mem = NULL;
-    char * key;
-    bool match_found;
-    
+    char * key = NULL;
+    char * value = NULL;
+    int flag = 0;
+    bool match_found = false;
+    bool mpool_requested = false;    
 
     if (mca_mpool_base_use_mem_hooks && 
         0 != (OPAL_MEMORY_FREE_SUPPORT & opal_mem_hooks_support_level())) {
@@ -149,12 +151,27 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         {
             match_found = false;
             ompi_info_get_nthkey(info, i, key);
+            if ( 0 != strcmp(key, "mpool") ) {
+                continue;
+            }
+            mpool_requested = true;
+            value = malloc(MPI_MAX_INFO_VAL+1);
+            if ( NULL == value ) {
+                break;
+            }
+            ompi_info_get(info, key, MPI_MAX_INFO_VAL+1, value, &flag);
+            if ( !flag ) {
+                free(value);
+                value = NULL;
+                continue;
+            }
+
             for(item = opal_list_get_first(&mca_mpool_base_modules);
                 item != opal_list_get_end(&mca_mpool_base_modules);
                 item = opal_list_get_next(item)) 
             {
                 current = ((mca_mpool_base_selected_module_t *)item);
-                if(0 == strcmp(key, 
+                if(0 == strcmp(value, 
                        current->mpool_module->mpool_component->mpool_version.mca_component_name))
                 {
                     match_found = true;
@@ -197,9 +214,10 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
         if(has_reg_function) { 
             free(has_reg_function);
         }
-        if(&ompi_mpi_info_null == info)
+        if(!mpool_requested)
         {
-            /* if the info argument was NULL and there were no useable mpools,
+            /* if the info argument was NULL and there were no useable mpools
+             * or there user provided info object but did not specifiy a "mpool" key,
              * just malloc the memory and return it */
             mem = malloc(size);
             if(NULL != mem){
@@ -208,6 +226,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 return mem;
             }
         }
+        
         /* the user passed info but we were not able to use any of the mpools 
          * specified */
         return NULL;
