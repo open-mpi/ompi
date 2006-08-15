@@ -98,12 +98,12 @@ extern "C" {
     /**
      * Utility routine to retreive all process pids w/in a specified job.
      */
-    OMPI_DECLSPEC int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t** pids, size_t* num_pids);
+    OMPI_DECLSPEC int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
     /**
      * Utility routine to get/set daemon pid
      */
     OMPI_DECLSPEC int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
-    OMPI_DECLSPEC int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t** pids, size_t* num_pids);
+    OMPI_DECLSPEC int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
   
     /**
      * Utility routine to set progress engine schedule

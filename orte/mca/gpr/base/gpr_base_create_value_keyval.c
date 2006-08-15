@@ -33,8 +33,8 @@
 int orte_gpr_base_create_value(orte_gpr_value_t **value,
                                orte_gpr_addr_mode_t addr_mode,
                                char *segment,
-                               size_t cnt,  /**< Number of keyval objects */
-                               size_t num_tokens)
+                               orte_std_cntr_t cnt,  /**< Number of keyval objects */
+                               orte_std_cntr_t num_tokens)
 {
     orte_gpr_value_t *val;
 

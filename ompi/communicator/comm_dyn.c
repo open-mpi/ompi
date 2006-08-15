@@ -59,8 +59,8 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                ompi_communicator_t **newcomm, orte_rml_tag_t tag )
 {
     int size, rsize, rank, rc;
-    size_t num_vals;
-    size_t rnamebuflen = 0;
+    orte_std_cntr_t num_vals;
+    orte_std_cntr_t rnamebuflen = 0;
     int rnamebuflen_int = 0;
     void *rnamebuf=NULL;
 
@@ -122,10 +122,11 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     }
 
     /* First convert the size_t to an int so we can cast in the bcast to a void *
-     * if we don't then we will get badness when using big vs little endian */
-    if (OMPI_SUCCESS != (rc = opal_size2int(rnamebuflen, &rnamebuflen_int, true))) {
-        goto exit;
-    }
+     * if we don't then we will get badness when using big vs little endian
+     * THIS IS NO LONGER REQUIRED AS THE LENGTH IS NOW A STD_CNTR_T, WHICH
+     * CORRELATES TO AN INT32
+     */
+    rnamebuflen = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
     rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm );
@@ -264,7 +265,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
                                           ompi_proc_t *proc, orte_rml_tag_t tag)
 {
     int rc;
-    size_t num_vals;
+    orte_std_cntr_t num_vals;
     orte_process_name_t *rport, tbuf;
     ompi_proc_t *rproc=NULL;
     bool isnew = false;
@@ -329,7 +330,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     char prefix[OMPI_PATH_MAX];
     char *base_prefix;
 
-    size_t num_apps, ai;
+    orte_std_cntr_t num_apps, ai;
     orte_jobid_t new_jobid;
     orte_app_context_t **apps=NULL;
 

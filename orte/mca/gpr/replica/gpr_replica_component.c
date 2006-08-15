@@ -326,7 +326,7 @@ int orte_gpr_replica_module_init(void)
  */
 int orte_gpr_replica_finalize(void)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_gpr_subscription_id_t j;
     orte_gpr_trigger_id_t k;
     orte_gpr_replica_segment_t** seg;

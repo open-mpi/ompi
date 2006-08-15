@@ -461,7 +461,7 @@ int orte_dss_open(void)
 
 int orte_dss_close(void)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     orte_dss_initialized = false;
 

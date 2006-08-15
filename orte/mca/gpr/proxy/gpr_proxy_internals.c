@@ -35,10 +35,10 @@
 #include "orte/mca/gpr/proxy/gpr_proxy.h"
 
 int
-orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions)
+orte_gpr_proxy_enter_subscription(orte_std_cntr_t cnt, orte_gpr_subscription_t **subscriptions)
 {
     orte_gpr_proxy_subscriber_t *sub;
-    size_t i;
+    orte_std_cntr_t i;
 
     OPAL_TRACE(2);
 
@@ -67,10 +67,10 @@ orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscrip
 
 
 int
-orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
+orte_gpr_proxy_enter_trigger(orte_std_cntr_t cnt, orte_gpr_trigger_t **trigs)
 {
     orte_gpr_proxy_trigger_t *trig, **tptr;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
 
     OPAL_TRACE(2);
 
@@ -149,7 +149,7 @@ MOVEON:
 int
 orte_gpr_proxy_remove_subscription(orte_gpr_proxy_subscriber_t *sub)
 {
-    size_t index;
+    orte_std_cntr_t index;
 
     OPAL_TRACE(2);
 
@@ -168,7 +168,7 @@ orte_gpr_proxy_remove_subscription(orte_gpr_proxy_subscriber_t *sub)
 int
 orte_gpr_proxy_remove_trigger(orte_gpr_proxy_trigger_t *trig)
 {
-    size_t index;
+    orte_std_cntr_t index;
 
     OPAL_TRACE(2);
 

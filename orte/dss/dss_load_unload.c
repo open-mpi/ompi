@@ -37,7 +37,7 @@
 
 
 int orte_dss_unload(orte_buffer_t *buffer, void **payload,
-                    size_t *bytes_used)
+                    orte_std_cntr_t *bytes_used)
 {
     /* check that buffer is not null */
     if (!buffer) {
@@ -72,7 +72,7 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
 
 
 int orte_dss_load(orte_buffer_t *buffer, void *payload,
-                  size_t bytes_used)
+                  orte_std_cntr_t bytes_used)
 {
     /* check to see if the buffer has been initialized */
     if (NULL == buffer) {

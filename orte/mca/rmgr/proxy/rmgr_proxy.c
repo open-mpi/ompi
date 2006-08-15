@@ -38,7 +38,7 @@ static int orte_rmgr_proxy_query(void);
 
 static int orte_rmgr_proxy_create(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 
 static int orte_rmgr_proxy_allocate(
@@ -68,7 +68,7 @@ static int orte_rmgr_proxy_signal_proc(
 
 static int orte_rmgr_proxy_spawn(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
@@ -99,7 +99,7 @@ orte_rmgr_base_module_t orte_rmgr_proxy_module = {
 
 static int orte_rmgr_proxy_create(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid)
 {
     orte_buffer_t cmd;
@@ -380,7 +380,7 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
 
     OPAL_TRACE(1);
@@ -483,7 +483,7 @@ static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *
 
 static int orte_rmgr_proxy_spawn(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfunc,
     orte_proc_state_t cb_conditions)

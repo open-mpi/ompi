@@ -77,31 +77,31 @@ int orte_soh_base_module_finalize_not_available (void);
  * DATA TYPE PACKING FUNCTIONS
  */
 int orte_soh_base_pack_exit_code(orte_buffer_t *buffer, void *src,
-                                 size_t num_vals, orte_data_type_t type);
+                                 orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_soh_base_pack_node_state(orte_buffer_t *buffer, void *src,
-                                  size_t num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_soh_base_pack_proc_state(orte_buffer_t *buffer, void *src,
-                                  size_t num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_soh_base_pack_job_state(orte_buffer_t *buffer, void *src,
-                                  size_t num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t num_vals, orte_data_type_t type);
 
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
 int orte_soh_base_unpack_exit_code(orte_buffer_t *buffer, void *dest,
-                                 size_t *num_vals, orte_data_type_t type);
+                                 orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_soh_base_unpack_node_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_soh_base_unpack_proc_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_soh_base_unpack_job_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type);
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 /*
  * DATA TYPE COMPARE FUNCTIONS

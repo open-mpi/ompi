@@ -34,10 +34,10 @@
  * RAS NODE
  */
 int orte_ras_base_pack_node(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type)
+                            orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
-    size_t i;
+    orte_std_cntr_t i;
     orte_ras_node_t **nodes;
 
     /* array of pointers to orte_ras_node_t objects - need to pack the objects a set of fields at a time */
@@ -74,28 +74,28 @@ int orte_ras_base_pack_node(orte_buffer_t *buffer, void *src,
 
         /* pack the number of slots */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(nodes[i]->node_slots)), 1, ORTE_SIZE))) {
+                        (void*)(&(nodes[i]->node_slots)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of slots in use */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(nodes[i]->node_slots_inuse)), 1, ORTE_SIZE))) {
+                        (void*)(&(nodes[i]->node_slots_inuse)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the number of slots allocated */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(nodes[i]->node_slots_alloc)), 1, ORTE_SIZE))) {
+                        (void*)(&(nodes[i]->node_slots_alloc)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* pack the max number of slots */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer,
-                        (void*)(&(nodes[i]->node_slots_max)), 1, ORTE_SIZE))) {
+                        (void*)(&(nodes[i]->node_slots_max)), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

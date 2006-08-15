@@ -275,7 +275,7 @@ typedef int (*orte_dss_peek_next_item_fn_t)(orte_buffer_t *buffer,
  * @code
  * orte_buffer_t *buffer;
  * uint8_t *bytes;
- * size_t size;
+ * orte_std_cntr_t size;
  *
  * status_code = orte_dss.unload(buffer, (void**)(&bytes), &size);
  * OBJ_RELEASE(buffer);
@@ -283,7 +283,7 @@ typedef int (*orte_dss_peek_next_item_fn_t)(orte_buffer_t *buffer,
  */
 typedef int (*orte_dss_unload_fn_t)(orte_buffer_t *buffer,
                                     void **payload,
-                                    size_t *size);
+                                    orte_std_cntr_t *size);
 
 /**
  * Load a data payload into a buffer.
@@ -319,7 +319,7 @@ typedef int (*orte_dss_unload_fn_t)(orte_buffer_t *buffer,
  * @code
  * orte_buffer_t *buffer;
  * uint8_t bytes;
- * size_t size;
+ * orte_std_cntr_t size;
  *
  * buffer = OBJ_NEW(orte_buffer_t);
  * status_code = orte_dss.load(buffer, (void*)(&bytes), size);
@@ -327,7 +327,7 @@ typedef int (*orte_dss_unload_fn_t)(orte_buffer_t *buffer,
  */
 typedef int (*orte_dss_load_fn_t)(orte_buffer_t *buffer,
                                   void *payload,
-                                  size_t size);
+                                  orte_std_cntr_t size);
 
 
 /**

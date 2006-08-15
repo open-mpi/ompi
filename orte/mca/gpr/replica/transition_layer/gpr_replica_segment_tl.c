@@ -34,9 +34,9 @@
 int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
                               bool create, char *segment)
 {
-    size_t len;
+    orte_std_cntr_t len;
     int rc=ORTE_SUCCESS;
-    size_t i, cntri;
+    orte_std_cntr_t i, cntri;
     orte_gpr_replica_segment_t **ptr;
 
     OPAL_TRACE(3);

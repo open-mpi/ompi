@@ -32,7 +32,7 @@
  * EXIT CODE
  */
 int orte_soh_base_unpack_exit_code(orte_buffer_t *buffer, void *dest,
-                                 size_t *num_vals, orte_data_type_t type)
+                                 orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
 
@@ -47,7 +47,7 @@ int orte_soh_base_unpack_exit_code(orte_buffer_t *buffer, void *dest,
  * NODE STATE
  */
 int orte_soh_base_unpack_node_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
 
@@ -62,7 +62,7 @@ int orte_soh_base_unpack_node_state(orte_buffer_t *buffer, void *dest,
  * PROC STATE
  */
 int orte_soh_base_unpack_proc_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
 
@@ -77,7 +77,7 @@ int orte_soh_base_unpack_proc_state(orte_buffer_t *buffer, void *dest,
  * JOB STATE
  */
 int orte_soh_base_unpack_job_state(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
 

@@ -74,7 +74,7 @@ struct orte_rmaps_base_proc_t {
     char *app;          /* name of executable */
     orte_rmaps_base_node_t* proc_node;
     orte_process_name_t proc_name;
-    size_t proc_rank;
+    orte_std_cntr_t proc_rank;
     pid_t pid;          /* PLS-assigned pid */
     pid_t local_pid;    /* pid found by local process */
 };
@@ -92,7 +92,7 @@ struct orte_rmaps_base_map_t {
     opal_list_item_t super;
     orte_app_context_t *app;
     orte_rmaps_base_proc_t** procs;
-    size_t num_procs;
+    orte_std_cntr_t num_procs;
     opal_list_t nodes;
 };
 typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;

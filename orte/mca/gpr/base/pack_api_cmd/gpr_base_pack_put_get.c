@@ -38,7 +38,7 @@
 #include "orte/mca/gpr/base/base.h"
 
 int orte_gpr_base_pack_put(orte_buffer_t *cmd,
-                size_t cnt, orte_gpr_value_t **values)
+                orte_std_cntr_t cnt, orte_gpr_value_t **values)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
@@ -68,7 +68,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     orte_gpr_cmd_flag_t command;
     char **ptr;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -99,7 +99,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     }
 
     /* pack number of tokens */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -121,7 +121,7 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
     }
 
     /* pack number of keys */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -139,12 +139,12 @@ int orte_gpr_base_pack_get(orte_buffer_t *cmd,
 int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
               orte_gpr_addr_mode_t mode,
               char *segment, char **tokens, char **keys,
-              size_t num_conditions, orte_gpr_keyval_t **conditions)
+              orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions)
 {
     orte_gpr_cmd_flag_t command;
     char **ptr;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -175,7 +175,7 @@ int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
     }
 
     /* pack number of tokens */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -197,7 +197,7 @@ int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
     }
 
     /* pack number of keys */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -210,7 +210,7 @@ int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
     }
 
     /* pack number of conditions */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &num_conditions, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &num_conditions, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

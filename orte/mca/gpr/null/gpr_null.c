@@ -63,7 +63,7 @@ orte_gpr_null_cleanup_proc(orte_process_name_t * proc)
 }
 
 static int
-orte_gpr_null_preallocate_segment(char *name, size_t num_slots)
+orte_gpr_null_preallocate_segment(char *name, orte_std_cntr_t num_slots)
 {
   return ORTE_SUCCESS;
 }
@@ -83,13 +83,13 @@ orte_gpr_null_delete_segment_nb(char *segment,
 }
 
 static int
-orte_gpr_null_put(size_t cnt, orte_gpr_value_t ** values)
+orte_gpr_null_put(orte_std_cntr_t cnt, orte_gpr_value_t ** values)
 {
   return ORTE_SUCCESS;
 }
 
 static int
-orte_gpr_null_put_nb(size_t cnt, orte_gpr_value_t ** values,
+orte_gpr_null_put_nb(orte_std_cntr_t cnt, orte_gpr_value_t ** values,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
   return ORTE_SUCCESS;
@@ -98,7 +98,7 @@ orte_gpr_null_put_nb(size_t cnt, orte_gpr_value_t ** values,
 static int
 orte_gpr_null_get(orte_gpr_addr_mode_t addr_mode,
              char *segment, char **tokens, char **keys,
-             size_t * cnt, orte_gpr_value_t *** values)
+             orte_std_cntr_t * cnt, orte_gpr_value_t *** values)
 {
   return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -106,8 +106,8 @@ orte_gpr_null_get(orte_gpr_addr_mode_t addr_mode,
 static int
 orte_gpr_null_get_conditional(orte_gpr_addr_mode_t addr_mode,
              char *segment, char **tokens, char **keys,
-             size_t num_conditions, orte_gpr_keyval_t **conditions,
-             size_t * cnt, orte_gpr_value_t *** values)
+             orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions,
+             orte_std_cntr_t * cnt, orte_gpr_value_t *** values)
 {
   return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -139,7 +139,7 @@ orte_gpr_null_delete_entries_nb(orte_gpr_addr_mode_t addr_mode,
 }
 
 static int
-orte_gpr_null_index(char *segment, size_t * cnt, char ***index)
+orte_gpr_null_index(char *segment, orte_std_cntr_t * cnt, char ***index)
 {
   return ORTE_SUCCESS;
 }
@@ -153,9 +153,9 @@ orte_gpr_null_index_nb(char *segment,
 }
 
 static int
-orte_gpr_null_subscribe(size_t num_subs,
+orte_gpr_null_subscribe(orte_std_cntr_t num_subs,
                    orte_gpr_subscription_t ** subscriptions,
-                   size_t num_trigs,
+                   orte_std_cntr_t num_trigs,
                    orte_gpr_trigger_t ** triggers)
 {
   return ORTE_SUCCESS;
@@ -261,7 +261,7 @@ static int orte_gpr_null_put_1(orte_gpr_addr_mode_t addr_mode,
 
 static int orte_gpr_null_put_N(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
-                               size_t n, char **keys,
+                               orte_std_cntr_t n, char **keys,
                                orte_data_value_t **data_values)
 {
     return ORTE_SUCCESS;
@@ -289,7 +289,7 @@ static int orte_gpr_null_subscribe_N(orte_gpr_subscription_id_t *id,
                                      orte_gpr_addr_mode_t addr_mode,
                                      char *segment,
                                      char **tokens,
-                                     size_t n,
+                                     orte_std_cntr_t n,
                                      char **keys,
                                      orte_gpr_notify_cb_fn_t cbfunc,
                                      void *user_tag)
@@ -304,7 +304,7 @@ static int orte_gpr_null_define_trigger(orte_gpr_trigger_id_t *id,
                                         orte_gpr_addr_mode_t addr_mode,
                                         char *segment,
                                         char **tokens,
-                                        size_t n,
+                                        orte_std_cntr_t n,
                                         char **keys,
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag)
@@ -318,9 +318,9 @@ static int orte_gpr_null_define_trigger_level(orte_gpr_trigger_id_t *id,
                                         orte_gpr_addr_mode_t addr_mode,
                                         char *segment,
                                         char **tokens,
-                                        size_t n,
+                                        orte_std_cntr_t n,
                                         char **keys,
-                                        size_t *levels,
+                                        orte_std_cntr_t *levels,
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag)
 {

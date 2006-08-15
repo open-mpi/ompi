@@ -223,7 +223,7 @@ static void mca_pml_base_modex_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t **keyval;
     ompi_proc_t *proc;
@@ -293,7 +293,7 @@ static void mca_pml_base_modex_registry_callback(
                         opal_list_item_t* item;
                         char *ptr;
                         void* bytes = NULL;
-                        size_t cnt;
+                        orte_std_cntr_t cnt;
                         size_t num_bytes;
                         orte_byte_object_t *bo;
 
@@ -348,10 +348,12 @@ static void mca_pml_base_modex_registry_callback(
                                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                                 continue;
                             }
-                            if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, bytes, &num_bytes, ORTE_BYTE))) {
+                            cnt = (orte_std_cntr_t)num_bytes;
+                            if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer, bytes, &cnt, ORTE_BYTE))) {
                                 ORTE_ERROR_LOG(rc);
                                 continue;
                             }
+                            num_bytes = cnt;
                         } else {
                             bytes = NULL;
                         }
@@ -513,7 +515,7 @@ int mca_pml_base_modex_send(
     orte_jobid_t jobid;
     int rc;
     orte_buffer_t buffer;
-    size_t i, num_tokens;
+    orte_std_cntr_t i, num_tokens;
     char *ptr, *segment, **tokens;
     orte_byte_object_t bo;
     orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
@@ -565,7 +567,7 @@ int mca_pml_base_modex_send(
         }
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.unload(&buffer, (void**)&(bo.bytes), (size_t*)&(bo.size)))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unload(&buffer, (void**)&(bo.bytes), &(bo.size)))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }

@@ -96,12 +96,12 @@ static bool is_mapped(opal_list_item_t *item,
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, size_t *total_num_slots)
+int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots)
 {
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
     int id, rc, nolocal;
-    size_t num_slots=0;
+    orte_std_cntr_t num_slots=0;
 
     /** set default answer */
     *total_num_slots = 0;
@@ -166,14 +166,14 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, siz
 int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                                        orte_app_context_t *app,
                                        opal_list_t *master_node_list,
-                                       size_t *total_num_slots)
+                                       orte_std_cntr_t *total_num_slots)
 {
     orte_app_context_map_t** loc_map = app->map_data;
     opal_list_item_t *item;
     orte_ras_node_t *node, *new_node;
     char **mapped_nodes = NULL;
     int num_mapped_nodes = 0;
-    size_t j, k, num_slots=0;
+    orte_std_cntr_t j, k, num_slots=0;
     int rc;
     
     /** set default answer */
@@ -188,7 +188,7 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
             }
             else { /* Append to the existing mapping */
                 char ** mini_map    = opal_argv_split(loc_map[k]->map_data, ',');
-                size_t mini_num_map = opal_argv_count(mini_map);
+                orte_std_cntr_t mini_num_map = opal_argv_count(mini_map);
                 for (j = 0; j < mini_num_map; ++j) {
                     rc = opal_argv_append(&num_mapped_nodes, &mapped_nodes, mini_map[j]);
                     if (OPAL_SUCCESS != rc) {
@@ -327,7 +327,7 @@ int orte_rmaps_base_update_node_usage(opal_list_t *nodes)
     opal_list_item_t* item;
     orte_gpr_value_t **values;
     int rc;
-    size_t num_values, i, j;
+    orte_std_cntr_t num_values, i, j;
     orte_ras_node_t* node;
     
     num_values = opal_list_get_size(nodes);
@@ -361,7 +361,7 @@ int orte_rmaps_base_update_node_usage(opal_list_t *nodes)
         node = (orte_ras_node_t*)item;
         
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[0]), ORTE_NODE_SLOTS_IN_USE_KEY,
-                                                         ORTE_SIZE, &(node->node_slots_inuse)))) {
+                                                         ORTE_STD_CNTR, &(node->node_slots_inuse)))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }

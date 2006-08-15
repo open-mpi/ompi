@@ -40,7 +40,7 @@ int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -66,11 +66,11 @@ int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret)
 }
 
 
-int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, size_t *cnt, orte_gpr_value_t ***values)
+int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n, num;
+    orte_std_cntr_t n, num;
 
     OPAL_TRACE(3);
 
@@ -87,7 +87,7 @@ int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret, size_t *cnt, orte_
 
     /* find out how many values came back */
     n=1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &num, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &num, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

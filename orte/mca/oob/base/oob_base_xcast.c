@@ -50,7 +50,7 @@ struct mca_oob_xcast_t {
     opal_object_t super;
     opal_mutex_t mutex;
     opal_condition_t cond;
-    size_t counter;
+    orte_std_cntr_t counter;
 };
 typedef struct mca_oob_xcast_t mca_oob_xcast_t;
 
@@ -86,11 +86,11 @@ static void mca_oob_xcast_cb(int status, orte_process_name_t* peer, orte_buffer_
 int mca_oob_xcast(
     orte_process_name_t* root,
     orte_process_name_t* peers,
-    size_t num_peers,
+    orte_std_cntr_t num_peers,
     orte_buffer_t* buffer,
     orte_gpr_trigger_cb_fn_t cbfunc)
 {
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
     int tag = MCA_OOB_TAG_XCAST;
     int cmpval;

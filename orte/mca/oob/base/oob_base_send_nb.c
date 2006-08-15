@@ -98,7 +98,7 @@ int mca_oob_send_packed_nb(
 {
     mca_oob_send_cbdata_t *oob_cbdata;
     void *dataptr;
-    size_t datalen;
+    orte_std_cntr_t datalen;
     int rc;
 
     /* first build iovec from buffer information */

@@ -53,7 +53,7 @@ int orte_gpr_proxy_dump_all(void)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
 	    return orte_gpr_base_pack_dump_all(orte_gpr_proxy_globals.compound_cmd);
@@ -114,7 +114,7 @@ int orte_gpr_proxy_dump_segments(char *segment)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_segments(orte_gpr_proxy_globals.compound_cmd, segment);
@@ -175,7 +175,7 @@ int orte_gpr_proxy_dump_triggers(orte_gpr_trigger_id_t start)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_triggers(orte_gpr_proxy_globals.compound_cmd, start);
@@ -236,7 +236,7 @@ int orte_gpr_proxy_dump_subscriptions(orte_gpr_subscription_id_t start)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_subscriptions(orte_gpr_proxy_globals.compound_cmd, start);
@@ -298,7 +298,7 @@ int orte_gpr_proxy_dump_a_trigger(char *name,
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_a_trigger(orte_gpr_proxy_globals.compound_cmd, name, id);
@@ -361,7 +361,7 @@ int orte_gpr_proxy_dump_a_subscription(char *name,
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_a_subscription(orte_gpr_proxy_globals.compound_cmd, name, id);
@@ -423,7 +423,7 @@ int orte_gpr_proxy_dump_callbacks(void)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
     
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_callbacks(orte_gpr_proxy_globals.compound_cmd);
@@ -560,7 +560,7 @@ int orte_gpr_proxy_dump_segment_size(char *segment)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     if (orte_gpr_proxy_globals.compound_cmd_mode) {
         return orte_gpr_base_pack_dump_segment_size(orte_gpr_proxy_globals.compound_cmd, segment);

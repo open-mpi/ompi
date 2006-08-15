@@ -46,7 +46,7 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count, index;
+    orte_std_cntr_t count, index;
     int rc;
     orte_ns_proxy_cell_info_t *new_cell;
 
@@ -156,7 +156,7 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_cellid_t j;
-    size_t i, count, index;
+    orte_std_cntr_t i, count, index;
     orte_ns_proxy_cell_info_t **cell, *new_cell;
     int rc, ret=ORTE_SUCCESS;
 
@@ -256,7 +256,7 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &ret, &count, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &ret, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -296,7 +296,7 @@ int orte_ns_proxy_create_jobid(orte_jobid_t *job)
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count;
     int rc;
 
     /* set default value */
@@ -362,7 +362,7 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count;
     int rc;
 
     /* set default return value */
@@ -434,12 +434,12 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
  * PEER functions
  */
 int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
-                                  size_t *num_procs, orte_jobid_t job)
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count;
     int rc;
 
     /* set default value */
@@ -491,7 +491,7 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &num_procs, &count, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &num_procs, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
@@ -525,7 +525,8 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_ns_proxy_tagitem_t* tagitem, **tags;
-    size_t count, i, j;
+    orte_std_cntr_t count, i;
+    orte_rml_tag_t j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
@@ -612,7 +613,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_UINT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -655,7 +656,7 @@ int orte_ns_proxy_define_data_type(const char *name,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_ns_proxy_dti_t **dti, *dtip;
-    size_t count, i, j;
+    orte_std_cntr_t count, i, j;
     int rc=ORTE_SUCCESS;
 
     if (NULL == name || 0 < *type) {
@@ -820,7 +821,7 @@ int orte_ns_proxy_dump_cells(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i;
+    orte_std_cntr_t i;
     orte_cellid_t j;
     orte_ns_proxy_cell_info_t **ptr;
     int rc;
@@ -928,7 +929,8 @@ int orte_ns_proxy_dump_tags(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j;
+    orte_std_cntr_t i;
+    orte_rml_tag_t j;
     orte_ns_proxy_tagitem_t **ptr;
     int rc;
 
@@ -989,7 +991,7 @@ int orte_ns_proxy_dump_datatypes(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_ns_proxy_dti_t **ptr;
     int rc;
 

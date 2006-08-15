@@ -123,8 +123,8 @@ typedef uint8_t orte_gpr_cmd_flag_t;
 int orte_gpr_base_create_value(orte_gpr_value_t **value,
                                orte_gpr_addr_mode_t addr_mode,
                                char *segment,
-                               size_t cnt,  /**< Number of keyval objects */
-                               size_t num_tokens);
+                               orte_std_cntr_t cnt,  /**< Number of keyval objects */
+                               orte_std_cntr_t num_tokens);
                                
 int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
                                 char *key,
@@ -138,7 +138,7 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
 
    OMPI_DECLSPEC int orte_gpr_base_put_N(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,
-                               size_t n, char **keys,
+                               orte_std_cntr_t n, char **keys,
                                orte_data_value_t **data_values);
 
    OMPI_DECLSPEC int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
@@ -160,7 +160,7 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
                                      orte_gpr_addr_mode_t addr_mode,
                                      char *segment,
                                      char **tokens,
-                                     size_t n,
+                                     orte_std_cntr_t n,
                                      char **keys,
                                      orte_gpr_notify_cb_fn_t cbfunc,
                                      void *user_tag);
@@ -172,7 +172,7 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
                                         orte_gpr_addr_mode_t addr_mode,
                                         char *segment,
                                         char **tokens,
-                                        size_t n,
+                                        orte_std_cntr_t n,
                                         char **keys,
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag);
@@ -183,9 +183,9 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
                                         orte_gpr_addr_mode_t addr_mode,
                                         char *segment,
                                         char **tokens,
-                                        size_t n,
+                                        orte_std_cntr_t n,
                                         char **keys,
-                                        size_t *levels,
+                                        orte_std_cntr_t *levels,
                                         orte_gpr_trigger_cb_fn_t cbfunc,
                                         void *user_tag);
 
@@ -200,13 +200,13 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
     OMPI_DECLSPEC int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_index(orte_buffer_t *cmd, char *segment);
-    OMPI_DECLSPEC int orte_gpr_base_unpack_index(orte_buffer_t *cmd, int *ret, size_t *cnt,
+    OMPI_DECLSPEC int orte_gpr_base_unpack_index(orte_buffer_t *cmd, int *ret, orte_std_cntr_t *cnt,
                                                  char ***index);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
-                    size_t num_subs,
+                    orte_std_cntr_t num_subs,
                     orte_gpr_subscription_t **subscriptions,
-                    size_t num_trigs, orte_gpr_trigger_t **trig);
+                    orte_std_cntr_t num_trigs, orte_gpr_trigger_t **trig);
     OMPI_DECLSPEC int orte_gpr_base_unpack_subscribe(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_unsubscribe(orte_buffer_t *cmd,
@@ -218,7 +218,7 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
     OMPI_DECLSPEC int orte_gpr_base_unpack_cancel_trigger(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_put(orte_buffer_t *cmd,
-                                             size_t cnt, orte_gpr_value_t **values);
+                                             orte_std_cntr_t cnt, orte_gpr_value_t **values);
     OMPI_DECLSPEC int orte_gpr_base_unpack_put(orte_buffer_t *buffer, int *ret);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_get(orte_buffer_t *cmd,
@@ -227,10 +227,10 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
     OMPI_DECLSPEC int orte_gpr_base_pack_get_conditional(orte_buffer_t *cmd,
                     orte_gpr_addr_mode_t mode,
                     char *segment, char **tokens, char **keys,
-                    size_t num_conditions, orte_gpr_keyval_t **conditions);
+                    orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions);
 
     OMPI_DECLSPEC int orte_gpr_base_unpack_get(orte_buffer_t *buffer, int *ret,
-                   size_t *cnt, orte_gpr_value_t ***values);
+                   orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_all(orte_buffer_t *cmd);
     OMPI_DECLSPEC int orte_gpr_base_pack_dump_segments(orte_buffer_t *cmd, char *segment);
@@ -273,83 +273,83 @@ int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
 
 /* GPR DATA TYPE PACKING FUNCTIONS */
 int orte_gpr_base_pack_cmd(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_subscription_id(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_trigger_id(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_notify_action(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_trigger_action(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_notify_msg_type(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_addr_mode(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_value(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_subscription(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_trigger(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_notify_data(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_gpr_base_pack_notify_msg(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type);
+                       orte_std_cntr_t num_vals, orte_data_type_t type);
 
 /* GPR DATA TYPE UNPACKING FUNCTIONS */
 int orte_gpr_base_unpack_cmd(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_subscription_id(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_trigger_id(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_notify_action(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_trigger_action(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_addr_mode(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_notify_msg_type(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_keyval(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_value(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_subscription(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_trigger(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_notify_data(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_gpr_base_unpack_notify_msg(orte_buffer_t *buffer, void *dest,
-                       size_t *num_vals, orte_data_type_t type);
+                       orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 
 

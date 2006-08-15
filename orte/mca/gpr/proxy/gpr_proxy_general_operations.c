@@ -39,7 +39,7 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_preallocate_segment(char *name, size_t num_slots)
+int orte_gpr_proxy_preallocate_segment(char *name, orte_std_cntr_t num_slots)
 {
     OPAL_TRACE(1);
 

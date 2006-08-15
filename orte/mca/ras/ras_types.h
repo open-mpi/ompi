@@ -44,15 +44,15 @@ struct orte_ras_node_t {
         This will typically correspond to the number of physical CPUs
         that we have been allocated on this note and would be the
         "ideal" number of processes for us to launch. */
-    size_t node_slots;
+    orte_std_cntr_t node_slots;
     /** How many processes have already been launched, used by one or
         more jobs on this node. */
-    size_t node_slots_inuse;
+    orte_std_cntr_t node_slots_inuse;
     /** This represents the number of slots we (the allocator) are
         attempting to allocate to the current job - or the number of
         slots allocated to a specific job on a query for the jobs
         allocations */
-    size_t node_slots_alloc;
+    orte_std_cntr_t node_slots_alloc;
     /** A "hard" limit (if set -- a value of 0 implies no hard limit)
         on the number of slots that can be allocated on a given
         node. This is for some environments (e.g. grid) there may be
@@ -63,7 +63,7 @@ struct orte_ras_node_t {
         other words allow the node to be oversubscribed up to a
         specified limit.  For example, if we have two processors, we
         may want to allow up to four processes but no more. */
-    size_t node_slots_max;
+    orte_std_cntr_t node_slots_max;
     /** Username on this node, if specified */
     char * node_username;
     /** For use by the launcher */

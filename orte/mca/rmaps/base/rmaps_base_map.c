@@ -105,7 +105,7 @@ static void orte_rmaps_base_map_construct(orte_rmaps_base_map_t* map)
 
 static void orte_rmaps_base_map_destruct(orte_rmaps_base_map_t* map)
 {
-    size_t i=0;
+    orte_std_cntr_t i=0;
     opal_list_item_t* item;
 
     for(i=0; i<map->num_procs; i++) {
@@ -137,26 +137,26 @@ OBJ_CLASS_INSTANCE(
 
 static int orte_rmaps_value_compare(orte_gpr_value_t** val1, orte_gpr_value_t** val2)
 {
-    size_t i;
-    size_t app1 = 0;
-    size_t app2 = 0;
-    size_t rank1 = 0;
-    size_t rank2 = 0;
-    size_t *sptr;
+    orte_std_cntr_t i;
+    orte_std_cntr_t app1 = 0;
+    orte_std_cntr_t app2 = 0;
+    orte_std_cntr_t rank1 = 0;
+    orte_std_cntr_t rank2 = 0;
+    orte_std_cntr_t *sptr;
     orte_gpr_value_t* value;
     int rc;
 
     for(i=0, value=*val1; i<value->cnt; i++) {
         orte_gpr_keyval_t* keyval = value->keyvals[i];
         if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
             }
             rank1 = *sptr;
             continue;
         }
         if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
             }
             app1 = *sptr;
@@ -166,14 +166,14 @@ static int orte_rmaps_value_compare(orte_gpr_value_t** val1, orte_gpr_value_t** 
     for(i=0, value=*val2; i<value->cnt; i++) {
         orte_gpr_keyval_t* keyval = value->keyvals[i];
         if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
             }
             rank2 = *sptr;
             continue;
         }
         if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
             }
             app2 = *sptr;
@@ -305,13 +305,13 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     orte_rmaps_base_map_t** mapping = NULL;
     opal_list_t nodes;
     opal_list_item_t* item;
-    size_t i, num_context = 0;
-    size_t *sptr;
+    orte_std_cntr_t i, num_context = 0;
+    orte_std_cntr_t *sptr;
     orte_process_name_t *pptr;
     pid_t *pidptr;
     char* segment = NULL;
     orte_gpr_value_t** values;
-    size_t v, num_values;
+    orte_std_cntr_t v, num_values;
     int rc;
     char* keys[] = {
         ORTE_PROC_RANK_KEY,
@@ -393,7 +393,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         orte_rmaps_base_map_t* map = NULL;
         orte_rmaps_base_proc_t* proc;
         char* node_name = NULL;
-        size_t kv, app_index;
+        orte_std_cntr_t kv, app_index;
 
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
@@ -405,7 +405,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         for(kv = 0; kv<value->cnt; kv++) {
             orte_gpr_keyval_t* keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -421,7 +421,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -534,13 +534,13 @@ int orte_rmaps_base_get_node_map(
     orte_rmaps_base_map_t** mapping = NULL;
     orte_ras_node_t *ras_node = NULL;
     orte_gpr_keyval_t *condition;
-    size_t i, num_context = 0;
-    size_t *sptr;
+    orte_std_cntr_t i, num_context = 0;
+    orte_std_cntr_t *sptr;
     pid_t *pidptr;
     orte_process_name_t *pptr;
     char* segment = NULL;
     orte_gpr_value_t** values;
-    size_t v, num_values;
+    orte_std_cntr_t v, num_values;
     int rc;
     char* keys[] = {
         ORTE_PROC_RANK_KEY,
@@ -620,7 +620,7 @@ int orte_rmaps_base_get_node_map(
         orte_rmaps_base_node_t *node = NULL;
         orte_rmaps_base_proc_t* proc;
         char* node_name = NULL;
-        size_t kv, app_index;
+        orte_std_cntr_t kv, app_index;
 
         proc = OBJ_NEW(orte_rmaps_base_proc_t);
         if(NULL == proc) {
@@ -632,7 +632,7 @@ int orte_rmaps_base_get_node_map(
         for(kv = 0; kv<value->cnt; kv++) {
             orte_gpr_keyval_t* keyval = value->keyvals[kv];
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -648,7 +648,7 @@ int orte_rmaps_base_get_node_map(
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_APP_CONTEXT_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
@@ -764,9 +764,9 @@ cleanup:
 
 int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
 {
-    size_t i, j;
-    size_t index=0;
-    size_t num_procs = 0;
+    orte_std_cntr_t i, j;
+    orte_std_cntr_t index=0;
+    orte_std_cntr_t num_procs = 0;
     int rc = ORTE_SUCCESS;
     opal_list_item_t* item;
     orte_gpr_value_t** values;
@@ -808,7 +808,7 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         free(segment);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[0]), ORTE_PROC_NUM_AT_INIT, ORTE_SIZE, &num_procs))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[0]), ORTE_PROC_NUM_AT_INIT, ORTE_STD_CNTR, &num_procs))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -834,14 +834,14 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         item != opal_list_get_end(mapping_list);
         item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
-        size_t p;
+        orte_std_cntr_t p;
         for(p=0; p<map->num_procs; p++) {
             orte_rmaps_base_proc_t* proc = map->procs[p];
             orte_gpr_value_t* value = values[index++];
             orte_proc_state_t proc_state=ORTE_PROC_STATE_INIT;
 
             /* initialize keyvals */
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_RANK_KEY, ORTE_SIZE, &(proc->proc_rank)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_RANK_KEY, ORTE_STD_CNTR, &(proc->proc_rank)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -856,7 +856,7 @@ int orte_rmaps_base_set_map(orte_jobid_t jobid, opal_list_t* mapping_list)
                 goto cleanup;
             }
 
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_SIZE, &(map->app->idx)))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[3]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_STD_CNTR, &(map->app->idx)))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -953,7 +953,7 @@ int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_
     char *tokens[2];
     char *keys[3];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0;
+    orte_std_cntr_t i, num_values = 0;
     orte_vpid_t *vptr;
     int rc;
 

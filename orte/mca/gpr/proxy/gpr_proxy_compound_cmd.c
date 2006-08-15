@@ -103,7 +103,7 @@ int orte_gpr_proxy_exec_compound_cmd(void)
 {
     orte_buffer_t *answer;
     orte_gpr_cmd_flag_t command;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, response;
     
     if (orte_gpr_proxy_globals.debug) {

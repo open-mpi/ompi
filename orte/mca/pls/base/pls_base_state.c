@@ -120,10 +120,10 @@ int orte_pls_base_get_proc_pid(const orte_process_name_t* name, pid_t* pid)
 {
     char *segment;
     char **tokens;
-    size_t num_tokens;
+    orte_std_cntr_t num_tokens;
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0;
+    orte_std_cntr_t i, num_values = 0;
     pid_t *pptr;
     int rc;
 
@@ -188,12 +188,12 @@ cleanup:
 /**
  *  Retrieve all process pids for the specified job.
  */
-int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pids)
+int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t **pids, orte_std_cntr_t* num_pids)
 {
     char *segment;
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0;
+    orte_std_cntr_t i, num_values = 0;
     pid_t *pptr;
     int rc;
 
@@ -302,11 +302,11 @@ int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid
 /**
  *  Retreive all daemon pids for the specified job.
  */
-int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t **pids, size_t* num_pids)
+int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t **pids, orte_std_cntr_t* num_pids)
 {
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0;
+    orte_std_cntr_t i, num_values = 0;
     int rc;
     char *jobid_string;
     pid_t *pptr;

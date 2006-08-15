@@ -36,7 +36,7 @@
 int orte_rmgr_base_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, orte_data_type_t type)
 {
     int rc;
-    size_t i;
+    orte_std_cntr_t i;
 
     /* create the new object */
     *dest = OBJ_NEW(orte_app_context_t);

@@ -41,10 +41,10 @@
 
 int orte_gpr_replica_find_containers(orte_gpr_replica_segment_t *seg,
                                      orte_gpr_replica_addr_mode_t addr_mode,
-                                     orte_gpr_replica_itag_t *taglist, size_t num_tags)
+                                     orte_gpr_replica_itag_t *taglist, orte_std_cntr_t num_tags)
 {
     orte_gpr_replica_container_t **cptr;
-    size_t i, j, index;
+    orte_std_cntr_t i, j, index;
 
     OPAL_TRACE(3);
 
@@ -75,11 +75,11 @@ int orte_gpr_replica_find_containers(orte_gpr_replica_segment_t *seg,
 
 int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
                                       orte_gpr_replica_segment_t *seg,
-                                      size_t num_itags,
+                                      orte_std_cntr_t num_itags,
                                       orte_gpr_replica_itag_t *itags)
 {
     int rc;
-    size_t index;
+    orte_std_cntr_t index;
 
     OPAL_TRACE(3);
 
@@ -112,7 +112,7 @@ int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
                                        orte_gpr_replica_container_t *cptr)
 {
     orte_gpr_replica_itagval_t **iptr;
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
 
     OPAL_TRACE(3);
@@ -219,7 +219,7 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_replica_itagval_t *iptr)
 {
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
 
     OPAL_TRACE(3);
@@ -268,7 +268,7 @@ int orte_gpr_replica_update_keyval(orte_gpr_replica_itagval_t **iptr2,
                                    orte_gpr_replica_container_t *cptr,
                                    orte_gpr_keyval_t *kptr)
 {
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
     orte_pointer_array_t *ptr;
     orte_gpr_replica_itagval_t *iptr;
@@ -337,11 +337,11 @@ MOVEON:
 
 
 int orte_gpr_replica_search_container(orte_gpr_replica_addr_mode_t addr_mode,
-                                      orte_gpr_replica_itag_t *itags, size_t num_itags,
+                                      orte_gpr_replica_itag_t *itags, orte_std_cntr_t num_itags,
                                       orte_gpr_replica_container_t *cptr)
 {
     orte_gpr_replica_itagval_t **ptr;
-    size_t i, j, index;
+    orte_std_cntr_t i, j, index;
 
     OPAL_TRACE(3);
 
@@ -384,7 +384,7 @@ bool orte_gpr_replica_value_in_container(orte_gpr_replica_container_t *cptr,
                                       orte_gpr_replica_itagval_t *iptr)
 {
     orte_gpr_replica_itagval_t **ptr;
-    size_t i, j;
+    orte_std_cntr_t i, j;
 
     ptr = (orte_gpr_replica_itagval_t**)((cptr->itagvals)->addr);
     for (i=0, j=0; j < cptr->num_itagvals &&
@@ -405,7 +405,7 @@ bool orte_gpr_replica_value_in_container(orte_gpr_replica_container_t *cptr,
 int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg)
 {
     int rc;
-    size_t i;
+    orte_std_cntr_t i;
 
     OPAL_TRACE(3);
 

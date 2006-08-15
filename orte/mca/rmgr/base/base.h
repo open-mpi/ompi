@@ -56,20 +56,20 @@ OMPI_DECLSPEC int orte_rmgr_base_close(void);
 OMPI_DECLSPEC int orte_rmgr_base_get_app_context(
     orte_jobid_t jobid,
     orte_app_context_t*** app_context,
-    size_t* num_context);
+    orte_std_cntr_t* num_context);
 
 OMPI_DECLSPEC int orte_rmgr_base_put_app_context(
     orte_jobid_t jobid,
     orte_app_context_t** app_context,
-    size_t num_context);
+    orte_std_cntr_t num_context);
 
 OMPI_DECLSPEC int orte_rmgr_base_get_job_slots(
     orte_jobid_t jobid,
-    size_t* num_slots);
+    orte_std_cntr_t* num_slots);
 
 OMPI_DECLSPEC int orte_rmgr_base_set_job_slots(
     orte_jobid_t jobid,
-    size_t num_slots);
+    orte_std_cntr_t num_slots);
 
 
 /*
@@ -84,7 +84,7 @@ OMPI_DECLSPEC int orte_rmgr_base_pack_cmd(
 OMPI_DECLSPEC int orte_rmgr_base_pack_create_cmd(
     orte_buffer_t* buffer,
     orte_app_context_t** context,
-    size_t num_context);
+    orte_std_cntr_t num_context);
 
 OMPI_DECLSPEC int orte_rmgr_base_pack_terminate_proc_cmd(
     orte_buffer_t* buffer,
@@ -116,7 +116,7 @@ OMPI_DECLSPEC int orte_rmgr_base_cmd_dispatch(
  */
 int orte_rmgr_base_create_not_available(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 int orte_rmgr_base_query_not_available(void);
 int orte_rmgr_base_allocate_not_available(orte_jobid_t);
@@ -135,7 +135,7 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(
         orte_gpr_notify_message_t *msg);
 int orte_rmgr_base_spawn_not_available(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
@@ -145,19 +145,19 @@ int orte_rmgr_base_finalize_not_available(void);
  * DATA TYPE PACKING FUNCTIONS
  */
 int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
-                                    size_t num_vals, orte_data_type_t type);
+                                    orte_std_cntr_t num_vals, orte_data_type_t type);
 
 int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
-                                        size_t num_vals, orte_data_type_t type);
+                                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
 int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
-                                      size_t *num_vals, orte_data_type_t type);
+                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
-                                          size_t *num_vals, orte_data_type_t type);
+                                          orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 
 /*

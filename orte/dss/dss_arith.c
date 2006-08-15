@@ -39,6 +39,8 @@ static void orte_dss_arith_uint32(uint32_t *value, uint32_t *operand, orte_dss_a
 static void orte_dss_arith_int64(int64_t *value, int64_t *operand, orte_dss_arith_op_t operation);
 static void orte_dss_arith_uint64(uint64_t *value, uint64_t *operand, orte_dss_arith_op_t operation);
 
+static void orte_dss_arith_std_cntr(orte_std_cntr_t *value, orte_std_cntr_t *operand, orte_dss_arith_op_t operation);
+
 /* some weird ones - but somebody *might* want to do it, I suppose... */
 static void orte_dss_arith_data_type(orte_data_type_t *value, orte_data_type_t *operand, orte_dss_arith_op_t operation);
 static void orte_dss_arith_daemon_cmd(orte_daemon_cmd_flag_t *value, orte_daemon_cmd_flag_t *operand, orte_dss_arith_op_t operation);
@@ -107,6 +109,10 @@ int orte_dss_arith(orte_data_value_t *value, orte_data_value_t *operand, orte_ds
             orte_dss_arith_uint64(value->data, operand->data, operation);
             break;
 
+        case ORTE_STD_CNTR:
+            orte_dss_arith_std_cntr(value->data, operand->data, operation);
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
             return ORTE_ERR_OPERATION_UNSUPPORTED;
@@ -131,6 +137,7 @@ int orte_dss_increment(orte_data_value_t *value)
     int64_t i64one;
     orte_daemon_cmd_flag_t daemoncmdone;
     orte_data_type_t datatypeone;
+    orte_std_cntr_t stdcntrone;
 
     /* check for error */
     if (NULL == value) {
@@ -211,6 +218,11 @@ int orte_dss_increment(orte_data_value_t *value)
             orte_dss_arith_data_type(value->data, &datatypeone, ORTE_DSS_ADD);
             break;
 
+        case ORTE_STD_CNTR:
+            stdcntrone = 1;
+            orte_dss_arith_std_cntr(value->data, &stdcntrone, ORTE_DSS_ADD);
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
             return ORTE_ERR_OPERATION_UNSUPPORTED;
@@ -235,6 +247,7 @@ int orte_dss_decrement(orte_data_value_t *value)
     int64_t i64one;
     orte_daemon_cmd_flag_t daemoncmdone;
     orte_data_type_t datatypeone;
+    orte_std_cntr_t stdcntrone;
 
     /* check for error */
     if (NULL == value) {
@@ -315,6 +328,11 @@ int orte_dss_decrement(orte_data_value_t *value)
             orte_dss_arith_data_type(value->data, &datatypeone, ORTE_DSS_SUB);
             break;
 
+        case ORTE_STD_CNTR:
+            stdcntrone = 1;
+            orte_dss_arith_std_cntr(value->data, &stdcntrone, ORTE_DSS_SUB);
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
             return ORTE_ERR_OPERATION_UNSUPPORTED;
@@ -679,6 +697,36 @@ static void orte_dss_arith_uint64(uint64_t *value, uint64_t *operand, orte_dss_a
             (*value) /= *operand;
             break;
 
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
+            break;
+    }
+    return;
+}
+
+static void orte_dss_arith_std_cntr(orte_std_cntr_t *value, orte_std_cntr_t *operand, orte_dss_arith_op_t operation)
+{
+    switch(operation) {
+        case ORTE_DSS_ADD:
+            (*value) += *operand;
+            break;
+            
+        case ORTE_DSS_SUB:
+            (*value) -= *operand;
+            break;
+            
+        case ORTE_DSS_MUL:
+            (*value) *= *operand;
+            break;
+            
+        case ORTE_DSS_DIV:
+            if (0 == *operand) {
+                ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
+                return;
+            }
+            (*value) /= *operand;
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_OPERATION_UNSUPPORTED);
             break;

@@ -107,7 +107,7 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                 orte_vpid_t *startvpid);
 
 int orte_ns_proxy_get_job_peers(orte_process_name_t **procs, 
-                                  size_t *num_procs, orte_jobid_t job);
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job);
 
 int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag, char *name);
 

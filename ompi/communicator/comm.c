@@ -839,7 +839,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
     char *rnamebuf=NULL;
-    size_t size_len;
+    orte_std_cntr_t size_len;
     int int_len, rlen;
     orte_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
@@ -870,9 +870,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (OMPI_SUCCESS != (rc = opal_size2int(size_len, &int_len, true))) {
-            goto err_exit;
-        }
+        int_len = (int)size_len;
         
         rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag, 
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm ));

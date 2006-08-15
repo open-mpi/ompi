@@ -106,7 +106,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     orte_cellid_t cellid=ORTE_CELLID_MAX, *cptr;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    size_t i, j, k, cnt=0;
+    orte_std_cntr_t i, j, k, cnt=0;
     orte_gpr_value_t **values=NULL, *value;
     orte_gpr_keyval_t **keyvals;
     char *keys[4], *tokens[3], *cellname;
@@ -526,7 +526,7 @@ static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
                                 orte_buffer_t* buffer, orte_rml_tag_t tag,
                                 void* cbdata)
 {
-    size_t n=1;
+    orte_std_cntr_t n=1;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_setup_hnp_mutex);

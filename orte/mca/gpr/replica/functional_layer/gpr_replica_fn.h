@@ -45,13 +45,13 @@ extern "C" {
 int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *itags,
-                                size_t num_tokens, size_t cnt,
+                                orte_std_cntr_t num_tokens, orte_std_cntr_t cnt,
                                 orte_gpr_keyval_t **keyvals);
 
 int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *itags,
-                                size_t num_tokens, size_t cnt,
+                                orte_std_cntr_t num_tokens, orte_std_cntr_t cnt,
                                 orte_gpr_keyval_t **keyvals);
 
 /*
@@ -59,17 +59,17 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
  */
 int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t mode,
                     orte_gpr_replica_segment_t *seg,
-                    orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                    orte_gpr_replica_itag_t *key_tags, size_t num_keys);
+                    orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                    orte_gpr_replica_itag_t *key_tags, orte_std_cntr_t num_keys);
 
 int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_addr_mode_t addr_mode,
                     orte_gpr_replica_segment_t *seg,
-                    orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                    orte_gpr_replica_itag_t *key_tags, size_t num_keys);
+                    orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                    orte_gpr_replica_itag_t *key_tags, orte_std_cntr_t num_keys);
 
 int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
-                            size_t *cnt, char ***index);
+                            orte_std_cntr_t *cnt, char ***index);
 
 int orte_gpr_replica_index_nb_fn(orte_gpr_replica_segment_t *seg,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
@@ -88,32 +88,32 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc);
  */
 int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
-                orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                size_t cnt, orte_gpr_keyval_t **keyvals);
+                orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                orte_std_cntr_t cnt, orte_gpr_keyval_t **keyvals);
 
 int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
-                orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                size_t cnt, orte_gpr_keyval_t **keyvals,
+                orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                orte_std_cntr_t cnt, orte_gpr_keyval_t **keyvals,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
 int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
-                            size_t *cnt, orte_gpr_value_t ***values);
+                            orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
+                            orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 int orte_gpr_replica_get_conditional_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
-                            size_t num_conditions, orte_gpr_replica_itagval_t **conditions,
-                            size_t *cnt, orte_gpr_value_t ***values);
+                            orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
+                            orte_std_cntr_t num_conditions, orte_gpr_replica_itagval_t **conditions,
+                            orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
-                                orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                                orte_gpr_replica_itag_t *keytags, size_t num_keys,
+                                orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                                orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
                                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
 
@@ -121,9 +121,9 @@ int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
  * Subscribe functions
  */
 int orte_gpr_replica_subscribe_fn(orte_process_name_t *requestor,
-                                  size_t num_subs,
+                                  orte_std_cntr_t num_subs,
                                   orte_gpr_subscription_t **subscriptions,
-                                  size_t num_trigs,
+                                  orte_std_cntr_t num_trigs,
                                   orte_gpr_trigger_t **trigs);
 
 /*
@@ -161,11 +161,11 @@ int orte_gpr_replica_release_segment(orte_gpr_replica_segment_t **seg);
 
 int orte_gpr_replica_find_containers(orte_gpr_replica_segment_t *seg,
                                      orte_gpr_replica_addr_mode_t addr_mode,
-                                     orte_gpr_replica_itag_t *taglist, size_t num_tags);
+                                     orte_gpr_replica_itag_t *taglist, orte_std_cntr_t num_tags);
 
 int orte_gpr_replica_create_container(orte_gpr_replica_container_t **cptr,
                                       orte_gpr_replica_segment_t *seg,
-                                      size_t num_itags,
+                                      orte_std_cntr_t num_itags,
                                       orte_gpr_replica_itag_t *itags);
 
 int orte_gpr_replica_release_container(orte_gpr_replica_segment_t *seg,
@@ -186,7 +186,7 @@ int orte_gpr_replica_purge_itag(orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t itag);
 
 int orte_gpr_replica_search_container(orte_gpr_replica_addr_mode_t addr_mode,
-                                      orte_gpr_replica_itag_t *itags, size_t num_itags,
+                                      orte_gpr_replica_itag_t *itags, orte_std_cntr_t num_itags,
                                       orte_gpr_replica_container_t *cptr);
 
 bool orte_gpr_replica_value_in_container(orte_gpr_replica_container_t *cptr,
@@ -201,13 +201,13 @@ int orte_gpr_replica_delete_itagval(orte_gpr_replica_segment_t *seg,
  */
 
 bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t mode,
-                    size_t num_itags_search,
+                    orte_std_cntr_t num_itags_search,
                     orte_gpr_replica_itag_t *itags,
-                    size_t num_itags_entry,
+                    orte_std_cntr_t num_itags_entry,
                     orte_gpr_replica_itag_t *entry_itags);
 
 int orte_gpr_replica_copy_itag_list(orte_gpr_replica_itag_t **dest,
-                                    orte_gpr_replica_itag_t *src, size_t num_itags);
+                                    orte_gpr_replica_itag_t *src, orte_std_cntr_t num_itags);
 
 void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
                                          orte_gpr_replica_itagval_t *iptr);
@@ -215,9 +215,9 @@ void orte_gpr_replica_dump_itagval_value(orte_buffer_t *buffer,
 /*
  * Trigger Operations
  */
-int orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions);
+int orte_gpr_replica_enter_local_subscription(orte_std_cntr_t cnt, orte_gpr_subscription_t **subscriptions);
 
-int orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs);
+int orte_gpr_replica_enter_local_trigger(orte_std_cntr_t cnt, orte_gpr_trigger_t **trigs);
 
 int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber_t *sub);
 
@@ -278,7 +278,7 @@ int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
 
 int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
-                                        size_t cnt,
+                                        orte_std_cntr_t cnt,
                                         orte_gpr_value_t **values);
 
 #if defined(c_plusplus) || defined(__cplusplus)

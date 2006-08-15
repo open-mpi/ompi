@@ -40,7 +40,7 @@
 int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *tokentags,
-                                size_t num_tokens, size_t cnt,
+                                orte_std_cntr_t num_tokens, orte_std_cntr_t cnt,
                                 orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr;
@@ -48,7 +48,7 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
     int rc;
-    size_t i, j, k, m, n;
+    orte_std_cntr_t i, j, k, m, n;
 
     OPAL_TRACE(2);
     
@@ -104,7 +104,7 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
 int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
                                 orte_gpr_replica_itag_t *tokentags,
-                                size_t num_tokens, size_t cnt,
+                                orte_std_cntr_t num_tokens, orte_std_cntr_t cnt,
                                 orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr;
@@ -112,7 +112,7 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_addr_mode_t tok_mode;
     orte_gpr_replica_itagval_t **ival;
     int rc;
-    size_t i, j, k, m, n;
+    orte_std_cntr_t i, j, k, m, n;
 
     OPAL_TRACE(2);
     

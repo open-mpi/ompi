@@ -176,7 +176,7 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
             item != opal_list_get_end(&map);
             item =  opal_list_get_next(item)) {
             orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-            size_t i;
+            orte_std_cntr_t i;
 
             for (i = 0 ; i < map->num_procs ; ++i) {
                 /* Clean up the session directory as if we were the
@@ -236,7 +236,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
 {
     opal_list_t mapping;
     opal_list_item_t* m_item, *n_item;
-    size_t num_nodes;
+    orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
@@ -484,7 +484,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                  * NOT being oversubscribed
                  */
                 if (ras_node->node_slots > 0 &&
-                    opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
+                    (orte_std_cntr_t)opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
                     if (mca_pls_gridengine_component.debug) {
                         opal_output(0, "pls:gridengine: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
                             ras_node->node_slots, opal_list_get_size(&rmaps_node->node_procs));
@@ -708,7 +708,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
 static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
 {
     int rc, *iptr, ivalue;
-    size_t num_tokens, i, get_cnt;
+    orte_std_cntr_t num_tokens, i, get_cnt;
     orte_gpr_value_t** get_values;
     char **tokens;
     char *get_keys[] = {"orte-gridengine-slot-cnt", NULL};
@@ -745,7 +745,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
     /* parse the response */
     for(i=0; i<get_cnt; i++) {
         orte_gpr_value_t* value = get_values[i];
-        size_t k;
+        orte_std_cntr_t k;
 
         /* looking in each GPR container for the keyval */
         for(k=0; k < value->cnt; k++) {

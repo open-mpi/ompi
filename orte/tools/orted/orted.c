@@ -454,7 +454,7 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     orte_buffer_t *answer;
     orte_daemon_cmd_flag_t command;
     int ret;
-    size_t n;
+    orte_std_cntr_t n;
     char *contact_info;
 
     OPAL_TRACE(1);
@@ -544,7 +544,7 @@ void job_state_callback(orte_gpr_notify_data_t *data, void *cbdata)
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
 
     OPAL_TRACE(1);

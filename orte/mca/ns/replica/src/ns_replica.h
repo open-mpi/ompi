@@ -152,7 +152,7 @@ int orte_ns_replica_reserve_range(orte_jobid_t job,
  * Peer functions
  */
 int orte_ns_replica_get_job_peers(orte_process_name_t **procs, 
-                                  size_t *num_procs, orte_jobid_t job);
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job);
 
 
 /*

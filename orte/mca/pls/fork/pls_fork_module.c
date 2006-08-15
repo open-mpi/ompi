@@ -564,7 +564,7 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
          item != opal_list_get_end(&map);
          item =  opal_list_get_next(item)) {
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
-        size_t i;
+        orte_std_cntr_t i;
         for (i=0; i<map->num_procs; i++) {
             rc = orte_pls_fork_proc(map->app, map->procs[i], vpid_start,
                                     vpid_range,
@@ -611,7 +611,7 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
         NULL
     };
     orte_gpr_value_t** values = NULL;
-    size_t i, k, num_values = 0;
+    orte_std_cntr_t i, k, num_values = 0;
     int rc;
     opal_value_array_t pids, procs;
     orte_process_name_t proc, *procptr;
@@ -706,7 +706,7 @@ int orte_pls_fork_signal_job(orte_jobid_t jobid, int32_t signal)
     char *segment;
     char *keys[3];
     orte_gpr_value_t** values = NULL;
-    size_t i, k, num_values = 0;
+    orte_std_cntr_t i, k, num_values = 0;
     int rc;
     opal_value_array_t pids;
     pid_t pid;
@@ -764,7 +764,7 @@ int orte_pls_fork_signal_job(orte_jobid_t jobid, int32_t signal)
 
     rc = ORTE_SUCCESS;
     /* If we have processes to signal, go signal them */
-    for (i = 0; i < opal_value_array_get_size(&pids); ++i) {
+    for (i = 0; i < (orte_std_cntr_t)opal_value_array_get_size(&pids); ++i) {
         pid = OPAL_VALUE_ARRAY_GET_ITEM(&pids, pid_t, i);
         if(kill(pid, (int)signal) != 0) {
             switch(errno) {

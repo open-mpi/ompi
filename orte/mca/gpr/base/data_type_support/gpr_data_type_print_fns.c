@@ -26,7 +26,7 @@
 
 #include "orte/mca/gpr/base/base.h"
 
-static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size);
+static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, orte_std_cntr_t src_size);
 
 /*
  * STANDARD PRINT FUNCTION - WORKS FOR EVERYTHING NON-STRUCTURED
@@ -116,7 +116,7 @@ int orte_gpr_base_print_gpr_value(char **output, char *prefix, orte_gpr_value_t 
 {
     orte_gpr_addr_mode_t addr;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
     int rc;
 
     /* set default result */
@@ -251,7 +251,7 @@ int orte_gpr_base_print_subscription(char **output, char *prefix, orte_gpr_subsc
 {
     int rc;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
 
     /* set default result */
     *output = NULL;
@@ -338,7 +338,7 @@ int orte_gpr_base_print_trigger(char **output, char *prefix, orte_gpr_trigger_t 
 {
     int rc;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
 
     /* set default result */
     *output = NULL;
@@ -414,7 +414,7 @@ int orte_gpr_base_print_trigger(char **output, char *prefix, orte_gpr_trigger_t 
 int orte_gpr_base_print_notify_data(char **output, char *prefix, orte_gpr_notify_data_t *data, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_value_t **values;
     int rc;
 
@@ -464,7 +464,7 @@ int orte_gpr_base_print_notify_data(char **output, char *prefix, orte_gpr_notify
 int orte_gpr_base_print_notify_msg(char **output, char *prefix, orte_gpr_notify_message_t *msg, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_notify_data_t **data;
     int rc;
 
@@ -523,7 +523,7 @@ int orte_gpr_base_print_notify_msg(char **output, char *prefix, orte_gpr_notify_
     return ORTE_SUCCESS;
 }
 
-static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size)
+static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, orte_std_cntr_t src_size)
 {
     char *prefx;
     uint8_t *ui8;

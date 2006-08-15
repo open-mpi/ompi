@@ -34,10 +34,10 @@
  * NAME
  */
 int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
-    size_t i;
+    orte_std_cntr_t i;
     orte_process_name_t* proc;
     orte_cellid_t *cellid;
     orte_jobid_t *jobid;
@@ -122,13 +122,13 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
  * CELLID
  */
 int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -139,13 +139,13 @@ int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
  * JOBID
  */
 int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -156,13 +156,13 @@ int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
  * VPID
  */
 int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
-                       size_t num_vals, orte_data_type_t type)
+                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_UINT32))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
         ORTE_ERROR_LOG(ret);
     }
 

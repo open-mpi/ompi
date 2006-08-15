@@ -43,7 +43,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
 {
     char **ptr, *new_dict;
     orte_gpr_replica_itag_t j;
-    size_t i, len, len2, index;
+    orte_std_cntr_t i, len, len2, index;
 
     OPAL_TRACE(3);
 
@@ -136,7 +136,7 @@ int orte_gpr_replica_delete_itag(orte_gpr_replica_segment_t *seg, char *name)
      free(ptr[itag]);
      
      /* remove itag from segment dictionary */
-    orte_pointer_array_set_item(seg->dict, (size_t)itag, NULL);
+    orte_pointer_array_set_item(seg->dict, (orte_std_cntr_t)itag, NULL);
     
     /* decrease the dict counter */
     (seg->num_dict_entries)--;
@@ -150,9 +150,9 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                              orte_gpr_replica_segment_t *seg, char *name)
 {
     char **ptr;
-    size_t i;
+    orte_std_cntr_t i;
     orte_gpr_replica_itag_t j;
-    size_t len, len2;
+    orte_std_cntr_t len, len2;
     
     OPAL_TRACE(3);
 
@@ -239,11 +239,11 @@ int orte_gpr_replica_dict_reverse_lookup(char **name,
 int
 orte_gpr_replica_get_itag_list(orte_gpr_replica_itag_t **itaglist,
                     orte_gpr_replica_segment_t *seg, char **names,
-                    size_t *num_names)
+                    orte_std_cntr_t *num_names)
 {
     char **namptr;
     int rc;
-    size_t i;
+    orte_std_cntr_t i;
 
     OPAL_TRACE(3);
 

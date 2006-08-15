@@ -98,7 +98,7 @@ static void orte_gpr_replica_segment_construct(orte_gpr_replica_segment_t* seg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_segment_destructor(orte_gpr_replica_segment_t* seg)
 {
-    size_t i, k;
+    orte_std_cntr_t i, k;
     char **dptr;
     orte_gpr_replica_itag_t j;
     orte_gpr_replica_container_t **cptr;
@@ -162,7 +162,7 @@ static void orte_gpr_replica_container_construct(orte_gpr_replica_container_t* r
 static void orte_gpr_replica_container_destructor(orte_gpr_replica_container_t* reg)
 {
     orte_gpr_replica_itagval_t **ptr;
-    size_t i, k;
+    orte_std_cntr_t i, k;
 
     if (NULL != reg->itags) {
          free(reg->itags);
@@ -321,7 +321,7 @@ static void orte_gpr_replica_subscription_destructor(orte_gpr_replica_subscripti
 {
     orte_gpr_replica_requestor_t **ptr;
     orte_gpr_replica_ivalue_t **ivals;
-    size_t i, k;
+    orte_std_cntr_t i, k;
 
     if (NULL != sub->name) free(sub->name);
 
@@ -416,7 +416,7 @@ static void orte_gpr_replica_trigger_construct(orte_gpr_replica_trigger_t* trig)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_replica_trigger_destructor(orte_gpr_replica_trigger_t* trig)
 {
-    size_t i, cnt;
+    orte_std_cntr_t i, cnt;
     orte_gpr_replica_counter_t **cntrs;
     orte_gpr_replica_trigger_requestor_t **att;
 

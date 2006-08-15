@@ -63,7 +63,7 @@ static int orte_ras_dash_host_allocate(orte_jobid_t jobid)
     opal_list_t nodes;
     opal_list_item_t* item;
     orte_app_context_t **context;
-    size_t i, j, k, num_context;
+    orte_std_cntr_t i, j, k, num_context;
     int rc;
     char **mapped_nodes = NULL, **mini_map;
     orte_ras_node_t *node;

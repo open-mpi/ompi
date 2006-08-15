@@ -583,7 +583,7 @@ typedef int (*orte_ns_base_module_define_data_type_fn_t)(
  * OF O(N) ARRAYS IN THE SYSTEM
  */
 typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
-                                  size_t *num_procs, size_t *self);
+                                  orte_std_cntr_t *num_procs, orte_std_cntr_t *self);
 
 /*
  * Get the list of peers from a specified job
@@ -592,7 +592,7 @@ typedef int (*orte_ns_base_module_get_peers_fn_t)(orte_process_name_t **procs,
  * OF O(N) ARRAYS IN THE SYSTEM
  */
 typedef int (*orte_ns_base_module_get_job_peers_fn_t)(orte_process_name_t **procs,
-                                  size_t *num_procs, orte_jobid_t job);
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job);
 
 
 

@@ -334,7 +334,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 {
     opal_list_t list_of_resource_maps;
     opal_list_item_t *item;
-    size_t i;
+    orte_std_cntr_t i;
     int rc;
 
     if (MPIR_proctable) {

@@ -42,7 +42,7 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
     orte_gpr_cmd_flag_t command=ORTE_GPR_SUBSCRIBE_CMD;
     orte_data_type_t type;
     int rc, ret;
-    size_t n, num_subs, num_trigs;
+    orte_std_cntr_t n, num_subs, num_trigs;
     orte_gpr_trigger_t **trigs=NULL;
     orte_gpr_subscription_t **subscriptions=NULL;
     
@@ -58,18 +58,18 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         goto RETURN_ERROR;
     }
     
-    /* if the original command did not provide any subscriptions, then we put a size_t value in the buffer of "zero"
-     * to avoid causing buffer problems. thus, we need to check to see if the type is size_t vs subscription vs
+    /* if the original command did not provide any subscriptions, then we put a orte_std_cntr_t value in the buffer of "zero"
+     * to avoid causing buffer problems. thus, we need to check to see if the type is orte_std_cntr_t vs subscription vs
      * something else. if it is trigger, then we need the number to be greater than 0, which should always
-     * be true (we check it just to be safe). if it is size_t, then the value should be zero - anything else
+     * be true (we check it just to be safe). if it is orte_std_cntr_t, then the value should be zero - anything else
      * generates an error.
      */
-    if (ORTE_SIZE == type) {
+    if (ORTE_STD_CNTR == type) {
         /* this case means that there were no subscriptions, so we need to clear the value from the buffer
          * and continue on
          */
         n=1;
-        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_subs, &n, ORTE_SIZE)) {
+        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_subs, &n, ORTE_STD_CNTR)) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
@@ -107,18 +107,18 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         goto RETURN_ERROR;
     }
     
-    /* if the original command did not provide any triggers, then we put a size_t value in the buffer of "zero"
-     * to avoid causing buffer problems. thus, we need to check to see if the type is size_t vs trigger vs
+    /* if the original command did not provide any triggers, then we put a orte_std_cntr_t value in the buffer of "zero"
+     * to avoid causing buffer problems. thus, we need to check to see if the type is orte_std_cntr_t vs trigger vs
      * something else. if it is trigger, then we need the number to be greater than 0, which should always
-     * be true (we check it just to be safe). if it is size_t, then the value should be zero - anything else
+     * be true (we check it just to be safe). if it is orte_std_cntr_t, then the value should be zero - anything else
      * generates an error.
      */
-    if (ORTE_SIZE == type) {
+    if (ORTE_STD_CNTR == type) {
         /* this case means that there were no triggers, so we need to clear the value from the buffer
          * and continue on
          */
         n=1;
-        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_trigs, &n, ORTE_SIZE)) {
+        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_trigs, &n, ORTE_STD_CNTR)) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
@@ -191,7 +191,7 @@ int orte_gpr_replica_recv_unsubscribe_cmd(orte_process_name_t *sender,
     orte_gpr_cmd_flag_t command=ORTE_GPR_UNSUBSCRIBE_CMD;
     orte_gpr_subscription_id_t sub_number=0;
     int rc, ret;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
     
@@ -230,7 +230,7 @@ int orte_gpr_replica_recv_cancel_trigger_cmd(orte_process_name_t *sender,
     orte_gpr_cmd_flag_t command=ORTE_GPR_CANCEL_TRIGGER_CMD;
     orte_gpr_trigger_id_t trig_number=0;
     int rc, ret;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
     

@@ -66,10 +66,10 @@ void orte_pointer_array_destruct(orte_pointer_array_t *array)
  * initialize an array object
  */
 int orte_pointer_array_init(orte_pointer_array_t **array,
-                            size_t initial_allocation,
-                            size_t max_size, size_t block_size)
+                            orte_std_cntr_t initial_allocation,
+                            orte_std_cntr_t max_size, orte_std_cntr_t block_size)
 {
-    size_t num_bytes;
+    orte_std_cntr_t num_bytes;
     
     /* check for errors */
     if (NULL == array || max_size < block_size) {
@@ -115,9 +115,9 @@ int orte_pointer_array_init(orte_pointer_array_t **array,
  * @param (OUT) Array index where ptr is inserted
  * @return ORTE_ERROR_code if it fails
  */
-int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *ptr)
+int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *table, void *ptr)
 {
-    size_t i, index;
+    orte_std_cntr_t i, index;
 
     if (0) {
         opal_output(0,"orte_pointer_array_add:  IN:  "
@@ -191,7 +191,7 @@ int orte_pointer_array_add(size_t *location, orte_pointer_array_t *table, void *
  *
  * Assumption: NULL element is free element.
  */
-int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
+int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t index,
                                 void * value)
 {
     assert(table != NULL);
@@ -230,7 +230,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
         	    table->number_free--;
         	    /* Reset lowest_free if required */
         	    if ( index == table->lowest_free ) {
-        		     size_t i;
+        		     orte_std_cntr_t i;
                     
         		     table->lowest_free=table->size;
         		     for ( i=index; i<table->size; i++) {
@@ -254,7 +254,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
         	else {
         	    /* Reset lowest_free if required */
         	    if ( index == table->lowest_free ) {
-            		size_t i;
+            		orte_std_cntr_t i;
                         
             		table->lowest_free=table->size;
             		for ( i=index; i<table->size; i++) {
@@ -295,7 +295,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, size_t index,
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
 bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
-                                           size_t index, void *value)
+                                           orte_std_cntr_t index, void *value)
 {
     assert(table != NULL);
 
@@ -331,7 +331,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
     table->number_free--;
     /* Reset lowest_free if required */
     if ( index == table->lowest_free ) {
-        size_t i;
+        orte_std_cntr_t i;
 
 	    table->lowest_free = table->size;
         for ( i=index; i<table->size; i++) {
@@ -355,7 +355,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 }
 
 
-int orte_pointer_array_set_size(orte_pointer_array_t *array, size_t new_size)
+int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t new_size)
 {
     OPAL_THREAD_LOCK(&(array->lock));
     while (new_size > orte_pointer_array_get_size(array)) {
@@ -371,7 +371,7 @@ int orte_pointer_array_set_size(orte_pointer_array_t *array, size_t new_size)
 
 static bool grow_table(orte_pointer_array_t *table)
 {
-    size_t new_size, i;
+    orte_std_cntr_t new_size, i;
     void *p;
 
     /* Ensure that we have room to grow -- stay less than

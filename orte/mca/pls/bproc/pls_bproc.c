@@ -497,7 +497,7 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     orte_jobid_t daemon_jobid;
     orte_process_name_t * proc_name;
     orte_vpid_t daemon_vpid_start = 0;
-    size_t idx;
+    orte_std_cntr_t idx;
     struct stat buf;
 
     /* find the length of the longest node array */
@@ -684,7 +684,7 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
     orte_gpr_value_t **values;
     bool dead_node = false;
     char *dead_node_name; 
-    size_t i, j;
+    orte_std_cntr_t i, j;
     
     printf("inside check node state... \n"); 
     
@@ -725,7 +725,7 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
             /* gotta see if this node belongs to us... arg.. */
             /* also, we know by order of creation that the node state */ 
             /* comes before the node name.. see soh_bproc.c */
-            size_t name_idx;
+            orte_std_cntr_t name_idx;
             for (name_idx = 0;
                  name_idx < orte_pointer_array_get_size(mca_pls_bproc_component.active_node_names);
                  name_idx++) { 
@@ -736,7 +736,7 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
                     int ret = ORTE_SUCCESS;
                     char *segment = NULL;
                     orte_gpr_value_t** seg_values = NULL;
-                    size_t  num_values = 0;
+                    orte_std_cntr_t  num_values = 0;
 	      
                     /**********************
                      * Job Info segment
@@ -1024,7 +1024,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     int num_daemons = 0;
     int context = 0;
     int j;
-    size_t idx;
+    orte_std_cntr_t idx;
     char cwd_save[OMPI_PATH_MAX + 1];
 
     if (NULL == getcwd(cwd_save, sizeof(cwd_save))) {
@@ -1057,7 +1057,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     for (item =  opal_list_get_first(&mapping);
          item != opal_list_get_end(&mapping);
          item =  opal_list_get_next(item)) {
-        size_t i;
+        orte_std_cntr_t i;
         map = (orte_rmaps_base_map_t*) item;
         for (i = 0; i < map->num_procs; ++i) {
             orte_app_context_t *context = map->app;
@@ -1229,7 +1229,7 @@ cleanup:
  */
 int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
     pid_t* pids;
-    size_t i, num_pids;
+    orte_std_cntr_t i, num_pids;
     int rc;
     /* kill application process */
     if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pids(jobid, &pids, &num_pids)))
@@ -1274,7 +1274,7 @@ int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
  */
 int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal) {
     pid_t* pids;
-    size_t i, num_pids;
+    orte_std_cntr_t i, num_pids;
     int rc;
 
     /* signal application process */

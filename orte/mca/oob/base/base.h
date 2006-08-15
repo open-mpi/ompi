@@ -112,12 +112,6 @@ OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
 OMPI_DECLSPEC int mca_oob_ping(const char*, struct timeval* tv);
 
 /**
- *  A barrier across all processes w/in the same job.
- */
-
-OMPI_DECLSPEC int mca_oob_barrier(void);
-
-/**
 *  Extract from the contact info the peer process identifier.
 *
 *  @param  cinfo (IN)   The contact information of the peer process.
@@ -411,7 +405,7 @@ OMPI_DECLSPEC int mca_oob_recv_packed_nb(
 OMPI_DECLSPEC int mca_oob_xcast(
     orte_process_name_t* root,
     orte_process_name_t* peers,
-    size_t num_peers,
+    orte_std_cntr_t num_peers,
     orte_buffer_t* buffer,
     orte_gpr_trigger_cb_fn_t cbfunc);
 

@@ -40,13 +40,13 @@
 
 int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 				     orte_gpr_replica_segment_t *seg,
-				     orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                      orte_gpr_replica_itag_t *key_itags, size_t num_keys)
+				     orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                      orte_gpr_replica_itag_t *key_itags, orte_std_cntr_t num_keys)
 {
     orte_gpr_replica_container_t **cptr;
     orte_gpr_replica_itagval_t  **ivals;
     orte_gpr_replica_addr_mode_t tok_mode;
-    size_t i, j, k, n, p;
+    orte_std_cntr_t i, j, k, n, p;
     int rc;
 
     OPAL_TRACE(2);
@@ -145,8 +145,8 @@ int orte_gpr_replica_delete_entries_fn(orte_gpr_addr_mode_t addr_mode,
 int orte_gpr_replica_delete_entries_nb_fn(
                     orte_gpr_addr_mode_t addr_mode,
                     orte_gpr_replica_segment_t *seg,
-                    orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                    orte_gpr_replica_itag_t *key_tags, size_t num_keys)
+                    orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                    orte_gpr_replica_itag_t *key_tags, orte_std_cntr_t num_keys)
 {
     OPAL_TRACE(2);
     
@@ -155,12 +155,12 @@ int orte_gpr_replica_delete_entries_nb_fn(
 
 
 int orte_gpr_replica_index_fn(orte_gpr_replica_segment_t *seg,
-                            size_t *cnt, char ***index)
+                            orte_std_cntr_t *cnt, char ***index)
 {
     char **ptr;
     orte_gpr_replica_segment_t **segs;
     char **dict;
-    size_t i, j;
+    orte_std_cntr_t i, j;
 
 
     OPAL_TRACE(2);

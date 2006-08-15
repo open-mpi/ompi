@@ -42,9 +42,9 @@ extern "C" {
 struct mca_oob_tcp_addr_t {
     opal_object_t super;
     orte_process_name_t addr_name;
-    uint32_t addr_count;               
-    uint32_t addr_next;
-    uint32_t addr_alloc;
+    orte_std_cntr_t addr_count;               
+    orte_std_cntr_t addr_next;
+    orte_std_cntr_t addr_alloc;
     bool addr_matched;
     struct sockaddr_in* addr_inet;    
 };

@@ -553,7 +553,7 @@ void mca_oob_tcp_registry_callback(
     orte_gpr_notify_data_t* data,
     void* cbdata)
 {
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t *keyval;
@@ -751,7 +751,7 @@ int mca_oob_tcp_init(void)
     int rc;
     opal_list_item_t* item;
     char *tmp, *tmp2, *tmp3;
-    size_t i, num_tokens;
+    orte_std_cntr_t i, num_tokens;
 
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)

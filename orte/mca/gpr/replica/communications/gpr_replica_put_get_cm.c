@@ -42,7 +42,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     orte_gpr_replica_itag_t *itags=NULL;
     orte_data_type_t type;
     int rc, ret;
-    size_t i=0, cnt;
+    orte_std_cntr_t i=0, cnt;
 
     OPAL_TRACE(3);
 
@@ -147,8 +147,8 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     orte_gpr_replica_itag_t *tokentags=NULL, *keytags=NULL;
     int rc, ret;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    size_t i=0, cnt=0;
-    size_t num_tokens=0, num_keys=0, n;
+    orte_std_cntr_t i=0, cnt=0;
+    orte_std_cntr_t num_tokens=0, num_keys=0, n;
     orte_gpr_value_t **values=NULL;
 
     OPAL_TRACE(3);
@@ -171,7 +171,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_tokens, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_tokens, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -194,7 +194,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_keys, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_keys, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -247,7 +247,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
  RETURN_ERROR:
 
     /* pack the number of values */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &cnt, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
     }
@@ -313,8 +313,8 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     orte_gpr_replica_itagval_t **conds = NULL;
     int rc, ret;
     char *segment=NULL, **tokens=NULL, **keys=NULL;
-    size_t i=0, cnt=0;
-    size_t num_tokens=0, num_keys=0, num_conditions=0, n;
+    orte_std_cntr_t i=0, cnt=0;
+    orte_std_cntr_t num_tokens=0, num_keys=0, num_conditions=0, n;
     orte_gpr_value_t **values=NULL;
 
     OPAL_TRACE(3);
@@ -337,7 +337,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_tokens, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_tokens, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -360,7 +360,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     }
 
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_keys, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_keys, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -383,7 +383,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
 
     /* get number of conditions */
     n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_conditions, &n, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(input_buffer, &num_conditions, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
@@ -462,7 +462,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
  RETURN_ERROR:
 
     /* pack the number of values */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &cnt, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(output_buffer, &cnt, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         ret = rc;
     }

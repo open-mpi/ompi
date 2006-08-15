@@ -1,13 +1,11 @@
-PROGS = no_op mpi_no_op hello hello_null sigusr_trap hello_nodename spin orte_nodename
+PROGS = no_op sigusr_trap spin orte_nodename
 
 all: $(PROGS)
 
-CC = mpicc
+CC = ortecc
 CFLAGS = -g
-CXX = mpic++
+CXX = ortec++
 CXXFLAGS = -g
-F77 = mpif77
-FC = mpif77
 FFLAGS = -g
 
 clean:

@@ -42,7 +42,7 @@ int orte_gpr_replica_deliver_notify_msg(orte_gpr_notify_message_t *msg)
     orte_gpr_trigger_cb_fn_t trig_cb;
     orte_gpr_notify_cb_fn_t sub_cb;
     void *sub_usertag;
-    size_t i, j, k, n;
+    orte_std_cntr_t i, j, k, n;
     int rc;
 
     OPAL_TRACE(1);
