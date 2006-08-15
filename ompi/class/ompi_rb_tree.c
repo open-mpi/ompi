@@ -169,16 +169,16 @@ int ompi_rb_tree_insert(ompi_rb_tree_t *tree, void * key, void * value)
     return OMPI_SUCCESS;
 }
 
-
 /* Finds the node in the tree based on the key */
-void * ompi_rb_tree_find(ompi_rb_tree_t *tree, void *key)
+void * ompi_rb_tree_find_with(ompi_rb_tree_t *tree, void *key,
+        ompi_rb_tree_comp_fn_t compfn)
 {
     ompi_rb_tree_node_t * node;
     int compvalue;
 
     node = tree->root_ptr->left;
     while (node != tree->nill) {
-        compvalue = tree->comp(key, node->key);
+        compvalue = compfn(key, node->key);
         /* if the result of the comparison function is 0, we found it */
         if (compvalue == 0) {
             return(node->value);
