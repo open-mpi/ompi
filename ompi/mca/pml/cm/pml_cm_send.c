@@ -37,8 +37,6 @@ mca_pml_cm_isend_init(void* buf,
     MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst, 
                                      datatype, sendmode, true, false, buf, count);
     
-    sendreq->req_send.req_base.req_pml_type = MCA_PML_CM_REQUEST_SEND;
-    
     *request = (ompi_request_t*) sendreq;
 
     return OMPI_SUCCESS;
