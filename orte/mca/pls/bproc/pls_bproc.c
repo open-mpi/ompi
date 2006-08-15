@@ -54,6 +54,7 @@
 #include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/oob/base/base.h"
@@ -509,10 +510,14 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     }
     /* create a list of all the nodes that need daemons, which is all the nodes
      * that will have at least 1 process  */
+    idx=0;
     for(i = 0; i < num_nodes; i++) {
         for(j = 0; j < num_contexts; j++) {
             if(i < node_array_lens[j] && 0 < *(node_arrays[j] + i)) {
                 daemon_list[num_daemons++] = i;
+                rc = orte_pointer_array_add(&idx, mca_pls_bproc_component.active_node_names,
+                                            node->node_name));
+	
                 break;
             }
         }
@@ -545,10 +550,12 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     argc = 0;
     opal_argv_append(&argc, &argv, mca_pls_bproc_component.orted);
     /* check for debug flags */
+#if 0
     if (mca_pls_bproc_component.debug) {
          opal_argv_append(&argc, &argv, "--debug");
          opal_argv_append(&argc, &argv, "--debug-daemons");
     }
+#endif 
 
     opal_argv_append(&argc, &argv, "--bootproxy");
     orte_ns.convert_jobid_to_string(&param, jobid);
@@ -661,6 +668,126 @@ cleanup:
     }
     return rc;
 }
+
+
+static void
+orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
+                                void *user_tag) 
+{ 
+    orte_gpr_value_t **values;
+    bool dead_node = false;
+    char *dead_node_name; 
+    size_t i, j;
+    
+    /* first see if node is in 
+       ORTE_NODE_STATE_DOWN or 
+       ORTE_NODE_STATE_REBOOT */
+    
+    values = (orte_gpr_value_t**)(notify_data->values)->addr;
+    for( j = 0; j < notify_data->cnt; j++) { 
+        dead_node = false;
+        for( i = 0; i < values[j]->cnt; i++) { 
+            orte_gpr_keyval_t* keyval = values[j]->keyvals[i];
+            if(strcmp(keyval->key, ORTE_NODE_STATE_KEY) == 0) { 
+                orte_node_state_t *node_state;
+                int ret;
+                if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &node_state, keyval->value, ORTE_NODE_STATE))) { 
+                    return;
+                }
+                if( *node_state == ORTE_NODE_STATE_DOWN || 
+                    *node_state == ORTE_NODE_STATE_REBOOT) { 
+                    dead_node = true;
+                    
+                }
+            } else if(strcmp(keyval->key, ORTE_NODE_NAME_KEY) == 0) { 
+                char* tmp_name;
+                int ret;
+                if( ORTE_SUCCESS != (ret = orte_dss.get( (void **) &tmp_name, keyval->value, ORTE_STRING))) { 
+                    return;
+                }
+                else { 
+                    dead_node_name = strdup(tmp_name);
+                }
+            }
+        }
+        
+        if(dead_node) {
+            /* gotta see if this node belongs to us... arg.. */
+            /* also, we know by order of creation that the node state */ 
+            /* comes before the node name.. see soh_bproc.c */
+            size_t name_idx;
+            for (name_idx = 0;
+                 name_idx < orte_pointer_array_get_size(mca_pls_bproc_component.active_node_names);
+                 name_idx++) { 
+                char* node_name = (char*) orte_pointer_array_get_item(mca_pls_bproc_component.active_node_names, name_idx);
+                if(strcmp(node_name, dead_node_name) == 0){ 
+                    /* one of our nodes up and died... */
+                    /* not much to do other than die.... */
+                    int ret = ORTE_SUCCESS;
+                    char *segment = NULL;
+                    orte_gpr_value_t** seg_values = NULL;
+                    size_t  num_values = 0;
+	      
+                    opal_output(0, "Open MPI detected a bproc compute node named %s has gone down\n", dead_node_name);
+                    
+                    /**********************
+                     * Job Info segment
+                     **********************/
+                    segment = strdup(ORTE_JOBINFO_SEGMENT);
+
+                    if( ORTE_SUCCESS != (ret = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                                            segment,
+                                                            NULL,
+                                                            NULL,
+                                                            &num_values,
+                                                            &seg_values ) ) ) {
+		
+                    }
+	      
+                    /*
+                     * kill all the jobids that are not zero
+                     */
+                    for(i = 0; i < num_values; ++i) {
+                        orte_gpr_value_t* value = values[i];
+                        orte_jobid_t jobid;
+                        orte_schema.extract_jobid_from_segment_name(&jobid, value->tokens[0]);
+                        opal_output(0, "Open MPI is killing jobid %d\n", jobid);
+                        if(jobid != 0) 
+                            orte_pls_bproc_terminate_job(jobid);
+                    }
+                    /*
+                     * and kill everyone else 
+                     */
+                    opal_output(0, "Open MPI is terminating\n");
+                    orte_pls_bproc_terminate_job(0); 
+                    /* shouldn't ever get here.. */
+                    exit(1);
+                }
+
+
+            }
+        }
+    }
+}
+
+
+static int
+orte_pls_bproc_monitor_nodes(void) 
+{
+    orte_gpr_subscription_id_t id;
+    return orte_gpr.subscribe_1(&id,
+                                NULL,
+                                NULL,
+                                ORTE_GPR_NOTIFY_VALUE_CHG,
+                                ORTE_GPR_TOKENS_OR | 
+                                ORTE_GPR_KEYS_OR,
+                                ORTE_NODE_SEGMENT,
+                                NULL,
+                                strdup(ORTE_NODE_STATE_KEY),
+                                orte_pls_bproc_check_node_state,
+				NULL);
+}
+
 
 /**
  * Launches the application processes
@@ -803,7 +930,7 @@ cleanup:
  * @retval error
  */
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
-    opal_list_item_t* item;
+    opal_list_item_t* item, *item2;
     opal_list_t mapping;
     orte_cellid_t cellid;
     orte_rmaps_base_map_t* map;
@@ -878,6 +1005,10 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         }
     }
 
+    if(0 < mca_pls_bproc_component.debug) {
+        opal_output(0, "pls_bproc: --- starting to launch procs ---");
+    }
+
     /* create an array to hold the pointers to the node arrays for each app
      * context. Also, create an array to hold the lengths of the node arrays */
     node_array = malloc(opal_list_get_size(&mapping) * sizeof(int *));
@@ -897,6 +1028,17 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         orte_pls_bproc_setup_env(&map->app->env);
         num_processes += rc;
         context++;
+    }
+    
+    /* setup subscription for each node so we can detect 
+       when the node's state changes, usefull for aborting when 
+       a bproc node up and dies */ 
+    
+    rc = orte_pls_bproc_monitor_nodes(); 
+    
+    if(ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
     }
 
     /* launch the daemons on all the nodes which have processes assign to them */
