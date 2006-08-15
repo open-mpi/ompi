@@ -104,6 +104,7 @@ do {                                                                            
         sendreq->req_send.req_base.req_proc->proc_bml;                              \
     bool do_csum = mca_pml_dr.enable_csum &&                                        \
         (endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM);                         \
+    assert(do_csum);                                                                \
     /* increment reference counts */                                                \
     OBJ_RETAIN(comm);                                                               \
     OBJ_RETAIN(datatype);                                                           \
