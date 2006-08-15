@@ -139,7 +139,7 @@ kq_init(void)
 	 */
 	if (kevent(kq,
 		kqueueop->changes, 1, kqueueop->events, NEVENT, NULL) != 1 ||
-	    kqueueop->events[0].ident != -1 ||
+	    kqueueop->events[0].ident != (unsigned int) -1 ||
 	    kqueueop->events[0].flags != EV_ERROR) {
 		event_warn("%s: detected broken kqueue; not using.", __func__);
 		free(kqueueop->changes);
