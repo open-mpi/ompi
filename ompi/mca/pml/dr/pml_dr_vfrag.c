@@ -70,7 +70,8 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
 
-    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x vid: %d",
+                        __FILE__, __LINE__, __func__, vfrag, vfrag->vf_id));
 
     /* update pending counts */
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-vfrag->vf_pending);

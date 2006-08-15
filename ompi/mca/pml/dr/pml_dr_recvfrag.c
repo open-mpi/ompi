@@ -113,9 +113,15 @@ void mca_pml_dr_recv_frag_callback(
         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
+        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? %d\n", 
+                            __FILE__, __LINE__));
+    
         return;
     }
 
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d: got a hdr of type %d\n", 
+                                    __FILE__, __LINE__, hdr->hdr_common.hdr_type));
+                
     switch(hdr->hdr_common.hdr_type) {
     case MCA_PML_DR_HDR_TYPE_MATCH:
         {
@@ -951,8 +957,10 @@ rematch:
                          * descriptor */
                         frag->request=match;
                         match->req_proc = proc;
-                        match->req_endpoint = (mca_pml_dr_endpoint_t*)proc->ompi_proc->proc_bml;
-
+                        match->req_endpoint = (mca_pml_dr_endpoint_t*)proc->ompi_proc->proc_pml;
+                        MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint 0x%08x match 0x%08x\n", 
+                              __FILE__, __LINE__, proc->ompi_proc->proc_pml, match->req_endpoint));
+        
                         /* add this fragment descriptor to the list of
                          * descriptors to be processed later
                          */

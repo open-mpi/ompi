@@ -162,10 +162,11 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
 
 
         endpoint = OBJ_NEW(mca_pml_dr_endpoint_t);
-        endpoint->src = mca_pml_dr.my_rank;
         endpoint->proc_ompi = procs[i];
         procs[i]->proc_pml = (struct mca_pml_base_endpoint_t*) endpoint;
-
+        MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint 0x%08x to proc_pml 0x%08x\n", 
+                              __FILE__, __LINE__, endpoint, procs[i]));
+        
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
         idx = ompi_pointer_array_add(&mca_pml_dr.endpoints,
@@ -176,9 +177,17 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
             mca_pml_dr.my_rank = idx;
         }
         endpoint->local = endpoint->dst = idx;
+        MCA_PML_DR_DEBUG(10, (0, "%s:%d: setting endpoint->dst to %d\n", 
+                              __FILE__, __LINE__, idx));
+        
         endpoint->bml_endpoint = bml_endpoints[i];
     }
-
+    
+    for(i = 0; i < nprocs; i++) { 
+        mca_pml_dr_endpoint_t* ep =  (mca_pml_dr_endpoint_t*) 
+            ompi_pointer_array_get_item(&mca_pml_dr.endpoints, i);
+            ep->src = mca_pml_dr.my_rank;
+    }
     /* no longer need this */
     if ( NULL != bml_endpoints ) {
 	free ( bml_endpoints) ;
