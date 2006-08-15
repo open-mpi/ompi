@@ -17,13 +17,32 @@
  */
 
 #include "ompi_config.h"
+
 #include "ompi/request/request.h"
+
 #include "mtl_mx.h"
+#include "mtl_mx_types.h"
+#include "mtl_mx_request.h"
 
+int
+ompi_mtl_mx_cancel(struct mca_mtl_base_module_t* mtl, 
+                   struct mca_mtl_request_t *mtl_request, 
+                   int flag) 
+{
+    mca_mtl_mx_request_t *mtl_mx_request =
+        (mca_mtl_mx_request_t*) mtl_request;
+    uint32_t result;
 
-int ompi_mtl_mx_cancel(struct mca_mtl_base_module_t* mtl, 
-                       struct mca_mtl_request_t *mtl_request, 
-                       int flag) {
+    mx_cancel(ompi_mtl_mx.mx_endpoint, 
+              &mtl_mx_request->mx_request,
+              &result);
 
-    return OMPI_ERR_NOT_IMPLEMENTED;
+    /* If MX canceled the request, mark it as canceled and complete
+       it.  Otherwise, keep on going */
+    if (result) {
+        mtl_request->ompi_req->req_status._cancelled = true;
+        mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
+    }
+
+    return OMPI_SUCCESS;
 }
