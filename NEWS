@@ -24,6 +24,12 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.3
+---
+
+- Addition of OpenIB-based unreliable datagram BTL ("ud").
+
+
 1.2
 ---
 
@@ -45,7 +51,6 @@ version 1.0.
   (not a C compiler that "sorta works" as a C++ compiler).
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
-- Addition of OpenIB-based unreliable datagram BTL ("ud").
 - Addition of UDAPL BTL ("udapl").
 
 
