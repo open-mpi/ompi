@@ -1093,7 +1093,6 @@ AC_CONFIG_FILES([
     orte/include/Makefile
     orte/etc/Makefile
 
-    orte/tools/console/Makefile
     orte/tools/orted/Makefile
     orte/tools/orteprobe/Makefile
     orte/tools/orterun/Makefile
