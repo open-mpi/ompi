@@ -42,6 +42,8 @@ AC_DEFUN([MCA_backtrace_darwin_CONFIG],[
           [AC_CHECK_HEADERS([mach/mach_vm.h])
            AC_CHECK_FUNCS([mach_vm_region mach_vm_read])])
 
+    backtrace_darwin_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
+
     AS_IF([test "$backtrace_darwin_happy" = "yes"], 
           [$1], [$2])
 ])

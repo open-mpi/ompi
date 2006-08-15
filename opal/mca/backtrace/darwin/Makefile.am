@@ -18,6 +18,8 @@
 
 AM_CPPFLAGS = -I$(srcdir)/MoreBacktrace
 
+CFLAGS = $(backtrace_darwin_CFLAGS)
+
 noinst_LTLIBRARIES = libmca_backtrace_darwin.la
 
 libmca_backtrace_darwin_la_SOURCES = \
