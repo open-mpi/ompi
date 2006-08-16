@@ -779,6 +779,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                                  );
                         if(des == NULL) {
                             OPAL_THREAD_LOCK(&ompi_request_lock);
+                            opal_list_remove_item(&mca_pml_dr.send_active, (opal_list_item_t*)sendreq);
                             opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                             OPAL_THREAD_UNLOCK(&ompi_request_lock);
                             break;
@@ -825,6 +826,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                             OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
                             mca_bml_base_free(bml_btl,des);
                             OPAL_THREAD_LOCK(&ompi_request_lock);
+                            opal_list_remove_item(&mca_pml_dr.send_active, (opal_list_item_t*) sendreq);
                             opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                             OPAL_THREAD_UNLOCK(&ompi_request_lock);
                             break;
@@ -865,6 +867,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     MCA_PML_DR_VFRAG_ALLOC(vfrag,rc);
                     if(NULL == vfrag) {
                         OPAL_THREAD_LOCK(&mca_pml_dr.lock);
+                        opal_list_remove_item(&mca_pml_dr.send_active, (opal_list_item_t*)sendreq);
                         opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                         OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);
                         break;
@@ -900,6 +903,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                                          );
                 if(des == NULL) {
                     OPAL_THREAD_LOCK(&mca_pml_dr.lock);
+                    opal_list_remove_item(&mca_pml_dr.send_active, (opal_list_item_t*)sendreq);
                     opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                     OPAL_THREAD_UNLOCK(&mca_pml_dr.lock);
                     break;
@@ -946,6 +950,7 @@ int mca_pml_dr_send_request_schedule(mca_pml_dr_send_request_t* sendreq)
                     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
                     mca_bml_base_free(bml_btl,des);
                     OPAL_THREAD_LOCK(&ompi_request_lock);
+                    opal_list_remove_item(&mca_pml_dr.send_active, (opal_list_item_t*)sendreq);
                     opal_list_append(&mca_pml_dr.send_pending, (opal_list_item_t*)sendreq);
                     OPAL_THREAD_UNLOCK(&ompi_request_lock);
                     break;

@@ -65,7 +65,10 @@ struct mca_pml_dr_t {
     /* pending lists */
     opal_list_t send_pending;
     opal_list_t acks_pending;
-
+    
+    /* active lists */
+    opal_list_t send_active;
+    
     /* free lists */
     ompi_free_list_t send_requests;
     ompi_free_list_t recv_requests;

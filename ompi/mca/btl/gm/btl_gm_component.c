@@ -224,6 +224,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
     OBJ_CONSTRUCT(&btl->gm_thread, opal_thread_t);
 #endif
 
+    btl->error_cb = NULL;
     /* query nic tokens */
     btl->gm_num_send_tokens = gm_num_send_tokens (btl->port);
     btl->gm_max_send_tokens = btl->gm_num_send_tokens;
@@ -559,10 +560,16 @@ int mca_btl_gm_component_progress()
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
 
-                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
-                reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-
+                /* cbfunc may be null if interface goes down.. */
+                if(reg->cbfunc) { 
+                    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+                    reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+                } else { 
+                    btl->error_cb(&btl->super, 
+                                  MCA_BTL_ERROR_FLAGS_FATAL);
+                    return 0;
+                }
                 MCA_BTL_GM_FRAG_POST(btl,frag);
                 count++;
                 break;
@@ -579,12 +586,17 @@ int mca_btl_gm_component_progress()
                 frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
-
-                OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
-                reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
-                OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
-
-                MCA_BTL_GM_FRAG_POST(btl,frag);
+                if(reg->cbfunc) { 
+                    OPAL_THREAD_UNLOCK(&mca_btl_gm_component.gm_lock);
+                    reg->cbfunc(&btl->super, hdr->tag, &frag->base, reg->cbdata);
+                    OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
+                    
+                    MCA_BTL_GM_FRAG_POST(btl,frag);
+                } else { 
+                    btl->error_cb(&btl->super, 
+                                  MCA_BTL_ERROR_FLAGS_FATAL);
+                    return 0;
+                }
                 count++;
                 break;
                 }

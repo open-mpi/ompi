@@ -70,6 +70,7 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_add_procs,
         mca_btl_gm_del_procs,
         mca_btl_gm_register, 
+        mca_btl_gm_register_error_cb,
         mca_btl_gm_finalize,
         mca_btl_gm_alloc, 
         mca_btl_gm_free, 
@@ -174,6 +175,19 @@ int mca_btl_gm_register(
     return OMPI_SUCCESS;
 }
 
+
+/* 
+ *Register callback function for error handling..
+ */ 
+int mca_btl_gm_register_error_cb(
+                        struct mca_btl_base_module_t* btl, 
+                        mca_btl_base_module_error_cb_fn_t cbfunc)
+{
+    
+    mca_btl_gm_module_t* gm_btl = (mca_btl_gm_module_t*) btl; 
+    gm_btl->error_cb = cbfunc; /* stash for later */
+    return OMPI_SUCCESS;
+}
 
 /**
  * Allocate a segment.

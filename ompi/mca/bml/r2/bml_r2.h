@@ -96,6 +96,7 @@ int mca_bml_r2_register(
                         void* data
                         ); 
 
+int mca_bml_r2_register_error( mca_btl_base_module_error_cb_fn_t  cbfunc );
 
 int mca_bml_r2_finalize( void ); 
 

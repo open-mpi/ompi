@@ -47,6 +47,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_add_procs,
         mca_btl_mx_del_procs,
         mca_btl_mx_register, 
+        NULL, /* register error */
         mca_btl_mx_finalize,
         mca_btl_mx_alloc, 
         mca_btl_mx_free, 

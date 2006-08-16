@@ -207,6 +207,9 @@ struct mca_btl_openib_module_t {
     size_t eager_rdma_frag_size; /**< length of eager frag */
     orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
     uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
+
+    mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
+    
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
 struct mca_btl_openib_frag_t; 
@@ -229,6 +232,19 @@ int mca_btl_openib_register(
     mca_btl_base_tag_t tag,
     mca_btl_base_module_recv_cb_fn_t cbfunc,
     void* cbdata
+);
+
+
+/**
+ * Register a callback function that is called on error..
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ */
+
+int mca_btl_openib_register_error_cb(
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_module_error_cb_fn_t cbfunc
 );
                                                                                                                      
 

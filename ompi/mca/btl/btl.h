@@ -153,6 +153,8 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
 #define MCA_BTL_EXCLUSIVITY_LOW      0         /* TCP used as a last resort */
 
+/* error callback flags */
+#define MCA_BTL_ERROR_FLAGS_FATAL 0x1
 
 /**
  * Asynchronous callback function on completion of an operation.
@@ -391,6 +393,32 @@ typedef int (*mca_btl_base_module_register_fn_t)(
 
 
 /**
+ * Callback function that is called asynchronously on receipt
+ * of an error from the transport layer 
+ * 
+ */
+
+typedef void (*mca_btl_base_module_error_cb_fn_t)(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags                             
+);
+
+
+/**
+ * Register a callback function that is called on receipt
+ * of an error.
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ *
+ */
+typedef int (*mca_btl_base_module_register_error_fn_t)(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_module_error_cb_fn_t cbfunc
+);
+
+
+/**
  * Allocate a descriptor with a segment of the requested size. 
  * Note that the BTL layer may choose to return a smaller size
  * if it cannot support the request.
@@ -514,10 +542,11 @@ struct mca_btl_base_module_t {
     uint32_t    btl_flags;            /**< flags (put/get...) */
 
     /* BTL function table */
-    mca_btl_base_module_add_procs_fn_t   btl_add_procs;
-    mca_btl_base_module_del_procs_fn_t   btl_del_procs;
-    mca_btl_base_module_register_fn_t    btl_register;
-    mca_btl_base_module_finalize_fn_t    btl_finalize;
+    mca_btl_base_module_add_procs_fn_t      btl_add_procs;
+    mca_btl_base_module_del_procs_fn_t      btl_del_procs;
+    mca_btl_base_module_register_fn_t       btl_register;
+    mca_btl_base_module_register_error_fn_t btl_register_error;
+    mca_btl_base_module_finalize_fn_t       btl_finalize;
 
     mca_btl_base_module_alloc_fn_t       btl_alloc;
     mca_btl_base_module_free_fn_t        btl_free;
@@ -527,7 +556,7 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_put_fn_t         btl_put;
     mca_btl_base_module_get_fn_t         btl_get;
     mca_btl_base_module_dump_fn_t        btl_dump; /* diagnostics */
-
+    
     /* the mpool associated with this btl (optional) */ 
     mca_mpool_base_module_t*             btl_mpool; 
 };

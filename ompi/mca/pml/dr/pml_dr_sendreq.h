@@ -85,6 +85,8 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
         OMPI_FREE_LIST_WAIT(&mca_pml_dr.send_requests, item, rc);          \
         sendreq = (mca_pml_dr_send_request_t*)item;                        \
         sendreq->req_send.req_base.req_proc = proc;                        \
+        opal_list_append(&mca_pml_dr.send_active,                          \
+                         (opal_list_item_t*) sendreq);                     \
     }                                                                      \
 }
 
@@ -241,6 +243,8 @@ do {                                                                            
 #define MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq)                               \
 do {                                                                                \
     assert( false == sendreq->req_send.req_base.req_pml_complete );                 \
+    opal_list_remove_item(&mca_pml_dr.send_active,                                  \
+                          (opal_list_item_t*) sendreq);                             \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&            \
         sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {        \
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                  \
@@ -355,6 +359,8 @@ do {                                                                  \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                       \
         if(NULL == sendreq)                                           \
             break;                                                    \
+        opal_list_append(&mca_pml_dr.send_active,                     \
+                         (opal_list_item_t*) sendreq);                \
         mca_pml_dr_send_request_schedule(sendreq);                    \
     }                                                                 \
 } while (0)

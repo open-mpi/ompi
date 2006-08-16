@@ -36,6 +36,7 @@
 #include "pml_dr_recvreq.h"
 #include "ompi/mca/bml/base/base.h"
 #include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 mca_pml_dr_t mca_pml_dr = {
     {
@@ -59,6 +60,10 @@ mca_pml_dr_t mca_pml_dr = {
     INT_MAX
     }
 };
+
+void mca_pml_dr_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags);
 
 int mca_pml_dr_enable(bool enable)
 {
@@ -104,6 +109,13 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 }
 
 
+
+void mca_pml_dr_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags) { 
+    orte_errmgr.abort();
+}
+
 /*
  *   For each proc setup a datastructure that indicates the PTLs
  *   that can be used to reach the destination.
@@ -139,13 +151,22 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                                );
     if(OMPI_SUCCESS != rc)
         return rc;
-
+    
+    /* register recv handler */
     rc = mca_bml.bml_register(
                               MCA_BTL_TAG_PML,
                               mca_pml_dr_recv_frag_callback,
                               NULL);
 
-    /* initialize free list of receive buffers */
+    if(OMPI_SUCCESS != rc)
+        return rc;
+
+    /* register error handlers */
+    rc = mca_bml.bml_register_error(mca_pml_dr_error_handler);
+    
+    if(OMPI_SUCCESS != rc)
+        return rc;
+ 
     ompi_free_list_init(
                         &mca_pml_dr.buffers,
                         sizeof(mca_pml_dr_buffer_t) + mca_pml_dr.eager_limit,

@@ -49,6 +49,7 @@ mca_bml_r2_module_t mca_bml_r2 = {
         mca_bml_r2_del_btl,
         mca_bml_r2_del_proc_btl,
         mca_bml_r2_register, 
+        mca_bml_r2_register_error,
         mca_bml_r2_finalize, 
         mca_bml_r2_progress
     }
@@ -712,6 +713,32 @@ int mca_bml_r2_register(
         rc = btl->btl_register(btl, tag, cbfunc, data);  
         if(OMPI_SUCCESS != rc) {
             return rc;
+        }
+    }
+    return OMPI_SUCCESS; 
+}
+
+
+/*
+ *  Register an error handler with/ all active btls
+ *   if they support error handlers..
+ */
+
+int mca_bml_r2_register_error( 
+                        mca_btl_base_module_error_cb_fn_t  cbfunc
+                        )
+{
+    uint32_t  i; 
+    int rc;
+    mca_btl_base_module_t *btl; 
+
+    for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
+        btl = mca_bml_r2.btl_modules[i]; 
+        if(btl->btl_register_error) { 
+            rc = btl->btl_register_error(btl, cbfunc);  
+            if(OMPI_SUCCESS != rc) {
+                return rc;
+            }
         }
     }
     return OMPI_SUCCESS; 
