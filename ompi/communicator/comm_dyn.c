@@ -47,7 +47,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/runtime/runtime.h"

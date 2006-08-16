@@ -21,7 +21,7 @@
 #define ORTE_RAS_BASE_NODE_H
 
 #include "orte/orte_types.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "orte/mca/rmgr/rmgr_types.h"
 #include "orte/mca/ras/ras.h"
 

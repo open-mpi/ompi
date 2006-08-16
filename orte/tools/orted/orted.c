@@ -60,10 +60,9 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/base/base.h"
 
 #include "orte/runtime/runtime.h"
 
@@ -387,7 +386,7 @@ int main(int argc, char *argv[])
      *  Set my process status to "starting". Note that this must be done
      *  after the rte init is completed.
      */
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                                      ORTE_PROC_STATE_RUNNING, 0))) {
         ORTE_ERROR_LOG(ret);
         return ret;

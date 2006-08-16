@@ -32,7 +32,7 @@
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 
 
 /**

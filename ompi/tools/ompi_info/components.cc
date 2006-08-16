@@ -90,8 +90,8 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
+#include "orte/mca/smr/base/base.h"
 #include "orte/mca/sds/sds.h"
 #include "orte/mca/sds/base/base.h"
 
@@ -228,8 +228,8 @@ void ompi_info::open_components()
   orte_sds_base_open();
   component_map["sds"] = &orte_sds_base_components_available;
 
-  orte_soh_base_open();
-  component_map["soh"] = &orte_soh_base.soh_components;
+  orte_smr_base_open();
+  component_map["smr"] = &orte_smr_base.smr_components;
 
   // MPI frameworks
 
@@ -296,7 +296,7 @@ void ompi_info::close_components()
 
         orte_iof_base_close();
         orte_sds_base_close();
-        orte_soh_base_close();
+        orte_smr_base_close();
         orte_pls_base_close();
         orte_rmgr_base_close();
         orte_rmaps_base_close();

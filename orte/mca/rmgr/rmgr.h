@@ -38,7 +38,7 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "rmgr_types.h"
 
 /*

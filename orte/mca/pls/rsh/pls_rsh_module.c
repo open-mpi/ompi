@@ -79,8 +79,7 @@
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
 #include "orte/util/sys_info.h"
 
@@ -325,7 +324,7 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
 
                 orte_session_dir_finalize(&(map->procs[i])->proc_name);
 
-                rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name),
+                rc = orte_smr.set_proc_state(&(map->procs[i]->proc_name),
                                            ORTE_PROC_STATE_ABORTED, status);
             }
             if (ORTE_SUCCESS != rc) {

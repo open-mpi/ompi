@@ -63,7 +63,7 @@
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 
@@ -289,9 +289,9 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
     int rc;
     /* set the state of this process */
     if(WIFEXITED(status)) {
-        rc = orte_soh.set_proc_soh(proc, ORTE_PROC_STATE_TERMINATED, status);
+        rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_TERMINATED, status);
     } else {
-        rc = orte_soh.set_proc_soh(proc, ORTE_PROC_STATE_ABORTED, status);
+        rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_ABORTED, status);
     }
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -724,7 +724,7 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
         if(dead_node) {
             /* gotta see if this node belongs to us... arg.. */
             /* also, we know by order of creation that the node state */ 
-            /* comes before the node name.. see soh_bproc.c */
+            /* comes before the node name.. see smr_bproc.c */
             orte_std_cntr_t name_idx;
             for (name_idx = 0;
                  name_idx < orte_pointer_array_get_size(mca_pls_bproc_component.active_node_names);

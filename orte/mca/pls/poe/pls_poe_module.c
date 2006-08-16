@@ -43,7 +43,7 @@
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/sds/base/base.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
@@ -347,7 +347,7 @@ static void poe_wait_job(pid_t pid, int status, void* cbdata)
 
         for(i = 0 ; i < map->num_procs ; ++i) {
             orte_session_dir_finalize(&(map->procs[i])->proc_name);
-            rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name),
+            rc = orte_smr.set_proc_state(&(map->procs[i]->proc_name),
                                         ORTE_PROC_STATE_ABORTED, status);
         }
         if(ORTE_SUCCESS != rc) {

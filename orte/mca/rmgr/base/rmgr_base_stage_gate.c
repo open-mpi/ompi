@@ -36,7 +36,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 
 #include "orte/mca/rmgr/base/base.h"
 
@@ -187,7 +187,7 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
     free(trig_keys[0]);
 
     /* set the job state to "launched" */
-    if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_LAUNCHED))) {
+    if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_LAUNCHED))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -235,22 +235,22 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 
     /* set the job state to the appropriate level */
     if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG1_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG1))) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG1))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG2))) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG2))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG3_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_AT_STG3))) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG3))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_NUM_FINALIZED_TRIGGER)) {
-        if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_FINALIZED))) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_FINALIZED))) {
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
@@ -299,7 +299,7 @@ int orte_rmgr_base_proc_stage_gate_mgr_abort(orte_gpr_notify_message_t *msg)
 
     /* set the job status to "aborted" */
 
-    if (ORTE_SUCCESS != (rc = orte_soh.set_job_soh(job, ORTE_JOB_STATE_ABORTED))) {
+    if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_ABORTED))) {
         ORTE_ERROR_LOG(rc);
     }
 

@@ -16,7 +16,26 @@
 # $HEADER$
 #
 
+# main library setup
+noinst_LTLIBRARIES = libmca_smr.la
+libmca_smr_la_SOURCES =
 
+# header setup
+nobase_orte_HEADERS =
 
-SUBDIRS = oob schema
-DIST_SUBDIRS = gpr gpr/remote ns oob ras rds rmaps rmgr schema smr
+# local files
+headers = smr.h smr_types.h
+libmca_smr_la_SOURCES += $(headers)
+
+# Conditionally install the header files
+if WANT_INSTALL_HEADERS
+nobase_orte_HEADERS += $(headers)
+ortedir = $(includedir)/openmpi/orte/mca/smr
+else
+ortedir = $(includedir)
+endif
+
+include base/Makefile.am
+
+distclean-local:
+	rm -f base/static-components.h

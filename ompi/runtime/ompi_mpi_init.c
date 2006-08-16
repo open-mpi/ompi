@@ -41,8 +41,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/schema/schema.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/constants.h"
@@ -475,7 +474,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Let system know we are at STG1 Barrier */
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG1, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "set process state failed";
@@ -585,7 +584,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Let system know we are at STG2 Barrier */
 
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG2, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "set process state failed";

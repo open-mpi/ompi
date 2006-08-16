@@ -57,7 +57,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/universe_setup_file_io.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rds/rds_types.h"
 #include "orte/mca/ns/ns.h"

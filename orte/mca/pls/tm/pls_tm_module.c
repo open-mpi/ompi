@@ -56,10 +56,9 @@
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/sds/base/base.h"
-#include "orte/mca/soh/soh.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 #include "pls_tm.h"
@@ -344,7 +343,7 @@ pls_tm_launch(orte_jobid_t jobid)
              * NOT being oversubscribed
              */
             if (node->node_slots > 0 &&
-                opal_list_get_size(&rmaps_node->node_procs) > node->node_slots) {
+                (orte_std_cntr_t)opal_list_get_size(&rmaps_node->node_procs) > node->node_slots) {
                 if (mca_pls_tm_component.debug) {
                     opal_output(0, "pls:tm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
                                 node->node_slots, 

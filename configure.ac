@@ -1146,7 +1146,7 @@ AC_CONFIG_FILES([
     test/mca/rmaps/Makefile
     test/mca/rmgr/Makefile
     test/mca/schema/Makefile
-    test/mca/soh/Makefile
+    test/mca/smr/Makefile
     test/memory/Makefile
     test/runtime/Makefile
     test/support/Makefile

@@ -1,3 +1,4 @@
+# -*- shell-script -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -15,8 +16,8 @@
 # 
 # $HEADER$
 #
-
-
-
-SUBDIRS = oob schema
-DIST_SUBDIRS = gpr gpr/remote ns oob ras rds rmaps rmgr schema smr
+                                                                                                            
+# Specific to this module
+                                                                                                            
+PARAM_INIT_FILE=smr_bproc.c
+PARAM_CONFIG_FILES="Makefile"
