@@ -58,6 +58,10 @@ mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
      mca_pml_cm_component_fini   /* component finalize */
 };
 
+static int free_list_num = 0;
+static int free_list_max = 0;
+static int free_list_inc = 0;
+static int default_priority = 0;
 
 static int
 mca_pml_cm_component_open(void)
@@ -67,7 +71,37 @@ mca_pml_cm_component_open(void)
     ret = ompi_mtl_base_open();
     if (OMPI_SUCCESS != ret) return ret;
 
-    /* BWB - FIX ME - register MCA parameters here */
+    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
+                           "free_list_num",
+                           "Initial size of request free lists",
+                           false,
+                           false,
+                           4,
+                           &free_list_num);
+
+    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
+                           "free_list_max",
+                           "Maximum size of request free lists",
+                           false,
+                           false,
+                           -1,
+                           &free_list_max);
+
+    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
+                           "free_list_inc",
+                           "Number of elements to add when growing request free lists",
+                           false,
+                           false,
+                           64,
+                           &free_list_inc);
+
+    mca_base_param_reg_int(&mca_pml_cm_component.pmlm_version,
+                           "priority",
+                           "CM PML selection priority",
+                           false,
+                           false,
+                           1,
+                           &default_priority);
 
     return OMPI_SUCCESS;
 }
@@ -82,12 +116,12 @@ mca_pml_cm_component_close(void)
 
 static mca_pml_base_module_t*
 mca_pml_cm_component_init(int* priority,
-                           bool enable_progress_threads,
-                           bool enable_mpi_threads)
+                          bool enable_progress_threads,
+                          bool enable_mpi_threads)
 {
     int ret;
 
-    *priority = 1;
+    *priority = default_priority;
 
     /* find a useable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);
@@ -97,14 +131,15 @@ mca_pml_cm_component_init(int* priority,
        information */
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;
     ompi_pml_cm.super.pml_max_tag = ompi_mtl->mtl_max_tag;
-
-    /* BWB - FIX ME - add mca parameters for free list water marks */
+    
     OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_send_requests, ompi_free_list_t);
     ompi_free_list_init(&ompi_pml_cm.cm_thin_send_requests,
                         sizeof(mca_pml_cm_thin_send_request_t) +
                         ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_thin_send_request_t),
-                        1, -1, 1,
+                        free_list_num,
+                        free_list_max,
+                        free_list_inc,
                         NULL);
 
     OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_send_requests, ompi_free_list_t);
@@ -112,25 +147,29 @@ mca_pml_cm_component_init(int* priority,
                         sizeof(mca_pml_cm_hvy_send_request_t) +
                         ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_send_request_t),
-                        1, -1, 1,
+                        free_list_num,
+                        free_list_max,
+                        free_list_inc,
                         NULL);
-
 
     OBJ_CONSTRUCT(&ompi_pml_cm.cm_thin_recv_requests, ompi_free_list_t);
     ompi_free_list_init(&ompi_pml_cm.cm_thin_recv_requests,
                         sizeof(mca_pml_cm_thin_recv_request_t) + 
                         ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_thin_recv_request_t),
-                        1, -1, 1,
+                        free_list_num,
+                        free_list_max,
+                        free_list_inc,
                         NULL);
-
 
     OBJ_CONSTRUCT(&ompi_pml_cm.cm_hvy_recv_requests, ompi_free_list_t);
     ompi_free_list_init(&ompi_pml_cm.cm_hvy_recv_requests,
                         sizeof(mca_pml_cm_hvy_recv_request_t) + 
                         ompi_mtl->mtl_request_size,
                         OBJ_CLASS(mca_pml_cm_hvy_recv_request_t),
-                        1, -1, 1,
+                        free_list_num,
+                        free_list_max,
+                        free_list_inc,
                         NULL);
 
     /* initialize buffered send code */
@@ -138,7 +177,6 @@ mca_pml_cm_component_init(int* priority,
         opal_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
-
 
     return &ompi_pml_cm.super;
 }
