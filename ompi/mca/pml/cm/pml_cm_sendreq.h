@@ -230,12 +230,12 @@ do {                                                                    \
     int freeAfter;                                                      \
                                                                         \
     if(sendreq->req_count > 0) {                                        \
-        sendreq->req_addr =                                             \
+        sendreq->req_buff =                                             \
             mca_pml_base_bsend_request_alloc_buf(sendreq->req_count);   \
-        if (NULL == sendreq->req_addr) {                                \
+        if (NULL == sendreq->req_buff) {                                \
             ret = MPI_ERR_BUFFER;                                       \
         } else {                                                        \
-            iov.iov_base = sendreq->req_addr;                           \
+            iov.iov_base = sendreq->req_buff;                           \
             max_data = iov.iov_len = sendreq->req_count;                \
             iov_count = 1;                                              \
             ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor, \
@@ -243,7 +243,7 @@ do {                                                                    \
                                  &iov_count,                            \
                                  &max_data, &freeAfter);                \
             ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, MPI_PACKED, \
-                                             max_data, sendreq->req_addr ); \
+                                             max_data, sendreq->req_buff ); \
         }                                                               \
     }                                                                   \
  } while(0);
@@ -285,7 +285,7 @@ do {                                                                    \
                                                                         \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED && \
         sendreq->req_count > 0 ) {                                      \
-        mca_pml_base_bsend_request_free(sendreq->req_addr);             \
+        mca_pml_base_bsend_request_free(sendreq->req_buff);             \
     }                                                                   \
                                                                         \
     OPAL_THREAD_LOCK(&ompi_request_lock);                               \
