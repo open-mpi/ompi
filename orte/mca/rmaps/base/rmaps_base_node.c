@@ -31,7 +31,7 @@
 
 #include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"

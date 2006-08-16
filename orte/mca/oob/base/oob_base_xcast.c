@@ -26,10 +26,9 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
-#include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/runtime/runtime.h"
 
 
@@ -93,18 +92,16 @@ int mca_oob_xcast(
     orte_std_cntr_t i;
     int rc;
     int tag = MCA_OOB_TAG_XCAST;
-    int cmpval;
     int status;
     orte_proc_state_t state;
 
     /* check to see if I am the root process name */
-    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, root, orte_process_info.my_name);
-    if(NULL != root && 0 == cmpval) {
+    if(NULL != root && ORTE_EQUAL == orte_dss.compare(root, orte_process_info.my_name, ORTE_NAME)) {
         mca_oob_xcast_t *xcast = OBJ_NEW(mca_oob_xcast_t);
         xcast->counter = num_peers;
         for(i=0; i<num_peers; i++) {
             /* check status of peer to ensure they are alive */
-            if (ORTE_SUCCESS != (rc = orte_soh.get_proc_soh(&state, &status, peers+i))) {
+            if (ORTE_SUCCESS != (rc = orte_smr.get_proc_state(&state, &status, peers+i))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }

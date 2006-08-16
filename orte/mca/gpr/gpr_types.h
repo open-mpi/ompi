@@ -43,7 +43,7 @@
 #include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/rmgr/rmgr_types.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {

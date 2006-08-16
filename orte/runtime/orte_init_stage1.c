@@ -52,7 +52,7 @@
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/schema/base/base.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/base/base.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
@@ -364,15 +364,15 @@ int orte_init_stage1(bool infrastructure)
     /*
      * setup the state-of-health monitor
      */
-    if (ORTE_SUCCESS != (ret = orte_soh_base_open())) {
+    if (ORTE_SUCCESS != (ret = orte_smr_base_open())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_soh_base_open";
+        error = "orte_smr_base_open";
         goto error;
     }
 
-    if (ORTE_SUCCESS != (ret = orte_soh_base_select())) {
+    if (ORTE_SUCCESS != (ret = orte_smr_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_soh_base_select";
+        error = "orte_smr_base_select";
         goto error;
     }
 

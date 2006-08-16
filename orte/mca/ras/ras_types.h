@@ -19,7 +19,7 @@
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 
 #ifndef ORTE_MCA_RAS_TYPES_H
 #define ORTE_MCA_RAS_TYPES_H

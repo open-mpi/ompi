@@ -65,7 +65,6 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/schema/base/base.h"
-#include "orte/mca/soh/base/base.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"

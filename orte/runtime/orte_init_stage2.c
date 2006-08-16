@@ -29,9 +29,6 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
-
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/base/base.h"
 #include "orte/mca/iof/base/base.h"
 
 #include "orte/runtime/runtime.h"

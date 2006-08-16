@@ -559,7 +559,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
             if(strcmp(keyval->key, ORTE_PROC_RANK_KEY) == 0) {
-                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_SIZE))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, keyval->value, ORTE_STD_CNTR))) {
                     ORTE_ERROR_LOG(rc);
                     continue;
                 }
@@ -660,7 +660,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
             break;
 
         case ORTE_PROC_STATE_TERMINATED:
-            dump_aborted_procs(jobid);
+            orterun_globals.exit_status = 0;  /* set the exit status to indicate normal termination */
             orterun_globals.exit = true;
             opal_condition_signal(&orterun_globals.cond);
             break;

@@ -35,7 +35,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns_types.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 
 #include "orte/mca/gpr/replica/transition_layer/gpr_replica_tl.h"
 #include "gpr_replica_fn.h"

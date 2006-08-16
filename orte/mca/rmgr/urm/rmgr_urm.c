@@ -40,7 +40,7 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 
 #include "orte/mca/rmgr/urm/rmgr_urm.h"
 
@@ -184,7 +184,7 @@ static int orte_rmgr_urm_launch(orte_jobid_t jobid)
     if (ORTE_SUCCESS !=
         (ret = mca_rmgr_urm_component.urm_pls->launch(jobid))) {
         ORTE_ERROR_LOG(ret);
-        ret2 = orte_soh.set_job_soh(jobid, ORTE_JOB_STATE_ABORTED);
+        ret2 = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_ABORTED);
         if (ORTE_SUCCESS != ret2) {
             ORTE_ERROR_LOG(ret2);
             return ret2;

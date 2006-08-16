@@ -72,8 +72,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/pls/fork/pls_fork.h"
 
 extern char **environ;
@@ -171,7 +170,7 @@ static void orte_pls_fork_kill_processes(opal_value_array_t *pids, opal_value_ar
         
         /* update the process state on the registry */
         proc = OPAL_VALUE_ARRAY_GET_ITEM(procs, orte_process_name_t, i);
-        if (ORTE_SUCCESS != (rc = orte_soh.set_proc_soh(&proc, ORTE_PROC_STATE_TERMINATED, exit_status))) {
+        if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(&proc, ORTE_PROC_STATE_TERMINATED, exit_status))) {
             ORTE_ERROR_LOG(rc);
             /* don't exit out even if this didn't work - we still might need to kill more
              * processes, so just keep trucking
@@ -203,9 +202,9 @@ static void orte_pls_fork_wait_proc(pid_t pid, int status, void* cbdata)
 
     /* set the state of this process */
     if(WIFEXITED(status)) {
-        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
+        rc = orte_smr.set_proc_state(&proc->proc_name, ORTE_PROC_STATE_TERMINATED, status);
     } else {
-        rc = orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
+        rc = orte_smr.set_proc_state(&proc->proc_name, ORTE_PROC_STATE_ABORTED, status);
     }
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -493,7 +492,7 @@ static int orte_pls_fork_proc(
                    the SOH or else everyone else will hang. Don't bother
                    checking whether or not this worked - just fire and forget
                 */
-                orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, rc);
+                orte_smr.set_proc_state(&proc->proc_name, ORTE_PROC_STATE_ABORTED, rc);
                 return ORTE_ERR_FATAL;
                 break;
             }
@@ -576,7 +575,7 @@ int orte_pls_fork_launch(orte_jobid_t jobid)
                    processes to be launched to ABORTED.  This will
                    cause the entire job to abort. */
                 for (; i < map->num_procs; ++i) {
-                    orte_soh.set_proc_soh(&map->procs[i]->proc_name,
+                    orte_smr.set_proc_state(&map->procs[i]->proc_name,
                                           ORTE_PROC_STATE_ABORTED, 0);
                 }
 
