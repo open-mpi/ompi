@@ -114,6 +114,7 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
                            bool enable_mpi_threads)
 {
     mx_return_t mx_return;
+    int ret;
 
     /* set the MX error handle to always return. This function is the
      * only MX function allowed to be called before mx_init in order
@@ -132,8 +133,11 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
         return NULL;
     }
         
-    ompi_mtl_mx_module_init();
-    
+    ret = ompi_mtl_mx_module_init();
+    if (OMPI_SUCCESS != ret) {
+        return NULL;
+    }
+
     ompi_mtl_mx.super.mtl_request_size = 
         sizeof(mca_mtl_mx_request_t) - 
         sizeof(struct mca_mtl_request_t);
