@@ -22,6 +22,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 #include "ompi/datatype/convertor.h"
+#include "ompi/mca/mtl/base/base.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
@@ -125,7 +126,9 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
     mx_return = mx_init(); 
     
     if(mx_return!=MX_SUCCESS) { 
-        opal_output(0, "Error in mx_init (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output,
+                    "Error in mx_init (error %s)\n",
+                    mx_strerror(mx_return));
         return NULL;
     }
         

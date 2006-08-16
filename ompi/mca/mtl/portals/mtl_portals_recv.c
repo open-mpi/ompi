@@ -57,9 +57,8 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
         ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
 
-#if OMPI_MTL_PORTALS_DEBUG
-            printf("recv complete: 0x%016llx\n", ev->match_bits);
-#endif
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "recv complete: 0x%016llx\n", ev->match_bits));
         
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
@@ -75,9 +74,8 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
         ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
 
-#if OMPI_MTL_PORTALS_DEBUG
-            printf("recv complete: 0x%016llx\n", ev->match_bits);
-#endif
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "recv complete: 0x%016llx\n", ev->match_bits));
         
         ptl_request->super.completion_callback(&ptl_request->super);
         break;
@@ -141,9 +139,9 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
                             PTL_UNLINK, &md_h);
             if (PTL_OK != ret) abort();
 
-#if OMPI_MTL_PORTALS_DEBUG
-            printf("acking recv: 0x%016llx\n", recv_event->ev.match_bits);
-#endif
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                                 "acking recv: 0x%016llx\n", 
+                                 recv_event->ev.match_bits));
 
             ret = PtlPut(md_h,
                          PTL_NO_ACK_REQ,
@@ -171,9 +169,9 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         ptl_request->super.ompi_req->req_status._count = 
             recv_event->ev.mlength;
 
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("recv complete: 0x%016llx\n", recv_event->ev.match_bits);
-#endif
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "recv complete: 0x%016llx\n", 
+                             recv_event->ev.match_bits));
         
         ptl_request->super.completion_callback(&ptl_request->super);
 
@@ -248,9 +246,10 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
 
     PTL_SET_RECV_BITS(match_bits, ignore_bits, comm->c_contextid,
                       src, tag);
-#if OMPI_MTL_PORTALS_DEBUG
-    printf("recv bits: 0x%016llx 0x%016llx\n", match_bits, ignore_bits);
-#endif
+
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "recv bits: 0x%016llx 0x%016llx\n",
+                         match_bits, ignore_bits));
 
     /* first, check the queue of processed unexpected messages */
     list_item = opal_list_get_first(&ompi_mtl_portals.unexpected_messages);

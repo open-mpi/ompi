@@ -17,7 +17,7 @@
  */
 
 #ifndef MTL_MX_TYPES_H_HAS_BEEN_INCLUDED
-#define MTL_MX_TYPS_H_HAS_BEEN_INCLUDED
+#define MTL_MX_TYPES_H_HAS_BEEN_INCLUDED
 
 #include "mtl_mx.h"
 

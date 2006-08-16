@@ -73,7 +73,7 @@ int ompi_mtl_mx_module_init(){
     
     
     if(mx_return != MX_SUCCESS) { 
-        opal_output(0, "Error in mx_open_endpoint (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output, "Error in mx_open_endpoint (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
     
@@ -82,7 +82,7 @@ int ompi_mtl_mx_module_init(){
                                       &ompi_mtl_mx.mx_endpoint_addr); 
     
     if(mx_return != MX_SUCCESS) { 
-        opal_output(0, "Error in mx_get_endpoint_addr (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output, "Error in mx_get_endpoint_addr (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
     
@@ -90,7 +90,7 @@ int ompi_mtl_mx_module_init(){
                                             &(ompi_mtl_mx.mx_addr.endpoint_id) );
     
     if(mx_return != MX_SUCCESS) { 
-        opal_output(0, "Error in mx_decompose_endpoint_addr (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output, "Error in mx_decompose_endpoint_addr (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
 
@@ -118,13 +118,13 @@ ompi_mtl_mx_finalize(struct mca_mtl_base_module_t* mtl) {
     /* free resources */
     mx_return = mx_close_endpoint(ompi_mtl_mx.mx_endpoint);
     if(mx_return != MX_SUCCESS){ 
-        opal_output(0, "Error in mx_close_endpoint (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output, "Error in mx_close_endpoint (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
 
     mx_return = mx_finalize(); 
     if(mx_return != MX_SUCCESS){ 
-        opal_output(0, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
+        opal_output(ompi_mtl_base_output, "Error in mx_finalize (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
     
@@ -179,7 +179,7 @@ int ompi_mtl_mx_progress( void ) {
                              &result);
         
         if(mx_return != MX_SUCCESS) { 
-            opal_output(0, "Error in mx_ipeek (error %s)\n", mx_strerror(mx_return));
+            opal_output(ompi_mtl_base_output, "Error in mx_ipeek (error %s)\n", mx_strerror(mx_return));
         }
         if(result) { 
             completed++;
@@ -188,15 +188,15 @@ int ompi_mtl_mx_progress( void ) {
                                 &mx_status,
                                 &result);
             if(mx_return != MX_SUCCESS) { 
-                opal_output(0, "Error in mx_test (error %s)\n", mx_strerror(mx_return));
+                opal_output(ompi_mtl_base_output, "Error in mx_test (error %s)\n", mx_strerror(mx_return));
                 abort();
             }
             if(0 == result) { 
-                opal_output(0, "Error in ompi_mtl_mx_progress, mx_ipeek returned a request, mx_test on the request resulted failure.\n");
+                opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_progress, mx_ipeek returned a request, mx_test on the request resulted failure.\n");
                 abort();
             }
             if(mx_status.code != MX_STATUS_SUCCESS) { 
-                opal_output(0, "Error in ompi_mtl_mx_progress, mx_test returned something other than MX_STATUS_SUCCESS: mx_status(%d).\n", 
+                opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_progress, mx_test returned something other than MX_STATUS_SUCCESS: mx_status(%d).\n", 
                         mx_status);
                 abort();
             }
