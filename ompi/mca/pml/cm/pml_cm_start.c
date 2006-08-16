@@ -70,7 +70,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             
             /* allocate a new request */
             switch (pml_request->req_pml_type) {
-            case MCA_PML_CM_REQUEST_SEND: {
+            case MCA_PML_CM_REQUEST_SEND_HEAVY: {
                 mca_pml_cm_hvy_send_request_t* sendreq = (mca_pml_cm_hvy_send_request_t*) pml_request;
                 rc = mca_pml_cm_isend_init(
                                            sendreq->req_addr,
@@ -83,7 +83,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                                            &request);
                 break;
             }
-            case MCA_PML_CM_REQUEST_RECV:{
+            case MCA_PML_CM_REQUEST_RECV_HEAVY: {
                 mca_pml_cm_hvy_recv_request_t* recvreq = (mca_pml_cm_hvy_recv_request_t*) pml_request;
                 rc = mca_pml_cm_irecv_init(
                                            recvreq->req_addr,
@@ -113,7 +113,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
         
         /* start the request */
         switch (pml_request->req_pml_type) {
-        case MCA_PML_CM_REQUEST_SEND:
+        case MCA_PML_CM_REQUEST_SEND_HEAVY:
             {
                 mca_pml_cm_hvy_send_request_t* sendreq =
                     (mca_pml_cm_hvy_send_request_t*)pml_request;
@@ -122,7 +122,7 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
                     return rc;
                 break;
             }
-        case MCA_PML_CM_REQUEST_RECV:
+        case MCA_PML_CM_REQUEST_RECV_HEAVY:
             {
                 mca_pml_cm_hvy_recv_request_t* recvreq =
                     (mca_pml_cm_hvy_recv_request_t*)pml_request;

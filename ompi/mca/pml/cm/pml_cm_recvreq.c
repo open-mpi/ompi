@@ -69,6 +69,7 @@ mca_pml_cm_thin_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_thin_recv_request_free;
     recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_THIN;
 }
 
 
@@ -80,6 +81,7 @@ mca_pml_cm_hvy_recv_request_construct(mca_pml_cm_hvy_recv_request_t* recvreq)
 
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_hvy_recv_request_free;
     recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
+    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV_HEAVY;
 }
 
 

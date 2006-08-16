@@ -19,19 +19,55 @@
 #include "pml_cm_recvreq.h"
 
 int
-mca_pml_cm_cancel(struct ompi_request_t *request, int flag)
+mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
 {
-    /* Temporarily silence a compiler warning.  Remove this when the
-       cancel is fully implemented */
-#if 1
-    return OMPI_SUCCESS;
-#else
-    int ret
-   /*  mca_pml_cm_request_t *base_request =  */
-/*         (mca_pml_cm_request_t*) request; */
-/*     ret = OMPI_MTL_CALL(cancel(ompi_mtl, */
-/*                                &base_request->req_mtl, */
-/*                                flag)); */
+    int ret;
+    mca_pml_cm_request_t *base_request =
+         (mca_pml_cm_request_t*) ompi_req;
+    mca_mtl_request_t *mtl_req = NULL;
+
+    switch (base_request->req_pml_type) {
+    case MCA_PML_CM_REQUEST_SEND_HEAVY:
+        {
+            mca_pml_cm_hvy_send_request_t *request =
+                (mca_pml_cm_hvy_send_request_t*) base_request;
+            mtl_req = &request->req_mtl;
+        }
+        break;
+
+    case MCA_PML_CM_REQUEST_SEND_THIN:
+        {
+            mca_pml_cm_thin_send_request_t *request =
+                (mca_pml_cm_thin_send_request_t*) base_request;
+            mtl_req = &request->req_mtl;
+        }
+        break;
+
+    case MCA_PML_CM_REQUEST_RECV_HEAVY:
+        {
+            mca_pml_cm_hvy_recv_request_t *request =
+                (mca_pml_cm_hvy_recv_request_t*) base_request;
+            mtl_req = &request->req_mtl;
+        }
+        break;
+
+    case MCA_PML_CM_REQUEST_RECV_THIN:
+        {
+            mca_pml_cm_thin_recv_request_t *request =
+                (mca_pml_cm_thin_recv_request_t*) base_request;
+            mtl_req = &request->req_mtl;
+        }
+        break;
+
+    default:
+        abort();
+
+        ret = OMPI_ERROR;
+    }
+
+    ret = OMPI_MTL_CALL(cancel(ompi_mtl,
+                               mtl_req,
+                               flag));
+
     return ret;
-#endif
 }

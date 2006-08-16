@@ -38,8 +38,6 @@ mca_pml_cm_irecv_init(void *addr,
     MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src, 
                                      datatype, addr, count, true); 
     
-    recvreq->req_base.req_pml_type = MCA_PML_CM_REQUEST_RECV;
-    
     *request = (ompi_request_t*) recvreq;
 
     return OMPI_SUCCESS;
