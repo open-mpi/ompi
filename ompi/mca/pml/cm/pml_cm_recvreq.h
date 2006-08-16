@@ -94,8 +94,7 @@ do {                                                                    \
     (request)->req_base.req_free_called = false;                        \
                                                                         \
     if( MPI_ANY_SOURCE == src ) {                                       \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[comm->c_my_rank]->proc_ompi;              \
+        ompi_proc = ompi_proc_local_proc;                               \
     } else {                                                            \
         ompi_proc =                                                     \
             comm->c_pml_procs[src]->proc_ompi;                          \
@@ -130,8 +129,7 @@ do {                                                                    \
     request->req_count = count;                                         \
                                                                         \
     if( MPI_ANY_SOURCE == src ) {                                       \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[comm->c_my_rank]->proc_ompi;              \
+        ompi_proc = ompi_proc_local_proc;                               \
     } else {                                                            \
         ompi_proc =                                                     \
             comm->c_pml_procs[src]->proc_ompi;                          \
