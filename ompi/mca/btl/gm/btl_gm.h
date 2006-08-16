@@ -110,6 +110,7 @@ struct mca_btl_gm_module_t {
     opal_thread_t gm_thread;
     bool gm_progress;
 #endif
+    mca_btl_base_module_error_cb_fn_t error_cb; 
 }; 
 typedef struct mca_btl_gm_module_t mca_btl_gm_module_t;
 extern mca_btl_gm_module_t mca_btl_gm_module;
@@ -257,6 +258,31 @@ extern int mca_btl_gm_register(
     mca_btl_base_tag_t tag, 
     mca_btl_base_module_recv_cb_fn_t cbfunc, 
     void* cbdata); 
+
+
+/**
+ * Register a callback function that is called on error..
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ */
+
+int mca_btl_gm_register_error_cb(
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_module_error_cb_fn_t cbfunc
+);
+
+/**
+ * Register a callback function that is called on error.
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if registration was successful
+ *
+ */
+
+extern int mca_btl_gm_register_error_cb(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_module_error_cb_fn_t cbfunc); 
     
 /**
  * Allocate a descriptor with a segment of the requested size.

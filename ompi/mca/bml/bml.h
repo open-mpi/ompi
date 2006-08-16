@@ -594,6 +594,22 @@ typedef int (*mca_bml_base_module_register_fn_t)(
 
 
 
+
+
+/**
+ * Register a callback function that is called of error.
+ *
+ * @param bml (IN)     BML module
+ * @return             Status indicating if cleanup was successful
+ *
+ */
+typedef int (*mca_bml_base_module_register_error_cb_fn_t)(
+        mca_btl_base_module_error_cb_fn_t cbfunc
+);
+
+
+
+
 /**
  * BML module interface functions and attributes.
  */
@@ -613,6 +629,8 @@ struct mca_bml_base_module_t {
     mca_bml_base_module_del_btl_fn_t       bml_del_btl;
     mca_bml_base_module_del_proc_btl_fn_t  bml_del_proc_btl;
     mca_bml_base_module_register_fn_t      bml_register;
+    mca_bml_base_module_register_error_cb_fn_t bml_register_error;
+
     mca_bml_base_module_finalize_fn_t      bml_finalize;
 
     mca_bml_base_module_progress_fn_t bml_progress;

@@ -46,7 +46,8 @@ mca_btl_template_module_t mca_btl_template_module = {
         0, /* flags */
         mca_btl_template_add_procs,
         mca_btl_template_del_procs,
-        mca_btl_template_register, 
+        mca_btl_template_register,
+        NULL,
         mca_btl_template_finalize,
         mca_btl_template_alloc, 
         mca_btl_template_free, 

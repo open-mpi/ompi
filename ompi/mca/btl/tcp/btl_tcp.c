@@ -48,6 +48,7 @@ mca_btl_tcp_module_t mca_btl_tcp_module = {
         mca_btl_tcp_add_procs,
         mca_btl_tcp_del_procs,
         mca_btl_tcp_register, 
+        NULL, /* register error */
         mca_btl_tcp_finalize,
         mca_btl_tcp_alloc, 
         mca_btl_tcp_free, 

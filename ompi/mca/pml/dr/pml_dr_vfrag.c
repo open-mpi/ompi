@@ -101,6 +101,21 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 }
 
 
+static void mca_pml_dr_vfrag_cleanup_active_desc(mca_bml_base_btl_t* bml_btl) { 
+    opal_list_item_t* item;
+    
+    for (item = opal_list_get_first(&mca_pml_dr.send_active) ;
+         item != opal_list_get_end(&mca_pml_dr.send_active) ;
+         item = opal_list_get_next(item)) {
+        mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*) item;
+        mca_btl_base_descriptor_t* des = sendreq->req_descriptor;
+        if( des->des_context == bml_btl) { 
+            des->des_context = NULL;
+        }
+            
+    }
+}
+
 /** 
  * The ack timer expired, better do something about it, like resend the entire vfrag? 
  */
@@ -118,6 +133,7 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
         /* declare btl dead */
         opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
             vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+        mca_pml_dr_vfrag_cleanup_active_desc(vfrag->bml_btl);
         mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         mca_pml_dr_vfrag_reset(vfrag);
     }

@@ -51,6 +51,7 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_add_procs,
         mca_btl_openib_del_procs,
         mca_btl_openib_register, 
+        mca_btl_openib_register_error_cb,
         mca_btl_openib_finalize,
         /* we need alloc free, pack */ 
         mca_btl_openib_alloc, 
@@ -227,6 +228,19 @@ int mca_btl_openib_register(
     return OMPI_SUCCESS;
 }
 
+
+/* 
+ *Register callback function for error handling..
+ */ 
+int mca_btl_openib_register_error_cb(
+                        struct mca_btl_base_module_t* btl, 
+                        mca_btl_base_module_error_cb_fn_t cbfunc)
+{
+    
+    mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*) btl; 
+    openib_btl->error_cb = cbfunc; /* stash for later */
+    return OMPI_SUCCESS;
+}
 
 /**
  * Allocate a segment.

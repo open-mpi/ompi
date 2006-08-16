@@ -157,6 +157,7 @@ int mca_pml_dr_component_open(void)
         NULL);
 
     OBJ_CONSTRUCT(&mca_pml_dr.send_pending, opal_list_t);
+    OBJ_CONSTRUCT(&mca_pml_dr.send_active, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.acks_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.buffers, ompi_free_list_t);
     OBJ_CONSTRUCT(&mca_pml_dr.endpoints, ompi_pointer_array_t);
@@ -179,6 +180,7 @@ int mca_pml_dr_component_close(void)
         return rc;
 
     OBJ_DESTRUCT(&mca_pml_dr.send_pending);
+    OBJ_DESTRUCT(&mca_pml_dr.send_active);
     OBJ_DESTRUCT(&mca_pml_dr.acks_pending);
     OBJ_DESTRUCT(&mca_pml_dr.recv_requests);
     OBJ_DESTRUCT(&mca_pml_dr.recv_frags);

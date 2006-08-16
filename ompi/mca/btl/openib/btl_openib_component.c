@@ -883,8 +883,11 @@ static int btl_openib_component_progress(void)
                 ret = btl_openib_handle_incoming_hp(openib_btl,
                         frag->endpoint, frag, 
                         size - sizeof(mca_btl_openib_footer_t));
-                if (ret != MPI_SUCCESS)
-                    return ret;
+                if (ret != MPI_SUCCESS) { 
+                    openib_btl->error_cb(&openib_btl->super, 
+                                         MCA_BTL_ERROR_FLAGS_FATAL);
+                    return 0;
+                }
                 count++;
             } else
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
@@ -928,15 +931,16 @@ static int btl_openib_component_progress(void)
                     abort();
                 }
 
-                return OMPI_ERROR;
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+                return 0;
             }
 
             /* Handle work completions */
             switch(wc.opcode) {
             case IBV_WC_RECV_RDMA_WITH_IMM: 
                 BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
-                return OMPI_ERROR; 
-                
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+                return 0;
             case IBV_WC_RDMA_WRITE:
             case IBV_WC_SEND :
 
@@ -994,8 +998,10 @@ static int btl_openib_component_progress(void)
                 frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
                 ret = btl_openib_handle_incoming_hp(openib_btl,
                         frag->endpoint, frag, wc.byte_len);
-                if (ret != OMPI_SUCCESS)
-                    return ret;
+                if (ret != OMPI_SUCCESS) { 
+                    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+                    return 0;
+                }
                 count++; 
                 break; 
 
@@ -1009,7 +1015,8 @@ static int btl_openib_component_progress(void)
         ne=ibv_poll_cq(openib_btl->ib_cq_lp, 1, &wc );
         if(ne < 0){ 
             BTL_ERROR(("error polling LP CQ with %d errno says %s", ne, strerror(errno))); 
-            return OMPI_ERROR;
+            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+            return 0;
         } 
         else if(1 == ne) {             
             if(wc.status != IBV_WC_SUCCESS) { 
@@ -1028,7 +1035,8 @@ static int btl_openib_component_progress(void)
                     BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
                                              btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
-                return OMPI_ERROR;
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+                return 0;
             }
 
             /* Handle n/w completions */
@@ -1036,7 +1044,8 @@ static int btl_openib_component_progress(void)
             case IBV_WC_RECV_RDMA_WITH_IMM: 
 
                 BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
-                return OMPI_ERROR; 
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
+                return 0;
                 
             case IBV_WC_SEND:
 
