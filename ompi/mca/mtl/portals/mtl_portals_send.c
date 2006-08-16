@@ -40,9 +40,11 @@ ompi_mtl_portals_send_progress_no_ack(ptl_event_t *ev,
             if (ptl_request->free_after) {
                 free(ev->md.start);
             }
-#if OMPI_MTL_PORTALS_DEBUG
-            printf("send complete: 0x%016llx\n", ev->match_bits);
-#endif
+
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                                 "send complete: 0x%016llx\n",
+                                 ev->match_bits));
+
             ptl_request->super.completion_callback(&ptl_request->super);
         }
 
@@ -70,9 +72,11 @@ ompi_mtl_portals_send_progress(ptl_event_t *ev,
             if (ptl_request->free_after) {
                 free(ev->md.start);
             }
-#if OMPI_MTL_PORTALS_DEBUG
-            printf("send complete: 0x%016llx\n", ev->match_bits);
-#endif
+
+            OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                                 "send complete: 0x%016llx\n", 
+                                 ev->match_bits));
+
             ptl_request->super.completion_callback(&ptl_request->super);
         }
         break;
@@ -134,9 +138,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_READY_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("ready send bits: 0x%016llx\n", match_bits);
-#endif
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "ready send bits: 0x%016llx\n", 
+                             match_bits));
 
         md.threshold = 1;
         md.options = PTL_MD_EVENT_START_DISABLE;
@@ -174,9 +179,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_LONG_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("long send bits: 0x%016llx (%d)\n", match_bits, dest);
-#endif
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "long send bits: 0x%016llx (%d)\n", 
+                             match_bits, dest));
 
         md.threshold = 2; /* send, {ack, get} */
         md.options = PTL_MD_OP_GET | PTL_MD_EVENT_START_DISABLE;
@@ -227,9 +233,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_SHORT_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("short ssend bits: 0x%016llx (%d)\n", match_bits, dest);
-#endif
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "short ssend bits: 0x%016llx (%d)\n", 
+                             match_bits, dest));
 
         md.threshold = 2; /* send, {ack, put} */
         md.options = PTL_MD_OP_PUT | PTL_MD_EVENT_START_DISABLE;
@@ -281,9 +288,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         PTL_SET_SEND_BITS(match_bits, comm->c_contextid,
                           comm->c_my_rank,
                           tag, PTL_SHORT_MSG);
-#if OMPI_MTL_PORTALS_DEBUG
-        printf("short send bits: 0x%016llx\n", match_bits);
-#endif
+
+        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                             "short send bits: 0x%016llx\n", 
+                             match_bits));
 
         md.threshold = 1;
         md.options = PTL_MD_EVENT_START_DISABLE;
@@ -314,7 +322,6 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
             if (ptl_request->free_after) free(md.start);
             return ompi_common_portals_error_ptl_to_ompi(ret);
         }
-
     }
 
     return OMPI_SUCCESS;

@@ -20,6 +20,7 @@
 
 #include "ompi/request/request.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/mtl/base/base.h"
 
 #include "mtl_mx.h"
 #include "mtl_mx_types.h"
@@ -52,7 +53,7 @@ ompi_mtl_mx_iprobe(struct mca_mtl_base_module_t* mtl,
                     &mx_status,
                     &result);
     if (MX_SUCCESS != ret) {
-        opal_output(0, "Error in mx_iprobe (error %s)\n", mx_strerror(ret));
+        opal_output(ompi_mtl_base_output, "Error in mx_iprobe (error %s)\n", mx_strerror(ret));
         return OMPI_ERROR;
     }
 
