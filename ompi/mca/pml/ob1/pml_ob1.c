@@ -35,6 +35,7 @@
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/mca/bml/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 mca_pml_ob1_t mca_pml_ob1 = {
     {
@@ -58,6 +59,11 @@ mca_pml_ob1_t mca_pml_ob1 = {
     INT_MAX
     }
 };
+
+
+void mca_pml_ob1_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags);
 
 int mca_pml_ob1_enable(bool enable)
 {
@@ -144,7 +150,10 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
                               MCA_BTL_TAG_PML,
                               mca_pml_ob1_recv_frag_callback,
                               NULL);
-
+    
+    /* register error handlers */
+    rc = mca_bml.bml_register_error(mca_pml_ob1_error_handler);
+    
     /* initialize free list of receive buffers */
     ompi_free_list_init(
                         &mca_pml_ob1.buffers,
@@ -345,4 +354,11 @@ void mca_pml_ob1_process_pending_rdma(void)
         if(OMPI_ERR_OUT_OF_RESOURCE == rc)
             break;
     }
+}
+
+
+void mca_pml_ob1_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags) { 
+    orte_errmgr.abort();
 }

@@ -110,11 +110,6 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 
 
 
-void mca_pml_dr_error_handler(
-        struct mca_btl_base_module_t* btl,
-        int32_t flags) { 
-    orte_errmgr.abort();
-}
 
 /*
  *   For each proc setup a datastructure that indicates the PTLs
@@ -250,3 +245,8 @@ int mca_pml_dr_dump(
 
 
 
+void mca_pml_dr_error_handler(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags) { 
+    orte_errmgr.abort();
+}
