@@ -173,7 +173,9 @@ static void mca_pml_dr_match_completion(
 
         /* return descriptor */
         if(NULL != sendreq->req_descriptor) {
-            mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+            if(NULL != sendreq->req_descriptor->des_context) { 
+                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+            }
             sendreq->req_descriptor = NULL;
         }
 
@@ -238,7 +240,9 @@ static void mca_pml_dr_rndv_completion(
     OPAL_THREAD_LOCK(&ompi_request_lock);
     if(vfrag->vf_ack == vfrag->vf_mask) {
         if(sendreq->req_descriptor) {
-            mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor);
+            if(NULL != sendreq->req_descriptor->des_context) { 
+                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor);
+            }
             sendreq->req_descriptor = NULL;
         }
 
@@ -670,7 +674,7 @@ int mca_pml_dr_send_request_start_rndv(
     if(NULL == des) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     } 
-    sendreq->req_descriptor = des; /* hang on to this for later */
+    sendreq->req_descriptor = des; /*hang on to this for later */
     segment = des->des_src;
     
     /* build hdr */
@@ -986,7 +990,9 @@ void mca_pml_dr_send_request_match_ack(
             /* if already have local completion free descriptor and complete message */
             /* return descriptor */
             if(NULL != sendreq->req_descriptor) {
-                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor ); 
+                if(NULL != sendreq->req_descriptor->des_context) { 
+                    mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor ); 
+                }
                 sendreq->req_descriptor = NULL;
             }
             
@@ -1040,7 +1046,9 @@ void mca_pml_dr_send_request_rndv_ack(
         } else {
             /* return descriptor of first fragment */
             if(NULL != sendreq->req_descriptor) {
-                mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+                if(NULL != sendreq->req_descriptor->des_context) { 
+                    mca_bml_base_free(sendreq->req_descriptor->des_context, sendreq->req_descriptor); 
+                }
                 sendreq->req_descriptor = NULL;
             }
 
