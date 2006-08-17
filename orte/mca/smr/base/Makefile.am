@@ -17,6 +17,7 @@
 #
 
 headers += \
+        base/smr_private.h \
         base/base.h
 
 libmca_smr_la_SOURCES += \
