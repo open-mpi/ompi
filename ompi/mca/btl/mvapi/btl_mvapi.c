@@ -60,7 +60,9 @@ mca_btl_mvapi_module_t mca_btl_mvapi_module = {
         mca_btl_mvapi_send,
         mca_btl_mvapi_put,
         mca_btl_mvapi_get,
-        mca_btl_mvapi_dump
+        mca_btl_mvapi_dump, 
+        NULL, /* mpool */
+        NULL /* error call back registration */
     }
 };
 

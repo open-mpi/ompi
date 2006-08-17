@@ -98,7 +98,6 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_add_procs_same_base_addr,
         mca_btl_sm_del_procs,
         mca_btl_sm_register,
-        NULL,
         mca_btl_sm_finalize,
         mca_btl_sm_alloc,
         mca_btl_sm_free,
@@ -107,7 +106,9 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_send, 
         NULL,  /* put */
         NULL,  /* get */
-        mca_btl_base_dump
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
         }
     },
     {
@@ -125,7 +126,6 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_add_procs,
         mca_btl_sm_del_procs,
         mca_btl_sm_register,
-        NULL,
         mca_btl_sm_finalize,
         mca_btl_sm_alloc,  
         mca_btl_sm_free,  
@@ -134,7 +134,9 @@ mca_btl_sm_t mca_btl_sm[2] = {
         mca_btl_sm_send,  
         NULL, /* put function */
         NULL, /* get function */
-        mca_btl_base_dump
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
         }
     }
 };

@@ -57,7 +57,7 @@ extern "C" {
  */
 
 struct mca_btl_tcp_component_t {
-    mca_btl_base_component_1_0_0_t super;   /**< base BTL component */ 
+    mca_btl_base_component_1_0_1_t super;   /**< base BTL component */ 
     uint32_t tcp_num_btls;                  /**< number of hcas available to the TCP component */
     struct mca_btl_tcp_module_t **tcp_btls; /**< array of available BTL modules */
     struct mca_btl_tcp_proc_t* tcp_local;   /**< local proc struct */

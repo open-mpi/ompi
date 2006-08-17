@@ -731,10 +731,18 @@ int mca_bml_r2_register_error(
     uint32_t  i; 
     int rc;
     mca_btl_base_module_t *btl; 
-
+    uint32_t ver;
+    
     for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
         btl = mca_bml_r2.btl_modules[i]; 
-        if(btl->btl_register_error) { 
+        /* this wont work for version numbers greater than 256... seems 
+           reasonable.. */
+        ver = btl->btl_component->btl_version.mca_type_major_version << 16 |
+            btl->btl_component->btl_version.mca_type_minor_version << 8 |
+            btl->btl_component->btl_version.mca_type_release_version;
+        /* is version number greater than or equal to 1.0.1? */
+        if(ver >= ((1 << 16) |  (0 << 8) | 1) &&            
+           NULL != btl->btl_register_error) { 
             rc = btl->btl_register_error(btl, cbfunc);  
             if(OMPI_SUCCESS != rc) {
                 return rc;

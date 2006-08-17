@@ -53,7 +53,6 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         mca_btl_udapl_add_procs,
         mca_btl_udapl_del_procs,
         mca_btl_udapl_register, 
-        NULL, /* register error */
         mca_btl_udapl_finalize,
         mca_btl_udapl_alloc, 
         mca_btl_udapl_free, 
@@ -63,6 +62,8 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         NULL, /* put */
         NULL, /* get */ 
         mca_btl_base_dump
+        NULL, /* mpool */
+        NULL /* register error cb */
     }
 };
 

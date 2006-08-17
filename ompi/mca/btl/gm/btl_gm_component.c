@@ -56,7 +56,7 @@ mca_btl_gm_component_t mca_btl_gm_component = {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
 
-            MCA_BTL_BASE_VERSION_1_0_0,
+            MCA_BTL_BASE_VERSION_1_0_1,
 
             "gm", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */

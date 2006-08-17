@@ -56,7 +56,6 @@ mca_btl_ud_module_t mca_btl_ud_module = {
         mca_btl_ud_add_procs,
         mca_btl_ud_del_procs,
         mca_btl_ud_register,
-        NULL, /* register error */
         mca_btl_ud_finalize,
         /* we need alloc free, pack */
         mca_btl_ud_alloc,
@@ -66,7 +65,10 @@ mca_btl_ud_module_t mca_btl_ud_module = {
         mca_btl_ud_send,
         NULL, /*mca_btl_ud_put */
         NULL, /*mca_btl_ud_get */
-        mca_btl_ud_dump
+        mca_btl_ud_dump,
+        NULL, /* mpool */
+        NULL /* register error */
+        
     }
 };
 

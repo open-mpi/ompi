@@ -43,7 +43,7 @@ mca_btl_portals_component_t mca_btl_portals_component = {
         /* Indicate that we are a pml v1.0.0 module (which also
            implies a specific MCA version) */
 
-        MCA_BTL_BASE_VERSION_1_0_0,
+        MCA_BTL_BASE_VERSION_1_0_1,
 
         "portals", /* MCA module name */
         OMPI_MAJOR_VERSION,  /* MCA module major version */

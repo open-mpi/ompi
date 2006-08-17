@@ -75,7 +75,7 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
 
-            MCA_BTL_BASE_VERSION_1_0_0,
+            MCA_BTL_BASE_VERSION_1_0_1,
 
             "tcp", /* MCA component name */
             1,  /* MCA component major version */
