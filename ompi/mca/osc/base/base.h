@@ -49,6 +49,7 @@ OMPI_DECLSPEC int ompi_osc_base_close(void);
 
 extern opal_list_t ompi_osc_base_open_components;
 extern opal_list_t ompi_osc_base_avail_components;
+extern int ompi_osc_base_output;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

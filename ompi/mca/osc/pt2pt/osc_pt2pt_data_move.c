@@ -28,6 +28,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/dt_arch.h"
+#include "ompi/mca/osc/base/base.h"
 
 
 static inline int32_t
@@ -66,9 +67,10 @@ ompi_osc_pt2pt_sendreq_send_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     ompi_osc_pt2pt_sendreq_t *sendreq = 
         (ompi_osc_pt2pt_sendreq_t*) longreq->req_comp_cbdata;
 
-    opal_output(-1, "%d completed long sendreq to %d",
-                sendreq->req_module->p2p_comm->c_my_rank,
-                sendreq->req_target_rank);
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "%d completed long sendreq to %d",
+                        sendreq->req_module->p2p_comm->c_my_rank,
+                        sendreq->req_target_rank);
 
     opal_list_remove_item(&(sendreq->req_module->p2p_long_msgs), 
                           &(longreq->super.super));
@@ -112,10 +114,11 @@ ompi_osc_pt2pt_sendreq_send_cb(ompi_osc_pt2pt_buffer_t *buffer)
 
             longreq->req_comp_cb = ompi_osc_pt2pt_sendreq_send_long_cb;
             longreq->req_comp_cbdata = sendreq;
-            opal_output(-1, "%d starting long sendreq to %d (%d)",
-                        sendreq->req_module->p2p_comm->c_my_rank,
-                        sendreq->req_target_rank,
-                        header->hdr_origin_tag);
+            opal_output_verbose(50, ompi_osc_base_output,
+                                "%d starting long sendreq to %d (%d)",
+                                sendreq->req_module->p2p_comm->c_my_rank,
+                                sendreq->req_target_rank,
+                                header->hdr_origin_tag);
                         
             mca_pml.pml_isend(sendreq->req_origin_convertor.pBaseBuf,
                               sendreq->req_origin_convertor.count,
@@ -262,9 +265,10 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 #endif
 
     /* send fragment */
-    opal_output(-1, "%d sending sendreq to %d",
-                sendreq->req_module->p2p_comm->c_my_rank,
-                sendreq->req_target_rank);
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "%d sending sendreq to %d",
+                        sendreq->req_module->p2p_comm->c_my_rank,
+                        sendreq->req_target_rank);
 
     ret = MCA_PML_CALL(isend(buffer->payload,
                              buffer->len,
@@ -579,9 +583,10 @@ ompi_osc_pt2pt_sendreq_recv_accum_long_cb(ompi_osc_pt2pt_longreq_t *longreq)
     /* unlock the window for accumulates */
     OPAL_THREAD_UNLOCK(&longreq->req_module->p2p_acc_lock);
     
-    opal_output(-1, "%d finished receiving long accum message from %d",
-                longreq->req_module->p2p_comm->c_my_rank, 
-                header->hdr_origin);               
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "%d finished receiving long accum message from %d",
+                        longreq->req_module->p2p_comm->c_my_rank, 
+                        header->hdr_origin);               
 
     /* free the temp buffer */
     free(longreq->req_comp_cbdata);
@@ -624,9 +629,10 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
 
         OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
 
-        opal_output(-1, "%d received accum message from %d",
-                    module->p2p_comm->c_my_rank,
-                    header->hdr_origin);
+        opal_output_verbose(50, ompi_osc_base_output,
+                            "%d received accum message from %d",
+                            module->p2p_comm->c_my_rank,
+                            header->hdr_origin);
         
     } else {
         ompi_osc_pt2pt_longreq_t *longreq;
@@ -663,10 +669,11 @@ ompi_osc_pt2pt_sendreq_recv_accum(ompi_osc_pt2pt_module_t *module,
                                 module->p2p_comm,
                                 &(longreq->req_pml_req));
 
-        opal_output(-1, "%d started long recv accum message from %d (%d)",
-                    module->p2p_comm->c_my_rank,
-                    header->hdr_origin,
-                    header->hdr_origin_tag);
+        opal_output_verbose(50, ompi_osc_base_output,
+                            "%d started long recv accum message from %d (%d)",
+                            module->p2p_comm->c_my_rank,
+                            header->hdr_origin,
+                            header->hdr_origin_tag);
 
         /* put the send request in the waiting list */
         OPAL_THREAD_LOCK(&(module->p2p_lock));

@@ -50,7 +50,8 @@ ompi_osc_base_close(void)
                    opal_list_get_end(&ompi_osc_base_open_components),
                    &ompi_osc_base_avail_components);
 
-    mca_base_components_close(0, &ompi_osc_base_open_components, NULL);
+    mca_base_components_close(ompi_osc_base_output,
+                              &ompi_osc_base_open_components, NULL);
 
     OBJ_DESTRUCT(&ompi_osc_base_open_components);
     OBJ_DESTRUCT(&ompi_osc_base_avail_components);

@@ -30,6 +30,7 @@
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/datatype/dt_arch.h"
 
@@ -193,7 +194,8 @@ ompi_osc_pt2pt_component_finalize(void)
 
     if (0 !=
         (num_modules = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules))) {
-        opal_output(0, "WARNING: There were %d Windows created but not freed.",-                    num_modules);
+        opal_output(ompi_osc_base_output,
+                    "WARNING: There were %d Windows created but not freed.",-                    num_modules);
         opal_progress_unregister(ompi_osc_pt2pt_progress);
     }
 
@@ -581,9 +583,8 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
         break;
 
     default:
-        /* BWB - FIX ME - this sucks */
-        opal_output(0, "received packet for Window with unknown type");
-        abort();
+        opal_output_verbose(5, ompi_osc_base_output,
+                            "received packet for Window with unknown type");
    }
 }
 

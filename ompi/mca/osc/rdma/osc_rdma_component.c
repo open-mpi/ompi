@@ -29,6 +29,7 @@
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
@@ -202,7 +203,8 @@ ompi_osc_rdma_component_finalize(void)
 
     if (0 != 
         (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.p2p_c_modules))) {
-        opal_output(0, "WARNING: There were %d Windows created but not freed.",
+        opal_output(ompi_osc_base_output,
+                    "WARNING: There were %d Windows created but not freed.",
                     num_modules);
     }
 
@@ -345,7 +347,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     } else if (0 == strcmp(sync_string, "alltoall")) {
         module->p2p_fence_sync_type = OSC_SYNC_ALLTOALL;
     } else {
-        opal_output(0, "invalid value for fence_sync_method parameter: %s\n", sync_string);
+        opal_output(ompi_osc_base_output,
+                    "invalid value for fence_sync_method parameter: %s\n", sync_string);
         return OMPI_ERROR;
     }
 
@@ -613,7 +616,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
     default:
         /* BWB - FIX ME - this sucks */
-        opal_output(0, "received packet for Window with unknown type");
-        abort();
+        opal_output(ompi_osc_base_output,
+                    "received packet for Window with unknown type");
    }
 }
