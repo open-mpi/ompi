@@ -47,7 +47,6 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_add_procs,
         mca_btl_mx_del_procs,
         mca_btl_mx_register, 
-        NULL, /* register error */
         mca_btl_mx_finalize,
         mca_btl_mx_alloc, 
         mca_btl_mx_free, 
@@ -55,8 +54,10 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
         NULL, /* put */
-        NULL, /* get */ 
-        mca_btl_base_dump 
+        NULL, /* get */
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
     }
 };
 

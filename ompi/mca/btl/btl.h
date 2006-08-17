@@ -277,14 +277,14 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  *  and component open/close/init functions.
  */
 
-struct mca_btl_base_component_1_0_0_t {
+struct mca_btl_base_component_1_0_1_t {
   mca_base_component_t btl_version;
   mca_base_component_data_1_0_0_t btl_data;
   mca_btl_base_component_init_fn_t btl_init;
   mca_btl_base_component_progress_fn_t btl_progress;
 };
-typedef struct mca_btl_base_component_1_0_0_t mca_btl_base_component_1_0_0_t;
-typedef struct mca_btl_base_component_1_0_0_t mca_btl_base_component_t;
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
 
 
 /*
@@ -545,7 +545,6 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_add_procs_fn_t      btl_add_procs;
     mca_btl_base_module_del_procs_fn_t      btl_del_procs;
     mca_btl_base_module_register_fn_t       btl_register;
-    mca_btl_base_module_register_error_fn_t btl_register_error;
     mca_btl_base_module_finalize_fn_t       btl_finalize;
 
     mca_btl_base_module_alloc_fn_t       btl_alloc;
@@ -556,19 +555,22 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_put_fn_t         btl_put;
     mca_btl_base_module_get_fn_t         btl_get;
     mca_btl_base_module_dump_fn_t        btl_dump; /* diagnostics */
-    
+   
     /* the mpool associated with this btl (optional) */ 
     mca_mpool_base_module_t*             btl_mpool; 
+    /* register a default error handler */ 
+    mca_btl_base_module_register_error_fn_t btl_register_error;
+    
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
  * Macro for use in modules that are of type btl v1.0.0
  */
-#define MCA_BTL_BASE_VERSION_1_0_0 \
+#define MCA_BTL_BASE_VERSION_1_0_1 \
   /* coll v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
   /* btl v1.0 */ \
-  "btl", 1, 0, 0
+  "btl", 1, 0, 1
 
 #endif /* OMPI_MCA_BTL_H */

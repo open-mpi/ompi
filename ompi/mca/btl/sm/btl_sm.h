@@ -81,7 +81,7 @@ typedef mca_btl_base_recv_reg_t mca_btl_sm_recv_reg_t;
  * Shared Memory (SM) BTL module.
  */
 struct mca_btl_sm_component_t {
-    mca_btl_base_component_1_0_0_t super;  /**< base BTL component */
+    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */
     int sm_free_list_num;              /**< initial size of free lists */
     int sm_free_list_max;              /**< maximum size of free lists */
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */

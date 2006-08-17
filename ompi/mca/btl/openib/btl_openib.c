@@ -51,7 +51,6 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_add_procs,
         mca_btl_openib_del_procs,
         mca_btl_openib_register, 
-        mca_btl_openib_register_error_cb,
         mca_btl_openib_finalize,
         /* we need alloc free, pack */ 
         mca_btl_openib_alloc, 
@@ -61,7 +60,9 @@ mca_btl_openib_module_t mca_btl_openib_module = {
         mca_btl_openib_send,
         mca_btl_openib_put,
         mca_btl_openib_get,
-        mca_btl_base_dump
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        mca_btl_openib_register_error_cb /* error call back registration */
     }
 };
 

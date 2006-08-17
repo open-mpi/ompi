@@ -70,7 +70,6 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_add_procs,
         mca_btl_gm_del_procs,
         mca_btl_gm_register, 
-        mca_btl_gm_register_error_cb,
         mca_btl_gm_finalize,
         mca_btl_gm_alloc, 
         mca_btl_gm_free, 
@@ -85,7 +84,10 @@ mca_btl_gm_module_t mca_btl_gm_module = {
         mca_btl_gm_put_nl,
         mca_btl_gm_get_nl,
 #endif
-        mca_btl_base_dump
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        mca_btl_gm_register_error_cb
+        
     }
 };
 

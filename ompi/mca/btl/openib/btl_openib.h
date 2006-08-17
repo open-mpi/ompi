@@ -53,7 +53,7 @@ extern "C" {
  */
 
 struct mca_btl_openib_component_t {
-    mca_btl_base_component_1_0_0_t          super;  /**< base BTL component */ 
+    mca_btl_base_component_1_0_1_t          super;  /**< base BTL component */ 
 
     int                                ib_max_btls;
     /**< maximum number of hcas available to the IB component */

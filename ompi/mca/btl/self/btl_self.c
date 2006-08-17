@@ -57,7 +57,6 @@ mca_btl_base_module_t mca_btl_self = {
     mca_btl_self_add_procs,
     mca_btl_self_del_procs,
     mca_btl_self_register,
-    NULL,
     mca_btl_self_finalize,
     mca_btl_self_alloc,
     mca_btl_self_free,
@@ -66,7 +65,9 @@ mca_btl_base_module_t mca_btl_self = {
     mca_btl_self_send, 
     mca_btl_self_rdma,  /* put */
     mca_btl_self_rdma,
-    mca_btl_base_dump
+    mca_btl_base_dump,
+    NULL, /* mpool */
+    NULL /* register error cb */
 };
 
 
