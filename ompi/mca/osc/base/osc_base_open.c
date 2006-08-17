@@ -35,7 +35,7 @@
 
 opal_list_t ompi_osc_base_open_components;
 opal_list_t ompi_osc_base_avail_components;
-
+int ompi_osc_base_output = 0;
 
 
 /**
@@ -47,13 +47,16 @@ ompi_osc_base_open(void)
 {
     int ret;
 
+    /* setup the output stream */
+    ompi_mtl_base_output = opal_output_open(NULL);
+
     /* initialize the base code */
     OBJ_CONSTRUCT(&ompi_osc_base_open_components, opal_list_t);
     OBJ_CONSTRUCT(&ompi_osc_base_avail_components, opal_list_t);
 
     /* Open up all available components */
     if (OMPI_SUCCESS != 
-        (ret = mca_base_components_open("osc", 0,
+        (ret = mca_base_components_open("osc", ompi_osc_base_output,
                                         mca_osc_base_static_components, 
                                         &ompi_osc_base_open_components, true))) {
         return ret;
