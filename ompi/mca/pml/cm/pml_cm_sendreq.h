@@ -28,6 +28,8 @@
 struct mca_pml_cm_send_request_t { 
     mca_pml_cm_request_t req_base;
     mca_pml_base_send_mode_t req_send_mode;
+    struct ompi_communicator_t *req_comm; /**< communicator pointer */
+    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
 };
 typedef struct mca_pml_cm_send_request_t mca_pml_cm_send_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
@@ -48,8 +50,6 @@ struct mca_pml_cm_hvy_send_request_t {
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */
-    struct ompi_communicator_t *req_comm; /**< communicator pointer */
-    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
     void *req_buff;                  /**< pointer to send buffer - may not be application buffer */
     bool req_blocking;
     mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
@@ -106,6 +106,10 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
                                             buf,                        \
                                             count)                      \
 {                                                                       \
+    OBJ_RETAIN(comm);                                                   \
+    OBJ_RETAIN(datatype);                                               \
+    req_send->req_comm = comm;                                          \
+    req_send->req_datatype = datatype;                                  \
     ompi_convertor_copy_and_prepare_for_send(                           \
                                              ompi_proc->proc_convertor, \
                                              datatype,                  \
@@ -136,10 +140,8 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
     do {                                                                \
         OMPI_REQUEST_INIT(&(sendreq->req_send.req_base.req_ompi),       \
                           persistent);                                  \
-        sendreq->req_comm = comm;                                       \
         sendreq->req_tag = tag;                                         \
         sendreq->req_peer = dst;                                        \
-        sendreq->req_datatype = datatype;                               \
         sendreq->req_addr = buf;                                        \
         sendreq->req_count = count;                                     \
         MCA_PML_CM_SEND_REQUEST_INIT_COMMON(                            \
@@ -258,7 +260,7 @@ do {                                                                    \
     }                                                                   \
     if (OMPI_SUCCESS == ret) {                                          \
         ret = OMPI_MTL_CALL(isend(ompi_mtl,                             \
-                                  sendreq->req_comm,                    \
+                                  sendreq->req_send.req_comm,           \
                                   sendreq->req_peer,                    \
                                   sendreq->req_tag,                     \
                                   &sendreq->req_send.req_base.req_convertor, \
@@ -315,6 +317,8 @@ do {                                                                    \
 #define MCA_PML_CM_HVY_SEND_REQUEST_RETURN(sendreq)                     \
     {                                                                   \
         /*  Let the base handle the reference counts */                 \
+        OBJ_RELEASE(sendreq->req_send.req_datatype);                    \
+        OBJ_RELEASE(sendreq->req_send.req_comm);                        \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
         OMPI_FREE_LIST_RETURN(                                          \
@@ -353,6 +357,8 @@ do {                                                                    \
 #define MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq)                    \
     {                                                                   \
         /*  Let the base handle the reference counts */                 \
+        OBJ_RELEASE(sendreq->req_send.req_datatype);                    \
+        OBJ_RELEASE(sendreq->req_send.req_comm);                        \
         OMPI_REQUEST_FINI(&sendreq->req_send.req_base.req_ompi);        \
         ompi_convertor_cleanup( &(sendreq->req_send.req_base.req_convertor) ); \
         OMPI_FREE_LIST_RETURN(                                          \
