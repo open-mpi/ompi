@@ -43,6 +43,7 @@ ompi_mtl_portals_send_progress_no_ack(ptl_event_t *ev,
 #if OMPI_MTL_PORTALS_DEBUG
             printf("send complete: 0x%016llx\n", ev->match_bits);
 #endif
+            ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
             ptl_request->super.completion_callback(&ptl_request->super);
         }
 
@@ -73,6 +74,7 @@ ompi_mtl_portals_send_progress(ptl_event_t *ev,
 #if OMPI_MTL_PORTALS_DEBUG
             printf("send complete: 0x%016llx\n", ev->match_bits);
 #endif
+            ptl_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
             ptl_request->super.completion_callback(&ptl_request->super);
         }
         break;
