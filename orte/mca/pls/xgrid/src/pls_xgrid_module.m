@@ -42,8 +42,8 @@
 #import "orte/mca/ras/base/ras_base_node.h"
 #import "orte/mca/rmaps/base/rmaps_base_map.h"
 #import "orte/mca/rmgr/base/base.h"
-#import "orte/mca/soh/soh.h"
-#import "orte/mca/soh/base/base.h"
+#import "orte/mca/smr/smr.h"
+#import "orte/mca/smr/base/base.h"
 #import "pls_xgrid.h"
 
 int orte_pls_xgrid_launch(orte_jobid_t jobid);
@@ -125,7 +125,7 @@ orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
     char *jobid_string;
     orte_gpr_value_t** values = NULL;
     orte_process_name_t *name;
-    size_t i, j, num_values = 0;
+    orte_std_cntr_t i, j, num_values = 0;
     int rc;
 
     if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
