@@ -97,6 +97,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         }
 
         if (ORTE_SUCCESS != (rc = orte_dss.pack(nbuf, &size, 1, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
             goto exit;
         }
         ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
@@ -117,6 +118,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         }
 
         if (ORTE_SUCCESS != (rc = orte_dss.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+            ORTE_ERROR_LOG(rc);
             goto exit;
         }
     }
@@ -126,14 +128,14 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
      * THIS IS NO LONGER REQUIRED AS THE LENGTH IS NOW A STD_CNTR_T, WHICH
      * CORRELATES TO AN INT32
      */
-    rnamebuflen = (int)rnamebuflen;
+    rnamebuflen_int = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
     rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-    rnamebuflen = (size_t)rnamebuflen_int;
+    rnamebuflen = rnamebuflen_int;
 
     if ( rank != root ) {
         /* non root processes need to allocate the buffer manually */
@@ -159,11 +161,13 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
     if ( ORTE_SUCCESS != ( rc = orte_dss.load(nrbuf, rnamebuf, rnamebuflen))) {
+        ORTE_ERROR_LOG(rc);
         goto exit;
     }
 
     num_vals = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(nrbuf, &rsize, &num_vals, ORTE_INT))) {
+        ORTE_ERROR_LOG(rc);
         goto exit;
     }
 
@@ -279,6 +283,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
             return NULL;
         }
         if (ORTE_SUCCESS != orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME)) {
+            ORTE_ERROR_LOG(rc);
             return NULL;
         }
         rc = orte_rml.send_buffer(port, sbuf, tag, 0);
@@ -296,6 +301,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag);
         num_vals = 1;
         if (ORTE_SUCCESS != orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME)) {
+            ORTE_ERROR_LOG(rc);
             return NULL;
         }
         OBJ_RELEASE(rbuf);
@@ -558,8 +564,9 @@ int ompi_comm_dyn_init (void)
        its pieces, which are : port_name and tag */
     oob_port = ompi_parse_port (port_name, &tag);
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, oob_port))) {
-          return rc;
-        }
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     rc = ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,
                   send_first, &newcomm, tag );
@@ -753,7 +760,7 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
 #define OMPI_COMM_MAXJOBIDS 64
 void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 {
-    int i, j, numjobids=0;
+    int i, j, numjobids=0, rc;
     int size, rsize;
     int found;
     orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
@@ -772,6 +779,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
     if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+        ORTE_ERROR_LOG(rc);
         return;
     }
     found = 0;
@@ -791,6 +799,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
     if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+        ORTE_ERROR_LOG(rc);
         return;
     }
     found = 0;

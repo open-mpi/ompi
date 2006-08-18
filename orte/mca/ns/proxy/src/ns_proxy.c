@@ -613,7 +613,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_RML_TAG))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
