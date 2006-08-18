@@ -32,6 +32,22 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
     OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
 
+    # GNU C and autotools are inconsistent about whether this is
+    # defined so let's make it true everywhere for now...  However, IBM
+    # XL compilers on PPC Linux behave really badly when compiled with
+    # _GNU_SOURCE defined, so don't define it in that situation.
+    #
+    # Don't use AC_GNU_SOURCE because it requires that no compiler
+    # tests are done before setting it, and we need to at least do
+    # enough tests to figure out if we're using XL or not.
+    AS_IF([test "$ompi_cv_c_compiler_vendor" != "ibm"],
+          [AH_VERBATIM([_GNU_SOURCE],
+                       [/* Enable GNU extensions on systems that have them.  */
+#ifndef _GNU_SOURCE
+# undef _GNU_SOURCE
+#endif])
+           AC_DEFINE([_GNU_SOURCE])])
+
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then
         if test "$ompi_c_vendor" = "gnu" ; then
