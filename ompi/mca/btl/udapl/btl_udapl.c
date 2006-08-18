@@ -61,7 +61,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         mca_btl_udapl_send,
         NULL, /* put */
         NULL, /* get */ 
-        mca_btl_base_dump
+        mca_btl_base_dump,
         NULL, /* mpool */
         NULL /* register error cb */
     }
