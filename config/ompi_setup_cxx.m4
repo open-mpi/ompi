@@ -183,6 +183,28 @@ AC_DEFUN([OMPI_SETUP_CXX],[
         ;;
     esac
 
+    # see if the compiler supports const_cast of 2-dimensional arrays
+    AC_LANG_PUSH(C++)
+    AC_CACHE_CHECK([if $CXX supports const_cast<> properly],
+       [ompi_cv_cxx_supports_2d_const_cast],
+       [AC_TRY_COMPILE([int non_const_func(int ranges[][3]);
+int cast_test(const int ranges[][3]) {
+  return non_const_func(const_cast<int(*)[3]>(ranges));  
+}],
+            [],
+            [ompi_cv_cxx_supports_2d_const_cast="yes"],
+            [ompi_cv_cxx_supports_2d_const_cast="no"])])
+    if test "$ompi_cv_cxx_supports_2d_const_cast" = "yes" ; then
+        use_2d_const_cast=1
+    else
+        use_2d_const_cast=0
+    fi
+    AC_DEFINE_UNQUOTED([OMPI_CXX_SUPPORTS_2D_CONST_CAST],
+                       [$use_2d_const_cast],
+                       [Whether a const_cast on a 2-d array will work with the C++ compiler])
+    unset use_2d_const_cast
+    AC_LANG_POP(C++)
+
     # Note: gcc-imperonating compilers accept -O3
     if test "$WANT_DEBUG" = "1"; then
         OPTFLAGS=

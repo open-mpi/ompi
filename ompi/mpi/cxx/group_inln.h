@@ -97,7 +97,13 @@ inline MPI::Group
 MPI::Group::Range_incl(int n, const int ranges[][3]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_range_incl(mpi_group, n, const_cast<int(*)[3]>(ranges), &newgroup);
+  (void)MPI_Group_range_incl(mpi_group, n,
+#if OMPI_CXX_SUPPORTS_2D_CONST_CAST
+                             const_cast<int(*)[3]>(ranges), 
+#else
+                             (int(*)[3]) ranges,
+#endif
+                             &newgroup);
   return newgroup;
 }
 
@@ -105,7 +111,13 @@ inline MPI::Group
 MPI::Group::Range_excl(int n, const int ranges[][3]) const
 {
   MPI_Group newgroup;
-  (void)MPI_Group_range_excl(mpi_group, n, const_cast<int(*)[3]>(ranges), &newgroup);
+  (void)MPI_Group_range_excl(mpi_group, n,
+#if OMPI_CXX_SUPPORTS_2D_CONST_CAST
+                             const_cast<int(*)[3]>(ranges),
+#else
+                             (int(*)[3]) ranges,
+#endif
+                             &newgroup);
   return newgroup;
 }
 
