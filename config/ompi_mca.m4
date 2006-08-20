@@ -422,6 +422,9 @@ AC_DEFUN([MCA_CONFIGURE_FRAMEWORK],[
 /*
  * \$HEADER\$
  */
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 `cat $outfile.extern`
 
@@ -429,6 +432,11 @@ const mca_base_component_t *mca_$2_base_static_components[[]] = {
 `cat $outfile.struct`
   NULL
 };
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 EOF
         # Only replace the header file if a) it doesn't previously
         # exist, or b) the contents are different.  Do this to not
