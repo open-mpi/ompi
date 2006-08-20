@@ -42,6 +42,7 @@
 
 #include "ompi/constants.h"
 #include "common_sm_mmap.h"
+#include "opal/util/basename.h"
 #include "opal/util/output.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
@@ -88,14 +89,15 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         size_t size_ctl_structure, size_t data_seg_alignment)
 {
     int fd = -1, return_code = OMPI_SUCCESS;
-    bool file_previously_opened;
+    bool file_previously_opened = false;
     mca_common_sm_file_header_t* seg = NULL;
     mca_common_sm_mmap_t* map = NULL;
-    struct stat s_stat;
     unsigned char *addr = NULL;
     size_t tmp,mem_offset;
 
 #if !defined(__WINDOWS__)
+    struct stat s_stat;
+
     /* input parameter error checks */
     if( (size < sizeof(mca_common_sm_file_header_t) ) ||
                 ( file_name == NULL ) || 
@@ -147,34 +149,48 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
 #else
     HANDLE hMapObject = INVALID_HANDLE_VALUE;
     LPVOID lpvMem = NULL;
+    char *temp1, *temp2;
+    int rc;
 
+    /**
+     * On Windows the shared file will be created by the OS directly on
+     * the system ressources. Therefore, no file get involved in the
+     * operation. However, a unique key should be used as name for the
+     * shared memory object in order to allow all processes to access
+     * the same unique shared memory region. The key will be obtained
+     * from the original file_name by replacing all path separator
+     * occurences by '/' (as '\' is not allowed on the object name).
+     */
+    temp1 = strdup(file_name);
+    temp2 = temp1;
+    while( NULL != (temp2 = strchr(temp2, OPAL_PATH_SEP[0])) ) {
+        *temp2 = '/';
+    }
     hMapObject = CreateFileMapping( INVALID_HANDLE_VALUE, /* use paging file */
                                     NULL,                 /* no security attributes */
                                     PAGE_READWRITE,       /* read/write access */
                                     0,                    /* size: high 32-bits */
                                     size,                 /* size: low 32-bits */
-                                    file_name);           /* name of map object */
-    if( ERROR_ALREADY_EXISTS == GetLastError() )
-        file_previously_opened=true;
-
-    if( NULL != hMapObject ) {
-        /* Get a pointer to the file-mapped shared memory. */
-        lpvMem = MapViewOfFile( hMapObject,     /* object to map view of */
-                                FILE_MAP_WRITE, /* read/write access */
-                                0,              /* high offset:  map from */
-                                0,              /* low offset:   beginning */
-                                0);             /* default: map entire file */
-    }
-    seg = (mca_common_sm_file_header_t*)lpvMem;
-    if( NULL == lpvMem ) {
-        int rc = GetLastError();
-        char* localbuf = NULL;
-        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
-                       NULL, rc, 0, (LPTSTR)&localbuf, 1024, NULL );
-        opal_output( 0, "%s\n", localbuf );
-        LocalFree( localbuf );
+                                    temp1);               /* name of map object */
+    if( NULL == hMapObject ) {
+        rc = GetLastError();
         goto return_error;
     }
+    if( ERROR_ALREADY_EXISTS == GetLastError() )
+        file_previously_opened=true;
+    free(temp1);  /* relase the temporary file name */
+
+    /* Get a pointer to the file-mapped shared memory. */
+    lpvMem = MapViewOfFile( hMapObject,          /* object to map view of */
+                            FILE_MAP_WRITE,      /* read/write access */
+                            0,                   /* high offset:  map from */
+                            0,                   /* low offset:   beginning */
+                            0);                  /* default: map entire file */
+    if( NULL == lpvMem ) {
+        rc = GetLastError();
+        goto return_error;
+    }
+    seg = (mca_common_sm_file_header_t*)lpvMem;
 #endif  /* !defined(__WINDOWS__) */
 
     /* set up the map object */
@@ -184,6 +200,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
        entry in the control structure is an mca_common_sm_file_header_t
        element */
     map->map_seg = seg;
+    map->hMappedObject = hMapObject;
 
     /* If we have a data segment (i.e., if 0 != data_seg_alignment),
        then make it the first aligned address after the control
@@ -227,8 +244,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         goto return_error;
     }
     close(fd);
-#else
-    CloseHandle(hMapObject);
 #endif  /* !defined(__WINDOWS__) */
 
     return map;
@@ -241,6 +256,13 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     }
     if( NULL != seg ) munmap((void*) seg,size);
 #else
+    {
+        char* localbuf = NULL;
+        FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
+                       NULL, rc, 0, (LPTSTR)&localbuf, 1024, NULL );
+        opal_output( 0, "%s\n", localbuf );
+        LocalFree( localbuf );
+    }
     if( NULL != lpvMem ) UnmapViewOfFile( lpvMem );
     if( NULL != hMapObject ) CloseHandle(hMapObject);
 #endif  /* !defined(__WINDOWS__) */
@@ -262,6 +284,8 @@ int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
         if( false == return_error ) {
             rc = GetLastError();
         }
+        CloseHandle(sm_mmap->hMappedObject);
+
 #endif  /* !defined(__WINDOWS__) */
     }
     return rc;
