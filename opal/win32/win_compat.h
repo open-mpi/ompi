@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,15 +19,29 @@
 #ifndef OMPI_WIN_COMPAT_H
 #define OMPI_WIN_COMPAT_H
 
+/**
+ * don't complain about all the deprecated functions.
+ */
+#define _CRT_SECURE_NO_DEPRECATE
+
+/**
+ * Allow usage of some recent functions (such as SwitchToThread)
+ *  0x0400 - for SwitchToThread
+ *  0x0500 - for using Event Objects
+ */
+#define _WIN32_WINNT 0x0500
+
 /* It is always better to include windows.h with the lean and mean option. 
    So, include it with that option and then include some which are required 
    for us in ompi. Note: this file is included only on windows */
 
 #ifndef WIN32_LEAN_AND_MEAN
 #define WIN32_LEAN_AND_MEAN
+#endif  /* WIN32_LEAN_AND_MEAN */
+#ifndef VC_EXTRALEAN
+#define VC_EXTRALEAN
+#endif  /* VC_EXTRALEAN */
 #include <windows.h>
-#undef WIN32_LEAN_AND_MEAN
-#endif
 
 /* FD_SETSIZE determines how many sockets windows can select() on. If not defined 
    before including winsock2.h, it is defined to be 64. We are going to go ahead and
@@ -40,6 +54,12 @@
 #include <ws2tcpip.h>
 #include <process.h>
 #include <signal.h>
+/**
+ * For all file io operations
+ */
+#include <direct.h>
+#include <io.h>
+
 /*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
 #include "opal/win32/ompi_uio.h"
 #include "opal/win32/ompi_time.h"
@@ -58,7 +78,7 @@
 typedef unsigned short mode_t;
 typedef long ssize_t;
 typedef DWORD in_port_t;
-typedef int caddr_t;
+typedef char* caddr_t;
 typedef unsigned int uint;
 
 /* Defines for the access functions */
@@ -68,23 +88,45 @@ typedef unsigned int uint;
 #define X_OK  0x06
 #define WTERMSIG(EXIT_CODE)    (1)
 #define WIFEXITED(EXIT_CODE)   (1)
-#define WEXITSTATUS(EXIT_CODE) (1)
+#define WEXITSTATUS(EXIT_CODE) (EXIT_CODE)
 #define WIFSIGNALED(EXIT_CODE) (0)
 #define WIFSTOPPED(EXIT_CODE)  (0)
 #define WSTOPSIG(EXIT_CODE)    (11)
 
 /* Anju: some random #defines which I know offhand, but need to configure it */
-#define OMPI_ALIGNMENT_CXX_BOOL OMPI_ALIGNMENT_INT
-#define SIZEOF_BOOL SIZEOF_INT
-#define getpid _getpid
-#define getcwd _getcwd
-#define mkdir _mkdir
+#define OMPI_ALIGNMENT_CXX_BOOL  OMPI_ALIGNMENT_INT
+#define SIZEOF_BOOL              SIZEOF_INT
+
+/**
+ * Microsoft compiler complain about non conformance of the default UNIX function.
+ * Non conformance to the POSIX standard, and they suggest to use the version
+ * starting with an _ instead. So, in order to keep cl.exe happy (and quiet) we can
+ * use the followings defines.
+ */
+#define getpid                    _getpid
+#define strdup(STRING)            _strdup((STRING))
+#define putenv(STRING)            _putenv((STRING))
+#define getcwd(BUF, SIZE)         _getcwd((BUF), (SIZE))
+#define mkdir(PATH, MODE)         _mkdir((PATH))
+#define rmdir(PATH)               _rmdir((PATH))
+#define chdir(PATH)               _chdir((PATH))
+#define chmod(PATH, MODE)         _chmod( (PATH), (MODE) )
+#define access(PATH, MODE)        _access((PATH), (MODE))
+#define open(PATH, FLAGS, MODE)   _open((PATH), (FLAGS), (MODE))
+#define close(FD)                 _close((FD))
+#define unlink(PATH)              _unlink((PATH))
+#define dup2(OLDFD, NEWFD)        _dup2((OLDFD), (NEWFD))
+#define write(FD, BUF, SIZE)      _write((FD), (BUF), (SIZE))
+#define read(FD, BUF, SIZE)       _read((FD), (BUF), (SIZE))
+#define fileno(FD)                _fileno((FD))
+#define isatty(FD)                _isatty((FD))
+#define execvp                    _execvp
+#define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
+#define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
 
 #define UINT32_MAX _UI32_MAX
 #define INT32_MAX  _I32_MAX
 #define UINT8_MAX  _UI8_MAX
-
-#define SIZEOF_SIZE_T 4
 
 /* If we now support __func__ set the HAVE_DECL___FUNC__ */
 #define __func__ __FUNCTION__
