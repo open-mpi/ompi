@@ -3,7 +3,7 @@ dnl
 dnl Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
-dnl Copyright (c) 2004-2005 The University of Tennessee and The University
+dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
 dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
@@ -25,8 +25,6 @@ AC_DEFUN([OMPI_SETUP_CXX],[
 
     AC_REQUIRE([_OMPI_START_SETUP_CXX])
     AC_REQUIRE([_OMPI_PROG_CXX])
-
-    OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])
 
     # Do we want code coverage
     if test "$WANT_COVERAGE" = "1"; then 
@@ -239,6 +237,8 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     OMPI_CXX_ABSOLUTE="`which $CXX`"
     AC_SUBST(OMPI_CXX_ABSOLUTE)
 
+    OMPI_CXX_COMPILER_VENDOR([ompi_cxx_vendor])
+
     # Make sure that the C++ compiler both works and is actually a C++
     # compiler (if not cross-compiling).  Don't just use the AC macro
     # so that we can have a pretty message.  Do something here that
@@ -252,7 +252,9 @@ AC_DEFUN([_OMPI_PROG_CXX],[
     # we want to cover the entire spectrum (compiling, linking,
     # running).
 
-    OMPI_CHECK_COMPILER_WORKS([C++], [#include <string>], 
-           [std::string foo = "Hello, world"; return 0], [], 
-           [AC_MSG_ERROR([Could not run a simple C++ program.  Aborting.])])
+	if[ test "$ompi_cv_cxx_compiler_vendor" != "microsoft" ]; then
+		OMPI_CHECK_COMPILER_WORKS([C++], [#include <string>], 
+				[std::string foo = "Hello, world"], [], 
+				[AC_MSG_ERROR([Could not run a simple C++ program.  Aborting.])])
+	fi
 ])
