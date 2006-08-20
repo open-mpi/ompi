@@ -96,7 +96,8 @@ int MPI_Type_create_darray(int size,
             if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) && (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
                 (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( (gsize_array[i] < 1) || (darg_array[i] < 0) || (psize_array[i] < 0) ) {
+            } else if( (gsize_array[i] < 1) || (psize_array[i] < 0) ||
+                       ((darg_array[i] < 0) && (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) ) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
             } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
                        (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
