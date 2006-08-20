@@ -29,11 +29,11 @@ static __inline char* getenv (const char *name)
 {
     int ret;
     char *buffer;
-    DWORD length = GetEnvironmentVariable( name, NULL, 0 );
+    DWORD length = GetEnvironmentVariable( (LPCSTR)((void*)name), NULL, 0 );
 
     if( 0 == length ) return NULL;
     buffer = (char *)malloc(sizeof(char) * length);
-    ret = GetEnvironmentVariable(name, buffer, length);
+    ret = GetEnvironmentVariable((LPCSTR)((void*)name), (LPSTR)((void*)buffer), length);
     return (ret > 0) ? buffer: NULL;
 }
 
@@ -41,7 +41,7 @@ static __inline char* getenv (const char *name)
 static __inline int setenv (const char *name, const char *value, int rewrite) {
 
     /* just push it back to the windows thingy */
-    int ret = SetEnvironmentVariable (name, value);
+    int ret = SetEnvironmentVariable ((LPCSTR)((void*)name), (LPCSTR)((void*)value));
     return (0 != ret)? 1: 0;
 }
 

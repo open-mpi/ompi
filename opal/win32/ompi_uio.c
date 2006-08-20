@@ -26,8 +26,7 @@
  of code to handle the windows error flags 
  */
 
-OPAL_DECLSPEC int
-writev( int fd, struct iovec * iov, int cnt )
+int writev( int fd, struct iovec * iov, int cnt )
 {
    int err;
    DWORD sendlen;
@@ -41,8 +40,7 @@ writev( int fd, struct iovec * iov, int cnt )
 } 
 
 
-OPAL_DECLSPEC int
-readv( int fd, struct iovec * iov, int cnt )
+int readv( int fd, struct iovec * iov, int cnt )
 {
    int err;
    DWORD recvlen = 0;

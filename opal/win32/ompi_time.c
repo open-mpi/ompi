@@ -23,8 +23,7 @@
 
 #define EPOCHFILETIME (116444736000000000LL)
 
-OPAL_DECLSPEC int
-gettimeofday(struct timeval *tv, struct timezone *tz)
+int gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     
     FILETIME file_time;

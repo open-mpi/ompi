@@ -29,11 +29,8 @@
     5. machine: GetSystemInfo
 */
     
-OPAL_DECLSPEC int
-uname( struct utsname *un )
+int uname( struct utsname *un )
 {
-
-    /* 1. get the OS name */
     TCHAR env_variable[] = "OS=%OS%";
     DWORD info_buf_count;
     OSVERSIONINFO version_info;
@@ -42,33 +39,48 @@ uname( struct utsname *un )
 
     info_buf_count = ExpandEnvironmentStrings( env_variable, info_buf, OMPI_UTSNAME_LEN); 
     if (0 == info_buf_count) {
-        return 1;
+        snprintf( un->sysname, OMPI_UTSNAME_LEN, "Unknown" );
+    } else {
+        /* remove the "OS=" from the beginning of the string */
+        strncpy( un->sysname, info_buf + 3, OMPI_UTSNAME_LEN );
     }
-
-    /* unfortunately, we need to trim the first three characters from un->sysname */
-    sprintf (un->sysname,"%s", info_buf+3);
-
     info_buf_count = OMPI_UTSNAME_LEN;
     if (!GetComputerName( un->nodename, &info_buf_count)) {
-        return 1;
+        snprintf(un->nodename, OMPI_UTSNAME_LEN, "undefined"); 
     }
     
     version_info.dwOSVersionInfoSize = sizeof(OSVERSIONINFO);
     if (!GetVersionEx(&version_info)) {
-        return 1;
+        snprintf(un->release, OMPI_UTSNAME_LEN, "undefined"); 
+        snprintf(un->version, OMPI_UTSNAME_LEN, "undefined"); 
     } else {
         /* fill in both release and version information */
-        sprintf (un->release, "%d.%d.%d", version_info.dwMajorVersion,
-                                          version_info.dwMinorVersion,
-                                          version_info.dwBuildNumber);
+        snprintf( un->release, OMPI_UTSNAME_LEN, "%d.%d.%d",
+                  version_info.dwMajorVersion,
+                  version_info.dwMinorVersion,
+                  version_info.dwBuildNumber);
+        snprintf( un->version, OMPI_UTSNAME_LEN, "%s", version_info.szCSDVersion );
     }
 
     /* get machine information */
     GetSystemInfo(&sys_info);
-    sprintf(un->machine, "%u", sys_info.dwProcessorType);
+    switch( sys_info.wProcessorArchitecture ) {
+        case PROCESSOR_ARCHITECTURE_UNKNOWN:
+            snprintf( un->machine, OMPI_UTSNAME_LEN, "Unknown %d", sys_info.wProcessorLevel );
+            break;
+        case PROCESSOR_ARCHITECTURE_INTEL:
+            snprintf( un->machine, OMPI_UTSNAME_LEN, "Intel %d", sys_info.wProcessorLevel );
+            break;
+        case PROCESSOR_ARCHITECTURE_IA64:
+            snprintf( un->machine, OMPI_UTSNAME_LEN, "IA64 %d", sys_info.wProcessorLevel );
+            break;
+        case PROCESSOR_ARCHITECTURE_AMD64:
+            snprintf( un->machine, OMPI_UTSNAME_LEN, "AMD %d", sys_info.wProcessorLevel );
+            break;
+        default:
+            snprintf( un->machine, OMPI_UTSNAME_LEN, "UFO hardware %d", sys_info.wProcessorLevel );
+            break;
+    }
 
-    /* version : need to ask Jeff */
-    sprintf(un->version, "undefined");
-    
     return 0;
 }
