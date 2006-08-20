@@ -47,8 +47,8 @@ extern "C" {
  * Well known address
  */
 
-OMPI_DECLSPEC extern orte_process_name_t mca_oob_name_any;
-OMPI_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
+ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_any;
+ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
 
 /*
  * OOB API
@@ -84,7 +84,7 @@ OMPI_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
 *  an OOB module prior to calling this routine.
 */
 
-OMPI_DECLSPEC char* mca_oob_get_contact_info(void);
+ORTE_DECLSPEC char* mca_oob_get_contact_info(void);
 
 /**
 *  Pre-populate the cache of contact information required by the OOB
@@ -96,7 +96,7 @@ OMPI_DECLSPEC char* mca_oob_get_contact_info(void);
 *
 */
 
-OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
+ORTE_DECLSPEC int mca_oob_set_contact_info(const char*);
 
 /**
  *  A routine to ping a given process name to determine if it is reachable.
@@ -109,7 +109,7 @@ OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
  *  an error status is returned.
  */
 
-OMPI_DECLSPEC int mca_oob_ping(const char*, struct timeval* tv);
+ORTE_DECLSPEC int mca_oob_ping(const char*, struct timeval* tv);
 
 /**
 *  Extract from the contact info the peer process identifier.
@@ -123,7 +123,7 @@ OMPI_DECLSPEC int mca_oob_ping(const char*, struct timeval* tv);
 *  the process name.
 */
 
-OMPI_DECLSPEC int mca_oob_parse_contact_info(const char* uri, orte_process_name_t* peer, char*** uris);
+ORTE_DECLSPEC int mca_oob_parse_contact_info(const char* uri, orte_process_name_t* peer, char*** uris);
 
 
 /**
@@ -134,7 +134,7 @@ OMPI_DECLSPEC int mca_oob_parse_contact_info(const char* uri, orte_process_name_
  *  must currently be set before calling mca_oob_base_init().
  */
 
-OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
+ORTE_DECLSPEC int mca_oob_set_contact_info(const char*);
 
 /**
 *  Similiar to unix writev(2).
@@ -156,7 +156,7 @@ OMPI_DECLSPEC int mca_oob_set_contact_info(const char*);
 *  address.
 */
 
-OMPI_DECLSPEC int mca_oob_send(
+ORTE_DECLSPEC int mca_oob_send(
     orte_process_name_t* peer,
     struct iovec *msg,
     int count,
@@ -172,7 +172,7 @@ OMPI_DECLSPEC int mca_oob_send(
 * @return            OMPI error code (<0) on error or number of bytes actually sent.
 */
 
-OMPI_DECLSPEC int mca_oob_send_packed(
+ORTE_DECLSPEC int mca_oob_send_packed(
     orte_process_name_t* peer,
     orte_buffer_t* buffer,
     int tag,
@@ -208,7 +208,7 @@ OMPI_DECLSPEC int mca_oob_send_packed(
 *
 */
 
-OMPI_DECLSPEC int mca_oob_recv(
+ORTE_DECLSPEC int mca_oob_recv(
     orte_process_name_t* peer,
     struct iovec *msg,
     int count,
@@ -230,7 +230,7 @@ OMPI_DECLSPEC int mca_oob_recv(
 *
 */
 
-OMPI_DECLSPEC int mca_oob_recv_packed (
+ORTE_DECLSPEC int mca_oob_recv_packed (
     orte_process_name_t* peer,
     orte_buffer_t *buf,
     int tag);
@@ -296,7 +296,7 @@ typedef void (*mca_oob_callback_packed_fn_t)(
 *
 */
 
-OMPI_DECLSPEC int mca_oob_send_nb(
+ORTE_DECLSPEC int mca_oob_send_nb(
     orte_process_name_t* peer,
     struct iovec* msg,
     int count,
@@ -322,7 +322,7 @@ OMPI_DECLSPEC int mca_oob_send_nb(
 *
 */
 
-OMPI_DECLSPEC int mca_oob_send_packed_nb(
+ORTE_DECLSPEC int mca_oob_send_packed_nb(
     orte_process_name_t* peer,
     orte_buffer_t* buffer,
     int tag,
@@ -346,7 +346,7 @@ OMPI_DECLSPEC int mca_oob_send_packed_nb(
 * that matches the call parameters.
 */
 
-OMPI_DECLSPEC int mca_oob_recv_nb(
+ORTE_DECLSPEC int mca_oob_recv_nb(
     orte_process_name_t* peer,
     struct iovec* msg,
     int count,
@@ -363,7 +363,7 @@ OMPI_DECLSPEC int mca_oob_recv_nb(
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
 
-OMPI_DECLSPEC int mca_oob_recv_cancel(
+ORTE_DECLSPEC int mca_oob_recv_cancel(
     orte_process_name_t* peer,
     int tag);
 
@@ -383,7 +383,7 @@ OMPI_DECLSPEC int mca_oob_recv_cancel(
 * that matches the call parameters.
 */
 
-OMPI_DECLSPEC int mca_oob_recv_packed_nb(
+ORTE_DECLSPEC int mca_oob_recv_packed_nb(
     orte_process_name_t* peer,
     int tag,
     int flags,
@@ -402,7 +402,7 @@ OMPI_DECLSPEC int mca_oob_recv_packed_nb(
  *  continuing to forward data along the distribution tree.
  */
 
-OMPI_DECLSPEC int mca_oob_xcast(
+ORTE_DECLSPEC int mca_oob_xcast(
     orte_process_name_t* root,
     orte_process_name_t* peers,
     orte_std_cntr_t num_peers,
@@ -424,21 +424,21 @@ typedef int (*mca_oob_base_exception_fn_t)(const orte_process_name_t* peer, int 
  *  Register a callback function on loss of a connection.
  */
 
-OMPI_DECLSPEC int mca_oob_add_exception_handler(
+ORTE_DECLSPEC int mca_oob_add_exception_handler(
     mca_oob_base_exception_fn_t cbfunc);
 
 /**
  * Remove a callback
  */
 
-OMPI_DECLSPEC int mca_oob_del_exception_handler(
+ORTE_DECLSPEC int mca_oob_del_exception_handler(
     mca_oob_base_exception_fn_t cbfunc);
 
 /**
  * Invoke exception handlers
  */
 
-OMPI_DECLSPEC void mca_oob_call_exception_handlers(
+ORTE_DECLSPEC void mca_oob_call_exception_handlers(
     orte_process_name_t* peer, int exception);
 
 #if defined(c_plusplus) || defined(__cplusplus)

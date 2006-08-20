@@ -28,6 +28,6 @@
  *  @returnvalue power of 2 integer same or greater than the input
  *               parameter.
  */
-OMPI_DECLSPEC int opal_round_up_to_nearest_pow2(int input_integer);
+OPAL_DECLSPEC int opal_round_up_to_nearest_pow2(int input_integer);
 
 #endif /* OPAL_POW2_H */

@@ -59,7 +59,7 @@ struct orte_bitmap_t {
 
 typedef struct orte_bitmap_t orte_bitmap_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
 
 
 /**
@@ -73,7 +73,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
  * @return ORTE error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit);
+ORTE_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -86,7 +86,7 @@ OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
+ORTE_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -98,7 +98,7 @@ OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
  * @return ORTE error code if the bit is out of range, else success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
+ORTE_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -111,7 +111,7 @@ OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
   *         0 if the bit is not set
   *
   */
-OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
+ORTE_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -122,7 +122,7 @@ OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit)
 
  * @return err        ORTE_SUCCESS on success
  */
-OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
+ORTE_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
                                                            orte_std_cntr_t *position);
 
 
@@ -133,7 +133,7 @@ OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
  * @return ORTE error code if bm is NULL
  *
  */
-OMPI_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
+ORTE_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
 
 
 /**
@@ -142,7 +142,7 @@ OMPI_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
  * @return ORTE error code if bm is NULL
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
+ORTE_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
 
 
 /**

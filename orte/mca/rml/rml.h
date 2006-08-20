@@ -45,8 +45,8 @@ extern "C" {
  * Well known addresses
  */
 
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_any;
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_any;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
 
 
 /*
@@ -433,7 +433,7 @@ typedef struct orte_rml_component_1_0_0_t orte_rml_component_t;
  * This is the RML instance that all functions are called through.
  */
 
-OMPI_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

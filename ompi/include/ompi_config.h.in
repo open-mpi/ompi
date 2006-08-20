@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -77,5 +77,27 @@ typedef struct {
   ompi_fortran_double_precision_t imag;
 } ompi_fortran_double_complex_t;
 #endif
+
+#if defined(__WINDOWS__)
+
+#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
+#    if defined(OMPI_EXPORTS)
+#      define OMPI_DECLSPEC __declspec(dllexport)
+#    else
+#      define OMPI_DECLSPEC __declspec(dllimport)
+#    endif
+#    if defined(OMPI_MODULE_EXPORTS)
+#      define OMPI_MODULE_DECLSPEC __declspec(dllexport)
+#    else
+#      define OMPI_MODULE_DECLSPEC __declspec(dllimport)
+#    endif
+#  else          /* building static library */
+#    define OMPI_DECLSPEC
+#    define OMPI_MODULE_DECLSPEC
+#  endif
+#else
+#define OMPI_DECLSPEC
+#define OMPI_MODULE_DECLSPEC
+#endif  /* defined(__WINDOWS__) */
 
 #endif

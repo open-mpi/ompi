@@ -372,23 +372,28 @@ int mca_bml_r2_add_procs(
         /* (1) determine the total bandwidth available across all btls
          *     note that we need to do this here, as we may already have btls configured
          * (2) determine the highest priority ranking for latency
+         * (3) compute the maximum amount of bytes that can be send without any
+         *     weighting. Once the left over is smaller than this number we will
+         *     start using the weight to compute the correct amount.
          */
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
+        bml_endpoint->bml_max_send_length = 0;
+        bml_endpoint->bml_max_rdma_length = 0;
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
-            total_bandwidth += bml_btl->btl->btl_bandwidth; 
+            total_bandwidth += bml_btl->btl->btl_bandwidth;
             if(btl->btl_latency < latency) {
                 latency = btl->btl_latency;
             }
+            bml_endpoint->bml_max_send_length += bml_btl->btl->btl_bandwidth;
         }
         
         /* (1) set the weight of each btl as a percentage of overall bandwidth
          * (2) copy all btl instances at the highest priority ranking into the
          *     list of btls used for first fragments
          */
-
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);

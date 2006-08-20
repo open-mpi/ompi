@@ -100,7 +100,7 @@ typedef uint8_t orte_dss_buffer_type_t;
     typedef struct orte_buffer_t orte_buffer_t;
 
     /** formalize the declaration */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION (orte_buffer_t);
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION (orte_buffer_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

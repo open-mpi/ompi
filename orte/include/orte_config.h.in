@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,6 +23,27 @@
 #define ORTE_CONFIG_H_
 
 #include "opal_config.h"
-#define ORTE_DECLSPEC OMPI_DECLSPEC
+
+#if defined(__WINDOWS__)
+
+#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
+#    if defined(ORTE_EXPORTS)
+#      define ORTE_DECLSPEC __declspec(dllexport)
+#    else
+#      define ORTE_DECLSPEC __declspec(dllimport)
+#    endif
+#    if defined(ORTE_MODULE_EXPORTS)
+#      define ORTE_MODULE_DECLSPEC __declspec(dllexport)
+#    else
+#      define ORTE_MODULE_DECLSPEC __declspec(dllimport)
+#    endif
+#  else          /* building static library */
+#    define ORTE_DECLSPEC
+#    define ORTE_MODULE_DECLSPEC
+#  endif
+#else
+#define ORTE_DECLSPEC
+#define ORTE_MODULE_DECLSPEC
+#endif  /* defined(__WINDOWS__) */
 
 #endif

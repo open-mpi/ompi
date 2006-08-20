@@ -45,7 +45,7 @@ extern "C" {
     /**
      * Component export structure
      */
-    OMPI_COMP_EXPORT extern orte_ras_dash_host_component_t mca_ras_dash_host_component;
+    ORTE_DECLSPEC extern orte_ras_dash_host_component_t mca_ras_dash_host_component;
     
     /**
      * Module init function

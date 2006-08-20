@@ -204,7 +204,7 @@ typedef orte_rds_base_component_1_0_0_t orte_rds_base_component_t;
 /*
  * global module that holds function pointers
  */
-OMPI_DECLSPEC extern orte_rds_base_module_t orte_rds;
+ORTE_DECLSPEC extern orte_rds_base_module_t orte_rds;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

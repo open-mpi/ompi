@@ -23,7 +23,7 @@
 
 #define EPOCHFILETIME (116444736000000000LL)
 
-OMPI_DECLSPEC int
+OPAL_DECLSPEC int
 gettimeofday(struct timeval *tv, struct timezone *tz)
 {
     

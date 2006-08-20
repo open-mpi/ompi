@@ -39,8 +39,8 @@ struct orte_ras_poe_component_t {
 };
 typedef struct orte_ras_poe_component_t orte_ras_poe_component_t;
 
-OMPI_COMP_EXPORT extern orte_ras_poe_component_t mca_ras_poe_component;
-OMPI_COMP_EXPORT extern orte_ras_base_module_t orte_ras_poe_module;
+ORTE_DECLSPEC extern orte_ras_poe_component_t mca_ras_poe_component;
+ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_poe_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

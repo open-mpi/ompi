@@ -250,6 +250,6 @@ typedef orte_rmgr_base_component_1_0_0_t orte_rmgr_base_component_t;
 /**
  * Global structure for accessing RAS functions
  */
-OMPI_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr;  /* holds selected module's function pointers */
+ORTE_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr;  /* holds selected module's function pointers */
 
 #endif

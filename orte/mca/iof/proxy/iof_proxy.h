@@ -136,8 +136,8 @@ struct orte_iof_proxy_component_t {
 };
 typedef struct orte_iof_proxy_component_t orte_iof_proxy_component_t;
 
-OMPI_COMP_EXPORT extern orte_iof_proxy_component_t mca_iof_proxy_component;
-OMPI_COMP_EXPORT extern orte_iof_base_module_t orte_iof_proxy_module;
+ORTE_DECLSPEC extern orte_iof_proxy_component_t mca_iof_proxy_component;
+ORTE_DECLSPEC extern orte_iof_base_module_t orte_iof_proxy_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

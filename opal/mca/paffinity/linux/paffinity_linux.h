@@ -93,7 +93,7 @@ extern "C" {
     /**
      * Globally exported variable
      */
-    OMPI_COMP_EXPORT extern const opal_paffinity_base_component_1_0_0_t
+    OPAL_DECLSPEC extern const opal_paffinity_base_component_1_0_0_t
         mca_paffinity_linux_component;
 
 

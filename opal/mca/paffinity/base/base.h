@@ -52,7 +52,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_open(void);
+    OPAL_DECLSPEC int opal_paffinity_base_open(void);
     
     /**
      * Select an available component.
@@ -85,7 +85,7 @@ extern "C" {
      * selected.  If no component was selected, subsequent invocation
      * of the paffinity wrapper functions will return an error.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_select(void);
+    OPAL_DECLSPEC int opal_paffinity_base_select(void);
 
     /**
      * Get the available number of processors
@@ -104,7 +104,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned and num_procs is set to -1.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_get_num_processors(int *num_procs);
+    OPAL_DECLSPEC int opal_paffinity_base_get_num_processors(int *num_procs);
 
     /**
      * Set this process' affinity.
@@ -121,7 +121,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_set(int id);
+    OPAL_DECLSPEC int opal_paffinity_base_set(int id);
 
     /**
      * Get this process' affinity.
@@ -139,7 +139,7 @@ extern "C" {
      * opal_paffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned and id is set to -1.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_get(int *id);
+    OPAL_DECLSPEC int opal_paffinity_base_get(int *id);
 
     /**
      * Shut down the paffinity MCA framework.
@@ -152,7 +152,7 @@ extern "C" {
      * It must be the last function invoked on the paffinity MCA
      * framework.
      */
-    OMPI_DECLSPEC int opal_paffinity_base_close(void);
+    OPAL_DECLSPEC int opal_paffinity_base_close(void);
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

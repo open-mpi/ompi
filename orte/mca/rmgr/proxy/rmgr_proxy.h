@@ -39,9 +39,9 @@ struct orte_rmgr_proxy_component_t {
 typedef struct orte_rmgr_proxy_component_t orte_rmgr_proxy_component_t;
 
 /** Global URM component */
-OMPI_COMP_EXPORT extern orte_rmgr_proxy_component_t mca_rmgr_proxy_component;
+ORTE_DECLSPEC extern orte_rmgr_proxy_component_t mca_rmgr_proxy_component;
 /** Global URM module */
-OMPI_COMP_EXPORT extern orte_rmgr_base_module_t orte_rmgr_proxy_module;
+ORTE_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr_proxy_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

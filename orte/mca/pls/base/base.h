@@ -53,7 +53,7 @@ extern "C" {
     /**
      * Global instance of pls-wide framework data
      */
-    OMPI_DECLSPEC extern orte_pls_base_t orte_pls_base;
+    ORTE_DECLSPEC extern orte_pls_base_t orte_pls_base;
 
     /**
      * pls component/module/priority tuple
@@ -71,7 +71,7 @@ extern "C" {
     /** Convenience typedef */
     typedef struct orte_pls_base_cmp_t orte_pls_base_cmp_t;
     /** Class declaration */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_pls_base_cmp_t);
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pls_base_cmp_t);
 
     /*
      * Global functions for MCA overall collective open and close
@@ -80,35 +80,35 @@ extern "C" {
     /**
      * Open the pls framework
      */
-    OMPI_DECLSPEC int orte_pls_base_open(void);
+    ORTE_DECLSPEC int orte_pls_base_open(void);
     /**
      * Select a pls module
      */
-    OMPI_DECLSPEC orte_pls_base_module_t *orte_pls_base_select(char *preferred);
+    ORTE_DECLSPEC orte_pls_base_module_t *orte_pls_base_select(char *preferred);
     /**
      * Close the pls framework
      */
-    OMPI_DECLSPEC int orte_pls_base_finalize(void);
-    OMPI_DECLSPEC int orte_pls_base_close(void);
+    ORTE_DECLSPEC int orte_pls_base_finalize(void);
+    ORTE_DECLSPEC int orte_pls_base_close(void);
     /**
      * Utility routine to get/set procesS pid
      */
-    OMPI_DECLSPEC int orte_pls_base_set_proc_pid(const orte_process_name_t*, pid_t);
-    OMPI_DECLSPEC int orte_pls_base_get_proc_pid(const orte_process_name_t*, pid_t*);
+    ORTE_DECLSPEC int orte_pls_base_set_proc_pid(const orte_process_name_t*, pid_t);
+    ORTE_DECLSPEC int orte_pls_base_get_proc_pid(const orte_process_name_t*, pid_t*);
     /**
      * Utility routine to retreive all process pids w/in a specified job.
      */
-    OMPI_DECLSPEC int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
+    ORTE_DECLSPEC int orte_pls_base_get_proc_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
     /**
      * Utility routine to get/set daemon pid
      */
-    OMPI_DECLSPEC int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
-    OMPI_DECLSPEC int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
+    ORTE_DECLSPEC int orte_pls_base_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
+    ORTE_DECLSPEC int orte_pls_base_get_node_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
   
     /**
      * Utility routine to set progress engine schedule
      */
-    OMPI_DECLSPEC int orte_pls_base_set_progress_sched(int sched);
+    ORTE_DECLSPEC int orte_pls_base_set_progress_sched(int sched);
 
 
     /**

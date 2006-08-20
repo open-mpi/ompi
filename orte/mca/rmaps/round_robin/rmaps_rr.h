@@ -40,8 +40,8 @@ struct orte_rmaps_round_robin_component_t {
 };
 typedef struct orte_rmaps_round_robin_component_t orte_rmaps_round_robin_component_t;
 
-OMPI_COMP_EXPORT extern orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component;
-OMPI_COMP_EXPORT extern orte_rmaps_base_module_t orte_rmaps_round_robin_module;
+ORTE_DECLSPEC extern orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component;
+ORTE_DECLSPEC extern orte_rmaps_base_module_t orte_rmaps_round_robin_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

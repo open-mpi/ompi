@@ -764,7 +764,7 @@ typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
 /*
  * global module that holds function pointers
  */
-OMPI_DECLSPEC extern orte_gpr_base_module_t orte_gpr; /* holds selected module's function pointers */
+ORTE_DECLSPEC extern orte_gpr_base_module_t orte_gpr; /* holds selected module's function pointers */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -790,7 +790,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             }
 
             /* run progress as the prepare (pinning) can take some time */
-            /* mca_pml_ob1_progress(); */
+            mca_bml.bml_progress();
         }
     } while(OPAL_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
 

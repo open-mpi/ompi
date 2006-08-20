@@ -61,7 +61,7 @@ OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 /*
  * Public variables
  */
-OMPI_DECLSPEC extern int mca_base_param_component_path;
+OPAL_DECLSPEC extern int mca_base_param_component_path;
 
 
 /*
@@ -82,7 +82,7 @@ OMPI_DECLSPEC extern int mca_base_param_component_path;
    * invoked during ompi_mpi_init() and specifically invoked in the
    * special case of the laminfo command.
    */
-OMPI_DECLSPEC   int mca_base_open(void);
+OPAL_DECLSPEC   int mca_base_open(void);
 
   /**
    * Last function called in the MCA
@@ -97,41 +97,41 @@ OMPI_DECLSPEC   int mca_base_open(void);
    * during ompi_mpi_finalize() and specifically invoked during the
    * special case of the laminfo command.
    */
-OMPI_DECLSPEC  int mca_base_close(void);
+OPAL_DECLSPEC  int mca_base_close(void);
 
   /* mca_base_cmd_line.c */
 
-OMPI_DECLSPEC  int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
-OMPI_DECLSPEC  int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
+OPAL_DECLSPEC  int mca_base_cmd_line_setup(opal_cmd_line_t *cmd);
+OPAL_DECLSPEC  int mca_base_cmd_line_process_args(opal_cmd_line_t *cmd,
                                                   char ***app_env,
                                                   char ***global_env);
 
   /* mca_base_component_compare.c */
   
-OMPI_DECLSPEC  int mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
+OPAL_DECLSPEC  int mca_base_component_compare_priority(mca_base_component_priority_list_item_t *a,
                                        mca_base_component_priority_list_item_t *b);
-OMPI_DECLSPEC  int mca_base_component_compare(const mca_base_component_t *a,
+OPAL_DECLSPEC  int mca_base_component_compare(const mca_base_component_t *a,
                               const mca_base_component_t *b);
   int mca_base_component_compatible(const mca_base_component_t *a,
                               const mca_base_component_t *b);
 
   /* mca_base_component_find.c */
 
-OMPI_DECLSPEC  int mca_base_component_find(const char *directory, const char *type,
+OPAL_DECLSPEC  int mca_base_component_find(const char *directory, const char *type,
                            const mca_base_component_t *static_components[],
                            opal_list_t *found_components,
                            bool open_dso_components);
 
   /* mca_base_components_open.c */
 
-OMPI_DECLSPEC  int mca_base_components_open(const char *type_name, int output_id,
+OPAL_DECLSPEC  int mca_base_components_open(const char *type_name, int output_id,
                             const mca_base_component_t **static_components,
                             opal_list_t *components_available,
                             bool open_dso_components);
 
   /* mca_base_components_close.c */
   
-OMPI_DECLSPEC  int mca_base_components_close(int output_id, opal_list_t *components_available, 
+OPAL_DECLSPEC  int mca_base_components_close(int output_id, opal_list_t *components_available, 
                              const mca_base_component_t *skip);
 
 #if 0

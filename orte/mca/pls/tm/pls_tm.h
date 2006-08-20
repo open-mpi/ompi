@@ -41,7 +41,7 @@ extern "C" {
     typedef struct orte_pls_tm_component_t orte_pls_tm_component_t;
 
     /* Globally exported variables */
-    OMPI_COMP_EXPORT extern orte_pls_tm_component_t mca_pls_tm_component;
+    ORTE_DECLSPEC extern orte_pls_tm_component_t mca_pls_tm_component;
     extern orte_pls_base_module_1_0_0_t orte_pls_tm_module;
 
 

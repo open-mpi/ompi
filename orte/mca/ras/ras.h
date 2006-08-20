@@ -258,7 +258,7 @@ typedef orte_ras_base_component_1_0_0_t orte_ras_base_component_t;
 /*
  * global module that holds function pointers
  */
-OMPI_DECLSPEC extern orte_ras_base_module_t orte_ras;
+ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

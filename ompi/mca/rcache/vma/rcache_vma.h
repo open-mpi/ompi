@@ -49,7 +49,7 @@ struct mca_rcache_vma_component_t {
     size_t reg_max_mru_size;
 }; typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t; 
 
-OMPI_COMP_EXPORT extern mca_rcache_vma_component_t mca_rcache_vma_component;
+OMPI_DECLSPEC extern mca_rcache_vma_component_t mca_rcache_vma_component;
 
 
 

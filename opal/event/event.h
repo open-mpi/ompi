@@ -154,15 +154,15 @@ struct opal_eventop {
 
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
 
-OMPI_DECLSPEC int opal_event_init(void);
-OMPI_DECLSPEC int opal_event_dispatch(void);
-OMPI_DECLSPEC int opal_event_base_dispatch(struct event_base *);
+OPAL_DECLSPEC int opal_event_init(void);
+OPAL_DECLSPEC int opal_event_dispatch(void);
+OPAL_DECLSPEC int opal_event_base_dispatch(struct event_base *);
 
-OMPI_DECLSPEC int opal_event_fini(void);
-OMPI_DECLSPEC int opal_event_enable(void);
-OMPI_DECLSPEC int opal_event_disable(void);
-OMPI_DECLSPEC bool opal_event_progress_thread(void);
-OMPI_DECLSPEC int opal_event_restart(void);
+OPAL_DECLSPEC int opal_event_fini(void);
+OPAL_DECLSPEC int opal_event_enable(void);
+OPAL_DECLSPEC int opal_event_disable(void);
+OPAL_DECLSPEC bool opal_event_progress_thread(void);
+OPAL_DECLSPEC int opal_event_restart(void);
 
 #define _EVENT_LOG_DEBUG 0
 #define _EVENT_LOG_MSG   1
@@ -178,7 +178,7 @@ int opal_event_base_set(struct event_base *, struct opal_event *);
 #define OPAL_EVLOOP_NONBLOCK	0x02
 #define OPAL_EVLOOP_ONELOOP     0x04
 
-OMPI_DECLSPEC int opal_event_loop(int);
+OPAL_DECLSPEC int opal_event_loop(int);
 int opal_event_base_loop(struct event_base *, int);
 int opal_event_loopexit(struct timeval *);	/* Causes the loop to exit */
 int event_base_loopexit(struct event_base *, struct timeval *);
@@ -203,11 +203,11 @@ int event_base_loopexit(struct event_base *, struct timeval *);
 #define opal_signal_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 
 /* for internal use only */
-OMPI_DECLSPEC int   opal_event_add_i(struct opal_event *, struct timeval *);
-OMPI_DECLSPEC int   opal_event_del_i(struct opal_event *);
-OMPI_DECLSPEC void  opal_event_active_i(struct opal_event*, int, short);
-OMPI_DECLSPEC extern opal_mutex_t opal_event_lock;
-OMPI_DECLSPEC extern int opal_evsignal_restart(void);
+OPAL_DECLSPEC int   opal_event_add_i(struct opal_event *, struct timeval *);
+OPAL_DECLSPEC int   opal_event_del_i(struct opal_event *);
+OPAL_DECLSPEC void  opal_event_active_i(struct opal_event*, int, short);
+OPAL_DECLSPEC extern opal_mutex_t opal_event_lock;
+OPAL_DECLSPEC extern int opal_evsignal_restart(void);
 
 extern struct event_base *current_base;
 

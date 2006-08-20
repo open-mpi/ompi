@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern opal_class_t orte_value_array_t_class;
+ORTE_DECLSPEC extern opal_class_t orte_value_array_t_class;
 
 
 struct orte_value_array_t
@@ -129,7 +129,7 @@ static inline orte_std_cntr_t orte_value_array_get_size(orte_value_array_t* arra
  *  return the new size.
  */
 
-OMPI_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, orte_std_cntr_t size);
+ORTE_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, orte_std_cntr_t size);
 
 
 /** 

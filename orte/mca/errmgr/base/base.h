@@ -47,36 +47,36 @@ extern "C" {
 /*
  * function definitions
  */
-OMPI_DECLSPEC    int orte_errmgr_base_open(void);
-OMPI_DECLSPEC    int orte_errmgr_base_select(bool *allow_multi_user_threads,
+ORTE_DECLSPEC    int orte_errmgr_base_open(void);
+ORTE_DECLSPEC    int orte_errmgr_base_select(bool *allow_multi_user_threads,
 			                                bool *have_hidden_threads);
-OMPI_DECLSPEC    int orte_errmgr_base_close(void);
+ORTE_DECLSPEC    int orte_errmgr_base_close(void);
 
     /*
      * Base functions that are common to all implementations - can be overridden
      */
 
-OMPI_DECLSPEC    void orte_errmgr_base_log(int error_code, char *filename, int line);
+ORTE_DECLSPEC    void orte_errmgr_base_log(int error_code, char *filename, int line);
 
-OMPI_DECLSPEC    void orte_errmgr_base_proc_aborted(orte_process_name_t *proc);
+ORTE_DECLSPEC    void orte_errmgr_base_proc_aborted(orte_process_name_t *proc);
 
-OMPI_DECLSPEC    void orte_errmgr_base_incomplete_start(orte_jobid_t job);
+ORTE_DECLSPEC    void orte_errmgr_base_incomplete_start(orte_jobid_t job);
 
-OMPI_DECLSPEC    void orte_errmgr_base_error_detected(int error_code);
+ORTE_DECLSPEC    void orte_errmgr_base_error_detected(int error_code);
 
-OMPI_DECLSPEC    int orte_errmgr_base_register_job(orte_jobid_t job);
+ORTE_DECLSPEC    int orte_errmgr_base_register_job(orte_jobid_t job);
 
-OMPI_DECLSPEC    void orte_errmgr_base_abort(void);
+ORTE_DECLSPEC    void orte_errmgr_base_abort(void);
 
 /*
  * globals that might be needed
  */
 
-OMPI_DECLSPEC extern int orte_errmgr_base_output;
-OMPI_DECLSPEC extern bool orte_errmgr_base_selected;
-OMPI_DECLSPEC extern bool orte_errmgr_initialized;
-OMPI_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
-OMPI_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
+ORTE_DECLSPEC extern int orte_errmgr_base_output;
+ORTE_DECLSPEC extern bool orte_errmgr_base_selected;
+ORTE_DECLSPEC extern bool orte_errmgr_initialized;
+ORTE_DECLSPEC extern opal_list_t orte_errmgr_base_components_available;
+ORTE_DECLSPEC extern mca_errmgr_base_component_t orte_errmgr_base_selected_component;
 
 /*
  * external API functions will be documented in the mca/errmgr/errmgr.h file

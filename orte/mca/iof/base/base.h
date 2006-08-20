@@ -61,13 +61,13 @@ typedef struct orte_iof_base_t orte_iof_base_t;
 
 
 
-OMPI_DECLSPEC int orte_iof_base_open(void);
-OMPI_DECLSPEC int orte_iof_base_close(void);
-OMPI_DECLSPEC int orte_iof_base_select(void);
-OMPI_DECLSPEC int orte_iof_base_flush(void);
+ORTE_DECLSPEC int orte_iof_base_open(void);
+ORTE_DECLSPEC int orte_iof_base_close(void);
+ORTE_DECLSPEC int orte_iof_base_select(void);
+ORTE_DECLSPEC int orte_iof_base_flush(void);
 
 
-OMPI_DECLSPEC extern orte_iof_base_t orte_iof_base;
+ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

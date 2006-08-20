@@ -28,46 +28,8 @@
 #error "opal_config_bottom.h should only be included from opal_config.h"
 #endif
 
-/*
- * OMPI_BUILDING and OMPI_BUILDING_WIN_DSO define how ompi_config.h
- * handles configuring all of Open MPI's "compatibility" code.  Both
- * constants will always be defined by the end of ompi_config.h.
- *
- * OMPI_BUILDING affects how much compatibility code is included by
- * ompi_config.h.  It will always be 1 or 0.  The user can set the
- * value before including either mpi.h or ompi_config.h and it will be
- * respected.  If ompi_config.h is included before mpi.h, it will
- * default to 1.  If mpi.h is included before ompi_config.h, it will
- * default to 0.
- *
- * If OMPI_BUILDING is 1, ompi_config.h will:
- *   - everything that happens with OMPI_BUILDING set to 0
- *   - include a bunch of header files (stdint.h, stdtypes.h, etc.)
- *   - potentially override malloc, free, etc. for memory debugging
- *   - provide C bool type
- *   - set ompi_building code to import all OMPI interfaces (windows)
- *
- * If OMPI_BUILDING is 0, ompi_config.h will:
- *   - set configuration #defines
- *   - define the fortran complex types
- *   - set the ompi_building code to export all the interfaces
- *     (unless OMPI_BUILDING_WIN_DSO is set to 1) (windows)
- *
- * If OMPI_BUILDING_WIN_DSO is 1, ompi_config.h will:
- *   - configure the OMPI_DECLSPEC defines to assume we are building a
- *     dynamic shared object for a component on Windows.  This will set
- *     all the import/export flags appropriately.
- *
- * If OMPI_BUILDING_WIN_DSO is 0 (or unset), ompi_config.h will:
- *   - configure the OMPI_DECLSPEC defines to assume we are not building
- *     a DSO component for Windows .
- */
 #ifndef OMPI_BUILDING
 #define OMPI_BUILDING 1
-#endif
-
-#ifndef OMPI_BUILDING_WIN_DSO
-#define OMPI_BUILDING_WIN_DSO 0
 #endif
 
 /***********************************************************************
@@ -93,30 +55,28 @@
 
 #if defined(__WINDOWS__)
 
-#  if OMPI_BUILDING_WIN_DSO
-     /* building a component - need to import libmpi and export our
-        struct */
-#    define OMPI_COMP_EXPORT __declspec(dllexport)
-#    define OMPI_DECLSPEC __declspec(dllimport)
-#  else
-#    if OMPI_BUILDING
-       /* building libmpi (or something in libmpi) - need to export libmpi
-          interface */
-#      define OMPI_COMP_EXPORT
-#      define OMPI_DECLSPEC __declspec(dllexport)
+#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
+#    if defined(OPAL_EXPORTS)
+#      define OPAL_DECLSPEC __declspec(dllexport)
 #    else
-       /* building something using libmpi - export the libmpi interface */
-#      define OMPI_COMP_EXPORT
-#      define OMPI_DECLSPEC __declspec(dllimport)
+#      define OPAL_DECLSPEC __declspec(dllimport)
 #    endif
+#    if defined(OPAL_MODULE_EXPORTS)
+#      define OPAL_MODULE_DECLSPEC __declspec(dllexport)
+#    else
+#      define OPAL_MODULE_DECLSPEC __declspec(dllimport)
+#    endif
+#  else          /* building static library */
+#    define OPAL_DECLSPEC
+#    define OPAL_MODULE_DECLSPEC
 #  endif
 #  if OMPI_BUILDING
 #    include "opal/win32/win_compat.h"
-#  endif
+#  endif  /* OMPI_BUILDING */
 #else
-   /* On Unix - get rid of the defines */ 
-#  define OMPI_COMP_EXPORT
-#  define OMPI_DECLSPEC
+   /* On Unix - this define is plain useless */
+#  define OPAL_DECLSPEC
+#  define OPAL_MODULE_DECLSPEC
 #endif
 
 /***********************************************************************

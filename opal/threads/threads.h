@@ -50,14 +50,13 @@ struct opal_thread_t {
 
 typedef struct opal_thread_t opal_thread_t;
 
-
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
-
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
 int  opal_thread_start(opal_thread_t *);
 int  opal_thread_join(opal_thread_t *, void **thread_return);
 bool opal_thread_self_compare(opal_thread_t*);
 opal_thread_t *opal_thread_get_self(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

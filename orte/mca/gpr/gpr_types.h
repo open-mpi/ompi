@@ -126,7 +126,7 @@ typedef struct {
     orte_data_value_t *value;           /* value */
 } orte_gpr_keyval_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
 #define ORTE_GPR_KEYVAL_EMPTY {{OBJ_CLASS(orte_gpr_keyval_t),0}, NULL, NULL}
 
 
@@ -151,7 +151,7 @@ typedef struct {
     char **tokens;                          /**< List of tokens that described the container */
 } orte_gpr_value_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
 #define ORTE_GPR_VALUE_EMPTY {{OBJ_CLASS(orte_gpr_value_t),0}, 0, NULL, 0, NULL, 0, NULL}
 
 /** Return structure for notification messages
@@ -168,7 +168,7 @@ typedef struct {
     orte_pointer_array_t *values;   /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 
 /** Return message for notify requests
  */
@@ -188,7 +188,7 @@ typedef struct {
     orte_pointer_array_t *data; /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
 
 /** Notify callback function
  * notify_msg = message containing data provided by trigger
@@ -227,7 +227,7 @@ typedef struct {
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_subscription_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
 #define ORTE_GPR_SUBSCRIPTION_EMPTY {{OBJ_CLASS(orte_gpr_subscription_t),0}, NULL, ORTE_GPR_SUBSCRIPTION_ID_MAX, 0, 0, NULL, 0, NULL}
 
 /** Structure for registering triggers
@@ -248,7 +248,7 @@ typedef struct {
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_trigger_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
 #define ORTE_GPR_TRIGGER_EMPTY {{OBJ_CLASS(orte_gpr_trigger_t),0}, NULL, ORTE_GPR_TRIGGER_ID_MAX, 0, 0, NULL, 0, NULL}
 
 #if defined(c_plusplus) || defined(__cplusplus)

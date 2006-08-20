@@ -338,12 +338,12 @@ typedef int (*orte_dss_load_fn_t)(orte_buffer_t *buffer,
  * structure gets loaded, so we provide an "open" call that is
  * executed as part of the program startup.
  */
-OMPI_DECLSPEC int orte_dss_open(void);
+ORTE_DECLSPEC int orte_dss_open(void);
 
 /**
  * DSS finalize function
  */
-OMPI_DECLSPEC int orte_dss_close(void);
+ORTE_DECLSPEC int orte_dss_close(void);
 
 
 /**
@@ -592,7 +592,7 @@ struct orte_dss_t {
 };
 typedef struct orte_dss_t orte_dss_t;
 
-OMPI_DECLSPEC extern orte_dss_t orte_dss;  /* holds dss function pointers */
+ORTE_DECLSPEC extern orte_dss_t orte_dss;  /* holds dss function pointers */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

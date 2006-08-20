@@ -49,25 +49,25 @@ extern "C" {
 /*
  * function definitions
  */
-OMPI_DECLSPEC int orte_rmgr_base_open(void);
-OMPI_DECLSPEC int orte_rmgr_base_select(void);
-OMPI_DECLSPEC int orte_rmgr_base_close(void);
+ORTE_DECLSPEC int orte_rmgr_base_open(void);
+ORTE_DECLSPEC int orte_rmgr_base_select(void);
+ORTE_DECLSPEC int orte_rmgr_base_close(void);
 
-OMPI_DECLSPEC int orte_rmgr_base_get_app_context(
+ORTE_DECLSPEC int orte_rmgr_base_get_app_context(
     orte_jobid_t jobid,
     orte_app_context_t*** app_context,
     orte_std_cntr_t* num_context);
 
-OMPI_DECLSPEC int orte_rmgr_base_put_app_context(
+ORTE_DECLSPEC int orte_rmgr_base_put_app_context(
     orte_jobid_t jobid,
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context);
 
-OMPI_DECLSPEC int orte_rmgr_base_get_job_slots(
+ORTE_DECLSPEC int orte_rmgr_base_get_job_slots(
     orte_jobid_t jobid,
     orte_std_cntr_t* num_slots);
 
-OMPI_DECLSPEC int orte_rmgr_base_set_job_slots(
+ORTE_DECLSPEC int orte_rmgr_base_set_job_slots(
     orte_jobid_t jobid,
     orte_std_cntr_t num_slots);
 
@@ -76,38 +76,38 @@ OMPI_DECLSPEC int orte_rmgr_base_set_job_slots(
  *  Pack/unpack
  */
 
-OMPI_DECLSPEC int orte_rmgr_base_pack_cmd(
+ORTE_DECLSPEC int orte_rmgr_base_pack_cmd(
     orte_buffer_t* buffer,
     orte_rmgr_cmd_t cmd,
     orte_jobid_t jobid);
 
-OMPI_DECLSPEC int orte_rmgr_base_pack_create_cmd(
+ORTE_DECLSPEC int orte_rmgr_base_pack_create_cmd(
     orte_buffer_t* buffer,
     orte_app_context_t** context,
     orte_std_cntr_t num_context);
 
-OMPI_DECLSPEC int orte_rmgr_base_pack_terminate_proc_cmd(
+ORTE_DECLSPEC int orte_rmgr_base_pack_terminate_proc_cmd(
     orte_buffer_t* buffer,
     const orte_process_name_t* name);
 
-OMPI_DECLSPEC int orte_rmgr_base_pack_signal_job_cmd(
+ORTE_DECLSPEC int orte_rmgr_base_pack_signal_job_cmd(
     orte_buffer_t* buffer,
     orte_jobid_t job,
     int32_t signal);
 
-OMPI_DECLSPEC int orte_rmgr_base_pack_signal_proc_cmd(
+ORTE_DECLSPEC int orte_rmgr_base_pack_signal_proc_cmd(
     orte_buffer_t* buffer,
     const orte_process_name_t* name,
     int32_t signal);
 
-OMPI_DECLSPEC int orte_rmgr_base_unpack_rsp(
+ORTE_DECLSPEC int orte_rmgr_base_unpack_rsp(
     orte_buffer_t* buffer);
 
-OMPI_DECLSPEC int orte_rmgr_base_unpack_create_rsp(
+ORTE_DECLSPEC int orte_rmgr_base_unpack_create_rsp(
     orte_buffer_t* buffer,
     orte_jobid_t*);
 
-OMPI_DECLSPEC int orte_rmgr_base_cmd_dispatch(
+ORTE_DECLSPEC int orte_rmgr_base_cmd_dispatch(
     orte_buffer_t* req,
     orte_buffer_t* rsp);
 
@@ -202,7 +202,7 @@ typedef struct orte_rmgr_base_t {
     opal_list_t rmgr_components;
 } orte_rmgr_base_t;
 
-OMPI_DECLSPEC extern orte_rmgr_base_t orte_rmgr_base;
+ORTE_DECLSPEC extern orte_rmgr_base_t orte_rmgr_base;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

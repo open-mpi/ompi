@@ -62,8 +62,8 @@ extern "C" {
 
 extern int opal_trace_handle;
 
-OMPI_DECLSPEC void opal_trace_init(void);
-OMPI_DECLSPEC void opal_trace_finalize(void);
+OPAL_DECLSPEC void opal_trace_init(void);
+OPAL_DECLSPEC void opal_trace_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

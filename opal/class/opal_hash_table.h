@@ -35,7 +35,7 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern opal_class_t opal_hash_table_t_class;
+OPAL_DECLSPEC extern opal_class_t opal_hash_table_t_class;
                            
 
 struct opal_hash_table_t
@@ -62,7 +62,7 @@ typedef struct opal_hash_table_t opal_hash_table_t;
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_init(opal_hash_table_t* ht, size_t table_size);
+OPAL_DECLSPEC int opal_hash_table_init(opal_hash_table_t* ht, size_t table_size);
 
 
 /**
@@ -86,7 +86,7 @@ static inline size_t opal_hash_table_get_size(opal_hash_table_t *ht)
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
+OPAL_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
 
 /**
  *  Retrieve value via uint32_t key.
@@ -101,7 +101,7 @@ OMPI_DECLSPEC int opal_hash_table_remove_all(opal_hash_table_t *ht);
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uint32_t key, 
+OPAL_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uint32_t key, 
 						   void** ptr);
 
 /**
@@ -114,7 +114,7 @@ OMPI_DECLSPEC int opal_hash_table_get_value_uint32(opal_hash_table_t* table, uin
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uint32_t key, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uint32_t key, void* value);
 
 /**
  *  Remove value based on uint32_t key.
@@ -125,7 +125,7 @@ OMPI_DECLSPEC int opal_hash_table_set_value_uint32(opal_hash_table_t* table, uin
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t* table, uint32_t key);
+OPAL_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t* table, uint32_t key);
 
 /**
  *  Retrieve value via uint64_t key.
@@ -140,7 +140,7 @@ OMPI_DECLSPEC int opal_hash_table_remove_value_uint32(opal_hash_table_t* table, 
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_value_uint64(opal_hash_table_t *table, uint64_t key,
+OPAL_DECLSPEC int opal_hash_table_get_value_uint64(opal_hash_table_t *table, uint64_t key,
 						   void **ptr);
 
 /**
@@ -153,7 +153,7 @@ OMPI_DECLSPEC int opal_hash_table_get_value_uint64(opal_hash_table_t *table, uin
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uint64_t key, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uint64_t key, void* value);
 
 /**
  *  Remove value based on uint64_t key.
@@ -164,7 +164,7 @@ OMPI_DECLSPEC int opal_hash_table_set_value_uint64(opal_hash_table_t *table, uin
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, uint64_t key);
+OPAL_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, uint64_t key);
 
 /**
  *  Retrieve value via arbitrary length binary key.
@@ -179,7 +179,7 @@ OMPI_DECLSPEC int opal_hash_table_remove_value_uint64(opal_hash_table_t *table, 
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void* key, 
+OPAL_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const void* key, 
 						size_t keylen, void **ptr);
 
 /**
@@ -192,7 +192,7 @@ OMPI_DECLSPEC int opal_hash_table_get_value_ptr(opal_hash_table_t *table, const 
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen, void* value);
+OPAL_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen, void* value);
 
 /**
  *  Remove value based on arbitrary length binary key.
@@ -203,7 +203,7 @@ OMPI_DECLSPEC int opal_hash_table_set_value_ptr(opal_hash_table_t *table, const 
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen);
+OPAL_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, const void* key, size_t keylen);
 
 
 /** The following functions are only for allowing iterating through
@@ -228,7 +228,7 @@ OMPI_DECLSPEC int opal_hash_table_remove_value_ptr(opal_hash_table_t *table, con
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table, uint32_t *key,
+OPAL_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table, uint32_t *key,
 					void **value, void **node);
 
 
@@ -246,7 +246,7 @@ OMPI_DECLSPEC int opal_hash_table_get_first_key_uint32(opal_hash_table_t *table,
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, uint32_t *key,
+OPAL_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, uint32_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 
@@ -264,7 +264,7 @@ OMPI_DECLSPEC int opal_hash_table_get_next_key_uint32(opal_hash_table_t *table, 
  *
  */
 
-OMPI_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table, uint64_t *key,
+OPAL_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table, uint64_t *key,
 				       void **value, void **node);
 
 
@@ -282,7 +282,7 @@ OMPI_DECLSPEC int opal_hash_table_get_first_key_uint64(opal_hash_table_t *table,
  *
  */
     
-OMPI_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, uint64_t *key,
+OPAL_DECLSPEC int opal_hash_table_get_next_key_uint64(opal_hash_table_t *table, uint64_t *key,
 				       void **value, void *in_node,
 				       void **out_node);
 

@@ -72,7 +72,7 @@ typedef struct {
     char *map_data;
 } orte_app_context_map_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
 
 
 /**
@@ -105,7 +105,7 @@ typedef struct {
     char *prefix_dir;
 } orte_app_context_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

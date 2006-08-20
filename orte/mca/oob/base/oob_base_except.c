@@ -36,7 +36,7 @@ OBJ_CLASS_INSTANCE(
  *  Register a callback function on loss of a connection.
  */
                                                                                                                  
-OMPI_DECLSPEC int mca_oob_add_exception_handler(
+int mca_oob_add_exception_handler(
     mca_oob_base_exception_fn_t cbfunc)
 {
     mca_oob_base_exception_handler_t *eh = OBJ_NEW(mca_oob_base_exception_handler_t);
@@ -49,7 +49,7 @@ OMPI_DECLSPEC int mca_oob_add_exception_handler(
  * Remove a callback
  */
                                                                                                                  
-OMPI_DECLSPEC int mca_oob_del_exception_handler(
+int mca_oob_del_exception_handler(
     mca_oob_base_exception_fn_t cbfunc)
 {
     opal_list_item_t* item;
@@ -70,7 +70,7 @@ OMPI_DECLSPEC int mca_oob_del_exception_handler(
  * Invoke exception handlers
  */
                                                                                                                  
-OMPI_DECLSPEC void mca_oob_call_exception_handlers(
+void mca_oob_call_exception_handlers(
     orte_process_name_t* peer, int exception)
 {
     opal_list_item_t* item;

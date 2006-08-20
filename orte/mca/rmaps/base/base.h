@@ -60,7 +60,7 @@ extern "C" {
     /**
      * Global instance of rmaps-wide framework data
      */
-    OMPI_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
+    ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 
     /**
      * RMAPS component/module/priority tuple
@@ -78,33 +78,33 @@ extern "C" {
     /** Convenience typedef */
     typedef struct orte_rmaps_base_cmp_t orte_rmaps_base_cmp_t;
     /** Class declaration */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
 
 
     /**
      * Open the rmaps framework
      */
-    OMPI_DECLSPEC int orte_rmaps_base_open(void);
+    ORTE_DECLSPEC int orte_rmaps_base_open(void);
 
     /**
      * Select an rmaps component / module
      */
-    OMPI_DECLSPEC orte_rmaps_base_module_t *orte_rmaps_base_select(char *preferred);
+    ORTE_DECLSPEC orte_rmaps_base_module_t *orte_rmaps_base_select(char *preferred);
 
     /**
      * Utility routines to get/set vpid mapping for the job
      */ 
                                                                       
-    OMPI_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, 
+    ORTE_DECLSPEC int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, 
         orte_vpid_t *start, orte_vpid_t *range);
-    OMPI_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
+    ORTE_DECLSPEC int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, 
         orte_vpid_t start, orte_vpid_t range);
 
     /**
      * Close down the rmaps framework
      */
-    OMPI_DECLSPEC int orte_rmaps_base_finalize(void);
-    OMPI_DECLSPEC int orte_rmaps_base_close(void);
+    ORTE_DECLSPEC int orte_rmaps_base_finalize(void);
+    ORTE_DECLSPEC int orte_rmaps_base_close(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

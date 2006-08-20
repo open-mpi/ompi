@@ -126,14 +126,14 @@
  * @retval OMPI_ERROR The directory cannot be found (if create is
  *                "false") or created (if create is "true").
  */
-OMPI_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *hostid, 
+ORTE_DECLSPEC int orte_session_dir(bool create, char *prefix, char *user, char *hostid, 
                      char *batchid, char *universe, char *job, char *vpid);
 
 /*
  * Construct the session directory name from the input parameters.
  * This function does no checking that the directory exists, or can be used
  */
-OMPI_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
+ORTE_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
                                             char **prfx,
                                             char **frontend,
                                             char *usr, char *hostid,
@@ -155,7 +155,7 @@ OMPI_DECLSPEC int orte_session_dir_get_name(char **fulldirpath,
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */
-OMPI_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
+ORTE_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
 
 /** The orte_session_dir_cleanup() function performs a cleanup of the
  * session directory tree when a job is aborted. It cleans up all
@@ -166,4 +166,4 @@ OMPI_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
  * @retval OMPI_ERROR If something prevents the tree from being
  *                properly cleaned up.
  */
-OMPI_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);
+ORTE_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);

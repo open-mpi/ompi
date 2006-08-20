@@ -131,7 +131,7 @@ typedef mca_schema_base_component_1_0_0_t mca_schema_base_component_t;
   /* schema v1.0 */ \
   "schema", 1, 0, 0
 
-OMPI_DECLSPEC extern orte_schema_base_module_t orte_schema;
+ORTE_DECLSPEC extern orte_schema_base_module_t orte_schema;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

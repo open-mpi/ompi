@@ -69,7 +69,7 @@ typedef struct orte_pointer_array_t orte_pointer_array_t;
 /**
  * Class declaration
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_pointer_array_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_pointer_array_t);
 
 
 /**
@@ -84,7 +84,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_pointer_array_t);
  * @retval ORTE_ERROR(s) Appropriate error code
  * 
  */
-OMPI_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
+ORTE_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
                                     orte_std_cntr_t initial_allocation,
                                     orte_std_cntr_t max_size, orte_std_cntr_t block_size);
                                     
@@ -97,7 +97,7 @@ OMPI_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
  * @param (OUT) Index of inserted array element.
  * @return Return value less than zero indicates an error.
  */
-OMPI_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *index, orte_pointer_array_t *array, void *ptr);
+ORTE_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *index, orte_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
@@ -109,7 +109,7 @@ OMPI_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *index, orte_pointer_ar
  *
  * @return Error code.  (-1) indicates an error.
  */
-OMPI_DECLSPEC int orte_pointer_array_set_item(orte_pointer_array_t *array, 
+ORTE_DECLSPEC int orte_pointer_array_set_item(orte_pointer_array_t *array, 
                                 orte_std_cntr_t index, void *value);
 
 /**
@@ -158,7 +158,7 @@ static inline orte_std_cntr_t orte_pointer_array_get_size(orte_pointer_array_t *
  * Simple function to set the size of the array in order to
  * hide the member field from external users.
  */
-OMPI_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t size);
+ORTE_DECLSPEC int orte_pointer_array_set_size(orte_pointer_array_t *array, orte_std_cntr_t size);
 
 
 /**
@@ -220,7 +220,7 @@ static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
  * In contrary to array_set, this function does not allow to overwrite 
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
-OMPI_DECLSPEC bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
+ORTE_DECLSPEC bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
                                           orte_std_cntr_t index,
                                           void *value);
 #if defined(c_plusplus) || defined(__cplusplus)

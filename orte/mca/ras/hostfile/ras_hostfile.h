@@ -45,7 +45,7 @@ extern "C" {
     /**
      * Component export structure
      */
-    OMPI_COMP_EXPORT extern orte_ras_hostfile_component_t mca_ras_hostfile_component;
+    ORTE_DECLSPEC extern orte_ras_hostfile_component_t mca_ras_hostfile_component;
     
     /**
      * Module init function

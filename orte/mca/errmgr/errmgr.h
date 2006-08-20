@@ -173,7 +173,7 @@ typedef mca_errmgr_base_component_1_0_0_t mca_errmgr_base_component_t;
 
 /* Global structure for accessing error manager functions
  */
-OMPI_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr;  /* holds selected module's function pointers */
+ORTE_DECLSPEC extern orte_errmgr_base_module_t orte_errmgr;  /* holds selected module's function pointers */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

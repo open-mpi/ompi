@@ -23,7 +23,7 @@
 
 #include <opal/sys/timer.h>
 
-OMPI_DECLSPEC opal_timer_t opal_timer_windows_freq;
+OPAL_DECLSPEC opal_timer_t opal_timer_windows_freq;
 
 static inline opal_timer_t
 opal_timer_base_get_cycles(void)

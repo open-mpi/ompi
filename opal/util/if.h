@@ -38,7 +38,7 @@ extern "C" {
  *  @param if_addr (OUT)  Interface address buffer
  *  @param size    (IN)   Interface address buffer size
  */
-OMPI_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
+OPAL_DECLSPEC int opal_ifnametoaddr(const char* if_name, 
                                     struct sockaddr* if_addr, int size);
 
 /**
@@ -48,7 +48,7 @@ OMPI_DECLSPEC int opal_ifnametoaddr(const char* if_name,
  *  @param if_name (OUT)  Interface name buffer
  *  @param size    (IN)   Interface name buffer size
  */
-OMPI_DECLSPEC int opal_ifaddrtoname(const char* if_addr, 
+OPAL_DECLSPEC int opal_ifaddrtoname(const char* if_addr, 
                                     char* if_name, int size);
 
 /**
@@ -57,17 +57,17 @@ OMPI_DECLSPEC int opal_ifaddrtoname(const char* if_addr,
  *  @param if_name (IN)  Interface name
  *  @return              Interface index
  */
-OMPI_DECLSPEC int opal_ifnametoindex(const char* if_name);
+OPAL_DECLSPEC int opal_ifnametoindex(const char* if_name);
 
 /**
  *  Returns the number of available interfaces.
  */
-OMPI_DECLSPEC int opal_ifcount(void);
+OPAL_DECLSPEC int opal_ifcount(void);
 
 /**
  *  Returns the index of the first available interface.
  */
-OMPI_DECLSPEC int opal_ifbegin(void); 
+OPAL_DECLSPEC int opal_ifbegin(void); 
 
 /**
  *  Lookup the current position in the interface list by
@@ -76,7 +76,7 @@ OMPI_DECLSPEC int opal_ifbegin(void);
  *  @param if_index   Returns the next available index from the 
  *                    current position.
  */
-OMPI_DECLSPEC int opal_ifnext(int if_index);
+OPAL_DECLSPEC int opal_ifnext(int if_index);
 
 /**
  *  Lookup an interface by index and return its name.
@@ -85,7 +85,7 @@ OMPI_DECLSPEC int opal_ifnext(int if_index);
  *  @param if_name (OUT)  Interface name buffer
  *  @param size (IN)      Interface name buffer size
  */
-OMPI_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
+OPAL_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
 
 /**
  *  Lookup an interface by index and return its primary address .
@@ -94,7 +94,7 @@ OMPI_DECLSPEC int opal_ifindextoname(int if_index, char* if_name, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OMPI_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
+OPAL_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
 
 /**
  *  Lookup an interface by index and return its network mask.
@@ -103,7 +103,7 @@ OMPI_DECLSPEC int opal_ifindextoaddr(int if_index, struct sockaddr*, int);
  *  @param if_name (OUT)  Interface address buffer
  *  @param size (IN)      Interface address buffer size
  */
-OMPI_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
+OPAL_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
 
 /**
  * Determine if given hostname / IP address is a local address
@@ -111,7 +111,7 @@ OMPI_DECLSPEC int opal_ifindextomask(int if_index, struct sockaddr*, int);
  * @param hostname (IN)    Hostname (or stringified IP address)
  * @return                 true if \c hostname is local, false otherwise
  */
-OMPI_DECLSPEC bool opal_ifislocal(char *hostname);
+OPAL_DECLSPEC bool opal_ifislocal(char *hostname);
 
 /**
  * Determine if given IP address is in the localhost range
@@ -124,7 +124,7 @@ OMPI_DECLSPEC bool opal_ifislocal(char *hostname);
  * @return                 true if \c addr is a localhost address,
  *                         false otherwise.
  */
-OMPI_DECLSPEC bool opal_ifislocalhost(struct sockaddr *addr);
+OPAL_DECLSPEC bool opal_ifislocalhost(struct sockaddr *addr);
 
 /**
  * Finalize the functions to release malloc'd data
@@ -133,7 +133,7 @@ OMPI_DECLSPEC bool opal_ifislocalhost(struct sockaddr *addr);
  * @return OPAL_SUCCESS if no problems encountered
  * @return OPAL_ERROR if data could not be released
  */
-OMPI_DECLSPEC int opal_iffinalize(void);
+OPAL_DECLSPEC int opal_iffinalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

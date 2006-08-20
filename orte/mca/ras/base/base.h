@@ -88,7 +88,7 @@ typedef struct orte_ras_base_t {
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
 
 /** Class declaration */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_base_cmp_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_base_cmp_t);
 
 
 /** Local data type functions */

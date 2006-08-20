@@ -64,7 +64,7 @@ OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param num_elements_per_alloc   Number of elements to grow by per allocation.
  */
  
-OMPI_DECLSPEC int opal_free_list_init(
+OPAL_DECLSPEC int opal_free_list_init(
     opal_free_list_t *free_list, 
     size_t element_size,
     opal_class_t* element_class,
@@ -72,7 +72,7 @@ OMPI_DECLSPEC int opal_free_list_init(
     int max_elements_to_alloc,
     int num_elements_per_alloc);
 
-OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
+OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
     
 /**
  * Attemp to obtain an item from a free list. 

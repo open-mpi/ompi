@@ -30,7 +30,7 @@ struct mca_pml_cm_proc_t {
     mca_pml_proc_t base;
 };
 typedef struct mca_pml_cm_proc_t mca_pml_cm_proc_t;
-OMPI_COMP_EXPORT extern opal_class_t mca_pml_cm_proc_t_class; 
+OMPI_DECLSPEC extern opal_class_t mca_pml_cm_proc_t_class; 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

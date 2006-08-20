@@ -53,7 +53,7 @@ extern "C" {
      * one of the two is NULL, the other list is simply copied to the
      * output.  If both are NULL, NULL is returned.
      */
-    OMPI_DECLSPEC char **opal_environ_merge(char **minor, char **major);
+    OPAL_DECLSPEC char **opal_environ_merge(char **minor, char **major);
 
     /**
      * Portable version of setenv(3), allowing editing of any
@@ -101,7 +101,7 @@ extern "C" {
      *   opal_setenv("foo", "bar", true, &my_env);
      * \endcode
      */
-    OMPI_DECLSPEC int opal_setenv(const char *name, const char *value,
+    OPAL_DECLSPEC int opal_setenv(const char *name, const char *value,
                                   bool overwrite, char ***env);
 
     /**
@@ -118,12 +118,12 @@ extern "C" {
      * If \em name is found in \em env, the string corresponding to
      * that entry is freed and its entry is eliminated from the array.
      */
-    OMPI_DECLSPEC int opal_unsetenv(const char *name, char ***env);
+    OPAL_DECLSPEC int opal_unsetenv(const char *name, char ***env);
 
     /**
      * So that others don't have to declare it
      */
-    OMPI_DECLSPEC extern char **opal_environ;
+    OPAL_DECLSPEC extern char **opal_environ;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

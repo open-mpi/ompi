@@ -257,7 +257,7 @@ typedef mca_oob_base_component_1_0_0_t mca_oob_base_component_t;
  * to make things work
  */
 
-OMPI_DECLSPEC extern mca_oob_t mca_oob;
+ORTE_DECLSPEC extern mca_oob_t mca_oob;
 
 /**
  * associate a component and a module that belongs to it
@@ -299,21 +299,21 @@ OBJ_CLASS_DECLARATION(mca_oob_base_exception_handler_t);
 /*
  * Global functions for MCA overall collective open and close
  */
-OMPI_DECLSPEC int mca_oob_base_open(void);
-OMPI_DECLSPEC int mca_oob_base_init(void);
-OMPI_DECLSPEC int mca_oob_base_module_init(void);
-OMPI_DECLSPEC int mca_oob_base_close(void);
+ORTE_DECLSPEC int mca_oob_base_open(void);
+ORTE_DECLSPEC int mca_oob_base_init(void);
+ORTE_DECLSPEC int mca_oob_base_module_init(void);
+ORTE_DECLSPEC int mca_oob_base_close(void);
 
 
 /*
  * Global struct holding the selected module's function pointers
  */
-OMPI_DECLSPEC extern int mca_oob_base_output;
-OMPI_DECLSPEC extern char* mca_oob_base_include;
-OMPI_DECLSPEC extern char* mca_oob_base_exclude;
-OMPI_DECLSPEC extern opal_list_t mca_oob_base_components;
-OMPI_DECLSPEC extern opal_list_t mca_oob_base_modules;
-OMPI_DECLSPEC extern opal_list_t mca_oob_base_exception_handlers;
+ORTE_DECLSPEC extern int mca_oob_base_output;
+ORTE_DECLSPEC extern char* mca_oob_base_include;
+ORTE_DECLSPEC extern char* mca_oob_base_exclude;
+ORTE_DECLSPEC extern opal_list_t mca_oob_base_components;
+ORTE_DECLSPEC extern opal_list_t mca_oob_base_modules;
+ORTE_DECLSPEC extern opal_list_t mca_oob_base_exception_handlers;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

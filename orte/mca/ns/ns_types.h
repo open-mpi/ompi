@@ -119,6 +119,6 @@ struct orte_name_services_namelist_t {
 };
 typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;
 
-OMPI_DECLSPEC    OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
+ORTE_DECLSPEC    OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
 
 #endif

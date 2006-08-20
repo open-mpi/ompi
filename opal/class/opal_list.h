@@ -80,13 +80,13 @@ extern "C" {
  *
  * The class for the list container.
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_t);
 /**
  * \internal
  *
  * Base class for items that are put in list (opal_list_t) containers.
  */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_item_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_list_item_t);
 
 
 /**

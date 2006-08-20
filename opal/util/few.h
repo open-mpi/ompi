@@ -53,7 +53,7 @@ extern "C" {
  *          safe in a multi-threaded environment in which a handler
  *          for \c SIGCHLD has been registered.
  */
-OMPI_DECLSPEC int opal_few(char *argv[], int *status);
+OPAL_DECLSPEC int opal_few(char *argv[], int *status);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
