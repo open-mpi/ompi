@@ -20,6 +20,15 @@
 
 /* This component will only be compiled on Linux, where we are
    guaranteed to have <unistd.h> and friends */
+#include <stdio.h>
+
+/* the affinity macros are only exposed if __USE_GNU is set (at least,
+   on Suse Linux for PPC).  However, __USE_GNU causes problems for
+   some compilers (IBM XL) with stdio.h.  So include stdio.h, then
+   set __USE_GNU. */
+#ifndef __USE_GNU
+#define __USE_GNU 1
+#endif
 #include <sched.h>
 #include <unistd.h>
 #include <stdlib.h>
