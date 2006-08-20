@@ -60,9 +60,7 @@ struct opal_mutex_t {
     opal_atomic_lock_t m_lock_atomic;
 };
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
-
-
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 /************************************************************************
  *

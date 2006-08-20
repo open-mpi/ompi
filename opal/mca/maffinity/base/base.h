@@ -50,7 +50,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int opal_maffinity_base_open(void);
+    OPAL_DECLSPEC int opal_maffinity_base_open(void);
     
     /**
      * Select an available component.
@@ -83,7 +83,7 @@ extern "C" {
      * selected.  If no component was selected, subsequent invocation
      * of the maffinity wrapper functions will return an error.
      */
-    OMPI_DECLSPEC int opal_maffinity_base_select(void);
+    OPAL_DECLSPEC int opal_maffinity_base_select(void);
 
     /**
      * Set memory affinity.
@@ -105,7 +105,7 @@ extern "C" {
      * opal_maffinity_base_select() was never invoked, OPAL_NOT_FOUND
      * is returned.
      */
-    OMPI_DECLSPEC int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments, size_t num_segments);
+    OPAL_DECLSPEC int opal_maffinity_base_set(opal_maffinity_base_segment_t *segments, size_t num_segments);
 
     /**
      * Shut down the maffinity MCA framework.
@@ -118,7 +118,7 @@ extern "C" {
      * It must be the last function invoked on the maffinity MCA
      * framework.
      */
-    OMPI_DECLSPEC int opal_maffinity_base_close(void);
+    OPAL_DECLSPEC int opal_maffinity_base_close(void);
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

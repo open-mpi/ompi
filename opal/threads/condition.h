@@ -52,7 +52,7 @@ struct opal_condition_t {
 };
 typedef struct opal_condition_t opal_condition_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_condition_t);
 
 
 static inline int opal_condition_wait(opal_condition_t *c, opal_mutex_t *m)

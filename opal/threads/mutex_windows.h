@@ -40,7 +40,7 @@ struct opal_mutex_t {
     volatile LONG m_lock;
 };
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_mutex_t);
 
 
 static inline int opal_mutex_trylock(opal_mutex_t *m)

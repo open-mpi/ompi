@@ -51,9 +51,9 @@
 extern "C" {
 #endif
 
-    OMPI_DECLSPEC int orte_schema_base_open(void);
-    OMPI_DECLSPEC int orte_schema_base_select(void);
-    OMPI_DECLSPEC int orte_schema_base_close(void);
+    ORTE_DECLSPEC int orte_schema_base_open(void);
+    ORTE_DECLSPEC int orte_schema_base_select(void);
+    ORTE_DECLSPEC int orte_schema_base_close(void);
 
     /* general usage functions */
 int orte_schema_base_get_proc_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_process_name_t *proc);

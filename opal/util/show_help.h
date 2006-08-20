@@ -113,7 +113,7 @@ extern "C" {
      * based on the topic, and displays it.  If want_error_header is
      * true, a header and footer of asterisks are also displayed.
      */
-OMPI_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
+OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
                        bool want_error_header, ...);
 
     /**
@@ -125,7 +125,7 @@ OMPI_DECLSPEC int opal_show_help(const char *filename, const char *topic,
      * flex parser since we may not hit the <<EOF>> rule and call this
      * function automatically.
      */
-OMPI_DECLSPEC int opal_show_help_finish_parsing(void);
+OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

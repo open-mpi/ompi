@@ -176,7 +176,7 @@ extern "C"
 {
 #endif
 
-OMPI_DECLSPEC int gettimeofday (struct timeval *tv, struct timezone *tz);
+OPAL_DECLSPEC int gettimeofday (struct timeval *tv, struct timezone *tz);
 
 #if defined(c_plusplus) || defined (__cplusplus)
 }

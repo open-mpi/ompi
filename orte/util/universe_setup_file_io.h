@@ -26,8 +26,8 @@
 #include "orte_config.h"
 #include "orte/util/univ_info.h"
 
-OMPI_DECLSPEC int orte_write_universe_setup_file(char *filename, orte_universe_t *info);
+ORTE_DECLSPEC int orte_write_universe_setup_file(char *filename, orte_universe_t *info);
 
-OMPI_DECLSPEC int orte_read_universe_setup_file(char *filename, orte_universe_t *info);
+ORTE_DECLSPEC int orte_read_universe_setup_file(char *filename, orte_universe_t *info);
 
 #endif

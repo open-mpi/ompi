@@ -82,7 +82,7 @@ void opal_malloc_finalize(void);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OMPI_DECLSPEC void *opal_malloc(size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_malloc(size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -98,7 +98,7 @@ OMPI_DECLSPEC void *opal_malloc(size_t size, const char *file, int line);
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OMPI_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -114,7 +114,7 @@ OMPI_DECLSPEC void *opal_calloc(size_t nmembers, size_t size, const char *file, 
    * This function is only used when --enable-mem-debug was specified to
    * configure (or by default if you're building in a SVN checkout).
    */
-OMPI_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int line);
+OPAL_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int line);
 
   /**
    * \internal
@@ -130,10 +130,10 @@ OMPI_DECLSPEC void *opal_realloc(void *ptr, size_t size, const char *file, int l
    * to configure (or by default if you're building in a SVN
    * checkout).
    */
-OMPI_DECLSPEC void opal_free(void *addr, const char *file, int line);
+OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line);
 
-OMPI_DECLSPEC extern int opal_malloc_debug_level;
-OMPI_DECLSPEC extern int opal_malloc_output;
+OPAL_DECLSPEC extern int opal_malloc_debug_level;
+OPAL_DECLSPEC extern int opal_malloc_output;
 
 static inline void opal_malloc_debug(int level);
 

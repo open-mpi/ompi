@@ -26,8 +26,8 @@
 extern "C" {
 #endif
 
-OMPI_COMP_EXPORT extern orte_rml_component_t mca_rml_oob_component;
-OMPI_COMP_EXPORT extern orte_rml_module_t orte_rml_oob_module;
+ORTE_DECLSPEC extern orte_rml_component_t mca_rml_oob_component;
+ORTE_DECLSPEC extern orte_rml_module_t orte_rml_oob_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

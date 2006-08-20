@@ -238,7 +238,7 @@ extern "C" {
      * destructor for opal_cmd_line_t handles will free all memory
      * associated with the handle.
      */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_cmd_line_t);
+    OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_cmd_line_t);
 
     /**
      * Make a command line handle from a table of initializers.
@@ -274,7 +274,7 @@ extern "C" {
      * };
      * \endcode
      */
-    OMPI_DECLSPEC int opal_cmd_line_create(opal_cmd_line_t *cmd,
+    OPAL_DECLSPEC int opal_cmd_line_create(opal_cmd_line_t *cmd,
                                            opal_cmd_line_init_t *table);
 
     /**
@@ -287,7 +287,7 @@ extern "C" {
      * opal_cmd_line_make_opt3(cmd, short_name, NULL, long_name,
      * num_params, desc).
      */
-    OMPI_DECLSPEC int opal_cmd_line_make_opt(opal_cmd_line_t *cmd,
+    OPAL_DECLSPEC int opal_cmd_line_make_opt(opal_cmd_line_t *cmd,
                                              char short_name, 
                                              const char *long_name,
                                              int num_params, 
@@ -321,7 +321,7 @@ extern "C" {
      * used to generate the output from opal_cmd_line_get_usage_msg().
      *
      */
-    OMPI_DECLSPEC int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC int opal_cmd_line_make_opt3(opal_cmd_line_t *cmd, 
                                               char short_name, 
                                               const char *sd_name,
                                               const char *long_name, 
@@ -379,7 +379,7 @@ extern "C" {
      * Invoking this function multiple times on different sets of argv
      * tokens is safe, but will erase any previous parsing results.
      */
-    OMPI_DECLSPEC int opal_cmd_line_parse(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC int opal_cmd_line_parse(opal_cmd_line_t *cmd, 
                                           bool ignore_unknown,
                                           int argc, char **argv);
 
@@ -404,7 +404,7 @@ extern "C" {
      *
      * The returned string must be freed by the caller.
      */
-    OMPI_DECLSPEC char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd);
+    OPAL_DECLSPEC char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd);
 
     /**
      * Test if a given option was taken on the parsed command line.
@@ -425,7 +425,7 @@ extern "C" {
      * (either by its short or long name) during token parsing.
      * Otherwise, it will return false.
      */
-    OMPI_DECLSPEC bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC bool opal_cmd_line_is_taken(opal_cmd_line_t *cmd, 
                                               const char *opt);
 
     /**
@@ -439,7 +439,7 @@ extern "C" {
      * Arguments are added to the handle via the opal_cmd_line_parse()
      * function.
      */
-    OMPI_DECLSPEC int opal_cmd_line_get_argc(opal_cmd_line_t *cmd);
+    OPAL_DECLSPEC int opal_cmd_line_get_argc(opal_cmd_line_t *cmd);
 
     /**
      * Return a string argument parsed on a OPAL command line handle.
@@ -458,7 +458,7 @@ extern "C" {
      * What is returned is a pointer to the actual string that is on
      * the handle; it should not be modified or freed.
      */
-    OMPI_DECLSPEC char *opal_cmd_line_get_argv(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC char *opal_cmd_line_get_argv(opal_cmd_line_t *cmd, 
                                                int index);
 
     /**
@@ -481,7 +481,7 @@ extern "C" {
      * either the option was not specified as part of the OPAL command line
      * handle, or opal_cmd_line_parse() was not invoked on this handle.
      */
-    OMPI_DECLSPEC int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC int opal_cmd_line_get_ninsts(opal_cmd_line_t *cmd, 
                                                const char *opt);
 
     /**
@@ -511,7 +511,7 @@ extern "C" {
      * The returned string should \em not be modified or freed by the
      * caller.
      */
-    OMPI_DECLSPEC char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, 
+    OPAL_DECLSPEC char *opal_cmd_line_get_param(opal_cmd_line_t *cmd, 
                                                 const char *opt, 
                                                 int instance_num,
                                                 int param_num);
@@ -543,7 +543,7 @@ extern "C" {
      * of the tail parameters, and must be freed (likely with a call
      * to opal_argv_free()) by the caller.
      */
-    OMPI_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, 
+    OPAL_DECLSPEC int opal_cmd_line_get_tail(opal_cmd_line_t *cmd, int *tailc, 
                                              char ***tailv);
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -78,124 +78,124 @@ typedef uint8_t orte_ns_cmd_bitmask_t;
 /*
  * function definitions
  */
-OMPI_DECLSPEC    int orte_ns_base_open(void);
-OMPI_DECLSPEC    int orte_ns_base_select(void);
-OMPI_DECLSPEC    int orte_ns_base_close(void);
+ORTE_DECLSPEC    int orte_ns_base_open(void);
+ORTE_DECLSPEC    int orte_ns_base_select(void);
+ORTE_DECLSPEC    int orte_ns_base_close(void);
 
     /*
      * Base functions that are common to all implementations - can be overridden
      */
 
-OMPI_DECLSPEC    int orte_ns_base_assign_cellid_to_process(orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_assign_cellid_to_process(orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_create_process_name(orte_process_name_t **name,
+ORTE_DECLSPEC    int orte_ns_base_create_process_name(orte_process_name_t **name,
                                   orte_cellid_t cell,
                                   orte_jobid_t job,
                                   orte_vpid_t vpid);
 
-OMPI_DECLSPEC    int orte_ns_base_copy_process_name(orte_process_name_t **dest,
+ORTE_DECLSPEC    int orte_ns_base_copy_process_name(orte_process_name_t **dest,
                                 orte_process_name_t* src);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
+ORTE_DECLSPEC    int orte_ns_base_convert_string_to_process_name(orte_process_name_t **name,
                                              const char* name_string);
 
-OMPI_DECLSPEC    int orte_ns_base_get_proc_name_string(char **name_string,
+ORTE_DECLSPEC    int orte_ns_base_get_proc_name_string(char **name_string,
                                    const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_get_vpid_string(char **vpid_string, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_vpid_string(char **vpid_string, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid);
+ORTE_DECLSPEC    int orte_ns_base_convert_vpid_to_string(char **vpid_string, const orte_vpid_t vpid);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstring);
+ORTE_DECLSPEC    int orte_ns_base_convert_string_to_vpid(orte_vpid_t *vpid, const char* vpidstring);
 
-OMPI_DECLSPEC    int orte_ns_base_get_jobid_string(char **jobid_string, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_jobid_string(char **jobid_string, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid);
+ORTE_DECLSPEC    int orte_ns_base_convert_jobid_to_string(char **jobid_string, const orte_jobid_t jobid);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobidstring);
+ORTE_DECLSPEC    int orte_ns_base_convert_string_to_jobid(orte_jobid_t *jobid, const char* jobidstring);
 
-OMPI_DECLSPEC    int orte_ns_base_get_cellid_string(char **cellid_string, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_cellid_string(char **cellid_string, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cellidstring);
+ORTE_DECLSPEC    int orte_ns_base_convert_string_to_cellid(orte_cellid_t *cellid, const char *cellidstring);
 
-OMPI_DECLSPEC    int orte_ns_base_convert_cellid_to_string(char **cellid_string, const orte_cellid_t cellid);
+ORTE_DECLSPEC    int orte_ns_base_convert_cellid_to_string(char **cellid_string, const orte_cellid_t cellid);
 
-OMPI_DECLSPEC    int orte_ns_base_get_vpid(orte_vpid_t *vpid, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_vpid(orte_vpid_t *vpid, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_get_jobid(orte_jobid_t *jobid, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_jobid(orte_jobid_t *jobid, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_get_cellid(orte_cellid_t *cellid, const orte_process_name_t* name);
+ORTE_DECLSPEC    int orte_ns_base_get_cellid(orte_cellid_t *cellid, const orte_process_name_t* name);
 
-OMPI_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
+ORTE_DECLSPEC    int orte_ns_base_compare(orte_ns_cmp_bitmask_t fields,
             const orte_process_name_t* name1,
             const orte_process_name_t* name2);
 
-OMPI_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
+ORTE_DECLSPEC    int orte_ns_base_free_name(orte_process_name_t **name);
 
-OMPI_DECLSPEC    int orte_ns_base_print_dump(orte_buffer_t *buffer);
+ORTE_DECLSPEC    int orte_ns_base_print_dump(orte_buffer_t *buffer);
 
 
 /* not available functions */
-OMPI_DECLSPEC    int orte_ns_base_module_init_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_module_init_not_available(void);
 
-OMPI_DECLSPEC    int orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid,
+ORTE_DECLSPEC    int orte_ns_base_create_cellid_not_available(orte_cellid_t *cellid,
                                     char *site, char *resource);
 
-OMPI_DECLSPEC    int orte_ns_base_get_cell_info_not_available(orte_cellid_t cellid,
+ORTE_DECLSPEC    int orte_ns_base_get_cell_info_not_available(orte_cellid_t cellid,
                                 char **site, char **resource);
 
-OMPI_DECLSPEC    int orte_ns_base_create_jobid_not_available(orte_jobid_t *jobid);
+ORTE_DECLSPEC    int orte_ns_base_create_jobid_not_available(orte_jobid_t *jobid);
 
-OMPI_DECLSPEC    int orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
+ORTE_DECLSPEC    int orte_ns_base_get_vpid_range_not_available(orte_jobid_t job,
                                                                orte_vpid_t range,
                                                                orte_vpid_t *startvpid);
 
-OMPI_DECLSPEC    int orte_ns_base_derive_vpid(orte_vpid_t *vpid,
+ORTE_DECLSPEC    int orte_ns_base_derive_vpid(orte_vpid_t *vpid,
                                              orte_vpid_t base_vpid,
                                              int offset);
 
-OMPI_DECLSPEC    int orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name);
+ORTE_DECLSPEC    int orte_ns_base_assign_rml_tag_not_available(orte_rml_tag_t *tag, char *name);
 
-OMPI_DECLSPEC    int orte_ns_base_define_data_type_not_available(
+ORTE_DECLSPEC    int orte_ns_base_define_data_type_not_available(
                                   const char *name,
                                   orte_data_type_t *type);
 
-OMPI_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_create_my_name_not_available(void);
 
-OMPI_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
+ORTE_DECLSPEC    int orte_ns_base_get_job_peers_not_available(orte_process_name_t **procs,
                                   orte_std_cntr_t *num_procs, orte_jobid_t job);
 
-OMPI_DECLSPEC    int orte_ns_base_dump_cells_not_available(void);
-OMPI_DECLSPEC    int orte_ns_base_dump_jobs_not_available(void);
-OMPI_DECLSPEC    int orte_ns_base_dump_tags_not_available(void);
-OMPI_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_dump_cells_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_dump_jobs_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_dump_tags_not_available(void);
+ORTE_DECLSPEC    int orte_ns_base_dump_datatypes_not_available(void);
 
 /* Base functions used everywhere */
-OMPI_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs,
+ORTE_DECLSPEC    int orte_ns_base_get_peers(orte_process_name_t **procs,
                                   orte_std_cntr_t *num_procs, orte_std_cntr_t *self);
 
-OMPI_DECLSPEC    int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
+ORTE_DECLSPEC    int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
+ORTE_DECLSPEC    int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
+ORTE_DECLSPEC    int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
+ORTE_DECLSPEC    int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
                        orte_std_cntr_t num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
+ORTE_DECLSPEC    int orte_ns_base_unpack_name(orte_buffer_t *buffer, void *dest,
                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
+ORTE_DECLSPEC    int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
+ORTE_DECLSPEC    int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-OMPI_DECLSPEC    int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
+ORTE_DECLSPEC    int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 /*
@@ -256,10 +256,10 @@ int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *na
  * globals that might be needed
  */
 
-OMPI_DECLSPEC extern int mca_ns_base_output;
-OMPI_DECLSPEC extern bool mca_ns_base_selected;
-OMPI_DECLSPEC extern opal_list_t mca_ns_base_components_available;
-OMPI_DECLSPEC extern mca_ns_base_component_t mca_ns_base_selected_component;
+ORTE_DECLSPEC extern int mca_ns_base_output;
+ORTE_DECLSPEC extern bool mca_ns_base_selected;
+ORTE_DECLSPEC extern opal_list_t mca_ns_base_components_available;
+ORTE_DECLSPEC extern mca_ns_base_component_t mca_ns_base_selected_component;
 
 /*
  * external API functions will be documented in the mca/ns/ns.h file

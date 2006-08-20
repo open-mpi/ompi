@@ -36,7 +36,7 @@ struct mca_mpool_udapl_component_t {
     char* rcache_name; 
 };
 typedef struct mca_mpool_udapl_component_t mca_mpool_udapl_component_t;
-OMPI_COMP_EXPORT extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
+OMPI_DECLSPEC extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
 
 
 struct mca_mpool_base_resources_t {

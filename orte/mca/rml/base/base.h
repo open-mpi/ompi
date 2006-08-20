@@ -31,9 +31,9 @@ extern "C" {
  * Global functions for the RML
  */
 
-OMPI_DECLSPEC int orte_rml_base_open(void);
-OMPI_DECLSPEC int orte_rml_base_select(void);
-OMPI_DECLSPEC int orte_rml_base_close(void);
+ORTE_DECLSPEC int orte_rml_base_open(void);
+ORTE_DECLSPEC int orte_rml_base_select(void);
+ORTE_DECLSPEC int orte_rml_base_close(void);
 
 /*
  * Global struct holding the base parameters.
@@ -45,10 +45,10 @@ struct orte_rml_base_t {
 };
 typedef struct orte_rml_base_t orte_rml_base_t;
 
-OMPI_DECLSPEC extern orte_rml_base_t orte_rml_base;
-OMPI_DECLSPEC extern orte_rml_module_t orte_rml;
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_any;
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
+ORTE_DECLSPEC extern orte_rml_base_t orte_rml_base;
+ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_any;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

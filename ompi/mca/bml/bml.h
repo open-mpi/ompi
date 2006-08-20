@@ -242,6 +242,8 @@ struct mca_bml_base_endpoint_t {
     size_t                   btl_rdma_align;    /**< max of min rdma size for available rmda btls */
     mca_bml_base_btl_array_t btl_eager;         /**< array of btls to use for first fragments */
     mca_bml_base_btl_array_t btl_send;          /**< array of btls to use for remaining fragments */
+    size_t                   bml_max_send_length;
+    size_t                   bml_max_rdma_length;
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
     uint32_t btl_flags_or;                      /**< the bitwise OR of the btl flags */
     uint32_t btl_flags_and;                     /**< the bitwise AND of the btl flags */
@@ -249,7 +251,7 @@ struct mca_bml_base_endpoint_t {
 typedef struct mca_bml_base_endpoint_t mca_bml_base_endpoint_t;
                               
     
-OMPI_COMP_EXPORT OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_bml_base_endpoint_t);
 
 static inline void mca_bml_base_alloc(mca_bml_base_btl_t* bml_btl, mca_btl_base_descriptor_t** des, size_t size) { 
     *des = bml_btl->btl_alloc(bml_btl->btl, size);

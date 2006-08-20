@@ -540,7 +540,6 @@ char *mca_base_param_environ_variable(const char *type,
 /*
  * Find the index for an MCA parameter based on its names.
  */
-OMPI_DECLSPEC
 int mca_base_param_find(const char *type_name, const char *component_name, 
                         const char *param_name) 
 {

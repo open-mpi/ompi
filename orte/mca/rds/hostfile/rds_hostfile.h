@@ -43,8 +43,8 @@ struct orte_rds_hostfile_component_t {
 };
 typedef struct orte_rds_hostfile_component_t orte_rds_hostfile_component_t;
 
-OMPI_COMP_EXPORT extern orte_rds_hostfile_component_t mca_rds_hostfile_component;
-OMPI_COMP_EXPORT extern orte_rds_base_module_t orte_rds_hostfile_module;
+ORTE_DECLSPEC extern orte_rds_hostfile_component_t mca_rds_hostfile_component;
+ORTE_DECLSPEC extern orte_rds_base_module_t orte_rds_hostfile_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

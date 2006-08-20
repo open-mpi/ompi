@@ -21,9 +21,11 @@
 
 #include "opal_config.h"
 #include "opal/sys/atomic.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 /**
  * @file:
  *
@@ -34,7 +36,7 @@ extern "C" {
 /*
  * declaring this here so that CL does not complain
  */ 
-OMPI_DECLSPEC extern bool opal_uses_threads;
+OPAL_DECLSPEC extern bool opal_uses_threads;
 
 /**
  * Opaque mutex object

@@ -28,9 +28,9 @@ extern "C" {
 #endif
 
 /** Global URM component */
-OMPI_COMP_EXPORT extern orte_rmgr_base_component_t mca_rmgr_cnos_component;
+ORTE_DECLSPEC extern orte_rmgr_base_component_t mca_rmgr_cnos_component;
 /** Global URM module */
-OMPI_COMP_EXPORT extern orte_rmgr_base_module_t orte_rmgr_cnos_module;
+ORTE_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr_cnos_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

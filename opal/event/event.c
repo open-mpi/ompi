@@ -155,7 +155,7 @@ static int	timeout_next(struct event_base *, struct timeval *);
 static void	timeout_process(struct event_base *);
 static void	timeout_correct(struct event_base *, struct timeval *);
 
-OMPI_DECLSPEC opal_mutex_t opal_event_lock;
+OPAL_DECLSPEC opal_mutex_t opal_event_lock;
 static int  opal_event_inited = 0;
 static bool opal_event_enabled = false;
 #if OMPI_ENABLE_PROGRESS_THREADS

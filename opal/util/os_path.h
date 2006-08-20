@@ -61,6 +61,6 @@
  * appropriate to the local operating system. The path_name string has been malloc'd
  * and therefore the user is responsible for free'ing the field.
 */
-OMPI_DECLSPEC char *opal_os_path(bool relative, ...);
+OPAL_DECLSPEC char *opal_os_path(bool relative, ...);
 
 #endif /* OPAL_OS_PATH_H */

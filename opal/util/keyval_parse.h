@@ -43,12 +43,12 @@ typedef void (*opal_keyval_parse_fn_t)(const char *key, const char *value);
  * called exactly once.  In a multithreaded context, calls to
  * opal_util_keyval_parse() will serialize multiple calls.
  */
-OMPI_DECLSPEC int opal_util_keyval_parse(const char *filename, 
+OPAL_DECLSPEC int opal_util_keyval_parse(const char *filename, 
                                          opal_keyval_parse_fn_t callback);
 
-OMPI_DECLSPEC int opal_util_keyval_parse_init(void);
+OPAL_DECLSPEC int opal_util_keyval_parse_init(void);
 
-OMPI_DECLSPEC int opal_util_keyval_parse_finalize(void);
+OPAL_DECLSPEC int opal_util_keyval_parse_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

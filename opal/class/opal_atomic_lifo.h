@@ -41,7 +41,7 @@ struct opal_atomic_lifo_t
 
 typedef struct opal_atomic_lifo_t opal_atomic_lifo_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_atomic_lifo_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_atomic_lifo_t);
 
 /* The ghost pointer will never change. The head will change via an atomic
  * compare-and-swap. On most architectures the reading of a pointer is an

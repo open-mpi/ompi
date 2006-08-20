@@ -42,7 +42,7 @@ extern "C" {
  *
  */
 
-OMPI_DECLSPEC void *orte_hash_table_get_proc(
+ORTE_DECLSPEC void *orte_hash_table_get_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t* key);
 
@@ -56,7 +56,7 @@ OMPI_DECLSPEC void *orte_hash_table_get_proc(
  *
  */
 
-OMPI_DECLSPEC int orte_hash_table_set_proc(
+ORTE_DECLSPEC int orte_hash_table_set_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t*, 
     void* value);
@@ -70,7 +70,7 @@ OMPI_DECLSPEC int orte_hash_table_set_proc(
  *
  */
 
-OMPI_DECLSPEC int orte_hash_table_remove_proc(
+ORTE_DECLSPEC int orte_hash_table_remove_proc(
     opal_hash_table_t* table, 
     const orte_process_name_t* key);
 

@@ -149,7 +149,7 @@ OBJ_CLASS_DECLARATION(mca_base_param_file_value_t);
  *
  * Global list of params and values read in from MCA parameter files
  */
-OMPI_DECLSPEC extern opal_list_t mca_base_param_file_values;
+OPAL_DECLSPEC extern opal_list_t mca_base_param_file_values;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

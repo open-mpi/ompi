@@ -39,7 +39,7 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC extern opal_class_t opal_value_array_t_class;
+OPAL_DECLSPEC extern opal_class_t opal_value_array_t_class;
 
 
 struct opal_value_array_t

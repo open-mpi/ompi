@@ -48,7 +48,7 @@ struct mca_mpool_openib_component_t {
 
 typedef struct mca_mpool_openib_component_t mca_mpool_openib_component_t;
 
-OMPI_COMP_EXPORT extern mca_mpool_openib_component_t mca_mpool_openib_component;
+OMPI_DECLSPEC extern mca_mpool_openib_component_t mca_mpool_openib_component;
 
 
 

@@ -71,7 +71,7 @@ extern "C" {
 
     /* globals used by RTE - instanced in orte_init.c */
 
-    OMPI_DECLSPEC extern int orte_debug_flag;
+    ORTE_DECLSPEC extern int orte_debug_flag;
 
     /**
      * Abort the current application with a pretty-print error message
@@ -80,7 +80,7 @@ extern "C" {
      * printing an error message if possible.  Error message should be
      * specified using the standard \code printf() format.
      */
-OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
+ORTE_DECLSPEC    int orte_abort(int status, char *fmt, ...);
 
 
     /**
@@ -95,10 +95,10 @@ OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
      * @param infrastructure Whether we are ORTE infrastructure or an ORTE 
      * application
      */
-OMPI_DECLSPEC    int orte_init(bool infrastructure);
-OMPI_DECLSPEC    int orte_system_init(bool infrastructure);
-OMPI_DECLSPEC    int orte_init_stage1(bool infrastructure);
-OMPI_DECLSPEC    int orte_init_stage2(void);
+ORTE_DECLSPEC    int orte_init(bool infrastructure);
+ORTE_DECLSPEC    int orte_system_init(bool infrastructure);
+ORTE_DECLSPEC    int orte_init_stage1(bool infrastructure);
+ORTE_DECLSPEC    int orte_init_stage2(void);
 
     /**
      * Initialize parameters for ORTE.
@@ -106,34 +106,34 @@ OMPI_DECLSPEC    int orte_init_stage2(void);
      * @retval ORTE_SUCCESS Upon success.
      * @retval ORTE_ERROR Upon failure.
      */
-OMPI_DECLSPEC    int orte_register_params(bool infrastructure);
+ORTE_DECLSPEC    int orte_register_params(bool infrastructure);
 
     /**
      * Re-init the Open run time environment.
      *
      * Restart selected components with a new process name.
      */
-OMPI_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
+ORTE_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
 
     /**
      * Finalize the Open run time environment. Any function calling \code
      * orte_init should call \code orte_finalize. 
      *
      */
-OMPI_DECLSPEC    int orte_finalize(void);
-OMPI_DECLSPEC    int orte_system_finalize(void);
+ORTE_DECLSPEC    int orte_finalize(void);
+ORTE_DECLSPEC    int orte_system_finalize(void);
 
     /*
      * Change state as processes complete registration/unregistration
      */
 
-OMPI_DECLSPEC    void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata);
+ORTE_DECLSPEC    void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata);
 
-OMPI_DECLSPEC    void orte_all_procs_unregistered(orte_gpr_notify_message_t* match, void* cbdata);
+ORTE_DECLSPEC    void orte_all_procs_unregistered(orte_gpr_notify_message_t* match, void* cbdata);
 
-OMPI_DECLSPEC	 int orte_monitor_procs_registered(void);
+ORTE_DECLSPEC	 int orte_monitor_procs_registered(void);
 
-OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
+ORTE_DECLSPEC    int orte_monitor_procs_unregistered(void);
 
     /**
      * Obtain a listing of all the universes on the machine
@@ -144,7 +144,7 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval ORTE_SUCCESS Upon successful search.
      * @retval ORTE_ERROR Upon unsuccessful search.
      */
-    OMPI_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
+    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
 
     /**
      * Check for universe existence
@@ -166,17 +166,17 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-OMPI_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
+ORTE_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
 
     /**
      * Setup I/O forwarding.
      */
-OMPI_DECLSPEC   int ompi_rte_init_io(void);
+ORTE_DECLSPEC   int ompi_rte_init_io(void);
 
     /**
      * Establish a Head Node Process on a cluster's front end
      */
-OMPI_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
+ORTE_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

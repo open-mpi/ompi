@@ -39,7 +39,7 @@ orte_pointer_array_t *orte_dss_types;
 orte_data_type_t orte_dss_num_reg_types;
 orte_dss_buffer_type_t default_buf_type;
 
-OMPI_DECLSPEC orte_dss_t orte_dss = {
+orte_dss_t orte_dss = {
     orte_dss_set,
     orte_dss_get,
     orte_dss_arith,

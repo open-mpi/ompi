@@ -72,9 +72,9 @@ extern "C" {
     };
     typedef struct orte_universe_t orte_universe_t;
 
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_universe_t);
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_universe_t);
 
-OMPI_DECLSPEC extern orte_universe_t orte_universe_info;
+ORTE_DECLSPEC extern orte_universe_t orte_universe_info;
 
 
 /**
@@ -87,9 +87,9 @@ OMPI_DECLSPEC extern orte_universe_t orte_universe_info;
  * @retval ORTE_SUCCESS If values are successfully determined.
  * @retval ORTE_ERROR If the system does not provide the requested information.
  */
-OMPI_DECLSPEC int orte_univ_info(void);
+ORTE_DECLSPEC int orte_univ_info(void);
 
-OMPI_DECLSPEC int orte_univ_info_finalize(void);
+ORTE_DECLSPEC int orte_univ_info_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

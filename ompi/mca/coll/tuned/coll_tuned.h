@@ -67,22 +67,22 @@ extern "C" {
  * Globally exported variable
  */
 
-/* OMPI_COMP_EXPORT extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component; */
+/* OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component; */
 
 /* these are the same across all modules and are loaded at component query time */
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_stream;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_priority;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_preallocate_memory_comm_size_limit;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_use_dynamic_rules;
-OMPI_COMP_EXPORT extern char* ompi_coll_tuned_dynamic_rules_filename;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_tree_fanout;
-OMPI_COMP_EXPORT extern int   ompi_coll_tuned_init_chain_fanout;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_stream;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_priority;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_preallocate_memory_comm_size_limit;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_use_dynamic_rules;
+OMPI_DECLSPEC extern char* ompi_coll_tuned_dynamic_rules_filename;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_init_tree_fanout;
+OMPI_DECLSPEC extern int   ompi_coll_tuned_init_chain_fanout;
 
 /* forced algorithm choices */
 /* the indices to the MCA params so that modules can look them up at open / comm create time  */
-OMPI_COMP_EXPORT extern coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT];
+OMPI_DECLSPEC extern coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tuned_forced_params[COLLCOUNT];
 /* the actual max algorithm values (readonly), loaded at component open */
-OMPI_COMP_EXPORT extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
+OMPI_DECLSPEC extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
 
 
 

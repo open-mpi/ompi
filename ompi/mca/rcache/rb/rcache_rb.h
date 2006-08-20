@@ -44,7 +44,7 @@ struct mca_rcache_rb_component_t {
     mca_rcache_base_component_t super; 
 }; typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
 
-OMPI_COMP_EXPORT extern mca_rcache_rb_component_t mca_rcache_rb_component;
+OMPI_DECLSPEC extern mca_rcache_rb_component_t mca_rcache_rb_component;
 
 
 

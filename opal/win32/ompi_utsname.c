@@ -29,7 +29,7 @@
     5. machine: GetSystemInfo
 */
     
-OMPI_DECLSPEC int
+OPAL_DECLSPEC int
 uname( struct utsname *un )
 {
 

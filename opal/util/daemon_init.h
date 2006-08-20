@@ -33,6 +33,6 @@
  * @retval OPAL_SUCCESS Indicates that the conversion was successful
  * @retval OPAL_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
-OMPI_DECLSPEC int opal_daemon_init(char *working_dir);
+OPAL_DECLSPEC int opal_daemon_init(char *working_dir);
 
 #endif /* OPAL_DAEMON_INIT_H */

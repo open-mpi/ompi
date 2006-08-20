@@ -33,7 +33,7 @@
 
 #include "orte/util/proc_info.h"
 
-OMPI_DECLSPEC orte_proc_info_t orte_process_info = {
+ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
     /*  .singleton =            */   false,
     /*  .vpid_start =           */   0,

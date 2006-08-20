@@ -333,7 +333,7 @@ do {                                                            \
 } while (0)
 
 BEGIN_C_DECLS
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
 
 
 /* declarations *******************************************************/
@@ -346,7 +346,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
  *
  * @param class    Pointer to class descriptor
  */
-OMPI_DECLSPEC void opal_class_initialize(opal_class_t *);
+OPAL_DECLSPEC void opal_class_initialize(opal_class_t *);
 
 /**
  * Shut down the class system and release all memory
@@ -357,7 +357,7 @@ OMPI_DECLSPEC void opal_class_initialize(opal_class_t *);
  * tools like valgrind and purify don't report still-reachable memory
  * upon process termination.
  */
-OMPI_DECLSPEC int opal_class_finalize(void);
+OPAL_DECLSPEC int opal_class_finalize(void);
 
 END_C_DECLS
 /**

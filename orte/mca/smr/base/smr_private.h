@@ -149,8 +149,8 @@ void orte_smr_base_std_release(orte_data_value_t *value);
  * globals that might be needed within the framework
  */
 
-OMPI_DECLSPEC extern int orte_smr_base_output;
-OMPI_DECLSPEC extern bool orte_smr_base_selected;
+ORTE_DECLSPEC extern int orte_smr_base_output;
+ORTE_DECLSPEC extern bool orte_smr_base_selected;
 
 
 /*

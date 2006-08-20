@@ -42,16 +42,16 @@
 extern "C" {
 #endif
 
-OMPI_DECLSPEC    int orte_smr_base_open(void);
-OMPI_DECLSPEC    int orte_smr_base_select(void);
-OMPI_DECLSPEC    int orte_smr_base_close(void);
+ORTE_DECLSPEC    int orte_smr_base_open(void);
+ORTE_DECLSPEC    int orte_smr_base_select(void);
+ORTE_DECLSPEC    int orte_smr_base_close(void);
 
 typedef struct orte_smr_base_t {
     int smr_output;
     opal_list_t smr_components;
 } orte_smr_base_t;
 
-OMPI_DECLSPEC extern orte_smr_base_t orte_smr_base;
+ORTE_DECLSPEC extern orte_smr_base_t orte_smr_base;
 
 
 /*

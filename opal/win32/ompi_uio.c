@@ -26,7 +26,7 @@
  of code to handle the windows error flags 
  */
 
-OMPI_DECLSPEC int
+OPAL_DECLSPEC int
 writev( int fd, struct iovec * iov, int cnt )
 {
    int err;
@@ -41,7 +41,7 @@ writev( int fd, struct iovec * iov, int cnt )
 } 
 
 
-OMPI_DECLSPEC int
+OPAL_DECLSPEC int
 readv( int fd, struct iovec * iov, int cnt )
 {
    int err;

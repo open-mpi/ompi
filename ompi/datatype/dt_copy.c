@@ -18,6 +18,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/prefetch.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
@@ -206,7 +207,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     pElem = &(description[pos_desc]);
 
     while( 1 ) {
-        while( pElem->elem.common.flags & DT_FLAG_DATA ) {
+        while( OPAL_LIKELY(pElem->elem.common.flags & DT_FLAG_DATA) ) {
             /* now here we have a basic datatype */
             COPY_PREDEFINED_DATATYPE( pElem, datatype, source_base, count, count_desc,
                                       source, destination, iov_len_local );

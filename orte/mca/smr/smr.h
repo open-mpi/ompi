@@ -150,6 +150,6 @@ typedef orte_smr_base_component_1_3_0_t orte_smr_base_component_t;
   /* smr v1.3 */ \
   "smr", 1, 3, 0
 
-OMPI_DECLSPEC extern orte_smr_base_module_t orte_smr;  /* holds selected module's function pointers */
+ORTE_DECLSPEC extern orte_smr_base_module_t orte_smr;  /* holds selected module's function pointers */
 
 #endif /* ORTE_SMR_H */

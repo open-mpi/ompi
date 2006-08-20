@@ -56,8 +56,8 @@ struct orte_smr_bproc_component_t {
 };
 typedef struct orte_smr_bproc_component_t orte_smr_bproc_component_t;
 
-OMPI_COMP_EXPORT extern orte_smr_base_module_t orte_smr_bproc_module;
-OMPI_COMP_EXPORT extern orte_smr_bproc_component_t mca_smr_bproc_component;
+ORTE_DECLSPEC extern orte_smr_base_module_t orte_smr_bproc_module;
+ORTE_DECLSPEC extern orte_smr_bproc_component_t mca_smr_bproc_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

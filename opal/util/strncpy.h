@@ -33,6 +33,6 @@
 #define strncpy opal_strncpy
 
 
-OMPI_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len);
+OPAL_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len);
 
 #endif /* OPAL_STRNCPY_H */

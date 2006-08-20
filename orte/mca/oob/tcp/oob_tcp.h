@@ -262,7 +262,7 @@ struct mca_oob_tcp_component_t {
  */
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
-OMPI_COMP_EXPORT extern mca_oob_tcp_component_t mca_oob_tcp_component;
+ORTE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

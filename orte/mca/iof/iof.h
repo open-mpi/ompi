@@ -184,7 +184,7 @@ struct orte_iof_base_module_1_0_0_t {
 
 typedef struct orte_iof_base_module_1_0_0_t orte_iof_base_module_1_0_0_t;
 typedef orte_iof_base_module_1_0_0_t orte_iof_base_module_t;
-OMPI_DECLSPEC extern orte_iof_base_module_t orte_iof;
+ORTE_DECLSPEC extern orte_iof_base_module_t orte_iof;
 
 /**
  *  IOF component descriptor. Contains component version information

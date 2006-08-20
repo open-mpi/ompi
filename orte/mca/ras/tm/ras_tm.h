@@ -30,8 +30,8 @@
 extern "C" {
 #endif
 
-    OMPI_COMP_EXPORT extern orte_ras_base_component_1_0_0_t mca_ras_tm_component;
-    OMPI_COMP_EXPORT extern orte_ras_base_module_t orte_ras_tm_module;
+    ORTE_DECLSPEC extern orte_ras_base_component_1_0_0_t mca_ras_tm_component;
+    ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_tm_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

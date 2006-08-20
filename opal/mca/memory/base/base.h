@@ -53,7 +53,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int opal_memory_base_open(void);
+    OPAL_DECLSPEC int opal_memory_base_open(void);
     
 
     /**
@@ -67,7 +67,7 @@ extern "C" {
      *
      * It must be the last function invoked on the memory MCA framework.
      */
-    OMPI_DECLSPEC int opal_memory_base_close(void);
+    OPAL_DECLSPEC int opal_memory_base_close(void);
 
     extern opal_list_t opal_memory_base_components_opened;
     
