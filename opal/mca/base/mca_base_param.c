@@ -23,6 +23,7 @@
 #include <stdlib.h>
 
 #include "opal/install_dirs.h"
+#include "opal/util/os_path.h"
 #include "opal/class/opal_value_array.h"
 #include "opal/util/show_help.h"
 #include "opal/class/opal_hash_table.h"
@@ -134,14 +135,21 @@ int mca_base_param_init(void)
         initialized = true;
 
         /* We may need this later */
+#if !defined(__WINDOWS__)
         home = getenv("HOME");
+        asprintf(&files,
+                 "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf:%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
+                 home, OPAL_SYSCONFDIR);
+#else
+        home = getenv("USERPROFILE");
+        asprintf(&files,
+                 "%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"mca-params.conf;%s"OPAL_PATH_SEP"openmpi-mca-params.conf",
+                 home, OPAL_SYSCONFDIR);
+#endif  /* !defined(__WINDOWS__) */
 
         /* Initialize a parameter that says where MCA param files can
            be found */
 
-        asprintf(&files,
-                 "~/.openmpi/mca-params.conf:%s/openmpi-mca-params.conf",
-                 OPAL_SYSCONFDIR);
         id = mca_base_param_reg_string_name("mca", "param_files",
                                             "Path for MCA configuration files containing default parameter values",
                                             false, false, files, &new_files);
@@ -514,7 +522,7 @@ char *mca_base_param_environ_variable(const char *type,
         if (NULL != param) {
             len += strlen(param);
         }
-        name = malloc(len);
+        name = (char*)malloc(len);
         if (NULL == name) {
             return NULL;
         }
@@ -567,7 +575,7 @@ int mca_base_param_find(const char *type_name, const char *component_name,
         ((NULL == param_name && NULL == array[i].mbp_param_name) ||
          (NULL != param_name && NULL != array[i].mbp_param_name &&
           0 == strcmp(param_name, array[i].mbp_param_name)))) {
-      return i;
+      return (int)i;
     }
   }
 
@@ -633,7 +641,7 @@ int mca_base_param_dump(opal_list_t **info, bool internal)
     for (i = 0; i < len; ++i) {
         if(array[i].mbp_internal == internal || internal) {
             p = OBJ_NEW(mca_base_param_info_t);
-            p->mbpp_index = i;
+            p->mbpp_index = (int)i;
             p->mbpp_type_name = array[i].mbp_type_name;
             p->mbpp_component_name = array[i].mbp_component_name;
             p->mbpp_param_name = array[i].mbp_param_name;
@@ -782,36 +790,8 @@ static int read_files(char *file_list)
        order so that we preserve unix/shell path-like semantics (i.e.,
        the entries farthest to the left get precedence) */
 
-    files = opal_argv_split(file_list, ':');
+    files = opal_argv_split(file_list, OPAL_ENV_SEP);
     count = opal_argv_count(files);
-
-#ifdef __WINDOWS__
-    /* Windows use : as a delimiter between the drive name and the path
-     * Hopefuly, the drive name is limitted to one letter, so we can parse
-     * the files array and merge all one letter char* with the next. I hope
-     * nobody plan to have a one letter path on UNIX.
-     */
-    {
-        int index;
-
-        for( index = i = 0; i < count; i++ ) {
-            if( (1 == strlen(files[i])) && (isalpha(files[i][0])) ) {
-                int length = 4 + strlen(files[i+1]);
-                char* temp = (char*)malloc( length );
-                snprintf( temp, length, "%s:%s", files[i], files[i+1] );
-                temp[3+strlen(files[i+1])] = '\0';
-                free(files[i]);
-                free(files[i+1]);
-                files[index++] = temp;
-                i++;
-            } else {
-                files[index++] = files[i];
-            }
-        }
-        count = index;
-        files[index] = NULL;  /* force the final NULL */
-    }
-#endif
 
     for (i = count - 1; i >= 0; --i) {
         mca_base_parse_paramfile(files[i]);
@@ -894,7 +874,7 @@ static int param_register(const char *type_name,
       len += strlen(param.mbp_param_name);
   }
   
-  param.mbp_full_name = malloc(len);
+  param.mbp_full_name = (char*)malloc(len);
   if (NULL == param.mbp_full_name) {
       OBJ_DESTRUCT(&param);
       return OPAL_ERROR;
@@ -922,7 +902,7 @@ static int param_register(const char *type_name,
   /* Create the environment name */
 
   len = strlen(param.mbp_full_name) + strlen(mca_prefix) + 16;
-  param.mbp_env_var_name = malloc(len);
+  param.mbp_env_var_name = (char*)malloc(len);
   if (NULL == param.mbp_env_var_name) {
     OBJ_DESTRUCT(&param);
     return OPAL_ERROR;
@@ -1118,7 +1098,7 @@ static int param_register(const char *type_name,
 
       /* Return the new index */
 
-      return i;
+      return (int)i;
     }
   }
 
@@ -1128,7 +1108,7 @@ static int param_register(const char *type_name,
       (ret = opal_value_array_append_item(&mca_base_params, &param))) {
     return ret;
   }
-  ret = opal_value_array_get_size(&mca_base_params) - 1;
+  ret = (int)opal_value_array_get_size(&mca_base_params) - 1;
 
   /* Finally, if we have a lookup value, look it up */
 
@@ -1241,7 +1221,7 @@ static bool param_lookup(size_t index, mca_base_param_storage_t *storage,
                 if( NULL == home ) {
                     asprintf(&p, "%s", storage->stringval + 2);
                 } else {
-                    asprintf(&p, "%s/%s", home, storage->stringval + 2);
+                    p = opal_os_path( false, home, storage->stringval + 2, NULL );
                 }
                 free(storage->stringval);
                 storage->stringval = p;
