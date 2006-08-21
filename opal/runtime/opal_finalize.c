@@ -66,11 +66,17 @@ opal_finalize_util(void)
     return OPAL_SUCCESS;
 }
 
+extern int opal_initialized;
 
 int
 opal_finalize(void)
 {
-
+    if( --opal_initialized != 0 ) {
+        if( opal_initialized < 0 ) {
+            return OPAL_ERROR;
+        }
+        return OPAL_SUCCESS;
+    }
     /* close high resolution timers */
     opal_timer_base_close();
 
