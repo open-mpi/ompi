@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,12 +31,12 @@
 #pragma weak pmpi_type_get_name__ = mpi_type_get_name_f
 #elif OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_NAME,
-                           pmpi_type_get_name,
-                           pmpi_type_get_name_,
-                           pmpi_type_get_name__,
-                           pmpi_type_get_name_f,
-                           (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr),
-                           (type, type_name, resultlen, ierr) )
+                            pmpi_type_get_name,
+                            pmpi_type_get_name_,
+                            pmpi_type_get_name__,
+                            pmpi_type_get_name_f,
+                            (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
+                            (type, type_name, resultlen, ierr, name_len) )
 #endif
 
 #if OMPI_HAVE_WEAK_SYMBOLS
@@ -47,12 +48,12 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_NAME,
 
 #if ! OMPI_HAVE_WEAK_SYMBOLS && ! OMPI_PROFILE_LAYER
 OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_NAME,
-                           mpi_type_get_name,
-                           mpi_type_get_name_,
-                           mpi_type_get_name__,
-                           mpi_type_get_name_f,
-                           (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr),
-                           (type, type_name, resultlen, ierr) )
+                            mpi_type_get_name,
+                            mpi_type_get_name_,
+                            mpi_type_get_name__,
+                            mpi_type_get_name_f,
+                            (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len),
+                            (type, type_name, resultlen, ierr, name_len) )
 #endif
 
 
@@ -60,7 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_NAME,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_type_get_name_f(MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr)
+void mpi_type_get_name_f(MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len)
 {
     int err, c_len;
     MPI_Datatype c_type = MPI_Type_f2c(*type);
@@ -68,8 +69,7 @@ void mpi_type_get_name_f(MPI_Fint *type, char *type_name, MPI_Fint *resultlen, M
 
     err = MPI_Type_get_name(c_type, c_name, &c_len);
     if (MPI_SUCCESS == err) {
-        ompi_fortran_string_c2f(c_name, type_name, 
-                                OMPI_FINT_2_INT(*resultlen));
+        ompi_fortran_string_c2f(c_name, type_name, name_len);
         *resultlen = OMPI_INT_2_FINT(c_len);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     } else {
