@@ -170,7 +170,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     }
 
     if (is_set(changes, BIT_NODE_BPROC_STATUS)) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_STATUS, ORTE_STRING, ni->status))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SMR_BPROC_NODE_STATUS, ORTE_STRING, ni->status))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             return;
@@ -179,7 +179,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     }
 
     if (is_set(changes, BIT_NODE_BPROC_MODE)) {
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_MODE, ORTE_UINT32, &(ni->mode)))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SMR_BPROC_NODE_MODE, ORTE_UINT32, &(ni->mode)))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             return;
@@ -192,7 +192,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	    user = strdup(pwd->pw_name);
     	else
     	    asprintf(&user, "%d\n", ni->user);
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_USER, ORTE_STRING, user))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SMR_BPROC_NODE_USER, ORTE_STRING, user))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             free(user);
@@ -207,7 +207,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	    group = strdup(grp->gr_name);
     	else
     	    asprintf(&group, "%d\n", ni->group);
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SOH_BPROC_NODE_GROUP, ORTE_STRING, group))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_SMR_BPROC_NODE_GROUP, ORTE_STRING, group))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
             free(group);
