@@ -52,7 +52,7 @@ SUBDIRS = scripts
 
 AM_FCFLAGS = -I$(top_builddir)/ompi/include -I$(top_srcdir)/ompi/include \
              $(OMPI_FC_MODULE_FLAG). -I$(srcdir) \
-             -I$(top_builddir)/ompi/mpi/f90
+             -I$(top_builddir)/ompi/mpi/f90 $(FCFLAGS_f90)
 
 # Do different things if the top-level configure decided that we're
 # going to build F90 bindings or not.
