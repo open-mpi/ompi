@@ -105,25 +105,45 @@ static inline int mca_btl_self_param_register_int(
 
 int mca_btl_self_component_open(void)
 {
+    int tmp;
+
     /* register SELF component parameters */
-    mca_btl_self_component.free_list_num =
-        mca_btl_self_param_register_int("free_list_num", 0);
-    mca_btl_self_component.free_list_max =
-        mca_btl_self_param_register_int("free_list_max", -1);
-    mca_btl_self_component.free_list_inc =
-        mca_btl_self_param_register_int("free_list_inc", 32);
-    mca_btl_self.btl_eager_limit = 
-        mca_btl_self_param_register_int("eager_limit", 128*1024);
-    mca_btl_self.btl_min_send_size = 
-    mca_btl_self.btl_max_send_size = 
-        mca_btl_self_param_register_int("max_send_size", 256*1024);
-    mca_btl_self.btl_min_rdma_size = 
-    mca_btl_self.btl_max_rdma_size =
-        mca_btl_self_param_register_int("max_rdma_size", INT_MAX);
-    mca_btl_self.btl_exclusivity = 
-        mca_btl_self_param_register_int("exclusivity", 64*1024);
-    mca_btl_self.btl_flags =
-        mca_btl_self_param_register_int("flags", MCA_BTL_FLAGS_PUT);
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_num",
+                            "Number of fragments by default", false, false,
+                            0, &mca_btl_self_component.free_list_num );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_max",
+                            "Maximum number of fragments", false, false,
+                            -1, &mca_btl_self_component.free_list_max );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_inc",
+                            "Increment by this number of fragments", false, false,
+                            32, &mca_btl_self_component.free_list_inc );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "eager_limit",
+                            "Eager size fragmeng (before the rendez-vous ptotocol)", false, false,
+                            128 * 1024, &tmp);
+    mca_btl_self.btl_eager_limit = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "min_send_size",
+                            "Minimum fragment size after the rendez-vous", false, false,
+                            256 * 1024, &tmp);
+    mca_btl_self.btl_min_send_size = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "max_send_size",
+                            "Maximum fragment size after the rendez-vous", false, false,
+                            256 * 1024, &tmp);
+    mca_btl_self.btl_max_send_size = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "min_rdma_size",
+                            "Maximum fragment size for the RDMA transfer", false, false,
+                            INT_MAX, &tmp);
+    mca_btl_self.btl_min_rdma_size = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "max_rdma_size",
+                            "Maximum fragment size for the RDMA transfer", false, false,
+                            INT_MAX, &tmp);
+    mca_btl_self.btl_max_rdma_size = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "exclusivity",
+                            "Device exclusivity", false, false,
+                            MCA_BTL_EXCLUSIVITY_HIGH, (int*)&mca_btl_self.btl_exclusivity );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "flags",
+                            "Active behavior flags", false, false,
+                            MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_SEND_INPLACE,
+                            (int*)&mca_btl_self.btl_flags );
 
     /* initialize objects */
     OBJ_CONSTRUCT(&mca_btl_self_component.self_lock, opal_mutex_t);
