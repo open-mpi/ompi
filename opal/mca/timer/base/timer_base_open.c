@@ -48,6 +48,7 @@ opal_list_t opal_timer_base_components_opened;
  */
 int opal_timer_base_open(void)
 {
+    OBJ_CONSTRUCT( &opal_timer_base_components_opened, opal_list_t );
     /* Open up all available components */
     if (OPAL_SUCCESS !=
         mca_base_components_open("timer", 0,
