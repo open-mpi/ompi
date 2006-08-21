@@ -282,11 +282,16 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == sbuf) {
             return NULL;
         }
-        if (ORTE_SUCCESS != orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME)) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(sbuf);
             return NULL;
         }
-        rc = orte_rml.send_buffer(port, sbuf, tag, 0);
+        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer(port, sbuf, tag, 0))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(sbuf);
+            return NULL;
+        }
         OBJ_RELEASE(sbuf);
 
         rport = port;
@@ -298,10 +303,15 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == rbuf) {
             return NULL;
         }
-        rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag);
-        num_vals = 1;
-        if (ORTE_SUCCESS != orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME)) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag))) {
             ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(rbuf);
+            return NULL;
+        }
+        num_vals = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(rbuf);
             return NULL;
         }
         OBJ_RELEASE(rbuf);
@@ -778,7 +788,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
@@ -798,7 +808,7 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
         ORTE_ERROR_LOG(rc);
         return;
     }
