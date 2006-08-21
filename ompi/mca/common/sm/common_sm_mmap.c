@@ -200,7 +200,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
        entry in the control structure is an mca_common_sm_file_header_t
        element */
     map->map_seg = seg;
-    map->hMappedObject = hMapObject;
 
     /* If we have a data segment (i.e., if 0 != data_seg_alignment),
        then make it the first aligned address after the control
@@ -244,6 +243,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         goto return_error;
     }
     close(fd);
+#else
+    map->hMappedObject = hMapObject;
 #endif  /* !defined(__WINDOWS__) */
 
     return map;
