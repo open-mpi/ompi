@@ -288,17 +288,20 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-#if !defined(__WINDOWS__) && defined(HAVE_SCHED_YIELD)
+#if defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD_)
     if (call_yield && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
          * the processor is oversubscribed - this will result in a best-case
          * latency equivalent to the time-slice.
          */
-        /* TODO: Find the windows equivalent for this */
+#if defined(__WINDOWS__)
+        SwitchToThread();
+#else
         sched_yield();
+#endif  /* defined(__WINDOWS__) */
     }
-#endif
+#endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD_) */
 }
 
 
@@ -314,7 +317,7 @@ opal_progress_register(opal_progress_callback_t cb)
     /* see if we need to allocate more space */
     if (callbacks_len + 1 > callbacks_size) {
         opal_progress_callback_t *tmp;
-        tmp = realloc(callbacks, sizeof(opal_progress_callback_t) * (callbacks_size + 4));
+        tmp = (opal_progress_callback_t*)realloc(callbacks, sizeof(opal_progress_callback_t) * (callbacks_size + 4));
         if (tmp == NULL) {
             ret = OPAL_ERR_TEMP_OUT_OF_RESOURCE;
             goto cleanup;
