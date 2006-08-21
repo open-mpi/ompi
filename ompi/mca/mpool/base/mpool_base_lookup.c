@@ -27,10 +27,10 @@
 #include "ompi/mca/mpool/base/base.h"
 #include "mpool_base_mem_cb.h"
 
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
 #include <malloc.h>
 extern int mca_mpool_base_disable_sbrk;
-#endif  /* defined(HAVE_MALLOPT) */
+#endif  /* MPOOL_BASE_CAN_DISABLE_SBRK */
 
 
 extern int mca_mpool_base_use_mem_hooks;
@@ -99,12 +99,12 @@ mca_mpool_base_module_t* mca_mpool_base_module_create(
               OBJ_CONSTRUCT(&mca_mpool_base_mem_cb_array, ompi_pointer_array_t);
         }
 
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
         else if(mca_mpool_base_disable_sbrk) { 
             mallopt(M_TRIM_THRESHOLD, -1); 
             mallopt(M_MMAP_MAX, 0);
         }
-#endif  /* defined(HAVE_MALLOPT) */
+#endif  /* MPOOL_BASE_CAN_DISABLE_SBRK */
     }
     return module; 
 }
