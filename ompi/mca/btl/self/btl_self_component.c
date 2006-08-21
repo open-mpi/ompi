@@ -79,6 +79,8 @@ mca_btl_self_component_t mca_btl_self_component = {
 
 int mca_btl_self_component_open(void)
 {
+    int tmp;
+
     /* register SELF component parameters */
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "free_list_num",
                             "Number of fragments by default", false, false,
@@ -91,19 +93,24 @@ int mca_btl_self_component_open(void)
                             32, &mca_btl_self_component.free_list_inc );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "eager_limit",
                             "Eager size fragmeng (before the rendez-vous ptotocol)", false, false,
-                            128 * 1024, (int*)&mca_btl_self.btl_eager_limit );
+                            128 * 1024, &tmp);
+    mca_btl_self.btl_eager_limit = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "min_send_size",
                             "Minimum fragment size after the rendez-vous", false, false,
-                            256 * 1024, (int*)&mca_btl_self.btl_min_send_size );
+                            256 * 1024, &tmp);
+    mca_btl_self.btl_min_send_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "max_send_size",
                             "Maximum fragment size after the rendez-vous", false, false,
-                            256 * 1024, (int*)&mca_btl_self.btl_max_send_size );
+                            256 * 1024, &tmp);
+    mca_btl_self.btl_max_send_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "min_rdma_size",
                             "Maximum fragment size for the RDMA transfer", false, false,
-                            INT_MAX, (int*)&mca_btl_self.btl_min_rdma_size );
+                            INT_MAX, &tmp);
+    mca_btl_self.btl_min_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "max_rdma_size",
                             "Maximum fragment size for the RDMA transfer", false, false,
-                            INT_MAX, (int*)&mca_btl_self.btl_max_rdma_size );
+                            INT_MAX, &tmp);
+    mca_btl_self.btl_max_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_self_component, "exclusivity",
                             "Device exclusivity", false, false,
                             MCA_BTL_EXCLUSIVITY_HIGH, (int*)&mca_btl_self.btl_exclusivity );
