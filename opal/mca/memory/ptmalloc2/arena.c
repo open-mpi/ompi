@@ -137,7 +137,7 @@ int __malloc_initialized = -1;
 static __malloc_ptr_t (*save_malloc_hook) __MALLOC_P ((size_t __size,
 						       __const __malloc_ptr_t));
 # if !defined _LIBC || !defined USE_TLS || (defined SHARED && !USE___THREAD)
-static __malloc_ptr_t (*save_memalign_hook) __MALLOC_P ((size_t __align,
+static __malloc_ptr_t (*save_memalign_hook) __MALLOC_P ((size_t align,
 							 size_t __size,
 						       __const __malloc_ptr_t));
 # endif

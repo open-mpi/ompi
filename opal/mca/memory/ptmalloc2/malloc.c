@@ -573,7 +573,9 @@ Void_t *(*__morecore)(ptrdiff_t) = __default_morecore;
 
 
 #if !defined _LIBC && (!defined __GNUC__ || __GNUC__<3)
+#ifndef __builtin_expect
 #define __builtin_expect(expr, val) (expr)
+#endif
 #endif
 
 /*
