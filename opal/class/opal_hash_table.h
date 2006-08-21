@@ -35,9 +35,8 @@
 extern "C" {
 #endif
 
-OPAL_DECLSPEC extern opal_class_t opal_hash_table_t_class;
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_hash_table_t);
                            
-
 struct opal_hash_table_t
 {
     opal_object_t        super;          /**< subclass of opal_object_t */
