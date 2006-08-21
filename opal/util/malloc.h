@@ -135,9 +135,6 @@ OPAL_DECLSPEC void opal_free(void *addr, const char *file, int line);
 OPAL_DECLSPEC extern int opal_malloc_debug_level;
 OPAL_DECLSPEC extern int opal_malloc_output;
 
-static inline void opal_malloc_debug(int level);
-
-
 /**
  * Used to set the debug level for malloc debug.
  *
