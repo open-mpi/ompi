@@ -48,7 +48,7 @@
  *
  **********************************************************************/
 #ifndef __WINDOWS__
-#  if defined(_WIN32) || defined(WIN32)
+#  if defined(_WIN32) || defined(WIN32) || defined(WIN64)
 #    define __WINDOWS__
 #  endif
 #endif
@@ -143,9 +143,11 @@ typedef long long bool;
  * Set the compile-time path-separator on this system
  */
 #ifdef __WINDOWS__
-#define OMPI_PATH_SEP "\\"
+#define OPAL_PATH_SEP "\\"
+#define OPAL_ENV_SEP  ';'
 #else
-#define OMPI_PATH_SEP "/"
+#define OPAL_PATH_SEP "/"
+#define OPAL_ENV_SEP  ':'
 #endif
 
 /*
