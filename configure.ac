@@ -279,7 +279,14 @@ if test "$GCC" = "yes"; then
     CFLAGS="$OMPI_CFLAGS_BEFORE_PICKY -Werror -ansi"
 fi
 AC_C_INLINE
-AC_C_RESTRICT
+# Microsoft compilers support 2 versions of restrict. One for functions, and
+# one for variables. The problem is that they don't have an equivalent
+# syntax, and the autoconf restrict detection is unable to detect them
+# correctly. It detect the restrict keyword as __restrict which break the
+# rules for function syntax which is declspec(restrict).
+if test "x$ompi_cv_c_compiler_vendor" != "xmicrosoft"; then
+  AC_C_RESTRICT
+fi
 OMPI_C_WEAK_SYMBOLS
 if test "$GCC" = "yes"; then
     CFLAGS="$CFLAGS_save"
