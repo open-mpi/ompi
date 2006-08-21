@@ -43,7 +43,7 @@
 int mca_mpool_base_output = -1;
 int mca_mpool_base_use_mem_hooks = 0; 
 
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
 int mca_mpool_base_disable_sbrk = 0;
 #endif
 
@@ -63,9 +63,9 @@ int mca_mpool_base_open(void)
        mca_mpool_base_components list */
     
     int use_mem_hooks;
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
     int disable_sbrk;
-#endif  /* defined(HAVE_MALLOPT) */
+#endif  /* MPOOL_BASE_CAN_DISABLE_SBRK */
     
     if (OMPI_SUCCESS != 
         mca_base_components_open("mpool", 0, mca_mpool_base_static_components, 
@@ -101,7 +101,7 @@ int mca_mpool_base_open(void)
     mca_mpool_base_use_mem_hooks = use_mem_hooks || mca_mpool_base_use_mem_hooks;
 
     
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
     mca_base_param_reg_int_name("mpool", 
                                 "base_disable_sbrk", 
                                 "use mallopt to override calling sbrk (doesn't return memory to OS!)",
@@ -123,7 +123,7 @@ int mca_mpool_base_open(void)
 #endif
 
     /* force mem hooks if leave_pinned or leave_pinned_pipeline is enabled */
-#if defined(HAVE_MALLOPT)
+#if MPOOL_BASE_CAN_DISABLE_SBRK
     if(0 == mca_mpool_base_use_mem_hooks && 0 == mca_mpool_base_disable_sbrk) {
 #else 
     if(0 == mca_mpool_base_use_mem_hooks ) {
