@@ -1325,7 +1325,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         if (NULL != param) {
             /* "Parse" the param, aka remove superfluous path_sep "/". */
             param_len = strlen(param);
-            while (0 == strcmp (OMPI_PATH_SEP, &(param[param_len-1]))) {
+            while (0 == strcmp (OPAL_PATH_SEP, &(param[param_len-1]))) {
                 param[param_len-1] = '\0';
                 param_len--;
                 if (0 == param_len) {

@@ -95,7 +95,7 @@ data_callback(const char *key, const char *value)
 
         for (i = 0 ; i < opal_argv_count(values) ; ++i) {
             char *line;
-            asprintf(&line, "-I%s%s%s", OPAL_INCLUDEDIR, OMPI_PATH_SEP, values[i]);
+            asprintf(&line, "-I%s%s%s", OPAL_INCLUDEDIR, OPAL_PATH_SEP, values[i]);
             opal_argv_append_nosize(&data.preproc_flags, line);
             free(line);
         }
@@ -174,7 +174,7 @@ data_init(const char *appname)
 
     /* now load the data */
     asprintf(&datafile, "%s%s%s-wrapper-data.txt", 
-             OPAL_PKGDATADIR, OMPI_PATH_SEP, appname);
+             OPAL_PKGDATADIR, OPAL_PATH_SEP, appname);
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     ret = opal_util_keyval_parse(datafile, data_callback);
@@ -346,7 +346,7 @@ main(int argc, char *argv[])
         if (data.req_file[0] != '\0') {
             char *filename;
             struct stat buf;
-            asprintf(&filename, "%s%s%s", OPAL_LIBDIR, OMPI_PATH_SEP, data.req_file);
+            asprintf(&filename, "%s%s%s", OPAL_LIBDIR, OPAL_PATH_SEP, data.req_file);
             if (0 != stat(filename, &buf)) {
                 opal_show_help("help-opal-wrapper.txt", "file-not-found", true,
                                base_argv0, data.req_file, data.language, NULL);
