@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -295,7 +296,7 @@ PN(void, mpi_type_get_attr, MPI_TYPE_GET_ATTR, (MPI_Fint *type, MPI_Fint *type_k
 PN(void, mpi_type_get_contents, MPI_TYPE_GET_CONTENTS, (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr));
 PN(void, mpi_type_get_envelope, MPI_TYPE_GET_ENVELOPE, (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr));
 PN(void, mpi_type_get_extent, MPI_TYPE_GET_EXTENT, (MPI_Fint *type, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *ierr));
-PN(void, mpi_type_get_name, MPI_TYPE_GET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr));
+PN(void, mpi_type_get_name, MPI_TYPE_GET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN(void, mpi_type_get_true_extent, MPI_TYPE_GET_TRUE_EXTENT, (MPI_Fint *datatype, MPI_Aint *true_lb, MPI_Aint *true_extent, MPI_Fint *ierr));
 PN(void, mpi_type_hindexed, MPI_TYPE_HINDEXED, (MPI_Fint *count, MPI_Fint *array_of_blocklengths, MPI_Fint *array_of_displacements, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
 PN(void, mpi_type_hvector, MPI_TYPE_HVECTOR, (MPI_Fint *count, MPI_Fint *blocklength, MPI_Fint *stride, MPI_Fint *oldtype, MPI_Fint *newtype, MPI_Fint *ierr));
@@ -327,7 +328,7 @@ PN(void, mpi_win_free_keyval, MPI_WIN_FREE_KEYVAL, (MPI_Fint *win_keyval, MPI_Fi
 PN(void, mpi_win_get_attr, MPI_WIN_GET_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr));
 PN(void, mpi_win_get_errhandler, MPI_WIN_GET_ERRHANDLER, (MPI_Fint *win, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_win_get_group, MPI_WIN_GET_GROUP, (MPI_Fint *win, MPI_Fint *group, MPI_Fint *ierr));
-PN(void, mpi_win_get_name, MPI_WIN_GET_NAME, (MPI_Fint *win, char *win_name, MPI_Fint *resultlen, MPI_Fint *ierr));
+PN(void, mpi_win_get_name, MPI_WIN_GET_NAME, (MPI_Fint *win, char *win_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN(void, mpi_win_lock, MPI_WIN_LOCK, (MPI_Fint *lock_type, MPI_Fint *rank, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN(void, mpi_win_post, MPI_WIN_POST, (MPI_Fint *group, MPI_Fint *assert, MPI_Fint *win, MPI_Fint *ierr));
 PN(void, mpi_win_set_attr, MPI_WIN_SET_ATTR, (MPI_Fint *win, MPI_Fint *win_keyval, MPI_Aint *attribute_val, MPI_Fint *ierr));
