@@ -74,6 +74,9 @@
 /* Whether we want MPI cxx support or not */
 #undef OMPI_WANT_CXX_BINDINGS
 
+/* Whether a const_cast on a 2-d array will work with the C++ compiler */
+#undef OMPI_CXX_SUPPORTS_2D_CONST_CAST
+
 /* Whether we want the MPI f77 bindings or not */
 #undef OMPI_WANT_F77_BINDINGS
 
