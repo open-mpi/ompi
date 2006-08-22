@@ -540,7 +540,7 @@ static void mca_btl_mvapi_endpoint_recv(
     int endpoint_state;
     int rc; 
     uint32_t i;
-    size_t cnt = 1; 
+    int32_t cnt = 1; 
     mca_btl_mvapi_rem_info_t rem_info; 
 
 
