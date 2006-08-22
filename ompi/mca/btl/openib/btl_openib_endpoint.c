@@ -581,7 +581,7 @@ static void mca_btl_openib_endpoint_recv(
     int endpoint_state;
     int rc;
     uint32_t i; 
-    size_t cnt = 1; 
+    int32_t cnt = 1; 
     mca_btl_openib_rem_info_t rem_info; 
     
     /* start by unpacking data first so we know who is knocking at 

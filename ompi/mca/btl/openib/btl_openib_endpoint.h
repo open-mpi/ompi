@@ -171,7 +171,7 @@ struct mca_btl_base_endpoint_t {
     /**< info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
-    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
+    int32_t eager_rdma_index; /**< index into RDMA buffers pointer array */
     struct mca_btl_openib_frag_t *hp_credit_frag; /**< frag for sending explicit high priority credits */
     struct mca_btl_openib_frag_t *lp_credit_frag; /**< frag for sending explicit low priority credits */
 };
