@@ -27,9 +27,11 @@
 #ifndef _EVENT_INTERNAL_H_
 #define _EVENT_INTERNAL_H_
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+RB_HEAD(opal_event_tree, opal_event);
 
 struct event_base {
 	const struct opal_eventop *evsel;
@@ -46,10 +48,10 @@ struct event_base {
 	struct opal_event_list eventqueue;
 	struct timeval event_tv;
 
-	RB_HEAD(opal_event_tree, opal_event) timetree;
+	opal_event_tree timetree;
 };
 
-#ifdef __cplusplus
+#if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
 

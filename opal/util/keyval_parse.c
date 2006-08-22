@@ -99,7 +99,7 @@ static int parse_line(void)
     if (key_buffer_len < strlen(opal_util_keyval_yytext) + 1) {
         char *tmp;
         key_buffer_len = strlen(opal_util_keyval_yytext) + 1;
-        tmp = realloc(key_buffer, key_buffer_len);
+        tmp = (char*)realloc(key_buffer, key_buffer_len);
         if (NULL == tmp) {
             free(key_buffer);
             key_buffer_len = 0;

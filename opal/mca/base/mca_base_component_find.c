@@ -286,7 +286,7 @@ static int save_filename(const char *filename, lt_ptr data)
   if (NULL != params->name) {
     len += strlen(params->name);
   }
-  prefix = malloc(len);
+  prefix = (char*)malloc(len);
   snprintf(prefix, len, component_template, params->type);
   prefix_len = strlen(prefix);
   if (NULL != params->name) {
@@ -404,7 +404,7 @@ static int open_component(component_file_item_t *target_file,
      Malloc out enough space for it. */
 
   len = strlen(target_file->type) + strlen(target_file->name) + 32;
-  struct_name = malloc(len);
+  struct_name = (char*)malloc(len);
   if (NULL == struct_name) {
     lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
@@ -423,7 +423,7 @@ static int open_component(component_file_item_t *target_file,
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
-  component_struct = lt_dlsym(component_handle, struct_name);
+  component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
     if (0 != show_errors) {
         opal_output(0, "mca: base: component_find: \"%s\" does not appear to be a valid "
@@ -494,7 +494,7 @@ static int check_ompi_info(component_file_item_t *target_file,
   /* Form the filename */
 
   len = strlen(target_file->filename) + strlen(ompi_info_suffix) + 16;
-  depname = malloc(len);
+  depname = (char*)malloc(len);
   if (NULL == depname)
     return OPAL_ERR_OUT_OF_RESOURCE;
   snprintf(depname, len, "%s%s", target_file->filename, ompi_info_suffix);

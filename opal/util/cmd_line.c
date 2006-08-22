@@ -504,8 +504,8 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
     /* First, take the original list and sort it */
 
-    sorted = malloc(sizeof(cmd_line_option_t *) * 
-                    opal_list_get_size(&cmd->lcl_options));
+    sorted = (cmd_line_option_t**)malloc(sizeof(cmd_line_option_t *) * 
+                                         opal_list_get_size(&cmd->lcl_options));
     if (NULL == sorted) {
         return NULL;
     }

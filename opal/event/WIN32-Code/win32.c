@@ -1,6 +1,7 @@
 /*
  * Copyright 2000-2002 Niels Provos <provos@citi.umich.edu>
  * Copyright 2003 Michael A. Davis <mike@datanerds.net>
+ * Copyright 2006 George Bosilca <bosilca@cs.utk.edu>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,6 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "opal_config.h"
 #include "config.h"
 
 #include <winsock2.h>
@@ -33,22 +35,26 @@
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#if defined(HAVE_SIGNAL_H)
 #include <signal.h>
+#endif  /* defined(HAVE_SIGNAL_H) */
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
 #include <assert.h>
 
-#include "log.h"
-#include "event.h"
-#include "event-internal.h"
+#include "opal/event/event_rename.h"
+#include "opal/event/log.h"
+#include "opal/event/event.h"
+#include "opal/event/event-internal.h"
+#include "opal/event/WIN32-Code/misc.h"
 
 #define XFREE(ptr) do { if (ptr) free(ptr); } while(0)
 
-extern struct event_list timequeue;
-extern struct event_list addqueue;
-extern struct event_list signalqueue;
+extern struct opal_event_list opal_timequeue;
+extern struct opal_event_list opal_addqueue;
+extern struct opal_event_list opal_signalqueue;
 
 struct win_fd_set {
 	u_int fd_count;
@@ -60,7 +66,7 @@ volatile sig_atomic_t signal_caught = 0;
 /* MSDN says this is required to handle SIGFPE */
 volatile double SIGFPE_REQ = 0.0f;
 
-int signal_handler(int sig);
+void signal_handler(int sig);
 void signal_process(void);
 int signal_recalc(void);
 
@@ -73,90 +79,19 @@ struct win32op {
 	struct win_fd_set *exset_out;
 	int n_events;
 	int n_events_alloc;
-	struct event **events;
+	opal_event **events;
 };
 
-void *win32_init	(void);
-int win32_insert	(void *, struct event *);
-int win32_del	(void *, struct event *);
-int win32_recalc	(struct event_base *base, void *, int);
-int win32_dispatch	(struct event_base *base, void *, struct timeval *);
-
-struct eventop win32ops = {
+const struct opal_eventop opal_win32ops = {
 	"win32",
 	win32_init,
-	win32_insert,
-	win32_del,
-	win32_recalc,
-	win32_dispatch
+	(int (*)(void *, struct opal_event *))win32_insert,
+	(int (*)(void *, struct opal_event *))win32_del,
+	(int (*)(struct event_base *, void *, int))win32_recalc,
+	(int (*)(struct event_base *, void *, struct timeval *))win32_dispatch
 };
 
 #define FD_SET_ALLOC_SIZE(n) ((sizeof(struct win_fd_set) + ((n)-1)*sizeof(SOCKET)))
-
-static int
-realloc_fd_sets(struct win32op *op, size_t new_size)
-{
-	size_t size;
-
-	assert(new_size >= op->readset_in->fd_count &&
-	       new_size >= op->writeset_in->fd_count);
-	assert(new_size >= 1);
-
-	size = FD_SET_ALLOC_SIZE(new_size);
-	if (!(op->readset_in = realloc(op->readset_in, size)))
-		return (-1);
-	if (!(op->writeset_in = realloc(op->writeset_in, size)))
-		return (-1);
-	if (!(op->readset_out = realloc(op->readset_out, size)))
-		return (-1);
-	if (!(op->exset_out = realloc(op->exset_out, size)))
-		return (-1);
-	if (!(op->writeset_out = realloc(op->writeset_out, size)))
-		return (-1);
-	op->fd_setsz = new_size;
-	return (0);
-}
-
-static int
-timeval_to_ms(struct timeval *tv)
-{
-	return ((tv->tv_sec * 1000) + (tv->tv_usec / 1000));
-}
-
-static int
-do_fd_set(struct win32op *op, SOCKET s, int read)
-{
-	unsigned int i;
-	struct win_fd_set *set = read ? op->readset_in : op->writeset_in;
-	for (i=0;i<set->fd_count;++i) {
-		if (set->fd_array[i]==s)
-			return (0);
-	}
-	if (set->fd_count == op->fd_setsz) {
-		if (realloc_fd_sets(op, op->fd_setsz*2))
-			return (-1);
-		/* set pointer will have changed and needs reiniting! */
-		set = read ? op->readset_in : op->writeset_in;
-	}
-	set->fd_array[set->fd_count] = s;
-	return (set->fd_count++);
-}
-
-static int
-do_fd_clear(struct win32op *op, SOCKET s, int read)
-{
-	unsigned int i;
-	struct win_fd_set *set = read ? op->readset_in : op->writeset_in;
-	for (i=0;i<set->fd_count;++i) {
-		if (set->fd_array[i]==s) {
-			if (--set->fd_count != i) {
-				set->fd_array[i] = set->fd_array[set->fd_count];
-			}
-			return (0);
-		}
-	}
-	return (0);
-}
 
 #define NEVENT 64
 void *
@@ -164,23 +99,23 @@ win32_init(void)
 {
 	struct win32op *winop;
 	size_t size;
-	if (!(winop = calloc(1, sizeof(struct win32op))))
+	if (!(winop = (struct win32op*)calloc(1, sizeof(struct win32op))))
 		return NULL;
 	winop->fd_setsz = NEVENT;
 	size = FD_SET_ALLOC_SIZE(NEVENT);
-	if (!(winop->readset_in = malloc(size)))
+	if (!(winop->readset_in = (win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->writeset_in = malloc(size)))
+	if (!(winop->writeset_in = (win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->readset_out = malloc(size)))
+	if (!(winop->readset_out = (win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->writeset_out = malloc(size)))
+	if (!(winop->writeset_out = (win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->exset_out = malloc(size)))
+	if (!(winop->exset_out = (win_fd_set*)malloc(size)))
 		goto err;
 	winop->n_events = 0;
 	winop->n_events_alloc = NEVENT;
-	if (!(winop->events = malloc(NEVENT*sizeof(struct event*))))
+	if (!(winop->events = (opal_event**)malloc(NEVENT*sizeof(opal_event*))))
 		goto err;
 	winop->readset_in->fd_count = winop->writeset_in->fd_count = 0;
 	winop->readset_out->fd_count = winop->writeset_out->fd_count
@@ -201,188 +136,315 @@ win32_init(void)
 int
 win32_recalc(struct event_base *base, void *arg, int max)
 {
-	return (signal_recalc());
+	return 0/*(signal_recalc())*/;
+}
+
+static bool win32_is_fd_a_socket( int fd )
+{
+    int error;
+    u_long value = 123456;
+
+    if( SOCKET_ERROR == WSAHtonl( fd, value, &value ) ) {
+        error = WSAGetLastError();
+        return false;
+    }
+    return true;
+}
+
+void CALLBACK win32_socket_event_callback( void* lpParameter, BOOLEAN TimerOrWaitFired )
+{
+    opal_event* master = (opal_event*)lpParameter;
+    WSANETWORKEVENTS network_events;
+    int got, error;
+    opal_event* next;
+
+    assert( FALSE == TimerOrWaitFired );
+
+    /* The handle will be automatically reset */
+    if( SOCKET_ERROR == WSAEnumNetworkEvents( master->ev_fd, master->base_handle, &network_events ) ) {
+        error = WSAGetLastError();
+        return;
+    }
+
+    do {
+        got = 0;
+        next = master->ev_similar;
+        if( network_events.lNetworkEvents  & (FD_READ | FD_ACCEPT) ) {
+            if( master->ev_events & OPAL_EV_READ ) {
+                network_events.lNetworkEvents &= ~(FD_READ | FD_ACCEPT);
+                got |= OPAL_EV_READ;
+            }
+	    }
+        if( master->ev_events & OPAL_EV_WRITE ) {
+            got |= OPAL_EV_WRITE;
+            if( 0 == WSASetEvent(master->base_handle) ) {
+                int error = WSAGetLastError();
+            }
+	    }
+
+        if( got ) {
+    	    if (!(master->ev_events & OPAL_EV_PERSIST)) {
+	    	    opal_event_del(master);
+	        }
+
+            (*master->ev_callback)((int)master->ev_fd, got, master->ev_arg);
+		    /*opal_event_active( ev, got, 1 );*/
+        }
+        master = next;
+    } while( master != ((opal_event*)lpParameter) );
+}
+
+void CALLBACK win32_file_event_callback( void* lpParameter, BOOLEAN TimerOrWaitFired )
+{
+    opal_event* ev = (opal_event*)lpParameter;
+    int got = 0;
+
+    assert( FALSE == TimerOrWaitFired );
+
+    if( ev->ev_events & OPAL_EV_READ ) {
+		got |= OPAL_EV_READ;
+	}
+	if( ev->ev_events & OPAL_EV_WRITE ) {
+		got |= OPAL_EV_WRITE;
+	}
+
+	if (!(ev->ev_events & OPAL_EV_PERSIST)) {
+		opal_event_del(ev);
+	}
+
+    if( got ) {
+        /*(*ev->ev_callback)((int)ev->ev_fd, got, ev->ev_arg);*/
+		opal_event_active( ev, got, 1 );
+    }
+}
+
+static int win32_recompute_event( opal_event* master )
+{
+    long flags = FD_CLOSE | FD_ACCEPT | FD_CONNECT;
+    opal_event* temp;
+    int error;
+
+    if( INVALID_HANDLE_VALUE == master->base_handle ) {
+        master->base_handle = WSACreateEvent();
+        if( INVALID_HANDLE_VALUE == master->base_handle ) {
+            return 0;
+        }
+    }
+
+    /* Compute the flags we're looking at */
+    temp = master;
+    do {
+        if( temp->ev_events & OPAL_EV_READ )  flags |= FD_READ;
+        if( temp->ev_events & OPAL_EV_WRITE ) flags |= FD_WRITE;
+        temp = temp->ev_similar;
+    } while( temp != master );
+
+    if( SOCKET_ERROR == WSAEventSelect( master->ev_fd, master->base_handle, flags ) ) {
+        error = WSAGetLastError();
+        WSACloseEvent( master->base_handle );
+        master->base_handle = INVALID_HANDLE_VALUE;
+        return 0;
+    }
+    if( INVALID_HANDLE_VALUE == master->registered_handle ) {
+        if( 0 == RegisterWaitForSingleObject( &master->registered_handle, master->base_handle, win32_socket_event_callback,
+                                              (void*)master, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
+            error = GetLastError();
+            WSACloseEvent( master->base_handle );
+            master->base_handle = INVALID_HANDLE_VALUE;
+            master->registered_handle = INVALID_HANDLE_VALUE;
+            return 0;
+        }
+    }
+    if( flags & FD_WRITE ) {
+        if( 0 == WSASetEvent(master->base_handle) ) {
+            error = WSAGetLastError();
+        }
+    }
+    return 1;
 }
 
 int
-win32_insert(struct win32op *win32op, struct event *ev)
+win32_insert(struct win32op *win32op, opal_event *ev)
 {
 	int i;
+    opal_event* master = NULL;
 
-	if (ev->ev_events & EV_SIGNAL) {
-		if (ev->ev_events & (EV_READ|EV_WRITE))
+	if (ev->ev_events & OPAL_EV_SIGNAL) {
+		if (ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE))
 			event_errx(1, "%s: EV_SIGNAL incompatible use",
 			           __func__);
-		if((int)signal(EVENT_SIGNAL(ev), signal_handler) == -1)
+		if((int)signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == -1)
 			return (-1);
 
 		return (0);
 	}
-	if (!(ev->ev_events & (EV_READ|EV_WRITE)))
-		return (0);
 
-	for (i=0;i<win32op->n_events;++i) {
-		if(win32op->events[i] == ev) {
-			event_debug(("%s: Event for %d already inserted.",
-				     __func__, (int)ev->ev_fd));
-			return (0);
-		}
-	}
-	event_debug(("%s: adding event for %d", __func__, (int)ev->ev_fd));
-	if (ev->ev_events & EV_READ) {
-		if (do_fd_set(win32op, ev->ev_fd, 1)<0)
-			return (-1);
-	}
-	if (ev->ev_events & EV_WRITE) {
-		if (do_fd_set(win32op, ev->ev_fd, 0)<0)
-			return (-1);
-	}
+    /**
+     * Find a place for the current event.
+     */
+	for( i = 0; i < win32op->n_events; ++i ) {
+        if( win32op->events[i]->ev_fd != ev->ev_fd ) continue;
+        master = win32op->events[i];
+        if( master == ev ) {
+	        event_debug( ("%s: Event for %d already inserted.",
+		    	         __func__, (int)ev->ev_fd));
+			   return (0);
+	    }
 
-	if (win32op->n_events_alloc == win32op->n_events) {
-		size_t sz;
-		win32op->n_events_alloc *= 2;
-		sz = sizeof(struct event*)*win32op->n_events_alloc;
-		if (!(win32op->events = realloc(win32op->events, sz)))
-			return (-1);
+        if( master->ev_events & ev->ev_events ) {
+            event_debug( ("%d Event for %d already have a similar event posted.",
+                          __func__, (int)ev->ev_fd) );
+        }
+        ev->ev_similar = master->ev_similar;
+        master->ev_similar = ev;
+        break;
 	}
-	win32op->events[win32op->n_events++] = ev;
+    if( NULL == master ) {
+    	event_debug(("%s: adding event for %d", __func__, (int)ev->ev_fd));
+
+	    if (win32op->n_events_alloc == win32op->n_events) {
+		    size_t sz;
+    		win32op->n_events_alloc *= 2;
+	    	sz = sizeof(opal_event*)*win32op->n_events_alloc;
+		    if (!(win32op->events = (opal_event**)realloc(win32op->events, sz)))
+			    return (-1);
+	    }
+	    win32op->events[win32op->n_events++] = ev;
+        ev->ev_similar = ev;
+        master = ev;
+    }
+    ev->base_handle       = INVALID_HANDLE_VALUE;
+    ev->registered_handle = INVALID_HANDLE_VALUE;
+    /**
+     * Decide if we have a socket or a normal file descriptor. If it's a socket
+     * create a WSA event otherwise a normal file event will be what we need.
+     */
+    if( win32_is_fd_a_socket(ev->ev_fd) ) {
+        win32_recompute_event( master );
+    } else {
+        /*
+        if( ev->ev_events & OPAL_EV_READ )  flags |= FD_READ;
+        if( ev->ev_events & OPAL_EV_WRITE ) flags |= FD_WRITE;
+        ev->base_handle = (HANDLE)_get_osfhandle( ev->ev_fd );
+        if( INVALID_HANDLE_VALUE == ev->base_handle ) {
+            int error = errno;
+        }
+        if( 0 == RegisterWaitForSingleObject( &ev->registered_handle, ev->base_handle, win32_file_event_callback,
+                                              (void*)ev, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
+            error = GetLastError();
+        }*/
+    }
 
 	return (0);
 }
 
 int
-win32_del(struct win32op *win32op, struct event *ev)
+win32_del(struct win32op *win32op, opal_event *ev)
 {
-	int i, found;
+	int i, error;
+    opal_event *master = NULL, *temp;
 
-	if (ev->ev_events & EV_SIGNAL)
-		return ((int)signal(EVENT_SIGNAL(ev), SIG_IGN));
+	if (ev->ev_events & OPAL_EV_SIGNAL)
+		return ((int)signal(OPAL_EVENT_SIGNAL(ev), SIG_IGN));
 
-	found = -1;
-	for (i=0;i<win32op->n_events;++i) {
-		if(win32op->events[i] == ev) {
-			found = i;
-			break;
-		}
+	for( i = 0; i < win32op->n_events; ++i ) {
+		if( win32op->events[i]->ev_fd != ev->ev_fd ) continue;
+	    master = win32op->events[i];
+	    break;
 	}
-	if (found < 0) {
+	if( NULL == master ) {
 		event_debug(("%s: Unable to remove non-inserted event for %d",
 			     __func__, ev->ev_fd));
 		return (-1);
 	}
 	event_debug(("%s: Removing event for %d", __func__, ev->ev_fd));
-	if (ev->ev_events & EV_READ)
-		do_fd_clear(win32op, ev->ev_fd, 1);
-	if (ev->ev_events & EV_WRITE)
-		do_fd_clear(win32op, ev->ev_fd, 0);
 
-	if (i != --win32op->n_events) {
-		win32op->events[i] = win32op->events[win32op->n_events];
-	}
+    /**
+     * Remove the current event and recomputer the registered event
+     * based on the opal event pending on the same request.
+     */
+    if( master == ev ) {
+        if( ev->ev_similar == ev ) {
+            /* Only one event in the queue. Remove everything. */
+            if( INVALID_HANDLE_VALUE != ev->registered_handle ) {
+                if( 0 == UnregisterWait(ev->registered_handle) ) {
+                    error = GetLastError();
+                }
+                ev->registered_handle = INVALID_HANDLE_VALUE;
+            }
+            if( INVALID_HANDLE_VALUE != ev->base_handle ) { /* socket */
+                /* Now detach the base event from the socket. */
+                if( SOCKET_ERROR == WSAEventSelect( ev->ev_fd, ev->base_handle, 0) ) {
+                    error = WSAGetLastError();
+                }
+                /* Finally, destroy the event handle. */
+                if( 0 == WSACloseEvent(ev->base_handle) ) {
+                    error = WSAGetLastError();
+                }
+                ev->base_handle = INVALID_HANDLE_VALUE;
+            }
+
+            if (i != --win32op->n_events) {
+		        win32op->events[i] = win32op->events[win32op->n_events];
+	        }
+
+            return 0;
+        }
+        master = ev->ev_similar;
+        master->base_handle = ev->base_handle;
+        master->registered_handle = ev->registered_handle;
+        win32op->events[i] = master;
+        temp = master;
+        while( temp->ev_similar != ev ) {
+            temp = temp->ev_similar;
+        }
+        temp->ev_similar = master;
+    } else {
+        temp = master;
+        while( temp->ev_similar != ev ) {
+            temp = temp->ev_similar;
+        }
+        temp->ev_similar = ev->ev_similar;
+    }
+    win32_recompute_event( master );
 
 	return 0;
 }
 
-static void
-fd_set_copy(struct win_fd_set *out, const struct win_fd_set *in)
-{
-	out->fd_count = in->fd_count;
-	memcpy(out->fd_array, in->fd_array, in->fd_count * (sizeof(SOCKET)));
-}
-
-/*
-  static void dump_fd_set(struct win_fd_set *s)
-  {
-  unsigned int i;
-  printf("[ ");
-  for(i=0;i<s->fd_count;++i)
-  printf("%d ",(int)s->fd_array[i]);
-  printf("]\n");
-  }
-*/
-
 int
-win32_dispatch(struct event_base *base, struct win32op *win32op,
-	       struct timeval *tv)
+win32_dispatch( struct event_base *base, struct win32op *win32op,
+	            struct timeval *tv )
 {
-	int res = 0;
-	int i;
-	int fd_count;
+    DWORD milisec;
 
-	fd_set_copy(win32op->readset_out, win32op->readset_in);
-	fd_set_copy(win32op->exset_out, win32op->readset_in);
-	fd_set_copy(win32op->writeset_out, win32op->writeset_in);
-
-	fd_count =
-           (win32op->readset_out->fd_count > win32op->writeset_out->fd_count) ?
-	    win32op->readset_out->fd_count : win32op->writeset_out->fd_count;
-
-	if (!fd_count) {
-		/* Windows doesn't like you to call select() with no sockets */
-		Sleep(timeval_to_ms(tv));
-		signal_process();
-		return (0);
-	}
-
-	res = select(fd_count,
-		     (struct fd_set*)win32op->readset_out,
-		     (struct fd_set*)win32op->writeset_out,
-		     (struct fd_set*)win32op->exset_out, tv);
-
-	event_debug(("%s: select returned %d", __func__, res));
-
-	if(res <= 0) {
-		signal_process();
-		return res;
-	}
-
-	for (i=0;i<win32op->n_events;++i) {
-		struct event *ev;
-		int got = 0;
-		ev = win32op->events[i];
-		if ((ev->ev_events & EV_READ)) {
-			if (FD_ISSET(ev->ev_fd, win32op->readset_out) ||
-			    FD_ISSET(ev->ev_fd, win32op->exset_out)) {
-				got |= EV_READ;
-			}
-		}
-		if ((ev->ev_events & EV_WRITE)) {
-			if (FD_ISSET(ev->ev_fd, win32op->writeset_out)) {
-				got |= EV_WRITE;
-			}
-		}
-		if (!got)
-			continue;
-		if (!(ev->ev_events & EV_PERSIST)) {
-			event_del(ev);
-		}
-		event_active(ev,got,1);
-	}
-
-	if (signal_recalc() == -1)
-		return (-1);
-
-	return (0);
+    milisec = tv->tv_sec * 1000;
+    if( tv->tv_usec > 1000 ) {
+        milisec += tv->tv_usec / 1000;
+    }
+    SleepEx( milisec, TRUE );
+    if( 0 != signal_caught ) {
+        signal_process();
+        signal_recalc();
+    }
+    return 0;
 }
 
 
-static int
+static void
 signal_handler(int sig)
 {
 	evsigcaught[sig]++;
 	signal_caught = 1;
-
-	return 0;
 }
 
 int
 signal_recalc(void)
 {
-	struct event *ev;
+	opal_event *ev;
 
 	/* Reinstall our signal handler. */
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		if((int)signal(EVENT_SIGNAL(ev), signal_handler) == -1)
+	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
+		if((int)signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == -1)
 			return (-1);
 	}
 	return (0);
@@ -391,15 +453,15 @@ signal_recalc(void)
 void
 signal_process(void)
 {
-	struct event *ev;
+	opal_event *ev;
 	short ncalls;
 
-	TAILQ_FOREACH(ev, &signalqueue, ev_signal_next) {
-		ncalls = evsigcaught[EVENT_SIGNAL(ev)];
+	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
+		ncalls = evsigcaught[OPAL_EVENT_SIGNAL(ev)];
 		if (ncalls) {
-			if (!(ev->ev_events & EV_PERSIST))
-				event_del(ev);
-			event_active(ev, EV_SIGNAL, ncalls);
+			if (!(ev->ev_events & OPAL_EV_PERSIST))
+				opal_event_del(ev);
+			opal_event_active(ev, OPAL_EV_SIGNAL, ncalls);
 		}
 	}
 

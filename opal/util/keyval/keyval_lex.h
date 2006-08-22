@@ -50,6 +50,7 @@ extern int opal_util_keyval_yynewlines;
 #define YY_NEVER_INTERACTIVE 0
 #define YY_MAIN 0
 #define YY_NO_UNPUT 1
+#define YY_SKIP_YYWRAP 1
 
 enum {
     OPAL_UTIL_KEYVAL_PARSE_DONE,
