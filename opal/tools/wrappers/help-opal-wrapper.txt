@@ -49,3 +49,12 @@ one of several possible environment variables.
 [file-not-found]
 %s could not find the file %s, needed for %s support.
 This may indicate an incomplete install and linking will likely fail.
+
+[spawn-failed]
+Unable to call the compiler (%s). The failure return the error
+%s.
+The failed command was [%s].
+
+[compiler-failed]
+The child process (%s) exit with error %d.
+The failed command was [%s].
