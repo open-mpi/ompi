@@ -28,6 +28,21 @@
 #error "opal_config_bottom.h should only be included from opal_config.h"
 #endif
 
+/*
+ * If we build a static library, Visual C define the _LIB symbol. In the
+ * case of a shared library _USERDLL get defined.
+ *
+ * OMPI_BUILDING and _LIB define how ompi_config.h
+ * handles configuring all of Open MPI's "compatibility" code.  Both
+ * constants will always be defined by the end of ompi_config.h.
+ *
+ * OMPI_BUILDING affects how much compatibility code is included by
+ * ompi_config.h.  It will always be 1 or 0.  The user can set the
+ * value before including either mpi.h or ompi_config.h and it will be
+ * respected.  If ompi_config.h is included before mpi.h, it will
+ * default to 1.  If mpi.h is included before ompi_config.h, it will
+ * default to 0.
+ */
 #ifndef OMPI_BUILDING
 #define OMPI_BUILDING 1
 #endif
@@ -47,11 +62,11 @@
  * Windows library interface declaration code
  *
  **********************************************************************/
-#ifndef __WINDOWS__
+#if !defined(__WINDOWS__)
 #  if defined(_WIN32) || defined(WIN32) || defined(WIN64)
 #    define __WINDOWS__
 #  endif
-#endif
+#endif  /* !defined(__WINDOWS__) */
 
 #if defined(__WINDOWS__)
 
@@ -77,6 +92,21 @@
    /* On Unix - this define is plain useless */
 #  define OPAL_DECLSPEC
 #  define OPAL_MODULE_DECLSPEC
+#endif
+
+/*
+ * Do we have <stdint.h>?
+ */
+#ifdef HAVE_STDINT_H
+#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
+/* When using a C++ compiler, the max / min value #defines for std
+   types are only included if __STDC_LIMIT_MACROS is set before
+   including stdint.h */
+#define __STDC_LIMIT_MACROS
+#endif
+#include <stdint.h>
+#else
+#include "opal_stdint.h"
 #endif
 
 /***********************************************************************
@@ -140,7 +170,7 @@ typedef long long bool;
 #endif
 
 /*
- * Set the compile-time path-separator on this system
+ * Set the compile-time path-separator on this system and variable separator
  */
 #ifdef __WINDOWS__
 #define OPAL_PATH_SEP "\\"
@@ -150,20 +180,6 @@ typedef long long bool;
 #define OPAL_ENV_SEP  ':'
 #endif
 
-/*
- * Do we have <stdint.h>?
- */
-#ifdef HAVE_STDINT_H
-#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
-/* When using a C++ compiler, the max / min value #defines for std
-   types are only included if __STDC_LIMIT_MACROS is set before
-   including stdint.h */
-#define __STDC_LIMIT_MACROS
-#endif
-#include <stdint.h>
-#else
-#include "opal_stdint.h"
-#endif
 
 /*
  * Do we want memory debugging?
@@ -293,5 +309,24 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #if defined(HAVE_DECL___FUNC__) && !HAVE_DECL___FUNC__
 #define __func__ __FILE__
 #endif
+
+/**
+ * Because of the way we're using the opal_object inside Open MPI (i.e.
+ * dynamic resolution at run-time to derive all objects from the basic
+ * type), on Windows we have to build everything on C++ mode, simply
+ * because the C mode does not support dynamic resolution in DLL. Therefore,
+ * no automatic conversion is allowed. All types have to be explicitly casted
+ * or the compiler generate an error. This is true even for the void* type. As
+ * we use void* to silence others compilers in the resolution of the addr member
+ * of the iovec structure, we have now to find a way around. The simplest solution
+ * is to define a special type for this field (just for casting). It can be
+ * set to void* on all platforms with the exception of windows where it has to be
+ * char*.
+ */
+#if defined(__WINDOWS__)
+#define IOVBASE_TYPE  char
+#else
+#define IOVBASE_TYPE  void
+#endif  /* defined(__WINDOWS__) */
 
 #endif /* OMPI_BUILDING */
