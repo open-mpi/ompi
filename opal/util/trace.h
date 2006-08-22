@@ -30,10 +30,6 @@
 
 #include "opal/util/output.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 #define OPAL_TRACE(verbose) \
     do {                                                                       \
         opal_output_verbose(verbose, opal_trace_handle, "TRACE: %s @ %s:%d",   \
@@ -59,6 +55,10 @@ extern "C" {
 #define OPAL_TRACE_ARG2(verbose, foo, foo2)
 
 #endif /* ENABLE_TRACE */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 extern int opal_trace_handle;
 
