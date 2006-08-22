@@ -416,7 +416,7 @@ opal_event_base_priority_init(struct event_base *base, int npriorities)
 		event_err(1, "%s: calloc", __func__);
 
 	for (i = 0; i < base->nactivequeues; ++i) {
-		base->activequeues[i] = (opal_event_list*)malloc(sizeof(struct opal_event_list));
+		base->activequeues[i] = (struct opal_event_list*)malloc(sizeof(struct opal_event_list));
 		if (base->activequeues[i] == NULL)
 			event_err(1, "%s: malloc", __func__);
 		TAILQ_INIT(base->activequeues[i]);
