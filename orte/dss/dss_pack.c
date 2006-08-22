@@ -320,13 +320,13 @@ int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
     for (i = 0; i < num_vals; ++i) {
         if (NULL == ssrc[i]) {  /* got zero-length string/NULL pointer - store NULL */
             len = 0;
-            if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &len, 1, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
         } else {
             len = strlen(ssrc[i]) + 1;
-            if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &len, 1, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
@@ -447,7 +447,7 @@ int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t 
 
     for (i = 0; i < num; ++i) {
         n = sbyteptr[i]->size;
-        if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &n, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &n, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }

@@ -492,7 +492,7 @@ int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
     char **sdest = (char**) dest;
 
     for (i = 0; i < (*num_vals); ++i) {
-        if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(buffer, &len, &n, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &len, &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
@@ -732,7 +732,7 @@ int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest, orte_std_cntr
         }
 
         /* unpack object size in bytes */
-        if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(buffer, &(dbyteptr[i]->size), &m, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &(dbyteptr[i]->size), &m, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
