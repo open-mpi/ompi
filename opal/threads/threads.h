@@ -19,9 +19,7 @@
 #ifndef OPAL_THREAD_H
 #define OPAL_THREAD_H 1
 
-#ifdef __WINDOWS__
-#include <windows.h>
-#elif OMPI_HAVE_POSIX_THREADS
+#if OMPI_HAVE_POSIX_THREADS
 #include <pthread.h>
 #elif OMPI_HAVE_SOLARIS_THREADS
 #include <thread.h>
