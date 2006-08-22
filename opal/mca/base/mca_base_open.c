@@ -56,7 +56,7 @@ int mca_base_open(void)
   int param_index;
   char *value, *home;
   opal_output_stream_t lds;
-  char hostname[MAXHOSTNAMELEN];
+  char hostname[64];
 
   if (!mca_base_opened) {
     mca_base_opened = true;
@@ -100,7 +100,7 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
-  gethostname(hostname, MAXHOSTNAMELEN);
+  gethostname(hostname, 64);
   asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");
