@@ -156,7 +156,7 @@ struct mca_btl_base_endpoint_t {
     /**< info about remote RDMA buffer */
     mca_btl_mvapi_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
-    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
+    int32_t eager_rdma_index; /**< index into RDMA buffers pointer array */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
