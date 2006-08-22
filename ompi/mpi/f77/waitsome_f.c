@@ -109,7 +109,7 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
             for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
                 if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 4]);
+                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 5]);
                 }
             }
         }
