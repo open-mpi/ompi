@@ -137,7 +137,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     AC_LANG_PUSH(C++)
     AC_CACHE_CHECK([if $CXX supports __builtin_expect],
         [ompi_cv_cxx_supports___builtin_expect],
-        [AC_TRY_COMPILE([],
+        [AC_TRY_LINK([],
           [void *ptr = (void*) 0;
            if (__builtin_expect (ptr != (void*) 0, 1)) return 0;],
           [ompi_cv_cxx_supports___builtin_expect="yes"],
@@ -155,7 +155,7 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     AC_LANG_PUSH(C++)
     AC_CACHE_CHECK([if $CXX supports __builtin_prefetch],
         [ompi_cv_cxx_supports___builtin_prefetch],
-        [AC_TRY_COMPILE([],
+        [AC_TRY_LINK([],
           [int ptr;
            __builtin_prefetch(&ptr,0,0);],
           [ompi_cv_cxx_supports___builtin_prefetch="yes"],
