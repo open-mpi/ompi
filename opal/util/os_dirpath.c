@@ -81,7 +81,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     /* Ensure to allocate enough space for tmp: the strlen of the
        incoming path + 1 (for \0) */
 
-    tmp = malloc(strlen(path) + 1);
+    tmp = (char*)malloc(strlen(path) + 1);
     tmp[0] = '\0';
 
     /* Iterate through all the subdirectory names in the path,
@@ -285,7 +285,7 @@ int opal_os_dirpath_destroy(const char *path,
     
     if (INVALID_HANDLE_VALUE == file) {
         FindClose(&file_data);
-        return;
+        return OPAL_ERROR;
     } 
     
     do {

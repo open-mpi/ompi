@@ -126,6 +126,11 @@ struct opal_event {
 
 	int ev_res;		/* result passed to event callback */
 	int ev_flags;
+#if defined(__WINDOWS__)
+    HANDLE base_handle;
+    HANDLE registered_handle;
+    struct opal_event* ev_similar;
+#endif  /* defined(__WINDOWS__) */
 };
 typedef struct opal_event opal_event_t;
 

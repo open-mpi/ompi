@@ -42,6 +42,7 @@
 #endif
 
 #include "event.h"
+#include "opal/opal_socket_errno.h"
 
 /* prototypes */
 
@@ -70,7 +71,7 @@ bufferevent_add(struct opal_event *ev, int timeout)
 static void
 bufferevent_read_pressure_cb(struct evbuffer *buf, size_t old, size_t now,
     void *arg) {
-	struct bufferevent *bufev = arg;
+	struct bufferevent *bufev = (struct bufferevent*)arg;
 	/* 
 	 * If we are below the watermak then reschedule reading if it's
 	 * still enabled.
@@ -86,7 +87,7 @@ bufferevent_read_pressure_cb(struct evbuffer *buf, size_t old, size_t now,
 static void
 bufferevent_readcb(int fd, short event, void *arg)
 {
-	struct bufferevent *bufev = arg;
+	struct bufferevent *bufev = (struct bufferevent*)arg;
 	int res = 0;
 	short what = OPAL_EVBUFFER_READ;
 	size_t len;
@@ -140,7 +141,7 @@ bufferevent_readcb(int fd, short event, void *arg)
 static void
 bufferevent_writecb(int fd, short event, void *arg)
 {
-	struct bufferevent *bufev = arg;
+	struct bufferevent *bufev = (struct bufferevent*)arg;
 	int res = 0;
 	short what = OPAL_EVBUFFER_WRITE;
 
@@ -201,7 +202,7 @@ bufferevent_new(int fd, evbuffercb readcb, evbuffercb writecb,
 {
 	struct bufferevent *bufev;
 
-	if ((bufev = calloc(1, sizeof(struct bufferevent))) == NULL)
+	if ((bufev = (struct bufferevent*)calloc(1, sizeof(struct bufferevent))) == NULL)
 		return (NULL);
 
 	if ((bufev->input = evbuffer_new()) == NULL) {

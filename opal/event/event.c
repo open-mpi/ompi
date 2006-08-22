@@ -416,7 +416,7 @@ opal_event_base_priority_init(struct event_base *base, int npriorities)
 		event_err(1, "%s: calloc", __func__);
 
 	for (i = 0; i < base->nactivequeues; ++i) {
-		base->activequeues[i] = malloc(sizeof(struct opal_event_list));
+		base->activequeues[i] = (opal_event_list*)malloc(sizeof(struct opal_event_list));
 		if (base->activequeues[i] == NULL)
 			event_err(1, "%s: malloc", __func__);
 		TAILQ_INIT(base->activequeues[i]);
@@ -496,7 +496,7 @@ opal_event_base_dispatch(struct event_base *event_base)
 static void
 event_loopexit_cb(int fd, short what, void *arg)
 {
-	struct event_base *base = arg;
+	struct event_base *base = (struct event_base*)arg;
 	base->event_gotterm = 1;
 }
 
@@ -529,8 +529,10 @@ opal_event_base_loop(struct event_base *base, int flags)
 {
 	const struct opal_eventop *evsel = base->evsel;
 	void *evbase = base->evbase;
+#if OPAL_HAVE_WORKING_EVENTOPS
 	struct timeval tv;
 	int res, done;
+#endif  /* OPAL_HAVE_WORKING_EVENTOPS */
 
 	if (opal_event_inited == false)
 		return(0);
@@ -633,7 +635,7 @@ struct event_once {
 static void
 event_once_cb(int fd, short events, void *arg)
 {
-	struct event_once *eonce = arg;
+	struct event_once *eonce = (struct event_once*)arg;
 
 	(*eonce->cb)(fd, events, eonce->arg);
 	free(eonce);
@@ -652,7 +654,7 @@ opal_event_once(int fd, short events,
 	if (events & OPAL_EV_SIGNAL)
 		return (-1);
 
-	if ((eonce = calloc(1, sizeof(struct event_once))) == NULL)
+	if ((eonce = (struct event_once*)calloc(1, sizeof(struct event_once))) == NULL)
 		return (-1);
 
 	eonce->cb = callback;
@@ -842,10 +844,12 @@ opal_event_add_i(struct opal_event *ev, struct timeval *tv)
 int
 opal_event_del_i(struct opal_event *ev)
 {
-		int rc = 0;
+    int rc = 0;
+#if OPAL_HAVE_WORKING_EVENTOPS
 	struct event_base *base;
 	const struct opal_eventop *evsel;
 	void *evbase;
+#endif  /* OPAL_HAVE_WORKING_EVENTOPS */
 
 	event_debug(("event_del: %p, callback %p",
 		 ev, ev->ev_callback));

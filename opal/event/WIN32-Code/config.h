@@ -98,7 +98,7 @@
 #define HAVE_GETTIMEOFDAY 1
 
 /* Define if you have the <inttypes.h> header file. */
-#define HAVE_INTTYPES_H 1
+/* #undef HAVE_INTTYPES_H */
 
 /* Define if you have the `kqueue' function. */
 #undef HAVE_KQUEUE
@@ -227,13 +227,10 @@
 /* Define to `unsigned char' if <sys/types.h> does not define. */
 /* #undef u_int8_t */
 
-<<<<<<< .working
 int win_read(int, void *, unsigned int);
 int win_write(int, void *, unsigned int);
 int socketpair(int d, int type, int protocol, int *sv);
 
+#if !defined(__func__)
 #define __func__ __FILE__
-=======
-/* Define to __FUNCTION__ or __file__ if your compiler doesn't have __func__ */
-#define __func__ __FUNCTION__
->>>>>>> .merge-right.r10952
+#endif  /* !defined(__func__) */

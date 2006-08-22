@@ -143,7 +143,11 @@ struct opal_output_stream_t {
      * 
      * If a NULL value is given, the string "opal" is used.
      */
+#ifndef __WINDOWS__
     char *lds_syslog_ident;
+#else
+    HANDLE lds_syslog_ident;
+#endif
     
     /**
      * String prefix added to all output on the stream.
