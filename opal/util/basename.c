@@ -20,6 +20,9 @@
 
 #include <stdlib.h>
 #include <string.h>
+#if HAVE_DIRNAME
+#include <libgen.h>
+#endif  /* HAVE_DIRNAME */
 
 #include "opal/util/basename.h"
 #include "opal/util/os_path.h"
@@ -42,7 +45,7 @@ static inline char* opal_find_last_path_separator( const char* filename, size_t 
         if( (*p != '\\') && (*p != '/') )
             break;
 #else
-        if( *p != OPAL_PATH_SEP )
+        if( *p != OPAL_PATH_SEP[0] )
             break;
 #endif  /* defined(__WINDOWS__) */
     }
@@ -52,7 +55,7 @@ static inline char* opal_find_last_path_separator( const char* filename, size_t 
         if( (*p == '\\') || (*p == '/') )
             return p;
 #else
-        if( *p == OPAL_PATH_SEP )
+        if( *p == OPAL_PATH_SEP[0] )
             return p;
 #endif  /* defined(__WINDOWS__) */
     }

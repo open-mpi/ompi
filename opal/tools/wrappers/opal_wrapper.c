@@ -582,7 +582,6 @@ main(int argc, char *argv[])
 
             free(exec_argv[0]);
             exec_argv[0] = tmp;
-            //free(tmp);
             ret = opal_few(exec_argv, &status);
             exit_status = WIFEXITED(status) ? WEXITSTATUS(status) :
                               (WIFSIGNALED(status) ? WTERMSIG(status) :
