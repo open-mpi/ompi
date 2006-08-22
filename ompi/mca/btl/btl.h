@@ -286,6 +286,17 @@ struct mca_btl_base_component_1_0_1_t {
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
 
+/* add the 1_0_0_t typedef for source compatability 
+ *   we can do this safely because 1_0_0 components are the same as 
+ *  1_0_1 components, the difference is in the btl module. 
+ *  Fortunately the only difference in the module is an additional interface
+ *  function added to 1_0_1. We can therefore safely treat an older module just
+ *  just like the new one so long as we check the component version 
+ *  prior to invoking the new interface function.
+ */
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_0_t;
+
+
 
 /*
  * BTL module interface functions and datatype.
@@ -565,12 +576,23 @@ struct mca_btl_base_module_t {
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
- * Macro for use in modules that are of type btl v1.0.0
+ * Macro for use in modules that are of type btl v1.0.1
  */
 #define MCA_BTL_BASE_VERSION_1_0_1 \
   /* coll v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
   /* btl v1.0 */ \
   "btl", 1, 0, 1
+
+
+/*
+ * Macro for use in modules that are of type btl v1.0.0
+ *  alows older btl sources to compile..
+ */
+#define MCA_BTL_BASE_VERSION_1_0_0 \
+  /* coll v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* btl v1.0 */ \
+  "btl", 1, 0, 0
 
 #endif /* OMPI_MCA_BTL_H */
