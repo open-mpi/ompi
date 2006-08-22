@@ -39,14 +39,7 @@
 #include "opal/util/os_path.h"
 #include "opal/constants.h"
 
-#ifdef __WINDOWS__
-#define PATH_SEP "\\"
-#else
-#define PATH_SEP "/"
-#endif
-
-static const char *path_sep = PATH_SEP;
-
+static const char path_sep[] = OPAL_PATH_SEP;
 
 int opal_os_dirpath_create(const char *path, const mode_t mode)
 {
@@ -172,7 +165,7 @@ int opal_os_dirpath_destroy(const char *path,
     int rc, exit_status = OPAL_SUCCESS;
     bool is_dir = false;
 
-#ifndef WIN32
+#ifndef __WINDOWS__
     DIR *dp;
     struct dirent *ep;
     char *filenm;
@@ -269,7 +262,6 @@ int opal_os_dirpath_destroy(const char *path,
      */
     closedir(dp);
 #else
-    bool empty = false;
     char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;
@@ -280,11 +272,11 @@ int opal_os_dirpath_destroy(const char *path,
     }
     
     strncpy(search_path, path, strlen(path)+1);
-    strncat (search_path, "\\*", 3);
+    strncat (search_path, OPAL_PATH_SEP"*", 3);
     file = FindFirstFile(search_path, &file_data);
     
     if (INVALID_HANDLE_VALUE == file) {
-        FindClose(&file_data);
+        FindClose(file);
         return OPAL_ERROR;
     } 
     
@@ -333,17 +325,9 @@ int opal_os_dirpath_destroy(const char *path,
         else {
             DeleteFile(file_name);
         }
-        
-        /*
-         * Are we done yet?
-         */
-        if (0 == FindNextFile(file, &file_data)) {
-            empty = true;
-        }
-        
-    } while(!empty);
+    } while( 0 != FindNextFile(file, &file_data) );
     
-    FindClose(&file_data);
+    FindClose(file);
 #endif
     
  cleanup:
@@ -384,6 +368,7 @@ bool opal_os_dirpath_is_empty(const char *path ) {
     char search_path[MAX_PATH];
     HANDLE file;
     WIN32_FIND_DATA file_data;
+    bool found = false;
 
     if (NULL != path) {
         strncpy(search_path, path, strlen(path)+1);
@@ -391,25 +376,19 @@ bool opal_os_dirpath_is_empty(const char *path ) {
 
         file = FindFirstFile(search_path, &file_data);
         if (INVALID_HANDLE_VALUE == file) {
-            FindClose(&file_data);
-            return true;
+            goto cleanup;
         }
 
-        if (0 != strcmp(file_data.cFileName, ".") || 0 != strcmp(file_data.cFileName, "..")) {
-            FindClose(&file_data);
-            return false;
-        }
-
-        while (0 != FindNextFile(file, &file_data)) {
+        do {
             if (0 != strcmp(file_data.cFileName, ".") || 0 != strcmp(file_data.cFileName, "..")) {
-                FindClose(&file_data);
-                return false;
+                found = true;
+                goto cleanup;
             }
-        }
+        } while (0 != FindNextFile(file, &file_data));
     }
-
-    FindClose(&file_data);
-    return true;
+  cleanup:
+    FindClose(file);
+    return found;
 #endif /* ifndef __WINDOWS__ */
 }
 

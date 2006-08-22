@@ -34,20 +34,13 @@
 #include "opal/util/os_path.h"
 #include "opal/constants.h"
 
-#ifdef __WINDOWS__
-#define PATH_SEP "\\"
-#else
-#define PATH_SEP "/"
-#endif
-
-static const char *path_sep = PATH_SEP;
-
+static const char *path_sep = OPAL_PATH_SEP;
 
 char *opal_os_path(bool relative, ...)
 {
     va_list ap, ap1;
     char *element, *path;
-    int num_elements, total_length;
+    size_t num_elements, total_length;
 
     va_start(ap, relative);
     va_start(ap1, relative);
@@ -112,5 +105,5 @@ char *opal_os_path(bool relative, ...)
 
     va_end(ap);
     va_end(ap1);
-    return(path);
+    return opal_make_filename_os_friendly(path);
 }

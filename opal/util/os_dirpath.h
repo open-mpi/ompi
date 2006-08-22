@@ -49,6 +49,10 @@
 #include <sys/stat.h>
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @param path A pointer to a string that contains the path name to be built.
  * @param mode A mode_t bit mask that specifies the access permissions for the
@@ -114,5 +118,9 @@ typedef bool (*opal_os_dirpath_destroy_callback_fn_t)(const char *root, const ch
 OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path, 
                                           bool recursive, 
                                           opal_os_dirpath_destroy_callback_fn_t cbfunc);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

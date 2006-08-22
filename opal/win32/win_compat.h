@@ -116,13 +116,15 @@ typedef unsigned int uint;
 #define close(FD)                 _close((FD))
 #define unlink(PATH)              _unlink((PATH))
 #define dup2(OLDFD, NEWFD)        _dup2((OLDFD), (NEWFD))
-#define write(FD, BUF, SIZE)      _write((FD), (BUF), (SIZE))
-#define read(FD, BUF, SIZE)       _read((FD), (BUF), (SIZE))
+#define write(FD, BUF, SIZE)      _write((FD), (BUF), (unsigned int)(SIZE))
+#define read(FD, BUF, SIZE)       _read((FD), (BUF), (unsigned int)(SIZE))
 #define fileno(FD)                _fileno((FD))
 #define isatty(FD)                _isatty((FD))
 #define execvp                    _execvp
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
 #define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
+#define strncasecmp               _strnicmp
+#define strcasecmp                _stricmp
 
 #define UINT32_MAX _UI32_MAX
 #define INT32_MAX  _I32_MAX
