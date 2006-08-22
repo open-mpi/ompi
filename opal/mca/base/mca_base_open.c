@@ -54,9 +54,9 @@ static void parse_verbose(char *e, opal_output_stream_t *lds);
 int mca_base_open(void)
 {
   int param_index;
-  char *value;
+  char *value, *home;
   opal_output_stream_t lds;
-  char hostname[64];
+  char hostname[MAXHOSTNAMELEN];
 
   if (!mca_base_opened) {
     mca_base_opened = true;
@@ -65,8 +65,14 @@ int mca_base_open(void)
   }
 
   /* Register some params */
+#if !defined(__WINDOWS__)
+  home = getenv("HOME");
+  asprintf(&value, "%s:%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", OPAL_PKGLIBDIR, home);
+#else
+  home = getenv("USERPROFILE");
+  asprintf(&value, "%s;%s"OPAL_PATH_SEP".openmpi"OPAL_PATH_SEP"components", OPAL_PKGLIBDIR, home);
+#endif  /* !defined(__WINDOWS__) */
 
-  asprintf(&value, "%s:~/.openmpi/components", OPAL_PKGLIBDIR);
   mca_base_param_component_path = 
     mca_base_param_reg_string_name("mca", "component_path",
                                    "Path where to look for Open MPI and ORTE components", 
@@ -94,7 +100,7 @@ int mca_base_open(void)
   } else {
     set_defaults(&lds);
   }
-  gethostname(hostname, sizeof(hostname));
+  gethostname(hostname, MAXHOSTNAMELEN);
   asprintf(&lds.lds_prefix, "[%s:%05d] ", hostname, getpid());
   opal_output_reopen(0, &lds);
   opal_output_verbose(5, 0, "mca: base: opening components");
@@ -189,7 +195,7 @@ static void parse_verbose(char *e, opal_output_stream_t *lds)
 
     else if (strncasecmp(ptr, "level", 5) == 0) {
       lds->lds_verbose_level = 0;
-      if (ptr[5] == ':')
+      if (ptr[5] == OPAL_ENV_SEP)
         lds->lds_verbose_level = atoi(ptr + 6);
     }
 

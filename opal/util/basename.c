@@ -22,18 +22,49 @@
 #include <string.h>
 
 #include "opal/util/basename.h"
+#include "opal/util/os_path.h"
 #include "opal/constants.h"
 
+/**
+ * Return a pointer into the original string where the last PATH delimiter
+ * was found. It does not modify the original string. Moreover, it does not
+ * scan the full string, but only the part allowed by the specified number
+ * of characters.
+ * If the last character on the string is a path separator, it will be skipped.
+ */
+static inline char* opal_find_last_path_separator( const char* filename, size_t n )
+{
+    char* p = (char*)filename + n;
+
+    /* First skip the latest separators */
+    for( ; p != filename; p-- ) {
+#if defined(__WINDOWS__)
+        if( (*p != '\\') && (*p != '/') )
+            break;
+#else
+        if( *p != OPAL_PATH_SEP )
+            break;
+#endif  /* defined(__WINDOWS__) */
+    }
+
+    for( ; p != filename; p-- ) {
+#if defined(__WINDOWS__)
+        if( (*p == '\\') || (*p == '/') )
+            return p;
+#else
+        if( *p == OPAL_PATH_SEP )
+            return p;
+#endif  /* defined(__WINDOWS__) */
+    }
+
+    return NULL;  /* nothing found inside the filename */
+}
 
 char *opal_basename(const char *filename)
 {
     size_t i;
     char *tmp, *ret = NULL;
-#ifdef __WINDOWS__
-    const char sep = '\\';
-#else
-    const char sep = '/';
-#endif
+    const char sep = OPAL_PATH_SEP[0];
 
     /* Check for the bozo case */
 
@@ -92,5 +123,34 @@ char *opal_basename(const char *filename)
     }
     ret = strdup(ret + 1);
     free(tmp);
-    return ret;
+    return opal_make_filename_os_friendly(ret);
+}
+
+char* opal_dirname(const char* filename)
+{
+#if defined(HAVE_DIRNAME)
+    return dirname(filename);
+#else
+    const char* p = opal_find_last_path_separator(filename, strlen(filename));
+
+    for( ; p != filename; p-- ) {
+        if( (*p == '\\') || (*p == '/') ) {
+            /* If there are several delimiters remove them all */
+            for( --p; p != filename; p-- ) {
+                if( (*p != '\\') && (*p != '/') ) {
+                    p++;
+                    break;
+                }
+            }
+            if( p != filename ) {
+                char* ret = (char*)malloc( p - filename + 1 );
+                strncpy_s( ret, (p - filename + 1), filename, p - filename );
+                ret[p - filename] = '\0';
+                return opal_make_filename_os_friendly(ret);
+            }
+            break;  /* return the duplicate of "." */
+        }
+    }
+    return _strdup(".");
+#endif  /* defined(HAVE_DIRNAME) */
 }

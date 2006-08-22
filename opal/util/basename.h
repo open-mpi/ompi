@@ -63,7 +63,44 @@ extern "C" {
      *
      * G:\ returns "G:"
      */
-    char *opal_basename(const char* filename);
+    OPAL_DECLSPEC char *opal_basename(const char* filename);
+
+    /**
+     * Return the dirname of a filename.
+     *
+     * @param filename The filename to examine
+     *
+     * @returns A string containing the dirname, or NULL if there is an error
+     *
+     * The contents of the \em filename parameter are unchanged.  This
+     * function returns a new string containing the dirname of the
+     * filename (which must be eventually freed by the caller), or
+     * NULL if there is an error.  Trailing "/" characters in the
+     * filename do not count, unless it is in the only part of the
+     * filename (e.g., "/" or "C:\").
+     *
+     * This function will do the Right Things on POSIX and
+     * Windows-based operating systems.  For example:
+     *
+     * foo.txt returns "foo.txt"
+     * 
+     * /foo/bar/baz returns "/foo/bar"
+     *
+     * /yow.c returns "/"
+     *
+     * / returns ""
+     *
+     * C:\foo\bar\baz returns "C:\foo\bar"
+     *
+     * D:foo.txt returns "D:"
+     *
+     * E:\yow.c returns "E:"
+     *
+     * F: returns ""
+     *
+     * G:\ returns ""
+     */
+    OPAL_DECLSPEC char *opal_dirname(const char* filename);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

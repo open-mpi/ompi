@@ -29,27 +29,35 @@ static __inline char* getenv (const char *name)
 {
     int ret;
     char *buffer;
-    DWORD length = GetEnvironmentVariable( (LPCSTR)((void*)name), NULL, 0 );
+    DWORD length = GetEnvironmentVariable( (LPCSTR)name, NULL, 0 );
 
     if( 0 == length ) return NULL;
     buffer = (char *)malloc(sizeof(char) * length);
-    ret = GetEnvironmentVariable((LPCSTR)((void*)name), (LPSTR)((void*)buffer), length);
+    ret = GetEnvironmentVariable((LPCSTR)name, (LPSTR)buffer, length);
     return (ret > 0) ? buffer: NULL;
 }
 
 
-static __inline int setenv (const char *name, const char *value, int rewrite) {
-
+static __inline int setenv (const char *name, const char *value, int rewrite)
+{
+    int ret;
+    if( 0 == rewrite  ) {
+        DWORD length = 0;
+        if( 0 == (length = GetEnvironmentVariable( (LPCSTR)name, NULL, length )) ) {
+            if( ERROR_ENVVAR_NOT_FOUND == GetLastError() ) {  /* do not exist */
+                return 0;
+            }
+        }
+    }
     /* just push it back to the windows thingy */
-    int ret = SetEnvironmentVariable ((LPCSTR)((void*)name), (LPCSTR)((void*)value));
+    ret = SetEnvironmentVariable ((LPCSTR)name, (LPCSTR)value);
     return (0 != ret)? 1: 0;
 }
 
 static __inline unsigned int sleep(unsigned int seconds) {
 
-    /* microsoft sleep is in milliseconds. Note: interrupt beaviour has
-      not yet been handled */
-    Sleep(seconds * 100);
+    /* Allow interruptions */
+    SleepEx(seconds * 100, TRUE);
     return 0;
 }
 
@@ -59,18 +67,16 @@ static __inline size_t sysconf(int option) {
     
     SYSTEM_INFO sys_info;
 
-    /* hardcoded on windows ... The maximum limit seems to be 2048 but
-     * it requires a call to _setmaxstdio.
-     */
-    if( _SC_OPEN_MAX == option )
-        return 512;
+    if( _SC_OPEN_MAX == option ) {
+        return _getmaxstdio();
+    }
 
     GetSystemInfo(&sys_info);
     if (_SC_PAGESIZE == option){
         return (size_t)sys_info.dwPageSize;
     }
     printf( "This functionality is not supported: line: %d\tfile: %s\n",
-            __LINE__, __FILE__);
+            __LINE__, __FILE__ );
     abort();
     return 0;
 }

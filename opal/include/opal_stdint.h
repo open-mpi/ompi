@@ -23,14 +23,6 @@
 #ifndef OMPI_STDINT_H
 #define OMPI_STDINT_H 1
 
-#include "opal_config.h"
-
-#ifdef HAVE_STDINT_H
-
-#include <stdint.h>
-
-#else 
-
 /*
  * Include what we can and define what is missing.
  */
@@ -194,8 +186,6 @@ typedef unsigned long long uintptr_t;
 #endif
 
 #endif /* ifndef SIZE_MAX */
-
-#endif /* HAVE_STDINT_H */
 
 #endif /* OMPI_STDINT_H */
 

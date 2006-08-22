@@ -27,17 +27,4 @@ static __inline int getpagesize(void)
     return (int)sys_info.dwPageSize;
 }
 
-/**
- * Case insensitive comparaison of strings.
- */
-static __inline int strncasecmp( const char *s1, const char *s2, int n)
-{
-    return _strnicmp( s1, s2, (size_t)n );
-}
-
-static __inline int strcasecmp(char *s1, char *s2)
-{
-    return _stricmp(s1, s2);
-}
-
 #endif
