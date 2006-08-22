@@ -339,7 +339,7 @@ static void mca_pml_base_modex_registry_callback(
                         }
                         cnt = 1;
                         if (ORTE_SUCCESS != (rc = orte_dss.unpack(&buffer,
-                            &num_bytes, &cnt, ORTE_STD_CNTR))) {
+                            &num_bytes, &cnt, ORTE_SIZE))) {
                             ORTE_ERROR_LOG(rc);
                             continue;
                         }
