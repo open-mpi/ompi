@@ -31,7 +31,7 @@
 extern "C" {
 #endif
 
-RB_HEAD(opal_event_tree, opal_event);
+typedef RB_HEAD(opal_event_tree, opal_event) opal_event_tree;
 
 struct event_base {
 	const struct opal_eventop *evsel;

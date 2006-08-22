@@ -62,7 +62,7 @@ evbuffer_new(void)
 {
 	struct evbuffer *buffer;
 	
-	buffer = (evbuffer*)calloc(1, sizeof(struct evbuffer));
+	buffer = (struct evbuffer*)calloc(1, sizeof(struct evbuffer));
 
 	return (buffer);
 }
