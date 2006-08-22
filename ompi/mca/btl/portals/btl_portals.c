@@ -64,7 +64,7 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         mca_btl_portals_send,
         mca_btl_portals_put,
         mca_btl_portals_get,
-        mca_btl_base_dump
+        mca_btl_base_dump,
         NULL, /* mpool */
         NULL /* register error */
     },
