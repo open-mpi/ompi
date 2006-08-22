@@ -36,7 +36,7 @@ static void opal_thread_construct(opal_thread_t *t)
 {
     t->t_run = 0;
 #ifdef __WINDOWS__
-    t->t_handle = (HANDLE) -1;
+    t->t_handle = (HANDLE)NULL;
 #elif OMPI_HAVE_POSIX_THREADS
     t->t_handle = (pthread_t) -1;
 #elif OMPI_HAVE_SOLARIS_THREADS
@@ -63,7 +63,7 @@ int opal_thread_start(opal_thread_t *t)
 
     t->t_handle = CreateThread(NULL,    /* default security attributes */
                                0,       /* default stack size */
-                               (LPVOID) t->t_run,
+                               (LPTHREAD_START_ROUTINE) t->t_run,
                                t,       /* argument */
                                0,       /* default creation flags */
                                &tid);
@@ -95,16 +95,16 @@ int opal_thread_join(opal_thread_t *t, void **thr_return)
 
 bool opal_thread_self_compare(opal_thread_t *t)
 {
-    DWORD thread_id;
-    thread_id = GetCurrentThreadId();
-    return (thread_id == t->t_handle ? true : false);
+    HANDLE thread_handle;
+    thread_handle = GetCurrentThread();
+    return (thread_handle == t->t_handle ? true : false);
 }
 
 
 opal_thread_t *opal_thread_get_self(void)
 {
     opal_thread_t *t = OBJ_NEW(opal_thread_t);
-    t->t_handle = GetCurrentThreadId();
+    t->t_handle = GetCurrentThread();
     return t;
 }
 
