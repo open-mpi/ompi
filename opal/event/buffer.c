@@ -62,7 +62,7 @@ evbuffer_new(void)
 {
 	struct evbuffer *buffer;
 	
-	buffer = (struct evbuffer*)calloc(1, sizeof(struct evbuffer));
+	buffer = calloc(1, sizeof(struct evbuffer));
 
 	return (buffer);
 }
@@ -207,7 +207,7 @@ evbuffer_readline(struct evbuffer *buffer)
 	if (i == (u_int) len)
 		return (NULL);
 
-	if ((line = (char*)malloc(i + 1)) == NULL) {
+	if ((line = malloc(i + 1)) == NULL) {
 		fprintf(stderr, "%s: out of memory\n", __func__);
 		evbuffer_drain(buffer, i);
 		return (NULL);
@@ -274,7 +274,7 @@ evbuffer_expand(struct evbuffer *buf, size_t datlen)
 		if ((newbuf = realloc(buf->buffer, length)) == NULL)
 			return (-1);
 
-		buf->orig_buffer = buf->buffer = (u_char*)newbuf;
+		buf->orig_buffer = buf->buffer = newbuf;
 		buf->totallen = length;
 	}
 
@@ -336,19 +336,13 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 {
 	u_char *p;
 	size_t oldoff = buf->off;
-#ifdef WIN32
-	u_long n = EVBUFFER_MAX_READ;
-	DWORD dwBytesRead;
-#else
 	int n = EVBUFFER_MAX_READ;
+#ifdef WIN32
+	DWORD dwBytesRead;
 #endif
 
-#if !defined(__WINDOWS__) && defined(FIONREAD)
-#ifdef WIN32
-	if (ioctlsocket(fd, FIONREAD, &n) == -1 || n == 0) {
-#else
+#ifdef FIONREAD
 	if (ioctl(fd, FIONREAD, &n) == -1 || n == 0) {
-#endif
 		n = EVBUFFER_MAX_READ;
 	} else if (n > EVBUFFER_MAX_READ && n > howmuch) {
 		/*
@@ -432,7 +426,7 @@ evbuffer_find(struct evbuffer *buffer, const u_char *what, size_t len)
 	u_char *search = buffer->buffer;
 	u_char *p;
 
-	while ((p = (u_char*)memchr(search, *what, remain)) != NULL && remain >= len) {
+	while ((p = memchr(search, *what, remain)) != NULL && remain >= len) {
 		if (memcmp(p, what, len) == 0)
 			return (p);
 
