@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,8 +71,7 @@ void mpi_comm_get_name_f(MPI_Fint *comm, char *comm_name,
 
     err = MPI_Comm_get_name(c_comm, c_name, &c_len);
     if (MPI_SUCCESS == err) {
-        ompi_fortran_string_c2f(c_name, comm_name, 
-                                OMPI_FINT_2_INT(*resultlen));
+        ompi_fortran_string_c2f(c_name, comm_name, name_len);
         *resultlen = OMPI_INT_2_FINT(c_len);
         *ierr = OMPI_INT_2_FINT(MPI_SUCCESS);
     } else {
