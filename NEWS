@@ -25,6 +25,8 @@ version 1.0.
 1.1.1
 -----
 
+- Fix for Fortran string handling in various MPI API functions.
+- Fix for Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
 - Various fixes for the XL compilers.
 - Automatically disable using mallot() on AIX.
 - Memory fixes for 64 bit platforms with registering MCA parameters in
