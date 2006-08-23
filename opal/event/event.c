@@ -227,7 +227,7 @@ opal_event_init(void)
 
 #if OPAL_HAVE_WORKING_EVENTOPS
 
-	if ((current_base = (event_base*)calloc(1, sizeof(struct event_base))) == NULL)
+	if ((current_base = (struct event_base*)calloc(1, sizeof(struct event_base))) == NULL)
 		event_err(1, "%s: calloc");
 
 	event_sigcb = NULL;
