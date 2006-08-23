@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,19 +34,19 @@ static const char FUNC_NAME[] = "MPI_Add_error_class";
 
 int MPI_Add_error_class(int *errorclass) 
 {
-    int class;
+    int err_class;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
     
-    class = ompi_errclass_add();
-    if ( 0 > class ) {
+    err_class = ompi_errclass_add();
+    if ( 0 > err_class ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
     }
 
-    *errorclass = class;
+    *errorclass = err_class;
     return MPI_SUCCESS;
 }
 
