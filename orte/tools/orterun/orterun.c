@@ -356,7 +356,7 @@ int orterun(int argc, char *argv[])
                                      false, false, (int)false, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -369,7 +369,7 @@ int orterun(int argc, char *argv[])
                                      false, false, 0, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -383,7 +383,7 @@ int orterun(int argc, char *argv[])
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug",
                                                     "daemons_file");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -397,7 +397,7 @@ int orterun(int argc, char *argv[])
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", NULL,
                                                     "no_daemonize");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
