@@ -31,7 +31,7 @@
 #include "opal/memoryhooks/memory_internal.h"
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_object.h"
-
+#include "opal/sys/atomic.h"
 
 /* 
  * local types
