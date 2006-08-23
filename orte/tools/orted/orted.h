@@ -30,6 +30,10 @@
 #include "opal/util/cmd_line.h"
 #include "opal/mca/mca.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Definitions needed for communication
  */
@@ -93,5 +97,8 @@ extern orted_globals_t orted_globals;
 /* extern char *path_pkglibdir; */
 /* extern char *path_sysconfdir; */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTED_H */

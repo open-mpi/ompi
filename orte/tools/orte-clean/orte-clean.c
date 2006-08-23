@@ -66,8 +66,6 @@
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
 
-extern char **environ;
-
 /******************
  * Local Functions
  ******************/
@@ -149,6 +147,13 @@ main(int argc, char *argv[])
         search_result = (orte_universe_t *) item;
 
         /*
+         * Avoid cleaning our own universe.
+         */
+        if( (0 == strcmp(search_result->name, orte_universe_info.name)) &&
+            (strlen(search_result->name) == strlen(orte_universe_info.name)) ) {
+            continue;
+        }
+        /*
          * Try to connect to the universe
          */
         if( orte_clean_globals.verbose ) {
@@ -181,6 +186,9 @@ main(int argc, char *argv[])
     while (NULL != (item = opal_list_remove_first(&universe_search_result))) {
         OBJ_RELEASE(item);
     }
+
+    orte_finalize();
+    opal_finalize();
 
     return exit_status;
 }
@@ -217,8 +225,7 @@ static int parse_args(int argc, char *argv[]) {
     }
 
     opal_setenv(mca_base_param_env_var("crs_base_is_tool"),
-                "1",
-                true, &environ);
+                "1", true, NULL);
 
     /**
      * Now start parsing our specific arguments
@@ -244,8 +251,7 @@ static int orte_clean_init(void) {
      * attach no matter if it is identified as private or not.
      */
     opal_setenv(mca_base_param_env_var("universe_console"),
-                "1",
-                true, &environ);
+                "1", true, NULL);
 
     /***************************
      * We need all of OPAL
@@ -316,7 +322,7 @@ static int orte_clean_universe(orte_universe_t *universe) {
     /********************
      * If the session directory is empty, then remove that too
      ********************/
-    asprintf(&session_dir, "%s/%s", prefix, frontend);
+    session_dir = opal_os_path( false, prefix, frontend, NULL );
     opal_os_dirpath_destroy(session_dir, false, NULL );
 
     /********************
@@ -339,7 +345,8 @@ static int orte_clean_universe(orte_universe_t *universe) {
     return exit_status;
 }
 
-static int orte_clean_check_universe(orte_universe_t *universe) {
+static int orte_clean_check_universe(orte_universe_t *universe)
+{
     int ret, exit_status = ORTE_SUCCESS;
     struct timeval ping_wait = {2, 0};
 
