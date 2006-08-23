@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,6 +36,9 @@ typedef struct {
 } orte_setup_hnp_cb_data_t;
 
 
-int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
+    /**
+     * Establish a Head Node Process on a cluster's front end
+     */
+ORTE_DECLSPEC int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
 
 #endif

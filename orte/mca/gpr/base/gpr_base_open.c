@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -318,7 +318,8 @@ int orte_gpr_base_open(void)
         kill_prefix.lds_verbose_level = value;
     }
     orte_gpr_base_output = opal_output_open(&kill_prefix);
-    
+    OBJ_DESTRUCT(&kill_prefix);
+
     id = mca_base_param_register_int("gpr", "base", "maxsize", NULL,
                                      ORTE_GPR_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);
@@ -513,7 +514,6 @@ int orte_gpr_base_open(void)
     }
 
     /* Open up all available components */
-
     if (ORTE_SUCCESS !=
         mca_base_components_open("gpr",
                                  orte_gpr_base_output,

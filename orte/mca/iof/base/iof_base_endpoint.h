@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef _IOF_BASE_ENDPOINT_
 #define _IOF_BASE_ENDPOINT_
 
@@ -7,6 +25,9 @@
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/iof/base/iof_base_header.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Structure store callbacks
@@ -19,7 +40,7 @@ struct orte_iof_base_callback_t {
 };
 typedef struct orte_iof_base_callback_t orte_iof_base_callback_t;
 
-OBJ_CLASS_DECLARATION(orte_iof_base_callback_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_callback_t);
 
 /**
  *  Structure that represents a published endpoint.
@@ -40,7 +61,7 @@ struct orte_iof_base_endpoint_t {
 };
 typedef struct orte_iof_base_endpoint_t orte_iof_base_endpoint_t;
 
-OBJ_CLASS_DECLARATION(orte_iof_base_endpoint_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_iof_base_endpoint_t);
 
 /*
  * Diff between two sequence numbers allowing for rollover
@@ -59,7 +80,7 @@ OBJ_CLASS_DECLARATION(orte_iof_base_endpoint_t);
  * @aram  fd    Local file descriptor corresponding to endpoint.
  */
 
-int orte_iof_base_endpoint_create(
+ORTE_DECLSPEC int orte_iof_base_endpoint_create(
    const orte_process_name_t* name,
    orte_iof_base_mode_t mode,
    int tag,
@@ -73,13 +94,13 @@ int orte_iof_base_endpoint_create(
  * @aram  cbdata  Local file descriptor corresponding to endpoint.
  */
 
-int orte_iof_base_callback_create(
+ORTE_DECLSPEC int orte_iof_base_callback_create(
     const orte_process_name_t *name,
     int tag,
     orte_iof_base_callback_fn_t cbfunc,
     void* cbdata);
 
-int orte_iof_base_callback_delete(
+ORTE_DECLSPEC int orte_iof_base_callback_delete(
     const orte_process_name_t *name,
     int tag);
 
@@ -93,7 +114,7 @@ int orte_iof_base_callback_delete(
  * @param tag   Tag for matching endpoints.
  */
 
-int orte_iof_base_endpoint_delete(
+ORTE_DECLSPEC int orte_iof_base_endpoint_delete(
    const orte_process_name_t* name,
    orte_ns_cmp_bitmask_t mask,
    int tag);
@@ -102,7 +123,7 @@ int orte_iof_base_endpoint_delete(
  * Disable forwarding through the specified endpoint.
  */
 
-int orte_iof_base_endpoint_close(
+ORTE_DECLSPEC int orte_iof_base_endpoint_close(
     orte_iof_base_endpoint_t* endpoint);
 
 /**
@@ -110,7 +131,7 @@ int orte_iof_base_endpoint_close(
  * process name/mask/tag.
  */
 
-orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
+ORTE_DECLSPEC orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
     const orte_process_name_t* dst_name,
     orte_ns_cmp_bitmask_t dst_mask,
     int dst_tag);
@@ -119,7 +140,7 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
  * Forward the specified message out the endpoint.
  */
 
-int orte_iof_base_endpoint_forward(
+ORTE_DECLSPEC int orte_iof_base_endpoint_forward(
     orte_iof_base_endpoint_t* endpoint,
     const orte_process_name_t* src,
     orte_iof_base_msg_header_t* hdr,
@@ -129,7 +150,7 @@ int orte_iof_base_endpoint_forward(
  * Callback when peer has closed endpoint.
  */
 
-void orte_iof_base_endpoint_closed(
+ORTE_DECLSPEC void orte_iof_base_endpoint_closed(
     orte_iof_base_endpoint_t* endpoint);
 
 /**
@@ -137,7 +158,7 @@ void orte_iof_base_endpoint_closed(
  * acknowledged.
  */
 
-int orte_iof_base_endpoint_ack(
+ORTE_DECLSPEC int orte_iof_base_endpoint_ack(
     orte_iof_base_endpoint_t* endpoint,
     uint32_t seq);
 
@@ -150,6 +171,10 @@ static inline bool orte_iof_base_endpoint_pending(
 {
     return opal_list_get_size(&endpoint->ep_frags) || (endpoint->ep_seq != endpoint->ep_ack);
 }
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

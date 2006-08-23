@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,6 +52,7 @@
 #include "opal/util/output.h"
 #include "opal/util/os_path.h"
 #include "opal/util/os_dirpath.h"
+#include "opal/util/basename.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
@@ -220,11 +221,8 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID/PROC
      */
     if( NULL != proc) {
-        if (0 > asprintf(&sessions, "%s%s%s%s%s%s%s", 
-                         *frontend,
-                         orte_system_info.path_sep, universe,
-                         orte_system_info.path_sep, job,
-                         orte_system_info.path_sep, proc)) {
+        sessions = opal_os_path( false, *frontend, universe, job, proc, NULL );
+        if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -233,10 +231,8 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE/JOBID
      */
     else if(NULL != job) {
-        if (0 > asprintf(&sessions, "%s%s%s%s%s",
-                         *frontend,
-                         orte_system_info.path_sep, universe,
-                         orte_system_info.path_sep, job)) {
+        sessions = opal_os_path( false, *frontend, universe, job, NULL );
+        if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -245,9 +241,8 @@ orte_session_dir_get_name(char **fulldirpath,
      *   openmpi-sessions-USERNAME@HOSTNAME_BATCHID/UNIVERSE
      */
     else if(NULL != universe) {
-        if (0 > asprintf(&sessions, "%s%s%s",
-                         *frontend,
-                         orte_system_info.path_sep, universe )) {
+        sessions = opal_os_path( false, *frontend, universe, NULL );
+        if( NULL == sessions ) {
             exit_status = ORTE_ERROR;
             goto cleanup;
         }
@@ -295,7 +290,7 @@ orte_session_dir_get_name(char **fulldirpath,
     /*
      * Construct the absolute final path
      */
-    *fulldirpath = strdup(opal_os_path(false, *prefix, sessions, NULL));
+    *fulldirpath = opal_os_path(false, *prefix, sessions, NULL);
 
     
  cleanup:
@@ -442,10 +437,9 @@ int orte_session_dir(bool create,
     	}
 
         /* Strip off last part of directory structure */
-        sav = strdup(fulldirpath);
+        sav = opal_dirname(fulldirpath);
         free(fulldirpath);
-        fulldirpath = strdup(dirname(sav));
-        free(sav);
+        fulldirpath = sav;
         sav = NULL;
     }
 
@@ -464,10 +458,9 @@ int orte_session_dir(bool create,
     	}
 
         /* Strip off last part of directory structure */
-        sav = strdup(fulldirpath);
+        sav = opal_dirname(fulldirpath);
         free(fulldirpath);
-        fulldirpath = strdup(dirname(sav));
-        free(sav); 
+        fulldirpath = sav;
         sav = NULL;
     }
 
@@ -529,9 +522,9 @@ orte_session_dir_cleanup(orte_jobid_t jobid)
         free(tmp);
         return rc;
     }
-    if (0 > asprintf(&job_session_dir, "%s%s%s",
-                        orte_process_info.universe_session_dir,
-                        orte_system_info.path_sep, job)) {
+    job_session_dir = opal_os_path( false, orte_process_info.universe_session_dir,
+                                    job, NULL );
+    if( NULL == job_session_dir ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(tmp);
         free(job);
@@ -612,19 +605,17 @@ orte_session_dir_finalize(orte_process_name_t *proc)
         free(job);
         return rc;
     }
-    
-    if (0 > asprintf(&job_session_dir, "%s%s%s",
-                        orte_process_info.universe_session_dir,
-                        orte_system_info.path_sep, job)) {
+    job_session_dir = opal_os_path( false, orte_process_info.universe_session_dir,
+                                    job, NULL );
+    if( NULL == job_session_dir ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(tmp);
         free(job);
         free(vpid);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (0 > asprintf(&proc_session_dir, "%s%s%s",
-                        job_session_dir,
-                        orte_system_info.path_sep, vpid)) {
+    proc_session_dir = opal_os_path( false, job_session_dir, vpid, NULL );
+    if( NULL == proc_session_dir ) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(tmp);
         free(job);

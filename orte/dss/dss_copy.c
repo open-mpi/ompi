@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -44,7 +46,7 @@ int orte_dss_copy(void **dest, void *src, orte_data_type_t type)
    /* Lookup the copy function for this type and call it */
 
     if (!(type < orte_dss_types->size) ||
-        (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type)))) {
+        (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type)))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         return ORTE_ERR_UNKNOWN_DATA_TYPE;
     }

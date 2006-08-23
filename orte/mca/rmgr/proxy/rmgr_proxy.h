@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -39,9 +39,9 @@ struct orte_rmgr_proxy_component_t {
 typedef struct orte_rmgr_proxy_component_t orte_rmgr_proxy_component_t;
 
 /** Global URM component */
-ORTE_DECLSPEC extern orte_rmgr_proxy_component_t mca_rmgr_proxy_component;
+ORTE_MODULE_DECLSPEC extern orte_rmgr_proxy_component_t mca_rmgr_proxy_component;
 /** Global URM module */
-ORTE_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr_proxy_module;
+extern orte_rmgr_base_module_t orte_rmgr_proxy_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

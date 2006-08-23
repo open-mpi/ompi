@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -73,6 +73,7 @@ int mca_oob_tcp_ping(
     fd_set fdset;
     mca_oob_tcp_hdr_t hdr;
     struct timeval tv;
+    struct iovec iov;
 #ifndef __WINDOWS__
     struct opal_event sigpipe_handler;
 #endif
@@ -119,7 +120,7 @@ int mca_oob_tcp_ping(
     if(connect(sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
         /* connect failed? */
         if(opal_socket_errno != EINPROGRESS && opal_socket_errno != EWOULDBLOCK) {
-            close(sd);
+            CLOSE_THE_SOCKET(sd);
             return ORTE_ERR_UNREACH;
         }
 
@@ -128,7 +129,7 @@ int mca_oob_tcp_ping(
         tv = *timeout;
         rc = select(sd+1, NULL, &fdset, NULL, &tv);
         if(rc <= 0) {
-             close(sd);
+             CLOSE_THE_SOCKET(sd);
              return ORTE_ERR_UNREACH;
         }
     }
@@ -160,14 +161,19 @@ int mca_oob_tcp_ping(
                     noop, &sigpipe_handler);
     opal_signal_add(&sigpipe_handler, NULL);
 #endif
-    /* Do the write and see what happens */
-    rc = write(sd, &hdr, sizeof(hdr));
+    /* Do the write and see what happens. Use the writev version just to
+     * make Windows happy as there the write function is limitted to
+     * file operations.
+     */
+    iov.iov_base = (IOVBASE_TYPE*)&hdr;
+    iov.iov_len  = sizeof(hdr);
+    rc = writev(sd, &iov, 1 );
 #ifndef __WINDOWS__
     /* Now de-register the handler */
     opal_signal_del(&sigpipe_handler);
 #endif
     if (rc != sizeof(hdr)) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERR_UNREACH;
     }
 
@@ -176,19 +182,19 @@ int mca_oob_tcp_ping(
     tv = *timeout;
     rc = select(sd+1, &fdset, NULL, NULL, &tv);
     if(rc <= 0) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERR_UNREACH;
     }
     if((rc = read(sd, &hdr, sizeof(hdr))) != sizeof(hdr)) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERR_UNREACH;
     }
     MCA_OOB_TCP_HDR_NTOH(&hdr);
     if(hdr.msg_type != MCA_OOB_TCP_PROBE) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return ORTE_ERR_UNREACH;
     }
-    close(sd);
+    CLOSE_THE_SOCKET(sd);
     return ORTE_SUCCESS;
 }
 

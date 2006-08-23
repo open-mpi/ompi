@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -58,7 +58,6 @@ orte_schema_base_module_t orte_schema = {
  * Global variables for framework
  */
 int orte_schema_base_output;
-orte_schema_base_module_t orte_schema;
 bool orte_schema_base_selected = false;
 opal_list_t orte_schema_base_components_available;
 mca_schema_base_component_t orte_schema_base_selected_component;

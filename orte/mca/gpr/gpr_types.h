@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -159,7 +159,7 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  * Each block of data is associated with a specified callback function and contains
  * data from a single segment, one or more containers with one or more keyvals/container.
  */
-typedef struct {
+typedef struct orte_gpr_notify_data_t {
     opal_object_t super;            /**< Makes this an object */
     char *target;                   /**< Name of the associated subscripton, if provided */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */

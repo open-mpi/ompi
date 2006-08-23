@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "orte_config.h"
 #include <stdlib.h>
 #include <string.h>
@@ -31,18 +49,18 @@ static void orte_iof_base_frag_construct(orte_iof_base_frag_t* frag)
     OMPI_DEBUG_ZERO(*frag);
     frag->frag_owner = NULL;
     frag->frag_len = 0;
-    frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+    frag->frag_iov[0].iov_base = (IOVBASE_TYPE*)&frag->frag_hdr;
     frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
-    frag->frag_iov[1].iov_base = (void*)frag->frag_data;
+    frag->frag_iov[1].iov_base = (IOVBASE_TYPE*)frag->frag_data;
     frag->frag_iov[1].iov_len = sizeof(frag->frag_data);
 }
 
 
 static void orte_iof_base_frag_destruct(orte_iof_base_frag_t* frag)
 {
-    frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+    frag->frag_iov[0].iov_base = (IOVBASE_TYPE*)&frag->frag_hdr;
     frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
-    frag->frag_iov[1].iov_base = (void*)frag->frag_data;
+    frag->frag_iov[1].iov_base = (IOVBASE_TYPE*)frag->frag_data;
     frag->frag_iov[1].iov_len = sizeof(frag->frag_data);
 }
 

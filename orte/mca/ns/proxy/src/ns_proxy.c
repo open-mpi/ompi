@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -701,7 +701,7 @@ int orte_ns_proxy_define_data_type(const char *name,
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &name, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, (void*)&name, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);

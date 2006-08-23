@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,6 +40,10 @@
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/smr/smr_types.h"
 #include "rmgr_types.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Component functions - all MUST be provided!
@@ -251,5 +255,9 @@ typedef orte_rmgr_base_component_1_0_0_t orte_rmgr_base_component_t;
  * Global structure for accessing RAS functions
  */
 ORTE_DECLSPEC extern orte_rmgr_base_module_t orte_rmgr;  /* holds selected module's function pointers */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

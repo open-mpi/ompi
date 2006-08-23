@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -153,7 +153,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         }
 
         if (app_context[i]->num_map > 0) {
-            app_context[i]->map_data = malloc(sizeof(orte_app_context_map_t*) * app_context[i]->num_map);
+            app_context[i]->map_data = (orte_app_context_map_t**)malloc(sizeof(orte_app_context_map_t*) * app_context[i]->num_map);
             if (NULL == app_context[i]->map_data) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;

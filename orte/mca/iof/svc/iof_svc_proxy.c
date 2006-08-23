@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "orte_config.h"
 #include "opal/util/output.h"
 #include "orte/mca/rml/rml.h"
@@ -6,6 +24,7 @@
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/class/orte_proc_table.h"
 #include "iof_svc.h"
 #include "iof_svc_proxy.h"
 #include "iof_svc_pub.h"
@@ -155,7 +174,7 @@ static void orte_iof_svc_proxy_msg(
                                                                                                                  
         frag->frag_hdr.hdr_msg = *hdr;
         frag->frag_hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_ACK;
-        frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+        frag->frag_iov[0].iov_base = (IOVBASE_TYPE*)&frag->frag_hdr;
         frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
         ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
                                                                                                                  
@@ -266,7 +285,7 @@ static void orte_iof_svc_proxy_ack(
             }
 
             frag->frag_hdr.hdr_msg = *hdr;
-            frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+            frag->frag_iov[0].iov_base = (IOVBASE_TYPE*)&frag->frag_hdr;
             frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
             ORTE_IOF_BASE_HDR_MSG_HTON(frag->frag_hdr.hdr_msg);
 

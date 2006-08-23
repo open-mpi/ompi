@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -275,7 +275,7 @@ typedef struct mca_oob_base_info_t mca_oob_base_info_t;
 /**
  * declare the association structure as a class
  */
-OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(mca_oob_base_info_t);
 
 /**
  * List of registrations of exception callbacks
@@ -293,7 +293,7 @@ typedef struct mca_oob_base_exception_handler_t mca_oob_base_exception_handler_t
 /**
  * declare the association structure as a class
  */
-OBJ_CLASS_DECLARATION(mca_oob_base_exception_handler_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(mca_oob_base_exception_handler_t);
 
 
 /*

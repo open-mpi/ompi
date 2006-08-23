@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -39,8 +39,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-
 
 /*
  * standard component functions
@@ -225,6 +223,11 @@ void mca_oob_tcp_registry_callback(
 
 void mca_oob_tcp_set_socket_options(int sd);
 
+typedef enum {
+    OOB_TCP_EVENT,
+    OOB_TCP_LISTEN_THREAD
+} mca_oob_tcp_listen_type_t;
+
 /**
  *  OOB TCP Component
 */
@@ -262,8 +265,13 @@ struct mca_oob_tcp_component_t {
  */
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
-ORTE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
+ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
+#if defined(__WINDOWS__)
+#define CLOSE_THE_SOCKET(socket)    closesocket(socket)
+#else
+#define CLOSE_THE_SOCKET(socket)    close(socket)
+#endif  /* defined(__WINDOWS__) */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

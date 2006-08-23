@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,6 +42,10 @@
 
 #include "opal/types.h"
 #include "opal/class/opal_list.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->cellid), \
@@ -87,7 +91,7 @@ typedef struct orte_process_name_t orte_process_name_t;
 #define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
 #define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
 
-extern orte_process_name_t orte_name_all;
+ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
 
 /**
@@ -119,6 +123,10 @@ struct orte_name_services_namelist_t {
 };
 typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;
 
-ORTE_DECLSPEC    OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

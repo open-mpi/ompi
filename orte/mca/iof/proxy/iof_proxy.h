@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,10 +22,10 @@
 #define ORTE_IOF_PROXY_H
 
 #include "orte/mca/iof/iof.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
 
 /**
  * Publish a local file descriptor as an endpoint that is logically
@@ -136,9 +136,8 @@ struct orte_iof_proxy_component_t {
 };
 typedef struct orte_iof_proxy_component_t orte_iof_proxy_component_t;
 
-ORTE_DECLSPEC extern orte_iof_proxy_component_t mca_iof_proxy_component;
-ORTE_DECLSPEC extern orte_iof_base_module_t orte_iof_proxy_module;
-
+ORTE_MODULE_DECLSPEC extern orte_iof_proxy_component_t mca_iof_proxy_component;
+extern orte_iof_base_module_t orte_iof_proxy_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

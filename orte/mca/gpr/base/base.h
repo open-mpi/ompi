@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -64,9 +64,6 @@
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-
 #include "opal/class/opal_list.h"
 #include "orte/dss/dss_types.h"
 
@@ -120,16 +117,16 @@ typedef uint8_t orte_gpr_cmd_flag_t;
    ORTE_DECLSPEC int orte_gpr_base_select(void);
    ORTE_DECLSPEC int orte_gpr_base_close(void);
 
-int orte_gpr_base_create_value(orte_gpr_value_t **value,
-                               orte_gpr_addr_mode_t addr_mode,
-                               char *segment,
-                               orte_std_cntr_t cnt,  /**< Number of keyval objects */
-                               orte_std_cntr_t num_tokens);
+   ORTE_DECLSPEC int orte_gpr_base_create_value(orte_gpr_value_t **value,
+                                                orte_gpr_addr_mode_t addr_mode,
+                                                char *segment,
+                                                orte_std_cntr_t cnt,  /**< Number of keyval objects */
+                                                orte_std_cntr_t num_tokens);
                                
-int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
-                                char *key,
-                                orte_data_type_t type,
-                                void *data);
+   ORTE_DECLSPEC int orte_gpr_base_create_keyval(orte_gpr_keyval_t **keyval,
+                                                 char *key,
+                                                 orte_data_type_t type,
+                                                 void *data);
                                                  
    ORTE_DECLSPEC int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
                                char *segment, char **tokens,

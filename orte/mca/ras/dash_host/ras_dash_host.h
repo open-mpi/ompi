@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -45,7 +45,7 @@ extern "C" {
     /**
      * Component export structure
      */
-    ORTE_DECLSPEC extern orte_ras_dash_host_component_t mca_ras_dash_host_component;
+    ORTE_MODULE_DECLSPEC extern orte_ras_dash_host_component_t mca_ras_dash_host_component;
     
     /**
      * Module init function

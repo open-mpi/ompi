@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -52,7 +52,6 @@
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
-#include "opal/util/basename.h"
 #include "opal/class/opal_value_array.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
@@ -75,7 +74,9 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/pls/fork/pls_fork.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_fork_launch_threaded(orte_jobid_t);
@@ -256,36 +257,6 @@ static int orte_pls_fork_proc(
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
-#if 0
- {
-    /* Do fork the windows way: see opal_few() for example */
-    HANDLE new_process;
-    STARTUPINFO si;
-    PROCESS_INFORMATION pi;
-    DWORD process_id;
-
-    ZeroMemory (&si, sizeof(si));
-    ZeroMemory (&pi, sizeof(pi));
-
-    GetStartupInfo (&si);
-    if (!CreateProcess (NULL,
-                        "new process",
-                        NULL,
-                        NULL,
-                        TRUE,
-                        0,
-                        NULL,
-                        NULL,
-                        &si,
-                        &pi)){
-       /* actual error can be got by simply calling GetLastError() */
-       return ORTE_ERROR;
-    }
-    /* get child pid */
-    process_id = GetProcessId(&pi);
-    pid = (int) process_id;
- }
-#endif
     /* A pipe is used to communicate between the parent and child to
        indicate whether the exec ultiimately succeeded or failed.  The
        child sets the pipe to be close-on-exec; the child only ever

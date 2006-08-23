@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -102,7 +102,6 @@ int mca_oob_base_init(void)
     mca_base_component_list_item_t *cli;
     mca_oob_base_component_t *component;
     mca_oob_t *module;
-    extern opal_list_t mca_oob_base_components;
     mca_oob_t *s_module = NULL;
     int  s_priority = -1;
 

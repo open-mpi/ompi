@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -50,8 +50,6 @@ typedef struct {
     orte_data_value_t value;
 } orte_gpr_replica_ival_list_t;
 
-OBJ_CLASS_DECLARATION(orte_gpr_replica_ival_list_t);
-
 /* constructor */
 static void orte_gpr_replica_ival_list_constructor(orte_gpr_replica_ival_list_t* ptr)
 {
@@ -81,8 +79,6 @@ typedef struct {
     orte_gpr_replica_container_t *cptr;   /* pointer to the container */
     opal_list_t *ival_list;             /* list of ival_list_t of values found by get */
 } orte_gpr_replica_get_list_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_replica_get_list_t);
 
 /* constructor */
 static void orte_gpr_replica_get_list_constructor(orte_gpr_replica_get_list_t* ptr)

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -58,7 +58,7 @@
 #include "opal/install_dirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
-#include "opal/util/if.h"
+#include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
 #include "opal/util/show_help.h"
@@ -83,8 +83,9 @@
 #include "orte/mca/pls/rsh/pls_rsh.h"
 #include "orte/util/sys_info.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
-
+#endif  /* !defined(__WINDOWS__) */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
@@ -764,8 +765,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         }
                     } else {
                         if (NULL != prefix_dir) {
-                            asprintf(&exec_path, "%s/%s/orted",
-                                     prefix_dir, bin_base);
+                            exec_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
                         }
                         /* If we yet did not fill up the execpath, do so now */
                         if (NULL == exec_path) {
@@ -784,12 +784,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         char *oldenv, *newenv;
 
                         /* Reset PATH */
+                        newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
                         oldenv = getenv("PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/%s:%s", prefix_dir,
-                                     bin_base, oldenv);
-                        } else {
-                            asprintf(&newenv, "%s/%s", prefix_dir, bin_base);
+                            char *temp;
+                            asprintf(&temp, "%s:%s", newenv, oldenv );
+                            free( newenv );
+                            newenv = temp;
                         }
                         opal_setenv("PATH", newenv, true, &environ);
                         if (mca_pls_rsh_component.debug) {
@@ -798,12 +799,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         free(newenv);
 
                         /* Reset LD_LIBRARY_PATH */
+                        newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
                         oldenv = getenv("LD_LIBRARY_PATH");
                         if (NULL != oldenv) {
-                            asprintf(&newenv, "%s/%s:%s", prefix_dir,
-                                     lib_base, oldenv);
-                        } else {
-                            asprintf(&newenv, "%s/%s", prefix_dir, lib_base);
+                            char* temp;
+                            asprintf(&temp, "%s:%s", newenv, lib_base, oldenv, NULL);
+                            free(newenv);
+                            newenv = temp;
                         }
                         opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
                         if (mca_pls_rsh_component.debug) {

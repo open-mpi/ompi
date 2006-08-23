@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,9 +32,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-/* resfile internal globals */
-extern opal_list_t resource_list;
 
 /*
  * RDS Resource file functions
@@ -72,8 +69,8 @@ struct orte_rds_resfile_component_t {
 };
 typedef struct orte_rds_resfile_component_t orte_rds_resfile_component_t;
 
-ORTE_DECLSPEC extern orte_rds_resfile_component_t mca_rds_resfile_component;
-ORTE_DECLSPEC extern orte_rds_base_module_t orte_rds_resfile_module;
+ORTE_MODULE_DECLSPEC extern orte_rds_resfile_component_t mca_rds_resfile_component;
+extern orte_rds_base_module_t orte_rds_resfile_module;
 
 extern bool orte_rds_resfile_queried;
 

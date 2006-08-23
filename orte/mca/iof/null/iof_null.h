@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -136,9 +136,8 @@ struct orte_iof_null_component_t {
 };
 typedef struct orte_iof_null_component_t orte_iof_null_component_t;
 
-ORTE_DECLSPEC extern orte_iof_null_component_t mca_iof_null_component;
-ORTE_DECLSPEC extern orte_iof_base_module_t orte_iof_null_module;
-
+ORTE_MODULE_DECLSPEC extern orte_iof_null_component_t mca_iof_null_component;
+extern orte_iof_base_module_t orte_iof_null_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

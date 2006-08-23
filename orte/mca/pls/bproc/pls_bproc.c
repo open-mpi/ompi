@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -72,7 +72,9 @@
 /**
  * Our current evironment
  */
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS
 int orte_pls_bproc_launch_threaded(orte_jobid_t);
@@ -585,9 +587,8 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     } else {
         orted_path = opal_path_findv(mca_pls_bproc_component.orted, 0, environ, NULL);
         if(NULL == orted_path) {
-            asprintf(&orted_path, "%s/%s", OPAL_BINDIR,
-                     mca_pls_bproc_component.orted);
-            if (0 != stat(orted_path, &buf)) {
+            orted_path = opal_os_path( false, OPAL_BINDIR, mca_pls_bproc_component.orted, NULL );
+            if( (NULL != orted_path) || (0 != stat(orted_path, &buf)) ) {
                 char *path = getenv("PATH");
                 if (NULL == path) {
                     path = ("PATH is empty!");

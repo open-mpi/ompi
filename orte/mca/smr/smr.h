@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,6 +35,10 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/smr/smr_types.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * Component functions - all MUST be provided!
@@ -151,5 +155,9 @@ typedef orte_smr_base_component_1_3_0_t orte_smr_base_component_t;
   "smr", 1, 3, 0
 
 ORTE_DECLSPEC extern orte_smr_base_module_t orte_smr;  /* holds selected module's function pointers */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTE_SMR_H */

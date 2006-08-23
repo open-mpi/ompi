@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -41,7 +41,6 @@ typedef struct orte_ras_lsf_bproc_component_t orte_ras_lsf_bproc_component_t;
 
 ORTE_DECLSPEC extern orte_ras_lsf_bproc_component_t mca_ras_lsf_bproc_component;
 ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_lsf_bproc_module;
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,7 +83,7 @@ extern "C" {
                                             orte_vpid_t global_vpid_start,
                                             int num_procs, char ***env);
 
-    extern opal_list_t orte_sds_base_components_available;
+    ORTE_DECLSPEC extern opal_list_t orte_sds_base_components_available;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

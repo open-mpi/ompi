@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -109,13 +109,13 @@ int mca_oob_send_packed_nb(
     orte_dss.load(buffer, dataptr, datalen);
 
     /* allocate a struct to pass into callback */
-    if(NULL == (oob_cbdata = malloc(sizeof(mca_oob_send_cbdata_t)))) {
+    if(NULL == (oob_cbdata = (mca_oob_send_cbdata_t*)malloc(sizeof(mca_oob_send_cbdata_t)))) {
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     oob_cbdata->cbbuf = buffer;
     oob_cbdata->cbfunc = cbfunc;
     oob_cbdata->cbdata = cbdata;
-    oob_cbdata->cbiov.iov_base = dataptr;
+    oob_cbdata->cbiov.iov_base = (IOVBASE_TYPE*)dataptr;
     oob_cbdata->cbiov.iov_len = datalen;
 
     /* queue up the request */
@@ -147,7 +147,7 @@ static void mca_oob_send_callback(
     void* cbdata)
 {
     /* validate status */
-    mca_oob_send_cbdata_t *oob_cbdata = cbdata;
+    mca_oob_send_cbdata_t *oob_cbdata = (mca_oob_send_cbdata_t*)cbdata;
     if(status < 0) {
         oob_cbdata->cbfunc(status, peer, NULL, tag, oob_cbdata->cbdata);
         free(oob_cbdata);
