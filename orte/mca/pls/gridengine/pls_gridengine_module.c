@@ -62,6 +62,7 @@
 #include "opal/install_dirs.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/if.h"
+#include "opal/util/os_path.h"
 #include "opal/util/path.h"
 #include "opal/event/event.h"
 #include "opal/util/show_help.h"
@@ -86,7 +87,9 @@
 #include "orte/mca/pls/gridengine/pls_gridengine.h"
 #include "orte/util/sys_info.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 orte_pls_base_module_1_0_0_t orte_pls_gridengine_module = {
     orte_pls_gridengine_launch,
@@ -526,11 +529,10 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     }
                 } else {
                     if (NULL != prefix_dir) {
-                        asprintf(&argv[orted_index], "%s/%s/orted", 
-                            prefix_dir, bin_base);
-                        if (mca_pls_gridengine_component.debug) {
-                            opal_output(0, "pls:gridengine: orted path=%s\n",
-                                    argv[orted_index]);
+                        orted_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
+			if (mca_pls_gridengine_component.debug) {
+			    opal_output(0, "pls:gridengine: orted path=%s\n",
+				argv[orted_index]);
                         }
                     }   
                     /* If we yet did not fill up the orted_path, do so now */
@@ -550,13 +552,14 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     char *oldenv, *newenv;
                     
                     /* Reset PATH */
-                    oldenv = getenv("PATH");
+		    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+		    oldenv = getenv("PATH");
                     if (NULL != oldenv) {
-                        asprintf(&newenv, "%s/%s:%s", prefix_dir, 
-                            bin_base, oldenv);
-                    } else {
-                        asprintf(&newenv, "%s/%s", prefix_dir, bin_base);
-                    }
+			char *temp;
+			asprintf(&temp, "%s:%s", newenv, oldenv);
+			free( newenv );
+			newenv = temp;
+		    }
                     opal_setenv("PATH", newenv, true, &environ);
                     if (mca_pls_gridengine_component.debug) {
                         opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
@@ -566,10 +569,10 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     /* Reset LD_LIBRARY_PATH */
                     oldenv = getenv("LD_LIBRARY_PATH");
                     if (NULL != oldenv) {
-                        asprintf(&newenv, "%s/%s:%s", prefix_dir, 
-                            lib_base, oldenv);
-                    } else {
-                        asprintf(&newenv, "%s/%s", prefix_dir, lib_base);
+			char* temp;
+			asprintf(&temp, "%s:%s", newenv, oldenv);
+			free(newenv);
+			newenv = temp;
                     }
                     opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
                     if (mca_pls_gridengine_component.debug) {
