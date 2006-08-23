@@ -324,11 +324,11 @@ main(int argc, char *argv[])
 #if defined(EXEEXT)
     if( 0 != strlen(EXEEXT) ) {
         char extension[] = EXEEXT;
-        char* temp = strstr( base_argv0, EXEEXT );
+        char* temp = strstr( base_argv0, extension );
         char* old_match = temp;
         while( NULL != temp ) {
             old_match = temp;
-            temp = strstr( temp + 1, EXEEXT );
+            temp = strstr( temp + 1, extension );
         }
         *old_match = '\0';
     }

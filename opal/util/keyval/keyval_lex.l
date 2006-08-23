@@ -30,7 +30,13 @@
  * local functions
  */
 static int finish_parsing(void);
-extern "C" int opal_util_keyval_yywrap(void);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+int opal_util_keyval_yywrap(void);
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 /*
  * global variables
@@ -94,7 +100,7 @@ static int finish_parsing(void)
     return YY_NULL;
 }
 
-static int opal_util_keyval_yywrap(void)
+int opal_util_keyval_yywrap(void)
 {
     opal_util_keyval_parse_done = true;
     return 1;
