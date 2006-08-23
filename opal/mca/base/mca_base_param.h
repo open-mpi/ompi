@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -111,11 +111,6 @@ struct mca_base_param_info_t {
  * Convenience typedef
  */
 typedef struct mca_base_param_info_t mca_base_param_info_t;
-/**
- * Make a real object for the info
- */
-OBJ_CLASS_DECLARATION(mca_base_param_info_t);
-
 
 /*
  * Global functions for MCA
@@ -124,6 +119,11 @@ OBJ_CLASS_DECLARATION(mca_base_param_info_t);
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+    /**
+     * Make a real object for the info
+     */
+    OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_param_info_t);
+
     /**
      * Initialize the MCA parameter system.
      *

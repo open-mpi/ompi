@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -46,11 +46,11 @@
 
 
 #define WORDALIGNED(v) \
-    (((unsigned long)v & _WORD_MASK_) ? false : true)
+    (((intptr_t)v & _WORD_MASK_) ? false : true)
 
 
 #define INTALIGNED(v) \
-    (((unsigned long)v & 3) ? false : true)
+    (((intptr_t)v & 3) ? false : true)
 
 /*
  * this version of bcopy_csum() looks a little too long, but it

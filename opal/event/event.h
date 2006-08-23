@@ -27,27 +27,24 @@
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 #include "opal_config.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/event/event_rename.h"
 
-
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-
-#include <stdarg.h>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 typedef unsigned char u_char;
+#endif
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
 #endif
 
 #define OPAL_EVLIST_TIMEOUT	0x01
@@ -181,7 +178,9 @@ int opal_event_base_set(struct event_base *, struct opal_event *);
 
 #define OPAL_EVLOOP_ONCE	0x01
 #define OPAL_EVLOOP_NONBLOCK	0x02
-#define OPAL_EVLOOP_ONELOOP     0x04
+    /* run once through the loop, but do have the default timeout.
+       Need to be both something special *AND* EVLOOP_ONCE */
+#define OPAL_EVLOOP_ONELOOP     0x05
 
 OPAL_DECLSPEC int opal_event_loop(int);
 int opal_event_base_loop(struct event_base *, int);
@@ -218,7 +217,7 @@ extern struct event_base *current_base;
 
 /* public functions */
 
-void
+OPAL_DECLSPEC void
 opal_event_set(struct opal_event *ev, int fd, short events,
       void (*callback)(int, short, void *), void *arg);
 
@@ -388,6 +387,14 @@ int evbuffer_read(struct evbuffer *, int, int);
 u_char *evbuffer_find(struct evbuffer *, const u_char *, size_t);
 void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
 
+/* This is to prevent event library from picking up the win32_ops
+   since this will be picked up over select(). By using select, we can
+   pretty much use the OOB and PTL as is. Otherwise, there would have
+   to be a lot of magic to be done to get this to work */
+#if defined(__WINDOWS__)
+extern const struct opal_eventop opal_win32ops;
+#endif  /* defined(__WINDOWS__) */
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -403,6 +410,8 @@ void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_
 #elif defined(HAVE_EPOLL) && HAVE_EPOLL
 #define OPAL_HAVE_WORKING_EVENTOPS 1
 #elif defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(__WINDOWS__)
 #define OPAL_HAVE_WORKING_EVENTOPS 1
 #else
 #define OPAL_HAVE_WORKING_EVENTOPS 0

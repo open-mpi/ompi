@@ -115,24 +115,30 @@ bool opal_output_init(void)
     char hostname[32];
 
     if (initialized) {
-	return true;
+        return true;
     }
 
     OBJ_CONSTRUCT(&verbose, opal_output_stream_t);
+#if defined(__WINDOWS__)
+    {
+        WSADATA wsaData;
+        WSAStartup( MAKEWORD(2,2), &wsaData );
+    }
+#endif  /* defined(__WINDOWS__) */
     gethostname(hostname, sizeof(hostname));
     verbose.lds_want_stderr = true;
     asprintf(&verbose.lds_prefix, "[%s:%05d] ", hostname, getpid());
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
-	info[i].ldi_used = false;
-	info[i].ldi_enabled = false;
+        info[i].ldi_used = false;
+        info[i].ldi_enabled = false;
 
-	info[i].ldi_syslog = false;
-	info[i].ldi_file = false;
-	info[i].ldi_file_suffix = NULL;
-	info[i].ldi_file_want_append = false;
-	info[i].ldi_fd = -1;
-	info[i].ldi_file_num_lines_lost = 0;
+        info[i].ldi_syslog = false;
+        info[i].ldi_file = false;
+        info[i].ldi_file_suffix = NULL;
+        info[i].ldi_file_want_append = false;
+        info[i].ldi_fd = -1;
+        info[i].ldi_file_num_lines_lost = 0;
     }
 
     /* Initialize the mutex that protects the output */
@@ -144,6 +150,10 @@ bool opal_output_init(void)
 
     asprintf(&output_prefix, "output-pid%d-", getpid());
     if (NULL != (str = getenv("TMPDIR"))) {
+        output_dir = strdup(str);
+	} else if (NULL != (str = getenv("TEMP"))) {
+        output_dir = strdup(str);
+	} else if (NULL != (str = getenv("TMP"))) {
         output_dir = strdup(str);
     } else if (NULL != (str = getenv("HOME"))) {
         output_dir = strdup(str);
@@ -186,12 +196,12 @@ bool opal_output_switch(int output_id, bool enable)
     /* Setup */
 
     if (!initialized) {
-	opal_output_init();
+        opal_output_init();
     }
 
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS) {
-	ret = info[output_id].ldi_enabled;
-	info[output_id].ldi_enabled = enable;
+        ret = info[output_id].ldi_enabled;
+        info[output_id].ldi_enabled = enable;
     }
 
     return ret;
@@ -208,34 +218,34 @@ void opal_output_reopen_all(void)
 
     for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
 
-	/* scan till we find ldi_used == 0, which is the end-marker */
+        /* scan till we find ldi_used == 0, which is the end-marker */
 
-	if (!info[i].ldi_used) {
-	    break;
-	}
+        if (!info[i].ldi_used) {
+            break;
+        }
 
-	/* 
-	 * set this to zero to ensure that opal_output_open will
-	 * return this same index as the output stream id
-	 */
-	info[i].ldi_used = false;
+        /* 
+         * set this to zero to ensure that opal_output_open will
+         * return this same index as the output stream id
+         */
+        info[i].ldi_used = false;
 
-	lds.lds_want_syslog = info[i].ldi_syslog;
-	lds.lds_syslog_priority = info[i].ldi_syslog_priority;
-	lds.lds_syslog_ident = info[i].ldi_syslog_ident;
-	lds.lds_prefix = info[i].ldi_prefix;
-	lds.lds_want_stdout = info[i].ldi_stdout;
-	lds.lds_want_stderr = info[i].ldi_stderr;
-	lds.lds_want_file = (-1 == info[i].ldi_fd) ? false : true;
-	/* open all streams in append mode */
-	lds.lds_want_file_append = true;
-	lds.lds_file_suffix = info[i].ldi_file_suffix;
+        lds.lds_want_syslog = info[i].ldi_syslog;
+        lds.lds_syslog_priority = info[i].ldi_syslog_priority;
+        lds.lds_syslog_ident = info[i].ldi_syslog_ident;
+        lds.lds_prefix = info[i].ldi_prefix;
+        lds.lds_want_stdout = info[i].ldi_stdout;
+        lds.lds_want_stderr = info[i].ldi_stderr;
+        lds.lds_want_file = (-1 == info[i].ldi_fd) ? false : true;
+        /* open all streams in append mode */
+        lds.lds_want_file_append = true;
+        lds.lds_file_suffix = info[i].ldi_file_suffix;
 
-	/* 
-	 * call opal_output_open to open the stream. The return value
-	 * is guaranteed to be i.  So we can ignore it.
-	 */
-	opal_output_open(&lds);
+        /* 
+         * call opal_output_open to open the stream. The return value
+         * is guaranteed to be i.  So we can ignore it.
+         */
+        opal_output_open(&lds);
     }
 }
 
@@ -258,8 +268,8 @@ void opal_output_close(int output_id)
 
     OPAL_THREAD_LOCK(&mutex);
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
-	info[output_id].ldi_used && info[output_id].ldi_enabled) {
-	free_descriptor(output_id);
+        info[output_id].ldi_used && info[output_id].ldi_enabled) {
+        free_descriptor(output_id);
 
         /* If no one has the syslog open, we should close it */
         
@@ -281,9 +291,9 @@ void opal_output_close(int output_id)
     /* Somewhat of a hack to free up the temp_str */
 
     if (NULL != temp_str) {
-	free(temp_str);
-	temp_str = NULL;
-	temp_str_len = 0;
+        free(temp_str);
+        temp_str = NULL;
+        temp_str_len = 0;
     }
     OPAL_THREAD_UNLOCK(&mutex);
 }
@@ -310,10 +320,10 @@ void opal_output_verbose(int level, int output_id, const char *format, ...)
 {
     if (output_id >= 0 && output_id < OPAL_OUTPUT_MAX_STREAMS &&
         info[output_id].ldi_verbose_level >= level) {
-	va_list arglist;
-	va_start(arglist, format);
-	output(output_id, format, arglist);
-	va_end(arglist);
+        va_list arglist;
+        va_start(arglist, format);
+        output(output_id, format, arglist);
+        va_end(arglist);
     }
 }
 
@@ -371,6 +381,9 @@ void opal_output_finalize(void)
         OBJ_DESTRUCT(&verbose);
         OBJ_DESTRUCT(&mutex);
     }
+#if defined(__WINDOWS__)
+    WSACleanup();
+#endif  /* defined(__WINDOWS__) */
 }
 
 /************************************************************************/
@@ -382,13 +395,14 @@ static void construct(opal_object_t *obj)
 {
     opal_output_stream_t *stream = (opal_output_stream_t*) obj;
 
-    stream->lds_is_debugging = false;
     stream->lds_verbose_level = 0;
-    stream->lds_want_syslog = false;
     stream->lds_syslog_priority = 0;
     stream->lds_syslog_ident = NULL;
     stream->lds_prefix = NULL;
+    stream->lds_is_debugging = false;
+    stream->lds_want_syslog = false;
     stream->lds_want_stdout = false;
+    stream->lds_want_stderr = false;
     stream->lds_want_file = false;
     stream->lds_want_file_append = false;
     stream->lds_file_suffix = NULL;
@@ -406,79 +420,79 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     /* Setup */
 
     if (!initialized) {
-	opal_output_init();
+        opal_output_init();
     }
 
     /* If output_id == -1, find an available stream, or return
      * OPAL_ERROR */
 
     if (-1 == output_id) {
-	OPAL_THREAD_LOCK(&mutex);
-	for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
-	    if (!info[i].ldi_used) {
-		break;
-	    }
-	}
-	if (i >= OPAL_OUTPUT_MAX_STREAMS) {
-	    OPAL_THREAD_UNLOCK(&mutex);
-	    return OPAL_ERR_OUT_OF_RESOURCE;
-	}
+        OPAL_THREAD_LOCK(&mutex);
+        for (i = 0; i < OPAL_OUTPUT_MAX_STREAMS; ++i) {
+            if (!info[i].ldi_used) {
+                break;
+            }
+        }
+        if (i >= OPAL_OUTPUT_MAX_STREAMS) {
+            OPAL_THREAD_UNLOCK(&mutex);
+            return OPAL_ERR_OUT_OF_RESOURCE;
+        }
     }
 
     /* Otherwise, we're reopening, so we need to free all previous
      * resources, close files, etc. */
 
     else {
-	free_descriptor(output_id);
-	i = output_id;
+        free_descriptor(output_id);
+        i = output_id;
     }
 
     /* Special case: if we got NULL for lds, then just use the default
      * verbose */
 
     if (NULL == lds) {
-	lds = &verbose;
+        lds = &verbose;
     }
 
     /* Got a stream -- now initialize it and open relevant outputs */
 
     info[i].ldi_used = true;
     if (-1 == output_id) {
-	OPAL_THREAD_UNLOCK(&mutex);
+        OPAL_THREAD_UNLOCK(&mutex);
     }
     info[i].ldi_enabled = lds->lds_is_debugging ?
-	(bool) OMPI_ENABLE_DEBUG : true;
+        (bool) OMPI_ENABLE_DEBUG : true;
     info[i].ldi_verbose_level = lds->lds_verbose_level;
 
     info[i].ldi_syslog = lds->lds_want_syslog;
     if (lds->lds_want_syslog) {
 
 #ifndef __WINDOWS__
-	if (NULL != lds->lds_syslog_ident) {
-	    info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
-	    openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
-	} else {
-	    info[i].ldi_syslog_ident = NULL;
-	    openlog("opal", LOG_PID, LOG_USER);
-	}
+        if (NULL != lds->lds_syslog_ident) {
+            info[i].ldi_syslog_ident = strdup(lds->lds_syslog_ident);
+            openlog(lds->lds_syslog_ident, LOG_PID, LOG_USER);
+        } else {
+            info[i].ldi_syslog_ident = NULL;
+            openlog("opal", LOG_PID, LOG_USER);
+        }
 #else
-	if (NULL == (info[i].ldi_syslog_ident =
-		     RegisterEventSource(NULL, TEXT("opal: ")))) {
-	    /* handle the error */
-	    return OPAL_ERROR;
-	}
+        if (NULL == (info[i].ldi_syslog_ident =
+                     RegisterEventSource(NULL, TEXT("opal: ")))) {
+            /* handle the error */
+            return OPAL_ERROR;
+        }
 #endif
 
-	syslog_opened = true;
-	info[i].ldi_syslog_priority = lds->lds_syslog_priority;
+        syslog_opened = true;
+        info[i].ldi_syslog_priority = lds->lds_syslog_priority;
     }
 
     if (NULL != lds->lds_prefix) {
-	info[i].ldi_prefix = strdup(lds->lds_prefix);
-	info[i].ldi_prefix_len = strlen(lds->lds_prefix);
+        info[i].ldi_prefix = strdup(lds->lds_prefix);
+        info[i].ldi_prefix_len = (int)strlen(lds->lds_prefix);
     } else {
-	info[i].ldi_prefix = NULL;
-	info[i].ldi_prefix_len = 0;
+        info[i].ldi_prefix = NULL;
+        info[i].ldi_prefix_len = 0;
     }
 
     info[i].ldi_stdout = lds->lds_want_stdout;
@@ -487,7 +501,7 @@ static int do_open(int output_id, opal_output_stream_t * lds)
     info[i].ldi_fd = -1;
     info[i].ldi_file = lds->lds_want_file;
     info[i].ldi_file_suffix = (NULL == lds->lds_file_suffix) ? NULL :
-	strdup(lds->lds_file_suffix);
+        strdup(lds->lds_file_suffix);
     info[i].ldi_file_want_append = lds->lds_want_file_append;
     info[i].ldi_file_num_lines_lost = 0;
 
@@ -679,20 +693,20 @@ static void output(int output_id, const char *format, va_list arglist)
 
 	if (ldi->ldi_file) {
 	    if (ldi->ldi_fd == -1) {
-		if (OPAL_SUCCESS != open_file(output_id)) {
-		    ++ldi->ldi_file_num_lines_lost;
-		} else if (ldi->ldi_file_num_lines_lost > 0) {
-		    char buffer[BUFSIZ];
-		    memset(buffer, 0, BUFSIZ);
-		    snprintf(buffer, BUFSIZ - 1,
-			     "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
-			     ldi->ldi_file_num_lines_lost);
-		    write(ldi->ldi_fd, buffer, strlen(buffer));
-		    ldi->ldi_file_num_lines_lost = 0;
-		}
+		    if (OPAL_SUCCESS != open_file(output_id)) {
+	            ++ldi->ldi_file_num_lines_lost;
+		    } else if (ldi->ldi_file_num_lines_lost > 0) {
+		        char buffer[BUFSIZ];
+		        memset(buffer, 0, BUFSIZ);
+		        snprintf(buffer, BUFSIZ - 1,
+			             "[WARNING: %d lines lost because the Open MPI process session directory did\n not exist when opal_output() was invoked]\n",
+			             ldi->ldi_file_num_lines_lost);
+		        write(ldi->ldi_fd, buffer, strlen(buffer));
+		        ldi->ldi_file_num_lines_lost = 0;
+		    }
 	    }
 	    if (ldi->ldi_fd != -1) {
-		write(ldi->ldi_fd, temp_str, total_len);
+            write(ldi->ldi_fd, temp_str, total_len);
 	    }
 	}
 	OPAL_THREAD_UNLOCK(&mutex);

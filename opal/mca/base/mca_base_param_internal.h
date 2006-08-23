@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,6 +38,10 @@
 #include "opal/class/opal_list.h"
 #include "opal/class/opal_hash_table.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * \internal
@@ -114,7 +118,7 @@ typedef struct mca_base_param_t mca_base_param_t;
  *
  * Object delcataion for mca_base_param_t
  */
-OBJ_CLASS_DECLARATION(mca_base_param_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_param_t);
 
 
 /**
@@ -141,7 +145,7 @@ typedef struct mca_base_param_file_value_t mca_base_param_file_value_t;
 /**
  * Object declaration for mca_base_param_file_value_t
  */
-OBJ_CLASS_DECLARATION(mca_base_param_file_value_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_param_file_value_t);
 
 
 /**
@@ -151,16 +155,13 @@ OBJ_CLASS_DECLARATION(mca_base_param_file_value_t);
  */
 OPAL_DECLSPEC extern opal_list_t mca_base_param_file_values;
 
+/**
+ * \internal
+ *
+ * Parse a parameter file.
+ */
+OPAL_DECLSPEC int mca_base_parse_paramfile(const char *paramfile);
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-    /**
-     * \internal
-     *
-     * Parse a parameter file.
-     */
-  int mca_base_parse_paramfile(const char *paramfile);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

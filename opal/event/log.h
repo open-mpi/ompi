@@ -27,6 +27,8 @@
 #ifndef _LOG_H_
 #define _LOG_H_
 
+#include "opal/event/event_rename.h"
+
 void event_err(int eval, const char *fmt, ...);
 void event_warn(const char *fmt, ...);
 void event_errx(int eval, const char *fmt, ...);

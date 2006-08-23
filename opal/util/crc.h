@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -19,6 +19,10 @@
 #ifndef _OPAL_CRC_H_
 #define _OPAL_CRC_H_
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 #define CRC_POLYNOMIAL ((unsigned int)0x04c11db7)
 #define CRC_INITIAL_REGISTER ((unsigned int)0xffffffff)
 
@@ -31,7 +35,7 @@
 #define OPAL_CSUM_ZERO  0
 
 
-unsigned long
+OPAL_DECLSPEC unsigned long
 opal_bcopy_csum_partial(
     const void *  source,
     void *  destination,
@@ -54,7 +58,7 @@ opal_bcopy_csum (
     return opal_bcopy_csum_partial(source, destination, copylen, csumlen, &plong, &plength);
 }
                                                                                                                   
-unsigned int 
+OPAL_DECLSPEC unsigned int 
 opal_bcopy_uicsum_partial (
     const void *  source,
     void *  destination,
@@ -77,7 +81,7 @@ opal_bcopy_uicsum (
     return opal_bcopy_uicsum_partial(source, destination, copylen, csumlen, &pint, &plength);
 }
                                                                                                                   
-unsigned long 
+OPAL_DECLSPEC unsigned long 
 opal_csum_partial (
     const void *  source,
     unsigned long csumlen,
@@ -94,7 +98,7 @@ opal_csum(const void *  source, unsigned long csumlen)
     return opal_csum_partial(source, csumlen, &lastPartialLong, &lastPartialLength);
 }
 
-unsigned int
+OPAL_DECLSPEC unsigned int
 opal_uicsum_partial (
     const void *  source,
     unsigned long csumlen,
@@ -116,7 +120,7 @@ opal_uicsum(const void *  source, unsigned long csumlen)
 
 void opal_initialize_crc_table(void);
 
-unsigned int 
+OPAL_DECLSPEC unsigned int 
 opal_bcopy_uicrc_partial(
     const void *  source,
     void *  destination,
@@ -134,7 +138,7 @@ opal_bcopy_uicrc(
     return opal_bcopy_uicrc_partial(source, destination, copylen, crclen, CRC_INITIAL_REGISTER);
 }
 
-unsigned int 
+OPAL_DECLSPEC unsigned int 
 opal_uicrc_partial(
     const void *  source, 
     unsigned long crclen, 
@@ -147,5 +151,9 @@ opal_uicrc(const void *  source, unsigned long crclen)
     return opal_uicrc_partial(source, crclen, CRC_INITIAL_REGISTER);
 }
                                                                                                                   
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif
 

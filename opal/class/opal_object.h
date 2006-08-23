@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -119,7 +119,9 @@
 #include <stdlib.h>
 #endif  /* HAVE_STDLIB_H */
 
+#if OMPI_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
 /*
  * BEGIN_C_DECLS should be used at the beginning of your declarations,
@@ -333,8 +335,8 @@ do {                                                            \
 } while (0)
 
 BEGIN_C_DECLS
-OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
 
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_object_t);
 
 /* declarations *******************************************************/
 

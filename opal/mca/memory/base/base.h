@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -69,7 +69,7 @@ extern "C" {
      */
     OPAL_DECLSPEC int opal_memory_base_close(void);
 
-    extern opal_list_t opal_memory_base_components_opened;
+    OPAL_DECLSPEC extern opal_list_t opal_memory_base_components_opened;
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -90,16 +90,6 @@ struct opal_output_stream_t {
     opal_object_t super;
 
     /**
-     * Indicates whether the output of the stream is
-     * debugging/developer-only output or not.
-     *
-     * This field should be "true" if the output is for debugging
-     * purposes only.  In that case, the output will never be sent to
-     * the stream unless OPAL was configured with --enable-debug.
-     */
-    bool lds_is_debugging;
-
-    /**
      * Indicate the starting verbosity level of the stream.
      *
      * Verbose levels are a convenience mechanisms, and are only
@@ -113,20 +103,6 @@ struct opal_output_stream_t {
      */
     int lds_verbose_level;
     
-    /**
-     * Indicates whether output of the stream should be sent to the
-     * syslog or not.
-     *
-     * If this field is true, output from this stream is sent to the
-     * syslog, and the following fields are also examined:
-     *
-     * - lds_syslog_priority
-     * - lds_syslog_ident
-     * - lds_prefix
-     *
-     * If this field is false, the above three fields are ignored.
-     */
-    bool lds_want_syslog;
     /**
      * When opal_output_stream_t::lds_want_syslog is true, this field is
      * examined to see what priority output from the stream should be
@@ -143,11 +119,11 @@ struct opal_output_stream_t {
      * 
      * If a NULL value is given, the string "opal" is used.
      */
-#ifndef __WINDOWS__
+#if !defined(__WINDOWS__)
     char *lds_syslog_ident;
 #else
     HANDLE lds_syslog_ident;
-#endif
+#endif  /* !defined(__WINDOWS__) */
     
     /**
      * String prefix added to all output on the stream.
@@ -158,6 +134,31 @@ struct opal_output_stream_t {
      */
     char *lds_prefix;
     
+    /**
+     * Indicates whether the output of the stream is
+     * debugging/developer-only output or not.
+     *
+     * This field should be "true" if the output is for debugging
+     * purposes only.  In that case, the output will never be sent to
+     * the stream unless OPAL was configured with --enable-debug.
+     */
+    bool lds_is_debugging;
+
+    /**
+     * Indicates whether output of the stream should be sent to the
+     * syslog or not.
+     *
+     * If this field is true, output from this stream is sent to the
+     * syslog, and the following fields are also examined:
+     *
+     * - lds_syslog_priority
+     * - lds_syslog_ident
+     * - lds_prefix
+     *
+     * If this field is false, the above three fields are ignored.
+     */
+    bool lds_want_syslog;
+
     /**
      * Whether to send stream output to stdout or not.
      *
@@ -209,15 +210,6 @@ struct opal_output_stream_t {
      * Convenience typedef
      */    
     typedef struct opal_output_stream_t opal_output_stream_t;
-    /**
-     * Declare the class of this type.  Note that the constructor for
-     * this class is for convenience only -- it is \em not necessary
-     * to be invoked.  If the constructor it used, it sets all values
-     * in the struct to be false / 0 (i.e., turning off all output).
-     * The intended usage is to invoke the constructor and then enable
-     * the output fields that you want.
-     */
-    OBJ_CLASS_DECLARATION(opal_output_stream_t);
 
     /**
      * Initializes the output stream system and opens a default
@@ -475,6 +467,17 @@ struct opal_output_stream_t {
      */
 #define OPAL_OUTPUT_VERBOSE(a)
 #endif
+
+/**
+ * Declare the class of this type.  Note that the constructor for
+ * this class is for convenience only -- it is \em not necessary
+ * to be invoked.  If the constructor it used, it sets all values
+ * in the struct to be false / 0 (i.e., turning off all output).
+ * The intended usage is to invoke the constructor and then enable
+ * the output fields that you want.
+ */
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_output_stream_t);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
