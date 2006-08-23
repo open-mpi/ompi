@@ -61,7 +61,6 @@ int orte_rmgr_base_put_app_context(
 
     /* put context info on the job segment of the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        OBJ_RELEASE(value);
         return rc;
     }
     
@@ -276,7 +275,6 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, orte_std_cntr_t proc_slots)
     /* put context info on the job segment of the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
         return rc;
     }
 
