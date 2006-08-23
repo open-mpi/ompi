@@ -32,6 +32,10 @@
 #include "opal/threads/mutex.h"
 #include "opal/event/event_rename.h"
 
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
