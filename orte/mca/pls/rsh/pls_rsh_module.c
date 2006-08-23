@@ -803,7 +803,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         oldenv = getenv("LD_LIBRARY_PATH");
                         if (NULL != oldenv) {
                             char* temp;
-                            asprintf(&temp, "%s:%s", newenv, oldenv, NULL);
+                            asprintf(&temp, "%s:%s", newenv, oldenv);
                             free(newenv);
                             newenv = temp;
                         }
