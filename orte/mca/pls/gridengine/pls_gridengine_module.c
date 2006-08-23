@@ -253,7 +253,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
     sigset_t sigs;
     char *lib_base = NULL, *bin_base = NULL;
     char *sge_root, *sge_arch;
-    
+
     /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
@@ -530,9 +530,9 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                 } else {
                     if (NULL != prefix_dir) {
                         orted_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
-			if (mca_pls_gridengine_component.debug) {
-			    opal_output(0, "pls:gridengine: orted path=%s\n",
-				argv[orted_index]);
+                        if (mca_pls_gridengine_component.debug) {
+                            opal_output(0, "pls:gridengine: orted path=%s\n",
+                                argv[orted_index]);
                         }
                     }   
                     /* If we yet did not fill up the orted_path, do so now */
@@ -552,14 +552,14 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     char *oldenv, *newenv;
                     
                     /* Reset PATH */
-		    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
-		    oldenv = getenv("PATH");
+                    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+                    oldenv = getenv("PATH");
                     if (NULL != oldenv) {
-			char *temp;
-			asprintf(&temp, "%s:%s", newenv, oldenv);
-			free( newenv );
-			newenv = temp;
-		    }
+                        char *temp;
+                        asprintf(&temp, "%s:%s", newenv, oldenv);
+                        free( newenv );
+                        newenv = temp;
+                    }
                     opal_setenv("PATH", newenv, true, &environ);
                     if (mca_pls_gridengine_component.debug) {
                         opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
@@ -569,10 +569,10 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     /* Reset LD_LIBRARY_PATH */
                     oldenv = getenv("LD_LIBRARY_PATH");
                     if (NULL != oldenv) {
-			char* temp;
-			asprintf(&temp, "%s:%s", newenv, oldenv);
-			free(newenv);
-			newenv = temp;
+                        char* temp;
+                        asprintf(&temp, "%s:%s", newenv, oldenv);
+                        free(newenv);
+                        newenv = temp;
                     }
                     opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
                     if (mca_pls_gridengine_component.debug) {
