@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -50,7 +50,7 @@ int MPI_Op_create(MPI_User_function *function, int commute,
 
   /* Create and cache the op.  Sets a refcount of 1. */
 
-  *op = ompi_op_create((bool) commute,
+  *op = ompi_op_create((commute != 0 ? true : false),
                        (ompi_op_fortran_handler_fn_t*) function);
   if (NULL == *op) {
     err = MPI_ERR_INTERN;

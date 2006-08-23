@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,6 +23,7 @@
 #include "mpi.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
+#include "ompi/runtime/params.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -33,11 +34,6 @@ extern "C" {
    NOTE: pragma weak stuff is handled on a file-by-file basis; it
    doesn't work to simply list all of the pragmas in a top-level
    header file. */
-
-/* This variable is actually in src/mpi/runtime/ompi_mpi_init.c, but it
-   is used by every MPI function. */
-
-    OMPI_DECLSPEC extern bool ompi_mpi_param_check;
 
 /* These macros have to be used to check the corectness of the datatype depending on the
  * operations that we have to do with them. They can be used on all functions, not only

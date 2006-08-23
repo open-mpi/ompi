@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -48,7 +48,7 @@ int MPI_Attr_get(MPI_Comm comm, int keyval, void *attribute_val, int *flag)
        src/attribute/attribute.c for a lengthy comment explaining Open
        MPI attribute behavior. */
 
-    ret = ompi_attr_get_c(comm->c_keyhash, keyval, attribute_val, flag);
+    ret = ompi_attr_get_c(comm->c_keyhash, keyval, (void**)attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, comm, ret, FUNC_NAME);
 }
 

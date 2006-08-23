@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,5 +53,5 @@ MPI_Op MPI_Op_f2c(MPI_Fint op_f)
         return NULL;
     }
 
-    return ompi_pointer_array_get_item(ompi_op_f_to_c_table, op_index);
+    return (MPI_Op)ompi_pointer_array_get_item(ompi_op_f_to_c_table, op_index);
 }
