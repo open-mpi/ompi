@@ -122,7 +122,7 @@ PN(void, mpi_errhandler_free, MPI_ERRHANDLER_FREE, (MPI_Fint *errhandler, MPI_Fi
 PN(void, mpi_errhandler_get, MPI_ERRHANDLER_GET, (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_errhandler_set, MPI_ERRHANDLER_SET, (MPI_Fint *comm, MPI_Fint *errhandler, MPI_Fint *ierr));
 PN(void, mpi_error_class, MPI_ERROR_CLASS, (MPI_Fint *errorcode, MPI_Fint *errorclass, MPI_Fint *ierr));
-PN(void, mpi_error_string, MPI_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr));
+PN(void, mpi_error_string, MPI_ERROR_STRING, (MPI_Fint *errorcode, char *string, MPI_Fint *resultlen, MPI_Fint *ierr, int string_len));
 PN(void, mpi_exscan, MPI_EXSCAN, (char *sendbuf, char *recvbuf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *op, MPI_Fint *comm, MPI_Fint *ierr));
 PN(void, mpi_file_call_errhandler, MPI_FILE_CALL_ERRHANDLER, (MPI_Fint *fh, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN(void, mpi_file_create_errhandler, MPI_FILE_CREATE_ERRHANDLER, (ompi_errhandler_fortran_handler_fn_t* function, MPI_Fint *errhandler, MPI_Fint *ierr));
@@ -188,7 +188,7 @@ PN(void, mpi_get_address, MPI_GET_ADDRESS, (char *location, MPI_Aint *address, M
 PN(void, mpi_get_count, MPI_GET_COUNT, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
 PN(void, mpi_get_elements, MPI_GET_ELEMENTS, (MPI_Fint *status, MPI_Fint *datatype, MPI_Fint *count, MPI_Fint *ierr));
 PN(void, mpi_get, MPI_GET, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *win, MPI_Fint *ierr));
-PN(void, mpi_get_processor_name, MPI_GET_PROCESSOR_NAME, (char *name, MPI_Fint *resultlen, MPI_Fint *ierr));
+PN(void, mpi_get_processor_name, MPI_GET_PROCESSOR_NAME, (char *name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
 PN(void, mpi_get_version, MPI_GET_VERSION, (MPI_Fint *version, MPI_Fint *subversion, MPI_Fint *ierr));
 PN(void, mpi_graph_create, MPI_GRAPH_CREATE, (MPI_Fint *comm_old, MPI_Fint *nnodes, MPI_Fint *index, MPI_Fint *edges, MPI_Flogical *reorder, MPI_Fint *comm_graph, MPI_Fint *ierr));
 PN(void, mpi_graph_get, MPI_GRAPH_GET, (MPI_Fint *comm, MPI_Fint *maxindex, MPI_Fint *maxedges, MPI_Fint *index, MPI_Fint *edges, MPI_Fint *ierr));
@@ -212,14 +212,14 @@ PN(void, mpi_group_translate_ranks, MPI_GROUP_TRANSLATE_RANKS, (MPI_Fint *group1
 PN(void, mpi_group_union, MPI_GROUP_UNION, (MPI_Fint *group1, MPI_Fint *group2, MPI_Fint *newgroup, MPI_Fint *ierr));
 PN(void, mpi_ibsend, MPI_IBSEND, (char *buf, MPI_Fint *count, MPI_Fint *datatype, MPI_Fint *dest, MPI_Fint *tag, MPI_Fint *comm, MPI_Fint *request, MPI_Fint *ierr));
 PN(void, mpi_info_create, MPI_INFO_CREATE, (MPI_Fint *info, MPI_Fint *ierr));
-PN(void, mpi_info_delete, MPI_INFO_DELETE, (MPI_Fint *info, char *key, MPI_Fint *ierr));
+PN(void, mpi_info_delete, MPI_INFO_DELETE, (MPI_Fint *info, char *key, MPI_Fint *ierr, int key_len));
 PN(void, mpi_info_dup, MPI_INFO_DUP, (MPI_Fint *info, MPI_Fint *newinfo, MPI_Fint *ierr));
 PN(void, mpi_info_free, MPI_INFO_FREE, (MPI_Fint *info, MPI_Fint *ierr));
-PN(void, mpi_info_get, MPI_INFO_GET, (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr));
+PN(void, mpi_info_get, MPI_INFO_GET, (MPI_Fint *info, char *key, MPI_Fint *valuelen, char *value, MPI_Flogical *flag, MPI_Fint *ierr, int key_len, int value_len));
 PN(void, mpi_info_get_nkeys, MPI_INFO_GET_NKEYS, (MPI_Fint *info, MPI_Fint *nkeys, MPI_Fint *ierr));
-PN(void, mpi_info_get_nthkey, MPI_INFO_GET_NTHKEY, (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr));
-PN(void, mpi_info_get_valuelen, MPI_INFO_GET_VALUELEN, (MPI_Fint *info, char *key, MPI_Fint *valuelen, MPI_Flogical *flag, MPI_Fint *ierr));
-PN(void, mpi_info_set, MPI_INFO_SET, (MPI_Fint *info, char *key, char *value, MPI_Fint *ierr));
+PN(void, mpi_info_get_nthkey, MPI_INFO_GET_NTHKEY, (MPI_Fint *info, MPI_Fint *n, char *key, MPI_Fint *ierr, int key_len));
+PN(void, mpi_info_get_valuelen, MPI_INFO_GET_VALUELEN, (MPI_Fint *info, char *key, MPI_Fint *valuelen, MPI_Flogical *flag, MPI_Fint *ierr, int key_len));
+PN(void, mpi_info_set, MPI_INFO_SET, (MPI_Fint *info, char *key, char *value, MPI_Fint *ierr, int key_len, int value_len));
 PN(void, mpi_init, MPI_INIT, (MPI_Fint *ierr));
 PN(void, mpi_initialized, MPI_INITIALIZED, (MPI_Flogical *flag, MPI_Fint *ierr));
 PN(void, mpi_init_thread, MPI_INIT_THREAD, (MPI_Fint *required, MPI_Fint *provided, MPI_Fint *ierr));
