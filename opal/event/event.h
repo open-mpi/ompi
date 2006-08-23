@@ -232,13 +232,7 @@ opal_event_add(struct opal_event *ev, struct timeval *tv)
 {
     extern opal_mutex_t opal_event_lock;
     int rc;
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        rc = opal_event_add_i(ev, tv);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        rc = opal_event_add_i(ev, tv);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_add_i(ev, tv));
     return rc;
 }
 
@@ -247,26 +241,14 @@ opal_event_del(struct opal_event *ev)
 {
     extern opal_mutex_t opal_event_lock;
     int rc;
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        rc = opal_event_del_i(ev);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        rc = opal_event_del_i(ev);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_del_i(ev));
     return rc;
 }
                                                                                           
 static inline void 
 opal_event_active(struct opal_event* ev, int res, short ncalls)
 {
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        opal_event_active_i(ev, res, ncalls);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        opal_event_active_i(ev, res, ncalls);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, opal_event_active_i(ev, res, ncalls));
 }
                                                                                           
 static inline int

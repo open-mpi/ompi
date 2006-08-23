@@ -257,8 +257,6 @@ opal_event_init(void)
 	/* allocate a single active event queue */
 	opal_event_base_priority_init(current_base, 1);
 
-#if OMPI_ENABLE_PROGRESS_THREADS
-#endif
 	opal_event_enable();
 #endif /* HAVE_WORKING_EVENTOPS */
 
@@ -461,13 +459,9 @@ opal_event_process_active(struct event_base *base)
 		while (ncalls) {
 			ncalls--;
 			ev->ev_ncalls = ncalls;
-#if OMPI_ENABLE_PROGRESS_THREADS
-			opal_mutex_unlock(&opal_event_lock);
+                        OPAL_THREAD_UNLOCK(&opal_event_lock);
 			(*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-			opal_mutex_lock(&opal_event_lock);
-#else
-			(*ev->ev_callback)((int)ev->ev_fd, ev->ev_res, ev->ev_arg);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+                        OPAL_THREAD_LOCK(&opal_event_lock);
 		}
 	}
 #endif
@@ -534,9 +528,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 		return(0);
 
 #if OPAL_HAVE_WORKING_EVENTOPS
-#if OMPI_ENABLE_PROGRESS_THREADS
-	opal_mutex_lock(&opal_event_lock);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+	OPAL_THREAD_LOCK(&opal_event_lock);
 
 	done = 0;
 	while (!done && opal_event_enabled) {
@@ -557,9 +549,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 				res = (*event_sigcb)();
 				if (res == -1) {
 					errno = EINTR;
-#if OMPI_ENABLE_PROGRESS_THREADS
-					opal_mutex_unlock(&opal_event_lock);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+					OPAL_THREAD_UNLOCK(&opal_event_lock);
 					return (-1);
 				}
 			}
@@ -583,9 +573,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 
 		/* If we have no events, we just exit */
 		if (!opal_event_haveevents(base)) {
-#if OMPI_ENABLE_PROGRESS_THREADS
-			opal_mutex_unlock(&opal_event_lock);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+			OPAL_THREAD_UNLOCK(&opal_event_lock);
 			event_debug(("%s: no events registered.", __func__));
 			return (1);
 		}
@@ -600,9 +588,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 
 		if (res == -1) {
 			opal_output(0, "opal_event_loop: ompi_evesel->dispatch() failed.");
-#if OMPI_ENABLE_PROGRESS_THREADS
-			opal_mutex_unlock(&opal_event_lock);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+			OPAL_THREAD_UNLOCK(&opal_event_lock);
 			return (-1);
 		}
 
@@ -618,9 +604,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 
 	event_debug(("%s: asked to terminate loop.", __func__));
 
-#if OMPI_ENABLE_PROGRESS_THREADS
-	opal_mutex_unlock(&opal_event_lock);
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+	OPAL_THREAD_UNLOCK(&opal_event_lock);
 	return (base->event_count_active);
 #else
 	return 0;
