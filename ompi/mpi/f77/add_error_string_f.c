@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -76,4 +77,5 @@ void mpi_add_error_string_f(MPI_Fint *errorcode, char *string,
     ompi_fortran_string_f2c(string, len, &c_string);
     *ierr = OMPI_INT_2_FINT(MPI_Add_error_string(OMPI_FINT_2_INT(*errorcode),
 						 c_string));
+    free(c_string);
 }
