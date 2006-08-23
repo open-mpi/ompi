@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -109,7 +110,7 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
             for (i = 0; i < OMPI_FINT_2_INT(*incount); ++i) {
                 if (!OMPI_IS_FORTRAN_STATUS_IGNORE(&array_of_statuses[i])) {
-                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * 5]);
+                    MPI_Status_c2f(&c_status[i], &array_of_statuses[i * sizeof(MPI_Status)]);
                 }
             }
         }
