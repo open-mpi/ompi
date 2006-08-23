@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -29,8 +29,8 @@
 /*
  * local functions
  */
-static int finish_parsing(void) ;
-static int opal_util_keyval_yywrap(void);
+static int finish_parsing(void);
+extern "C" int opal_util_keyval_yywrap(void);
 
 /*
  * global variables
@@ -94,13 +94,11 @@ static int finish_parsing(void)
     return YY_NULL;
 }
 
-
 static int opal_util_keyval_yywrap(void)
 {
     opal_util_keyval_parse_done = true;
     return 1;
 }
-
 
 /*
  * Ensure that we have a valid yybuffer to use.  Specifically, if this

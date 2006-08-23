@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,7 +32,14 @@
 #endif
 #define strncpy opal_strncpy
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 OPAL_DECLSPEC char *opal_strncpy(char *dest, const char *src, size_t len);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_STRNCPY_H */

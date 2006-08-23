@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,6 +27,7 @@
 #include "opal/util/show_help_lex.h"
 #include "opal/util/printf.h"
 #include "opal/util/argv.h"
+#include "opal/util/os_path.h"
 #include "opal/constants.h"
 
 static int open_file(const char *base, const char *topic);
@@ -103,7 +104,7 @@ static int open_file(const char *base, const char *topic)
     /* Try to open the file.  If we can't find it, try it with a .txt
        extension. */
 
-    asprintf(&filename, "%s/%s", OPAL_PKGDATADIR, base);
+    filename = opal_os_path( false, OPAL_PKGDATADIR, base, NULL );
     opal_show_help_yyin = fopen(filename, "r");
     free(filename);
     if (NULL == opal_show_help_yyin) {
@@ -135,7 +136,7 @@ static int open_file(const char *base, const char *topic)
     /* If we still couldn't find it, try with no extension */
 
     if (NULL == opal_show_help_yyin) {
-        asprintf(&filename, "%s/%s", OPAL_PKGDATADIR, base);
+        filename = opal_os_path( false, OPAL_PKGDATADIR, base, NULL );
         opal_show_help_yyin = fopen(filename, "r");
         free(filename);
     }

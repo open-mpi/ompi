@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -58,7 +58,7 @@ extern "C" {
  *
  * @retval OPAL_SUCCESS Initialization completed successfully
  */
-int opal_mem_hooks_init(void);
+OPAL_DECLSPEC int opal_mem_hooks_init(void);
 
 
 /**
@@ -76,7 +76,7 @@ int opal_mem_hooks_init(void);
  *
  * @retval OPAL_SUCCESS Shutdown completed successfully
  */
-int opal_mem_hooks_finalize(void);
+OPAL_DECLSPEC int opal_mem_hooks_finalize(void);
 
 
 /**
@@ -108,7 +108,7 @@ int opal_mem_hooks_finalize(void);
  *
  * \note This function must be called after opal_mem_hooks_init().
  */
-int opal_mem_hooks_support_level(void);
+OPAL_DECLSPEC int opal_mem_hooks_support_level(void);
 
 
 /**
@@ -147,8 +147,8 @@ typedef void (opal_mem_hooks_callback_fn_t)(void *buf, size_t length,
  * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be allocated
  */
-int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, 
-                                  void *cbdata);
+OPAL_DECLSPEC int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func, 
+                                                void *cbdata);
 
 
 /**
@@ -167,8 +167,8 @@ int opal_mem_hooks_register_alloc(opal_mem_hooks_callback_fn_t *func,
  * @retval OPAL_ERR_NOT_SUPPORTED There are no hooks available for 
  *                      receiving callbacks when memory is to be released
  */
-int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
-                                    void *cbdata);
+OPAL_DECLSPEC int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func, 
+                                                  void *cbdata);
 
 
 /**
@@ -181,7 +181,7 @@ int opal_mem_hooks_register_release(opal_mem_hooks_callback_fn_t *func,
  * @retval OPAL_SUCCESS The function was successfully deregistered
  * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
  */
-int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
+OPAL_DECLSPEC int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
 
 
 /**
@@ -194,7 +194,7 @@ int opal_mem_hooks_unregister_alloc(opal_mem_hooks_callback_fn_t *func);
  * @retval OPAL_SUCCESS The function was successfully deregistered
  * @retval OPAL_ERR_NOT_FOUND The function was not previously registered
  */
-int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
+OPAL_DECLSPEC int opal_mem_hooks_unregister_release(opal_mem_hooks_callback_fn_t *func);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

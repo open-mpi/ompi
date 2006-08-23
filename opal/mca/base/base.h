@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,8 +42,7 @@ struct mca_base_component_list_item_t {
   const mca_base_component_t *cli_component;
 };
 typedef struct mca_base_component_list_item_t mca_base_component_list_item_t;
-OBJ_CLASS_DECLARATION(mca_base_component_list_item_t);
-
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_list_item_t);
 
 /*
  * Structure for making priority lists of components
@@ -55,14 +54,13 @@ struct mca_base_component_priority_list_item_t {
 };
 typedef struct mca_base_component_priority_list_item_t 
   mca_base_component_priority_list_item_t;
-OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_component_priority_list_item_t);
 
 /*
  * Public variables
  */
 OPAL_DECLSPEC extern int mca_base_param_component_path;
-
 
 /*
  * Public functions
@@ -112,7 +110,7 @@ OPAL_DECLSPEC  int mca_base_component_compare_priority(mca_base_component_priori
                                        mca_base_component_priority_list_item_t *b);
 OPAL_DECLSPEC  int mca_base_component_compare(const mca_base_component_t *a,
                               const mca_base_component_t *b);
-  int mca_base_component_compatible(const mca_base_component_t *a,
+OPAL_DECLSPEC  int mca_base_component_compatible(const mca_base_component_t *a,
                               const mca_base_component_t *b);
 
   /* mca_base_component_find.c */

@@ -116,21 +116,29 @@ static inline int32_t opal_atomic_sub_32(volatile int32_t *addr, int32_t delta)
 static inline int opal_atomic_cmpset_acq_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
-#if OMPI_ENABLE_DEBUG
 /* The address should be 64 bits aligned otherwise ...
  * http://msdn.microsoft.com/library/default.asp?url=/library/en-us/dllproc/base/interlockedcompareexchange64.asp
  */
-#endif  /* OMPI_ENABLE_DEBUG */
-    int64_t ret = InterlockedCompareExchangeAcquire64 ((int64_t volatile*) addr,
+#if HAVE_INTERLOCKEDCOMPAREEXCHANGEACQUIRE64
+	int64_t ret = InterlockedCompareExchangeAcquire64 ((int64_t volatile*) addr,
                                                       (int64_t) newval, (int64_t) oldval);
+#else
+    int64_t ret = InterlockedCompareExchange64 ((int64_t volatile*) addr,
+                                                 (int64_t) newval, (int64_t) oldval);
+#endif  /* HAVE_INTERLOCKEDCOMPAREEXCHANGEACQUIRE64 */
     return (oldval == ret) ? 1: 0;
 }
 
 static inline int opal_atomic_cmpset_rel_64( volatile int64_t *addr,
                                              int64_t oldval, int64_t newval)
 {
+#if HAVE_INTERLOCKEDCOMPAREEXCHANGERELEASE64
     int64_t ret = InterlockedCompareExchangeRelease64 ((int64_t volatile*) addr,
                                                        (int64_t) newval, (int64_t) oldval);
+#else
+    int64_t ret = InterlockedCompareExchange64 ((int64_t volatile*) addr,
+                                                 (int64_t) newval, (int64_t) oldval);
+#endif  /* HAVE_INTERLOCKEDCOMPAREEXCHANGERELEASE64 */
     return (oldval == ret) ? 1: 0;
 }
 

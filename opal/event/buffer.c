@@ -343,7 +343,7 @@ evbuffer_read(struct evbuffer *buf, int fd, int howmuch)
 	int n = EVBUFFER_MAX_READ;
 #endif
 
-#ifdef FIONREAD
+#if !defined(__WINDOWS__) && defined(FIONREAD)
 #ifdef WIN32
 	if (ioctlsocket(fd, FIONREAD, &n) == -1 || n == 0) {
 #else

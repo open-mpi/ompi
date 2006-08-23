@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -37,7 +37,7 @@ extern "C" {
  * functions.  At this point, any function in the progress engine
  * interface may be called.
  */
-OPAL_DECLSPEC extern int opal_progress_init(void);
+OPAL_DECLSPEC int opal_progress_init(void);
 
 /**
  * Configure the progress engine for executing MPI applications
@@ -48,7 +48,7 @@ OPAL_DECLSPEC extern int opal_progress_init(void);
  * \note opal_progress_init() must be called before calling
  * this function.  Failure to do so is an error.
  */
-OPAL_DECLSPEC extern int opal_progress_mpi_init(void);
+OPAL_DECLSPEC int opal_progress_mpi_init(void);
 
 /** 
  * Turn on optimizations for MPI progress
@@ -58,7 +58,7 @@ OPAL_DECLSPEC extern int opal_progress_mpi_init(void);
  * active use and possibly disabling the sched_yield call when the
  * progress engine is idle 
  */
-OPAL_DECLSPEC extern int opal_progress_mpi_enable(void);
+OPAL_DECLSPEC int opal_progress_mpi_enable(void);
 
 /**
  * Turn off all optimizations enabled by opal_progress_mpi_enable().
@@ -67,7 +67,7 @@ OPAL_DECLSPEC extern int opal_progress_mpi_enable(void);
  * opal_progress_mpi_enable().  The event library resumes constant
  * ticking and the progress engine yields the CPU when idle.
  */
-OPAL_DECLSPEC extern int opal_progress_mpi_disable(void);
+OPAL_DECLSPEC int opal_progress_mpi_disable(void);
 
 /** 
  * Shut down the progress engine
@@ -76,17 +76,17 @@ OPAL_DECLSPEC extern int opal_progress_mpi_disable(void);
  * registered callbacks and freeing all resources.  After finalize
  * returns, no calls into the progress interface are allowed.
  */
-OPAL_DECLSPEC extern int opal_progress_finalize(void);
+OPAL_DECLSPEC int opal_progress_finalize(void);
 
 /**
  * Control how the event library is called
  */
-OPAL_DECLSPEC extern void opal_progress_events(int);
+OPAL_DECLSPEC void opal_progress_events(int);
 
 /**
  * Progress all pending events
  */
-OPAL_DECLSPEC extern void opal_progress(void);
+OPAL_DECLSPEC void opal_progress(void);
 
 typedef int (*opal_progress_callback_t)(void);
 
@@ -117,9 +117,8 @@ OPAL_DECLSPEC int opal_progress_event_decrement(void);
  * Progress until flag is true or poll iterations completed
  */
 
-extern volatile int32_t opal_progress_thread_count;
-extern int opal_progress_spin_count;
-
+OPAL_DECLSPEC extern volatile int32_t opal_progress_thread_count;
+OPAL_DECLSPEC extern int opal_progress_spin_count;
 
 static inline bool opal_progress_threads(void) 
 { 

@@ -82,16 +82,6 @@ extern const struct opal_eventop opal_kqops;
 extern const struct opal_eventop devpollops;
 #endif
 
-#if 0
-/* This is to prevent event library from picking up the win32_ops
-   since this will be picked up over select(). By using select, we can
-   pretty much use the OOB and PTL as is. Otherwise, there would have
-   to be a lot of magic to be done to get this to work */
-#if defined(WIN32) && WIN32
-extern const struct opal_eventop opal_win32ops;
-#endif
-#endif
-
 /* In order of preference */
 static const struct opal_eventop *eventops[] = {
 #if 0 /* no KQUEUE or EPOLL support for us -- neither seem to work
@@ -119,16 +109,18 @@ static const struct opal_eventop *eventops[] = {
 #if defined(HAVE_SELECT) && HAVE_SELECT
 	&opal_selectops,
 #endif
-#if 0
-	/* This is to prevent event library from picking up the
-	   win32_ops since this will be picked up over select(). By
-	   using select, we can pretty much use the OOB and PTL as
-	   is. Otherwise, there would have to be a lot of magic to be
-	   done to get this to work */
-#if defined(WIN32) && WIN32
+	/**
+      * One of the most stupid comment in the libevent project. Why ? How ?
+      *
+      * This is to prevent event library from picking up the
+	  * win32_ops since this will be picked up over select(). By
+	  * using select, we can pretty much use the OOB and PTL as
+	  * is. Otherwise, there would have to be a lot of magic to be
+	  * done to get this to work
+      */
+#if defined(__WINDOWS__)
 	&opal_win32ops,
-#endif
-#endif
+#endif  /* defined(__WINDOWS__) */
 	NULL
 };
 
@@ -148,8 +140,6 @@ static void opal_event_queue_remove(struct event_base *, struct opal_event *, in
 static int opal_event_haveevents(struct event_base *);
 
 static void opal_event_process_active(struct event_base *);
-
-extern int opal_evsignal_restart(void);
 
 static int	timeout_next(struct event_base *, struct timeval *);
 static void	timeout_process(struct event_base *);
@@ -237,7 +227,7 @@ opal_event_init(void)
 
 #if OPAL_HAVE_WORKING_EVENTOPS
 
-	if ((current_base = calloc(1, sizeof(struct event_base))) == NULL)
+	if ((current_base = (event_base*)calloc(1, sizeof(struct event_base))) == NULL)
 		event_err(1, "%s: calloc");
 
 	event_sigcb = NULL;
@@ -362,7 +352,7 @@ int opal_event_disable(void)
 
 int opal_event_restart(void)
 {
-#if OPAL_HAVE_WORKING_EVENTOPS
+#if OPAL_HAVE_WORKING_EVENTOPS && !defined(__WINDOWS__)
 	int rc;
 #if OMPI_ENABLE_PROGRESS_THREADS
 	opal_mutex_lock(&opal_event_lock);
@@ -379,8 +369,10 @@ int opal_event_restart(void)
 #endif
 
 	opal_event_enable();
+#if !defined(__WINDOWS__)
 	if((rc = opal_evsignal_restart()) != 0)
 		return OPAL_ERROR;
+#endif  /* defined(__WINDOWS__) */
 	return (OPAL_SUCCESS);
 #else /* OPAL_HAVE_WORKING_EVENTOPS */
 	return OPAL_ERR_NOT_SUPPORTED;
@@ -568,7 +560,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 				}
 			}
 		}
-
+#if !defined(__WINDOWS__)
 		/* Check if time is running backwards */
 		gettimeofday(&tv, NULL);
 		if (timercmp(&tv, &base->event_tv, <)) {
@@ -579,7 +571,7 @@ opal_event_base_loop(struct event_base *base, int flags)
 			timeout_correct(base, &off);
 		}
 		base->event_tv = tv;
-
+#endif  /* !defined(__WINDOWS__) */
 		if (!base->event_count_active && !(flags & OPAL_EVLOOP_NONBLOCK))
 			timeout_next(base, &tv);
 		else

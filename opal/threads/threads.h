@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,6 +26,7 @@
 #endif
 
 #include "opal/class/opal_object.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -50,10 +51,10 @@ typedef struct opal_thread_t opal_thread_t;
 
 OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_thread_t);
 
-int  opal_thread_start(opal_thread_t *);
-int  opal_thread_join(opal_thread_t *, void **thread_return);
-bool opal_thread_self_compare(opal_thread_t*);
-opal_thread_t *opal_thread_get_self(void);
+OPAL_DECLSPEC int  opal_thread_start(opal_thread_t *);
+OPAL_DECLSPEC int  opal_thread_join(opal_thread_t *, void **thread_return);
+OPAL_DECLSPEC bool opal_thread_self_compare(opal_thread_t*);
+OPAL_DECLSPEC opal_thread_t *opal_thread_get_self(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

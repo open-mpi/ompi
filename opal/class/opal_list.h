@@ -172,7 +172,7 @@ typedef struct opal_list_t opal_list_t;
 static inline bool opal_list_is_empty(opal_list_t* list)
 {
     return (list->opal_list_sentinel.opal_list_next == 
-            &(list->opal_list_sentinel));
+        &(list->opal_list_sentinel) ? true : false);
 }
 
 
@@ -682,8 +682,8 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
    * If index is greater than the length of the list, no action is
    * performed and false is returned.
    */
-  bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, 
-                        long long idx);
+  OPAL_DECLSPEC bool opal_list_insert(opal_list_t *list, opal_list_item_t *item, 
+                                      long long idx);
 
 
     /**
@@ -703,8 +703,8 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      * containers remain valid, including those that point to elements
      * in \c xlist.
      */
-    void opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, 
-                        opal_list_t *xlist);
+    OPAL_DECLSPEC void opal_list_join(opal_list_t *thislist, opal_list_item_t *pos, 
+                                      opal_list_t *xlist);
 
 
     /**
@@ -730,9 +730,9 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      * This is an O(N) operation because the length of both lists must
      * be recomputed.
      */
-    void opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
-                          opal_list_t *xlist, opal_list_item_t *first,
-                          opal_list_item_t *last);
+    OPAL_DECLSPEC void opal_list_splice(opal_list_t *thislist, opal_list_item_t *pos,
+                                        opal_list_t *xlist, opal_list_item_t *first,
+                                        opal_list_item_t *last);
 
     /**
      * Comparison function for opal_list_sort(), below.
@@ -793,7 +793,7 @@ static inline void opal_list_insert_pos(opal_list_t *list, opal_list_item_t *pos
      * whatever the underlying type is).  See the documentation of
      * opal_list_item_compare_fn_t for an example).
      */
-    int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare);
+    OPAL_DECLSPEC int opal_list_sort(opal_list_t* list, opal_list_item_compare_fn_t compare);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

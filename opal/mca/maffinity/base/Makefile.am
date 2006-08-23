@@ -17,8 +17,7 @@
 #
 
 headers += \
-        base/base.h \
-        base/internal.h
+        base/base.h
 
 libmca_maffinity_la_SOURCES += \
         base/maffinity_base_close.c \

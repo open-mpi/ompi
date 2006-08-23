@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,7 +23,11 @@
 #include "opal/class/opal_list.h"
 #include "opal/sys/atomic.h"
 
-/* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+    /* Atomic Last In First Out lists. If we are in a multi-threaded environment then the
  * atomicity is insured via the compare-and-swap operation, if not we simply do a read
  * and/or a write.
  *
@@ -98,6 +102,10 @@ static inline opal_list_item_t* opal_atomic_lifo_pop( opal_atomic_lifo_t* lifo )
     item->opal_list_next = NULL;
     return item;
 }
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif  /* OPAL_ATOMIC_LIFO_H_HAS_BEEN_INCLUDED */
 

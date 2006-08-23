@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -92,10 +92,10 @@
 
 #include <stdarg.h>
 
-
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
     /**
      * Look up a text message in a text file and display it to the
      * stderr using printf()-like substitutions (%d, %s, etc.).
@@ -113,8 +113,8 @@ extern "C" {
      * based on the topic, and displays it.  If want_error_header is
      * true, a header and footer of asterisks are also displayed.
      */
-OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
-                       bool want_error_header, ...);
+    OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic, 
+                                     bool want_error_header, ...);
 
     /**
      * \internal
@@ -125,10 +125,10 @@ OPAL_DECLSPEC int opal_show_help(const char *filename, const char *topic,
      * flex parser since we may not hit the <<EOF>> rule and call this
      * function automatically.
      */
-OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
+    OPAL_DECLSPEC int opal_show_help_finish_parsing(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-
 
 #endif

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -49,7 +49,7 @@ static int guess_strlen(const char *fmt, va_list ap)
     /* Start off with a fudge factor of 128 to handle the % escapes that
        we aren't calculating here */
 
-    len = strlen(fmt) + 128;
+    len = (int)strlen(fmt) + 128;
     for (i = 0; i < strlen(fmt); ++i) {
         if ('%' == fmt[i] && i + 1 < strlen(fmt)
             && '%' != fmt[i + 1]) {
@@ -62,7 +62,7 @@ static int guess_strlen(const char *fmt, va_list ap)
                  * use (null) */
 
                 if (NULL != sarg)
-                    len += strlen(sarg);
+                    len += (int)strlen(sarg);
                 else
                     len += 5;
                 break;
@@ -91,7 +91,7 @@ static int guess_strlen(const char *fmt, va_list ap)
                 break;
 
             case 'f':
-                farg = va_arg(ap, int);
+                farg = va_arg(ap, float);
                 /* Alloc for minus sign */
                 if (farg < 0) {
                     ++len;

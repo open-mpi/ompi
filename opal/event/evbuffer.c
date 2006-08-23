@@ -155,7 +155,12 @@ bufferevent_writecb(int fd, short event, void *arg)
 	    if (res == -1) {
 		    if (errno == EAGAIN ||
 			errno == EINTR ||
-			errno == EINPROGRESS)
+#if !defined(__WINDOWS__)
+			errno == EINPROGRESS
+#else
+                        0
+#endif  /* !defined(__WINDOWS__) */
+                       )
 			    goto reschedule;
 		    /* error case */
 		    what |= OPAL_EVBUFFER_ERROR;
