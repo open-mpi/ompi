@@ -71,9 +71,6 @@
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
 
-
-extern char **environ;
-
 /*******************
  * Universe/job/vpid information Objects
  *******************/
@@ -92,8 +89,6 @@ struct orte_ps_vpid_info_t {
 
 };
 typedef struct orte_ps_vpid_info_t orte_ps_vpid_info_t;
-
-OBJ_CLASS_DECLARATION(orte_ps_vpid_info_t);
 
 void orte_ps_vpid_info_construct(orte_ps_vpid_info_t *obj);
 void orte_ps_vpid_info_destruct( orte_ps_vpid_info_t *obj);
@@ -129,8 +124,6 @@ struct orte_ps_job_info_t {
 };
 typedef struct orte_ps_job_info_t orte_ps_job_info_t;
 
-OBJ_CLASS_DECLARATION(orte_ps_job_info_t);
-
 void orte_ps_job_info_construct(orte_ps_job_info_t *obj);
 void orte_ps_job_info_destruct( orte_ps_job_info_t *obj);
 
@@ -154,8 +147,6 @@ struct orte_ps_universe_info_t {
     opal_list_t nodes;
 };
 typedef struct orte_ps_universe_info_t orte_ps_universe_info_t;
-
-OBJ_CLASS_DECLARATION(orte_ps_universe_info_t);
 
 void orte_ps_universe_info_construct(orte_ps_universe_info_t *obj);
 void orte_ps_universe_info_destruct( orte_ps_universe_info_t *obj);
@@ -404,6 +395,7 @@ main(int argc, char *argv[])
             return ret;
         }
     }
+    opal_finalize();
 
     return exit_status;
 }
@@ -481,8 +473,7 @@ static int orte_ps_init(void) {
      * attach no matter if it is identified as private or not.
      */
     opal_setenv(mca_base_param_env_var("universe_console"),
-                "1",
-                true, &environ);
+                "1", true, NULL);
 
     /***************************
      * We need all of OPAL
@@ -805,8 +796,8 @@ static int pretty_print_vpids(orte_ps_job_info_t *job) {
     /*
      * Caculate segment lengths
      */
-    len_o_proc_name = strlen("ORTE Name");
-    len_proc_name   = strlen("Process Name");
+    len_o_proc_name = (int)strlen("ORTE Name");
+    len_proc_name   = (int)strlen("Process Name");
     len_rank        = 6;
     len_pid         = 6;
     len_state       = 0;
@@ -940,8 +931,7 @@ static int connect_to_universe(orte_universe_t universe_info) {
      * Set the environment universe information
      */
     opal_setenv(mca_base_param_env_var("universe"),
-                univ_mca_param,
-                true, &environ);
+                univ_mca_param, true, NULL);
 
     /*
      * Restart ORTE in the requested universe

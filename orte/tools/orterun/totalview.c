@@ -52,7 +52,9 @@
 /*
  * The environment
  */
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"

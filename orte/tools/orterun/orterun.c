@@ -72,11 +72,6 @@
 #include "totalview.h"
 
 /*
- * The environment
- */
-extern char** environ;
-
-/*
  * Globals
  */
 static struct opal_event term_handler;
@@ -263,7 +258,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
-
+#if !defined(__WINDOWS__)
+extern char** environ;
+#endif   /* !defined(__WINDOWS__) */
 /*
  * Local functions
  */
@@ -306,7 +303,7 @@ int orterun(int argc, char *argv[])
     /* Convert the list of apps to an array of orte_app_context_t
        pointers */
     array_size = orte_pointer_array_get_size(apps_pa);
-    apps = malloc(sizeof(orte_app_context_t *) * array_size);
+    apps = (orte_app_context_t**)malloc(sizeof(orte_app_context_t *) * array_size);
     if (NULL == apps) {
         opal_show_help("help-orterun.txt", "orterun:call-failed",
                        true, orterun_basename, "system", "malloc returned NULL", errno);
@@ -328,7 +325,7 @@ int orterun(int argc, char *argv[])
                        true, orterun_basename);
         exit(1);
     }
-    proc_infos = malloc(sizeof(struct proc_info_t) * j);
+    proc_infos = (struct proc_info_t*)malloc(sizeof(struct proc_info_t) * j);
     if (NULL == proc_infos) {
         opal_show_help("help-orterun.txt", "orterun:call-failed",
                        true, orterun_basename, "system", "malloc returned NULL", errno);
@@ -359,7 +356,7 @@ int orterun(int argc, char *argv[])
                                      false, false, (int)false, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -372,7 +369,7 @@ int orterun(int argc, char *argv[])
                                      false, false, 0, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -386,7 +383,7 @@ int orterun(int argc, char *argv[])
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug",
                                                     "daemons_file");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -400,7 +397,7 @@ int orterun(int argc, char *argv[])
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", NULL,
                                                     "no_daemonize");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, NULL))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
             free(tmp);
@@ -751,7 +748,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
  */
 static void  signal_forward_callback(int fd, short event, void *arg)
 {
-    struct opal_event *signal = arg;
+    struct opal_event *signal = (struct opal_event*)arg;
     int signum, ret;
 
     OPAL_TRACE(1);
@@ -1103,7 +1100,6 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
     int i, j, count, rc;
     char *param, *value, *value2;
     orte_app_context_t *app = NULL;
-    extern char **environ;
 #if 0 /* Used only in the C/N notion case, remove to silence compiler warnings */
     orte_std_cntr_t l, len;
 #endif
@@ -1307,19 +1303,24 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
             param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
         } else {
+            char* tmp_basename = NULL;
             /* If they specified an absolute path, strip off the
                /bin/<exec_name>" and leave just the prefix */
-            param = strdup(dirname(argv[0]));
+            param = opal_dirname(argv[0]);
             /* Quick sanity check to ensure we got
                something/bin/<exec_name> and that the installation
                tree is at least more or less what we expect it to
                be */
-            if (0 == strcmp("bin", basename(param))) {
-                param = dirname(param);
+            tmp_basename = opal_basename(param);
+            if (0 == strcmp("bin", tmp_basename)) {
+                char* tmp = param;
+                param = opal_dirname(tmp);
+                free(tmp);
             } else {
                 free(param);
                 param = NULL;
             }
+            free(tmp_basename);
         }
 
         if (NULL != param) {
@@ -1344,7 +1345,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     if (opal_cmd_line_is_taken(&cmd_line, "rawmap")) {
         j = opal_cmd_line_get_ninsts(&cmd_line, "rawmap");
-        app->map_data = malloc(sizeof(orte_app_context_map_t*) * j);
+        app->map_data = (orte_app_context_map_t**)malloc(sizeof(orte_app_context_map_t*) * j);
         if (NULL == app->map_data) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
