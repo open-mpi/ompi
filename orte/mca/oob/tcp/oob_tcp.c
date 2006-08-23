@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -260,7 +260,7 @@ static void mca_oob_tcp_accept(void)
         if(sd < 0) {
             if(opal_socket_errno == EINTR)
                 continue;
-            if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK)
+            if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
                 opal_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", opal_socket_errno);
             return;
         }
@@ -373,14 +373,14 @@ static void mca_oob_tcp_recv_probe(int sd, mca_oob_tcp_hdr_t* hdr)
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
                     opal_socket_errno);
-                close(sd);
+                CLOSE_THE_SOCKET(sd);
                 return;
             }
             continue;
         }
         cnt += retval;
     }
-    close(sd);
+    CLOSE_THE_SOCKET(sd);
 }
 
 /*
@@ -425,7 +425,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
     if(NULL == peer) {
         opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: unable to locate peer",
                 ORTE_NAME_ARGS(orte_process_info.my_name));
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
     /* is the peer instance willing to accept this connection */
@@ -438,7 +438,7 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
                     ORTE_NAME_ARGS(&(hdr->msg_src)),
                     peer->peer_state);
         }
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
 }
@@ -472,13 +472,13 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
                 opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: peer closed connection",
                     ORTE_NAME_ARGS(orte_process_info.my_name));
             }
-            close(sd);
+            CLOSE_THE_SOCKET(sd);
             return;
         }
         if(opal_socket_errno != EINTR) {
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: recv() failed with errno=%d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name), opal_socket_errno);
-            close(sd);
+            CLOSE_THE_SOCKET(sd);
             return;
         }
     }
@@ -495,7 +495,7 @@ static void mca_oob_tcp_recv_handler(int sd, short flags, void* user)
         default:
             opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_recv_handler: invalid message type: %d\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name), hdr.msg_type);
-            close(sd);
+            CLOSE_THE_SOCKET(sd);
             break;
     }
 }
@@ -755,7 +755,7 @@ int mca_oob_tcp_init(void)
 
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)
-    sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
+    Sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 100);
 #else
     usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
 #endif
@@ -933,7 +933,7 @@ int mca_oob_tcp_fini(void)
     /* close listen socket */
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
         opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
-        close(mca_oob_tcp_component.tcp_listen_sd);
+        CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
         mca_oob_tcp_component.tcp_listen_sd = -1;
     }
 

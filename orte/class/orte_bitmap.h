@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -47,6 +47,7 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 struct orte_bitmap_t {
     opal_object_t super; /**< Subclass of opal_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
@@ -155,7 +156,7 @@ ORTE_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
  */
 static inline int orte_bitmap_size(orte_bitmap_t *bm)
 {
-    return (NULL == bm) ? 0 : bm->legal_numbits;
+    return (NULL == bm) ? 0 : (int)bm->legal_numbits;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

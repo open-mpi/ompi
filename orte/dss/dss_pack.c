@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -79,7 +79,7 @@ int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_v
 
     /* Lookup the pack function for this type and call it */
 
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type))) {
         ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
         return ORTE_ERR_PACK_FAILURE;
     }
@@ -396,7 +396,7 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 
         /* Lookup the pack function for this type and call it */
 
-        if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, sdv[i]->type))) {
+        if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, sdv[i]->type))) {
             ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
             return ORTE_ERR_PACK_FAILURE;
         }

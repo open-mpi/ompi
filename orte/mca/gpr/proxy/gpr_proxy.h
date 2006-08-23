@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,6 +25,8 @@
 
 #include "orte/orte_types.h"
 #include "opal/class/opal_object.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "orte/class/orte_pointer_array.h"
 #include "orte/dss/dss_types.h"
 #include "orte/util/proc_info.h"
@@ -94,7 +96,6 @@ typedef struct {
     opal_condition_t compound_cmd_condition;
     int compound_cmd_waiting;
 } orte_gpr_proxy_globals_t;
-
 
 extern orte_gpr_proxy_globals_t orte_gpr_proxy_globals;
 
@@ -241,6 +242,11 @@ orte_gpr_proxy_enter_trigger(orte_std_cntr_t cnt, orte_gpr_trigger_t **triggers)
 
 int
 orte_gpr_proxy_remove_trigger(orte_gpr_proxy_trigger_t *trig);
+
+/*
+ *
+ */
+ORTE_MODULE_DECLSPEC extern mca_gpr_base_component_t mca_gpr_proxy_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

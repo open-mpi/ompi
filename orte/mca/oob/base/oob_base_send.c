@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -72,7 +72,7 @@ int mca_oob_send_packed (orte_process_name_t* peer, orte_buffer_t* buffer, int t
     }
     orte_dss.load(buffer, dataptr, datalen);
 
-    msg[0].iov_base = dataptr;
+    msg[0].iov_base = (IOVBASE_TYPE*)dataptr;
     msg[0].iov_len  = datalen;
 
     return(mca_oob.oob_send(peer, msg, 1, tag, flags));

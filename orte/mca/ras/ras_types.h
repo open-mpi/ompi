@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -16,13 +16,18 @@
  * $HEADER$
  */
 
+#ifndef ORTE_MCA_RAS_TYPES_H
+#define ORTE_MCA_RAS_TYPES_H
+
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
 #include "orte/mca/smr/smr_types.h"
 
-#ifndef ORTE_MCA_RAS_TYPES_H
-#define ORTE_MCA_RAS_TYPES_H
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Struct for holding information about a node (a local copy of what
@@ -75,8 +80,10 @@ struct orte_ras_node_t {
  */
 typedef struct orte_ras_node_t orte_ras_node_t;
 
-
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_node_t);
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

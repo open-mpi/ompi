@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -127,7 +127,10 @@ int orte_ns_proxy_dump_tags(void);
 
 int orte_ns_proxy_dump_datatypes(void);
 
-
+/*
+ *
+ */
+ORTE_MODULE_DECLSPEC extern mca_ns_base_component_t mca_ns_proxy_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

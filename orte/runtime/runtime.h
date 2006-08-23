@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -69,7 +69,7 @@
 extern "C" {
 #endif
 
-    /* globals used by RTE - instanced in orte_init.c */
+/* globals used by RTE - instanced in orte_init.c */
 
     ORTE_DECLSPEC extern int orte_debug_flag;
 
@@ -123,9 +123,9 @@ ORTE_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
 ORTE_DECLSPEC    int orte_finalize(void);
 ORTE_DECLSPEC    int orte_system_finalize(void);
 
-    /*
-     * Change state as processes complete registration/unregistration
-     */
+/*
+ * Change state as processes complete registration/unregistration
+ */
 
 ORTE_DECLSPEC    void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata);
 

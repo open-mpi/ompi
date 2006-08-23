@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -337,7 +337,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     }
 
     /* build the mapping */
-    if(NULL == (mapping = malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
+    if(NULL == (mapping = (orte_rmaps_base_map_t**)malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -348,7 +348,7 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
         orte_app_context_t* app = app_context[i];
         map->app = app;
         if (0 < app->num_procs) {
-            map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
+            map->procs = (orte_rmaps_base_proc_t**)malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
             if(NULL == map->procs) {
                 OBJ_RELEASE(map);
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -563,7 +563,7 @@ int orte_rmaps_base_get_node_map(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if(NULL == (mapping = malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
+    if(NULL == (mapping = (orte_rmaps_base_map_t**)malloc(sizeof(orte_rmaps_base_map_t*) * num_context))) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -574,7 +574,7 @@ int orte_rmaps_base_get_node_map(
         orte_app_context_t* app = app_context[i];
         OBJ_RETAIN(app);
         map->app = app;
-        map->procs = malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
+        map->procs = (orte_rmaps_base_proc_t**)malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
         if(NULL == map->procs) {
             OBJ_RELEASE(map);
             rc = ORTE_ERR_OUT_OF_RESOURCE;

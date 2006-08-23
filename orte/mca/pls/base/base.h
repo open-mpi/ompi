@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -136,8 +136,8 @@ extern "C" {
      * string pointing to the home directory name (owned by the
      * context; safe to free at destruction).
      */
-    int orte_pls_base_check_context_cwd(orte_app_context_t *context,
-                                        bool do_chdir);
+    ORTE_DECLSPEC int orte_pls_base_check_context_cwd(orte_app_context_t *context,
+                                                      bool do_chdir);
 
     /**
      * Check that the app exists and is executable.  If it is not,
@@ -146,7 +146,8 @@ extern "C" {
      * app with the string containing the absolute pathname to the
      * exectuable (owned by the context; safe to free at destruction).
      */
-    int orte_pls_base_check_context_app(orte_app_context_t *context);
+    ORTE_DECLSPEC int orte_pls_base_check_context_app(orte_app_context_t *context);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

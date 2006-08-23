@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,8 +40,9 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/rml/rml.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
-
+#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Local function
@@ -118,7 +119,7 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "debug",
                            "Whether or not to enable debugging output for the rsh pls component (0 or 1)",
                            false, false, false, &tmp);
-    mca_pls_rsh_component.debug = tmp;
+    mca_pls_rsh_component.debug = (tmp != 0 ? true : false);
     mca_base_param_reg_int(c, "num_concurrent",
                            "How many pls_rsh_agent instances to invoke concurrently (must be > 0)",
                            false, false, 128, &tmp);
@@ -127,12 +128,12 @@ int orte_pls_rsh_component_open(void)
                        true, tmp);
         tmp = 1;
     }
-    mca_pls_rsh_component.num_concurrent = tmp;
+    mca_pls_rsh_component.num_concurrent = (tmp != 0 ? true : false);
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
                                     "Whether or not to enable debugging output for all ORTE components (0 or 1)",
                                     false, false, false, &tmp);
-        mca_pls_rsh_component.debug = tmp;
+        mca_pls_rsh_component.debug = (tmp != 0 ? true : false);
     }
 
     mca_base_param_reg_string(c, "orted",
@@ -150,11 +151,11 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "reap",
                            "If set to 1, wait for all the processes to complete before exiting.  Otherwise, quit immediately -- without waiting for confirmation that all other processes in the job have completed.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.reap = tmp;
+    mca_pls_rsh_component.reap = (tmp != 0 ? true : false);
     mca_base_param_reg_int(c, "assume_same_shell",
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.assume_same_shell = tmp;
+    mca_pls_rsh_component.assume_same_shell = (tmp != 0 ? true : false);
 
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
@@ -165,11 +166,14 @@ int orte_pls_rsh_component_open(void)
 }
 
 
+#if !defined(__WINDOWS__)
+extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
+
 orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {
     char *bname;
     size_t i;
-    extern char **environ;
 
     /* Take the string that was given to us by the pla_rsh_agent MCA
        param and search for it */

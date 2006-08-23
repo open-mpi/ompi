@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -21,7 +21,7 @@
 
 #include "orte/mca/gpr/gpr.h"
 #include "orte/orte_constants.h"
-
+#include "orte/mca/gpr/null/gpr_null.h"
 
 extern orte_gpr_base_module_t orte_gpr_null_module;
 

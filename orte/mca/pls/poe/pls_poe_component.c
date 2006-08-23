@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -150,13 +150,16 @@ int orte_pls_poe_component_open(void)
     return ORTE_SUCCESS;
 }
 
+#if !defined(__WINDOWS__)
+extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
+
 /**
 orte_pls_poe_component_init - initialize component, check if we can run on this machine.
 @return error number
 */
 orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
-    extern char **environ;
     mca_pls_poe_component.path = opal_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_poe_component.path) {
         return NULL;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,13 +52,11 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
-#ifdef _WINDOWS_
-#include "opal/win32/ompi_util.h"
-#endif  /* _WINDOWS_ */
 
 static struct timeval ompi_rte_ping_wait = {2, 0};
 
-int orte_universe_search(opal_list_t *universe_list) {
+int orte_universe_search(opal_list_t *universe_list)
+{
     int ret, exit_status = ORTE_SUCCESS;
 #ifndef __WINDOWS__
     DIR *cur_dirp = NULL;
@@ -90,7 +88,8 @@ int orte_universe_search(opal_list_t *universe_list) {
         goto cleanup;
     }
     
-    asprintf(&frontend_abs, "%s/%s", prefix, frontend);
+#if !defined(__WINDOWS__)
+    frontend_abs = opal_os_path(false, prefix, frontend, NULL);
 
     /*
      * Check to make sure we have access to this directory
@@ -103,22 +102,15 @@ int orte_universe_search(opal_list_t *universe_list) {
     /*
      * Open up the base directory so we can get a listing
      */
-#ifndef __WINDOWS__
     if( NULL == (cur_dirp = opendir(frontend_abs)) ) {
         exit_status = ORTE_ERROR;
         goto cleanup;
     }
-#else
-    hFind = FindFirstFile( frontend_abs, &file_data );
-#endif  /* __WINDOWS__ */
-
     /*
      * For each directory/universe
      */
-#ifndef __WINDOWS__
     while( NULL != (dir_entry = readdir(cur_dirp)) ) {
         orte_universe_t *univ = NULL;
-        char * tmp_str = NULL;
 
         /*
          * Skip non-universe directories
@@ -131,29 +123,39 @@ int orte_universe_search(opal_list_t *universe_list) {
         /*
          * Read the setup file
          */
-        tmp_str = strdup(dir_entry->d_name);
-        asprintf(&univ_setup_filename, "%s/%s/%s", 
-                 frontend_abs,
-                 tmp_str,
-                 "universe-setup.txt");
+        univ_setup_filename = opal_os_path( false, frontend_abs,
+                                            dir_entry->d_name, "universe-setup.txt", NULL );
         
         univ = OBJ_NEW(orte_universe_t);
-        OBJ_RETAIN(univ);
         if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
             printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
             exit_status = ret;
-            goto cleanup;
+            OBJ_RELEASE(univ);
+        } else {
+            OBJ_RETAIN(univ);
+            opal_list_append(universe_list, &(univ->super));
         }
-
-        opal_list_append(universe_list, &(univ->super));
-
-        if( NULL != tmp_str)
-            free(tmp_str);
     }
 #else
+    /*
+     * Open up the base directory so we can get a listing.
+     *
+     * On Windows if we want to parse the content of a directory the filename
+     * should end with the "*". Otherwise we will only open the directory
+     * structure (and not the content).
+     */
+    frontend_abs = opal_os_path(false, prefix, frontend, "*", NULL);
+    hFind = FindFirstFile( frontend_abs, &file_data );
+    if( INVALID_HANDLE_VALUE == hFind ) {
+        exit_status = GetLastError();
+        goto cleanup;
+    }
+
+    /*
+     * For each directory/universe
+     */
     do {
         orte_universe_t *univ = NULL;
-        char * tmp_str = NULL;
 
         /*
          * Skip non-universe directories
@@ -166,26 +168,20 @@ int orte_universe_search(opal_list_t *universe_list) {
         /*
          * Read the setup file
          */
-        tmp_str = strdup(file_data.cFileName);
-        asprintf(&univ_setup_filename, "%s/%s/%s", 
-                 frontend_abs,
-                 tmp_str,
-                 "universe-setup.txt");
-        
+        univ_setup_filename = opal_os_path( false, prefix, frontend,
+                                            file_data.cFileName, "universe-setup.txt", NULL);
+    
         univ = OBJ_NEW(orte_universe_t);
-        OBJ_RETAIN(univ);
         if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
             printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
             exit_status = ret;
-            goto cleanup;
+            OBJ_RELEASE(univ);
+        } else {
+            OBJ_RETAIN(univ);
+            opal_list_append(universe_list, &(univ->super));
         }
-
-        opal_list_append(universe_list, &(univ->super));
-
-        if( NULL != tmp_str)
-            free(tmp_str);
     } while( 0 != FindNextFile( hFind, &file_data ) );
-#endif  /* __WINDOWS__ */
+#endif  /* !defined(__WINDOWS__) */
     
  cleanup:
 #ifndef __WINDOWS__
@@ -205,7 +201,7 @@ int orte_universe_search(opal_list_t *universe_list) {
     if( NULL != frontend_abs)
         free(frontend_abs);
 
-    return exit_status;
+    return (opal_list_is_empty(universe_list) ? exit_status : ORTE_SUCCESS);
 }
 
 int orte_universe_exists(orte_universe_t *univ)

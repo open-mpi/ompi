@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2006 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -20,8 +20,8 @@
 No available launching agents were found.
 
 This is an unusual error; it means that Open RTE was unable to find
-any mechanism to launch proceses, and therefore is unable start the
-process(es) in your application.
+any mechanism to launch proceses, and therefore is unable to start the
+process(es) required by your application.
 [chdir-error]
 Failed to change to the working directory:
 

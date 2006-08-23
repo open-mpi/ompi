@@ -1,3 +1,21 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #include "orte_config.h"
 #include "opal/util/output.h"
 #include "orte/mca/rml/rml.h"
@@ -45,7 +63,7 @@ int orte_iof_proxy_svc_publish(
     hdr.hdr_pub.pub_tag = tag;
     ORTE_IOF_BASE_HDR_PUB_NTOH(hdr.hdr_pub);
 
-    iov.iov_base = (void*)&hdr;
+    iov.iov_base = (IOVBASE_TYPE*)&hdr;
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
@@ -83,7 +101,7 @@ int orte_iof_proxy_svc_unpublish(
     hdr.hdr_pub.pub_tag = tag;
     ORTE_IOF_BASE_HDR_PUB_NTOH(hdr.hdr_pub);
 
-    iov.iov_base = (void*)&hdr;
+    iov.iov_base = (IOVBASE_TYPE*)&hdr;
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
@@ -128,7 +146,7 @@ int orte_iof_proxy_svc_subscribe(
     hdr.hdr_sub.dst_tag = dst_tag;
     ORTE_IOF_BASE_HDR_SUB_NTOH(hdr.hdr_sub);
 
-    iov.iov_base = (void*)&hdr;
+    iov.iov_base = (IOVBASE_TYPE*)&hdr;
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(
@@ -163,6 +181,8 @@ int orte_iof_proxy_svc_unsubscribe(
     int rc;
 
     hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_UNSUB;
+    hdr.hdr_common.hdr_reserve = (uint8_t)0;
+    hdr.hdr_common.hdr_status = (int16_t)0;
     hdr.hdr_sub.src_name = *src_name;
     hdr.hdr_sub.src_mask = src_mask;
     hdr.hdr_sub.src_tag = src_tag;
@@ -171,7 +191,7 @@ int orte_iof_proxy_svc_unsubscribe(
     hdr.hdr_sub.dst_tag = dst_tag;
     ORTE_IOF_BASE_HDR_SUB_NTOH(hdr.hdr_sub);
 
-    iov.iov_base = (void*)&hdr;
+    iov.iov_base = (IOVBASE_TYPE*)&hdr;
     iov.iov_len = sizeof(hdr);
 
     rc = orte_rml.send(

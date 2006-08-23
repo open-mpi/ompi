@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -60,13 +60,13 @@ char* orte_dss_buffer_extend(orte_buffer_t *buffer, size_t bytes_to_add)
         pack_offset = ((char*) buffer->pack_ptr) - ((char*) buffer->base_ptr);
         unpack_offset = ((char*) buffer->unpack_ptr) -
             ((char*) buffer->base_ptr);
-        buffer->base_ptr = realloc(buffer->base_ptr, 
-                                   num_pages * orte_dss_page_size);
+        buffer->base_ptr = (char*)realloc(buffer->base_ptr, 
+                                          num_pages * orte_dss_page_size);
     } else {
         pack_offset = 0;
         unpack_offset = 0;
         buffer->bytes_used = 0;
-        buffer->base_ptr = malloc(num_pages * orte_dss_page_size);
+        buffer->base_ptr = (char*)malloc(num_pages * orte_dss_page_size);
     }
     
     if (NULL == buffer->base_ptr) { 
@@ -113,7 +113,7 @@ int orte_dss_store_data_type(orte_buffer_t *buffer, orte_data_type_t type)
 
     /* Lookup the pack function for the actual orte_data_type type and call it */
     
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
         ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
         return ORTE_ERR_PACK_FAILURE;
     }
@@ -133,7 +133,7 @@ int orte_dss_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type)
     
     /* Lookup the unpack function for the actual orte_data_type type and call it */
     
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, ORTE_DATA_TYPE_T))) {
         ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
         return ORTE_ERR_PACK_FAILURE;
     }

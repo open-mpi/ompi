@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -90,7 +90,7 @@ int orte_dss_load(orte_buffer_t *buffer, void *payload,
     }
     
     /* populate the buffer */
-    buffer->base_ptr = payload; 
+    buffer->base_ptr = (char*)payload; 
 
     /* set pack/unpack pointers */
     buffer->pack_ptr = ((char*)buffer->base_ptr) + bytes_used; 

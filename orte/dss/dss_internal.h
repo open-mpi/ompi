@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -142,7 +142,7 @@ struct orte_dss_type_info_t {
  * Convenience typedef
  */
 typedef struct orte_dss_type_info_t orte_dss_type_info_t;
-OBJ_CLASS_DECLARATION(orte_dss_type_info_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_dss_type_info_t);
 
 /*
  * globals needed within dss

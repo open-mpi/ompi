@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -93,9 +93,9 @@ orte_pls_base_module_1_0_0_t orte_pls_tm_module = {
     pls_tm_finalize
 };
 
-
+#if !defined(__WINDOWS__)
 extern char **environ;
-
+#endif  /* !defined(__WINDOWS__) */
 
 static int 
 pls_tm_launch(orte_jobid_t jobid)

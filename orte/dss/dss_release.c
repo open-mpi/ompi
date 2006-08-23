@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -39,7 +41,7 @@ void orte_dss_release(orte_data_value_t *value)
     /* Lookup the release function for this type and call it */
 
     if (!(value->type < orte_dss_types->size) ||
-        (NULL == (info = orte_pointer_array_get_item(orte_dss_types, value->type)))) {
+        (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, value->type)))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         return;
     }
@@ -72,7 +74,7 @@ void orte_dss_release_byte_object(orte_data_value_t *value)
 {
    orte_byte_object_t *bo;
 
-   bo = value->data;
+   bo = (orte_byte_object_t*)value->data;
    free(bo->bytes);
 
    free(value->data);

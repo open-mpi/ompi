@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -62,7 +62,7 @@ struct orte_rmaps_base_node_t {
 };
 typedef struct orte_rmaps_base_node_t orte_rmaps_base_node_t;
 
-OBJ_CLASS_DECLARATION(orte_rmaps_base_node_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_node_t);
 
 
 /*
@@ -80,7 +80,7 @@ struct orte_rmaps_base_proc_t {
 };
 typedef struct orte_rmaps_base_proc_t orte_rmaps_base_proc_t;
 
-OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
 
 
 /*
@@ -97,12 +97,12 @@ struct orte_rmaps_base_map_t {
 };
 typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
 
-OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
 
-int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid);
-int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
-int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
-int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid);
+ORTE_DECLSPEC int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -42,12 +42,14 @@
 #include "orte/mca/pls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 int orte_pls_base_check_context_cwd(orte_app_context_t *context,
                                     bool want_chdir)
 {
-    bool good;
+    bool good = true;
     char *tmp;
     char hostname[MAXHOSTNAMELEN];
     struct stat buf;
@@ -57,7 +59,6 @@ int orte_pls_base_check_context_cwd(orte_app_context_t *context,
 
     /* If the directory does not exist, or stat() otherwise fails to
        get info about it, then set good = false. */
-    good = true;
     if (!(0 == stat(context->cwd, &buf) && S_ISDIR(buf.st_mode))) {
         good = false;
     }

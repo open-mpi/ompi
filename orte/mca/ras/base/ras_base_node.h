@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,38 +32,38 @@ extern "C" {
 /*
  * Query the registry for all available nodes 
  */
-int orte_ras_base_node_query(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_query(opal_list_t*);
 
 /*
  * Query the registry for a specific node 
  */
-orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
+ORTE_DECLSPEC orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
 
 /**
  * Query the registry for all nodes allocated to a specific job
  */
-int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
+ORTE_DECLSPEC int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
 
 /**
  * Add the specified node definitions to the registry
  */
-int orte_ras_base_node_insert(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_insert(opal_list_t*);
 
 /**
  * Delete the specified nodes from the registry
  */
-int orte_ras_base_node_delete(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_delete(opal_list_t*);
 
 /**
  * Assign the allocated slots on the specified nodes to the  
  * indicated jobid.
  */
-int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
+ORTE_DECLSPEC int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
 
 /**
  * Check to see if the node segment is empty
  */
-int orte_ras_base_node_segment_empty(bool *empty);
+ORTE_DECLSPEC int orte_ras_base_node_segment_empty(bool *empty);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

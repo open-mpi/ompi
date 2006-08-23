@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -490,7 +490,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
     if (peer->peer_sd >= 0) {
         opal_event_del(&peer->peer_recv_event);
         opal_event_del(&peer->peer_send_event);
-        close(peer->peer_sd);
+        CLOSE_THE_SOCKET(peer->peer_sd);
         peer->peer_sd = -1;
     } 
       

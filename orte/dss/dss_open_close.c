@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -466,7 +466,7 @@ int orte_dss_close(void)
     orte_dss_initialized = false;
 
     for (i = 0 ; i < orte_pointer_array_get_size(orte_dss_types) ; ++i) {
-        orte_dss_type_info_t *info = orte_pointer_array_get_item(orte_dss_types, i);
+        orte_dss_type_info_t *info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, i);
         if (NULL != info) {
             OBJ_RELEASE(info);
         }

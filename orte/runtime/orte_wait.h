@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,6 +31,10 @@
 #include <sys/types.h>
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /** typedef for callback function used in \c ompi_rte_wait_cb */
 typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
 
@@ -46,7 +50,7 @@ typedef void (*orte_wait_fn_t)(pid_t wpid, int status, void *data);
  * \note A \c wpid value of \c -1 is not currently supported and will
  * return an error.
  */
-pid_t orte_waitpid(pid_t wpid, int *status, int options);
+ORTE_DECLSPEC pid_t orte_waitpid(pid_t wpid, int *status, int options);
 
 
 /**
@@ -64,31 +68,35 @@ pid_t orte_waitpid(pid_t wpid, int *status, int options);
  * \warning It is not legal for \c wpid to be -1 when registering a
  * callback.
  */
-int orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data);
+ORTE_DECLSPEC int orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data);
 
-int orte_wait_cb_cancel(pid_t wpid);
+ORTE_DECLSPEC int orte_wait_cb_cancel(pid_t wpid);
 
-int orte_wait_cb_disable(void);
+ORTE_DECLSPEC int orte_wait_cb_disable(void);
 
-int orte_wait_cb_enable(void);
+ORTE_DECLSPEC int orte_wait_cb_enable(void);
 
 /**
  * \internal
  *
  * Initialize the wait system (allocate mutexes, etc.)
  */
-int orte_wait_init(void);
+ORTE_DECLSPEC int orte_wait_init(void);
 
 /**
  * Kill all processes we are waiting on.
  */
-int orte_wait_kill(int sig);
+ORTE_DECLSPEC int orte_wait_kill(int sig);
 
 /**
  * \internal
  *
  * Finalize the wait system (deallocate mutexes, etc.)
  */
-int orte_wait_finalize(void);
+ORTE_DECLSPEC int orte_wait_finalize(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* #ifndef ORTE_WAIT_H */

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -94,7 +94,7 @@ int orte_pointer_array_init(orte_pointer_array_t **array,
         (*array)->size = block_size;
    }
    
-   (*array)->addr = (void *)malloc(num_bytes);
+   (*array)->addr = (void **)malloc(num_bytes);
    if (NULL == (*array)->addr) { /* out of memory */
         OBJ_RELEASE(*array);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -396,7 +396,7 @@ static bool grow_table(orte_pointer_array_t *table)
     /* Adjust structure counters and pointers */
     
     table->number_free += new_size - table->size;
-    table->addr = p;
+    table->addr = (void**)p;
     for (i = table->size; i < new_size; ++i) {
         table->addr[i] = NULL;
     }

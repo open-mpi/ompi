@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,7 +44,7 @@ extern "C" {
  * System information structure
  *
  * The orte_sys_info() function fills the sysname, nodename, release, version, machine,
- * path_sep, and user fields
+ * and user fields
  *
  */
 struct orte_sys_info_t {
@@ -57,11 +57,6 @@ struct orte_sys_info_t {
     char *release;	   /**< Release level of the operating system. */
     char *version;	   /**< Version of the operating system release. */
     char *machine;	   /**< Type of hardware composing this node. */
-    char *path_sep;        /**< Path separation char, saved as string.
-			    * The character used to separate directories in the path - 
-			    * a value that is usually either a '\' or '/', depending
-			    * upon the operating system
-			    */
     char *user;            /**< User id on this system. */
     char *suffix;          /**< Automatic suffix added to file names.
 			    * Some computing environments automatically "tag" files

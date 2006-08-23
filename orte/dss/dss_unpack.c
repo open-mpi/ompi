@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -67,15 +67,15 @@
 /* NOTE: do not need to deal with endianness here, as the unpacking of
    the underling sender-side type will do that for us.  Repeat: the
    data in tmpbuf[] is already in host byte order. */
-#define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)   \
-    do { \
-        orte_std_cntr_t i; \
-        tmptype *tmpbuf = malloc(sizeof(tmptype) * *num_vals);          \
+#define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)        \
+    do {                                                                    \
+        orte_std_cntr_t i;                                                  \
+        tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
         ret = orte_dss_unpack_buffer(buffer, tmpbuf, num_vals, tmpdsstype); \
-        for (i = 0 ; i < *num_vals ; ++i) {                             \
-            ((unpack_type*) dest)[i] = tmpbuf[i];                       \
-        }                                                               \
-        free(tmpbuf); \
+        for (i = 0 ; i < *num_vals ; ++i) {                                 \
+            ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);            \
+        }                                                                   \
+        free(tmpbuf);                                                       \
     } while (0)
 
 
@@ -181,7 +181,7 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
 
     /* Lookup the unpack function for this type and call it */
 
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNPACK_FAILURE);
         return ORTE_ERR_UNPACK_FAILURE;
     }
@@ -499,7 +499,7 @@ int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
         if (0 ==  len) {   /* zero-length string - unpack the NULL */
             sdest[i] = NULL;
         } else {
-        sdest[i] = malloc(len);
+        sdest[i] = (char*)malloc(len);
             if (NULL == sdest[i]) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -687,7 +687,7 @@ int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest, orte_std_cntr_
 
         /* Lookup the unpack function for this type and call it */
 
-        if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ddv[i]->type))) {
+        if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, ddv[i]->type))) {
             ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
             return ORTE_ERR_PACK_FAILURE;
         }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -85,7 +85,7 @@ static orte_rmaps_base_module_t *select_any(void)
 
     /* If the list is empty, return NULL */
 
-    if (opal_list_is_empty(&orte_rmaps_base.rmaps_available) > 0) {
+    if (true == opal_list_is_empty(&orte_rmaps_base.rmaps_available)) {
         opal_output(orte_rmaps_base.rmaps_output,
                     "orte:base:select: no components available!");
         return NULL;

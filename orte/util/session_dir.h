@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -82,11 +82,18 @@
  *
  * \par If \c create is \c true, the directory will be created and the
  * proc_info structure will be updated.  If proc_info is false,
- *
  */
+
+#ifndef ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED
+#define ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED
+
 #include "orte_config.h"
 
 #include "orte/mca/ns/ns_types.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /** @param create A boolean variable that indicates whether or not to
  *                create the specified directory. If set to "false",
@@ -167,3 +174,9 @@ ORTE_DECLSPEC int orte_session_dir_finalize(orte_process_name_t *proc);
  *                properly cleaned up.
  */
 ORTE_DECLSPEC int orte_session_dir_cleanup(orte_jobid_t jobid);
+
+#endif  /* ORTE_SESSION_DIR_H_HAS_BEEN_INCLUDED */
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif

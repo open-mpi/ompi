@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -41,7 +43,7 @@ int orte_dss_print(char **output, char *prefix, void *src, orte_data_type_t type
     /* Lookup the print function for this type and call it */
 
     if (!(type < orte_dss_types->size) ||
-          (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type)))) {
+          (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type)))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         return ORTE_ERR_UNKNOWN_DATA_TYPE;
     }
@@ -303,8 +305,13 @@ int orte_dss_print_int32(char **output, char *prefix, int32_t *src, orte_data_ty
 
     return ORTE_SUCCESS;
 }
-
-int orte_dss_print_uint64(char **output, char *prefix, uint64_t *src, orte_data_type_t type)
+int orte_dss_print_uint64(char **output, char *prefix,
+#ifdef HAVE_INT64_T
+                          uint64_t *src,
+#else
+                          void *src,
+#endif  /* HAVE_INT64_T */
+                          orte_data_type_t type)
 {
     char *prefx;
 
@@ -318,12 +325,22 @@ int orte_dss_print_uint64(char **output, char *prefix, uint64_t *src, orte_data_
         return ORTE_SUCCESS;
     }
 
+#ifdef HAVE_INT64_T
     asprintf(output, "%sData type: ORTE_UINT64\tValue: %lu", prefx, (unsigned long) *src);
+#else
+    asprintf(output, "%sData type: ORTE_UINT64\tValue: unsupported", prefx);
+#endif  /* HAVE_INT64_T */
 
     return ORTE_SUCCESS;
 }
 
-int orte_dss_print_int64(char **output, char *prefix, int64_t *src, orte_data_type_t type)
+int orte_dss_print_int64(char **output, char *prefix,
+#ifdef HAVE_INT64_T
+                          int64_t *src,
+#else
+                          void *src,
+#endif  /* HAVE_INT64_T */
+                         orte_data_type_t type)
 {
     char *prefx;
 
@@ -337,7 +354,11 @@ int orte_dss_print_int64(char **output, char *prefix, int64_t *src, orte_data_ty
         return ORTE_SUCCESS;
     }
 
+#ifdef HAVE_INT64_T
     asprintf(output, "%sData type: ORTE_INT64\tValue: %ld", prefx, (long) *src);
+#else
+    asprintf(output, "%sData type: ORTE_INT64\tValue: unsupported", prefx);
+#endif  /* HAVE_INT64_T */
 
     return ORTE_SUCCESS;
 }

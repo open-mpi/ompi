@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -28,7 +28,23 @@
 /*
  * local functions
  */
-static int orte_rds_hostfile_wrap(void);
+#ifndef YY_SKIP_YYWRAP
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif  /* defined(c_plusplus) || defined(__cplusplus) */
+
+int orte_rds_hostfile_wrap(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif  /* defined(c_plusplus) || defined(__cplusplus) */
+#endif  /* !defined(YY_SKIP_YYWRAP) */
+
+int orte_rds_hostfile_wrap(void)
+{
+    orte_rds_hostfile_done = true;
+    return 1;
+}
 
 /*
  * global variables
@@ -129,11 +145,3 @@ username           { orte_rds_hostfile_value.sval = yytext;
                      return ORTE_RDS_HOSTFILE_ERROR; }
 
 %%
-
-
-static int orte_rds_hostfile_wrap(void)
-{
-    orte_rds_hostfile_done = true;
-    return 1;
-}
-

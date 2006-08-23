@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -127,11 +127,11 @@ int orte_rmgr_base_terminate_job_not_available(orte_jobid_t);
 int orte_rmgr_base_terminate_proc_not_available(const orte_process_name_t*);
 int orte_rmgr_base_signal_job_not_available(orte_jobid_t, int32_t);
 int orte_rmgr_base_signal_proc_not_available(const orte_process_name_t*, int32_t);
-int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
-int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t, void*, orte_proc_state_t);
-int orte_rmgr_base_proc_stage_gate_mgr(
+ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
+ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_subscribe(orte_jobid_t job, orte_gpr_notify_cb_fn_t, void*, orte_proc_state_t);
+ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_mgr(
         orte_gpr_notify_message_t *msg);
-int orte_rmgr_base_proc_stage_gate_mgr_abort(
+ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_mgr_abort(
         orte_gpr_notify_message_t *msg);
 int orte_rmgr_base_spawn_not_available(
     orte_app_context_t** app_context,
