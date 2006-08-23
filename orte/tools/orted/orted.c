@@ -68,6 +68,8 @@
 
 #include "orte/tools/orted/orted.h"
 
+extern char**environ;
+
 orted_globals_t orted_globals;
 
 static struct opal_event term_handler;
@@ -215,13 +217,13 @@ int main(int argc, char *argv[])
      */
     if (orted_globals.name) {
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
-                                              "env", true, NULL))) {
+                                              "env", true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds", "env", ret);
             return ret;
         }
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_name",
-                                  orted_globals.name, true, NULL))) {
+                                  orted_globals.name, true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds_name", orted_globals.name, ret);
             return ret;
@@ -231,13 +233,13 @@ int main(int argc, char *argv[])
          * requires that they be set
          */
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_vpid_start",
-                                  orted_globals.vpid_start, true, NULL))) {
+                                  orted_globals.vpid_start, true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds_vpid_start", orted_globals.vpid_start, ret);
             return ret;
         }
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds_num_procs",
-                                  orted_globals.num_procs, true, NULL))) {
+                                  orted_globals.num_procs, true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds_num_procs", orted_globals.num_procs, ret);
             return ret;
@@ -245,7 +247,7 @@ int main(int argc, char *argv[])
     }
     if (orted_globals.ns_nds) {
         if (ORTE_SUCCESS != (ret = opal_setenv("OMPI_MCA_ns_nds",
-                                               orted_globals.ns_nds, true, NULL))) {
+                                               orted_globals.ns_nds, true, &environ))) {
             opal_show_help("help-orted.txt", "orted:environ", false,
                            "OMPI_MCA_ns_nds", "env", ret);
             return ret;
@@ -341,7 +343,7 @@ int main(int argc, char *argv[])
         if (orted_globals.mpi_call_yield > 0) {
             char *var;
             var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(var, "1", true, NULL);
+            opal_setenv(var, "1", true, &environ);
         }
 
         /* setup callback on jobid */
