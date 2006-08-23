@@ -132,7 +132,7 @@ char *opal_basename(const char *filename)
 char* opal_dirname(const char* filename)
 {
 #if defined(HAVE_DIRNAME)
-    return dirname(filename);
+    return strdup(dirname(filename));
 #else
     const char* p = opal_find_last_path_separator(filename, strlen(filename));
 
