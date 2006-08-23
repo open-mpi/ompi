@@ -57,6 +57,16 @@ version 1.0.
 1.1.1
 -----
 
+- Fix for Fortran string handling in various MPI API functions.
+- Fix for Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
+- Various fixes for the XL compilers.
+- Automatically disable using mallot() on AIX.
+- Memory fixes for 64 bit platforms with registering MCA parameters in
+  the self and MX BTL components.
+- Fixes for BProc to support oversubscription and changes to the
+  mapping algorithm so that mapping processes "by slot" works as
+  expected.
+- Fixes for various abort cases to not hang and clean up nicely.
 - If using the Intel 9.0 v20051201 compiler on an IA64 platform, the
   ptmalloc2 memory manager component will automatically disable
   itself.  Other versions of the Intel compiler on this platform seem
