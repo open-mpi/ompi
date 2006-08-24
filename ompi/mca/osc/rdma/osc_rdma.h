@@ -139,6 +139,8 @@ typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
 extern "C" {
 #endif
 
+OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
+
 static inline ompi_osc_rdma_module_t* P2P_MODULE(struct ompi_win_t* win) 
 {
     ompi_osc_rdma_module_t *module = 
