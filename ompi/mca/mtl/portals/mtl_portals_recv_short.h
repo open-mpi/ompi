@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,7 +34,6 @@ struct ompi_mtl_portals_recv_short_block_t {
 };
 typedef struct ompi_mtl_portals_recv_short_block_t ompi_mtl_portals_recv_short_block_t;
 OBJ_CLASS_DECLARATION(ompi_mtl_portals_recv_short_block_t);
-
 
 int ompi_mtl_portals_recv_short_enable(mca_mtl_portals_module_t *mtl);
 

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -46,10 +46,9 @@ OMPI_DECLSPEC int ompi_osc_base_select(ompi_win_t *win,
 OMPI_DECLSPEC int ompi_osc_base_finalize(void);
 OMPI_DECLSPEC int ompi_osc_base_close(void);
 
-
-extern opal_list_t ompi_osc_base_open_components;
-extern opal_list_t ompi_osc_base_avail_components;
-extern int ompi_osc_base_output;
+OMPI_DECLSPEC extern opal_list_t ompi_osc_base_open_components;
+OMPI_DECLSPEC extern opal_list_t ompi_osc_base_avail_components;
+OMPI_DECLSPEC extern int ompi_osc_base_output;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,6 +26,7 @@
 #include "opal/event/event.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/allocator/allocator.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -39,10 +40,7 @@ struct mca_mpool_sm_component_t {
 };
 typedef struct mca_mpool_sm_component_t mca_mpool_sm_component_t;
 
-OMPI_DECLSPEC extern mca_mpool_sm_component_t mca_mpool_sm_component;
-/*  OMPI_DECLSPEC extern mca_mpool_base_module_t mca_mpool_sm_module; */
-
-
+OMPI_MODULE_DECLSPEC extern mca_mpool_sm_component_t mca_mpool_sm_component;
 
 struct mca_mpool_sm_module_t {
   mca_mpool_base_module_t super;

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -232,7 +232,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
             size_t max_data = sendreq->req_origin_bytes_packed;
 
             iov.iov_len = max_data;
-            iov.iov_base = (void*) ((unsigned char*) buffer->payload + written_data);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) buffer->payload + written_data);
 
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data, &free_after);
@@ -408,7 +408,7 @@ ompi_osc_pt2pt_replyreq_send(ompi_osc_pt2pt_module_t *module,
         size_t max_data = replyreq->rep_target_bytes_packed;
 
         iov.iov_len = max_data;
-        iov.iov_base = (void*) ((unsigned char*) buffer->payload + written_data);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) buffer->payload + written_data);
 
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data, &free_after);
@@ -512,7 +512,7 @@ ompi_osc_pt2pt_sendreq_recv_put(ompi_osc_pt2pt_module_t *module,
                                                  0,
                                                  &convertor);
         iov.iov_len = header->hdr_msg_length;
-        iov.iov_base = inbuf;
+        iov.iov_base = (IOVBASE_TYPE*)inbuf;
         max_data = iov.iov_len;
         ompi_convertor_unpack(&convertor, 
                               &iov,
@@ -724,7 +724,7 @@ ompi_osc_pt2pt_replyreq_recv(ompi_osc_pt2pt_module_t *module,
         size_t max_data;
 
         iov.iov_len = header->hdr_msg_length;
-        iov.iov_base = payload;
+        iov.iov_base = (IOVBASE_TYPE*)payload;
         max_data = iov.iov_len;
         ompi_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,

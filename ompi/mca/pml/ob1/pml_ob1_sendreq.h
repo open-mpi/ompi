@@ -63,7 +63,6 @@ struct mca_pml_ob1_send_request_t {
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
-
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 
@@ -333,7 +332,7 @@ static inline int mca_pml_ob1_send_request_start_btl(
           (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {
             if( 0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 sendreq->req_endpoint,
-                sendreq->req_send.req_addr,
+                (unsigned char*)sendreq->req_send.req_addr,
                 sendreq->req_send.req_bytes_packed,
                 sendreq->req_rdma))) {
                 rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,

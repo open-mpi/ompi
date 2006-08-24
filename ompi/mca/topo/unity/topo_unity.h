@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -20,7 +20,6 @@
 #define MCA_TOPO_UNTIY_H
 
 #include "ompi_config.h"
-#include "opal/threads/condition.h"
 #include "opal/util/cmd_line.h"
 #include "ompi/request/request.h"
 #include "ompi/mca/topo/topo.h"
@@ -39,24 +38,19 @@
  * ******************************************************************
  */
 #if defined(__cplusplus) || defined(c_plusplus)
-    extern "C" {
+extern "C" {
 #endif
-        int mca_topo_unity_component_init_query(bool enable_progress_threads,
-                                                bool enable_mpi_threads);
-        struct mca_topo_base_module_1_0_0_t *
-            mca_topo_unity_component_comm_query (int *priority);
-        int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm);
 
-        int mca_topo_unity_module_init (struct ompi_communicator_t *comm);
-        int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm);
-#if defined(__cplusplus) || defined(c_plusplus)
-    }
-#endif
-/*
- * ******************************************************************
- * ********************* meta functions end *************************
- * ******************************************************************
- */ 
+int mca_topo_unity_component_init_query(bool enable_progress_threads,
+                                        bool enable_mpi_threads);
+struct mca_topo_base_module_1_0_0_t *
+    mca_topo_unity_component_comm_query (int *priority);
+int mca_topo_unity_component_comm_unquery (struct ompi_communicator_t *comm);
+
+int mca_topo_unity_module_init (struct ompi_communicator_t *comm);
+int mca_topo_unity_module_finalize (struct ompi_communicator_t *comm);
+
+OMPI_MODULE_DECLSPEC extern mca_topo_base_component_1_0_0_t mca_topo_unity_component;
 
 /*
  * ******************************************************************
@@ -70,27 +64,25 @@
  * functions. They are ofcourse free to implement all of them too :-)
  * ******************************************************************
  */ 
-#if defined(__cplusplus) || defined(c_plusplus)
-    extern "C" {
-#endif
-        int mca_topo_unity_cart_map (struct ompi_communicator_t *comm,
-                                     int ndims,
-                                     int *dims,
-                                     int *periods,
-                                     int *newrank);
+int mca_topo_unity_cart_map (struct ompi_communicator_t *comm,
+                             int ndims,
+                             int *dims,
+                             int *periods,
+                             int *newrank);
 
-        int mca_topo_unity_graph_map (struct ompi_communicator_t *comm,
-                                      int nnodes,
-                                      int *index,
-                                      int *edges,
-                                      int *newrank);
-#if defined(__cplusplus) || defined(c_plusplus)
-    }
-#endif
+int mca_topo_unity_graph_map (struct ompi_communicator_t *comm,
+                              int nnodes,
+                              int *index,
+                              int *edges,
+                              int *newrank);
 /*
  * ******************************************************************
  * ************ functions implemented in this module end ************
  * ******************************************************************
  */ 
                                      
+#if defined(__cplusplus) || defined(c_plusplus)
+    }
+#endif
+
 #endif /* MCA_TOPO_UNITY_H */

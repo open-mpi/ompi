@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -185,7 +185,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
         long true_lb, true_extent, lb, extent;
         char *inplace_temp;
         int peer;
-        int count_left = count;
+        size_t count_left = (size_t)count;
         int frag_num = 0;
         bool first_operation = true;
         
@@ -211,8 +211,8 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                "segment_ddt_count" instances (i.e., the number of
                instances that can be held in a single fragment) */
             
-            free_buffer = malloc(true_extent + 
-                                 (segment_ddt_count - 1) * extent);
+            free_buffer = (char*)malloc(true_extent + 
+                                        (segment_ddt_count - 1) * extent);
             if (NULL == free_buffer) {
                 return OMPI_ERR_OUT_OF_RESOURCE;
             }
@@ -241,7 +241,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
            sbuf */
 
         if (MPI_IN_PLACE == sbuf && 0 != rank) {
-            inplace_temp = malloc(true_extent + (count - 1) * extent);
+            inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
             if (NULL == inplace_temp) {
                 if (NULL != free_buffer) {
                     free(free_buffer);
@@ -288,7 +288,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                         if (MPI_IN_PLACE != sbuf) {
                             ompi_ddt_copy_content_same_ddt(dtype,
                                                            count,
-                                                           reduce_target, sbuf);
+                                                           reduce_target, (char*)sbuf);
                             D(("root copied entire buffer to rbuf (contig ddt, count %d) FIRST OPERATION\n", count));
                         }
                     }
@@ -333,7 +333,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
                         /* Otherwise, I'm not the first process, so
                            instead of copying, combine in the next
                            fragment */
-                        D(("root combiningn fragment from shmem (contig ddt): count %d (left %d, seg %d)\n", min(count_left, segment_ddt_count), count_left, segment_ddt_count));
+                        D(("root combining fragment from shmem (contig ddt): count %d (left %d, seg %d)\n", min(count_left, segment_ddt_count), count_left, segment_ddt_count));
                         ompi_op_reduce(op, 
                                        ((char *) sbuf) +
                                        frag_num * segment_ddt_bytes,

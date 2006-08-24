@@ -20,9 +20,7 @@
 #include "ompi/peruse/peruse-internal.h"
 #include "opal/class/opal_hash_table.h"
 #include "ompi/communicator/communicator.h"
-#include "ompi/file/file.h"
-
-OMPI_DECLSPEC extern bool ompi_mpi_param_check;
+#include "ompi/runtime/params.h"
 
 /*
  * Data
@@ -179,7 +177,7 @@ int PERUSE_Event_comm_register( int                       event,
      */
     OPAL_THREAD_LOCK (&comm->c_lock);
     if( NULL == comm->c_peruse_handles ) {
-        comm->c_peruse_handles = calloc( PERUSE_num_events, sizeof(ompi_peruse_handle_t*) );
+        comm->c_peruse_handles = (ompi_peruse_handle_t**)calloc( PERUSE_num_events, sizeof(ompi_peruse_handle_t*) );
     }
     OPAL_THREAD_UNLOCK (&comm->c_lock);
     comm->c_peruse_handles[event] = handle;
@@ -308,7 +306,7 @@ int PERUSE_Event_get( peruse_event_h event_h, int* event )
 /* Obtain MPI object associated with event handle */
 int PERUSE_Event_object_get( peruse_event_h event_h, void** mpi_object )
 {
-    ompi_peruse_handle_t* p = event_h;
+    ompi_peruse_handle_t* p = (ompi_peruse_handle_t*)event_h;
 
     if (MPI_PARAM_CHECK) {
         if (NULL == event_h)

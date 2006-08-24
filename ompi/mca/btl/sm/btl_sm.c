@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -215,7 +215,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 
         /* If we got here, the proc is reachable via sm.  So
            initialize the peers information */
-        peer = peers[proc] = malloc(sizeof(struct mca_btl_base_endpoint_t));
+        peer = peers[proc] = (struct mca_btl_base_endpoint_t*)malloc(sizeof(struct mca_btl_base_endpoint_t));
         if( NULL == peer ){
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
@@ -224,7 +224,7 @@ int mca_btl_sm_add_procs_same_base_addr(
             mca_btl_sm_component.num_smp_procs;
         
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
-        sprintf(path, "%s/sm_fifo.%lu", orte_process_info.job_session_dir, 
+        sprintf(path, "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir, 
                 (unsigned long)procs[proc]->proc_name.vpid);
         peer->fifo_fd = open(path, O_WRONLY);
         if(peer->fifo_fd < 0) {
@@ -257,7 +257,7 @@ int mca_btl_sm_add_procs_same_base_addr(
            goto CLEANUP;
         }
         mca_btl_sm_component.sm_mpool_base =
-            mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool_base);
+            mca_btl_sm_component.sm_mpool->mpool_base((mca_mpool_base_module_t*)mca_btl_sm_component.sm_mpool_base);
     }
 
     /* make sure that my_smp_rank has been defined */
@@ -320,7 +320,7 @@ int mca_btl_sm_add_procs_same_base_addr(
     if ( !mca_btl_sm[0].btl_inited ) {
         /* set file name */
         len=asprintf(&(mca_btl_sm_component.sm_resouce_ctl_file),
-                "%s/shared_mem_btl_module.%s",orte_process_info.job_session_dir,
+                "%s"OPAL_PATH_SEP"shared_mem_btl_module.%s",orte_process_info.job_session_dir,
                 orte_system_info.nodename);
         if( 0 > len ) {
             goto CLEANUP;
@@ -364,7 +364,7 @@ int mca_btl_sm_add_procs_same_base_addr(
             /* allocate array of ompi_fifo_t* elements -
              * offset relative to base segement is stored, so that
              * this can be used by other procs */
-            mca_btl_sm_component.sm_ctl_header->fifo=
+            mca_btl_sm_component.sm_ctl_header->fifo= (volatile ompi_fifo_t**)
                 mca_btl_sm_component.sm_mpool->mpool_alloc
                 (mca_btl_sm_component.sm_mpool, n_to_allocate*sizeof(ompi_fifo_t *),
                  CACHE_LINE_SIZE, 0, NULL);
@@ -454,18 +454,18 @@ int mca_btl_sm_add_procs_same_base_addr(
             ( (char *)(mca_btl_sm_component.sm_ctl_header->segment_header.
               base_shared_mem_segment)  +
 		      (long )(mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool)) );
-        tmp_ptr[mca_btl_sm_component.my_smp_rank]=
+        tmp_ptr[mca_btl_sm_component.my_smp_rank]=(char*)
             mca_btl_sm_component.sm_mpool->mpool_base(mca_btl_sm_component.sm_mpool);
         /* memory barrier to ensure this flag is set before other
          *  flags are set */
         opal_atomic_mb();
 
-	/* Set my flag to 1 (convert from relative address first) */
+		/* Set my flag to 1 (convert from relative address first) */
         tmp_int_ptr=(volatile int *)
             ( ((char *) mca_btl_sm_component.sm_ctl_header->segment_header.
                base_shared_mem_flags) +
               ((long) mca_btl_sm_component.sm_mpool_base));
-	tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
+		tmp_int_ptr[mca_btl_sm_component.my_smp_rank]=1;
 
         /*
          * initialize the array of fifo's "owned" by this process
@@ -483,8 +483,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         }
 
         for( j=0 ; j < n_to_allocate ; j++ ) {
-            my_fifos[j].head=OMPI_CB_FREE;
-            my_fifos[j].tail=OMPI_CB_FREE;
+            my_fifos[j].head = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
+            my_fifos[j].tail = (ompi_cb_fifo_wrapper_t*)OMPI_CB_FREE;
             opal_atomic_unlock(&(my_fifos[j].head_lock));
             opal_atomic_unlock(&(my_fifos[j].tail_lock));
         }
@@ -677,7 +677,7 @@ int mca_btl_sm_add_procs(
             }
 
             /* initialize the peers information */
-            peers[proc]=malloc(sizeof(struct mca_btl_base_endpoint_t));
+            peers[proc] = (struct mca_btl_base_endpoint_t*)malloc(sizeof(struct mca_btl_base_endpoint_t));
             if( NULL == peers[proc] ){
                 return_code=OMPI_ERR_OUT_OF_RESOURCE;
                 goto CLEANUP;
@@ -828,7 +828,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
         max_data = frag->size - reserve;
     } 
     iov.iov_len = max_data;
-    iov.iov_base = (void*)(((unsigned char*)(frag+1)) + reserve);
+    iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag+1)) + reserve);
 
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
     if(rc < 0) {

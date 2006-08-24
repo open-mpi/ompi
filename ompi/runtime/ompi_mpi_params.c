@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,7 +19,9 @@
 
 #include "ompi_config.h"
 
+#if HAVE_TIME_H
 #include <time.h>
+#endif  /* HAVE_TIME_H */
 
 #include "ompi/constants.h"
 #include "ompi/runtime/mpiruntime.h"
@@ -59,7 +61,7 @@ int ompi_mpi_register_params(void)
     mca_base_param_reg_int_name("mpi", "param_check", 
                                 "Whether you want MPI API parameters checked at run-time or not.  Possible values are 0 (no checking) and 1 (perform checking at run-time)",
                                 false, false, MPI_PARAM_CHECK, &value);
-    ompi_mpi_param_check = (bool) value;
+    ompi_mpi_param_check = (value != 0 ? true : false);
     if (ompi_mpi_param_check) {
         value = 0;
         if (MPI_PARAM_CHECK) {
@@ -92,9 +94,7 @@ int ompi_mpi_register_params(void)
                                 "Whether MPI_FINALIZE shows all MPI handles that were not freed or not",
                                 false, false, 
                                 (int) ompi_debug_show_handle_leaks, &value);
-
-    
-    ompi_debug_show_handle_leaks = (bool) value;
+    ompi_debug_show_handle_leaks = (value != 0 ? true : false);
     
     /* Whether or not to free MPI handles.  Useless without run-time
        param checking, so implicitly set that to true if we don't want
@@ -104,7 +104,7 @@ int ompi_mpi_register_params(void)
                                 "Whether to actually free MPI objects when their handles are freed",
                                 false, false, 
                                 (int) ompi_debug_no_free_handles, &value);
-    ompi_debug_no_free_handles = (bool) value;
+    ompi_debug_no_free_handles = (value != 0 ? true : false);
     if (ompi_debug_no_free_handles) {
         ompi_mpi_param_check = true;
         value = 0;
@@ -123,7 +123,7 @@ int ompi_mpi_register_params(void)
                                 "Whether to show all MCA parameter value during MPI_INIT or not (good for reproducability of MPI jobs)",
                                 false, false, 
                                 (int) ompi_mpi_show_mca_params, &value);
-    ompi_mpi_show_mca_params = (bool) value;
+    ompi_mpi_show_mca_params = (value != 0 ? true : false);
 
     /* File to use when dumping the parameters */
     mca_base_param_reg_string_name("mpi", "show_mca_params_file",
@@ -136,7 +136,7 @@ int ompi_mpi_register_params(void)
                                 "If nonzero, assume that this job is the only (set of) process(es) running on each node and bind processes to processors, starting with processor ID 0",
                                 false, false, 
                                 (int) ompi_mpi_paffinity_alone, &value);
-    ompi_mpi_paffinity_alone = (bool) value;
+    ompi_mpi_paffinity_alone = (value != 0 ? true : false);
 
     mca_base_param_reg_int_name("mpi", "paffinity_processor",
                                 "If set, pin this process to the processor number indicated by the value",
@@ -149,7 +149,7 @@ int ompi_mpi_register_params(void)
     mca_base_param_reg_int_name("mpi", "keep_peer_hostnames",
                                 "If nonzero, save the string hostnames of all MPI peer processes (mostly for error / debugging output messages).  This can add quite a bit of memory usage to each MPI process.",
                                 false, false, 1, &value);
-    ompi_mpi_keep_peer_hostnames = (bool) value;
+    ompi_mpi_keep_peer_hostnames = (value != 0 ? true : false);
 
     /* MPI_ABORT controls */
 
@@ -174,7 +174,7 @@ int ompi_mpi_register_params(void)
                                 &value);
 #if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
     /* Only take the value if we have stack trace capability */
-    ompi_mpi_abort_print_stack = (bool) value;
+    ompi_mpi_abort_print_stack = (value != 0 ? true : false);
 #else
     /* If we do not have stack trace capability, ensure that this is
        hard-coded to false */
@@ -186,7 +186,7 @@ int ompi_mpi_register_params(void)
                                 false, false, 
                                 (int) ompi_mpi_preconnect_all, &value);
     
-    ompi_mpi_preconnect_all = (bool) value; 
+    ompi_mpi_preconnect_all = (value != 0 ? true : false); 
     
     /* The ddt engine has a few parameters */
 

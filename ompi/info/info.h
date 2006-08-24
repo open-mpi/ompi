@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -69,32 +69,31 @@ struct ompi_info_entry_t {
  */
 typedef struct ompi_info_entry_t ompi_info_entry_t;
 
-/**
- * Table for Fortran <-> C translation table
- */ 
-OMPI_DECLSPEC extern ompi_pointer_array_t ompi_info_f_to_c_table;
-
-/**
- * Global instance for MPI_INFO_NULL
- */
-OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
-
-/**
- * \internal
- * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
- */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
-
-/**
- * \internal
- * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
- */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+  /**
+   * Table for Fortran <-> C translation table
+   */ 
+  extern ompi_pointer_array_t ompi_info_f_to_c_table;
+
+  /**
+   * Global instance for MPI_INFO_NULL
+   */
+  OMPI_DECLSPEC extern ompi_info_t ompi_mpi_info_null;
+
+  /**
+   * \internal
+   * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
+   */
+  OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_t);
+
+  /**
+   * \internal
+   * Some declarations needed to use OBJ_NEW and OBJ_DESTRUCT macros
+   */
+  OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_info_entry_t);
+
   /**
    * This function is invoked during ompi_mpi_init() and sets up
    * MPI_Info handling.

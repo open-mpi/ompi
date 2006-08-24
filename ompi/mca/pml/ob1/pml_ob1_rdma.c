@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -82,7 +82,7 @@ size_t mca_pml_ob1_rdma_btls(
          * find the best fit when there are multiple registrations
          */
         for(r = 0; r < reg_cnt; r++) { 
-            mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
+            mca_mpool_base_registration_t* reg  = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, r); 
             size_t reg_len = reg->bound - base + 1;
 
             if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
@@ -166,7 +166,7 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
      * find the best fit when there are multiple registrations
      */
     for(r = 0; r < reg_cnt; r++) { 
-        mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
+        mca_mpool_base_registration_t* reg  = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
         
         if(reg->flags & MCA_MPOOL_FLAGS_CACHE) { 
@@ -244,7 +244,7 @@ mca_mpool_base_registration_t* mca_pml_ob1_rdma_register(
      * find the best fit when there are multiple registrations
      */
     for(r = 0; r < reg_cnt; r++) { 
-        mca_mpool_base_registration_t* reg  = ompi_pointer_array_get_item(&regs, r); 
+        mca_mpool_base_registration_t* reg  = (mca_mpool_base_registration_t*)ompi_pointer_array_get_item(&regs, r); 
         size_t reg_len = reg->bound - base + 1;
         if(reg->base <= base && reg_len >= size) {
             fit = reg;

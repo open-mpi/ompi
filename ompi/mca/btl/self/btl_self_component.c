@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -155,7 +155,7 @@ mca_btl_base_module_t** mca_btl_self_component_init(
 
     /* allocate the Shared Memory PTL */
     *num_btls = 1;
-    btls = malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    btls = (mca_btl_base_module_t**)malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
     if (NULL == btls) {
         return NULL;
     }

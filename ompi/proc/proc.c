@@ -513,7 +513,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                     if (NULL != str) {
                         free(str);
                     }
-                    str = strdup(keyval[j]->value->data);
+                    str = strdup((const char*)keyval[j]->value->data);
                 } else if (strcmp(keyval[j]->key, OMPI_PROC_ARCH) == 0) {
                     if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ui32, keyval[j]->value, ORTE_UINT32))) {
                         ORTE_ERROR_LOG(rc);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,6 +24,10 @@
 
 #include "ompi/mca/btl/btl.h"
 #include "pml_ob1_hdr.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 typedef enum {
     MCA_PML_OB1_RDMA_PUT,
@@ -47,7 +51,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_rdma_frag_t);
 
 #define MCA_PML_OB1_RDMA_FRAG_ALLOC(frag,rc)                    \
 do {                                                            \
-    ompi_free_list_item_t* item;                                     \
+    ompi_free_list_item_t* item;                                \
     OMPI_FREE_LIST_WAIT(&mca_pml_ob1.rdma_frags, item, rc);     \
     frag = (mca_pml_ob1_rdma_frag_t*)item;                      \
 } while(0)
@@ -56,7 +60,7 @@ do {                                                            \
 do {                                                            \
     /* return fragment */                                       \
     OMPI_FREE_LIST_RETURN(&mca_pml_ob1.rdma_frags,              \
-        (ompi_free_list_item_t*)frag);                               \
+        (ompi_free_list_item_t*)frag);                          \
 } while(0)
 
 

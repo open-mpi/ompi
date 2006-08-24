@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -71,7 +71,7 @@ ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
            (since there are never user-defined reductions in
            MPI_ACCUMULATE) */
         iov.iov_len = inbuflen;
-        iov.iov_base = inbuf;
+        iov.iov_base = (IOVBASE_TYPE*)inbuf;
         max_data = iov.iov_len;
         ompi_convertor_unpack(&convertor, 
                               &iov,

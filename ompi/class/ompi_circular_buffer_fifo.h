@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -235,7 +235,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate fifo array */
     len_to_allocate = sizeof(void *) * fifo->size;
-    fifo->queue=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
+    fifo->queue = (volatile void**)memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->queue) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -247,7 +247,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate head control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
+    fifo->head = (ompi_cb_fifo_ctl_t*)memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->head) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -259,7 +259,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 
     /* allocate tail control structure */
     len_to_allocate = sizeof(ompi_cb_fifo_ctl_t);
-    fifo->tail=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
+    fifo->tail = (ompi_cb_fifo_ctl_t*)memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->tail) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -303,22 +303,21 @@ static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo,
     if( OMPI_CB_NULL != fifo->head ){
         ptr=(char *)(fifo->queue);
         memory_allocator->mpool_free(memory_allocator, ptr, NULL);
-        fifo->queue=OMPI_CB_NULL;
+        fifo->queue = (volatile void**)OMPI_CB_NULL;
     }
 
     /* free head control structure */
     if( OMPI_CB_NULL != fifo->head) {
         ptr=(char *)(fifo->head);
         memory_allocator->mpool_free(memory_allocator, ptr, NULL);
-        fifo->head=OMPI_CB_NULL;
-
+        fifo->head = (ompi_cb_fifo_ctl_t*)OMPI_CB_NULL;
     }
 
     /* free tail control structure */
     if( OMPI_CB_NULL != fifo->tail) {
         ptr=(char *)(fifo->tail);
         memory_allocator->mpool_free(memory_allocator, ptr, NULL);
-        fifo->tail=OMPI_CB_NULL;
+        fifo->tail = (ompi_cb_fifo_ctl_t*)OMPI_CB_NULL;
     }
 
     /* return */

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -18,8 +18,6 @@
 
 #include "ompi_config.h"
 
-#include "opal/class/opal_list.h"
-#include "opal/threads/mutex.h"
 #include "opal/mca/base/base.h"
 #include "ompi/mca/io/io.h"
 #include "ompi/mca/io/base/base.h"
@@ -60,7 +58,7 @@ int mca_io_base_component_init(void)
 
 
 /*
- * Add a comoponent to the io framework's currently-in-use list, or
+ * Add a component to the io framework's currently-in-use list, or
  * increase its refcount if it's already in the list.
  */
 int mca_io_base_component_add(mca_io_base_components_t *comp)

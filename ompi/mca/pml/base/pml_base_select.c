@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -103,7 +103,7 @@ int mca_pml_base_select(bool enable_progress_threads,
             best_module = module;
         }
         
-        om = malloc(sizeof(opened_component_t));
+        om = (opened_component_t*)malloc(sizeof(opened_component_t));
         if (NULL == om) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

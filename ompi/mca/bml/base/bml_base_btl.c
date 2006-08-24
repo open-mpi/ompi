@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,7 +53,7 @@ int mca_bml_base_btl_array_reserve(mca_bml_base_btl_array_t* array, size_t size)
     if(old_len >= new_len)
         return OMPI_SUCCESS;
     
-    array->bml_btls = realloc(array->bml_btls, new_len);
+    array->bml_btls = (mca_bml_base_btl_t*)realloc(array->bml_btls, new_len);
     if(NULL == array->bml_btls)
         return OMPI_ERR_OUT_OF_RESOURCE;
     memset((unsigned char*)array->bml_btls + old_len, 0, new_len-old_len);

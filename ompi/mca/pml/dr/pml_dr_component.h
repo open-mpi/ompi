@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -20,10 +20,17 @@
 #ifndef MCA_PML_DR_COMPONENT_H
 #define MCA_PML_DR_COMPONENT_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * PML module functions.
  */
-
 OMPI_DECLSPEC extern mca_pml_base_component_1_0_0_t mca_pml_dr_component;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

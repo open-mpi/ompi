@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -100,7 +100,7 @@ int mca_bml_r2_progress( void ) {
     int count = 0;
 
     /*
-     * Progress each of the PTL modules
+     * Progress each of the BTL modules
      */
     for(i=0; i<mca_bml_r2.num_btl_progress; i++) {
         int rc = mca_bml_r2.btl_progress[i]();
@@ -109,7 +109,6 @@ int mca_bml_r2_progress( void ) {
         }
     }
     return count;
-    
 }
 
 
@@ -587,7 +586,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     }
 
     /* remove from bml list */
-    modules = malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
+    modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
     for(i=0,m=0; i<mca_bml_r2.num_btl_modules; i++) {
         if(mca_bml_r2.btl_modules[i] != btl) {
             modules[m++] = mca_bml_r2.btl_modules[i];

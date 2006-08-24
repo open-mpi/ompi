@@ -41,10 +41,12 @@
 #include "opal/class/opal_hash_table.h"
 #include "ompi/class/ompi_pointer_array.h"
 #include "mpi.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
+
+extern ompi_pointer_array_t *ompi_datatype_f_to_c_table;
 
 /* if there are more basic datatypes than the number of bytes in the int type
  * the bdt_used field of the data description struct should be changed to long.
@@ -121,7 +123,7 @@ typedef struct ompi_datatype_t {
     uint32_t           btypes[DT_MAX_PREDEFINED];
 } ompi_datatype_t;
 
-OBJ_CLASS_DECLARATION( ompi_datatype_t );
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_datatype_t );
 
 int ompi_ddt_register_params(void);
 int32_t ompi_ddt_init( void );

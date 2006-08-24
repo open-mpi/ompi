@@ -72,7 +72,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
 
       iov_count = 1;
       iov.iov_len = rcount;
-      iov.iov_base = rbuf;
+      iov.iov_base = (IOVBASE_TYPE*)rbuf;
       max_data = ( (size_t)iov.iov_len > (scount * sdtype->size) ? (scount * sdtype->size) : iov.iov_len );
 
       err = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
@@ -87,7 +87,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
 
       iov_count = 1;
       iov.iov_len = scount;
-      iov.iov_base = sbuf;
+      iov.iov_base = (IOVBASE_TYPE*)sbuf;
       max_data = ( (size_t)iov.iov_len < (rcount * rdtype->size) ? iov.iov_len : (rcount * rdtype->size) );
 
       err = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &freeAfter );
@@ -98,7 +98,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    }
 
    iov.iov_len = length = 64 * 1024;
-   iov.iov_base = (void*)malloc( length * sizeof(char) );
+   iov.iov_base = (IOVBASE_TYPE*)malloc( length * sizeof(char) );
 
    send_convertor = OBJ_NEW(ompi_convertor_t);
    recv_convertor = OBJ_NEW(ompi_convertor_t);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -220,7 +220,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
             max_data = frag->size - reserve;
         } 
         iov.iov_len = max_data;
-        iov.iov_base = (void*)((unsigned char*)(frag+1) + reserve);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)(frag+1) + reserve);
 
         rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
         if(rc < 0) {
@@ -312,7 +312,7 @@ int mca_btl_self_send(
     des->des_dst     = des->des_src;
     des->des_dst_cnt = des->des_src_cnt;
     /* upcall */
-    mca_btl_self_component.self_reg[tag].cbfunc(btl,tag,des,OMPI_SUCCESS);
+    mca_btl_self_component.self_reg[tag].cbfunc( btl, tag, des, (void*)OMPI_SUCCESS );
     des->des_dst     = NULL;
     des->des_dst_cnt = 0;
     /* send completion */
@@ -336,9 +336,9 @@ extern int mca_btl_self_rdma(
     mca_btl_base_segment_t* dst = des->des_dst;
     size_t src_cnt = des->des_src_cnt;
     size_t dst_cnt = des->des_dst_cnt;
-    unsigned char* src_addr = src->seg_addr.pval;
+    unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
-    unsigned char* dst_addr = dst->seg_addr.pval;
+    unsigned char* dst_addr = (unsigned char*)dst->seg_addr.pval;
     size_t dst_len = dst->seg_len;
 
     while(src_len && dst_len) {
@@ -349,7 +349,7 @@ extern int mca_btl_self_rdma(
             /* advance src */
             if(--src_cnt != 0) {
                 src++;
-                src_addr = src->seg_addr.pval;
+                src_addr = (unsigned char*)src->seg_addr.pval;
                 src_len = src->seg_len;
             } else {
                 src_len = 0;
@@ -358,7 +358,7 @@ extern int mca_btl_self_rdma(
             /* advance dst */
             if(--dst_cnt != 0) {
                 dst++;
-                dst_addr = dst->seg_addr.pval;
+                dst_addr = (unsigned char*)dst->seg_addr.pval;
                 dst_len = dst->seg_len;
             } else {
                 dst_len = 0;
@@ -373,7 +373,7 @@ extern int mca_btl_self_rdma(
             if(src_len == 0) {
                 if(--src_cnt != 0) {
                     src++;
-                    src_addr = src->seg_addr.pval;
+                    src_addr = (unsigned char*)src->seg_addr.pval;
                     src_len = src->seg_len;
                 }
             } else {
@@ -385,7 +385,7 @@ extern int mca_btl_self_rdma(
             if(dst_len == 0) {
                 if(--dst_cnt != 0) {
                     dst++;
-                    dst_addr = src->seg_addr.pval;
+                    dst_addr = (unsigned char*)src->seg_addr.pval;
                     dst_len = src->seg_len;
                 }
             } else {

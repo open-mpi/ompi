@@ -335,8 +335,8 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
 
 
   if (size<=ompi_coll_tuned_preallocate_memory_comm_size_limit) {
-    data = malloc(sizeof(struct mca_coll_base_comm_t) +
-                 (sizeof(ompi_request_t *) * size * 2));
+    data = (mca_coll_base_comm_t*)malloc(sizeof(struct mca_coll_base_comm_t) +
+                                        (sizeof(ompi_request_t *) * size * 2));
   
     if (NULL == data) {
          return NULL;
@@ -345,7 +345,7 @@ ompi_coll_tuned_module_init(struct ompi_communicator_t *comm)
     data->mcct_num_reqs = size * 2;
   }
   else {
-     data = malloc(sizeof(struct mca_coll_base_comm_t)); 
+     data = (mca_coll_base_comm_t*)malloc(sizeof(struct mca_coll_base_comm_t)); 
   
      if (NULL == data) {
          return NULL;

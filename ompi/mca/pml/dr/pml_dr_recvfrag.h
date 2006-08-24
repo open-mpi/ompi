@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,6 +26,10 @@
 #include "ompi/mca/bml/bml.h" 
 #include "pml_dr_hdr.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 struct mca_pml_dr_buffer_t {
     ompi_free_list_item_t super;
     size_t len;
@@ -34,7 +38,6 @@ struct mca_pml_dr_buffer_t {
 typedef struct mca_pml_dr_buffer_t mca_pml_dr_buffer_t;
 
 OBJ_CLASS_DECLARATION(mca_pml_dr_buffer_t);
-
 
 struct mca_pml_dr_recv_frag_t {
     ompi_free_list_item_t super;

@@ -154,10 +154,10 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         flist->fl_alignment;
 
     if (NULL != flist->fl_mpool)
-        alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
-                                                 alloc_size, 0, 0, &user_out);
+        alloc_ptr = (ompi_free_list_memory_t*)flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
+                                                                           alloc_size, 0, 0, &user_out);
     else
-        alloc_ptr = malloc(alloc_size);
+        alloc_ptr = (ompi_free_list_memory_t*)malloc(alloc_size);
 
     if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;

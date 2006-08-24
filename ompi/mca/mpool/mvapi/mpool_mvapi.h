@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,10 +42,6 @@ typedef struct mca_mpool_mvapi_component_t mca_mpool_mvapi_component_t;
 
 OMPI_DECLSPEC extern mca_mpool_mvapi_component_t mca_mpool_mvapi_component;
 
-
-
-
-
 struct mca_mpool_base_resources_t {
   VAPI_hca_hndl_t hca;   /* the hca (nic) */ 
   VAPI_pd_hndl_t pd_tag; /* the protection domain */ 
@@ -74,11 +70,7 @@ struct mca_mpool_mvapi_registration_t {
   
 };
 typedef struct mca_mpool_mvapi_registration_t mca_mpool_mvapi_registration_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_mvapi_registration_t); 
-
-
-
-
+OBJ_CLASS_DECLARATION(mca_mpool_mvapi_registration_t); 
 
 /* 
  *  Initializes the mpool module. 

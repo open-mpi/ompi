@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -127,12 +127,12 @@ int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
     size = ompi_comm_size(comm);
 
     ompi_ddt_get_extent(dtype, &lb, &extent);
-    pml_buffer = malloc(count * extent);
+    pml_buffer = (char*)malloc(count * extent);
     if (NULL == pml_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
-    err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+    err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
     if (MPI_SUCCESS != err) {
         goto exit;
     }

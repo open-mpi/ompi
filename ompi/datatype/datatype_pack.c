@@ -191,7 +191,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
             if( iov[iov_count].iov_base == NULL ) {
                 size_t length = iov[iov_count].iov_len;
                 if( 0 == length ) length = max_allowed;
-                iov[iov_count].iov_base = pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
                 iov[iov_count].iov_len = length;
                 (*freeAfter) |= (1 << 0);
                 if( max_allowed < (size_t)iov[iov_count].iov_len )
@@ -301,7 +301,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
             if( ((*max_data) - total_packed) < length )
                 length = (*max_data) - total_packed;
             assert( 0 < length );
-            iov[iov_count].iov_base = pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
+            iov[iov_count].iov_base = (IOVBASE_TYPE*)pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
             iov[iov_count].iov_len = length;
             *freeAfter = (*freeAfter) | (1 << iov_count);
         }

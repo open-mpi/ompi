@@ -1,6 +1,9 @@
 /*
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
@@ -29,7 +32,7 @@ int ompi_init_do_preconnect(void)
     int i, j, ret;
     struct ompi_request_t **requests; 
 
-    requests = malloc(comm_size * sizeof(struct ompi_request_t *));
+    requests = (ompi_request_t**)malloc(comm_size * sizeof(struct ompi_request_t *));
     if (NULL == requests) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

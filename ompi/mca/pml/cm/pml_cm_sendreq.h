@@ -237,7 +237,7 @@ do {                                                                    \
         if (NULL == sendreq->req_buff) {                                \
             ret = MPI_ERR_BUFFER;                                       \
         } else {                                                        \
-            iov.iov_base = sendreq->req_buff;                           \
+            iov.iov_base = (IOVBASE_TYPE*)sendreq->req_buff;            \
             max_data = iov.iov_len = sendreq->req_count;                \
             iov_count = 1;                                              \
             ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor, \

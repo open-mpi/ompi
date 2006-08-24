@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -24,6 +24,10 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
 
 struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
@@ -138,18 +142,12 @@ struct ompi_osc_pt2pt_module_t {
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 
-
-extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
-
+OMPI_MODULE_DECLSPEC extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
 
 /*
  * Helper macro for grabbing the module structure from a window instance
  */
 #if OMPI_ENABLE_DEBUG
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 static inline ompi_osc_pt2pt_module_t* P2P_MODULE(struct ompi_win_t* win) 
 {
@@ -161,19 +159,9 @@ static inline ompi_osc_pt2pt_module_t* P2P_MODULE(struct ompi_win_t* win)
     return module;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-
 #else
 #define P2P_MODULE(win) ((ompi_osc_pt2pt_module_t*) win->w_osc_module)
 #endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 
 /*
  * Component functions 

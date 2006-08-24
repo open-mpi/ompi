@@ -110,7 +110,7 @@ mca_pml_cm_add_procs(struct ompi_proc_t** procs, size_t nprocs)
     size_t i;
     struct mca_mtl_base_endpoint_t **endpoints;
 
-    endpoints = malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
+    endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
     if (NULL == endpoints) return OMPI_ERROR;
 
 #if OMPI_ENABLE_DEBUG
@@ -141,7 +141,7 @@ mca_pml_cm_del_procs(struct ompi_proc_t** procs, size_t nprocs)
     size_t i;
     struct mca_mtl_base_endpoint_t **endpoints;
 
-    endpoints = malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
+    endpoints = (struct mca_mtl_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_mtl_base_endpoint_t*));
     if (NULL == endpoints) return OMPI_ERROR;
 
     for (i = 0 ; i < nprocs ; ++i) {

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,7 +22,6 @@
 #define MCA_PML_OB1_COMM_H
 
 #include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/class/opal_list.h"
 #include "ompi/proc/proc.h"
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -64,7 +63,7 @@ struct mca_pml_comm_t {
 };
 typedef struct mca_pml_comm_t mca_pml_ob1_comm_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
+OBJ_CLASS_DECLARATION(mca_pml_ob1_comm_t);
 
 
 /**

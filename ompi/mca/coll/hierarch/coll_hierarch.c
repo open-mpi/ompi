@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -177,7 +177,7 @@ mca_coll_hierarch_comm_query(struct ompi_communicator_t *comm, int *priority,
     rank = ompi_comm_rank(comm);
 
     /* allocate the data structure holding all information */
-    tdata = calloc ( 1, sizeof(struct mca_coll_base_comm_t));
+    tdata = (struct mca_coll_base_comm_t*)calloc ( 1, sizeof(struct mca_coll_base_comm_t));
     if ( NULL == tdata ) {
         *priority = 0;
         return NULL;
@@ -755,7 +755,7 @@ static void mca_coll_hierarch_dump_struct ( struct mca_coll_base_comm_t *c)
 	   c->hier_num_lleaders );
 
     for ( i=0; i < ompi_pointer_array_get_size(&(c->hier_llead)); i++ ) {
-	current = ompi_pointer_array_get_item (&(c->hier_llead), i);
+	current = (mca_coll_hierarch_llead_t*)ompi_pointer_array_get_item (&(c->hier_llead), i);
 	if ( current == NULL ) {
 	  continue;
 	}

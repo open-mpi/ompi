@@ -38,6 +38,6 @@ int mca_coll_self_reduce_intra(void *sbuf, void *rbuf, int count,
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+        return ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
     }
 }

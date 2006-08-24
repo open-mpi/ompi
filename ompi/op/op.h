@@ -31,6 +31,9 @@
 #include "opal/class/opal_object.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /**
  * Fortran handles; must be [manually set to be] equivalent to the
@@ -261,7 +264,7 @@ struct ompi_op_t {
  * Convenience typedef 
  */
 typedef struct ompi_op_t ompi_op_t;
-OBJ_CLASS_DECLARATION(ompi_op_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_op_t);
 
 /**
  * Array to map ddt->id values to the corresponding position in the op
@@ -368,12 +371,7 @@ OMPI_DECLSPEC extern ompi_op_t ompi_mpi_op_replace;
 /**
  * Table for Fortran <-> C op handle conversion
  */
-OMPI_DECLSPEC extern struct ompi_pointer_array_t *ompi_op_f_to_c_table;
-
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
+extern struct ompi_pointer_array_t *ompi_op_f_to_c_table;
 
   /**
    * Initialize the op interface.
@@ -432,10 +430,6 @@ extern "C" {
    * expalantion.
    */
   void ompi_op_set_cxx_callback(ompi_op_t *op, MPI_User_function *fn);
-
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
 
 /**
  * Check to see if an op is intrinsic.
@@ -615,5 +609,9 @@ static inline void ompi_op_reduce(ompi_op_t *op, void *source, void *target,
     op->o_func[0].c_fn(source, target, &count, &dtype);
   }
 }
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OMPI_OP_H */

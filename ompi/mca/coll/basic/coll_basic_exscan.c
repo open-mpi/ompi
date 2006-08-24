@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -92,7 +92,7 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
     ompi_ddt_get_extent(dtype, &lb, &extent);
     ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-    free_buffer = malloc(true_extent + (count - 1) * extent);
+    free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
     if (NULL == free_buffer) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -104,14 +104,14 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
          * buffer before the receive completes */
 
         err = ompi_ddt_copy_content_same_ddt(dtype, count, 
-                                             reduce_buffer, sbuf);
+                                             reduce_buffer, (char*)sbuf);
         if (MPI_SUCCESS != err) {
             goto error;
         }
 
         /* Now setup the reduction */
 
-        source = rbuf;
+        source = (char*)rbuf;
 
         /* Finally, wait for the receive to complete (so that we can do
          * the reduction).  */
@@ -124,7 +124,7 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
 
         /* Setup the reduction */
 
-        source = sbuf;
+        source = (char*)sbuf;
 
         /* If we're not commutative, we have to wait for the receive to
          * complete and then copy it into the reduce buffer */
@@ -135,7 +135,7 @@ mca_coll_basic_exscan_intra(void *sbuf, void *rbuf, int count,
         }
 
         err = ompi_ddt_copy_content_same_ddt(dtype, count, 
-                                             reduce_buffer, rbuf);
+                                             reduce_buffer, (char*)rbuf);
         if (MPI_SUCCESS != err) {
             goto error;
         }

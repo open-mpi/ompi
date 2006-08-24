@@ -29,7 +29,7 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
 {
     int32_t desc_length = oldType->desc.used + 1;  /* +1 because of the fake DT_END_LOOP entry */
     ompi_datatype_t* pdt = ompi_ddt_create( desc_length );
-    void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
+    dt_elem_desc_t* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
     int32_t old_index = pdt->d_f_to_c_index;
 
     memcpy( pdt, oldType, sizeof(ompi_datatype_t) );
@@ -48,7 +48,7 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
     /* TODO: if the data was commited update the opt_desc field */
     if( 0 != oldType->opt_desc.used ) {
         desc_length = pdt->opt_desc.used + 1;
-        pdt->opt_desc.desc = malloc( desc_length * sizeof(dt_elem_desc_t) );
+        pdt->opt_desc.desc = (dt_elem_desc_t*)malloc( desc_length * sizeof(dt_elem_desc_t) );
         /*
          * Yes, the pdt->opt_desc.length is just the opt_desc.used of the old Type.
          */

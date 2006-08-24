@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -349,7 +349,7 @@ void mca_btl_tcp_endpoint_close(mca_btl_base_endpoint_t* btl_endpoint)
     if(btl_endpoint->endpoint_sd >= 0) {
         opal_event_del(&btl_endpoint->endpoint_recv_event);
         opal_event_del(&btl_endpoint->endpoint_send_event);
-        close(btl_endpoint->endpoint_sd);
+        CLOSE_THE_SOCKET(btl_endpoint->endpoint_sd);
         btl_endpoint->endpoint_sd = -1;
 #if MCA_BTL_TCP_ENDPOINT_CACHE
         free( btl_endpoint->endpoint_cache );

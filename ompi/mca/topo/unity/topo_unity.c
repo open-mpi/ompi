@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -105,7 +105,7 @@ int mca_topo_unity_module_init (struct ompi_communicator_t *comm)
    /* allocate the data */
 
    comm->c_topo_comm = NULL;
-   topo_data = malloc(sizeof(struct mca_topo_base_comm_1_0_0_t));
+   topo_data = (mca_topo_base_comm_1_0_0_t*)malloc(sizeof(struct mca_topo_base_comm_1_0_0_t));
    if (NULL == topo_data) {
        return OMPI_ERROR;
    }

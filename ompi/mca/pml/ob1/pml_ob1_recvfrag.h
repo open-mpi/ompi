@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -25,6 +25,10 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h" 
 #include "pml_ob1_hdr.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 struct mca_pml_ob1_buffer_t {
     ompi_free_list_item_t super;

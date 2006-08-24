@@ -220,9 +220,9 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 
-inline int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
-                                      struct iovec* iov, uint32_t* out_size,
-                                      size_t* max_data, int32_t* freeAfter )
+int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
+                               struct iovec* iov, uint32_t* out_size,
+                               size_t* max_data, int32_t* freeAfter )
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 

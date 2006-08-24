@@ -185,7 +185,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
         return 0;
     }
 
-    pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 1) );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 1) );
     pStack->count = count;
     pStack->index   = -1;
     pStack->disp    = 0;

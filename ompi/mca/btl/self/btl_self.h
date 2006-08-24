@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -39,7 +39,6 @@
 extern "C" {
 #endif
 
-
 /**
  * Shared Memory (SELF) BTL module.
  */
@@ -55,7 +54,7 @@ struct mca_btl_self_component_t {
     mca_btl_base_recv_reg_t self_reg[256];
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
-extern mca_btl_self_component_t mca_btl_self_component;
+OMPI_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
 
 /**
  * Register shared memory module parameters with the MCA framework
@@ -257,10 +256,9 @@ extern int mca_btl_self_rdma(
     struct mca_btl_base_descriptor_t* descriptor
 );
                                                                                                             
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
 #endif
 

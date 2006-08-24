@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -250,7 +250,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     /* create a named pipe to receive events  */
     sprintf( mca_btl_sm_component.sm_fifo_path, 
-             "%s/sm_fifo.%lu", orte_process_info.job_session_dir,
+             "%s"OPAL_PATH_SEP"sm_fifo.%lu", orte_process_info.job_session_dir,
              (unsigned long)orte_process_info.my_name->vpid );
     if(mkfifo(mca_btl_sm_component.sm_fifo_path, 0660) < 0) {
         opal_output(0, "mca_btl_sm_component_init: mkfifo failed with errno=%d\n",errno);
@@ -270,7 +270,7 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
 
     /* allocate the Shared Memory PTL */
     *num_ptls = 2;
-    ptls = malloc((*num_ptls)*sizeof(mca_btl_base_module_t*));
+    ptls = (mca_btl_base_module_t**)malloc((*num_ptls)*sizeof(mca_btl_base_module_t*));
     if (NULL == ptls) {
         return NULL;
     }
@@ -286,16 +286,17 @@ mca_btl_base_module_t** mca_btl_sm_component_init(
         mca_btl_sm[i].super.btl_max_send_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_min_rdma_size=mca_btl_sm_component.max_frag_size;
         mca_btl_sm[i].super.btl_max_rdma_size=mca_btl_sm_component.max_frag_size;
-        /* Because of the strange behavior of the qsort function on some OSes
-         * when it has to order items with the same value,
-         * we have to make sure that the add_procs functions are called in the
-         * correct order (ie. mca_btl_sm_add_procs_same_base_addr before
-         * mca_btl_sm_add_procs) or we will face segfault as only the first
-         * allocate memory for the mca_btl_sm_component.sm_proc_connect array.
+        /* The order in which the SM modules are initialized is important as only
+         * the first one (the one using the mca_btl_sm_add_procs_same_base_addr)
+         * will setup all the memory for the internal structures (sm_proc_connect).
+         * Therefore, the order in which the two SM module will be after the 
+         * selection is important. We have to make sure they get sorted in the
+         * correct order. The simplest way is to force the exclusivity of the
+         * second module to something lower than the exclusivity of the first one.
          */
-        mca_btl_sm[i].super.btl_exclusivity=mca_btl_sm_component.sm_exclusivity;
-        mca_btl_sm[i].super.btl_latency=mca_btl_sm_component.sm_latency; /* lowest latency */
-        mca_btl_sm[i].super.btl_bandwidth=900; /* not really used now since exclusivity is set to the highest value */
+        mca_btl_sm[i].super.btl_exclusivity = mca_btl_sm_component.sm_exclusivity - i;
+        mca_btl_sm[i].super.btl_latency     = mca_btl_sm_component.sm_latency; /* lowest latency */
+        mca_btl_sm[i].super.btl_bandwidth   = 900; /* not really used now since exclusivity is set to the highest value */
     }
 
     /* initialize some PTL data */
