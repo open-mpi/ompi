@@ -267,7 +267,7 @@ opal_evsignal_process(void)
 		}
 	}
 
-	memset((void*) opal_evsigcaught, 0, sizeof(opal_evsigcaught));
+	memset(opal_evsigcaught, 0, sizeof(opal_evsigcaught));
 	opal_evsignal_caught = 0;
 }
 
