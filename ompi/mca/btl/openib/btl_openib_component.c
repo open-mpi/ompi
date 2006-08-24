@@ -317,8 +317,8 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                            orte_system_info.nodename,
                            hca->ib_dev_attr.vendor_id,
                            hca->ib_dev_attr.vendor_part_id);
-            hca->mtu = mca_btl_openib_component.ib_mtu;
         }
+        hca->mtu = mca_btl_openib_component.ib_mtu;
     } else if (OMPI_SUCCESS != ret) {
         /* We had some other error that wasn't good -- we should abort
            upwards */
