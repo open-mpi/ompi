@@ -21,9 +21,10 @@
 #include "opal/threads/mutex.h"
 
 /*
- * Default to a safe value
+ * If we have progress threads, always default to using threads.
+ * Otherwise, wait and see if some upper layer wants to use threads.
  */
-bool opal_uses_threads = (bool) OMPI_HAVE_THREAD_SUPPORT;
+bool opal_uses_threads = (bool) OMPI_ENABLE_PROGRESS_THREADS;
 
 
 #ifdef __WINDOWS__
