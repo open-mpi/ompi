@@ -301,7 +301,7 @@ opal_progress(void)
         sched_yield();
 #endif  /* defined(__WINDOWS__) */
     }
-#endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD_) */
+#endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD) */
 }
 
 
