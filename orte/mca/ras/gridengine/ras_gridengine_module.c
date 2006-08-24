@@ -124,12 +124,19 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     orte_app_context_t** context, orte_std_cntr_t num_context)
 {    
     char *pe_hostfile = getenv("PE_HOSTFILE");
+    char *job_id = getenv("JOB_ID");
     char buf[1024], *tok, *num, *queue, *arch, *ptr;
     int rc, gridengine_slot_cnt;
     opal_list_item_t* item;
     opal_list_t new_nodes;
     FILE *fp;
     orte_ras_node_t *node;
+
+    /* show the Grid Engine's JOB_ID */
+    if (mca_ras_gridengine_component.show_jobid ||
+        mca_ras_gridengine_component.verbose != 0) {
+        opal_output(0, "ras:gridengine: JOB_ID: %s", job_id);
+    }
    
     /* query the nodelist from the registry */
     if(ORTE_SUCCESS != (rc = orte_ras_gridengine_node_query(nodelist))) {
