@@ -82,8 +82,6 @@ void mpi_error_string_f(MPI_Fint *errorcode, char *string,
 					 ));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_FINT(resultlen);
-        string_len = (string_len < MPI_MAX_ERROR_STRING) ?
-            string_len : MPI_MAX_ERROR_STRING;
         if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_string, string,
                                                            string_len))) {
             c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);

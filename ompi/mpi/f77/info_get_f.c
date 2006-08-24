@@ -91,8 +91,8 @@ void mpi_info_get_f(MPI_Fint *info, char *key, MPI_Fint *valuelen,
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         OMPI_SINGLE_INT_2_LOGICAL(flag);
 
-        value_len = (value_len < OMPI_FINT_2_INT(*valuelen)) ?
-            value_len : OMPI_FINT_2_INT(*valuelen);
+        /* Use the full length of the Fortran string, not *valuelen.
+           See comment in ompi/mpi/f77/strings.c. */
         if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_value, value,
                                                            value_len))) {
             c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);

@@ -74,6 +74,6 @@ void mpi_file_get_view_f(MPI_Fint *fh, MPI_Offset *disp,
         *disp = (MPI_Fint) c_disp;
         *etype = MPI_Type_c2f(c_etype);
         *filetype = MPI_Type_c2f(c_filetype);
-        ompi_fortran_string_c2f(c_datarep, datarep, MPI_MAX_DATAREP_STRING);
+        ompi_fortran_string_c2f(c_datarep, datarep, datarep_len);
     }
 }
