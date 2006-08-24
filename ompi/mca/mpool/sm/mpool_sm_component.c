@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -142,7 +142,7 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     mca_mpool_sm_module_init(mpool_module); 
 
     /* create initial shared memory mapping */
-    len = asprintf( &file_name, "%s/shared_mem_pool.%s",
+    len = asprintf( &file_name, "%s"OPAL_PATH_SEP"shared_mem_pool.%s",
                     orte_process_info.job_session_dir,
                     orte_system_info.nodename );
     if ( 0 > len ) {

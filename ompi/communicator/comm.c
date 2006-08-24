@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -1153,7 +1153,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     /* allocate the data for the common good */
 
-    new_comm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+    new_comm->c_topo_comm = (mca_topo_base_comm_t*)malloc(sizeof(mca_topo_base_comm_t));
     if (NULL == new_comm->c_topo_comm) {
         OBJ_RELEASE(new_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;

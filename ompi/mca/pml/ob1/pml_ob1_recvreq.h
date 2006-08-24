@@ -55,7 +55,6 @@ struct mca_pml_ob1_recv_request_t {
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
-
 OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
 
 
@@ -290,7 +289,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
-                iov[iov_count].iov_base = (void*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \

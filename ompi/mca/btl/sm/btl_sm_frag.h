@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -56,10 +56,9 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
-
 #define MCA_BTL_SM_FRAG_ALLOC1(frag, rc)                                 \
 {                                                                        \
-    ompi_free_list_item_t* item;                                              \
+    ompi_free_list_item_t* item;                                         \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags1, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
     frag->my_list = &mca_btl_sm_component.sm_frags1;                     \
@@ -67,7 +66,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
 #define MCA_BTL_SM_FRAG_ALLOC2(frag, rc)                                 \
 {                                                                        \
-    ompi_free_list_item_t* item;                                              \
+    ompi_free_list_item_t* item;                                         \
     OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags2, item, rc);      \
     frag = (mca_btl_sm_frag_t*)item;                                     \
     frag->my_list = &mca_btl_sm_component.sm_frags2;                     \
@@ -75,7 +74,7 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
 #define MCA_BTL_SM_FRAG_RETURN(frag)                                      \
 {                                                                         \
-    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag));      \
+    OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag)); \
 }
 #endif
 

@@ -33,7 +33,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern opal_class_t ompi_communicator_t_class;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
 #define OMPI_COMM_INTER      0x00000001
 #define OMPI_COMM_CART       0x00000002
@@ -229,7 +230,6 @@ struct ompi_communicator_t {
     static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid)
     {
         /* array of pointers to communicators, indexed by context ID */
-        OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
         return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
     }
 

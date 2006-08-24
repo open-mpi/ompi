@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -115,7 +115,7 @@ struct ompi_osc_rdma_module_t {
        with different synchronization costs */
     short *p2p_fence_coll_results;
 
-    enum { OSC_SYNC_REDUCE_SCATTER, OSC_SYNC_ALLREDUCE, OSC_SYNC_ALLTOALL } p2p_fence_sync_type;
+    mca_osc_fence_sync_t p2p_fence_sync_type;
 
     /* ********************* PWSC data ************************ */
 
@@ -129,10 +129,6 @@ struct ompi_osc_rdma_module_t {
     int32_t p2p_lock_received_ack;
 };
 typedef struct ompi_osc_rdma_module_t ompi_osc_rdma_module_t;
-
-
-extern ompi_osc_rdma_component_t mca_osc_rdma_component;
-
 
 /*
  * Helper macro for grabbing the module structure from a window instance
@@ -166,6 +162,7 @@ static inline ompi_osc_rdma_module_t* P2P_MODULE(struct ompi_win_t* win)
 extern "C" {
 #endif
 
+OMPI_MODULE_DECLSPEC extern ompi_osc_rdma_component_t mca_osc_rdma_component;
 
 /*
  * Component functions 

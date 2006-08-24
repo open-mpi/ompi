@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -43,7 +43,7 @@
 #  include <sched.h>
 #  define SPIN sched_yield()
 #elif defined(__WINDOWS__)
-#  define SPIN /*SwitchToThread() - Not until I figure out which library define it */
+#  define SPIN SwitchToThread()
 #else  /* no switch available */
 #  define SPIN
 #endif

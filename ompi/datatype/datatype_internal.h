@@ -221,11 +221,12 @@ typedef struct {
     long double i;
 } ompi_complex_long_double_t;
 
-extern const ompi_datatype_t* ompi_ddt_basicDatatypes[];
+extern const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED];
+
 #define BASIC_DDT_FROM_ELEM( ELEM ) (ompi_ddt_basicDatatypes[(ELEM).elem.common.type])
 
-extern int32_t ompi_ddt_default_convertors_init( void );
-extern int32_t ompi_ddt_default_convertors_fini( void );
+int32_t ompi_ddt_default_convertors_init( void );
+int32_t ompi_ddt_default_convertors_fini( void );
 
 #define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP, END_LOOP) \
 do { \

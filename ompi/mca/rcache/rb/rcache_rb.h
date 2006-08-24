@@ -2,7 +2,7 @@
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2005 The University of Tennessee and The University
+  * Copyright (c) 2004-2006 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,9 +44,7 @@ struct mca_rcache_rb_component_t {
     mca_rcache_base_component_t super; 
 }; typedef struct mca_rcache_rb_component_t mca_rcache_rb_component_t; 
 
-OMPI_DECLSPEC extern mca_rcache_rb_component_t mca_rcache_rb_component;
-
-
+OMPI_MODULE_DECLSPEC extern mca_rcache_rb_component_t mca_rcache_rb_component;
 
 void mca_rcache_rb_module_init( mca_rcache_rb_module_t* rcache );
 

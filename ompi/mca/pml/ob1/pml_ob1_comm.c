@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -84,7 +84,7 @@ int mca_pml_ob1_comm_init_size(mca_pml_ob1_comm_t* comm, size_t size)
     size_t i;
 
     /* send message sequence-number support - sender side */
-    comm->procs = malloc(sizeof(mca_pml_ob1_comm_proc_t)*size);
+    comm->procs = (mca_pml_ob1_comm_proc_t*)malloc(sizeof(mca_pml_ob1_comm_proc_t)*size);
     if(NULL == comm->procs) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

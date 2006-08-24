@@ -79,7 +79,7 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
     int32_t optimized = 0, continuity;
     uint32_t i;
 
-    pStack = alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (pData->btypes[DT_LOOP]+2) );
     SAVE_STACK( pStack, -1, 0, count, 0, pData->desc.used );
 
     pTypeDesc->length = 2 * pData->desc.used + 1 /* for the fake DT_END_LOOP at the end */;

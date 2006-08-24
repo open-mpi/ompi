@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -251,7 +251,7 @@ static int mca_pml_ob1_recv_request_ack(
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG) {
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 bml_endpoint,
-                recvreq->req_recv.req_base.req_addr,
+                (unsigned char*)recvreq->req_recv.req_base.req_addr,
                 recvreq->req_recv.req_bytes_packed,
                 recvreq->req_rdma);
 
@@ -322,7 +322,7 @@ static void mca_pml_ob1_rget_completion(
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
-    mca_pml_ob1_recv_request_t* recvreq = frag->rdma_req;
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -357,7 +357,7 @@ static void mca_pml_ob1_rget_completion(
 int mca_pml_ob1_recv_request_get_frag(
         mca_pml_ob1_rdma_frag_t* frag)
 {
-    mca_pml_ob1_recv_request_t* recvreq = frag->rdma_req;
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
     mca_bml_base_endpoint_t* bml_endpoint = frag->rdma_ep;
     mca_bml_base_btl_t* bml_btl;
     mca_btl_base_descriptor_t* descriptor;
@@ -375,7 +375,7 @@ int mca_pml_ob1_recv_request_get_frag(
     /* is there an existing registration for this btl */
     reg = mca_pml_ob1_rdma_registration(
         bml_btl, 
-        recvreq->req_recv.req_base.req_addr,
+        (unsigned char*)recvreq->req_recv.req_base.req_addr,
         recvreq->req_recv.req_bytes_packed);
     if(NULL != reg) {
          recvreq->req_rdma[0].bml_btl = bml_btl; 

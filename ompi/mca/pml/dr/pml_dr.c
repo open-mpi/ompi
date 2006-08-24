@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -132,7 +132,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     if(OMPI_SUCCESS != rc)
         return rc;
 
-    bml_endpoints = malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
+    bml_endpoints = (mca_bml_base_endpoint_t**)malloc(nprocs * sizeof(struct mca_bml_base_endpoint_t*));
     if (NULL == bml_endpoints) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }

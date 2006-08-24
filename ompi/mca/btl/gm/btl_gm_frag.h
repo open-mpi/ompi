@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -27,8 +27,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t);
-
 
 typedef enum {
     MCA_BTL_GM_SEND,
@@ -53,8 +51,8 @@ struct mca_btl_gm_frag_t {
     ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
-OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
 
+OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t);
 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_eager_t; 
     
@@ -67,7 +65,6 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_max_t);
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_user_t; 
     
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t); 
-
 
 /*
  * Macros to allocate/return descriptors from module specific

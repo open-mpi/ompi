@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -42,6 +42,7 @@
 #include "mpi.h"
 #include "opal/mca/maffinity/maffinity.h"
 #include "opal/mca/maffinity/base/base.h"
+#include "opal/util/os_path.h"
 #include "orte/mca/ns/ns.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
@@ -270,8 +271,8 @@ sm_module_init(struct ompi_communicator_t *comm)
     /* Get some space to setup memory affinity (just easier to try to
        alloc here to handle the error case) */
 
-    maffinity = malloc(sizeof(opal_maffinity_base_segment_t) * 
-                      c->sm_comm_num_segments * 3);
+    maffinity = (opal_maffinity_base_segment_t*)malloc(sizeof(opal_maffinity_base_segment_t) * 
+                                                       c->sm_comm_num_segments * 3);
     if (NULL == maffinity) {
         return NULL;
     }
@@ -289,7 +290,7 @@ sm_module_init(struct ompi_communicator_t *comm)
           mca_coll_sm_tree_node_t
     */
 
-    comm->c_coll_selected_data = data =
+    comm->c_coll_selected_data = data = (mca_coll_base_comm_t*)
         malloc(sizeof(mca_coll_base_comm_t) + 
                (c->sm_comm_num_segments * 
                 sizeof(mca_coll_base_mpool_index_t)) +
@@ -541,8 +542,8 @@ static int bootstrap_init(void)
         return OMPI_ERROR;
     }
     orte_proc_info();
-    asprintf(&fullpath, "%s/%s", orte_process_info.job_session_dir,
-             mca_coll_sm_component.sm_bootstrap_filename);
+    fullpath = opal_os_path( false, orte_process_info.job_session_dir,
+                             mca_coll_sm_component.sm_bootstrap_filename, NULL );
     if (NULL == fullpath) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -686,8 +687,8 @@ static int bootstrap_comm(ompi_communicator_t *comm)
                 (num_segments * (comm_size * frag_size));
 
             data->mcb_data_mpool_malloc_addr = tmp =
-                c->sm_data_mpool->mpool_alloc(c->sm_data_mpool, size, 
-                                              c->sm_control_size, 0, NULL);
+                (char*)c->sm_data_mpool->mpool_alloc(c->sm_data_mpool, size, 
+                                                     c->sm_control_size, 0, NULL);
             if (NULL == tmp) {
                 /* Cleanup before returning; allow other processes in
                    this communicator to learn of the failure.  Note
@@ -738,7 +739,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
 
     else {
         err = OMPI_SUCCESS;
-        data->mcb_mpool_base = c->sm_data_mpool->mpool_base(c->sm_data_mpool);
+        data->mcb_mpool_base = (unsigned char*)c->sm_data_mpool->mpool_base(c->sm_data_mpool);
         data->mcb_mpool_offset = bscs[i].smbcs_data_mpool_offset;
         data->mcb_mpool_area = data->mcb_mpool_base + data->mcb_mpool_offset;
         data->mcb_operation_count = 0;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -54,7 +54,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
 
     if (MPI_IN_PLACE == sbuf) {
         ompi_ddt_get_extent(rdtype, &lb, &extent);
-        send_buf = rbuf;
+        send_buf = (char*)rbuf;
         for (i = 0; i < rank; ++i) {
             send_buf += (rcounts[i] * extent);
         }

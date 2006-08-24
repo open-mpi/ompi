@@ -113,7 +113,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* handle special case when size == 1 */
     if (1 == size ) {
        if (sendbuf != MPI_IN_PLACE) {
-          ompi_ddt_copy_content_same_ddt( datatype, count, recvbuf, sendbuf );
+          ompi_ddt_copy_content_same_ddt( datatype, count, (char*)recvbuf, (char*)sendbuf );
        }
        return MPI_SUCCESS;
     }
@@ -368,7 +368,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     if (MPI_IN_PLACE == sbuf) {
         sbuf = rbuf;
-        inplace_temp = malloc(true_extent + (count - 1) * extent);
+        inplace_temp = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -376,7 +376,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     if (size > 1) {
-        free_buffer = malloc(true_extent + (count - 1) * extent);
+        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -386,7 +386,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     /* Initialize the receive buffer. */
 
     if (rank == (size - 1)) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
     } else {
         err = MCA_PML_CALL(recv(rbuf, count, dtype, size - 1,
                                 MCA_COLL_BASE_TAG_REDUCE, comm,
@@ -403,7 +403,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 
     for (i = size - 2; i >= 0; --i) {
         if (rank == i) {
-            inbuf = sbuf;
+            inbuf = (char*)sbuf;
         } else {
             err = MCA_PML_CALL(recv(pml_buffer, count, dtype, i,
                                     MCA_COLL_BASE_TAG_REDUCE, comm,
@@ -424,7 +424,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     if (NULL != inplace_temp) {
-        err = ompi_ddt_copy_content_same_ddt(dtype, count, sbuf, inplace_temp);
+        err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)sbuf, inplace_temp);
         free(inplace_temp);
     }
     if (NULL != free_buffer) {

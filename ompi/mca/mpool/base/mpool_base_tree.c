@@ -2,7 +2,7 @@
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2005 The University of Tennessee and The University
+  * Copyright (c) 2004-2006 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,7 +19,7 @@
   * @file
   * Description of the Registration Cache framework
   */
-
+#include "ompi_config.h"
 #include "opal/mca/mca.h"
 #include "mpool_base_tree.h"
 
@@ -89,7 +89,7 @@ int mca_mpool_base_tree_delete(mca_mpool_base_tree_item_t* item) {
  *  find the item in the rb tree  
  */
 mca_mpool_base_tree_item_t* mca_mpool_base_tree_find(void* base) { 
-    return(ompi_rb_tree_find(&mca_mpool_base_tree, base));
+    return (mca_mpool_base_tree_item_t*)ompi_rb_tree_find(&mca_mpool_base_tree, base);
 }
     
 /* 

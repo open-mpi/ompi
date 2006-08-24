@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,7 +36,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t);
 
 #define MCA_BTL_TCP_FRAG_IOVEC_NUMBER  4
 
@@ -59,7 +58,6 @@ struct mca_btl_tcp_frag_t {
 }; 
 typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_t); 
-
 
 typedef struct mca_btl_tcp_frag_t mca_btl_tcp_frag_eager_t; 
     
@@ -97,7 +95,7 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
 
 #define MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc)                              \
 {                                                                          \
-    ompi_free_list_item_t *item;                                                \
+    ompi_free_list_item_t *item;                                           \
     OMPI_FREE_LIST_WAIT(&mca_btl_tcp_component.tcp_frag_user, item, rc);   \
     frag = (mca_btl_tcp_frag_t*) item;                                     \
 }
@@ -105,7 +103,7 @@ OBJ_CLASS_DECLARATION(mca_btl_tcp_frag_user_t);
 #define MCA_BTL_TCP_FRAG_RETURN(frag)                                      \
 {                                                                          \
     OMPI_FREE_LIST_RETURN(frag->my_list,                                   \
-        (ompi_free_list_item_t*)(frag));                                        \
+        (ompi_free_list_item_t*)(frag));                                   \
 }
 
 #define MCA_BTL_TCP_FRAG_INIT_DST(frag,ep)                                 \
@@ -114,7 +112,7 @@ do {                                                                       \
     frag->btl = ep->endpoint_btl;                                          \
     frag->endpoint = ep;                                                   \
     frag->iov[0].iov_len = sizeof(frag->hdr);                              \
-    frag->iov[0].iov_base = (void*)&frag->hdr;                             \
+    frag->iov[0].iov_base = (IOVBASE_TYPE*)&frag->hdr;                     \
     frag->iov_cnt = 1;                                                     \
     frag->iov_idx = 0;                                                     \
     frag->iov_ptr = frag->iov;                                             \

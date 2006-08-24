@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -264,7 +264,7 @@ static inline int ompi_fifo_init_same_base_addr(int size_of_cb_fifo,
 
     /* allocate head ompi_cb_fifo_t structure */
     len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
-    fifo->head=memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
+    fifo->head = (ompi_cb_fifo_wrapper_t*)memory_allocator->mpool_alloc(memory_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
     if ( NULL == fifo->head) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
@@ -337,7 +337,7 @@ static inline int ompi_fifo_write_to_head_same_base_addr(void *data,
         if (next_ff->cb_overflow) {
             /* allocate head ompi_cb_fifo_t structure */
             len_to_allocate=sizeof(ompi_cb_fifo_wrapper_t);
-            next_ff=fifo_allocator->mpool_alloc
+            next_ff = (ompi_cb_fifo_wrapper_t*)fifo_allocator->mpool_alloc
                 (fifo_allocator, len_to_allocate,CACHE_LINE_SIZE, 0, NULL);
             if ( NULL == next_ff) {
                 opal_atomic_unlock(&(fifo->fifo_lock));

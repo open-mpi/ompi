@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -68,7 +68,7 @@ OBJ_CLASS_INSTANCE(
 static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
     MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x vid: %d",
                         __FILE__, __LINE__, __func__, vfrag, vfrag->vf_id));
@@ -144,7 +144,7 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
 
 void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
     /* update counters - give new BTL a fair chance :-) */
     vfrag->vf_ack_cnt = 0;
@@ -175,7 +175,7 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 
 void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
     /* start wdog timer */
     MCA_PML_DR_VFRAG_WDOG_START(vfrag);

@@ -29,9 +29,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
-struct mca_mem_pool_t;
 
+struct mca_mem_pool_t;
 
 struct ompi_free_list_t
 {
@@ -50,6 +49,7 @@ struct ompi_free_list_t
     opal_list_t fl_allocations;
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
 
 struct ompi_free_list_item_t
 { 
@@ -58,7 +58,7 @@ struct ompi_free_list_item_t
 }; 
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
-OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
 
 /**
  * Initialize a free list.

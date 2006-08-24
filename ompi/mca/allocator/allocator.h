@@ -2,7 +2,7 @@
   * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
   *                         University Research and Technology
   *                         Corporation.  All rights reserved.
-  * Copyright (c) 2004-2005 The University of Tennessee and The University
+  * Copyright (c) 2004-2006 The University of Tennessee and The University
   *                         of Tennessee Research Foundation.  All rights
   *                         reserved.
   * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -159,6 +159,7 @@ typedef struct mca_allocator_base_component_1_0_0_t mca_allocator_base_component
  * The output integer used for the mca base
  */
 OMPI_DECLSPEC extern int mca_allocator_base_output;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

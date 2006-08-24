@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -58,7 +58,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
 
     if (0 == rank) {
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+            err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
             if (MPI_SUCCESS != err) {
                 return err;
             }
@@ -75,7 +75,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
         ompi_ddt_get_extent(dtype, &lb, &extent);
         ompi_ddt_get_true_extent(dtype, &true_lb, &true_extent);
 
-        free_buffer = malloc(true_extent + (count - 1) * extent);
+        free_buffer = (char*)malloc(true_extent + (count - 1) * extent);
         if (NULL == free_buffer) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -84,7 +84,7 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
         /* Copy the send buffer into the receive buffer. */
 
         if (MPI_IN_PLACE != sbuf) {
-            err = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+            err = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
             if (MPI_SUCCESS != err) {
                 if (NULL != free_buffer) {
                     free(free_buffer);

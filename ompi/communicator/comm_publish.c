@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -144,7 +144,7 @@ char* ompi_comm_namelookup ( char *service_name )
     }
     if ( 0 < cnt && NULL != values[0] ) {  /* should be only one, if any */
         keyvals = values[0]->keyvals;
-        stmp = strdup(keyvals[0]->value->data);
+        stmp = strdup((const char*)keyvals[0]->value->data);
         OBJ_RELEASE(values[0]);
     }
 

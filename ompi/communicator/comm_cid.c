@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -117,7 +117,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     int nextcid;
     int done=0;
     int response=0, glresponse=0;
-    int flag;
+    bool flag;
     int start=ompi_mpi_communicators.lowest_free;
     int i;
     

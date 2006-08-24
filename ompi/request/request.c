@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,12 +23,12 @@
 #include "ompi/constants.h"
 
 ompi_pointer_array_t             ompi_request_f_to_c_table;
-OMPI_DECLSPEC size_t             ompi_request_waiting = 0;
-OMPI_DECLSPEC size_t             ompi_request_completed = 0;
-OMPI_DECLSPEC opal_mutex_t       ompi_request_lock;
-OMPI_DECLSPEC opal_condition_t   ompi_request_cond;
-OMPI_DECLSPEC ompi_request_t     ompi_request_null;
-OMPI_DECLSPEC ompi_request_t     ompi_request_empty;
+size_t                           ompi_request_waiting = 0;
+size_t                           ompi_request_completed = 0;
+opal_mutex_t                     ompi_request_lock;
+opal_condition_t                 ompi_request_cond;
+ompi_request_t                   ompi_request_null;
+ompi_request_t                   ompi_request_empty;
 ompi_status_public_t             ompi_status_empty;
 
 

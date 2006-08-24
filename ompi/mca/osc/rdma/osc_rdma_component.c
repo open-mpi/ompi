@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -101,7 +101,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     if (flag == 0) goto info_not_found;
     value_len++;
 
-    value_string = malloc(sizeof(char) * value_len);
+    value_string = (char*)malloc(sizeof(char) * value_len);
     if (NULL == value_string) goto info_not_found;
 
     ret = ompi_info_get(info, key, value_len, value_string, &flag);
@@ -122,9 +122,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     ret = mca_base_param_lookup_int(param, &flag);
     if (OMPI_SUCCESS != ret) return false;
 
-    result = flag;
-
-    return result;
+    return (flag != 0 ? true : false);
 }
 
 
@@ -243,7 +241,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     char *sync_string;
 
     /* create module structure */
-    module = malloc(sizeof(ompi_osc_rdma_module_t));
+    module = (ompi_osc_rdma_module_t*)malloc(sizeof(ompi_osc_rdma_module_t));
     if (NULL == module) return OMPI_ERROR;
 
     /* fill in the function pointer part */
@@ -265,8 +263,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     }
 
     OBJ_CONSTRUCT(&module->p2p_pending_sendreqs, opal_list_t);
-    module->p2p_num_pending_sendreqs = malloc(sizeof(short) * 
-                                              ompi_comm_size(module->p2p_comm));
+    module->p2p_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+                                                      ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
         ompi_comm_free(&comm);
@@ -285,8 +283,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
 
     OBJ_CONSTRUCT(&(module->p2p_copy_pending_sendreqs), opal_list_t);
-    module->p2p_copy_num_pending_sendreqs = malloc(sizeof(short) * 
-                                                   ompi_comm_size(module->p2p_comm));
+    module->p2p_copy_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+                                                           ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_copy_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
         OBJ_DESTRUCT(&module->p2p_long_msgs);
@@ -304,8 +302,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     module->p2p_eager_send = check_config_value_bool("eager_send", info);
 
     /* fence data */
-    module->p2p_fence_coll_counts = malloc(sizeof(int) * 
-                                           ompi_comm_size(module->p2p_comm));
+    module->p2p_fence_coll_counts = (int*)malloc(sizeof(int) * 
+                                                 ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_fence_coll_counts) {
         free(module->p2p_copy_num_pending_sendreqs);
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
@@ -322,8 +320,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         module->p2p_fence_coll_counts[i] = 1;
     }
 
-    module->p2p_fence_coll_results = malloc(sizeof(int) * 
-                                            ompi_comm_size(module->p2p_comm));
+    module->p2p_fence_coll_results = (short*)malloc(sizeof(short) * 
+                                                    ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_fence_coll_counts) {
         free(module->p2p_fence_coll_counts);
         free(module->p2p_copy_num_pending_sendreqs);

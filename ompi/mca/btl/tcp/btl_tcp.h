@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -83,9 +83,7 @@ struct mca_btl_tcp_component_t {
 }; 
 typedef struct mca_btl_tcp_component_t mca_btl_tcp_component_t;
 
-extern mca_btl_tcp_component_t mca_btl_tcp_component;
-
-
+OMPI_DECLSPEC extern mca_btl_tcp_component_t mca_btl_tcp_component;
 
 /**
  * BTL Module Interface
@@ -106,6 +104,11 @@ struct mca_btl_tcp_module_t {
 typedef struct mca_btl_tcp_module_t mca_btl_tcp_module_t;
 extern mca_btl_tcp_module_t mca_btl_tcp_module;
 
+#if defined(__WINDOWS__)
+#define CLOSE_THE_SOCKET(socket)   closesocket(socket)
+#else
+#define CLOSE_THE_SOCKET(socket)   close(socket)
+#endif  /* defined(__WINDOWS__) */
 
 /**
  * Register TCP component parameters with the MCA framework

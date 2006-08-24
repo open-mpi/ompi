@@ -592,7 +592,7 @@ int32_t ompi_ddt_init( void )
     MOOG(cxx_ldblcplex);
 
     for( i = 0; i < ompi_mpi_cxx_ldblcplex.d_f_to_c_index; i++ ) {
-        ompi_datatype_t* datatype = ompi_pointer_array_get_item( ompi_datatype_f_to_c_table, i );
+        ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_pointer_array_get_item( ompi_datatype_f_to_c_table, i );
 
         if( (datatype->ub - datatype->lb) == (long)datatype->size ) {
             datatype->flags |= DT_FLAG_NO_GAPS;

@@ -102,7 +102,7 @@ struct ompi_convertor_t {
     uint32_t                      csum_ui2;     /**< partial checksum computed by pack/unpack operation */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
 };
-OBJ_CLASS_DECLARATION( ompi_convertor_t );
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_convertor_t );
 
 /* Base convertor for all external32 operations */
 OMPI_DECLSPEC extern ompi_convertor_t* ompi_mpi_external32_convertor;

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -19,8 +19,6 @@
 #ifndef MTL_MX_H_HAS_BEEN_INCLUDED
 #define MTL_MX_H_HAS_BEEN_INCLUDED
 
-#include "opal/threads/threads.h"
-#include "opal/threads/condition.h"
 #include "ompi/class/ompi_free_list.h"
 #include "opal/util/cmd_line.h"
 #include "ompi/request/request.h"

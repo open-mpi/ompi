@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -129,7 +129,7 @@ void mca_pml_ob1_recv_frag_callback(
             sendreq = (mca_pml_ob1_send_request_t*)
                 hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
-            sendreq->req_rdma_offset = hdr->hdr_ack.hdr_rdma_offset;
+            sendreq->req_rdma_offset = (size_t)hdr->hdr_ack.hdr_rdma_offset;
             MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
             break;
         }

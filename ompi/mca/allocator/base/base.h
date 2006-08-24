@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -49,7 +49,7 @@ typedef struct mca_allocator_base_selected_module_t mca_allocator_base_selected_
 /**
  * Declaces mca_mpool_base_selected_module_t as a class.
  */
-OBJ_CLASS_DECLARATION(mca_mpool_base_selected_module_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_allocator_base_selected_module_t);
                                                                                                      
 
 /*
@@ -68,6 +68,7 @@ OMPI_DECLSPEC mca_allocator_base_component_t* mca_allocator_component_lookup(con
  * The list of all the selected components.
  */
 OMPI_DECLSPEC extern opal_list_t mca_allocator_base_components;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

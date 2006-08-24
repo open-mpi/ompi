@@ -2,7 +2,7 @@
 // Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 //                         University Research and Technology
 //                         Corporation.  All rights reserved.
-// Copyright (c) 2004-2005 The University of Tennessee and The University
+// Copyright (c) 2004-2006 The University of Tennessee and The University
 //                         of Tennessee Research Foundation.  All rights
 //                         reserved.
 // Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -16,12 +16,12 @@
 // $HEADER$
 //
 
-#include "ompi_config.h"
-
 #include <iostream>
 #include <string>
 #include <utility>
 #include <list>
+
+#include "ompi_config.h"
 
 #include <stdio.h>
 #include <ctype.h>
@@ -85,7 +85,6 @@ int main(int argc, char *argv[])
     exit(ret);
   }
 
-
   cmd_line = OBJ_NEW(opal_cmd_line_t);
   if (NULL == cmd_line) {
     ret = errno;
@@ -136,7 +135,10 @@ int main(int argc, char *argv[])
 
   // Get MCA parameters, if any */
   
-  mca_base_open();
+  if( OMPI_SUCCESS != mca_base_open() ) {
+      opal_show_help("help-ompi_info.txt", "lib-call-fail", true, "mca_base_open", __FILE__, __LINE__ );
+      exit(1);
+  }
   mca_base_cmd_line_setup(cmd_line);
 
   // Do the parsing

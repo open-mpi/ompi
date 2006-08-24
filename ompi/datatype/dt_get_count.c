@@ -40,7 +40,7 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
      */
     assert( (uint32_t)iSize <= datatype->size );
     DUMP( "dt_count_elements( %p, %d )\n", (void*)datatype, iSize );
-    pStack = alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
     pStack->count    = 1;
     pStack->index    = -1;
     pStack->disp     = 0;

@@ -19,7 +19,6 @@
 #ifndef DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
 #define DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
 #include <float.h>
 #include <assert.h>
 #include "ompi/constants.h"

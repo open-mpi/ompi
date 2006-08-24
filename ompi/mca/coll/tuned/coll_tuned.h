@@ -63,12 +63,6 @@ EXSCAN, GATHER, GATHERV, REDUCE, REDUCESCATTER, SCAN, SCATTER, SCATTERV, COLLCOU
 extern "C" {
 #endif
 
-/*
- * Globally exported variable
- */
-
-/* OMPI_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_tuned_component; */
-
 /* these are the same across all modules and are loaded at component query time */
 OMPI_DECLSPEC extern int   ompi_coll_tuned_stream;
 OMPI_DECLSPEC extern int   ompi_coll_tuned_priority;
@@ -84,12 +78,9 @@ OMPI_DECLSPEC extern coll_tuned_force_algorithm_mca_param_indices_t ompi_coll_tu
 /* the actual max algorithm values (readonly), loaded at component open */
 OMPI_DECLSPEC extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
 
-
-
 /*
  * coll API functions
  */
-
 
   /* API functions */
 
@@ -280,12 +271,6 @@ struct mca_coll_tuned_component_t {
      * Global component instance
      */
     extern mca_coll_tuned_component_t mca_coll_tuned_component;
-
-
-
-
-
-
 
 /*
  * Data structure for hanging data off the communicator 

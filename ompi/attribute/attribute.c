@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -251,7 +251,7 @@
             MPI_Fint attr_val = translate_to_fortran_mpi1(attribute); \
             (*((keyval_obj->delete_attr_fn).attr_mpi1_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, &attr_val, keyval_obj->extra_state, &f_err); \
+                 &f_key, &attr_val, (int*)keyval_obj->extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -264,7 +264,7 @@
             MPI_Aint attr_val = translate_to_fortran_mpi2(attribute); \
             (*((keyval_obj->delete_attr_fn).attr_mpi2_fortran_delete_fn)) \
                 (&(((ompi_##type##_t *)object)->attr_##type##_f), \
-                 &f_key, &attr_val, keyval_obj->extra_state, &f_err); \
+                 &f_key, (int*)&attr_val, (int*)keyval_obj->extra_state, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 if (need_lock) { \
                     OPAL_THREAD_UNLOCK(&alock); \
@@ -301,7 +301,7 @@
             in = translate_to_fortran_mpi1(in_attr); \
             (*((keyval_obj->copy_attr_fn).attr_mpi1_fortran_copy_fn)) \
                 (&(((ompi_##type##_t *)old_object)->attr_##type##_f), \
-                 &f_key, keyval_obj->extra_state, \
+                 &f_key, (int*)keyval_obj->extra_state, \
                  &in, &out, &f_flag, &f_err); \
             if (MPI_SUCCESS != OMPI_FINT_2_INT(f_err)) { \
                 OPAL_THREAD_UNLOCK(&alock); \
@@ -1135,7 +1135,7 @@ static int get_value(opal_hash_table_t *keyhash, int key,
     ret = opal_hash_table_get_value_uint32(keyhash, key, &attr);
     OPAL_THREAD_UNLOCK(&alock);
     if (OMPI_SUCCESS == ret) {
-        *attribute = attr;
+        *attribute = (attribute_value_t*)attr;
         *flag = 1;
     }
     return OMPI_SUCCESS;

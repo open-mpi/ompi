@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -64,7 +64,7 @@ int mca_bml_r2_component_open(void)
                            false,
                            1,
                            &tmp);
-    mca_bml_r2.show_unreach_errors = tmp;
+    mca_bml_r2.show_unreach_errors = (tmp != 0 ? true : false);
 
 
     return OMPI_SUCCESS; 
