@@ -567,6 +567,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     free(newenv);
                     
                     /* Reset LD_LIBRARY_PATH */
+                    newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
                     oldenv = getenv("LD_LIBRARY_PATH");
                     if (NULL != oldenv) {
                         char* temp;
