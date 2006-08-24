@@ -288,7 +288,7 @@ opal_progress(void)
         events += (callbacks[i])();
     }
 
-#if defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD_)
+#if defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD)
     if (call_yield && events <= 0) {
         /* If there is nothing to do - yield the processor - otherwise
          * we could consume the processor for the entire time slice. If
