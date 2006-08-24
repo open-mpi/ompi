@@ -71,7 +71,18 @@ int ompi_fortran_string_f2c(char *fstr, int len, char **cstr)
 
 
 /*
- * copy a C string into a Fortran string
+ * Copy a C string into a Fortran string.  Note that when Fortran
+ * copies strings, even if it operates on subsets of the strings, it
+ * is expected to zero out the rest of the string with spaces.  Hence,
+ * when calling this function, the "len" parameter should be the
+ * compiler-passed length of the entire string, even if you're copying
+ * over less than the full string.  Specifically:
+ *
+ * http://www.ibiblio.org/pub/languages/fortran/ch2-13.html
+ *
+ * "Whole operations 'using' only 'part' of it, e.g. assignment of a
+ * shorter string, or reading a shorter record, automatically pads the
+ * rest of the string with blanks."
  */
 int ompi_fortran_string_c2f(char *cstr, char *fstr, int len)
 {
