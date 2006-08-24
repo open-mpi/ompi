@@ -232,18 +232,16 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
         goto cleanup;
     }
     /* build the directory tree the io files will be in */
-    if (0 > asprintf(&frontend, "%stmp%sopenmpi-bproc-%s%s%s%s%s-%d%s%d",
-                     orte_system_info.path_sep, orte_system_info.path_sep,
-                     orte_system_info.user, orte_system_info.path_sep,
-                     orte_universe_info.name, orte_system_info.path_sep, job,
-                     app_context, orte_system_info.path_sep, node_rank)) {
+    if (0 > asprintf(&path, OPAL_PATH_SEP"tmp"OPAL_PATH_SEP"openmpi-bproc-%s"OPAL_PATH_SEP"%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
+                     orte_system_info.user, orte_universe_info.name, job,
+                     app_context, node_rank)) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto cleanup;
     }
 
     for(i = 0; i < 3; i++)  {
-        if(0 > asprintf(&path, "%s%s%d", frontend, orte_system_info.path_sep, i)) {
+        if(0 > asprintf(&path, "%s"OPAL_PATH_SEP"%d", frontend, i)) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             goto cleanup;

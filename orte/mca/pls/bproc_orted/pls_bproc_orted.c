@@ -135,11 +135,9 @@ static char *
                                         orte_system_info.user);
     mca_base_param_lookup_string(rc,&user);
 
-    if (0 > asprintf(&path, "%stmp%sopenmpi-bproc-%s%s%s%s%s-%d%s%d",
-                     orte_system_info.path_sep, orte_system_info.path_sep, user,
-                     orte_system_info.path_sep, orte_universe_info.name,
-                     orte_system_info.path_sep, job, (int) app_context,
-                     orte_system_info.path_sep, proc_rank)) {
+    if (0 > asprintf(&path, OPAL_PATH_SEP"tmp"OPAL_PATH_SEP"openmpi-bproc-%s"OPAL_PATH_SEP"%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
+                     user, orte_universe_info.name,
+                     job, (int) app_context, proc_rank)) {
         ORTE_ERROR_LOG(ORTE_ERROR);
         path = NULL;
     }
@@ -194,7 +192,7 @@ pls_bproc_orted_delete_dir_tree(char * path)
 static int
 pls_bproc_orted_remove_dir()
 {
-    char *frontend = NULL, *user = NULL;
+    char *frontend = NULL, *user = NULL, *filename = NULL;
     int id;
 
     /* get the username set by the bproc pls. We need to get it from here
@@ -203,9 +201,14 @@ pls_bproc_orted_remove_dir()
     id = mca_base_param_register_string("pls", "bproc", "username", NULL,
                                         orte_system_info.user);
     mca_base_param_lookup_string(id,&user);
-    if (0 > asprintf(&frontend, "%stmp%sopenmpi-bproc-%s",
-                     orte_system_info.path_sep, orte_system_info.path_sep, user)) {
-        free(frontend);
+    asprintf(&filename, "openmpi-bproc-%s", user );
+    if( NULL == filename ) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERROR;
+    }
+    frontend = opal_os_path(false, "tmp", filename, NULL );
+    free(filename);  /* Always free the filename */
+    if (NULL == frontend) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERROR;
     }
@@ -282,8 +285,8 @@ pls_bproc_orted_setup_stdio(orte_process_name_t *proc_name, int proc_rank,
     /* setup the stdin FIFO.  Always use a fifo for the same reason we
        always use a pipe in the iof_setup code -- don't want to flush
        onto the floor during close */
-   if (0 > asprintf(&fd_link_path, "%s%s%d", path_prefix,
-                    orte_system_info.path_sep, 0)) {
+    fd_link_path = opal_os_path( false, path_prefix, "0", NULL );
+   if (NULL == fd_link_path) {
         rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -320,8 +323,8 @@ pls_bproc_orted_setup_stdio(orte_process_name_t *proc_name, int proc_rank,
     fd_link_path = NULL;
 
     /* setup the stdout PTY / FIFO */
-    if (0 > asprintf(&fd_link_path, "%s%s%d", path_prefix,
-                     orte_system_info.path_sep, 1)) {
+    fd_link_path = opal_os_path( false, path_prefix, "1", NULL );
+    if (NULL == fd_link_path) {
         rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
@@ -384,8 +387,8 @@ stderr_fifo_setup:
     fd_link_path = NULL;
 
     /* setup the stderr FIFO.  Always a fifo */
-    if (0 > asprintf(&fd_link_path, "%s%s%d", path_prefix,
-                     orte_system_info.path_sep, 2)) {
+    fd_link_path = opal_os_path( false, path_prefix, "2", NULL );
+    if (NULL == fd_link_path) {
         rc = ORTE_ERROR;
         ORTE_ERROR_LOG(rc);
         goto cleanup;
