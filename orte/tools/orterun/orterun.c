@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -1324,7 +1324,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         }
 
         if (NULL != param) {
-            /* "Parse" the param, aka remove superfluous path_sep "/". */
+            /* "Parse" the param, aka remove superfluous path_sep. */
             param_len = strlen(param);
             while (0 == strcmp (OPAL_PATH_SEP, &(param[param_len-1]))) {
                 param[param_len-1] = '\0';
