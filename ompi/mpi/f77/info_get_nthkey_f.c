@@ -81,7 +81,6 @@ void mpi_info_get_nthkey_f(MPI_Fint *info, MPI_Fint *n, char *key,
 						OMPI_FINT_2_INT(*n),
 						c_key));
     
-    key_len = (key_len < MPI_MAX_INFO_KEY) ? key_len : MPI_MAX_INFO_KEY;
     if (OMPI_SUCCESS != (ret = ompi_fortran_string_c2f(c_key, key, key_len))) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, ret, FUNC_NAME);
         *ierr = OMPI_INT_2_FINT(c_err);
