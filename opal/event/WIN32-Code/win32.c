@@ -79,7 +79,7 @@ struct win32op {
 	struct win_fd_set *exset_out;
 	int n_events;
 	int n_events_alloc;
-	opal_event **events;
+	opal_event_t **events;
 };
 
 const struct opal_eventop opal_win32ops = {
@@ -103,34 +103,35 @@ win32_init(void)
 		return NULL;
 	winop->fd_setsz = NEVENT;
 	size = FD_SET_ALLOC_SIZE(NEVENT);
-	if (!(winop->readset_in = (win_fd_set*)malloc(size)))
+	if (!(winop->readset_in = (struct win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->writeset_in = (win_fd_set*)malloc(size)))
+	if (!(winop->writeset_in = (struct win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->readset_out = (win_fd_set*)malloc(size)))
+	if (!(winop->readset_out = (struct win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->writeset_out = (win_fd_set*)malloc(size)))
+	if (!(winop->writeset_out = (struct win_fd_set*)malloc(size)))
 		goto err;
-	if (!(winop->exset_out = (win_fd_set*)malloc(size)))
+	if (!(winop->exset_out = (struct win_fd_set*)malloc(size)))
 		goto err;
 	winop->n_events = 0;
 	winop->n_events_alloc = NEVENT;
-	if (!(winop->events = (opal_event**)malloc(NEVENT*sizeof(opal_event*))))
+	if (!(winop->events = (opal_event_t**)malloc(NEVENT*sizeof(opal_event_t*))))
 		goto err;
 	winop->readset_in->fd_count = winop->writeset_in->fd_count = 0;
 	winop->readset_out->fd_count = winop->writeset_out->fd_count
 		= winop->exset_out->fd_count = 0;
 
 	return (winop);
+
  err:
-        XFREE(winop->readset_in);
-        XFREE(winop->writeset_in);
-        XFREE(winop->readset_out);
-        XFREE(winop->writeset_out);
-        XFREE(winop->exset_out);
-        XFREE(winop->events);
-        XFREE(winop);
-        return (NULL);
+    XFREE(winop->readset_in);
+    XFREE(winop->writeset_in);
+    XFREE(winop->readset_out);
+    XFREE(winop->writeset_out);
+    XFREE(winop->exset_out);
+    XFREE(winop->events);
+    XFREE(winop);
+    return (NULL);
 }
 
 int
@@ -153,10 +154,10 @@ static bool win32_is_fd_a_socket( int fd )
 
 void CALLBACK win32_socket_event_callback( void* lpParameter, BOOLEAN TimerOrWaitFired )
 {
-    opal_event* master = (opal_event*)lpParameter;
+    opal_event_t* master = (opal_event_t*)lpParameter;
     WSANETWORKEVENTS network_events;
     int got, error;
-    opal_event* next;
+    opal_event_t* next;
 
     assert( FALSE == TimerOrWaitFired );
 
@@ -191,12 +192,12 @@ void CALLBACK win32_socket_event_callback( void* lpParameter, BOOLEAN TimerOrWai
 		    /*opal_event_active( ev, got, 1 );*/
         }
         master = next;
-    } while( master != ((opal_event*)lpParameter) );
+    } while( master != ((opal_event_t*)lpParameter) );
 }
 
 void CALLBACK win32_file_event_callback( void* lpParameter, BOOLEAN TimerOrWaitFired )
 {
-    opal_event* ev = (opal_event*)lpParameter;
+    opal_event_t* ev = (opal_event_t*)lpParameter;
     int got = 0;
 
     assert( FALSE == TimerOrWaitFired );
@@ -218,10 +219,10 @@ void CALLBACK win32_file_event_callback( void* lpParameter, BOOLEAN TimerOrWaitF
     }
 }
 
-static int win32_recompute_event( opal_event* master )
+static int win32_recompute_event( opal_event_t* master )
 {
     long flags = FD_CLOSE | FD_ACCEPT | FD_CONNECT;
-    opal_event* temp;
+    opal_event_t* temp;
     int error;
 
     if( INVALID_HANDLE_VALUE == master->base_handle ) {
@@ -264,10 +265,10 @@ static int win32_recompute_event( opal_event* master )
 }
 
 int
-win32_insert(struct win32op *win32op, opal_event *ev)
+win32_insert(struct win32op *win32op, opal_event_t *ev)
 {
 	int i;
-    opal_event* master = NULL;
+    opal_event_t* master = NULL;
 
 	if (ev->ev_events & OPAL_EV_SIGNAL) {
 		if (ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE))
@@ -305,8 +306,8 @@ win32_insert(struct win32op *win32op, opal_event *ev)
 	    if (win32op->n_events_alloc == win32op->n_events) {
 		    size_t sz;
     		win32op->n_events_alloc *= 2;
-	    	sz = sizeof(opal_event*)*win32op->n_events_alloc;
-		    if (!(win32op->events = (opal_event**)realloc(win32op->events, sz)))
+	    	sz = sizeof(opal_event_t*) * win32op->n_events_alloc;
+		    if (!(win32op->events = (opal_event_t**)realloc(win32op->events, sz)))
 			    return (-1);
 	    }
 	    win32op->events[win32op->n_events++] = ev;
@@ -339,10 +340,10 @@ win32_insert(struct win32op *win32op, opal_event *ev)
 }
 
 int
-win32_del(struct win32op *win32op, opal_event *ev)
+win32_del(struct win32op *win32op, opal_event_t *ev)
 {
 	int i, error;
-    opal_event *master = NULL, *temp;
+    opal_event_t *master = NULL, *temp;
 
 	if (ev->ev_events & OPAL_EV_SIGNAL)
 		return ((int)signal(OPAL_EVENT_SIGNAL(ev), SIG_IGN));
@@ -440,7 +441,7 @@ signal_handler(int sig)
 int
 signal_recalc(void)
 {
-	opal_event *ev;
+	opal_event_t *ev;
 
 	/* Reinstall our signal handler. */
 	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
@@ -453,7 +454,7 @@ signal_recalc(void)
 void
 signal_process(void)
 {
-	opal_event *ev;
+	opal_event_t *ev;
 	short ncalls;
 
 	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
