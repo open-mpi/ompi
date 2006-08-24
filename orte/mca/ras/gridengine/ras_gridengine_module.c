@@ -134,7 +134,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
 
     /* show the Grid Engine's JOB_ID */
     if (mca_ras_gridengine_component.show_jobid ||
-        mca_ras_gridengine_component.verbose != 0) {
+        mca_ras_gridengine_component.verbose != -1) {
         opal_output(0, "ras:gridengine: JOB_ID: %s", job_id);
     }
    
