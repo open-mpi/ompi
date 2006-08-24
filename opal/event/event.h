@@ -230,7 +230,6 @@ int opal_event_once(int, short, void (*)(int, short, void *), void *, struct tim
 static inline int
 opal_event_add(struct opal_event *ev, struct timeval *tv)
 {
-    extern opal_mutex_t opal_event_lock;
     int rc;
     OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_add_i(ev, tv));
     return rc;
@@ -239,7 +238,6 @@ opal_event_add(struct opal_event *ev, struct timeval *tv)
 static inline int 
 opal_event_del(struct opal_event *ev)
 {
-    extern opal_mutex_t opal_event_lock;
     int rc;
     OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_del_i(ev));
     return rc;
