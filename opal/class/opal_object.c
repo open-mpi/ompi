@@ -33,7 +33,7 @@
 /*
  * Instantiation of class descriptor for the base class.  This is
  * special, since be mark it as already initialized, with no parent
- * and no constructor or desctructor
+ * and no constructor or destructor.
  */
 opal_class_t opal_object_t_class = {
     "opal_object_t", /* name */
