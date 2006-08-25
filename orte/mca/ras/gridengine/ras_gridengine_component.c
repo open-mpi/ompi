@@ -84,6 +84,10 @@ static int orte_ras_gridengine_open(void)
     mca_base_param_reg_int(c, "verbose",
         "Enable verbose output for the gridengine ras component",
         false, false, 0, &value);
+    mca_base_param_reg_int(c, "show_jobid",
+        "Show the JOB_ID of the Grid Engine job",
+        false, false, 0, &mca_ras_gridengine_component.show_jobid);
+
     if (value != 0) {
         mca_ras_gridengine_component.verbose = opal_output_open(NULL);
     } else {
@@ -97,7 +101,7 @@ static orte_ras_base_module_t *orte_ras_gridengine_init(int* priority)
     *priority = mca_ras_gridengine_component.priority;
 
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 
-        NULL != getenv("PE_HOSTFILE")) {
+        NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         opal_output(orte_ras_base.ras_output, 
                 "ras:gridengine: available for selection");
         return &orte_ras_gridengine_module;
