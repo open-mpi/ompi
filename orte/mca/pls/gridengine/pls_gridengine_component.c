@@ -138,7 +138,7 @@ orte_pls_gridengine_component_init - initialize component, check if we can run o
 orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
 {
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
-        NULL != getenv("PE_HOSTFILE")){
+        NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         opal_output(orte_pls_base.pls_output, 
             "pls:gridengine: available for selection");
         *priority = mca_pls_gridengine_component.priority;

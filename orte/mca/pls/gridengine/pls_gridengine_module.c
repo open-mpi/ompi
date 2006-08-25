@@ -527,13 +527,9 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                     }
                 } else {
                     if (NULL != prefix_dir) {
-                        asprintf(&argv[orted_index], "%s/%s/orted", 
+                        asprintf(&orted_path, "%s/%s/orted", 
                             prefix_dir, bin_base);
-                        if (mca_pls_gridengine_component.debug) {
-                            opal_output(0, "pls:gridengine: orted path=%s\n",
-                                    argv[orted_index]);
-                        }
-                    }   
+                    }
                     /* If we yet did not fill up the orted_path, do so now */
                     if (NULL == orted_path) {
                         rc = orte_pls_gridengine_fill_orted_path(&orted_path);
@@ -541,6 +537,10 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
                             return rc;
                         }
                     }
+                }
+                asprintf(&argv[orted_index], orted_path);
+                if (mca_pls_gridengine_component.debug) {
+                    opal_output(0, "pls:gridengine: orted_path=%s", orted_path);
                 }
                 
                 /* If we have a prefix, then modify the PATH and
