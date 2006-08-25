@@ -146,6 +146,18 @@ static inline void ompi_win_set_mode(ompi_win_t *win, int16_t mode) {
     opal_atomic_wmb();
 }
 
+static inline void ompi_win_append_mode(ompi_win_t *win, int16_t mode) {
+    win->w_mode |= mode;
+    opal_atomic_wmb();
+}
+
+static inline void ompi_win_remove_mode(ompi_win_t *win,
+                                        int16_t mode)
+{
+    win->w_mode &= ~mode;
+    opal_atomic_wmb();
+}
+
 /* already in an access epoch */
 static inline bool ompi_win_access_epoch(ompi_win_t *win) {
     int16_t mode = ompi_win_get_mode(win);
