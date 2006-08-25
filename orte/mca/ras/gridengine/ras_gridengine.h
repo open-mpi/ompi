@@ -40,7 +40,6 @@ struct orte_ras_gridengine_component_t {
     int debug;
     int verbose;
     int priority;
-    int show_jobid;
 };
 typedef struct orte_ras_gridengine_component_t orte_ras_gridengine_component_t;
 
