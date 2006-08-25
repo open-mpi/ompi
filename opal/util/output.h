@@ -482,5 +482,15 @@ OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_output_stream_t);
 }
 #endif
 
+/**
+ * Declare the class of this type.  Note that the constructor for
+ * this class is for convenience only -- it is \em not necessary
+ * to be invoked.  If the constructor it used, it sets all values
+ * in the struct to be false / 0 (i.e., turning off all output).
+ * The intended usage is to invoke the constructor and then enable
+ * the output fields that you want.
+ */
+OBJ_CLASS_DECLARATION(opal_output_stream_t);
+
 #endif /* OPAL_OUTPUT_H_ */
 
