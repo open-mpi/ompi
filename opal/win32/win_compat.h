@@ -93,10 +93,6 @@ typedef unsigned int uint;
 #define WIFSTOPPED(EXIT_CODE)  (0)
 #define WSTOPSIG(EXIT_CODE)    (11)
 
-/* Anju: some random #defines which I know offhand, but need to configure it */
-#define OMPI_ALIGNMENT_CXX_BOOL  OMPI_ALIGNMENT_INT
-#define SIZEOF_BOOL              SIZEOF_INT
-
 /**
  * Microsoft compiler complain about non conformance of the default UNIX function.
  * Non conformance to the POSIX standard, and they suggest to use the version
