@@ -103,6 +103,9 @@
       integer MPI_MODE_DELETE_ON_CLOSE, MPI_MODE_UNIQUE_OPEN
       integer MPI_MODE_EXCL, MPI_MODE_APPEND, MPI_MODE_SEQUENTIAL
       integer MPI_DISPLACEMENT_CURRENT
+      integer MPI_MODE_NOCHECK, MPI_MODE_NOPRECEDE, MPI_MODE_NOPUT
+      integer MPI_MODE_NOSTOR, MPI_MODE_NOSUCCEED
+      integer MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED
       integer MPI_WIN_BASE, MPI_WIN_SIZE, MPI_WIN_DISP_UNIT
       
       parameter (MPI_ANY_SOURCE=-1)
@@ -161,6 +164,14 @@
       parameter (MPI_MODE_APPEND=128)
       parameter (MPI_MODE_SEQUENTIAL=256)
       parameter (MPI_DISPLACEMENT_CURRENT=-54278278)
+      parameter (MPI_MODE_NOCHECK=1)
+      parameter (MPI_MODE_NOPRECEDE=2)
+      parameter (MPI_MODE_NOPUT=4)
+      parameter (MPI_MODE_NOSTORE=8)
+      parameter (MPI_MODE_NOSUCCEED=16)
+      parameter (MPI_LOCK_EXCLUSIVE=1)
+      parameter (MPI_LOCK_SHARED=2)
+
 !     
 !     MPI sentinel values
 !
