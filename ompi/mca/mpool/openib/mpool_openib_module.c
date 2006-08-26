@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,12 +18,12 @@
  */
 
 #include "ompi_config.h"
-#include <string.h>
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/openib/mpool_openib.h"
 #include <infiniband/verbs.h> 
 #include <errno.h> 
 #include <string.h> 
+#include <malloc.h>
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
