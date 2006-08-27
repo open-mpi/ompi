@@ -332,7 +332,7 @@ extern "C" {
     /**
      * Global component instance
      */
-    extern mca_coll_sm_component_t mca_coll_sm_component;
+    OMPI_MODULE_DECLSPEC extern mca_coll_sm_component_t mca_coll_sm_component;
 
     /*
      * coll module functions

@@ -34,7 +34,7 @@ extern "C" {
  * Globally exported variable
  */
 
-extern const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component;
+OMPI_MODULE_DECLSPEC extern const mca_coll_base_component_1_0_0_t mca_coll_hierarch_component;
 extern int mca_coll_hierarch_priority_param;
 extern int mca_coll_hierarch_verbose_param;
 extern int mca_coll_hierarch_use_rdma_param;
