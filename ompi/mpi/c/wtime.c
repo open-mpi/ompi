@@ -22,6 +22,8 @@
 #endif
 #include <stdio.h>
 
+#include MCA_timer_IMPLEMENTATION_HEADER
+#include "opal/prefetch.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -38,10 +40,9 @@ static const char FUNC_NAME[] = "MPI_Wtime";
 
 double MPI_Wtime(void)
 {
-    struct timeval tv;
-    double wtime;
-    gettimeofday(&tv, NULL);
-    wtime = tv.tv_sec;
-    wtime += (double)tv.tv_usec / 1000000.0;
-    return wtime;
+#if OPAL_TIMER_USEC_NATIVE
+    return (double)opal_timer_base_get_usec();
+#else
+    return (double)opal_timer_base_get_cycles();
+#endif  /* OPAL_TIMER_USEC_NATIVE */
 }
