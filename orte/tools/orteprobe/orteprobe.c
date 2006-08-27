@@ -127,7 +127,9 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 int main(int argc, char *argv[])
 {
