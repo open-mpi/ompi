@@ -155,11 +155,6 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
        This should somehow be pushed up to the calling level, but we
        don't really have a way to do that just yet.
     */
-#ifdef __WINDOWS__
-    printf("This is not implemented yet for windows\n");
-    ORTE_ERROR_LOG(ORTE_ERROR);
-    return;
-#else
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* get the mapping for our node so we can cancel the right things */
         OBJ_CONSTRUCT(&map, opal_list_t);
@@ -223,7 +218,6 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_output(0, "No extra status information is available: %d.", status);
         }
     }
-#endif /* __WINDOWS__ */
     
     /* cleanup */
     OBJ_RELEASE(info->node);
@@ -459,7 +453,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
 
 #ifdef __WINDOWS__
             printf("Unimplemented feature for windows\n");
-            return;
+            return ORTE_ERR_NOT_IMPLEMENTED;
 #else
             /* fork a child to do qrsh */
             pid = fork();
@@ -606,7 +600,7 @@ int orte_pls_gridengine_launch(orte_jobid_t jobid)
 
                 if (!mca_pls_gridengine_component.debug) {
                     /* setup stdin */
-                    int fd = open("/dev/null", O_RDWR);
+                    int fd = open("/dev/null", O_RDWR, 0);
                     dup2(fd, 0);
                     close(fd);
                 }
