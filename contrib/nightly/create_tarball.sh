@@ -32,7 +32,7 @@ destdir="$4"
 
 # Set this to any value for additional output; typically only when
 # debugging
-debug=
+debug=1
 
 # do you want a success mail?
 want_success_mail=1
@@ -139,7 +139,9 @@ fi
 
 # if there's a $destdir/latest_snapshot.txt, see if anything has
 # happened since that r number.
+desired_r=
 if test -f "$destdir/latest_snapshot.txt"; then
+    # $r will be just an integer (not "r12345")
     r=`cat $destdir/latest_snapshot.txt | sed -e 's/.*r\([0-9]*\)/\1/'`
     if test -n "$debug"; then
         echo "** last snapshot r: $r"
@@ -153,6 +155,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
     # log message.
     need_build=0
     if test "`wc -l $file | awk '{ print $1}'`" != "1"; then
+        # $head_r will be "rXXXXX"
         head_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
         if test -n "$debug"; then
             echo "** found HEAD r: $head_r"
@@ -171,6 +174,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
         # If we get here, it means the head r is different than the
         # last_snapshot r, and therefore we need to build.
         need_build=1
+        desired_r=$head_r
     fi
 
     # If need_build still = 0, we know the r's are different.  But has
@@ -184,6 +188,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
         # So there's no need to check for a single line of dashes
         # here.
 
+        # $last_commit_r will be "rXXXXX"
         last_commit_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
         if test -n "$debug"; then
             echo "** found last commit r: $last_commit_r"
@@ -201,6 +206,7 @@ if test -f "$destdir/latest_snapshot.txt"; then
 
         # If we get here, the r numbers didn't match, and we therefore
         # need a new snapshot.
+        desired_r=$last_commit_r
     fi
 fi
 if test -n "$debug"; then
@@ -218,12 +224,23 @@ fi
 cd "$scratch_root"
 scratch_root="`pwd`"
 
-# get the snapshot number
-svn co -N "$svnroot" ompi > /dev/null 2>&1
-cd ompi
-svnr="r`svn info . | egrep '^Revision: [0-9]+' | awk '{ print $2 }'`"
-cd ..
-rm -rf ompi
+if test -n "$desired_r"; then
+    # we got a desired r number from above, so use that
+    # $svnr will be rXXXXX
+    svnr=$desired_r
+else
+    # we don't have a desired r number, so get the last r number of a
+    # commit
+    svn co -N "$svnroot" ompi > /dev/null 2>&1
+    cd ompi
+    # $svnr will be rXXXXX
+    svnr="r`svn info . | egrep '^Last Changed Rev: [0-9]+' | awk '{ print $4 }'`"
+    cd ..
+    rm -rf ompi
+fi
+if test -n "$debug"; then
+    echo "** making snapshot for r: $svnr"
+fi
 root="$scratch_root/create-$svnr"
 rm -rf "$root"
 mkdir "$root"
@@ -234,7 +251,8 @@ logdir="$root/logs"
 mkdir "$logdir"
 
 # checkout a clean version
-do_command "svn co $svnroot ompi"
+r=`echo $svnr | cut -c2-`
+do_command "svn co $svnroot -r $r ompi"
 
 # ensure that we append the SVN number on the official version number
 cd ompi
