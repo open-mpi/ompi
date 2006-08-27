@@ -22,6 +22,7 @@
 #endif
 #include <stdio.h>
 
+#include MCA_timer_IMPLEMENTATION_HEADER
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -38,5 +39,12 @@ static const char FUNC_NAME[] = "MPI_Wtick";
 
 double MPI_Wtick(void)
 {
-    return (double)0.000001;
+#if OPAL_TIMER_USEC_NATIVE
+    return 0.000001;
+#else
+    if( (opal_timer_t)0 == opal_timer_base_get_freq() ) {
+        opal_output( 0, "No timer frequency\n" );
+    }
+    return (double)opal_timer_base_get_freq();
+#endif  /* OPAL_TIMER_USEC_NATIVE */
 }
