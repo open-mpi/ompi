@@ -24,6 +24,7 @@
 #define _SC_PAGESIZE 0
 #define _SC_OPEN_MAX 1
 
+#if 0
 /* currently, this is a memory leak */
 static __inline char* getenv (const char *name)
 {
@@ -53,11 +54,12 @@ static __inline int setenv (const char *name, const char *value, int rewrite)
     ret = SetEnvironmentVariable ((LPCSTR)name, (LPCSTR)value);
     return (0 != ret)? 1: 0;
 }
+#endif
 
 static __inline unsigned int sleep(unsigned int seconds) {
 
     /* Allow interruptions */
-    SleepEx(seconds * 100, TRUE);
+    SleepEx(seconds * 1000, TRUE);
     return 0;
 }
 
