@@ -151,6 +151,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
         fi
         CFLAGS="$CFLAGS_orig$add"
 
+        CFLAGS_orig="$CFLAGS"
         CFLAGS="$CFLAGS_orig -fno-strict-aliasing"
         add=
         AC_CACHE_CHECK([if $CC supports -fno-strict-aliasing],
