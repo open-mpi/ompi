@@ -23,6 +23,7 @@
 #include "opal/constants.h"
 
 opal_timer_t opal_timer_windows_freq;
+opal_timer_t opal_timer_windows_start;
 
 static int opal_timer_windows_open(void);
 
@@ -58,8 +59,11 @@ opal_timer_windows_open(void)
 {
     LARGE_INTEGER now;
 
-    QueryPerformanceFrequency( &now );
-    opal_timer_windows_freq = now.QuadPart;
-
+    if( 0 != QueryPerformanceFrequency( &now ) ) {
+        opal_timer_windows_freq = now.QuadPart;
+        QueryPerformanceCounter( &now );
+        opal_timer_windows_start = now.QuadPart;
+        return OPAL_SUCCESS;
+    }
     return OPAL_SUCCESS;
 }

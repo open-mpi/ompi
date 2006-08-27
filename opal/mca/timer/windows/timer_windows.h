@@ -28,25 +28,22 @@ extern "C" {
 #endif
 
 OPAL_DECLSPEC extern opal_timer_t opal_timer_windows_freq;
+OPAL_DECLSPEC extern opal_timer_t opal_timer_windows_start;
 
 static inline opal_timer_t
 opal_timer_base_get_cycles(void)
 {
     LARGE_INTEGER now;
     QueryPerformanceCounter( &now );
-    return now.QuadPart;
+    return (now.QuadPart - opal_timer_windows_start);
 }
 
 
 static inline opal_timer_t
 opal_timer_base_get_usec(void)
 {
-#if OPAL_HAVE_SYS_TIMER_GET_CYCLES
     /* freq is in Hz, so this gives usec */
     return opal_sys_timer_get_cycles() * 1000000  / opal_timer_windows_freq;
-#else
-    return 0;
-#endif
 }    
 
 
