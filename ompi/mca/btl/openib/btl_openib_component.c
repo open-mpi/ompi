@@ -562,7 +562,7 @@ btl_openib_component_init(int *num_btl_modules,
             sizeof(mca_btl_openib_footer_t) + 
             openib_btl->super.btl_eager_limit;
 	
-        openib_btl->eager_rdma_frag_size = length;
+        openib_btl->eager_rdma_frag_size = (length + mca_btl_openib_component.buffer_alignment) & ~(mca_btl_openib_component.buffer_alignment-1);
  
         ompi_free_list_init_ex(&openib_btl->send_free_eager,
                             length,
@@ -879,7 +879,7 @@ static int btl_openib_component_progress(void)
                         size + sizeof(mca_btl_openib_footer_t));
                 frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + 
                     sizeof(mca_btl_openib_header_t);
-                
+
                 ret = btl_openib_handle_incoming_hp(openib_btl,
                         frag->endpoint, frag, 
                         size - sizeof(mca_btl_openib_footer_t));
@@ -1011,7 +1011,7 @@ static int btl_openib_component_progress(void)
                 break;
             }
         }
-        
+
         ne=ibv_poll_cq(openib_btl->ib_cq_lp, 1, &wc );
         if(ne < 0){ 
             BTL_ERROR(("error polling LP CQ with %d errno says %s", ne, strerror(errno))); 
