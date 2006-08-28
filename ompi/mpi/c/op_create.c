@@ -50,7 +50,7 @@ int MPI_Op_create(MPI_User_function *function, int commute,
 
   /* Create and cache the op.  Sets a refcount of 1. */
 
-  *op = ompi_op_create((commute != 0 ? true : false),
+  *op = ompi_op_create(OPAL_INT_TO_BOOL(commute),
                        (ompi_op_fortran_handler_fn_t*) function);
   if (NULL == *op) {
     err = MPI_ERR_INTERN;

@@ -119,12 +119,12 @@ do {                                                                            
     (sendreq)->req_send.req_base.req_peer = (int32_t)peer;                          \
     (sendreq)->req_send.req_base.req_tag = (int32_t)tag;                            \
     (sendreq)->req_send.req_base.req_comm = comm;                                   \
-    (sendreq)->req_send.req_base.req_pml_complete = (persistent ? true : false);    \
+    (sendreq)->req_send.req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent);    \
     (sendreq)->req_send.req_base.req_free_called = false;                           \
     (sendreq)->req_send.req_base.req_ompi.req_status._cancelled = 0;                \
                                                                                     \
     /* initialize datatype convertor for this request */                            \
-/*     if(count > 0) {      */                                                            \
+/*     if(count > 0) {      */                                                      \
         /* We will create a convertor specialized for the        */                 \
         /* remote architecture and prepared with the datatype.   */                 \
         ompi_convertor_copy_and_prepare_for_send(                                   \
@@ -136,9 +136,9 @@ do {                                                                            
                             &(sendreq)->req_send.req_convertor );                   \
         ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
-   /*  } else {   */                                                                      \
-   /*       (sendreq)->req_send.req_bytes_packed = 0;   */                                \
-   /*  }  */                                                                              \
+   /*  } else {   */                                                                \
+   /*       (sendreq)->req_send.req_bytes_packed = 0;   */                          \
+   /*  }  */                                                                        \
 } while(0)
 
 

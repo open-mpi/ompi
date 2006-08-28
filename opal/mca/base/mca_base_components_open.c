@@ -95,7 +95,7 @@ int mca_base_components_open(const char *type_name, int output_id,
 
   param = mca_base_param_find("mca", NULL, "component_show_load_errors");
   mca_base_param_lookup_int(param, &ret);
-  show_errors = (0 != ret) ? true : false;
+  show_errors = OPAL_INT_TO_BOOL(ret);
 
   /* Setup verbosity for this MCA type */
 

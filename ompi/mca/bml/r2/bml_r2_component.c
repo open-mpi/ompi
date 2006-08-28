@@ -64,7 +64,7 @@ int mca_bml_r2_component_open(void)
                            false,
                            1,
                            &tmp);
-    mca_bml_r2.show_unreach_errors = (tmp != 0 ? true : false);
+    mca_bml_r2.show_unreach_errors = OPAL_INT_TO_BOOL(tmp);
 
 
     return OMPI_SUCCESS; 

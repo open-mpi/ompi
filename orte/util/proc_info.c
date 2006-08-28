@@ -65,7 +65,7 @@ int orte_proc_info(void)
     
     id = mca_base_param_register_int("seed", NULL, NULL, NULL, orte_process_info.seed);
     mca_base_param_lookup_int(id, &tmp);
-    orte_process_info.seed = (tmp ? true : false);
+    orte_process_info.seed = OPAL_INT_TO_BOOL(tmp);
 
     id = mca_base_param_register_string("gpr", "replica", "uri", NULL, orte_process_info.gpr_replica_uri);
     mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));
