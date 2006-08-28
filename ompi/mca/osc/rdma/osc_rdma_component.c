@@ -122,7 +122,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     ret = mca_base_param_lookup_int(param, &flag);
     if (OMPI_SUCCESS != ret) return false;
 
-    return (flag != 0 ? true : false);
+    return OPAL_INT_TO_BOOL(flag);
 }
 
 

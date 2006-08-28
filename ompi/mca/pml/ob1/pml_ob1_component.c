@@ -171,7 +171,7 @@ int mca_pml_ob1_component_open(void)
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
-    mca_pml_ob1.leave_pinned = (value != 0 ? true : false); 
+    mca_pml_ob1.leave_pinned = OPAL_INT_TO_BOOL(value); 
     
     mca_base_param_register_int("mpi", NULL, "leave_pinned_pipeline", "leave_pinned_pipeline", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline"); 

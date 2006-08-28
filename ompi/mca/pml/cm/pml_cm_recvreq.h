@@ -125,7 +125,7 @@ do {                                                                    \
                                           persistent)                   \
 do {                                                                    \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
-    (request)->req_base.req_pml_complete = (persistent ? true : false); \
+    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
     (request)->req_base.req_free_called = false;                        \
     request->req_comm = comm;                                           \
     request->req_tag = tag;                                             \
