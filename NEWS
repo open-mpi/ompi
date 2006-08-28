@@ -54,6 +54,12 @@ version 1.0.
 - Addition of UDAPL BTL ("udapl").
 
 
+1.1.2
+-----
+
+- Add some missing Fortran MPI-2 IO constants.
+
+
 1.1.1
 -----
 
