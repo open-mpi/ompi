@@ -132,8 +132,8 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
     orte_ras_node_t *node;
     opal_list_item_t* item;
     opal_list_t new_nodes;
-    size_t num_requested = 0;
-    size_t i;
+    orte_std_cntr_t num_requested = 0;
+    orte_std_cntr_t i;
     char *hostname;
 
     /* how many slots do we need? */
