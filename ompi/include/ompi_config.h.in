@@ -82,22 +82,27 @@ typedef struct {
 
 #  if defined(_USRDLL)    /* building shared libraries (.DLL) */
 #    if defined(OMPI_EXPORTS)
-#      define OMPI_DECLSPEC __declspec(dllexport)
+#      define OMPI_DECLSPEC        __declspec(dllexport)
+#      define OMPI_MODULE_DECLSPEC
 #    else
-#      define OMPI_DECLSPEC __declspec(dllimport)
-#    endif
-#    if defined(OMPI_MODULE_EXPORTS)
-#      define OMPI_MODULE_DECLSPEC __declspec(dllexport)
-#    else
-#      define OMPI_MODULE_DECLSPEC __declspec(dllimport)
-#    endif
+#      define OMPI_DECLSPEC        __declspec(dllimport)
+#      if defined(OMPI_MODULE_EXPORTS)
+#        define OMPI_MODULE_DECLSPEC __declspec(dllexport)
+#      else
+#        define OMPI_MODULE_DECLSPEC __declspec(dllimport)
+#      endif  /* defined(OMPI_MODULE_EXPORTS) */
+#    endif  /* defined(OMPI_EXPORTS) */
 #  else          /* building static library */
-#    define OMPI_DECLSPEC
+#    if defined(OMPI_IMPORTS)
+#      define OMPI_DECLSPEC        __declspec(dllimport)
+#    else
+#      define OMPI_DECLSPEC
+#    endif  /* defined(OMPI_IMPORTS) */
 #    define OMPI_MODULE_DECLSPEC
-#  endif
+#  endif  /* defined(_USRDLL) */
 #else
-#define OMPI_DECLSPEC
-#define OMPI_MODULE_DECLSPEC
+#  define OMPI_DECLSPEC
+#  define OMPI_MODULE_DECLSPEC
 #endif  /* defined(__WINDOWS__) */
 
 #endif
