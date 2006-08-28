@@ -121,7 +121,7 @@ MPI::Is_initialized()
 {
   int t;
   (void)MPI_Initialized(&t);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 inline bool
@@ -129,7 +129,7 @@ MPI::Is_finalized()
 {
   int t;
   (void)MPI_Finalized(&t);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 
@@ -162,7 +162,7 @@ MPI::Is_thread_main()
 {
   int flag;
   (void) MPI_Is_thread_main(&flag);
-  return ((flag == 1) ? true : false);
+  return OPAL_INT_TO_BOOL(flag == 1);
 }
 
 

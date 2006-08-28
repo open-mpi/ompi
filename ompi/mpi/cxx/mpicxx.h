@@ -65,6 +65,15 @@ extern "C" int
 ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
                                    void *attribute_val, void *extra_state);
 
+/**
+ * Windows bool type is not any kind of integer. Special care should
+ * be taken in order to cast it correctly.
+ */
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64)
+#define OPAL_INT_TO_BOOL(VALUE)  ((VALUE) != 0 ? true : false)
+#else
+#define OPAL_INT_TO_BOOL(VALUE)  ((bool)(VALUE))
+#endif  /* defined(WIN32) || defined(_WIN32) || defined(WIN64) */
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
 #include "ompi/mpi/cxx/pmpicxx.h"

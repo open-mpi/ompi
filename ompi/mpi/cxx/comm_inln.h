@@ -123,7 +123,7 @@ MPI::Comm::Iprobe(int source, int tag, MPI::Status & status) const
 {
   int t;
   (void)MPI_Iprobe(source, tag, mpi_comm, &t, &status.mpi_status);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
   
 inline bool
@@ -131,7 +131,7 @@ MPI::Comm::Iprobe(int source, int tag) const
 {
   int t;
   (void)MPI_Iprobe(source, tag, mpi_comm, &t, MPI_STATUS_IGNORE);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 inline void
@@ -289,7 +289,7 @@ MPI::Comm::Is_inter() const
 {
   int t;
   (void)MPI_Comm_test_inter(mpi_comm, &t);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 
@@ -551,7 +551,7 @@ MPI::Comm::Get_attr(int comm_keyval, void* attribute_val) const
 {
   int flag;
   (void)MPI_Attr_get(mpi_comm, comm_keyval, attribute_val, &flag);
-  return (bool)flag;
+  return OPAL_INT_TO_BOOL(flag);
 }
 
 inline void
@@ -584,7 +584,7 @@ MPI::Comm::NULL_COPY_FN(const MPI::Comm& oldcomm, int comm_keyval,
     MPI_Copy_function *stupid_compiler = MPI_NULL_COPY_FN;
     ret = stupid_compiler(oldcomm, comm_keyval, extra_state, attribute_val_in,
                           attribute_val_out, &f);
-    flag = (bool)f;
+    flag = OPAL_INT_TO_BOOL(f);
   } else {
     ret = MPI_SUCCESS;
     flag = true;
@@ -613,7 +613,7 @@ MPI::Comm::DUP_FN(const MPI::Comm& oldcomm, int comm_keyval,
   int ret;
   ret = MPI_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in,
 		   attribute_val_out, &f);
-  flag = (bool) f;
+  flag = OPAL_INT_TO_BOOL(f);
   return ret;
 #else
   return MPI_DUP_FN(oldcomm, comm_keyval, extra_state, attribute_val_in,

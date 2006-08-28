@@ -71,7 +71,7 @@ MPI::Cartcomm::Get_topo(int maxdims, int dims[], bool periods[],
   }
   (void)MPI_Cart_get(mpi_comm, maxdims, dims, int_periods, coords);
   for (i=0; i<maxdims; i++) {
-    periods[i] = (bool)int_periods[i];
+    periods[i] = OPAL_INT_TO_BOOL(int_periods[i]);
   }
   delete [] int_periods;
 }

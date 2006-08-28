@@ -205,7 +205,7 @@ ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval,
   MPI::Cartcomm cartcomm;
   
   int thetype = (int)comm_type->second;
-  bool bflag = (bool)*flag; 
+  bool bflag = OPAL_INT_TO_BOOL(*flag); 
 
   switch (thetype) {
   case eIntracomm:
