@@ -753,7 +753,7 @@ int orte_ras_base_node_segment_empty(bool *empty)
         return ret;
     }
 
-    *empty = opal_list_is_empty(&nodes) ? true : false;
+    *empty = opal_list_is_empty(&nodes);
 
     /* Free the list */
 
