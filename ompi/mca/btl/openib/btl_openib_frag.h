@@ -78,8 +78,10 @@ typedef enum mca_btl_openib_frag_type_t mca_btl_openib_frag_type_t;
  */
 struct mca_btl_openib_frag_t {
     mca_btl_base_descriptor_t base; 
-    mca_btl_base_segment_t segment; 
     struct mca_btl_base_endpoint_t *endpoint; 
+    mca_btl_openib_footer_t *ftr;
+    mca_btl_openib_header_t *hdr;
+    mca_btl_base_segment_t segment; 
     size_t size; 
     int rc;
     mca_btl_openib_frag_type_t type; 
@@ -89,8 +91,6 @@ struct mca_btl_openib_frag_t {
     } wr_desc;  
     struct ibv_sge sg_entry;  
     struct ibv_mr *mr; 
-    mca_btl_openib_header_t *hdr;
-    mca_btl_openib_footer_t *ftr;
     mca_mpool_openib_registration_t * openib_reg; 
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
