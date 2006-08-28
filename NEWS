@@ -22,6 +22,12 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.1.2
+-----
+
+- Add some missing Fortran MPI-2 IO constants.
+
+
 1.1.1
 -----
 
