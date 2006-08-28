@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,7 +57,7 @@ OMPI_DECLSPEC void ompi_wait_for_totalview(void)
     if (wait_for_totalview) {
         while (MPIR_debug_gate == 0) {
 #if defined(__WINDOWS__)
-            sleep(100);     /* milliseconds */
+            Sleep(100);     /* milliseconds */
 #else
             usleep(100000); /* microseconds */
 #endif
