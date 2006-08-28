@@ -44,16 +44,16 @@
 
 /* These are the prototypes for the "real" back-end fortran functions. */
 #define PN(ret, lower_name, upper_name, args) \
-  ret lower_name##_f args;    \
-  ret lower_name args;        \
-  ret lower_name##_ args;     \
-  ret lower_name##__ args;    \
-  ret upper_name args;        \
-  ret p##lower_name##_f args; \
-  ret p##lower_name args;     \
-  ret p##lower_name##_ args;  \
-  ret p##lower_name##__ args; \
-  ret P##upper_name args
+  OMPI_DECLSPEC ret lower_name##_f args;    \
+  OMPI_DECLSPEC ret lower_name args;        \
+  OMPI_DECLSPEC ret lower_name##_ args;     \
+  OMPI_DECLSPEC ret lower_name##__ args;    \
+  OMPI_DECLSPEC ret upper_name args;        \
+  OMPI_DECLSPEC ret p##lower_name##_f args; \
+  OMPI_DECLSPEC ret p##lower_name args;     \
+  OMPI_DECLSPEC ret p##lower_name##_ args;  \
+  OMPI_DECLSPEC ret p##lower_name##__ args; \
+  OMPI_DECLSPEC ret P##upper_name args
 
 PN(void, mpi_abort, MPI_ABORT, (MPI_Fint *comm, MPI_Fint *errorcode, MPI_Fint *ierr));
 PN(void, mpi_accumulate, MPI_ACCUMULATE, (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr));
