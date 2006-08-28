@@ -72,19 +72,24 @@
 
 #  if defined(_USRDLL)    /* building shared libraries (.DLL) */
 #    if defined(OPAL_EXPORTS)
-#      define OPAL_DECLSPEC __declspec(dllexport)
+#      define OPAL_DECLSPEC        __declspec(dllexport)
+#      define OPAL_MODULE_DECLSPEC
 #    else
-#      define OPAL_DECLSPEC __declspec(dllimport)
-#    endif
-#    if defined(OPAL_MODULE_EXPORTS)
-#      define OPAL_MODULE_DECLSPEC __declspec(dllexport)
-#    else
-#      define OPAL_MODULE_DECLSPEC __declspec(dllimport)
-#    endif
+#      define OPAL_DECLSPEC        __declspec(dllimport)
+#      if defined(OPAL_MODULE_EXPORTS)
+#        define OPAL_MODULE_DECLSPEC __declspec(dllexport)
+#      else
+#        define OPAL_MODULE_DECLSPEC __declspec(dllimport)
+#      endif  /* defined(OPAL_MODULE_EXPORTS) */
+#    endif  /* defined(OPAL_EXPORTS) */
 #  else          /* building static library */
-#    define OPAL_DECLSPEC
+#    if defined(OPAL_IMPORTS)
+#      define OPAL_DECLSPEC        __declspec(dllimport)
+#    else
+#      define OPAL_DECLSPEC
+#    endif  /* defined(OPAL_IMPORTS) */
 #    define OPAL_MODULE_DECLSPEC
-#  endif
+#  endif  /* defined(_USRDLL) */
 #  if OMPI_BUILDING
 #    include "opal/win32/win_compat.h"
 #  endif  /* OMPI_BUILDING */
@@ -92,7 +97,7 @@
    /* On Unix - this define is plain useless */
 #  define OPAL_DECLSPEC
 #  define OPAL_MODULE_DECLSPEC
-#endif
+#endif  /* defined(__WINDOWS__) */
 
 /*
  * Do we have <stdint.h>?
@@ -323,6 +328,17 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define IOVBASE_TYPE  char
 #else
 #define IOVBASE_TYPE  void
+#endif  /* defined(__WINDOWS__) */
+
+/**
+ * If we generate our own bool type, we need a special way to cast the result
+ * in such a way to keep the compilers silent. Right now, th only compiler who
+ * complain about int to bool conversions is the Microsoft compiler.
+ */
+#if defined(__WINDOWS__)
+#  define OPAL_INT_TO_BOOL(VALUE)  ((VALUE) != 0 ? true : false)
+#else
+#  define OPAL_INT_TO_BOOL(VALUE)  (bool)(VALUE)
 #endif  /* defined(__WINDOWS__) */
 
 #endif /* OMPI_BUILDING */
