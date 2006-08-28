@@ -164,7 +164,7 @@ MPI::Win::Test() const
 {
   int flag;
   MPI_Win_test(mpi_win, &flag);
-  return (bool) flag;
+  return OPAL_INT_TO_BOOL(flag);
   
 }
 
@@ -228,7 +228,7 @@ MPI::Win::Get_attr(const Win& win, int win_keyval,
 {
   int ret;
   (void) MPI_Win_get_attr(win, win_keyval, attribute_val, &ret);
-  return (bool) ret;
+  return OPAL_INT_TO_BOOL(ret);
 }
 
 

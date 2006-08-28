@@ -45,7 +45,7 @@ MPI::File::Get_atomicity() const
 {
   int flag;
   (void) MPI_File_get_atomicity(mpi_file, &flag);
-  return (bool)flag;
+  return OPAL_INT_TO_BOOL(flag);
 }
 
 inline MPI::Offset

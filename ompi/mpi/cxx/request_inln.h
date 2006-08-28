@@ -44,7 +44,7 @@ MPI::Request::Test(MPI::Status &status)
 {
   int t;
   (void)MPI_Test(&mpi_request, &t, &status.mpi_status);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 inline bool
@@ -52,7 +52,7 @@ MPI::Request::Test()
 {
   int t;
   (void)MPI_Test(&mpi_request, &t, MPI_STATUS_IGNORE);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 inline int
@@ -102,7 +102,7 @@ MPI::Request::Testany(int count, MPI::Request array[],
     array[i] = array_of_requests[i];
   }
   delete [] array_of_requests;
-  return (bool)flag;
+  return (bool)(flag != 0 ? true : false);
 }
 
 inline bool
@@ -119,7 +119,7 @@ MPI::Request::Testany(int count, MPI::Request array[], int& index)
     array[i] = array_of_requests[i];
   }
   delete [] array_of_requests;
-  return (bool)flag;
+  return OPAL_INT_TO_BOOL(flag);
 }
 
 inline void
@@ -176,7 +176,7 @@ MPI::Request::Testall(int count, MPI::Request req_array[],
   }
   delete [] array_of_requests;
   delete [] array_of_statuses;
-  return (bool) flag;
+  return OPAL_INT_TO_BOOL(flag);
 }
 
 inline bool
@@ -195,7 +195,7 @@ MPI::Request::Testall(int count, MPI::Request req_array[])
   }
   delete [] array_of_requests;
 
-  return (bool) flag;
+  return OPAL_INT_TO_BOOL(flag);
 } 
 
 inline int
@@ -319,7 +319,7 @@ inline bool MPI::Request::Get_status(MPI::Status& status) const
     if (flag) {
         status = c_status;
     }
-    return (bool) flag;
+    return OPAL_INT_TO_BOOL(flag);
 }
 
 inline bool MPI::Request::Get_status() const
@@ -327,7 +327,7 @@ inline bool MPI::Request::Get_status() const
     int flag;
 
     (void)MPI_Request_get_status(mpi_request, &flag, MPI_STATUS_IGNORE);
-    return (bool) flag;
+    return OPAL_INT_TO_BOOL(flag);
 }
 
 

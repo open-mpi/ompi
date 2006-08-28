@@ -238,7 +238,7 @@ MPI::Datatype::Get_attr(int type_keyval,
 {
   int ret;
   (void) MPI_Type_get_attr(mpi_datatype, type_keyval, attribute_val, &ret);
-  return (bool) ret;
+  return OPAL_INT_TO_BOOL(ret);
 }
 
 
