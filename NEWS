@@ -50,6 +50,7 @@ version 1.0.
 
 1.1.1
 -----
+
 - Fix for Fortran string handling in various MPI API functions.
 - Fix for Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
 - Various fixes for the XL compilers.
@@ -100,7 +101,6 @@ version 1.0.
 - Allow propagation of SIGUSR1 and SIGUSR2 signals from mpirun to
   back-end MPI processes.
 - Add missing MPI::Is_finalized() function.
-
 
 1.1
 ---
