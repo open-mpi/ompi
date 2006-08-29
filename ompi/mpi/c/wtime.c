@@ -41,9 +41,21 @@ static const char FUNC_NAME[] = "MPI_Wtime";
 
 double MPI_Wtime(void)
 {
+    double wtime;
 #if OPAL_TIMER_USEC_NATIVE
-    return (double)opal_timer_base_get_usec();
+    wtime = (double)opal_timer_base_get_usec();
 #else
-    return (double)opal_timer_base_get_cycles();
+
+#if defined(__WINDOWS__)
+    wtime = ((double)opal_timer_base_get_cycles()) / ((double)opal_timer_base_get_freq());
+    return wtime;
+#else
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    wtime = tv.tv_sec;
+    wtime += (double)tv.tv_usec;
+#endif  /* defined(__WINDOWS__) */
+
 #endif  /* OPAL_TIMER_USEC_NATIVE */
+    return wtime / 1000000.0;
 }
