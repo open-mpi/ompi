@@ -43,7 +43,7 @@ double MPI_Wtime(void)
 {
     double wtime;
 #if OPAL_TIMER_USEC_NATIVE
-    wtime = (double)opal_timer_base_get_usec();
+    wtime = (double)opal_timer_base_get_usec() / 1000000.0;
 #else
 
 #if defined(__WINDOWS__)
@@ -53,9 +53,9 @@ double MPI_Wtime(void)
     struct timeval tv;
     gettimeofday(&tv, NULL);
     wtime = tv.tv_sec;
-    wtime += (double)tv.tv_usec;
+    wtime += (double)tv.tv_usec / 1000000.0;
 #endif  /* defined(__WINDOWS__) */
 
 #endif  /* OPAL_TIMER_USEC_NATIVE */
-    return wtime / 1000000.0;
+    return wtime;
 }
