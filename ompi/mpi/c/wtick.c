@@ -42,9 +42,15 @@ double MPI_Wtick(void)
 #if OPAL_TIMER_USEC_NATIVE
     return 0.000001;
 #else
+
+#if defined(__WINDOWS__)
     if( (opal_timer_t)0 == opal_timer_base_get_freq() ) {
         opal_output( 0, "No timer frequency\n" );
     }
     return (double)opal_timer_base_get_freq();
+#else
+    return 0.000001;
+#endif  /* defined(__WINDOWS__) */
+
 #endif  /* OPAL_TIMER_USEC_NATIVE */
 }
