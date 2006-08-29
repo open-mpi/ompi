@@ -77,7 +77,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         
         /* Prepare the iovec with all informations */
         outvec.iov_base = (char*) inbuf + (*position);
-        outvec.iov_len = insize - (*position);
+        outvec.iov_len = size;
         
         /* Do the actual unpacking */
         iov_count = 1;
