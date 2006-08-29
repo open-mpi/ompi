@@ -166,8 +166,8 @@ version 1.0.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 
 
-1.0.3
------
+1.0.3 (unreleased; all fixes included in 1.1)
+---------------------------------------------
 
 - Fix a problem noted by Chris Hennes where MPI_INFO_SET incorrectly
   disallowed long values.
