@@ -21,6 +21,7 @@
 
 #include <string.h>
 #include <ctype.h>
+#include <stdlib.h>
 
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -44,9 +45,9 @@ static size_t key_buffer_len = 0;
 typedef struct parsed_section_values_t {
     char *name;
 
-    uint32_t vendor_id;
-    bool vendor_id_set;
-
+    uint32_t *vendor_ids;
+    int vendor_ids_len;
+    
     uint32_t *vendor_part_ids;
     int vendor_part_ids_len;
 
@@ -90,6 +91,7 @@ static void reset_section(bool had_previous_value, parsed_section_values_t *s);
 static void reset_values(ompi_btl_openib_ini_values_t *v);
 static int save_section(parsed_section_values_t *s);
 static int intify(char *string);
+static int intify_list(char *str, uint32_t **values, int *len);
 static inline void show_help(const char *topic);
 
 
@@ -306,7 +308,7 @@ cleanup:
 static int parse_line(parsed_section_values_t *sv)
 {
     int val, ret = OMPI_SUCCESS;
-    char *value, *comma;
+    char *value;
     bool showed_unknown_field_warning = false;
 
     /* Save the name name */
@@ -359,47 +361,16 @@ static int parse_line(parsed_section_values_t *sv)
        all whitespace at the beginning and ending of the value. */
 
     if (0 == strcasecmp(key_buffer, "vendor_id")) {
-        /* Single value */
-        sv->vendor_id = (uint32_t) intify(value);
-        sv->vendor_id_set = true;
+        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_ids, 
+                                               &sv->vendor_ids_len))) {
+            return ret;
+        }
     }
 
     else if (0 == strcasecmp(key_buffer, "vendor_part_id")) {
-        char *str = value;
-
-        /* Comma-delimited list of values */
-        comma = strchr(str, ',');
-        if (NULL == comma) {
-            /* If we only got one value (i.e., no comma found), then
-               just make an array of one value and save it */
-            sv->vendor_part_ids = malloc(sizeof(uint32_t));
-            if (NULL == sv->vendor_part_ids) {
-                return OMPI_ERR_OUT_OF_RESOURCE;
-            }
-            sv->vendor_part_ids[0] = (uint32_t) intify(str);
-            sv->vendor_part_ids_len = 1;
-        } else {
-            /* If we found a comma, loop over all the values.  Be a
-               little clever in that we alwasy alloc enough space for
-               an extra value so that when we exit the loop, we don't
-               have to realloc again to get space for the last item. */
-            do {
-                *comma = '\0';
-                sv->vendor_part_ids = realloc(sv->vendor_part_ids,
-                                              sizeof(uint32_t) *
-                                              (sv->vendor_part_ids_len + 2));
-                sv->vendor_part_ids[sv->vendor_part_ids_len] = 
-                    (int32_t) intify(str);
-                ++sv->vendor_part_ids_len;
-                str = comma + 1;
-                comma = strchr(str, ',');
-            } while (NULL != comma);
-            /* Get the last value (i.e., the value after the last
-               comma, because it won't have been snarfed in the
-               loop) */
-            sv->vendor_part_ids[sv->vendor_part_ids_len] = 
-                (uint32_t) intify(str);
-            ++sv->vendor_part_ids_len;
+        if (OMPI_SUCCESS != (ret = intify_list(value, &sv->vendor_part_ids,
+                                               &sv->vendor_part_ids_len))) {
+            return ret;
         }
     }
 
@@ -457,14 +428,17 @@ static void reset_section(bool had_previous_value, parsed_section_values_t *s)
         if (NULL != s->name) {
             free(s->name);
         }
+        if (NULL != s->vendor_ids) {
+            free(s->vendor_ids);
+        }
         if (NULL != s->vendor_part_ids) {
             free(s->vendor_part_ids);
         }
     }
 
     s->name = NULL;
-    s->vendor_id = 0;
-    s->vendor_id_set = false;
+    s->vendor_ids = NULL;
+    s->vendor_ids_len = 0;
     s->vendor_part_ids = NULL;
     s->vendor_part_ids_len = 0;
 
@@ -490,46 +464,51 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
  */
 static int save_section(parsed_section_values_t *s)
 {
-    int i;
+    int i, j;
     opal_list_item_t *item;
     hca_values_t *h;
     bool found;
 
     /* Is the parsed section valid? */
-    if (NULL == s->name || !s->vendor_id_set || 0 == s->vendor_part_ids_len) {
+    if (NULL == s->name || 0 == s->vendor_ids_len || 
+        0 == s->vendor_part_ids_len) {
         return OMPI_ERR_BAD_PARAM;
     }
 
-    /* Iterate over each of the part IDs in the parsed values */
-    for (i = 0; i < s->vendor_part_ids_len; ++i) {
-        found = false;
+    /* Iterate over each of the vendor/part IDs in the parsed
+       values */
+    for (i = 0; i < s->vendor_ids_len; ++i) {
+        for (j = 0; j < s->vendor_part_ids_len; ++j) {
+            found = false;
 
-        /* Iterate over all the saved hcas */
-        for (item = opal_list_get_first(&hcas); 
-             item != opal_list_get_end(&hcas);
-             item = opal_list_get_next(item)) {
-            h = (hca_values_t*) item;
-            if (s->vendor_id == h->vendor_id &&
-                s->vendor_part_ids[i] == h->vendor_part_id) {
-                /* Found a match.  Update any newly-set values. */
-                if (s->values.mtu_set) {
-                    h->values.mtu = s->values.mtu;
-                    h->values.mtu_set = true;
-                    found = true;
-                    break;
+            /* Iterate over all the saved hcas */
+            for (item = opal_list_get_first(&hcas); 
+                 item != opal_list_get_end(&hcas);
+                 item = opal_list_get_next(item)) {
+                h = (hca_values_t*) item;
+                if (s->vendor_ids[i] == h->vendor_id &&
+                    s->vendor_part_ids[j] == h->vendor_part_id) {
+                    /* Found a match.  Update any newly-set values. */
+                    if (s->values.mtu_set) {
+                        h->values.mtu = s->values.mtu;
+                        h->values.mtu_set = true;
+                        found = true;
+                        break;
+                    }
                 }
             }
-        }
 
-        /* Did we find/update it in the exising list?  If not, create
-           a new one. */
-        if (!found) {
-            h = OBJ_NEW(hca_values_t);
-            h->section_name = strdup(s->name);
-            h->vendor_id = s->vendor_id;
-            h->vendor_part_id = s->vendor_part_ids[i];
-            h->values = s->values;
-            opal_list_append(&hcas, &h->super);
+            /* Did we find/update it in the exising list?  If not,
+               create a new one. */
+            if (!found) {
+                h = OBJ_NEW(hca_values_t);
+                h->section_name = strdup(s->name);
+                h->vendor_id = s->vendor_ids[i];
+                h->vendor_part_id = s->vendor_part_ids[j];
+                h->values = s->values;
+                opal_list_append(&hcas, &h->super);
+                printf("Created combo: %0x/%d\n", h->vendor_id, h->vendor_part_id);
+            }
         }
     }
 
@@ -559,6 +538,50 @@ static int intify(char *str)
     return atoi(str);
 }
 
+
+/*
+ * Take a comma-delimited list and infity them all
+ */
+static int intify_list(char *value, uint32_t **values, int *len)
+{
+    char *comma;
+    char *str = value;
+
+    *len = 0;
+    
+    /* Comma-delimited list of values */
+    comma = strchr(str, ',');
+    if (NULL == comma) {
+        /* If we only got one value (i.e., no comma found), then
+           just make an array of one value and save it */
+        *values = malloc(sizeof(uint32_t));
+        if (NULL == *values) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        *values[0] = (uint32_t) intify(str);
+        *len = 1;
+    } else {
+        /* If we found a comma, loop over all the values.  Be a
+           little clever in that we alwasy alloc enough space for
+           an extra value so that when we exit the loop, we don't
+           have to realloc again to get space for the last item. */
+        do {
+            *comma = '\0';
+            *values = realloc(*values, sizeof(uint32_t) * (*len + 2));
+            (*values)[*len] = (int32_t) intify(str);
+            ++(*len);
+            str = comma + 1;
+            comma = strchr(str, ',');
+        } while (NULL != comma);
+        /* Get the last value (i.e., the value after the last
+           comma, because it won't have been snarfed in the
+           loop) */
+        (*values)[*len] = (uint32_t) intify(str);
+        ++(*len);
+    }
+
+    return OMPI_SUCCESS;
+}
 
 /*
  * Trival helper function
