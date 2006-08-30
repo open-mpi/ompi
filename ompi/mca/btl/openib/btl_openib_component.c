@@ -68,6 +68,8 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev);
 static mca_btl_base_module_t **btl_openib_component_init(
     int *num_btl_modules, bool enable_progress_threads,
     bool enable_mpi_threads);
+static void merge_values(ompi_btl_openib_ini_values_t *target,
+                         ompi_btl_openib_ini_values_t *src);
 static int btl_openib_handle_incoming_hp(mca_btl_openib_module_t *openib_btl,
                                          mca_btl_openib_endpoint_t *endpoint,
                                          mca_btl_openib_frag_t *frag, 
@@ -280,7 +282,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     mca_btl_openib_hca_t *hca;
     uint8_t i;
     int ret = -1;
-    ompi_btl_openib_ini_values_t values;
+    ompi_btl_openib_ini_values_t values, default_values;
 
     hca = malloc(sizeof(mca_btl_openib_hca_t));
     if(NULL == hca){
@@ -303,10 +305,16 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto close_hca;
     }
 
-    /* Load in vendor/part-specific HCA parameters. */
+    /* Load in vendor/part-specific HCA parameters.  Note that even if
+       we don't find values for this vendor/part, "values" will be set
+       indicating that it does not have good values */
     ret = ompi_btl_openib_ini_query(hca->ib_dev_attr.vendor_id,
                                     hca->ib_dev_attr.vendor_part_id,
                                     &values);
+    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+        /* If we get a serious error, propagate it upwards */
+        goto close_hca;
+    }
     if (OMPI_ERR_NOT_FOUND == ret) {
         /* If we didn't find a matching HCA in the INI files, output a
            warning that we're using default values (unless overridden
@@ -318,36 +326,42 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
                            hca->ib_dev_attr.vendor_id,
                            hca->ib_dev_attr.vendor_part_id);
         }
-        hca->mtu = mca_btl_openib_component.ib_mtu;
-    } else if (OMPI_SUCCESS != ret) {
-        /* We had some other error that wasn't good -- we should abort
-           upwards */
+    }
+    /* Note that even if we don't find default values, "values" will
+       be set indicating that it does not have good values */
+    ret = ompi_btl_openib_ini_query(0, 0, &default_values);
+    if (OMPI_SUCCESS != ret && OMPI_ERR_NOT_FOUND != ret) {
+        /* If we get a serious error, propagate it upwards */
         goto close_hca;
-    } else {
-        /* If we did find values for this HCA, handle them */
-        if (values.mtu_set) {
-            switch (values.mtu) {
-            case 256:
-                hca->mtu = IBV_MTU_256;
-                break;
-            case 512:
-                hca->mtu = IBV_MTU_512;
-                break;
-            case 1024:
-                hca->mtu = IBV_MTU_1024;
-                break;
-            case 2048:
-                hca->mtu = IBV_MTU_2048;
-                break;
-            case 4096:
-                hca->mtu = IBV_MTU_4096;
-                break;
-            default:
-                BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored\n", values.mtu));
-                hca->mtu = mca_btl_openib_component.ib_mtu;
-                break;
-            }
+    }
+
+    /* If we did find values for this HCA (or in the defaults
+       section), handle them */
+    merge_values(&values, &default_values);
+    if (values.mtu_set) {
+        switch (values.mtu) {
+        case 256:
+            hca->mtu = IBV_MTU_256;
+            break;
+        case 512:
+            hca->mtu = IBV_MTU_512;
+            break;
+        case 1024:
+            hca->mtu = IBV_MTU_1024;
+            break;
+        case 2048:
+            hca->mtu = IBV_MTU_2048;
+            break;
+        case 4096:
+            hca->mtu = IBV_MTU_4096;
+            break;
+        default:
+            BTL_ERROR(("invalid MTU value specified in INI file (%d); ignored\n", values.mtu));
+            hca->mtu = mca_btl_openib_component.ib_mtu;
+            break;
         }
+    } else {
+        hca->mtu = mca_btl_openib_component.ib_mtu;
     }
 
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
@@ -655,6 +669,16 @@ btl_openib_component_init(int *num_btl_modules,
     free(ib_devs);
 #endif
     return btls;
+}
+
+
+static void merge_values(ompi_btl_openib_ini_values_t *target,
+                         ompi_btl_openib_ini_values_t *src)
+{
+    if (!target->mtu_set && src->mtu_set) {
+        target->mtu = src->mtu;
+        target->mtu_set = true;
+    }
 }
 
 
