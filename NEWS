@@ -48,6 +48,12 @@ version 1.0.
 - Addition of UDAPL BTL ("udapl").
 
 
+1.1.2
+-----
+
+- Add some missing Fortran MPI-2 IO constants.
+
+
 1.1.1
 -----
 
@@ -102,6 +108,7 @@ version 1.0.
   back-end MPI processes.
 - Add missing MPI::Is_finalized() function.
 
+
 1.1
 ---
 
@@ -153,8 +160,8 @@ version 1.0.
 - Add --debug option to mpirun to generically invoke a parallel debugger.
 
 
-1.0.3
------
+1.0.3 (unreleased; all fixes included in 1.1)
+---------------------------------------------
 
 - Fix a problem noted by Chris Hennes where MPI_INFO_SET incorrectly
   disallowed long values.
