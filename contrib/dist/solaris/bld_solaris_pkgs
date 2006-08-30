@@ -66,8 +66,7 @@ PATH=/usr/bin/usr/sbin:${PATH}
 #
 ARCH=`uname -p`
 DATE=`date +'%Y.%m.%d'`
-#PKGNAMES="SUNWompi SUNWompimn SUNWomsc SUNWorte SUNWortemn"
-PKGNAMES="SUNWompi SUNWorte SUNWortemn"
+PKGNAMES="SUNWompi SUNWompimn SUNWorte SUNWortemn SUNWomsc"
 PLATFORM=`uname -s`
 PROTO=
 SED_PKGINFO_PROTO=sed_pkginfo_proto
@@ -89,6 +88,15 @@ function build_package
 		mkdir -p ${SPOOLDEV}
 	fi
 	pkgmk -b ${PROTO} -d ${SPOOLDEV} -f prototype.${f_pkg_name}
+
+	if [ $? != 0 ] ; then
+		print "Error in packaging ${f_pkg_name}"
+
+		cleanup_pkginfo ${f_pkg_name}
+		cleanup_prototype ${f_pkg_name}
+
+		exit 1
+	fi
 }
 
 #
@@ -234,3 +242,5 @@ do
 done
 
 rm ${SED_PKGINFO_PROTO}
+
+exit 0
