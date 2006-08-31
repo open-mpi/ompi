@@ -45,7 +45,7 @@ int MPI_Win_start(MPI_Group group, int assert, MPI_Win win)
         } else if (0 != (assert & ~(MPI_MODE_NOCHECK))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
         } else if (0 != (ompi_win_get_mode(win) & OMPI_WIN_ACCESS_EPOCH)) {
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         }
     }
 

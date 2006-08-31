@@ -164,6 +164,12 @@ static inline bool ompi_win_access_epoch(ompi_win_t *win) {
     return (OMPI_WIN_ACCESS_EPOCH & mode);
 }
 
+/* already in an exposure epoch */
+static inline bool ompi_win_exposure_epoch(ompi_win_t *win) {
+    int16_t mode = ompi_win_get_mode(win);
+    return (OMPI_WIN_EXPOSE_EPOCH & mode);
+}
+
 /* we're either already in an access epoch or can easily start one
    (stupid fence rule). Either way, it's ok to be the origin of a
    communication call. */

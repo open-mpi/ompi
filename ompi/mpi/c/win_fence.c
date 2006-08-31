@@ -48,7 +48,7 @@ int MPI_Win_fence(int assert, MPI_Win win)
         } else if (0 != (ompi_win_get_mode(win) &
                          (OMPI_WIN_POSTED | OMPI_WIN_STARTED))) {
             /* If we're in a post or start, we can't be in a fence */
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_CONFLICT, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RMA_SYNC, FUNC_NAME);
         } 
     }
 
