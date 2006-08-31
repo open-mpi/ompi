@@ -7,8 +7,15 @@
 // Simple ring test program
 //
 
-#include <iostream>
+// MPI's C++ bindings unfortunately redefined some POSIX constants
+// (SEEK_SET and friends).  Fortunately, most versions of <iostream>
+// and <stdio.h> are sane enough that if you include "mpi.h" first,
+// they won't redefine the problematic values.  Note, however, that
+// this means that you should not make calls to fseek(3) (and friends)
+// in a C++ source file that includes <mpi.h>!
+
 #include "mpi.h"
+#include <iostream>
 
 int main(int argc, char *argv[])
 {
