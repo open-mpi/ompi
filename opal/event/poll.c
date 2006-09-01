@@ -192,7 +192,7 @@ poll_dispatch(void *arg, struct timeval *tv)
            int ret;
 	       sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
 	       ret = poll(pop->event_set + offset, num, sec);
-	       if (res == -1) {
+	       if (ret == -1) {
 		       if (errno != EINTR) {
 			       opal_output(0, "poll failed with errno=%d\n", errno);
                    opal_mutex_lock(&opal_event_lock);
