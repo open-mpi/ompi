@@ -507,7 +507,6 @@ static int save_section(parsed_section_values_t *s)
                 h->vendor_part_id = s->vendor_part_ids[j];
                 h->values = s->values;
                 opal_list_append(&hcas, &h->super);
-                printf("Created combo: %0x/%d\n", h->vendor_id, h->vendor_part_id);
             }
         }
     }
