@@ -293,7 +293,7 @@ PN(void, mpi_type_extent, MPI_TYPE_EXTENT, (MPI_Fint *type, MPI_Fint *extent, MP
 PN(void, mpi_type_free, MPI_TYPE_FREE, (MPI_Fint *type, MPI_Fint *ierr));
 PN(void, mpi_type_free_keyval, MPI_TYPE_FREE_KEYVAL, (MPI_Fint *type_keyval, MPI_Fint *ierr));
 PN(void, mpi_type_get_attr, MPI_TYPE_GET_ATTR, (MPI_Fint *type, MPI_Fint *type_keyval, MPI_Aint *attribute_val, MPI_Flogical *flag, MPI_Fint *ierr));
-PN(void, mpi_type_get_contents, MPI_TYPE_GET_CONTENTS, (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr));
+PN(void, mpi_type_get_contents, MPI_TYPE_GET_CONTENTS, (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr));
 PN(void, mpi_type_get_envelope, MPI_TYPE_GET_ENVELOPE, (MPI_Fint *type, MPI_Fint *num_integers, MPI_Fint *num_addresses, MPI_Fint *num_datatypes, MPI_Fint *combiner, MPI_Fint *ierr));
 PN(void, mpi_type_get_extent, MPI_TYPE_GET_EXTENT, (MPI_Fint *type, MPI_Aint *lb, MPI_Aint *extent, MPI_Fint *ierr));
 PN(void, mpi_type_get_name, MPI_TYPE_GET_NAME, (MPI_Fint *type, char *type_name, MPI_Fint *resultlen, MPI_Fint *ierr, int name_len));
