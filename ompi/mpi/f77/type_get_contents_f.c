@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_TYPE_GET_CONTENTS,
                            pmpi_type_get_contents_,
                            pmpi_type_get_contents__,
                            pmpi_type_get_contents_f,
-                           (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
+                           (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_TYPE_GET_CONTENTS,
                            mpi_type_get_contents_,
                            mpi_type_get_contents__,
                            mpi_type_get_contents_f,
-                           (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Fint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
+                           (MPI_Fint *mtype, MPI_Fint *max_integers, MPI_Fint *max_addresses, MPI_Fint *max_datatypes, MPI_Fint *array_of_integers, MPI_Aint *array_of_addresses, MPI_Fint *array_of_datatypes, MPI_Fint *ierr),
                            (mtype, max_integers, max_addresses, max_datatypes, array_of_integers, array_of_addresses, array_of_datatypes, ierr) )
 #endif
 
@@ -65,7 +65,7 @@ static const char FUNC_NAME[] = "MPI_TYPE_GET_CONTENTS";
 void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 			     MPI_Fint *max_addresses, MPI_Fint *max_datatypes,
 			     MPI_Fint *array_of_integers, 
-			     MPI_Fint *array_of_addresses, 
+			     MPI_Aint *array_of_addresses, 
 			     MPI_Fint *array_of_datatypes, MPI_Fint *ierr)
 {
     MPI_Aint *c_address_array = NULL;
@@ -107,7 +107,7 @@ void mpi_type_get_contents_f(MPI_Fint *mtype, MPI_Fint *max_integers,
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         for (i = 0; i < *max_addresses; i++) {
-            array_of_addresses[i] = (MPI_Fint)c_address_array[i];
+            array_of_addresses[i] = c_address_array[i];
         }
         for (i = 0; i < *max_datatypes; i++) {
           array_of_datatypes[i] = MPI_Type_c2f(c_datatype_array[i]);
