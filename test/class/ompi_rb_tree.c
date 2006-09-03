@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,6 +28,7 @@
 #endif
 #include <string.h>
 #include "support.h"
+#include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_rb_tree.h"
 #include "ompi/mca/mpool/base/base.h"
 
@@ -88,6 +90,7 @@ void test_keys(void)
     char buf[200];
     my_key_t *cur_key;
     my_val_t *cur_val;
+    long tmp;
 
     OBJ_CONSTRUCT(&tree, ompi_rb_tree_t); 
     rc = ompi_rb_tree_init(&tree, comp_key); 
@@ -97,8 +100,10 @@ void test_keys(void)
         cur_val = &(vals[i]); 
         cur_val->key = cur_key;
         cur_val->val = i;
-        cur_key->base = rand(); 
-        cur_key->bound = cur_key->base + rand();
+        tmp = (long) rand();
+        cur_key->base = (void*) tmp;
+        tmp += (long) rand();
+        cur_key->bound = (void*) tmp;
         rc = ompi_rb_tree_insert(&tree, cur_key, cur_val); 
         if(OMPI_SUCCESS != rc) { 
             test_failure("error inserting element in the tree"); 
@@ -113,7 +118,7 @@ void test_keys(void)
     }
     for(i = 1; i < NUM_KEYS; i+=2) { 
         cur_key = &(keys[i]); 
-        cur_val = (int*) ompi_rb_tree_find(&tree, cur_key); 
+        cur_val = (my_val_t*) ompi_rb_tree_find(&tree, cur_key); 
         if(cur_val == NULL) { 
             test_failure("lookup returned NULL item"); 
         }
@@ -300,12 +305,12 @@ int mem_node_compare(void * key1, void * key2)
 void test2(void)
 {
     ompi_free_list_t key_list;
-    opal_list_item_t * new_value;
+    ompi_free_list_item_t * new_value;
     ompi_rb_tree_t tree;
     int rc, i, size;
     void * result, * lookup;
     void * mem[NUM_ALLOCATIONS];
-    opal_list_item_t * key_array[NUM_ALLOCATIONS];
+    ompi_free_list_item_t * key_array[NUM_ALLOCATIONS];
     struct timeval start, end;
     
     OBJ_CONSTRUCT(&key_list, ompi_free_list_t);
