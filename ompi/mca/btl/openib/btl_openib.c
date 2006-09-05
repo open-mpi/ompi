@@ -121,6 +121,9 @@ int mca_btl_openib_add_procs(
             continue;
         }
 
+        orte_pointer_array_add((orte_std_cntr_t*)&ib_peer->index,
+                openib_btl->endpoints, (void*)ib_peer);
+
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
         peers[i] = ib_peer;
