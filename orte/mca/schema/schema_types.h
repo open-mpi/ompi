@@ -99,4 +99,8 @@
 #define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
 
+#define ORTE_NODE_GLOBALS				"orte-node-globals"
+#define ORTE_NODE_FAILED_CNTR			"orte-node-failed"
+#define ORTE_NODE_FAILED_TRIGGER		"orte-node-failed-trig"
+
 #endif

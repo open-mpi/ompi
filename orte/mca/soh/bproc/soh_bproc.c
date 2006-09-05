@@ -53,6 +53,11 @@
 
 typedef unsigned int bit_set;
 
+/* define a flag that indicates we are ready to
+ * begin notifying about dead nodes
+ */
+static bool monitor_nodes=false;
+
 static inline void set_bit(bit_set *set, int bit)
 {
     *set |= BIT_MASK(bit);
@@ -141,6 +146,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     struct passwd *pwd;
     struct group *grp;
     orte_gpr_value_t *value;
+    bool alert;
     int rc;
 
     cnt = num_bits(changes);
@@ -151,6 +157,9 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     if (cnt == 0)
 	return;
 
+    /* be sure to reset this flag to the default condition */
+    alert = false;
+    
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
 	                                                ORTE_NODE_SEGMENT, cnt, 0))) {
     	ORTE_ERROR_LOG(rc);
@@ -161,6 +170,15 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 
     if (is_set(changes, BIT_NODE_STATE)) {
         state = orte_soh_bproc_node_state(ni->status);
+        /* check to see if the state is DOWN or REBOOT - if so
+         * then we must trigger an alert as well as storing
+         * the state
+         */
+        if (ORTE_NODE_STATE_DOWN == state ||
+            ORTE_NODE_STATE_REBOOT == state) {
+            /* generate an alert AFTER we store the state */
+            alert = true;
+        }
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[idx]), ORTE_NODE_STATE_KEY, ORTE_NODE_STATE, &state))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(value);
@@ -255,9 +273,37 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	ORTE_ERROR_LOG(ret);
     	opal_event_del(&mca_soh_bproc_component.notify_event);
     }
-
     free(node_name);
     OBJ_RELEASE(value);
+
+    /* now check to see if we should generate an alert that
+     * a node has gone down or rebooted - only do so
+     * once we have started monitoring nodes! That way, we
+     * know that the registry is ready for us.
+     */
+    if (monitor_nodes && alert) {
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                                        ORTE_NODE_SEGMENT, 1, 1))) {
+            ORTE_ERROR_LOG(rc);
+            return;
+        }
+        /* the alert counter is in the NODE_GLOBALS container */
+        value->tokens[0] = strdup(ORTE_NODE_GLOBALS);
+        /* point the keyval at the proper trigger */
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                         ORTE_NODE_FAILED_CNTR,
+                                                         ORTE_UNDEF, NULL))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return;
+        }
+        /* trigger the counter */
+        if (ORTE_SUCCESS != (rc = orte_gpr.increment_value(value))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        OBJ_RELEASE(value);
+        return;
+    }
 }
 
 static int do_update(struct bproc_node_set_t *ns)
@@ -356,6 +402,12 @@ int orte_soh_bproc_module_init(void)
     return ORTE_SUCCESS;
 }
 
+static int orte_soh_bproc_begin_monitoring(orte_jobid_t job)
+{
+    monitor_nodes = true;
+    return ORTE_SUCCESS;
+}
+
 orte_soh_base_module_t orte_soh_bproc_module = {
     orte_soh_bproc_get_proc_soh,
     orte_soh_bproc_set_proc_soh,
@@ -363,7 +415,7 @@ orte_soh_base_module_t orte_soh_bproc_module = {
     orte_soh_base_set_node_soh_not_available,
     orte_soh_base_get_job_soh,
     orte_soh_base_set_job_soh,
-    orte_soh_base_begin_monitoring_not_available,
+    orte_soh_bproc_begin_monitoring,
     orte_soh_bproc_finalize
 };
 

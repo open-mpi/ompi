@@ -66,6 +66,7 @@
 #include "orte/mca/soh/base/base.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/tools/orted/orted.h"
 
 #include "pls_bproc.h"
 
@@ -686,13 +687,13 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
     bool dead_node = false;
     char *dead_node_name; 
     size_t i, j;
-    
-    /* first see if node is in 
-       ORTE_NODE_STATE_DOWN or 
-       ORTE_NODE_STATE_REBOOT */
+    opal_list_item_t* item;
     
     values = (orte_gpr_value_t**)(notify_data->values)->addr;
-    for( j = 0; j < notify_data->cnt; j++) { 
+    for( j = 0; j < notify_data->cnt; j++) {
+        /* first see if this node is in
+        ORTE_NODE_STATE_DOWN or
+        ORTE_NODE_STATE_REBOOT */
         dead_node = false;
         for( i = 0; i < values[j]->cnt; i++) { 
             orte_gpr_keyval_t* keyval = values[j]->keyvals[i];
@@ -720,23 +721,45 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
         }
         
         if(dead_node) {
-            /* gotta see if this node belongs to us... arg.. */
-            /* also, we know by order of creation that the node state */ 
-            /* comes before the node name.. see soh_bproc.c */
+            /* it's dead -  gotta see if this node belongs to us... arg.. */
             size_t name_idx;
+            orte_buffer_t cmd;
+            orte_daemon_cmd_flag_t command = ORTE_DAEMON_EXIT_CMD;
+            orte_process_name_t name;
+            OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+            orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD);
+            
             for (name_idx = 0;
                  name_idx < orte_pointer_array_get_size(mca_pls_bproc_component.active_node_names);
                  name_idx++) { 
                 char* node_name = (char*) orte_pointer_array_get_item(mca_pls_bproc_component.active_node_names, name_idx);
+                if(NULL == node_name) { 
+                    break; 
+                }
                 if(strcmp(node_name, dead_node_name) == 0){ 
                     /* one of our nodes up and died... */
                     /* not much to do other than die.... */
                     int ret = ORTE_SUCCESS;
+                    size_t daemon_idx;
                     char *segment = NULL;
                     orte_gpr_value_t** seg_values = NULL;
                     size_t  num_values = 0;
-	      
+                    
                     opal_output(0, "Open MPI detected a bproc compute node named %s has gone down\n", dead_node_name);
+                    
+                    for(daemon_idx = 0;
+                        daemon_idx < orte_pointer_array_get_size(mca_pls_bproc_component.daemon_names);
+                        daemon_idx++) { 
+                        orte_process_name_t* daemon_proc_name = (orte_process_name_t*) 
+                            orte_pointer_array_get_item(mca_pls_bproc_component.daemon_names, name_idx);
+                        char* daemon_name = (char*) 
+                            orte_pointer_array_get_item(mca_pls_bproc_component.active_node_names, name_idx);
+                        if(strcmp(daemon_name, dead_node_name) != 0) { 
+                            orte_rml.send_buffer(daemon_proc_name, &cmd, ORTE_RML_TAG_DAEMON, 0); 
+                            opal_output(0, "Open MPI is killing daemon on node %s\n", daemon_name);
+                        }
+                                                
+                    }
                     
                     /**********************
                      * Job Info segment
@@ -752,48 +775,212 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
 		
                     }
 	      
-                    /*
-                     * kill all the jobids that are not zero
-                     */
                     for(i = 0; i < num_values; ++i) {
                         orte_gpr_value_t* value = values[i];
                         orte_jobid_t jobid;
                         orte_schema.extract_jobid_from_segment_name(&jobid, value->tokens[0]);
-                        opal_output(0, "Open MPI is killing jobid %d\n", jobid);
-                        if(jobid != 0) 
-                            orte_pls_bproc_terminate_job(jobid);
+                        if(jobid != 0) { 
+                            name.cellid = 0;
+                            name.jobid = jobid; /*whatever jobid you were running - probably this is a 1,
+                                                but it must not be 0 */
+                            name.vpid = 0;  /* doesn't matter */
+                            
+                                                        
+                            /* trigger the aborted flag that will cause mpirun to wakeup
+                             * so it can cleanly exit
+                             */
+                            opal_output(0, "setting process state for jobid %d to aborted\n", jobid);
+                            orte_soh.set_proc_soh(&name, ORTE_PROC_STATE_ABORTED, -1);
+                            
+                            
+                        }
                     }
-                    /*
-                     * and kill everyone else 
-                     */
-                    opal_output(0, "Open MPI is terminating\n");
-                    orte_pls_bproc_terminate_job(0); 
-                    /* shouldn't ever get here.. */
-                    exit(1);
                 }
-
-
             }
         }
     }
 }
 
+static int
+orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
+{
+    orte_gpr_value_t *value;
+    orte_gpr_notify_data_t **data;
+    int rc;
+    size_t zero=0;
+    
+    /* there will ONLY be one notify data package in this message.
+     * Deliver it
+     */
+    if (1 != msg->cnt) { /* we have an error */
+        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        return ORTE_ERR_GPR_DATA_CORRUPT;
+    }
+
+    data = (orte_gpr_notify_data_t**)(msg->data)->addr;
+    orte_pls_bproc_check_node_state(data[0], NULL);
+
+    /* it's possible that the node(s) that died didn't belong to us,
+     * so we might still be alive. if we are, then reset the counter
+     * to zero so we can fire it again
+     */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
+                                                    ORTE_GPR_OVERWRITE |
+                                                    ORTE_GPR_TOKENS_XAND |
+                                                    ORTE_GPR_KEYS_OR,
+                                                    ORTE_NODE_SEGMENT, 1, 1))) {
+    
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    value->tokens[0] = strdup(ORTE_NODE_GLOBALS); /* put it in the node segment's globals container */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_NODE_FAILED_CNTR, ORTE_SIZE, &zero))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    /* put the counter on the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    OBJ_RELEASE(value);
+    return ORTE_SUCCESS;
+}
 
 static int
 orte_pls_bproc_monitor_nodes(void) 
 {
-    orte_gpr_subscription_id_t id;
-    return orte_gpr.subscribe_1(&id,
-                                NULL,
-                                NULL,
-                                ORTE_GPR_NOTIFY_VALUE_CHG,
-                                ORTE_GPR_TOKENS_OR | 
-                                ORTE_GPR_KEYS_OR,
-                                ORTE_NODE_SEGMENT,
-                                NULL,
-                                ORTE_NODE_STATE_KEY,
-                                orte_pls_bproc_check_node_state,
-				NULL);
+    orte_gpr_subscription_t *sub;
+    orte_gpr_trigger_t *trig;
+    orte_gpr_value_t *value;
+    size_t zero=0;
+    int rc;
+    size_t trig_level=1;
+
+    /* setup the node failed counter */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
+                                                    ORTE_GPR_OVERWRITE |
+                                                    ORTE_GPR_TOKENS_XAND |
+                                                    ORTE_GPR_KEYS_OR,
+                                                    ORTE_NODE_SEGMENT, 1, 1))) {
+
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    value->tokens[0] = strdup(ORTE_NODE_GLOBALS); /* put it in the node segment's globals container */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_NODE_FAILED_CNTR, ORTE_SIZE, &zero))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    /* put the counter on the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    OBJ_RELEASE(value);
+
+    /* now define the trigger. In this case, we need to return two pieces of data -
+     * the name of each node and its state - so we'll also need to define a
+     * subscription to get that info back
+     */
+    /* assemble the subscription object */
+    sub = OBJ_NEW(orte_gpr_subscription_t);
+    if (NULL == sub) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    sub->name = strdup("orte-bproc-node-failed-sub");
+    sub->action = ORTE_GPR_NOTIFY_NONE; /* in this case, we only want to get info when the trigger fires */
+    sub->cnt = 1;
+    sub->cbfunc = orte_pls_bproc_check_node_state; /* this is really irrelevant because we hard-coded it above,
+        but the registry may not like it if we leave it as NULL */
+    /* create the value object */
+    sub->values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
+    if (NULL == sub->values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(sub->values[0]),
+                                                    ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
+                                                    ORTE_NODE_SEGMENT, 2, 0))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sub);
+        return rc;
+    }
+    /* we want to get the values from all nodes, so leave tokens NULL */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(sub->values[0]->keyvals[0]),
+                                                     ORTE_NODE_STATE_KEY,
+                                                     ORTE_UNDEF, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sub);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(sub->values[0]->keyvals[1]),
+                                                     ORTE_NODE_NAME_KEY,
+                                                     ORTE_UNDEF, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sub);
+        return rc;
+    }
+    
+    /* assemble the trigger object */
+    trig = OBJ_NEW(orte_gpr_trigger_t);
+    if (NULL == trig) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(sub);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    trig->name = strdup(ORTE_NODE_FAILED_TRIGGER);
+    trig->action = ORTE_GPR_TRIG_ROUTE_DATA_THRU_ME | ORTE_GPR_TRIG_AT_LEVEL;
+    trig->cnt = 1;
+    trig->cbfunc = orte_pls_bproc_node_failed;
+    /* create the value object */
+    trig->values = (orte_gpr_value_t**)malloc(sizeof(orte_gpr_value_t*));
+    if (NULL == trig->values) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        OBJ_RELEASE(sub);
+        OBJ_RELEASE(trig);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(trig->values[0]),
+                                                    ORTE_GPR_TOKENS_XAND | ORTE_GPR_KEYS_OR,
+                                                    ORTE_NODE_SEGMENT, 1, 1))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sub);
+        OBJ_RELEASE(trig);
+        return rc;
+    }
+    trig->values[0]->tokens[0] = strdup(ORTE_NODE_GLOBALS);
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(trig->values[0]->keyvals[0]),
+                                                     ORTE_NODE_FAILED_CNTR,
+                                                     ORTE_SIZE, &trig_level))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(sub);
+        OBJ_RELEASE(trig);
+        return rc;
+    }
+
+    /* send the subscription */
+    if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &sub, 1, &trig))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    /* clean up memory */
+    OBJ_RELEASE(sub);
+    OBJ_RELEASE(trig);
+
+    /* now tell the soh we are ready to begin monitoring the nodes. The
+     * jobid here doesn't matter - we won't even look at it
+     */
+    if (ORTE_SUCCESS != (rc = orte_soh.begin_monitoring_job(ORTE_JOBID_MAX))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    return ORTE_SUCCESS;
 }
 
 
@@ -1009,7 +1196,7 @@ cleanup:
  * @retval error
  */
 int orte_pls_bproc_launch(orte_jobid_t jobid) {
-    opal_list_item_t* item;
+    opal_list_item_t* item, *item2;
     opal_list_t mapping;
     orte_cellid_t cellid;
     orte_rmaps_base_map_t* map;
@@ -1109,6 +1296,26 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         context++;
     }
     
+    /* stash nodes in the job for later */
+    idx = 0;
+    for (item =  opal_list_get_first(&mapping);
+         item != opal_list_get_end(&mapping);
+         item =  opal_list_get_next(item)) {
+      orte_rmaps_base_map_t *map = (orte_rmaps_base_map_t*) item;
+      for (item2 =  opal_list_get_first(&map->nodes);
+           item2 != opal_list_get_end(&map->nodes);
+           item2 =  opal_list_get_next(item2)) {
+        orte_rmaps_base_node_t* node = (orte_ras_node_t*) item2;
+        rc = orte_pointer_array_add(&idx, mca_pls_bproc_component.active_node_names,
+                                    strdup(node->node->node_name));
+
+	if(ORTE_SUCCESS != rc) { 
+	  ORTE_ERROR_LOG(rc);
+	  goto cleanup;
+	}
+      }
+    }
+
     /* setup subscription for each node so we can detect 
        when the node's state changes, usefull for aborting when 
        a bproc node up and dies */ 
