@@ -860,13 +860,21 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status)
 /*
  *  IB component progress.
  */
+static void btl_openib_frag_progress(mca_btl_base_endpoint_t *endpoint, int p)
+{
+
+}
+
 static int btl_openib_component_progress(void)
 {
-    int i, j, c;
+    static char *qp_name[] = {"HP", "LP"};
+    int i, j, c, qp = 0;
     int count = 0,ne = 0, ret;
     int32_t credits;
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
+    struct ibv_wc wc; 
+    mca_btl_openib_module_t* openib_btl;
 
     /* Poll for RDMA completions - if any succeed, we don't process the slower queues */
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
@@ -920,8 +928,7 @@ static int btl_openib_component_progress(void)
     if(count) return count;
 
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        struct ibv_wc wc; 
-        mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
+        openib_btl = &mca_btl_openib_component.openib_btls[i];
         
         /* we have two completion queues, one for "high" priority and one for "low". 
          *   we will check the high priority and process them until there are none left. 
@@ -929,50 +936,20 @@ static int btl_openib_component_progress(void)
          */
 
         ne=ibv_poll_cq(openib_btl->ib_cq_hp, 1, &wc );
-        if(ne < 0 ){ 
-            BTL_ERROR(("error polling HP CQ with %d errno says %s\n", ne, strerror(errno))); 
-            return OMPI_ERROR;
-        } 
-        else if(1 == ne) { 
-            if(wc.status != IBV_WC_SUCCESS) {
-                static int flush_err_printed = 0;
-                ompi_proc_t* remote_proc = NULL; 
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
-                if(frag) { 
-                    endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
-                    if(endpoint && 
-                       endpoint->endpoint_proc && 
-                       endpoint->endpoint_proc->proc_ompi) {
-                        remote_proc = endpoint->endpoint_proc->proc_ompi; 
-                    }
-                }
-                if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed++)
-                    BTL_PEER_ERROR(remote_proc, ("error polling HP CQ with status %s status number %d for wr_id %llu opcode %d", 
-                                             btl_openib_component_status_to_string(wc.status), 
-                                             wc.status, wc.wr_id, wc.opcode)); 
-                if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
-                    opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
-                    abort();
-                }
 
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
-                return 0;
-            }
+        if(ne != 0) {
+            if(ne < 0 || wc.status != IBV_WC_SUCCESS)
+                goto error_hp;
 
+            frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
+            endpoint = frag->endpoint;
             /* Handle work completions */
             switch(wc.opcode) {
-            case IBV_WC_RECV_RDMA_WITH_IMM: 
-                BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
-                return 0;
             case IBV_WC_RDMA_WRITE:
             case IBV_WC_SEND :
-
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
-                endpoint = frag->endpoint;
-
                 /* Process a completed send */
-                frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS); 
+                frag->base.des_cbfunc(&openib_btl->super, endpoint, &frag->base,
+                        OMPI_SUCCESS); 
 
                 /* return send wqe */
                 OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp, 1);
@@ -1019,9 +996,8 @@ static int btl_openib_component_progress(void)
 
             case IBV_WC_RECV: 
                 /* Process a RECV */ 
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
-                ret = btl_openib_handle_incoming_hp(openib_btl,
-                        frag->endpoint, frag, wc.byte_len);
+                ret = btl_openib_handle_incoming_hp(openib_btl, endpoint, frag,
+                        wc.byte_len);
                 if (ret != OMPI_SUCCESS) { 
                     openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
                     return 0;
@@ -1029,53 +1005,25 @@ static int btl_openib_component_progress(void)
                 count++; 
                 break; 
 
-            case IBV_WC_RDMA_READ:
             default:
                 BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL);
                 break;
             }
         }
 
-        ne=ibv_poll_cq(openib_btl->ib_cq_lp, 1, &wc );
-        if(ne < 0){ 
-            BTL_ERROR(("error polling LP CQ with %d errno says %s", ne, strerror(errno))); 
-            openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
-            return 0;
-        } 
-        else if(1 == ne) {             
-            if(wc.status != IBV_WC_SUCCESS) { 
-                static int flush_err_printed = 0;
-                ompi_proc_t* remote_proc = NULL; 
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
-                if(frag) { 
-                    endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
-                    if(endpoint && 
-                       endpoint->endpoint_proc && 
-                       endpoint->endpoint_proc->proc_ompi) {
-                        remote_proc = endpoint->endpoint_proc->proc_ompi; 
-                    }
-                }
-                if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed++)
-                    BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
-                                             btl_openib_component_status_to_string(wc.status), 
-                                             wc.status, wc.wr_id, wc.opcode)); 
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
-                return 0;
-            }
 
+        ne=ibv_poll_cq(openib_btl->ib_cq_lp, 1, &wc );
+
+        if(ne != 0) {
+            if(ne < 0 || wc.status != IBV_WC_SUCCESS)
+                goto error_lp;
+
+            frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
+            endpoint = frag->endpoint;
             /* Handle n/w completions */
             switch(wc.opcode) {
-            case IBV_WC_RECV_RDMA_WITH_IMM: 
-
-                BTL_ERROR(("Got an RDMA with Immediate data Not supported!")); 
-                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
-                return 0;
-                
             case IBV_WC_SEND:
-
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
-                endpoint = frag->endpoint;
-
                 /* Process a completed send - receiver must return tokens */
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
@@ -1116,16 +1064,11 @@ static int btl_openib_component_progress(void)
                 break;
 
             case IBV_WC_RDMA_READ: 
-                                    
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
+                                
                 OPAL_THREAD_ADD32(&frag->endpoint->get_tokens, 1);
                 /* fall through */
 
             case IBV_WC_RDMA_WRITE: 
-
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
-                endpoint = frag->endpoint;
-
                 /* process a completed write */
                 frag->base.des_cbfunc(&openib_btl->super, frag->endpoint, &frag->base, OMPI_SUCCESS);
 
@@ -1155,12 +1098,9 @@ static int btl_openib_component_progress(void)
                 }
                 count++;
                 break;
-                
+            
             case IBV_WC_RECV: 
-
                 /* Process a RECV */ 
-                frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id;
-                endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
                 credits = frag->hdr->credits;
 
                 /* advance the segment address past the header and subtract from the length..*/ 
@@ -1214,10 +1154,41 @@ static int btl_openib_component_progress(void)
 
             default:
                 BTL_ERROR(("Unhandled work completion opcode is %d", wc.opcode));
+                openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
                 break;
             }
         }
-        
     }
+    return count;
+error_lp:
+    qp = 1;
+error_hp:
+    if(ne < 0){ 
+        BTL_ERROR(("error polling %s CQ with %d errno says %s\n",
+                    qp_name[qp], ne, strerror(errno))); 
+    } else {
+        static int flush_err_printed[] = {0, 0};
+        ompi_proc_t* remote_proc = NULL; 
+        frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
+        if(frag) { 
+            endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
+            if(endpoint && 
+               endpoint->endpoint_proc && 
+               endpoint->endpoint_proc->proc_ompi) {
+                remote_proc = endpoint->endpoint_proc->proc_ompi; 
+            }
+        }
+        if(wc.status != IBV_WC_WR_FLUSH_ERR || !flush_err_printed[qp]++)
+            BTL_PEER_ERROR(remote_proc, ("error polling %s CQ with status %s "
+                        "status number %d for wr_id %llu opcode %d",
+                        qp_name[qp],
+                        btl_openib_component_status_to_string(wc.status), 
+                       wc.status, wc.wr_id, wc.opcode)); 
+        if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
+            opal_show_help("help-mpi-btl-openib.txt",
+                    "btl_openib:retry-exceeded", true);
+        }
+    }
+    openib_btl->error_cb(&openib_btl->super, MCA_BTL_ERROR_FLAGS_FATAL); 
     return count;
 }
