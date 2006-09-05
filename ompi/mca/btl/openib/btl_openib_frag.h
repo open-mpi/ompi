@@ -31,10 +31,12 @@ extern "C" {
 
 struct mca_btl_openib_header_t {
     mca_btl_base_tag_t tag;
-    int16_t credits;
-    int16_t rdma_credits;
+    uint16_t credits;
 };
 typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
+#define BTL_OPENIB_RDMA_CREDITS_FLAG (1<<15)
+#define BTL_OPENIB_IS_RDMA_CREDITS(I) ((I)&BTL_OPENIB_RDMA_CREDITS_FLAG)
+#define BTL_OPENIB_CREDITS(I) ((I)&~BTL_OPENIB_RDMA_CREDITS_FLAG)
 
 struct mca_btl_openib_footer_t {
 #if OMPI_ENABLE_DEBUG
@@ -48,7 +50,7 @@ struct mca_btl_openib_footer_t {
 typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 
 typedef enum {
-    MCA_BTL_OPENIB_CONTROL_NOOP,
+    MCA_BTL_OPENIB_CONTROL_CREDITS,
     MCA_BTL_OPENIB_CONTROL_RDMA
 } mca_btl_openib_control_t;
 
@@ -63,6 +65,12 @@ struct mca_btl_openib_eager_rdma_header_t {
 	uint32_t rkey;
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
+
+struct mca_btl_openib_rdma_credits_header_t {
+    mca_btl_openib_control_header_t control;
+    uint16_t rdma_credits;
+};
+typedef struct mca_btl_openib_rdma_credits_header_t mca_btl_openib_rdma_credits_header_t;
 
 enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_EAGER,
