@@ -25,8 +25,7 @@ check_PROGRAMS = \
 	opal_list \
 	opal_value_array \
 	ompi_pointer_array \
-	ompi_rb_tree \
-	orte_bitmap
+	ompi_rb_tree
 
 TESTS = \
 	$(check_PROGRAMS)
@@ -88,13 +87,6 @@ ompi_rb_tree_LDADD = \
         $(top_builddir)/opal/libopal.la \
 	$(top_builddir)/test/support/libsupport.a
 ompi_rb_tree_DEPENDENCIES = $(ompi_rb_tree_LDADD)
-
-orte_bitmap_SOURCES = orte_bitmap.c 
-orte_bitmap_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la \
-        $(top_builddir)/test/support/libsupport.a
-orte_bitmap_DEPENDENCIES = $(orte_bitmap_LDADD)
 
 clean-local:
 	rm -f ompi_bitmap_test_out.txt opal_hash_table_test_out.txt
