@@ -101,7 +101,7 @@ static inline void show_help(const char *topic);
  */
 int ompi_btl_openib_ini_init(void)
 {
-    int ret;
+    int ret = OMPI_ERR_NOT_FOUND;
     char *colon;
 
     OBJ_CONSTRUCT(&hcas, opal_list_t);
@@ -308,7 +308,7 @@ cleanup:
 static int parse_line(parsed_section_values_t *sv)
 {
     int val, ret = OMPI_SUCCESS;
-    char *value;
+    char *value = NULL;
     bool showed_unknown_field_warning = false;
 
     /* Save the name name */
@@ -391,7 +391,8 @@ static int parse_line(parsed_section_values_t *sv)
 
     /* All done */
 
-    free(value);
+    if(NULL != value)
+        free(value);
     return ret;
 }
 

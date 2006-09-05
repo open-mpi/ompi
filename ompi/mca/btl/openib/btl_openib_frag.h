@@ -159,7 +159,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
 
 #define MCA_BTL_IB_FRAG_RETURN(btl, frag)                                  \
 {   do {                                                                   \
-        ompi_free_list_t* my_list;                                         \
+        ompi_free_list_t* my_list = NULL;                                  \
         switch(frag->type) {                                               \
          case MCA_BTL_OPENIB_FRAG_EAGER_RDMA:                              \
          case MCA_BTL_OPENIB_FRAG_EAGER:                                   \
