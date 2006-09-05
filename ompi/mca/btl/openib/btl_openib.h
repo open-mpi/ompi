@@ -203,7 +203,8 @@ struct mca_btl_openib_module_t {
     uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
-    
+   
+    orte_pointer_array_t *endpoints;
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
 struct mca_btl_openib_frag_t; 
