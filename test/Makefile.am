@@ -19,5 +19,5 @@
 
 
 # support needs to be first for dependencies
-SUBDIRS = support asm class dss mca memory threads util peruse datatype
+SUBDIRS = support asm class memory threads peruse datatype
 DIST_SUBDIRS = event runtime $(SUBDIRS)
