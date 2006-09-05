@@ -164,7 +164,7 @@ struct mca_btl_base_endpoint_t {
 
     uint16_t subnet; /**< subnet of this endpoint*/
 
-    uint32_t eager_recv_count; /**< number of eager received */
+    int32_t eager_recv_count; /**< number of eager received */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;
     /**< info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
