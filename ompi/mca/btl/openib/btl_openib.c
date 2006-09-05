@@ -655,11 +655,11 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_WRITE; 
 
     /* check for a send wqe */
-    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],-1) < 0) {
 
-        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 
@@ -712,21 +712,21 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     frag->wr_desc.sr_desc.opcode = IBV_WR_RDMA_READ; 
 
     /* check for a send wqe */
-    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1) < 0) {
+    if (OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],-1) < 0) {
 
-        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t *)frag);
+        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 
     /* check for a get token */
     } else if(OPAL_THREAD_ADD32(&endpoint->get_tokens,-1) < 0) {
 
-        OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,1);
+        OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags_lp, (opal_list_item_t*)frag);
+        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 

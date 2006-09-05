@@ -127,13 +127,7 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpotint */
     
-    opal_list_t                 pending_frags_hp; 
-    /**< list of pending high priority frags */ 
-
-    opal_list_t                 pending_frags_lp; 
-    /**< list of pending low priority frags */ 
-
-    
+    opal_list_t                 pending_frags[2]; /**< list of pending frags */ 
 
     mca_btl_openib_rem_info_t   rem_info;
     
@@ -149,8 +143,7 @@ struct mca_btl_base_endpoint_t {
     struct ibv_qp_attr*         lcl_qp_attr_lp; 
     /* Local QP attributes (Low and High) */
     
-    int32_t                     sd_tokens_hp;  /**< number of high priority send tokens */
-    int32_t                     sd_tokens_lp;  /**< number of low priority send tokens */
+    int32_t                     sd_tokens[2];  /**< number of send tokens */
     int32_t                     get_tokens;    /**< number of available get tokens */
 
     int32_t rd_posted_hp;   /**< number of high priority descriptors posted to the nic*/
@@ -159,8 +152,7 @@ struct mca_btl_base_endpoint_t {
     int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
     int32_t sd_credits_hp;  /**< number of send wqe entries being used to return credits */
     int32_t sd_credits_lp;  /**< number of send wqe entries being used to return credits */
-    int32_t sd_wqe_hp;      /**< number of available send wqe entries */
-    int32_t sd_wqe_lp;      /**< number of available send wqe entries */
+    int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
     uint16_t subnet; /**< subnet of this endpoint*/
 
