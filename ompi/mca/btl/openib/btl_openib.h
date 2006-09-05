@@ -192,16 +192,10 @@ struct mca_btl_openib_module_t {
     int32_t  rd_num; 
     int32_t  rd_low;
     
-    int32_t sd_tokens_hp; 
-    /**< number of high priority frags that  can be outstanding (down counter) */ 
-    int32_t sd_tokens_lp; 
-    /**< number of low priority frags that  can be outstanding (down counter) */ 
+    int32_t sd_tokens[2];
+    /**< number of frags that  can be outstanding (down counter) */ 
     
-    opal_list_t                 pending_frags_hp; 
-    /**< list of pending high priority frags */ 
-
-    opal_list_t                 pending_frags_lp; 
-    /**< list of pending low priority frags */ 
+    opal_list_t pending_frags[2]; /**< list of pending frags */ 
 
     opal_mutex_t eager_rdma_lock;
     size_t eager_rdma_frag_size; /**< length of eager frag */
@@ -482,6 +476,9 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl);
 }
 
 #endif
+
+#define BTL_OPENIB_HP_QP 0
+#define BTL_OPENIB_LP_QP 1
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

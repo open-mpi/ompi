@@ -179,40 +179,6 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_send_frag_control_t);
     } while(0);                                                            \
 }
 
-
-#define MCA_BTL_IB_FRAG_PROGRESS(frag) \
-do { \
-    switch(frag->wr_desc.sr_desc.opcode) { \
-    case IBV_WR_SEND: \
-        if(OMPI_SUCCESS !=  mca_btl_openib_endpoint_send(frag->endpoint, frag)) { \
-            BTL_ERROR(("error in posting pending send\n")); \
-        } \
-        break; \
-    case IBV_WR_RDMA_WRITE: \
-        if(OMPI_SUCCESS !=  mca_btl_openib_put((mca_btl_base_module_t*) openib_btl, \
-            frag->endpoint, \
-            (mca_btl_base_descriptor_t*) frag)) { \
-            BTL_ERROR(("error in posting pending rdma write\n")); \
-        } \
-        break; \
-    case IBV_WR_RDMA_READ: \
-        if(OMPI_SUCCESS !=  mca_btl_openib_get((mca_btl_base_module_t *) openib_btl, \
-                                                              frag->endpoint, \
-                                                              (mca_btl_base_descriptor_t*) frag)) { \
-            BTL_ERROR(("error in posting pending rdma read\n")); \
-        } \
-        break; \
-    default: \
-        BTL_ERROR(("error in posting pending operation, invalide opcode %d\n", frag->wr_desc.sr_desc.opcode)); \
-        break; \
-    } \
-} while (0)
-                                                                                                                             
-                                                                                                                             
-
-
-
-
 struct mca_btl_openib_module_t;
 
 #if defined(c_plusplus) || defined(__cplusplus)
