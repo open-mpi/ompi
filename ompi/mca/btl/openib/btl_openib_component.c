@@ -197,11 +197,12 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     mca_btl_openib_endpoint_t* endpoint = frag->endpoint;
     mca_btl_openib_control_header_t *ctl_hdr = frag->segment.seg_addr.pval;
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
+    mca_btl_openib_rdma_credits_header_t *credits_hdr;
 
     if(frag->size == mca_btl_openib_component.eager_limit) {
 	    /* if not sent via rdma */
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
-                ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_NOOP) {
+                ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
              OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -1);
         }
     } else {
@@ -209,7 +210,11 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     }
 
     switch (ctl_hdr->type) {
-    case MCA_BTL_OPENIB_CONTROL_NOOP:
+    case MCA_BTL_OPENIB_CONTROL_CREDITS:
+        credits_hdr = (mca_btl_openib_rdma_credits_header_t*)ctl_hdr;
+        if(credits_hdr->rdma_credits)
+            OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
+                    credits_hdr->rdma_credits);
        break;
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
@@ -720,10 +725,14 @@ static int btl_openib_handle_incoming_hp(mca_btl_openib_module_t *openib_btl,
     }
    
     if (!mca_btl_openib_component.use_srq) {
-        OPAL_THREAD_ADD32(&endpoint->sd_tokens[BTL_OPENIB_HP_QP],
-                frag->hdr->credits);
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
-                 frag->hdr->rdma_credits);
+        if(BTL_OPENIB_IS_RDMA_CREDITS(frag->hdr->credits) &&
+                BTL_OPENIB_CREDITS(frag->hdr->credits) > 0)
+            OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
+                BTL_OPENIB_CREDITS(frag->hdr->credits));
+        else
+            if(frag->hdr->credits > 0)
+                OPAL_THREAD_ADD32(&endpoint->sd_tokens[BTL_OPENIB_HP_QP],
+                    frag->hdr->credits);
     }
 
     if (mca_btl_openib_component.use_eager_rdma &&
