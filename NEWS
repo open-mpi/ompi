@@ -25,6 +25,7 @@ version 1.0.
 1.1.2
 -----
 
+- Fixes for BProc node selection.
 - Add some missing Fortran MPI-2 IO constants.
 
 
