@@ -1136,20 +1136,7 @@ AC_CONFIG_FILES([
     test/event/Makefile
     test/asm/Makefile
     test/class/Makefile
-    test/dss/Makefile
-    test/mca/Makefile
-    test/mca/gpr/Makefile
-    test/mca/gpr/remote/Makefile
-    test/mca/ns/Makefile
-    test/mca/oob/Makefile
-    test/mca/ras/Makefile
-    test/mca/rds/Makefile
-    test/mca/rmaps/Makefile
-    test/mca/rmgr/Makefile
-    test/mca/schema/Makefile
-    test/mca/smr/Makefile
     test/memory/Makefile
-    test/runtime/Makefile
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
