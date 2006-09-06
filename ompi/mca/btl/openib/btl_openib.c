@@ -139,7 +139,6 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
     int first_time = (0 == openib_btl->num_peers);
     int rc;
     openib_btl->num_peers += nprocs; 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     if(mca_btl_openib_component.use_srq) { 
         openib_btl->rd_num = mca_btl_openib_component.rd_num + log2(nprocs) * mca_btl_openib_component.srq_rd_per_peer; 
         if(openib_btl->rd_num > mca_btl_openib_component.srq_rd_max)
@@ -163,7 +162,6 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
         }
 	    
     } else 
-#endif
 	{
 	    min_cq_size = ( mca_btl_openib_component.rd_num >  (int32_t) mca_btl_openib_component.eager_rdma_num  ? 
 			    mca_btl_openib_component.rd_num : (int32_t) mca_btl_openib_component.eager_rdma_num ) * 
@@ -683,17 +681,13 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
             rc = OMPI_SUCCESS;
         }
     
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
         if(mca_btl_openib_component.use_srq) { 
             MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
             MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
         } else { 
-#endif 
             MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
             MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
         }
-#endif 
     }
     return rc; 
 }
@@ -750,17 +744,13 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
             rc = ORTE_SUCCESS;
         }
         
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
         if(mca_btl_openib_component.use_srq) { 
             MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
             MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
         } else { 
-#endif 
             MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
             MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
         }
-#endif 
     }
     return rc; 
 }
@@ -774,7 +764,6 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     /* Allocate Protection Domain */ 
     openib_btl->poll_cq = false; 
     
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     if(mca_btl_openib_component.use_srq) { 
         
         struct ibv_srq_init_attr attr; 
@@ -801,7 +790,6 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         openib_btl->srq_hp = NULL; 
         openib_btl->srq_lp = NULL;
     } 
-#endif
     
     /* Create the low and high priority queue pairs */ 
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
