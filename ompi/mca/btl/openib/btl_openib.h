@@ -182,12 +182,10 @@ struct mca_btl_openib_module_t {
     bool poll_cq; 
     
     
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     struct ibv_srq *srq_hp; 
     struct ibv_srq *srq_lp;
     int32_t srd_posted_hp; 
     int32_t srd_posted_lp; 
-#endif 
     int32_t num_peers;
     int32_t  rd_num; 
     int32_t  rd_low;
@@ -410,7 +408,6 @@ extern void mca_btl_openib_send_frag_return(
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
 
 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
 
 #define MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, additional) \
 { \
@@ -475,8 +472,6 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl);
     OPAL_THREAD_ADD32(srd_posted,  num_post); \
    } while(0);\
 }
-
-#endif
 
 #define BTL_OPENIB_HP_QP 0
 #define BTL_OPENIB_LP_QP 1

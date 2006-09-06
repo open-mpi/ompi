@@ -43,9 +43,7 @@ int mca_btl_openib_endpoint_create_qp(
                                       mca_btl_openib_module_t* openib_btl, 
                                       struct ibv_pd* pd, 
                                       struct ibv_cq* cq, 
-#if OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                       struct ibv_srq* srq, 
-#endif
                                       struct ibv_qp_attr* qp_attr,                                      
                                       struct ibv_qp** qp
                                       ); 
@@ -420,9 +418,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
                                                                openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_hp, 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_hp, 
-#endif
                                                                endpoint->lcl_qp_attr_hp, 
                                                                &endpoint->lcl_qp_hp))) { 
         BTL_ERROR(("error creating queue pair, error code %d", rc)); 
@@ -435,9 +431,7 @@ static int mca_btl_openib_endpoint_start_connect(mca_btl_base_endpoint_t* endpoi
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
                                                                openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_lp, 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_lp, 
-#endif
                                                               endpoint->lcl_qp_attr_lp, 
                                                                &endpoint->lcl_qp_lp))) { 
         BTL_ERROR(("error creating queue pair, error code %d", rc)); 
@@ -474,9 +468,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
                                                                openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_hp,  
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_hp, 
-#endif
 
                                                                endpoint->lcl_qp_attr_hp, 
                                                                &endpoint->lcl_qp_hp))) { 
@@ -490,9 +482,7 @@ static int mca_btl_openib_endpoint_reply_start_connect(mca_btl_openib_endpoint_t
     if(OMPI_SUCCESS != (rc = mca_btl_openib_endpoint_create_qp(openib_btl, 
                                                                openib_btl->hca->ib_pd, 
                                                                openib_btl->ib_cq_lp, 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                                                openib_btl->srq_lp, 
-#endif
 
                                                                endpoint->lcl_qp_attr_lp, 
                                                                &endpoint->lcl_qp_lp))) { 
@@ -917,17 +907,13 @@ int mca_btl_openib_endpoint_connect(
     MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, endpoint->hp_credit_frag, rc);
     MCA_BTL_IB_FRAG_ALLOC_CREDIT_WAIT(openib_btl, endpoint->lp_credit_frag, rc);
 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
     if(mca_btl_openib_component.use_srq) { 
         MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 1); 
         MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 1);         
     } else { 
-#endif 
         MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 1); 
         MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 1); 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
     }
-#endif 
     
     return OMPI_SUCCESS;
 }
@@ -942,9 +928,7 @@ int mca_btl_openib_endpoint_create_qp(
                                       mca_btl_openib_module_t* openib_btl, 
                                       struct ibv_pd* pd, 
                                       struct ibv_cq* cq, 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ
                                       struct ibv_srq* srq, 
-#endif
                                       struct ibv_qp_attr* qp_attr,
                                       struct ibv_qp** qp
                                       )
@@ -962,11 +946,9 @@ int mca_btl_openib_endpoint_create_qp(
         qp_init_attr.cap.max_send_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.cap.max_recv_sge = mca_btl_openib_component.ib_sg_list_size;
         qp_init_attr.qp_type = IBV_QPT_RC; 
-#ifdef OMPI_MCA_BTL_OPENIB_HAVE_SRQ 
         if(mca_btl_openib_component.use_srq) { 
             qp_init_attr.srq = srq; 
         }
-#endif
         my_qp = ibv_create_qp(pd, &qp_init_attr); 
     
         if(NULL == my_qp) { 
