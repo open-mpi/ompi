@@ -252,15 +252,6 @@ do { \
     OPAL_THREAD_ADD32(&(rd_credits), num_post); \
 } while(0); 
 
-#define BTL_OPENIB_INSERT_PENDING(frag, frag_list, tokens, lock) \
-do{ \
-     OPAL_THREAD_LOCK(&lock); \
-     opal_list_append(&frag_list, (opal_list_item_t *)frag); \
-     OPAL_THREAD_UNLOCK(&lock); \
-     OPAL_THREAD_ADD32(&tokens, 1); \
- } while(0); 
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
