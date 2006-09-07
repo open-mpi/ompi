@@ -40,7 +40,8 @@
 
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h" 
-#include "btl_openib_endpoint.h"
+
+#include "btl_openib_frag.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -138,6 +139,11 @@ extern mca_btl_openib_component_t mca_btl_openib_component;
 
 typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
     
+struct mca_btl_openib_port_info_t {
+    uint32_t mtu;
+    uint16_t subnet;
+};
+typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
 
 struct mca_btl_openib_hca_t {
     struct ibv_device *ib_dev;  /* the ib device */
@@ -181,11 +187,8 @@ struct mca_btl_openib_module_t {
     size_t ib_inline_max; /**< max size of inline send*/ 
     bool poll_cq; 
     
-    
-    struct ibv_srq *srq_hp; 
-    struct ibv_srq *srq_lp;
-    int32_t srd_posted_hp; 
-    int32_t srd_posted_lp; 
+    struct ibv_srq *srq[2]; 
+    int32_t srd_posted[2]; 
     int32_t num_peers;
     int32_t  rd_num; 
     int32_t  rd_low;
@@ -205,7 +208,6 @@ struct mca_btl_openib_module_t {
     orte_pointer_array_t *endpoints;
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
     
-struct mca_btl_openib_frag_t; 
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
 /**
@@ -407,74 +409,44 @@ extern void mca_btl_openib_send_frag_return(
 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 
 
-
-
-#define MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, additional) \
-{ \
-    do{ \
-        OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-        if(openib_btl->srd_posted_hp <= openib_btl->rd_low+additional && \
-           openib_btl->srd_posted_hp < openib_btl->rd_num){ \
-           MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_num -  \
-                                      openib_btl->srd_posted_hp, \
-                                      openib_btl, \
-                                      &openib_btl->recv_free_eager, \
-                                      &openib_btl->srd_posted_hp, \
-                                      openib_btl->srq_hp); \
-        } \
-        OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-    } while(0); \
-}
-
-#define MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, additional) \
-{ \
-    do { \
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(openib_btl->srd_posted_lp <= openib_btl->rd_low+additional && \
-       openib_btl->srd_posted_lp < openib_btl->rd_num){ \
-        MCA_BTL_OPENIB_POST_SRR_SUB(openib_btl->rd_num -  \
-                                            openib_btl->srd_posted_lp, \
-                                            openib_btl, \
-                                            &openib_btl->recv_free_max, \
-                                            &openib_btl->srd_posted_lp, \
-                                            openib_btl->srq_lp); \
-    } \
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-    } while(0); \
-}
-
-
-#define MCA_BTL_OPENIB_POST_SRR_SUB(cnt, \
-                                   openib_btl, \
-                                   frag_list, \
-                                   srd_posted, \
-                                   srq) \
-{\
-    do { \
-    int32_t i; \
-    int32_t num_post = cnt; \
-    ompi_free_list_item_t* item = NULL; \
-    mca_btl_openib_frag_t* frag = NULL; \
-    struct ibv_recv_wr *bad_wr; \
-    int32_t rc; \
-    for(i = 0; i < num_post; i++) { \
-        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
-        frag = (mca_btl_openib_frag_t*) item; \
-        frag->sg_entry.length = frag->size + \
-            ((unsigned char*) frag->segment.seg_addr.pval-  \
-             (unsigned char*) frag->hdr);  \
-       if(ibv_post_srq_recv(srq, &frag->wr_desc.rd_desc, &bad_wr)) { \
-           BTL_ERROR(("error posting receive descriptors to shared receive queue: %s",\
-                   strerror(errno))); \
-           return OMPI_ERROR; \
-       }\
-    }\
-    OPAL_THREAD_ADD32(srd_posted,  num_post); \
-   } while(0);\
-}
-
 #define BTL_OPENIB_HP_QP 0
 #define BTL_OPENIB_LP_QP 1
+
+static inline mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
+        const int additional, const int prio)
+{
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+    if(openib_btl->srd_posted[prio] <= openib_btl->rd_low + additional &&
+             openib_btl->srd_posted[prio] < openib_btl->rd_num) {
+        int32_t i, rc;
+        int32_t num_post = openib_btl->rd_num - openib_btl->srd_posted[prio];
+        ompi_free_list_item_t* item;
+        mca_btl_openib_frag_t* frag;
+        struct ibv_recv_wr *bad_wr;
+        ompi_free_list_t *free_list;
+
+        if(BTL_OPENIB_HP_QP == prio)
+            free_list = &openib_btl->recv_free_eager;
+        else
+            free_list = &openib_btl->recv_free_max;
+
+        for(i = 0; i < num_post; i++) {
+            OMPI_FREE_LIST_WAIT(free_list, item, rc);
+            frag = (mca_btl_openib_frag_t*)item;
+            frag->sg_entry.length = frag->size +
+                ((unsigned char*)frag->segment.seg_addr.pval -
+                 (unsigned char*)frag->hdr);
+            if(ibv_post_srq_recv(openib_btl->srq[prio], &frag->wr_desc.rd_desc,
+                        &bad_wr)) {
+                BTL_ERROR(("error posting receive descriptors to shared "
+                            "receive queue: %s", strerror(errno)));
+                return OMPI_ERROR;
+            }
+        }
+        OPAL_THREAD_ADD32(&openib_btl->srd_posted[prio], num_post);
+    }
+    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

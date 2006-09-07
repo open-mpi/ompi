@@ -37,13 +37,6 @@ extern "C" {
 
 struct mca_btl_openib_frag_t;
 
-struct mca_btl_openib_port_info_t {
-    uint32_t mtu;
-    uint16_t subnet; 
-};
-typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
-
-
 /**
  * State of IB endpoint connection.
  */
@@ -138,9 +131,7 @@ struct mca_btl_base_endpoint_t {
     uint32_t                    lcl_psn_lp; 
     /* Local processes port sequence number (Low and High) */
  
-    struct ibv_qp*              lcl_qp_hp;
-    struct ibv_qp*              lcl_qp_lp;
-    /* Local QP (Low and High) */
+    struct ibv_qp*              lcl_qp[2]; /* Local QP (Low and High) */
 
     struct ibv_qp_attr*         lcl_qp_attr_hp; 
     struct ibv_qp_attr*         lcl_qp_attr_lp; 
@@ -149,12 +140,9 @@ struct mca_btl_base_endpoint_t {
     int32_t                     sd_tokens[2];  /**< number of send tokens */
     int32_t                     get_tokens;    /**< number of available get tokens */
 
-    int32_t rd_posted_hp;   /**< number of high priority descriptors posted to the nic*/
-    int32_t rd_posted_lp;   /**< number of low priority descriptors posted to the nic*/
-    int32_t rd_credits_hp;  /**< number of high priority credits to return to peer */
-    int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
-    int32_t sd_credits_hp;  /**< number of send wqe entries being used to return credits */
-    int32_t sd_credits_lp;  /**< number of send wqe entries being used to return credits */
+    int32_t rd_posted[2];   /**< number of descriptors posted to the nic*/
+    int32_t rd_credits[2];  /**< number of credits to return to peer */
+    int32_t sd_credits[2];  /**< number of send wqe entries being used to return credits */
     int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
     uint16_t subnet; /**< subnet of this endpoint*/
@@ -181,76 +169,47 @@ void mca_btl_openib_post_recv(void);
 void mca_btl_openib_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
 void mca_btl_openib_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
-    
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, \
-                                             additional) \
-{ \
-   do { \
-    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(endpoint->rd_posted_hp <= mca_btl_openib_component.rd_low+additional && \
-       endpoint->rd_posted_hp < openib_btl->rd_num) { \
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(openib_btl->rd_num -  \
-                                            endpoint->rd_posted_hp, \
-                                            endpoint, \
-                                            &openib_btl->recv_free_eager, \
-                                            endpoint->rd_posted_hp, \
-                                            endpoint->rd_credits_hp, \
-                                            endpoint->lcl_qp_hp); \
-    } \
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-   } while(0); \
-}
 
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, \
-                                            additional) { \
-    do { \
-    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(endpoint->rd_posted_lp <= mca_btl_openib_component.rd_low+additional && \
-       endpoint->rd_posted_lp < openib_btl->rd_num){ \
-       MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(openib_btl->rd_num - \
-                                            endpoint->rd_posted_lp,  \
-                                            endpoint, \
-                                            &openib_btl->recv_free_max, \
-                                            endpoint->rd_posted_lp, \
-                                            endpoint->rd_credits_lp, \
-                                            endpoint->lcl_qp_lp \
-                                            ); } \
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-    } while(0); \
-}
+static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
+        const int additional, const int prio)
+{
+    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
 
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(cnt, \
-                                            my_endpoint, \
-                                            frag_list, \
-                                            rd_posted, \
-                                            rd_credits, \
-                                            qp ) \
-do { \
-    int32_t i; \
-    int rc; \
-    int32_t num_post = cnt; \
-    struct ibv_recv_wr* bad_wr; \
-    for(i = 0; i < num_post; i++) { \
-        ompi_free_list_item_t* item; \
-        mca_btl_openib_frag_t* frag; \
-        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
-        frag = (mca_btl_openib_frag_t*) item; \
-        frag->endpoint = my_endpoint; \
-        frag->sg_entry.length = frag->size + \
-            ((unsigned char*) frag->segment.seg_addr.pval-  \
-             (unsigned char*) frag->hdr);  \
-        if(ibv_post_recv(qp, \
-            &frag->wr_desc.rd_desc, \
-            &bad_wr)) { \
-            BTL_ERROR(("error posting receive errno says %s\n", strerror(errno))); \
-            return OMPI_ERROR; \
-        }\
-    }\
-    OPAL_THREAD_ADD32(&(rd_posted), num_post); \
-    OPAL_THREAD_ADD32(&(rd_credits), num_post); \
-} while(0); 
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+    if(endpoint->rd_posted[prio] <=
+            mca_btl_openib_component.rd_low + additional &&
+            endpoint->rd_posted[prio] < openib_btl->rd_num) {
+        int rc;
+        int32_t i, num_post = openib_btl->rd_num - endpoint->rd_posted[prio];
+        struct ibv_recv_wr* bad_wr;
+        ompi_free_list_t *free_list;
+
+        if(BTL_OPENIB_HP_QP == prio)
+            free_list = &openib_btl->recv_free_eager;
+        else
+            free_list = &openib_btl->recv_free_max;
+
+        for(i = 0; i < num_post; i++) {
+           ompi_free_list_item_t* item;
+           mca_btl_openib_frag_t* frag;
+           OMPI_FREE_LIST_WAIT(free_list, item, rc);
+           frag = (mca_btl_openib_frag_t*)item;
+           frag->endpoint = endpoint;
+           frag->sg_entry.length = frag->size +
+               ((unsigned char*)frag->segment.seg_addr.pval -
+                (unsigned char*)frag->hdr);
+           if(ibv_post_recv(endpoint->lcl_qp[prio], &frag->wr_desc.rd_desc,
+                       &bad_wr)) {
+               BTL_ERROR(("error posting receive errno says %s\n",
+                           strerror(errno)));
+               return OMPI_ERROR;
+           }
+        }
+        OPAL_THREAD_ADD32(&endpoint->rd_posted[prio], num_post);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], num_post);
+     }
+     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
