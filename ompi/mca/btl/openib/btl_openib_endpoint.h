@@ -209,6 +209,7 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
         OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], num_post);
      }
      OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+     return OMPI_SUCCESS;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
