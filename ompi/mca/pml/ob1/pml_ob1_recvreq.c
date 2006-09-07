@@ -260,7 +260,7 @@ static int mca_pml_ob1_recv_request_ack(
                 recvreq->req_rdma_cnt != 0) {
 
                 /* start rdma at current fragment offset - no need to ack */
-                recvreq->req_rdma_offset = recvreq->req_bytes_received;
+                recvreq->req_rdma_offset = bytes_received;
                 return OMPI_SUCCESS;
                 
                 /* are rdma devices available for long rdma protocol */
@@ -296,8 +296,8 @@ static int mca_pml_ob1_recv_request_ack(
                 
                 /* use convertor to figure out the rdma offset for this request */
                 recvreq->req_rdma_offset = bml_endpoint->btl_rdma_offset;
-                if(recvreq->req_rdma_offset < recvreq->req_bytes_received) {
-                    recvreq->req_rdma_offset = recvreq->req_bytes_received;
+                if(recvreq->req_rdma_offset < bytes_received) {
+                    recvreq->req_rdma_offset = bytes_received;
                 }
                 ompi_convertor_set_position( &recvreq->req_recv.req_convertor,
                                              &recvreq->req_rdma_offset );

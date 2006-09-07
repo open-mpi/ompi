@@ -867,7 +867,7 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 
     do {
         /* allocate remaining bytes to BTLs */
-        size_t bytes_remaining = sendreq->req_rdma_offset -
+        int32_t bytes_remaining = sendreq->req_rdma_offset -
             sendreq->req_send_offset;
         size_t prev_bytes_remaining = 0, num_fail = 0;
 
