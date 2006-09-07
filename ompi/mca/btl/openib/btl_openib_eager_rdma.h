@@ -12,7 +12,6 @@
 
 #include "ompi_config.h"
 #include "btl_openib.h"
-#include "btl_openib_endpoint.h"
 #include "ompi/mca/mpool/openib/mpool_openib.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

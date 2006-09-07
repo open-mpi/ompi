@@ -203,10 +203,10 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
 	    /* if not sent via rdma */
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
                 ctl_hdr->type == MCA_BTL_OPENIB_CONTROL_CREDITS) {
-             OPAL_THREAD_ADD32(&endpoint->rd_credits_hp, -1);
+             OPAL_THREAD_ADD32(&endpoint->rd_credits[BTL_OPENIB_HP_QP], -1);
         }
     } else {
-        OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -1);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits[BTL_OPENIB_LP_QP], -1);
     }
 
     switch (ctl_hdr->type) {
@@ -745,21 +745,23 @@ static int btl_openib_handle_incoming_hp(mca_btl_openib_module_t *openib_btl,
 
 
     /* check to see if we need to return credits */
-    if((endpoint->rd_credits_hp >= mca_btl_openib_component.rd_win ||
+    if((endpoint->rd_credits[BTL_OPENIB_HP_QP] >=
+                mca_btl_openib_component.rd_win ||
                 endpoint->eager_rdma_local.credits >=
                 mca_btl_openib_component.rd_win) &&
-            OPAL_THREAD_ADD32(&endpoint->sd_credits_hp, 1) == 1) {
+            OPAL_THREAD_ADD32(&endpoint->sd_credits[BTL_OPENIB_HP_QP],1) == 1) {
         mca_btl_openib_endpoint_send_credits_hp(endpoint);
     }
 
     /* repost receive descriptors if receive not by RDMA */
     if(!MCA_BTL_OPENIB_RDMA_FRAG(frag)) {
         if(mca_btl_openib_component.use_srq) {
-            OPAL_THREAD_ADD32((int32_t*) &openib_btl->srd_posted_hp, -1);
-            MCA_BTL_OPENIB_POST_SRR_HIGH(openib_btl, 0);
+            OPAL_THREAD_ADD32((int32_t*)&openib_btl->srd_posted[BTL_OPENIB_HP_QP], -1);
+            mca_btl_openib_post_srr(openib_btl, 0, BTL_OPENIB_HP_QP);
         } else {
-            OPAL_THREAD_ADD32((int32_t*) &endpoint->rd_posted_hp, -1);
-            MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, 0);
+            OPAL_THREAD_ADD32((int32_t*)&endpoint->rd_posted[BTL_OPENIB_HP_QP],
+                    -1);
+            btl_openib_endpoint_post_rr(endpoint, 0, BTL_OPENIB_HP_QP);
         }
     }
 
@@ -1018,8 +1020,11 @@ static int btl_openib_component_progress(void)
 
                 if(!mca_btl_openib_component.use_srq) {
                     /* check to see if we need to return credits */
-                    if((endpoint->rd_credits_hp >= mca_btl_openib_component.rd_win || endpoint->eager_rdma_local.credits >= mca_btl_openib_component.rd_win) &&
-                        OPAL_THREAD_ADD32(&endpoint->sd_credits_hp, 1) == 1) {
+                    if((endpoint->rd_credits[BTL_OPENIB_HP_QP] >=
+                                mca_btl_openib_component.rd_win ||
+                                endpoint->eager_rdma_local.credits >=
+                                mca_btl_openib_component.rd_win) &&
+                        OPAL_THREAD_ADD32(&endpoint->sd_credits[BTL_OPENIB_HP_QP], 1) == 1) {
                         mca_btl_openib_endpoint_send_credits_hp(endpoint);
                     }
 
@@ -1075,8 +1080,9 @@ static int btl_openib_component_progress(void)
 
                 if(!mca_btl_openib_component.use_srq) {
                     /* check to see if we need to return credits */
-                    if( endpoint->rd_credits_lp >= mca_btl_openib_component.rd_win &&
-                        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, 1) == 1) {
+                    if( endpoint->rd_credits[BTL_OPENIB_LP_QP] >=
+                            mca_btl_openib_component.rd_win &&
+                            OPAL_THREAD_ADD32(&endpoint->sd_credits[BTL_OPENIB_LP_QP], 1) == 1) {
                         mca_btl_openib_endpoint_send_credits_lp(endpoint);
                     }
                 }
@@ -1119,13 +1125,13 @@ static int btl_openib_component_progress(void)
 
                 if(mca_btl_openib_component.use_srq) { 
                     /* repost receive descriptors */
-                    OPAL_THREAD_ADD32((int32_t*) &openib_btl->srd_posted_lp, -1); 
-                    MCA_BTL_OPENIB_POST_SRR_LOW(openib_btl, 0); 
+                    OPAL_THREAD_ADD32((int32_t*)&openib_btl->srd_posted[BTL_OPENIB_LP_QP], -1); 
+                    mca_btl_openib_post_srr(openib_btl, 0, BTL_OPENIB_LP_QP);
                 } else { 
                     /* repost receive descriptors */
-                    OPAL_THREAD_ADD32((int32_t*) &endpoint->rd_posted_lp, -1); 
-                    MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, 0); 
-
+                    OPAL_THREAD_ADD32((int32_t*)
+                            &endpoint->rd_posted[BTL_OPENIB_LP_QP], -1); 
+                    btl_openib_endpoint_post_rr(endpoint, 0, BTL_OPENIB_LP_QP); 
 
                     OPAL_THREAD_ADD32(&endpoint->sd_tokens[BTL_OPENIB_LP_QP],
                          credits);
@@ -1135,8 +1141,9 @@ static int btl_openib_component_progress(void)
                          BTL_OPENIB_LP_QP);
 
                     /* check to see if we need to return credits */
-                    if(endpoint->rd_credits_lp >= mca_btl_openib_component.rd_win &&
-                        OPAL_THREAD_ADD32(&endpoint->sd_credits_lp, 1) == 1) {
+                    if(endpoint->rd_credits[BTL_OPENIB_LP_QP] >=
+                            mca_btl_openib_component.rd_win &&
+                        OPAL_THREAD_ADD32(&endpoint->sd_credits[BTL_OPENIB_LP_QP], 1) == 1) {
                         mca_btl_openib_endpoint_send_credits_lp(endpoint);
                     }
                 }

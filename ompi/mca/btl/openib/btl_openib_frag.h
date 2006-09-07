@@ -20,10 +20,10 @@
 #define MCA_BTL_IB_FRAG_H
 
 #include "ompi_config.h"
-#include "btl_openib.h" 
 
 #include <infiniband/verbs.h> 
 #include "ompi/mca/mpool/openib/mpool_openib.h" 
+#include "ompi/mca/btl/btl.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
