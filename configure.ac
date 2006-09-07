@@ -1137,6 +1137,7 @@ AC_CONFIG_FILES([
     test/asm/Makefile
     test/class/Makefile
     test/memory/Makefile
+    test/runtime/Makefile
     test/support/Makefile
     test/threads/Makefile
     test/util/Makefile
