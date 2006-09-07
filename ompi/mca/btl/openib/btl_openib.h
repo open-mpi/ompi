@@ -412,7 +412,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl);
 #define BTL_OPENIB_HP_QP 0
 #define BTL_OPENIB_LP_QP 1
 
-static inline mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
+static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
         const int additional, const int prio)
 {
     OPAL_THREAD_LOCK(&openib_btl->ib_lock);
@@ -446,6 +446,8 @@ static inline mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
         OPAL_THREAD_ADD32(&openib_btl->srd_posted[prio], num_post);
     }
     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+
+    return OMPI_SUCCESS;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
