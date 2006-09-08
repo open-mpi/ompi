@@ -341,4 +341,15 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #  define OPAL_INT_TO_BOOL(VALUE)  (bool)(VALUE)
 #endif  /* defined(__WINDOWS__) */
 
+/**
+ * Top level define to check 2 things: a) if we want ipv6 support, and
+ * b) the underlying system supports ipv6.  Having one #define for
+ * this makes it simpler to check throughout the code base.
+ */
+#if OMPI_ENABLE_IPV6 && defined(HAVE_STRUCT_SOCKADDR_IN6)
+#define OMPI_WANT_IPV6 1
+#else
+#define OMPI_WANT_IPV6 0
+#endif
+
 #endif /* OMPI_BUILDING */
