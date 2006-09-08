@@ -37,15 +37,22 @@ AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 # 2. When profiling is enabled but weak symbol support is absent.
 #
 
-noinst_LTLIBRARIES =
 if WANT_MPI_F77_BINDINGS_LAYER
-noinst_LTLIBRARIES += libmpi_f77_mpi.la
+lib_LTLIBRARIES = libmpi_f77.la
 else
-noinst_LTLIBRARIES +=
+lib_LTLIBRARIES =
 endif
 
+if WANT_PMPI_F77_BINDINGS_LAYER
+libmpi_f77_la_LIBADD = profile/libmpi_f77_pmpi.la
+else
+libmpi_f77_la_LIBADD =
+endif
+
+
+noinst_LTLIBRARIES =
 if OMPI_WANT_F77_BINDINGS
-noinst_LTLIBRARIES += libmpi_f77.la
+noinst_LTLIBRARIES += libmpi_f77_base.la
 else
 noinst_LTLIBRARIES +=
 endif
@@ -61,8 +68,7 @@ headers = \
 # libmpi_f77.la is always build because it contains some non-profilied
 # functions.
 #
-
-libmpi_f77_la_SOURCES   = \
+libmpi_f77_base_la_SOURCES   = \
         attr_fn_f.c \
         f90_accessors.c \
         strings.c \
@@ -71,8 +77,10 @@ libmpi_f77_la_SOURCES   = \
 #
 # These files are only built and added to libmpi_f77.la in certain cases.
 #
+libmpi_f77_la_SOURCES =
 
-libmpi_f77_mpi_la_SOURCES = \
+if WANT_MPI_F77_BINDINGS_LAYER
+libmpi_f77_la_SOURCES += \
         abort_f.c \
         add_error_class_f.c \
         add_error_code_f.c \
@@ -358,6 +366,7 @@ libmpi_f77_mpi_la_SOURCES = \
         win_test_f.c \
         win_unlock_f.c \
         win_wait_f.c
+endif
 
 #
 # Conditionally install the header files
