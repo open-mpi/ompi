@@ -961,6 +961,17 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 rsh_daemon_info_t *daemon_info;
 
                 OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
+                /* JJH Bug:
+                 * If we are in '--debug-daemons' we keep the ssh connection 
+                 * alive for the span of the run. If we use this option 
+                 * AND we launch on more than "num_concurrent" machines
+                 * then we will deadlock. No connections are terminated 
+                 * until the job is complete, no job is started
+                 * since all the orteds are waiting for all the others
+                 * to come online, and the others ore not launched because
+                 * we are waiting on those that have started to terminate
+                 * their ssh tunnels. :(
+                 */
                 if (mca_pls_rsh_component.num_children++ >=
                     mca_pls_rsh_component.num_concurrent) {
                     opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);

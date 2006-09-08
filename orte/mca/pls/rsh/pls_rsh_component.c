@@ -128,7 +128,8 @@ int orte_pls_rsh_component_open(void)
                        true, tmp);
         tmp = 1;
     }
-    mca_pls_rsh_component.num_concurrent = (tmp != 0 ? true : false);
+    mca_pls_rsh_component.num_concurrent = tmp;
+
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
                                     "Whether or not to enable debugging output for all ORTE components (0 or 1)",
