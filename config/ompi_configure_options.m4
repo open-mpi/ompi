@@ -508,11 +508,11 @@ AC_ARG_ENABLE([ipv6],
         [Disable IPv6 support (default: enabled, but only if the underlying system supports it)])])
 if test "$enable_ipv6" = "no"; then
     AC_MSG_RESULT([no])
-    ompi_want_ipv6=0
+    opal_want_ipv6=0
 else
     AC_MSG_RESULT([yes (if underlying system supports it)])
-    ompi_want_ipv6=1
+    opal_want_ipv6=1
 fi
-AC_DEFINE_UNQUOTED([OMPI_ENABLE_IPV6], [$ompi_want_ipv6],
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_IPV6], [$opal_want_ipv6],
                    [Enable IPv6 support, but only if the underlying system supports it])
 ])
