@@ -290,8 +290,8 @@ find_and_delete() {
 	    echo "--> Errr... there's no configure.in or configure.ac file!"
 	fi
 	if test -n "$fad_cfile"; then
-	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | cut -d\( -f 2 | cut -d\) -f 1`"
-	fi	
+	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | egrep -v '^dnl' | cut -d\( -f 2 | cut -d\) -f 1`"
+	fi
 	if test -f "$auxdir/$fad_file"; then
 	    rm -f "$auxdir/$fad_file"
 	fi
