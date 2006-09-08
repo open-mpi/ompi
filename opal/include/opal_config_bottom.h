@@ -346,10 +346,10 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
  * b) the underlying system supports ipv6.  Having one #define for
  * this makes it simpler to check throughout the code base.
  */
-#if OMPI_ENABLE_IPV6 && defined(HAVE_STRUCT_SOCKADDR_IN6)
-#define OMPI_WANT_IPV6 1
+#if OPAL_ENABLE_IPV6 && defined(HAVE_STRUCT_SOCKADDR_IN6)
+#define OPAL_WANT_IPV6 1
 #else
-#define OMPI_WANT_IPV6 0
+#define OPAL_WANT_IPV6 0
 #endif
 
 #endif /* OMPI_BUILDING */
