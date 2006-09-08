@@ -34,21 +34,9 @@ endif
 # See if we have f77 MPI bindings
 
 if OMPI_WANT_F77_BINDINGS
-f77_base_lib = mpi/f77/libmpi_f77.la
-if WANT_MPI_F77_BINDINGS_LAYER
-f77_mpi_lib = mpi/f77/libmpi_f77_mpi.la
-else
-f77_mpi_lib = 
-endif
-if WANT_PMPI_F77_BINDINGS_LAYER
-f77_pmpi_lib = mpi/f77/profile/libmpi_f77_pmpi.la
-else
-f77_pmpi_lib = 
-endif
+f77_base_lib = mpi/f77/libmpi_f77_base.la
 else
 f77_base_lib =
-f77_mpi_lib =
-f77_pmpi_lib =
 endif
 
 SUBDIRS = \
@@ -82,8 +70,6 @@ libmpi_la_LIBADD = \
 	$(c_mpi_lib) \
 	$(c_pmpi_lib) \
         $(f77_base_lib) \
-	$(f77_mpi_lib) \
-	$(f77_pmpi_lib) \
 	$(MCA_ompi_FRAMEWORK_LIBS) \
 	$(top_ompi_builddir)/orte/liborte.la
 libmpi_la_DEPENDENCIES = $(libmpi_la_LIBADD)
