@@ -642,6 +642,12 @@ AC_CHECK_TYPES([struct sockaddr_in], [], [], [AC_INCLUDES_DEFAULT
 #include <netinet/in.h>
 #endif])
 
+# Do we have IPv6 support?
+AC_CHECK_TYPES([struct sockaddr_in6], [], [], [AC_INCLUDES_DEFAULT
+#ifdef HAVE_NETINET_IN_H
+#include <netinet/in.h>
+#endif])
+
 # SA_RESTART in signal.h
 AC_MSG_CHECKING([if SA_RESTART defined in signal.h])
 AC_EGREP_CPP(yes, [

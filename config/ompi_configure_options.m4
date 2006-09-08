@@ -499,4 +499,20 @@ AC_ARG_ENABLE([binaries],
         [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
 AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
+#
+# Do we want to disable IPv6 support?
+#
+AC_MSG_CHECKING([if want IPv6 support])
+AC_ARG_ENABLE([ipv6],
+    [AC_HELP_STRING([--disable-ipv6],
+        [Disable IPv6 support (default: enabled, but only if the underlying system supports it)])])
+if test "$enable_ipv6" = "no"; then
+    AC_MSG_RESULT([no])
+    ompi_want_ipv6=0
+else
+    AC_MSG_RESULT([yes (if underlying system supports it)])
+    ompi_want_ipv6=1
+fi
+AC_DEFINE_UNQUOTED([OMPI_ENABLE_IPV6], [$ompi_want_ipv6],
+                   [Enable IPv6 support, but only if the underlying system supports it])
 ])
