@@ -604,7 +604,7 @@ pls_poe_launch - launch a POE job
 */
 static int pls_poe_launch(orte_jobid_t jobid)
 {
-    if(!strncmp(mca_pls_poe_component.class,"interactive",11)) {
+    if(0 == strncmp(mca_pls_poe_component.class,"interactive",11)) {
         return poe_launch_interactive(jobid);
     }
     return ORTE_ERR_NOT_IMPLEMENTED;

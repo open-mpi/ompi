@@ -21,12 +21,14 @@
 # -----------------------------------------------------------
 
 AC_DEFUN([MCA_ras_poe_CONFIG],[
-    # POE is only supported on AIX.  We only need executables (no
-    # header files or libraries), but those can be found (or not) at
-    # run-time.  So if we're on AIX, build this component.
-    AC_MSG_CHECKING([if on AIX])
+    # POE used to be only supported on AIX. Now we support it on
+    # AIX and some IBM Linux Machines. 
+    # We only need executables (no header files or libraries), but 
+    # those can be found (or not) at run-time.  So if we're on AIX, 
+    # or Linux build this component.
+    AC_MSG_CHECKING([if on AIX or Linux])
     case $host_os in
-    aix3* | aix4* | aix5*)
+    linux* | aix3* | aix4* | aix5*)
         happy=yes
         ;;
     *)
