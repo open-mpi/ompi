@@ -57,6 +57,9 @@ version 1.0.
 1.1.2
 -----
 
+- Only install mpif.h if the rest of the Fortran bindings are
+  installed.
+- Fixes for BProc node selection.
 - Add some missing Fortran MPI-2 IO constants.
 
 
