@@ -577,7 +577,7 @@ static void mca_btl_openib_endpoint_recv(
     void* cbdata)
 {
     mca_btl_openib_proc_t *ib_proc;
-    mca_btl_openib_endpoint_t *ib_endpoint;
+    mca_btl_openib_endpoint_t *ib_endpoint = NULL;
     int endpoint_state;
     int rc;
     uint32_t i; 

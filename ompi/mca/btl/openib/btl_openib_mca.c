@@ -304,7 +304,7 @@ int btl_openib_register_mca_params(void)
                   "messages are received from a given peer "
                   "(must be >= 1)", 
                   16, &ival, REGINT_GE_ONE));
-    mca_btl_openib_component.eager_rdma_threshold = (uint32_t) ival;
+    mca_btl_openib_component.eager_rdma_threshold = (int32_t) ival;
 
     CHECK(reg_int("max_eager_rdma", "Maximum number of peers allowed to use "
                   "RDMA for short messages (RDMA is used for all long "
