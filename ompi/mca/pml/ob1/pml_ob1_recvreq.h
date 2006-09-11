@@ -52,6 +52,7 @@ struct mca_pml_ob1_recv_request_t {
     uint32_t req_rdma_cnt;
     uint32_t req_rdma_idx;
     bool req_pending;
+    bool req_ack_sent; /**< whether ack was sent to the sender */
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
 
@@ -219,6 +220,7 @@ do {                                                                            
     (request)->req_pipeline_depth = 0;                                            \
     (request)->req_rdma_idx = 0;                                                  \
     (request)->req_pending = false;                                               \
+    (request)->req_ack_sent = false;                                              \
                                                                                   \
     MCA_PML_BASE_RECV_START( &(request)->req_recv.req_base );                     \
                                                                                   \
