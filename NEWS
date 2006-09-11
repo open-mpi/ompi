@@ -57,6 +57,7 @@ version 1.0.
 1.1.2
 -----
 
+- Allow the "poe" RAS component to be built on AIX or Linux.
 - Only install mpif.h if the rest of the Fortran bindings are
   installed.
 - Fixes for BProc node selection.
