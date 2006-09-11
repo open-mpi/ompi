@@ -304,7 +304,8 @@ static int mca_pml_ob1_recv_request_ack(
             }
         }
     }
-
+    /* let know to shedule function there is no need to put ACK flag */
+    recvreq->req_ack_sent = true;
     return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.pval,
             recvreq, recvreq->req_rdma_offset);
 }
@@ -606,7 +607,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
     mca_bml_base_endpoint_t* bml_endpoint =
         (mca_bml_base_endpoint_t*) proc->proc_bml; 
     mca_bml_base_btl_t* bml_btl; 
-    bool ack = false;
     int num_btl_avail =
         mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
     int num_tries = num_btl_avail;
@@ -659,11 +659,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                  bml_btl = recvreq->req_rdma[recvreq->req_rdma_idx].bml_btl;
                  num_btl_avail = recvreq->req_rdma_cnt - recvreq->req_rdma_idx;
                  reg = recvreq->req_rdma[recvreq->req_rdma_idx].btl_reg;
-
-                 /*
-                  * Send ack to the sender so it can properly complete request
-                  */
-                 ack = true; 
 
                  if(++recvreq->req_rdma_idx >= recvreq->req_rdma_cnt)
                     recvreq->req_rdma_idx = 0;
@@ -749,14 +744,16 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             /* fill in rdma header */
             hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
             hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
-            hdr->hdr_common.hdr_flags = ack ? MCA_PML_OB1_HDR_TYPE_ACK : 0; 
+            hdr->hdr_common.hdr_flags =
+                (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
             hdr->hdr_req = recvreq->req_send;
             hdr->hdr_des.pval = dst;
             hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
             hdr->hdr_seg_cnt = dst->des_dst_cnt;
             memcpy(hdr->hdr_segs, dst->des_dst,
                     dst->des_dst_cnt * sizeof(mca_btl_base_segment_t));
-
+            if(!recvreq->req_ack_sent)
+                recvreq->req_ack_sent = true;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
             hdr->hdr_common.hdr_flags |= MCA_PML_OB1_HDR_FLAGS_NBO;
