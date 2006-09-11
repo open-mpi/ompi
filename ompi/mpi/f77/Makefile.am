@@ -29,31 +29,51 @@ SUBDIRS = profile
 
 AM_CPPFLAGS = -DOMPI_PROFILE_LAYER=0 -DOMPI_COMPILING_F77_WRAPPERS=1
 
+# The top directory only builds MPI_* bindings and some support
+# glue. The bottom directory only builds PMPI_* bindings.  Each
+# directory is built when certain conditions are met.  If the F77
+# bindings are disabled, nothing in the top or bottom directory is
+# built.
 #
-# The top directory always builds MPI_* bindings. The bottom directory
-# always builds PMPI_* bindings. The cases where the top directory
-# needs to be built are
-# 1. When profiling is disabled.
-# 2. When profiling is enabled but weak symbol support is absent.
+# If the F77 MPI API bindings are enabled, the glue functions in the
+# top directory are always built.
+#
+# The cases where the MPI API functions are build top directory needs
+# to be built are:
+#
+# 1. When profiling is disabled
+# 2. When profiling is enabled but weak symbol support is absent
 #
 
-if WANT_MPI_F77_BINDINGS_LAYER
-lib_LTLIBRARIES = libmpi_f77.la
-else
 lib_LTLIBRARIES =
-endif
-
-if WANT_PMPI_F77_BINDINGS_LAYER
-libmpi_f77_la_LIBADD = profile/libmpi_f77_pmpi.la
-else
 libmpi_f77_la_LIBADD =
+noinst_LTLIBRARIES =
+
+# Are we building the F77 bindings at all?
+if OMPI_WANT_F77_BINDINGS
+# If yes, then we need to build the installable library and the glue
+# convenience library that will be sucked up into the main libmpi.
+lib_LTLIBRARIES += libmpi_f77.la
+noinst_LTLIBRARIES += libmpi_f77_base.la
+# Do we need to suck in the convenience library from the lower
+# directory?
+if WANT_PMPI_F77_BINDINGS_LAYER
+libmpi_f77_la_LIBADD += profile/libmpi_f77_pmpi.la
+else
+# Is this else conditional really necessary?  There *used* to be an AM
+# bug that forced this; is it still there?  (there is no harm in
+# having this extra statement; I just don't know if it's *necessary*
+# anymore)
+libmpi_f77_la_LIBADD += 
 endif
 
-
-noinst_LTLIBRARIES =
-if OMPI_WANT_F77_BINDINGS
-noinst_LTLIBRARIES += libmpi_f77_base.la
 else
+
+# No, we are not building the F77 bindings at all.  Ditto on the
+# comment above about whether we really need these statements or
+# not...
+lib_LTLIBRARIES +=
+libmpi_f77_la_LIBADD += 
 noinst_LTLIBRARIES +=
 endif
 
