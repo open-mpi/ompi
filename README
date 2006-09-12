@@ -42,7 +42,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (17 Jun 2006):
+base as of this writing (12 Sep 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -222,6 +222,11 @@ base as of this writing (17 Jun 2006):
   messages; latter fragments do not have this size restriction.  The
   MCA parameter btl_mx_max_send_size can be used to vary the maximum
   size of subsequent fragments.
+
+- The Open Fabrics Enterprise Distribution (OFED) software package
+  v1.0 will not work properly with Open MPI v1.2 (and later) due to
+  how its Mellanox InfiniBand plugin driver is created.  The problem
+  is fixed OFED v1.1 (and beyond).
 
 - The current version of the Open MPI point-to-point engine does not
   yet support hardware-level MPI message matching.  As such, MPI
