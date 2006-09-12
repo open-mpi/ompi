@@ -166,8 +166,7 @@ struct mca_btl_openib_module_t {
     mca_btl_openib_port_info_t port_info;  /* contains only the subnet right now */ 
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;           /**< ID of the PORT */ 
-    struct ibv_cq *ib_cq_hp;
-    struct ibv_cq *ib_cq_lp; 
+    struct ibv_cq *ib_cq[2];
     struct ibv_port_attr ib_port_attr; 
     uint16_t lid;                      /**< lid that is actually used (for LMC) */
     uint8_t src_path_bits;             /**< offset from base lid (for LMC) */
@@ -433,9 +432,6 @@ static inline int mca_btl_openib_post_srr(mca_btl_openib_module_t* openib_btl,
         for(i = 0; i < num_post; i++) {
             OMPI_FREE_LIST_WAIT(free_list, item, rc);
             frag = (mca_btl_openib_frag_t*)item;
-            frag->sg_entry.length = frag->size +
-                ((unsigned char*)frag->segment.seg_addr.pval -
-                 (unsigned char*)frag->hdr);
             if(ibv_post_srq_recv(openib_btl->srq[prio], &frag->wr_desc.rd_desc,
                         &bad_wr)) {
                 BTL_ERROR(("error posting receive descriptors to shared "

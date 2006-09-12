@@ -177,12 +177,13 @@ int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size
             openib_btl->hca->ib_dev_attr.max_cq : min_cq_size;
 #if OMPI_MCA_BTL_OPENIB_HAVE_RESIZE_CQ
         if(!first_time) { 
-            rc = ibv_resize_cq(openib_btl->ib_cq_lp, mca_btl_openib_component.ib_cq_size);
+            rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], mca_btl_openib_component.ib_cq_size);
             if(rc) {
                 BTL_ERROR(("cannot resize low priority completion queue, error: %d", rc));
                 return OMPI_ERROR;
             }
-            rc = ibv_resize_cq(openib_btl->ib_cq_hp, mca_btl_openib_component.ib_cq_size); 
+            rc = ibv_resize_cq(openib_btl->ib_cq[BTL_OPENIB_HP_QP],
+                    mca_btl_openib_component.ib_cq_size);
             if(rc) {
                 BTL_ERROR(("cannot resize high priority completion queue, error: %d", rc));
                 return OMPI_ERROR;
@@ -797,16 +798,16 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     
     /* Create the low and high priority queue pairs */ 
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
-    openib_btl->ib_cq_lp = 
+    openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL); 
 #else
-    openib_btl->ib_cq_lp = 
+    openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL, NULL, 0); 
 #endif
     
-    if(NULL == openib_btl->ib_cq_lp) {
+    if(NULL == openib_btl->ib_cq[BTL_OPENIB_LP_QP]) {
         BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
                   ibv_get_device_name(openib_btl->hca->ib_dev), 
                   strerror(errno))); 
@@ -814,16 +815,16 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     }
 
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
-    openib_btl->ib_cq_hp = 
+    openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL); 
 #else
-    openib_btl->ib_cq_hp = 
+    openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL, NULL, 0); 
 #endif    
 
-    if(NULL == openib_btl->ib_cq_hp) {
+    if(NULL == openib_btl->ib_cq[BTL_OPENIB_HP_QP]) {
         BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
                   ibv_get_device_name(openib_btl->hca->ib_dev), 
                   strerror(errno))); 
