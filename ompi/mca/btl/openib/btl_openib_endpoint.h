@@ -154,8 +154,7 @@ struct mca_btl_base_endpoint_t {
     /**< info about local RDMA buffer */
     int32_t eager_rdma_index; /**< index into RDMA buffers pointer array */
     uint32_t index;           /**< index of the endpoint in endpoints array */
-    struct mca_btl_openib_frag_t *hp_credit_frag; /**< frag for sending explicit high priority credits */
-    struct mca_btl_openib_frag_t *lp_credit_frag; /**< frag for sending explicit low priority credits */
+    struct mca_btl_openib_frag_t *credit_frag[2]; /**< frags for sending explicit high priority credits */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
@@ -166,8 +165,7 @@ OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
 int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_openib_frag_t* frag);
 int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_openib_post_recv(void);
-void mca_btl_openib_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
-void mca_btl_openib_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
+void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
 
 static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
@@ -195,9 +193,6 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
            OMPI_FREE_LIST_WAIT(free_list, item, rc);
            frag = (mca_btl_openib_frag_t*)item;
            frag->endpoint = endpoint;
-           frag->sg_entry.length = frag->size +
-               ((unsigned char*)frag->segment.seg_addr.pval -
-                (unsigned char*)frag->hdr);
            if(ibv_post_recv(endpoint->lcl_qp[prio], &frag->wr_desc.rd_desc,
                        &bad_wr)) {
                BTL_ERROR(("error posting receive errno says %s\n",
@@ -210,6 +205,23 @@ static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
      }
      OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
      return OMPI_SUCCESS;
+}
+
+static inline int btl_openib_check_send_credits(
+        mca_btl_openib_endpoint_t *endpoint, const int prio)
+{
+    if(!mca_btl_openib_component.use_srq &&
+            endpoint->rd_credits[prio] >= mca_btl_openib_component.rd_win)
+        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+
+    if(BTL_OPENIB_LP_QP == prio) /* nothing more for low prio QP */
+        return 0;
+
+    /* for high prio check eager RDMA credits */
+    if(endpoint->eager_rdma_local.credits >= mca_btl_openib_component.rd_win)
+        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+
+    return 0;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -38,7 +38,7 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
     }
     frag->segment.seg_len = frag->size;
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    frag->sg_entry.length = frag->size; 
+    frag->sg_entry.length = frag->size + sizeof(mca_btl_openib_header_t);
     frag->base.des_flags = 0; 
 }
 
