@@ -24,6 +24,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -66,22 +67,24 @@
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/basename.h"
-#include "orte/orte_constants.h"
+
+#include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
+
 #include "orte/runtime/orte_wait.h"
+
 #include "orte/mca/ns/ns.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/ras/ras_types.h"
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/smr/smr.h"
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
-#include "orte/util/sys_info.h"
 
 #if !defined(__WINDOWS__)
 extern char **environ;
@@ -92,13 +95,14 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
 #endif
 
 
-orte_pls_base_module_1_0_0_t orte_pls_rsh_module = {
+orte_pls_base_module_t orte_pls_rsh_module = {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
     orte_pls_rsh_launch_threaded,
 #else
     orte_pls_rsh_launch,
 #endif
     orte_pls_rsh_terminate_job,
+    orte_pls_rsh_terminate_orteds,
     orte_pls_rsh_terminate_proc,
     orte_pls_rsh_signal_job,
     orte_pls_rsh_signal_proc,
@@ -384,7 +388,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 {
     opal_list_t mapping;
     opal_list_item_t* m_item, *n_item;
-    size_t num_nodes;
+    orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
@@ -401,6 +405,13 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     bool remote_bash = false, remote_csh = false;
     bool local_bash = false, local_csh = false;
     char *lib_base = NULL, *bin_base = NULL;
+    opal_list_t daemons;
+    orte_pls_daemon_info_t *dmn;
+    
+    /* setup a list that will contain the info for all the daemons
+     * so we can store it on the registry when done
+     */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
 
     /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
@@ -433,6 +444,12 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* setup the orted triggers for passing their launch info */
+    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
     /* need integer value for command line parameter */
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -519,7 +536,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, mca_pls_rsh_component.orted);
 
     /* check for debug flags */
-    orte_pls_base_proxy_mca_argv(&argc, &argv);
+    orte_pls_base_mca_argv(&argc, &argv);
 
     opal_argv_append(&argc, &argv, "--bootproxy");
     opal_argv_append(&argc, &argv, jobid_string);
@@ -647,6 +664,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if(ras_node->node_launched++ != 0)
                 continue;
 
+            /* new daemon - setup to record its info */
+            dmn = OBJ_NEW(orte_pls_daemon_info_t);
+            opal_list_append(&daemons, &dmn->super);
+            
             /* setup node name */
             free(argv[node_name_index1]);
             if (NULL != ras_node->node_username &&
@@ -659,6 +680,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
             free(argv[node_name_index2]);
             argv[node_name_index2] = strdup(ras_node->node_name);
+            
+            /* save it in the daemon info */
+            dmn->nodename = strdup(ras_node->node_name);
 
             /* initialize daemons process name */
             rc = orte_ns.create_process_name(&name, ras_node->node_cellid, 0, vpid);
@@ -666,9 +690,23 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            
+            /* save it in the daemon info */
+            dmn->cell = ras_node->node_cellid;
+            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
 
             /* rsh a child to exec the rsh/ssh session */
-    #ifdef __WINDOWS__
+            
+            /* set the process state to "launched" */
+            if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(name, ORTE_PROC_STATE_LAUNCHED, 0))) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+
+#ifdef __WINDOWS__
             printf("Unimplemented feature for windows\n");
             return;
     #if 0
@@ -977,13 +1015,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
                 }
                 OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
-
-                /* save the daemons name on the node */
-                if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(ras_node,jobid,name))) {
-                    ORTE_ERROR_LOG(rc);
-                    goto cleanup;
-                }
-
+                
                 /* setup callback on sigchild - wait until setup above is complete
                  * as the callback can occur in the call to orte_wait_cb
                  */
@@ -1002,12 +1034,22 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             free(name);
         }
     }
+    
+    /* all done, so store the daemon info on the registry */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
 cleanup:
     while (NULL != (m_item = opal_list_remove_first(&mapping))) {
         OBJ_RELEASE(m_item);
     }
     OBJ_DESTRUCT(&mapping);
+
+    while (NULL != (m_item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(m_item);
+    }
+    OBJ_DESTRUCT(&daemons);
 
     if (NULL != lib_base) {
         free(lib_base);
@@ -1024,41 +1066,112 @@ cleanup:
 
 
 /**
- * Query the registry for all nodes participating in the job
+ * Terminate all processes for a given job
  */
 int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
 {
-    return orte_pls_base_proxy_terminate_job(jobid);
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* order them to kill their local procs for this job */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
+/**
+* Terminate the orteds for a given job
+ */
+int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid)
+{
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* now tell them to die! */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
+}
+
+/*
+ * Terminate a specific process
+ */
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 {
-    return orte_pls_base_proxy_terminate_proc(proc);
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
 {
-    return orte_pls_base_proxy_signal_job(jobid, signal);
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&daemons);
+        return rc;
+    }
+    
+    /* order them to pass this signal to their local procs */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(&daemons, signal))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
 int orte_pls_rsh_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
-    return orte_pls_base_proxy_signal_proc(proc, signal);
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 int orte_pls_rsh_finalize(void)
 {
-    if (mca_pls_rsh_component.reap) {
-        OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-        while (mca_pls_rsh_component.num_children > 0) {
-            opal_condition_wait(&mca_pls_rsh_component.cond, &mca_pls_rsh_component.lock);
-        }
-        OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
-    }
-
+    int rc;
+    
     /* cleanup any pending recvs */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
-    return ORTE_SUCCESS;
+    if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    return rc;
 }
 
 

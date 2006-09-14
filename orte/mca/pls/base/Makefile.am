@@ -19,12 +19,14 @@
 dist_pkgdata_DATA += base/help-pls-base.txt
 
 headers += \
+        base/pls_private.h \
         base/base.h
 
 libmca_pls_la_SOURCES += \
         base/pls_base_close.c \
-        base/pls_base_context.c \
+        base/pls_base_general_support_fns.c \
         base/pls_base_open.c \
+        base/pls_base_receive.c \
         base/pls_base_select.c \
-	base/pls_base_state.c \
-	base/pls_base_proxy.c
+	base/pls_base_dmn_registry_fns.c \
+	base/pls_base_orted_cmds.c

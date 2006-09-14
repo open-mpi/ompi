@@ -98,7 +98,8 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
     OBJ_RELEASE(value);
 
     /* check to see if we need to increment orte-standard counters */
-    if (ORTE_PROC_STATE_AT_STG1 == state ||
+    if (ORTE_PROC_STATE_LAUNCHED == state ||
+        ORTE_PROC_STATE_AT_STG1 == state ||
         ORTE_PROC_STATE_AT_STG2 == state ||
         ORTE_PROC_STATE_AT_STG3 == state ||
         ORTE_PROC_STATE_FINALIZED == state ||
@@ -128,6 +129,13 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
     
         /* see which state we are in - let that determine the counter */
         switch (state) {
+            case ORTE_PROC_STATE_LAUNCHED:
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_LAUNCHED, ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto cleanup;
+                }
+                break;
+                
             case ORTE_PROC_STATE_AT_STG1:
                 if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_NUM_AT_STG1, ORTE_UNDEF, NULL))) {
                     ORTE_ERROR_LOG(rc);

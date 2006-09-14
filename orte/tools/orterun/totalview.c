@@ -65,7 +65,7 @@ extern char **environ;
 #include "opal/mca/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr_types.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/runtime/runtime.h"
 #include "totalview.h"
 

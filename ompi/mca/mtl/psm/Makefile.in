@@ -148,17 +148,16 @@ am__aclocal_m4_deps = $(top_srcdir)/acinclude.m4 \
 	$(top_srcdir)/opal/mca/timer/linux/configure.m4 \
 	$(top_srcdir)/opal/mca/timer/solaris/configure.m4 \
 	$(top_srcdir)/opal/mca/timer/windows/configure.m4 \
+	$(top_srcdir)/orte/mca/errmgr/bproc/configure.m4 \
+	$(top_srcdir)/orte/mca/odls/bproc/configure.m4 \
+	$(top_srcdir)/orte/mca/odls/default/configure.m4 \
 	$(top_srcdir)/orte/mca/oob/tcp/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/bproc/configure.m4 \
-	$(top_srcdir)/orte/mca/pls/bproc_orted/configure.m4 \
-	$(top_srcdir)/orte/mca/pls/fork/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/gridengine/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/poe/configure.m4 \
-	$(top_srcdir)/orte/mca/pls/process/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/rsh/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/slurm/configure.m4 \
 	$(top_srcdir)/orte/mca/pls/tm/configure.m4 \
-	$(top_srcdir)/orte/mca/pls/xgrid/configure.m4 \
 	$(top_srcdir)/orte/mca/ras/bjs/configure.m4 \
 	$(top_srcdir)/orte/mca/ras/gridengine/configure.m4 \
 	$(top_srcdir)/orte/mca/ras/lsf_bproc/configure.m4 \
@@ -416,6 +415,13 @@ MCA_ns_DSO_SUBDIRS = @MCA_ns_DSO_SUBDIRS@
 MCA_ns_STATIC_COMPONENTS = @MCA_ns_STATIC_COMPONENTS@
 MCA_ns_STATIC_LTLIBS = @MCA_ns_STATIC_LTLIBS@
 MCA_ns_STATIC_SUBDIRS = @MCA_ns_STATIC_SUBDIRS@
+MCA_odls_ALL_COMPONENTS = @MCA_odls_ALL_COMPONENTS@
+MCA_odls_ALL_SUBDIRS = @MCA_odls_ALL_SUBDIRS@
+MCA_odls_DSO_COMPONENTS = @MCA_odls_DSO_COMPONENTS@
+MCA_odls_DSO_SUBDIRS = @MCA_odls_DSO_SUBDIRS@
+MCA_odls_STATIC_COMPONENTS = @MCA_odls_STATIC_COMPONENTS@
+MCA_odls_STATIC_LTLIBS = @MCA_odls_STATIC_LTLIBS@
+MCA_odls_STATIC_SUBDIRS = @MCA_odls_STATIC_SUBDIRS@
 MCA_ompi_FRAMEWORKS = @MCA_ompi_FRAMEWORKS@
 MCA_ompi_FRAMEWORKS_SUBDIRS = @MCA_ompi_FRAMEWORKS_SUBDIRS@
 MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS = @MCA_ompi_FRAMEWORK_COMPONENT_ALL_SUBDIRS@
@@ -609,6 +615,14 @@ OMPI_BUILD_common_portals_DSO_FALSE = @OMPI_BUILD_common_portals_DSO_FALSE@
 OMPI_BUILD_common_portals_DSO_TRUE = @OMPI_BUILD_common_portals_DSO_TRUE@
 OMPI_BUILD_common_sm_DSO_FALSE = @OMPI_BUILD_common_sm_DSO_FALSE@
 OMPI_BUILD_common_sm_DSO_TRUE = @OMPI_BUILD_common_sm_DSO_TRUE@
+OMPI_BUILD_errmgr_bproc_DSO_FALSE = @OMPI_BUILD_errmgr_bproc_DSO_FALSE@
+OMPI_BUILD_errmgr_bproc_DSO_TRUE = @OMPI_BUILD_errmgr_bproc_DSO_TRUE@
+OMPI_BUILD_errmgr_hnp_DSO_FALSE = @OMPI_BUILD_errmgr_hnp_DSO_FALSE@
+OMPI_BUILD_errmgr_hnp_DSO_TRUE = @OMPI_BUILD_errmgr_hnp_DSO_TRUE@
+OMPI_BUILD_errmgr_orted_DSO_FALSE = @OMPI_BUILD_errmgr_orted_DSO_FALSE@
+OMPI_BUILD_errmgr_orted_DSO_TRUE = @OMPI_BUILD_errmgr_orted_DSO_TRUE@
+OMPI_BUILD_errmgr_proxy_DSO_FALSE = @OMPI_BUILD_errmgr_proxy_DSO_FALSE@
+OMPI_BUILD_errmgr_proxy_DSO_TRUE = @OMPI_BUILD_errmgr_proxy_DSO_TRUE@
 OMPI_BUILD_gpr_null_DSO_FALSE = @OMPI_BUILD_gpr_null_DSO_FALSE@
 OMPI_BUILD_gpr_null_DSO_TRUE = @OMPI_BUILD_gpr_null_DSO_TRUE@
 OMPI_BUILD_gpr_proxy_DSO_FALSE = @OMPI_BUILD_gpr_proxy_DSO_FALSE@
@@ -651,6 +665,10 @@ OMPI_BUILD_ns_proxy_DSO_FALSE = @OMPI_BUILD_ns_proxy_DSO_FALSE@
 OMPI_BUILD_ns_proxy_DSO_TRUE = @OMPI_BUILD_ns_proxy_DSO_TRUE@
 OMPI_BUILD_ns_replica_DSO_FALSE = @OMPI_BUILD_ns_replica_DSO_FALSE@
 OMPI_BUILD_ns_replica_DSO_TRUE = @OMPI_BUILD_ns_replica_DSO_TRUE@
+OMPI_BUILD_odls_bproc_DSO_FALSE = @OMPI_BUILD_odls_bproc_DSO_FALSE@
+OMPI_BUILD_odls_bproc_DSO_TRUE = @OMPI_BUILD_odls_bproc_DSO_TRUE@
+OMPI_BUILD_odls_default_DSO_FALSE = @OMPI_BUILD_odls_default_DSO_FALSE@
+OMPI_BUILD_odls_default_DSO_TRUE = @OMPI_BUILD_odls_default_DSO_TRUE@
 OMPI_BUILD_oob_tcp_DSO_FALSE = @OMPI_BUILD_oob_tcp_DSO_FALSE@
 OMPI_BUILD_oob_tcp_DSO_TRUE = @OMPI_BUILD_oob_tcp_DSO_TRUE@
 OMPI_BUILD_osc_pt2pt_DSO_FALSE = @OMPI_BUILD_osc_pt2pt_DSO_FALSE@
@@ -665,24 +683,18 @@ OMPI_BUILD_paffinity_windows_DSO_FALSE = @OMPI_BUILD_paffinity_windows_DSO_FALSE
 OMPI_BUILD_paffinity_windows_DSO_TRUE = @OMPI_BUILD_paffinity_windows_DSO_TRUE@
 OMPI_BUILD_pls_bproc_DSO_FALSE = @OMPI_BUILD_pls_bproc_DSO_FALSE@
 OMPI_BUILD_pls_bproc_DSO_TRUE = @OMPI_BUILD_pls_bproc_DSO_TRUE@
-OMPI_BUILD_pls_bproc_orted_DSO_FALSE = @OMPI_BUILD_pls_bproc_orted_DSO_FALSE@
-OMPI_BUILD_pls_bproc_orted_DSO_TRUE = @OMPI_BUILD_pls_bproc_orted_DSO_TRUE@
-OMPI_BUILD_pls_fork_DSO_FALSE = @OMPI_BUILD_pls_fork_DSO_FALSE@
-OMPI_BUILD_pls_fork_DSO_TRUE = @OMPI_BUILD_pls_fork_DSO_TRUE@
 OMPI_BUILD_pls_gridengine_DSO_FALSE = @OMPI_BUILD_pls_gridengine_DSO_FALSE@
 OMPI_BUILD_pls_gridengine_DSO_TRUE = @OMPI_BUILD_pls_gridengine_DSO_TRUE@
 OMPI_BUILD_pls_poe_DSO_FALSE = @OMPI_BUILD_pls_poe_DSO_FALSE@
 OMPI_BUILD_pls_poe_DSO_TRUE = @OMPI_BUILD_pls_poe_DSO_TRUE@
-OMPI_BUILD_pls_process_DSO_FALSE = @OMPI_BUILD_pls_process_DSO_FALSE@
-OMPI_BUILD_pls_process_DSO_TRUE = @OMPI_BUILD_pls_process_DSO_TRUE@
+OMPI_BUILD_pls_proxy_DSO_FALSE = @OMPI_BUILD_pls_proxy_DSO_FALSE@
+OMPI_BUILD_pls_proxy_DSO_TRUE = @OMPI_BUILD_pls_proxy_DSO_TRUE@
 OMPI_BUILD_pls_rsh_DSO_FALSE = @OMPI_BUILD_pls_rsh_DSO_FALSE@
 OMPI_BUILD_pls_rsh_DSO_TRUE = @OMPI_BUILD_pls_rsh_DSO_TRUE@
 OMPI_BUILD_pls_slurm_DSO_FALSE = @OMPI_BUILD_pls_slurm_DSO_FALSE@
 OMPI_BUILD_pls_slurm_DSO_TRUE = @OMPI_BUILD_pls_slurm_DSO_TRUE@
 OMPI_BUILD_pls_tm_DSO_FALSE = @OMPI_BUILD_pls_tm_DSO_FALSE@
 OMPI_BUILD_pls_tm_DSO_TRUE = @OMPI_BUILD_pls_tm_DSO_TRUE@
-OMPI_BUILD_pls_xgrid_DSO_FALSE = @OMPI_BUILD_pls_xgrid_DSO_FALSE@
-OMPI_BUILD_pls_xgrid_DSO_TRUE = @OMPI_BUILD_pls_xgrid_DSO_TRUE@
 OMPI_BUILD_pml_cm_DSO_FALSE = @OMPI_BUILD_pml_cm_DSO_FALSE@
 OMPI_BUILD_pml_cm_DSO_TRUE = @OMPI_BUILD_pml_cm_DSO_TRUE@
 OMPI_BUILD_pml_dr_DSO_FALSE = @OMPI_BUILD_pml_dr_DSO_FALSE@
@@ -703,6 +715,8 @@ OMPI_BUILD_ras_lsf_bproc_DSO_FALSE = @OMPI_BUILD_ras_lsf_bproc_DSO_FALSE@
 OMPI_BUILD_ras_lsf_bproc_DSO_TRUE = @OMPI_BUILD_ras_lsf_bproc_DSO_TRUE@
 OMPI_BUILD_ras_poe_DSO_FALSE = @OMPI_BUILD_ras_poe_DSO_FALSE@
 OMPI_BUILD_ras_poe_DSO_TRUE = @OMPI_BUILD_ras_poe_DSO_TRUE@
+OMPI_BUILD_ras_proxy_DSO_FALSE = @OMPI_BUILD_ras_proxy_DSO_FALSE@
+OMPI_BUILD_ras_proxy_DSO_TRUE = @OMPI_BUILD_ras_proxy_DSO_TRUE@
 OMPI_BUILD_ras_slurm_DSO_FALSE = @OMPI_BUILD_ras_slurm_DSO_FALSE@
 OMPI_BUILD_ras_slurm_DSO_TRUE = @OMPI_BUILD_ras_slurm_DSO_TRUE@
 OMPI_BUILD_ras_tm_DSO_FALSE = @OMPI_BUILD_ras_tm_DSO_FALSE@
@@ -715,8 +729,12 @@ OMPI_BUILD_rcache_vma_DSO_FALSE = @OMPI_BUILD_rcache_vma_DSO_FALSE@
 OMPI_BUILD_rcache_vma_DSO_TRUE = @OMPI_BUILD_rcache_vma_DSO_TRUE@
 OMPI_BUILD_rds_hostfile_DSO_FALSE = @OMPI_BUILD_rds_hostfile_DSO_FALSE@
 OMPI_BUILD_rds_hostfile_DSO_TRUE = @OMPI_BUILD_rds_hostfile_DSO_TRUE@
+OMPI_BUILD_rds_proxy_DSO_FALSE = @OMPI_BUILD_rds_proxy_DSO_FALSE@
+OMPI_BUILD_rds_proxy_DSO_TRUE = @OMPI_BUILD_rds_proxy_DSO_TRUE@
 OMPI_BUILD_rds_resfile_DSO_FALSE = @OMPI_BUILD_rds_resfile_DSO_FALSE@
 OMPI_BUILD_rds_resfile_DSO_TRUE = @OMPI_BUILD_rds_resfile_DSO_TRUE@
+OMPI_BUILD_rmaps_proxy_DSO_FALSE = @OMPI_BUILD_rmaps_proxy_DSO_FALSE@
+OMPI_BUILD_rmaps_proxy_DSO_TRUE = @OMPI_BUILD_rmaps_proxy_DSO_TRUE@
 OMPI_BUILD_rmaps_round_robin_DSO_FALSE = @OMPI_BUILD_rmaps_round_robin_DSO_FALSE@
 OMPI_BUILD_rmaps_round_robin_DSO_TRUE = @OMPI_BUILD_rmaps_round_robin_DSO_TRUE@
 OMPI_BUILD_rmgr_cnos_DSO_FALSE = @OMPI_BUILD_rmgr_cnos_DSO_FALSE@
@@ -971,6 +989,9 @@ common_portals_CPPFLAGS = @common_portals_CPPFLAGS@
 common_portals_LDFLAGS = @common_portals_LDFLAGS@
 common_portals_LIBS = @common_portals_LIBS@
 datadir = @datadir@
+errmgr_bproc_CPPFLAGS = @errmgr_bproc_CPPFLAGS@
+errmgr_bproc_LDFLAGS = @errmgr_bproc_LDFLAGS@
+errmgr_bproc_LIBS = @errmgr_bproc_LIBS@
 exec_prefix = @exec_prefix@
 host = @host@
 host_alias = @host_alias@
@@ -1017,21 +1038,19 @@ mtl_psm_CFLAGS = @mtl_psm_CFLAGS@
 mtl_psm_CPPFLAGS = @mtl_psm_CPPFLAGS@
 mtl_psm_LDFLAGS = @mtl_psm_LDFLAGS@
 mtl_psm_LIBS = @mtl_psm_LIBS@
+odls_bproc_CPPFLAGS = @odls_bproc_CPPFLAGS@
+odls_bproc_LDFLAGS = @odls_bproc_LDFLAGS@
+odls_bproc_LIBS = @odls_bproc_LIBS@
 oldincludedir = @oldincludedir@
 pls_bproc_CPPFLAGS = @pls_bproc_CPPFLAGS@
 pls_bproc_LDFLAGS = @pls_bproc_LDFLAGS@
 pls_bproc_LIBS = @pls_bproc_LIBS@
-pls_bproc_orted_CPPFLAGS = @pls_bproc_orted_CPPFLAGS@
-pls_bproc_orted_LDFLAGS = @pls_bproc_orted_LDFLAGS@
-pls_bproc_orted_LIBS = @pls_bproc_orted_LIBS@
 pls_slurm_CPPFLAGS = @pls_slurm_CPPFLAGS@
 pls_slurm_LDFLAGS = @pls_slurm_LDFLAGS@
 pls_slurm_LIBS = @pls_slurm_LIBS@
 pls_tm_CPPFLAGS = @pls_tm_CPPFLAGS@
 pls_tm_LDFLAGS = @pls_tm_LDFLAGS@
 pls_tm_LIBS = @pls_tm_LIBS@
-pls_xgrid_LDFLAGS = @pls_xgrid_LDFLAGS@
-pls_xgrid_OBJCFLAGS = @pls_xgrid_OBJCFLAGS@
 prefix = @prefix@
 program_transform_name = @program_transform_name@
 ras_bjs_CPPFLAGS = @ras_bjs_CPPFLAGS@

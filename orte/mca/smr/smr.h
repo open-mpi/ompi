@@ -33,6 +33,8 @@
 #include "orte/orte_types.h"
 
 #include "opal/mca/mca.h"
+
+#include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/smr/smr_types.h"
 
@@ -84,6 +86,63 @@ typedef int (*orte_smr_base_module_set_job_state_fn_t)(orte_jobid_t jobid,
                                                      orte_job_state_t state);
 
 /*
+ * Define the job-specific standard stage gates
+ * This function creates all of the ORTE-standard stage gates. 
+ */
+typedef int (*orte_smr_base_module_job_stage_gate_init_fn_t)(orte_jobid_t job,
+                                                             orte_gpr_trigger_cb_fn_t cbfunc,
+                                                             void *user_tag);
+
+/*
+ * Define the orted standard stage gates
+ * This function creates all of the orted-standard stage gates. 
+ */
+typedef int (*orte_smr_base_module_orted_stage_gate_init_fn_t)(orte_jobid_t job,
+                                                               orte_std_cntr_t num_orteds,
+                                                               orte_gpr_trigger_cb_fn_t cbfunc,
+                                                               void *user_tag);
+
+/*
+ * Define an "alert" monitor
+ * This function will establish an appropriate trigger to notify the specified
+ * callback function when an event takes place. In this case, event is defined
+ * by the specified memory location achieving the specified value - e.g., a
+ * location could be monitored for a value being set to 1, indicating that a
+ * process has aborted.
+ *
+ * @param job The job that is to be monitored.
+ *
+ * @param *trigger_name The name of the trigger to be defined.
+ *
+ * @param *counter_key A string defining the key name of the counter on the registry.
+ *
+ * @param *counter A pointer to a data_value object that contains the initial
+ * value to which the counter should be set.
+ *
+ * @param *alert_value A pointer to a data_value object that contains the value of
+ * the counter that should cause the alert to be sent.
+ *
+ * @param one_shot Whether or not the trigger should be a one-shot
+ *
+ * @param cbfunc A registry callback function to be called when the alert fires.
+ *
+ * @param *user_tag Whatever data the user would like to have passed back to them
+ * when the alert is received
+ *
+ * NOTE: alerts are intended solely for purposes of alerting the caller when
+ * an event happens. Thus, they do not convey any information beyond the fact that
+ * they fired.
+ */
+typedef int (*orte_smr_base_module_define_alert_monitor_fn_t)(orte_jobid_t job,
+                                                              char *trigger_name,
+                                                              char *counter_key,
+                                                              orte_std_cntr_t counter,
+                                                              orte_std_cntr_t alert_value,
+                                                              bool one_shot,
+                                                              orte_gpr_trigger_cb_fn_t cbfunc,
+                                                              void *user_tag);
+
+/*
  * Initiate monitoring of a job
  * This function notifies the smr that it should initiate monitoring of the specified
  * jobid. It is called by the resource manager once a job has been launched. Calling
@@ -93,6 +152,14 @@ typedef int (*orte_smr_base_module_set_job_state_fn_t)(orte_jobid_t jobid,
  */
 typedef int (*orte_smr_base_module_begin_monitoring_fn_t)(orte_jobid_t job);
 
+/*
+ * Subscribe to a job stage gate
+ */
+typedef int (*orte_smr_base_module_job_stage_gate_subscribe_fn_t)(orte_jobid_t job,
+                                                                  orte_gpr_notify_cb_fn_t cbfunc, void* cbdata,
+                                                                  orte_proc_state_t cb_conditions);
+
+    
 /* Shutdown the module nicely 
  */
 
@@ -106,14 +173,19 @@ typedef int (*orte_smr_base_module_finalize_fn_t)(void);
  * Ver 1.3.0
  */
 struct orte_smr_base_module_1_3_0_t {
-    orte_smr_base_module_get_proc_state_fn_t      get_proc_state;
-    orte_smr_base_module_set_proc_state_fn_t      set_proc_state;
-    orte_smr_base_module_get_node_state_fn_t      get_node_state;
-    orte_smr_base_module_set_node_state_fn_t      set_node_state;
-    orte_smr_base_module_get_job_state_fn_t       get_job_state;
-    orte_smr_base_module_set_job_state_fn_t       set_job_state;
-    orte_smr_base_module_begin_monitoring_fn_t  begin_monitoring_job;
-    orte_smr_base_module_finalize_fn_t          finalize;
+    orte_smr_base_module_get_proc_state_fn_t            get_proc_state;
+    orte_smr_base_module_set_proc_state_fn_t            set_proc_state;
+    orte_smr_base_module_get_node_state_fn_t            get_node_state;
+    orte_smr_base_module_set_node_state_fn_t            set_node_state;
+    orte_smr_base_module_get_job_state_fn_t             get_job_state;
+    orte_smr_base_module_set_job_state_fn_t             set_job_state;
+    orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring_job;
+    /* TRIGGER INIT FUNCTIONS */
+    orte_smr_base_module_job_stage_gate_init_fn_t       init_job_stage_gates;
+    orte_smr_base_module_orted_stage_gate_init_fn_t     init_orted_stage_gates;
+    orte_smr_base_module_define_alert_monitor_fn_t      define_alert_monitor;
+    orte_smr_base_module_job_stage_gate_subscribe_fn_t  job_stage_gate_subscribe;
+    orte_smr_base_module_finalize_fn_t                  finalize;
 };
 
 typedef struct orte_smr_base_module_1_3_0_t orte_smr_base_module_1_3_0_t;

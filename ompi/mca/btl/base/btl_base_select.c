@@ -27,7 +27,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "orte/runtime/runtime.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 OBJ_CLASS_INSTANCE(
    mca_btl_base_selected_module_t,
@@ -151,7 +151,7 @@ int mca_btl_base_select(bool enable_progress_threads,
   if (0 == opal_list_get_size(&mca_btl_base_modules_initialized)) {
      opal_show_help("help-mca-base.txt", "find-available:none-found", true,
                     "btl");
-     orte_abort(1, "");
+     orte_errmgr.error_detected(1, NULL);
   }
   return OMPI_SUCCESS;
 }

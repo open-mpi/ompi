@@ -62,11 +62,11 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/universe_setup_file_io.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/ras/ras_types.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
@@ -1079,9 +1079,9 @@ static int gather_job_info(orte_ps_universe_info_t* universe) {
         /*
          * Get the App Context(s)
          */
-        orte_rmgr_base_get_app_context(job->id,
-                                       &job->app_context,
-                                       &job->num_app_context);
+        orte_rmgr.get_app_context(job->id,
+                                  &job->app_context,
+                                  &job->num_app_context);
         /*
          * Access the job segment
          */

@@ -22,6 +22,8 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
+
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "rmaps_rr.h"
 
 /*
@@ -39,10 +41,10 @@ orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
+        /* Indicate that we are a rmaps v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RMAPS_BASE_VERSION_1_0_0,
+        ORTE_RMAPS_BASE_VERSION_1_3_0,
 
         "round_robin", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -100,6 +102,18 @@ static int orte_rmaps_round_robin_open(void)
 static orte_rmaps_base_module_t* 
 orte_rmaps_round_robin_init(int *priority)
 {
+    int rc;
+    
+    /* if I am NOT an HNP, then don't consider me! */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
+    /* start the receive function */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_comm_start())) {
+        return NULL;
+    }
+    
     *priority = mca_rmaps_round_robin_component.priority;
     return &orte_rmaps_round_robin_module;
 }

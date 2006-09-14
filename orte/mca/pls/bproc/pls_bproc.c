@@ -48,6 +48,7 @@
 #include "opal/util/output.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/path.h"
+#include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
 
 #include "orte/dss/dss.h"
@@ -55,18 +56,21 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/ns.h"
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/oob/base/base.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 
+/* remove this when moved to 2.0 */
+#include "orte/mca/rmaps/base/rmaps_private.h"
+
+#include "orte/mca/pls/base/pls_private.h"
 #include "pls_bproc.h"
 
 /**
@@ -91,6 +95,7 @@ orte_pls_base_module_t orte_pls_bproc_module = {
     orte_pls_bproc_launch,
 #endif
     orte_pls_bproc_terminate_job,
+    orte_pls_bproc_terminate_orteds,
     orte_pls_bproc_terminate_proc,
     orte_pls_bproc_signal_job,
     orte_pls_bproc_signal_proc,
@@ -226,13 +231,13 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
         return ORTE_ERROR;
     }
 
-    rc = orte_ns_base_convert_jobid_to_string(&job, jobid);
+    rc = orte_ns.convert_jobid_to_string(&job, jobid);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
     /* build the directory tree the io files will be in */
-    if (0 > asprintf(&path, OPAL_PATH_SEP"tmp"OPAL_PATH_SEP"openmpi-bproc-%s"OPAL_PATH_SEP"%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
+    if (0 > asprintf(&frontend, OPAL_PATH_SEP"tmp"OPAL_PATH_SEP"openmpi-bproc-%s"OPAL_PATH_SEP"%s"OPAL_PATH_SEP"%s-%d"OPAL_PATH_SEP"%d",
                      orte_system_info.user, orte_universe_info.name, job,
                      app_context, node_rank)) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
@@ -278,8 +283,11 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
 }
 
 /**
- * Callback for orte_wait_cb. This function decrements the number of currently
- * running processes, and when this hits 0 it kills all the daemons
+ * Callback for orte_wait_cb. This function ONLY gets called for
+ * normal termination, or termination caused by a signal. If the
+ * process abnormally terminates by other than a signal, we go through
+ * another function so it can tell us that it was abnormal.
+ * Bproc doesn't really let us do it through here.
  * @param wpid the process's pid
  * @param status tells why the process died
  * @param data a pointer to the process's name
@@ -287,9 +295,10 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
 static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
     orte_process_name_t * proc = (orte_process_name_t*) data;
     int rc;
+    
     /* set the state of this process */
     if(WIFEXITED(status)) {
-        rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_TERMINATED, status);
+            rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_TERMINATED, status);
     } else {
         rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_ABORTED, status);
     }
@@ -297,14 +306,6 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
         ORTE_ERROR_LOG(rc);
     }
     free(proc);
-
-    OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
-    mca_pls_bproc_component.num_procs--;
-    if(0 < mca_pls_bproc_component.debug) {
-        opal_output(0, "in orte_pls_bproc_waitpid_cb, %d processes left\n",
-                mca_pls_bproc_component.num_procs);
-    }
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
 }
 
 /**
@@ -317,7 +318,7 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
 static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data) {
     if(!mca_pls_bproc_component.done_launching) {
         /* if a daemon exits before we are done launching the user apps we send a
-         * message to ourself so we will break out of the recieve loop and exit */
+         * message to ourself so we will break out of the receive loop and exit */
         orte_buffer_t ack;
         int rc;
         int src[4] = {-1, -1};
@@ -331,7 +332,7 @@ static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data)
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
         }
-        rc = mca_oob_send_packed(MCA_OOB_NAME_SELF, &ack, MCA_OOB_TAG_BPROC, 0);
+        rc = mca_oob_send_packed(ORTE_RML_NAME_SELF, &ack, ORTE_RML_TAG_BPROC, 0);
         if(0 > rc) {
             ORTE_ERROR_LOG(rc);
         }
@@ -433,11 +434,6 @@ static void orte_pls_bproc_setup_env(char *** env)
     opal_setenv(var, orte_system_info.user, true, env);
     free(var);
 
-    /* tell the bootproxy to use the bproc_orted pls */
-    var = mca_base_param_environ_variable("rmgr", "bootproxy", "pls");
-    opal_setenv(var, "bproc_orted", true, env);
-    free(var);
-
     /* gpr replica contact info */
     if(NULL == orte_process_info.gpr_replica) {
         orte_ns.copy_process_name(&orte_process_info.gpr_replica,
@@ -499,6 +495,14 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     orte_vpid_t daemon_vpid_start = 0;
     orte_std_cntr_t idx;
     struct stat buf;
+    opal_list_t daemons;
+    orte_pls_daemon_info_t *dmn;
+    opal_list_item_t *item;
+
+    /* setup a list that will contain the info for all the daemons
+     * so we can store it on the registry when done
+     */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
 
     /* find the length of the longest node array */
     for(i = 0; i < num_contexts; i++) {
@@ -526,13 +530,15 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     }
 
     /* allocate a range of vpids for the daemons */
-    rc = orte_ns_base_get_jobid(&daemon_jobid, orte_process_info.my_name);
+    daemon_jobid = orte_process_info.my_name->jobid;
+    rc = orte_ns.reserve_range(daemon_jobid, num_daemons, &daemon_vpid_start);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-    rc = orte_ns.reserve_range(daemon_jobid, num_daemons, &daemon_vpid_start);
-    if(ORTE_SUCCESS != rc) {
+
+    /* setup the orted triggers for passing their launch info */
+    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_daemons, NULL, NULL))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -646,12 +652,20 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 goto cleanup;
             }
-            rc = orte_pls_base_set_node_pid(cellid, param, jobid, pids[i]);
+            rc = orte_pls_bproc_set_node_pid(cellid, param, jobid, pids[i]);
             if(ORTE_SUCCESS != rc) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
+            dmn = OBJ_NEW(orte_pls_daemon_info_t);
+            orte_dss.copy((void**)&(dmn->name), proc_name, ORTE_NAME);
+            dmn->cell = cellid;
+            dmn->nodename = strdup(param);
+            dmn->active_job = jobid;
+            opal_list_append(&daemons, &dmn->super);
+            
             free(param);
+            
             rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb,
                               &daemon_list[i]);
             if(ORTE_SUCCESS != rc) {
@@ -659,6 +673,10 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
                 goto cleanup;
             }
         }
+    }
+    /* store the daemon info */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
     }
     *num_launched = num_daemons;
 
@@ -672,6 +690,11 @@ cleanup:
     if(NULL != orted_path) {
         free(orted_path);
     }
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    
     return rc;
 }
 
@@ -940,7 +963,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                orte_pls_base_set_proc_pid(proc_name, pids[j]);
+                orte_pls_bproc_set_proc_pid(proc_name, pids[j]);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
@@ -1026,30 +1049,34 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     orte_std_cntr_t idx;
     char cwd_save[OMPI_PATH_MAX + 1];
 
+    /* make sure the pls_bproc receive function has been started */
+    if (ORTE_SUCCESS != (rc = orte_pls_bproc_comm_start())) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* save the current working directory */
     if (NULL == getcwd(cwd_save, sizeof(cwd_save))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     cwd_save[sizeof(cwd_save) - 1] = '\0';
+    
     /* query for the application context and allocated nodes */
     OBJ_CONSTRUCT(&mapping, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_map(jobid, &mapping))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start,
-                                                            &vpid_range))) {
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_vpid_range(jobid, &vpid_start,
+                                                      &vpid_range))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
     /* get the cellid */
-    rc = orte_ns_base_get_cellid(&cellid, orte_process_info.my_name);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
+    cellid = orte_process_info.my_name->cellid;
+    
     /* do a large lock so the processes will not decrement the process count
      * until we are done launching */
 
@@ -1064,13 +1091,13 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             /* Check that the cwd is sane.  We have to chdir there in
                to check the executable, because the executable could
                have been specified as a relative path to the wdir */
-            rc = orte_pls_base_check_context_cwd(context, true);
+            rc = orte_rmgr.check_context_cwd(context, true);
             if (ORTE_SUCCESS != rc) {
                 goto cleanup;
             }
 
             /* Check that the app exists and is executable */
-            rc = orte_pls_base_check_context_app(context);
+            rc = orte_rmgr.check_context_app(context);
             if (ORTE_SUCCESS != rc) {
                 goto cleanup;
             }
@@ -1151,7 +1178,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     for(j = 0; j < num_daemons; j++) {
         orte_buffer_t ack;
         OBJ_CONSTRUCT(&ack, orte_buffer_t);
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &ack, MCA_OOB_TAG_BPROC);
+        rc = mca_oob_recv_packed(ORTE_RML_NAME_ANY, &ack, ORTE_RML_TAG_BPROC);
         if(0 > rc) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&ack);
@@ -1189,7 +1216,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
         item =  opal_list_get_next(item)) {
         map = (orte_rmaps_base_map_t*)item;
 
-        rc = orte_pls_base_check_context_cwd(map->app, true);
+        rc = orte_rmgr.check_context_cwd(map->app, true);
         if (ORTE_SUCCESS != rc) {
             goto cleanup;
         }
@@ -1223,15 +1250,18 @@ cleanup:
 }
 
 /**
- * Terminate all processes associated with this job - including
- * daemons.
- */
+ * Terminate all processes associated with this job */
 int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
     pid_t* pids;
     orte_std_cntr_t i, num_pids;
     int rc;
+    
+    if(0 < mca_pls_bproc_component.debug) {
+        opal_output(0, "orte_pls_bproc: terminating job %ld", jobid);
+    }
+    
     /* kill application process */
-    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pids(jobid, &pids, &num_pids)))
+    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pids(jobid, &pids, &num_pids)))
         return rc;
     for(i=0; i<num_pids; i++) {
         if(mca_pls_bproc_component.debug) {
@@ -1241,8 +1271,38 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
     }
     if(NULL != pids)
         free(pids);
-    /* dont kill daemons - allow them to do cleanup when they see the job aborts */
+
+    /* dont kill daemons - mpirun will do this for us */
     return ORTE_SUCCESS;
+}
+
+/**
+* Terminate the orteds for a given job
+ */
+int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid)
+{
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+
+    /* now tell them to die! */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
 /**
@@ -1251,7 +1311,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
     int rc;
     pid_t pid;
-    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, mca_pls_bproc_component.terminate_sig) != 0) {
         switch(errno) {
@@ -1277,7 +1337,7 @@ int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal) {
     int rc;
 
     /* signal application process */
-    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pids(jobid, &pids, &num_pids)))
+    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pids(jobid, &pids, &num_pids)))
         return rc;
     for(i=0; i<num_pids; i++) {
         if(mca_pls_bproc_component.debug) {
@@ -1299,7 +1359,7 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
     int rc;
     pid_t pid;
 
-    if(ORTE_SUCCESS != (rc = orte_pls_base_get_proc_pid(proc_name, &pid)))
+    if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, (int)signal) != 0) {
         switch(errno) {
@@ -1321,13 +1381,7 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
  */
 int orte_pls_bproc_finalize(void)
 {
-    /* wait for all daemons */
-    OPAL_THREAD_LOCK(&mca_pls_bproc_component.lock);
-    while(mca_pls_bproc_component.num_daemons || mca_pls_bproc_component.num_procs) {
-        opal_condition_wait(&mca_pls_bproc_component.condition, &mca_pls_bproc_component.lock);
-    }
-    OPAL_THREAD_UNLOCK(&mca_pls_bproc_component.lock);
-    return ORTE_SUCCESS;
+   return ORTE_SUCCESS;
 }
 
 

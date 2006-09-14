@@ -112,6 +112,55 @@ extern "C" {
 #error Unsupported pid_t size!
 #endif
 
+/* Unpack generic size macros */
+#define UNPACK_SIZE_MISMATCH(unpack_type, remote_type, ret)      \
+do { \
+    switch(remote_type) { \
+        case ORTE_UINT8: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, remote_type); \
+            break; \
+        case ORTE_INT8: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, remote_type); \
+            break; \
+        case ORTE_UINT16: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, remote_type); \
+            break; \
+        case ORTE_INT16: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, remote_type); \
+            break; \
+        case ORTE_UINT32: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, remote_type); \
+            break; \
+        case ORTE_INT32: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, remote_type); \
+            break; \
+        case ORTE_UINT64: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, remote_type); \
+            break; \
+        case ORTE_INT64: \
+            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, remote_type); \
+            break; \
+        default: \
+            ret = ORTE_ERR_NOT_FOUND; \
+            ORTE_ERROR_LOG(ret); \
+    } \
+} while (0)
+        
+/* NOTE: do not need to deal with endianness here, as the unpacking of
+the underling sender-side type will do that for us.  Repeat: the
+data in tmpbuf[] is already in host byte order. */
+#define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)        \
+do {                                                                    \
+    orte_std_cntr_t i;                                                  \
+    tmptype *tmpbuf = (tmptype*)malloc(sizeof(tmptype) * (*num_vals));  \
+    ret = orte_dss_unpack_buffer(buffer, tmpbuf, num_vals, tmpdsstype); \
+    for (i = 0 ; i < *num_vals ; ++i) {                                 \
+        ((unpack_type*) dest)[i] = (unpack_type)(tmpbuf[i]);            \
+    }                                                                   \
+    free(tmpbuf);                                                       \
+} while (0)
+            
+            
 /**
  * Internal struct used for holding registered dss functions
  */
@@ -256,9 +305,6 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_pack_data_type(orte_buffer_t *buffer, void *src,
                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
-    int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src,
-                                 orte_std_cntr_t num_vals, orte_data_type_t type);
-
     int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src,
                            orte_std_cntr_t num_vals, orte_data_type_t type);
 
@@ -300,9 +346,6 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_unpack_data_type(orte_buffer_t *buffer, void *dest,
                              orte_std_cntr_t *num_vals, orte_data_type_t type);
-
-    int orte_dss_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest,
-                                   orte_std_cntr_t *num_vals, orte_data_type_t type);
 
     int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest,
                              orte_std_cntr_t *num_vals, orte_data_type_t type);
@@ -360,8 +403,6 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte_data_type_t type);
 
-    int orte_dss_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type);
-
     int orte_dss_compare_data_value(orte_data_value_t *value1, orte_data_value_t *value2, orte_data_type_t type);
 
     int orte_dss_compare_byte_object(orte_byte_object_t *value1, orte_byte_object_t *value2, orte_data_type_t type);
@@ -405,7 +446,6 @@ extern orte_data_type_t orte_dss_num_reg_types;
     int orte_dss_print_null(char **output, char *prefix, void *src, orte_data_type_t type);
     int orte_dss_print_std_cntr(char **output, char *prefix, orte_std_cntr_t *src, orte_data_type_t type);
     int orte_dss_print_data_type(char **output, char *prefix, orte_data_type_t *src, orte_data_type_t type);
-    int orte_dss_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type);
     int orte_dss_print_data_value(char **output, char *prefix, orte_data_value_t *src, orte_data_type_t type);
     int orte_dss_print_byte_object(char **output, char *prefix, orte_byte_object_t *src, orte_data_type_t type);
 

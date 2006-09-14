@@ -23,12 +23,14 @@
 
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
+
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_bjs.h"
 
 
@@ -164,8 +166,8 @@ static int orte_ras_bjs_discover(
 
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
-    if(NULL == nodes) {
-        return opal_list_get_size(nodelist) ? ORTE_SUCCESS : ORTE_ERR_NOT_AVAILABLE;
+    if (NULL == nodes) {
+        return ORTE_ERR_NOT_AVAILABLE;
     }
 
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
@@ -242,7 +244,7 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid)
     orte_app_context_t **context = NULL;
     orte_std_cntr_t i, num_context;
 
-    rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
+    rc = orte_rmgr.get_app_context(jobid, &context, &num_context);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -273,16 +275,6 @@ cleanup:
     return rc;
 }
 
-static int orte_ras_bjs_node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int orte_ras_bjs_node_query(opal_list_t *nodes)
-{
-        return orte_ras_base_node_query(nodes);
-}
-
 static int orte_ras_bjs_deallocate(orte_jobid_t jobid)
 {
     return ORTE_SUCCESS;
@@ -297,8 +289,10 @@ static int orte_ras_bjs_finalize(void)
 
 orte_ras_base_module_t orte_ras_bjs_module = {
     orte_ras_bjs_allocate,
-    orte_ras_bjs_node_insert,
-    orte_ras_bjs_node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     orte_ras_bjs_deallocate,
     orte_ras_bjs_finalize
 };

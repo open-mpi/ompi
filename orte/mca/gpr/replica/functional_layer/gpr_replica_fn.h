@@ -278,6 +278,7 @@ int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc);
 
 int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
+                                        char *sub_name,
                                         orte_std_cntr_t cnt,
                                         orte_gpr_value_t **values);
 

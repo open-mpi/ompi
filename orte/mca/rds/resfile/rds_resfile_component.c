@@ -18,10 +18,16 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
+
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "orte/util/proc_info.h"
 #include "opal/util/output.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns_types.h"
+
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/resfile/rds_resfile.h"
 
 /*
@@ -32,7 +38,6 @@ static int orte_rds_resfile_open(void);
 static int orte_rds_resfile_close(void);
 static orte_rds_base_module_t* orte_rds_resfile_init(void);
 
-
 orte_rds_resfile_component_t mca_rds_resfile_component = {
     {
       /* First, the mca_base_component_t struct containing meta
@@ -42,7 +47,7 @@ orte_rds_resfile_component_t mca_rds_resfile_component = {
         /* Indicate that we are a iof v1.0.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RDS_BASE_VERSION_1_0_0,
+        ORTE_RDS_BASE_VERSION_1_3_0,
 
         "resfile", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -58,7 +63,8 @@ orte_rds_resfile_component_t mca_rds_resfile_component = {
         false
       },
 
-      orte_rds_resfile_init
+      orte_rds_resfile_init,
+      orte_rds_resfile_finalize
     }
 };
 
@@ -66,7 +72,6 @@ orte_rds_resfile_component_t mca_rds_resfile_component = {
 orte_rds_base_module_t orte_rds_resfile_module = {
     orte_rds_resfile_query,
     orte_rds_base_store_resource,
-    orte_rds_resfile_finalize
 };
 
 /*
@@ -98,8 +103,28 @@ static int orte_rds_resfile_open(void)
 
 static orte_rds_base_module_t *orte_rds_resfile_init(void)
 {
+    int rc;
+    
+    /* if we are not an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+
+    /* if we are an HNP, then volunteer */
     OBJ_DESTRUCT(&mca_rds_resfile_component.lock);
+
+    /* issue non-blocking receive for call_back function */
+    if (ORTE_SUCCESS != (rc = orte_rds_base_comm_start())) {
+        ORTE_ERROR_LOG(rc);
+        return NULL;
+    }
+
     return &orte_rds_resfile_module;
+}
+
+int orte_rds_resfile_finalize(void)
+{
+    return ORTE_SUCCESS;
 }
 
 /**

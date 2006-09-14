@@ -31,6 +31,8 @@
 #import "opal/util/argv.h"
 #import "opal/util/path.h"
 #import "opal/util/basename.h"
+
+#import "orte/util/proc_info.h"
 #import "orte/mca/pls/pls.h"
 #import "orte/mca/pls/base/base.h"
 #import "opal/mca/base/mca_base_param.h"
@@ -119,6 +121,11 @@ orte_pls_xgrid_component_init(int *priority)
 {
     char *string;
     int ret, val, param;
+    
+    /* if we are NOT an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
 
     if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME") ||
         NULL == getenv("XGRID_CONTROLLER_PASSWORD")) {

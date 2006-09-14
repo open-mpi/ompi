@@ -18,18 +18,20 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
-#include "orte/util/proc_info.h"
+
 #include "opal/util/output.h"
+#include "opal/mca/base/mca_base_param.h"
+
 #include "orte/dss/dss_types.h"
 #include "orte/mca/errmgr/errmgr.h"
-
-#include "orte/mca/rds/base/base.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/pls/base/base.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/util/proc_info.h"
+#include "orte/mca/rds/rds.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/rml/rml.h"
+
+#include "orte/mca/rmgr/rmgr.h"
 #include "rmgr_urm.h"
 
 /*
@@ -47,10 +49,10 @@ orte_rmgr_urm_component_t mca_rmgr_urm_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
+        /* Indicate that we are a rmgr v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RMGR_BASE_VERSION_1_0_0,
+        ORTE_RMGR_BASE_VERSION_1_3_0,
 
         "urm", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -76,133 +78,17 @@ orte_rmgr_urm_component_t mca_rmgr_urm_component = {
   */
 static int orte_rmgr_urm_open(void)
 {
-    int rc;
-
-    /**
-     * Open Resource Discovery Subsystem (RDS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_open())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Open Resource Allocation Subsystem (RAS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_ras_base_open())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Open Resource Mapping Subsystem (RMAPS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_open())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Open Process Launch Subsystem (PLS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_open())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     return ORTE_SUCCESS;
 }
 
-
-static void orte_rmgr_urm_recv(
-    int status,
-    orte_process_name_t* peer,
-    orte_buffer_t* req,
-    orte_rml_tag_t tag,
-    void* cbdata)
-{
-    int rc;
-    orte_buffer_t rsp;
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-                                                                                                                          
-    if (ORTE_SUCCESS != (rc = orte_rmgr_base_cmd_dispatch(req,&rsp))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-                                                                                                                          
-    rc = orte_rml.send_buffer(peer, &rsp, ORTE_RML_TAG_RMGR_CLNT, 0);
-    if (rc < 0) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-cleanup:
-    OBJ_DESTRUCT(&rsp);
-}
-
-
 static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
 {
-    int rc;
-    char* pls = NULL;
-    if(orte_process_info.seed == false) {
-        /* if we are bootproxy - need to be selected */
-        int id = mca_base_param_register_int("rmgr","bootproxy","jobid",NULL,0);
-        int jobid = 0;
-        mca_base_param_lookup_int(id,&jobid);
-        if(jobid == 0) {
-            return NULL;
-        }
-        /* use fork pls for bootproxy */
-        id = mca_base_param_register_string("rmgr","bootproxy","pls",NULL,"fork");
-        mca_base_param_lookup_string(id,&pls);
-    }
-
-    /**
-     * Select RDS components.
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_select())) {
-        ORTE_ERROR_LOG(rc);
-        return NULL;
-    }
-    mca_rmgr_urm_component.urm_rds = false;
-
-    /**
-     * Find available RAS components
-     */
-    if (ORTE_SUCCESS != (rc = orte_ras_base_find_available())) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
+    /* if we are NOT an HNP, then we do NOT want to be selected */
+    if(!orte_process_info.seed) {
         return NULL;
     }
 
-    /**
-     * Select RMAPS component
-     */
-    if (NULL == (mca_rmgr_urm_component.urm_rmaps = orte_rmaps_base_select(NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return NULL;
-    }
-
-    /**
-     * Select PLS component
-     */
-    if (NULL == (mca_rmgr_urm_component.urm_pls = orte_pls_base_select(pls))) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
-        return NULL;
-    }
-
-    /* Post non-blocking receive */
-
-    if (0 > (rc = orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY,
-        ORTE_RML_TAG_RMGR_SVC,
-        ORTE_RML_PERSISTENT,
-        orte_rmgr_urm_recv,
-        NULL))) {
-        ORTE_ERROR_LOG(rc);
-        return NULL;
-    }
-
+    /* volunteer to be selected */
     *priority = 100;
     return &orte_rmgr_urm_module;
 }
@@ -213,39 +99,5 @@ static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
  */
 static int orte_rmgr_urm_close(void)
 {
-    int rc;
-
-    /**
-     * Close Process Launch Subsystem (PLS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_close())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Close Resource Mapping Subsystem (RMAPS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_close())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Close Resource Allocation Subsystem (RAS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_ras_base_close())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Close Resource Discovery Subsystem (RDS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_close())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     return ORTE_SUCCESS;
 }

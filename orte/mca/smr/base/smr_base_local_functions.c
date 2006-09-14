@@ -30,26 +30,32 @@
 #include "orte/mca/smr/base/smr_private.h"
 
 
+/* these functions will default to SUCCESS so that environments
+ * that do not provide any support will not fail. This is
+ * particularly important for the "begin_monitoring" function
+ * as some systems can call this without that support
+ */
+
 int orte_smr_base_get_node_state_not_available(orte_node_state_t *state,
                                                       orte_cellid_t cell,
                                                       char *nodename)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 int orte_smr_base_set_node_state_not_available(orte_cellid_t cell,
                                              char *nodename,
                                              orte_node_state_t state)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 int orte_smr_base_begin_monitoring_not_available(orte_jobid_t job)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }
 
 int orte_smr_base_module_finalize_not_available (void)
 {
-    return ORTE_ERR_NOT_IMPLEMENTED;
+    return ORTE_SUCCESS;
 }

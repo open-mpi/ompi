@@ -22,17 +22,15 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 #include "orte/orte_constants.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "orte/mca/ras/base/ras_private.h"
 
 /*
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_ras_base_allocate(orte_jobid_t jobid,
-                           orte_ras_base_module_t **module)
+int orte_ras_base_allocate(orte_jobid_t jobid)
 {
     int ret;
     opal_list_item_t *item;
@@ -60,8 +58,8 @@ int orte_ras_base_allocate(orte_jobid_t jobid,
                     "orte:ras:base:allocate: attemping to allocate using module: %s",
                     cmp->component->ras_version.mca_component_name);
 
-        if (NULL != cmp->module->allocate) {
-            ret = cmp->module->allocate(jobid);
+        if (NULL != cmp->module->allocate_job) {
+            ret = cmp->module->allocate_job(jobid);
             if (ORTE_SUCCESS == ret) {
                 bool empty;
 
@@ -78,7 +76,6 @@ int orte_ras_base_allocate(orte_jobid_t jobid,
                     opal_output(orte_ras_base.ras_output,
                                 "orte:ras:base:allocate: found good module: %s",
                                 cmp->component->ras_version.mca_component_name);
-                    *module = cmp->module;
                     return ORTE_SUCCESS;
                 }
             }
@@ -93,3 +90,9 @@ int orte_ras_base_allocate(orte_jobid_t jobid,
     ORTE_ERROR_LOG(ret);
     return ret;
 }
+
+int orte_ras_base_deallocate(orte_jobid_t job)
+{
+    return ORTE_SUCCESS;
+}
+

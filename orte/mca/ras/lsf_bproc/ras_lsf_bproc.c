@@ -21,22 +21,14 @@
 #include <string.h>
 
 #include "orte/orte_constants.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_lsf_bproc.h"
 
 
 static int orte_ras_lsf_bproc_allocate(orte_jobid_t jobid)
 {
     return ORTE_SUCCESS;
-}
-
-static int orte_ras_lsf_bproc_node_insert(opal_list_t *nodes)
-{
-    return ORTE_ERROR;
-}
-
-static int orte_ras_lsf_bproc_node_query(opal_list_t *nodes)
-{
-    return ORTE_ERROR;
 }
 
 static int orte_ras_lsf_bproc_deallocate(orte_jobid_t jobid)
@@ -53,8 +45,10 @@ static int orte_ras_lsf_bproc_finalize(void)
 
 orte_ras_base_module_t orte_ras_lsf_bproc_module = {
     orte_ras_lsf_bproc_allocate,
-    orte_ras_lsf_bproc_node_insert,
-    orte_ras_lsf_bproc_node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     orte_ras_lsf_bproc_deallocate,
     orte_ras_lsf_bproc_finalize
 };

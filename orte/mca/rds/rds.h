@@ -150,56 +150,51 @@ extern "C" {
 typedef int (*orte_rds_base_module_query_fn_t)(void);
 
 /**
- * Cleanup module resources.
- */
-
-typedef int (*orte_rds_base_module_finalize_fn_t)(void);
-
-/**
  * Add a list of resources to the Resource Segment
  */
 typedef int (*orte_rds_base_module_store_resource_fn_t)(opal_list_t *);
 
 /*
- * Ver 1.0.0
+ * Ver 1.3.0
  */
-struct orte_rds_base_module_1_0_0_t {
+struct orte_rds_base_module_1_3_0_t {
     orte_rds_base_module_query_fn_t query;
     orte_rds_base_module_store_resource_fn_t store_resource;
-    orte_rds_base_module_finalize_fn_t finalize;
 };
 
-typedef struct orte_rds_base_module_1_0_0_t orte_rds_base_module_1_0_0_t;
-typedef orte_rds_base_module_1_0_0_t orte_rds_base_module_t;
+typedef struct orte_rds_base_module_1_3_0_t orte_rds_base_module_1_3_0_t;
+typedef orte_rds_base_module_1_3_0_t orte_rds_base_module_t;
 
 /*
  * RDS Component
  */
 
 typedef orte_rds_base_module_t* (*orte_rds_base_component_init_fn_t)(void);
+typedef int (*orte_rds_base_component_finalize_fn_t)(void);
 
  
 /*
  * the standard component data structure
  */
 
-struct orte_rds_base_component_1_0_0_t {
-    mca_base_component_t rds_version;
-    mca_base_component_data_1_0_0_t rds_data;
-    orte_rds_base_component_init_fn_t rds_init;
+struct orte_rds_base_component_1_3_0_t {
+    mca_base_component_t 					rds_version;
+    mca_base_component_data_1_0_0_t 		rds_data;
+    orte_rds_base_component_init_fn_t 		rds_init;
+    orte_rds_base_component_finalize_fn_t 	rds_fini;
 };
-typedef struct orte_rds_base_component_1_0_0_t orte_rds_base_component_1_0_0_t;
-typedef orte_rds_base_component_1_0_0_t orte_rds_base_component_t;
+typedef struct orte_rds_base_component_1_3_0_t orte_rds_base_component_1_3_0_t;
+typedef orte_rds_base_component_1_3_0_t orte_rds_base_component_t;
 
 
 /*
- * Macro for use in components that are of type rda v1.0.0
+ * Macro for use in components that are of type rds v1.3.0
  */
-#define ORTE_RDS_BASE_VERSION_1_0_0 \
-  /* rds v1.0 is chained to MCA v1.0 */ \
+#define ORTE_RDS_BASE_VERSION_1_3_0 \
+  /* rds v1.3 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* rds v1.0 */ \
-  "rds", 1, 0, 0
+  /* rds v1.3 */ \
+  "rds", 1, 3, 0
 
 /*
  * global module that holds function pointers

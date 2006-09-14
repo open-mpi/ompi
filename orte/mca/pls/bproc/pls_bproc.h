@@ -39,12 +39,18 @@
 #define ORTE_PLS_BPROC_H_
 
 #include "orte_config.h"
-#include "orte/class/orte_pointer_array.h"
 #include "orte/orte_constants.h"
-#include "orte/mca/pls/base/base.h"
-#include "orte/util/proc_info.h"
-#include "opal/threads/condition.h"
+
 #include <sys/bproc.h>
+
+#include "opal/threads/condition.h"
+
+#include "orte/class/orte_pointer_array.h"
+#include "orte/util/proc_info.h"
+
+#include "orte/mca/rml/rml_types.h"
+
+#include "orte/mca/pls/base/base.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -68,9 +74,30 @@ int orte_pls_bproc_finalize(void);
 int orte_pls_bproc_launch(orte_jobid_t);
 int orte_pls_bproc_terminate_job(orte_jobid_t);
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name);
+int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid);
 int orte_pls_bproc_signal_job(orte_jobid_t, int32_t);
 int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t);
 
+/* Utility routine to get/set process pid */
+ORTE_DECLSPEC int orte_pls_bproc_set_proc_pid(const orte_process_name_t*, pid_t);
+ORTE_DECLSPEC int orte_pls_bproc_get_proc_pid(const orte_process_name_t*, pid_t*);
+/**
+ * Utility routine to retreive all process pids w/in a specified job.
+ */
+ORTE_DECLSPEC int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
+/**
+ * Utility routine to get/set daemon pid
+ */
+ORTE_DECLSPEC int orte_pls_bproc_set_node_pid(orte_cellid_t cellid, char* node_name, orte_jobid_t jobid, pid_t pid);
+ORTE_DECLSPEC int orte_pls_bproc_get_node_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
+
+/* utility functions for abort communications */
+int orte_pls_bproc_comm_start(void);
+int orte_pls_bproc_comm_stop(void);
+void orte_pls_bproc_recv(int status, orte_process_name_t* sender,
+                         orte_buffer_t* buffer, orte_rml_tag_t tag,
+                         void* cbdata);
+    
 /**
  * PLS bproc Component
  */
@@ -106,6 +133,10 @@ struct orte_pls_bproc_component_t {
     bool bynode;
     /**< Indicates whether or not this application is to be mapped by node
      * (if set to true) or by slot (default)
+     */
+    bool recv_issued;
+    /**< Indicates that the comm recv for reporting abnormal proc termination
+     * has been issued
      */
     
 };

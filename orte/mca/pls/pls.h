@@ -196,13 +196,18 @@
 /**
  * Launch the indicated jobid
  */
-typedef int (*orte_pls_base_module_launch_fn_t)(orte_jobid_t);
+typedef int (*orte_pls_base_module_launch_job_fn_t)(orte_jobid_t);
 
 /**
  * Terminate any processes launched for the respective jobid by
  * this component.
  */
 typedef int (*orte_pls_base_module_terminate_job_fn_t)(orte_jobid_t);
+
+/**
+ * Terminate the daemons associated with this jobid
+ */
+typedef int (*orte_pls_base_module_terminate_orteds_fn_t)(orte_jobid_t);
 
 /**
  * Terminate a specific process.
@@ -226,21 +231,22 @@ typedef int (*orte_pls_base_module_signal_proc_fn_t)(const orte_process_name_t*,
 typedef int (*orte_pls_base_module_finalize_fn_t)(void);
 
 /**
- * pls module version 1.0.0
+ * pls module version 1.3.0
  */
-struct orte_pls_base_module_1_0_0_t {
-   orte_pls_base_module_launch_fn_t launch;
-   orte_pls_base_module_terminate_job_fn_t terminate_job;
-   orte_pls_base_module_terminate_proc_fn_t terminate_proc;
-   orte_pls_base_module_signal_job_fn_t signal_job;
-   orte_pls_base_module_signal_proc_fn_t signal_proc;
-   orte_pls_base_module_finalize_fn_t finalize;
+struct orte_pls_base_module_1_3_0_t {
+   orte_pls_base_module_launch_job_fn_t         launch_job;
+   orte_pls_base_module_terminate_job_fn_t      terminate_job;
+   orte_pls_base_module_terminate_orteds_fn_t   terminate_orteds;
+   orte_pls_base_module_terminate_proc_fn_t     terminate_proc;
+   orte_pls_base_module_signal_job_fn_t         signal_job;
+   orte_pls_base_module_signal_proc_fn_t        signal_proc;
+   orte_pls_base_module_finalize_fn_t           finalize;
 };
 
-/** shorten orte_pls_base_module_1_0_0_t declaration */
-typedef struct orte_pls_base_module_1_0_0_t orte_pls_base_module_1_0_0_t;
+/** shorten orte_pls_base_module_1_3_0_t declaration */
+typedef struct orte_pls_base_module_1_3_0_t orte_pls_base_module_1_3_0_t;
 /** shorten orte_pls_base_module_t declaration */
-typedef struct orte_pls_base_module_1_0_0_t orte_pls_base_module_t;
+typedef struct orte_pls_base_module_1_3_0_t orte_pls_base_module_t;
 
 /**
  * pls initialization function
@@ -251,13 +257,13 @@ typedef struct orte_pls_base_module_1_0_0_t orte_pls_base_module_t;
  * @param priority (OUT) Relative priority or ranking use by MCA to
  *                       select a module.
  */
-typedef struct orte_pls_base_module_1_0_0_t*
+typedef struct orte_pls_base_module_1_3_0_t*
 (*orte_pls_base_component_init_fn_t)(int *priority);
 
 /**
- * pls component v1.0.0
+ * pls component v1.3.0
  */
-struct orte_pls_base_component_1_0_0_t {
+struct orte_pls_base_component_1_3_0_t {
     /** component version */
     mca_base_component_t pls_version;
     /** component data */
@@ -266,18 +272,23 @@ struct orte_pls_base_component_1_0_0_t {
     orte_pls_base_component_init_fn_t pls_init;
 };
 /** Convenience typedef */
-typedef struct orte_pls_base_component_1_0_0_t orte_pls_base_component_1_0_0_t;
+typedef struct orte_pls_base_component_1_3_0_t orte_pls_base_component_1_3_0_t;
 /** Convenience typedef */
-typedef orte_pls_base_component_1_0_0_t orte_pls_base_component_t;
+typedef orte_pls_base_component_1_3_0_t orte_pls_base_component_t;
 
 
 /**
  * Macro for use in modules that are of type pls v1.0.0
  */
-#define ORTE_PLS_BASE_VERSION_1_0_0 \
-  /* pls v1.0 is chained to MCA v1.0 */ \
+#define ORTE_PLS_BASE_VERSION_1_3_0 \
+  /* pls v1.3 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* pls v1.0 */ \
-  "pls", 1, 0, 0
+  /* pls v1.3 */ \
+  "pls", 1, 3, 0
+
+/* Global structure for accessing PLS functions
+*/
+ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls;  /* holds selected module's function pointers */
+
 
 #endif /* MCA_PLS_H */

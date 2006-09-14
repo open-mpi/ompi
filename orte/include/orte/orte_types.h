@@ -46,10 +46,6 @@ typedef struct {
     uint8_t *bytes;
 } orte_byte_object_t;
 
-/* define the orted command flag type */
-typedef uint16_t orte_daemon_cmd_flag_t;
-#define ORTE_DAEMON_CMD_T   ORTE_UINT16
-
 /**
  * handle differences in iovec
  */

@@ -418,22 +418,6 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 }
 
 /*
- * ORTE_DAEMON_CMD
- */
-int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
-                             orte_data_type_t type)
-{
-    int ret;
-    
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-
-/*
  * ORTE_BYTE_OBJECT
  */
 int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,

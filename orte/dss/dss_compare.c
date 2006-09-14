@@ -232,16 +232,6 @@ int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte
     return ORTE_EQUAL;
 }
 
-/* ORTE_DAEMON_CMD */
-int orte_dss_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type)
-{
-    if (*value1 > *value2) return ORTE_VALUE1_GREATER;
-
-    if (*value2 > *value1) return ORTE_VALUE2_GREATER;
-
-    return ORTE_EQUAL;
-}
-
 /* ORTE_DATA_VALUE */
 int orte_dss_compare_data_value(orte_data_value_t *value1, orte_data_value_t *value2, orte_data_type_t type)
 {

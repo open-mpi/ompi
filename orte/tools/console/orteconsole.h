@@ -19,6 +19,16 @@
 #ifndef ORTECONSOLE_H
 #define ORTECONSOLE_H
 
+#include "orte_config.h"
+
+#include "opal/class/opal_list.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
+
+#include "orte/mca/odls/odls_types.h"
+
+#include "orte/tools/orted/orted.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif

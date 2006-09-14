@@ -16,6 +16,8 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif  /* HAVE_SYS_TIME_H */
@@ -29,105 +31,73 @@
 
 #include "opal/util/trace.h"
 
-#include "orte/orte_constants.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rds/base/base.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/pls/base/base.h"
+#include "orte/mca/rds/rds.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/iof/iof.h"
 #include "orte/mca/ns/ns.h"
-#include "orte/mca/rml/rml.h"
 #include "orte/mca/smr/smr.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/rmgr/urm/rmgr_urm.h"
 
 
-static int orte_rmgr_urm_query(void);
-
-static int orte_rmgr_urm_create(
+static int orte_rmgr_urm_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 
-static int orte_rmgr_urm_allocate(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_urm_deallocate(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_urm_map(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_urm_launch(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_urm_terminate_job(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_urm_terminate_proc(
-    const orte_process_name_t* proc_name);
-
-static int orte_rmgr_urm_signal_job(
-        orte_jobid_t jobid, int32_t signal);
-
-static int orte_rmgr_urm_signal_proc(
-        const orte_process_name_t* proc_name,
-        int32_t signal);
-
-static int orte_rmgr_urm_spawn(
+static int orte_rmgr_urm_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
 
-static int orte_rmgr_urm_finalize(void);
+static int orte_rmgr_urm_module_init(void);
+
+static int orte_rmgr_urm_module_finalize(void);
 
 
 orte_rmgr_base_module_t orte_rmgr_urm_module = {
-    orte_rmgr_urm_query,
-    orte_rmgr_urm_create,
-    orte_rmgr_urm_allocate,
-    orte_rmgr_urm_deallocate,
-    orte_rmgr_urm_map,
-    orte_rmgr_urm_launch,
-    orte_rmgr_urm_terminate_job,
-    orte_rmgr_urm_terminate_proc,
-    orte_rmgr_urm_signal_job,
-    orte_rmgr_urm_signal_proc,
-    orte_rmgr_urm_spawn,
-    orte_rmgr_base_proc_stage_gate_init,
-    orte_rmgr_base_proc_stage_gate_mgr,
-    orte_rmgr_urm_finalize
+    orte_rmgr_urm_module_init,
+    orte_rmgr_urm_setup_job,
+    orte_rmgr_urm_spawn_job,
+    orte_rmgr_urm_module_finalize,
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_get_app_context,
+    orte_rmgr_base_put_app_context,
+    orte_rmgr_base_check_context_cwd,
+    orte_rmgr_base_check_context_app,
+    orte_rmgr_base_set_vpid_range,
+    orte_rmgr_base_get_vpid_range    
 };
 
 
-/*
- * Resource discovery
- */
 
-static int orte_rmgr_urm_query(void)
+/*
+ * Since we were selected, complete the init
+ * by starting the comm system
+ */
+static int orte_rmgr_urm_module_init(void)
 {
     int rc;
-
-    OPAL_TRACE(1);
-
-    if(ORTE_SUCCESS != (rc = orte_rds_base_query())) {
+    
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_comm_start())) {
         ORTE_ERROR_LOG(rc);
-        return rc;
     }
-    return ORTE_SUCCESS;
+    return rc;
 }
 
 
 /*
- *  Create the job segment and initialize the application context.
+ *  Setup the job
  */
 
-static int orte_rmgr_urm_create(
+static int orte_rmgr_urm_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid)
@@ -150,124 +120,18 @@ static int orte_rmgr_urm_create(
         return rc;
     }
 
+    /* set a default job state of INIT. We need this so that
+     * orterun doesn't report an error from the registry if
+     * the spawn fails for some reason. Otherwise, orterun
+     * will try to get the job state (to see why we exited)
+     * and will find nothing
+     */
+    if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(*jobid, ORTE_JOB_STATE_INIT))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
     return ORTE_SUCCESS;
-}
-
-
-static int orte_rmgr_urm_allocate(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_ras_base_allocate(jobid, &mca_rmgr_urm_component.urm_ras);
-}
-
-static int orte_rmgr_urm_deallocate(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return mca_rmgr_urm_component.urm_ras->deallocate(jobid);
-}
-
-static int orte_rmgr_urm_map(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return mca_rmgr_urm_component.urm_rmaps->map(jobid);
-}
-
-static int orte_rmgr_urm_launch(orte_jobid_t jobid)
-{
-    int ret, ret2;
-
-    OPAL_TRACE(1);
-
-    if (ORTE_SUCCESS !=
-        (ret = mca_rmgr_urm_component.urm_pls->launch(jobid))) {
-        ORTE_ERROR_LOG(ret);
-        ret2 = orte_smr.set_job_state(jobid, ORTE_JOB_STATE_ABORTED);
-        if (ORTE_SUCCESS != ret2) {
-            ORTE_ERROR_LOG(ret2);
-            return ret2;
-        }
-    }
-
-    return ret;
-}
-
-static int orte_rmgr_urm_terminate_job(orte_jobid_t jobid)
-{
-    int ret;
-    orte_jobid_t my_jobid;
-
-    OPAL_TRACE(1);
-
-    ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
-    if (ORTE_SUCCESS == ret) {
-        /* if our jobid is the one we're trying to kill AND we're a
-           singleton, then calling the urm_pls isn't going to be able
-           to do anything.  Just call exit. */
-        if (orte_process_info.singleton && jobid == my_jobid) {
-            exit(1);
-        }
-    }
-
-    return mca_rmgr_urm_component.urm_pls->terminate_job(jobid);
-}
-
-static int orte_rmgr_urm_terminate_proc(const orte_process_name_t* proc_name)
-{
-    OPAL_TRACE(1);
-
-    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name,
-                              orte_process_info.my_name)) &&
-        (orte_process_info.singleton)) {
-        /* if we're trying to get ourselves killed and we're a
-           singleton, calling terminate_proc isn't going to work
-           properly -- there's no pls setup properly for us.  Just
-           call exit and be done. */
-        exit(1);
-    }
-
-    return mca_rmgr_urm_component.urm_pls->terminate_proc(proc_name);
-}
-
-
-static int orte_rmgr_urm_signal_job(orte_jobid_t jobid, int32_t signal)
-{
-    int ret;
-    orte_jobid_t my_jobid;
-
-    OPAL_TRACE(1);
-
-    ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
-    if (ORTE_SUCCESS == ret) {
-        /** if our jobid is the one we're trying to signal AND we're a
-         * singleton, then calling the urm_pls isn't going to be able
-         * to do anything - we already have the signal! */
-        if (orte_process_info.singleton && jobid == my_jobid) {
-            return ORTE_SUCCESS;
-        }
-    }
-
-    return mca_rmgr_urm_component.urm_pls->signal_job(jobid, signal);
-}
-
-static int orte_rmgr_urm_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
-{
-    OPAL_TRACE(1);
-
-    if ((0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc_name,
-         orte_process_info.my_name)) &&
-         (orte_process_info.singleton)) {
-        /** if we're trying to signal ourselves and we're a
-         * singleton, calling signal_proc isn't going to work
-         * properly -- there's no pls setup properly for us. Besides, we
-         * already have the signal!
-         */
-        return ORTE_SUCCESS;
-    }
-
-    return mca_rmgr_urm_component.urm_pls->signal_proc(proc_name, signal);
 }
 
 
@@ -303,7 +167,7 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
 
     OPAL_TRACE(1);
 
-    /* stupid ISO C forbids conversion of object pointer to function
+    /* ISO C forbids conversion of object pointer to function
        pointer.  So we do this, which is the same thing, but without
        the warning from GCC */
     cbfunc_union.ptr = cbdata;
@@ -362,10 +226,6 @@ static void orte_rmgr_urm_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     (*cbfunc)(jobid,ORTE_PROC_STATE_TERMINATED);
                     continue;
                 }
-                if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_ABORTED);
-                    continue;
-                }
             }
         }
     }
@@ -400,7 +260,7 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
  */
 
 
-static int orte_rmgr_urm_spawn(
+static int orte_rmgr_urm_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
@@ -415,29 +275,26 @@ static int orte_rmgr_urm_spawn(
     /*
      * Perform resource discovery.
      */
-    if (mca_rmgr_urm_component.urm_rds == false &&
-        ORTE_SUCCESS != (rc = orte_rds_base_query())) {
+    if (ORTE_SUCCESS != (rc = orte_rds.query())) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    } else {
-        mca_rmgr_urm_component.urm_rds = true;
     }
 
     /*
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
     if (ORTE_SUCCESS !=
-        (rc = orte_rmgr_urm_create(app_context,num_context,jobid))) {
+        (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmgr_urm_allocate(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmgr_urm_map(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -458,7 +315,8 @@ static int orte_rmgr_urm_spawn(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-  
+    free(name); /* done with this */
+
     /* setup the launch system's stage gate counters and subscriptions */
     if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -466,14 +324,22 @@ static int orte_rmgr_urm_spawn(
     }
     
     /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
-    rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
+    rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
+     /*
+      * Define the ERRMGR's callbacks as required
+      */
+     if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
+         ORTE_ERROR_LOG(rc);
+         return rc;
+     }
+     
     /*
-     * setup callback
+     * setup caller's callback
      */
 
     if(NULL != cbfunc) {
@@ -483,13 +349,13 @@ static int orte_rmgr_urm_spawn(
         } cbfunc_union;
         void *cbdata;
 
-        /* stupid ISO C forbids conversion of object pointer to function
+        /* ISO C forbids conversion of object pointer to function
            pointer.  So we do this, which is the same thing, but without
            the warning from GCC */
         cbfunc_union.func = cbfunc;
         cbdata = cbfunc_union.ptr;
 
-        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, cbdata, cb_conditions);
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, cbdata, cb_conditions);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -499,58 +365,24 @@ static int orte_rmgr_urm_spawn(
     /*
      * launch the job
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_urm_launch(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls.launch_job(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    orte_ns.free_name(&name);
     return ORTE_SUCCESS;
 }
 
 
-static int orte_rmgr_urm_finalize(void)
+static int orte_rmgr_urm_module_finalize(void)
 {
     int rc;
 
-    OPAL_TRACE(1);
-
-    /**
-     * Finalize Process Launch Subsystem (PLS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_finalize())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Finalize Resource Mapping Subsystem (RMAPS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_finalize())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Finalize Resource Allocation Subsystem (RAS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_ras_base_finalize())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /**
-     * Finalize Resource Discovery Subsystem (RDS)
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_finalize())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     /* Cancel pending receive. */
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_comm_stop())) {
+        ORTE_ERROR_LOG(rc);
+    }
 
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_SVC);
-
-    return ORTE_SUCCESS;
+    return rc;
 }
 

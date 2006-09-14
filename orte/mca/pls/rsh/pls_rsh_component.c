@@ -23,6 +23,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -30,15 +31,18 @@
 #endif
 #include <ctype.h>
 
-#include "orte/orte_constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "opal/util/show_help.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/rsh/pls_rsh.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/pls_private.h"
+#include "orte/mca/pls/rsh/pls_rsh.h"
 
 #if !defined(__WINDOWS__)
 extern char **environ;
@@ -68,10 +72,10 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -175,7 +179,13 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {
     char *bname;
     size_t i;
+    int rc;
 
+    /* if we are not an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     /* Take the string that was given to us by the pla_rsh_agent MCA
        param and search for it */
     mca_pls_rsh_component.agent_argv = 
@@ -219,6 +229,12 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
         return NULL;
     }
     *priority = mca_pls_rsh_component.priority;
+    
+    /* ensure the receive gets posted */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     return &orte_pls_rsh_module;
 }
 

@@ -23,8 +23,7 @@
 #include "opal/util/argv.h"
 #include "orte/orte_constants.h"
 #include "orte/mca/ras/poe/ras_poe.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 
 static int orte_ras_poe_allocate(orte_jobid_t jobid)
 {
@@ -71,16 +70,6 @@ static int orte_ras_poe_allocate(orte_jobid_t jobid)
     return ret;
 }
 
-static int orte_ras_poe_node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int orte_ras_poe_node_query(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
 static int orte_ras_poe_deallocate(orte_jobid_t jobid)
 {
     return ORTE_SUCCESS;
@@ -93,8 +82,10 @@ static int orte_ras_poe_finalize(void)
 
 orte_ras_base_module_t orte_ras_poe_module = {
     orte_ras_poe_allocate,
-    orte_ras_poe_node_insert,
-    orte_ras_poe_node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     orte_ras_poe_deallocate,
     orte_ras_poe_finalize
 };

@@ -91,6 +91,20 @@ typedef struct orte_process_name_t orte_process_name_t;
 #define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
 #define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
 
+/*
+ * define invalid values
+ */
+#define ORTE_CELLID_INVALID     -999
+#define ORTE_JOBID_INVALID      -999
+#define ORTE_VPID_INVALID       -999
+
+/*
+ * define wildcard values
+ */
+#define ORTE_CELLID_WILDCARD     -1
+#define ORTE_JOBID_WILDCARD      -1
+#define ORTE_VPID_WILDCARD       -1
+
 ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
 
@@ -117,13 +131,13 @@ ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
 
 /** List of names for general use
  */
-struct orte_name_services_namelist_t {
+struct orte_namelist_t {
     opal_list_item_t item;     /**< Allows this item to be placed on a list */
     orte_process_name_t *name;  /**< Name of a process */
 };
-typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;
+typedef struct orte_namelist_t orte_namelist_t;
 
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_namelist_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

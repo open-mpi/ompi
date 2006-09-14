@@ -45,10 +45,10 @@ orte_rmgr_base_component_t mca_rmgr_cnos_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
+        /* Indicate that we are a rmgr v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RMGR_BASE_VERSION_1_0_0,
+        ORTE_RMGR_BASE_VERSION_1_3_0,
 
         "cnos", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
@@ -79,7 +79,8 @@ static int orte_rmgr_cnos_open(void)
 
 static orte_rmgr_base_module_t *orte_rmgr_cnos_init(int* priority)
 {
-    *priority = 1;
+    /* set a priority higher than the proxy component */
+    *priority = 10;
 
 #ifdef HAVE_CNOS_PM_BARRIER
     /* register with the process manager so that everyone aborts if

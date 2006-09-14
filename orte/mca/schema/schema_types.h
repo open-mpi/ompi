@@ -77,7 +77,8 @@
 #define ORTE_PROC_EXIT_CODE_KEY         "orte-proc-exit-code"
 #define ORTE_PROC_NUM_ALIVE             "orte-proc-num-alive"
 #define ORTE_PROC_NUM_ABORTED           "orte-proc-num-aborted"
-#define ORTE_PROC_NUM_AT_INIT            "orte-proc-num-init"
+#define ORTE_PROC_NUM_FAILED_START      "orte-proc-num-failed-start"
+#define ORTE_PROC_NUM_AT_INIT           "orte-proc-num-init"
 #define ORTE_PROC_NUM_LAUNCHED          "orte-proc-num-launched"
 #define ORTE_PROC_NUM_RUNNING           "orte-proc-num-running"
 #define ORTE_PROC_NUM_AT_STG1           "orte-proc-num-stg1"
@@ -86,6 +87,7 @@
 #define ORTE_PROC_NUM_FINALIZED         "orte-proc-num-finalized"
 #define ORTE_PROC_NUM_TERMINATED        "orte-proc-num-terminated"
 #define ORTE_PROC_RML_IP_ADDRESS_KEY    "orte-proc-rml-ip-addr"
+
 /*
  * ORTE-wide names for specific system triggers and subscriptions
  */
@@ -98,5 +100,14 @@
 #define ORTE_NUM_FINALIZED_TRIGGER      "orte-num-finalized"
 #define ORTE_NUM_ABORTED_TRIGGER        "orte-num-aborted"
 #define ORTE_NUM_TERMINATED_TRIGGER     "orte-num-terminated"
+#define ORTE_FAILED_TO_START_TRIGGER    "orte-failed-start-trig"
+
+/*
+ * ORTED (ORTE DAEMON) TRIGGER DEFINITIONS
+ */
+#define ORTED_LAUNCH_STAGE_GATE_TRIGGER     "orted-launch-gate"
+#define ORTED_LAUNCH_STG_SUB                "orted-launch-sub"
+#define ORTED_LAUNCH_STAGE_GATE_CNTR        "orted-num-at-launch-gate"
+#define ORTED_NUM_TO_BE_LAUNCHED            "orted-num-to-be-launched"
 
 #endif

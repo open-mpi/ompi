@@ -41,6 +41,11 @@ int orte_rds_base_select(void)
     orte_rds_base_component_t *component;
     orte_rds_base_module_t *module = NULL;
 
+    /* if we are using the "null" component, then do nothing */
+    if (orte_rds_base.no_op_selected) {
+        return ORTE_SUCCESS;
+    }
+
     /* Iterate through all the available components */
   
     for (item = opal_list_get_first(&orte_rds_base.rds_components);
@@ -70,8 +75,6 @@ int orte_rds_base_select(void)
                     "rda:select: no components available!");
         return ORTE_ERROR;
     }
-
-    orte_rds = *module;
 
     return ORTE_SUCCESS;
 }

@@ -34,14 +34,15 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
+#include "orte/runtime/runtime_types.h"
+
 #include "orte/mca/rds/rds.h"
-#include "orte/mca/rds/base/base.h"
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/hostfile/rds_hostfile.h"
 #include "orte/mca/rds/hostfile/rds_hostfile_lex.h"
 
-#include "orte/runtime/runtime_types.h"
-
+static bool orte_rds_hostfile_queried = false;
 static orte_cellid_t local_cellid;
 static bool need_cellid = true;
 static char *cur_hostfile_name = NULL;
@@ -311,9 +312,6 @@ static int orte_rds_hostfile_parse(const char *hostfile, opal_list_t* existing, 
     orte_rds_hostfile_done = false;
     orte_rds_hostfile_in = fopen(hostfile, "r");
     if (NULL == orte_rds_hostfile_in) {
-        opal_show_help("help-rds-hostfile.txt", "rds:no-hostfile",
-                       true,
-                       cur_hostfile_name);
         rc = ORTE_ERR_NOT_FOUND;
         goto unlock;
     }
@@ -378,6 +376,19 @@ static int orte_rds_hostfile_query(void)
     orte_ras_node_t *ras_item;
     int rc;
 
+    if (orte_rds_hostfile_queried) {
+        /* if we have already been queried, then
+         * our info is on the registry, so just
+         * return. Note that this restriction
+         * may eventually be lifted - ideally, 
+         * we might check to see if this is a
+         * new file name and go ahead with the
+         * query if so.
+         */
+        return ORTE_SUCCESS;
+    }
+    orte_rds_hostfile_queried = true;
+    
     OBJ_CONSTRUCT(&existing, opal_list_t);
     OBJ_CONSTRUCT(&updates, opal_list_t);
     OBJ_CONSTRUCT(&rds_updates, opal_list_t);
@@ -394,7 +405,9 @@ static int orte_rds_hostfile_query(void)
         if(mca_rds_hostfile_component.default_hostfile) {
             rc = ORTE_SUCCESS;
         } else {
-            opal_output(0, "orte_rds_hostfile: could not open %s\n", mca_rds_hostfile_component.path);
+            opal_show_help("help-rds-hostfile.txt", "rds:no-hostfile",
+                           true,
+                           mca_rds_hostfile_component.path);
         }
         goto cleanup;
     } else if (ORTE_SUCCESS != rc) {
@@ -513,14 +526,7 @@ cleanup:
 }
 
 
-static int orte_rds_hostfile_finalize(void)
-{
-    return ORTE_SUCCESS;
-}
-
-
 orte_rds_base_module_t orte_rds_hostfile_module = {
     orte_rds_hostfile_query,
-    orte_rds_base_store_resource,
-    orte_rds_hostfile_finalize
+    orte_rds_base_store_resource
 };

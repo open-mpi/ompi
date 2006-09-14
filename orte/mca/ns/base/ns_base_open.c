@@ -100,13 +100,13 @@ mca_ns_base_component_t mca_ns_base_selected_component;
 
 
 /* constructor - used to initialize namelist instance */
-static void orte_name_services_namelist_construct(orte_name_services_namelist_t* list)
+static void orte_namelist_construct(orte_namelist_t* list)
 {
     list->name = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
-static void orte_name_services_namelist_destructor(orte_name_services_namelist_t* list)
+static void orte_namelist_destructor(orte_namelist_t* list)
 {
     if (NULL != list->name) {
     free(list->name);
@@ -115,10 +115,10 @@ static void orte_name_services_namelist_destructor(orte_name_services_namelist_t
 
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
-           orte_name_services_namelist_t,              /* type name */
+           orte_namelist_t,              /* type name */
            opal_list_item_t,                        /* parent "class" name */
-           orte_name_services_namelist_construct,    /* constructor */
-           orte_name_services_namelist_destructor);  /* destructor */
+           orte_namelist_construct,    /* constructor */
+           orte_namelist_destructor);  /* destructor */
 
 
 

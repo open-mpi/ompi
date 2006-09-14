@@ -112,8 +112,9 @@ int orte_pls_gridengine_finalize(void);
 /*
  * Interface
  */
-int orte_pls_gridengine_launch(orte_jobid_t);
+int orte_pls_gridengine_launch_job(orte_jobid_t);
 int orte_pls_gridengine_terminate_job(orte_jobid_t);
+int orte_pls_gridengine_terminate_orteds(orte_jobid_t);
 int orte_pls_gridengine_terminate_proc(const orte_process_name_t*);
 int orte_pls_gridengine_signal_job(orte_jobid_t, int32_t);
 int orte_pls_gridengine_signal_proc(const orte_process_name_t*, int32_t);

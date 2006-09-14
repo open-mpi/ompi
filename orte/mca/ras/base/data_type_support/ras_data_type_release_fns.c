@@ -24,7 +24,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/ras_private.h"
 
 /*
  * STANDARD OBJECT RELEASE

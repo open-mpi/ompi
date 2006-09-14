@@ -23,30 +23,36 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <fcntl.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "orte/orte_constants.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/poe/pls_poe.h"
 #include "orte/mca/ns/ns.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/sds/base/base.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
+
+/* remove for ORTE 2.0 */
+#include "orte/mca/rmaps/base/rmaps_private.h"
+#include "orte/mca/sds/base/base.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
+
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/poe/pls_poe.h"
 
 #if !defined(__WINDOWS__)
 extern char **environ;
@@ -55,16 +61,18 @@ extern char **environ;
 /*
  * Local functions
  */
-static int pls_poe_launch(orte_jobid_t jobid);
+static int pls_poe_launch_job(orte_jobid_t jobid);
 static int pls_poe_terminate_job(orte_jobid_t jobid);
+static int pls_poe_terminate_orteds(orte_jobid_t jobid);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
 static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal);
 static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_poe_finalize(void);
 
-orte_pls_base_module_1_0_0_t orte_pls_poe_module = {
-    pls_poe_launch,
+orte_pls_base_module_t orte_pls_poe_module = {
+    pls_poe_launch_job,
     pls_poe_terminate_job,
+    pls_poe_terminate_orteds,
     pls_poe_terminate_proc,
     pls_poe_signal_job,
     pls_poe_signal_proc,
@@ -451,7 +459,7 @@ poe_launch_interactive - launch an interactive job
 @param jobid JOB Identifier [IN]
 @return error number
 */
-static inline int poe_launch_interactive(orte_jobid_t jobid)
+static inline int poe_launch_interactive_job(orte_jobid_t jobid)
 {
     opal_list_t map, nodes, mapping_list;
     opal_list_item_t* item;
@@ -480,7 +488,7 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
 
     if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
 
-        /* Create a tempolary hostlist file if user specify */
+        /* Create a temporary hostlist file if user specify */
 
         if( (NULL==(mca_pls_poe_component.hostfile=tempnam(NULL,NULL))) ||
             (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
@@ -502,10 +510,10 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
     rc = orte_rmaps_base_get_map(jobid,&map);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
-    rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start, &vpid_range);
+    rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
 
-    /* Create a tempolary POE command file */
+    /* Create a temporary POE command file */
 
     for(item =  opal_list_get_first(&map);
         item != opal_list_get_end(&map);
@@ -602,10 +610,10 @@ pls_poe_launch - launch a POE job
 @param jobid JOB Identifier [IN]
 @return error number
 */
-static int pls_poe_launch(orte_jobid_t jobid)
+static int pls_poe_launch_job(orte_jobid_t jobid)
 {
     if(0 == strncmp(mca_pls_poe_component.class,"interactive",11)) {
-        return poe_launch_interactive(jobid);
+        return poe_launch_interactive_job(jobid);
     }
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -617,6 +625,11 @@ static int pls_poe_terminate_job(orte_jobid_t jobid)
 
 
 static int pls_poe_terminate_proc(const orte_process_name_t *name)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int pls_poe_terminate_orteds(orte_jobid_t jobid)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -633,7 +646,7 @@ static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal)
 }
 
 /**
-pls_poe_finalize - clean up tempolary files
+pls_poe_finalize - clean up temporary files
 @return error number
 */
 static int pls_poe_finalize(void)

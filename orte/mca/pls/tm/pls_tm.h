@@ -42,7 +42,7 @@ extern "C" {
 
     /* Globally exported variables */
     ORTE_DECLSPEC extern orte_pls_tm_component_t mca_pls_tm_component;
-    extern orte_pls_base_module_1_0_0_t orte_pls_tm_module;
+    extern orte_pls_base_module_t orte_pls_tm_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

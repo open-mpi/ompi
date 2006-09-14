@@ -28,7 +28,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 /*
  * APP CONTEXT

@@ -1,4 +1,4 @@
-PROGS = mpi_no_op hello hello_null hello_nodename
+PROGS = mpi_no_op hello hello_nodename abort multi_abort
 
 all: $(PROGS)
 

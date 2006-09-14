@@ -31,8 +31,8 @@ int orte_ras_base_finalize(void)
 {
     opal_list_item_t* item;
 
-    /* Finalize all available modules */
     if (orte_ras_base.ras_available_valid) {
+        /* Finalize all available modules */
         while (NULL != 
                (item = opal_list_remove_first(&orte_ras_base.ras_available))) {
             orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
@@ -48,11 +48,13 @@ int orte_ras_base_finalize(void)
 
 int orte_ras_base_close(void)
 {
-    /* Close all remaining available components (may be one if this is a
-       Open RTE program, or [possibly] multiple if this is ompi_info) */
+    if (orte_ras_base.ras_opened_valid) {
+        /* Close all remaining available components (may be one if this is a
+        Open RTE program, or [possibly] multiple if this is ompi_info) */
 
-    mca_base_components_close(orte_ras_base.ras_output, 
-                              &orte_ras_base.ras_opened, NULL);
+        mca_base_components_close(orte_ras_base.ras_output, 
+                                  &orte_ras_base.ras_opened, NULL);
+    }
   
     return ORTE_SUCCESS;
 }

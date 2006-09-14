@@ -16,26 +16,21 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 
-#include "orte/orte_constants.h"
-
 #include "opal/util/trace.h"
 
-#include "orte/dss/dss.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rds/base/base.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/pls/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 /*
  *  Create the job segment and initialize the application context.

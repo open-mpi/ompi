@@ -373,7 +373,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
      * later override this value by providing an MPI_Info value. for now, though,
      * let's get the default value off the registry
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -533,7 +533,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     if (NULL != base_prefix) free(base_prefix);
 
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_decrement();
         return MPI_ERR_SPAWN;

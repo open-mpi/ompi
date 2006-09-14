@@ -32,14 +32,12 @@
 #include "orte/util/sys_info.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/smr/smr_types.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/ras.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/rmaps/base/rmaps_base_node.h"
-
 
 /*
  * A sanity check to ensure that all of the requested nodes are actually
@@ -106,7 +104,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, ort
     /** set default answer */
     *total_num_slots = 0;
     
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(nodes, jobid))) {
+    if(ORTE_SUCCESS != (rc = orte_ras.node_query_alloc(nodes, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

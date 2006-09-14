@@ -133,8 +133,8 @@ static void mca_btl_tcp_endpoint_dump(mca_btl_base_endpoint_t* btl_endpoint, con
     char dst[64];
     int sndbuf,rcvbuf,nodelay,flags;
     struct sockaddr_in inaddr;
-    ompi_socklen_t obtlen;
-    ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
+    opal_socklen_t obtlen;
+    opal_socklen_t addrlen = sizeof(struct sockaddr_in);
 
     getsockname(btl_endpoint->endpoint_sd, (struct sockaddr*)&inaddr, &addrlen);
     sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));
@@ -553,7 +553,7 @@ static int mca_btl_tcp_endpoint_start_connect(mca_btl_base_endpoint_t* btl_endpo
 static void mca_btl_tcp_endpoint_complete_connect(mca_btl_base_endpoint_t* btl_endpoint)
 {
     int so_error = 0;
-    ompi_socklen_t so_length = sizeof(so_error);
+    opal_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
     opal_event_del(&btl_endpoint->endpoint_send_event);

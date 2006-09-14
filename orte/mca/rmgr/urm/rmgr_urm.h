@@ -38,12 +38,6 @@ struct orte_rmgr_urm_component_t {
     orte_rmgr_base_component_t super;
     /** Has RDS query been called */
     bool urm_rds;
-    /** Selected ras module */
-    orte_ras_base_module_t *urm_ras;
-    /** Selected rmaps module */
-    orte_rmaps_base_module_t *urm_rmaps;
-    /** Selected pls module */
-    orte_pls_base_module_t *urm_pls;
 };
 /** Convenience typedef */
 typedef struct orte_rmgr_urm_component_t orte_rmgr_urm_component_t;

@@ -118,3 +118,7 @@ Things to check:
     - Ensure that the debugger is installed properly
     - Ensure that the "%s" executable is in your path
     - Ensure that any required licenses are available to run the debugger
+#
+[orterun:daemon-die]
+%s was unable to cleanly terminate the daemons for this job. Returned value %d instead of ORTE_SUCCESS.
+

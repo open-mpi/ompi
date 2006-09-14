@@ -221,7 +221,7 @@ void ompi_info::open_components()
   component_map["rml"] = &orte_rml_base.rml_components;
 
   orte_pls_base_open();
-  component_map["pls"] = &orte_pls_base.pls_opened;
+  component_map["pls"] = &orte_pls_base.available_components;
 
   orte_sds_base_open();
   component_map["sds"] = &orte_sds_base_components_available;

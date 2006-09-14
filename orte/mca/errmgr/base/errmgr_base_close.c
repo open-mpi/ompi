@@ -24,6 +24,8 @@
 #include "opal/util/trace.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 
 
@@ -44,6 +46,10 @@ int orte_errmgr_base_close(void)
                             &orte_errmgr_base_components_available, NULL);
 
     orte_errmgr_initialized = false;
+    
+    /* set the module back to the default so that error logging can continue */
+    orte_errmgr = orte_errmgr_default;
+    
   /* All done */
 
   return ORTE_SUCCESS;

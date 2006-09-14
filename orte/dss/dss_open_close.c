@@ -426,19 +426,6 @@ int orte_dss_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    tmp = ORTE_DAEMON_CMD;
-    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_daemon_cmd,
-                                          orte_dss_unpack_daemon_cmd,
-                                          (orte_dss_copy_fn_t)orte_dss_std_copy,
-                                          (orte_dss_compare_fn_t)orte_dss_compare_daemon_cmd,
-                                          (orte_dss_size_fn_t)orte_dss_std_size,
-                                          (orte_dss_print_fn_t)orte_dss_print_daemon_cmd,
-                                          (orte_dss_release_fn_t)orte_dss_std_release,
-                                          ORTE_DSS_UNSTRUCTURED,
-                                          "ORTE_DATA_TYPE", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     tmp = ORTE_BYTE_OBJECT;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_byte_object,
                                           orte_dss_unpack_byte_object,

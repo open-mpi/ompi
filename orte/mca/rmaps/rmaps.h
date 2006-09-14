@@ -47,6 +47,7 @@
 #include "opal/mca/mca.h"
 #include "orte/mca/ns/ns_types.h"
 
+#include "orte/mca/rmaps/rmaps_types.h"
 
 /*
  * rmaps module functions
@@ -55,7 +56,7 @@
 /**
  * Mapping function
  */
-typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job);
+typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job, char *desired_mapper);
 
 /**
  * Cleanup module resources.
@@ -63,18 +64,18 @@ typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job);
 typedef int (*orte_rmaps_base_module_finalize_fn_t)(void);
 
 /*
- * rmaps module version 1.0.0
+ * rmaps module version 1.3.0
  */
-struct orte_rmaps_base_module_1_0_0_t {
+struct orte_rmaps_base_module_1_3_0_t {
     /** Maping function pointer */
-    orte_rmaps_base_module_map_fn_t map;
+    orte_rmaps_base_module_map_fn_t         map_job;
     /** Finalization function pointer */
-    orte_rmaps_base_module_finalize_fn_t finalize;
+    orte_rmaps_base_module_finalize_fn_t    finalize;
 };
 /** Convenience typedef */
-typedef struct orte_rmaps_base_module_1_0_0_t orte_rmaps_base_module_1_0_0_t;
+typedef struct orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_1_3_0_t;
 /** Convenience typedef */
-typedef orte_rmaps_base_module_1_0_0_t orte_rmaps_base_module_t;
+typedef orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_t;
 
 
 /*
@@ -89,9 +90,9 @@ typedef orte_rmaps_base_module_t* (*orte_rmaps_base_component_init_fn_t)(
 
  
 /**
- * rmaps component version 1.0.0
+ * rmaps component version 1.3.0
  */
-struct orte_rmaps_base_component_1_0_0_t {
+struct orte_rmaps_base_component_1_3_0_t {
     /** Base MCA structure */
     mca_base_component_t rmaps_version;
     /** Base MCA data */
@@ -100,19 +101,23 @@ struct orte_rmaps_base_component_1_0_0_t {
     orte_rmaps_base_component_init_fn_t rmaps_init;
 };
 /** Convenience typedef */
-typedef struct orte_rmaps_base_component_1_0_0_t orte_rmaps_base_component_1_0_0_t;
+typedef struct orte_rmaps_base_component_1_3_0_t orte_rmaps_base_component_1_3_0_t;
 /** Convenience typedef */
-typedef orte_rmaps_base_component_1_0_0_t orte_rmaps_base_component_t;
+typedef orte_rmaps_base_component_1_3_0_t orte_rmaps_base_component_t;
 
 
 /**
  * Macro for use in components that are of type rmaps v1.0.0
  */
-#define ORTE_RMAPS_BASE_VERSION_1_0_0 \
-  /* rmaps v1.0 is chained to MCA v1.0 */ \
+#define ORTE_RMAPS_BASE_VERSION_1_3_0 \
+  /* rmaps v1.3 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* rmaps v1.0 */ \
-  "rmaps", 1, 0, 0
+  /* rmaps v1.3 */ \
+  "rmaps", 1, 3, 0
+
+
+/* global structure for accessing RMAPS modules */
+ORTE_DECLSPEC extern orte_rmaps_base_module_t orte_rmaps;
 
 #endif
 

@@ -40,6 +40,8 @@
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 #include "orte/mca/ns/ns.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
@@ -50,6 +52,7 @@
 #include <signal.h>
 #endif
 
+#if 0
 static
 int
 abort_procs(ompi_proc_t **procs, int proc_count, 
@@ -66,14 +69,14 @@ abort_procs(ompi_proc_t **procs, int proc_count,
         }
         if (jobid == my_jobid) continue;
 
-        killret = orte_rmgr.terminate_job(jobid);
+        killret = orte_pls.terminate_job(jobid);
 
         if (OMPI_SUCCESS != killret) ret = killret;
     }
 
     return ret;
 }
-
+#endif
 
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
@@ -143,7 +146,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     }
 
     /* BWB - XXX - Should probably publish the error code somewhere */
-
+#if 0
     /* Kill everyone in the job.  We may make this better someday to
        actually loop over ompi_rte_kill_proc() to only kill the procs
        in comm, and additionally to somehow use errorcode. */
@@ -167,7 +170,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                 comm->c_local_group->grp_proc_count,
                 my_jobid);
 
-    ret = orte_rmgr.terminate_job(my_jobid);
+    ret = orte_pls.terminate_job(my_jobid);
 
     if (OMPI_SUCCESS == ret) {
         while (1) {
@@ -188,6 +191,12 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         just exit and let it become Somebody Elses Problem. */
         exit(errcode);
     }
-
+#endif
+    
+    /* tell the error manager we detected an error - OpenRTE
+     * will take care of cleaning up for us
+     */
+    orte_errmgr.error_detected(errcode, "MPI_Abort has been called", NULL);
+    
     return OMPI_SUCCESS;
 }

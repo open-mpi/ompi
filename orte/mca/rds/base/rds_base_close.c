@@ -31,10 +31,15 @@ int orte_rds_base_finalize(void)
 {
     opal_list_item_t* item;
 
+    /* if we are using the "null" component, then do nothing */
+    if (orte_rds_base.no_op_selected) {
+        return ORTE_SUCCESS;
+    }
+    
     /* Finalize all selected modules */
     while((item = opal_list_remove_first(&orte_rds_base.rds_selected)) != NULL) {
         orte_rds_base_selected_t* selected = (orte_rds_base_selected_t*)item;
-        selected->module->finalize();
+        selected->component->rds_fini();
         OBJ_RELEASE(selected);
     }
     return ORTE_SUCCESS;
@@ -42,6 +47,11 @@ int orte_rds_base_finalize(void)
     
 int orte_rds_base_close(void)
 {
+    /* if we are using the "null" component, then do nothing */
+    if (orte_rds_base.no_op_selected) {
+        return ORTE_SUCCESS;
+    }
+
     /* Close all remaining available components (may be one if this is a
        Open RTE program, or [possibly] multiple if this is ompi_info) */
 

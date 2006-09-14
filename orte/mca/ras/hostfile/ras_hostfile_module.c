@@ -22,11 +22,10 @@
 #include "opal/util/argv.h"
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/ras/hostfile/ras_hostfile.h"
 
@@ -46,6 +45,8 @@ orte_ras_base_module_t orte_ras_hostfile_module = {
     orte_ras_hostfile_allocate,
     orte_ras_base_node_insert,
     orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     orte_ras_hostfile_deallocate,
     orte_ras_hostfile_finalize
 };
@@ -53,6 +54,11 @@ orte_ras_base_module_t orte_ras_hostfile_module = {
 
 orte_ras_base_module_t *orte_ras_hostfile_init(int* priority)
 {
+    /* if we are not an HNP, then we must not be selected */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     *priority = mca_ras_hostfile_component.priority;
     return &orte_ras_hostfile_module;
 }

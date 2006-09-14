@@ -26,8 +26,7 @@
 #include "opal/util/show_help.h"
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_slurm.h"
 
 
@@ -35,8 +34,6 @@
  * Local functions
  */
 static int allocate(orte_jobid_t jobid);
-static int node_insert(opal_list_t *);
-static int node_query(opal_list_t *);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -51,8 +48,10 @@ static int parse_range(char *base, char *range, char ***nodelist);
  */
 orte_ras_base_module_t orte_ras_slurm_module = {
     allocate,
-    node_insert,
-    node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     deallocate,
     finalize
 };
@@ -100,16 +99,6 @@ static int allocate(orte_jobid_t jobid)
                     "ras:slurm:allocate: failure (base_allocate_nodes=%d)", ret);
     }
     return ret;
-}
-
-static int node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int node_query(opal_list_t *nodes)
-{
-    return orte_ras_base_node_query(nodes);
 }
 
 /*

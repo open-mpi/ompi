@@ -74,13 +74,17 @@ extern "C" {
     ORTE_DECLSPEC extern int orte_debug_flag;
 
     /**
-     * Abort the current application with a pretty-print error message
+     * Abort the current application
      *
-     * Aborts currently running application with \code abort(), pretty
-     * printing an error message if possible.  Error message should be
-     * specified using the standard \code printf() format.
+     * Aborts currently running application, NOTE: We do NOT call the
+     * regular C-library "abort" function, even
+     * though that would have alerted us to the fact that this is
+     * an abnormal termination, because it would automatically cause
+     * a core file to be generated. The "report" flag indicates if the
+     * function should create an appropriate file to alert the local
+     * orted that termination was abnormal.
      */
-ORTE_DECLSPEC    int orte_abort(int status, char *fmt, ...);
+ORTE_DECLSPEC    int orte_abort(int status, bool report);
 
 
     /**

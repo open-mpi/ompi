@@ -25,9 +25,8 @@
 #include "orte/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/ras/base/ras_private.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "ras_xgrid.h"
 
 
@@ -35,8 +34,6 @@
  * Local functions
  */
 static int allocate(orte_jobid_t jobid);
-static int node_insert(opal_list_t *);
-static int node_query(opal_list_t *);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -48,8 +45,10 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist);
  */
 orte_ras_base_module_t orte_ras_xgrid_module = {
     allocate,
-    node_insert,
-    node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     deallocate,
     finalize
 };
@@ -93,16 +92,6 @@ static int allocate(orte_jobid_t jobid)
     return ret;
 }
 
-static int node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int node_query(opal_list_t *nodes)
-{
-    return orte_ras_base_node_query(nodes);
-}
-
 /*
  * There's really nothing to do here
  */
@@ -137,7 +126,7 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
     char *hostname;
 
     /* how many slots do we need? */
-    if(ORTE_SUCCESS != (ret = orte_rmgr_base_get_job_slots(jobid, &num_requested))) {
+    if(ORTE_SUCCESS != (ret = orte_rmgr.get_job_slots(jobid, &num_requested))) {
         return ret;
     }
 

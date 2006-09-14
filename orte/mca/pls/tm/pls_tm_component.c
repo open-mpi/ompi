@@ -29,8 +29,13 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "orte/orte_constants.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
+#include "orte/mca/pls/base/pls_private.h"
 #include "pls_tm.h"
 
 
@@ -47,7 +52,7 @@ const char *mca_pls_tm_component_version_string =
  */
 static int pls_tm_open(void);
 static int pls_tm_close(void);
-static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority);
+static orte_pls_base_module_t *pls_tm_init(int *priority);
 
 
 /*
@@ -61,9 +66,9 @@ orte_pls_tm_component_t mca_pls_tm_component = {
            about the component itself */
 
         {
-            /* Indicate that we are a pls v1.0.0 component (which also
+            /* Indicate that we are a pls v1.3.0 component (which also
                implies a specific MCA version) */
-            ORTE_PLS_BASE_VERSION_1_0_0,
+            ORTE_PLS_BASE_VERSION_1_3_0,
 
             /* Component name and version */
             "tm",
@@ -126,12 +131,25 @@ static int pls_tm_close(void)
 }
 
 
-static struct orte_pls_base_module_1_0_0_t *pls_tm_init(int *priority)
+static orte_pls_base_module_t *pls_tm_init(int *priority)
 {
+    int rc;
+    
+    /* if we are NOT an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     /* Are we running under a TM job? */
 
     if (NULL != getenv("PBS_ENVIRONMENT") &&
         NULL != getenv("PBS_JOBID")) {
+
+        /* ensure the receive gets posted */
+        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
         *priority = mca_pls_tm_component.priority;
         return &orte_pls_tm_module;
     }

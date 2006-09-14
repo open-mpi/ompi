@@ -30,7 +30,7 @@
 extern "C" {
 #endif
 
-    ORTE_DECLSPEC extern orte_ras_base_component_1_0_0_t mca_ras_slurm_component;
+    ORTE_DECLSPEC extern orte_ras_base_component_t mca_ras_slurm_component;
     ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras_slurm_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -29,11 +29,12 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/smr/smr_types.h"
 
+#include "orte/mca/rmaps/base/rmaps_private.h"
+#include "orte/mca/rmaps/base/base.h"
 
 /**
  * orte_rmaps_base_node_t
@@ -324,14 +325,14 @@ int orte_rmaps_base_get_map(orte_jobid_t jobid, opal_list_t* mapping_list)
     };
 
     /* query the application context */
-    if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &app_context, &num_context))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /* query the node list */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_ras_base_node_query_alloc(&nodes,jobid))) {
+    if(ORTE_SUCCESS != (rc = orte_ras.node_query_alloc(&nodes,jobid))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -553,13 +554,13 @@ int orte_rmaps_base_get_node_map(
     };
 
     /* allocate the node */
-    if(NULL == (ras_node = orte_ras_base_node_lookup(cellid,hostname))) {
+    if(NULL == (ras_node = orte_ras.node_lookup(cellid,hostname))) {
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
 
     /* query the application context */
-    if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &app_context, &num_context))) {
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &app_context, &num_context))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -897,122 +898,6 @@ cleanup:
     }
     if(NULL != values)
         free(values);
-    return rc;
-}
-
-
-/*
- *  Set the vpid start and range on the "global" job segment.
- */
-
-int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t start, orte_vpid_t range)
-{
-    orte_gpr_value_t *value;
-    char *segment;
-    int rc;
-
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE, segment, 2, 1))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-    free(segment);
-    value->tokens[0] = strdup(ORTE_JOB_GLOBALS);
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_JOB_VPID_START_KEY, ORTE_VPID, &start))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID, &range))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    rc = orte_gpr.put(1, &value);
-    if (ORTE_SUCCESS != rc) ORTE_ERROR_LOG(rc);
-
-    OBJ_RELEASE(value);
-    return rc;
-}
-
-
-/*
- *  Get the vpid start and range from the "global" job segment.
- */
-
-int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range)
-{
-    char *segment;
-    char *tokens[2];
-    char *keys[3];
-    orte_gpr_value_t** values = NULL;
-    orte_std_cntr_t i, num_values = 0;
-    orte_vpid_t *vptr;
-    int rc;
-
-    /* query the job segment on the registry */
-    if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    tokens[0] = ORTE_JOB_GLOBALS;
-    tokens[1] = NULL;
-
-    keys[0] = ORTE_JOB_VPID_START_KEY;
-    keys[1] = ORTE_JOB_VPID_RANGE_KEY;
-    keys[2] = NULL;
-
-    rc = orte_gpr.get(
-        ORTE_GPR_KEYS_AND|ORTE_GPR_TOKENS_OR,
-        segment,
-        tokens,
-        keys,
-        &num_values,
-        &values
-        );
-    if(rc != ORTE_SUCCESS) {
-        free(segment);
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if(num_values != 1) {
-        rc = ORTE_ERR_NOT_FOUND;
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
-    for(i=0; i<values[0]->cnt; i++) {
-         if(strcmp(values[0]->keyvals[i]->key, ORTE_JOB_VPID_START_KEY) == 0) {
-             if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, values[0]->keyvals[i]->value, ORTE_VPID))) {
-                 ORTE_ERROR_LOG(rc);
-                 goto cleanup;
-             }
-             *start = *vptr;
-             continue;
-         }
-         if(strcmp(values[0]->keyvals[i]->key, ORTE_JOB_VPID_RANGE_KEY) == 0) {
-             if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&vptr, values[0]->keyvals[i]->value, ORTE_VPID))) {
-                 ORTE_ERROR_LOG(rc);
-                 goto cleanup;
-             }
-             *range = *vptr;
-             continue;
-         }
-    }
-
-cleanup:
-    for(i=0; i<num_values; i++)
-        OBJ_RELEASE(values[i]);
-    free(segment);
-    free(values);
     return rc;
 }
 
