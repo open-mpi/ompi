@@ -142,7 +142,7 @@ struct mca_btl_sm_component_t {
 #endif
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
-OMPI_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
 
 /**
  * Register shared memory module parameters with the MCA framework

@@ -54,7 +54,7 @@ struct mca_btl_self_component_t {
     mca_btl_base_recv_reg_t self_reg[256];
 };
 typedef struct mca_btl_self_component_t mca_btl_self_component_t;
-OMPI_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
 
 /**
  * Register shared memory module parameters with the MCA framework

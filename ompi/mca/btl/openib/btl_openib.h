@@ -135,7 +135,7 @@ struct mca_btl_openib_component_t {
     bool warn_no_hca_params_found;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
-extern mca_btl_openib_component_t mca_btl_openib_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
 
 typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t; 
     

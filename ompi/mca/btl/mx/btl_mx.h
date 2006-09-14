@@ -91,7 +91,7 @@ struct mca_btl_mx_component_t {
 }; 
 typedef struct mca_btl_mx_component_t mca_btl_mx_component_t;
 
-extern mca_btl_mx_component_t mca_btl_mx_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_mx_component_t mca_btl_mx_component;
 
 /**
  * BTL Module Interface
