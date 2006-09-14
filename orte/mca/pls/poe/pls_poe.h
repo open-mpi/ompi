@@ -63,7 +63,7 @@ typedef struct orte_pls_poe_component_t orte_pls_poe_component_t;
 
 
 ORTE_DECLSPEC orte_pls_poe_component_t mca_pls_poe_component;
-ORTE_DECLSPEC orte_pls_base_module_t orte_pls_poe_module;
+orte_pls_base_module_t orte_pls_poe_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
