@@ -91,7 +91,7 @@ int mca_oob_xcast(
 {
     orte_std_cntr_t i;
     int rc;
-    int tag = MCA_OOB_TAG_XCAST;
+    int tag = ORTE_RML_TAG_XCAST;
     int status;
     orte_proc_state_t state;
 

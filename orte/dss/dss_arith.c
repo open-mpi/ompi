@@ -22,11 +22,12 @@
 #if HAVE_NETINET_IN_H
 #include <netinet/in.h>
 #endif
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/dss/dss_internal.h"
-#include "opal/util/output.h"
 
 static void orte_dss_arith_int(int *value, int *operand, orte_dss_arith_op_t operation);
 static void orte_dss_arith_uint(uint *value, uint *operand, orte_dss_arith_op_t operation);

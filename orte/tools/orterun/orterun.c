@@ -62,8 +62,10 @@
 
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/schema/schema.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
@@ -275,6 +277,7 @@ static int parse_globals(int argc, char* argv[]);
 static int parse_locals(int argc, char* argv[]);
 static int parse_appfile(char *filename, char ***env);
 static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
+static void dump_aborted_procs(orte_jobid_t jobid);
 
 
 int orterun(int argc, char *argv[])
@@ -283,6 +286,7 @@ int orterun(int argc, char *argv[])
     int rc, i, num_apps, array_size, j;
     int id, iparam;
     orte_proc_state_t cb_states;
+    orte_job_state_t exit_state;
 
     /* Setup MCA params */
 
@@ -440,8 +444,8 @@ int orterun(int argc, char *argv[])
 
     /* Spawn the job */
 
-    cb_states = ORTE_PROC_STATE_ABORTED | ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
-    rc = orte_rmgr.spawn(apps, num_apps, &jobid, job_state_callback, cb_states);
+    cb_states = ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
+    rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, job_state_callback, cb_states);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
@@ -455,6 +459,27 @@ int orterun(int argc, char *argv[])
                 opal_condition_wait(&orterun_globals.cond,
                                     &orterun_globals.lock);
             }
+            /* check to see if the job was aborted */
+            if (ORTE_SUCCESS != (rc = orte_smr.get_job_state(&exit_state, jobid))) {
+                ORTE_ERROR_LOG(rc);
+                /* define the exit state as abnormal by default */
+                exit_state = ORTE_JOB_STATE_ABORTED;
+            }
+            if (ORTE_JOB_STATE_TERMINATED != exit_state) {
+                /* abnormal termination of some kind */
+                dump_aborted_procs(jobid);
+                /* If we showed more abort messages than were allowed,
+                show a followup message here */
+                if (num_aborted > max_display_aborted) {
+                    i = num_aborted - max_display_aborted;
+                    printf("%d additional process%s aborted (not shown)\n",
+                           i, ((i > 1) ? "es" : ""));
+                }
+                if (num_killed > 0) {
+                    printf("%d process%s killed (possibly by Open MPI)\n",
+                           num_killed, ((num_killed > 1) ? "es" : ""));
+                }
+            }
             /* Make sure we propagate the exit code */
             if (WIFEXITED(orterun_globals.exit_status)) {
                 rc = WEXITSTATUS(orterun_globals.exit_status);
@@ -465,19 +490,16 @@ int orterun(int argc, char *argv[])
                  * value for the shell */
                 rc = WTERMSIG(orterun_globals.exit_status) + 128;
             }
+            
+            /* the job is complete - now tell the orteds that it is
+             * okay to finalize and exit, we are done with them
+             */
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(jobid))) {
+                opal_show_help("help-orterun.txt", "orterun:daemon-die", false,
+                               orterun_basename, NULL, NULL, rc);
+            }
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
-            /* If we showed more abort messages than were allowed,
-               show a followup message here */
-            if (num_aborted > max_display_aborted) {
-                i = num_aborted - max_display_aborted;
-                printf("%d additional process%s aborted (not shown)\n",
-                       i, ((i > 1) ? "es" : ""));
-            }
-            if (num_killed > 0) {
-                printf("%d process%s killed (possibly by Open MPI)\n",
-                       num_killed, ((num_killed > 1) ? "es" : ""));
-            }
         }
     }
 
@@ -642,10 +664,6 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
     /* Note that there's only three states that we're interested in
        here:
 
-       ABORTED: which means that one or more processes have aborted
-                (terminated abnormally).  In which case, we probably
-                want to print out some information.
-
        TERMINATED: which means that all the processes in the job have
                 completed (normally and/or abnormally).
 
@@ -662,11 +680,6 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
     }
 
     switch(state) {
-        case ORTE_PROC_STATE_ABORTED:
-            dump_aborted_procs(jobid);
-            orte_rmgr.terminate_job(jobid);
-            break;
-
         case ORTE_PROC_STATE_TERMINATED:
             orterun_globals.exit_status = 0;  /* set the exit status to indicate normal termination */
             orterun_globals.exit = true;
@@ -731,25 +744,24 @@ static void abort_signal_callback(int fd, short flags, void *arg)
          return;
     }
     if (!orterun_globals.quiet){
-        fprintf(stderr, "%s: killing job...", orterun_basename);
+        fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     }
 
+    /* terminate the job - this will also wakeup orterun so
+     * it can kill all the orteds
+     */
     if (jobid != ORTE_JOBID_MAX) {
-        ret = orte_rmgr.terminate_job(jobid);
+        ret = orte_pls.terminate_job(jobid);
         if (ORTE_SUCCESS != ret) {
             jobid = ORTE_JOBID_MAX;
         }
     }
-
+    
     if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
     }
 
-    /* make the output a little prettier - move the prompt to its own line */
-    if (!orterun_globals.quiet){
-        fprintf(stderr, "\n\n");
-    }
         
 }
 
@@ -771,7 +783,7 @@ static void  signal_forward_callback(int fd, short event, void *arg)
     }
 
     /** send the signal out to the processes */
-    if (ORTE_SUCCESS != (ret = orte_rmgr.signal_job(jobid, signum))) {
+    if (ORTE_SUCCESS != (ret = orte_pls.signal_job(jobid, signum))) {
         fprintf(stderr, "Signal %d could not be sent to the job (returned %d)",
                 signum, ret);
     }

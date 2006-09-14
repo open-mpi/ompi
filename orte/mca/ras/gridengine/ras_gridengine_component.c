@@ -45,10 +45,10 @@ orte_ras_gridengine_component_t mca_ras_gridengine_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a ras v1.0.0 component (which also
+        /* Indicate that we are a ras v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RAS_BASE_VERSION_1_0_0,
+        ORTE_RAS_BASE_VERSION_1_3_0,
         "gridengine",                /* MCA component name */
         ORTE_MAJOR_VERSION,          /* MCA component major version */
         ORTE_MINOR_VERSION,          /* MCA component minor version */
@@ -98,6 +98,11 @@ static int orte_ras_gridengine_open(void)
 
 static orte_ras_base_module_t *orte_ras_gridengine_init(int* priority)
 {
+    /* if we are not an HNP, then we must not be selected */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     *priority = mca_ras_gridengine_component.priority;
 
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") && 

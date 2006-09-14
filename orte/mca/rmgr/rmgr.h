@@ -50,16 +50,7 @@ extern "C" {
  */
 
 /**
- * Query/update a resource
- *
- * @code
- * return_value = orte_rmgr.query();
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_query_fn_t)(void);
-
-/**
- * Create a job. Allocated a jobid and initializes the job segment.
+ * Setup a job. Allocated a jobid and initializes the job segment.
  *
  * @param app_context   Array of application context values.
  * @param num_context   Number of entries in the app_context array.
@@ -68,79 +59,13 @@ typedef int (*orte_rmgr_base_module_query_fn_t)(void);
  * @code
  * orte_jobid_t jobid;
  *
- * return_value = orte_rmgr.create(app_context,num_context,&jobid);
+ * return_value = orte_rmgr.setup_job(app_context,num_context,&jobid);
  * @endcode
  */
-typedef int (*orte_rmgr_base_module_create_fn_t)(
+typedef int (*orte_rmgr_base_module_setup_job_fn_t)(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t *jobid);
-
-/**
- * Allocate resources to a job.
- *
- * @code
- * return_value = orte_rmgr.allocate(orte_jobid_t jobid)
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_allocate_fn_t)(orte_jobid_t jobid);
-
-/**
- * Deallocate resources from a job
- *
- * @code
- * return_value = orte_rmgr.deallocate(orte_jobid_t jobid);
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_deallocate_fn_t)(orte_jobid_t jobid);
-
-/**
- * Map processes to resources assigned to a job.
- *
- * @code
- * return_value = orte_mgr.map(orte_jobid_t jobid);
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_map_fn_t)(orte_jobid_t job);
-
-/**
- * Launch processes that have been mapped.
- *
- * @code
- * return_value = orte_rmgr.launch(orte_jobid_t jobid);
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_launch_fn_t)(orte_jobid_t job);
-
-/**
- * Terminate an entire job.
- *
- * @code
- * return_value = orte_rmgr.terminate_job(orte_jobid_t jobid);
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_terminate_job_fn_t)(orte_jobid_t job);
-
-/**
- * Terminate a specific process.
- *
- * @code
- * return_value = orte_rmgr.terminate_proc(const orte_process_name_t* proc_name);
- * @endcode
- */
-typedef int (*orte_rmgr_base_module_terminate_proc_fn_t)(const orte_process_name_t* proc_name);
-
-
-/**
- * Transmit a signal to an entire job
- */
-typedef int (*orte_rmgr_base_module_signal_job_fn_t)(orte_jobid_t job, int32_t signal);
-
-/**
- * Transmit a signal to a specific process
- */
-typedef int (*orte_rmgr_base_module_signal_proc_fn_t)(const orte_process_name_t* proc_name, int32_t signal);
-
 
 /*
  * Callback function for resource manager
@@ -164,61 +89,91 @@ typedef void (*orte_rmgr_cb_fn_t)(orte_jobid_t jobid, orte_proc_state_t state);
  * return_value = orte_rmgr.spawn(app_context, num_context, &jobid, NULL, 0);
  * @endcode
  */
-typedef int (*orte_rmgr_base_module_spawn_fn_t)(
+typedef int (*orte_rmgr_base_module_spawn_job_fn_t)(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t *jobid,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
 
-/*
- * Init the proc stage gate process
- * A process goes through several stages during its life, each stage being marked by
- * a barrier function that prevents the process from going any further until all
- * processes reach that point. This function initializes the callbacks required
- * to manage that process.
- */
-typedef int (*orte_rmgr_base_module_proc_stage_gate_init_fn_t)(orte_jobid_t job);
-
-/*
- * Call the proc stage gate manager
- * As each process achieves a defined barrier (or "stage gate"), it sets its process
- * status (via the SOH) to indicate "at stage gate x". When all process have reached
- * that point, this function is called with a message indicating this has happened.
- * The stage gate manager then takes the appropriate action for that stage gate -
- * usually, broadcasting a message to all processes in the job that allows them
- * to proceed.
- */
-typedef int (*orte_rmgr_base_module_proc_stage_gate_mgr_fn_t)(orte_gpr_notify_message_t *msg);
 
 /**
- * Cleanup resources held by rmgr.
+ * Allow module-specific init.
+ */
+
+typedef int (*orte_rmgr_base_module_init_fn_t)(void);
+
+/**
+    * Cleanup resources held by rmgr.
  */
 
 typedef int (*orte_rmgr_base_module_finalize_fn_t)(void);
 
+/***   APP_CONTEXT FUNCTIONS   ***/
 /*
- * Ver 1.0.0
+ * Store an array of app_context objects for a given job/pset
  */
-struct orte_rmgr_base_module_1_0_0_t {
-    orte_rmgr_base_module_query_fn_t query;
-    orte_rmgr_base_module_create_fn_t create;
-    orte_rmgr_base_module_allocate_fn_t allocate;
-    orte_rmgr_base_module_deallocate_fn_t deallocate;
-    orte_rmgr_base_module_map_fn_t map;
-    orte_rmgr_base_module_launch_fn_t launch;
-    orte_rmgr_base_module_terminate_job_fn_t terminate_job;
-    orte_rmgr_base_module_terminate_proc_fn_t terminate_proc;
-    orte_rmgr_base_module_signal_job_fn_t signal_job;
-    orte_rmgr_base_module_signal_proc_fn_t signal_proc;
-    orte_rmgr_base_module_spawn_fn_t spawn;
-    orte_rmgr_base_module_proc_stage_gate_init_fn_t stage_gate_init;
-    orte_rmgr_base_module_proc_stage_gate_mgr_fn_t stage_gate_mgr;
-    orte_rmgr_base_module_finalize_fn_t finalize;
+typedef int (*orte_rmgr_base_module_store_app_context_fn_t)(orte_jobid_t jobid,
+                                                            orte_app_context_t** app_context,
+                                                            orte_std_cntr_t num_context);
+
+/*
+ * Get an array of app_context objects for a given job/pset
+ */
+typedef int (*orte_rmgr_base_module_get_app_context_fn_t)(orte_jobid_t jobid,
+                                                          orte_app_context_t ***app_context,
+                                                          orte_std_cntr_t *num_context);
+
+/*
+ * Check the app_context for changing to a working dir or the HOME dir
+ */
+typedef int (*orte_rmgr_base_module_check_context_cwd_fn_t)(orte_app_context_t *context,
+                                                            bool want_chdir);
+
+/* 
+ * Check app_context application for existence
+ */
+typedef int (*orte_rmgr_base_module_check_context_app_fn_t)(orte_app_context_t *context);
+
+/**
+    * VPID FUNCTIONS
+ */
+
+/**
+    * Store the vpid range of a job
+ */
+typedef int (*orte_rmgr_base_module_set_vpid_range_fn_t)(orte_jobid_t jobid,
+                                                         orte_vpid_t start,
+                                                         orte_vpid_t range);
+
+
+/**
+    * Retrieve the vpid range of a job
+ */
+typedef int (*orte_rmgr_base_module_get_vpid_range_fn_t)(orte_jobid_t jobid,
+                                                         orte_vpid_t *start,
+                                                         orte_vpid_t *range);
+
+
+/*
+ * Ver 1.3.0
+ */
+struct orte_rmgr_base_module_1_3_0_t {
+    orte_rmgr_base_module_init_fn_t                 module_init;
+    orte_rmgr_base_module_setup_job_fn_t            setup_job;
+    orte_rmgr_base_module_spawn_job_fn_t            spawn_job;
+    orte_rmgr_base_module_finalize_fn_t             finalize;
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_module_get_app_context_fn_t      get_app_context;
+    orte_rmgr_base_module_store_app_context_fn_t    store_app_context;
+    orte_rmgr_base_module_check_context_cwd_fn_t    check_context_cwd;
+    orte_rmgr_base_module_check_context_app_fn_t    check_context_app;
+    orte_rmgr_base_module_set_vpid_range_fn_t       set_vpid_range;
+    orte_rmgr_base_module_get_vpid_range_fn_t       get_vpid_range;
 };
 
-typedef struct orte_rmgr_base_module_1_0_0_t orte_rmgr_base_module_1_0_0_t;
-typedef orte_rmgr_base_module_1_0_0_t orte_rmgr_base_module_t;
+typedef struct orte_rmgr_base_module_1_3_0_t orte_rmgr_base_module_1_3_0_t;
+typedef orte_rmgr_base_module_1_3_0_t orte_rmgr_base_module_t;
 
 /*
  * RMGR Component
@@ -232,24 +187,24 @@ typedef orte_rmgr_base_module_t* (*orte_rmgr_base_component_init_fn_t)(
  * the standard component data structure
  */
 
-struct orte_rmgr_base_component_1_0_0_t {
+struct orte_rmgr_base_component_1_3_0_t {
     mca_base_component_t rmgr_version;
     mca_base_component_data_1_0_0_t rmgr_data;
     orte_rmgr_base_component_init_fn_t rmgr_init;
 };
-typedef struct orte_rmgr_base_component_1_0_0_t orte_rmgr_base_component_1_0_0_t;
-typedef orte_rmgr_base_component_1_0_0_t orte_rmgr_base_component_t;
+typedef struct orte_rmgr_base_component_1_3_0_t orte_rmgr_base_component_1_3_0_t;
+typedef orte_rmgr_base_component_1_3_0_t orte_rmgr_base_component_t;
 
 
 
 /**
  * Macro for use in components that are of type rmgr v1.0.0
  */
-#define ORTE_RMGR_BASE_VERSION_1_0_0 \
+#define ORTE_RMGR_BASE_VERSION_1_3_0 \
   /* rmgr v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* rmgr v1.0 */ \
-  "rmgr", 1, 0, 0
+  /* rmgr v1.3 */ \
+  "rmgr", 1, 3, 0
 
 /**
  * Global structure for accessing RAS functions

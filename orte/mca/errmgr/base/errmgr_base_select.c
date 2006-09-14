@@ -29,8 +29,7 @@
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_errmgr_base_select(bool *allow_multi_user_threads, 
-                            bool *have_hidden_threads)
+int orte_errmgr_base_select(void)
 {
   opal_list_item_t *item;
   mca_base_component_list_item_t *cli;
@@ -71,11 +70,9 @@ int orte_errmgr_base_select(bool *allow_multi_user_threads,
 
         best_module = module;
         best_component = component;
-        *allow_multi_user_threads = multi;
-        *have_hidden_threads = hidden;
 
-	/* update the best priority */
-	best_priority = priority;
+        /* update the best priority */
+        best_priority = priority;
       } 
 
       /* If it's not the best one, finalize it */
@@ -86,10 +83,10 @@ int orte_errmgr_base_select(bool *allow_multi_user_threads,
     }
   }
 
-  /* If we didn't find one to select, that's okay - stick with default */
+  /* If we didn't find one to select, then we have a big problem */
 
   if (NULL == best_component) {
-    return ORTE_SUCCESS;
+    return ORTE_ERROR;
   }
 
   /* We have happiness -- save the component and module for later
@@ -98,7 +95,7 @@ int orte_errmgr_base_select(bool *allow_multi_user_threads,
   orte_errmgr = *best_module;
   orte_errmgr_base_selected_component = *best_component;
   orte_errmgr_base_selected = true;
-
+  
   /* all done */
 
   return ORTE_SUCCESS;

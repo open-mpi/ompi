@@ -28,7 +28,7 @@
 #include "orte/mca/smr/smr_types.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 
 static void orte_ras_base_node_construct(orte_ras_node_t* node)
 {
@@ -335,7 +335,19 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
                 continue;
             }
         }
-        opal_list_append(nodes, &node->super);
+        /* check to see if any slots were reserved on this node for us
+         * The "get" command will return data from ALL nodes on the node
+         * segment. We ONLY want to include here nodes that are assigned
+         * to the specified job - i.e., nodes that have a node_slots_alloc_key
+         * for this jobid. If that is the case, then the node_slots_alloc will be
+         * set to a value greater than 0
+         */
+        if (0 < node->node_slots_alloc) {
+            opal_list_append(nodes, &node->super);
+        } else {
+            /* no slots were allocated to us on this node */
+            OBJ_RELEASE(node);
+        }
         OBJ_RELEASE(value);
     }
 

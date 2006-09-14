@@ -29,35 +29,20 @@
 
 int orte_pls_base_finalize(void)
 {
-    /* Finalize all available modules */
-    if (orte_pls_base.pls_available_valid) {
-        opal_list_item_t* item;
-        while (NULL != 
-               (item = opal_list_remove_first(&orte_pls_base.pls_available))) {
-            orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
-            opal_output(orte_pls_base.pls_output,
-                        "orte:base:close: finalizing module %s",
-                        cmp->component->pls_version.mca_component_name);
-            if (NULL != cmp->module->finalize) {
-                cmp->module->finalize();
-            }
-            OBJ_RELEASE(cmp);
-        }
-    }
-    orte_pls_base.pls_available_valid = false;
+    /* Finalize the selected module */
+    orte_pls.finalize();
+    
     return ORTE_SUCCESS;
 }
 
 
 int orte_pls_base_close(void)
 {
-    /* Close all remaining open components */
-    if (orte_pls_base.pls_opened_valid) {
-        orte_pls_base.pls_opened_valid = false;
-        mca_base_components_close(orte_pls_base.pls_output, 
-                                  &orte_pls_base.pls_opened, NULL);
-        OBJ_DESTRUCT(&orte_pls_base.pls_opened);
-    }
+    /* Close all open components */
+    mca_base_components_close(orte_pls_base.pls_output, 
+                                &orte_pls_base.available_components, NULL);
+    OBJ_DESTRUCT(&orte_pls_base.available_components);
+
     return ORTE_SUCCESS;
 }
 

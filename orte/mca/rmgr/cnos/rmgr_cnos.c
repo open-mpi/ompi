@@ -37,38 +37,12 @@
 #include "rmgr_cnos.h"
 
 
-static int orte_rmgr_cnos_query(void);
-
-static int orte_rmgr_cnos_create(
+static int orte_rmgr_cnos_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 
-static int orte_rmgr_cnos_allocate(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_cnos_deallocate(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_cnos_map(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_cnos_launch(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_cnos_terminate_job(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_cnos_terminate_proc(
-    const orte_process_name_t* proc_name);
-
-static int orte_rmgr_cnos_signal_job(
-        orte_jobid_t jobid, int32_t signal);
-
-static int orte_rmgr_cnos_signal_proc(
-        const orte_process_name_t* proc_name, int32_t signal);
-
-static int orte_rmgr_cnos_spawn(
+static int orte_rmgr_cnos_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
@@ -77,28 +51,46 @@ static int orte_rmgr_cnos_spawn(
 
 static int orte_rmgr_cnos_finalize(void);
 
+static int orte_rmgr_cnos_get_app_context(orte_jobid_t jobid,
+                                          orte_app_context_t*** app_context,
+                                          orte_std_cntr_t* num_context);
+
+static int orte_rmgr_cnos_put_app_context(orte_jobid_t jobid,
+                                          orte_app_context_t** app_context,
+                                          orte_std_cntr_t num_context);
+
+static int orte_rmgr_cnos_check_context_app(orte_app_context_t *context);
+
+static int orte_rmgr_cnos_check_context_cwd(orte_app_context_t *context,
+                                            bool want_chdir);
+
+static int orte_rmgr_cnos_set_vpid_range(orte_jobid_t jobid,
+                                         orte_vpid_t start,
+                                         orte_vpid_t range);
+
+static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
+                                         orte_vpid_t *start,
+                                         orte_vpid_t *range);
+
 orte_rmgr_base_module_t orte_rmgr_cnos_module = {
-    orte_rmgr_cnos_query,
-    orte_rmgr_cnos_create,
-    orte_rmgr_cnos_allocate,
-    orte_rmgr_cnos_deallocate,
-    orte_rmgr_cnos_map,
-    orte_rmgr_cnos_launch,
-    orte_rmgr_cnos_terminate_job,
-    orte_rmgr_cnos_terminate_proc,
-    orte_rmgr_cnos_signal_job,
-    orte_rmgr_cnos_signal_proc,
-    orte_rmgr_cnos_spawn,
-    orte_rmgr_base_proc_stage_gate_init,
-    orte_rmgr_base_proc_stage_gate_mgr,
-    orte_rmgr_cnos_finalize
+    NULL, /* don't need special init */
+    orte_rmgr_cnos_setup_job,
+    orte_rmgr_cnos_spawn_job,
+    orte_rmgr_cnos_finalize,
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_cnos_get_app_context,
+    orte_rmgr_cnos_put_app_context,
+    orte_rmgr_cnos_check_context_cwd,
+    orte_rmgr_cnos_check_context_app,
+    orte_rmgr_cnos_set_vpid_range,
+    orte_rmgr_cnos_get_vpid_range
 };
 
 
 /*
  *  Create the job segment and initialize the application context.
  */
-static int orte_rmgr_cnos_create(
+static int orte_rmgr_cnos_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid)
@@ -106,97 +98,8 @@ static int orte_rmgr_cnos_create(
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-static int orte_rmgr_cnos_query(void)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
 
-}
-
-static int orte_rmgr_cnos_allocate(orte_jobid_t jobid)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_deallocate(orte_jobid_t jobid)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_map(orte_jobid_t jobid)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_launch(orte_jobid_t jobid)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-#ifdef HAVE_KILLRANK
-#include "catamount/types.h"
-/* secret sauce on the Cray machine */
-extern int killrank(rank_t RANK, int SIG);
-#endif
-
-static int orte_rmgr_cnos_terminate_job(orte_jobid_t jobid)
-{
-#ifdef HAVE_KILLRANK
-    orte_jobid_t my_jobid;
-
-    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
-
-    /* make sure it's my job */
-    if (jobid == my_jobid) {
-        killrank(-1, SIGKILL);
-    } else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-#else
-    exit(0);
-#endif
-
-    return ORTE_SUCCESS;
-}
-
-static int orte_rmgr_cnos_terminate_proc(const orte_process_name_t* proc_name)
-{
-#ifdef HAVE_KILLRANK
-    orte_jobid_t my_jobid;
-    orte_jobid_t his_jobid;
-    orte_vpid_t his_vpid;
-
-    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
-    orte_ns.get_jobid(&his_jobid, proc_name);
-
-    orte_ns.get_vpid(&his_vpid, proc_name);
-
-    /* make sure it's my job.  This may end up killing me, but what
-       the heck. */
-    if (his_jobid == my_jobid) {
-        killrank((int) his_vpid, SIGKILL);
-    } else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
-#else
-    exit(0);
-#endif
-
-    return ORTE_SUCCESS;
-}
-
-
-static int orte_rmgr_cnos_signal_job(orte_jobid_t jobid, int32_t signal)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-static int orte_rmgr_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
-{
-    return ORTE_ERR_NOT_SUPPORTED;
-}
-
-
-static int orte_rmgr_cnos_spawn(
+static int orte_rmgr_cnos_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
@@ -217,4 +120,43 @@ static int orte_rmgr_cnos_finalize(void)
 #endif
 
     return ORTE_SUCCESS;
+}
+
+static int orte_rmgr_cnos_get_app_context(orte_jobid_t jobid,
+                                          orte_app_context_t*** app_context,
+                                          orte_std_cntr_t* num_context)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_put_app_context(orte_jobid_t jobid,
+                                          orte_app_context_t** app_context,
+                                          orte_std_cntr_t num_context)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_check_context_app(orte_app_context_t *context)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_check_context_cwd(orte_app_context_t *context,
+                                            bool want_chdir)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_set_vpid_range(orte_jobid_t jobid,
+                                         orte_vpid_t start,
+                                         orte_vpid_t range)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
+                                         orte_vpid_t *start,
+                                         orte_vpid_t *range)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
 }

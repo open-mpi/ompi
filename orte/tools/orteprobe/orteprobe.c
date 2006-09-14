@@ -61,6 +61,7 @@
 #include "orte/util/universe_setup_file_io.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/rml/rml.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/base/base.h"
@@ -313,13 +314,13 @@ int main(int argc, char *argv[])
 
         if (ORTE_SUCCESS != (ret = orte_dss.pack(&buffer, &orted_uri_ptr, 1, ORTE_STRING))) {
             fprintf(stderr, "orteprobe: failed to pack contact info for existing universe\n");
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         }
 
         if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
             fprintf(stderr, "orteprobe: comm failure when sending contact info for existing univ back to requestor\n");
             OBJ_DESTRUCT(&buffer);
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         }
 
         OBJ_DESTRUCT(&buffer);
@@ -346,7 +347,7 @@ int main(int argc, char *argv[])
 
             if (0 > asprintf(&orte_universe_info.name, "%s-%d", universe, pid)) {
                 fprintf(stderr, "orteprobe: failed to create unique universe name");
-                orte_abort(1, NULL);
+                orte_errmgr.error_detected(1, NULL);
             }
         }
 
@@ -354,7 +355,7 @@ int main(int argc, char *argv[])
         /* setup the pipe to get the contact info back */
         if (pipe(orted_pipe)) {
             fprintf (stderr, "orteprobe: Pipe failed\n");
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         }
         
         /* get name of orted application - just in case user specified something different */
@@ -369,7 +370,7 @@ int main(int argc, char *argv[])
         ortedargc = opal_argv_count(ortedargv);
         if (ortedargc <= 0) {
             fprintf(stderr, "orteprobe: could not initialize argv array for daemon\n");
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         }
         
         /* setup the path */
@@ -406,11 +407,11 @@ int main(int argc, char *argv[])
                 Close read end first. */
             execv(path, ortedargv);
             fprintf(stderr, "orteprobe: execv failed with errno=%d\n", errno);
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         } else if (pid < (pid_t) 0) {
             /* The fork failed. */
             fprintf (stderr, "orteprobe: Fork failed\n");
-            orte_abort(1, NULL);
+            orte_errmgr.error_detected(1, NULL);
         } else {
             /* This is the parent process.
                 Close write end first. */
@@ -428,13 +429,13 @@ int main(int argc, char *argv[])
 
             if (ORTE_SUCCESS != (ret = orte_dss.pack(&buffer, &orted_uri_ptr[0], 1, ORTE_STRING))) {
                 fprintf(stderr, "orteprobe: failed to pack daemon uri\n");
-                orte_abort(1, NULL);
+                orte_errmgr.error_detected(1, NULL);
             }
 
             if (0 > orte_rml.send_buffer(&requestor, &buffer, ORTE_RML_TAG_PROBE, 0)) {
                 fprintf(stderr, "orteprobe: could not send daemon uri info back to probe\n");
                 OBJ_DESTRUCT(&buffer);
-                orte_abort(1, NULL);
+                orte_errmgr.error_detected(1, NULL);
             }
 
             OBJ_DESTRUCT(&buffer);

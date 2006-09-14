@@ -22,6 +22,8 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 

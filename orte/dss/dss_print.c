@@ -476,28 +476,6 @@ int orte_dss_print_data_value(char **output, char *prefix, orte_data_value_t *sr
 }
 
 /*
- * ORTE_DAEMON_CMD
- */
-int orte_dss_print_daemon_cmd(char **output, char *prefix, orte_daemon_cmd_flag_t *src, orte_data_type_t type)
-{
-    char *prefx;
-
-    /* deal with NULL prefix */
-    if (NULL == prefix) asprintf(&prefx, " ");
-    else prefx = prefix;
-
-    /* if src is NULL, just print data type and return */
-    if (NULL == src) {
-        asprintf(output, "%sData type: ORTE_DAEMON_CMD\tValue: NULL pointer", prefx);
-        return ORTE_SUCCESS;
-    }
-
-    asprintf(output, "%sData type: ORTE_DAEMON_CMD\tValue: %lu", prefx, (unsigned long) *src);
-
-    return ORTE_SUCCESS;
-}
-
-/*
  * ORTE_BYTE_OBJECT
  */
 int orte_dss_print_byte_object(char **output, char *prefix, orte_byte_object_t *src, orte_data_type_t type)

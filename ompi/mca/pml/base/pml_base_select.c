@@ -24,7 +24,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/runtime/runtime.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -117,9 +117,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     if( NULL == best_component ) {
         opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         if( NULL !=  mca_pml_base_pml ) {
-            orte_abort( 1, "PML %s cannot be selected", mca_pml_base_pml );
+            orte_errmgr.error_detected(1, "PML %s cannot be selected", mca_pml_base_pml, NULL);
         } else {
-            orte_abort(1, "No pml component available.  This shouldn't happen.");
+            orte_errmgr.error_detected(2, "No pml component available.  This shouldn't happen.", NULL);
         }
     } 
 

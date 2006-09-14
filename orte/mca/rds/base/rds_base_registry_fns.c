@@ -33,6 +33,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/schema/schema.h"
 
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 int orte_rds_base_store_resource(opal_list_t *resources)

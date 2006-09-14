@@ -24,6 +24,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -38,6 +39,7 @@
 #include <tm.h>
 
 #include "opal/install_dirs.h"
+#include "opal/threads/condition.h"
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -47,20 +49,23 @@
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/runtime/opal_progress.h"
-#include "orte/orte_constants.h"
+
 #include "orte/orte_types.h"
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/smr/smr_types.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
+
+/* needs to be cleaned up for ORTE 2.0 */
+#include "orte/mca/rmaps/base/rmaps_private.h"
+
+
+#include "orte/mca/pls/base/pls_private.h"
 #include "pls_tm.h"
 
 
@@ -68,8 +73,9 @@
 /*
  * Local functions
  */
-static int pls_tm_launch(orte_jobid_t jobid);
+static int pls_tm_launch_job(orte_jobid_t jobid);
 static int pls_tm_terminate_job(orte_jobid_t jobid);
+static int pls_tm_terminate_orteds(orte_jobid_t jobid);
 static int pls_tm_terminate_proc(const orte_process_name_t *name);
 static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal);
 static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal);
@@ -77,16 +83,29 @@ static int pls_tm_finalize(void);
 
 static int pls_tm_connect(void);
 static int pls_tm_disconnect(void);
+static int pls_tm_query_hostnames(void);
 static int pls_tm_start_proc(char *nodename, int argc, char **argv, 
-                             char **env, tm_event_t *event);
+                             char **env, tm_task_id *task_id, 
+                             tm_event_t *event);
 static int pls_tm_check_path(char *exe, char **env);
+
+/*
+ * Local variables
+ */
+/* Resolving TM hostname */
+static char **tm_hostnames = NULL;
+static tm_node_id *tm_node_ids = NULL;
+static int num_tm_hostnames = 0, num_node_ids = 0;
+
+
 
 /*
  * Global variable
  */
-orte_pls_base_module_1_0_0_t orte_pls_tm_module = {
-    pls_tm_launch,
+orte_pls_base_module_t orte_pls_tm_module = {
+    pls_tm_launch_job,
     pls_tm_terminate_job,
+    pls_tm_terminate_orteds,
     pls_tm_terminate_proc,
     pls_tm_signal_job,
     pls_tm_signal_proc,
@@ -97,8 +116,7 @@ orte_pls_base_module_1_0_0_t orte_pls_tm_module = {
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
-static int 
-pls_tm_launch(orte_jobid_t jobid)
+static int pls_tm_launch_job(orte_jobid_t jobid)
 {
     opal_list_t mapping;
     opal_list_item_t *m_item, *n_item;
@@ -112,10 +130,15 @@ pls_tm_launch(orte_jobid_t jobid)
     int argc;
     int rc;
     bool connected = false;
-    int launched = 0, i; 
+    uint launched = 0, i; 
     char *bin_base = NULL, *lib_base = NULL;
-    tm_event_t *events = NULL;
-    
+    tm_event_t *tm_events = NULL;
+    tm_task_id *tm_task_ids = NULL;
+    int local_err;
+    tm_event_t event;
+    opal_list_t daemons;
+    orte_pls_daemon_info_t *dmn;
+
    /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
@@ -138,7 +161,7 @@ pls_tm_launch(orte_jobid_t jobid)
     /*
      * Allocate a range of vpids for the daemons.
      */
-    if (num_nodes == 0) {
+    if (0 == num_nodes) {
         return ORTE_ERR_BAD_PARAM;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
@@ -146,9 +169,25 @@ pls_tm_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* setup the orted triggers for passing their launch info */
+    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* setup a list that will contain the info for all the daemons
+     * so we can store it on the registry when done
+     */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    
     /* Allocate a bunch of TM events to use for tm_spawn()ing */
-    events = malloc(sizeof(tm_event_t) * num_nodes);
-    if (NULL == events) {
+    tm_events = malloc(sizeof(tm_event_t) * num_nodes);
+    if (NULL == tm_events) {
+        rc = ORTE_ERR_OUT_OF_RESOURCE;
+        goto cleanup;
+    }
+    tm_task_ids = malloc(sizeof(tm_task_id) * num_nodes);
+    if (NULL == tm_task_ids) {
         rc = ORTE_ERR_OUT_OF_RESOURCE;
         goto cleanup;
     }
@@ -163,7 +202,7 @@ pls_tm_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "--no-daemonize");
     
     /* check for debug flags */
-    orte_pls_base_proxy_mca_argv(&argc, &argv);
+    orte_pls_base_mca_argv(&argc, &argv);
 
     /* proxy information */
     opal_argv_append(&argc, &argv, "--bootproxy");
@@ -232,6 +271,15 @@ pls_tm_launch(orte_jobid_t jobid)
     }
     connected = true;
 
+    /* Resolve the TM hostnames and TD node ID's (guarantee that we
+       don't mix any of these TM events in with the TM spawn events,
+       so that we can poll for each set of events without interference
+       from the other */
+    rc = pls_tm_query_hostnames();
+    if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in pls_rsh_module.c explaining all
        the rationale for how / why we're doing this. */
@@ -252,11 +300,10 @@ pls_tm_launch(orte_jobid_t jobid)
         env = opal_argv_copy(environ);
         var = mca_base_param_environ_variable("seed",NULL,NULL);
         opal_setenv(var, "0", true, &env);
-        
+
         /* If we have a prefix, then modify the PATH and
            LD_LIBRARY_PATH environment variables.  */
         if (NULL != map->app->prefix_dir) {
-            int i;
             char *newenv;
             
             for (i = 0; NULL != env && NULL != env[i]; ++i) {
@@ -313,12 +360,28 @@ pls_tm_launch(orte_jobid_t jobid)
                 continue;
             }
             
+            /* new daemon - setup to record its info */
+            dmn = OBJ_NEW(orte_pls_daemon_info_t);
+            dmn->active_job = jobid;
+            opal_list_append(&daemons, &dmn->super);
+            
             /* setup node name */
-            argv[node_name_index] = node->node_name;
+            free(argv[node_name_index]);
+            argv[node_name_index] = strdup(node->node_name);
+            
+            /* record the node name in the daemon struct */
+            dmn->cell = node->node_cellid;
+            dmn->nodename = strdup(node->node_name);
             
             /* initialize daemons process name */
             rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
             if (ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                goto cleanup;
+            }
+            
+            /* save it in the daemon struct */
+            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -336,8 +399,9 @@ pls_tm_launch(orte_jobid_t jobid)
                 opal_output(0, "pls:tm: unable to create process name");
                 return rc;
             }
-            argv[proc_name_index] = name_string;
-            
+            free(argv[proc_name_index]);
+            argv[proc_name_index] = strdup(name_string);
+
             /* set the progress engine schedule for this node.
              * if node_slots is set to zero, then we default to
              * NOT being oversubscribed
@@ -359,12 +423,6 @@ pls_tm_launch(orte_jobid_t jobid)
                 opal_setenv(var, "0", true, &env);
             }
             free(var);
-            
-            /* save the daemons name on the node */
-            if (ORTE_SUCCESS != (rc = orte_pls_base_proxy_set_node_name(node,jobid,name))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
 	    
             /* exec the daemon */
             if (mca_pls_tm_component.debug) {
@@ -376,39 +434,48 @@ pls_tm_launch(orte_jobid_t jobid)
             }
             
             rc = pls_tm_start_proc(node->node_name, argc, argv, env,
-                                   events + launched);
+                                   tm_task_ids + launched, 
+                                   tm_events + launched);
             if (ORTE_SUCCESS != rc) {
                 opal_output(0, "pls:tm: start_procs returned error %d", rc);
                 goto cleanup;
             }
             launched++;
-            vpid++;
+            ++vpid;
             free(name);
+
+            /* Allow some progress to occur */
             opal_event_loop(OPAL_EVLOOP_NONBLOCK);
         }
-        
+    }
+    if (mca_pls_tm_component.debug) {
+        opal_output(0, "pls:tm:launch: finished spawning orteds\n");
     }
 
-    /* loop through all those that are launched and poll for
-       completion status */
-
-    for(i = 0; i < launched; i++){ 
-        int ret, local_err;
-        tm_event_t event;
-        ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
-        if (TM_SUCCESS != ret) {
-            errno = local_err;
-            opal_output(0, "pls:tm: failed to start a proc error %d", ret);
-            goto cleanup;
-        }
+    /* all done, so store the daemon info on the registry */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
     }
     
+    /* TM poll for all the spawns */
+    for (i = 0; i < launched; ++i) {
+        rc = tm_poll(TM_NULL_EVENT, &event, 1, &local_err);
+        if (TM_SUCCESS != rc) {
+            errno = local_err;
+            opal_output(0, "pls:tm: failed to poll for a spawned proc, return status = %d", rc);
+            return ORTE_ERR_IN_ERRNO;
+        }
+    }
+
  cleanup:
     if (connected) {
         pls_tm_disconnect();
     }
-    if (NULL != events) {
-        free(events);
+    if (NULL != tm_events) {
+        free(tm_events);
+    }
+    if (NULL != tm_task_ids) {
+        free(tm_task_ids);
     }
     
     while (NULL != (m_item = opal_list_remove_first(&mapping))) {
@@ -422,58 +489,149 @@ pls_tm_launch(orte_jobid_t jobid)
         free(bin_base);
     }
 
+    /* deconstruct the daemon list */
+    while (NULL != (m_item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(m_item);
+    }
+    OBJ_DESTRUCT(&daemons);
+
+    if (mca_pls_tm_component.debug) {
+        opal_output(0, "pls:tm:launch: finished\n");
+    }
     return rc;
 }
 
 
-static int
-pls_tm_terminate_job(orte_jobid_t jobid)
+static int pls_tm_terminate_job(orte_jobid_t jobid)
 {
-    return orte_pls_base_proxy_terminate_job(jobid);
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* order them to kill their local procs for this job */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
+
+/**
+ * Terminate the orteds for a given job
+ */
+int pls_tm_terminate_orteds(orte_jobid_t jobid)
+{
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* now tell them to die! */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
+}
 
 /*
  * TM can't kill individual processes -- PBS will kill the entire job
  */
-static int
-pls_tm_terminate_proc(const orte_process_name_t *name)
+static int pls_tm_terminate_proc(const orte_process_name_t *name)
 {
-    opal_output(orte_pls_base.pls_output,
-                "pls:tm:terminate_proc: not supported");
+    if (mca_pls_tm_component.debug) {
+        opal_output(0, "pls:tm:terminate_proc: not supported");
+    }
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
-static int
-pls_tm_signal_job(orte_jobid_t jobid, int32_t signal)
+static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal)
 {
-    return orte_pls_base_proxy_signal_job(jobid, signal);
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&daemons);
+        return rc;
+    }
+    
+    /* order them to pass this signal to their local procs */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_signal_local_procs(&daemons, signal))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
 
-static int
-pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal)
+static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal)
 {
-    return orte_pls_base_proxy_signal_proc(name, signal);
+    return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
 
 /*
  * Free stuff
  */
-static int
-pls_tm_finalize(void)
+static int pls_tm_finalize(void)
 {
+    int rc;
+    
     /* cleanup any pending recvs */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    if (NULL != tm_hostnames) {
+        opal_argv_free(tm_hostnames);
+        tm_hostnames = NULL;
+        num_tm_hostnames = 0;
+    }
+    if (NULL != tm_node_ids) {
+        free(tm_node_ids);
+        tm_node_ids = NULL;
+        num_node_ids = 0;
+    }
 
     return ORTE_SUCCESS;
 }
 
 
-static int
-pls_tm_connect(void)
+static int pls_tm_connect(void)
 {
     int ret;
     struct tm_roots tm_root;
@@ -499,27 +657,19 @@ pls_tm_connect(void)
 }
 
 
-static int
-pls_tm_disconnect(void)
+static int pls_tm_disconnect(void)
 {
     tm_finalize();
 
     return ORTE_SUCCESS;
 }
 
-static char **tm_hostnames = NULL;
-static tm_node_id *tm_node_ids = NULL;
-static int num_tm_hostnames, num_node_ids;
 
-
-
-/* we don't call this anymore */
 /*
  * For a given TM node ID, get the string hostname corresponding to
  * it.
  */
-static char*
-get_tm_hostname(tm_node_id node)
+static char *get_tm_hostname(tm_node_id node)
 {
     char *hostname;
     char buffer[256];
@@ -531,6 +681,7 @@ get_tm_hostname(tm_node_id node)
 
     ret = tm_rescinfo(node, buffer, sizeof(buffer) - 1, &event);
     if (TM_SUCCESS != ret) {
+        opal_output(0, "tm_rescinfo returned %d\n", ret);
         return NULL;
     }
 
@@ -538,6 +689,7 @@ get_tm_hostname(tm_node_id node)
 
     ret = tm_poll(TM_NULL_EVENT, &event, 1, &local_errno);
     if (TM_SUCCESS != ret) {
+        opal_output(0, "tm_poll returned %d\n", ret);
         return NULL;
     }
 
@@ -548,6 +700,7 @@ get_tm_hostname(tm_node_id node)
     buffer[sizeof(buffer) - 1] = '\0';
     argv = opal_argv_split(buffer, ' ');
     if (NULL == argv) {
+        opal_output(0, "opal_argv_split failed\n");
         return NULL;
     }
     hostname = strdup(argv[1]);
@@ -559,9 +712,7 @@ get_tm_hostname(tm_node_id node)
 }
 
 
-/* we don't call this anymore!*/
-static int
-query_tm_hostnames(void)
+static int pls_tm_query_hostnames(void)
 {
     char *h;
     int i, ret;
@@ -584,6 +735,10 @@ query_tm_hostnames(void)
     num_tm_hostnames = 0;
     for (i = 0; i < num_node_ids; ++i) {
         h = get_tm_hostname(tm_node_ids[i]);
+        if (NULL == h) {
+            opal_output(0, "get_tm_hostname returned NULL");
+            return ORTE_ERROR;
+        }
         opal_argv_append(&num_tm_hostnames, &tm_hostnames, h);
         free(h);
     }
@@ -593,27 +748,23 @@ query_tm_hostnames(void)
     return ORTE_SUCCESS;
 }
 
-/* we don't call this anymore! */
-static int
-do_tm_resolve(char *hostname, tm_node_id *tnodeid)
+static int do_tm_resolve(char *hostname, tm_node_id *tnodeid)
 {
     int i, ret;
 
     /* Have we already queried TM for all the node info? */
     if (NULL == tm_hostnames) {
-        ret = query_tm_hostnames();
-        if (ORTE_SUCCESS != ret) {
-            return ret;
-        }
+        return ORTE_ERR_NOT_FOUND;
     }
 
     /* Find the TM ID of the hostname that we're looking for */
     for (i = 0; i < num_tm_hostnames; ++i) {
         if (0 == strcmp(hostname, tm_hostnames[i])) {
             *tnodeid = tm_node_ids[i];
-            opal_output(orte_pls_base.pls_output,
-                        "pls:tm:launch: resolved host %s to node ID %d",
-                        hostname, tm_node_ids[i]);
+            if (mca_pls_tm_component.debug) {
+                opal_output(0, "pls:tm:launch: resolved host %s to node ID %d",
+                            hostname, tm_node_ids[i]);
+            }
             break;
         }
     }
@@ -629,20 +780,22 @@ do_tm_resolve(char *hostname, tm_node_id *tnodeid)
 }
 
 
-static int
-pls_tm_start_proc(char *nodename, int argc, char **argv, char **env,
-                  tm_event_t *event)
+static int pls_tm_start_proc(char *nodename, int argc, char **argv, char **env,
+                             tm_task_id *task_id, tm_event_t *event)
 {
     int ret;
     tm_node_id node_id;
-    tm_task_id task_id;
 
     /* get the tm node id for this node */
     ret = do_tm_resolve(nodename, &node_id);
-    if (ORTE_SUCCESS != ret) return ret;
+    if (ORTE_SUCCESS != ret) {
+        return ret;
+    }
 
-    ret = tm_spawn(argc, argv, env, node_id, &task_id, event);
-    if (TM_SUCCESS != ret) return ORTE_ERROR;
+    ret = tm_spawn(argc, argv, env, node_id, task_id, event);
+    if (TM_SUCCESS != ret) {
+        return ORTE_ERROR;
+    }
 
     return ORTE_SUCCESS;
 }

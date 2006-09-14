@@ -29,6 +29,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rds/rds.h"
 
 
@@ -58,7 +60,6 @@ ORTE_DECLSPEC int orte_rds_base_open(void);
 ORTE_DECLSPEC int orte_rds_base_select(void);
 ORTE_DECLSPEC int orte_rds_base_finalize(void);
 ORTE_DECLSPEC int orte_rds_base_close(void);
-ORTE_DECLSPEC int orte_rds_base_query(void);
 
 /*
  * globals that might be needed
@@ -66,20 +67,12 @@ ORTE_DECLSPEC int orte_rds_base_query(void);
 
 typedef struct orte_rds_base_t {
     int rds_output;
+    bool no_op_selected;
     opal_list_t rds_components;
     opal_list_t rds_selected;
 } orte_rds_base_t;
 
 ORTE_DECLSPEC extern orte_rds_base_t orte_rds_base;
-
-/*
- * external API functions will be documented in the mca/ns/ns.h file
- */
-
-/*
- * utility functions for use within the RDS
- */
-ORTE_DECLSPEC int orte_rds_base_store_resource(opal_list_t *resource_list);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

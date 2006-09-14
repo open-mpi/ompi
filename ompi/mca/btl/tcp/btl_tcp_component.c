@@ -391,7 +391,7 @@ static int mca_btl_tcp_component_create_listen(void)
 {
     int flags;
     struct sockaddr_in inaddr; 
-    ompi_socklen_t addrlen;
+    opal_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
     mca_btl_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -556,7 +556,7 @@ int mca_btl_tcp_component_control(int param, void* value, size_t size)
 static void mca_btl_tcp_component_accept(void)
 {
     while(true) {
-        ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
+        opal_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
         mca_btl_tcp_event_t *event;
         int sd = accept(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
@@ -588,7 +588,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     struct sockaddr_in addr;
     int retval;
     mca_btl_tcp_proc_t* btl_proc;
-    ompi_socklen_t addr_len = sizeof(addr);
+    opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_event_t *event = (mca_btl_tcp_event_t *)user;
 
     /* accept new connections on the listen socket */

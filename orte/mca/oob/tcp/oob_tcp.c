@@ -83,6 +83,7 @@ OBJ_CLASS_INSTANCE(
  */
 
 static int  mca_oob_tcp_create_listen(void);
+static int  mca_oob_tcp_create_listen_thread(void);
 static void mca_oob_tcp_recv_handler(int sd, short flags, void* user);
 static void mca_oob_tcp_accept(void);
 
@@ -99,6 +100,12 @@ OBJ_CLASS_INSTANCE(
     opal_list_item_t,
     NULL,
     NULL);
+
+OBJ_CLASS_INSTANCE(
+                   mca_oob_tcp_pending_connection_t,
+                   opal_free_list_item_t,
+                   NULL,
+                   NULL);
 
 
 
@@ -169,6 +176,9 @@ static inline char* mca_oob_tcp_param_register_str(
  */
 int mca_oob_tcp_component_open(void)
 {
+    char *listen_type;
+    int tmp;
+
 #ifdef __WINDOWS__
     WSADATA win_sock_data;
     if (WSAStartup(MAKEWORD(2,2), &win_sock_data) != 0) {
@@ -190,6 +200,12 @@ int mca_oob_tcp_component_open(void)
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_msg_completed, opal_list_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_lock,    opal_mutex_t);
     OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_match_cond,    opal_condition_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_listen_thread, opal_thread_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections_fl, opal_free_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_copy_out_connections, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_copy_in_connections, opal_list_t);
+    OBJ_CONSTRUCT(&mca_oob_tcp_component.tcp_pending_connections_lock, opal_mutex_t);
 
     /* register oob module parameters */
     mca_oob_tcp_component.tcp_peer_limit =
@@ -207,9 +223,60 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_rcvbuf =
         mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
 
+    mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
+                              "listen_mode",
+                              "Mode for HNP to accept incoming connections: event, listen_thread",
+                              false,
+                              false,
+                              "event",
+                              &listen_type);
+
+    if ((0 == strcmp(listen_type, "event")) || NULL == getenv("I_AM_MPIRUN")) {
+        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
+    } else if (0 == strcmp(listen_type, "listen_thread")) {
+        mca_oob_tcp_component.tcp_listen_type = OOB_TCP_LISTEN_THREAD;
+    } else {
+        opal_output(0, "Invalid value for oob_tcp_listen_mode parameter: %s",
+                    listen_type);
+        return ORTE_ERROR;
+    }
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "listen_thread_max_queue",
+                           "High water mark for queued accepted socket list size",
+                           false,
+                           false,
+                           10,
+                           &mca_oob_tcp_component.tcp_copy_max_size);
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "listen_thread_max_time",
+                           "Maximum amount of time (in milliseconds) to wait between processing accepted socket list",
+                           false,
+                           false,
+                           10,
+                           &tmp);
+
+#if OPAL_TIMER_USEC_NATIVE
+    mca_oob_tcp_component.tcp_copy_delta = tmp * 1000;
+#else
+    mca_oob_tcp_component.tcp_copy_delta = tmp *
+        opal_timer_base_get_freq() / 1000;
+#endif
+
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "accept_spin_count",
+                           "Number of times to let accept return EWOULDBLOCK before updating accepted socket list",
+                           false,
+                           false,
+                           10,
+                           &mca_oob_tcp_component.tcp_copy_spin_count);
+
     /* initialize state */
+    mca_oob_tcp_component.tcp_shutdown = false;
     mca_oob_tcp_component.tcp_listen_sd = -1;
     mca_oob_tcp_component.tcp_match_count = 0;
+    mca_oob_tcp_component.tcp_last_copy_time = 0;
     return ORTE_SUCCESS;
 }
 
@@ -251,7 +318,7 @@ int mca_oob_tcp_component_close(void)
 static void mca_oob_tcp_accept(void)
 {
     while(true) {
-        ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
+        opal_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
         mca_oob_tcp_event_t* event;
         int sd;
@@ -291,7 +358,7 @@ static int mca_oob_tcp_create_listen(void)
 {
     int flags;
     struct sockaddr_in inaddr;
-    ompi_socklen_t addrlen;
+    opal_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
     mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -349,6 +416,206 @@ static int mca_oob_tcp_create_listen(void)
         0);
     opal_event_add(&mca_oob_tcp_component.tcp_recv_event, 0);
     return ORTE_SUCCESS;
+}
+
+
+static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
+{
+    int rc, count;
+    opal_socklen_t addrlen = sizeof(struct sockaddr_in);
+    opal_free_list_item_t *fl_item;
+    mca_oob_tcp_pending_connection_t *item;
+    struct timeval timeout;
+    fd_set readfds;
+
+    while (false == mca_oob_tcp_component.tcp_shutdown) {
+        count = 0;
+
+        FD_ZERO(&readfds);
+        FD_SET(mca_oob_tcp_component.tcp_listen_sd, &readfds);
+        timeout.tv_sec = 0;
+        timeout.tv_usec = 10000;
+
+        rc = select(mca_oob_tcp_component.tcp_listen_sd + 1, &readfds,
+                    NULL, NULL, &timeout);
+        if (rc < 0) {
+            if (EAGAIN != opal_socket_errno && EINTR != opal_socket_errno) {
+                perror("select");
+            }
+            continue;
+        }
+
+        while (count < mca_oob_tcp_component.tcp_copy_spin_count && 
+               opal_list_get_size(&mca_oob_tcp_component.tcp_copy_in_connections) < 
+               (size_t) mca_oob_tcp_component.tcp_copy_max_size) {
+            OPAL_FREE_LIST_WAIT(&mca_oob_tcp_component.tcp_pending_connections_fl, 
+                                fl_item, rc);
+            item = (mca_oob_tcp_pending_connection_t*) fl_item;
+            item->fd = accept(mca_oob_tcp_component.tcp_listen_sd, 
+                              (struct sockaddr*)&(item->addr), &addrlen);
+            if(item->fd < 0) {
+                OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
+                                      fl_item);
+
+                if (mca_oob_tcp_component.tcp_shutdown) return NULL;
+
+                if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK) {
+                    opal_output(0, "mca_oob_tcp_accept: accept() failed with errno %d.", opal_socket_errno);
+                    close(item->fd);
+                    return NULL;
+                }
+
+                count++;
+                continue;
+            }
+
+            if(mca_oob_tcp_component.tcp_debug) {
+                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_listen_thread: (%d, %d) %s:%d\n",
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            item->fd, opal_socket_errno,
+                            inet_ntoa(item->addr.sin_addr),
+                            item->addr.sin_port);
+            }
+
+            opal_list_append(&mca_oob_tcp_component.tcp_copy_in_connections,
+                             (opal_list_item_t*) item);
+        }
+
+        if (0 < opal_list_get_size(&mca_oob_tcp_component.tcp_copy_in_connections)) {
+            opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+            opal_list_join(&mca_oob_tcp_component.tcp_pending_connections,
+                           opal_list_get_end(&mca_oob_tcp_component.tcp_pending_connections),
+                           &mca_oob_tcp_component.tcp_copy_in_connections);
+            opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+        }
+    }
+
+    return NULL;
+}
+
+/* called from opal_progress() to create the oob contact information
+   for the file descriptors accepted() by the accept thread. */
+static int mca_oob_tcp_listen_progress(void)
+{
+    int count = 0;
+    mca_oob_tcp_pending_connection_t *item;
+    mca_oob_tcp_event_t* event;
+#if OPAL_TIMER_USEC_NATIVE
+    opal_timer_t now = opal_timer_base_get_usec();
+#else
+    opal_timer_t now = opal_timer_base_get_cycles();
+#endif  /* OPAL_TIMER_USEC_NATIVE */
+
+    /* if we've not pulled pending connections for a while OR we've
+       hit the high water mark of pending connections, grab all the
+       pending connections */
+    if ((now - mca_oob_tcp_component.tcp_last_copy_time > 
+         mca_oob_tcp_component.tcp_copy_delta) ||
+        ((size_t) mca_oob_tcp_component.tcp_copy_max_size <
+         opal_list_get_size(&mca_oob_tcp_component.tcp_pending_connections))) {
+
+        /* copy the pending connections from the list the accept
+           thread is inserting into into a temporary list for us to
+           process from.  This is an O(1) operation, so we minimize
+           the lock time */
+        opal_mutex_lock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+        opal_list_join(&mca_oob_tcp_component.tcp_copy_out_connections,
+                       opal_list_get_end(&mca_oob_tcp_component.tcp_copy_out_connections),
+                       &mca_oob_tcp_component.tcp_pending_connections);
+        opal_mutex_unlock(&mca_oob_tcp_component.tcp_pending_connections_lock);
+
+        /* process al the connections */
+        while (NULL != (item = (mca_oob_tcp_pending_connection_t*) 
+                        opal_list_remove_first(&mca_oob_tcp_component.
+                                               tcp_copy_out_connections))) {
+
+            /* setup socket options */
+            mca_oob_tcp_set_socket_options(item->fd);
+
+            /* log the accept */
+            if(mca_oob_tcp_component.tcp_debug) {
+                opal_output(0, "[%lu,%lu,%lu] mca_oob_tcp_listen_progress: %s:%d\n",
+                            ORTE_NAME_ARGS(orte_process_info.my_name),
+                            inet_ntoa(item->addr.sin_addr),
+                            item->addr.sin_port);
+            }
+
+            /* wait for receipt of peers process identifier to
+               complete this connection */
+            event = OBJ_NEW(mca_oob_tcp_event_t);
+            opal_event_set(&event->event, item->fd, OPAL_EV_READ, mca_oob_tcp_recv_handler, event);
+            opal_event_add(&event->event, 0);
+            OPAL_FREE_LIST_RETURN(&mca_oob_tcp_component.tcp_pending_connections_fl, 
+                                (opal_free_list_item_t *) item);
+
+            count++;
+        }
+
+        mca_oob_tcp_component.tcp_last_copy_time = now;
+    }
+
+    return count;
+}
+
+
+static int mca_oob_tcp_create_listen_thread(void)
+{
+    struct sockaddr_in inaddr;
+    opal_socklen_t addrlen;
+    int flags;
+
+    /* create a listen socket for incoming connections */
+    mca_oob_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
+    if(mca_oob_tcp_component.tcp_listen_sd < 0) {
+        opal_output(0,"mca_oob_tcp_component_init: socket() failed with errno=%d", opal_socket_errno);
+        return ORTE_ERROR;
+    }
+
+    /* setup socket options */
+    mca_oob_tcp_set_socket_options(mca_oob_tcp_component.tcp_listen_sd);
+
+    /* bind address */
+    memset(&inaddr, 0, sizeof(inaddr));
+    inaddr.sin_family = AF_INET;
+    inaddr.sin_addr.s_addr = INADDR_ANY;
+    inaddr.sin_port = 0;
+
+    if(bind(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
+        opal_output(0,"mca_oob_tcp_create_listen: bind() failed with errno=%d", opal_socket_errno);
+        return ORTE_ERROR;
+    }
+
+    /* resolve system assigned port */
+    addrlen = sizeof(struct sockaddr_in);
+    if(getsockname(mca_oob_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
+        opal_output(0, "mca_oob_tcp_create_listen: getsockname() failed with errno=%d", opal_socket_errno);
+        return ORTE_ERROR;
+    }
+    mca_oob_tcp_component.tcp_listen_port = inaddr.sin_port;
+
+    /* setup listen backlog to maximum allowed by kernel */
+    if(listen(mca_oob_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
+        opal_output(0, "mca_oob_tcp_component_init: listen() failed with errno=%d", opal_socket_errno);
+        return ORTE_ERROR;
+    }
+
+    /* set socket up to be non-blocking, otherwise accept could block */
+    if((flags = fcntl(mca_oob_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
+        opal_output(0, "mca_oob_tcp_component_init: fcntl(F_GETFL) failed with errno=%d", opal_socket_errno);
+        return ORTE_ERROR;
+    } else {
+        flags |= O_NONBLOCK;
+        if(fcntl(mca_oob_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
+            opal_output(0, "mca_oob_tcp_component_init: fcntl(F_SETFL) failed with errno=%d", opal_socket_errno);
+            return ORTE_ERROR;
+        }
+    }
+
+    /* start the listen thread */
+    mca_oob_tcp_component.tcp_listen_thread.t_run = mca_oob_tcp_listen_thread;
+    mca_oob_tcp_component.tcp_listen_thread.t_arg = NULL;
+
+    return opal_thread_start(&mca_oob_tcp_component.tcp_listen_thread);
 }
 
 
@@ -537,9 +804,23 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(opal_event_t));
 
     /* create a listen socket */
-    if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-        opal_output(0, "mca_oob_tcp_init: unable to create listen socket\n");
-        return NULL;
+    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
+        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
+            return NULL;
+        }
+    } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
+        if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
+            return NULL;
+        }
+        opal_free_list_init(&mca_oob_tcp_component.tcp_pending_connections_fl,
+                            sizeof(mca_oob_tcp_pending_connection_t),
+                            OBJ_CLASS(mca_oob_tcp_pending_connection_t),
+                            16,  /* initial number */
+                            -1,  /* maximum number */
+                            16);  /* increment to grow by */
+        opal_progress_register(mca_oob_tcp_listen_progress);
     }
     return &mca_oob_tcp;
 }
@@ -932,8 +1213,16 @@ int mca_oob_tcp_fini(void)
 
     /* close listen socket */
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
-        opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
-        CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
+        if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
+            opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
+            close(mca_oob_tcp_component.tcp_listen_sd);
+        } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
+            void *data;
+            mca_oob_tcp_component.tcp_shutdown = true;
+            close(mca_oob_tcp_component.tcp_listen_sd);
+            opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, &data);
+            opal_progress_unregister(mca_oob_tcp_listen_progress);
+        }
         mca_oob_tcp_component.tcp_listen_sd = -1;
     }
 

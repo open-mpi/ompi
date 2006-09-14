@@ -27,8 +27,13 @@
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/orte_constants.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
+#include "orte/mca/pls/base/pls_private.h"
 #include "pls_slurm.h"
 
 
@@ -44,7 +49,7 @@ const char *mca_pls_slurm_component_version_string =
  */
 static int pls_slurm_open(void);
 static int pls_slurm_close(void);
-static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority);
+static orte_pls_base_module_t *pls_slurm_init(int *priority);
 
 
 /*
@@ -59,10 +64,10 @@ orte_pls_slurm_component_t mca_pls_slurm_component = {
            information about the component itself */
 
         {
-            /* Indicate that we are a pls v1.0.0 component (which also
+            /* Indicate that we are a pls v1.3.0 component (which also
                implies a specific MCA version) */
 
-            ORTE_PLS_BASE_VERSION_1_0_0,
+            ORTE_PLS_BASE_VERSION_1_3_0,
             
             /* Component name and version */
             
@@ -121,14 +126,28 @@ static int pls_slurm_open(void)
 }
 
 
-static struct orte_pls_base_module_1_0_0_t *pls_slurm_init(int *priority)
+static orte_pls_base_module_t *pls_slurm_init(int *priority)
 {
+    int rc;
+    
+    /* if we are NOT an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     /* Are we running under a SLURM job? */
 
     if (NULL != getenv("SLURM_JOBID")) {
         *priority = mca_pls_slurm_component.priority;
-        opal_output(orte_pls_base.pls_output,
-                    "pls:slurm: available for selection");
+        if (mca_pls_slurm_component.debug) {
+            opal_output(0, "pls:slurm: available for selection");
+        }
+
+        /* ensure the receive gets posted */
+        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
         return &orte_pls_slurm_module;
     }
 

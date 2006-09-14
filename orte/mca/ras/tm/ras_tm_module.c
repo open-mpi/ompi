@@ -28,8 +28,7 @@
 #include "opal/util/output.h"
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "orte/mca/ras/base/ras_private.h"
 #include "ras_tm.h"
 
 
@@ -37,8 +36,6 @@
  * Local functions
  */
 static int allocate(orte_jobid_t jobid);
-static int node_insert(opal_list_t *);
-static int node_query(opal_list_t *);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -51,8 +48,10 @@ static int get_tm_hostname(tm_node_id node, char **hostname, char **arch);
  */
 orte_ras_base_module_t orte_ras_tm_module = {
     allocate,
-    node_insert,
-    node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     deallocate,
     finalize
 };
@@ -105,16 +104,6 @@ static int allocate(orte_jobid_t jobid)
     }
     tm_finalize();
     return ret;
-}
-
-static int node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int node_query(opal_list_t *nodes)
-{
-    return orte_ras_base_node_query(nodes);
 }
 
 /*

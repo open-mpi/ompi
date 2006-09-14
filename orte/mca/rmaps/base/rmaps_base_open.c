@@ -25,6 +25,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
 
@@ -38,19 +39,22 @@
 
 
 /*
- * Local functions
- */
-static void cmp_constructor(orte_rmaps_base_cmp_t *cmp);
-static void cmp_destructor(orte_rmaps_base_cmp_t *cmp);
-static int compare(opal_list_item_t **a, opal_list_item_t **b);
-
-/*
  * Global variables
  */
 orte_rmaps_base_t orte_rmaps_base;
-OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, opal_list_item_t,
-                   cmp_constructor, cmp_destructor);
 
+/*
+ * Declare the RMAPS module to hold the API function pointers
+ */
+orte_rmaps_base_module_t orte_rmaps = {
+    orte_rmaps_base_map,
+    orte_rmaps_base_finalize
+};
+
+orte_rmaps_base_module_t orte_rmaps_no_op = {
+    orte_rmaps_base_map_no_op,
+    orte_rmaps_base_finalize
+};
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -58,13 +62,8 @@ OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, opal_list_item_t,
  */
 int orte_rmaps_base_open(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    orte_rmaps_base_component_t *component;
-    orte_rmaps_base_module_t *module;
-    int param, priority, value;
-    orte_rmaps_base_cmp_t *cmp;
-    char *policy;
+    int param, value;
+    char *policy, *requested;
 
     /* Debugging / verbose output */
 
@@ -104,6 +103,28 @@ int orte_rmaps_base_open(void)
     }
     
     
+    /* Some systems do not want any RMAPS support. In those cases,
+     * memory consumption is also an issue. For those systems, we
+     * avoid opening the RMAPS components by checking for a directive
+     * to use the "null" component.
+     */
+    param = mca_base_param_reg_string_name("rmaps", NULL, NULL,
+                                           false, false, NULL, NULL);
+    if (ORTE_ERROR == mca_base_param_lookup_string(param, &requested)) {
+        return ORTE_ERROR;
+    }
+    if (NULL != requested && 0 == strcmp(requested, "null")) {
+        /* the user has specifically requested that we use the "null"
+        * component. In this case, that means we do NOT open any
+        * components, and we simply use the default module we have
+        * already defined above
+        */
+        orte_rmaps_base.no_op_selected = true;
+        orte_rmaps = orte_rmaps_no_op; /* use the no_op module */
+        return ORTE_SUCCESS;
+    }
+    orte_rmaps_base.no_op_selected = false;
+    
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 
@@ -113,79 +134,7 @@ int orte_rmaps_base_open(void)
        return ORTE_ERROR;
     }
 
-    /* Query all the opened components and see if they want to run */
-
-    OBJ_CONSTRUCT(&orte_rmaps_base.rmaps_available, opal_list_t);
-    for (item = opal_list_get_first(&orte_rmaps_base.rmaps_opened); 
-         opal_list_get_end(&orte_rmaps_base.rmaps_opened) != item; 
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_rmaps_base_component_t *) cli->cli_component;
-        opal_output(orte_rmaps_base.rmaps_output,
-                    "orte:base:open: querying component %s", 
-                    component->rmaps_version.mca_component_name);
-
-        /* Call the component's init function and see if it wants to be
-           selected */
-
-        module = component->rmaps_init(&priority);
-
-        /* If we got a non-NULL module back, then the component wants
-           to be considered for selection */
-
-        if (NULL != module) {
-            opal_output(orte_rmaps_base.rmaps_output,
-                        "orte:base:open: component %s returns priority %d", 
-                        component->rmaps_version.mca_component_name,
-                        priority);
-
-            cmp = OBJ_NEW(orte_rmaps_base_cmp_t);
-            cmp->component = component;
-            cmp->module = module;
-            cmp->priority = priority;
-
-            opal_list_append(&orte_rmaps_base.rmaps_available, &cmp->super);
-        } else {
-            opal_output(orte_rmaps_base.rmaps_output,
-                        "orte:base:open: component %s does NOT want to be considered for selection", 
-                        component->rmaps_version.mca_component_name);
-        }
-    }
-
-    /* Sort the resulting available list in priority order */
-
-    opal_list_sort(&orte_rmaps_base.rmaps_available, compare);
-
     /* All done */
 
     return ORTE_SUCCESS;
-}
-
-
-static void cmp_constructor(orte_rmaps_base_cmp_t *cmp)
-{
-    cmp->component = NULL;
-    cmp->module = NULL;
-    cmp->priority = -1;
-}
-
-
-static void cmp_destructor(orte_rmaps_base_cmp_t *cmp)
-{
-    cmp_constructor(cmp);
-}
-
-
-static int compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    orte_rmaps_base_cmp_t *aa = *((orte_rmaps_base_cmp_t **) a);
-    orte_rmaps_base_cmp_t *bb = *((orte_rmaps_base_cmp_t **) b);
-
-    if (aa->priority > bb->priority) {
-        return 1;
-    } else if (aa->priority == bb->priority) {
-        return 0;
-    } else {
-        return -1;
-    }
 }

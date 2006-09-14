@@ -65,6 +65,28 @@ int orte_smr_base_get_job_state(orte_job_state_t *state,
 int orte_smr_base_set_job_state(orte_jobid_t jobid,
                               orte_job_state_t state);
 
+int orte_smr_base_init_job_stage_gates(orte_jobid_t job,
+                                       orte_gpr_trigger_cb_fn_t cbfunc,
+                                       void *user_tag);
+
+int orte_smr_base_init_orted_stage_gates(orte_jobid_t job,
+                                         orte_std_cntr_t num_orteds,
+                                         orte_gpr_trigger_cb_fn_t cbfunc,
+                                         void *user_tag);
+    
+int orte_smr_base_define_alert_monitor(orte_jobid_t job,
+                                        char *trigger_name,
+                                        char *counter_key,
+                                        orte_std_cntr_t init_value,
+                                        orte_std_cntr_t alert_value,
+                                        bool one_shot,
+                                        orte_gpr_trigger_cb_fn_t cbfunc,
+                                        void *user_tag);
+
+int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
+                                           orte_gpr_notify_cb_fn_t cbfunc, void* cbdata,
+                                           orte_proc_state_t cb_conditions);
+
 int orte_smr_base_begin_monitoring_not_available(orte_jobid_t job);
 
 

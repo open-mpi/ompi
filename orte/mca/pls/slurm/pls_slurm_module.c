@@ -24,6 +24,8 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include <sys/types.h>
 #ifdef HAVE_UNISTD_H
@@ -51,24 +53,25 @@
 #include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/mca/base/mca_base_param.h"
+
 #include "orte/runtime/runtime.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
-#include "orte/orte_constants.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/base/base.h"
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/smr/smr.h"
+#include "orte/mca/rmaps/base/rmaps_private.h"
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/pls_private.h"
 #include "pls_slurm.h"
 
 
 /*
  * Local functions
  */
-static int pls_slurm_launch(orte_jobid_t jobid);
+static int pls_slurm_launch_job(orte_jobid_t jobid);
 static int pls_slurm_terminate_job(orte_jobid_t jobid);
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
 static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal);
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
@@ -81,9 +84,10 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
 /*
  * Global variable
  */
-orte_pls_base_module_1_0_0_t orte_pls_slurm_module = {
-    pls_slurm_launch,
+orte_pls_base_module_1_3_0_t orte_pls_slurm_module = {
+    pls_slurm_launch_job,
     pls_slurm_terminate_job,
+    pls_slurm_terminate_orteds,
     pls_slurm_terminate_proc,
     pls_slurm_signal_job,
     pls_slurm_signal_proc,
@@ -103,7 +107,7 @@ static pid_t srun_pid = 0;
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
-static int pls_slurm_launch(orte_jobid_t jobid)
+static int pls_slurm_launch_job(orte_jobid_t jobid)
 {
     opal_list_t nodes, mapping_list;
     opal_list_item_t *item, *item2;
@@ -125,7 +129,14 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     char **custom_strings;
     int num_args, i;
     char *cur_prefix;
+    opal_list_t daemons;
+    orte_pls_daemon_info_t *dmn;
 
+    /* setup a list that will contain the info for all the daemons
+     * so we can store it on the registry when done
+     */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    
     /* Query the list of nodes allocated and mapped to this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
@@ -151,6 +162,12 @@ static int pls_slurm_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* setup the orted triggers for passing their launch info */
+    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
     /* need integer value for command line parameter */
     asprintf(&jobid_string, "%lu", (unsigned long) jobid);
 
@@ -212,7 +229,7 @@ static int pls_slurm_launch(orte_jobid_t jobid)
     opal_argv_append(&argc, &argv, "--no-daemonize");
 
     /* check for debug flags */
-    orte_pls_base_proxy_mca_argv(&argc, &argv);
+    orte_pls_base_mca_argv(&argc, &argv);
 
     /* proxy information */
     opal_argv_append(&argc, &argv, "--bootproxy");
@@ -297,7 +314,6 @@ static int pls_slurm_launch(orte_jobid_t jobid)
          item != opal_list_get_end(&nodes);
          item =  opal_list_get_next(item)) {
         orte_ras_node_t* node = (orte_ras_node_t*)item;
-        orte_process_name_t* name;
         opal_list_t map;
         size_t num_processes;
 
@@ -351,24 +367,24 @@ static int pls_slurm_launch(orte_jobid_t jobid)
             }
         }
 
-        /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-        if (ORTE_SUCCESS != rc) {
+        /* record the daemons info for this node */
+        dmn = OBJ_NEW(orte_pls_daemon_info_t);
+        dmn->cell = node->node_cellid;
+        dmn->nodename = strdup(node->node_name);
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(dmn->name), node->node_cellid, 0, vpid))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-
-        /* save the daemons name on the node */
-        if (ORTE_SUCCESS !=
-            (rc = orte_pls_base_proxy_set_node_name(node, jobid, name))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
+        opal_list_append(&daemons, &dmn->super);
 
         vpid++;
-        free(name);
     }
 
+    /* store the daemon info on the registry */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     /* setup environment */
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
@@ -417,18 +433,71 @@ cleanup:
         OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&mapping_list);
+    
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    
     return rc;
 }
 
 
 static int pls_slurm_terminate_job(orte_jobid_t jobid)
 {
-    if (0 != srun_pid) {
-        kill(srun_pid, SIGHUP);
-        /* JMS need appropriate code here to reap */
-        srun_pid = 0;
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
     }
-    return ORTE_SUCCESS;
+    
+    /* order them to kill their local procs for this job */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
+}
+
+
+/**
+* Terminate the orteds for a given job
+ */
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid)
+{
+    int rc;
+    opal_list_t daemons;
+    opal_list_item_t *item;
+    
+    /* construct the list of active daemons on this job */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* order them to go away */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+CLEANUP:
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
+    }
+    OBJ_DESTRUCT(&daemons);
+    return rc;
 }
 
 
@@ -438,8 +507,7 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid)
  */
 static int pls_slurm_terminate_proc(const orte_process_name_t *name)
 {
-    opal_output(orte_pls_base.pls_output,
-                "pls:slurm:terminate_proc: not supported");
+    opal_output(0, "pls:slurm:terminate_proc: not supported");
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
@@ -461,15 +529,20 @@ static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal)
  */
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal)
 {
-    return orte_pls_base_proxy_signal_proc(name, signal);
+    opal_output(0, "pls:slurm:signal_proc: not supported");
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
 static int pls_slurm_finalize(void)
 {
-    /* cleanup any pending recvs */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR_CLNT);
+    int rc;
 
+    /* cleanup any pending recvs */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     return ORTE_SUCCESS;
 }
 
@@ -486,8 +559,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
 
     srun_pid = fork();
     if (-1 == srun_pid) {
-        opal_output(orte_pls_base.pls_output,
-                    "pls:slurm:start_proc: fork failed");
+        opal_output(0, "pls:slurm:start_proc: fork failed");
         return ORTE_ERR_IN_ERRNO;
     } else if (0 == srun_pid) {
         char *bin_base = NULL, *lib_base = NULL;
@@ -556,9 +628,9 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
            cntl-c) don't get sent to srun */
         setpgid(0, 0);
 
-        opal_output(orte_pls_base.pls_output,
-                    "pls:slurm:start_proc: exec failed");
         execve(exec_argv, argv, env);
+
+        opal_output(0, "pls:slurm:start_proc: exec failed");
         /* don't return - need to exit - returning would be bad -
            we're not in the calling process anymore */
         exit(1);

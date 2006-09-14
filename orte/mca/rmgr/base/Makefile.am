@@ -17,17 +17,19 @@
 #
 
 headers += \
+        base/rmgr_private.h \
         base/base.h
 
 libmca_rmgr_la_SOURCES += \
+        base/rmgr_base_check_context.c \
         base/rmgr_base_context.c \
         base/rmgr_base_close.c \
         base/rmgr_base_open.c \
-        base/rmgr_base_pack.c \
-        base/rmgr_base_unpack.c \
+        base/rmgr_base_receive.c \
         base/rmgr_base_select.c \
         base/rmgr_base_stage_gate.c \
         base/rmgr_base_stubs.c \
+        base/rmgr_base_vpid_support_fns.c \
         base/data_type_support/rmgr_data_type_compare_fns.c \
         base/data_type_support/rmgr_data_type_copy_fns.c \
         base/data_type_support/rmgr_data_type_print_fns.c \

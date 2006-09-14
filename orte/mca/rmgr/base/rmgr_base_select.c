@@ -88,6 +88,11 @@ int orte_rmgr_base_select(void)
 
     /* save the module for later usage */
     orte_rmgr = *best_module;
+    
+    /* let the module do it's own init, if needed */
+    if (NULL != orte_rmgr.module_init) {
+        orte_rmgr.module_init();
+    }
     return ORTE_SUCCESS;
 }
 

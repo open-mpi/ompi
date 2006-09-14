@@ -31,15 +31,19 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
-#include "orte/mca/pls/pls.h"
-#include "pls_gridengine.h"
+
 #include "opal/util/path.h"
 #include "opal/util/argv.h"
-#include "opal/mca/base/mca_base_param.h"
-#include "orte/mca/pls/base/base.h"
 #include "opal/util/output.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
+#include "opal/mca/base/mca_base_param.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
+#include "orte/mca/pls/base/pls_private.h"
+#include "pls_gridengine.h"
 
 /**
  * Public string showing the pls ompi_gridengine component version number
@@ -62,10 +66,10 @@ orte_pls_gridengine_component_t mca_pls_gridengine_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -137,10 +141,23 @@ orte_pls_gridengine_component_init - initialize component, check if we can run o
 */
 orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
 {
+    int rc;
+    
+    /* if we are not an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
         opal_output(orte_pls_base.pls_output, 
             "pls:gridengine: available for selection");
+
+        /* ensure the receive gets posted */
+        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
         *priority = mca_pls_gridengine_component.priority;
         return &orte_pls_gridengine_module;
     }

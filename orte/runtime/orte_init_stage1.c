@@ -47,9 +47,11 @@
 #include "orte/mca/sds/base/base.h"
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/rds/base/base.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/odls/base/base.h"
+
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/smr/base/base.h"
@@ -58,6 +60,10 @@
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/universe_setup_file_io.h"
+
+/* these are to be cleaned up for 2.0 */
+#include "orte/mca/ras/base/ras_private.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/runtime_internal.h"
@@ -265,6 +271,10 @@ int orte_init_stage1(bool infrastructure)
             free(orte_universe_info.seed_uri);
         }
         orte_universe_info.seed_uri = orte_rml.get_uri();
+        /* and make sure that the daemon flag is NOT set so that
+         * components unique to non-HNP orteds can be selected
+         */
+        orte_process_info.daemon = false;
     }
 
     /* setup my session directory */
@@ -346,9 +356,72 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * setup the resource manager
+     * Now that we know for certain if we are an HNP and/or a daemon,
+     * setup the resource management frameworks. This includes opening
+     * and selecting the daemon launch framework - that framework "knows"
+     * what to do if it isn't in a daemon, and everyone needs that framework
+     * to at least register its datatypes.
      */
-
+    if (ORTE_SUCCESS != (ret = orte_rds_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rds_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rds_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rds_base_select";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_ras_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ras_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_ras_base_find_available())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ras_base_find_available";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmaps_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmaps_base_find_available())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_find_available";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_pls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pls_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_pls_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pls_base_select";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_select";
+        goto error;
+    }
+    
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_rmgr_base_open";
@@ -362,7 +435,7 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * setup the state-of-health monitor
+     * setup the state monitor
      */
     if (ORTE_SUCCESS != (ret = orte_smr_base_open())) {
         ORTE_ERROR_LOG(ret);
@@ -376,7 +449,16 @@ int orte_init_stage1(bool infrastructure)
         goto error;
     }
 
-     /* if we are a singleton or the seed, setup the infrastructure for our job */
+    /*
+     * setup the errmgr
+     */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_smr_base_select";
+        goto error;
+    }
+    
+    /* if we are a singleton or the seed, setup the infrastructure for our job */
 
     if(orte_process_info.singleton || orte_process_info.seed) {
         char *site, *resource;
@@ -430,7 +512,6 @@ int orte_init_stage1(bool infrastructure)
             orte_rds_cell_desc_t *rds_item;
             orte_rds_cell_attr_t *new_attr;
             orte_ras_node_t *ras_item;
-            orte_ras_base_module_t *module;
 
             OBJ_CONSTRUCT(&single_host, opal_list_t);
             OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
@@ -502,7 +583,7 @@ int orte_init_stage1(bool infrastructure)
             opal_list_append(&rds_single_host, &rds_item->super);
 
             /* Store into registry */
-            ret = orte_rds_base_store_resource(&rds_single_host);
+            ret = orte_rds.store_resource(&rds_single_host);
             if (ORTE_SUCCESS != ret ) {
                 ORTE_ERROR_LOG(ret);
                 error = "orte_rds.store_resource";
@@ -528,12 +609,7 @@ int orte_init_stage1(bool infrastructure)
                you'll end up with the localhost *and* all the other
                nodes in your allocation on the node segment -- which
                is probably fine) */
-            orte_ras_base_allocate(my_jobid, &module);
-            if (NULL == module) {
-                error = "orte_ras NULL module";
-                goto error;
-            }
-            orte_ras = *module;
+            orte_ras.allocate_job(my_jobid);
 
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);
@@ -545,9 +621,9 @@ int orte_init_stage1(bool infrastructure)
             error = "orte_rmgr_base_set_job_slots";
             goto error;
         }
-        if (ORTE_SUCCESS != (ret = orte_rmaps_base_set_vpid_range(my_jobid,0,1))) {
+        if (ORTE_SUCCESS != (ret = orte_rmgr.set_vpid_range(my_jobid,0,1))) {
             ORTE_ERROR_LOG(ret);
-            error = "orte_rmaps_base_set_vpid_range";
+            error = "orte_rmgr.set_vpid_range";
             goto error;
         }
         if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {

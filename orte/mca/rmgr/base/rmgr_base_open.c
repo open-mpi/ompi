@@ -31,6 +31,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/trace.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/rmgr/base/base.h"
 
 
@@ -49,20 +50,18 @@
 
 orte_rmgr_base_t orte_rmgr_base;
 orte_rmgr_base_module_t orte_rmgr = {
-    orte_rmgr_base_query_not_available,
+    NULL,
     orte_rmgr_base_create_not_available,
-    orte_rmgr_base_allocate_not_available,
-    orte_rmgr_base_deallocate_not_available,
-    orte_rmgr_base_map_not_available,
-    orte_rmgr_base_launch_not_available,
-    orte_rmgr_base_terminate_job_not_available,
-    orte_rmgr_base_terminate_proc_not_available,
-    orte_rmgr_base_signal_job_not_available,
-    orte_rmgr_base_signal_proc_not_available,
     orte_rmgr_base_spawn_not_available,
-    orte_rmgr_base_proc_stage_gate_init,
-    orte_rmgr_base_proc_stage_gate_mgr,
-    orte_rmgr_base_finalize_not_available
+    orte_rmgr_base_finalize_not_available,
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_get_app_context,
+    orte_rmgr_base_put_app_context,
+    orte_rmgr_base_check_context_cwd,
+    orte_rmgr_base_check_context_app,
+    orte_rmgr_base_set_vpid_range,
+    orte_rmgr_base_get_vpid_range
+    
 };
 
 /*
@@ -172,7 +171,7 @@ int orte_rmgr_base_open(void)
         orte_rmgr_base.rmgr_output = -1;
     }
 
-    /* register the base system types with the DPS */
+    /* register the base system types with the DSS */
     tmp = ORTE_APP_CONTEXT;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_app_context,
                                         orte_rmgr_base_unpack_app_context,

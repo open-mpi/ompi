@@ -34,6 +34,7 @@
 #include "opal/threads/condition.h"
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_msg.h"
+#include "opal/mca/timer/base/base.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -223,11 +224,6 @@ void mca_oob_tcp_registry_callback(
 
 void mca_oob_tcp_set_socket_options(int sd);
 
-typedef enum {
-    OOB_TCP_EVENT,
-    OOB_TCP_LISTEN_THREAD
-} mca_oob_tcp_listen_type_t;
-
 /**
  *  OOB TCP Component
 */
@@ -258,6 +254,19 @@ struct mca_oob_tcp_component_t {
     opal_condition_t   tcp_match_cond;       /**< condition variable used in finalize */
     int                tcp_match_count;      /**< number of matched recvs in progress */
     int                tcp_debug;            /**< debug level */
+
+    bool               tcp_shutdown;
+    enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } tcp_listen_type;
+    opal_thread_t tcp_listen_thread;
+    opal_free_list_t tcp_pending_connections_fl;
+    opal_list_t tcp_pending_connections;
+    opal_list_t tcp_copy_out_connections;
+    opal_list_t tcp_copy_in_connections;
+    opal_mutex_t tcp_pending_connections_lock;
+    opal_timer_t tcp_last_copy_time;
+    opal_timer_t tcp_copy_delta;
+    int tcp_copy_max_size;
+    int tcp_copy_spin_count;
 };
 
 /**
@@ -272,6 +281,14 @@ ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 #else
 #define CLOSE_THE_SOCKET(socket)    close(socket)
 #endif  /* defined(__WINDOWS__) */
+
+struct mca_oob_tcp_pending_connection_t {
+        opal_free_list_item_t super;
+        int fd;
+        struct sockaddr_in addr;
+    };
+    typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
+    OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

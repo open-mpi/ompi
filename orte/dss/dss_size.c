@@ -109,10 +109,6 @@ int orte_dss_std_size(size_t *size, void *src, orte_data_type_t type)
             *size = sizeof(orte_data_type_t);
             break;
 
-        case ORTE_DAEMON_CMD:
-            *size = sizeof(orte_daemon_cmd_flag_t);
-            break;
-
         default:
             *size = 0;
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);

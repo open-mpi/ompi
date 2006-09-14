@@ -27,7 +27,9 @@ endif
 libs = \
         $(top_builddir)/orte/liborte.la
 
-headers = orted.h
+headers = \
+	orted.h
+
 orted_SOURCES = \
 	$(headers) \
         orted.c 

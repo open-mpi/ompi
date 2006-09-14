@@ -31,6 +31,8 @@
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
 
+#include "orte/util/proc_info.h"
+
 
 /*
  * Public string showing the pls ompi_poe component version number
@@ -55,10 +57,10 @@ orte_pls_poe_component_t mca_pls_poe_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -160,6 +162,12 @@ orte_pls_poe_component_init - initialize component, check if we can run on this 
 */
 orte_pls_base_module_t *orte_pls_poe_component_init(int *priority)
 {
+    
+    /* if we are NOT an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+
     mca_pls_poe_component.path = opal_path_findv(mca_pls_poe_component.argv[0], 0, environ, NULL);
     if (NULL == mca_pls_poe_component.path) {
         return NULL;

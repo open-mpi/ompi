@@ -101,9 +101,9 @@ typedef void* ompi_iov_base_ptr_t;
  */
 
 #if defined(HAVE_SOCKLEN_T)
-typedef socklen_t ompi_socklen_t;
+typedef socklen_t opal_socklen_t;
 #else
-typedef int ompi_socklen_t;
+typedef int opal_socklen_t;
 #endif
 
 

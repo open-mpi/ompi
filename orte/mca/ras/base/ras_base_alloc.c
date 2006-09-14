@@ -23,9 +23,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 
 /*
  * Mark nodes as allocated on the registry

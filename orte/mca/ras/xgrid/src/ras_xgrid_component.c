@@ -23,6 +23,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ras_xgrid.h"
 #include "opal/util/output.h"
+#include "orte/util/proc_info.h"
 
 /*
  * Local functions
@@ -32,15 +33,15 @@ static int orte_ras_xgrid_component_close(void);
 static orte_ras_base_module_t *orte_ras_xgrid_init(int*);
 
 
-orte_ras_base_component_1_0_0_t mca_ras_xgrid_component = {
+orte_ras_base_component_t mca_ras_xgrid_component = {
     /* First, the mca_base_component_t struct containing meta
        information about the component itself */
 
     {
-        /* Indicate that we are a iof v1.0.0 component (which also
+        /* Indicate that we are a ras v1.3.0 component (which also
            implies a specific MCA version) */
         
-        ORTE_RAS_BASE_VERSION_1_0_0,
+        ORTE_RAS_BASE_VERSION_1_3_0,
         
         /* Component name and version */
         
@@ -82,6 +83,11 @@ orte_ras_xgrid_component_close(void)
 
 static orte_ras_base_module_t *orte_ras_xgrid_init(int* priority)
 {
+    /* if we are not an HNP, then we must not be selected */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     /* Are we running under a xgrid job? */
     int id = mca_base_param_find("ras", "xgrid", "priority");
     mca_base_param_lookup_int(id,priority);

@@ -49,6 +49,8 @@ extern "C" {
     typedef struct orte_rmaps_base_t {
         /** Verbose/debug output stream */
         int rmaps_output;
+        /** Whether or not the NO_OP module is in use */
+        bool no_op_selected;
         /** List of opened components */
         opal_list_t rmaps_opened;
         /** Sorted list of available components (highest priority first) */
@@ -63,25 +65,6 @@ extern "C" {
     ORTE_DECLSPEC extern orte_rmaps_base_t orte_rmaps_base;
 
     /**
-     * RMAPS component/module/priority tuple
-     */
-    struct orte_rmaps_base_cmp_t {
-        /** Base object */
-        opal_list_item_t super;
-        /** rmaps component */
-        orte_rmaps_base_component_t *component;
-        /** rmaps module */
-        orte_rmaps_base_module_t* module;
-        /** This component's priority */
-        int priority;
-    };
-    /** Convenience typedef */
-    typedef struct orte_rmaps_base_cmp_t orte_rmaps_base_cmp_t;
-    /** Class declaration */
-    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
-
-
-    /**
      * Open the rmaps framework
      */
     ORTE_DECLSPEC int orte_rmaps_base_open(void);
@@ -89,7 +72,7 @@ extern "C" {
     /**
      * Select an rmaps component / module
      */
-    ORTE_DECLSPEC orte_rmaps_base_module_t *orte_rmaps_base_select(char *preferred);
+    ORTE_DECLSPEC int orte_rmaps_base_find_available(void);
 
     /**
      * Utility routines to get/set vpid mapping for the job

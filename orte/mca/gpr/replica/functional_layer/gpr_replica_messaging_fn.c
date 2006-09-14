@@ -213,7 +213,7 @@ int orte_gpr_replica_register_callback(orte_gpr_replica_subscription_t *sub,
              * subscription id, combining data where the id's match
              */
             if (ORTE_SUCCESS != (rc = orte_gpr_replica_store_value_in_msg(reqs[i],
-                                            cb->message, cnt, values))) {
+                                            cb->message, sub->name, cnt, values))) {
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP;
             }
@@ -436,6 +436,7 @@ int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
 
 int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
                                         orte_gpr_notify_message_t *msg,
+                                        char *sub_name,
                                         orte_std_cntr_t cnt,
                                         orte_gpr_value_t **values)
 {
@@ -482,6 +483,10 @@ int orte_gpr_replica_store_value_in_msg(orte_gpr_replica_requestor_t *req,
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    /* set the name of the subscription, if provided */
+    if (NULL != sub_name) {
+        dptr->target = strdup(sub_name);
+    }
     dptr->id = req->idtag;
     if (0 > orte_pointer_array_add(&index, msg->data, dptr)) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -526,7 +531,7 @@ static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscrip
         if (NULL != data[i]) {
             k++;
             if ((NULL == data[i]->target && NULL == sub) ||
-                 (NULL != data[i]->target &&
+                 (NULL != data[i]->target && NULL != sub->name &&
                  0 == strcmp(data[i]->target, sub->name))) { /* going to the same place */
                 for (j=0; j < cnt; j++) {
                     if (0 > orte_pointer_array_add(&index, data[i]->values, values[j])) {
@@ -557,7 +562,7 @@ static int orte_gpr_replica_store_value_in_trigger_msg(orte_gpr_replica_subscrip
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    if (NULL != sub) {
+    if (NULL != sub && NULL != sub->name) {
         dptr->target = strdup(sub->name);
     }
     if (0 > orte_pointer_array_add(&index, msg->data, dptr)) {

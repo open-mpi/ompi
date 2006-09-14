@@ -43,7 +43,7 @@ extern "C" {
     
     ORTE_DECLSPEC extern orte_pls_slurm_component_t 
         mca_pls_slurm_component;
-    ORTE_DECLSPEC extern orte_pls_base_module_1_0_0_t
+    ORTE_DECLSPEC extern orte_pls_base_module_t
         orte_pls_slurm_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)

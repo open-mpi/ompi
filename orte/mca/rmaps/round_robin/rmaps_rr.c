@@ -37,10 +37,9 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/rmaps/base/rmaps_base_node.h"
+#include "orte/mca/rmgr/rmgr.h"
+
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "rmaps_rr.h"
 
 
@@ -234,7 +233,7 @@ static int map_app_by_slot(
  * Create a round-robin mapping for the job.
  */
 
-static int orte_rmaps_rr_map(orte_jobid_t jobid)
+static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
 {
     orte_app_context_t** context, *app;
     orte_rmaps_base_map_t* map;
@@ -249,7 +248,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     bool bynode = true, modify_app_context = false;
 
     /* query for the application context and allocated nodes */
-    if(ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context))) {
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &context, &num_context))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -473,7 +472,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
     }
     
     /* save vpid start/range on the job segment */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_set_vpid_range(jobid, job_vpid_start, num_procs))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.set_vpid_range(jobid, job_vpid_start, num_procs))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
@@ -494,7 +493,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid)
         processes
      */
     if (modify_app_context) {
-        if (ORTE_SUCCESS != (rc = orte_rmgr_base_put_app_context(jobid, context, 1))) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.store_app_context(jobid, context, 1))) {
             ORTE_ERROR_LOG(rc);
         }
     }
