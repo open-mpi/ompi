@@ -12,33 +12,33 @@
 # Use the top-level Makefile.options
 
 
-dist_pkgdata_DATA = help-orte-pls-process.txt
+dist_pkgdata_DATA = help-orte-odls-process.txt
 
 sources = \
-        pls_process.h \
-        pls_process_component.c \
-        pls_process_module.c
+        odls_process.h \
+        odls_process_component.c \
+        odls_process_module.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_pls_process_DSO
+if OMPI_BUILD_odls_process_DSO
 component_noinst =
-component_install = mca_pls_process.la
+component_install = mca_odls_process.la
 else
-component_noinst = libmca_pls_process.la
+component_noinst = libmca_odls_process.la
 component_install =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_pls_process_la_SOURCES = $(sources)
-mca_pls_process_la_LDFLAGS = -module -avoid-version
-mca_pls_process_la_LIBADD = \
+mca_odls_process_la_SOURCES = $(sources)
+mca_odls_process_la_LDFLAGS = -module -avoid-version
+mca_odls_process_la_LIBADD = \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_pls_process_la_SOURCES =$(sources)
-libmca_pls_process_la_LDFLAGS = -module -avoid-version
+libmca_odls_process_la_SOURCES =$(sources)
+libmca_odls_process_la_LDFLAGS = -module -avoid-version

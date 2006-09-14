@@ -8,11 +8,6 @@
  *
  * $HEADER$
  *
- * These symbols are in a file by themselves to provide nice linker
- * semantics.  Since linkers generally pull in symbols by object
- * files, keeping these symbols as the only symbols in this file
- * prevents utility programs such as "ompi_info" from having to import
- * entire components just to query their version and parameters.
  */
 
 #include "orte_config.h"
@@ -58,42 +53,42 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/sds/base/base.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/base/base.h"
+#include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rmaps/base/base.h"
 #include "orte/mca/rmaps/base/rmaps_base_map.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/smr/base/base.h"
-#include "orte/mca/pls/process/pls_process.h"
+#include "orte/mca/odls/process/odls_process.h"
 
 #if !defined(__WINDOWS__)
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
-static int orte_pls_process_launch_threaded(orte_jobid_t);
+static int orte_odls_process_launch_threaded(orte_jobid_t);
 #endif
 
 
-orte_pls_base_module_1_0_0_t orte_pls_process_module = {
+orte_odls_base_module_1_0_0_t orte_odls_process_module = {
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
-    orte_pls_process_launch_threaded,
+    orte_odls_process_launch_threaded,
 #else
-    orte_pls_process_launch,
+    orte_odls_process_launch,
 #endif
-    orte_pls_process_terminate_job,
-    orte_pls_process_terminate_proc,
-    orte_pls_process_signal_job,
-    orte_pls_process_signal_proc,
-    orte_pls_process_finalize
+    orte_odls_process_terminate_job,
+    orte_odls_process_terminate_proc,
+    orte_odls_process_signal_job,
+    orte_odls_process_signal_proc,
+    orte_odls_process_finalize
 };
 
 static void set_handler_default(int sig);
 
 
-static bool orte_pls_process_child_died(pid_t pid, unsigned int timeout)
+static bool orte_odls_process_child_died(pid_t pid, unsigned int timeout)
 {
 #if NOT_YET_AVAILABLE
     time_t end;
@@ -126,7 +121,7 @@ static bool orte_pls_process_child_died(pid_t pid, unsigned int timeout)
     return false;
 }
 
-static void orte_pls_process_kill_processes(opal_value_array_t *pids)
+static void orte_odls_process_kill_processes(opal_value_array_t *pids)
 {
     size_t i;
     pid_t pid;
@@ -146,8 +141,8 @@ static void orte_pls_process_kill_processes(opal_value_array_t *pids)
             char hostname[MAXHOSTNAMELEN];
             gethostname(hostname, sizeof(hostname));
 
-            opal_show_help("help-orte-pls-process.txt",
-                           "orte-pls-process:could-not-send-kill",
+            opal_show_help("help-orte-odls-process.txt",
+                           "orte-odls-process:could-not-send-kill",
                            true, hostname, pid, err);
             
             continue;
@@ -156,29 +151,29 @@ static void orte_pls_process_kill_processes(opal_value_array_t *pids)
         /* The kill succeeded.  Wait up to timeout_before_sigkill
            seconds to see if it died. */
 
-        if (!orte_pls_process_child_died(pid, mca_pls_process_component.timeout_before_sigkill)) {
+        if (!orte_odls_process_child_died(pid, mca_odls_process_component.timeout_before_sigkill)) {
             char hostname[MAXHOSTNAMELEN];
             gethostname(hostname, sizeof(hostname));
 
-            opal_show_help("help-orte-pls-process.txt",
-                           "orte-pls-process:could-not-kill",
+            opal_show_help("help-orte-odls-process.txt",
+                           "orte-odls-process:could-not-kill",
                            true, hostname, pid);
         }
         
     }
 
     /* Release any waiting threads from this process */
-    OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-    mca_pls_process_component.num_children = 0;
-    opal_condition_signal(&mca_pls_process_component.cond);
-    OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+    OPAL_THREAD_LOCK(&mca_odls_process_component.lock);
+    mca_odls_process_component.num_children = 0;
+    opal_condition_signal(&mca_odls_process_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_odls_process_component.lock);
 }
 
 /*
  *  Wait for a callback indicating the child has completed.
  */
 
-static void orte_pls_process_wait_proc(pid_t pid, int status, void* cbdata)
+static void orte_odls_process_wait_proc(pid_t pid, int status, void* cbdata)
 {
     orte_rmaps_base_proc_t* proc = (orte_rmaps_base_proc_t*)cbdata;
     int rc;
@@ -201,17 +196,17 @@ static void orte_pls_process_wait_proc(pid_t pid, int status, void* cbdata)
     OBJ_RELEASE(proc);
 
     /* release any waiting threads */
-    OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-    mca_pls_process_component.num_children--;
-    opal_condition_signal(&mca_pls_process_component.cond);
-    OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+    OPAL_THREAD_LOCK(&mca_odls_process_component.lock);
+    mca_odls_process_component.num_children--;
+    opal_condition_signal(&mca_odls_process_component.cond);
+    OPAL_THREAD_UNLOCK(&mca_odls_process_component.lock);
 }
 
 /**
  *  Fork/exec the specified processes
  */
 
-static int orte_pls_process_proc(
+static int orte_odls_process_proc(
     orte_app_context_t* context,
     orte_rmaps_base_proc_t* proc,
     orte_vpid_t vpid_start,
@@ -244,9 +239,9 @@ static int orte_pls_process_proc(
     /* Try to change to the context cwd and check that the app
      * exists and is executable
      */
-    if (ORTE_SUCCESS != orte_pls_base_check_context_cwd(context, true) ||
-        ORTE_SUCCESS != orte_pls_base_check_context_app(context)) {
-        opal_show_help("help-orte-pls-process.txt", "orte-pls-process:execv-error",
+    if (ORTE_SUCCESS != orte_odls_base_check_context_cwd(context, true) ||
+        ORTE_SUCCESS != orte_odls_base_check_context_app(context)) {
+        opal_show_help("help-orte-odls-process.txt", "orte-odls-process:execv-error",
                        true, context->app, strerror(errno));
         return ORTE_ERR_FATAL;
     }
@@ -263,7 +258,7 @@ static int orte_pls_process_proc(
        but at least some users do this.  :-\ It is possible that
        when using --prefix, the user will also "-x PATH" and/or
        "-x LD_LIBRARY_PATH", which would therefore clobber the
-       work that was done in the prior pls to ensure that we have
+       work that was done in the prior odls to ensure that we have
        the prefix at the beginning of the PATH and
        LD_LIBRARY_PATH.  So examine the context->env and see if we
        find PATH or LD_LIBRARY_PATH.  If found, that means the
@@ -349,7 +344,7 @@ static int orte_pls_process_proc(
     }
 
     /* save the pid in the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_set_proc_pid(&proc->proc_name, pid))) {
+    if (ORTE_SUCCESS != (rc = orte_odls_base_set_proc_pid(&proc->proc_name, pid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -359,11 +354,11 @@ static int orte_pls_process_proc(
      * otherwise can receive the wait callback before the above is
      * ever completed
      */
-    OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-    mca_pls_process_component.num_children++;
-    OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+    OPAL_THREAD_LOCK(&mca_odls_process_component.lock);
+    mca_odls_process_component.num_children++;
+    OPAL_THREAD_UNLOCK(&mca_odls_process_component.lock);
     OBJ_RETAIN(proc);
-    orte_wait_cb(pid, orte_pls_process_wait_proc, proc);
+    orte_wait_cb(pid, orte_odls_process_wait_proc, proc);
     return ORTE_SUCCESS;
 }
 
@@ -372,7 +367,7 @@ static int orte_pls_process_proc(
  * Launch all processes allocated to the current node.
  */
 
-int orte_pls_process_launch(orte_jobid_t jobid)
+int orte_odls_process_launch(orte_jobid_t jobid)
 {
     opal_list_t map;
     opal_list_item_t* item;
@@ -413,7 +408,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)item;
         orte_std_cntr_t i;
         for (i=0; i<map->num_procs; i++) {
-            rc = orte_pls_process_proc(map->app, map->procs[i], vpid_start,
+            rc = orte_odls_process_proc(map->app, map->procs[i], vpid_start,
                                     vpid_range,
                                     (num_processes > num_processors) ?
                                     false : true, i);
@@ -447,7 +442,7 @@ cleanup:
  *  those on the current node.
  */
 
-int orte_pls_process_terminate_job(orte_jobid_t jobid)
+int orte_odls_process_terminate_job(orte_jobid_t jobid)
 {
     /* query for the pids allocated on this node */
     char *segment;
@@ -511,7 +506,7 @@ int orte_pls_process_terminate_job(orte_jobid_t jobid)
 
     /* If we have processes to kill, go kill them */
     if (opal_value_array_get_size(&pids) > 0) {
-        orte_pls_process_kill_processes(&pids);
+        orte_odls_process_kill_processes(&pids);
     }
     OBJ_DESTRUCT(&pids);
 
@@ -523,7 +518,7 @@ int orte_pls_process_terminate_job(orte_jobid_t jobid)
 }
 
 
-int orte_pls_process_terminate_proc(const orte_process_name_t* proc)
+int orte_odls_process_terminate_proc(const orte_process_name_t* proc)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -533,7 +528,7 @@ int orte_pls_process_terminate_proc(const orte_process_name_t* proc)
  *  those on the current node.
  */
 
-int orte_pls_process_signal_job(orte_jobid_t jobid, int32_t signal)
+int orte_odls_process_signal_job(orte_jobid_t jobid, int32_t signal)
 {
     /* query for the pids allocated on this node */
     char *segment;
@@ -633,20 +628,20 @@ int orte_pls_process_signal_job(orte_jobid_t jobid, int32_t signal)
 }
 
 
-int orte_pls_process_signal_proc(const orte_process_name_t* proc, int32_t signal)
+int orte_odls_process_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-int orte_pls_process_finalize(void)
+int orte_odls_process_finalize(void)
 {
-    if(mca_pls_process_component.reap) {
-        OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-        while(mca_pls_process_component.num_children > 0) {
-            opal_condition_wait(&mca_pls_process_component.cond,
-                &mca_pls_process_component.lock);
+    if(mca_odls_process_component.reap) {
+        OPAL_THREAD_LOCK(&mca_odls_process_component.lock);
+        while(mca_odls_process_component.num_children > 0) {
+            opal_condition_wait(&mca_odls_process_component.cond,
+                &mca_odls_process_component.lock);
         }
-        OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
+        OPAL_THREAD_UNLOCK(&mca_odls_process_component.lock);
     }
     return ORTE_SUCCESS;
 }
@@ -658,16 +653,16 @@ int orte_pls_process_finalize(void)
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 
-struct orte_pls_process_stack_t {
+struct orte_odls_process_stack_t {
     opal_condition_t cond;
     opal_mutex_t mutex;
     bool complete;
     orte_jobid_t jobid;
     int rc;
 };
-typedef struct orte_pls_process_stack_t orte_pls_process_stack_t;
+typedef struct orte_odls_process_stack_t orte_odls_process_stack_t;
 
-static void orte_pls_process_stack_construct(orte_pls_process_stack_t* stack)
+static void orte_odls_process_stack_construct(orte_odls_process_stack_t* stack)
 {
     OBJ_CONSTRUCT(&stack->mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&stack->cond, opal_condition_t);
@@ -675,40 +670,40 @@ static void orte_pls_process_stack_construct(orte_pls_process_stack_t* stack)
     stack->complete = false;
 }
 
-static void orte_pls_process_stack_destruct(orte_pls_process_stack_t* stack)
+static void orte_odls_process_stack_destruct(orte_odls_process_stack_t* stack)
 {
     OBJ_DESTRUCT(&stack->mutex);
     OBJ_DESTRUCT(&stack->cond);
 }
 
 static OBJ_CLASS_INSTANCE(
-    orte_pls_process_stack_t,
+    orte_odls_process_stack_t,
     opal_object_t,
-    orte_pls_process_stack_construct,
-    orte_pls_process_stack_destruct);
+    orte_odls_process_stack_construct,
+    orte_odls_process_stack_destruct);
 
 
-static void orte_pls_process_launch_cb(int fd, short event, void* args)
+static void orte_odls_process_launch_cb(int fd, short event, void* args)
 {
-    orte_pls_process_stack_t *stack = (orte_pls_process_stack_t*)args;
+    orte_odls_process_stack_t *stack = (orte_odls_process_stack_t*)args;
     OPAL_THREAD_LOCK(&stack->mutex);
-    stack->rc = orte_pls_process_launch(stack->jobid);
+    stack->rc = orte_odls_process_launch(stack->jobid);
     stack->complete = true;
     opal_condition_signal(&stack->cond);
     OPAL_THREAD_UNLOCK(&stack->mutex);
 }
 
-static int orte_pls_process_launch_threaded(orte_jobid_t jobid)
+static int orte_odls_process_launch_threaded(orte_jobid_t jobid)
 {
 
     struct timeval tv = { 0, 0 };
     struct opal_event event;
-    struct orte_pls_process_stack_t stack;
+    struct orte_odls_process_stack_t stack;
 
-    OBJ_CONSTRUCT(&stack, orte_pls_process_stack_t);
+    OBJ_CONSTRUCT(&stack, orte_odls_process_stack_t);
 
     stack.jobid = jobid;
-    opal_evtimer_set(&event, orte_pls_process_launch_cb, &stack);
+    opal_evtimer_set(&event, orte_odls_process_launch_cb, &stack);
     opal_evtimer_add(&event, &tv);
 
     OPAL_THREAD_LOCK(&stack.mutex);

@@ -11,34 +11,34 @@
 #
 # This is the US/English general help file for Open RTE's orterun.
 #
-[orte-pls-process:chdir-error]
+[orte-odls-process:chdir-error]
 Failed to change to the working directory:
 
 Host:      %s
 Directory: %s
 
 The error returned was "%s".  Execution will now abort.
-[orte-pls-process:argv0-not-found]
+[orte-odls-process:argv0-not-found]
 Failed to find the following executable:
 
 Host:       %s
 Executable: %s
 
 Cannot continue.
-[orte-pls-process:argv0-not-accessible]
+[orte-odls-process:argv0-not-accessible]
 Failed to find or execute the following executable:
 
 Host:       %s
 Executable: %s
 
 Cannot continue.
-[orte-pls-process:execv-error]
+[orte-odls-process:execv-error]
 Could not execute the executable "%s": %s
 
 This could mean that your PATH or executable name is wrong, or that you do not
 have the necessary permissions.  Please ensure that the executable is able to be
 found and executed.
-[orte-pls-process:could-not-kill]
+[orte-odls-process:could-not-kill]
 WARNING: A process refused to die!
 
 Host: %s
@@ -46,7 +46,7 @@ PID:  %d
 
 This process may still be running and/or consuming resources.
 
-[orte-pls-process:could-not-kill]
+[orte-odls-process:could-not-kill]
 WARNING: A process refused the kill SIGTERM signal!
          This should never happen unless the application is changing the
          parent/child relationship permissions.
