@@ -129,7 +129,7 @@ struct mca_btl_mvapi_component_t {
     uint32_t max_eager_rdma;
 }; typedef struct mca_btl_mvapi_component_t mca_btl_mvapi_component_t;
 
-extern mca_btl_mvapi_component_t mca_btl_mvapi_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_mvapi_component_t mca_btl_mvapi_component;
 
 typedef mca_btl_base_recv_reg_t mca_btl_mvapi_recv_reg_t; 
     

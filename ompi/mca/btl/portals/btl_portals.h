@@ -211,7 +211,7 @@ int mca_btl_portals_get(struct mca_btl_base_module_t* btl_base,
 /*
  * global structures
  */
-extern mca_btl_portals_component_t mca_btl_portals_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_portals_component_t mca_btl_portals_component;
 extern mca_btl_portals_module_t mca_btl_portals_module;
 
 #endif
