@@ -58,6 +58,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/universe_setup_file_io.h"
+#include "orte/util/pre_condition_transports.h"
 
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
@@ -405,6 +406,16 @@ int orterun(int argc, char *argv[])
         }
         free(tmp);
     }
+
+    
+    /* pre-condition any network transports that require it */
+    if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(apps, num_apps))) {
+        ORTE_ERROR_LOG(rc);
+        opal_show_help("help-orterun.txt", "orterun:precondition", false,
+                       orterun_basename, NULL, NULL, rc);
+        return rc;
+    }
+
 
     /* Prep to start the application */
 
