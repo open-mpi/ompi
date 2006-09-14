@@ -9,14 +9,14 @@
  * $HEADER$
  */
 
-#ifndef ORTE_PLS_PROCESS_EXPORT_H
-#define ORTE_PLS_PROCESS_EXPORT_H
+#ifndef ORTE_ODLS_PROCESS_EXPORT_H
+#define ORTE_ODLS_PROCESS_EXPORT_H
 
 #include "orte_config.h"
 
 #include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
-#include "orte/mca/pls/pls.h"
+#include "orte/mca/odls/odls.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -25,30 +25,30 @@ extern "C" {
 /*
  * Module open / close
  */
-int orte_pls_process_component_open(void);
-int orte_pls_process_component_close(void);
-orte_pls_base_module_t* orte_pls_process_component_init(int *priority);
+int orte_odls_process_component_open(void);
+int orte_odls_process_component_close(void);
+orte_odls_base_module_t* orte_odls_process_component_init(int *priority);
 
 /*
  * Startup / Shutdown
  */
-int orte_pls_process_finalize(void);
+int orte_odls_process_finalize(void);
 
 
 /*
  * Interface
  */
-int orte_pls_process_launch(orte_jobid_t);
-int orte_pls_process_terminate_job(orte_jobid_t);
-int orte_pls_process_terminate_proc(const orte_process_name_t* proc_name);
-int orte_pls_process_signal_job(orte_jobid_t, int32_t);
-int orte_pls_process_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
+int orte_odls_process_launch(orte_jobid_t);
+int orte_odls_process_terminate_job(orte_jobid_t);
+int orte_odls_process_terminate_proc(const orte_process_name_t* proc_name);
+int orte_odls_process_signal_job(orte_jobid_t, int32_t);
+int orte_odls_process_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
 
 /**
- * PLS Component
+ * ODLS Component
  */
-struct orte_pls_process_component_t {
-    orte_pls_base_component_t super;
+struct orte_odls_process_component_t {
+    orte_odls_base_component_t super;
     int debug;
     int priority;
     int reap;
@@ -57,14 +57,14 @@ struct orte_pls_process_component_t {
     opal_mutex_t lock;
     opal_condition_t cond;
 };
-typedef struct orte_pls_process_component_t orte_pls_process_component_t;
+typedef struct orte_odls_process_component_t orte_odls_process_component_t;
 
 
-ORTE_MODULE_DECLSPEC extern orte_pls_process_component_t mca_pls_process_component;
-extern orte_pls_base_module_t orte_pls_process_module;
+ORTE_MODULE_DECLSPEC extern orte_odls_process_component_t mca_odls_process_component;
+extern orte_odls_base_module_t orte_odls_process_module;
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
-#endif /* ORTE_PLS_PROCESS_EXPORT_H */
+#endif /* ORTE_ODLS_PROCESS_EXPORT_H */
