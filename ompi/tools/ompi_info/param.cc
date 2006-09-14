@@ -16,11 +16,11 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
 #include <map>
-
-#include "ompi_config.h"
 
 #if HAVE_UNISTD_H
 #include <unistd.h>
@@ -158,7 +158,7 @@ void ompi_info::show_mca_params(const string& type, const string& component,
                     }
                 } else {
                     mca_base_param_lookup_int(p->mbpp_index, &value_int);
-                    opal_asprintf(&value_string, "%d", value_int);
+                    asprintf(&value_string, "%d", value_int);
                 }
                 content = value_string;
                     
