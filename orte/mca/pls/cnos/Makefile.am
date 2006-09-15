@@ -22,28 +22,28 @@
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
-if OMPI_BUILD_rmgr_cnos_DSO
+if OMPI_BUILD_pls_cnos_DSO
 component_noinst =
-component_install = mca_rmgr_cnos.la
+component_install = mca_pls_cnos.la
 else
-component_noinst = libmca_rmgr_cnos.la
+component_noinst = libmca_pls_cnos.la
 component_install =
 endif
 
 cnos_SOURCES = \
-    rmgr_cnos.c \
-    rmgr_cnos.h \
-    rmgr_cnos_component.c
+    pls_cnos.c \
+    pls_cnos.h \
+    pls_cnos_component.c
 
 mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
-mca_rmgr_cnos_la_SOURCES = $(cnos_SOURCES)
-mca_rmgr_cnos_la_LIBADD = \
+mca_pls_cnos_la_SOURCES = $(cnos_SOURCES)
+mca_pls_cnos_la_LIBADD = \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
-mca_rmgr_cnos_la_LDFLAGS = -module -avoid-version
+mca_pls_cnos_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)
-libmca_rmgr_cnos_la_SOURCES = $(cnos_SOURCES)
-libmca_rmgr_cnos_la_LIBADD =
-libmca_rmgr_cnos_la_LDFLAGS = -module -avoid-version
+libmca_pls_cnos_la_SOURCES = $(cnos_SOURCES)
+libmca_pls_cnos_la_LIBADD =
+libmca_pls_cnos_la_LDFLAGS = -module -avoid-version
