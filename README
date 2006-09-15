@@ -395,6 +395,18 @@ for a full list); a summary of the more commonly used ones follows:
   generates these bindings at compile time with a maximum number of
   dimensions as specified by this parameter.  The default value is 4.
 
+--enable-mpirun-prefix-by-default
+  This option forces the "mpirun" command to always behave as if
+  "--prefix $prefix" was present on the command line (where $prefix is
+  the value given to the --prefix option to configure).  This prevents
+  most rsh/ssh-based users from needing to modify their shell startup
+  files to set the PATH and/or LD_LIBRARY_PATH for Open MPI on remote
+  nodes.  Note, however, that such users may still desire to set PATH
+  -- perhaps even in their shell startup files -- so that executables
+  such as mpicc and mpirun can be found without needing to type long
+  path names.  --enable-orterun-prefix-by-default is a synonym for
+  this option.
+
 --disable-shared
   By default, libmpi is built as a shared library, and all components
   are built as dynamic shared objects (DSOs).  This switch disables

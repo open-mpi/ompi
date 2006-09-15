@@ -41,6 +41,7 @@
 #endif
 
 #include "opal/event/event.h"
+#include "opal/install_dirs.h"
 #include "opal/mca/base/base.h"
 #include "opal/threads/condition.h"
 #include "opal/util/argv.h"
@@ -93,6 +94,7 @@ static int num_killed = 0;
 static char **global_mca_env = NULL;
 static bool have_zero_np = false;
 static orte_std_cntr_t total_num_apps = 0;
+static bool want_prefix_by_default = (bool) ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT;
 
 /*
  * setup globals for catching orterun command line options
@@ -255,6 +257,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
+    { NULL, NULL, NULL, '\0', NULL, "noprefix", 1,
+      NULL, OPAL_CMD_LINE_TYPE_STRING,
+      "Disable automatic --prefix behavior" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -1316,16 +1321,25 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
         app->user_specified_cwd = false;
     }
 
+    /* Check to see if the user explicitly wanted to disable automatic
+       --prefix behavior */
+
+    if (opal_cmd_line_is_taken(&cmd_line, "noprefix")) {
+        want_prefix_by_default = false;
+    }
+
     /* Did the user specify a specific prefix for this app_context_t
        or provide an absolute path name to argv[0]? */
     if (opal_cmd_line_is_taken(&cmd_line, "prefix") ||
-        '/' == argv[0][0]) {
+        '/' == argv[0][0] || want_prefix_by_default) {
         size_t param_len;
 
         /* The --prefix option takes precedence over /path/to/orterun */
         if (opal_cmd_line_is_taken(&cmd_line, "prefix")) {
             param = opal_cmd_line_get_param(&cmd_line, "prefix", 0, 0);
-        } else {
+        } 
+        /* /path/to/orterun */
+        else if ('/' == argv[0][0]) {
             char* tmp_basename = NULL;
             /* If they specified an absolute path, strip off the
                /bin/<exec_name>" and leave just the prefix */
@@ -1344,6 +1358,10 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
                 param = NULL;
             }
             free(tmp_basename);
+        }
+        /* --enable-orterun-prefix-default was given to orterun */
+        else {
+            param = strdup(OPAL_PREFIX);
         }
 
         if (NULL != param) {

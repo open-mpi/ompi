@@ -348,6 +348,8 @@ void ompi_info::do_config(bool want_all)
                           1 == MPI_PARAM_CHECK ? "always" : "runtime");
   string threads;
   const string want_libltdl(OMPI_WANT_LIBLTDL ? "yes" : "no");
+  const string mpirun_prefix_by_default(ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT ?
+                                        "yes" : "no");
   
   if (OMPI_HAVE_SOLARIS_THREADS || OMPI_HAVE_POSIX_THREADS) {
       threads = OMPI_HAVE_SOLARIS_THREADS ? "solaris" :
@@ -579,4 +581,6 @@ void ompi_info::do_config(bool want_all)
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
   out("libltdl support", "option:dlopen", want_libltdl);
+  out("mpirun default --prefix", "mpirun:prefix_by_default", 
+      mpirun_prefix_by_default);
 }

@@ -27,6 +27,9 @@ version 1.0.
 1.3
 ---
 
+- Add new --enable-mpirun-prefix-by-default configure option to always
+  imply the --prefix option to mpirun, preventing many rsh/ssh-based
+  users from needing to modify their shell startup files.
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
 
 
