@@ -17,6 +17,7 @@
 #
 
 headers += \
+        base/rds_private.h \
         base/base.h
 
 libmca_rds_la_SOURCES += \
