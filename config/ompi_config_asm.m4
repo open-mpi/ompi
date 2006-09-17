@@ -848,7 +848,7 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
             OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
             ;;
 
-        alpha-*)
+        alpha-*|alphaev[4-8]-*|alphaev56-*|alphaev6[78]-*)
             ompi_cv_asm_arch="ALPHA"
             OMPI_ASM_SUPPORT_64BIT=1
             OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
