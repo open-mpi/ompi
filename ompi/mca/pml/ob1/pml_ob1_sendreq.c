@@ -1111,7 +1111,7 @@ int mca_pml_ob1_send_request_put_frag(
     des->des_cbdata = frag;
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(sendreq->req_send.req_base), size, PERUSE_SEND );
+                                  &(sendreq->req_send.req_base), save_size, PERUSE_SEND );
 
     if(OMPI_SUCCESS != (rc = mca_bml_base_put(bml_btl, des))) {
         mca_bml_base_free(bml_btl, des);
