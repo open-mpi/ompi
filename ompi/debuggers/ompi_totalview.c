@@ -32,18 +32,22 @@
 OMPI_DECLSPEC int MPIR_being_debugged = 0;
 OMPI_DECLSPEC volatile int MPIR_debug_gate = 0;
 OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
+#if defined(OMPI_TV_DLL)
+OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_TV_DLL;
+#endif  /* defined(OMPI_TV_DLL) */
+
 struct MPIR_PROCDESC {
     char *host_name;        /* something that can be passed to inet_addr */
     char *executable_name;  /* name of binary */
     int pid;                /* process pid */
 };
 OMPI_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
-
+OMPI_DECLSPEC int MPIR_proctable_size = 0;
 
 /**
  * Wait for a TotalView-like debugger if asked.
  */
-OMPI_DECLSPEC void ompi_wait_for_totalview(void)
+void ompi_wait_for_totalview(void)
 {
     int wait_for_totalview;
 
