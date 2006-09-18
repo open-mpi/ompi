@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,6 +61,7 @@ extern char **environ;
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
+#include "opal/util/os_path.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -80,16 +81,14 @@ struct MPIR_PROCDESC {
     int pid;                /* process pid */
 };
 
-struct MPIR_PROCDESC *MPIR_proctable = NULL;
-int MPIR_proctable_size = 0;
-int MPIR_being_debugged = 0;
-int MPIR_force_to_main = 0;
-volatile int MPIR_debug_state = 0;
-volatile int MPIR_i_am_starter = 0;
-volatile int MPIR_debug_gate = 0;
-volatile int MPIR_acquired_pre_main = 0;
-
-void *MPIR_Breakpoint(void);
+ORTE_DECLSPEC struct MPIR_PROCDESC *MPIR_proctable = NULL;
+ORTE_DECLSPEC int MPIR_proctable_size = 0;
+ORTE_DECLSPEC int MPIR_being_debugged = 0;
+ORTE_DECLSPEC int MPIR_force_to_main = 0;
+ORTE_DECLSPEC volatile int MPIR_debug_state = 0;
+ORTE_DECLSPEC volatile int MPIR_i_am_starter = 0;
+ORTE_DECLSPEC volatile int MPIR_debug_gate = 0;
+ORTE_DECLSPEC volatile int MPIR_acquired_pre_main = 0;
 
 /* --- end MPICH/TotalView interface definitions */
 
@@ -402,7 +401,8 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
             for (i = 0; i < map->num_procs; i++) {
                 orte_rmaps_base_proc_t *proc = map->procs[i];
                 MPIR_proctable[i].host_name = proc->proc_node->node->node_name;
-                MPIR_proctable[i].executable_name = proc->app;
+                MPIR_proctable[i].executable_name =
+                    opal_os_path( false, map->app->cwd, proc->app, NULL );
                 MPIR_proctable[i].pid = proc->local_pid;
             }
         }
@@ -410,7 +410,7 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         OBJ_DESTRUCT(&list_of_resource_maps);
 
     }
-
+    orte_debug_flag = 1;
     if (orte_debug_flag) {
         dump();
     }
