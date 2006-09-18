@@ -773,6 +773,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
                 * the app_context(s), vpid_start, and vpid_range entries. Only one
                 * value object should ever come from that container
                 */
+                /* set the default values to INVALID */
+                start = ORTE_VPID_INVALID;
+                range = ORTE_VPID_INVALID;
                 for (kv=0; kv < value->cnt; kv++) {
                     kval = value->keyvals[kv];
                     if (strcmp(kval->key, ORTE_JOB_VPID_START_KEY) == 0) {
@@ -986,6 +989,7 @@ int orte_odls_default_signal_local_procs(orte_process_name_t *proc, int32_t sign
      * of the local procs, so just do that case
      */
     if (NULL == proc) {
+        rc = ORTE_SUCCESS;  /* pre-set this as an empty list causes us to drop to bottom */
         for (item = opal_list_get_first(&orte_odls_default.children);
              item != opal_list_get_end(&orte_odls_default.children);
              item = opal_list_get_next(item)) {
