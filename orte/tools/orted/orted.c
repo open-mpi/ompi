@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
     }
 
     /* see if they want us to spin until they can connect a debugger to us */
+    i=0;
     while (orted_globals.spin) {
         i++;
         if (1000 < i) i=0;        
