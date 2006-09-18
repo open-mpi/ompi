@@ -410,7 +410,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
         OBJ_DESTRUCT(&list_of_resource_maps);
 
     }
-    orte_debug_flag = 1;
     if (orte_debug_flag) {
         dump();
     }
