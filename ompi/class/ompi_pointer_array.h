@@ -53,7 +53,7 @@ struct ompi_pointer_array_t {
         It does \em not necessarily imply indices all above this index
         are not taken! */
     int lowest_free;
-    /** number of fee elements in the list */
+    /** number of free elements in the list */
     int number_free;
     /** size of list, i.e. number of elements in addr */
     int size;
