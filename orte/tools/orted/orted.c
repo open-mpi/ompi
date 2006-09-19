@@ -608,22 +608,22 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
     n = 1;
     if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
-        goto DONE;
+        goto CLEANUP;
     }
     
     /* setup the answer */
-    
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        goto DONE;
+        goto CLEANUP;
     }
-
+    
     /* pack the command to ensure we always have something to send back, and
      * so that the caller can verify communication
      */
     if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(ret);
+        OBJ_RELEASE(answer);
         goto CLEANUP;
     }
     
@@ -705,9 +705,9 @@ DONE:
     if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
     }
+    OBJ_RELEASE(answer);
  
  CLEANUP:
-    OBJ_RELEASE(answer);
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     /* reissue the non-blocking receive */
