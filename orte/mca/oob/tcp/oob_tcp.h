@@ -242,6 +242,7 @@ struct mca_oob_tcp_component_t {
     int                tcp_peer_retries;     /**< max number of retries before declaring peer gone */
     int                tcp_sndbuf;           /**< socket send buffer size */
     int                tcp_rcvbuf;           /**< socket recv buffer size */
+    int                tcp_timeout;          /**< socket connect timeout in seconds */
     opal_free_list_t   tcp_msgs;             /**< free list of messages */
     opal_event_t       tcp_send_event;       /**< event structure for sends */
     opal_event_t       tcp_recv_event;       /**< event structure for recvs */
