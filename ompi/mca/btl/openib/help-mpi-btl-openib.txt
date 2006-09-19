@@ -106,3 +106,9 @@ respect to the retry count:
      4.096 microseconds * (2^btl_openib_ib_timeout)
 
   See the InfiniBand spec 1.2 (section 12.7.34) for more details.
+[no active ports found]
+WARNING: There is at least on IB HCA found on host '%s', but there is
+no active ports detected. This is most certainly not what you wanted.
+Check your cables and SM configuration.
+[error in hca init]
+WARNING: There were errors during IB HCA initialization on host '%s'.
