@@ -54,6 +54,8 @@ static int orte_rmgr_urm_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
 
@@ -66,6 +68,8 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_urm_module_init,
     orte_rmgr_urm_setup_job,
     orte_rmgr_urm_spawn_job,
+    orte_rmgr_base_connect,
+    orte_rmgr_base_disconnect,
     orte_rmgr_urm_module_finalize,
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_get_app_context,
@@ -264,6 +268,8 @@ static int orte_rmgr_urm_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfunc,
     orte_proc_state_t cb_conditions)
 {

@@ -533,7 +533,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     if (NULL != base_prefix) free(base_prefix);
 
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, ORTE_PROC_STATE_NONE))) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_decrement();
         return MPI_ERR_SPAWN;

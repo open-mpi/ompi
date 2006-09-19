@@ -450,7 +450,7 @@ int orterun(int argc, char *argv[])
     /* Spawn the job */
 
     cb_states = ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
-    rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, job_state_callback, cb_states);
+    rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, 0, NULL, job_state_callback, cb_states);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);

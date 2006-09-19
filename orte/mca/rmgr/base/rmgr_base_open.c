@@ -53,6 +53,8 @@ orte_rmgr_base_module_t orte_rmgr = {
     NULL,
     orte_rmgr_base_create_not_available,
     orte_rmgr_base_spawn_not_available,
+    orte_rmgr_base_connect,
+    orte_rmgr_base_disconnect,
     orte_rmgr_base_finalize_not_available,
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_get_app_context,

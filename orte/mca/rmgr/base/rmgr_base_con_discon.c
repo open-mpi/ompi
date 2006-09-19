@@ -17,42 +17,33 @@
  */
 /** @file:
  *
+ * Support functions for the RMGR subsystem
  */
 
 #include "orte_config.h"
-
 #include "orte/orte_constants.h"
-#include "opal/mca/mca.h"
+
+#include <string.h>
+
+#include "opal/util/output.h"
+#include "opal/class/opal_list.h"
+
+#include "orte/dss/dss.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/rmgr/base/rmgr_private.h"
 
-
-/*
- * "not available" functions
- */
-int
-orte_rmgr_base_create_not_available(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid)
+int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
+                           orte_process_name_t *connect)
 {
-    return ORTE_ERR_UNREACH;
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
-int
-orte_rmgr_base_spawn_not_available(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid,
-    orte_std_cntr_t num_connect,
-    orte_process_name_t *connect,
-    orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions)
+int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
+                              orte_process_name_t *disconnect)
 {
-    return ORTE_ERR_UNREACH;
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
-int
-orte_rmgr_base_finalize_not_available(void)
-{
-    return ORTE_ERR_UNREACH;
-}

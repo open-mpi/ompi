@@ -41,10 +41,10 @@ orte_rmgr_proxy_component_t mca_rmgr_proxy_component = {
          information about the component itself */
 
       {
-        /* Indicate that we are a iof v1.0.0 component (which also
+        /* Indicate that we are a rmgr v2.0.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_RMGR_BASE_VERSION_1_3_0,
+        ORTE_RMGR_BASE_VERSION_2_0_0,
 
         "proxy", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */

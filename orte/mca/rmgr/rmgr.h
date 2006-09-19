@@ -93,8 +93,31 @@ typedef int (*orte_rmgr_base_module_spawn_job_fn_t)(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t *jobid,
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
+
+
+/**
+ * Connect a process to other processes, possibly in other jobs. Note that this
+ * function supports WILDCARD process name fields. Thus, a process can request
+ * connection to all other processes in another job by providing a single
+ * entry in the connect array that has a cellid of ORTE_CELLID_WILDCARD, the
+ * desired jobid, and a vpid of ORTE_VPID_WILDCARD.
+ */
+typedef int (*orte_rmgr_base_module_connect_fn_t)(orte_std_cntr_t num_connect,
+                                                  orte_process_name_t *connect);
+
+/**
+ * Disconnect a process from one or more other processes. Note that this
+ * function supports WILDCARD process name fields. Thus, a process can request
+ * to disconnect from all other processes in another job by providing a single
+ * entry in the connect array that has a cellid of ORTE_CELLID_WILDCARD, the
+ * desired jobid, and a vpid of ORTE_VPID_WILDCARD.
+ */
+typedef int (*orte_rmgr_base_module_disconnect_fn_t)(orte_std_cntr_t num_disconnect,
+                                                     orte_process_name_t *disconnect);
 
 
 /**
@@ -156,12 +179,14 @@ typedef int (*orte_rmgr_base_module_get_vpid_range_fn_t)(orte_jobid_t jobid,
 
 
 /*
- * Ver 1.3.0
+ * Ver 2.0
  */
-struct orte_rmgr_base_module_1_3_0_t {
+struct orte_rmgr_base_module_2_0_0_t {
     orte_rmgr_base_module_init_fn_t                 module_init;
     orte_rmgr_base_module_setup_job_fn_t            setup_job;
     orte_rmgr_base_module_spawn_job_fn_t            spawn_job;
+    orte_rmgr_base_module_connect_fn_t				connect;
+    orte_rmgr_base_module_disconnect_fn_t			disconnect;
     orte_rmgr_base_module_finalize_fn_t             finalize;
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_module_get_app_context_fn_t      get_app_context;
@@ -172,8 +197,8 @@ struct orte_rmgr_base_module_1_3_0_t {
     orte_rmgr_base_module_get_vpid_range_fn_t       get_vpid_range;
 };
 
-typedef struct orte_rmgr_base_module_1_3_0_t orte_rmgr_base_module_1_3_0_t;
-typedef orte_rmgr_base_module_1_3_0_t orte_rmgr_base_module_t;
+typedef struct orte_rmgr_base_module_2_0_0_t orte_rmgr_base_module_2_0_0_t;
+typedef orte_rmgr_base_module_2_0_0_t orte_rmgr_base_module_t;
 
 /*
  * RMGR Component
@@ -187,24 +212,24 @@ typedef orte_rmgr_base_module_t* (*orte_rmgr_base_component_init_fn_t)(
  * the standard component data structure
  */
 
-struct orte_rmgr_base_component_1_3_0_t {
+struct orte_rmgr_base_component_2_0_0_t {
     mca_base_component_t rmgr_version;
     mca_base_component_data_1_0_0_t rmgr_data;
     orte_rmgr_base_component_init_fn_t rmgr_init;
 };
-typedef struct orte_rmgr_base_component_1_3_0_t orte_rmgr_base_component_1_3_0_t;
-typedef orte_rmgr_base_component_1_3_0_t orte_rmgr_base_component_t;
+typedef struct orte_rmgr_base_component_2_0_0_t orte_rmgr_base_component_2_0_0_t;
+typedef orte_rmgr_base_component_2_0_0_t orte_rmgr_base_component_t;
 
 
 
 /**
- * Macro for use in components that are of type rmgr v1.0.0
+ * Macro for use in components that are of type rmgr v2.0.0
  */
-#define ORTE_RMGR_BASE_VERSION_1_3_0 \
-  /* rmgr v1.0 is chained to MCA v1.0 */ \
+#define ORTE_RMGR_BASE_VERSION_2_0_0 \
+  /* rmgr v2.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* rmgr v1.3 */ \
-  "rmgr", 1, 3, 0
+  /* rmgr v2.0 */ \
+  "rmgr", 2, 0, 0
 
 /**
  * Global structure for accessing RAS functions
