@@ -18,7 +18,7 @@
 # Portions taken from original ROMIO Makefile*
 #
 
-EXTRA_DIST = users-guide.bbl users-guide.ps.gz users-guide.tex README
+EXTRA_DIST = users-guide.bbl users-guide.ps.gz users-guide.tex source-guide.tex README
 
 all:
 	latex users-guide.tex

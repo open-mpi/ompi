@@ -881,7 +881,7 @@ void ADIOI_PVFS_WriteStridedListIO(ADIO_File fd, void *buf, int count,
 	        max_mem_list = mem_list_count;
 	    if (max_file_list < file_list_count)
 	        max_file_list = file_list_count;
-	    if (max_mem_list == max_mem_list == MAX_ARRAY_SIZE)
+	    if (max_mem_list == MAX_ARRAY_SIZE)
 	        break;
 	} /* while (size_wrote < bufsize) */
 

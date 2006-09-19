@@ -31,6 +31,6 @@ struct ADIOI_Fns_struct ADIO_NFS_operations = {
     ADIOI_GEN_IreadStrided, /* IreadStrided */
     ADIOI_GEN_IwriteStrided, /* IwriteStrided */
     ADIOI_GEN_Flush, /* Flush */
-    ADIOI_GEN_Resize, /* Resize */
+    ADIOI_NFS_Resize, /* Resize */
     ADIOI_GEN_Delete, /* Delete */
 };

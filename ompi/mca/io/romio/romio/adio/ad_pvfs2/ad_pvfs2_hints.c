@@ -19,6 +19,12 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	MPI_Info_create(&(fd->info));
 	MPI_Info_set(fd->info, "romio_pvfs2_debugmask", "0");
 	fd->hints->fs_hints.pvfs2.debugmask = 0;
+
+	MPI_Info_set(fd->info, "striping_factor", "0");
+	fd->hints->striping_factor = 0;
+
+	MPI_Info_set(fd->info, "striping_unit", "0");
+	fd->hints->striping_unit = 0;
 	
 	/* any user-provided hints? */
 	if (users_info != MPI_INFO_NULL) {
@@ -60,6 +66,30 @@ void ADIOI_PVFS2_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 		/* --END ERROR HANDLING-- */
 		
 		MPI_Info_set(fd->info, "striping_factor", value);
+	    }
+
+	    /* the striping unit */
+	    MPI_Info_get(users_info, "striping_unit",
+		    MPI_MAX_INFO_VAL, value, &flag);
+	    if (flag) {
+		tmp_value = fd->hints->striping_unit = atoi(value);
+		MPI_Bcast(&tmp_value, 1, MPI_INT, 0, fd->comm);
+		/* --BEGIN ERROR HANDLING-- */
+		if (tmp_value != fd->hints->striping_unit) {
+		    MPIO_ERR_CREATE_CODE_INFO_NOT_SAME(myname, 
+			                               "striping_unit",
+			                                error_code);
+		    return;
+		}
+		/* --END ERROR HANDLING-- */
+
+		MPI_Info_set(fd->info, "striping_unit", value);
+	    }
+
+	    /* distribution name */
+	    MPI_Info_get(users_info, "romio_pvfs2_distribution_name",
+		    MPI_MAX_INFO_VAL, value, &flag);
+	    if (flag) {
 	    }
 
             ADIOI_Free(value);

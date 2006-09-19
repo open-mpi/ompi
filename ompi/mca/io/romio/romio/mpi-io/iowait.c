@@ -55,7 +55,7 @@ int MPIO_Wait(MPIO_Request *request, MPI_Status *status)
     }
 #endif /* MPI_hpux */
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     if (*request == MPIO_REQUEST_NULL) {
@@ -91,7 +91,7 @@ int MPIO_Wait(MPIO_Request *request, MPI_Status *status)
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
 }
 #endif

@@ -1,0 +1,10 @@
+Makefile
+Debug*
+Release*
+.deps
+*.bb
+*.bbg
+.libs
+.libstamp*
+*.lo
+.*-cache

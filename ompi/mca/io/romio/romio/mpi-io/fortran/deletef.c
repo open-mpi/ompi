@@ -94,15 +94,15 @@ extern FORTRAN_API void FORT_CALL mpi_file_delete_( char * FORT_MIXED_LEN_DECL, 
 
 /* Prototype to keep compiler happy */
 /*
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, int *ierr, int str_len);
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, MPI_Fint *ierr, int str_len);
 
 #ifdef _UNICOS
-void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, int *ierr)
+void mpi_file_delete_(_fcd filename_fcd, MPI_Fint *info, MPI_Fint *ierr)
 {
     char *filename = _fcdtocp(filename_fcd);
     int str_len = _fcdlen(filename_fcd);
 #else
-FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, int *ierr, int str_len)
+FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename, MPI_Fint *info, MPI_Fint *ierr, int str_len)
 */
 /* Prototype to keep compiler happy */
 FORTRAN_API void FORT_CALL mpi_file_delete_(char *filename FORT_MIXED_LEN_DECL, MPI_Fint *info, MPI_Fint *ierr FORT_END_LEN_DECL);

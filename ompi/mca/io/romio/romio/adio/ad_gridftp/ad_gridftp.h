@@ -78,8 +78,6 @@ void ADIOI_GRIDFTP_IwriteStrided(ADIO_File fd, void *buf, int count,
 				*error_code);
 void ADIOI_GRIDFTP_Flush(ADIO_File fd, int *error_code);
 void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code);
-ADIO_Offset ADIOI_GRIDFTP_SeekIndividual(ADIO_File fd, ADIO_Offset offset, 
-					int whence, int *error_code);
 void ADIOI_GRIDFTP_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code);
 void ADIOI_GRIDFTP_Get_shared_fp(ADIO_File fd, int size, 
 				ADIO_Offset *shared_fp, 

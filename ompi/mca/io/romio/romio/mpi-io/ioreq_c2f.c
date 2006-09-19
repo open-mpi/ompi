@@ -48,11 +48,11 @@ MPI_Fint MPIO_Request_c2f(MPIO_Request request)
 #else
     int i;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
 
     if ((request <= (MPIO_Request) 0) || (request->cookie != ADIOI_REQ_COOKIE))
     {
-	    MPID_CS_EXIT(); 
+	    MPIU_THREAD_SINGLE_CS_EXIT("io"); 
 	    return (MPI_Fint) 0;
     }
     if (!ADIOI_Reqtable) {
@@ -73,7 +73,7 @@ MPI_Fint MPIO_Request_c2f(MPIO_Request request)
     ADIOI_Reqtable_ptr++;
     ADIOI_Reqtable[ADIOI_Reqtable_ptr] = request;
 
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return (MPI_Fint) ADIOI_Reqtable_ptr;
 #endif
 }

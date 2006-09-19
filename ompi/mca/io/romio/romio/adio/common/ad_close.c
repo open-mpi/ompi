@@ -6,6 +6,7 @@
  */
 
 #include "adio.h"
+#include "adio_extern.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
@@ -53,21 +54,20 @@ void ADIO_Close(ADIO_File fd, int *error_code)
 	/* if we are doing aggregation and deferred open, then it's possible
 	 * that rank 0 does not have access to the file. make sure only an
 	 * aggregator deletes the file.*/
-	if (fd->agg_comm != MPI_COMM_NULL ) {
-		MPI_Comm_rank(fd->agg_comm, &myrank);
-		MPI_Barrier(fd->agg_comm);
-                if (!myrank) ADIO_Delete(fd->filename, &err);
-	} else {
-		MPI_Comm_rank(fd->comm, &myrank);
-		MPI_Barrier(fd->comm);
-                if (!myrank) ADIO_Delete(fd->filename, &err);
+	MPI_Comm_rank(fd->comm, &myrank);
+	if (myrank == fd->hints->ranklist[0]) {
+		ADIO_Delete(fd->filename, &err);
 	}
+	MPI_Barrier(fd->comm);
+    }
+
+    if (fd->fortran_handle != -1) {
+	ADIOI_Ftable[fd->fortran_handle] = MPI_FILE_NULL;
     }
 
     ADIOI_Free(fd->hints->ranklist);
     ADIOI_Free(fd->hints->cb_config_list);
     ADIOI_Free(fd->hints);
-    ADIOI_Free(fd->fns);
     MPI_Comm_free(&(fd->comm));
     /* deferred open: if we created an aggregator communicator, free it */
     if (fd->agg_comm != MPI_COMM_NULL) {

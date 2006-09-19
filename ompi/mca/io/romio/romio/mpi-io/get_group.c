@@ -41,7 +41,7 @@ int MPI_File_get_group(MPI_File mpi_fh, MPI_Group *group)
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_GROUP";
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -59,6 +59,6 @@ int MPI_File_get_group(MPI_File mpi_fh, MPI_Group *group)
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
 }

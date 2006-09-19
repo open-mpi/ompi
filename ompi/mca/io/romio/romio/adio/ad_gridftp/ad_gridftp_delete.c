@@ -48,7 +48,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    myname, __LINE__,
 			    MPI_ERR_IO,
 			    "**io", "**io %s", 
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	    return; 
     }
     
@@ -63,7 +63,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    myname, __LINE__,
 			    MPI_ERR_IO,
 			    "**io", "**io %s",
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
     globus_mutex_lock(&lock);
@@ -79,7 +79,7 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    myname, __LINE__,
 			    MPI_ERR_IO,
 			    "**io", "**io %s", 
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
 
@@ -90,6 +90,6 @@ void ADIOI_GRIDFTP_Delete(char *filename, int *error_code)
 			    myname, __LINE__,
 			    MPI_ERR_IO,
 			    "**io", "**io %s", 
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	}
 }

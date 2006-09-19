@@ -39,6 +39,7 @@ libadio_nfs_la_SOURCES = \
         io_romio_ad_nfs_iwrite.c \
         io_romio_ad_nfs_open.c \
         io_romio_ad_nfs_read.c \
+        io_romio_ad_nfs_resize.c \
         io_romio_ad_nfs_setsh.c \
         io_romio_ad_nfs_wait.c \
         io_romio_ad_nfs_write.c

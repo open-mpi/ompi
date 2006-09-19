@@ -76,7 +76,7 @@ int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count,
     HANDLE hThread;
 #endif
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     status = (MPI_Status *) ADIOI_Malloc(sizeof(MPI_Status));
@@ -123,7 +123,7 @@ int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count,
 #endif
 
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     /* passed the buck to the blocking version...*/
     return MPI_SUCCESS;
@@ -139,7 +139,7 @@ int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count,
     ADIO_Offset off, shared_fp;
     static char myname[] = "MPI_FILE_IWRITE_SHARED";
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -208,7 +208,7 @@ int MPI_File_iwrite_shared(MPI_File mpi_fh, void *buf, int count,
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

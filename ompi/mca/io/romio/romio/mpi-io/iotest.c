@@ -55,7 +55,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
     }
 #endif /* MPI_hpux */
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
 
     if (*request == MPIO_REQUEST_NULL) {
 	    error_code = MPI_SUCCESS;
@@ -88,7 +88,7 @@ int MPIO_Test(MPIO_Request *request, int *flag, MPI_Status *status)
 #endif /* MPI_hpux */
 
 fn_exit:
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
 }
 #endif

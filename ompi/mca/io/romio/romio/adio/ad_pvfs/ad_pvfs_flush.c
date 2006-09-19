@@ -24,7 +24,7 @@ void ADIOI_PVFS_Flush(ADIO_File fd, int *error_code)
     if (rank == fd->hints->ranklist[0]) {
 	    err = pvfs_fsync(fd->fd_sys);
     }
-    MPI_Bcast(&err, 1, MPI_INT, 0, fd->comm);
+    MPI_Bcast(&err, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
 
     if (err == -1) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,

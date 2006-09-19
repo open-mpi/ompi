@@ -60,7 +60,7 @@ int MPI_Register_datarep(char *name,
     ADIOI_Datarep *datarep;
     static char myname[] = "MPI_REGISTER_DATAREP";
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
 
     /* --BEGIN ERROR HANDLING-- */
     /* check datarep name (use strlen instead of strnlen because
@@ -156,7 +156,7 @@ int MPI_Register_datarep(char *name,
     error_code = MPI_SUCCESS;
 
 fn_exit:
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

@@ -12,26 +12,25 @@
 #include "mpio.h"
 
 static int is_aggregator(int rank, ADIO_File fd);
+static int uses_generic_read(ADIO_File fd);
+static int uses_generic_write(ADIO_File fd);
 
 MPI_File ADIO_Open(MPI_Comm orig_comm,
 		   MPI_Comm comm, char *filename, int file_system,
 		   ADIOI_Fns *ops,
 		   int access_mode, ADIO_Offset disp, MPI_Datatype etype, 
 		   MPI_Datatype filetype,
-		   int iomode /* ignored */,
 		   MPI_Info info, int perm, int *error_code)
 {
     MPI_File mpi_fh;
     ADIO_File fd;
     ADIO_cb_name_array array;
-    int orig_amode_excl, orig_amode_wronly, err, rank, procs, agg_rank;
+    int orig_amode_excl, orig_amode_wronly, err, rank, procs;
     char *value;
     static char myname[] = "ADIO_OPEN";
     int rank_ct, max_error_code;
     int *tmp_ranklist;
     MPI_Comm aggregator_comm = MPI_COMM_NULL; /* just for deferred opens */
-
-    ADIOI_UNREFERENCED_ARG(iomode);
 
     *error_code = MPI_SUCCESS;
 
@@ -47,10 +46,9 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     fd->comm = comm;       /* dup'ed in MPI_File_open */
     fd->filename = ADIOI_Strdup(filename);
     fd->file_system = file_system;
+    fd->fs_ptr = NULL;
 
-    /* TODO: VERIFY THAT WE DON'T NEED TO ALLOCATE THESE, THEN DON'T. */
-    fd->fns = (ADIOI_Fns *) ADIOI_Malloc(sizeof(ADIOI_Fns));
-    *fd->fns = *ops;
+    fd->fns = ops;
 
     fd->disp = disp;
     fd->split_coll_count = 0;
@@ -64,6 +62,8 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 
     fd->async_count = 0;
 
+    fd->fortran_handle = -1;
+
     fd->err_handler = ADIOI_DFLT_ERR_HANDLER;
 
 /* create and initialize info object */
@@ -76,6 +76,22 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
     fd->hints->initialized = 0;
     fd->info = MPI_INFO_NULL;
     ADIO_SetInfo(fd, info, &err);
+
+     /* deferred open: 
+     * we can only do this optimization if 'fd->hints->deferred_open' is set
+     * (which means the user hinted 'no_indep_rw' and collective buffering).
+     * Furthermore, we only do this if our collective read/write routines use
+     * our generic function, and not an fs-specific routine (we can defer opens
+     * only if we use our aggreagation code). */
+    if (fd->hints->deferred_open && 
+		    !(uses_generic_read(fd) \
+			    && uses_generic_write(fd))) {
+	    fd->hints->deferred_open = 0;
+    }
+    if (fd->file_system == ADIO_PVFS2)
+	    /* disable deferred open on PVFS2 so that scalable broadcast will
+	     * always use the propper communicator */
+	    fd->hints->deferred_open = 0;
 
 /* gather the processor name array if we don't already have it */
 
@@ -111,9 +127,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 	MPI_Info_set(fd->info, "cb_nodes", value);
 	ADIOI_Free(value);
     }
-/* bcast the rank map (could do an allgather above and avoid
- * this...would that really be any better?)
- */
+
     ADIOI_cb_bcast_rank_map(fd);
     if (fd->hints->cb_nodes <= 0) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
@@ -123,22 +137,14 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
         goto fn_exit;
     }
 
-    /* deferred open: 
-     * we can only do this if 'fd->hints->deferred_open' is set (which means
-     * the user hinted 'no_indep_rw' and collective buffering).  Furthermore,
-     * we only do this if our collective read/write routines use our generic
-     * function, and not an fs-specific routine (we can defer opens only if we
-     * use our aggreagation code). 
-     *
-     * if we are an aggregator, create a new communicator.  we'll use this
-     * aggregator communicator for opens and closes.  otherwise, we have a NULL
-     * communicator until we try to do independent IO */
+
+     /* deferred open: if we are an aggregator, create a new communicator.
+      * we'll use this aggregator communicator for opens and closes.
+      * otherwise, we have a NULL communicator until we try to do independent
+      * IO */
     fd->agg_comm = MPI_COMM_NULL;
     fd->is_open = 0;
-    fd->io_worker = 0;
-    if (fd->hints->deferred_open && 
-		    ADIOI_Uses_generic_read(fd) &&
-		    ADIOI_Uses_generic_write(fd) ) {
+    if (fd->hints->deferred_open) {
 	    /* MPI_Comm_split will create a communication group of aggregators.
 	     * for non-aggregators it will return MPI_COMM_NULL .  we rely on
 	     * fd->agg_comm == MPI_COMM_NULL for non-aggregators in several
@@ -146,54 +152,58 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
 	    if (is_aggregator(rank, fd)) {
 		    MPI_Comm_split(fd->comm, 1, 0, &aggregator_comm);
 		    fd->agg_comm = aggregator_comm;
-		    MPI_Comm_rank(fd->agg_comm, &agg_rank);
-		    if (agg_rank == 0) {
-			    fd->io_worker = 1;
-		    }
 	    } else {
 		    MPI_Comm_split(fd->comm, MPI_UNDEFINED, 0, &aggregator_comm);
 		    fd->agg_comm = aggregator_comm;
-	    }
-
-    } else {
-	    if (rank == 0) {
-		    fd->io_worker = 1;
 	    }
     }
 
     orig_amode_excl = access_mode;
 
-    /* we used to do this EXCL|CREAT workaround in MPI_File_open, but if we are
-     * doing deferred open, we more easily know who the aggregators are in
-     * ADIO_Open */
-    if ((access_mode & MPI_MODE_CREATE) && (access_mode & MPI_MODE_EXCL)) {
-       /* the open should fail if the file exists. Only *1* process should
-	   check this. Otherwise, if all processes try to check and the file
-	   does not exist, one process will create the file and others who
-	   reach later will return error. */
-       if(fd->io_worker) {
-    		fd->access_mode = access_mode;
-    		(*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
-		MPI_Bcast(error_code, 1, MPI_INT, 0, fd->comm);
-		/* if no error, close the file and reopen normally below */
-		if (*error_code == MPI_SUCCESS) 
-			(*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
+    /* optimization: by having just one process create a file, close it, then
+     * have all N processes open it, we can possibly avoid contention for write
+     * locks on a directory for some file systems. 
+     *
+     * we used to special-case EXCL|CREATE, since when N processes are trying
+     * to create a file exclusively, only 1 will succeed and the rest will
+     * (spuriously) fail.   Since we are now carrying out the CREATE on one
+     * process anyway, the EXCL case falls out and we don't need to explicitly
+     * worry about it, other than turning off both the EXCL and CREATE flags 
+     */
+    /* pvfs2 handles opens specially, so it is actually more efficent for that
+     * file system if we skip this optimization */
+    if (access_mode & ADIO_CREATE && fd->file_system != ADIO_PVFS2) {
+       if(rank == fd->hints->ranklist[0]) {
+	   /* remove delete_on_close flag if set */
+	   if (access_mode & ADIO_DELETE_ON_CLOSE)
+	       fd->access_mode = access_mode ^ ADIO_DELETE_ON_CLOSE;
+	   else 
+	       fd->access_mode = access_mode;
+	       
+	   (*(fd->fns->ADIOI_xxx_Open))(fd, error_code);
+	   MPI_Bcast(error_code, 1, MPI_INT, \
+		     fd->hints->ranklist[0], fd->comm);
+	   /* if no error, close the file and reopen normally below */
+	   if (*error_code == MPI_SUCCESS) 
+	       (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
+
+	   fd->access_mode = access_mode; /* back to original */
        }
-       else MPI_Bcast(error_code, 1, MPI_INT, 0, fd->comm);
+       else MPI_Bcast(error_code, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
 
        if (*error_code != MPI_SUCCESS) {
            goto fn_exit;
        } 
        else {
-           /* turn off EXCL for real open */
-           access_mode = access_mode ^ MPI_MODE_EXCL; 
+           /* turn off CREAT (and EXCL if set) for real multi-processor open */
+           access_mode ^= ADIO_CREATE; 
+	   if (access_mode & ADIO_EXCL)
+		   access_mode ^= ADIO_EXCL;
        }
     }
 
     /* if we are doing deferred open, non-aggregators should return now */
-    if (fd->hints->deferred_open && 
-		    ADIOI_Uses_generic_read(fd) &&
-		    ADIOI_Uses_generic_write(fd) ) {
+    if (fd->hints->deferred_open ) {
         if (fd->agg_comm == MPI_COMM_NULL) {
             /* we might have turned off EXCL for the aggregators.
              * restore access_mode that non-aggregators get the right
@@ -240,9 +250,7 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
         
             /* in the deferred open case, only those who have actually
                opened the file should close it */
-            if (fd->hints->deferred_open && 
-                ADIOI_Uses_generic_read(fd) &&
-                ADIOI_Uses_generic_write(fd) ) {
+            if (fd->hints->deferred_open)  {
                 if (fd->agg_comm != MPI_COMM_NULL) {
                     (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
                 }
@@ -251,9 +259,10 @@ MPI_File ADIO_Open(MPI_Comm orig_comm,
                 (*(fd->fns->ADIOI_xxx_Close))(fd, error_code);
             }
         }
-
-	if (fd->fns) ADIOI_Free(fd->fns);
 	if (fd->filename) ADIOI_Free(fd->filename);
+	if (fd->hints->ranklist) ADIOI_Free(fd->hints->ranklist);
+	if (fd->hints->cb_config_list) ADIOI_Free(fd->hints->cb_config_list);
+	if (fd->hints) ADIOI_Free(fd->hints);
 	if (fd->info != MPI_INFO_NULL) MPI_Info_free(&(fd->info));
 	ADIOI_Free(fd);
         fd = ADIO_FILE_NULL;
@@ -285,4 +294,29 @@ int is_aggregator(int rank, ADIO_File fd ) {
                         return 1;
         }
         return 0;
+}
+
+/* 
+ * we special-case TESTFS because all it does is wrap logging info around GEN 
+ */
+static int uses_generic_read(ADIO_File fd)
+{
+    ADIOI_Fns *fns = fd->fns;
+    if (fns->ADIOI_xxx_ReadStridedColl == ADIOI_GEN_ReadStridedColl || 
+        fd->file_system == ADIO_TESTFS )
+    {
+        return 1;
+    }
+    return 0;
+}
+
+static int uses_generic_write(ADIO_File fd)
+{
+    ADIOI_Fns *fns = fd->fns;
+    if (fns->ADIOI_xxx_WriteStridedColl == ADIOI_GEN_WriteStridedColl ||
+        fd->file_system == ADIO_TESTFS )
+    {
+        return 1;
+    }
+    return 0;
 }

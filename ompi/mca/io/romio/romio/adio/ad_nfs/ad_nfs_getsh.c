@@ -27,7 +27,7 @@ void ADIOI_NFS_Get_shared_fp(ADIO_File fd, int incr, ADIO_Offset *shared_fp,
 				     fd->file_system,
 				     fd->fns,
 				     ADIO_CREATE | ADIO_RDWR | ADIO_DELETE_ON_CLOSE, 
-				     0, MPI_BYTE, MPI_BYTE, 0, MPI_INFO_NULL, 
+				     0, MPI_BYTE, MPI_BYTE, MPI_INFO_NULL, 
 				     ADIO_PERM_NULL, error_code);
 	if (*error_code != MPI_SUCCESS) return;
 	*shared_fp = 0;

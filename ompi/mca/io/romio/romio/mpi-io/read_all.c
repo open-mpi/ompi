@@ -75,7 +75,7 @@ int MPIOI_File_read_all(MPI_File mpi_fh,
     int error_code, datatype_size;
     ADIO_File fh;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -105,9 +105,15 @@ int MPIOI_File_read_all(MPI_File mpi_fh,
 
     ADIO_ReadStridedColl(fh, buf, count, datatype, file_ptr_type,
 			 offset, status, &error_code);
+
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(fh, error_code);
+    /* --END ERROR HANDLING-- */
+
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT()
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

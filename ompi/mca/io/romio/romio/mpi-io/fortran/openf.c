@@ -142,11 +142,11 @@ void mpi_file_open_(MPI_Fint *comm,_fcd filename_fcd,MPI_Fint *amode,
 #else
 /* Prototype to keep compiler happy */
 /*
-FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename,int *amode,
-		    MPI_Fint *info, MPI_Fint *fh, int *ierr, int str_len );
+FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename,MPI_Fint *amode,
+		    MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int str_len );
 
-FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename,int *amode,
-                  MPI_Fint *info, MPI_Fint *fh, int *ierr, int str_len )
+FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Comm *comm,char *filename,MPI_Fint *amode,
+                  MPI_Fint *info, MPI_Fint *fh, MPI_Fint *ierr, int str_len )
 */
 /* Prototype to keep compiler happy */
 FORTRAN_API void FORT_CALL mpi_file_open_(MPI_Fint *comm,char *filename FORT_MIXED_LEN_DECL,MPI_Fint *amode,

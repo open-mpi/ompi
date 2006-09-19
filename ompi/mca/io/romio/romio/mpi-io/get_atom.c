@@ -40,7 +40,6 @@ int MPI_File_get_atomicity(MPI_File mpi_fh, int *flag)
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_ATOMICITY";
     
-    MPID_CS_ENTER();
     fh = MPIO_File_resolve(mpi_fh);
 
     /* --BEGIN ERROR HANDLING-- */
@@ -50,6 +49,5 @@ int MPI_File_get_atomicity(MPI_File mpi_fh, int *flag)
     *flag = fh->atomicity;
 
 fn_exit:
-    MPID_CS_EXIT();
     return MPI_SUCCESS;
 }

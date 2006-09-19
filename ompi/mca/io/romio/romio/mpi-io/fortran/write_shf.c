@@ -110,7 +110,7 @@ void mpi_file_write_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 FORTRAN_API void FORT_CALL mpi_file_write_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 		    MPI_Fint *datatype,MPI_Status *status, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpi_file_write_shared_(MPI_Fint *fh,void *buf,int *count,
+FORTRAN_API void FORT_CALL mpi_file_write_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
                    MPI_Fint *datatype,MPI_Status *status, MPI_Fint *ierr )
 {
     MPI_File fh_c;

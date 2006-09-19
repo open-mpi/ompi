@@ -104,9 +104,9 @@ void mpi_file_get_group_(MPI_Fint *fh, MPI_Fint *group, MPI_Fint *ierr )
 }
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_get_group_(MPI_Fint *fh,MPI_Group *group, int *ierr );
+FORTRAN_API void FORT_CALL mpi_file_get_group_(MPI_Fint *fh,MPI_Group *group, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpi_file_get_group_(MPI_Fint *fh,MPI_Group *group, int *ierr )
+FORTRAN_API void FORT_CALL mpi_file_get_group_(MPI_Fint *fh,MPI_Group *group, MPI_Fint *ierr )
 {
     MPI_File fh_c;
     
