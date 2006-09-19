@@ -389,7 +389,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
          goto dealloc_pd;
     }
    
-    ret = 1; 
+    ret = OMPI_SUCCESS; 
     /* Note ports are 1 based hence j = 1 */
     for(i = 1; i <= hca->ib_dev_attr.phys_port_cnt; i++){
         struct ibv_port_attr ib_port_attr;
@@ -524,8 +524,19 @@ btl_openib_component_init(int *num_btl_modules,
         if (OMPI_SUCCESS != (ret = init_one_hca(&btl_list, ib_devs[i]))) {
             break;
         }
-    } 
-        
+    }
+
+    if(ret != OMPI_SUCCESS) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                "error in hca init", true, orte_system_info.nodename);
+    }
+       
+    if(0 == mca_btl_openib_component.ib_num_btls) {
+        opal_show_help("help-mpi-btl-openib.txt",
+                "no active ports found", true, orte_system_info.nodename);
+        return NULL;
+    }
+
     /* Allocate space for btl modules */
     mca_btl_openib_component.openib_btls =
         malloc(sizeof(mca_btl_openib_module_t) *
