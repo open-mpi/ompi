@@ -28,6 +28,7 @@ int mpi_errno = MPI_SUCCESS;
 
 
 const void* BOTTOM = (void*) MPI_BOTTOM;
+const void* IN_PLACE = (void*) MPI_IN_PLACE;
 
 // return  codes
 const int SUCCESS = MPI_SUCCESS;
@@ -67,10 +68,17 @@ const int ERR_LASTCODE = MPI_ERR_LASTCODE;
 // assorted constants
 const int PROC_NULL = MPI_PROC_NULL;
 const int ANY_SOURCE = MPI_ANY_SOURCE;
+const int ROOT = MPI_ROOT;
 const int ANY_TAG = MPI_ANY_TAG;
 const int UNDEFINED = MPI_UNDEFINED;
 const int BSEND_OVERHEAD = MPI_BSEND_OVERHEAD;
 const int KEYVAL_INVALID = MPI_KEYVAL_INVALID;
+const int ORDER_C = MPI_ORDER_C;
+const int ORDER_FORTRAN = MPI_ORDER_FORTRAN;
+const int DISTRIBUTE_BLOCK = MPI_DISTRIBUTE_BLOCK;
+const int DISTRIBUTE_CYCLIC = MPI_DISTRIBUTE_CYCLIC;
+const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE;
+const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG;
 
 // error-handling specifiers
 const Errhandler  ERRORS_ARE_FATAL(MPI_ERRORS_ARE_FATAL);
@@ -78,6 +86,11 @@ const Errhandler  ERRORS_RETURN(MPI_ERRORS_RETURN);
 const Errhandler  ERRORS_THROW_EXCEPTIONS(MPI_ERRORS_RETURN);
 //JGS: the MPI_ERRORS_RETURN function in ERRORS_THROW_EXCEPTIONS gets replaced
 //by the throw_exptn_fctn in Init)
+
+// typeclass definitions for MPI_Type_match_size
+const int TYPECLASS_INTEGER = MPI_TYPECLASS_INTEGER;
+const int TYPECLASS_REAL = MPI_TYPECLASS_REAL;
+const int TYPECLASS_COMPLEX = MPI_TYPECLASS_COMPLEX;
 
 // maximum sizes for strings
 const int MAX_PROCESSOR_NAME = MPI_MAX_PROCESSOR_NAME;
@@ -184,11 +197,12 @@ const int UNEQUAL = MPI_UNEQUAL;
 
 // environmental inquiry keys
 const int TAG_UB = MPI_TAG_UB;
-const int IO = MPI_IO;
 const int HOST = MPI_HOST;
+const int IO = MPI_IO;
 const int WTIME_IS_GLOBAL = MPI_WTIME_IS_GLOBAL;
-const int UNIVERSE_SIZE = MPI_UNIVERSE_SIZE;
 const int APPNUM = MPI_APPNUM;
+const int LASTUSEDCODE = MPI_LASTUSEDCODE;
+const int UNIVERSE_SIZE = MPI_UNIVERSE_SIZE;
 const int WIN_BASE = MPI_WIN_BASE;
 const int WIN_SIZE = MPI_WIN_SIZE;
 const int WIN_DISP_UNIT = MPI_WIN_DISP_UNIT;
@@ -219,6 +233,7 @@ const Datatype     DATATYPE_NULL = MPI_DATATYPE_NULL;
 Request      REQUEST_NULL = MPI_REQUEST_NULL;
 const Op           OP_NULL = MPI_OP_NULL;
 const Errhandler   ERRHANDLER_NULL;  
+const File FILE_NULL = MPI_FILE_NULL;
 
 // constants specifying empty or ignored input
 const char**       ARGV_NULL = (const char**) MPI_ARGV_NULL;
@@ -230,6 +245,31 @@ const Group GROUP_EMPTY(MPI_GROUP_EMPTY);
 // topologies
 const int GRAPH = MPI_GRAPH;
 const int CART = MPI_CART;
+
+// MPI-2 IO
+const int MODE_CREATE = MPI_MODE_CREATE;
+const int MODE_RDONLY = MPI_MODE_RDONLY;
+const int MODE_WRONLY = MPI_MODE_WRONLY;
+const int MODE_RDWR = MPI_MODE_RDWR;
+const int MODE_DELETE_ON_CLOSE = MPI_MODE_DELETE_ON_CLOSE;
+const int MODE_UNIQUE_OPEN = MPI_MODE_UNIQUE_OPEN;
+const int MODE_EXCL = MPI_MODE_EXCL;
+const int MODE_APPEND = MPI_MODE_APPEND;
+const int MODE_SEQUENTIAL = MPI_MODE_SEQUENTIAL;
+
+const int DISPLACEMENT_CURRENT = MPI_DISPLACEMENT_CURRENT;
+
+const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
+
+// one-sided constants
+const int MODE_NOCHECK = MPI_MODE_NOCHECK;
+const int MODE_NOPRECEDE = MPI_MODE_NOPRECEDE;
+const int MODE_NOPUT = MPI_MODE_NOPUT;
+const int MODE_NOSTORE = MPI_MODE_NOSTORE;
+const int MODE_NOSUCCEED = MPI_MODE_NOSUCCEED;
+
+const int LOCK_EXCLUSIVE = MPI_LOCK_EXCLUSIVE;
+const int LOCK_SHARED = MPI_LOCK_SHARED;
 
 // special datatypes for contstruction of derived datatypes
 const Datatype UB(MPI_UB);

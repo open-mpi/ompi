@@ -55,17 +55,30 @@ OMPI_DECLSPEC extern const int ERR_WIN;
 
 // assorted constants
 OMPI_DECLSPEC extern const void* BOTTOM;
+OMPI_DECLSPEC extern const void* IN_PLACE;
 OMPI_DECLSPEC extern const int PROC_NULL;
 OMPI_DECLSPEC extern const int ANY_SOURCE;
+OMPI_DECLSPEC extern const int ROOT;
 OMPI_DECLSPEC extern const int ANY_TAG;
 OMPI_DECLSPEC extern const int UNDEFINED;
 OMPI_DECLSPEC extern const int BSEND_OVERHEAD;
 OMPI_DECLSPEC extern const int KEYVAL_INVALID;
+OMPI_DECLSPEC extern const int ORDER_C;
+OMPI_DECLSPEC extern const int ORDER_FORTRAN;
+OMPI_DECLSPEC extern const int DISTRIBUTE_BLOCK;
+OMPI_DECLSPEC extern const int DISTRIBUTE_CYCLIC;
+OMPI_DECLSPEC extern const int DISTRIBUTE_NONE;
+OMPI_DECLSPEC extern const int DISTRIBUTE_DFLT_DARG;
 
 // error-handling specifiers
 OMPI_DECLSPEC extern const Errhandler  ERRORS_ARE_FATAL;
 OMPI_DECLSPEC extern const Errhandler  ERRORS_RETURN;
 OMPI_DECLSPEC extern const Errhandler  ERRORS_THROW_EXCEPTIONS;
+
+// typeclass definitions for MPI_Type_match_size
+OMPI_DECLSPEC extern const int TYPECLASS_INTEGER;
+OMPI_DECLSPEC extern const int TYPECLASS_REAL;
+OMPI_DECLSPEC extern const int TYPECLASS_COMPLEX;
 
 // maximum sizes for strings
 OMPI_DECLSPEC extern const int MAX_PROCESSOR_NAME;
@@ -174,11 +187,12 @@ OMPI_DECLSPEC extern const int UNEQUAL;
 
 // environmental inquiry keys
 OMPI_DECLSPEC extern const int TAG_UB;
-OMPI_DECLSPEC extern const int IO;
 OMPI_DECLSPEC extern const int HOST;
+OMPI_DECLSPEC extern const int IO;
 OMPI_DECLSPEC extern const int WTIME_IS_GLOBAL;
-OMPI_DECLSPEC extern const int UNIVERSE_SIZE;
 OMPI_DECLSPEC extern const int APPNUM;
+OMPI_DECLSPEC extern const int LASTUSEDCODE;
+OMPI_DECLSPEC extern const int UNIVERSE_SIZE;
 OMPI_DECLSPEC extern const int WIN_BASE;
 OMPI_DECLSPEC extern const int WIN_SIZE;
 OMPI_DECLSPEC extern const int WIN_DISP_UNIT;
@@ -209,6 +223,7 @@ OMPI_DECLSPEC extern const Datatype     DATATYPE_NULL;
 OMPI_DECLSPEC extern Request            REQUEST_NULL;
 OMPI_DECLSPEC extern const Op           OP_NULL;
 OMPI_DECLSPEC extern const Errhandler   ERRHANDLER_NULL;  
+OMPI_DECLSPEC extern const File         FILE_NULL;
 
 // constants specifying empty or ignored input
 OMPI_DECLSPEC extern const char**       ARGV_NULL;
@@ -220,3 +235,28 @@ OMPI_DECLSPEC extern const Group  GROUP_EMPTY;
 // topologies
 OMPI_DECLSPEC extern const int GRAPH;
 OMPI_DECLSPEC extern const int CART;
+
+// MPI-2 IO
+OMPI_DECLSPEC extern const int MODE_CREATE;
+OMPI_DECLSPEC extern const int MODE_RDONLY;
+OMPI_DECLSPEC extern const int MODE_WRONLY;
+OMPI_DECLSPEC extern const int MODE_RDWR;
+OMPI_DECLSPEC extern const int MODE_DELETE_ON_CLOSE;
+OMPI_DECLSPEC extern const int MODE_UNIQUE_OPEN;
+OMPI_DECLSPEC extern const int MODE_EXCL;
+OMPI_DECLSPEC extern const int MODE_APPEND;
+OMPI_DECLSPEC extern const int MODE_SEQUENTIAL;
+
+OMPI_DECLSPEC extern const int DISPLACEMENT_CURRENT;
+
+OMPI_DECLSPEC extern const int MAX_DATAREP_STRING;
+
+// one-sided constants
+OMPI_DECLSPEC extern const int MODE_NOCHECK;
+OMPI_DECLSPEC extern const int MODE_NOPRECEDE;
+OMPI_DECLSPEC extern const int MODE_NOPUT;
+OMPI_DECLSPEC extern const int MODE_NOSTORE;
+OMPI_DECLSPEC extern const int MODE_NOSUCCEED;
+
+OMPI_DECLSPEC extern const int LOCK_EXCLUSIVE;
+OMPI_DECLSPEC extern const int LOCK_SHARED;
