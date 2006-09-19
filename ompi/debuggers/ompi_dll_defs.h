@@ -77,8 +77,31 @@ typedef struct
         } offset;
     } ompi_request_t;
     struct {
-        int empty;
+        int size;
+        struct {
+            int req_addr;
+            int req_count;
+            int req_peer;
+            int req_tag;
+            int req_comm;
+            int req_proc;
+            int req_sequence;
+        } offset;
     } mca_pml_base_request_t;
+    struct {
+        int size;
+        struct {
+            int req_addr;
+            int req_bytes_packed;
+            int req_send_mode;
+        } offset;
+    } mca_pml_base_send_request_t;
+    struct {
+        int size;
+        struct {
+            int req_bytes_packed;
+        } offset;
+    } mca_pml_base_recv_request_t;
     /* communicator structures */
     struct {
         int size;
