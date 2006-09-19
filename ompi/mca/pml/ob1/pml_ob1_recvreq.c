@@ -94,6 +94,11 @@ static int mca_pml_ob1_recv_request_cancel(struct ompi_request_t* ompi_request, 
        }
        PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_REMOVE_FROM_POSTED_Q,
                                 &(request->req_recv.req_base), PERUSE_RECV );
+       /**
+        * As now the PML is done with this request we have to force the lmp_complete
+        * to true. Otherwise, the request will never be freed.
+        */
+       request->req_recv.req_base.req_pml_complete = true;
     }
     OPAL_THREAD_UNLOCK(&comm->matching_lock);
     
