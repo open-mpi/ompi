@@ -140,7 +140,7 @@ int mca_btl_mvapi_component_open(void)
     mca_btl_mvapi_param_register_int ("max_btls", "maximum number of HCAs/ports to use", 
                                       4, &tmp_int);
     mca_btl_mvapi_component.ib_max_btls = tmp_int;
-    mca_btl_mvapi_param_register_int ("free_list_num", "intial size of free lists", 
+    mca_btl_mvapi_param_register_int ("free_list_num", "initial size of free lists", 
                                        8, &mca_btl_mvapi_component.ib_free_list_num);
     mca_btl_mvapi_param_register_int ("free_list_max", "maximum size of free lists",
                                        -1, &mca_btl_mvapi_component.ib_free_list_max);

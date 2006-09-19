@@ -101,7 +101,7 @@ bool ompi_mpi_maffinity_setup = false;
  * corresponding dummy function that is invoked from this function).
  *
  * Additionally, there can be/are strange linking paths such that
- * ompi_info needs symbols symbols such as ompi_fortran_status_ignore,
+ * ompi_info needs symbols such as ompi_fortran_status_ignore,
  * which, if they weren't here with a collection of other global
  * symbols that are initialized (which seems to force this .o file to
  * be pulled into the resolution process, because ompi_info certainly
