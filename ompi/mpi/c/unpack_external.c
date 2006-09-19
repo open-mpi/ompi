@@ -68,7 +68,7 @@ int MPI_Unpack_external (char *datarep, void *inbuf, MPI_Aint insize,
 
     /* Prepare the iovec with all informations */
     outvec.iov_base = (char*) inbuf + (*position);
-    outvec.iov_len = insize - (*position);
+    outvec.iov_len = size;
 
     /* Do the actual unpacking */
     iov_count = 1;

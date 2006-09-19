@@ -71,7 +71,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* Prepare the iovec with all informations */
     invec.iov_base = (char*) outbuf + (*position);
-    invec.iov_len = outsize - (*position);
+    invec.iov_len = size;
 
     /* Do the actual packing */
     iov_count = 1;
