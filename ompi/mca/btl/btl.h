@@ -40,27 +40,27 @@
  *     a layer of abstraction over multiple physical devices (e.g. NICs),
  * (3) a list containing multiple BTL modules where each BTL module
  *     corresponds to a single physical device.
- * 
+ *
  * During module initialization, the module should post any addressing
  * information required by its peers. An example would be the TCP
  * listen port opened by the TCP module for incoming connection
  * requests. This information is published to peers via the
  * mca_pml_base_modex_send() interface. Note that peer information is not
- * guaranteed to be available via mca_pml_base_modex_recv() during the 
- * module's init function. However, it will be available during 
+ * guaranteed to be available via mca_pml_base_modex_recv() during the
+ * module's init function. However, it will be available during
  * BTL selection (mca_btl_base_add_proc_fn_t()).
  *
  * BTL Selection:
  *
- * The upper layer builds an ordered list of the available BTL modules sorted 
+ * The upper layer builds an ordered list of the available BTL modules sorted
  * by their exclusivity ranking. This is a relative ranking that is used
- * to determine the set of BTLs that may be used to reach a given destination.  
- * During startup the BTL modules are queried via their 
+ * to determine the set of BTLs that may be used to reach a given destination.
+ * During startup the BTL modules are queried via their
  * mca_btl_base_add_proc_fn_t() to determine if they are able to reach
- * a given destination.  The BTL module with the highest ranking that 
- * returns success is selected. Subsequent BTL modules are selected only 
+ * a given destination.  The BTL module with the highest ranking that
+ * returns success is selected. Subsequent BTL modules are selected only
  * if they have the same exclusivity ranking.
- * 
+ *
  * An example of how this might be used:
  *
  * BTL         Exclusivity   Comments
@@ -73,36 +73,36 @@
  * TCP               0       Selected based on network reachability
  *
  * When a BTL module is selected, it may choose to optionally return a
- * pointer to an an mca_btl_base_endpoint_t data structure to the PML. 
+ * pointer to an an mca_btl_base_endpoint_t data structure to the PML.
  * This pointer is treated as an opaque handle by the PML and is
- * returned to the BTL on subsequent data transfer calls to the 
- * corresponding destination process.  The actual contents of the  
- * data structure are defined on a per BTL basis, and may be used to 
- * cache addressing or connection information, such as a TCP socket 
+ * returned to the BTL on subsequent data transfer calls to the
+ * corresponding destination process.  The actual contents of the
+ * data structure are defined on a per BTL basis, and may be used to
+ * cache addressing or connection information, such as a TCP socket
  * or IB queue pair.
  *
  * Progress:
  *
  * By default, the library provides for polling based progress of outstanding
- * requests. The BTL component exports an interface function (btlm_progress)
+ * requests. The BTL component exports an interface function (btl_progress)
  * that is called in a polling mode by the PML during calls into the MPI
  * library. Note that the btlm_progress() function is called on the BTL component
  * rather than each BTL module. This implies that the BTL author is responsible
- * for iterating over the pending operations in each of the BTL modules associated 
+ * for iterating over the pending operations in each of the BTL modules associated
  * with the component.
- * 
+ *
  * On platforms where threading support is provided, the library provides the
- * option of building with asynchronous threaded progress. In this case, the BTL 
+ * option of building with asynchronous threaded progress. In this case, the BTL
  * author is responsible for providing a thread to progress pending operations.
- * A thread is associated with the BTL component/module such that transport specific 
- * functionality/APIs may be used to block the thread ubtll a pending operation 
- * completes. This thread MUST NOT poll for completion as this would oversubscribe 
- * the CPU. 
+ * A thread is associated with the BTL component/module such that transport specific
+ * functionality/APIs may be used to block the thread until a pending operation
+ * completes. This thread MUST NOT poll for completion as this would oversubscribe
+ * the CPU.
  *
  * Note that in the threaded case the PML may choose to use a hybrid approach,
  * such that polling is implemented from the user thread for a fixed number of
- * cycles before relying on the background thread(s) to complete requests. If 
- * possible the BTL should support the use of both modes concurrebtly.
+ * cycles before relying on the background thread(s) to complete requests. If
+ * possible the BTL should support the use of both modes concurrently.
  *
  */
 
