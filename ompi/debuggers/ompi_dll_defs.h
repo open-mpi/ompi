@@ -48,8 +48,11 @@ typedef struct
         } offset;
     } opal_list_t;
     struct {
-        int empty;
+        int size;
     } ompi_free_list_item_t;
+    struct {
+        int size;
+    } ompi_free_list_memory_t;
     struct {
         int size;
         struct {
@@ -58,11 +61,20 @@ typedef struct
             int fl_alignment;
             int fl_allocations;
             int fl_max_to_alloc;
+            int fl_num_per_alloc;
+            int fl_num_allocated;
         } offset;
     } ompi_free_list_t;
     /* requests structures */
     struct {
-        int empty;
+        int size;
+        struct {
+            int req_type;
+            int req_status;
+            int req_complete;
+            int req_state;
+            int req_f_to_c_index;
+        } offset;
     } ompi_request_t;
     struct {
         int empty;
@@ -155,6 +167,26 @@ typedef struct group_t
   int     *local_to_global;			/* The translation table */
 } group_t;
 
+typedef struct mqs_ompi_opal_list_t_pos {
+    mqs_taddr_t current_item;
+    mqs_taddr_t list;
+    mqs_taddr_t sentinel;
+} mqs_opal_list_t_pos;
+
+typedef struct {
+    mqs_opal_list_t_pos opal_list_t_pos;
+    mqs_taddr_t current_item;
+    mqs_taddr_t upper_bound;
+    mqs_taddr_t free_list;
+    mqs_tword_t fl_elem_size;
+    mqs_tword_t fl_header_space;
+    mqs_tword_t fl_alignment;
+    mqs_tword_t fl_num_per_alloc;
+    mqs_tword_t fl_num_allocated;
+    mqs_tword_t fl_num_initial_alloc;
+} mqs_ompi_free_list_t_pos;
+
+
 /* Information for a single process, a list of communicators, some
  * useful addresses, and the state of the iterators.
  */
@@ -173,12 +205,11 @@ typedef struct
 
   /* Other info we need to remember about it */
   mqs_tword_t communicator_sequence;		
-  int has_sendq;
 
   /* State for the iterators */
   struct communicator_t *current_communicator;	/* Easy, we're walking a simple list */
     
-  mqs_taddr_t   next_msg;			/* And state for the message iterator */
+  mqs_ompi_free_list_t_pos next_msg;            /* And state for the message iterator */
   mqs_op_class  what;				/* What queue are we looking on */
 } mpi_process_info;
 
