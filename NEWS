@@ -36,6 +36,7 @@ version 1.0.
 1.2
 ---
 
+- Add a number of missing constants in the C++ bindings
 - Added tight integration with Sun N1 Grid Engine (N1GE) 6 and the
   open source Grid Engine.
 - Allow building the F90 MPI bindings as shared libraries for most
