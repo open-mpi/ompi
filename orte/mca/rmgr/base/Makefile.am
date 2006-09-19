@@ -23,6 +23,7 @@ headers += \
 libmca_rmgr_la_SOURCES += \
         base/rmgr_base_check_context.c \
         base/rmgr_base_context.c \
+        base/rmgr_base_con_discon.c \
         base/rmgr_base_close.c \
         base/rmgr_base_open.c \
         base/rmgr_base_receive.c \

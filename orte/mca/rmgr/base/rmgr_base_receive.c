@@ -178,7 +178,8 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
             }
                 
             /* process the request */
-            if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(context, num_context, &job, NULL, ORTE_PROC_STATE_NONE))) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(context, num_context, &job,
+                                                          0, NULL, NULL, ORTE_PROC_STATE_NONE))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
