@@ -29,6 +29,7 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "opal/sys/timer.h"
+#include "opal/sys/atomic.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -965,8 +966,10 @@ static int btl_openib_component_progress(void)
             frag = MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG (endpoint,
                     endpoint->eager_rdma_local.head);
 
-            if (MCA_BTL_OPENIB_RDMA_FRAG_LOCAL (frag)) {
-                uint32_t size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
+            if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
+                uint32_t size;
+                opal_atomic_rmb();
+                size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
 #if OMPI_ENABLE_DEBUG
                 if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
                     BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
