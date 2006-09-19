@@ -762,6 +762,10 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
     
     OBJ_CONSTRUCT(&app_context_list, opal_list_t);
     
+    /* set the default values to INVALID */
+    start = ORTE_VPID_INVALID;
+    range = ORTE_VPID_INVALID;
+    
     values = (orte_gpr_value_t**)(data->values)->addr;
     for (j=0, i=0; i < data->cnt && j < (data->values)->size; j++) {  /* loop through all returned values */
         if (NULL != values[j]) {
@@ -773,9 +777,6 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data)
                 * the app_context(s), vpid_start, and vpid_range entries. Only one
                 * value object should ever come from that container
                 */
-                /* set the default values to INVALID */
-                start = ORTE_VPID_INVALID;
-                range = ORTE_VPID_INVALID;
                 for (kv=0; kv < value->cnt; kv++) {
                     kval = value->keyvals[kv];
                     if (strcmp(kval->key, ORTE_JOB_VPID_START_KEY) == 0) {
