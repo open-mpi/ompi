@@ -1,5 +1,5 @@
 /* -*- Mode: C; c-basic-offset:4 ; -*- */
-/*  $Id: adioi_error.h,v 1.11 2005/02/18 00:39:02 robl Exp $
+/*  $Id: adioi_error.h,v 1.12 2006/01/05 23:53:58 robl Exp $
  *
  *  (C) 2001 by Argonne National Laboratory.
  *      See COPYRIGHT in top-level directory.
@@ -45,7 +45,7 @@ if (datatype == MPI_DATATYPE_NULL) {				\
 }
 
 #define MPIO_CHECK_READABLE(fh, myname, error_code)		\
-if (fh->access_mode & MPI_MODE_WRONLY) {			\
+if (fh->access_mode & ADIO_WRONLY) {			\
     error_code = MPIO_Err_create_code(MPI_SUCCESS,		\
 				      MPIR_ERR_RECOVERABLE,	\
 				      myname, __LINE__,		\
@@ -56,7 +56,7 @@ if (fh->access_mode & MPI_MODE_WRONLY) {			\
 }
 
 #define MPIO_CHECK_WRITABLE(fh, myname, error_code)		\
-if (fh->access_mode & MPI_MODE_RDONLY) {			\
+if (fh->access_mode & ADIO_RDONLY) {			\
     error_code = MPIO_Err_create_code(MPI_SUCCESS,		\
 				      MPIR_ERR_RECOVERABLE,	\
 				      myname, __LINE__,		\
@@ -68,7 +68,7 @@ if (fh->access_mode & MPI_MODE_RDONLY) {			\
 }
 
 #define MPIO_CHECK_NOT_SEQUENTIAL_MODE(fh, myname, error_code)		\
-if (fh->access_mode & MPI_MODE_SEQUENTIAL) {				\
+if (fh->access_mode & ADIO_SEQUENTIAL) {				\
     error_code = MPIO_Err_create_code(MPI_SUCCESS,			\
 				      MPIR_ERR_RECOVERABLE,		\
 				      myname, __LINE__,			\

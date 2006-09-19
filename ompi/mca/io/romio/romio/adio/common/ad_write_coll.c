@@ -83,6 +83,7 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
     unsigned long long max_pe_request =         0;
     unsigned long long min_rd_request = ULONG_MAX;
     unsigned long long max_rd_request =         0;
+    int old_error;
 
     MPI_Info_get(fd->info, "ompi_enable_parallel_optimizations", MPI_MAX_INFO_VAL, value, 
                  &info_flag);
@@ -274,6 +275,34 @@ void ADIOI_GEN_WriteStridedColl(ADIO_File fd, void *buf, int count,
 			len_list, contig_access_count, min_st_offset,
 			fd_size, fd_start, fd_end, buf_idx, error_code);
 
+    /* If this collective write is followed by an independent write,
+     * it's possible to have those subsequent writes on other processes
+     * race ahead and sneak in before the read-modify-write completes.
+     * We carry out a collective communication at the end here so no one
+     * can start independent i/o before collective I/O completes. 
+     *
+     * optimization: if only one process performing i/o, we can perform
+     * a less-expensive Bcast 
+     *
+     * need to do some gymnastics with the error codes so that if something
+     * went wrong, all processes report error, but if a process has a more
+     * specific error code, we can still have that process report the
+     * additional information */
+
+    old_error = *error_code;
+    if (*error_code != MPI_SUCCESS) *error_code = MPI_ERR_IO;
+
+    if (fd->hints->cb_nodes == 1) 
+	    MPI_Bcast(error_code, 1, MPI_INT, 
+			    fd->hints->ranklist[0], fd->comm);
+    else 
+	    MPI_Allreduce(MPI_IN_PLACE, error_code, 1, MPI_INT, 
+			    MPI_MAX, fd->comm);
+
+    if ( (old_error != MPI_SUCCESS) && (old_error != MPI_ERR_IO) )
+	    *error_code = old_error;
+
+
     if (!buftype_is_contig) ADIOI_Delete_flattened(datatype);
 
 /* free all memory allocated for collective I/O */
@@ -334,6 +363,7 @@ static void ADIOI_Exch_and_write(ADIO_File fd, void *buf, MPI_Datatype
    array to a file, where each local array is 8Mbytes, requiring
    at least another 8Mbytes of temp space is unacceptable. */
 
+    /* TODO: 'hole' not used outside of ADIOI_W_Exchange_data */
     int hole, i, j, m, size=0, ntimes, max_ntimes, buftype_is_contig;
     ADIO_Offset st_loc=-1, end_loc=-1, off, done, req_off;
     char *write_buf=NULL;

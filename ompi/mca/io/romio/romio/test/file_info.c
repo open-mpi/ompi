@@ -8,7 +8,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-static int verbose = 0;
+/* Set verbose to 0 only if you want no information about any failure */
+static int verbose = 1;
 
 int main(int argc, char **argv)
 {
@@ -168,7 +169,7 @@ int main(int argc, char **argv)
     MPI_Info_set(info, "cb_buffer_size", "8388608");
 
     /* number of processes that actually perform I/O in collective I/O */
-    sprintf(value, "%d", nprocs/2 ? 0 : 1);
+    sprintf(value, "%d", nprocs/2);
     MPI_Info_set(info, "cb_nodes", value);
 
     /* buffer size for data sieving in independent reads */
@@ -261,10 +262,10 @@ int main(int argc, char **argv)
 	    }
 	}
 	else if (!strcmp("cb_nodes", key)) {
-	    if (atoi(value) != nprocs/2 ? 0 : 1) {
+	    if (atoi(value) != (nprocs/2)) {
 		errs++;
 		if (verbose) fprintf(stderr, "cb_nodes is %d; should be %d\n", atoi(value),
-				     nprocs/2 ? 0 : 1);
+				     nprocs/2);
 	    }
 	}
 	else if (!strcmp("romio_no_indep_rw", key)) {

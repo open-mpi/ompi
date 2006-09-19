@@ -115,7 +115,7 @@ void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
     globus_off_t goff;
     globus_result_t result;
 
-    if ( fd->access_mode&MPI_MODE_WRONLY )
+    if ( fd->access_mode&ADIO_WRONLY )
 	{
 	    *error_code=MPIR_ERR_MODE_WRONLY;
 	    return;
@@ -162,7 +162,7 @@ void ADIOI_GRIDFTP_ReadContig(ADIO_File fd, void *buf, int count,
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 			    MPI_ERR_IO, "**io", "**io %s", 
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}  
 
@@ -211,7 +211,7 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
     globus_result_t result;
     globus_byte_t *tmp;
 
-    if ( fd->access_mode&MPI_MODE_WRONLY )
+    if ( fd->access_mode&ADIO_WRONLY )
 	{
 	    *error_code=MPIR_ERR_MODE_WRONLY;
 	    return;
@@ -283,7 +283,7 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 		    myrank,nprocs,myname,extent,count*btype_size);
 	    fflush(stderr);
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myanem, __LINE__, 
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 			    MPI_ERR_IO, "**io", 0);
 	    return;
 	}
@@ -305,9 +305,9 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 	{
 	    globus_err_handler("globus_ftp_client_partial_get",myname,result);
 	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
-			    MPIR_ERR_RECOVERABLE, myanem, __LINE__, 
+			    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 			    MPI_ERR_IO, "**io", "**io %s", 
-			    globus_object_printable_to_string(result));
+			    globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
 
@@ -326,10 +326,10 @@ void ADIOI_GRIDFTP_ReadDiscontig(ADIO_File fd, void *buf, int count,
 						 (void *)(&bytes_read)))!=GLOBUS_SUCCESS )
 	{
 	    globus_err_handler("globus_ftp_client_register_read",myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCESS, MPIR_ERR_RECOVERABLE,
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 		    myname, __LINE__, MPI_ERR_IO,
 		    "**io",
-		    "**io %s", globus_object_printable_to_string(result));
+		    "**io %s", globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
     /* The ctl callback won't start till the data callbacks complete, so it's

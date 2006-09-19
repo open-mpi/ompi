@@ -109,6 +109,7 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
     int *procname_len = NULL, my_procname_len, *disp = NULL, i;
     int commsize, commrank, found;
     ADIO_cb_name_array array = NULL;
+    int alloc_size;
 
     if (cb_config_list_keyval == MPI_KEYVAL_INVALID) {
 	MPI_Keyval_create((MPI_Copy_function *) ADIOI_cb_copy_name_array, 
@@ -166,25 +167,27 @@ int ADIOI_cb_gather_name_array(MPI_Comm comm,
 	}
 #endif
 
+	alloc_size = 0;
 	for (i=0; i < commsize; i++) {
 	    /* add one to the lengths because we need to count the
 	     * terminator, and we are going to use this list of lengths
 	     * again in the gatherv.  
 	     */
-	    procname_len[i]++;
-	    procname[i] = ADIOI_Malloc(procname_len[i]);
-	    if (procname[i] == NULL) {
-		return -1;
-	    }
+	    alloc_size += ++procname_len[i];
+	}
+	
+	procname[0] = ADIOI_Malloc(alloc_size);
+	if (procname[0] == NULL) {
+	    return -1;
+	}
+
+	for (i=1; i < commsize; i++) {
+	    procname[i] = procname[i-1] + procname_len[i-1];
 	}
 	
 	/* create our list of displacements for the gatherv.  we're going
 	 * to do everything relative to the start of the region allocated
 	 * for procname[0]
-	 *
-	 * I suppose it is theoretically possible that the distance between 
-	 * malloc'd regions could be more than will fit in an int.  We don't
-	 * cover that case.
 	 */
 	disp = ADIOI_Malloc(commsize * sizeof(int));
 	disp[0] = 0;
@@ -398,10 +401,13 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
     array->refct--;
 
     if (array->refct <= 0) {
-	/* time to free the structures (names, array of ptrs to names, struct) 
+	/* time to free the structures (names, array of ptrs to names, struct)
 	 */
-	for (i=0; i < array->namect; i++) {
-	    ADIOI_Free(array->names[i]);
+	if (array->namect) {
+	    /* Note that array->names[i], where i > 0, 
+	     * are just pointers into the allocated region array->names[0]
+	     */
+	    ADIOI_Free(array->names[0]);
 	}
 	if (array->names != NULL) ADIOI_Free(array->names);
 	ADIOI_Free(array);

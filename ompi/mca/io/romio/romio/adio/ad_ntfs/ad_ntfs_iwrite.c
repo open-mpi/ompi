@@ -100,10 +100,20 @@ int ADIOI_NTFS_aio(ADIO_File fd, void *buf, int len, ADIO_Offset offset,
 
     if (wr)
     {
+	/*printf("WriteFile(%d bytes)\n", len);fflush(stdout);*/
 	ret_val = WriteFile(fd_sys, buf, len, &dwNumWritten, pOvl);
     }
     else
     {
+	/*
+	{
+	    ADIO_Fcntl_t fcntl_struct;
+	    int error_code;
+	    ADIO_Fcntl(fd, ADIO_FCNTL_GET_FSIZE, &fcntl_struct, &error_code);
+	    printf("File size a: %d\n", fcntl_struct.fsize);
+	}
+	printf("ReadFile(%d bytes)\n", len);fflush(stdout);
+	*/
 	ret_val = ReadFile(fd_sys, buf, len, &dwNumRead, pOvl);
     }
 

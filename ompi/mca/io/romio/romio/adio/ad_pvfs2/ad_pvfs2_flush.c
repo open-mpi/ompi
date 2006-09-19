@@ -36,10 +36,9 @@ void ADIOI_PVFS2_Flush(ADIO_File fd, int *error_code)
     /* io_worker computed in ADIO_Open */
     if (rank == fd->hints->ranklist[0]) {
 	ret = PVFS_sys_flush(pvfs_fs->object_ref, &(pvfs_fs->credentials));
-	MPI_Bcast(&ret, 1, MPI_INT, 0, fd->comm);
-    } else {
-	MPI_Bcast(&ret, 1, MPI_INT, 0, fd->comm);
     }
+    MPI_Bcast(&ret, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
+
     /* --BEGIN ERROR HANDLING-- */
     if (ret != 0) {
 	*error_code = MPIO_Err_create_code(MPI_SUCCESS,

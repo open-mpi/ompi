@@ -60,6 +60,7 @@ void ADIOI_NTFS_WriteContig(ADIO_File fd, void *buf, int count,
 		}
 	    }
 	}
+	/*printf("WriteFile(%d bytes)\n", len);fflush(stdout);*/
 	err = WriteFile(fd->fd_sys, buf, len, &dwNumWritten, pOvl);
 	/* --BEGIN ERROR HANDLING-- */
 	if (err == FALSE)
@@ -126,6 +127,7 @@ void ADIOI_NTFS_WriteContig(ADIO_File fd, void *buf, int count,
 		}
 	    }
 	}
+	/*printf("WriteFile(%d bytes)\n", len);fflush(stdout);*/
 	err = WriteFile(fd->fd_sys, buf, len, &dwNumWritten, pOvl);
 	/* --BEGIN ERROR HANDLING-- */
 	if (err == FALSE)

@@ -65,11 +65,11 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
     MPI_Comm_rank(fd->comm, &myrank);
 
     /* Sanity check */
-    if ( fd->access_mode&MPI_MODE_RDONLY )
+    if ( fd->access_mode&ADIO_RDONLY )
 	{
 	    FPRINTF(stderr,"%s:  attempt to resize read-only file %s!\n",
 		    myname,fd->filename);
-	    *error_code = MPIO_Err_create_code(MPI_SUCESS, MPIR_ERR_RECOVERABLE,
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 		    myname, __LINE__, MPI_ERR_IO,
 		    "**io", 0);
 	    return;
@@ -88,10 +88,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 					GLOBUS_NULL))!=GLOBUS_SUCCESS )
 	{
 	    globus_err_handler("globus_ftp_client_size",myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCESS, MPIR_ERR_RECOVERABLE,
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 		    myname, __LINE__, MPI_ERR_IO,
 		    "**io",
-		    "**io %s", globus_object_printable_to_string(result));
+		    "**io %s", globus_object_printable_to_string(globus_error_get(result)));
 	    return;
 	}
     globus_mutex_lock(&resize_lock);
@@ -113,10 +113,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						       GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_partial_put",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCESS, 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 				    MPI_ERR_IO, "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 
@@ -129,10 +129,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 							  GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_register_write",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCESS, 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 				    MPI_ERR_IO, "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 	    globus_mutex_lock(&resize_lock);
@@ -161,10 +161,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_move",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCESS, 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 				    MPI_ERR_IO, "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 	    globus_mutex_lock(&resize_lock);
@@ -189,10 +189,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_partial_third_party_transfer",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCESS, 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 				    MPI_ERR_IO, "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 	    globus_mutex_lock(&resize_lock);
@@ -213,10 +213,10 @@ void ADIOI_GRIDFTP_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 						  GLOBUS_NULL))!=GLOBUS_SUCCESS )
 		{
 		    globus_err_handler("globus_ftp_client_delete",myname,result);
-		    *error_code = MPIO_Err_create_code(MPI_SUCESS, 
+		    *error_code = MPIO_Err_create_code(MPI_SUCCESS, 
 				    MPIR_ERR_RECOVERABLE, myname, __LINE__, 
 				    MPI_ERR_IO, "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 	    globus_mutex_lock(&resize_lock);

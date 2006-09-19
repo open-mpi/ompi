@@ -762,13 +762,13 @@ AC_CHECK_HEADERS(unistd.h fcntl.h malloc.h stddef.h)
 CROSS_SIZEOF_INT=${CROSS_SIZEOF_INT:-0}
 CROSS_SIZEOF_VOID_P=${CROSS_SIZEOF_VOID_P:-0}
 AC_CHECK_SIZEOF(int,$CROSS_SIZEOF_INT)
-AC_CHECK_SIZEOF(void*,$CROSS_SIZEOF_VOID_P)
+AC_CHECK_SIZEOF(void *,$CROSS_SIZEOF_VOID_P)
 AC_CACHE_CHECK([for int large enough for pointers],
 pac_cv_int_hold_pointer,[
 if test "$ac_cv_sizeof_int" = "0" -o \
-	"$ac_cv_sizeof_voidp" = "0" ; then
+	"$ac_cv_sizeof_void_p" = "0" ; then
     pac_cv_int_hold_pointer=unknown
-elif test "$ac_cv_sizeof_int" -lt "$ac_cv_sizeof_voidp" ; then
+elif test "$ac_cv_sizeof_int" -lt "$ac_cv_sizeof_void_p" ; then
     pac_cv_int_hold_pointer=no
 else
     pac_cv_int_hold_pointer=yes
@@ -841,6 +841,47 @@ else
    PAC_MPI_OFFSET_KIND_4BYTE
   fi
 fi
+#
+# Test that we can use the FORTRAN_MPI_OFFSET type.  If the environment
+# is a strict Fortran 90/95 or later compiler, the "integer*8" format
+# may not work.
+if test "$NOF77" = 0 ; then
+    rm -f conftest*
+    ac_cv_f77_offset_type_works=no
+    AC_MSG_CHECKING([that we can use $FORTRAN_MPI_OFFSET to declare MPI_DISPLACMENT_CURRENT])
+    cat >conftest.f <<EOF
+        program main
+        $FORTRAN_MPI_OFFSET j
+        end
+EOF
+    if $F77 -o conftest conftest.f >>config.log 2>&1 && test -x conftest ; then
+        ac_cv_f77_offset_type_works=yes
+    fi
+    rm -f conftest*
+    AC_MSG_RESULT($ac_cv_f77_offset_type_works)
+
+    if test "$ac_cv_f77_offset_type_works" != "yes" ; then
+        AC_MSG_CHECKING([whether we can use KIND with the selected F77 compiler $F77])
+        ac_cv_f77_allows_offset_kind=no
+        rm -f conftest*
+        cat >conftest.f <<EOF
+        program main
+        integer (kind=$MPI_OFFSET_KIND) j
+        end
+EOF
+        if $F77 -o conftest conftest.f >>config.log 2>&1 && test -x conftest ; then
+            ac_cv_f77_allows_offset_kind=yes
+        fi
+        rm -f conftest*
+        AC_MSG_RESULT($ac_cv_f77_allows_offset_kind)
+        if test "$ac_cv_f77_allows_offset_kind" ; then
+             FORTRAN_MPI_OFFSET="integer (kind=$MPI_OFFSET_KIND)"
+        else
+             AC_MSG_WARN([Could not find a way to declare an integer type corresponding to MPI_Offset in Fortran.])
+        fi
+    fi
+fi
+
 #
 # check if MPI_Info functions are defined in the MPI implementation
 if test $WITHIN_KNOWN_MPI_IMPL = no ; then
@@ -927,6 +968,36 @@ EOF
     ac_link2='${CC-cc} -o conftest $CFLAGS $CPPFLAGS $LDFLAGS conftest1.c conftest2.c $LIBS >conftest.out 2>&1'
     if eval $ac_link2 ; then
         AC_MSG_RESULT(yes)
+        AC_MSG_CHECKING([that the compiler correctly implements weak symbols])
+        # The gcc 3.4.x compiler accepts the pragma weak, but does not
+        # correctly implement it on systems where the loader doesn't 
+        # support weak symbols (e.g., cygwin).  This is a bug in gcc, but it
+        # it is one that *we* have to detect.
+        rm -f conftest*
+        cat >>conftest1.c <<EOF
+extern int PFoo(int);
+#pragma weak PFoo = Foo
+int Foo(int);
+int Foo(int a) { return a; }
+EOF
+    cat >>conftest2.c <<EOF
+extern int Foo(int);
+int PFoo(int a) { return a+1;}
+int main(int argc, char **argv) {
+return Foo(0);}
+EOF
+        if eval $ac_link2 ; then
+            AC_MSG_RESULT(yes)
+            has_pragma_weak=1
+        else 
+            AC_MSG_RESULT(no)
+            echo "$ac_link2" >> config.log
+	    echo "Failed program was" >> config.log
+            cat conftest1.c >>config.log
+            cat conftest2.c >>config.log
+            if test -s conftest.out ; then cat conftest.out >> config.log ; fi
+            has_pragma_weak=0
+        fi
     else
       echo "$ac_link2" 1>&AC_FD_CC
       echo "Failed program was" 1>&AC_FD_CC
@@ -1056,8 +1127,8 @@ if test -n "$file_system_xfs"; then
     AC_CACHE_CHECK([for memory alignment needed for direct I/O],
     pac_cv_memalignval,
     [
-    /bin/rm -f confmemalignval
-    /bin/rm -f /tmp/romio_tmp.bin
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
     AC_TRY_RUN([
 	#include <stdio.h>
 	#include <unistd.h>
@@ -1077,8 +1148,8 @@ if test -n "$file_system_xfs"; then
 	pac_cv_memalignval=`cat confmemalignval`,
 	pac_cv_memalignval="unknown",pac_cv_memalignval="unknown"
     )
-    /bin/rm -f confmemalignval
-    /bin/rm -f /tmp/romio_tmp.bin
+    rm -f confmemalignval
+    rm -f /tmp/romio_tmp.bin
     ])
     if test -n "$pac_cv_memalignval" -a "$pac_cv_memalignval" != 0 -a \
 	"$pac_cv_memalignval" != "unknown" ; then
@@ -1155,19 +1226,65 @@ fi
 save_libs=$LIBS
 LIBS=
 #
-# Some systems need pthreads to get AIO to work
+# Some systems need pthreads to get AIO to work.  However, we don't want
+# to add pthreads just because it is there, as that can cause problems
+# with some implementations of pthreads and compilers (e.g., gcc version 3
+# would fail if there was an int a[100000] on the stack if the application
+# was *linked* with pthreads, but would succeed if the application was
+# *not linked* with pthreads.
 #
 if test "x$disable_aio" = "xno" ; then
-    AC_SEARCH_LIBS(pthread_create,pthread,
-        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
-        MPI_LIB="$MPI_LIB $LIBS"
-        )
+    foundPTHREAD=no
+
+    # Do we have aio_write in aio or rt?
+    saveLIBS=$LIBS
     LIBS=
-    AC_SEARCH_LIBS(aio_write,aio rt,
-        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
-        MPI_LIB="$MPI_LIB $LIBS"
-        aio_write_found=yes
-    )
+    AC_SEARCH_LIBS(aio_write,aio rt,foundAIO=yes,foundAIO=no)
+    if test "$foundAIO" = yes ; then
+        AIOLIBS=$LIBS
+        LIBS="$saveLIBS $LIBS"
+    else
+        LIBS="$saveLIBS"
+    fi
+
+    # If not, try finding pthread_create first, and if found, try the
+    # test again.
+    if test "$foundAIO" = no ; then 
+        saveLIBS=$LIBS
+	LIBS=
+        AC_SEARCH_LIBS(pthread_create,pthread,foundPTHREAD=yes,
+	foundPTHREAD=no)
+        if test "$foundPTHREAD" = yes ; then
+            AC_SEARCH_LIBS(aio_write,aio rt,foundAIO=yes,foundAIO=no)
+	    
+	    if test "$foundAIO" = yes ; then
+	        AIO_LIBS=$LIBS
+		LIBS="$saveLIBS $LIBS"
+	    else
+                LIBS=$saveLIBS
+            fi
+        else
+	    LIBS=$saveLIBS
+        fi
+    fi
+
+
+    if test "$foundAIO" = yes ; then
+        ROMIO_LIBLIST="$ROMIO_LIBLIST $AIOLIBS"
+        MPI_LIB="$MPI_LIB $AIOLIBS"
+	aio_write_found=yes
+    fi
+ 
+dnl    AC_SEARCH_LIBS(pthread_create,pthread,
+dnl        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
+dnl        MPI_LIB="$MPI_LIB $LIBS"
+dnl        )
+dnl    LIBS=
+dnl    AC_SEARCH_LIBS(aio_write,aio rt,
+dnl        ROMIO_LIBLIST="$ROMIO_LIBLIST $LIBS"
+dnl        MPI_LIB="$MPI_LIB $LIBS"
+dnl        aio_write_found=yes
+dnl    )
 fi
 LIBS=$save_libs
 

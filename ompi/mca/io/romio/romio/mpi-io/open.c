@@ -54,7 +54,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
     HPMP_IO_OPEN_START(fl_xmpi, comm);
 #endif /* MPI_hpux */
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     /* --BEGIN ERROR HANDLING-- */
@@ -63,8 +63,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_COMM,
 					  "**comm", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
     /* --END ERROR HANDLING-- */
 
@@ -75,8 +74,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_COMM, 
 					  "**commnotintra", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
 
     if ( ((amode&MPI_MODE_RDONLY)?1:0) + ((amode&MPI_MODE_RDWR)?1:0) +
@@ -85,8 +83,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_AMODE, 
 					  "**fileamodeone", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
 
     if ((amode & MPI_MODE_RDONLY) && 
@@ -95,8 +92,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_AMODE, 
 					  "**fileamoderead", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
 
     if ((amode & MPI_MODE_RDWR) && (amode & MPI_MODE_SEQUENTIAL))
@@ -104,8 +100,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 					  myname, __LINE__, MPI_ERR_AMODE, 
 					  "**fileamodeseq", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
     /* --END ERROR HANDLING-- */
 
@@ -132,8 +127,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 					      MPIR_ERR_RECOVERABLE,
 					      myname, __LINE__, MPI_ERR_OTHER,
 					      "**initialized", 0);
-	    error_code = MPIO_Err_return_comm(comm, error_code);
-	    goto fn_exit;
+	    goto fn_fail;
 	}
 	/* --END ERROR HANDLING-- */
 
@@ -164,8 +158,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	 * possibly can or call MPIO_Err_setmsg.  We just need to propagate 
 	 * the error up.
 	 */
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
 
     /* Test for invalid flags in amode.
@@ -184,8 +177,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 					  myname, __LINE__,
 					  MPI_ERR_UNSUPPORTED_OPERATION, 
 					  "**iosequnsupported", 0);
-	error_code = MPIO_Err_return_comm(comm, error_code);
-	goto fn_exit;
+	goto fn_fail;
     }
     /* --END ERROR HANDLING-- */
 
@@ -201,11 +193,12 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 /* use default values for disp, etype, filetype */    
 
     *fh = ADIO_Open(comm, dupcomm, filename, file_system, fsops, amode, 0,
-		    MPI_BYTE, MPI_BYTE, 0, info, ADIO_PERM_NULL, &error_code);
+		    MPI_BYTE, MPI_BYTE, info, ADIO_PERM_NULL, &error_code);
 
     /* --BEGIN ERROR HANDLING-- */
     if (error_code != MPI_SUCCESS) {
         MPI_Comm_free(&dupcomm);
+	goto fn_fail;
     }
     /* --END ERROR HANDLING-- */
 
@@ -223,7 +216,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
            indiv. file pointer already set to end of file in ADIO_Open. 
            Here file view is just bytes. */
 	if ((*fh)->access_mode & MPI_MODE_APPEND) {
-	    if ((*fh)->io_worker)  /* only one person need set the sharedfp */
+	    if (rank == (*fh)->hints->ranklist[0])  /* only one person need set the sharedfp */
 		    ADIO_Set_shared_fp(*fh, (*fh)->fp_ind, &error_code);
 	    MPI_Barrier(dupcomm);
 	}
@@ -233,8 +226,15 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
     HPMP_IO_OPEN_END(fl_xmpi, *fh, comm);
 #endif /* MPI_hpux */
 
-fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+
+fn_exit:
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
+fn_fail:
+    /* --BEGIN ERROR HANDLING-- */
+    MPIR_Nest_decr();
+    error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
+    goto fn_exit;
+    /* --END ERROR HANDLING-- */
 }

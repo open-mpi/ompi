@@ -91,9 +91,9 @@ extern FORTRAN_API void FORT_CALL mpi_file_iwrite_shared_( MPI_Fint *, void*, MP
 
 #if defined(MPIHP) || defined(MPILAM)
 /* Prototype to keep compiler happy */
-void mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,int *count,
+void mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 			     MPI_Fint *datatype,MPI_Fint *request, MPI_Fint *ierr );
-void mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,int *count,
+void mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
                     MPI_Fint *datatype,MPI_Fint *request, MPI_Fint *ierr )
 {
     MPI_File fh_c;
@@ -108,10 +108,10 @@ void mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,int *count,
 }
 #else
 /* Prototype to keep compiler happy */
-FORTRAN_API void FORT_CALL mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,int *count,
+FORTRAN_API void FORT_CALL mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 			     MPI_Datatype *datatype,MPI_Fint *request, MPI_Fint *ierr ); 
 
-FORTRAN_API void FORT_CALL mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,int *count,
+FORTRAN_API void FORT_CALL mpi_file_iwrite_shared_(MPI_Fint *fh,void *buf,MPI_Fint *count,
                     MPI_Datatype *datatype,MPI_Fint *request, MPI_Fint *ierr )
 {
     MPI_File fh_c;

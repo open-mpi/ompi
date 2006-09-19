@@ -83,7 +83,7 @@ MakeExe() {
 # CleanExe program-name
 CleanExe() {
     if [ $makeeach = 1 ] ; then
-	/bin/rm -f $1 $1.o
+	rm -f $1 $1.o
     fi
 }
 # Output marker
@@ -362,7 +362,7 @@ else
 fi
 #
 # echo '*** Checking for differences from expected output ***'
-# /bin/rm -f iotests.diff
+# rm -f iotests.diff
 # nodiff=1
 # for file in $testfiles ; do
 #     stdfile="${srcdir}/std/`basename $file .out`.std"

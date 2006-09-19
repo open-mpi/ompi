@@ -69,7 +69,7 @@ static DWORD WINAPI iread_shared_thread(LPVOID lpParameter)
 int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count, 
 			  MPI_Datatype datatype, MPIO_Request *request)
 {
-    int error_code;
+    int error_code=MPI_SUCCESS;
     ADIO_File fh;
     MPI_Status *status;
 #if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
@@ -77,7 +77,7 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
     HANDLE hThread;
 #endif
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -117,6 +117,11 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
     /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
     status->MPI_ERROR = error_code;
 
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(mpi_fh, error_code);
+    /* --END ERROR HANDLING-- */
+
     /* kick off the request */
     MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
 	MPIU_Greq_cancel_fn, status, request);
@@ -127,8 +132,8 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
 #endif
 
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
-    return MPI_SUCCESS;
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
+    return error_code;
 }
 #else
 int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count, 
@@ -141,7 +146,7 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
     ADIO_Status status;
     ADIO_Offset off, shared_fp;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -221,9 +226,14 @@ int MPI_File_iread_shared(MPI_File mpi_fh, void *buf, int count,
 			   shared_fp, request, &error_code);
     }
 
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(fh, error_code);
+    /* --END ERROR HANDLING-- */
+
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
 }
 #endif

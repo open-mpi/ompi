@@ -37,13 +37,13 @@ Output Parameters:
 @*/
 int MPI_File_read_ordered_end(MPI_File mpi_fh, void *buf, MPI_Status *status)
 {
-    int error_code;
+    int error_code=MPI_SUCCESS;
     ADIO_File fh;
     static char myname[] = "MPI_FILE_READ_ORDERED_END";
 
     MPIU_UNREFERENCED_ARG(buf);
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
 
     fh = MPIO_File_resolve(mpi_fh);
 
@@ -67,7 +67,7 @@ int MPI_File_read_ordered_end(MPI_File mpi_fh, void *buf, MPI_Status *status)
     fh->split_coll_count = 0;
 
 fn_exit:
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
-    return MPI_SUCCESS;
+    return error_code;
 }

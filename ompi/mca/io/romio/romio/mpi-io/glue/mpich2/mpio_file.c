@@ -65,6 +65,10 @@ MPI_Fint MPIO_File_c2f(MPI_File fh)
 
     if ((fh <= (MPI_File) 0) || (fh->cookie != ADIOI_FILE_COOKIE))
 	return (MPI_Fint) 0;
+
+    if (fh->fortran_handle != -1)
+	return fh->fortran_handle;
+
     if (!ADIOI_Ftable) {
 	ADIOI_Ftable_max = 1024;
 	ADIOI_Ftable = (MPI_File *)
@@ -82,6 +86,7 @@ MPI_Fint MPIO_File_c2f(MPI_File fh)
     }
     ADIOI_Ftable_ptr++;
     ADIOI_Ftable[ADIOI_Ftable_ptr] = fh;
+    fh->fortran_handle = ADIOI_Ftable_ptr;
     return (MPI_Fint) ADIOI_Ftable_ptr;
 #endif
 }

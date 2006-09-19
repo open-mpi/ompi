@@ -95,11 +95,11 @@ extern FORTRAN_API void FORT_CALL mpi_file_set_view_( MPI_Fint *, MPI_Offset *, 
 #if defined(MPIHP) || defined(MPILAM)
 /* Prototype to keep compiler happy */
 void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
-   MPI_Fint *filetype,char *datarep,MPI_Fint *info, int *ierr,
+   MPI_Fint *filetype,char *datarep,MPI_Fint *info, MPI_Fint *ierr,
 			int str_len );
 
 void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
-   MPI_Fint *filetype,char *datarep,MPI_Fint *info, int *ierr,
+   MPI_Fint *filetype,char *datarep,MPI_Fint *info, MPI_Fint *ierr,
    int str_len )
 {
     char *newstr;
@@ -139,7 +139,7 @@ void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Fint *etype,
 
 #ifdef _UNICOS
 void mpi_file_set_view_(MPI_Fint *fh,MPI_Offset *disp,MPI_Datatype *etype,
-   MPI_Datatype *filetype,_fcd datarep_fcd,MPI_Fint *info, int *ierr)
+   MPI_Datatype *filetype,_fcd datarep_fcd,MPI_Fint *info, MPI_Fint *ierr)
 {
    char *datarep = _fcdtocp(datarep_fcd);
    int str_len = _fcdlen(datarep_fcd);

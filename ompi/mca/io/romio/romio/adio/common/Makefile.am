@@ -71,7 +71,6 @@ libadio_common_la_SOURCES = \
         io_romio_eof_offset.c \
         io_romio_error.c \
         io_romio_flatten.c \
-        io_romio_gencheck.c \
         io_romio_get_fp_posn.c \
         io_romio_iscontig.c \
         io_romio_lock.c \

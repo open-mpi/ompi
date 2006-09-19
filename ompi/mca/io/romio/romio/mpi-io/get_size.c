@@ -47,7 +47,6 @@ int MPI_File_get_size(MPI_File mpi_fh, MPI_Offset *size)
 		  MPI_DATATYPE_NULL, -1);
 #endif /* MPI_hpux */
 
-    MPID_CS_ENTER();
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -60,6 +59,10 @@ int MPI_File_get_size(MPI_File mpi_fh, MPI_Offset *size)
 
     fcntl_struct = (ADIO_Fcntl_t *) ADIOI_Malloc(sizeof(ADIO_Fcntl_t));
     ADIO_Fcntl(fh, ADIO_FCNTL_GET_FSIZE, fcntl_struct, &error_code);
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(fh, error_code);
+    /* --END ERROR HANDLING-- */
     *size = fcntl_struct->fsize;
     ADIOI_Free(fcntl_struct);
 
@@ -69,7 +72,6 @@ int MPI_File_get_size(MPI_File mpi_fh, MPI_Offset *size)
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
 
     return error_code;
 }
