@@ -223,6 +223,16 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_rcvbuf =
         mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
 
+    /* AWF - may need to increase this for large-scale jobs -
+       see AWF comment in oob_tcp_peer.c */
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "connect_timeout",
+                           "connect() timeout in seconds, before trying next interface",
+                           false,
+                           false,
+                           10,
+                           &mca_oob_tcp_component.tcp_timeout);
+
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "listen_mode",
                               "Mode for HNP to accept incoming connections: event, listen_thread",
@@ -230,7 +240,7 @@ int mca_oob_tcp_component_open(void)
                               false,
                               "event",
                               &listen_type);
-
+    
     if ((0 == strcmp(listen_type, "event")) || NULL == getenv("I_AM_MPIRUN")) {
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
     } else if (0 == strcmp(listen_type, "listen_thread")) {
