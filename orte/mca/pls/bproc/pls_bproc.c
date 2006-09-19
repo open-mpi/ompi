@@ -977,8 +977,14 @@ orte_pls_bproc_monitor_nodes(void)
      * jobid here doesn't matter - we won't even look at it
      */
     if (ORTE_SUCCESS != (rc = orte_soh.begin_monitoring_job(ORTE_JOBID_MAX))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+        if(ORTE_ERR_NOT_IMPLEMENTED == rc){ 
+            /* well we can't montior the nodes.. must hav bproc < 4.0..  */
+            /* we can continue anyway though we just won't get notified  */
+            /* when bproc nodes fall off the face of the earth..  */
+        } else { 
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     return ORTE_SUCCESS;
 }
@@ -1305,8 +1311,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
       for (item2 =  opal_list_get_first(&map->nodes);
            item2 != opal_list_get_end(&map->nodes);
            item2 =  opal_list_get_next(item2)) {
-        orte_rmaps_base_node_t* node = (orte_ras_node_t*) item2;
-        rc = orte_pointer_array_add(&idx, mca_pls_bproc_component.active_node_names,
+          orte_rmaps_base_node_t* node = (orte_rmaps_base_node_t*) item2;
+          rc = orte_pointer_array_add(&idx, mca_pls_bproc_component.active_node_names,
                                     strdup(node->node->node_name));
 
 	if(ORTE_SUCCESS != rc) { 
