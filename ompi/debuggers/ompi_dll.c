@@ -443,6 +443,16 @@ int mqs_image_has_queues (mqs_image *image, char **message)
             goto type_missing;
         }
         /* This is just an overloaded opal_list_item_t */
+        i_info->ompi_free_list_item_t.size = mqs_sizeof(qh_type);
+    }
+    {
+        mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_memory_t", mqs_lang_c );
+        if( !qh_type ) {
+            missing_in_action = "ompi_free_list_memory_t";
+            goto type_missing;
+        }
+        /* This is just an overloaded opal_list_item_t */
+        i_info->ompi_free_list_memory_t.size = mqs_sizeof(qh_type);
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "ompi_free_list_t", mqs_lang_c );
@@ -456,6 +466,7 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->ompi_free_list_t.offset.fl_alignment = mqs_field_offset(qh_type, "fl_alignment");
         i_info->ompi_free_list_t.offset.fl_allocations = mqs_field_offset(qh_type, "fl_allocations");
         i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_max_to_alloc");
+        i_info->ompi_free_list_t.offset.fl_max_to_alloc = mqs_field_offset(qh_type, "fl_num_allocated");
     }
     /**
      * Now let's look for all types required for reading the requests.
@@ -466,6 +477,12 @@ int mqs_image_has_queues (mqs_image *image, char **message)
             missing_in_action = "ompi_request_t";
             goto type_missing;
         }
+        i_info->ompi_request_t.size = mqs_sizeof(qh_type);
+        i_info->ompi_request_t.offset.req_type = mqs_field_offset(qh_type, "req_type");
+        i_info->ompi_request_t.offset.req_status = mqs_field_offset(qh_type, "req_status");
+        i_info->ompi_request_t.offset.req_complete = mqs_field_offset(qh_type, "req_complete");
+        i_info->ompi_request_t.offset.req_state = mqs_field_offset(qh_type, "req_state");
+        i_info->ompi_request_t.offset.req_f_to_c_index = mqs_field_offset(qh_type, "req_f_to_c_index");
     }
     {
         mqs_type* qh_type = mqs_find_type( image, "mca_pml_base_request_t", mqs_lang_c );
@@ -834,7 +851,9 @@ int mqs_setup_communicator_iterator (mqs_process *proc)
     /* Start at the front of the list again */
     p_info->current_communicator = p_info->communicator_list;
     /* Reset the operation iterator too */
-    p_info->next_msg = 0;
+    p_info->next_msg.free_list            = 0;
+    p_info->next_msg.current_item         = 0;
+    p_info->next_msg.opal_list_t_pos.list = 0;
 
     return p_info->current_communicator == NULL ? mqs_end_of_list : mqs_ok;
 } /* mqs_setup_communicator_iterator */
@@ -886,50 +905,11 @@ int mqs_next_communicator (mqs_process *proc)
     return (p_info->current_communicator != NULL) ? mqs_ok : mqs_end_of_list;
 } /* mqs_next_communicator */
 
-/***********************************************************************
- * Setup to iterate over pending operations 
- */
-int mqs_setup_operation_iterator (mqs_process *proc, int op)
-{
-    mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    mqs_image * image          = mqs_get_image (proc);
-    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-
-    p_info->what = (mqs_op_class)op;
-
-    switch (op) {
-    case mqs_pending_sends:
-        if (!p_info->has_sendq)
-            return mqs_no_information;
-        else {
-            p_info->next_msg = p_info->send_queue_base;
-            return mqs_ok;
-        }
-
-    case mqs_pending_receives:
-        p_info->next_msg = p_info->recv_queue_base;
-        return mqs_ok;
-
-    case mqs_unexpected_messages:  /* TODO */
-        p_info->next_msg = p_info->recv_queue_base + i_info->unexpected_offs;
-        return mqs_ok;
-
-    default:
-        return err_bad_request;
-    }
-} /* mqs_setup_operation_iterator */
-
 /**
  * Parsing the opal_list_t.
  */
-typedef struct mqs_ompi_opal_list_t_pos {
-    mqs_taddr_t current_item;
-    mqs_taddr_t list;
-    mqs_taddr_t sentinel;
-} mqs_ompi_opal_list_t_pos;
-
 static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
-                                  mqs_ompi_opal_list_t_pos* position, mqs_taddr_t* active_item )
+                                  mqs_opal_list_t_pos* position, mqs_taddr_t* active_item )
 {
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
@@ -949,6 +929,7 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
                            p_info );
     }
     if( position->sentinel == (*active_item) ) {
+        printf( "Reach the opal_list_t sentinel\n" );
         *active_item = 0;
     }
     position->current_item = *active_item;
@@ -962,7 +943,190 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
  *
  *
  */
+static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
+                                         mqs_ompi_free_list_t_pos* position, mqs_taddr_t free_list )
+{
+    mqs_image * image          = mqs_get_image (proc);
+    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
+    mqs_taddr_t active_allocation;
 
+    position->opal_list_t_pos.list = 
+        fetch_pointer( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_allocations,
+                       p_info );
+    position->fl_elem_size =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_elem_size,
+                   p_info );
+    position->fl_header_space =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_header_space,
+                   p_info );
+    position->fl_alignment =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_alignment,
+                   p_info );
+    position->fl_num_per_alloc =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_per_alloc,
+                   p_info );
+    position->fl_num_allocated =
+        fetch_int( proc, position->free_list + i_info->ompi_free_list_t.offset.fl_num_allocated,
+                   p_info );
+    /**
+     * Work around the strange ompi_free_list_t way to allocate elements. The first chunk is
+     * not required to have the same size as the others.
+     * A similar work around should be set for the last chunk of allocations too !!! But how
+     * can we solve ONE equation with 2 unknowns ?
+     */
+    if( position->fl_num_allocated <= position->fl_num_per_alloc ) {
+        position->fl_num_initial_alloc = position->fl_num_allocated;
+    } else {
+        position->fl_num_initial_alloc = position->fl_num_allocated % position->fl_num_per_alloc;
+        if( 0 == position->fl_num_initial_alloc )
+            position->fl_num_initial_alloc = position->fl_num_per_alloc;
+    }
+
+    position->opal_list_t_pos.current_item = 0;
+    next_item_opal_list_t( proc, p_info,
+                           &position->opal_list_t_pos, &active_allocation );
+    if( 0 == active_allocation ) {  /* the end of the list */
+        position->upper_bound = 0;
+    } else {
+        /**
+         * Now let's try to compute the upper bound ...
+         */
+        position->upper_bound = position->fl_num_initial_alloc * position->fl_elem_size +
+            i_info->ompi_free_list_memory_t.size + position->fl_header_space +
+            position->fl_alignment + active_allocation;
+        /**
+         * Handle alignment issues...
+         */
+        active_allocation += i_info->ompi_free_list_memory_t.size;
+        if( 0 != position->fl_alignment ) {
+            mqs_tword_t modulo;
+            
+            active_allocation += position->fl_header_space;
+            modulo = active_allocation % position->fl_alignment;
+            active_allocation += (position->fl_alignment - modulo);
+            active_allocation -= position->fl_header_space;
+        }
+    }
+    position->current_item = active_allocation;
+
+    printf( "position->opal_list_t_pos.current_item = %lld\n", (long long)position->opal_list_t_pos.current_item );
+    printf( "position->opal_list_t_pos.list         = %lld\n", (long long)position->opal_list_t_pos.list );
+    printf( "position->opal_list_t_pos.sentinel     = %lld\n", (long long)position->opal_list_t_pos.sentinel );
+    printf( "position->current_item                 = %lld\n", (long long)position->current_item );
+    printf( "position->upper_bound                  = %lld\n", (long long)position->upper_bound );
+    printf( "position->free_list                    = %lld\n", (long long)position->free_list );
+    printf( "position->fl_elem_size                 = %ld\n", (long)position->fl_elem_size );
+    printf( "position->fl_header_space              = %ld\n", (long)position->fl_header_space );
+    printf( "position->fl_alignment                 = %ld\n", (long)position->fl_alignment );
+    printf( "position->fl_num_per_alloc             = %ld\n", (long)position->fl_num_per_alloc );
+    printf( "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
+    printf( "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
+    return mqs_ok;
+}
+
+#include <unistd.h>  /* TODO: remove me when the sleep is not required */
+
+/**
+ * Return the current position and move the internal counter to the next element.
+ */
+static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_info,
+                                       mqs_ompi_free_list_t_pos* position, mqs_taddr_t* active_item )
+{
+    mqs_image * image          = mqs_get_image (proc);
+    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
+    mqs_taddr_t active_allocation;
+
+    *active_item = position->current_item;
+    if( 0 == position->current_item )  /* the end ... */
+        return mqs_ok;
+
+    position->current_item += position->fl_elem_size;
+    if( position->current_item > position->upper_bound ) {
+        printf( "Reach the end of one of the ompi_free_list_t allocations. Go to the next one\n" );
+        /* we should go to the next allocation */
+        next_item_opal_list_t( proc, p_info,
+                               &position->opal_list_t_pos, &active_allocation );
+        if( 0 == active_allocation ) { /* we're at the end */
+            position->current_item = 0;
+            return mqs_ok;
+        }
+        /**
+         * Now let's try to compute the upper bound ...
+         */
+        position->upper_bound = position->fl_num_per_alloc * position->fl_elem_size +
+            i_info->ompi_free_list_memory_t.size + position->fl_header_space +
+            position->fl_alignment + active_allocation;
+        /**
+         * Handle alignment issues...
+         */
+        active_allocation += i_info->ompi_free_list_memory_t.size;
+        if( 0 != position->fl_alignment ) {
+            mqs_tword_t modulo;
+
+            active_allocation += position->fl_header_space;
+            modulo = active_allocation % position->fl_alignment;
+            active_allocation += (position->fl_alignment - modulo);
+            active_allocation -= position->fl_header_space;
+        }
+        position->current_item = active_allocation;
+    }
+    printf( "Free list actual position %p next element at %p\n", (void*)*active_item,
+            (void*)position->current_item );
+    sleep(1);
+    return mqs_ok;
+}
+
+/**
+ * Handle the send queue as well as the receive queue. The unexpected queue
+ * is a whole different story ...
+ */
+static int fetch_request( mqs_process *proc, mpi_process_info *p_info,
+			  mqs_pending_operation *res, int look_for_user_buffer )
+{
+    mqs_image * image        = mqs_get_image (proc);
+    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
+    mqs_taddr_t current_item;
+
+    ompi_free_list_t_next_item( proc, p_info,
+                                &p_info->next_msg, &current_item );
+    if( 0 == current_item )
+        return mqs_end_of_list;
+
+    res->status = mqs_st_pending;
+    res->desired_local_rank  = -1;
+    res->desired_global_rank = -1;
+    res->tag_wild            = 0;
+    res->desired_tag         = 0x1111;
+	  
+    res->system_buffer       = FALSE;
+    res->buffer              = 0xdeadbeef;
+    res->desired_length      = 1024;
+
+    res->actual_length       = 1;
+    res->actual_tag          = 0x1111;
+    res->actual_local_rank   = -1;
+    res->actual_global_rank  = -1;
+
+    printf( "\n=====================================\n" );
+    printf( "Request %p contain \n", (void*)current_item );
+    printf( "\tres->status              = %d\n", res->status );
+    printf( "\tres->desired_local_rank  = %ld\n", (long)res->desired_local_rank );
+    printf( "\tres->desired_global_rank = %ld\n", (long)res->desired_global_rank );
+    printf( "\tres->tag_wild            = %ld\n", (long)res->tag_wild );
+    printf( "\tres->desired_tag         = %ld\n", (long)res->desired_tag );
+    printf( "\tres->system_buffer       = %s\n", (TRUE == res->system_buffer ? "TRUE" : "FALSE") );
+    printf( "\tres->buffer              = %p\n", (void*)res->buffer );
+    printf( "\tres->desired_length      = %ld\n", (long)res->desired_length );
+    printf( "\tres->actual_length       = %ld\n", (long)res->actual_length );
+    printf( "\tres->actual_tag          = %ld\n", (long)res->actual_tag );
+    printf( "\tres->actual_local_rank   = %ld\n", (long)res->actual_local_rank );
+    printf( "\tres->actual_global_rank  = %ld\n", (long)res->actual_global_rank );
+    printf( "=====================================\n\n" );
+    sleep(1);
+    return mqs_ok;
+}
+
+#if 0
 /***********************************************************************
  * Handle the unexpected queue and the pending receive queue.
  * They're very similar.
@@ -971,8 +1135,8 @@ static int fetch_receive (mqs_process *proc, mpi_process_info *p_info,
 			  mqs_pending_operation *res, int look_for_user_buffer)
 {
     mqs_image * image          = mqs_get_image (proc);
-    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
-    communicator_t   *comm   = p_info->current_communicator;
+    mpi_image_info *i_info     = (mpi_image_info *)mqs_get_image_info (image);
+    communicator_t   *comm     = p_info->current_communicator;
     mqs_tword_t wanted_context = comm->recv_context;
     mqs_taddr_t base           = fetch_pointer (proc, p_info->next_msg, p_info);
 
@@ -1063,9 +1227,6 @@ static int fetch_send (mqs_process *proc, mpi_process_info *p_info,
     communicator_t   *comm   = p_info->current_communicator;
     mqs_taddr_t base         = fetch_pointer (proc, p_info->next_msg, p_info);
 
-    if (!p_info->has_sendq)
-        return mqs_no_information;
-
     /* Say what operation it is. We can only see non blocking send operations
      * in MPICH. Other MPI systems may be able to show more here. 
      */
@@ -1107,6 +1268,37 @@ static int fetch_send (mqs_process *proc, mpi_process_info *p_info,
     p_info->next_msg = 0;
     return mqs_end_of_list;
 } /* fetch_send */
+#endif
+
+/***********************************************************************
+ * Setup to iterate over pending operations 
+ */
+int mqs_setup_operation_iterator (mqs_process *proc, int op)
+{
+    mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
+    mqs_image * image          = mqs_get_image (proc);
+    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
+
+    p_info->what = (mqs_op_class)op;
+
+    switch (op) {
+    case mqs_pending_sends:
+        printf( "prepare the send queue\n" );
+        ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->send_queue_base );
+        return mqs_ok;
+
+    case mqs_pending_receives:
+        printf( "prepare the receive queue\n" );
+        ompi_free_list_t_init_parser( proc, p_info, &p_info->next_msg, p_info->recv_queue_base );
+        return mqs_ok;
+
+    case mqs_unexpected_messages:  /* TODO */
+        return mqs_no_information;
+
+    default:
+        return err_bad_request;
+    }
+} /* mqs_setup_operation_iterator */
 
 /***********************************************************************
  * Fetch the next valid operation. 
@@ -1120,11 +1312,13 @@ int mqs_next_operation (mqs_process *proc, mqs_pending_operation *op)
 
     switch (p_info->what) {
     case mqs_pending_receives:
-        return fetch_receive (proc,p_info,op,TRUE);
+        printf( "Go for the next receive\n" );
+        return fetch_request( proc, p_info, op, TRUE );
     case mqs_unexpected_messages:
-        return fetch_receive (proc,p_info,op,FALSE);
+        printf( "Go or the next send\n" );
+        return fetch_request( proc, p_info, op, FALSE );
     case mqs_pending_sends:
-        return fetch_send (proc,p_info,op);
+        /* TODO: not handled yet */
     default: return err_bad_request;
     }
 } /* mqs_next_operation */
