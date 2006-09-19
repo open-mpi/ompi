@@ -38,26 +38,42 @@ static int orte_ras_poe_allocate(orte_jobid_t jobid)
     if (NULL == poe_node_str) {
         return ORTE_ERR_NOT_FOUND;
     }
-
+    
     /* poe_node_str is something like "nodeA nodeA nodeB nodeB" */
 
     names = opal_argv_copy(opal_argv_split(poe_node_str, ' '));
     nnode = opal_argv_count(names);
 
+    /* iterate through all the nodes listed. If a single node is listed more than once,
+     * it means that we have multiple slots allocated on that node */ 
     OBJ_CONSTRUCT(&nodes_list, opal_list_t);
     for (i = 0; i < nnode; i++) {
-        node = OBJ_NEW(orte_ras_node_t);
-        if (NULL == node) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
+        /* check for duplicated nodes */
+        for (item = opal_list_get_first(&nodes_list); 
+             opal_list_get_end(&nodes_list) != item;
+             item = opal_list_get_next(item)) {
+             node = (orte_ras_node_t*) item;
+             if (0 == strcmp(node->node_name, names[i])) {
+                ++node->node_slots;
+                break;
+            }
         }
-        node->node_name = strdup(names[i]);
-        node->node_arch = NULL;
-        node->node_state = ORTE_NODE_STATE_UP;
-        node->node_cellid = 0;
-        node->node_slots_inuse = 0;
-        node->node_slots_max = 0;
-        node->node_slots = 1;
-        opal_list_append(&nodes_list, &node->super);
+        
+        if(opal_list_get_end(&nodes_list) == item) {
+            /* we did not find a duplicate, so add a new item to the list */
+            node = OBJ_NEW(orte_ras_node_t);
+            if (NULL == node) {
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            node->node_name = strdup(names[i]);
+            node->node_arch = NULL;
+            node->node_state = ORTE_NODE_STATE_UP;
+            node->node_cellid = 0;
+            node->node_slots_inuse = 0;
+            node->node_slots_max = 0;
+            node->node_slots = 1;
+            opal_list_append(&nodes_list, &node->super);
+        }
     }
     ret = orte_ras_base_node_insert(&nodes_list);
     ret = orte_ras_base_allocate_nodes(jobid, &nodes_list);
@@ -66,7 +82,6 @@ static int orte_ras_poe_allocate(orte_jobid_t jobid)
         OBJ_RELEASE(item);    
     }
     OBJ_DESTRUCT(&nodes_list);
-
     return ret;
 }
 

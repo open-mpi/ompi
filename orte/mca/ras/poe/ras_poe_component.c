@@ -20,6 +20,8 @@
 #include "orte/orte_constants.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/ras/base/base.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 #include "ras_poe.h"
@@ -68,10 +70,6 @@ static int orte_ras_poe_open(void)
 {
     mca_base_component_t *c = &mca_ras_poe_component.super.ras_version;
 
-    mca_base_param_reg_int(c, "debug",
-                           "Whether or not to enable debugging output for the poe ras component (0 or 1)",
-                           false, false, 0, &mca_ras_poe_component.debug);
-
     mca_base_param_reg_int(c, "priority",
                            "Priority of the poe ras component",
                            false , false, 100, &mca_ras_poe_component.priority);
@@ -88,9 +86,15 @@ static orte_ras_base_module_t *orte_ras_poe_init(int* priority)
         
     *priority = mca_ras_poe_component.priority;
 
-    if ( NULL != getenv("LOADL_PID") ) {
+    if ( NULL != getenv("LOADL_PROCESSOR_LIST") ) {
+        opal_output(orte_ras_base.ras_output,
+                    "ras:poe: available for selection with priority %d",
+                    mca_ras_poe_component.priority);
         return &orte_ras_poe_module;
     }
+
+    opal_output(orte_ras_base.ras_output,
+                "ras:poe: NOT available for selection");
     return NULL;
 }
 
