@@ -188,11 +188,11 @@ typedef long          mqs_tword_t;		/* Something long enough for a word    */
 /* A structure for (target) architectural information */
 typedef struct
 {
-  int short_size;				/* sizeof (short) */
-  int int_size;					/* sizeof (int)   */
-  int long_size;				/* sizeof (long)  */
-  int long_long_size;			/* sizeof (long long) */
-  int pointer_size;				/* sizeof (void *) */
+    int short_size;	/* sizeof (short) */
+    int int_size;	/* sizeof (int)   */
+    int long_size;	/* sizeof (long)  */
+    int long_long_size;	/* sizeof (long long) */
+    int pointer_size;	/* sizeof (void *) */
 } mqs_target_type_sizes;
   
 /* Result codes. 

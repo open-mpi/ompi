@@ -86,6 +86,7 @@ typedef struct
             int req_comm;
             int req_proc;
             int req_sequence;
+            int req_type;
         } offset;
     } mca_pml_base_request_t;
     struct {
@@ -128,6 +129,16 @@ typedef struct
             int c_local_group;
         } offset;
     } ompi_communicator_t;
+    struct {
+        int size;
+        struct {
+            int MPI_SOURCE;
+            int MPI_TAG;
+            int MPI_ERROR;
+            int _count;
+            int _cancelled;
+        } offset;
+    } ompi_status_public_t;
     /* Fields in MPID_QHDR */
     int unexpected_offs;
 
