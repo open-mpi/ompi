@@ -31,14 +31,12 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern opal_class_t mca_pml_base_send_request_t_class;
-
 
 /**
  * Base type for send requests 
  */
 struct mca_pml_base_send_request_t {
-    mca_pml_base_request_t req_base;         /** base request type - common data structure for use by wait/test */
+    mca_pml_base_request_t req_base;         /**< base request type - common data structure for use by wait/test */
     void *req_addr;                          /**< pointer to send buffer - may not be application buffer */
     size_t req_bytes_packed;                 /**< packed size of a message given the datatype and count */
     mca_pml_base_send_mode_t req_send_mode;  /**< type of send */
@@ -46,7 +44,7 @@ struct mca_pml_base_send_request_t {
 };
 typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
 
-
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION( mca_pml_base_send_request_t );
 
 /**
  * Initialize a send request with call parameters.
@@ -77,7 +75,6 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
    {                                                                      \
       /* increment reference counts */                                    \
       OBJ_RETAIN(comm);                                                   \
-      OBJ_RETAIN(datatype);                                               \
                                                                           \
       OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
       (request)->req_addr = addr;                                         \
@@ -92,9 +89,11 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
       (request)->req_base.req_free_called = false;                        \
       (request)->req_base.req_ompi.req_status._cancelled = 0;             \
+      (request)->req_bytes_packed = 0;                                    \
                                                                           \
       /* initialize datatype convertor for this request */                \
-      if(count > 0) {                                                     \
+      if( count > 0 ) {                                                   \
+          OBJ_RETAIN(datatype);                                           \
          /* We will create a convertor specialized for the        */      \
          /* remote architecture and prepared with the datatype.   */      \
          ompi_convertor_copy_and_prepare_for_send(                        \
@@ -106,8 +105,6 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
                             &(request)->req_convertor );                  \
          ompi_convertor_get_packed_size( &(request)->req_convertor,       \
                                          &((request)->req_bytes_packed) );\
-      } else {                                                            \
-         (request)->req_bytes_packed = 0;                                 \
       }                                                                   \
       PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                  \
                                &(request)->req_base,                      \
@@ -138,7 +135,8 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
     do {                                                                  \
         OMPI_REQUEST_FINI(&(request)->req_base.req_ompi);                 \
         OBJ_RELEASE((request)->req_base.req_comm);                        \
-        OBJ_RELEASE((request)->req_base.req_datatype);                    \
+        if( 0 != (request)->req_base.req_count )                          \
+            OBJ_RELEASE((request)->req_base.req_datatype);                \
         ompi_convertor_cleanup( &((request)->req_convertor) );            \
     } while (0)
 
