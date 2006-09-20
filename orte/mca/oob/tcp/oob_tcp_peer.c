@@ -295,8 +295,15 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                    able to accept connections fast enough.  If this is the case, increase
                    the connect_timeout MCA parameter. 
                  */
-                struct timeval tv = {mca_oob_tcp_component.tcp_timeout, 0};
+                struct timeval tv;
+                
+                tv.tv_sec = mca_oob_tcp_component.tcp_timeout;
+                tv.tv_usec = 0;
+                
+                /* The first event is responsible for our timeout, while the second event
+                   may occur sooner, due to a successful connect() */
                 opal_evtimer_add(&peer->peer_timer_event, &tv);
+                opal_event_add(&peer->peer_send_event, 0);
 
                 return ORTE_SUCCESS;
             }
@@ -418,6 +425,7 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
 
     /* unregister from receiving event notifications */
     opal_event_del(&peer->peer_send_event);
+    opal_event_del(&peer->peer_timer_event);
 
     /* check connect completion status */
     if(getsockopt(peer->peer_sd, SOL_SOCKET, SO_ERROR, (char *)&so_error, &so_length) < 0) {
@@ -933,7 +941,7 @@ static void mca_oob_tcp_peer_timer_handler(int sd, short flags, void* user)
 {
     /* start the connection to the peer */
     mca_oob_tcp_peer_t* peer = (mca_oob_tcp_peer_t*)user;
-    opal_output(0, "mca_oob_tcp_peer_timer_handler\n");
+
     OPAL_THREAD_LOCK(&peer->peer_lock);
     if(peer->peer_state == MCA_OOB_TCP_CLOSED)
         mca_oob_tcp_peer_start_connect(peer);
