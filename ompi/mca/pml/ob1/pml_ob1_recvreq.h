@@ -22,7 +22,6 @@
 #define OMPI_PML_OB1_RECV_REQUEST_H
 
 #include "pml_ob1.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/proc/proc.h"
@@ -105,7 +104,7 @@ do {                                                                \
                                     persistent);                    \
     if( MPI_ANY_SOURCE != src ) {                                   \
         (request)->req_recv.req_base.req_proc =                     \
-            comm->c_pml_comm->procs[src].proc_ompi;                 \
+            comm->c_pml_comm->procs[src].ompi_proc;                 \
         if( (0 != (datatype)->size) && (0 != count) ) {             \
             ompi_convertor_copy_and_prepare_for_recv(               \
                 (request)->req_recv.req_base.req_proc->proc_convertor, \

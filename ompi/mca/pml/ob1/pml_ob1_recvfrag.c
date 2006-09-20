@@ -210,7 +210,7 @@ do { \
         if ( (frag_tag == recv_tag) || \
              ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
  \
-            generic_recv->req_recv.req_base.req_proc = proc->proc_ompi; \
+            generic_recv->req_recv.req_base.req_proc = proc->ompi_proc; \
             /* Match made */ \
             return_match = generic_recv; \
  \

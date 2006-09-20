@@ -41,9 +41,8 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     size_t length;
     mx_status_t mx_status;
     uint32_t result;
-    
-    mca_mtl_mx_endpoint_t* mx_endpoint = 
-        (mca_mtl_mx_endpoint_t*) comm->c_pml_procs[dest]->proc_ompi->proc_pml;
+    ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
+    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
 
     assert(mtl == &ompi_mtl_mx.super);
 
@@ -139,10 +138,8 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
     int ret;
     mca_mtl_mx_request_t * mtl_mx_request = (mca_mtl_mx_request_t*) mtl_request;
     size_t length;
-
-    
-    mca_mtl_mx_endpoint_t* mx_endpoint = 
-        (mca_mtl_mx_endpoint_t*) comm->c_pml_procs[dest]->proc_ompi->proc_pml;
+    ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
+    mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
 
     assert(mtl == &ompi_mtl_mx.super);
 

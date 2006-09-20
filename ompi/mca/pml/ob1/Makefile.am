@@ -30,8 +30,6 @@ ob1_sources  = \
 	pml_ob1_iprobe.c \
 	pml_ob1_irecv.c \
 	pml_ob1_isend.c \
-	pml_ob1_proc.c \
-	pml_ob1_proc.h \
 	pml_ob1_progress.c \
 	pml_ob1_rdma.c \
 	pml_ob1_rdma.h \

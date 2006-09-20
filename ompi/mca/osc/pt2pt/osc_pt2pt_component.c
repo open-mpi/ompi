@@ -475,7 +475,7 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
             }
 
             /* create or get a pointer to our datatype */
-            proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+            proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
             datatype = ompi_osc_pt2pt_datatype_create(proc, &payload);
 
             /* create replyreq sendreq */

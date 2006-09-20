@@ -30,7 +30,6 @@
 #include "ompi/mca/bml/bml.h" 
 #include "ompi/mca/btl/btl.h"
 
-#include "pml_dr_proc.h"
 #include "pml_dr_comm.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_vfrag.h"
@@ -73,8 +72,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    ompi_proc_t *proc =                                                    \
-         comm->c_pml_procs[dst]->proc_ompi;                                \
+    ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );                \
     ompi_free_list_item_t* item;                                           \
                                                                            \
     if(NULL == proc) {                                                     \

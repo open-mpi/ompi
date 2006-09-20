@@ -29,8 +29,6 @@ local_sources = \
 	pml_cm_component.c \
 	pml_cm_component.h \
 	pml_cm_probe.c \
-	pml_cm_proc.h \
-	pml_cm_proc.c \
 	pml_cm_recv.c \
 	pml_cm_recvreq.h \
 	pml_cm_recvreq.c \

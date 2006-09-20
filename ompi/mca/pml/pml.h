@@ -77,9 +77,7 @@ typedef uint64_t mca_pml_sequence_t;
 /**
  * Base PML proc structure
  *
- * Base PML structure for caching proc information on a communicator.
- * A PML should maintain an array of pointers to mca_pml_proc_t
- * structures in the c_pml_procs structure of every communicator.
+ * Base PML structure for storing proc information.
  * Note that the mca_pml_proc_t structure can not be instantiated
  * directly, so each PML *must* provide a class that inherits from
  * this class and provides the necessary integration logic.

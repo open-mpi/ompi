@@ -441,7 +441,7 @@ ompi_osc_rdma_module_lock(int lock_type,
                            int assert,
                            ompi_win_t *win)
 {
-    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( P2P_MODULE(win)->p2p_comm, target );
 
     assert(lock_type != 0);
 
@@ -470,7 +470,7 @@ ompi_osc_rdma_module_unlock(int target,
     int32_t out_count;
     opal_list_item_t *item;
     int ret;
-    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( P2P_MODULE(win)->p2p_comm, target );
 
     while (0 == P2P_MODULE(win)->p2p_lock_received_ack) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
@@ -530,7 +530,7 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
 {
     bool send_ack = false;
     int ret = OMPI_SUCCESS;
-    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[origin]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin );
     ompi_osc_rdma_pending_lock_t *new_pending;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));

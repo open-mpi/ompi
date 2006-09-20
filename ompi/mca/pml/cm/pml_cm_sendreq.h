@@ -63,8 +63,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 {                                                                       \
     do{                                                                 \
         ompi_free_list_item_t* item;                                    \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[dst]->proc_ompi;                          \
+        ompi_proc = ompi_comm_peer_lookup( comm, dst );                 \
                                                                         \
         if(NULL == ompi_proc) {                                         \
             rc = OMPI_ERR_OUT_OF_RESOURCE;                              \
@@ -83,8 +82,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
                                           ompi_proc, rc)                \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    ompi_proc =                                                         \
-        comm->c_pml_procs[dst]->proc_ompi;                              \
+    ompi_proc = ompi_comm_peer_lookup( comm, dst );                     \
     if(NULL == ompi_proc) {                                             \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
         sendreq = NULL;                                                 \
