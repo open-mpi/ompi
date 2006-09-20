@@ -26,7 +26,7 @@
 #ifndef _ORTE_PRE_CONDITION_TRANSPORTS_H_
 #define _ORTE_PRE_CONDITION_TRANSPORTS_H_
 
-#define ORTE_TRANSPORT_KEY_FMT "%016x-%016x"
+#define ORTE_TRANSPORT_KEY_FMT "%016lx-%016lx"
 #define ORTE_TRANSPORT_KEY_LEN 33 /* 16 + sep + 16 */
 
 #include "orte_config.h"
