@@ -1,6 +1,0 @@
-mpio.h mpiof.h
-.deps
-.libs
-.libstamp*
-*.lo
-.*-cache
