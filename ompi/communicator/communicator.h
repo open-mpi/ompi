@@ -42,10 +42,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_NAMEISSET  0x00000008
 #define OMPI_COMM_ISFREED    0x00000010
 #define OMPI_COMM_INTRINSIC  0x00000020
-#define OMPI_COMM_HIDDEN     0x00000040
-#define OMPI_COMM_DYNAMIC    0x00000080
-#define OMPI_COMM_INVALID    0x00000100
-#define OMPI_COMM_PML_ADDED  0x00000200
+#define OMPI_COMM_DYNAMIC    0x00000040
+#define OMPI_COMM_INVALID    0x00000080
+#define OMPI_COMM_PML_ADDED  0x00000100
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -53,13 +52,11 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_IS_CART(comm) ((comm)->c_flags & OMPI_COMM_CART)
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
-#define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
 #define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags &OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags &OMPI_COMM_INVALID)
 #define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags &OMPI_COMM_PML_ADDED)
 
-#define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
@@ -219,10 +216,7 @@ struct ompi_communicator_t {
      */
     static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
     {
-        if ( comm->c_flags & OMPI_COMM_INTER )
-            return comm->c_remote_group->grp_proc_count;
-        else
-            return 0;
+        return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
     }
 
     /* return pointer to communicator associated with context id cid,
