@@ -39,10 +39,17 @@
  * into the environment of every MPI process when launched.
  */
 
+static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
+    int pid;
+    pid = getpid();
+    srand(pid);
+    unique_key[1] = rand();
+    unique_key[2] = rand();
+    
+}
 int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context)
 {
     size_t i;
-    char **env;
     char *cs_env;
     int fd_rand;
     uint64_t unique_key[2];
@@ -50,17 +57,23 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
 	
     size_t bytes_read; 
     
+    
+    
     /* put the number here - or else create an appropriate string. this just needs to
      * eventually be a string variable
      */
     
-    fd_rand = open("/dev/random", O_RDONLY);
-    bytes_read = read(fd_rand, (char *) unique_key, 16);
-    if(bytes_read != 16) {
-        opal_output(0,"Open MPI error reading /dev/random for transport pre-conditioning\n");
+    if(-1 == (fd_rand = open("/dev/random", O_RDONLY | O_NONBLOCK))) {
+        orte_pre_condition_transports_use_rand(unique_key); 
+    } else { 
+        bytes_read = read(fd_rand, (char *) unique_key, 16);
+        if(bytes_read != 16) {
+            orte_pre_condition_transports_use_rand(unique_key); 
+        } else { 
+            close(fd_rand);
+        }
     }
-    close(fd_rand);
-
+    
     sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, unique_key[0], unique_key[1]);
     string_key[sizeof string_key - 1] = '\0';
     
