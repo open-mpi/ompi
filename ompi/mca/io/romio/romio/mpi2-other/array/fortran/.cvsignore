@@ -1,6 +1,0 @@
-Makefile
-.deps
-.libs
-.libstamp*
-*.lo
-.*-cache

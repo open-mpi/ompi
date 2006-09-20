@@ -1,9 +1,0 @@
-Makefile
-.deps
-*.o
-*.bb
-*.bbg
-.libs
-.libstamp*
-*.lo
-.*-cache

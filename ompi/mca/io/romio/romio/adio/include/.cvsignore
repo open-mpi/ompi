@@ -1,7 +1,0 @@
-romioconf.h
-romioconf.h.in
-.deps
-.libs
-.libstamp*
-*.lo
-*-cache
