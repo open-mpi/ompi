@@ -29,7 +29,6 @@
 #include "pml_dr.h"
 #include "pml_dr_component.h"
 #include "pml_dr_comm.h"
-#include "pml_dr_proc.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_recvfrag.h"
 #include "pml_dr_sendreq.h"
@@ -76,7 +75,6 @@ int mca_pml_dr_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_dr_comm_t* pml_comm = OBJ_NEW(mca_pml_dr_comm_t);
-    mca_pml_dr_proc_t* pml_proc = NULL;
     int i;
 
     if (NULL == pml_comm) {
@@ -84,16 +82,9 @@ int mca_pml_dr_add_comm(ompi_communicator_t* comm)
     }
     mca_pml_dr_comm_init(pml_comm, comm);
     comm->c_pml_comm = pml_comm;
-    comm->c_pml_procs = (mca_pml_proc_t**)malloc(
-                                                 comm->c_remote_group->grp_proc_count * sizeof(mca_pml_proc_t));
-    if(NULL == comm->c_pml_procs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
-    for(i=0; i<comm->c_remote_group->grp_proc_count; i++){
-        pml_proc = OBJ_NEW(mca_pml_dr_proc_t);
-        pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
-        comm->c_pml_procs[i] = (mca_pml_proc_t*) pml_proc; /* comm->c_remote_group->grp_proc_pointers[i]->proc_pml; */
+    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
+        pml_comm->procs[i].ompi_proc = comm->c_remote_group->grp_proc_pointers[i];
     }
     return OMPI_SUCCESS;
 }
@@ -102,14 +93,8 @@ int mca_pml_dr_del_comm(ompi_communicator_t* comm)
 {
     OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = NULL;
-    if(comm->c_pml_procs != NULL)
-        free(comm->c_pml_procs);
-    comm->c_pml_procs = NULL;
     return OMPI_SUCCESS;
 }
-
-
-
 
 /*
  *   For each proc setup a datastructure that indicates the PTLs

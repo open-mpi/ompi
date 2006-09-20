@@ -498,7 +498,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 
             /* create or get a pointer to our datatype */
-            proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+            proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
             datatype = ompi_osc_rdma_datatype_create(proc, &payload);
 
             /* create replyreq sendreq */

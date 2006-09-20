@@ -118,8 +118,8 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
     ptl_md_t md;
     ptl_handle_md_t md_h;
     ptl_handle_me_t me_h;
-    mca_mtl_base_endpoint_t *endpoint = 
-        (mca_mtl_base_endpoint_t*) comm->c_pml_procs[dest]->proc_ompi->proc_pml;
+    ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
+    mca_mtl_base_endpoint_t *endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
     ompi_mtl_portals_request_t *ptl_request = 
         (ompi_mtl_portals_request_t*) mtl_request;
     size_t buflen;

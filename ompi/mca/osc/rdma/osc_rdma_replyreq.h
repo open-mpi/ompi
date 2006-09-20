@@ -73,7 +73,7 @@ ompi_osc_rdma_replyreq_alloc(ompi_osc_rdma_module_t *module,
 {
     int ret;
     opal_free_list_item_t *item;
-    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[origin_rank]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin_rank );
 
     /* BWB - FIX ME - is this really the right return code? */
     if (NULL == proc) return OMPI_ERR_OUT_OF_RESOURCE;

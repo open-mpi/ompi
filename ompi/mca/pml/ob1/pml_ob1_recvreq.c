@@ -977,7 +977,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     }
     return NULL;
  find_fragment:
-    request->req_recv.req_base.req_proc = proc->proc_ompi;
+    request->req_recv.req_base.req_proc = proc->ompi_proc;
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
         PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,

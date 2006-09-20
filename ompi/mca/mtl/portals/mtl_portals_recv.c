@@ -240,7 +240,8 @@ ompi_mtl_portals_irecv(struct mca_mtl_base_module_t* mtl,
         remote_proc.nid = PTL_NID_ANY;
         remote_proc.pid = PTL_PID_ANY;
     } else {
-        endpoint = (mca_mtl_base_endpoint_t*) comm->c_pml_procs[src]->proc_ompi->proc_pml;
+        ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, src );
+        endpoint = (mca_mtl_base_endpoint_t*) ompi_proc->proc_pml;
         remote_proc = endpoint->ptl_proc;
     }
 

@@ -496,7 +496,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
     int ret = OMPI_SUCCESS;
     void *target = (unsigned char*) module->p2p_win->w_baseptr + 
         (header->hdr_target_disp * module->p2p_win->w_disp_unit);    
-    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
         ompi_osc_rdma_datatype_create(proc, &inbuf);
 
@@ -616,7 +616,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
 {
     int ret = OMPI_SUCCESS;
     struct ompi_op_t *op = ompi_osc_rdma_op_create(header->hdr_target_op);
-    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
     struct ompi_datatype_t *datatype = 
         ompi_osc_rdma_datatype_create(proc, &payload);
 

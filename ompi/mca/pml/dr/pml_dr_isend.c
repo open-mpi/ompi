@@ -19,7 +19,6 @@
 #include "ompi_config.h"
 
 #include "pml_dr.h"
-#include "pml_dr_proc.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 

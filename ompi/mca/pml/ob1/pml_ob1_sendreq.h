@@ -22,7 +22,6 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
@@ -72,8 +71,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    ompi_proc_t *proc =                                                    \
-         comm->c_pml_procs[dst]->proc_ompi;                                \
+    ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );                \
     ompi_free_list_item_t* item;                                           \
                                                                            \
     if(NULL == proc) {                                                     \

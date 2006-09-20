@@ -26,7 +26,6 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_dr.h"
-#include "pml_dr_proc.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"

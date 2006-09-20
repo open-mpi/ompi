@@ -16,7 +16,6 @@
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 
 #include "pml_cm.h"
-#include "pml_cm_proc.h"
 #include "pml_cm_sendreq.h"
 #include "pml_cm_recvreq.h"
 
@@ -56,25 +55,8 @@ mca_pml_cm_enable(bool enable)
 int
 mca_pml_cm_add_comm(ompi_communicator_t* comm)
 {
-    mca_pml_cm_proc_t *pml_proc;
-    int i;
-
     /* setup our per-communicator data */
     comm->c_pml_comm = NULL;
-
-    /* setup our proc cache on the communicator.  This should be
-       something that can be safely cast to a mca_pml_proc_t* */
-    comm->c_pml_procs = (mca_pml_proc_t**) malloc(
-        comm->c_remote_group->grp_proc_count * sizeof(mca_pml_proc_t*));
-    if(NULL == comm->c_pml_procs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
-
-    for(i = 0 ; i < comm->c_remote_group->grp_proc_count ; i++){
-        pml_proc = OBJ_NEW(mca_pml_cm_proc_t);
-        pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
-        comm->c_pml_procs[i] = (mca_pml_proc_t*) pml_proc;
-    }
 
     return OMPI_SUCCESS;
 }
@@ -83,21 +65,8 @@ mca_pml_cm_add_comm(ompi_communicator_t* comm)
 int
 mca_pml_cm_del_comm(ompi_communicator_t* comm)
 {
-    int i;
-
     /* clean up our per-communicator data */
     comm->c_pml_comm = NULL;
-
-    /* clean up our proc cache on the communicator */
-    if (comm->c_pml_procs != NULL) {
-        for(i = 0 ; i < comm->c_remote_group->grp_proc_count ; i++){
-            mca_pml_cm_proc_t *pml_proc = 
-                (mca_pml_cm_proc_t*) comm->c_pml_procs[i];
-            OBJ_RELEASE(pml_proc);
-        }
-        free(comm->c_pml_procs);
-        comm->c_pml_procs = NULL;
-    }
 
     return OMPI_SUCCESS;
 }

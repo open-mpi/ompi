@@ -32,7 +32,7 @@ extern "C" {
 struct mca_pml_ob1_comm_proc_t {
     opal_object_t super;
     uint16_t expected_sequence;    /**< send message sequence number - receiver side */
-    struct ompi_proc_t* proc_ompi;
+    struct ompi_proc_t* ompi_proc;
 #if OMPI_HAVE_THREAD_SUPPORT
     volatile int32_t send_sequence; /**< send side sequence number */
 #else

@@ -29,7 +29,6 @@
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_dr.h"
 #include "pml_dr_hdr.h"
-#include "pml_dr_proc.h"
 #include "pml_dr_sendreq.h"
 #include "pml_dr_recvreq.h"
 #include "ompi/mca/bml/base/base.h"

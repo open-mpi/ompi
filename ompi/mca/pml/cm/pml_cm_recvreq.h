@@ -102,8 +102,7 @@ do {                                                                    \
     if( MPI_ANY_SOURCE == src ) {                                       \
         ompi_proc = ompi_proc_local_proc;                               \
     } else {                                                            \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[src]->proc_ompi;                          \
+        ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
     ompi_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->proc_convertor,            \
@@ -139,8 +138,7 @@ do {                                                                    \
     if( MPI_ANY_SOURCE == src ) {                                       \
         ompi_proc = ompi_proc_local_proc;                               \
     } else {                                                            \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[src]->proc_ompi;                          \
+        ompi_proc = ompi_comm_peer_lookup( comm, src );                 \
     }                                                                   \
     ompi_convertor_copy_and_prepare_for_recv(                           \
                                   ompi_proc->proc_convertor,            \

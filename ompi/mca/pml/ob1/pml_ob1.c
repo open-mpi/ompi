@@ -28,7 +28,6 @@
 #include "pml_ob1.h"
 #include "pml_ob1_component.h"
 #include "pml_ob1_comm.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_recvfrag.h"
 #include "pml_ob1_sendreq.h"
@@ -76,7 +75,6 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
 {
     /* allocate pml specific comm data */
     mca_pml_ob1_comm_t* pml_comm = OBJ_NEW(mca_pml_ob1_comm_t);
-    mca_pml_ob1_proc_t* pml_proc = NULL;
     int i;
 
     if (NULL == pml_comm) {
@@ -84,17 +82,9 @@ int mca_pml_ob1_add_comm(ompi_communicator_t* comm)
     }
     mca_pml_ob1_comm_init_size(pml_comm, comm->c_remote_group->grp_proc_count);
     comm->c_pml_comm = pml_comm;
-    comm->c_pml_procs = (mca_pml_proc_t**)malloc(
-                                                 comm->c_remote_group->grp_proc_count * sizeof(mca_pml_proc_t));
-    if(NULL == comm->c_pml_procs) {
-        return OMPI_ERR_OUT_OF_RESOURCE;
-    }
 
-    for(i=0; i<comm->c_remote_group->grp_proc_count; i++){
-        pml_proc = OBJ_NEW(mca_pml_ob1_proc_t);
-        pml_proc->base.proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
-        comm->c_pml_procs[i] = (mca_pml_proc_t*) pml_proc; /* comm->c_remote_group->grp_proc_pointers[i]->proc_pml; */
-        pml_comm->procs[i].proc_ompi = comm->c_remote_group->grp_proc_pointers[i];
+    for( i = 0; i < comm->c_remote_group->grp_proc_count; i++ ) {
+        pml_comm->procs[i].ompi_proc = comm->c_remote_group->grp_proc_pointers[i];
     }
     return OMPI_SUCCESS;
 }
@@ -103,9 +93,6 @@ int mca_pml_ob1_del_comm(ompi_communicator_t* comm)
 {
     OBJ_RELEASE(comm->c_pml_comm);
     comm->c_pml_comm = NULL;
-    if(comm->c_pml_procs != NULL)
-        free(comm->c_pml_procs);
-    comm->c_pml_procs = NULL;
     return OMPI_SUCCESS;
 }
 
@@ -205,7 +192,7 @@ int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
     /* iterate through all procs on communicator */
     for(i=0; i<pml_comm->num_procs; i++) {
         mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
-        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->proc_ompi->proc_bml;
+        mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_bml;
         size_t n;
 
         opal_output(0, "[Rank %d]\n", i);
