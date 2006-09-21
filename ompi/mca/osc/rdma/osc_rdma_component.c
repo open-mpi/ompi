@@ -36,6 +36,7 @@
 #include "ompi/datatype/dt_arch.h"
 
 static int ompi_osc_rdma_component_open(void);
+static int32_t registered_callback = 0;
 
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
     { /* ompi_osc_base_component_t */
@@ -278,6 +279,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 
     module->p2p_num_pending_out = 0;
     module->p2p_num_pending_in = 0;
+    module->p2p_num_post_msgs = 0;
+    module->p2p_num_complete_msgs = 0;
     module->p2p_tag_counter = 0;
 
     OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
@@ -376,10 +379,12 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    /* register to receive fragment callbacks */
-    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA,
-                               ompi_osc_rdma_component_fragment_cb,
-                               NULL);
+    /* register to receive fragment callbacks, if not already done */
+    if (OPAL_THREAD_ADD32(&registered_callback, 1) <= 1) {
+        ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA,
+                                   ompi_osc_rdma_component_fragment_cb,
+                                   NULL);
+    }
 
 
     if (module->p2p_eager_send) {
@@ -558,7 +563,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
             if (NULL == module) return;
 
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_post_msgs), -1);
         }
         break;
     case OMPI_OSC_RDMA_HDR_COMPLETE:
@@ -579,7 +584,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* we've heard from one more place, and have value reqs to
                process */
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_complete_msgs), -1);
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value[0]);
         }
         break;

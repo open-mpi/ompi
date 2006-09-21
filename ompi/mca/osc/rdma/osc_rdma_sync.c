@@ -239,7 +239,7 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
 
     /* possible we've already received a couple in messages, so
        atomicall add however many we're going to wait for */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_in),
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_post_msgs),
                       ompi_group_size(P2P_MODULE(win)->p2p_sc_group));
 
     return OMPI_SUCCESS;
@@ -255,7 +255,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
     opal_list_item_t *item;
 
     /* wait for all the post messages */
-    while (0 != P2P_MODULE(win)->p2p_num_pending_in) {
+    while (0 != P2P_MODULE(win)->p2p_num_post_msgs) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
 
@@ -353,7 +353,7 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
     ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out),
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_complete_msgs),
                       ompi_group_size(P2P_MODULE(win)->p2p_pw_group));
 
     /* send a hello counter to everyone in group */
@@ -373,7 +373,7 @@ ompi_osc_rdma_module_wait(ompi_win_t *win)
     ompi_group_t *group;
 
     while (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-           0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+           0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
 
@@ -399,10 +399,10 @@ ompi_osc_rdma_module_test(ompi_win_t *win,
     ompi_group_t *group;
 
     if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-        0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+        0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
         if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-            0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+            0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
             *flag = 0;
             return OMPI_SUCCESS;
         }

@@ -95,19 +95,25 @@ struct ompi_osc_pt2pt_module_t {
 
     /** For MPI_Fence synchronization, the number of messages to send
         in epoch.  For Start/Complete, the number of updates for this
-        Complete.  For Post/Wait (poorly named), the number of
-        Complete counters we're waiting for.  For lock, the number of
+        Complete.  For lock, the number of
         messages waiting for completion on on the origin side.  Not
         protected by p2p_lock - must use atomic counter operations. */
     volatile int32_t p2p_num_pending_out;
 
     /** For MPI_Fence synchronization, the number of expected incoming
-        messages.  For Start/Complete, the number of expected Post
         messages.  For Post/Wait, the number of expected updates from
         complete. For lock, the number of messages on the passive side
         we are waiting for.  Not protected by p2p_lock - must use
         atomic counter operations. */
     volatile int32_t p2p_num_pending_in;
+
+    /** Number of "ping" messages from the remote post group we've
+        received */
+    volatile int32_t p2p_num_post_msgs;
+
+    /** Number of "count" messages from the remote complete group
+        we've received */
+    volatile int32_t p2p_num_complete_msgs;
 
     /** cyclic counter for a unique tag for long messages.  Not
         protected by the p2p_lock - must use create_send_tag() to

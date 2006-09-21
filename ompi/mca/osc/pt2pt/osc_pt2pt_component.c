@@ -279,6 +279,8 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     module->p2p_num_pending_out = 0;
     module->p2p_num_pending_in = 0;
+    module->p2p_num_post_msgs = 0;
+    module->p2p_num_complete_msgs = 0;
     module->p2p_tag_counter = 0;
 
     OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
@@ -533,7 +535,7 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
 
             assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_post_msgs), -1);
         }
         break;
     case OMPI_OSC_PT2PT_HDR_COMPLETE:
@@ -552,7 +554,7 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
 
             /* we've heard from one more place, and have value reqs to
                process */
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_complete_msgs), -1);
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value[0]);
         }
         break;
