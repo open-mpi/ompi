@@ -51,6 +51,8 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&(module->p2p_locks_pending));
 
+    free(module->p2p_sc_remote_ranks);
+    free(module->p2p_sc_remote_active_ranks);
     assert(module->p2p_sc_group == NULL);
     assert(module->p2p_pw_group == NULL);
     free(module->p2p_fence_coll_counts);

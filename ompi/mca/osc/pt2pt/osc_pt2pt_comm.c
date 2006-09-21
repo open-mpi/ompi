@@ -49,6 +49,11 @@ ompi_osc_pt2pt_module_accumulate(void *origin_addr, int origin_count,
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
 
+    if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
+        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        return MPI_ERR_RMA_SYNC;
+    }
+
     if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
         /* well, we're definitely in an access epoch now */
         ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
@@ -103,6 +108,11 @@ ompi_osc_pt2pt_module_get(void *origin_addr,
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
 
+    if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
+        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        return MPI_ERR_RMA_SYNC;
+    }
+
     if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
         /* well, we're definitely in an access epoch now */
         ompi_win_set_mode(win, OMPI_WIN_FENCE | OMPI_WIN_ACCESS_EPOCH |
@@ -142,6 +152,11 @@ ompi_osc_pt2pt_module_put(void *origin_addr, int origin_count,
 {
     int ret;
     ompi_osc_pt2pt_sendreq_t *sendreq;
+
+    if ((OMPI_WIN_STARTED & ompi_win_get_mode(win)) &&
+        (!P2P_MODULE(win)->p2p_sc_remote_active_ranks[target])) {
+        return MPI_ERR_RMA_SYNC;
+    }
 
     if (OMPI_WIN_FENCE & ompi_win_get_mode(win)) {
         /* well, we're definitely in an access epoch now */
