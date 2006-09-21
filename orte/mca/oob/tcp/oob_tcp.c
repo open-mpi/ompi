@@ -207,6 +207,16 @@ int mca_oob_tcp_component_open(void)
     mca_oob_tcp_component.tcp_rcvbuf =
         mca_oob_tcp_param_register_int("rcvbuf", 128*1024);
 
+    /* AWF - may need to increase this for large-scale jobs -
+       see AWF comment in oob_tcp_peer.c */
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "connect_timeout",
+                           "connect() timeout in seconds, before trying next interface",
+                           false,
+                           false,
+                           10,
+                           &mca_oob_tcp_component.tcp_timeout);
+
     /* initialize state */
     mca_oob_tcp_component.tcp_listen_sd = -1;
     mca_oob_tcp_component.tcp_match_count = 0;
