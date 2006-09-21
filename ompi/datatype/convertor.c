@@ -425,7 +425,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         }                                                               \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
-        /* if checksum is enabled the always continue */                \
+        /* if checksum is enabled then always continue */               \
         if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
             (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
             ((convertor->flags & CONVERTOR_SEND) ||                     \

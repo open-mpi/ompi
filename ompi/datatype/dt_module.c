@@ -775,7 +775,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
         index += __dt_contain_basic_datatypes( pData, buffer + index, length - index );
         index += snprintf( buffer + index, length - index, "\n" );
     }
-    if( pData->opt_desc.desc != pData->desc.desc ) {
+    if( (pData->opt_desc.desc != pData->desc.desc) && (NULL != pData->opt_desc.desc) ) {
         /* If the data is already committed print everything including the last
          * fake DT_END_LOOP entry.
          */
