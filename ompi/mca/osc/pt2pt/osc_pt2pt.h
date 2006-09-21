@@ -139,6 +139,8 @@ struct ompi_osc_pt2pt_module_t {
 
     struct ompi_group_t *p2p_pw_group;
     struct ompi_group_t *p2p_sc_group;
+    bool *p2p_sc_remote_active_ranks;
+    int *p2p_sc_remote_ranks;
 
     /* ********************* LOCK data ************************ */
     int32_t p2p_lock_status; /* one of 0, MPI_LOCK_EXCLUSIVE, MPI_LOCK_SHARED */

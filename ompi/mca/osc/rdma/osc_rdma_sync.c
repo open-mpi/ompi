@@ -224,6 +224,8 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
                             int assert,
                             ompi_win_t *win)
 {
+    int i;
+
     OBJ_RETAIN(group);
     /* BWB - do I need this? */
     ompi_group_increment_proc_count(group);
@@ -232,6 +234,37 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
     assert(NULL == P2P_MODULE(win)->p2p_sc_group);
     P2P_MODULE(win)->p2p_sc_group = group;    
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
+
+    memset(P2P_MODULE(win)->p2p_sc_remote_active_ranks, 0,
+           sizeof(bool) * ompi_comm_size(P2P_MODULE(win)->p2p_comm));
+
+    /* for each process in the specified group, find it's rank in our
+       communicator, store those indexes, and set the true / false in
+       the active ranks table */
+    for (i = 0 ; i < ompi_group_size(group) ; i++) {
+        int comm_rank = -1, j;
+        
+        /* no need to increment ref count - the communicator isn't
+           going anywhere while we're here */
+        ompi_group_t *comm_group = P2P_MODULE(win)->p2p_comm->c_local_group;
+
+        /* find the rank in the communicator associated with this windows */
+        for (j = 0 ; 
+             j < ompi_group_size(comm_group) ;
+             ++j) {
+            if (P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i] ==
+                comm_group->grp_proc_pointers[j]) {
+                comm_rank = j;
+                break;
+            }
+        }
+        if (comm_rank == -1) {
+            return MPI_ERR_RMA_SYNC;
+        }
+
+        P2P_MODULE(win)->p2p_sc_remote_active_ranks[comm_rank] = true;
+        P2P_MODULE(win)->p2p_sc_remote_ranks[i] = comm_rank;
+    }
 
     /* Set our mode to access w/ start */
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
@@ -264,25 +297,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
     /* for each process in group, send a control message with number
        of updates coming, then start all the requests */
     for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->p2p_sc_group) ; ++i) {
-        int comm_rank = -1, j;
-        /* no need to increment ref count - the communicator isn't
-           going anywhere while we're here */
-        ompi_group_t *comm_group = P2P_MODULE(win)->p2p_comm->c_local_group;
-
-        /* find the rank in the communicator associated with this windows */
-        for (j = 0 ; 
-             j < ompi_group_size(comm_group) ;
-             ++j) {
-            if (P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i] ==
-                comm_group->grp_proc_pointers[j]) {
-                comm_rank = j;
-                break;
-            }
-        }
-        if (comm_rank == -1) {
-            ret = MPI_ERR_RMA_SYNC;
-            goto cleanup;
-        }
+        int comm_rank = P2P_MODULE(win)->p2p_sc_remote_ranks[i];
 
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
@@ -316,7 +331,6 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
 
- cleanup:
     /* remove WIN_POSTED from our mode */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
 
