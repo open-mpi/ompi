@@ -196,6 +196,17 @@ int mca_io_base_request_alloc(ompi_file_t *file,
 
     OMPI_REQUEST_INIT(&((*req)->super), false);
 
+    /*
+     * Copied from ompi/mca/pml/base/pml_base_recvreq.h:
+     * always set the req_status.MPI_TAG to ANY_TAG before starting the
+     * request. This field is used if cancelled to find out if the request
+     * has been matched or not.
+     */
+    (*req)->super.req_status.MPI_TAG = MPI_ANY_TAG;
+    (*req)->super.req_status.MPI_ERROR = OMPI_SUCCESS;
+    (*req)->super.req_status._count = 0;
+    (*req)->super.req_status._cancelled = 0;
+
     /* All done */
 
     return OMPI_SUCCESS;
