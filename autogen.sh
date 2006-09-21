@@ -1,4 +1,4 @@
-#! /bin/bash 
+#! /usr/bin/env /bin/bash 
 #
 # Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
