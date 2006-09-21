@@ -86,6 +86,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
         num_segments = 1;
     } else {
         /* segment the message */
+	if (segsize < typelng) segsize = typelng; /* push segsize up to hold one type */
         segcount = segsize / typelng;
         if (segcount > count) { /* we have a single underfilled segment */
             segcount = count;
@@ -275,11 +276,14 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 
     err = ompi_ddt_type_size( datatype, &type_size );
 
+
+
     /* Determine number of segments and number of elements per segment */
     counts[0] = count/2;
     if (count % 2 != 0) counts[0]++;
     counts[1] = count - counts[0];
     if ( segsize > 0 ) {
+    	if (segsize < type_size) segsize = type_size; /* push segsize up to hold one type */
         segcount[0] = segcount[1] = segsize / type_size; 
         num_segments[0] = counts[0]/segcount[0];
         if ((counts[0] % segcount[0]) != 0) num_segments[0]++;
@@ -537,6 +541,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
         num_segments = 1;
     } else {
         /* segment the message */
+        if (segsize < type_size) segsize = type_size; /* push segsize up to hold one type */
         segcount = segsize / type_size;
         if (segcount > count) { /* we have a single underfilled segment */
             segcount = count;
