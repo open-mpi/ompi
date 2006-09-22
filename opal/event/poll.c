@@ -189,7 +189,7 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
            something else. */
         OPAL_THREAD_UNLOCK(&opal_event_lock);
 	res = poll(pop->event_set, nfds, sec);
-	OPAL_THREAD_LOCK(&opal_event_lock);
+        OPAL_THREAD_LOCK(&opal_event_lock);
 
 #if OPAL_EVENT_USE_SIGNALS
 	if (opal_evsignal_recalc(&pop->evsigmask) == -1)
@@ -206,8 +206,9 @@ poll_dispatch(struct event_base *base, void *arg, struct timeval *tv)
 		opal_evsignal_process();
 #endif
 		return (0);
-	} else if (opal_evsignal_caught)
+	}
 #if OPAL_EVENT_USE_SIGNALS
+        else if (opal_evsignal_caught)
 		opal_evsignal_process();
 #endif
 
