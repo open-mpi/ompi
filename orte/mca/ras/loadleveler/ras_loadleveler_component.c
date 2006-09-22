@@ -36,7 +36,7 @@ static int param_priority;
  * Local functions
  */
 static int orte_ras_loadleveler_open(void);
-static orte_ras_base_module_t *ras_loadleveler_init(int*);
+static orte_ras_base_module_t *orte_ras_loadleveler_init(int*);
 
 
 orte_ras_base_component_t mca_ras_loadleveler_component = {
@@ -67,7 +67,7 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
         false
     },
     
-    ras_loadleveler_init
+    orte_ras_loadleveler_init
 };
 
 
@@ -85,7 +85,7 @@ static int orte_ras_loadleveler_open(void)
 }
 
 
-static orte_ras_base_module_t *ras_loadleveler_init(int* priority)
+static orte_ras_base_module_t *orte_ras_loadleveler_init(int* priority)
 {
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.seed) {
