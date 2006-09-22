@@ -345,7 +345,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
     }
 
     
-    rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT16);
+    rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT64);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -608,7 +608,7 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT16);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT64);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;

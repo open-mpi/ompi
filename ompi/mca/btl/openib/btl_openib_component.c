@@ -240,6 +240,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     uint16_t lid, i, lmc;
     mca_btl_openib_module_t *openib_btl;
     mca_btl_base_selected_module_t *ib_selected;
+    union ibv_gid gid;
 
     lmc = (1 << ib_port_attr->lmc);
 
@@ -266,8 +267,10 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            /* store the sm_lid for multi-nic support */
-            openib_btl->port_info.subnet = ib_port_attr->sm_lid;
+            /* store the subnet for multi-nic support */
+            ibv_query_gid(hca->ib_dev_context, port_num, ib_port_attr->sm_lid,
+                    &gid);
+            openib_btl->port_info.subnet = gid.global.subnet_prefix;
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
