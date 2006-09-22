@@ -63,7 +63,7 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
         NULL, /* get */ 
         mca_btl_base_dump,
         NULL, /* mpool */
-        NULL /* register error cb */
+        NULL /* register error cb */ 
     }
 };
 
@@ -347,9 +347,11 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
 
     /* Set up the LMR triplet from the frag segment */
     /* Note that this triplet defines a sub-region of a registered LMR */
-    frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
+    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->ftr = (mca_btl_udapl_footer_t *)
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
     frag->triplet.segment_length =
-        frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+        frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
     assert(frag->triplet.lmr_context ==
             ((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet.lmr_context);
     
@@ -486,7 +488,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         frag->registration = registration;
         frag->triplet.lmr_context =
             ((mca_mpool_udapl_registration_t*)registration)->lmr_triplet.lmr_context;
-        /* TODO - should our base addr be frag->hdr? */
+        /* TODO - should our base addr be frag->ftr? */
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->triplet.segment_length = max_data;
@@ -506,7 +508,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
 
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+        iov.iov_base = (char *) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data, &free_after);
@@ -515,11 +517,6 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag);
             return NULL;
         }
-
-        frag->segment.seg_len = max_data + reserve;
-        frag->triplet.segment_length =
-            max_data + reserve + sizeof(mca_btl_base_header_t);
-        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
     }
 
     /* 
@@ -537,7 +534,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
 
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+        iov.iov_base = (char *) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data, &free_after);
@@ -547,14 +544,17 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             MCA_BTL_UDAPL_FRAG_RETURN_MAX(btl, frag);
             return NULL;
         }
-
-        /* TODO - pull this out of the if statements. */
-        frag->segment.seg_len = max_data + reserve;
-        frag->triplet.segment_length =
-            max_data + reserve + sizeof(mca_btl_base_header_t);
-        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
     }
 
+    /* setup lengths and addresses to send out data */
+    frag->segment.seg_len = max_data + reserve;
+    frag->triplet.segment_length =
+	max_data + reserve + sizeof(mca_btl_udapl_footer_t);
+    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
+    frag->ftr = (mca_btl_udapl_footer_t *)
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
+
+    /* initialize base descriptor */
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
@@ -656,7 +656,9 @@ int mca_btl_udapl_send(
 
     frag->btl = (mca_btl_udapl_module_t*)btl;
     frag->endpoint = endpoint;
-    frag->hdr->tag = tag;
+    frag->ftr = (mca_btl_udapl_footer_t *)
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
+    frag->ftr->tag = tag;
     frag->type = MCA_BTL_UDAPL_SEND;
 
     /* TODO - will inlining this give worthwhile performance? */

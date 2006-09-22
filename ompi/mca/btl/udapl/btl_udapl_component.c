@@ -54,7 +54,7 @@ mca_btl_udapl_component_t mca_btl_udapl_component = {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
 
-            MCA_BTL_BASE_VERSION_1_0_1,
+            MCA_BTL_BASE_VERSION_1_0_0,
 
             "udapl", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
@@ -182,12 +182,12 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_component.udapl_eager_frag_size =
         mca_btl_udapl_module.super.btl_eager_limit;
     mca_btl_udapl_module.super.btl_eager_limit -=
-        sizeof(mca_btl_base_header_t);
+        sizeof(mca_btl_udapl_footer_t);
     
     mca_btl_udapl_component.udapl_max_frag_size =
         mca_btl_udapl_module.super.btl_max_send_size;
     mca_btl_udapl_module.super.btl_max_send_size -=
-        sizeof(mca_btl_base_header_t);
+        sizeof(mca_btl_udapl_footer_t);
 
 
     /* leave pinned option */
@@ -412,6 +412,7 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
 
     memcpy(frag->segment.seg_addr.pval,
             &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
+
     frag->type = MCA_BTL_UDAPL_CONN_SEND;
 
     rc = dat_ep_post_send(endpoint, 1,
@@ -498,7 +499,7 @@ int mca_btl_udapl_component_progress()
                     
                                 assert(frag->triplet.segment_length ==
                                         frag->segment.seg_len +
-                                        sizeof(mca_btl_base_header_t));
+                                        sizeof(mca_btl_udapl_footer_t));
 
                                 cookie.as_ptr = frag;
                                 dat_ep_post_send(endpoint->endpoint_eager,
@@ -521,7 +522,7 @@ int mca_btl_udapl_component_progress()
                                 
                                 assert(frag->triplet.segment_length ==
                                         frag->segment.seg_len +
-                                        sizeof(mca_btl_base_header_t));
+                                        sizeof(mca_btl_udapl_footer_t));
 
                                 cookie.as_ptr = frag;
                                 dat_ep_post_send(endpoint->endpoint_max,
@@ -537,8 +538,7 @@ int mca_btl_udapl_component_progress()
                     }
                     case MCA_BTL_UDAPL_RECV:
                     {
-                        mca_btl_base_recv_reg_t* reg =
-                                &btl->udapl_reg[frag->hdr->tag];
+                        mca_btl_base_recv_reg_t* reg;
 
                         assert(frag->base.des_dst == &frag->segment);
                         assert(frag->base.des_dst_cnt == 1);
@@ -546,26 +546,26 @@ int mca_btl_udapl_component_progress()
                         assert(frag->base.des_src_cnt == 0);
                         assert(frag->type == MCA_BTL_UDAPL_RECV);
                         assert(frag->triplet.virtual_address ==
-                                (DAT_VADDR)frag->hdr);
+                                (DAT_VADDR)frag->segment.seg_addr.pval);
                         assert(frag->triplet.segment_length == frag->size);
                         assert(frag->btl == btl);
 
-                        /*OPAL_OUTPUT((0, "btl_udapl UDAPL_RECV %d",
-                                    dto->transfered_length));*/
-
-                        frag->segment.seg_addr.pval = frag->hdr + 1;
+			/* setup frag ftr location and do callback */
                         frag->segment.seg_len = dto->transfered_length -
-                            sizeof(mca_btl_base_header_t);
-
+                            sizeof(mca_btl_udapl_footer_t);
+			frag->ftr = (mca_btl_udapl_footer_t *)
+			    ((char *)frag->segment.seg_addr.pval + 
+			     frag->segment.seg_len);
+			reg = &btl->udapl_reg[frag->ftr->tag];
                         OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
                         reg->cbfunc(&btl->super,
-                                frag->hdr->tag, &frag->base, reg->cbdata);
+                                frag->ftr->tag, &frag->base, reg->cbdata);
                         OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
 
                         /* Repost the frag */
-                        frag->segment.seg_addr.pval = frag->hdr;
+                        frag->ftr = frag->segment.seg_addr.pval;
                         frag->segment.seg_len =
-                            frag->size - sizeof(mca_btl_base_header_t);
+                            frag->size - sizeof(mca_btl_udapl_footer_t);
                         frag->base.des_flags = 0;
 
                         if(frag->size ==
