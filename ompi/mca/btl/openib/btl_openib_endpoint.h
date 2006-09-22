@@ -41,7 +41,7 @@ struct mca_btl_openib_frag_t;
 
 struct mca_btl_openib_port_info_t {
     uint32_t mtu;
-    uint16_t subnet; 
+    uint64_t subnet; 
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
 
@@ -88,7 +88,7 @@ struct mca_btl_openib_rem_info_t {
     uint32_t                    rem_psn_lp; 
     /* Remote processes port sequence number (Low and High) */ 
    
-    uint16_t                    rem_subnet; 
+    uint64_t                    rem_subnet; 
     /* subnet of remote process */     
 
     /* MTU of remote process */
