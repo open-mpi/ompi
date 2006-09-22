@@ -533,8 +533,10 @@ opal_event_base_loop(struct event_base *base, int flags)
 	done = 0;
 	while (!done && opal_event_enabled) {
 		/* Calculate the initial events that we are waiting for */
-		if (evsel->recalc(base, evbase, 0) == -1)
+		if (evsel->recalc(base, evbase, 0) == -1) {
+                        OPAL_THREAD_UNLOCK(&opal_event_lock);
 			return (-1);
+                }
 
 		/* Terminate the loop if we have been asked to */
 		if (base->event_gotterm) {
