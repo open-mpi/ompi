@@ -79,7 +79,7 @@ struct mca_btl_openib_rem_info_t {
     uint32_t                    rem_psn_lp; 
     /* Remote processes port sequence number (Low and High) */ 
    
-    uint16_t                    rem_subnet; 
+    uint64_t                    rem_subnet; 
     /* subnet of remote process */     
 
     /* MTU of remote process */
