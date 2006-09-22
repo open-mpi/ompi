@@ -211,7 +211,7 @@ void gsym_test_func(void);
 }
 #endif
 int
-main(int argc, char *argv[[]])
+main()
 {
     gsym_test_func();
     return 0;

@@ -56,7 +56,6 @@ void $ompi_print_logical_fn(ompi_fortran_logical_t * logical);
 
 void $ompi_print_logical_fn(ompi_fortran_logical_t * logical)
 {
-    int result = 0;
     FILE *f=fopen("conftestval", "w");
     if (!f) exit(1);
 
@@ -89,7 +88,7 @@ EOF
                  [happy=0])
 
              if test "$happy" = "0" ; then
-                 AC_MSG_ERROR([Could not determine value of Fotran .TRUE..  Aborting.])
+                 AC_MSG_ERROR([Could not determine value of Fortran .TRUE..  Aborting.])
              fi
 
              AS_IF([test "$cross_compiling" = "yes"],
