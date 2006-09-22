@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +40,14 @@ typedef enum {
     MCA_BTL_UDAPL_CONN_SEND
 } mca_btl_udapl_frag_type_t;
 
+/**
+ * uDAPL btl footer.
+ * This is put after the payload packet so the PML header can be aligned.
+ */
+struct mca_btl_udapl_footer_t {
+    mca_btl_base_tag_t tag;
+};
+typedef struct mca_btl_udapl_footer_t mca_btl_udapl_footer_t;
 
 /**
  * uDAPL fragment derived type.
@@ -51,12 +61,13 @@ struct mca_btl_udapl_frag_t {
     struct mca_mpool_base_registration_t* registration;
     DAT_LMR_TRIPLET triplet;
     
-    mca_btl_base_header_t *hdr;
+    mca_btl_udapl_footer_t *ftr;
     size_t size; 
     mca_btl_udapl_frag_type_t type;
 }; 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_t); 
+
 
 typedef struct mca_btl_udapl_frag_t mca_btl_udapl_frag_eager_t; 
 OBJ_CLASS_DECLARATION(mca_btl_udapl_frag_eager_t); 

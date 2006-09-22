@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,8 +37,8 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 #endif
 
     frag->registration = (mca_mpool_base_registration_t*)reg; 
-    frag->hdr = (mca_btl_base_header_t*)(frag + 1);
-    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
+    frag->segment.seg_addr.pval = (unsigned char*)(frag + 1); 
+    frag->ftr = NULL;
 
     /* Don't understand why yet, but there are cases where reg is NULL -
        that is, this memory has not been registered.  So be careful not
@@ -67,14 +68,14 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
     mca_btl_udapl_frag_common_constructor(frag); 
     frag->segment.seg_len = 0;
     frag->segment.seg_addr.pval = NULL;
-    frag->hdr = NULL;
+    frag->ftr = NULL;
     frag->size = 0; 
 }
 
 static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
 {
 #if OMPI_ENABLE_DEBUG
-    frag->hdr = NULL;
+    frag->ftr = NULL;
     frag->size = 0; 
     frag->registration = NULL; 
     frag->segment.seg_len = 0;

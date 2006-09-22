@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ int mca_btl_udapl_endpoint_send(mca_btl_base_endpoint_t* endpoint,
 
     /* Fix up the segment length before we do anything with the frag */
     frag->triplet.segment_length =
-            frag->segment.seg_len + sizeof(mca_btl_base_header_t);
+            frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
 
     OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
     switch(endpoint->endpoint_state) {
@@ -179,7 +181,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
     mca_btl_udapl_addr_t addr;
     mca_btl_udapl_proc_t* proc;
     mca_btl_base_endpoint_t* ep;
-    size_t cnt = 1;
+    int32_t cnt = 1;
     size_t i;
     int rc;
 
@@ -286,6 +288,8 @@ failure_create:
 
 /*
  * Finish establishing a connection
+ * Note that this routine expects that the mca_btl_udapl_component.udapl.lock
+ * has been acquired by the callee.
  */
 
 int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
@@ -311,7 +315,6 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
             /* TODO - Check that the DAT_CONN_QUAL's match too */
             if(ep->endpoint_btl == btl &&
                     !memcmp(addr, &ep->endpoint_addr, sizeof(DAT_SOCK_ADDR))) {
-
                 OPAL_THREAD_LOCK(&ep->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {
                     ep->endpoint_eager = endpoint;
@@ -324,7 +327,6 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                             ep->endpoint_state));
                     return OMPI_ERROR;
                 }
-
                 return rc;
             }
         }
@@ -401,9 +403,10 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
                 opal_list_remove_first(&endpoint->endpoint_eager_frags))) {
         cookie.as_ptr = frag;
             
-        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->hdr);
+        assert(frag->triplet.virtual_address == 
+	       (DAT_VADDR)frag->segment.seg_addr.pval);
         assert(frag->triplet.segment_length ==
-                frag->segment.seg_len + sizeof(mca_btl_base_header_t));
+                frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
                 mca_btl_udapl_component.udapl_eager_frag_size);
         rc = dat_ep_post_send(endpoint->endpoint_eager, 1,
@@ -427,9 +430,9 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
                 opal_list_remove_first(&endpoint->endpoint_max_frags))) {
         cookie.as_ptr = frag;
             
-        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->hdr);
+        assert(frag->triplet.virtual_address == (DAT_VADDR)frag->ftr);
         assert(frag->triplet.segment_length ==
-                frag->segment.seg_len + sizeof(mca_btl_base_header_t));
+                frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
                 mca_btl_udapl_component.udapl_eager_frag_size);
 
@@ -477,7 +480,7 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
         assert(size == frag->size);
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
-        frag->triplet.virtual_address = (DAT_VADDR)frag->hdr;
+        frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
         frag->triplet.segment_length = frag->size;
     
         frag->btl = endpoint->endpoint_btl;
