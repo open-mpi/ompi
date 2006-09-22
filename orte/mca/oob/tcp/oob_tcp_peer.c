@@ -451,11 +451,11 @@ static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
         opal_evtimer_add(&peer->peer_timer_event, &tv);
         return;
     } else if(so_error != 0) {
-        /* If no interfaces could connect (the error case below), an error message has
-           already been printed, so we can just return */
-        if(ORTE_ERR_UNREACH == mca_oob_tcp_peer_try_connect(peer)) {
-            return;
-        }
+        /* No need to worry about the return code here - we return regardless
+           at this point, and if an error did occur a message has already been
+           printed for the user */
+        mca_oob_tcp_peer_try_connect(peer);
+        return;
     }
 
     if(mca_oob_tcp_peer_send_connect_ack(peer) == ORTE_SUCCESS) {
