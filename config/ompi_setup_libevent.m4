@@ -225,7 +225,7 @@ if test "x$ac_cv_header_sys_event_h" = "xyes"; then
 #include <stdlib.h>
 
 int
-main(int argc, char **argv)
+main()
 {
 	int kq;
 	int n;
@@ -289,7 +289,7 @@ epoll_create(int size)
 }
 
 int
-main(int argc, char **argv)
+main()
 {
 	int epfd;
 

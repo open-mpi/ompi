@@ -44,7 +44,7 @@ AC_TRY_RUN([#include <pthread.h>
 #include <unistd.h>
 #include <stdlib.h>
 void *checkpid(void *arg);
-int main(int argc, char* argv[]) {
+int main() {
   pthread_t thr;
   int pid, retval;
   pid = getpid();

@@ -36,7 +36,7 @@ void func (int c, char * f, ...)
   va_end (arglist);
 }
 
-int main (int argc, char * argv[])
+int main ()
 {
   FILE *f;
   func (4711, "Help %d [%s]\n", 10, "ten");

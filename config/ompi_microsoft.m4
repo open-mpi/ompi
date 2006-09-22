@@ -40,7 +40,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         AC_MSG_CHECKING(for working InterlockedCompareExchange)
         AC_TRY_RUN( [#include <windows.h>
-                     int main( int argc, char** argv ) {
+                     int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchange( &dest, exchange, comperand );
@@ -56,7 +56,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         AC_MSG_CHECKING(for working InterlockedCompareExchangeAcquire)
         AC_TRY_RUN( [#include <windows.h>
-                 int main( int argc, char** argv ) {
+                 int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchangeAcquire( &dest, exchange, comperand );
@@ -72,7 +72,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         AC_MSG_CHECKING(for working InterlockedCompareExchangeRelease)
         AC_TRY_RUN( [#include <windows.h>
-                 int main( int argc, char** argv ) {
+                 int main() {
                      LONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchangeRelease( &dest, exchange, comperand );
@@ -88,7 +88,7 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
 
         AC_MSG_CHECKING(for working InterlockedCompareExchange64)
         AC_TRY_RUN( [#include <windows.h>
-                 int main( int argc, char** argv ) {
+                 int main() {
                      LONGLONG dest = 1, exchange = 0, comperand = 1;
                      SetErrorMode(SEM_FAILCRITICALERRORS);
                      InterlockedCompareExchange64( &dest, exchange, comperand );
