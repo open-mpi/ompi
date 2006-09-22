@@ -22,9 +22,6 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#ifdef HAVE_EXECINFO_H
-#include <execinfo.h>
-#endif
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
@@ -35,58 +32,28 @@
 #include <netdb.h>
 #endif
 
-#include "opal/event/event.h"
-#include "opal/util/show_help.h"
+#include "opal/mca/backtrace/backtrace.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/rmgr/rmgr.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 
-#if HAVE_SIGNAL_H
-#include <signal.h>
-#endif
-
-#if 0
-static
-int
-abort_procs(ompi_proc_t **procs, int proc_count, 
-            orte_jobid_t my_jobid)
-{
-    int i;
-    int ret = OMPI_SUCCESS;
-    int killret=OMPI_SUCCESS;
-    orte_jobid_t jobid;
-
-    for (i = 0 ; i < proc_count ; ++i) {
-        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&jobid, &(procs[i]->proc_name)))) {
-            return ret;
-        }
-        if (jobid == my_jobid) continue;
-
-        killret = orte_pls.terminate_job(jobid);
-
-        if (OMPI_SUCCESS != killret) ret = killret;
-    }
-
-    return ret;
-}
-#endif
 
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
                int errcode,
                bool kill_remote_of_intercomm)
 {
-    orte_jobid_t my_jobid;
-    int ret = OMPI_SUCCESS;
+    int count = 0, i, ret = OMPI_SUCCESS;
     char hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
+    orte_process_name_t *abort_procs;
+    orte_std_cntr_t nabort_procs;
+ 
     
     /* Corner case: if we're being called as a result of the
        OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
@@ -94,7 +61,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
        ORTE has been setup yet. */
 
     if (!ompi_mpi_initialized || ompi_mpi_finalized) {
-        exit(errcode);
+        orte_errmgr.error_detected(errcode, NULL);
     }
 
     /* If we're going to print anything, get the hostname and PID of
@@ -109,21 +76,21 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* Should we print a stack trace? */
 
     if (ompi_mpi_abort_print_stack) {
-#if OMPI_WANT_PRETTY_PRINT_STACKTRACE && ! defined(__WINDOWS__) && defined(HAVE_BACKTRACE)
-        int i;
-        int trace_size;
-        void *trace[32];
-        char **messages = (char **)NULL;
+        char **messages;
+        int len, i;
 
-        trace_size = backtrace(trace, 32);
-        messages = backtrace_symbols(trace, trace_size);
-
-        for (i = 0; i < trace_size; ++i) {
-            fprintf(stderr, "[%s:%d] [%d] func:%s\n", hostname, (int) pid, 
-                    i, messages[i]);
+        if (OMPI_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
+            for (i = 0; i < len; ++i) {
+                fprintf(stderr, "[%s:%d] [%d] func:%s\n", hostname, (int) pid, 
+                        i, messages[i]);
+                fflush(stderr);
+            }
+            free(messages);
+        } else {
+            fprintf(stderr, "[%s:%d] Abort is unable to print a stack trace\n",
+                    hostname, (int) pid);
             fflush(stderr);
         }
-#endif
     }
 
     /* Should we wait for a while before aborting? */
@@ -145,58 +112,65 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         }
     }
 
-    /* BWB - XXX - Should probably publish the error code somewhere */
-#if 0
-    /* Kill everyone in the job.  We may make this better someday to
-       actually loop over ompi_rte_kill_proc() to only kill the procs
-       in comm, and additionally to somehow use errorcode. */
+    /* abort local procs in the communicator.  If the communicator is
+       an intercommunicator AND the abort has explicitly requested
+       that we abort the remote procs, then do that as well. */
+    nabort_procs = ompi_comm_size(comm);
 
-    if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, 
-                                                 orte_process_info.my_name))) {
-        /* What else can you do? */
-        exit(errcode);
+    if (kill_remote_of_intercomm) {
+        /* ompi_comm_remote_size() returns 0 if not an intercomm, so
+           this is cool */
+        nabort_procs += ompi_comm_remote_size(comm);
     }
 
-    /* kill everyone in the remote group execpt our jobid, if
-       requested */
-    if (kill_remote_of_intercomm && OMPI_COMM_IS_INTER(comm)) {
-        abort_procs(comm->c_remote_group->grp_proc_pointers,
-                    comm->c_remote_group->grp_proc_count,
-                    my_jobid);
+    abort_procs = malloc(sizeof(orte_process_name_t) * nabort_procs);
+    if (NULL == abort_procs) {
+        /* quick clean orte and get out */
+        orte_errmgr.error_detected(errcode, 
+                                   "Abort unable to malloc memory to kill procs", 
+                                   NULL);
     }
 
-    /* kill everyone in the local group, except our jobid. */
-    abort_procs(comm->c_local_group->grp_proc_pointers,
-                comm->c_local_group->grp_proc_count,
-                my_jobid);
+    /* put all the local procs in the abort list */
+    for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
+        if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, 
+                                 &comm->c_local_group->grp_proc_pointers[i]->proc_name,
+                                 orte_process_info.my_name)) {
+            assert(count <= nabort_procs);
+            abort_procs[count++] = comm->c_local_group->grp_proc_pointers[i]->proc_name;
+        } else {
+            /* don't terminate me just yet */
+            nabort_procs--;
+        }
+    }
 
-    ret = orte_pls.terminate_job(my_jobid);
-
-    if (OMPI_SUCCESS == ret) {
-        while (1) {
-            /* We should never really get here, since
-               ompi_rte_terminate_job shouldn't return until the job
-               is actually dead.  But just in case there are some
-               race conditions, keep progressing the event loop until
-               we get killed */
-            if (!OMPI_ENABLE_PROGRESS_THREADS || opal_event_progress_thread()) {
-                opal_event_loop(0);
+    /* if requested, kill off remote procs too */
+    if (kill_remote_of_intercomm) {
+        for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
+            if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, 
+                                     &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
+                                     orte_process_info.my_name)) {
+                assert(count <= nabort_procs);
+                abort_procs[count++] =
+                    comm->c_remote_group->grp_proc_pointers[i]->proc_name;
             } else {
-                sleep(1000);
+                /* don't terminate me just yet */
+                nabort_procs--;
             }
         }
-    } else {
-        /* If ret isn't OMPI_SUCCESS, then the rest of the job is
-        still running.  But we can't really do anything about that, so
-        just exit and let it become Somebody Elses Problem. */
-        exit(errcode);
     }
-#endif
-    
-    /* tell the error manager we detected an error - OpenRTE
-     * will take care of cleaning up for us
-     */
-    orte_errmgr.error_detected(errcode, "MPI_Abort has been called", NULL);
+
+    if (nabort_procs > 0) {
+        ret = orte_errmgr.abort_procs_request(abort_procs, nabort_procs);
+        if (OMPI_SUCCESS != ret) {
+            orte_errmgr.error_detected(ret, 
+                                       "Open MPI failed to abort procs as requested (%d). Exiting.",
+                                       ret, NULL);
+        }
+    }
+
+    /* now that we've aborted everyone else, gracefully die. */
+    orte_errmgr.error_detected(errcode, NULL);
     
     return OMPI_SUCCESS;
 }
