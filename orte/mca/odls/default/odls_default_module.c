@@ -929,9 +929,10 @@ DOFORK:
             ORTE_ERROR_LOG(rc);
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
             opal_condition_signal(&orte_odls_default.cond);
-            OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
             return rc;
         }
+        /* reaquire lock so we don't double unlock... */
+        OPAL_THREAD_LOCK(&orte_odls_default.mutex);
         i++;
     }
 
