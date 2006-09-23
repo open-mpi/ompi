@@ -27,6 +27,14 @@
 # Assembly Format field:
 #   config_file-text-global-label_suffix-gsym-lsym-type-size-align_log-ppc_r_reg-64_bit-gnu_stack
 
+######################################################################
+#
+# Alpha
+#
+######################################################################
+
+ALPHA	default-.text-.globl-:--$-@-1-1-1-1-1	alpha-linux
+
 
 ######################################################################
 #
