@@ -74,7 +74,8 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
         }
     }
     
-    sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, unique_key[0], unique_key[1]);
+    sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long unsigned)unique_key[0], 
+            (long unsigned)unique_key[1]);
     string_key[sizeof string_key - 1] = '\0';
     
     if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
