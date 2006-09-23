@@ -30,7 +30,7 @@ $IS64BIT = 0;
 ($CONFIG, $TEXT, $GLOBAL, $SUFFIX, $GSYM, $LSYM, $TYPE, $SIZE, $ALIGN_LOG, $DEL_R_REG, $IS64BIT, $GNU_STACK) = (
     $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
 
-if (1) {
+if 01) {
 print "$asmformat\n";
 print "CONFIG: $CONFIG\n";
 print "TEXT: $TEXT\n";
