@@ -45,6 +45,12 @@ AC_DEFUN([MCA_timer_linux_CONFIG],[
                  [timer_linux_happy="yes"],
                  [timer_linux_happy="no"])])
 
+   case "${host}" in
+   alpha*)
+        timer_linux_happy="no"
+        ;;
+   esac
+
    AS_IF([test "$timer_linux_happy" = "no" -a \
                "$timer_linux_should_use" = "1"],
          [AC_MSG_ERROR([Linux timer requested but not available.  Aborting.])])
