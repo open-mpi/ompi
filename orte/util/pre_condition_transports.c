@@ -15,7 +15,22 @@
  * 
  * $HEADER$
  */
+
 #include "orte_config.h"
+
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_STAT_H
+#include <sys/stat.h>
+#endif
+#ifdef HAVE_FCNTL_H
+#include <fcntl.h>
+#endif
+
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
@@ -28,9 +43,6 @@
 
 #include "orte/util/pre_condition_transports.h"
 
-#include <unistd.h>
-#include <sys/types.h> 
-#include <fcntl.h>
 /* some network transports require a little bit of information to
  * "pre-condition" them - i.e., to setup their individual transport
  * connections so they can generate their endpoint addresses. This
