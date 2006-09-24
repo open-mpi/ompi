@@ -45,8 +45,8 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
     srand(pid);
     unique_key[1] = rand();
     unique_key[2] = rand();
-    
 }
+
 int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context)
 {
     size_t i;
@@ -56,14 +56,17 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     char string_key[ORTE_TRANSPORT_KEY_LEN + 1]; /* key + null */
 	
     size_t bytes_read; 
-    
-    
-    
+    struct stat buf;
+        
     /* put the number here - or else create an appropriate string. this just needs to
      * eventually be a string variable
      */
-    
-    if(-1 == (fd_rand = open("/dev/random", O_RDONLY | O_NONBLOCK))) {
+    if(0 == stat("/dev/urandom", &buf)) { 
+        /* file doesn't exist! */
+        orte_pre_condition_transports_use_rand(unique_key); 
+    }
+        
+    if(-1 == (fd_rand = open("/dev/urandom", O_RDONLY))) {
         orte_pre_condition_transports_use_rand(unique_key); 
     } else { 
         bytes_read = read(fd_rand, (char *) unique_key, 16);
