@@ -221,8 +221,12 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef SI_SIGIO
             case SI_SIGIO: str = "SI_SIGIO"; break;
 #endif
+#ifdef SI_ASYNCIO
             case SI_ASYNCIO: str = "SI_ASYNCIO"; break;
+#endif
+#ifdef SI_MESGQ
             case SI_MESGQ: str = "SI_MESGQ"; break;
+#endif
             case SI_TIMER: str = "SI_TIMER"; break;
             case SI_QUEUE: str = "SI_QUEUE"; break;
             case SI_USER: str = "SI_USER"; break;
