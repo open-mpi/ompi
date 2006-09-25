@@ -27,15 +27,19 @@ version 1.0.
 1.3
 ---
 
-- Add new --enable-mpirun-prefix-by-default configure option to always
-  imply the --prefix option to mpirun, preventing many rsh/ssh-based
-  users from needing to modify their shell startup files.
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
 
 
 1.2
 ---
 
+- A variety of Fortran API fixes.
+- Build the Fortran MPI API as a separate library to allow these
+  functions to be profiled properly.
+- Added LoadLeveler support for jobs larger than 128 tasks.
+- Add new --enable-mpirun-prefix-by-default configure option to always
+  imply the --prefix option to mpirun, preventing many rsh/ssh-based
+  users from needing to modify their shell startup files.
 - Add a number of missing constants in the C++ bindings
 - Added tight integration with Sun N1 Grid Engine (N1GE) 6 and the
   open source Grid Engine.
@@ -46,7 +50,7 @@ version 1.0.
   unresolved common symbols in shared libraries.
 - Addition of "dr" (data reliability) PML.
 - Added stacktrace support for Solaris and Mac OS X.
-- Update event library to libevent-1.1b
+- Update event library to libevent-1.1b.
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
 - Addition of "cm" PML to better support library-level matching
@@ -61,6 +65,9 @@ version 1.0.
 1.1.2
 -----
 
+- Fix the "tuned" collective componenete where some cases where
+  MPI_BCAST could hang.
+- Update TCP support to support non-uniform TCP environments.
 - Allow the "poe" RAS component to be built on AIX or Linux.
 - Only install mpif.h if the rest of the Fortran bindings are
   installed.
