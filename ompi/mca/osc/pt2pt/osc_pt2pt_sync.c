@@ -221,8 +221,7 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
                             int assert,
                             ompi_win_t *win)
 {
-    assert(P2P_MODULE(win)->p2p_num_pending_in == 0);
-    assert(P2P_MODULE(win)->p2p_num_pending_out == 0);
+    int i;
 
     OBJ_RETAIN(group);
     /* BWB - do I need this? */
@@ -233,37 +232,15 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
     P2P_MODULE(win)->p2p_sc_group = group;    
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
-    /* Set our mode to access w/ start */
-    ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
+    memset(P2P_MODULE(win)->p2p_sc_remote_active_ranks, 0,
+           sizeof(bool) * ompi_comm_size(P2P_MODULE(win)->p2p_comm));
 
-    /* possible we've already received a couple in messages, so
-       atomicall add however many we're going to wait for */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_in),
-                      ompi_group_size(P2P_MODULE(win)->p2p_sc_group));
-
-    return OMPI_SUCCESS;
-}
-
-
-int
-ompi_osc_pt2pt_module_complete(ompi_win_t *win)
-{
-    int i;
-    int ret = OMPI_SUCCESS;
-    ompi_group_t *group;
-    opal_list_item_t *item;
-
-    /* wait for all the post messages */
-    while (0 != P2P_MODULE(win)->p2p_num_pending_in) {
-        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
-    }
-
-    ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
-
-    /* for each process in group, send a control message with number
-       of updates coming, then start all the requests */
-    for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->p2p_sc_group) ; ++i) {
+    /* for each process in the specified group, find it's rank in our
+       communicator, store those indexes, and set the true / false in
+       the active ranks table */
+    for (i = 0 ; i < ompi_group_size(group) ; i++) {
         int comm_rank = -1, j;
+        
         /* no need to increment ref count - the communicator isn't
            going anywhere while we're here */
         ompi_group_t *comm_group = P2P_MODULE(win)->p2p_comm->c_local_group;
@@ -279,9 +256,45 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
             }
         }
         if (comm_rank == -1) {
-            ret = MPI_ERR_RMA_SYNC;
-            goto cleanup;
+            return MPI_ERR_RMA_SYNC;
         }
+
+        P2P_MODULE(win)->p2p_sc_remote_active_ranks[comm_rank] = true;
+        P2P_MODULE(win)->p2p_sc_remote_ranks[i] = comm_rank;
+    }
+
+    /* Set our mode to access w/ start */
+    ompi_win_remove_mode(win, OMPI_WIN_FENCE);
+    ompi_win_append_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
+
+    /* possible we've already received a couple in messages, so
+       atomicall add however many we're going to wait for */
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_post_msgs),
+                      ompi_group_size(P2P_MODULE(win)->p2p_sc_group));
+
+    return OMPI_SUCCESS;
+}
+
+
+int
+ompi_osc_pt2pt_module_complete(ompi_win_t *win)
+{
+    int i;
+    int ret = OMPI_SUCCESS;
+    ompi_group_t *group;
+    opal_list_item_t *item;
+
+    /* wait for all the post messages */
+    while (0 != P2P_MODULE(win)->p2p_num_post_msgs) {
+        ompi_osc_pt2pt_progress(P2P_MODULE(win));        
+    }
+
+    ompi_osc_pt2pt_flip_sendreqs(P2P_MODULE(win));
+
+    /* for each process in group, send a control message with number
+       of updates coming, then start all the requests */
+    for (i = 0 ; i < ompi_group_size(P2P_MODULE(win)->p2p_sc_group) ; ++i) {
+        int comm_rank = P2P_MODULE(win)->p2p_sc_remote_ranks[i];
 
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
@@ -314,9 +327,8 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
         ompi_osc_pt2pt_progress(P2P_MODULE(win));        
     }
 
- cleanup:
-    /* set our mode back to nothing */
-    ompi_win_set_mode(win, 0);
+    /* remove WIN_POSTED from our mode */
+    ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_STARTED);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
     group = P2P_MODULE(win)->p2p_sc_group;
@@ -337,9 +349,6 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
 {
     int i;
 
-    assert(P2P_MODULE(win)->p2p_num_pending_in == 0);
-    assert(P2P_MODULE(win)->p2p_num_pending_out == 0);
-
     OBJ_RETAIN(group);
     /* BWB - do I need this? */
     ompi_group_increment_proc_count(group);
@@ -350,10 +359,11 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
     /* Set our mode to expose w/ post */
+    ompi_win_remove_mode(win, OMPI_WIN_FENCE);
     ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out),
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_complete_msgs),
                       ompi_group_size(P2P_MODULE(win)->p2p_pw_group));
 
     /* send a hello counter to everyone in group */
@@ -373,11 +383,11 @@ ompi_osc_pt2pt_module_wait(ompi_win_t *win)
     ompi_group_t *group;
 
     while (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-           0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+           0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_pt2pt_progress(P2P_MODULE(win));        
     }
 
-    ompi_win_set_mode(win, 0);
+    ompi_win_remove_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
     group = P2P_MODULE(win)->p2p_pw_group;
@@ -399,10 +409,10 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
     ompi_group_t *group;
 
     if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-        0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+        0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_pt2pt_progress(P2P_MODULE(win));        
         if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-            0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+            0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
             *flag = 0;
             return OMPI_SUCCESS;
         }
@@ -410,7 +420,7 @@ ompi_osc_pt2pt_module_test(ompi_win_t *win,
 
     *flag = 1;
 
-    ompi_win_set_mode(win, 0);
+    ompi_win_remove_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     OPAL_THREAD_LOCK(&(P2P_MODULE(win)->p2p_lock));
     group = P2P_MODULE(win)->p2p_pw_group;
