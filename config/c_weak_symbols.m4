@@ -33,7 +33,7 @@ EOF
     cat > conftest.c <<EOF
 extern int fake(int i);
 extern int real(int i);
-int main(int argc, char *argv[]) { return fake(3); }
+int main() { return fake(3); }
 EOF
 
 # Try the compile

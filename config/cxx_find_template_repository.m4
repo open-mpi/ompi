@@ -91,7 +91,7 @@ foo<T>::member(int i)
 }
 
 int
-main(int argc, char *argv[])
+main()
 {
   foo<bar> var1(6);
   foo< foo<bar> > var2(var1);
