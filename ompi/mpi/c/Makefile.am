@@ -42,8 +42,6 @@ AM_CPPFLAGS     = -DOMPI_PROFILING_DEFINES=0
 noinst_LTLIBRARIES = libmpi_c.la
 if WANT_MPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_mpi.la
-else
-noinst_LTLIBRARIES +=
 endif
 
 headers = bindings.h

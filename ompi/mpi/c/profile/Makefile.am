@@ -35,9 +35,6 @@ AM_CPPFLAGS = -DOMPI_PROFILING_DEFINES=1
 noinst_LTLIBRARIES =
 if WANT_PMPI_BINDINGS_LAYER
 noinst_LTLIBRARIES += libmpi_c_pmpi.la
-else
-noinst_LTLIBRARIES +=
-pmpi_lib = 
 endif
 
 headers = defines.h
