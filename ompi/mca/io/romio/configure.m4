@@ -17,6 +17,14 @@
 # $HEADER$
 #
 
+AC_DEFUN([MCA_io_romio_POST_CONFIG], [
+    AS_IF([test $1 -eq 0 -a "$enable_dist" = "yes"],
+          [AC_MSG_ERROR([ROMIO disabled but --enable-dist specifed.  This will result in a bad tarball.  Aborting configure.])])
+    AM_CONDITIONAL([MCA_io_romio_SHOULD_BUILD], [test $1 -eq 1])
+
+])
+
+
 # MCA_io_romio_CONFIG([action-if-found], [action-if-not-found])
 # -----------------------------------------------------------
 AC_DEFUN([MCA_io_romio_CONFIG],[
