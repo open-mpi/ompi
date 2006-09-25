@@ -55,14 +55,15 @@ opal_atomic_cmpset_32:
 	.frame $30,0,$26,0
 	.prologue 0
 	.set	macro
-	1:  ldl_l $0, 0($16)            
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stl_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldl_l $0, 0($16)        
+	cmpeq $0, $17, $0        
+	beq $0, 2f              
+	mov $18, $0              
+	stl_c $0, 0($16)            
+	beq $0, 1b              
+	jmp 3f                  
+2:  mov $31, $0         
+3:                      
 
 	.set	nomacro
 	addl $31,$0,$0
@@ -78,14 +79,15 @@ opal_atomic_cmpset_acq_32:
 	.frame $30,0,$26,0
 	.prologue 0
 	.set	macro
-	1:  ldl_l $0, 0($16)            
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stl_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldl_l $0, 0($16)        
+	cmpeq $0, $17, $0        
+	beq $0, 2f              
+	mov $18, $0              
+	stl_c $0, 0($16)            
+	beq $0, 1b              
+	jmp 3f                  
+2:  mov $31, $0         
+3:                      
 
 	.set	nomacro
 	addl $31,$0,$0
@@ -105,14 +107,15 @@ opal_atomic_cmpset_rel_32:
 	.prologue 0
 	.set	macro
 	wmb
-	1:  ldl_l $0, 0($16)            
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stl_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldl_l $0, 0($16)        
+	cmpeq $0, $17, $0        
+	beq $0, 2f              
+	mov $18, $0              
+	stl_c $0, 0($16)            
+	beq $0, 1b              
+	jmp 3f                  
+2:  mov $31, $0         
+3:                      
 
 	.set	nomacro
 	addl $31,$0,$0
@@ -128,14 +131,15 @@ opal_atomic_cmpset_64:
 	.frame $30,0,$26,0
 	.prologue 0
 	.set	macro
-	1:  ldq_l $0, 0($16)           
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stq_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldq_l $0, 0($16)     
+	cmpeq $0, $17, $0     
+	beq $0, 2f           
+	mov $18, $0           
+	stq_c $0, 0($16)         
+	beq $0, 1b           
+	jmp 3f               
+2:  mov $31, $0      
+3:                   
 
 	.set	nomacro
 	addl $31,$0,$0
@@ -151,14 +155,15 @@ opal_atomic_cmpset_acq_64:
 	.frame $30,0,$26,0
 	.prologue 0
 	.set	macro
-	1:  ldq_l $0, 0($16)           
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stq_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldq_l $0, 0($16)     
+	cmpeq $0, $17, $0     
+	beq $0, 2f           
+	mov $18, $0           
+	stq_c $0, 0($16)         
+	beq $0, 1b           
+	jmp 3f               
+2:  mov $31, $0      
+3:                   
 
 	.set	nomacro
 	addl $31,$0,$0
@@ -178,33 +183,19 @@ opal_atomic_cmpset_rel_64:
 	.prologue 0
 	.set	macro
 	wmb
-	1:  ldq_l $0, 0($16)           
-     cmpeq $0, $17, $0        
-     beq $0, 2f              
-     mov $18, $0              
-     stq_c $0, 0($16)            
-     beq $0, 3f              
-2:                           
-3:   br 1b                   
+	1:  ldq_l $0, 0($16)     
+	cmpeq $0, $17, $0     
+	beq $0, 2f           
+	mov $18, $0           
+	stq_c $0, 0($16)         
+	beq $0, 1b           
+	jmp 3f               
+2:  mov $31, $0      
+3:                   
 
 	.set	nomacro
 	addl $31,$0,$0
 	ret $31,($26),1
 	.end opal_atomic_cmpset_rel_64
-	.align 2
-	.align 4
-	.globl opal_sys_timer_get_cycles
-	.ent opal_sys_timer_get_cycles
-$opal_sys_timer_get_cycles..ng:
-opal_sys_timer_get_cycles:
-	.eflag 48
-	.frame $30,0,$26,0
-	.prologue 0
-	.set	macro
-	rpcc $0
-	.set	nomacro
-	addl $31,$0,$0
-	ret $31,($26),1
-	.end opal_sys_timer_get_cycles
 	.section	.note.GNU-stack,"",@progbits
 	.ident	"GCC: (GNU) 3.4.6 (Gentoo 3.4.6-r1, ssp-3.4.5-1.0, pie-8.7.9)"
