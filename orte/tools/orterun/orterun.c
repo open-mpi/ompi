@@ -111,7 +111,7 @@ struct globals_t {
     bool no_oversubscribe;
     bool debugger;
     bool no_local_schedule;
-    orte_std_cntr_t num_procs;
+    int num_procs;
     int exit_status;
     char *hostfile;
     char *env_val;
@@ -153,10 +153,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, NULL, NULL, 'c', "np", "np", 1,
-      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_SIZE_T,
+      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     { NULL, NULL, NULL, '\0', "n", "n", 1,
-      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_SIZE_T,
+      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     
     /* Set a hostfile */
@@ -1414,7 +1414,7 @@ static int create_app(int argc, char* argv[], orte_app_context_t **app_ptr,
 
     /* Get the numprocs */
 
-    app->num_procs = orterun_globals.num_procs;
+    app->num_procs = (orte_std_cntr_t)orterun_globals.num_procs;
 
     /* If the user didn't specify the number of processes to run, then we
        default to launching an app process using every slot. We can't do
