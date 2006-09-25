@@ -84,6 +84,13 @@ mca_m4_config_env_file="mca_m4_config_env"
 autogen_subdir_file="autogen.subdirs"
 topdir_file="opal/include/opal_config_bottom.h"
 
+if echo a | grep -E '(a|b)' >/dev/null 2>&1; then
+  egrep='grep -E'
+else
+  egrep=egrep
+fi
+
+
 ############################################################################
 #
 # Version check - does major,minor,release check (hopefully ignoring
@@ -290,7 +297,7 @@ find_and_delete() {
 	    echo "--> Errr... there's no configure.in or configure.ac file!"
 	fi
 	if test -n "$fad_cfile"; then
-	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | egrep -v '^dnl' | cut -d\( -f 2 | cut -d\) -f 1`"
+	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | $egrep -v '^dnl' | cut -d\( -f 2 | cut -d\) -f 1`"
 	fi
 	if test -f "$auxdir/$fad_file"; then
 	    rm -f "$auxdir/$fad_file"
@@ -637,7 +644,7 @@ EOF
 
         elif test -f .ompi_ignore && \
              test -s .ompi_unignore && \
-             test -z "`egrep $USER\$\|$USER@$HOST .ompi_unignore`" ; then
+             test -z "`$egrep $USER\$\|$USER@$HOST .ompi_unignore`" ; then
 
             # If we have a non-empty .ompi_unignore and our username
             # is in there somewhere, we ignore the .ompi_ignore (and
