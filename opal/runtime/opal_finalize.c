@@ -32,6 +32,7 @@
 #include "opal/constants.h"
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/memory/base/base.h"
+#include "opal/mca/backtrace/base/base.h"
 #include "opal/mca/timer/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 
@@ -79,6 +80,8 @@ opal_finalize(void)
     }
     /* close high resolution timers */
     opal_timer_base_close();
+
+    opal_backtrace_base_close();
 
     /* close the memory manager components.  Registered hooks can
        still be fired any time between now and the call to

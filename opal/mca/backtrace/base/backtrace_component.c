@@ -62,8 +62,7 @@ opal_backtrace_base_open(void)
 int
 opal_backtrace_base_close(void)
 {
-    /* Close all components that are still open (this should only
-       happen during laminfo). */
+    /* Close all components that are still open */
     mca_base_components_close(0, 
                               &opal_backtrace_base_components_opened, 
                               NULL);

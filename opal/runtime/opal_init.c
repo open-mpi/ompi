@@ -31,6 +31,7 @@
 #include "opal/mca/memcpy/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/mca/backtrace/base/base.h"
 #include "opal/constants.h"
 #include "opal/util/error.h"
 #include "opal/util/stacktrace.h"
@@ -222,6 +223,11 @@ opal_init(void)
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != opal_mem_hooks_init()) {
         error = "opal_mem_free_init";
+        goto return_error;
+    }
+
+    if (OPAL_SUCCESS != (ret = opal_backtrace_base_open())) {
+        error = "opal_backtrace_base_open";
         goto return_error;
     }
 
