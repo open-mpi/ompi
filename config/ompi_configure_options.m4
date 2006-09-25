@@ -499,4 +499,28 @@ AC_ARG_ENABLE([binaries],
         [Build and install binaries required for Open MPI, such as the wrapper compilers.   Useful for multi-lib installations.  (default: enabled)])])
 AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
+
+#
+# Do we want orterun's --prefix behavior to be enabled by default?
+#
+AC_MSG_CHECKING([if want orterun "--prefix" behavior to be enabled by default])
+AC_ARG_ENABLE([orterun-prefix-by-default],
+    [AC_HELP_STRING([--enable-orterun-prefix-by-default],
+        [Make "orterun ..." behave exactly the same as "orterun --prefix \$prefix" (where \$prefix is the value given to --prefix in configure)])])
+AC_ARG_ENABLE([mpirun-prefix-by-default],
+    [AC_HELP_STRING([--enable-mpirun-prefix-by-default],
+        [Synonym for --enable-orterun-prefix-by-default])])
+if test "$enable_orterun_prefix_by_default" = ""; then
+    enable_orterun_prefix_by_default=$enable_mpirun_prefix_by_default
+fi
+if test "$enable_orterun_prefix_by_default" = "yes"; then
+    AC_MSG_RESULT([yes])
+    orte_want_orterun_prefix_by_default=1
+else
+    AC_MSG_RESULT([no])
+    orte_want_orterun_prefix_by_default=0
+fi
+AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
+                   [$orte_want_orterun_prefix_by_default],
+                   [Whether we want orterun to effect "--prefix $prefix" by default])
 ])
