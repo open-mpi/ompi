@@ -195,11 +195,6 @@ int ompi_mtl_mx_progress( void ) {
                 opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_progress, mx_ipeek returned a request, mx_test on the request resulted failure.\n");
                 abort();
             }
-            if(mx_status.code != MX_STATUS_SUCCESS) { 
-                opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_progress, mx_test returned something other than MX_STATUS_SUCCESS: mx_status(%d).\n", 
-                        mx_status);
-                abort();
-            }
             mtl_mx_request = (mca_mtl_mx_request_t*) mx_status.context;
             if(OMPI_MTL_MX_ISEND == mtl_mx_request->type) { 
                 if(mtl_mx_request->free_after) { 
