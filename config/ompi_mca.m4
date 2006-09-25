@@ -541,6 +541,9 @@ AC_DEFUN([MCA_CONFIGURE_M4_CONFIG_COMPONENT],[
            # add component to all component list
            $4="$$4 $3"])
 
+    m4_ifdef([MCA_$2_$3_POST_CONFIG],
+             [MCA_$2_$3_POST_CONFIG($should_build)])
+
     # set the AM_CONDITIONAL on how we should build
     AS_IF([test "$compile_mode" = "dso"], 
           [BUILD_$2_$3_DSO=1],
