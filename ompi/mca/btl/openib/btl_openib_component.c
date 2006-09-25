@@ -280,7 +280,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             if (-1 != mca_btl_openib_component.ib_max_btls &&
                 mca_btl_openib_component.ib_num_btls >=
                 mca_btl_openib_component.ib_max_btls) {
-                return OMPI_SUCCESS;
+                return OMPI_ERR_VALUE_OUT_OF_BOUNDS;
             }
         }
     }
@@ -409,6 +409,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
             ret = init_one_port(btl_list, hca, i, &ib_port_attr);
 
             if (OMPI_SUCCESS != ret) {
+                /* Out of bounds error indicates that we hit max btl number 
+                 * don't propagate the error to the caller */
+                if(OMPI_ERR_VALUE_OUT_OF_BOUNDS == ret)
+                    ret = OMPI_SUCCESS;
                 break;
             }
         }
