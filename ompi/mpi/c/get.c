@@ -54,7 +54,7 @@ int MPI_Get(void *origin_addr, int origin_count,
                    (MPI_PROC_NULL != target_rank)) {
             rc = MPI_ERR_RANK;
         } else if (!ompi_win_comm_allowed(win)) {
-            rc = MPI_ERR_RMA_CONFLICT;
+            rc = MPI_ERR_RMA_SYNC;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, origin_datatype, origin_count);
         }

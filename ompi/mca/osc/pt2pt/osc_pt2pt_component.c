@@ -320,7 +320,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
 
     module->p2p_fence_coll_results = malloc(sizeof(int) * 
                                             ompi_comm_size(module->p2p_comm));
-    if (NULL == module->p2p_fence_coll_counts) {
+    if (NULL == module->p2p_fence_coll_results) {
         free(module->p2p_fence_coll_counts);
         free(module->p2p_copy_num_pending_sendreqs);
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
@@ -337,6 +337,39 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     /* pwsc data */
     module->p2p_pw_group = NULL;
     module->p2p_sc_group = NULL;
+    module->p2p_sc_remote_active_ranks =
+        malloc(sizeof(bool) * ompi_comm_size(module->p2p_comm));
+    if (NULL == module->p2p_sc_remote_active_ranks) {
+        free(module->p2p_fence_coll_results);
+        free(module->p2p_fence_coll_counts);
+        free(module->p2p_copy_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_long_msgs);
+        free(module->p2p_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return OMPI_ERROR;
+    }
+    module->p2p_sc_remote_ranks =
+        malloc(sizeof(int) * ompi_comm_size(module->p2p_comm));
+    if (NULL == module->p2p_sc_remote_ranks) {
+        free(module->p2p_sc_remote_active_ranks);
+        free(module->p2p_fence_coll_results);
+        free(module->p2p_fence_coll_counts);
+        free(module->p2p_copy_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_long_msgs);
+        free(module->p2p_num_pending_sendreqs);
+        OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
+        ompi_comm_free(&comm);
+        OBJ_DESTRUCT(&(module->p2p_acc_lock));
+        OBJ_DESTRUCT(&(module->p2p_lock));
+        free(module);
+        return OMPI_ERROR;
+    }
 
     /* lock data */
     module->p2p_lock_status = 0;
@@ -409,6 +442,12 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
 
             assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
 
+            if (!ompi_win_exposure_epoch(module->p2p_win)) {
+                opal_output(0, "Invalid MPI_PUT on Window %s.  Window not in exposure epoch",
+                            module->p2p_win->w_name);
+                break;
+            }
+
             ret = ompi_osc_pt2pt_sendreq_recv_put(module, header, payload);
         }
         break;
@@ -429,6 +468,12 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
 #endif
 
             assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
+
+            if (!ompi_win_exposure_epoch(module->p2p_win)) {
+                opal_output(0, "Invalid MPI_ACCUMULATE on Window %s.  Window not in exposure epoch",
+                            module->p2p_win->w_name);
+                break;
+            }
 
             /* receive into temporary buffer */
             ret = ompi_osc_pt2pt_sendreq_recv_accum(module, header, payload);
@@ -454,6 +499,12 @@ ompi_osc_pt2pt_component_fragment_cb(ompi_osc_pt2pt_module_t *module,
 #endif
 
             assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
+
+            if (!ompi_win_exposure_epoch(module->p2p_win)) {
+                opal_output(0, "Invalid MPI_GET on Window %s.  Window not in exposure epoch",
+                            module->p2p_win->w_name);
+                break;
+            }
 
             /* create or get a pointer to our datatype */
             proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;

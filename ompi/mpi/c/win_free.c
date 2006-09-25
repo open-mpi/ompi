@@ -44,7 +44,7 @@ int MPI_Win_free(MPI_Win *win)
         } else if ((OMPI_WIN_ACCESS_EPOCH|OMPI_WIN_EXPOSE_EPOCH) &
                    ompi_win_get_mode(*win)) {
             return OMPI_ERRHANDLER_INVOKE(*win, 
-                                          MPI_ERR_RMA_CONFLICT, 
+                                          MPI_ERR_RMA_SYNC, 
                                           FUNC_NAME);
         }
     }
