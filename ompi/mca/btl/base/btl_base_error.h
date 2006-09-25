@@ -20,7 +20,10 @@
 #define MCA_BTL_BASE_ERROR_H
 
 #include "ompi_config.h"
+
+#include <errno.h>
 #include <stdio.h>
+
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 
