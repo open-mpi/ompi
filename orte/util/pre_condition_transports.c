@@ -30,6 +30,9 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
+#ifdef HAVE_TIME_H
+#include <time.h>
+#endif
 
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
@@ -52,9 +55,7 @@
  */
 
 static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
-    int pid;
-    pid = getpid();
-    srand(pid);
+    srand(time(NULL));
     unique_key[1] = rand();
     unique_key[2] = rand();
 }
@@ -73,7 +74,7 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     /* put the number here - or else create an appropriate string. this just needs to
      * eventually be a string variable
      */
-    if(0 == stat("/dev/urandom", &buf)) { 
+    if(0 != stat("/dev/urandom", &buf)) { 
         /* file doesn't exist! */
         orte_pre_condition_transports_use_rand(unique_key); 
     }
