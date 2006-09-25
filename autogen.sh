@@ -347,11 +347,11 @@ EOF
         # If we need to make a version header template file, do so
 
         rgt_abs_dir="`pwd`"
-        rgt_component_name="`basename \"$rgt_abs_dir\"`"
-        rgt_component_type="`dirname \"$rgt_abs_dir\"`"
-        rgt_component_type="`basename \"$rgt_component_type\"`"
+        rgt_component_name=`basename "$rgt_abs_dir"`
+        rgt_component_type=`dirname "$rgt_abs_dir"`
+        rgt_component_type=`basename "$rgt_component_type"`
         rgt_ver_header="$rgt_abs_dir/$rgt_component_type-$rgt_component_name-version.h"
-        rgt_ver_header_base="`basename \"$rgt_ver_header\"`"
+        rgt_ver_header_base=`basename "$rgt_ver_header"`
         make_version_header_template "$rgt_ver_header_base" "$rgt_component_type" "$rgt_component_name"
 
 	happy=1
@@ -845,9 +845,9 @@ component_list_sort() {
 
     # get the list of priorities
     component_list=
-    cls_priority_list="`sort -r -n -u \"$cls_filename\" | cut -f1 -d' ' | xargs`"
+    cls_priority_list=`sort -r -n -u "$cls_filename" | cut -f1 -d' ' | xargs`
     for cls_priority in $cls_priority_list ; do
-        component_list="$component_list `grep \"^$cls_priority \" \"$cls_filename\" | cut -f2 -d' ' | xargs`"
+        component_list="$component_list "`grep "^$cls_priority " "$cls_filename" | cut -f2 -d' ' | xargs`
     done
 }
 
@@ -911,12 +911,12 @@ EOF
     echo $rg_cwd
     project_list=""
     for project_path in $config_project_list; do 
-        project="`basename \"$project_path\"`"
+        project=`basename "$project_path"`
         project_list="$project_list $project"
 
         framework_list=""
         for framework_path in $project_path/mca/*; do
-            framework="`basename \"$framework_path\"`"
+            framework=`basename "$framework_path"`
 
 	    if test "$framework" != "base" -a \
                 -d "$framework_path" ; then
@@ -939,7 +939,7 @@ EOF
                                 -f "$component_path/configure.params" -o \
                                 -f "$component_path/configure.ac"; then
 
-                                component="`basename \"$component_path\"`"
+                                component=`basename "$component_path"`
 
                                 process_dir "$component_path" "$rg_cwd" \
                                     "$project" "$framework" "$component"
