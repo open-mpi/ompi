@@ -481,7 +481,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
  */
 char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 {
-    int i, len = MAX_WIDTH * 2, prev_len;
+    int i, len, prev_len;
     int argc;
     size_t j;
     char **argv;
@@ -553,8 +553,9 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
                 filled = true;
             }
             strcat(line, " ");
-            for (i = 0; i < option->clo_num_params; ++i) {
-                snprintf(temp, len, "<arg%d> ", i);
+            for (i = 0; (int)i < option->clo_num_params; ++i) {
+                len = sizeof(temp);
+                snprintf(temp, len, "<arg%d> ", (int)i);
                 strcat(line, temp);
             }
             if (option->clo_num_params > 0) {
