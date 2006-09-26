@@ -72,9 +72,13 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
         }
     }
 
+    /* Keys are indexed on 0, which makes the "n" parameter offset by
+       1 from the value returned by get_nkeys().  So be sure to
+       compare appropriately. */
+
     err = ompi_info_get_nkeys(info, &nkeys);
     OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
-    if (nkeys < n) {
+    if (n > (nkeys - 1)) {
         return OMPI_ERRHANDLER_INVOKE (MPI_COMM_WORLD, MPI_ERR_INFO_KEY,
                                        FUNC_NAME);
     }
