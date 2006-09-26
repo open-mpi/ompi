@@ -36,7 +36,6 @@
 #import "orte/mca/pls/pls.h"
 #import "orte/mca/pls/base/base.h"
 #import "opal/mca/base/mca_base_param.h"
-#import "orte/mca/rml/rml.h"
 
 #import "pls_xgrid.h"
 #import "pls_xgrid_client.h"
@@ -65,10 +64,10 @@ orte_pls_xgrid_component_t mca_pls_xgrid_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -101,9 +100,20 @@ orte_pls_xgrid_component_t mca_pls_xgrid_component = {
 int
 orte_pls_xgrid_component_open(void)
 {
-    mca_base_param_register_string("pls", "xgrid", "orted", NULL, "orted");
-    mca_base_param_register_int("pls", "xgrid", "priority", NULL, 20);
-    mca_base_param_register_int("pls", "xgrid", "delete_job", NULL, 1);
+    mca_base_param_reg_string(&mca_pls_xgrid_component.super.pls_version,
+			      "orted",
+			      "The command name that the component will invoke for the ORTE daemon",
+			      false, false, "orted", NULL);
+
+    mca_base_param_reg_int(&mca_pls_xgrid_component.super.pls_version,
+			   "priority",
+			   "Priority of the xgrid pls component",
+			   false, false, 20, NULL);
+
+    mca_base_param_reg_int(&mca_pls_xgrid_component.super.pls_version,
+			   "delete_job",
+			   "Delete job from XGrid controller's database on job completion",
+			   false, false, 1, NULL);
 
     return ORTE_SUCCESS;
 }
