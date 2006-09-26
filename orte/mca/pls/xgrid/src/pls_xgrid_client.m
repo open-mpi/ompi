@@ -324,7 +324,8 @@ char **environ;
             }
             
             /* setup per-node options */
-	    opal_output(0, "pls:xgrid: launching on node %s", 
+	    opal_output(orte_pls_base.pls_output,
+			"pls:xgrid: launching on node %s", 
 			node->node_name);
             
             /* setup process name */
@@ -411,7 +412,8 @@ cleanup:
     }
     OBJ_DESTRUCT(&daemons);
 
-    opal_output(0, "pls:xgrid:launch: finished\n");
+    opal_output(orte_pls_base.pls_output,
+		"pls:xgrid:launch: finished\n");
 
     return rc;
 }
