@@ -5,8 +5,8 @@ my $srcdir = shift;
 my $destdir = shift;
 
 if (! $perl || ! $srcdir || ! $destdir) {
-    print "ERROR: invalid argument to generate-all-asm.pl";
-    print "usage: generate-all-asm.pl [PERL] [SRCDIR] [DESTDIR]";
+    print "ERROR: invalid argument to generate-all-asm.pl\n";
+    print "usage: generate-all-asm.pl [PERL] [SRCDIR] [DESTDIR]\n";
     exit 1;
 }
 
@@ -22,6 +22,6 @@ while(<DATAFILE>) {
     if (! $ASMARCH || ! $ASMFORMAT) { next; }
 
     print "--> Generating assembly for \"$ASMARCH\" \"$ASMFORMAT\"\n";
-    system("$perl \"$srcdir/generate-asm.pl\" \"$ASMARCH\" \"$ASMFORMAT\" \"$srcdir/base\" \"$destdir/generated/atomic-$ASMFILE.s\"");
+    system("$perl \'$srcdir/generate-asm.pl\' \'$ASMARCH\' \'$ASMFORMAT\' \'$srcdir/base\' \'$destdir/generated/atomic-$ASMFILE.s\'");
 
 }
