@@ -956,10 +956,13 @@ AC_MSG_ERROR([Can not continue.])
          fi
          asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
          ompi_cv_asm_format="${asm_format}-${ompi_cv_asm_gnu_stack}"
-         OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
+         # For the Makefile, need to escape the $ as $$.  Don't display
+         # this version, but make sure the Makefile gives the right thing
+         # when regenerating the files because the base has been touched.
+         OMPI_ASSEMBLY_FORMAT=`echo "$ompi_cv_asm_format" | sed -e 's/\\\$/\\\$\\\$/'`
 
         AC_MSG_CHECKING([for assembly format])
-        AC_MSG_RESULT([$OMPI_ASSEMBLY_FORMAT])
+        AC_MSG_RESULT([$ompi_cv_asm_format])
         AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_FORMAT], ["$OMPI_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OMPI_ASSEMBLY_FORMAT])
