@@ -232,6 +232,17 @@ extern "C" {
      * framework name: for any given framework
      * "mpi": for parameters that apply to the overall MPI layer
      * "orte": for parameters that apply to the overall ORTE layer
+     * "btl": for parameters to the OMPI BTL framework
+     * ...etc.
+     *
+     * Note that the type should always be a framework or a level name
+     * (e.g., "btl" or "mpi") -- it should not include the component
+     * name, even if the componet is the base of a framework.  Hence,
+     * "btl_base" is not a valid type name.  Specifically, registering
+     * a parameter with an unrecognized type is not an error, but
+     * ompi_info has a hard-coded list of frameworks and levels;
+     * parameters that have recongized types, although they can be
+     * used by the user, will not be displayed by ompi_info.
      *
      * Note that if you use mca_base_param_find() to lookup the index
      * of the registered parameter, the "component" argument should be
@@ -329,6 +340,17 @@ extern "C" {
      * framework name: for any given framework
      * "mpi": for parameters that apply to the overall MPI layer
      * "orte": for parameters that apply to the overall ORTE layer
+     * "btl": for parameters to the OMPI BTL framework
+     * ...etc.
+     *
+     * Note that the type should always be a framework or a level name
+     * (e.g., "btl" or "mpi") -- it should not include the component
+     * name, even if the componet is the base of a framework.  Hence,
+     * "btl_base" is not a valid type name.  Specifically, registering
+     * a parameter with an unrecognized type is not an error, but
+     * ompi_info has a hard-coded list of frameworks and levels;
+     * parameters that have recongized types, although they can be
+     * used by the user, will not be displayed by ompi_info.
      *
      * Note that if you use mca_base_param_find() to lookup the index
      * of the registered parameter, the "component" argument should be
