@@ -19,6 +19,7 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 headers += \
+	util/pre_condition_transports.h \
         util/proc_info.h \
         util/session_dir.h \
         util/sys_info.h \
@@ -27,6 +28,7 @@ headers += \
 
 liborte_la_SOURCES += \
         util/error_strings.c \
+	util/pre_condition_transports.c \
         util/proc_info.c \
         util/session_dir.c \
         util/sys_info.c \
