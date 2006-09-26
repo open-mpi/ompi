@@ -42,46 +42,38 @@ bin_PROGRAMS = opal_wrapper
 
 # List all man pages that will be installed
 
-man_MANS = opalcc.1 opalc++.1
-if CASE_SENSITIVE_FS
-man_MANS += opalCC.1
-endif
+man_MANS = opalcc.1
 
-# Only include in the distribution tarball the man pages that are not
-# generated (i.e., opalcc.1).
+# MANS are not automatically distributed
 
-EXTRA_DIST = opalcc.1
-
-# Rules to generate the other man pages
-
-opalc++.1: $(srcdir)/opalcc.1
-	cp -f $(srcdir)/opalcc.1 opalc++.1
-if CASE_SENSITIVE_FS
-opalCC.1: $(srcdir)/opalcc.1
-	cp -f $(srcdir)/opalcc.1 opalCC.1
-endif
+EXTRA_DIST = $(man_MANS)
 
 if CASE_SENSITIVE_FS
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
 	(cd $(DESTDIR)$(bindir); rm -f opalCC$(EXEEXT); $(LN_S) opal_wrapper opalCC)
-
+	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
+	(cd $(DESTDIR)$(mandir)/man1; rm -f opalCC.1; $(LN_S) opalcc.1 opalCC.1)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f opalCC-wrapper-data.txt; $(LN_S) opalc++-wrapper-data.txt opalCC-wrapper-data.txt)
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
 	$(DESTDIR)$(bindir)/opalc++$(EXEEXT) \
 	$(DESTDIR)$(bindir)/opalCC$(EXEEXT) \
+	$(DESTDIR)$(mandir)/man1/opalc++.1 \
+	$(DESTDIR)$(mandir)/man1/opalCC.1 \
 	$(DESTDIR)$(pkgdatadir)/opalCC-wrapper-data.txt
 
 else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
+	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
-	$(DESTDIR)$(bindir)/opalc++$(EXEEXT)
+	$(DESTDIR)$(bindir)/opalc++$(EXEEXT) \
+	$(DESTDIR)$(mandir)/man1/opalc++.1
 
 endif
 
