@@ -48,6 +48,7 @@ extern "C" {
 #endif
 
 #define MCA_BTL_IB_LEAVE_PINNED 1
+#define IB_DEFAULT_GID_PREFIX 0xfe80000000000000ll
 
 /**
  * Infiniband (IB) BTL component.
@@ -133,6 +134,9 @@ struct mca_btl_openib_component_t {
     /** Whether we want a warning if no HCA-specific parameters are
         found in INI files */
     bool warn_no_hca_params_found;
+    /** Whether we want a warning if non default GID prefix is not configured
+        on multiport setup */
+    bool warn_default_gid_prefix;
 }; typedef struct mca_btl_openib_component_t mca_btl_openib_component_t;
 
 OMPI_MODULE_DECLSPEC extern mca_btl_openib_component_t mca_btl_openib_component;
