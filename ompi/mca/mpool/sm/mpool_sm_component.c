@@ -28,6 +28,7 @@
 #include "ompi/mca/common/sm/common_sm_mmap.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
+#include "ompi/proc/proc.h"
 
 /*
  * Local functions
@@ -67,25 +68,7 @@ mca_mpool_sm_component_t mca_mpool_sm_component = {
     }
 };
 
-static char* mca_mpool_sm_param_register_string(
-    const char* param_name,
-    const char* default_value)
-{
-    char *param_value;
-    int id = mca_base_param_register_string("mpool","sm",param_name,NULL,default_value);
-    mca_base_param_lookup_string(id, &param_value);
-    return param_value;
-}
-
-static  int mca_mpool_sm_param_register_int(
-    const char* param_name,
-    int default_value)
-{
-    int id = mca_base_param_register_int("mpool","sm",param_name,NULL,default_value);
-    int param_value = default_value;
-    mca_base_param_lookup_int(id,&param_value);
-    return param_value;
-}
+static int max_size_param, min_size_param, peer_size_param;
 
 
 /**
@@ -94,10 +77,35 @@ static  int mca_mpool_sm_param_register_int(
 static int mca_mpool_sm_open(void)
 {
     /* register SM component parameters */
-    mca_mpool_sm_component.sm_size =
-        mca_mpool_sm_param_register_int("size", 512*1024*1024);
-    mca_mpool_sm_component.sm_allocator_name =
-        mca_mpool_sm_param_register_string("allocator", "bucket");
+    mca_base_param_reg_string(&mca_mpool_sm_component.super.mpool_version,
+                              "allocator",
+                              "Name of allocator component to use with sm mpool",
+                              false, false,
+                              "bucket",
+                              &mca_mpool_sm_component.sm_allocator_name);
+
+    max_size_param = 
+        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+                               "max_size",
+                               "Maximum size of the sm mpool shared memory file",
+                               false, false, 512 * 1024 * 1024, NULL);
+
+    min_size_param = 
+        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+                               "min_size",
+                               "Minimum size of the sm mpool shared memory file",
+                               false, false, 128 * 1024 * 1024, NULL);
+
+    peer_size_param = 
+        mca_base_param_reg_int(&mca_mpool_sm_component.super.mpool_version,
+                               "per_peer_size",
+                               "Size (in bytes) to allocate per local peer in "
+                               "the sm mpool shared memory file, bounded by "
+                               "min_size and max_size",
+                               false, false, 32 * 1024 * 1024, NULL);
+
+    mca_mpool_sm_component.sm_size = 0;
+
     return OMPI_SUCCESS;
 }
 
@@ -119,6 +127,37 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     int len;
     mca_mpool_sm_module_t* mpool_module; 
     mca_allocator_base_component_t* allocator_component; 
+    int max_size, min_size, peer_size;
+    ompi_proc_t **procs;
+    size_t num_all_procs, i, num_local_procs = 0;
+
+    /* determine size of shared memory file */
+    mca_base_param_lookup_int(max_size_param, &max_size);
+    mca_base_param_lookup_int(min_size_param, &min_size);
+    mca_base_param_lookup_int(peer_size_param, &peer_size);
+
+    procs = ompi_proc_all(&num_all_procs);
+    for (i = 0 ; i < num_all_procs ; ++i) {
+        if (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
+            num_local_procs++;
+        }
+    }
+
+    if (min_size > max_size) {
+        opal_output(0, "mca_mpool_sm_init: adjusting max_size to be min_size (%d)",
+                    min_size);
+        max_size = min_size;
+    }
+
+    /* set sm_size based on num_procs, then adjust from there */
+    mca_mpool_sm_component.sm_size = peer_size * num_local_procs;
+    if ((size_t) min_size > mca_mpool_sm_component.sm_size) {
+        mca_mpool_sm_component.sm_size = min_size;
+    }
+    if ((size_t) max_size < mca_mpool_sm_component.sm_size) {
+        mca_mpool_sm_component.sm_size = max_size;
+    }
+
     allocator_component = mca_allocator_component_lookup(
         mca_mpool_sm_component.sm_allocator_name);
 
