@@ -112,3 +112,10 @@ no active ports detected. This is most certainly not what you wanted.
 Check your cables and SM configuration.
 [error in hca init]
 WARNING: There were errors during IB HCA initialization on host '%s'.
+[default subnet prefix]
+WARNING: There are more than one active ports on host '%s', but non
+default GID prefix is not configured on one or more subnets. This
+configuration may fail. Please assign unique GID prefix to all subnets.
+
+NOTE: You can turn off this warning by setting the MCA parameter
+      btl_openib_warn_default_gid_prefix to 0.
