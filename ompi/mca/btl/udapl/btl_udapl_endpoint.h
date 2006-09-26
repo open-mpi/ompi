@@ -11,6 +11,8 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,6 +84,9 @@ struct mca_btl_base_endpoint_t {
     int32_t endpoint_max_sends;
     /**< number of sends that may be posted */
 
+    int32_t endpoint_connection_seq;
+    /**< sequence number of sendrecv message for the connection est */
+
     opal_mutex_t endpoint_lock;
     /**< lock for concurrent access to endpoint state */
 
@@ -118,6 +123,7 @@ void mca_btl_udapl_endpoint_post_oob_recv(void);
 
 int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                                           mca_btl_udapl_addr_t* addr,
+                                          int32_t* seq,
                                           DAT_EP_HANDLE endpoint);
 
 #if defined(c_plusplus) || defined(__cplusplus)
