@@ -53,7 +53,8 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
 
     if (ompi_mpi_finalized) {
         /* JMS show_help */
-        return OMPI_ERRHANDLER_INVOKE(null, MPI_ERR_OTHER, FUNC_NAME);
+        return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
+                                      MPI_ERR_OTHER, FUNC_NAME);
     } else if (ompi_mpi_initialized) {
         /* JMS show_help */
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
