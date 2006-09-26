@@ -23,7 +23,11 @@
 sources =
 include src/Makefile.extra
 
+if MCA_io_romio_SHOULD_BUILD
+# Need to set both SUBDIRS and DIST_SUBDIRS due to oddities with AM
 SUBDIRS = romio
+DIST_SUBDIRS = romio
+endif
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
