@@ -294,6 +294,7 @@ failure_create:
 
 int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                                           mca_btl_udapl_addr_t* addr,
+                                          int32_t* connection_seq,
                                           DAT_EP_HANDLE endpoint)
 {
     mca_btl_udapl_proc_t* proc;
@@ -317,10 +318,27 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                     !memcmp(addr, &ep->endpoint_addr, sizeof(DAT_SOCK_ADDR))) {
                 OPAL_THREAD_LOCK(&ep->endpoint_lock);
                 if(MCA_BTL_UDAPL_CONN_EAGER == ep->endpoint_state) {
+                    ep->endpoint_connection_seq = *connection_seq;
                     ep->endpoint_eager = endpoint;
                     rc = mca_btl_udapl_endpoint_finish_eager(ep);
-                } else if(MCA_BTL_UDAPL_CONN_MAX == ep->endpoint_state) {
-                    ep->endpoint_max = endpoint;
+               } else if(MCA_BTL_UDAPL_CONN_MAX == ep->endpoint_state) {
+                    /* Check to see order of messages received are in
+                     * the same order the actual connections are made.
+                     * If they are not we need to swap the eager and
+                     * max connections. This inversion is possible due
+                     * to a race condition that one process may actually
+                     * receive the sendrecv messages from the max connection
+                     * before the eager connection.
+                     */
+                    if (ep->endpoint_connection_seq < *connection_seq) {
+                        /* normal order connection matching */
+                        ep->endpoint_max = endpoint;
+                    } else {
+                        /* inverted order connection matching */
+                        ep->endpoint_max = ep->endpoint_eager;
+                        ep->endpoint_eager = endpoint;
+                    }
+
                     rc = mca_btl_udapl_endpoint_finish_max(ep);
                 } else {
                     OPAL_OUTPUT((0, "btl_udapl ERROR invalid EP state %d\n",
@@ -516,6 +534,7 @@ static void mca_btl_udapl_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->endpoint_btl = 0;
     endpoint->endpoint_proc = 0;
 
+    endpoint->endpoint_connection_seq = 0;
     endpoint->endpoint_eager_sends = mca_btl_udapl_component.udapl_num_sends;
     endpoint->endpoint_max_sends = mca_btl_udapl_component.udapl_num_sends;
 
