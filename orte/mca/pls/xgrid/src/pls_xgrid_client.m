@@ -144,20 +144,41 @@ char **environ;
 }
 
 
+- (NSString *)servicePrincipal;
+{
+    NSString *servicePrincipal = [connection servicePrincipal];
+
+    if (servicePrincipal == nil) [NSString stringWithFormat:@"xgrid/%@", [connection name]];
+
+    return servicePrincipal;
+}
+
+
 /* interface for launch */
 -(int) connect
 {
     connection = [[[XGConnection alloc] initWithHostname: controller_hostname
 					portnumber:0] autorelease];
-    authenticator = [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
 
-    /* this seems to be hard coded */
-    [authenticator setUsername:@"one-xgrid-client"];
-    [authenticator setPassword:controller_password];
+    if (NULL == controller_password) {
+	XGGSSAuthenticator *authenticator = 
+	    [[[XGGSSAuthenticator alloc] init] autorelease];
+		
+	[authenticator setServicePrincipal:[self servicePrincipal]];
+	[connection setAuthenticator:authenticator];
+
+    } else {
+        XGTwoWayRandomAuthenticator *authenticator =
+	    [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
+
+	/* this seems to be hard coded */
+	[authenticator setUsername:@"one-xgrid-client"];
+	[authenticator setPassword:controller_password];
     
-    [connection setAuthenticator:authenticator];
+	[connection setAuthenticator:authenticator];
+    }
     [connection setDelegate: self];
-    
+
     /* get us connected */
     opal_mutex_lock(&state_mutex);
     [connection open];
