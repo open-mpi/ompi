@@ -197,5 +197,3 @@ opal_atomic_cmpset_rel_64:
 	addl $31,$0,$0
 	ret $31,($26),1
 	.end opal_atomic_cmpset_rel_64
-	.section	.note.GNU-stack,"",@progbits
-	.ident	"GCC: (GNU) 3.4.6 (Gentoo 3.4.6-r1, ssp-3.4.5-1.0, pie-8.7.9)"
