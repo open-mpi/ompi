@@ -41,14 +41,14 @@
 #include <arpa/inet.h>
 #endif
 #ifdef HAVE_NET_IF_H
-#if defined(__DARWIN_ALIGN_POWER) && __DARWIN_ALIGN_POWER
+#if defined(__APPLE__) && defined(__POWERPC__) && defined(_LP64)
 /* Apple engineering suggested this as a workaround for a bug in OS X
  * 10.4 (Tiger) that prevented ioctl(..., SIOCGIFCONF, ...) from
  * working properly in 64 bit mode */
 #pragma options align=power
 #endif
 #include <net/if.h>
-#if defined(__DARWIN_ALIGN_POWER) && __DARWIN_ALIGN_POWER
+#if defined(__APPLE__) && defined(__POWERPC__) && defined(_LP64)
 #pragma options align=reset
 #endif
 #endif
@@ -103,6 +103,7 @@ static opal_list_t opal_if_list;
 static bool already_done = false;
 
 #define DEFAULT_NUMBER_INTERFACES 10
+#define MAX_IFCONF_SIZE 10 * 1024 * 1024
 
 /*
  *  Discover the list of configured interfaces. Don't care about any
@@ -117,6 +118,7 @@ static int opal_ifinit(void)
     char *ptr;
     struct ifconf ifconf;
     int ifc_len;
+    bool successful_locate = false;
 
     if (already_done) {
         return OPAL_SUCCESS;
@@ -178,6 +180,7 @@ static int opal_ifinit(void)
                call to ioctl, try again with a bigger buffer.  else stop */
             if (ifconf.ifc_len == lastlen && ifconf.ifc_len > 0) {
                 /* we didn't expand.  we're done */
+                successful_locate = true;
                 break;
             }
             lastlen = ifconf.ifc_len;
@@ -187,7 +190,11 @@ static int opal_ifinit(void)
            back around and try again with a bigger buffer */
         free(ifconf.ifc_req);
         ifc_len = (ifc_len == 0) ? 1 : ifc_len * 2;
-    } while (1);
+    } while (ifc_len < MAX_IFCONF_SIZE);
+    if (!successful_locate) {
+        opal_output(0, "opal_ifinit: unable to find network interfaces.");
+        return OPAL_ERR_FATAL;
+    }
 
 
     /* 

@@ -788,7 +788,7 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     *priority = 1;
 
     /* are there any interfaces? */
-    if(opal_ifcount() == 0)
+    if(opal_ifcount() <= 0)
         return NULL;
 
     /* initialize data structures */
