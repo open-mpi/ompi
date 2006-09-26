@@ -83,14 +83,14 @@ orte_ras_xgrid_component_close(void)
 
 static orte_ras_base_module_t *orte_ras_xgrid_init(int* priority)
 {
+    /* Are we running under a xgrid job? */
+    int id = mca_base_param_find("ras", "xgrid", "priority");
+    mca_base_param_lookup_int(id,priority);
+
     /* if we are not an HNP, then we must not be selected */
     if (!orte_process_info.seed) {
         return NULL;
     }
-    
-    /* Are we running under a xgrid job? */
-    int id = mca_base_param_find("ras", "xgrid", "priority");
-    mca_base_param_lookup_int(id,priority);
 
     if (NULL != getenv("XGRID_CONTROLLER_HOSTNAME") &&
         NULL != getenv("XGRID_CONTROLLER_PASSWORD")) {

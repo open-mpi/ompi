@@ -34,6 +34,6 @@ struct orte_pls_xgrid_component_t {
 };
 typedef struct orte_pls_xgrid_component_t orte_pls_xgrid_component_t;
 extern orte_pls_xgrid_component_t mca_pls_xgrid_component;
-extern orte_pls_base_module_1_0_0_t orte_pls_xgrid_module;
+extern orte_pls_base_module_1_3_0_t orte_pls_xgrid_module;
 
 int orte_pls_xgrid_progress(void);
