@@ -130,9 +130,6 @@ mpi.obj: mpi.f90 mpi-f90-interfaces.h
 	$(FCCOMPILE) -c -I. -o $@ $(FCFLAGS_f90) `$(CYGPATH_W) '$<'`
 
 BUILT_SOURCES = mpi-f90-interfaces.h
-
-else
-lib_LTLIBRARIES +=
 endif
 
 # mpi.f90 is the only f90 source file directly in libmpif90 that gets
