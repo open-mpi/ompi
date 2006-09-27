@@ -52,7 +52,7 @@ int MPI_Info_get_nthkey(MPI_Info info, int n, char *key)
 
     /*
      * 1. Check if info is a valid handle
-     * 2. Check if there are atleast "n" elements
+     * 2. Check if there are at least (n+1) elements
      * 3. If so, give the nth defined key
      */
     if (MPI_PARAM_CHECK) {
