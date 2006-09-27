@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,6 +71,7 @@ OMPI_DECLSPEC  void mca_btl_base_dump(
 OMPI_DECLSPEC extern int mca_btl_base_output;
 OMPI_DECLSPEC extern char* mca_btl_base_include;
 OMPI_DECLSPEC extern char* mca_btl_base_exclude;
+OMPI_DECLSPEC extern int mca_btl_base_warn_component_unused;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_components_opened;
 OMPI_DECLSPEC extern opal_list_t mca_btl_base_modules_initialized;
 
