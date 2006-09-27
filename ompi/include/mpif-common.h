@@ -114,7 +114,7 @@
       parameter (MPI_ROOT=-4)
       parameter (MPI_MAX_PROCESSOR_NAME=255)
       parameter (MPI_MAX_ERROR_STRING=255)
-      parameter (MPI_MAX_DATAREP_STRING=128)
+      parameter (MPI_MAX_DATAREP_STRING=127)
       parameter (MPI_UNDEFINED=-32766)
       parameter (MPI_CART=1)
       parameter (MPI_GRAPH=2)
