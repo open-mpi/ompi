@@ -34,7 +34,6 @@
 #include "ompi/mca/mtl/base/static-components.h"
 
 
-/* BWB - FIX ME - Properly initialize this */
 int ompi_mtl_base_output = 0;
 opal_list_t ompi_mtl_base_components_opened;
 mca_mtl_base_component_t *ompi_mtl_base_selected_component = NULL;
@@ -48,14 +47,18 @@ mca_mtl_base_module_t *ompi_mtl;
 int
 ompi_mtl_base_open(void)
 {
-    /* Open up all available components */
+    /* setup the output stream */
+    ompi_mtl_base_output = opal_output_open(NULL);
 
+    /* Open up all available components */
     if (OMPI_SUCCESS != 
-        mca_base_components_open("mtl", 0, mca_mtl_base_static_components, 
+        mca_base_components_open("mtl", ompi_mtl_base_output,
+                                 mca_mtl_base_static_components, 
                                  &ompi_mtl_base_components_opened,
                                  !MCA_mtl_DIRECT_CALL)) {
         return OMPI_ERROR;
     }
+
 
     /* Set a sentinel in case we don't select any components (e.g.,
        ompi_info) */

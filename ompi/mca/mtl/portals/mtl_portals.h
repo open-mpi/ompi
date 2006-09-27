@@ -37,8 +37,6 @@
 extern "C" {
 #endif
 
-#define OMPI_MTL_PORTALS_DEBUG 0
-
 struct mca_mtl_portals_module_t {
     mca_mtl_base_module_t base;
 
