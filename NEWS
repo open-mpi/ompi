@@ -65,6 +65,9 @@ version 1.0.
 1.1.2
 -----
 
+- Fix off-by-one error check in MPI_INFO_GET_NTHKEY.  Thanks to
+  Lisandro Dalcin for reporting the problem.
+- Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
 - Fix the "tuned" collective componenete where some cases where
   MPI_BCAST could hang.
 - Update TCP support to support non-uniform TCP environments.
