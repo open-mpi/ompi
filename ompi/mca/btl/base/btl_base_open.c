@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -69,6 +70,7 @@ OBJ_CLASS_INSTANCE(
 int mca_btl_base_output = -1;
 char* mca_btl_base_include = NULL;
 char* mca_btl_base_exclude = NULL;
+int mca_btl_base_warn_component_unused = 1;
 opal_list_t mca_btl_base_components_opened;
 opal_list_t mca_btl_base_modules_initialized;
 
@@ -110,6 +112,9 @@ int mca_btl_base_open(void)
       mca_base_param_register_string("btl","base","include",NULL,NULL), &mca_btl_base_include);
   mca_base_param_lookup_string(
       mca_base_param_register_string("btl","base","exclude",NULL,NULL), &mca_btl_base_exclude);
+  mca_base_param_reg_int_name("btl", "base_warn_component_unused",
+      "This parameter is used to turn on warning messages when certain NICs are not used",
+      false, false, 1, &mca_btl_base_warn_component_unused);
 
   /* All done */
   return OMPI_SUCCESS;
