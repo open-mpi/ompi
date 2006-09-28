@@ -65,6 +65,7 @@ version 1.0.
 1.1.2
 -----
 
+- Fix for large-sized Fortran LOGICAL datatypes.
 - Fix various error checking in MPI_INFO_GET_NTHKEY and
   MPI_GROUP_TRANSLATE_RANKS.  Thanks to Lisandro Dalcin for reporting
   the problem.

@@ -395,9 +395,10 @@ AC_DEFINE([ompi_fortran_bogus_type_t], [int],
 # We want to set the #define's for all of these, so invoke the macros
 # regardless of whether we have F77 support or not.
 
-OMPI_F77_CHECK([LOGICAL], [yes], [char, int, int32_t], [-1])
+OMPI_F77_CHECK([LOGICAL], [yes], 
+               [char, int32_t, int, int64_t, long long, long], [-1])
 OMPI_F77_CHECK([INTEGER], [yes], 
-               [int32_t, int, int64_r, long long, long], [-1])
+               [int32_t, int, int64_t, long long, long], [-1])
 OMPI_F77_CHECK([INTEGER*1], [no], 
                [char, int8_t, short, int, int64_t, long long, long], [1])
 OMPI_F77_CHECK([INTEGER*2], [no],

@@ -61,6 +61,8 @@ void $ompi_print_logical_fn(ompi_fortran_logical_t * logical)
 
     if( SIZEOF_INT >= sizeof(ompi_fortran_logical_t) ) {
         fprintf(f, "%d\n", (int)*logical);
+    } else if (SIZEOF_LONG >= sizeof(ompi_fortran_logical_t) ) {
+	fprintf(f, "%ld\n", (long) *logical);
     } else {
         exit(1);
     }
