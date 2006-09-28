@@ -122,16 +122,11 @@ static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* reque
     request->req_rdma_cnt = 0;
 }
 
-static void mca_pml_ob1_recv_request_destruct(mca_pml_ob1_recv_request_t* request)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_recv_request_t,
     mca_pml_base_recv_request_t,
     mca_pml_ob1_recv_request_construct,
-    mca_pml_ob1_recv_request_destruct);
+    NULL);
 
 
 /*
