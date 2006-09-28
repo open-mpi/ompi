@@ -343,8 +343,6 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
             return ORTE_ERROR;
         }
         opal_argv_append(num_hosts, hostlist, task_machine_name);
-        ll_free_objs(queryObject);
-        ll_deallocate(queryObject);
 
     } else { /* parallel job */
 
@@ -432,6 +430,8 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
             }
         }
     }
+    ll_free_objs(queryObject);
+    ll_deallocate(queryObject);
 
     return ORTE_SUCCESS;
 }
