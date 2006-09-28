@@ -59,6 +59,7 @@ version 1.0.
 1.1.2
 -----
 
+- Fix for large-sized Fortran LOGICAL datatypes.
 - Fix the "tuned" collective componenete where some cases where
   MPI_BCAST could hang.
 - Update TCP support to support non-uniform TCP environments.
