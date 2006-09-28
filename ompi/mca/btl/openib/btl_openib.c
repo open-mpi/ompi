@@ -663,7 +663,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
 
         OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t *)frag);
+        opal_list_append(&endpoint->pending_put_frags, (opal_list_item_t *)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 
@@ -716,7 +716,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
 
         OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t *)frag);
+        opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 
@@ -726,7 +726,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
         OPAL_THREAD_ADD32(&endpoint->sd_wqe[BTL_OPENIB_LP_QP],1);
         OPAL_THREAD_ADD32(&endpoint->get_tokens,1);
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
-        opal_list_append(&endpoint->pending_frags[BTL_OPENIB_LP_QP], (opal_list_item_t*)frag);
+        opal_list_append(&endpoint->pending_get_frags, (opal_list_item_t*)frag);
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
         return OMPI_SUCCESS;
 

@@ -79,7 +79,7 @@ static char* btl_openib_component_status_to_string(enum ibv_wc_status status);
 static int btl_openib_component_progress(void);
 static void btl_openib_frag_progress_pending(
          mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
-         int prio);
+         const int prio);
 
 
 mca_btl_openib_component_t mca_btl_openib_component = {
@@ -911,16 +911,16 @@ static inline int btl_openib_frag_progress_one(
         (((P) == BTL_OPENIB_HP_QP)?(E)->eager_rdma_remote.tokens:0))
 static void btl_openib_frag_progress_pending(
         mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
-        int prio)
+        const int prio)
 {
     
     opal_list_item_t *frag_item;
     mca_btl_openib_frag_t* frag;
+    size_t i, len = opal_list_get_size(&endpoint->pending_frags[prio]);
 
-    /* check to see if we need to progress any pending desciptors */
-    while(!opal_list_is_empty(&endpoint->pending_frags[prio]) &&
-            endpoint->sd_wqe[prio] > 0 &&
-            BTL_OPENIB_TOKENS(endpoint, prio) > 0) {
+    /* check to see if we need to progress any pending descriptors */
+    for(i = 0; i < len && endpoint->sd_wqe[prio] > 0 &&
+            BTL_OPENIB_TOKENS(endpoint, prio) > 0; i++) {
         OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
         frag_item = opal_list_remove_first(&(endpoint->pending_frags[prio]));
         OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
@@ -931,11 +931,38 @@ static void btl_openib_frag_progress_pending(
             break;
     }
 
+    if(BTL_OPENIB_LP_QP == prio) {
+        len = opal_list_get_size(&endpoint->pending_get_frags);
+        for(i = 0; i < len && endpoint->sd_wqe[BTL_OPENIB_LP_QP] > 0 &&
+                endpoint->get_tokens > 0; i++) {
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            frag_item = opal_list_remove_first(&(endpoint->pending_get_frags));
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
+                break;
+            if(btl_openib_frag_progress_one(openib_btl, frag) ==
+                    OMPI_ERR_OUT_OF_RESOURCE)
+                break;
+        }
+
+        len = opal_list_get_size(&endpoint->pending_put_frags);
+        for(i = 0; i < len && endpoint->sd_wqe[BTL_OPENIB_LP_QP] > 0; i++) {
+            OPAL_THREAD_LOCK(&endpoint->endpoint_lock);
+            frag_item = opal_list_remove_first(&(endpoint->pending_put_frags));
+            OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
+            if(NULL == (frag = (mca_btl_openib_frag_t *) frag_item))
+                break;
+            if(btl_openib_frag_progress_one(openib_btl, frag) ==
+                    OMPI_ERR_OUT_OF_RESOURCE)
+                break;
+        }
+    }
+
     if(!mca_btl_openib_component.use_srq)
         return;
 
-    while(!opal_list_is_empty(&openib_btl->pending_frags[prio]) &&
-            openib_btl->sd_tokens[prio] > 0) {
+    len = opal_list_get_size(&openib_btl->pending_frags[prio]);
+    for(i = 0; i < len && openib_btl->sd_tokens[prio] > 0; i++) {
         /* dequeue resources due to global flow control */
         OPAL_THREAD_LOCK(&openib_btl->ib_lock);
         frag_item = opal_list_remove_first(&openib_btl->pending_frags[prio]);
@@ -1037,7 +1064,7 @@ static int btl_openib_component_progress(void)
             switch(wc.opcode) {
             case IBV_WC_RDMA_READ:
                 assert(BTL_OPENIB_LP_QP == qp);
-                OPAL_THREAD_ADD32(&frag->endpoint->get_tokens, 1);
+                OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
                 /* fall through */
 
             case IBV_WC_RDMA_WRITE:
@@ -1065,7 +1092,7 @@ static int btl_openib_component_progress(void)
                 OPAL_THREAD_ADD32(&endpoint->sd_wqe[qp], 1);
                 if(mca_btl_openib_component.use_srq)
                     OPAL_THREAD_ADD32(&openib_btl->sd_tokens[qp], 1);
-                /* check to see if we need to progress any pending desciptors */
+                /* check to see if we need to progress any pending descriptors */
                 btl_openib_frag_progress_pending(openib_btl, endpoint, qp);
 
                 /* check to see if we need to return credits */
