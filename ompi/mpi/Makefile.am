@@ -20,3 +20,7 @@
 SUBDIRS = c cxx f77 f90
 
 dist_pkgdata_DATA = help-mpi-api.txt
+
+man_MANS =
+include man/man3/Makefile.extra
+EXTRA_DIST = $(man_MANS)
