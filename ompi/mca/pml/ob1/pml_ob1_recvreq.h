@@ -102,6 +102,7 @@ do {                                                                \
                                     tag,                            \
                                     comm,                           \
                                     persistent);                    \
+    (request)->req_bytes_delivered = 0;                             \
     if( MPI_ANY_SOURCE != src ) {                                   \
         (request)->req_recv.req_base.req_proc =                     \
             comm->c_pml_comm->procs[src].ompi_proc;                 \
@@ -113,6 +114,8 @@ do {                                                                \
                 (request)->req_recv.req_base.req_addr,              \
                 0,                                                  \
                 &(request)->req_recv.req_convertor );               \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor, \
+                                              &(request)->req_bytes_delivered );  \
         }                                                           \
     }                                                               \
 } while(0)
@@ -240,13 +243,13 @@ do {                                                                            
 do {                                                                               \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
-    (request)->req_bytes_delivered = (request)->req_recv.req_bytes_packed;         \
                                                                                    \
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
                                                                                    \
     if((request)->req_recv.req_bytes_packed > 0) {                                 \
-        if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \
+        if( (MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer) ||           \
+            (0 == (request)->req_bytes_delivered) ) {                              \
             ompi_convertor_copy_and_prepare_for_recv(                              \
                          (request)->req_recv.req_base.req_proc->proc_convertor,    \
                          (request)->req_recv.req_base.req_datatype,                \
@@ -254,9 +257,9 @@ do {                                                                            
                          (request)->req_recv.req_base.req_addr,                    \
                          0,                                                        \
                          &(request)->req_recv.req_convertor );                     \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,  \
+                                              &(request)->req_bytes_delivered );   \
         }                                                                          \
-        ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
-                                          &(request)->req_bytes_delivered );       \
         PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
                                  &((request)->req_recv.req_base), PERUSE_RECV);    \
     }                                                                              \
