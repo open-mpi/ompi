@@ -193,35 +193,51 @@ void mca_pml_ob1_recv_frag_callback(
  * set by the upper level routine.
  */
 #define MCA_PML_OB1_MATCH_GENERIC_RECEIVES(hdr,generic_receives,proc,return_match) \
-do { \
-    /* local variables */ \
-    mca_pml_ob1_recv_request_t *generic_recv; \
-    int recv_tag, frag_tag = hdr->hdr_tag; \
-\
-    /* Loop over the receives. */ \
-    for( generic_recv = (mca_pml_ob1_recv_request_t *)  \
-            opal_list_get_first(generic_receives); \
-            generic_recv != (mca_pml_ob1_recv_request_t *) \
-            opal_list_get_end(generic_receives); \
-            generic_recv = (mca_pml_ob1_recv_request_t *)  \
-            ((opal_list_item_t *)generic_recv)->opal_list_next) { \
-        /* Check for a match */ \
-        recv_tag = generic_recv->req_recv.req_base.req_tag; \
-        if ( (frag_tag == recv_tag) || \
-             ( (recv_tag == OMPI_ANY_TAG) && (0 <= frag_tag) ) ) { \
- \
-            generic_recv->req_recv.req_base.req_proc = proc->ompi_proc; \
-            /* Match made */ \
-            return_match = generic_recv; \
- \
-            /* remove descriptor from posted specific ireceive list */ \
-            opal_list_remove_item(generic_receives, \
-                    (opal_list_item_t *)generic_recv); \
- \
-            break; \
-        } \
-    } \
-} while(0)
+    do {                                                                           \
+        /* local variables */                                                      \
+        mca_pml_ob1_recv_request_t *generic_recv = (mca_pml_ob1_recv_request_t *)  \
+                     opal_list_get_first(generic_receives);                        \
+        mca_pml_ob1_recv_request_t *last_recv = (mca_pml_ob1_recv_request_t *)     \
+            opal_list_get_end(generic_receives);                                   \
+        register int recv_tag, frag_tag = hdr->hdr_tag;                            \
+                                                                                   \
+        /* Loop over the receives. If the received tag is less than zero  */       \
+        /* enter in a special mode, where we match only our internal tags */       \
+        /* (such as those used by the collectives.*/                               \
+        if( 0 <= frag_tag ) {                                                      \
+            for( ; generic_recv != last_recv;                                      \
+                 generic_recv = (mca_pml_ob1_recv_request_t *)                     \
+                     ((opal_list_item_t *)generic_recv)->opal_list_next) {         \
+                /* Check for a match */                                            \
+                recv_tag = generic_recv->req_recv.req_base.req_tag;                \
+                if ( (frag_tag == recv_tag) || (recv_tag == OMPI_ANY_TAG) ) {      \
+                    break;                                                         \
+                }                                                                  \
+            }                                                                      \
+        } else {                                                                   \
+            for( ; generic_recv != last_recv;                                      \
+                 generic_recv = (mca_pml_ob1_recv_request_t *)                     \
+                     ((opal_list_item_t *)generic_recv)->opal_list_next) {         \
+                /* Check for a match */                                            \
+                recv_tag = generic_recv->req_recv.req_base.req_tag;                \
+                if ( frag_tag == recv_tag ) {                                      \
+                    break;                                                         \
+                }                                                                  \
+            }                                                                      \
+        }                                                                          \
+        if( generic_recv != (mca_pml_ob1_recv_request_t *)                         \
+            opal_list_get_end(generic_receives) ) {                                \
+                                                                                   \
+            generic_recv->req_recv.req_base.req_proc = proc->ompi_proc;            \
+            /* Match made */                                                       \
+            return_match = generic_recv;                                           \
+                                                                                   \
+            /* remove descriptor from posted specific ireceive list */             \
+            opal_list_remove_item(generic_receives,                                \
+                                  (opal_list_item_t *)generic_recv);               \
+                                                                                   \
+        }                                                                          \
+    } while(0)
 
 /**
  * Try and match the incoming message fragment to the list of
