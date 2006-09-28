@@ -235,6 +235,8 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     OBJ_CONSTRUCT(&endpoint->pending_send_frags, opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_frags[BTL_OPENIB_HP_QP], opal_list_t);
     OBJ_CONSTRUCT(&endpoint->pending_frags[BTL_OPENIB_LP_QP], opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_get_frags, opal_list_t);
+    OBJ_CONSTRUCT(&endpoint->pending_put_frags, opal_list_t);
     
     endpoint->lcl_qp_attr_hp = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 
     endpoint->lcl_qp_attr_lp = (struct ibv_qp_attr *) malloc(sizeof(struct ibv_qp_attr)); 

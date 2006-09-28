@@ -124,6 +124,8 @@ struct mca_btl_base_endpoint_t {
     /**< list of pending send frags for this endpotint */
     
     opal_list_t                 pending_frags[2]; /**< list of pending frags */ 
+    opal_list_t                 pending_get_frags; /**< list of pending rget ops */
+    opal_list_t                 pending_put_frags; /**< list of pending rput ops */
 
     mca_btl_openib_rem_info_t   rem_info;
     
