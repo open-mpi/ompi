@@ -163,15 +163,14 @@ do {                                                                            
     } else {                                                                    \
         /* initialize request status */                                         \
         recvreq->req_recv.req_base.req_pml_complete = true;                     \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                 \
+            recvreq->req_bytes_received;                                        \
         if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {       \
-            recvreq->req_recv.req_base.req_ompi.req_status._count =     \
-                recvreq->req_bytes_delivered;                           \
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =  \
-                MPI_ERR_TRUNCATE;                                       \
-        } else {                                                        \
-            recvreq->req_recv.req_base.req_ompi.req_status._count =     \
-                recvreq->req_bytes_received;                            \
-        }                                                               \
+            recvreq->req_recv.req_base.req_ompi.req_status._count =             \
+                recvreq->req_bytes_delivered;                                   \
+            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =          \
+                MPI_ERR_TRUNCATE;                                               \
+        }                                                                       \
         MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq );                       \
     }                                                                           \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                                     \
