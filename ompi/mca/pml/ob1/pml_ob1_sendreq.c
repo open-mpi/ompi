@@ -89,12 +89,13 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     sendreq->req_send.req_base.req_free_called = true;
-    if( true == sendreq->req_send.req_base.req_pml_complete ) {
-        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
-    }
 
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(sendreq->req_send.req_base), PERUSE_SEND );
+
+    if( true == sendreq->req_send.req_base.req_pml_complete ) {
+        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
+    }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
