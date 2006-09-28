@@ -365,7 +365,7 @@ AC_MSG_CHECKING([if peruse support is required])
 AC_ARG_ENABLE(peruse,
     AC_HELP_STRING([--enable-peruse],
                    [Support PERUSE interface (default: disabled)]))
-if test "$enable_peruse" == "yes"; then
+if test "$enable_peruse" = "yes"; then
     AC_MSG_RESULT([yes])
     WANT_PERUSE=1
 else

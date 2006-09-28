@@ -33,6 +33,7 @@ version 1.0.
 1.2
 ---
 
+- A number of fixes for Alpha platforms.
 - A variety of Fortran API fixes.
 - Build the Fortran MPI API as a separate library to allow these
   functions to be profiled properly.
