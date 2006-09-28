@@ -117,16 +117,11 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     req->req_rdma_cnt = 0;
 }
 
-static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_send_request_t,
     mca_pml_base_send_request_t,
     mca_pml_ob1_send_request_construct,
-    mca_pml_ob1_send_request_destruct);
+    NULL);
 
 /**
  * Completion of a short message - nothing left to schedule. Note that this
