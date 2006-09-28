@@ -468,9 +468,17 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             if (NULL == module) return;
 
             if (!ompi_win_exposure_epoch(module->p2p_win)) {
-                opal_output(0, "Invalid MPI_PUT on Window %s.  Window not in exposure epoch",
-                            module->p2p_win->w_name);
-                break;
+                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->p2p_win)) {
+                    /* well, we're definitely in an access epoch now */
+                    ompi_win_set_mode(module->p2p_win, 
+                                      OMPI_WIN_FENCE | 
+                                      OMPI_WIN_ACCESS_EPOCH |
+                                      OMPI_WIN_EXPOSE_EPOCH);
+                } else {
+                    opal_output(0, "Invalid MPI_PUT on Window %s.  Window not in exposure epoch",
+                                module->p2p_win->w_name);
+                    break;
+                }
             }
 
             ret = ompi_osc_rdma_sendreq_recv_put(module, header, payload);
@@ -497,9 +505,17 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             if (NULL == module) return;
 
             if (!ompi_win_exposure_epoch(module->p2p_win)) {
-                opal_output(0, "Invalid MPI_ACCUMULATE on Window %s.  Window not in exposure epoch",
-                            module->p2p_win->w_name);
-                break;
+                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->p2p_win)) {
+                    /* well, we're definitely in an access epoch now */
+                    ompi_win_set_mode(module->p2p_win, 
+                                      OMPI_WIN_FENCE | 
+                                      OMPI_WIN_ACCESS_EPOCH |
+                                      OMPI_WIN_EXPOSE_EPOCH);
+                } else {
+                    opal_output(0, "Invalid MPI_ACCUMULATE on Window %s.  Window not in exposure epoch",
+                                module->p2p_win->w_name);
+                    break;
+                }
             }
 
             /* receive into temporary buffer */
@@ -530,9 +546,17 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             if (NULL == module) return;
 
             if (!ompi_win_exposure_epoch(module->p2p_win)) {
-                opal_output(0, "Invalid MPI_GET on Window %s.  Window not in exposure epoch",
-                            module->p2p_win->w_name);
-                break;
+                if (OMPI_WIN_FENCE & ompi_win_get_mode(module->p2p_win)) {
+                    /* well, we're definitely in an access epoch now */
+                    ompi_win_set_mode(module->p2p_win, 
+                                      OMPI_WIN_FENCE | 
+                                      OMPI_WIN_ACCESS_EPOCH |
+                                      OMPI_WIN_EXPOSE_EPOCH);
+                } else {
+                    opal_output(0, "Invalid MPI_GET on Window %s.  Window not in exposure epoch",
+                                module->p2p_win->w_name);
+                    break;
+                }
             }
 
             /* create or get a pointer to our datatype */
