@@ -363,7 +363,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("flags", "BTL flags, added together: SEND=1, PUT=2, GET=4 "
                   "(cannot be 0)",
-                  MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_NEED_ACK |
+                  MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_NEED_ACK |
                   MCA_BTL_FLAGS_NEED_CSUM, &ival, REGINT_GE_ZERO));
     mca_btl_openib_module.super.btl_flags = (uint32_t) ival;
     
