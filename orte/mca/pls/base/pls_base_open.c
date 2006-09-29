@@ -65,6 +65,9 @@ int orte_pls_base_open(void)
     } else {
         orte_pls_base.pls_output = -1;
     }
+    
+    /* init selected to be false */
+    orte_pls_base.selected = false;
 
     /* Open up all the components that we can find */
 

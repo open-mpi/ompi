@@ -143,7 +143,7 @@ int orte_errmgr_orted_abort_procs_request(orte_process_name_t *procs, orte_std_c
     }
     
     /* send the request */
-    if (0 > orte_rml.send_buffer(orte_errmgr_orted_globals.replica, cmd, ORTE_RML_TAG_RDS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_errmgr_orted_globals.replica, cmd, ORTE_RML_TAG_ERRMGR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -158,7 +158,7 @@ int orte_errmgr_orted_abort_procs_request(orte_process_name_t *procs, orte_std_c
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(orte_errmgr_orted_globals.replica, answer, ORTE_RML_TAG_RDS)) {
+    if (0 > orte_rml.recv_buffer(orte_errmgr_orted_globals.replica, answer, ORTE_RML_TAG_ERRMGR)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;
