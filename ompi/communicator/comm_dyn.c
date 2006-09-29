@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -289,13 +290,14 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
             OBJ_RELEASE(sbuf);
             return NULL;
         }
-        if (ORTE_SUCCESS != (rc = orte_rml.send_buffer(port, sbuf, tag, 0))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(sbuf);
-            return NULL;
-        }
-        OBJ_RELEASE(sbuf);
 
+        rc = orte_rml.send_buffer(port, sbuf, tag, 0);
+        OBJ_RELEASE(sbuf);
+	if ( 0 > rc ) {
+	    ORTE_ERROR_LOG(rc);
+	    return NULL;
+	}
+	    
         rport = port;
     }
     else {
@@ -310,6 +312,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
             OBJ_RELEASE(rbuf);
             return NULL;
         }
+
         num_vals = 1;
         if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
