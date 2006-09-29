@@ -99,6 +99,7 @@ int orte_pls_base_select(void)
 
     orte_pls = *best_module;
     orte_pls_base.selected_component = *best_component;
+    orte_pls_base.selected = true;
 
     return ORTE_SUCCESS;
 }

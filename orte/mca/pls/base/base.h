@@ -44,6 +44,8 @@ extern "C" {
         int pls_output;
         /** List of opened components */
         opal_list_t available_components;
+        /** indicate a component has been selected */
+        bool selected;
         /** selected component */
         orte_pls_base_component_t selected_component;
     } orte_pls_base_t;

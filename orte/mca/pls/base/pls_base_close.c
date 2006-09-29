@@ -38,6 +38,11 @@ int orte_pls_base_finalize(void)
 
 int orte_pls_base_close(void)
 {
+    /* finalize selected module */
+    if (orte_pls_base.selected) {
+        orte_pls.finalize();
+    }
+    
     /* Close all open components */
     mca_base_components_close(orte_pls_base.pls_output, 
                                 &orte_pls_base.available_components, NULL);
