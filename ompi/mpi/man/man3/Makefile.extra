@@ -8,7 +8,6 @@
 #
 
 man_MANS += \
-        man/man3/mpi.3 \
         man/man3/MPI.3 \
         man/man3/MPI_Abort.3 \
         man/man3/MPI_Accumulate.3 \
@@ -314,5 +313,4 @@ man_MANS += \
         man/man3/MPI_Win_wait.3 \
         man/man3/MPI_Wtick.3 \
         man/man3/MPI_Wtime.3 \
-        man/man3/openmpi.3 \
-        man/man3/OpenMPI.3
+        man/man3/openmpi.3
