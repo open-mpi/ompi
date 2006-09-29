@@ -83,11 +83,22 @@ static int orte_rmgr_urm_open(void)
 
 static orte_rmgr_base_module_t *orte_rmgr_urm_init(int* priority)
 {
+    int param, value;
+    
     /* if we are NOT an HNP, then we do NOT want to be selected */
     if(!orte_process_info.seed) {
         return NULL;
     }
 
+    param = mca_base_param_reg_int_name("orte", "timing",
+                                        "Request that critical timing loops be measured",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        mca_rmgr_urm_component.timing = true;
+    } else {
+        mca_rmgr_urm_component.timing = false;
+    }
+    
     /* volunteer to be selected */
     *priority = 100;
     return &orte_rmgr_urm_module;

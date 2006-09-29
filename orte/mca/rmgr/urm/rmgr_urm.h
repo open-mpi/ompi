@@ -38,6 +38,8 @@ struct orte_rmgr_urm_component_t {
     orte_rmgr_base_component_t super;
     /** Has RDS query been called */
     bool urm_rds;
+    /* timing tests requested */
+    bool timing;
 };
 /** Convenience typedef */
 typedef struct orte_rmgr_urm_component_t orte_rmgr_urm_component_t;

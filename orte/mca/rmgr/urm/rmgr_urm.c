@@ -30,6 +30,7 @@
 #endif  /* HAVE_STRING_H */
 
 #include "opal/util/trace.h"
+#include "opal/util/output.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rds/rds.h"
@@ -275,9 +276,19 @@ static int orte_rmgr_urm_spawn_job(
 {
     int rc;
     orte_process_name_t* name;
+    struct timeval urmstart, urmstop;
 
     OPAL_TRACE(1);
 
+    /* check for timing request - get start time if so */
+    if (mca_rmgr_urm_component.timing) {
+        if (0 != gettimeofday(&urmstart, NULL)) {
+            opal_output(0, "rmgr_urm: could not obtain start time");
+            urmstart.tv_sec = 0;
+            urmstart.tv_usec = 0;
+        }
+    }
+    
     /*
      * Perform resource discovery.
      */
@@ -305,7 +316,7 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
-    /*
+     /*
      * setup I/O forwarding
      */
 
@@ -368,7 +379,18 @@ static int orte_rmgr_urm_spawn_job(
         }
     }
 
-    /*
+     /* check for timing request - get stop time and report elapsed time if so */
+     if (mca_rmgr_urm_component.timing) {
+         if (0 != gettimeofday(&urmstop, NULL)) {
+             opal_output(0, "rmgr_urm: could not obtain stop time");
+         } else {
+             opal_output(0, "rmgr_urm: job setup time is %ld sec %ld usec",
+                         (long int)(urmstop.tv_sec - urmstart.tv_sec),
+                         (long int)(urmstop.tv_usec - urmstart.tv_usec));
+         }
+     }
+     
+     /*
      * launch the job
      */
     if (ORTE_SUCCESS != (rc = orte_pls.launch_job(*jobid))) {

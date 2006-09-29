@@ -19,6 +19,10 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
+
 #include "mpi.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
@@ -202,6 +206,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     bool compound_cmd = false;
+    bool timing = false;
+    int param, value;
+    struct timeval ompistart, ompistop;
 
     /* Join the run-time environment - do the things that don't hit
        the registry */
@@ -211,6 +218,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* check to see if we want timing information */
+    param = mca_base_param_reg_int_name("orte", "timing",
+                                        "Request that critical timing loops be measured",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        timing = true;
+        if (0 != gettimeofday(&ompistart, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain start time");
+            ompistart.tv_sec = 0;
+            ompistart.tv_usec = 0;
+        }
+    }
+    
     /* Setup ORTE stage 1, note that we are not infrastructre  */
     
     if (ORTE_SUCCESS != (ret = orte_init_stage1(false))) {
@@ -481,6 +501,22 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (timing) {
+        if (0 != gettimeofday(&ompistop, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain stop time");
+        } else {
+            opal_output(0, "ompi_mpi_init: time from start to exec_compound_cmd %ld sec %ld usec",
+                        (long int)(ompistop.tv_sec - ompistart.tv_sec),
+                        (long int)(ompistop.tv_usec - ompistart.tv_usec));
+            if (0 != gettimeofday(&ompistart, NULL)) {
+                opal_output(0, "ompi_mpi_init: could not obtain new start time");
+                ompistart.tv_sec = ompistop.tv_sec;
+                ompistart.tv_usec = ompistop.tv_usec;
+            }
+        }
+    }
+    
     /* if the compound command is operative, execute it */
 
     if (compound_cmd) {
@@ -491,7 +527,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (timing) {
+        if (0 != gettimeofday(&ompistop, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain stop time after compound_cmd");
+        } else {
+            opal_output(0, "ompi_mpi_init: time to exec_compound_cmd %ld sec %ld usec",
+                        (long int)(ompistop.tv_sec - ompistart.tv_sec),
+                        (long int)(ompistop.tv_usec - ompistart.tv_usec));
+        }
+    }
+    
+    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
                                  orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
