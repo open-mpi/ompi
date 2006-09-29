@@ -91,6 +91,14 @@ static int orte_rmgr_proxy_setup_job(
 
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_RMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    
     /* pack the number of app_contexts */
     if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &num_context, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
