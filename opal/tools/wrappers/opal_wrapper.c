@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ *                         Use is subject to license terms.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -59,6 +61,7 @@ extern char **environ;
 #define OPAL_INCLUDE_PATTERN  "/I"
 #define OPAL_LIBDIR_PATTERN   "/LIBPATH:"
 #endif  /* !defined(__WINDOWS__) */
+#define POINTER_SIZE_64_BIT 8 /* Used to determine if binary is 32-bit or 64-bit */
 
 struct {
     char *language;
@@ -73,6 +76,10 @@ struct {
     char **comp_flags;
     char **link_flags;
     char **libs;
+    char *incdir32;
+    char *libdir32;
+    char *incdir64;
+    char *libdir64;
     char *req_file;
 } data;
 
@@ -83,6 +90,8 @@ struct {
 #define COMP_WANT_COMPILE  0x010
 #define COMP_WANT_LINK     0x020
 #define COMP_WANT_PMPI     0x040
+#define COMP_WANT_32_BIT   0x100
+#define COMP_WANT_64_BIT   0x200
 
 static void
 data_callback(const char *key, const char *value)
@@ -139,6 +148,14 @@ data_callback(const char *key, const char *value)
                          opal_argv_count(data.libs),
                          values);
         opal_argv_free(values);
+    } else if (0 == strcmp(key, "incdir32")) {
+        if (NULL != value) data.incdir32 = strdup(value);
+    } else if (0 == strcmp(key, "libdir32")) {
+        if (NULL != value) data.libdir32 = strdup(value);
+    } else if (0 == strcmp(key, "incdir64")) {
+        if (NULL != value) data.incdir64 = strdup(value);
+    } else if (0 == strcmp(key, "libdir64")) {
+        if (NULL != value) data.libdir64 = strdup(value);
     } else if (0 == strcmp(key, "required_file")) {
         if (NULL != value) data.req_file = strdup(value);
     } else if (0 == strcmp(key, "project_short")) {
@@ -172,32 +189,11 @@ data_init(const char *appname)
     data.link_flags[0] = NULL;
     data.libs = malloc(sizeof(char*));
     data.libs[0] = NULL;
+    data.incdir32 = NULL;
+    data.libdir32 = NULL;
+    data.incdir64 = NULL;
+    data.libdir64 = NULL;
     data.req_file = NULL;
-
-    /* load the default -I<incdir> and -L<libdir> */
-    if (0 != strcmp(OPAL_INCLUDEDIR, "/usr/include")) {
-        char *line;
-#if defined(__WINDOWS__)
-        asprintf(&line, OPAL_INCLUDE_PATTERN"\"%s\"", OPAL_INCLUDEDIR);
-#else
-        asprintf(&line, OPAL_INCLUDE_PATTERN"%s", OPAL_INCLUDEDIR);
-#endif  /* defined(__WINDOWS__) */
-        opal_argv_append_nosize(&data.preproc_flags, line);
-        free(line);
-    }
-#if defined(__WINDOWS__)
-    opal_argv_append_nosize( &data.link_flags, "/link" );
-#endif  /* defined(__WINDOWS__) */
-    if (0 != strcmp(OPAL_LIBDIR, "/usr/lib")) {
-        char *line;
-#if defined(__WINDOWS__)
-        asprintf(&line, OPAL_LIBDIR_PATTERN"\"%s\"", OPAL_LIBDIR);
-#else
-        asprintf(&line, OPAL_LIBDIR_PATTERN"%s", OPAL_LIBDIR);
-#endif  /* defined(__WINDOWS__) */
-        opal_argv_append_nosize(&data.link_flags, line);
-        free(line);
-    }
 
     /* now load the data */
     asprintf(&datafile, "%s%s%s-wrapper-data.txt", 
@@ -227,6 +223,10 @@ data_finalize(void)
     opal_argv_free(data.comp_flags);
     opal_argv_free(data.link_flags);
     opal_argv_free(data.libs);
+    if (NULL != data.incdir32) free(data.incdir32);
+    if (NULL != data.libdir32) free(data.libdir32);
+    if (NULL != data.incdir64) free(data.incdir64);
+    if (NULL != data.libdir64) free(data.libdir64);
     if (NULL != data.req_file) free(data.req_file);
 
     return OPAL_SUCCESS;
@@ -355,7 +355,6 @@ main(int argc, char *argv[])
     /* libs */
     load_env_data_argv(data.project_short, "LIBS", &data.libs);
 
-
     /****************************************************
      *
      * Sanity Checks
@@ -451,7 +450,6 @@ main(int argc, char *argv[])
                 disable_flags = false;
                 break;
             }
-
         } else if (0 == strcmp(user_argv[i], "-c")) {
             flags &= ~COMP_WANT_LINK;
             real_flag = true;
@@ -472,8 +470,116 @@ main(int argc, char *argv[])
             disable_flags = false;
             flags |= COMP_SHOW_ERROR;
             real_flag = true;
+        } else if (0 == strcmp(user_argv[i], "-32")) {
+            flags |= COMP_WANT_32_BIT;
+            real_flag = true;
+
+            /* remove element from user_argv */
+            opal_argv_delete(&user_argc, &user_argv, i, 1);
+            --i;
+        } else if (0 == strcmp(user_argv[i], "-64")) {
+            flags |= COMP_WANT_64_BIT;
+            real_flag = true;
+
+            /* remove element from user_argv */
+            opal_argv_delete(&user_argc, &user_argv, i, 1);
+            --i;
         } else { 
             real_flag = true;
+        }
+    }
+
+    /* If the user has not specified -32 or -64 then set the appropriate bit
+       flag based on the bitness of the wrapper.
+
+       The value of POINTER_SIZE_64_BIT is being compared to the size of a pointer to
+       determine if the wrapper was compiled as a 32 or 64 bit app.  If the
+       size of a pointer is equal to POINTER_SIZE_64_BIT (eight) then we are assuming the
+       wrapper was compiled as a 64 bit app
+    */
+    if ( ! (flags & COMP_WANT_64_BIT) && ! (flags & COMP_WANT_32_BIT) ) {
+        int ptr_size = sizeof(void*);
+        if (POINTER_SIZE_64_BIT == ptr_size) {
+            flags |= COMP_WANT_64_BIT;
+        } else {
+            flags |= COMP_WANT_32_BIT;
+        }
+    }
+
+    /* conflicting options, -32 and -64 can not both be defined */
+    if ( (flags & COMP_WANT_64_BIT) && (flags & COMP_WANT_32_BIT) ) {
+        opal_show_help("help-opal-wrapper.txt", "multiple-bit-flags", true,
+                       argv[0], NULL);
+        errno = 0;
+        exit_status = 1;
+    }
+
+    if ( (flags & COMP_WANT_64_BIT) && (NULL != data.incdir64) && (NULL != data.libdir64) ) {
+        char *line;
+
+        load_env_data(data.project_short, "INCDIR64", &data.incdir64);
+        load_env_data(data.project_short, "LIBDIR64", &data.libdir64);
+
+#if defined(__WINDOWS__)
+        asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX "\"\\%s\"", data.incdir64);
+#else
+        asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX"/%s", data.incdir64);
+#endif  /* defined(__WINDOWS__) */
+        opal_argv_append_nosize(&data.preproc_flags, line);
+        free(line);
+#if defined(__WINDOWS__)
+        opal_argv_append_nosize( &data.link_flags, "/link" );
+        asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX "\"\\%s\"", data.libdir64);
+#else
+        asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX"/%s", data.libdir64);
+#endif  /* defined(__WINDOWS__) */
+        opal_argv_append_nosize(&data.link_flags, line);
+        free(line);
+    } else if ( (flags & COMP_WANT_32_BIT) && (NULL != data.incdir32) && (NULL != data.libdir32) ) {
+        char *line;
+
+        load_env_data(data.project_short, "INCDIR32", &data.incdir32);
+        load_env_data(data.project_short, "LIBDIR32", &data.libdir32);
+
+#if defined(__WINDOWS__)
+        asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX "\"\\%s\"", data.incdir32);
+#else
+        asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX"/%s", data.incdir32);
+#endif  /* defined(__WINDOWS__) */
+        opal_argv_append_nosize(&data.preproc_flags, line);
+        free(line);
+#if defined(__WINDOWS__)
+        opal_argv_append_nosize( &data.link_flags, "/link" );
+        asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX "\"\\%s\"", data.libdir32);
+#else
+        asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX"/%s", data.libdir32);
+#endif  /* defined(__WINDOWS__) */
+        opal_argv_append_nosize(&data.link_flags, line);
+        free(line);
+    } else {
+        /* load the default -I<incdir> and -L<libdir> */
+        if (0 != strcmp(OPAL_INCLUDEDIR, "/usr/include")) {
+            char *line;
+#if defined(__WINDOWS__)
+            asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX "\"\\%s\"", OPAL_INCLUDEDIR);
+#else
+            asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX"/%s", OPAL_INCLUDEDIR);
+#endif  /* defined(__WINDOWS__) */
+            opal_argv_append_nosize(&data.preproc_flags, line);
+            free(line);
+        }
+#if defined(__WINDOWS__)
+        opal_argv_append_nosize( &data.link_flags, "/link" );
+#endif  /* defined(__WINDOWS__) */
+        if (0 != strcmp(OPAL_LIBDIR, "/usr/lib")) {
+            char *line;
+#if defined(__WINDOWS__)
+            asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX "\"\\%s\"", OPAL_LIBDIR);
+#else
+            asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX"/%s", OPAL_LIBDIR);
+#endif  /* defined(__WINDOWS__) */
+            opal_argv_append_nosize(&data.link_flags, line);
+            free(line);
         }
     }
 
@@ -502,7 +608,6 @@ main(int argc, char *argv[])
 		               argv[0], NULL);
     }
 #endif
-
 
     /****************************************************
      *
@@ -560,44 +665,46 @@ main(int argc, char *argv[])
      *
      ****************************************************/
 
-    if (flags & COMP_DRY_RUN) {
-        exec_command = opal_argv_join(exec_argv, ' ');
-        printf("%s\n", exec_command);
-    } else {
-        char *tmp;
+    if (0 == exit_status) {
+        if (flags & COMP_DRY_RUN) {
+            exec_command = opal_argv_join(exec_argv, ' ');
+            printf("%s\n", exec_command);
+        } else {
+            char *tmp;
 
 #if 0
-        exec_command = opal_argv_join(exec_argv, ' ');
-        printf("command: %s\n", exec_command);
+            exec_command = opal_argv_join(exec_argv, ' ');
+            printf("command: %s\n", exec_command);
 #endif
 
-        tmp = opal_path_findv(exec_argv[0], 0, environ, NULL);
-        if (NULL == tmp) {
-            opal_show_help("help-opal-wrapper.txt", "no-compiler-found", true,
-                           exec_argv[0], NULL);
-            errno = 0;
-            exit_status = 1;
-        }  else {
-            int status;
+            tmp = opal_path_findv(exec_argv[0], 0, environ, NULL);
+            if (NULL == tmp) {
+                opal_show_help("help-opal-wrapper.txt", "no-compiler-found", true,
+                               exec_argv[0], NULL);
+                errno = 0;
+                exit_status = 1;
+            }  else {
+                int status;
 
-            free(exec_argv[0]);
-            exec_argv[0] = tmp;
-            ret = opal_few(exec_argv, &status);
-            exit_status = WIFEXITED(status) ? WEXITSTATUS(status) :
-                              (WIFSIGNALED(status) ? WTERMSIG(status) :
-                                  (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
-            if( (OPAL_SUCCESS != ret) || ((0 != exit_status) && (flags & COMP_SHOW_ERROR)) ) {
-                char* exec_command = opal_argv_join(exec_argv, ' ');
-                if( OPAL_SUCCESS != ret ) {
-                    opal_show_help("help-opal-wrapper.txt", "spawn-failed", true,
-                                   exec_argv[0], strerror(status), exec_command, NULL);
-                } else {
+                free(exec_argv[0]);
+                exec_argv[0] = tmp;
+                ret = opal_few(exec_argv, &status);
+                exit_status = WIFEXITED(status) ? WEXITSTATUS(status) :
+                                  (WIFSIGNALED(status) ? WTERMSIG(status) :
+                                      (WIFSTOPPED(status) ? WSTOPSIG(status) : 255));
+                if( (OPAL_SUCCESS != ret) || ((0 != exit_status) && (flags & COMP_SHOW_ERROR)) ) {
+                    char* exec_command = opal_argv_join(exec_argv, ' ');
+                    if( OPAL_SUCCESS != ret ) {
+                        opal_show_help("help-opal-wrapper.txt", "spawn-failed", true,
+                                       exec_argv[0], strerror(status), exec_command, NULL);
+                    } else {
 #if 0
-                    opal_show_help("help-opal-wrapper.txt", "compiler-failed", true,
-                                   exec_argv[0], exit_status, exec_command, NULL);
+                        opal_show_help("help-opal-wrapper.txt", "compiler-failed", true,
+                                       exec_argv[0], exit_status, exec_command, NULL);
 #endif
+                    }
+                    free(exec_command);
                 }
-                free(exec_command);
             }
         }
     }
