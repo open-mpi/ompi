@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+dnl                         Use is subject to license terms.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -41,6 +43,11 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
     USER_WRAPPER_EXTRA_FCFLAGS=
     USER_WRAPPER_EXTRA_LDFLAGS=
     USER_WRAPPER_EXTRA_LIBS=
+
+    WRAPPER_32_BIT_INCDIR=
+    WRAPPER_32_BIT_LIBDIR=
+    WRAPPER_64_BIT_INCDIR=
+    WRAPPER_64_BIT_LIBDIR=
 
     AC_ARG_WITH([wrapper-cflags], 
                 [AC_HELP_STRING([--with-wrapper-cflags],
@@ -95,6 +102,52 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_INIT],[
     elif test ! -z "$with_wrapper_libs" ; then
         USER_WRAPPER_EXTRA_LIBS="$with_wrapper_libs"
     fi
+
+    AC_ARG_WITH([wrapper-32-bit-incdir],
+        AC_HELP_STRING([--with-wrapper-32-bit-incdir=include],
+            [defined where the 32 bit header files are located in relation to prefix]))
+    if test "$with_wrapper_32_bit_incdir" = "yes" -o "$with_wrapper_32_bit_incdir" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-32-bit-incdir must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_32_bit_incdir" ; then
+        WRAPPER_32_BIT_INCDIR="$with_wrapper_32_bit_incdir"
+    fi
+
+    AC_ARG_WITH([wrapper-32-bit-libdir],
+        AC_HELP_STRING([--with-wrapper-32-bit-libdir=lib],
+            [defined where the 32 bit library files are located in relation to prefix]))
+    if test "$with_wrapper_32_bit_libdir" = "yes" -o "$with_wrapper_32_bit_libdir" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-32-bit-libdir must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_32_bit_libdir" ; then
+        WRAPPER_32_BIT_LIBDIR="$with_wrapper_32_bit_libdir"
+    fi
+
+    if (test "${with_wrapper_32_bit_incdir+set}" != set && test "${with_wrapper_32_bit_libdir+set}" = set ) ||
+       (test "${with_wrapper_32_bit_incdir+set}" = set && test "${with_wrapper_32_bit_libdir+set}" != set ) ; then
+        AC_MSG_ERROR([Using --with-wrapper-32-bit-incdir or --with-wrapper-32-bit-libdir requires the setting of both values.  Aborting])
+    fi
+
+    AC_ARG_WITH([wrapper-64-bit-incdir],
+        AC_HELP_STRING([--with-wrapper-64-bit-incdir=include],
+            [defined where the 64 bit header files are located in relation to prefix]))
+    if test "$with_wrapper_64_bit_incdir" = "yes" -o "$with_wrapper_64_bit_incdir" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-64-bit-incdir must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_64_bit_incdir" ; then
+        WRAPPER_64_BIT_INCDIR="$with_wrapper_64_bit_incdir"
+    fi
+
+    AC_ARG_WITH([wrapper-64-bit-libdir],
+        AC_HELP_STRING([--with-wrapper-64-bit-libdir=lib],
+            [defined where the 64 bit library files are located in relation to prefix]))
+    if test "$with_wrapper_64_bit_libdir" = "yes" -o "$with_wrapper_64_bit_libdir" = "no"; then
+        AC_MSG_ERROR([--with-wrapper-64-bit-libdir must have an argument.  Aborting])
+    elif test ! -z "$with_wrapper_64_bit_libdir" ; then
+        WRAPPER_64_BIT_LIBDIR="$with_wrapper_64_bit_libdir"
+    fi
+
+    if (test "${with_wrapper_64_bit_incdir+set}" != set && test "${with_wrapper_64_bit_libdir+set}" = set ) ||
+       (test "${with_wrapper_64_bit_incdir+set}" = set && test "${with_wrapper_64_bit_libdir+set}" != set ) ; then
+        AC_MSG_ERROR([Using --with-wrapper-64-bit-incdir or --with-wrapper-64-bit-libdir requires the setting of both values.  Aborting])
+    fi
 ])
 
 
@@ -146,6 +199,25 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OPAL_WRAPPER_EXTRA_INCLUDES])
     AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_INCLUDES])
 
+    AC_MSG_CHECKING([for OPAL 32 BIT INCS])
+    OPAL_WRAPPER_32_BIT_INCDIR="$WRAPPER_32_BIT_INCDIR"
+    AC_SUBST([OPAL_WRAPPER_32_BIT_INCDIR])
+    AC_MSG_RESULT([$OPAL_WRAPPER_32_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for OPAL 32 BIT LIBS])
+    OPAL_WRAPPER_32_BIT_LIBDIR="$WRAPPER_32_BIT_LIBDIR"
+    AC_SUBST([OPAL_WRAPPER_32_BIT_LIBDIR])
+    AC_MSG_RESULT([$OPAL_WRAPPER_32_BIT_LIBDIR])
+
+    AC_MSG_CHECKING([for OPAL 64 BIT INCS])
+    OPAL_WRAPPER_64_BIT_INCDIR="$WRAPPER_64_BIT_INCDIR"
+    AC_SUBST([OPAL_WRAPPER_64_BIT_INCDIR])
+    AC_MSG_RESULT([$OPAL_WRAPPER_64_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for OPAL 64 BIT LIBS])
+    OPAL_WRAPPER_64_BIT_LIBDIR="$WRAPPER_64_BIT_LIBDIR"
+    AC_SUBST([OPAL_WRAPPER_64_BIT_LIBDIR])
+    AC_MSG_RESULT([$OPAL_WRAPPER_64_BIT_LIBDIR])
 
     #
     # ORTE
@@ -183,6 +255,25 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([ORTE_WRAPPER_EXTRA_INCLUDES])
     AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_INCLUDES])
 
+    AC_MSG_CHECKING([for ORTE 32 BIT INCS])
+    ORTE_WRAPPER_32_BIT_INCDIR="$OPAL_WRAPPER_32_BIT_INCDIR"
+    AC_SUBST([ORTE_WRAPPER_32_BIT_INCDIR])
+    AC_MSG_RESULT([$ORTE_WRAPPER_32_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for ORTE 32 BIT LIBS])
+    ORTE_WRAPPER_32_BIT_LIBDIR="$OPAL_WRAPPER_32_BIT_LIBDIR"
+    AC_SUBST([ORTE_WRAPPER_32_BIT_LIBDIR])
+    AC_MSG_RESULT([$ORTE_WRAPPER_32_BIT_LIBDIR])
+
+    AC_MSG_CHECKING([for ORTE 64 BIT INCS])
+    ORTE_WRAPPER_64_BIT_INCDIR="$OPAL_WRAPPER_64_BIT_INCDIR"
+    AC_SUBST([ORTE_WRAPPER_64_BIT_INCDIR])
+    AC_MSG_RESULT([$ORTE_WRAPPER_64_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for ORTE 64 BIT LIBS])
+    ORTE_WRAPPER_64_BIT_LIBDIR="$OPAL_WRAPPER_64_BIT_LIBDIR"
+    AC_SUBST([ORTE_WRAPPER_64_BIT_LIBDIR])
+    AC_MSG_RESULT([$ORTE_WRAPPER_64_BIT_LIBDIR])
 
     #
     # OMPI
@@ -225,6 +316,26 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OMPI_WRAPPER_EXTRA_LIBS])
     AC_MSG_RESULT([$OMPI_WRAPPER_EXTRA_LIBS])
 
+    AC_MSG_CHECKING([for OMPI 32 BIT INCS])
+    OMPI_WRAPPER_32_BIT_INCDIR="$ORTE_WRAPPER_32_BIT_INCDIR"
+    AC_SUBST([OMPI_WRAPPER_32_BIT_INCDIR])
+    AC_MSG_RESULT([$OMPI_WRAPPER_32_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for OMPI 32 BIT LIBS])
+    OMPI_WRAPPER_32_BIT_LIBDIR="$ORTE_WRAPPER_32_BIT_LIBDIR"
+    AC_SUBST([OMPI_WRAPPER_32_BIT_LIBDIR])
+    AC_MSG_RESULT([$OMPI_WRAPPER_32_BIT_LIBDIR])
+
+    AC_MSG_CHECKING([for OMPI 64 BIT INCS])
+    OMPI_WRAPPER_64_BIT_INCDIR="$ORTE_WRAPPER_64_BIT_INCDIR"
+    AC_SUBST([OMPI_WRAPPER_64_BIT_INCDIR])
+    AC_MSG_RESULT([$OMPI_WRAPPER_64_BIT_INCDIR])
+
+    AC_MSG_CHECKING([for OMPI 64 BIT LIBS])
+    OMPI_WRAPPER_64_BIT_LIBDIR="$ORTE_WRAPPER_64_BIT_LIBDIR"
+    AC_SUBST([OMPI_WRAPPER_64_BIT_LIBDIR])
+    AC_MSG_RESULT([$OMPI_WRAPPER_64_BIT_LIBDIR])
+
     AC_MSG_CHECKING([for OMPI extra include dirs])
     if test "$WANT_INSTALL_HEADERS" = "1" ; then
         # Always include openmpi in case C++ bindings get installed
@@ -239,7 +350,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     # compiler should work even if there is no language support.
     if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
         OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
-        OMPI_WRAPPER_CXX_REQUIRED_FILE="libmpi_cxx.la"
+        OMPI_WRAPPER_CXX_REQUIRED_FILE=""
     else
         OMPI_WRAPPER_CXX_LIB=""
         OMPI_WRAPPER_CXX_REQUIRED_FILE=""
@@ -255,7 +366,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OMPI_WRAPPER_F77_REQUIRED_FILE])
 
     if test "$OMPI_WANT_F90_BINDINGS" = "1" ; then
-        OMPI_WRAPPER_F90_REQUIRED_FILE="libmpi_f90.la"
+        OMPI_WRAPPER_F90_REQUIRED_FILE=""
     else
         OMPI_WRAPPER_F90_REQUIRED_FILE="not supported"
     fi
