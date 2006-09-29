@@ -28,10 +28,12 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
 	(cd $(DESTDIR)$(bindir); rm -f orteCC$(EXEEXT); $(LN_S) opal_wrapper orteCC)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f orteCC-wrapper-data.txt; $(LN_S) ortec++-wrapper-data.txt orteCC-wrapper-data.txt)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f ortecc.1; $(LN_S) opalcc.1 ortecc.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f ortec++.1; $(LN_S) opalcc.1 ortec++.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f orteCC.1; $(LN_S) opalcc.1 orteCC.1)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f orteCC-wrapper-data.txt; $(LN_S) ortec++-wrapper-data.txt orteCC-wrapper-data.txt)
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT) \
@@ -46,6 +48,8 @@ else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f ortecc.1; $(LN_S) opalcc.1 ortecc.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f ortec++.1; $(LN_S) opalcc.1 ortec++.1)
 

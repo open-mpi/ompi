@@ -52,9 +52,11 @@ if CASE_SENSITIVE_FS
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
 	(cd $(DESTDIR)$(bindir); rm -f opalCC$(EXEEXT); $(LN_S) opal_wrapper opalCC)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f opalCC-wrapper-data.txt; $(LN_S) opalc++-wrapper-data.txt opalCC-wrapper-data.txt)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f opalCC.1; $(LN_S) opalcc.1 opalCC.1)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f opalCC-wrapper-data.txt; $(LN_S) opalc++-wrapper-data.txt opalCC-wrapper-data.txt)
 
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
@@ -68,6 +70,8 @@ else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
 
 uninstall-local:

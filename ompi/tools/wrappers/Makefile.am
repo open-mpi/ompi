@@ -35,13 +35,15 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper mpif90)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpiCC-wrapper-data.txt)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpicc.1; $(LN_S) opalcc.1 mpicc.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpic++.1; $(LN_S) opalcc.1 mpic++.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpiCC.1; $(LN_S) opalcc.1 mpiCC.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpif77.1; $(LN_S) opalcc.1 mpif77.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpif90.1; $(LN_S) opalcc.1 mpif90.1)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f mpiCC-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpiCC-wrapper-data.txt)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
 else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) mpic++ mpicxx)
@@ -51,11 +53,13 @@ install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f mpicxx$(EXEEXT); $(LN_S) opal_wrapper mpicxx)
 	(cd $(DESTDIR)$(bindir); rm -f mpif77$(EXEEXT); $(LN_S) opal_wrapper mpif77)
 	(cd $(DESTDIR)$(bindir); rm -f mpif90$(EXEEXT); $(LN_S) opal_wrapper mpif90)
+	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
+
+install-data-hook:
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpicc.1; $(LN_S) opalcc.1 mpicc.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpic++.1; $(LN_S) opalcc.1 mpic++.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpif77.1; $(LN_S) opalcc.1 mpif77.1)
 	(cd $(DESTDIR)$(mandir)/man1; rm -f mpif90.1; $(LN_S) opalcc.1 mpif90.1)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f mpicxx-wrapper-data.txt; $(LN_S) mpic++-wrapper-data.txt mpicxx-wrapper-data.txt)
 endif
 
 if CASE_SENSITIVE_FS
