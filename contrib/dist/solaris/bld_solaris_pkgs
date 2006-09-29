@@ -126,6 +126,7 @@ s/\/INC_ISAV9/\/${inc_v9}/g
 s/\/LIB_ISA/\/${ARCH}/g
 s/\/INC_ISA/\/${ARCH}/g
 s/\/ISA/\/${ARCH}/g
+s/\=\"ISA\"/\=\"${ARCH}\"/g
 _EOF
 
 }
