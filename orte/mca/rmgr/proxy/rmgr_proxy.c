@@ -84,7 +84,7 @@ static int orte_rmgr_proxy_setup_job(
     orte_buffer_t cmd;
     orte_buffer_t rsp;
     orte_std_cntr_t count;
-    orte_rmgr_cmd_t command;
+    orte_rmgr_cmd_t command=ORTE_RMGR_SETUP_JOB_CMD;
     int rc;
 
     OPAL_TRACE(1);
