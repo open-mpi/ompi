@@ -88,7 +88,7 @@ int MPI_Reduce_scatter(void *sendbuf, void *recvbuf, int *recvcounts,
     if (size == count) {
         return MPI_SUCCESS;
     }
-        
+
     /* Invoke the coll component to perform the back-end operation */
 
     OBJ_RETAIN(op);

@@ -107,10 +107,13 @@ int MPI_Scatter(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    /* If we have nothing to receive, return success (everyone must
-       have given the same recvcount) */
+    /* Do we need to do anything? */
 
-    if (0 == recvcount) {
+    if ((0 == recvcount &&
+         (ompi_comm_rank(comm) != root ||
+          (ompi_comm_rank(comm) == root && MPI_IN_PLACE != recvbuf))) ||
+        (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf &&
+         0 == sendcount)) {
         return MPI_SUCCESS;
     }
 

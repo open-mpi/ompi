@@ -60,12 +60,14 @@ int MPI_Allgather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* Can we optimize?  Everyone had to give the same send signature,
-       which means that everyone must have given a sendcount > 0 if
-       there's anything to send. */
+    /* Do we need to do anything?  Everyone had to give the same send
+       signature, which means that everyone must have given a
+       sendcount > 0 if there's anything to send.  If we're doing
+       IN_PLACE, however, check recvcount, not sendcount. */
 
-    if (sendcount == 0) {
-      return MPI_SUCCESS;
+    if ((MPI_IN_PLACE != sendbuf && 0 == sendcount) ||
+        (0 == recvcount)) {
+        return MPI_SUCCESS;
     }
 
     /* Invoke the coll component to perform the back-end operation */

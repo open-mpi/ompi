@@ -70,7 +70,9 @@ int MPI_Scan(void *sendbuf, void *recvbuf, int count,
         OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* If everyone supplied count == 0, we can just return */
+    /* Do we need to do anything? (MPI says that reductions have to
+       have a count of at least 1, but at least IMB calls reduce with
+       a count of 0 -- blah!) */
 
     if (0 == count) {
         return MPI_SUCCESS;

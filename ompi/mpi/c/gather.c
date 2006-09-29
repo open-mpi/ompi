@@ -112,12 +112,14 @@ int MPI_Gather(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
-    /* Can we optimize?  Everyone had to give the same send signature,
-       which means that everyone must have given a sendcount > 0 if
-       there's anything to send. */
+    /* Do we need to do anything? */
 
-    if (sendcount == 0) {
-      return MPI_SUCCESS;
+    if ((0 == sendcount &&
+         (ompi_comm_rank(comm) != root ||
+          (ompi_comm_rank(comm) == root && MPI_IN_PLACE != sendbuf))) ||
+        (ompi_comm_rank(comm) == root && MPI_IN_PLACE == sendbuf && 
+         0 == recvbuf)) {
+        return MPI_SUCCESS;
     }
 
     /* Invoke the coll component to perform the back-end operation */
