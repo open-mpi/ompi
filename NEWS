@@ -27,8 +27,9 @@ version 1.0.
 
 - Fix for large-sized Fortran LOGICAL datatypes.
 - Fix various error checking in MPI_INFO_GET_NTHKEY and
-  MPI_GROUP_TRANSLATE_RANKS.  Thanks to Lisandro Dalcin for reporting
-  the problem.
+  MPI_GROUP_TRANSLATE_RANKS, and some collective operations
+  (particularly with regards to MPI_IN_PLACE).  Thanks to Lisandro
+  Dalcin for reporting the problems.
 - Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
 - Fix a number of race conditions with the MPI-2 Onesided
   interface
