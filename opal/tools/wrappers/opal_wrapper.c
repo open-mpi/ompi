@@ -561,9 +561,9 @@ main(int argc, char *argv[])
         if (0 != strcmp(OPAL_INCLUDEDIR, "/usr/include")) {
             char *line;
 #if defined(__WINDOWS__)
-            asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX "\"\\%s\"", OPAL_INCLUDEDIR);
+            asprintf(&line, OPAL_INCLUDE_PATTERN "\"\\%s\"", OPAL_INCLUDEDIR);
 #else
-            asprintf(&line, OPAL_INCLUDE_PATTERN OPAL_PREFIX"/%s", OPAL_INCLUDEDIR);
+            asprintf(&line, OPAL_INCLUDE_PATTERN "/%s", OPAL_INCLUDEDIR);
 #endif  /* defined(__WINDOWS__) */
             opal_argv_append_nosize(&data.preproc_flags, line);
             free(line);
