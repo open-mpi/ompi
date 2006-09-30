@@ -81,10 +81,10 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
         }
     }
 
-    /* MPI-1, p114, says that each process must supply at least
-       one element.  But at least the Pallas benchmarks call
-       MPI_REDUCE with a count of 0.  So be sure to handle it. */
-    
+    /* Do we need to do anything? (MPI says that reductions have to
+       have a count of at least 1, but at least IMB calls reduce with
+       a count of 0 -- blah!) */
+
     if (0 == count) {
         return MPI_SUCCESS;
     }

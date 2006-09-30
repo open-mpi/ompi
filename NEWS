@@ -27,6 +27,7 @@ version 1.0.
 1.2
 ---
 
+- A number of fixes for Alpha platforms.
 - A variety of Fortran API fixes.
 - Build the Fortran MPI API as a separate library to allow these
   functions to be profiled properly.
@@ -60,6 +61,11 @@ version 1.0.
 -----
 
 - Fix for large-sized Fortran LOGICAL datatypes.
+- Fix various error checking in MPI_INFO_GET_NTHKEY and
+  MPI_GROUP_TRANSLATE_RANKS, and some collective operations
+  (particularly with regards to MPI_IN_PLACE).  Thanks to Lisandro
+  Dalcin for reporting the problems.
+- Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
 - Fix the "tuned" collective componenete where some cases where
   MPI_BCAST could hang.
 - Update TCP support to support non-uniform TCP environments.

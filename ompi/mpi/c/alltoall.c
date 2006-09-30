@@ -61,10 +61,9 @@ int MPI_Alltoall(void *sendbuf, int sendcount, MPI_Datatype sendtype,
       OMPI_ERRHANDLER_CHECK(err, comm, err, FUNC_NAME);
     }
 
-    /* If the sendcount is 0, since everyone gave the same value, then
-       we don't need to do anything */
+    /* Do we need to do anything? */
 
-    if (0 == sendcount) {
+    if (0 == sendcount && 0 == recvcount) {
         return MPI_SUCCESS;
     }
 
