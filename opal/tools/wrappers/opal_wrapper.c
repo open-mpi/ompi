@@ -574,9 +574,9 @@ main(int argc, char *argv[])
         if (0 != strcmp(OPAL_LIBDIR, "/usr/lib")) {
             char *line;
 #if defined(__WINDOWS__)
-            asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX "\"\\%s\"", OPAL_LIBDIR);
+            asprintf(&line, OPAL_LIBDIR_PATTERN "\"\\%s\"", OPAL_LIBDIR);
 #else
-            asprintf(&line, OPAL_LIBDIR_PATTERN OPAL_PREFIX"/%s", OPAL_LIBDIR);
+            asprintf(&line, OPAL_LIBDIR_PATTERN "/%s", OPAL_LIBDIR);
 #endif  /* defined(__WINDOWS__) */
             opal_argv_append_nosize(&data.link_flags, line);
             free(line);
