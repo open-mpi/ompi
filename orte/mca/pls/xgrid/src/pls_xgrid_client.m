@@ -366,6 +366,7 @@ char **environ;
 		[NSArray arrayWithObjects: @"--no-daemonize",
 			 @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
 			 @"--name", [NSString stringWithCString: name_string],
+                         @"--num_procs", [NSString stringWithFormat: @"%d", 1],
 			 @"--nodename", [NSString stringWithCString: node->node_name],
 			 @"--nsreplica", [NSString stringWithCString: nsuri],
 			 @"--gprreplica", [NSString stringWithCString: gpruri],
