@@ -390,7 +390,6 @@ int ADIOI_cb_delete_name_array(MPI_Comm comm,
 			 void *attr_val, 
 			 void *extra)
 {
-    int i;
     ADIO_cb_name_array array;
 
     ADIOI_UNREFERENCED_ARG(comm);
