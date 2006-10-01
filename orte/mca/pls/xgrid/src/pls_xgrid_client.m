@@ -98,7 +98,7 @@ char **environ;
 	    if (XGActionMonitorOutcomeSuccess != [actionMonitor outcome]) {
 		NSError *err = [actionMonitor error];
 		fprintf(stderr, "orte:pls:xgrid: cleanup failed: %s\n", 
-			[[err localizedFailureReason] cString]);
+			[[err localizedDescription] cString]);
 	    }
 	}
     }
@@ -146,11 +146,17 @@ char **environ;
 
 - (NSString *)servicePrincipal;
 {
-    NSString *servicePrincipal = [connection servicePrincipal];
+    NSString *myServicePrincipal = [connection servicePrincipal];
 
-    if (servicePrincipal == nil) [NSString stringWithFormat:@"xgrid/%@", [connection name]];
+    if (myServicePrincipal == nil) {
+	myServicePrincipal = [NSString stringWithFormat:@"xgrid/%@", [connection name]];
+    }
 
-    return servicePrincipal;
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid: Kerberos servicePrincipal: %s",
+			[myServicePrincipal cString]);
+
+    return myServicePrincipal;
 }
 
 
@@ -160,15 +166,25 @@ char **environ;
     connection = [[[XGConnection alloc] initWithHostname: controller_hostname
 					portnumber:0] autorelease];
 
-    if (NULL == controller_password) {
+    if (nil == controller_password) {
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Using Kerberos authentication");
+
 	XGGSSAuthenticator *authenticator = 
 	    [[[XGGSSAuthenticator alloc] init] autorelease];
+
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Kerberos principal: %s",
+			    [[self servicePrincipal] cString]);
 		
 	[authenticator setServicePrincipal:[self servicePrincipal]];
 	[connection setAuthenticator:authenticator];
 
     } else {
-        XGTwoWayRandomAuthenticator *authenticator =
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Using password authentication");
+
+       XGTwoWayRandomAuthenticator *authenticator =
 	    [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
 
 	/* this seems to be hard coded */
@@ -187,18 +203,25 @@ char **environ;
     }
     opal_mutex_unlock(&state_mutex);
 
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: connection name: %s", [[connection name] cString]);
+    /* if we're not connected when the condition is triggered, we
+       dont' have a connection and can't start.  exit. */
+    if ([connection state] != XGConnectionStateOpen) {
+	return ORTE_ERR_NOT_AVAILABLE;
+    }
+
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid: connection name: %s",
+			[[connection name] cString]);
     
     controller = [[XGController alloc] initWithConnection:connection];
     /* need to call progress exactly once for some reason to get the
        controller happy enough to allow us to assign the grid */
     opal_progress();
     grid = [controller defaultGrid];
-#if 0 /* gives a warning - need to figure out "right way" */
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: grid name: %s", [[grid name] cString]);
-#endif
+
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"pls: xgrid: grid name: %s",
+			[[grid identifier] cString]);
 
     return ORTE_SUCCESS;
 }
@@ -324,14 +347,15 @@ char **environ;
             }
             
             /* setup per-node options */
-	    opal_output(orte_pls_base.pls_output,
-			"pls:xgrid: launching on node %s", 
-			node->node_name);
+	    opal_output_verbose(1, orte_pls_base.pls_output,
+				"orte:pls:xgrid: launching on node %s", 
+				node->node_name);
             
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if (ORTE_SUCCESS != rc) {
-                opal_output(0, "pls:xgrid: unable to create process name");
+                opal_output(orte_pls_base.pls_output,
+			    "orte:pls:xgrid: unable to create process name");
                 return rc;
             }
 
@@ -382,8 +406,9 @@ char **environ;
 	rc = ORTE_SUCCESS;
     } else {	
 	NSError *err = [actionMonitor error];
-	fprintf(stderr, "orte:pls:xgrid: launch failed: %s\n", 
-		[[err localizedFailureReason] cString]);
+	fprintf(stderr, "orte:pls:xgrid: launch failed: (%d) %s\n", 
+		[actionMonitor outcome],
+		[[err localizedDescription] cString]);
 	rc = ORTE_ERROR;
 	goto cleanup;
     }
@@ -412,8 +437,8 @@ cleanup:
     }
     OBJ_DESTRUCT(&daemons);
 
-    opal_output(orte_pls_base.pls_output,
-		"pls:xgrid:launch: finished\n");
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid:launch: finished\n");
 
     return rc;
 }
@@ -438,7 +463,7 @@ cleanup:
     } else {	
 	NSError *err = [actionMonitor error];
 	fprintf(stderr, "orte:pls:xgrid: terminate failed: %s\n", 
-		[[err localizedFailureReason] cString]);
+		[[err localizedDescription] cString]);
 	ret = ORTE_ERROR;
     }
 
@@ -447,24 +472,51 @@ cleanup:
 
 
 /* delegate for changes */
--(void) connectionDidOpen:(XGConnection*) connection
+-(void) connectionDidOpen:(XGConnection*) myConnection
 {
+    /* this isn't an error condition -- we finally opened the
+       connection, so trigger the condition variable we're waiting
+       on */
     opal_condition_broadcast(&state_cond);
 }
 
 
--(void) connectionDidNotOpen:(XGConnection*) connection withError: (NSError*) error
+-(void) connectionDidNotOpen:(XGConnection*) myConnection withError: (NSError*) error
 {
     opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: got connectionDidNotOpen message");
+		"orte:pls:xgrid: Controller connection did not open: (%d) %s",
+		[error code],
+		[[error localizedDescription] cString]);
     opal_condition_broadcast(&state_cond);
 }
 
 
--(void) connectionDidClose:(XGConnection*) connection;
+-(void) connectionDidClose:(XGConnection*) myConnection;
 {
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: got connectionDidClose message");
+    // check for success
+    if ([myConnection error] != nil) {
+	switch ([[myConnection error] code]) {
+	case 200:
+	    /* success */
+	    break;
+	case 530:
+	case 535:
+	    opal_output(orte_pls_base.pls_output,
+			"orte:pls:xgrid: Connection to XGrid controller failed due to authentication error (%d):",
+			[[myConnection error] code]);
+	    break;
+	default:
+	    opal_output(orte_pls_base.pls_output,
+			"orte:pls:xgrid: Connection to XGrid controller unexpectedly closed: (%d) %s",
+			[[myConnection error] code],
+			[[[myConnection error] localizedDescription] cString]);
+	    break;
+	}
+    } else {
+	opal_output(orte_pls_base.pls_output,
+		    "orte:pls:xgrid: Connection to XGrid controller unexpectedly closed");
+    }
+
     opal_condition_broadcast(&state_cond);
 }
 
