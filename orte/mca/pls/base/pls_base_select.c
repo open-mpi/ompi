@@ -47,8 +47,8 @@ int orte_pls_base_select(void)
          item = opal_list_get_next(item)) {
         cli = (mca_base_component_list_item_t *) item;
         component = (orte_pls_base_component_t *) cli->cli_component;
-        opal_output(orte_pls_base.pls_output,
-                    "orte:base:open: querying component %s", 
+        opal_output_verbose(10, orte_pls_base.pls_output,
+                    "orte:base:select: querying component %s", 
                     component->pls_version.mca_component_name);
 
         /* Call the component's init function and see if it wants to be
@@ -75,8 +75,8 @@ int orte_pls_base_select(void)
                 /* update the best priority */
                 best_priority = priority;
             } else {
-                opal_output(orte_pls_base.pls_output,
-                        "orte:base:open: component %s does NOT want to be considered for selection", 
+                opal_output_verbose(10, orte_pls_base.pls_output,
+                        "orte:base:select: component %s does NOT want to be considered for selection", 
                         component->pls_version.mca_component_name);
                 if (NULL == module->finalize) {
                     opal_output(orte_pls_base.pls_output,

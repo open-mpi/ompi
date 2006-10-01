@@ -150,7 +150,7 @@ orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
     
     if (NULL != getenv("SGE_ROOT") && NULL != getenv("ARC") &&
         NULL != getenv("PE_HOSTFILE") && NULL != getenv("JOB_ID")) {
-        opal_output(orte_pls_base.pls_output, 
+        opal_output_verbose(10, orte_pls_base.pls_output,
             "pls:gridengine: available for selection");
 
         /* ensure the receive gets posted */
@@ -161,7 +161,7 @@ orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
         *priority = mca_pls_gridengine_component.priority;
         return &orte_pls_gridengine_module;
     }
-    opal_output(orte_pls_base.pls_output, 
+    opal_output_verbose(10, orte_pls_base.pls_output,
             "pls:gridengine: NOT available for selection");
     return NULL;
 }

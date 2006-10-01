@@ -156,7 +156,7 @@ static orte_pls_base_module_t *pls_tm_init(int *priority)
 
     /* Sadly, no */
 
-    opal_output(orte_pls_base.pls_output, 
-                "pls:tm: NOT available for selection");
+    opal_output_verbose(10, orte_pls_base.pls_output,
+                        "pls:tm: NOT available for selection");
     return NULL;
 }
