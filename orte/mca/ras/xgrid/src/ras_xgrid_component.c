@@ -92,8 +92,7 @@ static orte_ras_base_module_t *orte_ras_xgrid_init(int* priority)
         return NULL;
     }
 
-    if (NULL != getenv("XGRID_CONTROLLER_HOSTNAME") &&
-        NULL != getenv("XGRID_CONTROLLER_PASSWORD")) {
+    if (NULL != getenv("XGRID_CONTROLLER_HOSTNAME")) {
         opal_output(orte_ras_base.ras_output, 
                     "orte:ras:xgrid: available for selection");
         return &orte_ras_xgrid_module;
