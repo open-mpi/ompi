@@ -646,8 +646,9 @@ opal_ifislocalhost(struct sockaddr *addr)
     case AF_INET:
         {
             struct sockaddr_in *inaddr = (struct sockaddr_in*) addr;
-            /* if it's in the 127. domain, it shouldn't be routed */
-            if (0x74000000 == (0x74000000 & htonl(inaddr->sin_addr.s_addr))) {
+            /* if it's in the 127. domain, it shouldn't be routed
+               (0x7f == 127) */
+            if (0x7F000000 == (0x7F000000 & ntohl(inaddr->sin_addr.s_addr))) {
                 return true;
             }
             return false;
