@@ -55,16 +55,9 @@ int orte_pls_base_open(void)
 {
     int param, value;
 
-    /* Debugging / verbose output */
-
-    param = mca_base_param_reg_int_name("pls_base", "verbose",
-                                        "Verbosity level for the pls framework",
-                                        false, false, 0, &value);
-    if (value != 0) {
-        orte_pls_base.pls_output = opal_output_open(NULL);
-    } else {
-        orte_pls_base.pls_output = -1;
-    }
+    /* Debugging / verbose output.  Always have stream open, with
+       verbose set by the mca open system... */
+    orte_pls_base.pls_output = opal_output_open(NULL);
     
     /* init selected to be false */
     orte_pls_base.selected = false;
@@ -77,7 +70,7 @@ int orte_pls_base_open(void)
                                  &orte_pls_base.available_components, true)) {
        return ORTE_ERROR;
     }
-
+    
     /* All done */
 
     return ORTE_SUCCESS;
