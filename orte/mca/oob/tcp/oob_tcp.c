@@ -1043,12 +1043,15 @@ int mca_oob_tcp_init(void)
     opal_list_item_t* item;
     char *tmp, *tmp2, *tmp3;
     orte_std_cntr_t i, num_tokens;
+    int randval = orte_process_info.num_procs;
+
+    if (0 == randval) randval = 10; 
 
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)
-    Sleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 100);
+    Sleep((orte_process_info.my_name->vpid % randval % 1000) * 100);
 #else
-    usleep((orte_process_info.my_name->vpid % orte_process_info.num_procs % 1000) * 1000);
+    usleep((orte_process_info.my_name->vpid % randval % 1000) * 1000);
 #endif
 
     /* get my jobid */
