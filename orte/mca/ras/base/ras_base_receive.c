@@ -62,6 +62,22 @@ int orte_ras_base_comm_start(void)
 }
 
 
+int orte_ras_base_comm_stop(void)
+{
+    int rc;
+
+    if (!recv_issued) {
+        return ORTE_SUCCESS;
+    }
+
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RAS))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    recv_issued = false;
+
+    return rc;
+}
+
 
 /*
  * handle message from proxies

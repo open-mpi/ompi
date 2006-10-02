@@ -24,6 +24,11 @@
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
 
+#include "orte/util/proc_info.h"
+
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
 
 
@@ -53,7 +58,7 @@ int orte_ras_base_find_available(void)
     mca_base_component_list_item_t *cli;
     orte_ras_base_component_t *component;
     orte_ras_base_module_t *module;
-    int priority;
+    int priority, rc;
     orte_ras_base_cmp_t *cmp;
 
     orte_ras_base.ras_available_valid = false;
@@ -100,6 +105,14 @@ int orte_ras_base_find_available(void)
 
         /* Sort the resulting available list in priority order */
         opal_list_sort(&orte_ras_base.ras_available, compare);
+
+        /* if we are an HNP, start the receive */
+        if (orte_process_info.seed) {
+            if (ORTE_SUCCESS  != (rc = orte_ras_base_comm_start())) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
     }
     
     return ORTE_SUCCESS;

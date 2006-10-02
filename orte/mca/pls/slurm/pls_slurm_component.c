@@ -143,11 +143,6 @@ static orte_pls_base_module_t *pls_slurm_init(int *priority)
             opal_output(0, "pls:slurm: available for selection");
         }
 
-        /* ensure the receive gets posted */
-        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
         return &orte_pls_slurm_module;
     }
 

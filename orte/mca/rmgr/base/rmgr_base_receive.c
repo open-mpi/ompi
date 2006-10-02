@@ -178,6 +178,8 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
             }
                 
             /* process the request */
+            /* init the job to be INVALID so we setup the job */
+            job = ORTE_JOBID_INVALID;
             if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(context, num_context, &job,
                                                           0, NULL, NULL, ORTE_PROC_STATE_NONE))) {
                 ORTE_ERROR_LOG(rc);

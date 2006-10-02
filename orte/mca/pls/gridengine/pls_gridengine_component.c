@@ -141,8 +141,6 @@ orte_pls_gridengine_component_init - initialize component, check if we can run o
 */
 orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
 {
-    int rc;
-    
     /* if we are not an HNP, then don't select us */
     if (!orte_process_info.seed) {
         return NULL;
@@ -153,11 +151,6 @@ orte_pls_base_module_t *orte_pls_gridengine_component_init(int *priority)
         opal_output_verbose(10, orte_pls_base.pls_output,
             "pls:gridengine: available for selection");
 
-        /* ensure the receive gets posted */
-        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
-            ORTE_ERROR_LOG(rc);
-        }
-        
         *priority = mca_pls_gridengine_component.priority;
         return &orte_pls_gridengine_module;
     }

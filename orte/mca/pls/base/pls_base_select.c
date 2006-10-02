@@ -24,6 +24,11 @@
 #include "opal/util/show_help.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/base/base.h"
 
 
@@ -39,6 +44,7 @@ int orte_pls_base_select(void)
     orte_pls_base_component_t *component, *best_component = NULL;
     orte_pls_base_module_t *module, *best_module = NULL;
     int priority, best_priority = -1;
+    int rc;
 
     /* Query all the opened components and see if they want to run */
 
@@ -101,5 +107,13 @@ int orte_pls_base_select(void)
     orte_pls_base.selected_component = *best_component;
     orte_pls_base.selected = true;
 
+    /* if we are an HNP, then start our receive */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }

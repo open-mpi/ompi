@@ -300,10 +300,17 @@ static int orte_rmgr_urm_spawn_job(
     /*
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
-    if (ORTE_SUCCESS !=
-        (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+     
+    /* If the jobid = ORTE_JOBID_INVALID, then we need to
+     * get one assigned to us. Otherwise, we are entering
+     * with a valid jobid, so no need to get one
+     */
+    if (ORTE_JOBID_INVALID == *jobid) { /* setup the job */
+        if (ORTE_SUCCESS !=
+            (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid))) {

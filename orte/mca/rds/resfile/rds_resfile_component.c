@@ -103,8 +103,6 @@ static int orte_rds_resfile_open(void)
 
 static orte_rds_base_module_t *orte_rds_resfile_init(void)
 {
-    int rc;
-    
     /* if we are not an HNP, then don't select us */
     if (!orte_process_info.seed) {
         return NULL;
@@ -112,12 +110,6 @@ static orte_rds_base_module_t *orte_rds_resfile_init(void)
 
     /* if we are an HNP, then volunteer */
     OBJ_DESTRUCT(&mca_rds_resfile_component.lock);
-
-    /* issue non-blocking receive for call_back function */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_comm_start())) {
-        ORTE_ERROR_LOG(rc);
-        return NULL;
-    }
 
     return &orte_rds_resfile_module;
 }

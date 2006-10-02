@@ -25,6 +25,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
@@ -51,7 +54,7 @@ int orte_rmaps_base_find_available(void)
     orte_rmaps_base_component_t *component;
     orte_rmaps_base_module_t *module;
     orte_rmaps_base_cmp_t *cmp;
-    int priority;
+    int priority, rc;
     
     /* construct the list to hold any available components */
     OBJ_CONSTRUCT(&orte_rmaps_base.rmaps_available, opal_list_t);
@@ -95,7 +98,14 @@ int orte_rmaps_base_find_available(void)
     
     /* Sort the resulting available list in priority order */
     opal_list_sort(&orte_rmaps_base.rmaps_available, compare);
-    
+
+    /* if we are an HNP, start the receive function */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_comm_start())) {
+            return rc;
+        }
+    }
+
     /* all done */
     return ORTE_SUCCESS;
 }

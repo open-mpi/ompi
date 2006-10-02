@@ -25,6 +25,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
@@ -32,6 +35,7 @@
 int orte_rmaps_base_finalize(void)
 {
     opal_list_item_t* item;
+    int rc;
 
     if (!orte_rmaps_base.no_op_selected) {
         /* Finalize all available modules */
@@ -48,6 +52,14 @@ int orte_rmaps_base_finalize(void)
             OBJ_RELEASE(cmp);
         }
     }
+
+    /* if we are an HNP, then cancel our receive */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_comm_stop())) {
+            return rc;
+        }
+    }
+
     
     return ORTE_SUCCESS;
 }
