@@ -1081,6 +1081,8 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
         goto CLEANUP;
     }
     
+    opal_output(0, "pls_rsh_terminate_job: called for job %ld with %ld daemons", jobid, (long)opal_list_get_size(&daemons));
+    
     /* order them to kill their local procs for this job */
     if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -1110,6 +1112,8 @@ int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
+    
+    opal_output(0, "pls_rsh_terminate_orteds: called for job %ld with %ld daemons", jobid, (long)opal_list_get_size(&daemons));
     
     /* now tell them to die! */
     if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {

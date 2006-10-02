@@ -26,6 +26,8 @@
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
+#include "opal/util/output.h"
+
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -133,6 +135,8 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job)
         return rc;
     }
     
+    opal_output(0, "pls_proxy_terminate_job: sending for job %ld", (long)job);
+    
     if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
@@ -176,6 +180,8 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job)
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    
+    opal_output(0, "pls_proxy_terminate_orteds: sending for job %ld", (long)job);
     
     command = ORTE_PLS_TERMINATE_ORTEDS_CMD;
     

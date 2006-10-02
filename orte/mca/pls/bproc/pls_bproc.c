@@ -50,6 +50,7 @@
 #include "opal/util/path.h"
 #include "opal/util/os_path.h"
 #include "opal/util/show_help.h"
+#include "opal/util/trace.h"
 
 #include "orte/dss/dss.h"
 #include "orte/util/sys_info.h"
@@ -149,6 +150,8 @@ static int orte_pls_bproc_node_array(orte_rmaps_base_map_t* map,
     int num_procs = 0;
     int num_on_node;
 
+    OPAL_TRACE(1);
+    
     *node_array_len = 0;
     for(item =  opal_list_get_first(&map->nodes);
         item != opal_list_get_end(&map->nodes);
@@ -191,6 +194,9 @@ static int orte_pls_bproc_node_list(int * node_array, int node_array_len,
                                    int ** node_list, int * num_nodes,
                                    int num_procs) {
     int node;
+
+    OPAL_TRACE(1);
+    
     *num_nodes = 0;
     *node_list = (int*)malloc(sizeof(int) * node_array_len);
     if(NULL == *node_list) {
@@ -222,6 +228,8 @@ static int orte_pls_bproc_setup_io(orte_jobid_t jobid, struct bproc_io_t * io,
     char *frontend = NULL, *path = NULL, *job = NULL;
     int rc, i;
 
+    OPAL_TRACE(1);
+    
     /* ensure that system info is set */
     orte_sys_info();
     if (NULL == orte_system_info.user) { /* error condition */
@@ -296,6 +304,8 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
     orte_process_name_t * proc = (orte_process_name_t*) data;
     int rc;
     
+    OPAL_TRACE(1);
+    
     /* set the state of this process */
     if(WIFEXITED(status)) {
             rc = orte_smr.set_proc_state(proc, ORTE_PROC_STATE_TERMINATED, status);
@@ -316,6 +326,9 @@ static void orte_pls_bproc_waitpid_cb(pid_t wpid, int status, void *data) {
  * @param data a pointer to the node the daemon was on
  */
 static void orte_pls_bproc_waitpid_daemon_cb(pid_t wpid, int status, void *data) {
+
+    OPAL_TRACE(1);
+     
     if(!mca_pls_bproc_component.done_launching) {
         /* if a daemon exits before we are done launching the user apps we send a
          * message to ourself so we will break out of the receive loop and exit */
@@ -359,6 +372,9 @@ static int bproc_vexecmove_io(int nnodes, int *nodes, int *pids,
                               char * const argv[], char * envp[]) {
     int i;
     char * rank;
+
+    OPAL_TRACE(1);
+    
     for(i = 0; i < nnodes; i++) {
         pids[i] = fork();
         if(0 == pids[i]) {
@@ -406,6 +422,8 @@ static void orte_pls_bproc_setup_env(char *** env)
     int rc;
     int num_env;
 
+    OPAL_TRACE(1);
+    
     num_env = opal_argv_count(*env);
     /* append mca parameters to our environment */
     if(ORTE_SUCCESS != (rc = mca_base_param_build_env(env, &num_env, false))) {
@@ -499,6 +517,8 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     orte_pls_daemon_info_t *dmn;
     opal_list_item_t *item;
 
+    OPAL_TRACE(1);
+    
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done
      */
@@ -708,8 +728,8 @@ orte_pls_bproc_check_node_state(orte_gpr_notify_data_t *notify_data,
     char *dead_node_name; 
     orte_std_cntr_t i, j;
     
-    printf("inside check node state... \n"); 
-    
+    OPAL_TRACE(1);
+        
     /* first see if node is in 
        ORTE_NODE_STATE_DOWN or 
        ORTE_NODE_STATE_REBOOT */
@@ -805,6 +825,9 @@ static int
 orte_pls_bproc_monitor_nodes(void) 
 {
     orte_gpr_subscription_id_t id;
+
+    OPAL_TRACE(1);
+
     return orte_gpr.subscribe_1(&id,
                                 NULL,
                                 NULL,
@@ -848,6 +871,8 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
     struct bproc_io_t bproc_io[3];
     orte_rmaps_base_node_t *node;
 
+    OPAL_TRACE(1);
+    
     if(NULL == (pids = (int*)malloc(sizeof(int) * node_array_len))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -1049,6 +1074,8 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     orte_std_cntr_t idx;
     char cwd_save[OMPI_PATH_MAX + 1];
 
+    OPAL_TRACE(1);
+    
     /* make sure the pls_bproc receive function has been started */
     if (ORTE_SUCCESS != (rc = orte_pls_bproc_comm_start())) {
         ORTE_ERROR_LOG(rc);
@@ -1256,6 +1283,8 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid) {
     orte_std_cntr_t i, num_pids;
     int rc;
     
+    OPAL_TRACE(1);
+    
     if(0 < mca_pls_bproc_component.debug) {
         opal_output(0, "orte_pls_bproc: terminating job %ld", jobid);
     }
@@ -1285,6 +1314,8 @@ int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid)
     opal_list_t daemons;
     opal_list_item_t *item;
 
+    OPAL_TRACE(1);
+    
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
@@ -1311,6 +1342,9 @@ CLEANUP:
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name) {
     int rc;
     pid_t pid;
+
+    OPAL_TRACE(1);
+    
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, mca_pls_bproc_component.terminate_sig) != 0) {
@@ -1336,6 +1370,8 @@ int orte_pls_bproc_signal_job(orte_jobid_t jobid, int32_t signal) {
     orte_std_cntr_t i, num_pids;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* signal application process */
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pids(jobid, &pids, &num_pids)))
         return rc;
@@ -1359,6 +1395,8 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
     int rc;
     pid_t pid;
 
+    OPAL_TRACE(1);
+    
     if(ORTE_SUCCESS != (rc = orte_pls_bproc_get_proc_pid(proc_name, &pid)))
         return rc;
     if(kill(pid, (int)signal) != 0) {

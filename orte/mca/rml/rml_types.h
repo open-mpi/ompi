@@ -68,6 +68,7 @@ typedef uint32_t orte_rml_tag_t;
                                * size for the receive and return the allocated buffer and size in the first
                                * element of the iovec array. */
 #define ORTE_RML_PERSISTENT 0x08 /**< posted non-blocking recv is persistent */
+#define ORTE_RML_NON_PERSISTENT  0x00
                                                                                                                                         
 /**
  * The wildcard for receives from any peer.
