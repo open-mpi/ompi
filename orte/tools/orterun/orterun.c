@@ -84,7 +84,7 @@ static struct opal_event int_handler;
 static struct opal_event sigusr1_handler;
 static struct opal_event sigusr2_handler;
 #endif  /* __WINDOWS__ */
-static orte_jobid_t jobid = ORTE_JOBID_MAX;
+static orte_jobid_t jobid = ORTE_JOBID_INVALID;
 static orte_pointer_array_t *apps_pa;
 static bool wait_for_job_completion = true;
 static char *orterun_basename = NULL;
@@ -755,10 +755,10 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     /* terminate the job - this will also wakeup orterun so
      * it can kill all the orteds
      */
-    if (jobid != ORTE_JOBID_MAX) {
+    if (jobid != ORTE_JOBID_INVALID) {
         ret = orte_pls.terminate_job(jobid);
         if (ORTE_SUCCESS != ret) {
-            jobid = ORTE_JOBID_MAX;
+            jobid = ORTE_JOBID_INVALID;
         }
     }
     

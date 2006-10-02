@@ -115,8 +115,11 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
                 OBJ_RELEASE(app_context->map_data[i]);
             }
         }
-        free(app_context->map_data);
+        if (NULL != app_context->map_data) {
+            free(app_context->map_data);
+        }
     }
+    
     if (NULL != app_context->prefix_dir) {
         free(app_context->prefix_dir);
     }

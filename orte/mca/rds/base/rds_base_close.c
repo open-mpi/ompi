@@ -24,12 +24,18 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 
 int orte_rds_base_finalize(void)
 {
     opal_list_item_t* item;
+    int rc;
 
     /* if we are using the "null" component, then do nothing */
     if (orte_rds_base.no_op_selected) {
@@ -42,6 +48,16 @@ int orte_rds_base_finalize(void)
         selected->component->rds_fini();
         OBJ_RELEASE(selected);
     }
+
+    /* if we are an HNP, then cancel our receive */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_rds_base_comm_stop())) {
+            ORTE_ERROR_LOG(rc);
+            return NULL;
+        }
+    }
+
+    
     return ORTE_SUCCESS;
 }
     

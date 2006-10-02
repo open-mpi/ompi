@@ -97,19 +97,11 @@ static int orte_rds_hostfile_open(void)
 
 static orte_rds_base_module_t *orte_rds_hostfile_init(void)
 {
-    int rc;
-    
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.seed) {
         return NULL;
     }
 
-    /* issue non-blocking receive for call_back function */
-    if (ORTE_SUCCESS != (rc = orte_rds_base_comm_start())) {
-        ORTE_ERROR_LOG(rc);
-        return NULL;
-    }
-    
     return &orte_rds_hostfile_module;
 }
 

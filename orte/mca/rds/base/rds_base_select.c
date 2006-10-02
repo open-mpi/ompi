@@ -24,6 +24,11 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/util/output.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 
@@ -40,6 +45,7 @@ int orte_rds_base_select(void)
     mca_base_component_list_item_t *cli;
     orte_rds_base_component_t *component;
     orte_rds_base_module_t *module = NULL;
+    int rc;
 
     /* if we are using the "null" component, then do nothing */
     if (orte_rds_base.no_op_selected) {
@@ -76,6 +82,14 @@ int orte_rds_base_select(void)
         return ORTE_ERROR;
     }
 
+    /* if we are an HNP, issue non-blocking receive for call_back function */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_rds_base_comm_start())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
     return ORTE_SUCCESS;
 }
 

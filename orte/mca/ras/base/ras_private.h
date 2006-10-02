@@ -116,7 +116,7 @@ int orte_ras_base_node_segment_empty(bool *empty);
  * oob interface
  */
 int orte_ras_base_comm_start(void);
-
+int orte_ras_base_comm_stop(void);
 void orte_ras_base_recv(int status, orte_process_name_t* sender,
                         orte_buffer_t* buffer, orte_rml_tag_t tag, void* cbdata);
 

@@ -24,12 +24,18 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
 
 
 int orte_ras_base_finalize(void)
 {
     opal_list_item_t* item;
+    int rc;
 
     if (orte_ras_base.ras_available_valid) {
         /* Finalize all available modules */
@@ -40,6 +46,13 @@ int orte_ras_base_finalize(void)
             OBJ_RELEASE(cmp);
         }
         OBJ_DESTRUCT(&orte_ras_base.ras_available);
+
+        /* if we are an HNP, stop the receive */
+        if (orte_process_info.seed) {
+            if (ORTE_SUCCESS != (rc = orte_ras_base_comm_stop())) {
+                ORTE_ERROR_LOG(rc);
+            }
+        }
     }
 
     return ORTE_SUCCESS;

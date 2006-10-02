@@ -179,7 +179,6 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {
     char *bname;
     size_t i;
-    int rc;
 
     /* if we are not an HNP, then don't select us */
     if (!orte_process_info.seed) {
@@ -229,11 +228,6 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
         return NULL;
     }
     *priority = mca_pls_rsh_component.priority;
-    
-    /* ensure the receive gets posted */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_comm_start())) {
-        ORTE_ERROR_LOG(rc);
-    }
     
     return &orte_pls_rsh_module;
 }

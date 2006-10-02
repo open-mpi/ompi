@@ -101,16 +101,9 @@ static int orte_rmaps_round_robin_open(void)
 
 static orte_rmaps_base_module_t* 
 orte_rmaps_round_robin_init(int *priority)
-{
-    int rc;
-    
+{    
     /* if I am NOT an HNP, then don't consider me! */
     if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
-    /* start the receive function */
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_comm_start())) {
         return NULL;
     }
     

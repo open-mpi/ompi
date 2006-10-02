@@ -192,7 +192,7 @@ cleanup:
     for (i = 0; i < num_context; i++) {
         OBJ_RELEASE(context[i]);
     }
-    free(context);
+    if (NULL != context) free(context);
     return rc;
 }
 
