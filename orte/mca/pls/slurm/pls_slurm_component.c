@@ -128,8 +128,6 @@ static int pls_slurm_open(void)
 
 static orte_pls_base_module_t *pls_slurm_init(int *priority)
 {
-    int rc;
-    
     /* if we are NOT an HNP, then don't select us */
     if (!orte_process_info.seed) {
         return NULL;

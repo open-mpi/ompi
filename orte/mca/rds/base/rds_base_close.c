@@ -53,7 +53,7 @@ int orte_rds_base_finalize(void)
     if (orte_process_info.seed) {
         if (ORTE_SUCCESS != (rc = orte_rds_base_comm_stop())) {
             ORTE_ERROR_LOG(rc);
-            return NULL;
+            return rc;
         }
     }
 
