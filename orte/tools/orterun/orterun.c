@@ -126,12 +126,6 @@ struct globals_t {
 } orterun_globals;
 static bool globals_init = false;
 
-struct proc_info_t {
-    bool reported;
-    int32_t exit_status;
-};
-struct proc_info_t *proc_infos = NULL;
-
 
 opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
@@ -288,7 +282,7 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state);
 int orterun(int argc, char *argv[])
 {
     orte_app_context_t **apps;
-    int rc, i, num_apps, array_size, j;
+    int rc, i, num_apps, array_size;
     int id, iparam;
     orte_proc_state_t cb_states;
 
@@ -319,11 +313,10 @@ int orterun(int argc, char *argv[])
         exit(1);
     }
     num_apps = 0;
-    for (j = i = 0; i < array_size; ++i) {
+    for (i = 0; i < array_size; ++i) {
         apps[num_apps] = (orte_app_context_t *)
             orte_pointer_array_get_item(apps_pa, i);
         if (NULL != apps[num_apps]) {
-            j += apps[num_apps]->num_procs;
             num_apps++;
         }
     }
@@ -333,16 +326,6 @@ int orterun(int argc, char *argv[])
         opal_show_help("help-orterun.txt", "orterun:nothing-to-do",
                        true, orterun_basename);
         exit(1);
-    }
-    proc_infos = malloc(sizeof(struct proc_info_t) * j);
-    if (NULL == proc_infos) {
-        opal_show_help("help-orterun.txt", "orterun:call-failed",
-                       true, orterun_basename, "system", "malloc returned NULL", errno);
-        exit(1);
-    }
-    for (i = 0; i < j; ++i) {
-        proc_infos[i].reported = false;
-        proc_infos[i].exit_status = 0;
     }
 
     /* Intialize our Open RTE environment */
@@ -497,7 +480,6 @@ int orterun(int argc, char *argv[])
     OBJ_RELEASE(apps_pa);
     orte_finalize();
     free(orterun_basename);
-    free(proc_infos);
     return rc;
 }
 
@@ -597,13 +579,8 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 continue;
             }
         }
-        if (rank_found && exit_status_set) {
-            proc_infos[rank].exit_status = exit_status;
-        }
 
-        if (rank_found && !proc_infos[rank].reported) {
-            proc_infos[rank].reported = true;
-
+        if (rank_found) {
             if (WIFSIGNALED(exit_status)) {
                 if (9 == WTERMSIG(exit_status)) {
                     ++num_killed;
