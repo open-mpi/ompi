@@ -45,6 +45,7 @@ typedef uint8_t orte_errmgr_cmd_flag_t;
     
 /* define some commands */
 #define ORTE_ERRMGR_ABORT_PROCS_REQUEST_CMD     0x01
+#define ORTE_ERRMGR_REGISTER_JOB_CMD            0x02
  
 /* Internal support */
 int orte_errmgr_base_comm_start(void);

@@ -21,6 +21,7 @@
 #include "orte/orte_constants.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/mca/ns/ns_types.h"
@@ -37,6 +38,8 @@
  */
 int orte_errmgr_proxy_proc_aborted(orte_gpr_notify_message_t *msg)
 {
+    OPAL_TRACE(1);
+    
     return ORTE_ERR_NOT_AVAILABLE;
 }
 
@@ -47,6 +50,8 @@ int orte_errmgr_proxy_proc_aborted(orte_gpr_notify_message_t *msg)
  */
 int orte_errmgr_proxy_incomplete_start(orte_gpr_notify_message_t *msg)
 {
+    OPAL_TRACE(1);
+    
     return ORTE_ERR_NOT_AVAILABLE;
 }
 
@@ -59,6 +64,8 @@ int orte_errmgr_proxy_incomplete_start(orte_gpr_notify_message_t *msg)
 void orte_errmgr_proxy_error_detected(int error_code, char *fmt, ...)
 {
     va_list arglist;
+    
+    OPAL_TRACE(1);
     
     /* If there was a message, output it */
     
@@ -102,6 +109,8 @@ int orte_errmgr_proxy_abort_procs_request(orte_process_name_t *procs, orte_std_c
     orte_errmgr_cmd_flag_t command;
     orte_std_cntr_t count;
     int rc;
+    
+    OPAL_TRACE(1);
     
     /* protect us against error */
     if (NULL == procs) {
@@ -183,5 +192,73 @@ int orte_errmgr_proxy_abort_procs_request(orte_process_name_t *procs, orte_std_c
  */
 int orte_errmgr_proxy_register_job(orte_jobid_t job)
 {
-     return ORTE_SUCCESS;
+    orte_buffer_t* cmd;
+    orte_buffer_t* answer;
+    orte_errmgr_cmd_flag_t command;
+    orte_std_cntr_t count;
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    command = ORTE_ERRMGR_REGISTER_JOB_CMD;
+    
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (cmd == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_ERRMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    /* pack the jobid we are requesting be monitored */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    /* send the request */
+    if (0 > orte_rml.send_buffer(orte_errmgr_proxy_globals.replica, cmd, ORTE_RML_TAG_ERRMGR, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    /* setup a buffer for the answer */
+    answer = OBJ_NEW(orte_buffer_t);
+    if(answer == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* enter a blocking receive until we hear back */
+    if (0 > orte_rml.recv_buffer(orte_errmgr_proxy_globals.replica, answer, ORTE_RML_TAG_ERRMGR)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &command, &count, ORTE_ERRMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+    
+    /* check that this is the right command */
+    if (ORTE_ERRMGR_REGISTER_JOB_CMD != command) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    /* clean up and leave */
+    OBJ_RELEASE(answer);
+    return ORTE_SUCCESS;
 }
