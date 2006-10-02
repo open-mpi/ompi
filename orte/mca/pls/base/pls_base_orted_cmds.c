@@ -46,8 +46,6 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
         
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     
-    opal_output(0, "pls_base_orted_exit: called with %ld daemons", (long)opal_list_get_size(daemons));
-    
     /* pack the command */
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
         ORTE_ERROR_LOG(rc);
@@ -60,8 +58,6 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
 
-        opal_output(0, "pls_base_orted_exit: sending cmd to [%ld,%ld,%ld]", ORTE_NAME_ARGS(dmn->name));
-        
         if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);
