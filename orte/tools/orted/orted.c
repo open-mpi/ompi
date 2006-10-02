@@ -635,8 +635,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
              * we should kill all local procs. Otherwise, only kill those within
              * the specified jobid
              */
-            opal_output(0, "orted_daemon_recv_pls: kill_local_procs");
-            
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
@@ -687,8 +685,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
            
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
-            opal_output(0, "orted_daemon_recv_pls: exit");
-            
             /* send the response before we wakeup because otherwise
              * we'll depart before it gets out!
              */

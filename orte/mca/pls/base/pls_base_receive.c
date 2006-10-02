@@ -125,13 +125,11 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             break;
             
         case ORTE_PLS_TERMINATE_JOB_CMD:
-            opal_output(0, "pls_base_recv: terminate job");
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
-                opal_output(0, "pls_base_recv: terminate job with jobid %ld", (long)job);
                 
             if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job))) {
                 ORTE_ERROR_LOG(rc);
@@ -145,8 +143,6 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
-            opal_output(0, "pls_base_recv: terminate orteds with jobid %ld", (long)job);
-
             if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job))) {
                 ORTE_ERROR_LOG(rc);
             }
