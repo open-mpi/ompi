@@ -53,8 +53,6 @@ orte_pls_base_module_t orte_pls;
  */
 int orte_pls_base_open(void)
 {
-    int param, value;
-
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_pls_base.pls_output = opal_output_open(NULL);
