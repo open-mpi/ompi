@@ -23,11 +23,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "orte/dss/dss.h"
 #include "opal/threads/mutex.h"
-
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
+
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/ns/base/base.h"
 #include "ns_replica.h"
 
@@ -46,6 +48,8 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
     int rc;
     orte_std_cntr_t index;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *cellid = ORTE_CELLID_MAX;
@@ -90,6 +94,8 @@ int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
     orte_cellid_t j;
     orte_ns_replica_cell_tracker_t **cell;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
@@ -120,6 +126,8 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
     int rc;
     orte_std_cntr_t index;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *jobid = ORTE_JOBID_MAX;
@@ -164,6 +172,8 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
     orte_std_cntr_t j;
     orte_jobid_t k;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     /* find the jobid */
@@ -204,6 +214,8 @@ int orte_ns_replica_get_job_peers(orte_process_name_t **procs,
     orte_std_cntr_t j;
     orte_jobid_t k;
 
+    OPAL_TRACE_ARG1(1, job);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     /* find the jobid */

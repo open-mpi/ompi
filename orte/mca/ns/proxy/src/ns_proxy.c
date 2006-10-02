@@ -25,8 +25,11 @@
 
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
+
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
+
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -50,6 +53,8 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
     int rc;
     orte_ns_proxy_cell_info_t *new_cell;
 
+    OPAL_TRACE(1);
+    
     /* set the default value of error */
     *cellid = ORTE_CELLID_MAX;
 
@@ -160,6 +165,8 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     orte_ns_proxy_cell_info_t **cell, *new_cell;
     int rc, ret=ORTE_SUCCESS;
 
+    OPAL_TRACE(1);
+    
     /* see if we already have the info locally */
     OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
 
@@ -299,6 +306,8 @@ int orte_ns_proxy_create_jobid(orte_jobid_t *job)
     orte_std_cntr_t count;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* set default value */
     *job = ORTE_JOBID_MAX;
 
@@ -365,6 +374,8 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
     orte_std_cntr_t count;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* set default return value */
     *starting_vpid = ORTE_VPID_MAX;
 
@@ -439,9 +450,11 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    orte_std_cntr_t count;
+    orte_std_cntr_t count, nprocs;
     int rc;
 
+    OPAL_TRACE_ARG1(1, job);
+    
     /* set default value */
     *procs = NULL;
     *num_procs = 0;
@@ -452,7 +465,15 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     }
 
     command = ORTE_NS_GET_JOB_PEERS_CMD;
+    /* pack the command */
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, (void*)&command, 1, ORTE_NS_CMD))) { /* got a problem */
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
@@ -491,27 +512,28 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &num_procs, &count, ORTE_STD_CNTR))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &nprocs, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
     }
 
     /* allocate space for array of proc names */
-    if (0 < *num_procs) {
-        *procs = (orte_process_name_t*)malloc((*num_procs) * sizeof(orte_process_name_t));
+    if (0 < nprocs) {
+        *procs = (orte_process_name_t*)malloc((nprocs) * sizeof(orte_process_name_t));
         if (NULL == *procs) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             OBJ_RELEASE(answer);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, procs, num_procs, ORTE_NAME))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, procs, &nprocs, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
             return rc;
         }
     }
+    *num_procs = nprocs;
 
     OBJ_RELEASE(answer);
     return ORTE_SUCCESS;

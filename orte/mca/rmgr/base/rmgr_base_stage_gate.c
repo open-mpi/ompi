@@ -85,6 +85,8 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
          return rc;
      }
 
+    OPAL_TRACE_ARG1(1, job);
+    
     /* need the list of peers for this job so we can send them the xcast.
      * obtain this list from the name service's get_job_peers function
      */
