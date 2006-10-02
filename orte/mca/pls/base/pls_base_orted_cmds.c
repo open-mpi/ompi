@@ -108,8 +108,6 @@ int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
 
-        opal_output(0, "pls_base_orted_kill_local: sending cmd to [%ld,%ld,%ld]", ORTE_NAME_ARGS(dmn->name));
-        
         if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);

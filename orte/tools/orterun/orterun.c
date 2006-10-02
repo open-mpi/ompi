@@ -733,7 +733,6 @@ static void abort_signal_callback(int fd, short flags, void *arg)
      * it can kill all the orteds
      */
     if (jobid != ORTE_JOBID_INVALID) {
-        fprintf(stderr, "terminating job %ld", (long)jobid);
         ret = orte_pls.terminate_job(jobid);
         if (ORTE_SUCCESS != ret) {
             jobid = ORTE_JOBID_INVALID;
