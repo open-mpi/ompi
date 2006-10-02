@@ -412,7 +412,8 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     char *tagname, *site, *resource;
     orte_rml_tag_t oob_tag;
     orte_data_type_t type;
-    orte_std_cntr_t count;
+    orte_std_cntr_t count, nprocs;
+    orte_process_name_t *procs;
     int rc=ORTE_SUCCESS, ret;
 
     count = 1;
@@ -611,6 +612,33 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
             /* ignore this command */
             break;
 
+        case ORTE_NS_GET_JOB_PEERS_CMD:
+            /* unpack the jobid */
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            /* process the request */
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_get_job_peers(&procs, &nprocs, job))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            /* pack the answer */
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &nprocs, 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            if (nprocs > 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &procs, nprocs, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto RETURN_ERROR;
+                }
+            }
+            break;
+            
         case ORTE_NS_DUMP_CELLS_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);
