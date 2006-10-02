@@ -43,7 +43,7 @@
 #include "opal/util/output.h"
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
-#include "orte/mca/ras/base/ras_private.h"
+#include "orte/mca/ras/base/ras_base_node.h"
 #include "orte/mca/gpr/gpr.h"
 #include "ras_loadleveler.h"
 
@@ -65,8 +65,6 @@ orte_ras_base_module_t orte_ras_loadleveler_module = {
     orte_ras_loadleveler_allocate,
     orte_ras_base_node_insert,
     orte_ras_base_node_query,
-    orte_ras_base_node_query_alloc,
-    orte_ras_base_node_lookup,
     orte_ras_loadleveler_deallocate,
     orte_ras_loadleveler_finalize
 };
