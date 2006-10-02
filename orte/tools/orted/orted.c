@@ -399,12 +399,12 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
     /* register the daemon main receive functions */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, 0, orte_daemon_recv_pls, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, 0, orte_daemon_recv, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
@@ -635,6 +635,8 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
              * we should kill all local procs. Otherwise, only kill those within
              * the specified jobid
              */
+            opal_output(0, "orted_daemon_recv_pls: kill_local_procs");
+            
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
@@ -685,6 +687,8 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
            
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
+            opal_output(0, "orted_daemon_recv_pls: exit");
+            
             /* send the response before we wakeup because otherwise
              * we'll depart before it gets out!
              */
@@ -711,7 +715,7 @@ DONE:
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, 0, orte_daemon_recv_pls, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
@@ -800,7 +804,7 @@ DONE:
         OPAL_THREAD_UNLOCK(&orted_globals.mutex);
     
     /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, 0, orte_daemon_recv, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }

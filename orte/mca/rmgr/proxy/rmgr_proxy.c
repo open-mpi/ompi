@@ -287,7 +287,7 @@ static int orte_rmgr_proxy_spawn_job(
     orte_proc_state_t cb_conditions)
 {
     int rc;
-    orte_process_name_t* name;
+    orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
 
     OPAL_TRACE(1);
 
@@ -320,15 +320,13 @@ static int orte_rmgr_proxy_spawn_job(
      * setup I/O forwarding
      */
 
-    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
+    name.jobid = *jobid;
+
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -372,7 +370,6 @@ static int orte_rmgr_proxy_spawn_job(
         return rc;
     }
 
-    free(&name);
     return ORTE_SUCCESS;
 }
 
