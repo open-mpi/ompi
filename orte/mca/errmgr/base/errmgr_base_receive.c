@@ -29,6 +29,7 @@
 #include "orte/orte_types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -93,8 +94,11 @@ void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
     orte_errmgr_cmd_flag_t command;
     orte_std_cntr_t count, nprocs;
     orte_process_name_t *procs;
+    orte_jobid_t jobid;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* get the command */
     count = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &count, ORTE_ERRMGR_CMD))) {
@@ -146,7 +150,21 @@ void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
             break;
-
+            
+        case ORTE_ERRMGR_REGISTER_JOB_CMD:
+            /* register the job to monitor for alerts */
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &jobid, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            /* process the request */
+            if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(jobid))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            break;
+                
        default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }

@@ -167,6 +167,8 @@ int orte_errmgr_hnp_abort_procs_request(orte_process_name_t *procs, orte_std_cnt
 {
     int rc;
     
+    OPAL_TRACE(1);
+    
     rc = ORTE_SUCCESS;
     return rc;
 }
@@ -184,6 +186,8 @@ int orte_errmgr_hnp_register_job(orte_jobid_t job)
      * someone aborts
      */
     int rc;
+    
+    OPAL_TRACE(1);
     
     /* define the ABORT trigger to fire when any process aborts */
     if (ORTE_SUCCESS != (rc = orte_smr.define_alert_monitor(job, ORTE_NUM_ABORTED_TRIGGER,

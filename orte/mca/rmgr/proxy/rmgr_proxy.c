@@ -331,6 +331,12 @@ static int orte_rmgr_proxy_spawn_job(
         return rc;
     }
 
+    /* setup the launch system's stage gate counters and subscriptions */
+    if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
     rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
     if(ORTE_SUCCESS != rc) {
@@ -338,6 +344,14 @@ static int orte_rmgr_proxy_spawn_job(
         return rc;
     }
 
+    /*
+     * Define the ERRMGR's callbacks as required
+     */
+    if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /*
      * setup callback
      */

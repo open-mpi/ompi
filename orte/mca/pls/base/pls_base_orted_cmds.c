@@ -23,6 +23,7 @@
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
+#include "opal/util/trace.h"
 
 #include "orte/dss/dss.h"
 #include "orte/mca/ns/ns_types.h"
@@ -41,6 +42,8 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
 
+    OPAL_TRACE(1);
+        
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     
     opal_output(0, "pls_base_orted_exit: called with %ld daemons", (long)opal_list_get_size(daemons));
@@ -88,6 +91,8 @@ int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
     
+    OPAL_TRACE(1);
+
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     
     /* pack the command */
@@ -138,6 +143,8 @@ int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal)
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
     
+    OPAL_TRACE(1);
+    
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     
     /* pack the command */
@@ -186,6 +193,8 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_ADD_LOCAL_PROCS;
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
+    
+    OPAL_TRACE(1);
     
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     

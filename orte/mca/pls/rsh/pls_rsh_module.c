@@ -66,6 +66,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "opal/util/basename.h"
 
 #include "orte/util/sys_info.h"
@@ -1074,6 +1075,8 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
     opal_list_t daemons;
     opal_list_item_t *item;
     
+    OPAL_TRACE(1);
+    
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
@@ -1104,6 +1107,8 @@ int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid)
     opal_list_t daemons;
     opal_list_item_t *item;
     
+    OPAL_TRACE(1);
+    
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
     if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
@@ -1129,6 +1134,8 @@ CLEANUP:
  */
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
 {
+    OPAL_TRACE(1);
+    
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
@@ -1137,6 +1144,8 @@ int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
     int rc;
     opal_list_t daemons;
     opal_list_item_t *item;
+    
+    OPAL_TRACE(1);
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
@@ -1160,6 +1169,8 @@ int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
 
 int orte_pls_rsh_signal_proc(const orte_process_name_t* proc, int32_t signal)
 {
+    OPAL_TRACE(1);
+    
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 

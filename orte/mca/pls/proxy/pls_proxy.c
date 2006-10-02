@@ -27,6 +27,7 @@
 #include "orte/orte_types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -51,6 +52,8 @@ int orte_pls_proxy_launch(orte_jobid_t job)
     orte_std_cntr_t count;
     int rc;
 
+    OPAL_TRACE(1);
+    
     command = ORTE_PLS_LAUNCH_JOB_CMD;
 
     cmd = OBJ_NEW(orte_buffer_t);
@@ -114,6 +117,8 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job)
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    
+    OPAL_TRACE(1);
     
     command = ORTE_PLS_TERMINATE_JOB_CMD;
     
@@ -179,6 +184,8 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job)
     orte_std_cntr_t count;
     int rc;
     
+    OPAL_TRACE(1);
+    
     command = ORTE_PLS_TERMINATE_ORTEDS_CMD;
     
     cmd = OBJ_NEW(orte_buffer_t);
@@ -242,6 +249,8 @@ int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal)
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    
+    OPAL_TRACE(1);
     
     command = ORTE_PLS_SIGNAL_JOB_CMD;
     
@@ -314,6 +323,8 @@ int orte_pls_proxy_terminate_proc(const orte_process_name_t* name)
     orte_std_cntr_t count;
     int rc;
     
+    OPAL_TRACE(1);
+    
     command = ORTE_PLS_TERMINATE_PROC_CMD;
     
     cmd = OBJ_NEW(orte_buffer_t);
@@ -377,6 +388,8 @@ int orte_pls_proxy_signal_proc(const orte_process_name_t* name, int32_t signal)
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    
+    OPAL_TRACE(1);
     
     command = ORTE_PLS_TERMINATE_PROC_CMD;
     
