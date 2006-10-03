@@ -50,6 +50,7 @@ EXTRA_DIST = $(man_MANS)
 
 if CASE_SENSITIVE_FS
 install-exec-hook:
+	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
 	(cd $(DESTDIR)$(bindir); rm -f opalCC$(EXEEXT); $(LN_S) opal_wrapper opalCC)
 	(cd $(DESTDIR)$(pkgdatadir); rm -f opalCC-wrapper-data.txt; $(LN_S) opalc++-wrapper-data.txt opalCC-wrapper-data.txt)
