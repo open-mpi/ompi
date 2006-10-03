@@ -28,7 +28,9 @@ version 1.0.
 ---
 
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
-
+- Welcome heterogeneous environments. Fine grain [type based] data conversion
+  is now the default. Call the optimized version of the copy function if
+  a communication involve an identical type on both peers.
 
 1.2
 ---
