@@ -25,10 +25,10 @@
 
 /***************************************************
 ** This file tries to classify the most relevant
-** plattforms regarding their data representation.
+** platforms regarding their data representation.
 ** Three aspects are important:
 ** - byte ordering (little or big endian)
-** - intgere representation
+** - integer representation
 ** - floating point representation.
 
 ** In addition, don't forget about the C/Fortran problems.
