@@ -300,11 +300,12 @@ static void mca_pml_dr_frag_completion(
     }
 
     /* have all pending frags completed for this vfrag? */
-    if(OPAL_THREAD_ADD64(&vfrag->vf_pending,-1) == 0) {
+    OPAL_THREAD_LOCK(&ompi_request_lock);
+    vfrag->vf_pending -= 1;
+    if(vfrag->vf_pending == 0) {
         MCA_PML_DR_VFRAG_WDOG_STOP(vfrag);
 
         /* has the vfrag already been acked */
-        OPAL_THREAD_LOCK(&ompi_request_lock);
         if (vfrag->vf_ack == vfrag->vf_mask) {
 
             sendreq->req_bytes_delivered += vfrag->vf_size;
