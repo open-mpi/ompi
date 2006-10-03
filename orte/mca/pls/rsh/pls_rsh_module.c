@@ -74,6 +74,7 @@
 #include "orte/util/session_dir.h"
 
 #include "orte/runtime/orte_wait.h"
+#include "orte/dss/dss.h"
 
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rml/rml.h"

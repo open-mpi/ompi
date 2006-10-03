@@ -30,4 +30,11 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_no_ops.c \
         base/rmaps_base_open.c \
         base/rmaps_base_receive.c \
-        base/rmaps_base_find_avail.c
+        base/rmaps_base_find_avail.c \
+        base/data_type_support/rmaps_data_type_compare_fns.c \
+        base/data_type_support/rmaps_data_type_copy_fns.c \
+        base/data_type_support/rmaps_data_type_packing_fns.c \
+        base/data_type_support/rmaps_data_type_print_fns.c \
+        base/data_type_support/rmaps_data_type_release_fns.c \
+        base/data_type_support/rmaps_data_type_size_fns.c \
+        base/data_type_support/rmaps_data_type_unpacking_fns.c

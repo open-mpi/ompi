@@ -1112,6 +1112,9 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
          item =  opal_list_get_next(item)) {
         orte_std_cntr_t i;
         map = (orte_rmaps_base_map_t*) item;
+        
+        orte_dss.dump(0, map, ORTE_JOB_MAP);
+        
         for (i = 0; i < map->num_procs; ++i) {
             orte_app_context_t *context = map->app;
 
