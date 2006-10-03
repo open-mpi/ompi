@@ -120,8 +120,7 @@ orte_pls_xgrid_component_init(int *priority)
     char *string;
     int ret, val, param;
 
-    if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME") ||
-        NULL == getenv("XGRID_CONTROLLER_PASSWORD")) {
+    if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME")) {
 	opal_output(orte_pls_base.pls_output,
 		    "orte:pls:xgrid: not available: controller info not set");
         return NULL;
@@ -139,8 +138,10 @@ orte_pls_xgrid_component_init(int *priority)
     if (NULL != string) free(string);
 
     /* setup contact information */
-    [mca_pls_xgrid_component.client setControllerPasswordAsCString: 
+    if (NULL != getenv("XGRID_CONTROLLER_PASSWORD")) {
+        [mca_pls_xgrid_component.client setControllerPasswordAsCString: 
 				getenv("XGRID_CONTROLLER_PASSWORD")];
+    }
     [mca_pls_xgrid_component.client setControllerHostnameAsCString: 
 				getenv("XGRID_CONTROLLER_HOSTNAME")];
 

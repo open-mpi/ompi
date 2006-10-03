@@ -44,7 +44,6 @@
     opal_mutex_t state_mutex;
 
     XGConnection *connection;
-    XGTwoWayRandomAuthenticator *authenticator;
     XGController *controller;
     XGGrid *grid;
     int cleanup;

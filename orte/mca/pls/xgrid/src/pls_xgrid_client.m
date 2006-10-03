@@ -222,13 +222,38 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 {
     connection = [[[XGConnection alloc] initWithHostname: controller_hostname
 					portnumber:0] autorelease];
-    authenticator = [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
-
-    /* this seems to be hard coded */
-    [authenticator setUsername:@"one-xgrid-client"];
-    [authenticator setPassword:controller_password];
+   if (nil == controller_password) {
+        opal_output_verbose(1, orte_pls_base.pls_output,
+                            "orte:pls:xgrid: Using Kerberos authentication");
     
-    [connection setAuthenticator:authenticator];
+        XGGSSAuthenticator *authenticator = 
+            [[[XGGSSAuthenticator alloc] init] autorelease];
+
+        NSString *servicePrincipal = [connection servicePrincipal];
+        if (nil == servicePrincipal) {
+            servicePrincipal = [NSString stringWithFormat: @"xgrid/%@", [connection name]];
+        }
+
+        opal_output_verbose(1, orte_pls_base.pls_output, 
+                            "orte:pls:xgrid: Kerberos servicePrincipal: %s",
+                            [servicePrincipal cString]);
+
+        [authenticator setServicePrincipal:servicePrincipal];
+        [connection setAuthenticator:authenticator];
+
+    } else {
+        opal_output_verbose(1, orte_pls_base.pls_output,
+                            "orte:pls:xgrid: Using password authentication");
+
+       XGTwoWayRandomAuthenticator *authenticator =
+            [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
+
+        /* this seems to be hard coded */
+        [authenticator setUsername:@"one-xgrid-client"];
+        [authenticator setPassword:controller_password];
+
+        [connection setAuthenticator:authenticator];
+    }
     [connection setDelegate: self];
     
     /* get us connected */
@@ -319,6 +344,7 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 	    [NSArray arrayWithObjects: @"--no-daemonize",
 		     @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
 		     @"--name", [NSString stringWithCString: name_str],
+		     @"--num_procs", @"1",
 		     @"--nodename", [NSString stringWithCString: node->node_name],
 		     @"--nsreplica", [NSString stringWithCString: nsuri],
 		     @"--gprreplica", [NSString stringWithCString: gpruri],
