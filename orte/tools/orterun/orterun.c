@@ -465,8 +465,8 @@ int orterun(int argc, char *argv[])
 }
 
 /*
- * On abnormal termination - dump the
- * exit status of the aborted procs.
+ * Check for aborted procs and dump the exit status. Note that this is
+ * always called, not just when the job terminates abnormally.
  */
 
 static void dump_aborted_procs(orte_jobid_t jobid)
