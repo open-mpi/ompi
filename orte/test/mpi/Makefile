@@ -1,4 +1,4 @@
-PROGS = mpi_no_op hello hello_nodename abort multi_abort
+PROGS = mpi_no_op hello hello_nodename abort multi_abort simple_spawn
 
 all: $(PROGS)
 

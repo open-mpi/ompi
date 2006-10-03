@@ -29,6 +29,7 @@
 #include "orte/orte_types.h"
 
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/mca_base_param.h"
 
@@ -97,6 +98,8 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
     orte_app_context_t **context;
     int rc;
 
+    OPAL_TRACE(2);
+    
     /* get the command */
     count = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &command, &count, ORTE_RMGR_CMD))) {
@@ -193,6 +196,22 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
             }
             break;
 
+        case ORTE_RMGR_SETUP_GATES_CMD:
+            /* get the jobid */
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            /* setup the stage gates */
+            if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(job))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            break;
+
+                
         default:
             ORTE_ERROR_LOG(ORTE_ERR_VALUE_OUT_OF_BOUNDS);
     }

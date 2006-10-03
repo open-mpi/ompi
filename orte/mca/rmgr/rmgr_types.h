@@ -37,7 +37,8 @@ extern "C" {
  */
 #define ORTE_RMGR_SETUP_JOB_CMD      1
 #define ORTE_RMGR_SPAWN_JOB_CMD      2
-
+#define ORTE_RMGR_SETUP_GATES_CMD	 3
+    
 #define ORTE_RMGR_CMD  ORTE_UINT8
 typedef uint8_t orte_rmgr_cmd_t;
 
