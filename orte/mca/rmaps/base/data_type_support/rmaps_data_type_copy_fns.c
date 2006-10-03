@@ -170,3 +170,4 @@ int orte_rmaps_base_copy_mapped_node(orte_rmaps_base_node_t **dest, orte_rmaps_b
     return ORTE_SUCCESS;
     
 }
+
