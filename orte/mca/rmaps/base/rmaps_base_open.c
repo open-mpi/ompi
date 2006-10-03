@@ -25,6 +25,9 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 
+#include "orte/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
@@ -62,8 +65,9 @@ orte_rmaps_base_module_t orte_rmaps_no_op = {
  */
 int orte_rmaps_base_open(void)
 {
-    int param, value;
+    int param, rc, value;
     char *policy, *requested;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
 
@@ -100,6 +104,49 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.oversubscribe = true;  /** default condition that allows oversubscription */
     } else {
         orte_rmaps_base.oversubscribe = false;
+    }
+    
+    /** register the base system types with the DSS */
+    tmp = ORTE_JOB_MAP;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_map,
+                                                     orte_rmaps_base_unpack_map,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_map,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_map,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_map,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_map,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_JOB_MAP", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_MAPPED_PROC;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_mapped_proc,
+                                                     orte_rmaps_base_unpack_mapped_proc,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_mapped_proc,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_mapped_proc,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_mapped_proc,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_mapped_proc,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_MAPPED_PROC", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_MAPPED_NODE;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_mapped_node,
+                                                     orte_rmaps_base_unpack_mapped_node,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_mapped_node,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_mapped_node,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_mapped_node,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_mapped_node,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_MAPPED_NODE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     

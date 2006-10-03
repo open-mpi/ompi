@@ -123,8 +123,12 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_CELL_DESC           (orte_data_type_t)   51 /**< describe attributes of cells */
 #define    ORTE_SLOT_DESC           (orte_data_type_t)   52 /**< describes slot allocations/reservations */
 #define    ORTE_RAS_NODE			(orte_data_type_t)	 53 /**< node information */
+#define    ORTE_JOB_MAP             (orte_data_type_t)   54 /**< map of process locations */
+#define    ORTE_MAPPED_PROC         (orte_data_type_t)   55 /**< process entry on map */
+#define    ORTE_MAPPED_NODE         (orte_data_type_t)   56 /**< node entry on map */
+
     /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   54 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   57 /**< command flag for communicating with the daemon */
 
 /* define the starting point for dynamically assigning data types */
 #define ORTE_DSS_ID_DYNAMIC 60

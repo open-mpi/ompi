@@ -117,6 +117,39 @@ int orte_rmaps_base_claim_slot(orte_rmaps_base_map_t *map,
 int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t start, orte_vpid_t range);
 int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range);
 
+/** Local data type functions */
+void orte_rmaps_base_std_obj_release(orte_data_value_t *value);
+
+/* JOB_MAP */
+int orte_rmaps_base_copy_map(orte_rmaps_base_map_t **dest, orte_rmaps_base_map_t *src, orte_data_type_t type);
+int orte_rmaps_base_compare_map(orte_rmaps_base_map_t *value1, orte_rmaps_base_map_t *value2, orte_data_type_t type);
+int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
+                            orte_std_cntr_t num_vals, orte_data_type_t type);
+int orte_rmaps_base_print_map(char **output, char *prefix, orte_rmaps_base_map_t *src, orte_data_type_t type);
+int orte_rmaps_base_size_map(size_t *size, orte_rmaps_base_map_t *src, orte_data_type_t type);
+int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
+                              orte_std_cntr_t *num_vals, orte_data_type_t type);
+
+/* MAPPED_PROC */
+int orte_rmaps_base_copy_mapped_proc(orte_rmaps_base_proc_t **dest, orte_rmaps_base_proc_t *src, orte_data_type_t type);
+int orte_rmaps_base_compare_mapped_proc(orte_rmaps_base_proc_t *value1, orte_rmaps_base_proc_t *value2, orte_data_type_t type);
+int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
+                             orte_std_cntr_t num_vals, orte_data_type_t type);
+int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_rmaps_base_proc_t *src, orte_data_type_t type);
+int orte_rmaps_base_size_mapped_proc(size_t *size, orte_rmaps_base_proc_t *src, orte_data_type_t type);
+int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
+                               orte_std_cntr_t *num_vals, orte_data_type_t type);
+
+/* MAPPED_NODE */
+int orte_rmaps_base_copy_mapped_node(orte_rmaps_base_node_t **dest, orte_rmaps_base_node_t *src, orte_data_type_t type);
+int orte_rmaps_base_compare_mapped_node(orte_rmaps_base_node_t *value1, orte_rmaps_base_node_t *value2, orte_data_type_t type);
+int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
+                             orte_std_cntr_t num_vals, orte_data_type_t type);
+int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_rmaps_base_node_t *src, orte_data_type_t type);
+int orte_rmaps_base_size_mapped_node(size_t *size, orte_rmaps_base_node_t *src, orte_data_type_t type);
+int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
+                               orte_std_cntr_t *num_vals, orte_data_type_t type);
+
 /*
  * external API functions will be documented in the mca/rmaps/rmaps.h file
  */
