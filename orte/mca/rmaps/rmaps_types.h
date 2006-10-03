@@ -44,7 +44,7 @@ extern "C" {
 struct orte_rmaps_base_node_t {
     opal_list_item_t super;
     orte_ras_node_t* node;
-    opal_list_t node_procs;
+    opal_list_t node_procs;   /* list of rmaps_base_proc_t */
 };
 typedef struct orte_rmaps_base_node_t orte_rmaps_base_node_t;
 
@@ -79,7 +79,7 @@ struct orte_rmaps_base_map_t {
     orte_app_context_t *app;
     orte_rmaps_base_proc_t** procs;
     orte_std_cntr_t num_procs;
-    opal_list_t nodes;
+    opal_list_t nodes;		/* list of rmaps_base_node_t */
 };
 typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
 

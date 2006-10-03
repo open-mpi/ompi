@@ -233,6 +233,8 @@ extern orte_data_type_t orte_dss_num_reg_types;
 
     int orte_dss_print(char **output, char *prefix, void *src, orte_data_type_t type);
 
+    int orte_dss_dump(int output_stream, void *src, orte_data_type_t type);
+
     int orte_dss_size(size_t *size, void *src, orte_data_type_t type);
 
     int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
