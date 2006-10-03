@@ -40,7 +40,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (17 Jun 2006):
+base as of this writing (3 October 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -73,6 +73,7 @@ base as of this writing (17 Jun 2006):
   - SLURM
   - XGrid
   - Cray XT-3 / Red Storm
+  - LoadLeveler / POE
 
 - The majority of Open MPI's documentation is here in this file and on
   the web site FAQ (http://www.open-mpi.org/).  This will eventually
@@ -331,6 +332,10 @@ for a full list); a summary of the more commonly used ones follows:
 --with-tm=<directory>
   Specify the directory where the TM libraries and header files are
   located.  This enables PBS / Torque support in Open MPI.
+
+--with-loadleveler=<directory>
+  Specify the directory where the LoadLeveler libraries and header
+  file are located.  This enables LoadLeveler support in Open MPI.
 
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If --with-mpi-param
