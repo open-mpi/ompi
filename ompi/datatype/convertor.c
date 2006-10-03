@@ -452,7 +452,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
-            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
         } else {                                                        \
             ompi_convertor_master_t* master;                            \
             int i;                                                      \
@@ -476,6 +475,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
             ((convertor->flags & CONVERTOR_SEND) ||                     \
              (0 == bdt_mask)) ) {                                       \
+            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
             convertor->bConverted = 0;                                  \
             return OMPI_SUCCESS;                                        \
         }                                                               \
