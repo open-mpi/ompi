@@ -39,7 +39,6 @@ version 1.0.
 - A variety of Fortran API fixes.
 - Build the Fortran MPI API as a separate library to allow these
   functions to be profiled properly.
-- Added LoadLeveler support for jobs larger than 128 tasks.
 - Add new --enable-mpirun-prefix-by-default configure option to always
   imply the --prefix option to mpirun, preventing many rsh/ssh-based
   users from needing to modify their shell startup files.
@@ -68,12 +67,22 @@ version 1.0.
 1.1.2
 -----
 
+- Fixed a error in command line parsing on some platforms (causing
+  mpirun to crash without doing anything).
+- Fix for initialization hangs on 64 bit Mac OS X PowerPC systems.
+- Add support for platforms that have 8 byte Fortran LOGICALs.
+- Fixed some memory allocation problems in mpirun that could cause
+  random problems if "-np" was not specified on the command line.
+- Add Kerberos authentication support for XGrid.
+- Added LoadLeveler support for jobs larger than 128 tasks.
 - Fix for large-sized Fortran LOGICAL datatypes.
 - Fix various error checking in MPI_INFO_GET_NTHKEY and
   MPI_GROUP_TRANSLATE_RANKS, and some collective operations
   (particularly with regards to MPI_IN_PLACE).  Thanks to Lisandro
   Dalcin for reporting the problems.
 - Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
+- Fix a number of race conditions with the MPI-2 Onesided
+  interface.
 - Fix the "tuned" collective componenete where some cases where
   MPI_BCAST could hang.
 - Update TCP support to support non-uniform TCP environments.
