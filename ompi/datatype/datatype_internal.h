@@ -150,26 +150,29 @@ typedef struct ddt_elem_id_description ddt_elem_id_description;
  * by a set of basic elements.
  */
 struct ddt_elem_desc {
-    ddt_elem_id_description common; /**< basic data description and flags */
-    uint32_t                count;  /**< number of elements */
-    long                    disp;   /**< displacement of the first element */
-    int32_t                 extent; /**< extent of each element */
+    ddt_elem_id_description common;   /**< basic data description and flags */
+    uint32_t                count;    /**< number of blocks */
+    uint32_t                blocklen; /**< number of elements on each block */
+    int32_t                 extent;   /**< extent of each block (in bytes) */
+    long                    disp;     /**< displacement of the first block */
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
 struct ddt_loop_desc {
     ddt_elem_id_description common; /**< basic data description and flags */
     uint32_t                loops;  /**< number of elements */
-    long                    extent; /**< extent of the whole loop */
+    uint32_t                unused; /**< not used right now */
     uint32_t                items;  /**< number of items in the loop */
+    long                    extent; /**< extent of the whole loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
 struct ddt_endloop_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
     uint32_t                items;            /**< number of elements */
-    long                    first_elem_disp;  /**< total extent of the loop taking in account the repetitions */
+    uint32_t                unused;           /**< not used right now */
     uint32_t                size;             /**< real size of the data in the loop */
+    long                    first_elem_disp;  /**< the displacement of the first block in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 
@@ -180,13 +183,14 @@ union dt_elem_desc {
 };
 
 #define CREATE_LOOP_START( _place, _count, _items, _extent, _flags ) \
-do { \
-    (_place)->loop.common.type   = DT_LOOP; \
-    (_place)->loop.common.flags  = (_flags) & ~DT_FLAG_DATA; \
-    (_place)->loop.loops         = (_count); \
-    (_place)->loop.items         = (_items); \
-    (_place)->loop.extent        = (_extent); \
-} while(0)
+    do {                                                             \
+        (_place)->loop.common.type   = DT_LOOP;                      \
+        (_place)->loop.common.flags  = (_flags) & ~DT_FLAG_DATA;     \
+        (_place)->loop.loops         = (_count);                     \
+        (_place)->loop.items         = (_items);                     \
+        (_place)->loop.extent        = (_extent);                    \
+        (_place)->loop.unused        = -1;                           \
+    } while(0)
 
 #define CREATE_LOOP_END( _place, _items, _first_item_disp, _size, _flags ) \
     do {                                                                   \
@@ -195,16 +199,18 @@ do { \
         (_place)->end_loop.items = (_items);                               \
         (_place)->end_loop.first_elem_disp = (_first_item_disp);           \
         (_place)->end_loop.size = (_size);  /* the size inside the loop */ \
+        (_place)->end_loop.unused = -1;                                    \
     } while(0)
 
-#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )        \
-do {                                                                        \
-    (_place)->elem.common.flags = (_flags) | DT_FLAG_DATA_C | DT_FLAG_DATA; \
-    (_place)->elem.common.type  = (_type);                                  \
-    (_place)->elem.count        = (_count);                                 \
-    (_place)->elem.disp         = (_disp);                                  \
-    (_place)->elem.extent       = (_extent);                                \
-} while(0)
+#define CREATE_ELEM( _place, _type, _flags, _count, _disp, _extent )    \
+    do {                                                                \
+        (_place)->elem.common.flags = (_flags) | DT_FLAG_DATA_C | DT_FLAG_DATA; \
+        (_place)->elem.common.type  = (_type);                          \
+        (_place)->elem.count        = (_count);                         \
+        (_place)->elem.disp         = (_disp);                          \
+        (_place)->elem.extent       = (_extent);                        \
+        (_place)->elem.blocklen     = 1;                                \
+    } while(0)
 
 typedef struct {
     float r;
