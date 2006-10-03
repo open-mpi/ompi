@@ -428,6 +428,18 @@ typedef int (*orte_dss_print_fn_t)(char **output, char *prefix, void *src, orte_
 
 
 /**
+ * Print a data value to an output stream for debugging purposes
+ *
+ * Uses the dss.print command to obtain a string version of the data value
+ * and prints it to the designated output stream.
+ *
+ * @retval ORTE_SUCCESS The value was successfully printed.
+ *
+ * @retval ORTE_ERROR(s) An appropriate error code.
+ */
+typedef int (*orte_dss_dump_fn_t)(int output_stream, void *src, orte_data_type_t type);
+
+/**
  * Set a data value
  *
  * Since the data values are stored in an opaque manner, the system needs
@@ -570,25 +582,26 @@ typedef void (*orte_dss_dump_data_types_fn_t)(int output);
  * pointers to the calling interface.
  */
 struct orte_dss_t {
-    orte_dss_set_fn_t set;
-    orte_dss_get_fn_t get;
-    orte_dss_arith_fn_t arith;
-    orte_dss_increment_fn_t increment;
-    orte_dss_decrement_fn_t decrement;
-    orte_dss_set_buffer_type_fn_t set_buffer_type;
-    orte_dss_pack_fn_t pack;
-    orte_dss_unpack_fn_t unpack;
-    orte_dss_copy_fn_t copy;
-    orte_dss_compare_fn_t compare;
-    orte_dss_size_fn_t size;
-    orte_dss_print_fn_t print;
-    orte_dss_release_fn_t release;
-    orte_dss_peek_next_item_fn_t peek;
-    orte_dss_unload_fn_t unload;
-    orte_dss_load_fn_t load;
-    orte_dss_register_fn_t register_type;
-    orte_dss_lookup_data_type_fn_t lookup_data_type;
-    orte_dss_dump_data_types_fn_t dump_data_types;
+    orte_dss_set_fn_t 				set;
+    orte_dss_get_fn_t 				get;
+    orte_dss_arith_fn_t 			arith;
+    orte_dss_increment_fn_t 		increment;
+    orte_dss_decrement_fn_t 		decrement;
+    orte_dss_set_buffer_type_fn_t 	set_buffer_type;
+    orte_dss_pack_fn_t 				pack;
+    orte_dss_unpack_fn_t 			unpack;
+    orte_dss_copy_fn_t 				copy;
+    orte_dss_compare_fn_t 			compare;
+    orte_dss_size_fn_t 				size;
+    orte_dss_print_fn_t 			print;
+    orte_dss_release_fn_t 			release;
+    orte_dss_peek_next_item_fn_t 	peek;
+    orte_dss_unload_fn_t 			unload;
+    orte_dss_load_fn_t 				load;
+    orte_dss_register_fn_t 			register_type;
+    orte_dss_lookup_data_type_fn_t 	lookup_data_type;
+    orte_dss_dump_data_types_fn_t 	dump_data_types;
+    orte_dss_dump_fn_t				dump;
 };
 typedef struct orte_dss_t orte_dss_t;
 

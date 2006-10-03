@@ -25,6 +25,23 @@
 #include "orte/dss/dss_internal.h"
 
 
+int orte_dss_dump(int output_stream, void *src, orte_data_type_t type)
+{
+    char *sptr;
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_dss.print(&sptr, NULL, src, type))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    opal_output(output_stream, "%s", sptr);
+    free(sptr);
+
+    return ORTE_SUCCESS;
+}
+
+
 void orte_dss_dump_data_types(int output)
 {
     orte_dss_type_info_t **ptr;
