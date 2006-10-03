@@ -122,7 +122,6 @@ do {                                                                            
     }                                                                                  \
     OPAL_THREAD_UNLOCK((recvreq)->req_mutex);                                          \
                                                                                        \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                                              \
     opal_list_remove_item(&(recvreq)->req_proc->matched_receives,                      \
                           (opal_list_item_t*)(recvreq));                               \
                                                                                        \
@@ -142,7 +141,6 @@ do {                                                                            
     if( true == recvreq->req_recv.req_base.req_free_called ) {                         \
         MCA_PML_DR_RECV_REQUEST_RETURN( recvreq );                                     \
     }                                                                                  \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                            \
 } while(0)
 
 

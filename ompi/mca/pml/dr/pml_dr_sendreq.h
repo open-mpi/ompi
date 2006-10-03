@@ -246,7 +246,6 @@ do {                                                                            
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                  \
     }                                                                               \
                                                                                     \
-    OPAL_THREAD_LOCK(&ompi_request_lock);                                           \
     if( false == sendreq->req_send.req_base.req_ompi.req_complete ) {               \
         /* Should only be called for long messages (maybe synchronous) */           \
         MCA_PML_DR_SEND_REQUEST_MPI_COMPLETE(sendreq);                              \
@@ -263,7 +262,6 @@ do {                                                                            
             ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset); \
         }                                                                           \
     }                                                                               \
-    OPAL_THREAD_UNLOCK(&ompi_request_lock);                                         \
 } while (0)
 
 /*
