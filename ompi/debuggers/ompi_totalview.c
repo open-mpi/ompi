@@ -36,6 +36,23 @@ OMPI_DECLSPEC volatile int MPIR_debug_state = 0;
 OMPI_DECLSPEC char MPIR_dll_name[] = OMPI_TV_DLL;
 #endif  /* defined(OMPI_TV_DLL) */
 
+/**
+ * There is an issue with the debugger running on different architectures
+ * compared with the debugged program. We need to know the sizes of the types
+ * on the debugged program. The problem is that the size depend on the
+ * compilation options (32 or 64 bits) and on the compiler. Therefore,
+ * the simplest and more accurate way is to export these sizes directly from
+ * the debugged program.
+ */
+OMPI_DECLSPEC int MPIR_debug_typedefs_sizeof[] = {
+    sizeof(bool),
+    sizeof(short),
+    sizeof(int),
+    sizeof(long),
+    sizeof(long long),
+    sizeof(size_t)
+};
+    
 struct MPIR_PROCDESC {
     char *host_name;        /* something that can be passed to inet_addr */
     char *executable_name;  /* name of binary */

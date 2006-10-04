@@ -520,6 +520,43 @@ int mqs_image_has_queues (mqs_image *image, char **message)
         i_info->mca_pml_base_recv_request_t.offset.req_bytes_packed = mqs_field_offset(qh_type, "req_bytes_packed");
     }
     /**
+     * Gather information about the receive fragments and theirs headers.
+     */
+    {
+        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_common_hdr_t", mqs_lang_c );
+        if( !qh_type ) {
+            missing_in_action = "mca_pml_ob1_common_hdr_t";
+            goto type_missing;
+        }
+        i_info->mca_pml_ob1_common_hdr_t.size = mqs_sizeof(qh_type);
+        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_type = mqs_field_offset(qh_type, "hdr_type");
+        i_info->mca_pml_ob1_common_hdr_t.offset.hdr_flags = mqs_field_offset(qh_type, "hdr_flags");
+    }
+    {
+        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_match_hdr_t", mqs_lang_c );
+        if( !qh_type ) {
+            missing_in_action = "mca_pml_ob1_match_hdr_t";
+            goto type_missing;
+        }
+        i_info->mca_pml_ob1_match_hdr_t.size = mqs_sizeof(qh_type);
+        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_common = mqs_field_offset(qh_type, "hdr_common");
+        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_ctx    = mqs_field_offset(qh_type, "hdr_ctx");
+        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_src    = mqs_field_offset(qh_type, "hdr_src");
+        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_tag    = mqs_field_offset(qh_type, "hdr_tag");
+        i_info->mca_pml_ob1_match_hdr_t.offset.hdr_seq    = mqs_field_offset(qh_type, "hdr_seq");
+    }
+    {
+        mqs_type* qh_type = mqs_find_type( image, "mca_pml_ob1_recv_frag_t", mqs_lang_c );
+        if( !qh_type ) {
+            missing_in_action = "mca_pml_ob1_recv_frag_t";
+            goto type_missing;
+        }
+        i_info->mca_pml_ob1_recv_frag_t.size = mqs_sizeof(qh_type);
+        i_info->mca_pml_ob1_recv_frag_t.offset.hdr = mqs_field_offset(qh_type, "hdr");
+        i_info->mca_pml_ob1_recv_frag_t.offset.request = mqs_field_offset(qh_type, "request");
+    }
+
+    /**
      * And now let's look at the communicator and group structures.
      */
     {
