@@ -103,6 +103,31 @@ typedef struct
             int req_bytes_packed;
         } offset;
     } mca_pml_base_recv_request_t;
+    /* fragments for unexpected messages (as well as theirs headers) */
+    struct {
+        int size;
+        struct {
+            int hdr;
+            int request;
+        } offset;
+    } mca_pml_ob1_recv_frag_t;
+    struct {
+        int size;
+        struct {
+            int hdr_type;
+            int hdr_flags;
+        } offset;
+    } mca_pml_ob1_common_hdr_t;
+    struct {
+        int size;
+        struct {
+            int hdr_common;
+            int hdr_ctx;
+            int hdr_src;
+            int hdr_tag;
+            int hdr_seq;
+        } offset;
+    } mca_pml_ob1_match_hdr_t;
     /* communicator structures */
     struct {
         int size;
