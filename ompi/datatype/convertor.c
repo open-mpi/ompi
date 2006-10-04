@@ -157,7 +157,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
      */
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         if( remote_sizes[i] != ompi_ddt_local_sizes[i] )
-            master->hetero_mask |= (1 << i);
+            master->hetero_mask |= (((uint64_t)1) << i);
     }
     if( ompi_arch_checkmask( &master->remote_arch, OMPI_ARCH_ISBIGENDIAN ) !=
         ompi_arch_checkmask( &ompi_mpi_local_arch, OMPI_ARCH_ISBIGENDIAN ) ) {
@@ -165,7 +165,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
 
         for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
             if( remote_sizes[i] > 2 )
-                hetero_mask |= (1 << i);
+                hetero_mask |= (((uint64_t)1) << i);
         }
         hetero_mask &= ~((1 << DT_LOGIC) | (1 << DT_CXX_BOOL));
         master->hetero_mask |= hetero_mask;
@@ -176,7 +176,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
      * try to minimize the usage of the heterogeneous versions.
      */
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-        if( master->hetero_mask & (1 << i) )
+        if( master->hetero_mask & (((uint64_t)1) << i) )
             master->pFunctions[i] = ompi_ddt_heterogeneous_copy_functions[i];
         else
             master->pFunctions[i] = ompi_ddt_copy_functions[i];
@@ -426,7 +426,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  */
 #define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
-        uint64_t bdt_mask = 0;                                          \
         convertor->pBaseBuf        = (char*)pUserBuf;                   \
         convertor->count           = count;                             \
                                                                         \
@@ -449,17 +448,18 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             return OMPI_SUCCESS;                                        \
         }                                                               \
                                                                         \
+        convertor->flags |= CONVERTOR_HOMOGENEOUS;                      \
         if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
         } else {                                                        \
             ompi_convertor_master_t* master;                            \
             int i;                                                      \
-            bdt_mask = datatype->bdt_used >> DT_CHAR;                   \
+            uint64_t bdt_mask = datatype->bdt_used;                     \
             master = convertor->master;                                 \
             convertor->remote_size = 0;                                 \
-            for( i = DT_CHAR; bdt_mask != 0; i++, bdt_mask >>= 1 ) {    \
-                if( bdt_mask & ((unsigned long long)1) ) {              \
+            for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {            \
+                if( bdt_mask & ((uint64_t)1 << i) ) {                   \
                     convertor->remote_size += (datatype->btypes[i] *    \
                                                master->remote_sizes[i]);\
                 }                                                       \
@@ -467,6 +467,8 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             convertor->remote_size *= convertor->count;                 \
             convertor->use_desc = &(datatype->desc);                    \
             bdt_mask = datatype->bdt_used & master->hetero_mask;        \
+            if( 0 != bdt_mask )                                         \
+                convertor->flags ^= CONVERTOR_HOMOGENEOUS;              \
         }                                                               \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
@@ -474,8 +476,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
             (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
             ((convertor->flags & CONVERTOR_SEND) ||                     \
-             (0 == bdt_mask)) ) {                                       \
-            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
+             (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {            \
             convertor->bConverted = 0;                                  \
             return OMPI_SUCCESS;                                        \
         }                                                               \
