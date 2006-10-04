@@ -190,9 +190,11 @@ ompi_ddt_optimize_short( ompi_datatype_t* pData,
                         changes++; optimized++;
                         goto complete_loop;
                     } else if( loop->loops < 3 ) {
+                        long elem_displ = elem->disp;
                         for( i = 0; i < loop->loops; i++ ) {
                             CREATE_ELEM( pElemDesc, elem->common.type, elem->common.flags,
-                                         elem->count, elem->disp, loop->extent );
+                                         elem->count, elem_displ, elem->extent );
+                            elem_displ += loop->extent;
                             pElemDesc++; nbElems++;
                         }
                         pos_desc += loop->items + 1;
