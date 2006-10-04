@@ -156,7 +156,7 @@ copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t 
         }                                                               \
     }                                                                   \
     *advance = count * from_extent;                                     \
-    return count; \
+    return count;                                                       \
 }
 
 
