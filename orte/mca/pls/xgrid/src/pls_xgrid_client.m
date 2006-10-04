@@ -264,6 +264,13 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
     }
     opal_mutex_unlock(&state_mutex);
 
+    /* if we're not connected when the condition is triggered, we
+       dont' have a connection and can't start.  exit. */
+    if ([connection state] != XGConnectionStateOpen) {
+        opal_output(0, "Connection to XGrid controller failed");
+        return ORTE_ERR_NOT_AVAILABLE;
+    }
+
     opal_output(orte_pls_base.pls_output,
 		"pls: xgrid: connection name: %s", [[connection name] cString]);
     

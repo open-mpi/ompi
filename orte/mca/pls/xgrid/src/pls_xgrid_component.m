@@ -162,6 +162,7 @@ orte_pls_xgrid_component_init(int *priority)
 	opal_output(orte_pls_base.pls_output,
 		    "orte:pls:xgrid: connection failed");
 	orte_pls_xgrid_finalize();
+        return NULL;
     }
 
     return &orte_pls_xgrid_module;
