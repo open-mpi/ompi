@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,8 +56,8 @@ int MPI_Reduce(void *sendbuf, void *recvbuf, int count,
             int ret = OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_OP, msg);
             free(msg);
             return ret;
-        } else if ((root != ompi_comm_rank(comm) && MPI_IN_PLACE == sendbuf) ||
-                   MPI_IN_PLACE == recvbuf) {
+        } else if ((ompi_comm_rank(comm) != root && MPI_IN_PLACE == sendbuf) ||
+                   (ompi_comm_rank(comm) == root && MPI_IN_PLACE == recvbuf)) {
           err = MPI_ERR_ARG;
         } else {
           OMPI_CHECK_DATATYPE_FOR_SEND(err, datatype, count);
