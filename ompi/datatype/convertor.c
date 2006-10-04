@@ -167,7 +167,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
             if( remote_sizes[i] > 2 )
                 hetero_mask |= (((uint64_t)1) << i);
         }
-        hetero_mask &= ~((1 << DT_LOGIC) | (1 << DT_CXX_BOOL));
+        hetero_mask &= ~((((uint64_t)1) << DT_LOGIC) | (((uint64_t)1) << DT_CXX_BOOL));
         master->hetero_mask |= hetero_mask;
     }
     master->pFunctions = malloc( sizeof(ompi_ddt_heterogeneous_copy_functions) );
