@@ -25,6 +25,11 @@ version 1.0.
 1.1.2
 -----
 
+- Really fix Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
+- Various datatype fixes, reported by several users as causing
+  failures in the BLACS testing suite.  Thanks to Harald Forbert, Ake
+  Sandgren and, Michael Kluskens for reporting the problem.
+- Correctness and performance fixes for heterogeneous environments.
 - Fixed a error in command line parsing on some platforms (causing
   mpirun to crash without doing anything).
 - Fix for initialization hangs on 64 bit Mac OS X PowerPC systems.
