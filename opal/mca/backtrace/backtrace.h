@@ -24,6 +24,10 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Most of this file is just for ompi_info.  There are two interface
  * functions, both of which are called directly.  The joy of link-time
@@ -36,7 +40,7 @@
  *
  * \note some attempts made to be signal safe.
  */
-void opal_backtrace_print(FILE *file);
+OPAL_DECLSPEC void opal_backtrace_print(FILE *file);
 
 /*
  * Return back trace in buffer.  buffer will be allocated by the
@@ -45,7 +49,7 @@ void opal_backtrace_print(FILE *file);
  * \note Probably bad to call this from a signal handler.
  *
  */
-int opal_backtrace_buffer(char*** messages, int *len);
+OPAL_DECLSPEC int opal_backtrace_buffer(char*** messages, int *len);
 
 
 /**
@@ -71,5 +75,9 @@ typedef struct opal_backtrace_base_component_1_0_0_t opal_backtrace_base_compone
     MCA_BASE_VERSION_1_0_0, \
     /* backtrace v1.0 */ \
     "backtrace", 1, 0, 0
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_MCA_BACKTRACE_BACKTRACE_H */
