@@ -67,7 +67,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
     
     if (ORTE_SUCCESS != (rc = orte_bitmap_clear_all_bits(&(orte_gpr_replica_globals.srch_itag)))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        return false;
     }
     
     /* run the search  - check the container's tags to see which search tags are found */
@@ -83,16 +83,15 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
              */
             if (ORTE_SUCCESS != (rc = orte_bitmap_resize(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
                 ORTE_ERROR_LOG(rc);
-                return rc;
+                return false;
             }
     	    if (entry_itags[i] == itags[j]) { /* found a match */
         		if (ORTE_SUCCESS != (rc = orte_bitmap_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[j]))) {
                     ORTE_ERROR_LOG(rc);
-                    return rc;
+                    return false;
                 }
         		if (ORTE_GPR_REPLICA_OR & addr_mode) { /* only need one match */
-        		    if (not_set) return false;
-                    else return true;
+        		    return (!not_set);
         		}
                 match = true;
                 found_one = true;
@@ -103,8 +102,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
               * of those in the search list. Since I checked the search list and
               * found at least one that didn't match, this violates the exclusive requirement.
               */
-             if (not_set) return true;
-             else return false;
+             return (not_set);
         }
     }
 
@@ -113,8 +111,7 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
      * case
      */
      if ((ORTE_GPR_REPLICA_XOR & addr_mode) && found_one) {
-        if (not_set) return false;
-        else return true;
+        return (!not_set);
      }
      
      /* Only thing we have left to check is AND */
@@ -122,17 +119,14 @@ bool orte_gpr_replica_check_itag_list(orte_gpr_replica_addr_mode_t addr_mode,
     for (i=0; i < num_itags_search; i++) {
         if (0 > (bit_is_set = orte_bitmap_is_set_bit(&(orte_gpr_replica_globals.srch_itag), itags[i]))) {
             ORTE_ERROR_LOG(bit_is_set);
-            return bit_is_set;
+            return false;
         } else if (1 != bit_is_set) {
             /* this tag was NOT found - required to find them all */
-            if (not_set) return true;
-            else return false;
+            return (not_set);
         }
     }
     /* okay, all the tags are there, so we now passed the AND test */
-    if (not_set) return false;
-    else return true;
-    
+    return (!not_set);
 }
 
 
