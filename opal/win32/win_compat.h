@@ -31,6 +31,11 @@
  */
 #define _WIN32_WINNT 0x0500
 
+/**
+ * Define it in order to get access to the "secure" version of rand.
+ */
+#define _CRT_RAND_S
+
 /* It is always better to include windows.h with the lean and mean option. 
    So, include it with that option and then include some which are required 
    for us in ompi. Note: this file is included only on windows */
@@ -59,6 +64,8 @@
  */
 #include <direct.h>
 #include <io.h>
+
+#include <stdlib.h>
 
 /*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
 #include "opal/win32/ompi_uio.h"
