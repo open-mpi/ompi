@@ -123,7 +123,7 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "debug",
                            "Whether or not to enable debugging output for the rsh pls component (0 or 1)",
                            false, false, false, &tmp);
-    mca_pls_rsh_component.debug = (tmp != 0 ? true : false);
+    mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "num_concurrent",
                            "How many pls_rsh_agent instances to invoke concurrently (must be > 0)",
                            false, false, 128, &tmp);
@@ -132,13 +132,13 @@ int orte_pls_rsh_component_open(void)
                        true, tmp);
         tmp = 1;
     }
-    mca_pls_rsh_component.num_concurrent = tmp;
+    mca_pls_rsh_component.num_concurrent = OPAL_INT_TO_BOOL(tmp);
 
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
                                     "Whether or not to enable debugging output for all ORTE components (0 or 1)",
                                     false, false, false, &tmp);
-        mca_pls_rsh_component.debug = (tmp != 0 ? true : false);
+        mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     }
 
     mca_base_param_reg_string(c, "orted",
@@ -156,11 +156,11 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "reap",
                            "If set to 1, wait for all the processes to complete before exiting.  Otherwise, quit immediately -- without waiting for confirmation that all other processes in the job have completed.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.reap = (tmp != 0 ? true : false);
+    mca_pls_rsh_component.reap = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "assume_same_shell",
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.assume_same_shell = (tmp != 0 ? true : false);
+    mca_pls_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(tmp);
 
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
