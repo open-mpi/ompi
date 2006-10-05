@@ -50,17 +50,17 @@ int ompi_ddt_dfd = -1;
 #define INIT_BASIC_TYPE( TYPE, NAME )                                        \
     { BASEOBJ_DATA, 0/*size*/, 0 /*align*/, 0/*true_lb*/, 0/*true_ub*/,      \
             0/*lb*/, 0/*ub*/, DT_FLAG_PREDEFINED, TYPE, 1,                   \
-      (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
+      (((uint64_t)1)<<(TYPE)), EMPTY_DATA(NAME) }
 
 #define INIT_BASIC_DATA( TYPE, ALIGN, NAME, FLAGS )                                \
     { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
             0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
-            DT_##NAME, 1, (((unsigned long long)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
+            DT_##NAME, 1, (((uint64_t)1)<<(DT_##NAME)), EMPTY_DATA(NAME) }
 
 #define INIT_BASIC_DATA_WITH_NAME( TYPE, ALIGN, INTERNAL_NAME, NAME, FLAGS )       \
     { BASEOBJ_DATA, sizeof(TYPE), ALIGN, 0, sizeof(TYPE),                          \
             0, sizeof(TYPE), DT_FLAG_BASIC | (FLAGS),                              \
-            DT_##INTERNAL_NAME, 1, (((unsigned long long)1)<<(DT_##INTERNAL_NAME)),\
+            DT_##INTERNAL_NAME, 1, (((uint64_t)1)<<(DT_##INTERNAL_NAME)),          \
             EMPTY_DATA(NAME) }
 
 #define INIT_UNAVAILABLE_DATA( NAME )                                           \
@@ -76,7 +76,7 @@ int ompi_ddt_dfd = -1;
     { BASEOBJ_DATA, SIZE, ALIGN, 0/*true_lb*/, SIZE/*true_ub*/,                                    \
             0/*lb*/, SIZE/*ub*/,                                                                   \
             DT_FLAG_BASIC | DT_FLAG_DATA_FORTRAN | (FLAGS), \
-            (TYPE), 1, (((unsigned long long)1)<<(TYPE)), EMPTY_DATA(NAME) }
+            (TYPE), 1, (((uint64_t)1)<<(TYPE)), EMPTY_DATA(NAME) }
 #else
 #define INIT_BASIC_FORTRAN_TYPE( TYPE, NAME, SIZE, ALIGN, FLAGS )                                          \
     INIT_BASIC_TYPE( TYPE, NAME )
@@ -731,7 +731,7 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
 {
     int i;
     size_t index = 0;
-    unsigned long long mask = 1;
+    uint64_t mask = 1;
 
     if( pData->flags & DT_FLAG_USER_LB ) index += snprintf( ptr, length - index, "lb " );
     if( pData->flags & DT_FLAG_USER_UB ) index += snprintf( ptr + index, length - index, "ub " );
