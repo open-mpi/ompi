@@ -30,7 +30,7 @@ void orte_totalview_init_before_spawn(void);
 void orte_totalview_init_after_spawn(orte_jobid_t jobid);
 void orte_totalview_finalize(void);
 
-ORTE_DECLSPEC extern void *MPIR_Breakpoint(void);
+extern void *MPIR_Breakpoint(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
