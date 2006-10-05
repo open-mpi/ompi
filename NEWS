@@ -27,11 +27,12 @@ version 1.0.
 1.2
 ---
 
+- Added man pages for several Open MPI executables and the MPI API
+  functions.
 - A number of fixes for Alpha platforms.
 - A variety of Fortran API fixes.
 - Build the Fortran MPI API as a separate library to allow these
   functions to be profiled properly.
-- Added LoadLeveler support for jobs larger than 128 tasks.
 - Add new --enable-mpirun-prefix-by-default configure option to always
   imply the --prefix option to mpirun, preventing many rsh/ssh-based
   users from needing to modify their shell startup files.
@@ -60,12 +61,26 @@ version 1.0.
 1.1.2
 -----
 
+- Really fix Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
+- Various datatype fixes, reported by several users as causing
+  failures in the BLACS testing suite.  Thanks to Harald Forbert, Ake
+  Sandgren and, Michael Kluskens for reporting the problem.
+- Correctness and performance fixes for heterogeneous environments.
+- Fixed a error in command line parsing on some platforms (causing
+  mpirun to crash without doing anything).
+- Fix for initialization hangs on 64 bit Mac OS X PowerPC systems.
+- Fixed some memory allocation problems in mpirun that could cause
+  random problems if "-np" was not specified on the command line.
+- Add Kerberos authentication support for XGrid.
+- Added LoadLeveler support for jobs larger than 128 tasks.
 - Fix for large-sized Fortran LOGICAL datatypes.
 - Fix various error checking in MPI_INFO_GET_NTHKEY and
   MPI_GROUP_TRANSLATE_RANKS, and some collective operations
   (particularly with regards to MPI_IN_PLACE).  Thanks to Lisandro
   Dalcin for reporting the problems.
 - Fix receiving messages to buffers allocated by MPI_ALLOC_MEM.
+- Fix a number of race conditions with the MPI-2 Onesided
+  interface.
 - Fix the "tuned" collective componenete where some cases where
   MPI_BCAST could hang.
 - Update TCP support to support non-uniform TCP environments.
@@ -137,10 +152,6 @@ version 1.0.
 - Various MPI datatype fixes, optimizations.
 - Fixed various problems on the SPARC architecture (e.g., not
   correctly aligning addresses within structs).
-- Addition of "dr" pml component (data reliability) for running in
-  unreliable networks (such as those at high altitudes).  Includes
-  functionality for retransmission due to problems with end-to-end
-  data content checking or loss of data in the network.
 - Improvements in various run-time error messages to be more clear
   about what they mean and where the errors are occurring.
 - Various fixes to mpirun's handling of --prefix.
