@@ -21,7 +21,7 @@ CFILE=/tmp/opal_atomic_$$.c
 
 trap "/bin/rm -f $CFILE; exit 0" 0 1 2 15
 
-echo Updating atomic.s from atomic.h using gcc
+echo Updating asm.s from atomic.h using gcc
 
 cat > $CFILE<<EOF
 #include <stdlib.h>
@@ -33,4 +33,4 @@ cat > $CFILE<<EOF
 #include "atomic.h"
 EOF
 
-gcc -I. -S $CFILE -o atomic.s
+gcc -O3 -I. -S $CFILE -o asm.s

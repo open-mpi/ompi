@@ -90,18 +90,18 @@ static inline int opal_atomic_cmpset_32( volatile int32_t *addr,
    int32_t ret;
    
    __asm __volatile__ (
-"1:  ldl_l %0, %1        // load oldval value            \n\
-     cmpeq %0, %2, %0    // compare                   \n\
-     beq %0, 2f          // exit if not equal         \n\
-     mov %3, %0          // value to store            \n\
-     stl_c %0, %1        // attempt to store          \n\
-     beq %0, 3f          // if failed, try again      \n\
-2:                       // done                      \n\
-3:   br 1b               // try again                 \n\
-.previous               \n"
-    : "=&r" (ret), "+m" (*addr)
-    : "r" (oldval), "r" (newval)
-    : "memory");
+		       "1:  ldl_l %0, %1        \n\t"
+		       "cmpeq %0, %2, %0        \n\t"
+		       "beq %0, 2f              \n\t"
+		       "mov %3, %0              \n\t"
+		       "stl_c %0, %1            \n\t"
+		       "beq %0, 1b              \n\t"
+		       "jmp 3f                  \n"
+		       "2:  mov $31, %0         \n"
+		       "3:                      \n"
+		       : "=&r" (ret), "+m" (*addr)
+		       : "r" (oldval), "r" (newval)
+		       : "memory");
 
     return ret;
 }
@@ -135,18 +135,18 @@ static inline int opal_atomic_cmpset_64( volatile int64_t *addr,
     int32_t ret;
 
     __asm__ __volatile__ (
-"1:  ldq_l %0, %1        // load oldval value            \n\
-     cmpeq %0, %2, %0    // compare                   \n\
-     beq %0, 2f          // exit if not equal         \n\
-     mov %3, %0          // value to store            \n\
-     stq_c %0, %1        // attempt to store          \n\
-     beq %0, 3f          // if failed, try again      \n\
-2:                       // done                      \n\
-3:   br 1b               // try again                 \n\
-.previous               \n"
-    : "=&r" (ret), "+m" (*addr)
-    : "r" (oldval), "r" (newval)
-    : "memory");
+			  "1:  ldq_l %0, %1     \n\t"
+			  "cmpeq %0, %2, %0     \n\t"
+			  "beq %0, 2f           \n\t"
+			  "mov %3, %0           \n\t"
+			  "stq_c %0, %1         \n\t"
+			  "beq %0, 1b           \n\t"
+			  "jmp 3f               \n"
+			  "2:  mov $31, %0      \n"
+			  "3:                   \n"
+			  : "=&r" (ret), "+m" (*addr)
+			  : "r" (oldval), "r" (newval)
+			  : "memory");
 
     return ret;
 }

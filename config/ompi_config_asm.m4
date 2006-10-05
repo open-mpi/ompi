@@ -848,10 +848,10 @@ AC_DEFUN([OMPI_CONFIG_ASM],[
             OMPI_GCC_INLINE_ASSIGN='"mov %0=r0\n;;\n" : "=&r"(ret)'
             ;;
 
-        alpha-*)
+        alpha-*|alphaev[[4-8]]-*|alphaev56-*|alphaev6[[78]]-*)
             ompi_cv_asm_arch="ALPHA"
             OMPI_ASM_SUPPORT_64BIT=1
-            OMPI_GCC_INLINE_ASSIGN='"bis zero,zero,%0" : "=&r"(ret)'
+            OMPI_GCC_INLINE_ASSIGN='"bis [$]31,[$]31,%0" : "=&r"(ret)'
             ;;
 
         mips-*|mips64-*)
@@ -956,10 +956,13 @@ AC_MSG_ERROR([Can not continue.])
          fi
          asm_format="${asm_format}-${OMPI_ASM_SUPPORT_64BIT}"
          ompi_cv_asm_format="${asm_format}-${ompi_cv_asm_gnu_stack}"
-         OMPI_ASSEMBLY_FORMAT="$ompi_cv_asm_format"
+         # For the Makefile, need to escape the $ as $$.  Don't display
+         # this version, but make sure the Makefile gives the right thing
+         # when regenerating the files because the base has been touched.
+         OMPI_ASSEMBLY_FORMAT=`echo "$ompi_cv_asm_format" | sed -e 's/\\\$/\\\$\\\$/'`
 
         AC_MSG_CHECKING([for assembly format])
-        AC_MSG_RESULT([$OMPI_ASSEMBLY_FORMAT])
+        AC_MSG_RESULT([$ompi_cv_asm_format])
         AC_DEFINE_UNQUOTED([OMPI_ASSEMBLY_FORMAT], ["$OMPI_ASSEMBLY_FORMAT"],
                            [Format of assembly file])
         AC_SUBST([OMPI_ASSEMBLY_FORMAT])
@@ -1018,7 +1021,7 @@ if test "$ompi_cv_asm_arch" != "WINDOWS" ; then
             AC_MSG_CHECKING([whether possible to generate assembly file])
             mkdir -p opal/asm/generated
             ompi_cv_asm_file="atomic-local.s"
-            ompi_try="$PERL \"$top_ompi_srcdir/opal/asm/generate-asm.pl\" \"$ompi_cv_asm_arch\" \"$ompi_cv_asm_format\" \"$top_ompi_srcdir/opal/asm/base\" \"$top_ompi_builddir/opal/asm/generated/$ompi_cv_asm_file\" >conftest.out 2>&1"
+            ompi_try='$PERL $top_ompi_srcdir/opal/asm/generate-asm.pl $ompi_cv_asm_arch $ompi_cv_asm_format $top_ompi_srcdir/opal/asm/base $top_ompi_builddir/opal/asm/generated/$ompi_cv_asm_file >conftest.out 2>&1'
             if AC_TRY_EVAL(ompi_try) ; then
                 # save the warnings
                 cat conftest.out >&AC_FD_CC

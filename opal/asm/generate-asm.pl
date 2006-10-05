@@ -31,6 +31,7 @@ $IS64BIT = 0;
     $asmformat =~ /(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)\-(.*)/);
 
 if (0) {
+print "$asmformat\n";
 print "CONFIG: $CONFIG\n";
 print "TEXT: $TEXT\n";
 print "GLOBAL: $GLOBAL\n";

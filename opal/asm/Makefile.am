@@ -27,7 +27,7 @@
 #
 ######################################################################
 generated/@OMPI_ASM_FILE@: base/@OMPI_ASSEMBLY_ARCH@.asm
-	$(PERL) "$(top_srcdir)/opal/asm/generate-asm.pl" "@OMPI_ASSEMBLY_ARCH@" "@OMPI_ASSEMBLY_FORMAT@" "$(top_srcdir)/opal/asm/base" "$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@"
+	$(PERL) '$(top_srcdir)/opal/asm/generate-asm.pl' '@OMPI_ASSEMBLY_ARCH@' '@OMPI_ASSEMBLY_FORMAT@' '$(top_srcdir)/opal/asm/base' '$(top_builddir)/opal/asm/generated/@OMPI_ASM_FILE@'
 
 atomic-asm.s: generated/@OMPI_ASM_FILE@
 	rm -f atomic-asm.s
@@ -58,6 +58,7 @@ EXTRA_DIST	= \
 	generate-all-asm.pl \
 	base/aix.conf \
 	base/default.conf \
+	base/ALPHA.asm \
 	base/AMD64.asm \
 	base/IA32.asm \
 	base/IA64.asm \

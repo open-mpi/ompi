@@ -41,7 +41,7 @@ AC_DEFUN([OMPI_FIND_TYPE],[
                [AS_VAR_SET(type_var, "not found")],
                [AS_VAR_SET(type_var, "$oft_real_type")])])
 
-    AS_IF([test "AS_VAR_GET(type_var)" == "not found"],
+    AS_IF([test "AS_VAR_GET(type_var)" = "not found"],
           [AC_MSG_WARN([*** Did not find corresponding C type])
            AS_IF([test "$oft_abort_on_fail" != "no"],
                  [AC_MSG_ERROR([Cannot continue])])])
