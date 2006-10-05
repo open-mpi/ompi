@@ -91,8 +91,13 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
         }
     }
 #else
-    rand_s( &unique_key[0] );
-    rand_s( &unique_key[1] );
+    {
+        unsigned int random_value;
+        rand_s( &random_value );
+        unique_key[0] = (uint64_t)random_value;
+        rand_s( &random_value );
+        unique_key[1] = (uint64_t)random_value;
+    }
 #endif  /* !defined(__WINDOWS__) */
 
     sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long unsigned)unique_key[0], 
