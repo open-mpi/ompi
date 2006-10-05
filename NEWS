@@ -75,7 +75,6 @@ version 1.0.
 - Fixed a error in command line parsing on some platforms (causing
   mpirun to crash without doing anything).
 - Fix for initialization hangs on 64 bit Mac OS X PowerPC systems.
-- Add support for platforms that have 8 byte Fortran LOGICALs.
 - Fixed some memory allocation problems in mpirun that could cause
   random problems if "-np" was not specified on the command line.
 - Add Kerberos authentication support for XGrid.
