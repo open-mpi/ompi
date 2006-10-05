@@ -224,6 +224,7 @@ void mca_oob_tcp_registry_callback(
 
 void mca_oob_tcp_set_socket_options(int sd);
 
+typedef enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } mca_oob_tcp_listen_type_t;
 /**
  *  OOB TCP Component
 */
@@ -257,7 +258,7 @@ struct mca_oob_tcp_component_t {
     int                tcp_debug;            /**< debug level */
 
     bool               tcp_shutdown;
-    enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } tcp_listen_type;
+    mca_oob_tcp_listen_type_t tcp_listen_type;
     opal_thread_t tcp_listen_thread;
     opal_free_list_t tcp_pending_connections_fl;
     opal_list_t tcp_pending_connections;
