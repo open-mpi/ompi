@@ -41,10 +41,6 @@ extern "C" {
 /*
  * General ODLS types
  */
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 typedef struct orte_odls_globals_t {
     /** Verbose/debug output stream */
     int output;
