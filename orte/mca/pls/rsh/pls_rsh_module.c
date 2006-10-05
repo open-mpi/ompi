@@ -461,7 +461,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /* What is our local shell? */
     p = getpwuid(getuid());
     if (NULL != p) {
-        local_csh = (strstr(p->pw_shell, "csh") != 0) ? true : false;
+        local_csh = OPAL_INT_TO_BOOL(strstr(p->pw_shell, "csh");
         if ((strstr(p->pw_shell, "bash") != 0) ||
             (strstr(p->pw_shell, "zsh") != 0)) {
             local_bash = true;
