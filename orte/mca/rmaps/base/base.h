@@ -58,7 +58,7 @@ extern "C" {
         /** whether or not we allow oversubscription of nodes */
         bool oversubscribe;
     } orte_rmaps_base_t;
-
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_t);
     /**
      * Global instance of rmaps-wide framework data
      */

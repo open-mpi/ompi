@@ -66,7 +66,7 @@ struct orte_rmaps_base_proc_t {
 };
 typedef struct orte_rmaps_base_proc_t orte_rmaps_base_proc_t;
 
-OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
 
 
 /*
@@ -83,7 +83,7 @@ struct orte_rmaps_base_map_t {
 };
 typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
 
-OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
