@@ -16,10 +16,10 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
-
-#include "ompi_config.h"
 
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>

@@ -16,12 +16,12 @@
 // $HEADER$
 //
 
+#include "ompi_config.h"
+
 #include <iostream>
 #include <string>
 #include <utility>
 #include <list>
-
-#include "ompi_config.h"
 
 #include <stdio.h>
 #include <ctype.h>
