@@ -107,7 +107,7 @@ static orte_rmaps_base_module_t *select_any(void)
 
     /* If the list is empty, return NULL */
 
-    if (opal_list_is_empty(&orte_rmaps_base.rmaps_available) > 0) {
+    if (opal_list_is_empty(&orte_rmaps_base.rmaps_available)) {
         opal_output(orte_rmaps_base.rmaps_output,
                     "orte:rmaps:base:map: no components available!");
         return NULL;
