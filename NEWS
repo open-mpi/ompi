@@ -28,13 +28,13 @@ version 1.0.
 ---
 
 - Addition of OpenIB-based unreliable datagram BTL ("ud").
-- Welcome heterogeneous environments. Fine grain [type based] data conversion
-  is now the default. Call the optimized version of the copy function if
-  a communication involve an identical type on both peers.
+
 
 1.2
 ---
 
+- Added man pages for several Open MPI executables and the MPI API
+  functions.
 - A number of fixes for Alpha platforms.
 - A variety of Fortran API fixes.
 - Build the Fortran MPI API as a separate library to allow these
@@ -67,6 +67,11 @@ version 1.0.
 1.1.2
 -----
 
+- Really fix Fortran status handling in MPI_WAITSOME and MPI_TESTSOME.
+- Various datatype fixes, reported by several users as causing
+  failures in the BLACS testing suite.  Thanks to Harald Forbert, Ake
+  Sandgren and, Michael Kluskens for reporting the problem.
+- Correctness and performance fixes for heterogeneous environments.
 - Fixed a error in command line parsing on some platforms (causing
   mpirun to crash without doing anything).
 - Fix for initialization hangs on 64 bit Mac OS X PowerPC systems.
