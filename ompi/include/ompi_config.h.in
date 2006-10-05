@@ -19,8 +19,8 @@
  * Function: - OS, CPU and compiler dependent configuration
  */
 
-#ifndef OMPI_CONFIG_H_
-#define OMPI_CONFIG_H_
+#ifndef OMPI_CONFIG_H
+#define OMPI_CONFIG_H
 
 #include "opal_config.h"
 

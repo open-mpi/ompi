@@ -19,8 +19,8 @@
  * Function: - OS, CPU and compiler dependent configuration
  */
 
-#ifndef ORTE_CONFIG_H_
-#define ORTE_CONFIG_H_
+#ifndef ORTE_CONFIG_H
+#define ORTE_CONFIG_H
 
 #include "opal_config.h"
 
