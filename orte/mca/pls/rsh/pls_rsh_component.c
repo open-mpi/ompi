@@ -132,7 +132,7 @@ int orte_pls_rsh_component_open(void)
                        true, tmp);
         tmp = 1;
     }
-    mca_pls_rsh_component.num_concurrent = OPAL_INT_TO_BOOL(tmp);
+    mca_pls_rsh_component.num_concurrent = tmp;
 
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
