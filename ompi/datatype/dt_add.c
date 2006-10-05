@@ -90,7 +90,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     if( pdtAdd->flags & DT_FLAG_PREDEFINED ) { /* add a basic datatype */
         /* handle special cases for DT_LB and DT_UB */
         if( pdtAdd == ompi_ddt_basicDatatypes[DT_LB] ) {
-            pdtBase->bdt_used |= (1<< DT_LB);
+            pdtBase->bdt_used |= (((uint64_t)1) << DT_LB);
             if( pdtBase->flags & DT_FLAG_USER_LB ) {
                 pdtBase->lb = LMIN( pdtBase->lb, disp );
             } else {
@@ -102,7 +102,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
             }
             return OMPI_SUCCESS;
         } else if( pdtAdd == ompi_ddt_basicDatatypes[DT_UB] ) {
-            pdtBase->bdt_used |= (1<< DT_UB);
+            pdtBase->bdt_used |= (((uint64_t)1) << DT_UB);
             if( pdtBase->flags & DT_FLAG_USER_UB ) {
                 pdtBase->ub = LMAX( pdtBase->ub, disp );
             } else {
