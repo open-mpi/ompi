@@ -690,7 +690,7 @@ rematch:
             MCA_PML_DR_RECV_FRAG_ALLOC(frag, rc);
             if(OMPI_SUCCESS != rc) {
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
-                return rc;
+                return false;
             }
             MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
             if(do_csum && csum != hdr->hdr_csum) { 
@@ -726,7 +726,7 @@ rematch:
         MCA_PML_DR_RECV_FRAG_ALLOC(frag, rc);
         if(OMPI_SUCCESS != rc) {
             OPAL_THREAD_UNLOCK(&comm->matching_lock);
-            return rc;
+            return false;
         }
         MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
         if(do_csum && csum != hdr->hdr_csum) { 
