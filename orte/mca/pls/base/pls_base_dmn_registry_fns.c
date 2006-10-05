@@ -146,7 +146,6 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
     /* setup the key */
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, job))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
         return rc;
     }
     asprintf(&keys[0], "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
