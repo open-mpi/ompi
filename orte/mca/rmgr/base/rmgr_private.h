@@ -93,11 +93,11 @@ int orte_rmgr_base_spawn_not_available(
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions);
 
-int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
-                           orte_process_name_t *connect);
+ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
+                                         orte_process_name_t *connect);
 
-int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
-                              orte_process_name_t *disconnect);
+ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
+                                            orte_process_name_t *disconnect);
 
 int orte_rmgr_base_finalize_not_available(void);
 
@@ -108,9 +108,9 @@ ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg);
 
-int orte_rmgr_base_comm_start(void);
+ORTE_DECLSPEC int orte_rmgr_base_comm_start(void);
 
-int orte_rmgr_base_comm_stop(void);
+ORTE_DECLSPEC int orte_rmgr_base_comm_stop(void);
 
 void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
                          orte_buffer_t* buffer, orte_rml_tag_t tag,

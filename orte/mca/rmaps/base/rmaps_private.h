@@ -47,12 +47,6 @@ typedef uint8_t orte_rmaps_cmd_flag_t;
 /* define some commands */
 #define ORTE_RMAPS_MAP_CMD     0x01
     
-/* Internal support */
-int orte_rmaps_base_comm_start(void);
-void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
-                          orte_buffer_t* buffer, orte_rml_tag_t tag,
-                          void* cbdata);
-    
 /*
  * RMAPS component/module/priority tuple
  */
@@ -69,19 +63,19 @@ struct orte_rmaps_base_cmp_t {
 /* Convenience typedef */
 typedef struct orte_rmaps_base_cmp_t orte_rmaps_base_cmp_t;
 /* Class declaration */
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
+OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
 
 
 /*
  * Base functions
  */
 
-ORTE_DECLSPEC   int orte_rmaps_base_map(orte_jobid_t job, char *desired_mapper);
+int orte_rmaps_base_map(orte_jobid_t job, char *desired_mapper);
 
 /*
  * NO_OP functions
  */
-ORTE_DECLSPEC   int orte_rmaps_base_map_no_op(orte_jobid_t job, char *desired_mapper);
+int orte_rmaps_base_map_no_op(orte_jobid_t job, char *desired_mapper);
 
 /*
  * communication functions
@@ -95,27 +89,24 @@ void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
 /*
  * Internal support functions
  */
-int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid);
-int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
-int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
-int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_mapped_node_query(opal_list_t* mapping_list, opal_list_t* nodes_alloc, orte_jobid_t jobid);
+ORTE_DECLSPEC int orte_rmaps_base_get_map(orte_jobid_t, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_set_map(orte_jobid_t, opal_list_t* mapping);
+ORTE_DECLSPEC int orte_rmaps_base_get_node_map(orte_cellid_t, orte_jobid_t, const char*, opal_list_t* mapping);
 
-int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots);
-int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
-int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
-                                       orte_app_context_t *app,
-                                       opal_list_t *master_node_list,
-                                       orte_std_cntr_t *total_num_slots);
+ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots);
+ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
+ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
+                                                     orte_app_context_t *app,
+                                                     opal_list_t *master_node_list,
+                                                     orte_std_cntr_t *total_num_slots);
 
-int orte_rmaps_base_claim_slot(orte_rmaps_base_map_t *map,
-                               orte_ras_node_t *current_node,
-                               orte_jobid_t jobid, orte_vpid_t vpid,
-                               int proc_index,
-                               opal_list_t *nodes,
-                               opal_list_t *fully_used_nodes);
-
-int orte_rmaps_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t start, orte_vpid_t range);
-int orte_rmaps_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range);
+ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_rmaps_base_map_t *map,
+                                             orte_ras_node_t *current_node,
+                                             orte_jobid_t jobid, orte_vpid_t vpid,
+                                             int proc_index,
+                                             opal_list_t *nodes,
+                                             opal_list_t *fully_used_nodes);
 
 /** Local data type functions */
 void orte_rmaps_base_std_obj_release(orte_data_value_t *value);

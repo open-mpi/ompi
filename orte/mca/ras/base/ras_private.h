@@ -78,38 +78,38 @@ ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid,
 /*
  * Query the registry for all available nodes 
  */
-int orte_ras_base_node_query(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_query(opal_list_t*);
 
 /*
  * Query the registry for a specific node 
  */
-orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
+ORTE_DECLSPEC orte_ras_node_t* orte_ras_base_node_lookup(orte_cellid_t, const char* nodename);
 
 /**
     * Query the registry for all nodes allocated to a specific job
  */
-int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
+ORTE_DECLSPEC int orte_ras_base_node_query_alloc(opal_list_t*, orte_jobid_t);
 
 /**
     * Add the specified node definitions to the registry
  */
-int orte_ras_base_node_insert(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_insert(opal_list_t*);
 
 /**
     * Delete the specified nodes from the registry
  */
-int orte_ras_base_node_delete(opal_list_t*);
+ORTE_DECLSPEC int orte_ras_base_node_delete(opal_list_t*);
 
 /**
     * Assign the allocated slots on the specified nodes to the  
  * indicated jobid.
  */
-int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
+ORTE_DECLSPEC int orte_ras_base_node_assign(opal_list_t*, orte_jobid_t);
 
 /**
     * Check to see if the node segment is empty
  */
-int orte_ras_base_node_segment_empty(bool *empty);
+ORTE_DECLSPEC int orte_ras_base_node_segment_empty(bool *empty);
 
 
 /*

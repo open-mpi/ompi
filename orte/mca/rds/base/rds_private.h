@@ -60,7 +60,7 @@ void orte_rds_base_recv(int status, orte_process_name_t* sender,
 /*
  * utility functions for use within the RDS
  */
-int orte_rds_base_store_resource(opal_list_t *resource_list);
+ORTE_DECLSPEC int orte_rds_base_store_resource(opal_list_t *resource_list);
 
 /*
  * the "null" component functions
