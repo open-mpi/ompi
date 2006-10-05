@@ -341,7 +341,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
     module->p2p_pw_group = NULL;
     module->p2p_sc_group = NULL;
     module->p2p_sc_remote_active_ranks =
-        malloc(sizeof(bool) * ompi_comm_size(module->p2p_comm));
+        (bool*)malloc(sizeof(bool) * ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_sc_remote_active_ranks) {
         free(module->p2p_fence_coll_results);
         free(module->p2p_fence_coll_counts);
@@ -357,7 +357,7 @@ ompi_osc_pt2pt_component_select(ompi_win_t *win,
         return OMPI_ERROR;
     }
     module->p2p_sc_remote_ranks =
-        malloc(sizeof(int) * ompi_comm_size(module->p2p_comm));
+        (int*)malloc(sizeof(int) * ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_sc_remote_ranks) {
         free(module->p2p_sc_remote_active_ranks);
         free(module->p2p_fence_coll_results);
