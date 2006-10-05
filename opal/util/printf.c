@@ -91,7 +91,7 @@ static int guess_strlen(const char *fmt, va_list ap)
                 break;
 
             case 'f':
-                farg = va_arg(ap, int);
+                farg = (float)va_arg(ap, int);
                 /* Alloc for minus sign */
                 if (farg < 0) {
                     ++len;
