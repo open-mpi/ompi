@@ -55,7 +55,7 @@
  */
 
 static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) { 
-    srand(time(NULL));
+    srand((unsigned int)time(NULL));
     unique_key[1] = rand();
     unique_key[2] = rand();
 }
