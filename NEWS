@@ -158,10 +158,6 @@ version 1.0.
 - Various MPI datatype fixes, optimizations.
 - Fixed various problems on the SPARC architecture (e.g., not
   correctly aligning addresses within structs).
-- Addition of "dr" pml component (data reliability) for running in
-  unreliable networks (such as those at high altitudes).  Includes
-  functionality for retransmission due to problems with end-to-end
-  data content checking or loss of data in the network.
 - Improvements in various run-time error messages to be more clear
   about what they mean and where the errors are occurring.
 - Various fixes to mpirun's handling of --prefix.
