@@ -64,13 +64,14 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
 {
     size_t i;
     char *cs_env;
-    int fd_rand;
     uint64_t unique_key[2];
     char string_key[ORTE_TRANSPORT_KEY_LEN + 1]; /* key + null */
 	
+#if !defined(__WINDOWS__)
+    int fd_rand;
     size_t bytes_read; 
     struct stat buf;
-        
+
     /* put the number here - or else create an appropriate string. this just needs to
      * eventually be a string variable
      */
@@ -89,7 +90,11 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
             close(fd_rand);
         }
     }
-    
+#else
+    rand_s( &unique_key[0] );
+    rand_s( &unique_key[1] );
+#endif  /* !defined(__WINDOWS__) */
+
     sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long unsigned)unique_key[0], 
             (long unsigned)unique_key[1]);
     string_key[sizeof string_key - 1] = '\0';
@@ -100,7 +105,7 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     }
     
     for (i=0; i < num_context; i++) {
-	opal_setenv(cs_env, string_key, true, &app_context[i]->env);
+        opal_setenv(cs_env, string_key, true, &app_context[i]->env);
     }
 
     free(cs_env);
