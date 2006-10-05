@@ -10,5 +10,5 @@
 # $HEADER$
 #
 
-PARAM_INIT_FILE=odls_windows_component.c
+PARAM_INIT_FILE=odls_process_component.c
 PARAM_CONFIG_FILES="Makefile"
