@@ -88,9 +88,7 @@
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
 
-#if !defined(__WINDOWS__)
 extern char **environ;
-#endif  /* !defined(__WINDOWS__) */
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid);
@@ -298,11 +296,6 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
        This should somehow be pushed up to the calling level, but we
        don't really have a way to do that just yet.
     */
-#ifdef __WINDOWS__
-    printf("This is not implemented yet for windows\n");
-    ORTE_ERROR_LOG(ORTE_ERROR);
-    return;
-#else
     if (! WIFEXITED(status) || ! WEXITSTATUS(status) == 0) {
         /* get the mapping for our node so we can cancel the right things */
         OBJ_CONSTRUCT(&map, opal_list_t);
@@ -365,7 +358,6 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
             opal_output(0, "No extra status information is available: %d.", status);
         }
     }
-#endif /* __WINDOWS__ */
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
@@ -461,7 +453,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /* What is our local shell? */
     p = getpwuid(getuid());
     if (NULL != p) {
-        local_csh = OPAL_INT_TO_BOOL(strstr(p->pw_shell, "csh");
+        local_csh = (strstr(p->pw_shell, "csh") != 0) ? true : false;
         if ((strstr(p->pw_shell, "bash") != 0) ||
             (strstr(p->pw_shell, "zsh") != 0)) {
             local_bash = true;
@@ -708,42 +700,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 goto cleanup;
             }
 
-#ifdef __WINDOWS__
-            printf("Unimplemented feature for windows\n");
-            return;
-    #if 0
-            {
-                /* Do fork the windows way: see opal_few() for example */
-                HANDLE new_process;
-                STARTUPINFO si;
-                PROCESS_INFORMATION pi;
-                DWORD process_id;
-
-                ZeroMemory (&si, sizeof(si));
-                ZeroMemory (&pi, sizeof(pi));
-
-                GetStartupInfo (&si);
-                if (!CreateProcess (NULL,
-                                    "new process",
-                                    NULL,
-                                    NULL,
-                                    TRUE,
-                                    0,
-                                    NULL,
-                                    NULL,
-                                    &si,
-                                    &pi)){
-                    /* actual error can be got by simply calling GetLastError() */
-                    return OMPI_ERROR;
-                }
-                /* get child pid */
-                process_id = GetProcessId(&pi);
-                pid = (int) process_id;
-            }
-    #endif
-    #else
             pid = fork();
-    #endif
             if (pid < 0) {
                 rc = ORTE_ERR_OUT_OF_RESOURCE;
                 goto cleanup;
@@ -962,10 +919,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
                 set_handler_default(SIGTERM);
                 set_handler_default(SIGINT);
-    #ifndef __WINDOWS__
                 set_handler_default(SIGHUP);
                 set_handler_default(SIGPIPE);
-    #endif
                 set_handler_default(SIGCHLD);
 
                 /* Unblock all signals, for many of the same reasons that
@@ -975,10 +930,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                    specifically, we don't want it to be blocked by the
                    orted and then inherited by the ORTE processes that it
                    forks, making them unkillable by SIGTERM). */
-    #ifndef __WINDOWS__
                 sigprocmask(0, 0, &sigs);
                 sigprocmask(SIG_UNBLOCK, &sigs, 0);
-    #endif
 
                 /* setup environment */
                 env = opal_argv_copy(environ);
@@ -1262,7 +1215,6 @@ static int orte_pls_rsh_launch_threaded(orte_jobid_t jobid)
 
 static void set_handler_default(int sig)
 {
-#ifndef __WINDOWS__
     struct sigaction act;
 
     act.sa_handler = SIG_DFL;
@@ -1270,5 +1222,4 @@ static void set_handler_default(int sig)
     sigemptyset(&act.sa_mask);
 
     sigaction(sig, &act, (struct sigaction *)0);
-#endif
 }
