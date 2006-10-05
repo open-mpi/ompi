@@ -123,7 +123,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
         nabort_procs += ompi_comm_remote_size(comm);
     }
 
-    abort_procs = malloc(sizeof(orte_process_name_t) * nabort_procs);
+    abort_procs = (orte_process_name_t*)malloc(sizeof(orte_process_name_t) * nabort_procs);
     if (NULL == abort_procs) {
         /* quick clean orte and get out */
         orte_errmgr.error_detected(errcode, 

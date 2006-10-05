@@ -170,7 +170,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
         hetero_mask &= ~((((uint64_t)1) << DT_LOGIC) | (((uint64_t)1) << DT_CXX_BOOL));
         master->hetero_mask |= hetero_mask;
     }
-    master->pFunctions = malloc( sizeof(ompi_ddt_heterogeneous_copy_functions) );
+    master->pFunctions = (conversion_fct_t*)malloc( sizeof(ompi_ddt_heterogeneous_copy_functions) );
     /**
      * Usually the heterogeneous functions are slower than the copy ones. Let's
      * try to minimize the usage of the heterogeneous versions.
