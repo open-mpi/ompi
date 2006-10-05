@@ -100,22 +100,22 @@ typedef unsigned int uint;
  * use the followings defines.
  */
 #define getpid                    _getpid
-#define strdup(STRING)            _strdup((STRING))
-#define putenv(STRING)            _putenv((STRING))
-#define getcwd(BUF, SIZE)         _getcwd((BUF), (SIZE))
+#define strdup                    _strdup
+#define putenv                    _putenv
+#define getcwd                    _getcwd
 #define mkdir(PATH, MODE)         _mkdir((PATH))
-#define rmdir(PATH)               _rmdir((PATH))
-#define chdir(PATH)               _chdir((PATH))
-#define chmod(PATH, MODE)         _chmod( (PATH), (MODE) )
-#define access(PATH, MODE)        _access((PATH), (MODE))
-#define open(PATH, FLAGS, MODE)   _open((PATH), (FLAGS), (MODE))
-#define close(FD)                 _close((FD))
-#define unlink(PATH)              _unlink((PATH))
-#define dup2(OLDFD, NEWFD)        _dup2((OLDFD), (NEWFD))
-#define write(FD, BUF, SIZE)      _write((FD), (BUF), (unsigned int)(SIZE))
-#define read(FD, BUF, SIZE)       _read((FD), (BUF), (unsigned int)(SIZE))
-#define fileno(FD)                _fileno((FD))
-#define isatty(FD)                _isatty((FD))
+#define rmdir                     _rmdir
+#define chdir                     _chdir
+#define chmod                     _chmod
+#define access                    _access
+#define open                      _open
+#define close                     _close
+#define unlink                    _unlink
+#define dup2                      _dup2
+#define write                     _write 
+#define read                      _read 
+#define fileno                    _fileno 
+#define isatty                    _isatty 
 #define execvp                    _execvp
 #define pipe(array_fd)            _pipe(array_fd, 1024, O_BINARY )
 #define S_ISDIR(STAT_MODE)        ((STAT_MODE) & _S_IFDIR)
