@@ -98,6 +98,7 @@ OBJ_CLASS_DECLARATION(odls_default_app_context_t);
  * ODLS Default module
  */
 extern orte_odls_base_module_t orte_odls_default_module;
+ORTE_MODULE_DECLSPEC extern orte_odls_base_component_t mca_odls_default_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

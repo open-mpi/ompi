@@ -53,6 +53,7 @@ extern "C" {
     /**
      * Global instance of odls-wide framework data
      */
+    ORTE_DECLSPEC extern orte_odls_base_module_t orte_odls;
     ORTE_DECLSPEC extern orte_odls_base_t orte_odls_base;
 
     /*
