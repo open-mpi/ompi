@@ -81,7 +81,7 @@ typedef struct odls_default_child_t {
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
 } odls_default_child_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(odls_default_child_t);
+OBJ_CLASS_DECLARATION(odls_default_child_t);
 
 /*
  * List object to locally store app_contexts returned by the
@@ -92,7 +92,7 @@ typedef struct odls_default_app_context_t {
     opal_list_item_t super;      /* required to place this on a list */
     orte_app_context_t *app_context;
 } odls_default_app_context_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(odls_default_app_context_t);
+OBJ_CLASS_DECLARATION(odls_default_app_context_t);
 
 /*
  * ODLS Default module
