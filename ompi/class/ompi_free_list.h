@@ -100,6 +100,12 @@ static inline int ompi_free_list_init(
 
 OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
 
+/* Grow the free list to be *at least* size elemenets.  This function
+   will not shrink the list if it is already larger than size and may
+   grow it past size if necessary (it will grow in
+   num_elements_per_alloc chunks) */
+OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
+
 /* Allow to walk through the all allocated items. Not thread-safe, not
  * protected, this function should never be used except for debugging purposes.
  * The position should never be NULL, and it should be set to {NULL, NULL} 

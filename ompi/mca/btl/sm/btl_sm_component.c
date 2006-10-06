@@ -125,7 +125,7 @@ int mca_btl_sm_component_open(void)
     mca_btl_sm_component.sm_free_list_max =
         mca_btl_sm_param_register_int("free_list_max", -1);
     mca_btl_sm_component.sm_free_list_inc =
-        mca_btl_sm_param_register_int("free_list_inc", 256);
+        mca_btl_sm_param_register_int("free_list_inc", 64);
     mca_btl_sm_component.sm_exclusivity =
         mca_btl_sm_param_register_int("exclusivity", MCA_BTL_EXCLUSIVITY_HIGH-1);
     mca_btl_sm_component.sm_latency =
