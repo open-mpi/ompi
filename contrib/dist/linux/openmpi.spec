@@ -34,14 +34,13 @@
 #
 #############################################################################
 
-# Part of the purpose of this specfile is to help Los Alamos National
-# Labs (LANL), so we're going to put in a bunch of defaults for them.
-
-%{!?lanl: %define lanl 0}
-
 # Help for OSCAR RPMs
 
 %{!?oscar: %define oscar 0}
+
+# Help for OFED RPMs
+
+%{!?ofed: %define ofed 0}
 
 # Define this if you want to make this SRPM build in /opt/NAME/VERSION-RELEASE
 # instead of the default /usr/
@@ -76,20 +75,15 @@
 # type: bool (0/1)
 %{!?build_all_in_one_rpm: %define build_all_in_one_rpm 1}
 
-#############################################################################
-#
-# LANL-specific defaults
-#
-#############################################################################
+# Should we leave the BUILD_ROOT around?  Default: no
+# type: bool (0/1)
+%{!?leave_build_root: %define leave_build_root 0}
 
-%if %{lanl}
-%define install_in_opt 1
-%define install_modulefile 1
-%define modulefile_path /usr/share/modules/modulefiles
-%define modulefile_subdir mpi
-%define modulefile_name %{name}-%{version}
-%define modules_rpm_name environment-modules
-%endif
+# Should we use the default "check_files" RPM step (i.e., check for
+# unpackaged files)?  It is discouraged to disable this, but some
+# installers need it (e.g., OFED, because it installs lots of other
+# stuff in the BUILD_ROOT before Open MPI).
+%{!?use_check_files: %define use_check_files 1}
 
 
 #############################################################################
@@ -105,6 +99,18 @@
 %define modulefile_subdir openmpi
 %define modulefile_name %{name}-%{version}
 %define modules_rpm_name modules-oscar
+%endif
+
+
+#############################################################################
+#
+# OFED-specific defaults
+#
+#############################################################################
+
+%if %{ofed}
+%define leave_build_root 1
+%define use_check_files 0
 %endif
 
 
@@ -131,6 +137,10 @@
 %global _sysconfdir /etc
 %else
 %global _sysconfdir %{_prefix}/etc
+%endif
+
+%if !%{use_check_files}
+%define __check_files %{nil}
 %endif
 
 %{!?configure_options: %define configure_options %{nil}}
@@ -240,8 +250,14 @@ This subpackage provides the documentation for Open MPI.
 # Unbelievably, some versions of RPM do not first delete the previous
 # installation root (e.g., it may have been left over from a prior
 # failed build).  This can lead to Badness later if there's files in
-# there that are not meant to be packaged.
+# there that are not meant to be packaged.  HOWEVER: in some cases, we
+# do not want to delete the prior RPM_BUILD_ROOT because there may be
+# other stuff in there that we need (e.g., the OFED installer installs
+# everything into RPM_BUILD_ROOT that OMPI needs to compile, like the
+# OpenIB drivers).
+%if !%{leave_build_root}
 rm -rf $RPM_BUILD_ROOT
+%endif
 
 %setup -q -n openmpi-%{version}
 
@@ -270,13 +286,6 @@ export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 #############################################################################
 %install
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
-
-# Currently remove a few executables that are not yet ready for prime
-# time
-
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/openmpi"
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteconsole"
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteprobe"
 
 # An attempt to make enviornment happier when installed into non /usr path
 
@@ -384,8 +393,13 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 #
 #############################################################################
 %clean
-test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
+# Remove installed driver after rpm build finished
+rm -rf $RPM_BUILD_DIR/%{_name}-%{_version} 
 
+# Leave $RPM_BUILD_ROOT in order to build dependent packages, if desired
+%if !%{leave_build_root}
+test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
+%endif
 
 #############################################################################
 #
@@ -509,6 +523,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Fri Oct  6 2006 Jeff Squyes <jsquyres@cisco.com>
+- Remove LANL section; they don't want it
+- Add some help for OFED building
+- Remove some outdated "rm -f" lines for executables that we no longer ship
+
 * Wed Apr 26 2006 Jeff Squyres <jsquyres@cisco.com>
 - Revamp files listings to ensure that rpm -e will remove directories
   if rpm -i created them.
