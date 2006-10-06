@@ -251,7 +251,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
-    { NULL, NULL, NULL, '\0', NULL, "noprefix", 1,
+    { NULL, NULL, NULL, '\0', NULL, "noprefix", 0,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Disable automatic --prefix behavior" },
 
