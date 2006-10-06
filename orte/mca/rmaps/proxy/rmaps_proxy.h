@@ -63,6 +63,11 @@ extern orte_rmaps_proxy_globals_t orte_rmaps_proxy_globals;
  */
 int orte_rmaps_proxy_map(orte_jobid_t job, char *desired_mapper);
 
+/*
+ * Global component.
+ */
+ORTE_MODULE_DECLSPEC extern orte_rmaps_base_component_t mca_rmaps_proxy_component;
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
