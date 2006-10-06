@@ -411,10 +411,8 @@ EOF
 # always gives a 0 exit status.
 
 # Runtime files
-file=/tmp/openmpi-rpm-tmp.$$
-rm -f $file
 find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" > $file
+   sed -e "s@$RPM_BUILD_ROOT@@" | \
    egrep "lib.*.so|mca.*so" $file > runtime.files | /bin/true
 
 # Devel files
