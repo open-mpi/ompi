@@ -32,35 +32,47 @@ orte_odls_base_module_t* orte_odls_process_component_init(int *priority);
 /*
  * Startup / Shutdown
  */
-int orte_odls_process_finalize(void);
-
-
-/*
- * Interface
- */
-int orte_odls_process_launch(orte_jobid_t);
-int orte_odls_process_terminate_job(orte_jobid_t);
-int orte_odls_process_terminate_proc(const orte_process_name_t* proc_name);
-int orte_odls_process_signal_job(orte_jobid_t, int32_t);
-int orte_odls_process_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
+int orte_odls_process_component_finalize(void);
 
 /**
- * ODLS Component
+ * ODLS Process globals
  */
-struct orte_odls_process_component_t {
-    orte_odls_base_component_t super;
-    int debug;
-    int priority;
-    int reap;
-    int timeout_before_sigkill;
-    int num_children;
-    opal_mutex_t lock;
+typedef struct orte_odls_process_globals_t {
+    opal_mutex_t mutex;
     opal_condition_t cond;
-};
-typedef struct orte_odls_process_component_t orte_odls_process_component_t;
+    opal_list_t children;
+} orte_odls_process_globals_t;
 
+extern orte_odls_process_globals_t orte_odls_process;
 
-ORTE_MODULE_DECLSPEC extern orte_odls_process_component_t mca_odls_process_component;
+/*
+ * List object to locally store the process names and pids of
+ * our children. This can subsequently be used to order termination
+ * or pass signals without looking the info up again.
+ */
+typedef struct odls_process_child_t {
+    opal_list_item_t super;      /* required to place this on a list */
+    orte_process_name_t *name;   /* the OpenRTE name of the proc */
+    pid_t pid;                   /* local pid of the proc */
+    orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
+    bool alive;                  /* is this proc alive? */
+} odls_process_child_t;
+OBJ_CLASS_DECLARATION(odls_process_child_t);
+
+/*
+ * List object to locally store app_contexts returned by the
+ * registry subscription. Since we don't know how many app_contexts will
+ * be returned, we need to store them on a list.
+ */
+typedef struct odls_process_app_context_t {
+    opal_list_item_t super;      /* required to place this on a list */
+    orte_app_context_t *app_context;
+} odls_process_app_context_t;
+OBJ_CLASS_DECLARATION(odls_process_app_context_t);
+
+/*
+ * ODLS Process module
+ */
 extern orte_odls_base_module_t orte_odls_process_module;
 
 
