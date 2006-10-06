@@ -623,6 +623,13 @@ int mca_btl_sm_add_procs_same_base_addr(
         }
     }
 
+    /* make sure we have enough eager fragmnents for each process */
+    return_code = ompi_free_list_resize(&mca_btl_sm_component.sm_frags1,
+                                        (mca_btl_sm_component.num_smp_procs + n_local_procs) * 2);
+    if (OMPI_SUCCESS != return_code) {
+        goto CLEANUP;
+    }
+
     /* update the local smp process count */
     mca_btl_sm_component.num_smp_procs+=n_local_procs;
 
@@ -778,10 +785,14 @@ extern mca_btl_base_descriptor_t* mca_btl_sm_alloc(
     } else {
         return NULL;
     }
-    frag->segment.seg_len = size;
+
+    if (frag != NULL) {
+        frag->segment.seg_len = size;
+    }
+
     return (mca_btl_base_descriptor_t*)frag;
 }
-                                                                                                                   
+
 /**
  * Return a segment allocated by this BTL.
  *

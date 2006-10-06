@@ -33,12 +33,14 @@ static inline void mca_btl_sm_frag_constructor(mca_btl_sm_frag_t* frag)
 static void mca_btl_sm_frag1_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.eager_limit;
+    frag->my_list = &mca_btl_sm_component.sm_frags1;
     mca_btl_sm_frag_constructor(frag);
 }
 
 static void mca_btl_sm_frag2_constructor(mca_btl_sm_frag_t* frag)
 {
     frag->size = mca_btl_sm_component.max_frag_size;
+    frag->my_list = &mca_btl_sm_component.sm_frags2;
     mca_btl_sm_frag_constructor(frag);
 }
 

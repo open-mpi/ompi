@@ -56,20 +56,18 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag1_t);
 OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
 
-#define MCA_BTL_SM_FRAG_ALLOC1(frag, rc)                                 \
-{                                                                        \
-    ompi_free_list_item_t* item;                                         \
-    OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags1, item, rc);      \
-    frag = (mca_btl_sm_frag_t*)item;                                     \
-    frag->my_list = &mca_btl_sm_component.sm_frags1;                     \
+#define MCA_BTL_SM_FRAG_ALLOC1(frag, rc)                                \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags1, item, rc);      \
+    frag = (mca_btl_sm_frag_t*)item;                                    \
 }
 
-#define MCA_BTL_SM_FRAG_ALLOC2(frag, rc)                                 \
-{                                                                        \
-    ompi_free_list_item_t* item;                                         \
-    OMPI_FREE_LIST_WAIT(&mca_btl_sm_component.sm_frags2, item, rc);      \
-    frag = (mca_btl_sm_frag_t*)item;                                     \
-    frag->my_list = &mca_btl_sm_component.sm_frags2;                     \
+#define MCA_BTL_SM_FRAG_ALLOC2(frag, rc)                                \
+{                                                                       \
+    ompi_free_list_item_t* item;                                        \
+    OMPI_FREE_LIST_GET(&mca_btl_sm_component.sm_frags2, item, rc);      \
+    frag = (mca_btl_sm_frag_t*)item;                                    \
 }
 
 #define MCA_BTL_SM_FRAG_RETURN(frag)                                      \
@@ -77,4 +75,3 @@ OBJ_CLASS_DECLARATION(mca_btl_sm_frag2_t);
     OMPI_FREE_LIST_RETURN(frag->my_list, (ompi_free_list_item_t*)(frag)); \
 }
 #endif
-
