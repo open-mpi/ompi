@@ -269,6 +269,33 @@ rm -rf $RPM_BUILD_ROOT
 
 %build
 
+# Non-gcc compilers cannot use FORTIFY_SOURCE (at least, not as of 6
+# Oct 2006).  So if we're not GCC, strip out any -DFORTIFY_SOURCE
+# arguments in the RPM_OPT_FLAGS before potentially propagating them
+# everywhere.  We can really only examine the basename of the
+# compiler, so search for it in a few places.
+
+fortify_source=1
+if test "$CC" != "" -a "`basename $CC`" != "gcc"; then
+    fortify_source=0
+else
+    compiler="`echo %{configure_options} | sed -e 's@.* CC=\([^ ]*\).*@\1@'`"
+    # If that didn't find it, try for CC at the beginning of the line
+    if test "$compiler" = "%{configure_options}"; then
+        compiler="`echo %{configure_options} | sed -e 's@^CC=\([^ ]*\).*@\1@'`"
+    fi
+
+    # Now that we *might* have the compiler name, do a best-faith
+    # effort to see if it's gcc.  Blah!
+    if test "$compiler" != "" -a "`basename $compiler`" != "gcc"; then
+        fortify_source=0
+    fi
+fi
+
+if test "$fortify_source" = 0; then
+    RPM_OPT_FLAGS="`echo $RPM_OPT_FLAGS | sed -e 's@-D_FORTIFY_SOURCE[=0-9]*@@'`"
+fi
+
 CFLAGS="%{?cflags:%{cflags}}%{!?cflags:$RPM_OPT_FLAGS}"
 CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
 F77FLAGS="%{?f77flags:%{f77flags}}%{!?f7flags:$RPM_OPT_FLAGS}"
@@ -372,20 +399,31 @@ EOF
 %endif
 # End of install_in_opt if
 
+%if !%{build_all_in_one_rpm}
+
 # Build lists of files that are specific to each package that are not
 # easily identifiable by a single directory (e.g., the different
-# libraries).
+# libraries).  In a somewhat lame move, we can't just pipe everything
+# together because if the user, for example, did --disable-shared
+# --enable-static, the "grep" for .so files will not find anything and
+# therefore return a non-zero exit status.  This will cause RPM to
+# barf.  So be super lame and dump the egrep through /bin/true -- this
+# always gives a 0 exit status.
 
 # Runtime files
+file=/tmp/openmpi-rpm-tmp.$$
+rm -f $file
 find $RPM_BUILD_ROOT -type f -o -type l | \
-   sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*.so|mca.*so" > runtime.files
+   sed -e "s@$RPM_BUILD_ROOT@@" > $file
+   egrep "lib.*.so|mca.*so" $file > runtime.files | /bin/true
 
 # Devel files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*\.a|lib.*\.la" > devel.files
+   egrep "lib.*\.a|lib.*\.la" > devel.files | /bin/true
 
+%endif
+# End of build_all_in_one_rpm
 
 #############################################################################
 #
