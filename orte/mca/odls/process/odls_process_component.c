@@ -24,12 +24,32 @@
 #include "orte/mca/odls/odls.h"
 #include "orte/mca/odls/process/odls_process.h"
 
+/* Instantiate the component globals */
+orte_odls_process_globals_t orte_odls_process;
 
-/*
- * Public string showing the odls ompi_process component version number
- */
-const char *mca_odls_process_component_version_string =
-  "Open MPI process odls MCA component version " ORTE_VERSION;
+
+/* instance the child list object */
+static void odls_process_child_constructor(odls_process_child_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->pid = 0;
+    ptr->app_idx = -1;
+    ptr->alive = false;
+}
+static void odls_process_child_destructor(odls_process_child_t *ptr)
+{
+    if (NULL != ptr->name) free(ptr->name);
+}
+
+OBJ_CLASS_INSTANCE(odls_process_child_t,
+                   opal_list_item_t,
+                   odls_process_child_constructor,
+                   odls_process_child_destructor);
+
+/* instance the app_context list object */
+OBJ_CLASS_INSTANCE(odls_process_app_context_t,
+                   opal_list_item_t,
+                   NULL, NULL);
 
 
 /*
@@ -37,17 +57,14 @@ const char *mca_odls_process_component_version_string =
  * and pointers to our public functions in it
  */
 
-orte_odls_process_component_t mca_odls_process_component = {
-    {
+orte_odls_base_component_t mca_odls_process_component = {
     /* First, the mca_component_t struct containing meta information
-       about the component itself */
-
+    about the component itself */
     {
-        /* Indicate that we are a odls v1.0.0 component (which also
-           implies a specific MCA version) */
-
-        ORTE_ODLS_BASE_VERSION_1_0_0,
-
+        /* Indicate that we are a odls v1.3.0 component (which also
+        implies a specific MCA version) */
+        
+        ORTE_ODLS_BASE_VERSION_1_3_0,
         /* Component name and version */
 
         "process",
@@ -71,63 +88,47 @@ orte_odls_process_component_t mca_odls_process_component = {
 
     /* Initialization / querying functions */
 
-    orte_odls_process_component_init
-    }
+    orte_odls_process_component_init,
+    orte_odls_process_component_finalize
 };
-
-
 
 int orte_odls_process_component_open(void)
 {
-    mca_base_component_t *c = &mca_odls_process_component.super.odls_version;
-
     /* initialize globals */
-    OBJ_CONSTRUCT(&mca_odls_process_component.lock, opal_mutex_t);
-    OBJ_CONSTRUCT(&mca_odls_process_component.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_odls_process.mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_odls_process.cond, opal_condition_t);
+    OBJ_CONSTRUCT(&orte_odls_process.children, opal_list_t);
 
-    /* lookup parameters */
-    mca_base_param_reg_int(c, "reap", 
-                           "Whether to wait to reap all children before finalizing or not",
-                           false, false, 1, &mca_odls_process_component.reap);
-    mca_base_param_reg_int(c, "reap_timeout", 
-                           "When killing children processes, first send a SIGTERM, then wait at least this timeout (in seconds), then send a SIGKILL",
-                           false, false, 0, &mca_odls_process_component.timeout_before_sigkill);
-    mca_base_param_reg_int(c, "priority", 
-                           "Priority of this component",
-                           false, false, 1, &mca_odls_process_component.priority);
-    mca_base_param_reg_int(c, "debug", 
-                           "Whether to enable debugging output or not",
-                           false, false, 0, &mca_odls_process_component.debug);
-    if (mca_odls_process_component.debug == 0) {
-        int id = mca_base_param_register_int("debug",NULL,NULL,NULL,0);
-        int value;
-        mca_base_param_lookup_int(id,&value);
-        mca_odls_process_component.debug = (value > 0) ? 1 : 0;
-    }
     return ORTE_SUCCESS;
 }
-
 
 orte_odls_base_module_t *orte_odls_process_component_init(int *priority)
 {
-    /* Only return a module if we're in the orted */
-#if 0
-    if (orte_process_info.daemon) {
-        *priority = mca_odls_process_component.priority;
-        return &orte_odls_process_module;
-    } else {
-        return NULL;
-    }
-#endif
-    *priority = mca_odls_process_component.priority;
+    /* the base open/select logic protects us against operation when
+     * we are NOT in a daemon, so we don't have to check that here
+     */
+    
+    *priority = 1;
+    
     return &orte_odls_process_module;
 }
 
-
 int orte_odls_process_component_close(void)
 {
-    OBJ_DESTRUCT(&mca_odls_process_component.lock);
-    OBJ_DESTRUCT(&mca_odls_process_component.cond);
+    OBJ_DESTRUCT(&orte_odls_process.mutex);
+    OBJ_DESTRUCT(&orte_odls_process.cond);
+    OBJ_DESTRUCT(&orte_odls_process.children);
     return ORTE_SUCCESS;
 }
 
+int orte_odls_process_component_finalize(void)
+{
+    opal_list_item_t *item;
+    
+    /* cleanup state */
+    while (NULL != (item = opal_list_remove_first(&orte_odls_process.children))) {
+        OBJ_RELEASE(item);
+    }
+    
+    return ORTE_SUCCESS;
+}
