@@ -32,8 +32,7 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
 # Source code files
 
-headers = \
-        debuggers.h
+headers = debuggers.h mpi_interface.h ompi_dll_defs.h
 
 instdir = $(libdir)/openmpi
 
