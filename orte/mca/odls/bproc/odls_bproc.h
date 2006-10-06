@@ -96,10 +96,10 @@ typedef struct odls_bproc_child_t {
     orte_std_cntr_t app_idx;     /* index of the app_context for this proc */
     bool alive;                  /* is this proc alive? */
 } odls_bproc_child_t;
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(odls_bproc_child_t);
+OBJ_CLASS_DECLARATION(odls_bproc_child_t);
 
-ORTE_DECLSPEC orte_odls_bproc_component_t mca_odls_bproc_component;
-ORTE_DECLSPEC orte_odls_base_module_t orte_odls_bproc_module;
+ORTE_MODULE_DECLSPEC extern orte_odls_bproc_component_t mca_odls_bproc_component;
+extern orte_odls_base_module_t orte_odls_bproc_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
