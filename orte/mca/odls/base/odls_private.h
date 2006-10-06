@@ -48,7 +48,7 @@ typedef struct orte_odls_globals_t {
     int timeout_before_sigkill;
 } orte_odls_globals_t;
 
-extern orte_odls_globals_t orte_odls_globals;
+ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
         
 /*
  * data type functions
