@@ -58,7 +58,7 @@ typedef int (*orte_odls_base_module_kill_local_processes_fn_t)(orte_jobid_t job,
 /**
  * Signal local processes
  */
-typedef int (*orte_pls_base_module_signal_local_process_fn_t)(orte_process_name_t *proc,
+typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_process_name_t *proc,
                                                               int32_t signal);
 
 /**
@@ -68,7 +68,7 @@ struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_subscribe_launch_data_fn_t        subscribe_launch_data;
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
-    orte_pls_base_module_signal_local_process_fn_t   		signal_local_procs;
+    orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
 };
 
 /** shorten orte_odls_base_module_1_3_0_t declaration */
