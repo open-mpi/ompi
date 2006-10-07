@@ -155,7 +155,7 @@
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 1
+Release: 2
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
@@ -413,7 +413,7 @@ EOF
 # Runtime files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*.so|mca.*so" $file > runtime.files | /bin/true
+   egrep "lib.*.so|mca.*so" > runtime.files | /bin/true
 
 # Devel files
 find $RPM_BUILD_ROOT -type f -o -type l | \
