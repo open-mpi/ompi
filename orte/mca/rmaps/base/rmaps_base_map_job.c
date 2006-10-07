@@ -42,7 +42,7 @@ static orte_rmaps_base_module_t *select_any(void);
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_rmaps_base_map(orte_jobid_t job, char *desired_mapper)
+int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper)
 {
     orte_rmaps_base_module_t *module=NULL;
     int rc;

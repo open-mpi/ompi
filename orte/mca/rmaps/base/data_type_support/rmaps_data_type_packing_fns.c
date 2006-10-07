@@ -34,33 +34,32 @@
  * JOB_MAP
  */
 int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
-                            orte_std_cntr_t num_vals, orte_data_type_t type)
+                             orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
     orte_std_cntr_t i, num_nodes;
-    orte_rmaps_base_map_t **maps;
+    orte_job_map_t **maps;
     opal_list_item_t *item;
-    orte_rmaps_base_node_t *srcnode;
+    orte_mapped_node_t *srcnode;
 
-    /* array of pointers to orte_rmaps_base_map_t objects - need to pack the objects a set of fields at a time */
-    maps = (orte_rmaps_base_map_t**) src;
+    /* array of pointers to orte_job_map_t objects - need to pack the objects a set of fields at a time */
+    maps = (orte_job_map_t**) src;
 
     for (i=0; i < num_vals; i++) {
-        /* pack the app_context */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, maps[i]->app, 1, ORTE_APP_CONTEXT))) {
+        /* pack the jobid this map is for */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->job), 1, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* pack the number of procs */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->num_procs), 1, ORTE_STD_CNTR))) {
+        /* pack the number of app_contexts */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->num_apps), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* pack the procs array */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(maps[i]->procs),
-                                                       maps[i]->num_procs, ORTE_MAPPED_PROC))) {
+        /* pack the app_contexts */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, maps[i]->apps, maps[i]->num_apps, ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -77,7 +76,7 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
             for (item = opal_list_get_first(&(maps[i]->nodes));
                  item != opal_list_get_end(&(maps[i]->nodes));
                  item = opal_list_get_next(item)) {
-                srcnode = (orte_rmaps_base_node_t*)item;
+                srcnode = (orte_mapped_node_t*)item;
                 if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)srcnode,
                                                            1, ORTE_MAPPED_NODE))) {
                     ORTE_ERROR_LOG(rc);
@@ -99,45 +98,33 @@ int orte_rmaps_base_pack_mapped_proc(orte_buffer_t *buffer, void *src,
 {
     int rc;
     orte_std_cntr_t i;
-    orte_rmaps_base_proc_t **procs;
+    orte_mapped_proc_t **procs;
     
-    /* array of pointers to orte_rmaps_base_proc_t objects - need to pack the objects a set of fields at a time */
-    procs = (orte_rmaps_base_proc_t**) src;
+    /* array of pointers to orte_mapped_proc_t objects - need to pack the objects a set of fields at a time */
+    procs = (orte_mapped_proc_t**) src;
     
     for (i=0; i < num_vals; i++) {
-        /* pack the app */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, procs[i]->app, 1, ORTE_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* pack the proc_node */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, procs[i]->proc_node, 1, ORTE_MAPPED_NODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* pack the proc name */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&(procs[i]->proc_name)),
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)(&(procs[i]->name)),
                                                        1, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the rank */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->proc_rank), 1, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->rank), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* pack the pls-pid */
+        /* pack the pid */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->pid), 1, ORTE_PID))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* pack the local pid */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->local_pid), 1, ORTE_PID))) {
+        /* pack the app_idx */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(procs[i]->app_idx), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -155,22 +142,46 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
 {
     int rc;
     orte_std_cntr_t i, num_procs;
-    orte_rmaps_base_node_t **nodes;
+    orte_mapped_node_t **nodes;
     opal_list_item_t *item;
-    orte_rmaps_base_proc_t *srcproc;
+    orte_mapped_proc_t *srcproc;
     
-    /* array of pointers to orte_rmaps_base_node_t objects - need to pack the objects a set of fields at a time */
-    nodes = (orte_rmaps_base_node_t**) src;
+    /* array of pointers to orte_mapped_node_t objects - need to pack the objects a set of fields at a time */
+    nodes = (orte_mapped_node_t**) src;
     
     for (i=0; i < num_vals; i++) {
-        /* pack the node object */
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, nodes[i]->node, 1, ORTE_RAS_NODE))) {
+        /* pack the cellid */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->cell), 1, ORTE_CELLID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the nodename */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->nodename), 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the username */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->username), 1, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
+        /* pack the daemon's name */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->daemon), 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* pack the oversubscribed flag */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->oversubscribed), 1, ORTE_BOOL))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+                
         /* pack the number of procs */
-        num_procs = (orte_std_cntr_t)opal_list_get_size(&(nodes[i]->node_procs));
+        num_procs = (orte_std_cntr_t)opal_list_get_size(&(nodes[i]->procs));
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &num_procs, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -178,10 +189,10 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
         
         /* pack the procs list */
         if (0 < num_procs) {
-            for (item = opal_list_get_first(&(nodes[i]->node_procs));
-                 item != opal_list_get_end(&(nodes[i]->node_procs));
+            for (item = opal_list_get_first(&(nodes[i]->procs));
+                 item != opal_list_get_end(&(nodes[i]->procs));
                  item = opal_list_get_next(item)) {
-                srcproc = (orte_rmaps_base_proc_t*)item;
+                srcproc = (orte_mapped_proc_t*)item;
                 if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)srcproc,
                                                                1, ORTE_MAPPED_PROC))) {
                     ORTE_ERROR_LOG(rc);

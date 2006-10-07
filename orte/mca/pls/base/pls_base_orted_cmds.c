@@ -58,6 +58,7 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
 
+opal_output(0, "sending exit cmd to daemon [%ld,%ld,%ld]", ORTE_NAME_ARGS(dmn->name));
         if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);

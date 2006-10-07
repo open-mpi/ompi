@@ -34,10 +34,10 @@
 /*
  * JOB_MAP
  */
-int orte_rmaps_base_print_map(char **output, char *prefix, orte_rmaps_base_map_t *src, orte_data_type_t type)
+int orte_rmaps_base_print_map(char **output, char *prefix, orte_job_map_t *src, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *pfx2;
-    orte_rmaps_base_node_t *srcnode;
+    orte_mapped_node_t *srcnode;
     orte_std_cntr_t i, num_nodes;
     opal_list_item_t *item;
     int rc;
@@ -52,32 +52,22 @@ int orte_rmaps_base_print_map(char **output, char *prefix, orte_rmaps_base_map_t
         asprintf(&pfx2, "%s", prefix);
     }
 
-    asprintf(&tmp, "%sMap for app_context:", pfx2);
+    asprintf(&tmp, "%sMap for job: %ld\tNum app_contexts: %ld", pfx2, (long)src->job, (long)src->num_apps);
 
     asprintf(&pfx, "%s\t", pfx2);
     free(pfx2);
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, src->app, ORTE_APP_CONTEXT))) {
-        ORTE_ERROR_LOG(rc);
-        free(pfx);
-        free(tmp);
-        return rc;
-    }
-    asprintf(&tmp3, "%s\n%s\n%sNum elements in procs array: %ld", tmp, tmp2, pfx, (long)src->num_procs);
-    free(tmp);
-    free(tmp2);
-    
-    for (i=0; i < src->num_procs; i++) {
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_print_mapped_proc(&tmp, pfx, src->procs[i], ORTE_MAPPED_PROC))) {
+
+    for (i=0; i < src->num_apps; i++) {
+        if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, src->apps[i], ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             free(pfx);
-            free(tmp3);
+            free(tmp);
             return rc;
         }
-        asprintf(&tmp2, "%s\n%s", tmp3, tmp);
+        asprintf(&tmp3, "%s\n%s", tmp, tmp2);
         free(tmp);
-        free(tmp3);
-        tmp3 = tmp2;
+        free(tmp2);
+        tmp = tmp3;
     }
     
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&(src->nodes));
@@ -86,7 +76,7 @@ int orte_rmaps_base_print_map(char **output, char *prefix, orte_rmaps_base_map_t
     for (item = opal_list_get_first(&(src->nodes));
          item != opal_list_get_end(&(src->nodes));
          item = opal_list_get_next(item)) {
-        srcnode = (orte_rmaps_base_node_t*)item;
+        srcnode = (orte_mapped_node_t*)item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_print_mapped_node(&tmp2, pfx, srcnode, ORTE_MAPPED_NODE))) {
             ORTE_ERROR_LOG(rc);
             free(pfx);
@@ -110,7 +100,7 @@ int orte_rmaps_base_print_map(char **output, char *prefix, orte_rmaps_base_map_t
 /*
  * MAPPED_PROC
  */
-int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_rmaps_base_proc_t *src, orte_data_type_t type)
+int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_mapped_proc_t *src, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *pfx2;
     int rc;
@@ -125,35 +115,18 @@ int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_rmaps_ba
         asprintf(&pfx2, "%s", prefix);
     }
     
-    asprintf(&tmp, "%sMapped proc:", pfx2);
+    asprintf(&tmp3, "%sMapped proc:\n%s\tProc Name:", pfx2, pfx2);
     
     asprintf(&pfx, "%s\t", pfx2);
     
-    if (NULL != src->app) {
-        asprintf(&tmp2, "%s\n%sApp name: %s", tmp, pfx, src->app);
-    } else {
-        asprintf(&tmp2, "%s\n%sApplication has NULL name", tmp, pfx);
-    }
-    free(tmp);        
-    
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_print_mapped_node(&tmp, pfx, src->proc_node, ORTE_MAPPED_NODE))) {
-        ORTE_ERROR_LOG(rc);
-        free(pfx);
-        free(tmp2);
-        return rc;
-    }
-    asprintf(&tmp3, "%s\n%s\n%s\n%sProc Name:", tmp2, pfx, tmp, pfx);
-    free(tmp2);
-    free(tmp);
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, &(src->proc_name), ORTE_NAME))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, &(src->name), ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         free(pfx);
         free(tmp3);
         return rc;
     }
-    asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tPLS pid: %ld\tLocal PID: %ld\n", tmp3, tmp2, pfx,
-             (long)src->proc_rank, (long)src->pid, (long)src->local_pid);
+    asprintf(&tmp, "%s\n%s\n%sProc Rank: %ld\tProc PID: %ld\tApp_context index: %ld\n", tmp3, tmp2, pfx,
+                                                    (long)src->rank, (long)src->pid, (long)src->app_idx);
     free(tmp2);
     free(tmp3);
     
@@ -168,15 +141,13 @@ int orte_rmaps_base_print_mapped_proc(char **output, char *prefix, orte_rmaps_ba
 /*
  * MAPPED_NODE
  */
-int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_rmaps_base_node_t *src, orte_data_type_t type)
+int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_mapped_node_t *src, orte_data_type_t type)
 {
     int rc;
     char *tmp, *tmp2, *tmp3, *pfx, *pfx2;
     orte_std_cntr_t num_procs;
-#if 0
     opal_list_item_t *item;
-    orte_rmaps_base_proc_t *srcproc;
-#endif
+    orte_mapped_proc_t *srcproc;
     
     /* set default result */
     *output = NULL;
@@ -187,28 +158,31 @@ int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_rmaps_ba
     } else {
         asprintf(&pfx2, "%s", prefix);
     }
-    
-    asprintf(&tmp, "%sMapped node:", pfx2);
+
+    asprintf(&tmp, "%sMapped node:\n%s\tCell: %ld\tNodename: %s\tUsername: %s\n%s\tDaemon name:", pfx2, pfx2,
+             (long)src->cell, (NULL == src->nodename ? "NULL" : src->nodename),
+             (NULL == src->username ? "NULL" : src->username), pfx2);
     
     asprintf(&pfx, "%s\t", pfx2);
     free(pfx2);
     
-    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, src->node, ORTE_RAS_NODE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp2, pfx, src->daemon, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         free(pfx);
         free(tmp);
         return rc;
     }
     
-    num_procs = (orte_std_cntr_t)opal_list_get_size(&(src->node_procs));
-    asprintf(&tmp3, "%s\n%s\n%sNum elements in procs list: %ld", tmp, tmp2, pfx, (long)num_procs);
+    num_procs = (orte_std_cntr_t)opal_list_get_size(&(src->procs));
+    asprintf(&tmp3, "%s\n\t%s\n%sOversubscribed: %s\tNum elements in procs list: %ld", tmp, tmp2, pfx,
+             (src->oversubscribed ? "True" : "False"), (long)num_procs);
     free(tmp);
     free(tmp2);
-#if 0
-   for (item = opal_list_get_first(&(src->node_procs));
-         item != opal_list_get_end(&(src->node_procs));
+    
+   for (item = opal_list_get_first(&(src->procs));
+         item != opal_list_get_end(&(src->procs));
          item = opal_list_get_next(item)) {
-        srcproc = (orte_rmaps_base_proc_t*)item;
+        srcproc = (orte_mapped_proc_t*)item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_print_mapped_proc(&tmp2, pfx, srcproc, ORTE_MAPPED_PROC))) {
             ORTE_ERROR_LOG(rc);
             free(pfx);
@@ -220,7 +194,7 @@ int orte_rmaps_base_print_mapped_node(char **output, char *prefix, orte_rmaps_ba
         free(tmp2);
         tmp3 = tmp;
     }
-#endif
+
     /* set the return */
     *output = tmp3;
     

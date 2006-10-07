@@ -40,48 +40,47 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
 {
     int rc;
     orte_std_cntr_t i, j, n, num_nodes;
-    orte_rmaps_base_map_t **maps;
-    orte_rmaps_base_node_t *node;
+    orte_job_map_t **maps;
+    orte_mapped_node_t *node;
 
-    /* unpack into array of orte_rmaps_base_map_t objects */
-    maps = (orte_rmaps_base_map_t**) dest;
+    /* unpack into array of orte_job_map_t objects */
+    maps = (orte_job_map_t**) dest;
     for (i=0; i < *num_vals; i++) {
 
         /* create the orte_rmaps_base_map_t object */
-        maps[i] = OBJ_NEW(orte_rmaps_base_map_t);
+        maps[i] = OBJ_NEW(orte_job_map_t);
         if (NULL == maps[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
+        /* unpack the jobid */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->job), &n, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the number of app_contexts */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->num_apps), &n, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* allocate space for them */
+        maps[i]->apps = (orte_app_context_t**)malloc(maps[i]->num_apps * sizeof(orte_app_context_t*));
+        if (NULL == maps[i]->apps) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
         /* unpack the app_context */
-        n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                &(maps[i]->app), &n, ORTE_APP_CONTEXT))) {
+                                &(maps[i]->apps), &(maps[i]->num_apps), ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-
-        /* unpack the number of procs */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                &(maps[i]->num_procs), &n, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-
-        /* if we have some, allocate space for them */
-        if (0 < maps[i]->num_procs) {
-            maps[i]->procs = (orte_rmaps_base_proc_t**)malloc(maps[i]->num_procs * sizeof(orte_rmaps_base_proc_t*));
-            if (NULL == maps[i]->procs) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            /* and unpack them */
-            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, maps[i]->procs, &(maps[i]->num_procs), ORTE_MAPPED_PROC))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
         }
 
         /* unpack the number of nodes */
@@ -112,39 +111,23 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
 {
     int rc;
     orte_std_cntr_t i, n;
-    orte_rmaps_base_proc_t **procs;
+    orte_mapped_proc_t **procs;
     
-    /* unpack into array of orte_rmaps_base_proc_t objects */
-    procs = (orte_rmaps_base_proc_t**) dest;
+    /* unpack into array of orte_mapped_proc_t objects */
+    procs = (orte_mapped_proc_t**) dest;
     for (i=0; i < *num_vals; i++) {
         
-        /* create the orte_rmaps_base_proc_t object */
-        procs[i] = OBJ_NEW(orte_rmaps_base_proc_t);
+        /* create the orte_mapped_proc_t object */
+        procs[i] = OBJ_NEW(orte_mapped_proc_t);
         if (NULL == procs[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
-        /* unpack the app name */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->app), &n, ORTE_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* unpack the proc_node */
-        n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->proc_node), &n, ORTE_MAPPED_NODE))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
         /* unpack the proc name */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->proc_name), &n, ORTE_NAME))) {
+                                                         &(procs[i]->name), &n, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -152,12 +135,12 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
         /* unpack the rank */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->proc_rank), &n, ORTE_STD_CNTR))) {
+                                                         &(procs[i]->rank), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        /* unpack the pls-pid */
+        /* unpack the pid */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
                                                          &(procs[i]->pid), &n, ORTE_PID))) {
@@ -165,10 +148,10 @@ int orte_rmaps_base_unpack_mapped_proc(orte_buffer_t *buffer, void *dest,
             return rc;
         }
         
-        /* unpack the local pid */
+        /* unpack the app_idx */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(procs[i]->local_pid), &n, ORTE_PID))) {
+                                                         &(procs[i]->app_idx), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -185,24 +168,56 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
 {
     int rc;
     orte_std_cntr_t i, j, n, num_procs;
-    orte_rmaps_base_node_t **nodes;
-    orte_rmaps_base_proc_t *srcproc;
+    orte_mapped_node_t **nodes;
+    orte_mapped_proc_t *srcproc;
     
-    /* unpack into array of orte_rmaps_base_node_t objects */
-    nodes = (orte_rmaps_base_node_t**) dest;
+    /* unpack into array of orte_mapped_node_t objects */
+    nodes = (orte_mapped_node_t**) dest;
     for (i=0; i < *num_vals; i++) {
         
         /* create the orte_rmaps_base_node_t object */
-        nodes[i] = OBJ_NEW(orte_rmaps_base_node_t);
+        nodes[i] = OBJ_NEW(orte_mapped_node_t);
         if (NULL == nodes[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
-        /* unpack the node object */
+        /* unpack the cellid */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
-                                                         &(nodes[i]->node), &n, ORTE_RAS_NODE))) {
+                                                         &(nodes[i]->cell), &n, ORTE_CELLID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the nodename */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(nodes[i]->nodename), &n, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the username */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(nodes[i]->username), &n, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* unpack the daemon's name */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(nodes[i]->daemon), &n, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+
+        /* unpack the oversubscribed flag */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(nodes[i]->oversubscribed), &n, ORTE_BOOL))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -222,7 +237,7 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
                     ORTE_ERROR_LOG(rc);
                     return rc;
                 }
-                opal_list_append(&(nodes[i]->node_procs), &srcproc->super);
+                opal_list_append(&(nodes[i]->procs), &srcproc->super);
             }
         }
     }

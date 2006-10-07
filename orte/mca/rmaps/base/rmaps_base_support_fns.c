@@ -48,6 +48,7 @@ static bool are_all_mapped_valid(char **mapping,
                                  opal_list_t* nodes)
 {
     opal_list_item_t *item;
+    orte_ras_node_t *node;
     int i;
     bool matched;
     
@@ -57,7 +58,8 @@ static bool are_all_mapped_valid(char **mapping,
         for(item  = opal_list_get_first(nodes);
             item != opal_list_get_end(nodes);
             item  = opal_list_get_next(item) ) {
-            if( 0 == strcmp( ((orte_ras_node_t*) item)->node_name, mapping[i]) ) {
+            node = (orte_ras_node_t*) item;
+            if( 0 == strcmp(node->node_name, mapping[i]) ) {
                 matched = true;
                 break;
             }
@@ -94,7 +96,7 @@ static bool is_mapped(opal_list_item_t *item,
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots)
+int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots)
 {
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
@@ -104,7 +106,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, ort
     /** set default answer */
     *total_num_slots = 0;
     
-    if(ORTE_SUCCESS != (rc = orte_ras.node_query_alloc(nodes, jobid))) {
+    /* get the allocation for this job */
+    if(ORTE_SUCCESS != (rc = orte_ras.node_query_alloc(allocated_nodes, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -115,21 +118,21 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, ort
     id = mca_base_param_find("rmaps", NULL, "base_schedule_local");
     mca_base_param_lookup_int(id, &nolocal);
     if (0 == nolocal) {
-        for (item  = opal_list_get_first(nodes);
-             item != opal_list_get_end(nodes);
+        for (item  = opal_list_get_first(allocated_nodes);
+             item != opal_list_get_end(allocated_nodes);
              item  = opal_list_get_next(item) ) {
-            if (0 == strcmp(((orte_ras_node_t *) item)->node_name, 
-                            orte_system_info.nodename) ||
-                opal_ifislocal(((orte_ras_node_t *) item)->node_name)) {
-                opal_list_remove_item(nodes, item);
+            node = (orte_ras_node_t*)item;
+            if (0 == strcmp(node->node_name, orte_system_info.nodename) ||
+                opal_ifislocal(node->node_name)) {
+                opal_list_remove_item(allocated_nodes, item);
                 break;
             }
         }
     }
 
     /** remove all nodes that are already at max usage */
-    item  = opal_list_get_first(nodes);
-    while (item != opal_list_get_end(nodes)) {
+    item  = opal_list_get_first(allocated_nodes);
+    while (item != opal_list_get_end(allocated_nodes)) {
 
         /** save the next pointer in case we remove this node */
         next  = opal_list_get_next(item);
@@ -137,8 +140,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, ort
         /** check to see if this node is fully used - remove if so */
         node = (orte_ras_node_t*)item;
         if (0 != node->node_slots_max && node->node_slots_inuse > node->node_slots_max) {
-            opal_list_remove_item(nodes, item);
-        } else { /** otherwise, add its slots to the total */
+            opal_list_remove_item(allocated_nodes, item);
+        } else { /** otherwise, add the slots for our job to the total */
             num_slots += node->node_slots;
         }
 
@@ -146,8 +149,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t* nodes, orte_jobid_t jobid, ort
         item = next;
     }
 
-    /* Sanity check to make sure we have been allocated nodes */
-    if (0 == opal_list_get_size(nodes)) {
+    /* Sanity check to make sure we have resources available */
+    if (0 == opal_list_get_size(allocated_nodes)) {
         ORTE_ERROR_LOG(ORTE_ERR_TEMP_OUT_OF_RESOURCE);
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
     }
@@ -245,67 +248,108 @@ int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
 }
 
 
-/*
- * Claim a slot for a specified job on a node
- */
-int orte_rmaps_base_claim_slot(orte_rmaps_base_map_t *map,
-                               orte_ras_node_t *current_node,
-                               orte_jobid_t jobid, orte_vpid_t vpid,
-                               int proc_index,
-                               opal_list_t *nodes,
-                               opal_list_t *fully_used_nodes)
+int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename,
+                                    char *username, bool oversubscribed, orte_mapped_proc_t *proc)
 {
-    orte_rmaps_base_proc_t *proc;
-    orte_process_name_t *proc_name;
-    orte_rmaps_base_node_t *rmaps_node;
-    int rc;
+    opal_list_item_t *item;
+    orte_mapped_node_t *node;
     
-    /* create objects */
-    rmaps_node = OBJ_NEW(orte_rmaps_base_node_t);
-    if (NULL == rmaps_node) {
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_mapped_node_t*)item;
+        
+        if (cell == node->cell && 0 == strcmp(nodename, node->nodename)) {
+            /* node was found - add this proc to that list */
+            opal_list_append(&node->procs, &proc->super);
+            /* set the oversubscribed flag */
+            node->oversubscribed = oversubscribed;
+            return ORTE_SUCCESS;
+        }
+    }
+    
+    /* node was NOT found - add this one to the list */
+    node = OBJ_NEW(orte_mapped_node_t);
+    if (NULL == node) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
-    OBJ_RETAIN(current_node);
-    rmaps_node->node = current_node;
-    proc = OBJ_NEW(orte_rmaps_base_proc_t);
+    node->cell = cell;
+    node->nodename = strdup(nodename);
+    if (NULL != username) {
+        node->username = strdup(username);
+    }
+    node->oversubscribed = oversubscribed;
+    opal_list_append(&map->nodes, &node->super);
+    
+    /* and add this proc to the new node's list of procs */
+    opal_list_append(&node->procs, &proc->super);
+    
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * Claim a slot for a specified job on a node
+ */
+int orte_rmaps_base_claim_slot(orte_job_map_t *map,
+                               orte_ras_node_t *current_node,
+                               orte_jobid_t jobid, orte_vpid_t vpid,
+                               orte_std_cntr_t app_idx,
+                               opal_list_t *nodes,
+                               opal_list_t *fully_used_nodes)
+{
+    orte_process_name_t *name;
+    orte_mapped_proc_t *proc;
+    bool oversub;
+    int rc;
+    
+    /* create mapped_proc object */
+    proc = OBJ_NEW(orte_mapped_proc_t);
     if (NULL == proc) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(rmaps_node);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* create the process name as an offset from the vpid-start */
-    rc = orte_ns.create_process_name(&proc_name, current_node->node_cellid,
+    rc = orte_ns.create_process_name(&name, current_node->node_cellid,
                                      jobid, vpid);
     if (rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(proc);
-        OBJ_RELEASE(rmaps_node);
         return rc;
     }
-    proc->proc_node = rmaps_node;
-    proc->proc_name = *proc_name;
-    proc->proc_rank = vpid;
-    orte_ns.free_name(&proc_name);
-    OBJ_RETAIN(proc); /* bump reference count for the node */
-    opal_list_append(&rmaps_node->node_procs, &proc->super);
-    map->procs[proc_index] = proc;
-    
-    /* Save this node on the map */
-    opal_list_append(&map->nodes, &rmaps_node->super);
+    proc->name = *name;
+    proc->rank = vpid;
+    proc->app_idx = app_idx;
     
     /* Be sure to demarcate this slot as claimed for the node */
     current_node->node_slots_inuse++;
+    
+    /* see if this node is oversubscribed now */
+    if (current_node->node_slots_inuse >= current_node->node_slots) {
+        oversub = true;
+    } else {
+        oversub = false;
+    }
+    
+    /* add the proc to the map */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_add_proc_to_map(map, current_node->node_cellid,
+                                                              current_node->node_name,
+                                                              current_node->node_username,
+                                                              oversub, proc))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(proc);
+        return rc;
+    }
     
     /* Remove this node if it has reached its max number of allocatable slots OR it has
      * reached the soft limit AND we are in a "no oversubscribe" state
      */
     if ((0 != current_node->node_slots_max  &&
         current_node->node_slots_inuse >= current_node->node_slots_max) ||
-        (!orte_rmaps_base.oversubscribe &&
-         current_node->node_slots_inuse >= current_node->node_slots)) {
+        (!orte_rmaps_base.oversubscribe && oversub)) {
         opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
         /* add it to the list of fully used nodes */
         opal_list_append(fully_used_nodes, &current_node->super);

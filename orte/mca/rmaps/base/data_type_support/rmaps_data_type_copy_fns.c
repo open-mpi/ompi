@@ -34,12 +34,12 @@
 /*
  * JOB_MAP
  */
-int orte_rmaps_base_copy_map(orte_rmaps_base_map_t **dest, orte_rmaps_base_map_t *src, orte_data_type_t type)
+int orte_rmaps_base_copy_map(orte_job_map_t **dest, orte_job_map_t *src, orte_data_type_t type)
 {
     orte_std_cntr_t i;
     int rc;
     opal_list_item_t *item;
-    orte_rmaps_base_node_t *srcnode, *nodeptr;
+    orte_mapped_node_t *srcnode, *nodeptr;
     
     if (NULL == src) {
         *dest = NULL;
@@ -47,34 +47,34 @@ int orte_rmaps_base_copy_map(orte_rmaps_base_map_t **dest, orte_rmaps_base_map_t
     }
     
     /* create the new object */
-    *dest = OBJ_NEW(orte_rmaps_base_map_t);
+    *dest = OBJ_NEW(orte_job_map_t);
     if (NULL == *dest) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
     /* copy data into it */
-    (*dest)->app = src->app;
+    (*dest)->job = src->job;
+    (*dest)->num_apps = src->num_apps;
     
-    (*dest)->procs = (orte_rmaps_base_proc_t**)malloc(src->num_procs * sizeof(orte_rmaps_base_proc_t));
-    if (NULL == (*dest)->procs) {
+    (*dest)->apps = (orte_app_context_t**)malloc(src->num_apps * sizeof(orte_app_context_t*));
+    if (NULL == (*dest)->apps) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         OBJ_RELEASE(*dest);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    for (i=0; i < src->num_procs; i++) {
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_copy_mapped_proc(&((*dest)->procs[i]), src->procs[i], ORTE_MAPPED_PROC))) {
+    for (i=0; i < src->num_apps; i++) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&((*dest)->apps[i]), src->apps[i], ORTE_APP_CONTEXT))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(*dest);
             return rc;
         }
     }
-    (*dest)->num_procs = src->num_procs;
     
     for (item = opal_list_get_first(&(src->nodes));
          item != opal_list_get_end(&(src->nodes));
          item = opal_list_get_next(item)) {
-        srcnode = (orte_rmaps_base_node_t*)item;
+        srcnode = (orte_mapped_node_t*)item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_copy_mapped_node(&nodeptr, srcnode, ORTE_MAPPED_NODE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(*dest);
@@ -89,40 +89,28 @@ int orte_rmaps_base_copy_map(orte_rmaps_base_map_t **dest, orte_rmaps_base_map_t
 /*
  * MAPPED_PROC
  */
-int orte_rmaps_base_copy_mapped_proc(orte_rmaps_base_proc_t **dest, orte_rmaps_base_proc_t *src, orte_data_type_t type)
+int orte_rmaps_base_copy_mapped_proc(orte_mapped_proc_t **dest, orte_mapped_proc_t *src, orte_data_type_t type)
 {
-    int rc;
-    
     if (NULL == src) {
         *dest = NULL;
         return ORTE_SUCCESS;
     }
     
     /* create the new object */
-    *dest = OBJ_NEW(orte_rmaps_base_proc_t);
+    *dest = OBJ_NEW(orte_mapped_proc_t);
     if (NULL == *dest) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* copy data into it */
-    if (NULL != src->app) {
-        (*dest)->app = strdup(src->app);
-    }
+    (*dest)->name = src->name;
     
-    if (ORTE_SUCCESS != (rc = orte_rmaps_base_copy_mapped_node(&((*dest)->proc_node), src->proc_node, ORTE_MAPPED_NODE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(*dest);
-        return rc;
-    }
+    (*dest)->rank = src->rank;
     
-    (*dest)->proc_name = src->proc_name;
-    
-    (*dest)->proc_rank = src->proc_rank;
+    (*dest)->app_idx = src->app_idx;
     
     (*dest)->pid = src->pid;
-    
-    (*dest)->local_pid = src->local_pid;
     
     return ORTE_SUCCESS;
 }
@@ -130,11 +118,11 @@ int orte_rmaps_base_copy_mapped_proc(orte_rmaps_base_proc_t **dest, orte_rmaps_b
 /*
  * MAPPED_NODE
  */
-int orte_rmaps_base_copy_mapped_node(orte_rmaps_base_node_t **dest, orte_rmaps_base_node_t *src, orte_data_type_t type)
+int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node_t *src, orte_data_type_t type)
 {
     int rc;
     opal_list_item_t *item;
-    orte_rmaps_base_proc_t *srcproc, *procptr;
+    orte_mapped_proc_t *srcproc, *procptr;
     
     if (NULL == src) {
         *dest = NULL;
@@ -142,29 +130,43 @@ int orte_rmaps_base_copy_mapped_node(orte_rmaps_base_node_t **dest, orte_rmaps_b
     }
     
     /* create the new object */
-    *dest = OBJ_NEW(orte_rmaps_base_node_t);
+    *dest = OBJ_NEW(orte_mapped_node_t);
     if (NULL == *dest) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     
     /* copy data into it */
-    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&((*dest)->node), src->node, ORTE_RAS_NODE))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(*dest);
-        return rc;
+    (*dest)->cell = src->cell;
+    
+    if (NULL != src->nodename) {
+        (*dest)->nodename = strdup(src->nodename);
+    }
+
+    if (NULL != src->username) {
+        (*dest)->username = strdup(src->username);
     }
     
-    for (item = opal_list_get_first(&(src->node_procs));
-         item != opal_list_get_end(&(src->node_procs));
+    if (NULL != src->daemon) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&((*dest)->daemon), src->daemon, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(*dest);
+            return rc;
+        }
+    }
+    
+    (*dest)->oversubscribed = src->oversubscribed;
+    
+    for (item = opal_list_get_first(&(src->procs));
+         item != opal_list_get_end(&(src->procs));
          item = opal_list_get_next(item)) {
-        srcproc = (orte_rmaps_base_proc_t*)item;
+        srcproc = (orte_mapped_proc_t*)item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_copy_mapped_proc(&procptr, srcproc, ORTE_MAPPED_PROC))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(*dest);
             return rc;
         }
-        opal_list_append(&((*dest)->node_procs), &procptr->super);
+        opal_list_append(&((*dest)->procs), &procptr->super);
     }
     
     return ORTE_SUCCESS;

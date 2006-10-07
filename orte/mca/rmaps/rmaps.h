@@ -59,6 +59,18 @@
 typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job, char *desired_mapper);
 
 /**
+ * Get the map of a job from the registry
+ */
+typedef int (*orte_rmaps_base_module_get_job_map_fn_t)(orte_job_map_t **map, orte_jobid_t job);
+
+/**
+ * Get the map for a job on a specific node from the registry. Providing a jobid of
+ * ORTE_JOBID_WILDCARD will return the map of all processes on that node
+ */
+typedef int (*orte_rmaps_base_module_get_node_map_fn_t)(orte_mapped_node_t **node, orte_cellid_t cell,
+                                                        char *nodename, orte_jobid_t job);
+
+/**
  * Cleanup module resources.
  */
 typedef int (*orte_rmaps_base_module_finalize_fn_t)(void);
@@ -67,10 +79,14 @@ typedef int (*orte_rmaps_base_module_finalize_fn_t)(void);
  * rmaps module version 1.3.0
  */
 struct orte_rmaps_base_module_1_3_0_t {
-    /** Maping function pointer */
-    orte_rmaps_base_module_map_fn_t         map_job;
+    /** Mapping function pointer */
+    orte_rmaps_base_module_map_fn_t         	map_job;
+    /** Get job map pointer */
+    orte_rmaps_base_module_get_job_map_fn_t		get_job_map;
+    /** Node map pointer */
+    orte_rmaps_base_module_get_node_map_fn_t    get_node_map;
     /** Finalization function pointer */
-    orte_rmaps_base_module_finalize_fn_t    finalize;
+    orte_rmaps_base_module_finalize_fn_t    	finalize;
 };
 /** Convenience typedef */
 typedef struct orte_rmaps_base_module_1_3_0_t orte_rmaps_base_module_1_3_0_t;

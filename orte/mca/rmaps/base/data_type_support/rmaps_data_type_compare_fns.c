@@ -29,14 +29,14 @@
 /*
  * JOB_MAP
  */
-int orte_rmaps_base_compare_map(orte_rmaps_base_map_t *value1, orte_rmaps_base_map_t *value2, orte_data_type_t type)
+int orte_rmaps_base_compare_map(orte_job_map_t *value1, orte_job_map_t *value2, orte_data_type_t type)
 {
     return ORTE_EQUAL;
 }
 
 
 /* MAPPED_PROC */
-int orte_rmaps_base_compare_mapped_proc(orte_rmaps_base_proc_t *value1, orte_rmaps_base_proc_t *value2, orte_data_type_t type)
+int orte_rmaps_base_compare_mapped_proc(orte_mapped_proc_t *value1, orte_mapped_proc_t *value2, orte_data_type_t type)
 {
     return ORTE_EQUAL;
 }
@@ -44,7 +44,7 @@ int orte_rmaps_base_compare_mapped_proc(orte_rmaps_base_proc_t *value1, orte_rma
 
 
 /* MAPPED_NODE */
-int orte_rmaps_base_compare_mapped_node(orte_rmaps_base_node_t *value1, orte_rmaps_base_node_t *value2, orte_data_type_t type)
+int orte_rmaps_base_compare_mapped_node(orte_mapped_node_t *value1, orte_mapped_node_t *value2, orte_data_type_t type)
 {
     return ORTE_EQUAL;
 }
