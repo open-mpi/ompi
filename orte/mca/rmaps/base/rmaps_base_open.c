@@ -50,14 +50,17 @@ orte_rmaps_base_t orte_rmaps_base;
  * Declare the RMAPS module to hold the API function pointers
  */
 orte_rmaps_base_module_t orte_rmaps = {
-    orte_rmaps_base_map,
+    orte_rmaps_base_map_job,
+    orte_rmaps_base_get_job_map,
+    orte_rmaps_base_get_node_map,
     orte_rmaps_base_finalize
 };
 
-orte_rmaps_base_module_t orte_rmaps_no_op = {
-    orte_rmaps_base_map_no_op,
-    orte_rmaps_base_finalize
-};
+/*
+ * Include all the RMAPS class instance declarations
+ */
+#include "orte/mca/rmaps/base/rmaps_class_instances.h"
+
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -66,7 +69,7 @@ orte_rmaps_base_module_t orte_rmaps_no_op = {
 int orte_rmaps_base_open(void)
 {
     int param, rc, value;
-    char *policy, *requested;
+    char *policy;
     orte_data_type_t tmp;
 
     /* Debugging / verbose output */
@@ -150,30 +153,7 @@ int orte_rmaps_base_open(void)
     }
     
     
-    /* Some systems do not want any RMAPS support. In those cases,
-     * memory consumption is also an issue. For those systems, we
-     * avoid opening the RMAPS components by checking for a directive
-     * to use the "null" component.
-     */
-    param = mca_base_param_reg_string_name("rmaps", NULL, NULL,
-                                           false, false, NULL, NULL);
-    if (ORTE_ERROR == mca_base_param_lookup_string(param, &requested)) {
-        return ORTE_ERROR;
-    }
-    if (NULL != requested && 0 == strcmp(requested, "null")) {
-        /* the user has specifically requested that we use the "null"
-        * component. In this case, that means we do NOT open any
-        * components, and we simply use the default module we have
-        * already defined above
-        */
-        orte_rmaps_base.no_op_selected = true;
-        orte_rmaps = orte_rmaps_no_op; /* use the no_op module */
-        return ORTE_SUCCESS;
-    }
-    orte_rmaps_base.no_op_selected = false;
-    
     /* Open up all the components that we can find */
-
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmaps", orte_rmaps_base.rmaps_output,
                                  mca_rmaps_base_static_components, 

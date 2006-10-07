@@ -30,7 +30,7 @@
 #import "orte/mca/pls/pls.h"
 #import "orte/mca/errmgr/errmgr.h"
 #import "orte/mca/ras/ras_types.h"
-#import "orte/mca/rmaps/base/rmaps_private.h"
+#import "orte/mca/rmaps/rmaps.h"
 #import "orte/mca/smr/smr.h"
 
 #import "pls_xgrid_client.h"
@@ -229,8 +229,8 @@ char **environ;
 
 -(int) launchJob:(orte_jobid_t) jobid
 {
-    opal_list_t mapping;
-    opal_list_item_t *m_item, *n_item;
+    orte_job_map_t *map;
+    opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
     int rc, i = 0;  
@@ -239,24 +239,17 @@ char **environ;
     char *orted_path;
     char *nsuri = NULL, *gpruri = NULL;
 
-   /* Query the list of nodes allocated and mapped to this job.
+   /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
      *  - need to know if we are launching on a subset of the allocated nodes
      */
-    OBJ_CONSTRUCT(&mapping, opal_list_t);
-    rc = orte_rmaps_base_get_map(jobid, &mapping);
+    rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
 
-    num_nodes = 0;
-    for(m_item = opal_list_get_first(&mapping);
-        m_item != opal_list_get_end(&mapping);
-        m_item = opal_list_get_next(m_item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
-        num_nodes += opal_list_get_size(&map->nodes);
-    }
+    num_nodes = opal_list_get_size(&map->nodes);
 
     /*
      * Allocate a range of vpids for the daemons.
@@ -300,84 +293,69 @@ char **environ;
     /* build up the array of task specifications */
     NSMutableDictionary *taskSpecifications = [NSMutableDictionary dictionary];
 
-    /*
-     * iterate through each of the contexts
+    /* Iterate through each of the nodes and spin
+     * up a daemon.
      */
-    for (m_item = opal_list_get_first(&mapping);
-         m_item != opal_list_get_end(&mapping);
-         m_item = opal_list_get_next(m_item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
+    for (item =  opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item =  opal_list_get_next(n_item)) {
+        orte_mapped_node_t* rmaps_node = (orte_mapped_node_t*)item;
+        orte_process_name_t* name;
+        char* name_string;
+        
+        /* new daemon - setup to record its info */
+        dmn = OBJ_NEW(orte_pls_daemon_info_t);
+        dmn->active_job = jobid;
+        opal_list_append(&daemons, &dmn->super);
+        
+        /* record the node name in the daemon struct */
+        dmn->cell = node->cell;
+        dmn->nodename = strdup(node->nodename);
+        
+        /* initialize daemons process name */
+        rc = orte_ns.create_process_name(&name, node->cell, 0, vpid);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* save it in the daemon struct */
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        
+        /* setup per-node options */
+        opal_output_verbose(1, orte_pls_base.pls_output,
+            "orte:pls:xgrid: launching on node %s", 
+            node->nodename);
+        
+        /* setup process name */
+        rc = orte_ns.get_proc_name_string(&name_string, name);
+        if (ORTE_SUCCESS != rc) {
+            opal_output(orte_pls_base.pls_output,
+            "orte:pls:xgrid: unable to create process name");
+            return rc;
+        }
 
-        /* Iterate through each of the nodes and spin
-         * up a daemon.
-         */
-        for (n_item =  opal_list_get_first(&map->nodes);
-             n_item != opal_list_get_end(&map->nodes);
-             n_item =  opal_list_get_next(n_item)) {
-            orte_rmaps_base_node_t* rmaps_node = (orte_rmaps_base_node_t*)n_item;
-            orte_ras_node_t* node = rmaps_node->node;
-            orte_process_name_t* name;
-            char* name_string;
-            
-            /* already launched on this node */
-            if (0 != node->node_launched++) {
-                continue;
-            }
-            
-            /* new daemon - setup to record its info */
-            dmn = OBJ_NEW(orte_pls_daemon_info_t);
-            dmn->active_job = jobid;
-            opal_list_append(&daemons, &dmn->super);
-            
-            /* record the node name in the daemon struct */
-            dmn->cell = node->node_cellid;
-            dmn->nodename = strdup(node->node_name);
-            
-            /* initialize daemons process name */
-            rc = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* save it in the daemon struct */
-            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            
-            /* setup per-node options */
-	    opal_output_verbose(1, orte_pls_base.pls_output,
-				"orte:pls:xgrid: launching on node %s", 
-				node->node_name);
-            
-            /* setup process name */
-            rc = orte_ns.get_proc_name_string(&name_string, name);
-            if (ORTE_SUCCESS != rc) {
-                opal_output(orte_pls_base.pls_output,
-			    "orte:pls:xgrid: unable to create process name");
-                return rc;
-            }
-
-	    NSMutableDictionary *task = [NSMutableDictionary dictionary];
-	    [task setObject: [NSString stringWithCString: orted_path]
-		  forKey: XGJobSpecificationCommandKey];
-	    NSArray *taskArguments = 
-		[NSArray arrayWithObjects: @"--no-daemonize",
-			 @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
-			 @"--name", [NSString stringWithCString: name_string],
-                         @"--num_procs", [NSString stringWithFormat: @"%d", 1],
-			 @"--nodename", [NSString stringWithCString: node->node_name],
-			 @"--nsreplica", [NSString stringWithCString: nsuri],
-			 @"--gprreplica", [NSString stringWithCString: gpruri],
-			 nil];
-	    [task setObject: taskArguments forKey: XGJobSpecificationArgumentsKey];
-
-	    [taskSpecifications setObject: task 
-				forKey: [NSString stringWithFormat: @"%d", i]];
-
-	    vpid++; i++;
-	}
+        NSMutableDictionary *task = [NSMutableDictionary dictionary];
+        [task setObject: [NSString stringWithCString: orted_path]
+            forKey: XGJobSpecificationCommandKey];
+        NSArray *taskArguments = 
+        [NSArray arrayWithObjects: @"--no-daemonize",
+                @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
+                @"--name", [NSString stringWithCString: name_string],
+                            @"--num_procs", [NSString stringWithFormat: @"%d", 1],
+                @"--nodename", [NSString stringWithCString: node->nodename],
+                @"--nsreplica", [NSString stringWithCString: nsuri],
+                @"--gprreplica", [NSString stringWithCString: gpruri],
+                nil];
+        [task setObject: taskArguments forKey: XGJobSpecificationArgumentsKey];
+    
+        [taskSpecifications setObject: task 
+                forKey: [NSString stringWithFormat: @"%d", i]];
+    
+        vpid++; i++;
     }
 
     /* job specification */
@@ -419,18 +397,13 @@ char **environ;
 		 forKey: [NSString stringWithFormat: @"%d", jobid]];
 
     /* all done, so store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
         ORTE_ERROR_LOG(rc);
     }
 
 cleanup:
     if (NULL != nsuri) free(nsuri);
     if (NULL != gpruri) free(gpruri);
-
-    while (NULL != (m_item = opal_list_remove_first(&mapping))) {
-        OBJ_RELEASE(m_item);
-    }
-    OBJ_DESTRUCT(&mapping);
 
     /* deconstruct the daemon list */
     while (NULL != (m_item = opal_list_remove_first(&daemons))) {

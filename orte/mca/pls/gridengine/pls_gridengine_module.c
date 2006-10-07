@@ -81,10 +81,8 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
+#include "orte/mca/rmaps/rmaps.h"
 #include "orte/mca/smr/smr.h"
-
-/* clean up for ORTE 2.0 */
-#include "orte/mca/rmaps/base/rmaps_private.h"
 
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/pls_private.h"
@@ -104,21 +102,10 @@ orte_pls_base_module_t orte_pls_gridengine_module = {
     orte_pls_gridengine_finalize
 };
 
-/**
- * struct used to have enough information to clean up the state of the
- * universe if a daemon aborts
- */
-struct gridengine_daemon_info_t {
-    opal_object_t super;
-    orte_process_name_t *name;
-    char *nodename;
-};
-typedef struct gridengine_daemon_info_t gridengine_daemon_info_t;
-static OBJ_CLASS_INSTANCE(gridengine_daemon_info_t,
-                          opal_object_t,
-                          NULL, NULL);
 static void set_handler_default(int sig);
+#if 0
 static int update_slot_keyval(orte_ras_node_t* node, int* slot_cnt);
+#endif
 
 /**
  * Fill the orted_path variable with the directory to the orted
@@ -146,7 +133,7 @@ static int orte_pls_gridengine_fill_orted_path(char** orted_path)
  */
 static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
 {
-    gridengine_daemon_info_t *info = (gridengine_daemon_info_t*) cbdata;
+    orte_pls_daemon_info_t *info = (orte_pls_daemon_info_t*) cbdata;
     int rc;
       
     /* if qrsh exited abnormally, set the daemon's state to aborted
@@ -204,16 +191,16 @@ static void orte_pls_gridengine_wait_daemon(pid_t pid, int status, void* cbdata)
  */
 int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 {
-    opal_list_t mapping;
-    opal_list_item_t* m_item, *n_item;
+    orte_job_map_t *map;
+    opal_list_item_t *n_item;
     orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
     int proc_name_index;
     int orted_index;
-    int call_yield_index;
     char *jobid_string;
+    char *prefix_dir;
     char *uri, *param;
     char **argv;
     int argc;
@@ -229,26 +216,19 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
      */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
     
-    /* Query the list of nodes allocated and mapped to this job.
+    /* Get the map for this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
      *  - need to know if we are launching on a subset of the allocated nodes
      * All other mapping responsibilities fall to orted in the fork PLS
      */
-    OBJ_CONSTRUCT(&mapping, opal_list_t);
-    rc = orte_rmaps_base_get_map(jobid, &mapping);
+    rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
 
-    num_nodes = 0;
-    for(m_item = opal_list_get_first(&mapping);
-        m_item != opal_list_get_end(&mapping);
-        m_item = opal_list_get_next(m_item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
-        num_nodes += opal_list_get_size(&map->nodes);
-    }
+    num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
 
     /*
      * Allocate a range of vpids for the daemons.
@@ -353,10 +333,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     free(uri);
     free(param);
 
-    opal_argv_append(&argc, &argv, "--mpi-call-yield");
-    call_yield_index = argc;
-    opal_argv_append(&argc, &argv, "0");
-
     if (mca_pls_gridengine_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
@@ -368,332 +344,292 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
 
     /* Figure out the basenames for the libdir and bindir.  There is a
        lengthy comment about this in pls_rsh_module.c explaining all
-       the rationale for how / why we're doing this. */
+       the rationale for how / why we're doing this.
+     */
 
     lib_base = opal_basename(OPAL_LIBDIR);
     bin_base = opal_basename(OPAL_BINDIR);
 
-    /*
-     * Iterate through each of the contexts
+    /* See the note about prefix_dir in the orte/mca/pls/slurm/pls_slurm.c
+     * module. Fo here, just note that we must have at least one app_context,
+     * and we take the prefix_dir from that first one.
      */
-    for(m_item = opal_list_get_first(&mapping);
-        m_item != opal_list_get_end(&mapping);
-        m_item = opal_list_get_next(m_item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*)m_item;
-        char *prefix_dir = map->app->prefix_dir;
+    prefix_dir = map->apps[0]->prefix_dir;
 
-        /*
-         * For each of the contexts - iterate through the nodes.
-         */
-        for(n_item =  opal_list_get_first(&map->nodes);
-            n_item != opal_list_get_end(&map->nodes);
-            n_item =  opal_list_get_next(n_item)) {
-            orte_rmaps_base_node_t* rmaps_node = (orte_rmaps_base_node_t*)n_item;
-            orte_ras_node_t* ras_node = rmaps_node->node;
-            orte_process_name_t* name;
-            pid_t pid;
-            char *exec_path, *orted_path;
-            char **exec_argv;
-            int remain_slot_cnt;
+    /*
+     * Iterate through the nodes.
+     */
+    for(n_item =  opal_list_get_first(&map->nodes);
+        n_item != opal_list_get_end(&map->nodes);
+        n_item =  opal_list_get_next(n_item)) {
+        orte_mapped_node_t* rmaps_node = (orte_mapped_node_t*)n_item;
+        orte_process_name_t* name;
+        pid_t pid;
+        char *exec_path, *orted_path;
+        char **exec_argv;
+#if 0
+        int remain_slot_cnt;
+        
+        /* RHC - I don't believe this code is really necessary any longer.
+         * The mapper correctly accounts for slots that have already been
+         * used. Even if another job starts to run between the time the
+         * mapper maps this job and we get to this point, the new job
+         * will have gone through the mapper and will not overuse the node.
+         * As this code consumes considerable time, I have sliced it out
+         * of the code for now.
+         *
+         * query the registry for the remaining gridengine slot count on
+         * this node, and update the registry for the count for the
+         * current process launch */
+        if (ORTE_SUCCESS != (rc =
+            update_slot_keyval(ras_node, &remain_slot_cnt))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-            /* already launched on this node */
-            if(ras_node->node_launched++ != 0) {
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: already launched on this node, %s",
-                        ras_node->node_name);
-                }
-                continue;
-            }
-            
-            /* query the registry for the remaining gridengine slot count on
-             * this node, and update the registry for the count for the
-             * current process launch */
-            if (ORTE_SUCCESS != (rc =
-                update_slot_keyval(ras_node, &remain_slot_cnt))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-
-            /* check for the unlikely scenario, because gridengine ras already
-             * checks for it, but still provide a check there. */
-            if (remain_slot_cnt < 0) {
-                opal_show_help("help-pls-gridengine.txt", "insufficient-pe-slot",
-                    true, ras_node->node_name, true);
-                exit(-1); /* exit instead of return ORTE_ERR_OUT_OF_RESOURCE */
-            }
-            
-            /* setup node name */
-            free(argv[node_name_index1]);
-            if (NULL != ras_node->node_username &&
-                0 != strlen (ras_node->node_username)) {
-                asprintf(&argv[node_name_index1], "%s@%s",
-                          ras_node->node_username, ras_node->node_name);
-            } else {
-                argv[node_name_index1] = strdup(ras_node->node_name);
-            }
-
-            free(argv[node_name_index2]);
-            argv[node_name_index2] = strdup(ras_node->node_name);
-
-            /* initialize daemons process name */
-            rc = orte_ns.create_process_name(&name, ras_node->node_cellid, 0, vpid);
-            if (ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-
-            /* new daemon - setup to record its info */
-            dmn = OBJ_NEW(orte_pls_daemon_info_t);
-            dmn->active_job = jobid;
-            dmn->cell = ras_node->node_cellid;
-            dmn->nodename = strdup(ras_node->node_name);
-            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
-            opal_list_append(&daemons, &dmn->super);
-            
-#ifdef __WINDOWS__
-            printf("Unimplemented feature for windows\n");
-            return ORTE_ERR_NOT_IMPLEMENTED;
-#else
-            /* fork a child to do qrsh */
-            pid = fork();
+        /* check for the unlikely scenario, because gridengine ras already
+         * checks for it, but still provide a check there. */
+        if (remain_slot_cnt < 0) {
+            opal_show_help("help-pls-gridengine.txt", "insufficient-pe-slot",
+                true, ras_node->node_name, true);
+            exit(-1); /* exit instead of return ORTE_ERR_OUT_OF_RESOURCE */
+        }
 #endif
-            if (pid < 0) {
-                rc = ORTE_ERR_OUT_OF_RESOURCE;
-                goto cleanup;
+        
+        /* setup node name */
+        free(argv[node_name_index1]);
+        if (NULL != rmaps_node->username &&
+            0 != strlen (rmaps_node->username)) {
+            asprintf(&argv[node_name_index1], "%s@%s",
+                      rmaps_node->username, rmaps_node->nodename);
+        } else {
+            argv[node_name_index1] = strdup(rmaps_node->nodename);
+        }
+
+        free(argv[node_name_index2]);
+        argv[node_name_index2] = strdup(rmaps_node->nodename);
+
+        /* initialize daemons process name */
+        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+
+        /* new daemon - setup to record its info */
+        dmn = OBJ_NEW(orte_pls_daemon_info_t);
+        dmn->active_job = jobid;
+        dmn->cell = rmaps_node->cell;
+        dmn->nodename = strdup(rmaps_node->nodename);
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+        opal_list_append(&daemons, &dmn->super);
+        
+#ifdef __WINDOWS__
+        printf("Unimplemented feature for windows\n");
+        return ORTE_ERR_NOT_IMPLEMENTED;
+#else
+        /* fork a child to do qrsh */
+        pid = fork();
+#endif
+        if (pid < 0) {
+            rc = ORTE_ERR_OUT_OF_RESOURCE;
+            goto cleanup;
+        }
+
+        /* child */
+        if (pid == 0) {
+            char* name_string;
+            char** env;
+            char* var;
+            long fd, fdmax = sysconf(_SC_OPEN_MAX);
+
+            if (mca_pls_gridengine_component.debug) {
+                opal_output(0, "pls:gridengine: launching on node %s",
+                    rmaps_node->nodename);
             }
 
-            /* child */
-            if (pid == 0) {
-                char* name_string;
-                char** env;
-                char* var;
-                long fd, fdmax = sysconf(_SC_OPEN_MAX);
+            /* setting exec_argv and exec_path for qrsh */
+            exec_argv = &argv[0];
 
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: launching on node %s",
-                        ras_node->node_name);
+            sge_root = getenv("SGE_ROOT");
+            sge_arch = getenv("ARC");
+            asprintf(&exec_path, "%s/bin/%s/qrsh", sge_root, sge_arch);
+            exec_path = opal_path_findv(exec_path, X_OK, environ, NULL);
+            if (NULL == exec_path) {
+                opal_show_help("help-pls-gridengine.txt", "bad-qrsh-path",
+                    true, exec_path, sge_root, sge_arch);
+                return ORTE_ERR_NOT_FOUND;
+            }
+
+            if (mca_pls_gridengine_component.debug) {
+                opal_output(0, "pls:gridengine: exec_argv[0]=%s, exec_path=%s",
+                    exec_argv[0], exec_path);
+            }
+            
+            /* setting orted_path for orted */
+            orted_path = opal_path_findv(exec_argv[orted_index], 0, environ, NULL);
+
+            if (NULL == orted_path && NULL == prefix_dir) {
+                rc = orte_pls_gridengine_fill_orted_path(&orted_path);
+                if (ORTE_SUCCESS != rc) {
+                    return rc;
                 }
-
-                /* set the progress engine schedule for this node.
-                 * if node_slots is set to zero, then we default to
-                 * NOT being oversubscribed
-                 */
-                if (ras_node->node_slots > 0 &&
-                    (orte_std_cntr_t)opal_list_get_size(&rmaps_node->node_procs) > ras_node->node_slots) {
-                    if (mca_pls_gridengine_component.debug) {
-                        opal_output(0, "pls:gridengine: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
-                            ras_node->node_slots, opal_list_get_size(&rmaps_node->node_procs));
-                    }
-                    free(argv[call_yield_index]);
-                    argv[call_yield_index] = strdup("1");
-                } else {
-                    if (mca_pls_gridengine_component.debug) {
-                        opal_output(0, "pls:gridengine: not oversubscribed -- setting mpi_yield_when_idle to 0");
-                    }
-                    free(argv[call_yield_index]);
-                    argv[call_yield_index] = strdup("0");
+            } else {
+                if (NULL != prefix_dir) {
+                    orted_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
                 }
-
-                /* setting exec_argv and exec_path for qrsh */
-                exec_argv = &argv[0];
-
-                sge_root = getenv("SGE_ROOT");
-                sge_arch = getenv("ARC");
-                asprintf(&exec_path, "%s/bin/%s/qrsh", sge_root, sge_arch);
-                exec_path = opal_path_findv(exec_path, X_OK, environ, NULL);
-                if (NULL == exec_path) {
-                    opal_show_help("help-pls-gridengine.txt", "bad-qrsh-path",
-                        true, exec_path, sge_root, sge_arch);
-                    return ORTE_ERR_NOT_FOUND;
-                }
-    
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: exec_argv[0]=%s, exec_path=%s",
-                        exec_argv[0], exec_path);
-                }
-                
-                /* setting orted_path for orted */
-                orted_path = opal_path_findv(exec_argv[orted_index], 0, environ, NULL);
-
-                if (NULL == orted_path && NULL == prefix_dir) {
+                /* If we yet did not fill up the orted_path, do so now */
+                if (NULL == orted_path) {
                     rc = orte_pls_gridengine_fill_orted_path(&orted_path);
                     if (ORTE_SUCCESS != rc) {
                         return rc;
                     }
-                } else {
-                    if (NULL != prefix_dir) {
-                        orted_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
-                    }
-                    /* If we yet did not fill up the orted_path, do so now */
-                    if (NULL == orted_path) {
-                        rc = orte_pls_gridengine_fill_orted_path(&orted_path);
-                        if (ORTE_SUCCESS != rc) {
-                            return rc;
-                        }
-                    }
                 }
-                asprintf(&argv[orted_index], orted_path);
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: orted_path=%s", orted_path);
-                }
-                
-                /* If we have a prefix, then modify the PATH and
-                   LD_LIBRARY_PATH environment variables.  We're
-                   already in the child process, so it's ok to modify
-                   environ. */
-                if (NULL != prefix_dir) {
-                    char *oldenv, *newenv;
-                    
-                    /* Reset PATH */
-                    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
-                    oldenv = getenv("PATH");
-                    if (NULL != oldenv) {
-                        char *temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv);
-                        free( newenv );
-                        newenv = temp;
-                    }
-                    opal_setenv("PATH", newenv, true, &environ);
-                    if (mca_pls_gridengine_component.debug) {
-                        opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
-                    }
-                    free(newenv);
-                    
-                    /* Reset LD_LIBRARY_PATH */
-                    newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
-                    oldenv = getenv("LD_LIBRARY_PATH");
-                    if (NULL != oldenv) {
-                        char* temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv);
-                        free(newenv);
-                        newenv = temp;
-                    }
-                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
-                    if (mca_pls_gridengine_component.debug) {
-                        opal_output(0, "pls:gridengine: reset LD_LIBRARY_PATH: %s",
-                            newenv);
-                    }
-                    free(newenv);
-                }
-
-                var = getenv("HOME");
-                if (NULL != var) {
-                    if (mca_pls_gridengine_component.debug) {
-                        opal_output(0, "pls:gridengine: changing to directory %s",
-                            var);
-                    }
-                    /* Ignore errors -- what are we going to do?
-                       (and we ignore errors on the remote nodes
-                       in the fork pls, so this is consistent) */
-                    chdir(var);
-                }
-            
-                /* setup process name */
-                rc = orte_ns.get_proc_name_string(&name_string, name);
-                if (ORTE_SUCCESS != rc) {
-                    opal_output(0, "pls:gridengine: unable to create process name");
-                    exit(-1);
-                }
-                free(argv[proc_name_index]);
-                argv[proc_name_index] = strdup(name_string);
-
-                if (!mca_pls_gridengine_component.debug) {
-                    /* setup stdin */
-                    int fd = open("/dev/null", O_RDWR, 0);
-                    dup2(fd, 0);
-                    close(fd);
-                }
-
-                /* close all file descriptors w/ exception of stdin/stdout/stderr */
-                for(fd=3; fd<fdmax; fd++)
-                    close(fd);
-
-                /* Set signal handlers back to the default.  Do this close
-                   to the execve() because the event library may (and likely
-                   will) reset them.  If we don't do this, the event
-                   library may have left some set that, at least on some
-                   OS's, don't get reset via fork() or exec().  Hence, the
-                   orted could be unkillable (for example). */
-        
-                set_handler_default(SIGTERM);
-                set_handler_default(SIGINT);
-#ifndef __WINDOWS__
-                set_handler_default(SIGHUP);
-                set_handler_default(SIGPIPE);
-#endif
-                set_handler_default(SIGCHLD);
-
-                /* Unblock all signals, for many of the same reasons that
-                   we set the default handlers, above.  This is noticable
-                   on Linux where the event library blocks SIGTERM, but we
-                   don't want that blocked by the orted (or, more
-                   specifically, we don't want it to be blocked by the
-                   orted and then inherited by the ORTE processes that it
-                   forks, making them unkillable by SIGTERM). */
-#ifndef __WINDOWS__
-                sigprocmask(0, 0, &sigs);
-                sigprocmask(SIG_UNBLOCK, &sigs, 0);
-#endif
-                
-                /* setup environment */
-                env = opal_argv_copy(environ);
-                var = mca_base_param_environ_variable("seed",NULL,NULL);
-                opal_setenv(var, "0", true, &env);
-
-                /* exec the daemon */
-                if (mca_pls_gridengine_component.debug) {
-                    param = opal_argv_join(exec_argv, ' ');
-                    if (NULL != param) {
-                        opal_output(0, "pls:gridengine: executing: %s", param);
-                        free(param);
-                    }
-                }
-                execve(exec_path, exec_argv, env);
-                opal_output(0, "pls:gridengine: execve failed with errno=%d\n", errno);
-                exit(-1);
-            } else { /* parent */
-                gridengine_daemon_info_t *daemon_info;
-
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: parent");
-                }   
-                              
-                /* setup callback on sigchild - wait until setup above is complete
-                 * as the callback can occur in the call to orte_wait_cb
-                 */
-                daemon_info = OBJ_NEW(gridengine_daemon_info_t);
-                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(daemon_info->name), name, ORTE_NAME))) {
-                    ORTE_ERROR_LOG(rc);
-                }
-                daemon_info->nodename= strdup(ras_node->node_name);
-                orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, daemon_info);
-                
-                vpid++;
             }
-            free(name);
+            asprintf(&argv[orted_index], orted_path);
+            if (mca_pls_gridengine_component.debug) {
+                opal_output(0, "pls:gridengine: orted_path=%s", orted_path);
+            }
+            
+            /* If we have a prefix, then modify the PATH and
+               LD_LIBRARY_PATH environment variables.  We're
+               already in the child process, so it's ok to modify
+               environ. */
+            if (NULL != prefix_dir) {
+                char *oldenv, *newenv;
+                
+                /* Reset PATH */
+                newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+                oldenv = getenv("PATH");
+                if (NULL != oldenv) {
+                    char *temp;
+                    asprintf(&temp, "%s:%s", newenv, oldenv);
+                    free( newenv );
+                    newenv = temp;
+                }
+                opal_setenv("PATH", newenv, true, &environ);
+                if (mca_pls_gridengine_component.debug) {
+                    opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
+                }
+                free(newenv);
+                
+                /* Reset LD_LIBRARY_PATH */
+                newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
+                oldenv = getenv("LD_LIBRARY_PATH");
+                if (NULL != oldenv) {
+                    char* temp;
+                    asprintf(&temp, "%s:%s", newenv, oldenv);
+                    free(newenv);
+                    newenv = temp;
+                }
+                opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+                if (mca_pls_gridengine_component.debug) {
+                    opal_output(0, "pls:gridengine: reset LD_LIBRARY_PATH: %s",
+                        newenv);
+                }
+                free(newenv);
+            }
+
+            var = getenv("HOME");
+            if (NULL != var) {
+                if (mca_pls_gridengine_component.debug) {
+                    opal_output(0, "pls:gridengine: changing to directory %s",
+                        var);
+                }
+                /* Ignore errors -- what are we going to do?
+                   (and we ignore errors on the remote nodes
+                   in the fork pls, so this is consistent) */
+                chdir(var);
+            }
+        
+            /* setup process name */
+            rc = orte_ns.get_proc_name_string(&name_string, name);
+            if (ORTE_SUCCESS != rc) {
+                opal_output(0, "pls:gridengine: unable to create process name");
+                exit(-1);
+            }
+            free(argv[proc_name_index]);
+            argv[proc_name_index] = strdup(name_string);
+
+            if (!mca_pls_gridengine_component.debug) {
+                /* setup stdin */
+                int fd = open("/dev/null", O_RDWR, 0);
+                dup2(fd, 0);
+                close(fd);
+            }
+
+            /* close all file descriptors w/ exception of stdin/stdout/stderr */
+            for(fd=3; fd<fdmax; fd++)
+                close(fd);
+
+            /* Set signal handlers back to the default.  Do this close
+               to the execve() because the event library may (and likely
+               will) reset them.  If we don't do this, the event
+               library may have left some set that, at least on some
+               OS's, don't get reset via fork() or exec().  Hence, the
+               orted could be unkillable (for example). */
+    
+            set_handler_default(SIGTERM);
+            set_handler_default(SIGINT);
+#ifndef __WINDOWS__
+            set_handler_default(SIGHUP);
+            set_handler_default(SIGPIPE);
+#endif
+            set_handler_default(SIGCHLD);
+
+            /* Unblock all signals, for many of the same reasons that
+               we set the default handlers, above.  This is noticable
+               on Linux where the event library blocks SIGTERM, but we
+               don't want that blocked by the orted (or, more
+               specifically, we don't want it to be blocked by the
+               orted and then inherited by the ORTE processes that it
+               forks, making them unkillable by SIGTERM). */
+#ifndef __WINDOWS__
+            sigprocmask(0, 0, &sigs);
+            sigprocmask(SIG_UNBLOCK, &sigs, 0);
+#endif
+            
+            /* setup environment */
+            env = opal_argv_copy(environ);
+            var = mca_base_param_environ_variable("seed",NULL,NULL);
+            opal_setenv(var, "0", true, &env);
+
+            /* exec the daemon */
+            if (mca_pls_gridengine_component.debug) {
+                param = opal_argv_join(exec_argv, ' ');
+                if (NULL != param) {
+                    opal_output(0, "pls:gridengine: executing: %s", param);
+                    free(param);
+                }
+            }
+            execve(exec_path, exec_argv, env);
+            opal_output(0, "pls:gridengine: execve failed with errno=%d\n", errno);
+            exit(-1);
+        } else { /* parent */
+            if (mca_pls_gridengine_component.debug) {
+                opal_output(0, "pls:gridengine: parent");
+            }   
+                          
+            /* setup callback on sigchild - wait until setup above is complete
+             * as the callback can occur in the call to orte_wait_cb
+             */
+           orte_wait_cb(pid, orte_pls_gridengine_wait_daemon, dmn);
+            
+            vpid++;
         }
+        free(name);
     }
                      
      /* all done, so store the daemon info on the registry */
-     if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+     if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
          ORTE_ERROR_LOG(rc);
      }
                      
     
   cleanup:
-    while (NULL != (m_item = opal_list_remove_first(&mapping))) {
-        OBJ_RELEASE(m_item);
-    }
-    OBJ_DESTRUCT(&mapping);
-    
-    while (NULL != (m_item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(m_item);
-    }
-    OBJ_DESTRUCT(&daemons);
-     
     if (NULL != lib_base) {
         free(lib_base);
     }
@@ -707,6 +643,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     return rc;
 }
 
+#if 0
 /**
  * Query the registry for the gridengine slot count, and update it
  */
@@ -808,6 +745,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
 
     return rc;
 }
+#endif
 
 /**
  * Query the registry for all nodes participating in the job

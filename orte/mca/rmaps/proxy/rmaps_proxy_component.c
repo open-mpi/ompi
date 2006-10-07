@@ -69,6 +69,8 @@ orte_rmaps_base_component_t mca_rmaps_proxy_component = {
  */
 static orte_rmaps_base_module_t orte_rmaps_proxy = {
     orte_rmaps_proxy_map,
+    orte_rmaps_base_get_job_map,
+    orte_rmaps_base_get_node_map,
     orte_rmaps_proxy_finalize
 };
 

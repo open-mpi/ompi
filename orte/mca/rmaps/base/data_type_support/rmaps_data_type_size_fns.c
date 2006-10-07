@@ -32,10 +32,10 @@
 /*
  * JOB_MAP
  */
-int orte_rmaps_base_size_map(size_t *size, orte_rmaps_base_map_t *src, orte_data_type_t type)
+int orte_rmaps_base_size_map(size_t *size, orte_job_map_t *src, orte_data_type_t type)
 {
     /* account for the object itself */
-    *size = sizeof(orte_rmaps_base_map_t);
+    *size = sizeof(orte_job_map_t);
 
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;
@@ -46,10 +46,10 @@ int orte_rmaps_base_size_map(size_t *size, orte_rmaps_base_map_t *src, orte_data
 /*
  * MAPPED_PROC
  */
-int orte_rmaps_base_size_mapped_proc(size_t *size, orte_rmaps_base_proc_t *src, orte_data_type_t type)
+int orte_rmaps_base_size_mapped_proc(size_t *size, orte_mapped_proc_t *src, orte_data_type_t type)
 {
     /* account for the object itself */
-    *size = sizeof(orte_rmaps_base_proc_t);
+    *size = sizeof(orte_mapped_proc_t);
     
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;
@@ -60,10 +60,10 @@ int orte_rmaps_base_size_mapped_proc(size_t *size, orte_rmaps_base_proc_t *src, 
 /*
  * MAPPED_NODE
  */
-int orte_rmaps_base_size_mapped_node(size_t *size, orte_rmaps_base_node_t *src, orte_data_type_t type)
+int orte_rmaps_base_size_mapped_node(size_t *size, orte_mapped_node_t *src, orte_data_type_t type)
 {
     /* account for the object itself */
-    *size = sizeof(orte_rmaps_base_node_t);
+    *size = sizeof(orte_mapped_node_t);
     
     /* if src is NULL, then that's all we wanted */
     if (NULL == src) return ORTE_SUCCESS;

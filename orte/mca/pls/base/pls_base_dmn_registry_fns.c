@@ -53,7 +53,7 @@ OBJ_CLASS_INSTANCE(orte_pls_daemon_info_t,  /* type name */
 /*
  * Store the active daemons for a job
  */
-int orte_pls_base_store_active_daemons(opal_list_t *daemons, orte_jobid_t job)
+int orte_pls_base_store_active_daemons(opal_list_t *daemons)
 {
     orte_pls_daemon_info_t *dmn;
     opal_list_item_t *item;
@@ -63,6 +63,10 @@ int orte_pls_base_store_active_daemons(opal_list_t *daemons, orte_jobid_t job)
     
     /* determine the number of daemons */
     num_daemons = opal_list_get_size(daemons);
+
+    if (0 == num_daemons) {
+        return ORTE_SUCCESS;
+    }
     
     /* since each daemon gets recorded in a separate node's container,
      * we need to allocate space for num_daemons value objects
@@ -73,15 +77,6 @@ int orte_pls_base_store_active_daemons(opal_list_t *daemons, orte_jobid_t job)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     memset(values, 0, num_daemons*sizeof(orte_gpr_value_t*)); /* NULL the array */
-    
-    /* setup the key */
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, job))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(values[0]);
-        return rc;
-    }
-    asprintf(&key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
-    free(jobid_string);
     
     /* loop through the values and the list and create all the value objects */
     item = opal_list_get_first(daemons);
@@ -101,6 +96,15 @@ int orte_pls_base_store_active_daemons(opal_list_t *daemons, orte_jobid_t job)
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
+        
+        /* setup the key */
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, dmn->active_job))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(values[0]);
+            return rc;
+        }
+        asprintf(&key, "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
+        free(jobid_string);
         
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[0]), key, ORTE_NAME, dmn->name))) {
             ORTE_ERROR_LOG(rc);
@@ -140,7 +144,10 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
         NULL
     };
     orte_cellid_t *cell;
+    char *nodename;
+    orte_process_name_t *name;
     orte_pls_daemon_info_t *dmn;
+    bool found_name, found_node, found_cell;
     int rc;
     
     /* setup the key */
@@ -164,27 +171,29 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
     
     /* loop through the answers and construct the list */
     for (i=0; i < cnt; i++) {
-        /* each container should have only one set of values */
-        dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        if (NULL == dmn) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            goto CLEANUP;
-        }
+        /* for systems such as bproc, the node segment holds containers
+         * for nodes that we may not have launched upon. Each container
+         * will send us back a value object, so we have to ensure here
+         * that we only create daemon objects on the list for those nodes
+         * that DO provide a valid object
+         */
+        found_name = found_node = found_cell = false;
         for (j=0; j < values[i]->cnt; j++) {
             kv = values[i]->keyvals[j];
             if (0 == strcmp(kv->key, keys[0])) {
-                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), kv->value->data, ORTE_NAME))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&name, kv->value, ORTE_NAME))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
+                found_name = true;
                 continue;            
             }
             if (0 == strcmp(kv->key, ORTE_NODE_NAME_KEY)) {
-                /* use the dss.copy function here to protect us against zero-length strings */
-                if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->nodename), kv->value->data, ORTE_STRING))) {
+                if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&nodename, kv->value, ORTE_STRING))) {
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
+                found_node = true;
                 continue;            
             }
             if (0 == strcmp(kv->key, ORTE_CELLID_KEY)) {
@@ -192,12 +201,32 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
                     ORTE_ERROR_LOG(rc);
                     goto CLEANUP;
                 }
-                dmn->cell = *cell;
+                found_cell = true;
                 continue;            
             }
          }
-        /* add this daemon to the list */
-        opal_list_append(daemons, &dmn->super);
+        /* if we found everything, then this is a valid entry - create
+         * it and add it to the list
+         */
+        if (found_name && found_node && found_cell) {
+            dmn = OBJ_NEW(orte_pls_daemon_info_t);
+            if (NULL == dmn) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                rc = ORTE_ERR_OUT_OF_RESOURCE;
+                goto CLEANUP;
+            }
+            if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(dmn);
+                goto CLEANUP;
+            }
+            dmn->cell = *cell;
+            if (NULL != nodename) {
+                dmn->nodename = strdup(nodename);
+            }
+            /* add this daemon to the list */
+            opal_list_append(daemons, &dmn->super);
+        }
         OBJ_RELEASE(values[i]);
     }
 
@@ -212,5 +241,23 @@ CLEANUP:
 }
 
 /*
- * Retrieve the active daemon(s) for a specific node
+ * Remove a daemon from the world of active daemons
  */
+int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info)
+{
+    opal_list_t daemons;
+    int rc;
+    
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
+    
+    /* We actually don't want to do this - instead, we need to do a registry
+     * delete function call targeting this entry
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, info->active_job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* find this item in the list */
+    return ORTE_SUCCESS;
+}

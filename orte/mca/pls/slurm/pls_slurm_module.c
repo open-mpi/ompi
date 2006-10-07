@@ -59,7 +59,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/smr/smr.h"
-#include "orte/mca/rmaps/base/rmaps_private.h"
+#include "orte/mca/rmaps/rmaps.h"
 
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/pls_private.h"
@@ -109,8 +109,8 @@ extern char **environ;
 
 static int pls_slurm_launch_job(orte_jobid_t jobid)
 {
-    opal_list_t nodes, mapping_list;
-    opal_list_item_t *item, *item2;
+    orte_job_map_t *map;
+    opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
     char *jobid_string;
@@ -137,15 +137,13 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
      */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
     
-    /* Query the list of nodes allocated and mapped to this job.
+    /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
      *  - need to know if we are launching on a subset of the allocated nodes
      * All other mapping responsibilities fall to orted in the fork PLS
      */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
+    rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
@@ -153,7 +151,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     /*
      * Allocate a range of vpids for the daemons.
      */
-    num_nodes = opal_list_get_size(&nodes);
+    num_nodes = opal_list_get_size(&map->nodes);
     if (num_nodes == 0) {
         return ORTE_ERR_BAD_PARAM;
     }
@@ -206,12 +204,12 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     nodelist_argv = NULL;
     nodelist_argc = 0;
 
-    for (item =  opal_list_get_first(&nodes);
-         item != opal_list_get_end(&nodes);
+    for (item =  opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
          item =  opal_list_get_next(item)) {
-        orte_ras_node_t* node = (orte_ras_node_t*)item;
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
 
-        opal_argv_append(&nodelist_argc, &nodelist_argv, node->node_name);
+        opal_argv_append(&nodelist_argc, &nodelist_argv, node->nodename);
     }
     nodelist_flat = opal_argv_join(nodelist_argv, ',');
     asprintf(&tmp, "--nodelist=%s", nodelist_flat);
@@ -308,80 +306,59 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
         }
     }
 
-    /* Bookkeeping -- save the node names */
+    /* Copy the prefix-directory specified in the
+       corresponding app_context.  If there are multiple,
+       different prefix's in the app context, complain (i.e., only
+       allow one --prefix option for the entire slurm run -- we
+       don't support different --prefix'es for different nodes in
+       the SLURM pls) */
     cur_prefix = NULL;
-    for (item =  opal_list_get_first(&nodes);
-         item != opal_list_get_end(&nodes);
-         item =  opal_list_get_next(item)) {
-        orte_ras_node_t* node = (orte_ras_node_t*)item;
-        opal_list_t map;
-        size_t num_processes;
+    for (i=0; i < map->num_apps; i++) {
+        char * app_prefix_dir = map->apps[i]->prefix_dir;
+         /* Check for already set cur_prefix_dir -- if different,
+           complain */
+        if (NULL != app_prefix_dir) {
+            if (NULL != cur_prefix &&
+                0 != strcmp (cur_prefix, app_prefix_dir)) {
+                opal_show_help("help-pls-slurm.txt", "multiple-prefixes",
+                               true, cur_prefix, app_prefix_dir);
+                return ORTE_ERR_FATAL;
+            }
 
-        OBJ_CONSTRUCT(&map, opal_list_t);
-        /* Get the mapping of this very node */
-        rc = orte_rmaps_base_get_node_map(orte_process_info.my_name->cellid,
-                                          jobid,
-                                          node->node_name,
-                                          &map);
-        if (ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
-
-        /* Copy the prefix-directory specified within the
-           corresponding app_context.  If there are multiple,
-           different prefix's in the app context, complain (i.e., only
-           allow one --prefix option for the entire slurm run -- we
-           don't support different --prefix'es for different nodes in
-           the SLURM pls) */
-        num_processes = 0;
-        for (item2 =  opal_list_get_first(&map);
-             item2 != opal_list_get_end(&map);
-             item2 =  opal_list_get_next(item2)) {
-            orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item2;
-            char * app_prefix_dir = map->app->prefix_dir;
-
-            /* Increment the number of processes allocated to this node
-             * This allows us to accurately test for oversubscription */
-            num_processes += map->num_procs;
-
-            /* Check for already set cur_prefix_dir -- if different,
-               complain */
-            if (NULL != app_prefix_dir) {
-                if (NULL != cur_prefix &&
-                    0 != strcmp (cur_prefix, app_prefix_dir)) {
-                    opal_show_help("help-pls-slurm.txt", "multiple-prefixes",
-                                   true, cur_prefix, app_prefix_dir);
-                    return ORTE_ERR_FATAL;
-                }
-
-                /* If not yet set, copy it; iff set, then it's the
-                   same anyway */
-                if (NULL == cur_prefix) {
-                    cur_prefix = strdup(map->app->prefix_dir);
-                    if (mca_pls_slurm_component.debug) {
-                        opal_output (0, "pls:slurm: Set prefix:%s",
-                                     cur_prefix);
-                    }
+            /* If not yet set, copy it; iff set, then it's the
+               same anyway */
+            if (NULL == cur_prefix) {
+                cur_prefix = strdup(app_prefix_dir);
+                if (mca_pls_slurm_component.debug) {
+                    opal_output (0, "pls:slurm: Set prefix:%s",
+                                 cur_prefix);
                 }
             }
         }
+    }
 
+    /* setup the daemon info for each node */
+    vpid = 0;
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+        
         /* record the daemons info for this node */
         dmn = OBJ_NEW(orte_pls_daemon_info_t);
-        dmn->cell = node->node_cellid;
-        dmn->nodename = strdup(node->node_name);
-        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(dmn->name), node->node_cellid, 0, vpid))) {
+        dmn->active_job = jobid;
+        dmn->cell = node->cell;
+        dmn->nodename = strdup(node->nodename);
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&(dmn->name), dmn->cell, 0, vpid))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
         opal_list_append(&daemons, &dmn->super);
-
         vpid++;
     }
 
     /* store the daemon info on the registry */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -389,29 +366,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
-
-#if 0
-    /* JMS What to do for sched_yield? */
-
-    /* set the progress engine schedule for this node.  if node_slots
-       is set to zero, then we default to NOT being oversubscribed */
-    if (node->node_slots > 0 &&
-        num_processes > node->node_slots) {
-        if (mca_pls_slurm_component.debug) {
-            opal_output(0, "pls:slurm: oversubscribed -- setting mpi_yield_when_idle to 1 (%d %d)",
-                        node->node_slots, num_processes);
-        }
-        var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-        opal_setenv(var, "1", true, &env);
-    } else {
-        if (mca_pls_slurm_component.debug) {
-            opal_output(0, "pls:slurm: not oversubscribed -- setting mpi_yield_when_idle to 0");
-        }
-        var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-        opal_setenv(var, "0", true, &env);
-    }
-    free(var);
-#endif
 
     /* exec the daemon */
     rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
@@ -424,16 +378,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     /* JMS: how do we catch when srun dies? */
 
 cleanup:
-    while (NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&nodes);
-
-    while (NULL != (item = opal_list_remove_first(&mapping_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mapping_list);
-    
     while (NULL != (item = opal_list_remove_first(&daemons))) {
         OBJ_RELEASE(item);
     }

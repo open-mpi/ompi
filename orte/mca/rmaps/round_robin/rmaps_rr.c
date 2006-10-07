@@ -31,6 +31,7 @@
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 
@@ -56,7 +57,7 @@ static opal_list_t fully_used_nodes;
  */
 static int map_app_by_node(
     orte_app_context_t* app,
-    orte_rmaps_base_map_t* map,
+    orte_job_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     opal_list_t* nodes,
@@ -66,8 +67,9 @@ static int map_app_by_node(
     orte_std_cntr_t num_alloc = 0;
     opal_list_item_t *next;
     orte_ras_node_t *node;
-    
 
+    OPAL_TRACE(2);
+    
     /* This loop continues until all procs have been mapped or we run
        out of resources. We determine that we have "run out of
        resources" when all nodes have node_slots_max processes mapped to them,
@@ -110,7 +112,7 @@ static int map_app_by_node(
         
         /* Allocate a slot on this node */
         node = (orte_ras_node_t*) cur_node_item;
-        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, num_alloc,
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
                                              nodes, max_used_nodes))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -120,8 +122,6 @@ static int map_app_by_node(
 
         cur_node_item = next;
     }
-
-    map->num_procs = num_alloc;
 
     return ORTE_SUCCESS;
 }
@@ -133,7 +133,7 @@ static int map_app_by_node(
  */
 static int map_app_by_slot(
     orte_app_context_t* app,
-    orte_rmaps_base_map_t* map,
+    orte_job_map_t* map,
     orte_jobid_t jobid,
     orte_vpid_t vpid_start,
     opal_list_t* nodes,
@@ -145,7 +145,8 @@ static int map_app_by_slot(
     orte_ras_node_t *node;
     opal_list_item_t *next;
 
-
+    OPAL_TRACE(2);
+    
     /* This loop continues until all procs have been mapped or we run
        out of resources. We determine that we have "run out of
        resources" when either all nodes have node_slots_max processes mapped to them,
@@ -195,7 +196,7 @@ static int map_app_by_slot(
         num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
         
         for( i = 0; i < num_slots_to_take; ++i) {
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, num_alloc,
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
                                                  nodes, max_used_nodes))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
@@ -223,8 +224,6 @@ static int map_app_by_slot(
 
     }
 
-    map->num_procs = num_alloc;
-
     return ORTE_SUCCESS;
 }
    
@@ -235,11 +234,10 @@ static int map_app_by_slot(
 
 static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
 {
-    orte_app_context_t** context, *app;
-    orte_rmaps_base_map_t* map;
-    orte_std_cntr_t i, num_context;
+    orte_app_context_t *app;
+    orte_job_map_t* map;
+    orte_std_cntr_t i;
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
-    opal_list_t mapping;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
     orte_vpid_t vpid_start, job_vpid_start=0;
@@ -247,8 +245,20 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     int rc;
     bool bynode = true, modify_app_context = false;
 
+    OPAL_TRACE(1);
+    
+    /* create the map object */
+    map = OBJ_NEW(orte_job_map_t);
+    if (NULL == map) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* set the jobid */
+    map->job = jobid;
+    
     /* query for the application context and allocated nodes */
-    if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &context, &num_context))) {
+    if(ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(jobid, &(map->apps), &(map->num_apps)))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -271,11 +281,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
         return rc;
     }
 
-    /* construct a mapping for the job - the list will hold mappings for each
-     * application context
-     */
-    OBJ_CONSTRUCT(&mapping, opal_list_t);
-    
     /** initialize the cur_node_item to point to the first node in the list */
     cur_node_item = opal_list_get_first(&master_node_list);
     
@@ -298,29 +303,19 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     /** construct a list to hold any nodes involved in a user-specified mapping */
     OBJ_CONSTRUCT(&mapped_node_list, opal_list_t);
     
-    for(i=0; i<num_context; i++) {
-        app = context[i];
+    for(i=0; i < map->num_apps; i++) {
+        app = map->apps[i];
 
         /** if the number of processes wasn't specified, then we know there can be only
         * one app_context allowed in the launch, and that we are to launch it across
         * all available slots. We'll double-check the single app_context rule first
         */
-        if (0 == app->num_procs && 1 < num_context) {
+        if (0 == app->num_procs && 1 < map->num_apps) {
             opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:multi-apps-and-zero-np",
-                           true, num_context, NULL);
+                           true, map->num_apps, NULL);
             ORTE_ERROR_LOG(ORTE_ERR_INVALID_NUM_PROCS);
             return ORTE_ERR_INVALID_NUM_PROCS;
         }
-
-        /** create a map for this app_context */
-        map = OBJ_NEW(orte_rmaps_base_map_t);
-        if(NULL == map) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-        /** add it to the list of mappings for the job */
-        opal_list_append(&mapping, &map->super);
 
         if ( 0 < app->num_map ) {
             /** If the user has specified a mapping for this app_context, then we
@@ -353,15 +348,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
                 app->num_procs = total_num_slots;
                 modify_app_context = true;
             }
-        }
-
-
-        map->app = app;
-        map->procs = (orte_rmaps_base_proc_t**)malloc(sizeof(orte_rmaps_base_proc_t*) * app->num_procs);
-        if(NULL == map->procs) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
         }
 
         /* allocate a vpid range for this app within the job */
@@ -467,7 +453,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     }
 
     /* save mapping to the registry */
-    if(ORTE_SUCCESS != (rc = orte_rmaps_base_set_map(jobid, &mapping))) {
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_put_job_map(map))) {
         goto cleanup;
     }
     
@@ -493,7 +479,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
         processes
      */
     if (modify_app_context) {
-        if (ORTE_SUCCESS != (rc = orte_rmgr.store_app_context(jobid, context, 1))) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.store_app_context(jobid, map->apps, 1))) {
             ORTE_ERROR_LOG(rc);
         }
     }
@@ -505,11 +491,6 @@ cleanup:
     }
     OBJ_DESTRUCT(&master_node_list);
 
-    while(NULL != (item = opal_list_remove_first(&mapping))) {
-        OBJ_RELEASE(item);
-    }
-
-    OBJ_DESTRUCT(&mapping);
     OBJ_DESTRUCT(&max_used_nodes);
     OBJ_DESTRUCT(&fully_used_nodes);
     OBJ_DESTRUCT(&mapped_node_list);
@@ -526,6 +507,8 @@ static int orte_rmaps_rr_finalize(void)
 
 orte_rmaps_base_module_t orte_rmaps_round_robin_module = {
     orte_rmaps_rr_map,
+    orte_rmaps_base_get_job_map,
+    orte_rmaps_base_get_node_map,
     orte_rmaps_rr_finalize
 };
 

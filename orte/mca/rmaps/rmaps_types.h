@@ -24,11 +24,7 @@
 #include "orte/orte_constants.h"
 
 #include "orte/mca/ns/ns_types.h"
-#include "orte/mca/gpr/gpr_types.h"
-#include "orte/mca/ras/ras_types.h"
-#include "orte/mca/rml/rml_types.h"
-
-#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmgr/rmgr_types.h"
 
 /*
  * General MAP types
@@ -36,55 +32,51 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-    
+
+/****   JOB_MAP OBJECTS   ***/
+/*
+ * Mapped process info for job_map
+ */
+struct orte_mapped_proc_t {
+    opal_list_item_t super;
+    orte_process_name_t name;	/* process name */
+    orte_std_cntr_t	rank;		/* process rank */
+    orte_std_cntr_t	app_idx;	/* index of app_context for this process */
+    pid_t pid;
+};
+typedef struct orte_mapped_proc_t orte_mapped_proc_t;
+OBJ_CLASS_DECLARATION(orte_mapped_proc_t);
+
 /*
  * Mapping of nodes to process ranks.
  */
-
-struct orte_rmaps_base_node_t {
+struct orte_mapped_node_t {
     opal_list_item_t super;
-    orte_ras_node_t* node;
-    opal_list_t node_procs;   /* list of rmaps_base_proc_t */
+    orte_cellid_t cell;	 			/* cell where this node is located */
+    char *nodename;		 			/* name of node */
+    char *username;
+    orte_process_name_t *daemon;	/* name of the daemon on this node
+                                     * NULL => daemon not assigned yet
+                                     */
+    bool oversubscribed;            /* whether or not the #procs > #processors */
+    opal_list_t procs;   			/* list of mapped_proc objects on this node */
 };
-typedef struct orte_rmaps_base_node_t orte_rmaps_base_node_t;
-
-OBJ_CLASS_DECLARATION(orte_rmaps_base_node_t);
-
+typedef struct orte_mapped_node_t orte_mapped_node_t;
+OBJ_CLASS_DECLARATION(orte_mapped_node_t);
 
 /*
- * Mapping of a process rank to a specific node.
- */
-
-struct orte_rmaps_base_proc_t {
-    opal_list_item_t super;
-    char *app;          /* name of executable */
-    orte_rmaps_base_node_t* proc_node;
-    orte_process_name_t proc_name;
-    orte_std_cntr_t proc_rank;
-    pid_t pid;          /* PLS-assigned pid */
-    pid_t local_pid;    /* pid found by local process */
-};
-typedef struct orte_rmaps_base_proc_t orte_rmaps_base_proc_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_proc_t);
-
-
-/*
- * Structure that represents the mapping of an application to an
+ * Structure that represents the mapping of a job to an
  * allocated set of resources.
  */
-
-struct orte_rmaps_base_map_t {
-    opal_list_item_t super;
-    orte_app_context_t *app;
-    orte_rmaps_base_proc_t** procs;
-    orte_std_cntr_t num_procs;
-    opal_list_t nodes;		/* list of rmaps_base_node_t */
+struct orte_job_map_t {
+    opal_object_t super;
+    orte_jobid_t job;
+    orte_std_cntr_t num_apps;	/* number of app_contexts */
+    orte_app_context_t **apps;	/* the array of app_contexts for this job */
+    opal_list_t nodes;			/* list of mapped_node_t */
 };
-typedef struct orte_rmaps_base_map_t orte_rmaps_base_map_t;
-
-ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_map_t);
-
+typedef struct orte_job_map_t orte_job_map_t;
+OBJ_CLASS_DECLARATION(orte_job_map_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

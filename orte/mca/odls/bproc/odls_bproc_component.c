@@ -137,15 +137,3 @@ int orte_odls_bproc_component_close(void)
     OBJ_DESTRUCT(&mca_odls_bproc_component.children);
     return ORTE_SUCCESS;
 }
-
-int orte_odls_bproc_component_finalize(void)
-{
-    opal_list_item_t *item;
-    
-    /* cleanup state */
-    while (NULL != (item = opal_list_remove_first(&mca_odls_bproc_component.children))) {
-        OBJ_RELEASE(item);
-    }
-    
-    return ORTE_SUCCESS;
-}
