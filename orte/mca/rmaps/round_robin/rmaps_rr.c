@@ -41,6 +41,7 @@
 #include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
+#include "orte/mca/rmaps/base/base.h"
 #include "rmaps_rr.h"
 
 
@@ -243,7 +244,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     orte_vpid_t vpid_start, job_vpid_start=0;
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
-    bool bynode = true, modify_app_context = false;
+    bool modify_app_context = false;
 
     OPAL_TRACE(1);
     
@@ -263,13 +264,6 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
         return rc;
     }
 
-    /* which policy should we use? */
-    if (0 == strcmp(mca_rmaps_round_robin_component.schedule_policy, "node")) {
-        bynode = true;
-    } else {
-        bynode = false;
-    }
-    
     /* query for all nodes allocated to this job - this will become our master list of
      * nodes. From this, we will construct a working list of nodes based on any specified
      * mappings from the user
@@ -330,8 +324,14 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
             cur_node_item = opal_list_get_first(working_node_list);
             
             if (0 == app->num_procs) {
-               /** set the num_procs to equal the number of slots on these mapped nodes */
-                app->num_procs = mapped_num_slots;
+               /** set the num_procs to equal the number of slots on these mapped nodes - if
+                   user has specified "-pernode", then set it to the number of nodes
+                */
+                if (orte_rmaps_base.per_node) {
+                    app->num_procs = opal_list_get_size(&mapped_node_list);
+                } else {
+                    app->num_procs = mapped_num_slots;
+                }
                 modify_app_context = true;
             }
         }
@@ -344,8 +344,14 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
             working_node_list = &master_node_list;
             
             if (0 == app->num_procs) {
-                /** set the num_procs to equal the number of slots on all available nodes */
-                app->num_procs = total_num_slots;
+                /** set the num_procs to equal the number of slots on these mapped nodes - if
+                user has specified "-pernode", then set it to the number of nodes
+                */
+                if (orte_rmaps_base.per_node) {
+                    app->num_procs = opal_list_get_size(&master_node_list);
+                } else {
+                    app->num_procs = total_num_slots;
+                }
                 modify_app_context = true;
             }
         }
@@ -366,7 +372,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
         num_procs += app->num_procs;
 
         /* Make assignments */
-        if (bynode) {
+        if (orte_rmaps_base.bynode) {
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
