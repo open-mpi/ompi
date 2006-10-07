@@ -55,8 +55,12 @@ extern "C" {
         opal_list_t rmaps_opened;
         /** Sorted list of available components (highest priority first) */
         opal_list_t rmaps_available;
+        /* map by node or not */
+        bool bynode;
         /** whether or not we allow oversubscription of nodes */
         bool oversubscribe;
+        /** do we want one ppn if num_procs not specified */
+        bool per_node;
     } orte_rmaps_base_t;
     ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_t);
     /**

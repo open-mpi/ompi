@@ -70,8 +70,6 @@ orte_rmaps_round_robin_component_t mca_rmaps_round_robin_component = {
   */
 static int orte_rmaps_round_robin_open(void)
 {
-    int id;
-
     mca_base_param_reg_int(&mca_rmaps_round_robin_component.super.rmaps_version, "debug",
                            "Toggle debug output for Round Robin RMAPS component",
                            false, false, 1, 
@@ -81,19 +79,6 @@ static int orte_rmaps_round_robin_open(void)
                            "Selection priority for Round Robin RMAPS component",
                            false, false, 1,
                            &mca_rmaps_round_robin_component.priority);
-
-    /* JMS To be changed post-beta to LAM's C/N command line notation */
-
-    id = mca_base_param_find("rmaps_base", NULL, "schedule_policy");
-    if (0 > id) {
-        id = mca_base_param_reg_string_name("rmaps_base", "schedule_policy",
-                                            "Scheduling Policy for RMAPS. [slot | node]",
-                                            false, false, "slot", 
-                                            &mca_rmaps_round_robin_component.schedule_policy);
-    }
-    else {
-        mca_base_param_lookup_string(id, &mca_rmaps_round_robin_component.schedule_policy);
-    }
 
     return ORTE_SUCCESS;
 }
@@ -117,10 +102,6 @@ orte_rmaps_round_robin_init(int *priority)
 
 static int orte_rmaps_round_robin_close(void)
 {
-    if (NULL != mca_rmaps_round_robin_component.schedule_policy) {
-        free(mca_rmaps_round_robin_component.schedule_policy);
-    }
-
     return ORTE_SUCCESS;
 }
 

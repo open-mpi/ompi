@@ -108,6 +108,7 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool by_node;
     bool by_slot;
+    bool per_node;
     bool no_oversubscribe;
     bool debugger;
     bool no_local_schedule;
@@ -190,6 +191,9 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
+    { NULL, NULL, NULL, '\0', "pernode", "pernode", 0,
+        &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
+        "If no number of process is specified, this will cause one process per available node to be executed" },
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
@@ -783,6 +787,7 @@ static int init_globals(void)
         /* no_wait =        */  false,
         /* by_node =        */  false,
         /* by_slot =        */  false,
+        /* per_node =		*/	false,
         /* no_oversub =     */  false,
         /* debugger =       */  false,
         /* no_local =       */  false,
@@ -897,7 +902,22 @@ static int parse_globals(int argc, char* argv[])
         /* Default */
         orterun_globals.by_slot = true;
     }
-    
+
+    /* did the user request "pernode", indicating we are to spawn one ppn
+     * if no np is provided
+     */
+    if (orterun_globals.per_node) {
+        id = mca_base_param_reg_int_name("rmaps", "base_pernode",
+                                            "Request one ppn if num procs not specified",
+                                            false, false, 0, &ret);
+
+        if (orterun_globals.per_node) {
+            mca_base_param_set_int(id, (int)true);
+        } else {
+            mca_base_param_set_int(id, (int)false);
+        }
+    }
+
     /** Do we want to disallow oversubscription of nodes? */
     id = mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
                                      "If nonzero, do not allow oversubscription of processes on nodes. If zero (default), oversubscription is allowed.",
