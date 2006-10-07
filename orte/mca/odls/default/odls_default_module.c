@@ -978,7 +978,7 @@ static int send_signal(pid_t pid, int signal)
     
     return rc;
 }
-int orte_odls_default_signal_local_procs(orte_process_name_t *proc, int32_t signal)
+int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_t signal)
 {
     int rc;
     opal_list_item_t *item;
@@ -1010,7 +1010,7 @@ int orte_odls_default_signal_local_procs(orte_process_name_t *proc, int32_t sign
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
         child = (odls_default_child_t*)item;
-        if (ORTE_EQUAL == orte_dss.compare(&(child->name), proc, ORTE_NAME)) {
+        if (ORTE_EQUAL == orte_dss.compare(&(child->name), (orte_process_name_t*)proc, ORTE_NAME)) {
             /* unlock before signaling as this may generate a callback */
             opal_condition_signal(&orte_odls_default.cond);
             OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
