@@ -962,7 +962,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
 cleanup:
-/*    OBJ_RELEASE(map); */
+    OBJ_RELEASE(map);
 
     if (NULL != lib_base) {
         free(lib_base);

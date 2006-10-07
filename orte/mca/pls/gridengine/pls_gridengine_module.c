@@ -630,6 +630,8 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                      
     
   cleanup:
+    OBJ_RELEASE(map);
+                     
     if (NULL != lib_base) {
         free(lib_base);
     }
