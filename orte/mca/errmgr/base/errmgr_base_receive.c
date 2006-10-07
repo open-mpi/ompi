@@ -134,7 +134,7 @@ void orte_errmgr_base_recv(int status, orte_process_name_t* sender,
             
             /* unpack the array of process names */
             count = nprocs;
-            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &procs, &count, ORTE_NAME))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, procs, &count, ORTE_NAME))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
