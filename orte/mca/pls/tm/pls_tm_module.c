@@ -426,6 +426,8 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     }
 
  cleanup:
+    OBJ_RELEASE(map);
+    
     if (connected) {
         pls_tm_disconnect();
     }

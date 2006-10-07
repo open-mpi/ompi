@@ -378,6 +378,8 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     /* JMS: how do we catch when srun dies? */
 
 cleanup:
+    OBJ_RELEASE(map);
+    
     while (NULL != (item = opal_list_remove_first(&daemons))) {
         OBJ_RELEASE(item);
     }

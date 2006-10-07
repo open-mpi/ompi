@@ -582,6 +582,8 @@ static inline int poe_launch_interactive_job(orte_jobid_t jobid)
 
 
 cleanup:
+    OBJ_RELEASE(map);
+    
     return rc;
 }
 

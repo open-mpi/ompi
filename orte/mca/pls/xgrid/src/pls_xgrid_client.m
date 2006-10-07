@@ -402,6 +402,8 @@ char **environ;
     }
 
 cleanup:
+    OBJ_RELEASE(map);
+    
     if (NULL != nsuri) free(nsuri);
     if (NULL != gpruri) free(gpruri);
 

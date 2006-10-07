@@ -1249,6 +1249,9 @@ opal_output(0, "launching apps");
     mca_pls_bproc_component.done_launching = true;
 cleanup:
     chdir(cwd_save);
+
+    OBJ_RELEASE(map);
+
     if(NULL != node_array) {
         free(node_array);
     }

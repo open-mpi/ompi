@@ -127,7 +127,7 @@ static void orte_rmaps_job_map_destruct(orte_job_map_t* map)
 }
 
 OBJ_CLASS_INSTANCE(orte_job_map_t,
-                   opal_list_item_t,
+                   opal_object_t,
                    orte_rmaps_job_map_construct,
                    orte_rmaps_job_map_destruct);
     
