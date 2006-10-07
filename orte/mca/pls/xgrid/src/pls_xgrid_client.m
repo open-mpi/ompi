@@ -298,7 +298,7 @@ char **environ;
      */
     for (item =  opal_list_get_first(&map->nodes);
          item != opal_list_get_end(&map->nodes);
-         item =  opal_list_get_next(n_item)) {
+         item =  opal_list_get_next(item)) {
         orte_mapped_node_t* rmaps_node = (orte_mapped_node_t*)item;
         orte_process_name_t* name;
         char* name_string;
@@ -309,11 +309,11 @@ char **environ;
         opal_list_append(&daemons, &dmn->super);
         
         /* record the node name in the daemon struct */
-        dmn->cell = node->cell;
-        dmn->nodename = strdup(node->nodename);
+        dmn->cell = rmaps_node->cell;
+        dmn->nodename = strdup(rmaps_node->nodename);
         
         /* initialize daemons process name */
-        rc = orte_ns.create_process_name(&name, node->cell, 0, vpid);
+        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
@@ -328,7 +328,7 @@ char **environ;
         /* setup per-node options */
         opal_output_verbose(1, orte_pls_base.pls_output,
             "orte:pls:xgrid: launching on node %s", 
-            node->nodename);
+            rmaps_node->nodename);
         
         /* setup process name */
         rc = orte_ns.get_proc_name_string(&name_string, name);
@@ -346,7 +346,7 @@ char **environ;
                 @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
                 @"--name", [NSString stringWithCString: name_string],
                             @"--num_procs", [NSString stringWithFormat: @"%d", 1],
-                @"--nodename", [NSString stringWithCString: node->nodename],
+                @"--nodename", [NSString stringWithCString: rmaps_node->nodename],
                 @"--nsreplica", [NSString stringWithCString: nsuri],
                 @"--gprreplica", [NSString stringWithCString: gpruri],
                 nil];
@@ -406,8 +406,8 @@ cleanup:
     if (NULL != gpruri) free(gpruri);
 
     /* deconstruct the daemon list */
-    while (NULL != (m_item = opal_list_remove_first(&daemons))) {
-        OBJ_RELEASE(m_item);
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
+        OBJ_RELEASE(item);
     }
     OBJ_DESTRUCT(&daemons);
 
