@@ -412,7 +412,6 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
             }
         }
 
-        OBJ_RELEASE(map);
     }
 
     if (orte_debug_flag) {
