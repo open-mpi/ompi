@@ -286,7 +286,7 @@ static void dump_aborted_procs(orte_jobid_t jobid);
 int orterun(int argc, char *argv[])
 {
     orte_app_context_t **apps;
-    int rc, i, num_apps, array_size;
+    int rc, ret, i, num_apps, array_size;
     int id, iparam;
     orte_proc_state_t cb_states;
     orte_job_state_t exit_state;
@@ -486,9 +486,9 @@ int orterun(int argc, char *argv[])
             /* the job is complete - now tell the orteds that it is
              * okay to finalize and exit, we are done with them
              */
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(jobid))) {
+            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid))) {
                 opal_show_help("help-orterun.txt", "orterun:daemon-die", false,
-                               orterun_basename, NULL, NULL, rc);
+                               orterun_basename, NULL, NULL, ret);
             }
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
