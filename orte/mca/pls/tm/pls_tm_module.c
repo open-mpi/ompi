@@ -336,7 +336,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
      */
     for (item =  opal_list_get_first(&map->nodes);
          item != opal_list_get_end(&map->nodes);
-         item =  opal_list_get_next(n_item)) {
+         item =  opal_list_get_next(item)) {
         orte_mapped_node_t* node = (orte_mapped_node_t*)item;
         orte_process_name_t* name;
         char* name_string;
