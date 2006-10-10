@@ -76,7 +76,7 @@ struct orte_job_map_t {
     opal_list_t nodes;			/* list of mapped_node_t */
 };
 typedef struct orte_job_map_t orte_job_map_t;
-OBJ_CLASS_DECLARATION(orte_job_map_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
