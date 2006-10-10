@@ -88,8 +88,13 @@ int orte_rmaps_base_open(void)
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot | node]",
                                            false, false, "slot", &policy);
+    
+    opal_output(orte_rmaps_base.rmaps_output, "Scheduling policy: %s", policy);
+    
     if (0 == strcmp(policy, "node")) {
-        mca_base_param_set_string(param, "node");
+        orte_rmaps_base.bynode = true;
+    } else {
+        orte_rmaps_base.bynode = false;
     }
 
     /* Do we want one ppn if num_procs not specified */
