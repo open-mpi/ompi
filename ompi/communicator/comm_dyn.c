@@ -352,7 +352,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     char *base_prefix;
 
     orte_std_cntr_t num_apps, ai;
-    orte_jobid_t new_jobid;
+    orte_jobid_t new_jobid=ORTE_JOBID_INVALID;
     orte_app_context_t **apps=NULL;
 
 
@@ -383,8 +383,11 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* we'll just use the prefix from the first member of the app_context array.
      * this shouldn't matter as they all should be the same. it could be NULL, of
      * course (user might not have specified it), so we need to protect against that.
+     *
+     * It's possible that no app_contexts are returned (e.g., during a comm_spawn
+     * from a singleton), so check first
      */
-    if (NULL != apps[0]->prefix_dir) {
+    if (NULL != apps && NULL != apps[0]->prefix_dir) {
         base_prefix = strdup(apps[0]->prefix_dir);
     } else {
         base_prefix = NULL;

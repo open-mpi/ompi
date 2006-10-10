@@ -68,17 +68,6 @@ int MPI_Comm_spawn(char *command, char **argv, int maxprocs, MPI_Info info,
           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO,
                                         FUNC_NAME);
         }
-
-        /* Do not allow MPI_COMM_SPAWN from a singleton.  This check
-           will be removed when the ORTE 2.0 stuff comes over and
-           Makes This All Better(tm) */
-        if (orte_process_info.singleton) {
-            if (ompi_comm_rank(comm) == root) {
-                opal_show_help("help-mpi-api.txt", "spawn-from-singleton", 
-                               true, FUNC_NAME);
-            }
-            return OMPI_ERRHANDLER_INVOKE(comm, MPI_ERR_ARG, FUNC_NAME);
-        }
     }
    
    rank = ompi_comm_rank ( comm );
