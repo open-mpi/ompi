@@ -359,8 +359,11 @@ int main(int argc, char *argv[])
         }
 
         if (ORTE_SUCCESS != (ret = orte_rmgr.launch(orted_globals.bootproxy))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
+            /* cleanup session directory */
+            orte_session_dir_cleanup(orted_globals.bootproxy);
+            /* Finalize the runtime - don't worry about error codes at this point */
+            orte_finalize();
+            exit(ret);
         }
 
         /* setup and enter the event monitor */

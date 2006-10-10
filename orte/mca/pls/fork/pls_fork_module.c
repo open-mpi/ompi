@@ -488,7 +488,12 @@ static int orte_pls_fork_proc(
             } else {
                 /* Doh -- child failed.  The child already printed a
                    suitable error message, so disable all
-                   ORTE_ERROR_LOG reporting after this. */
+                   ORTE_ERROR_LOG reporting after this. Must also
+                   report the failure to launch this process through
+                   the SOH or else everyone else will hang. Don't bother
+                   checking whether or not this worked - just fire and forget
+                */
+                orte_soh.set_proc_soh(&proc->proc_name, ORTE_PROC_STATE_ABORTED, rc);
                 return ORTE_ERR_FATAL;
                 break;
             }
@@ -680,7 +685,6 @@ int orte_pls_fork_terminate_job(orte_jobid_t jobid)
     if(NULL != values) {
         free(values);
     }
-    free(segment);
     return ORTE_SUCCESS;
 }
 
