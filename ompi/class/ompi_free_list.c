@@ -253,15 +253,15 @@ ompi_free_list_resize(ompi_free_list_t* flist, size_t size)
         return OMPI_SUCCESS;
     } else {
         size_t inc_num;        
-        OPAL_THREAD_LOCK(&((fl)->fl_lock));
+        OPAL_THREAD_LOCK(&((flist)->fl_lock));
         inc_num = size - flist->fl_num_allocated + 
             flist->fl_num_per_alloc - (inc_num % flist->fl_num_per_alloc);
         if (flist->fl_num_allocated + inc_num > flist->fl_max_to_alloc) {
-            OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
+            OPAL_THREAD_UNLOCK(&((flist)->fl_lock));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
         ret = ompi_free_list_grow(flist, inc_num);
-        OPAL_THREAD_UNLOCK(&((fl)->fl_lock));
+        OPAL_THREAD_UNLOCK(&((flist)->fl_lock));
     }
 
     return ret;
