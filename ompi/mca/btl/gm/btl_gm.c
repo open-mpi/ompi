@@ -208,9 +208,18 @@ mca_btl_base_descriptor_t* mca_btl_gm_alloc(
     
     if(size <= btl->btl_eager_limit) { 
         MCA_BTL_GM_FRAG_ALLOC_EAGER(gm_btl, frag, rc); 
+        if(NULL == frag) { 
+            return NULL;
+        }
+        frag->type=MCA_BTL_GM_EAGER;
         frag->segment.seg_len = size;
+        
     } else if(size <=  btl->btl_max_send_size) { 
         MCA_BTL_GM_FRAG_ALLOC_MAX(gm_btl, frag, rc); 
+        if(NULL == frag) { 
+            return NULL;
+        }
+        frag->type=MCA_BTL_GM_SEND;
         frag->segment.seg_len = size; 
     } else { 
         return NULL;
@@ -276,6 +285,11 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag){
             return NULL;
         }
+        /*
+         * just assign it something.. 
+         *  we will assign the real value in put/get 
+        */
+        frag->type = MCA_BTL_GM_PUT; 
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
@@ -308,6 +322,11 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag){
             return NULL;
         }
+        /*
+         * just assign it something.. 
+         *  we will assign the real value in put/get 
+        */
+        frag->type = MCA_BTL_GM_PUT;
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
@@ -339,6 +358,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag) {
             return NULL;
         }
+        frag->type = MCA_BTL_GM_EAGER;
 
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
@@ -362,6 +382,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         if(NULL == frag) {
             return NULL;
         }
+        frag->type = MCA_BTL_GM_SEND;
         if(max_data + reserve > btl->btl_max_send_size){
             max_data = btl->btl_max_send_size - reserve;
         }
@@ -419,8 +440,20 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     if(NULL == frag) {
         return NULL;
     }
-
+    /*
+     * just assign it something.. 
+     *  we will assign the real value in put/get 
+     */
+    frag->type = MCA_BTL_GM_PUT;
+    
     ompi_ddt_type_lb(convertor->pDesc, &lb);
+    /* 
+     *  we don't know that this is for a PUT,
+     *  but it doesn't matter.. they belong 
+     *  on the same list eventually anyway
+     */      
+    frag->type = MCA_BTL_GM_PUT; 
+    
     frag->segment.seg_len = *size;
     frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
@@ -553,7 +586,6 @@ static int mca_btl_gm_send_nl(
     frag->btl = gm_btl;
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag;
-    frag->type = MCA_BTL_GM_SEND;
 
     /* queue the descriptor if there are no send tokens */
     MCA_BTL_GM_ACQUIRE_TOKEN_NL(gm_btl, frag);
@@ -614,8 +646,7 @@ int mca_btl_gm_send(
     frag->btl = gm_btl;
     frag->endpoint = endpoint; 
     frag->hdr->tag = tag;
-    frag->type = MCA_BTL_GM_SEND;
-
+    
     /* queue the descriptor if there are no send tokens */
     OPAL_THREAD_LOCK(&mca_btl_gm_component.gm_lock);
     MCA_BTL_GM_ACQUIRE_TOKEN(gm_btl, frag);

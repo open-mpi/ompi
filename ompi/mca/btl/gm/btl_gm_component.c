@@ -286,6 +286,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         if(NULL == frag) {
             return rc;
         }
+        frag->type = MCA_BTL_GM_EAGER;
         frag->base.des_src = NULL;
         frag->base.des_src_cnt = 0;
         frag->base.des_dst = &frag->segment;
@@ -300,6 +301,7 @@ mca_btl_gm_module_init (mca_btl_gm_module_t * btl)
         if(NULL == frag) {
             return rc;
         }
+        frag->type = MCA_BTL_GM_SEND;
         frag->base.des_src = NULL;
         frag->base.des_src_cnt = 0;
         frag->base.des_dst = &frag->segment;
