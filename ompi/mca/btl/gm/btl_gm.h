@@ -380,6 +380,7 @@ do {                                                                            
        if(NULL != frag) {                                                                       \
            switch(frag->type) {                                                                 \
            case MCA_BTL_GM_SEND:                                                                \
+           case MCA_BTL_GM_EAGER:                                                               \
                mca_btl_gm_send_nl(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);    \
                break;                                                                           \
            case MCA_BTL_GM_PUT:                                                                 \
