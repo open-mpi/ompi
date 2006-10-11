@@ -109,6 +109,7 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
 int orte_pls_rsh_component_open(void)
 {
     int tmp;
+    char *ctmp;
     mca_base_component_t *c = &mca_pls_rsh_component.super.pls_version;
 
     /* initialize globals */
@@ -141,10 +142,27 @@ int orte_pls_rsh_component_open(void)
         mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     }
 
+    /* see if we want to use malloc options to debug memory in the daemons */
+    mca_base_param_reg_int_name("orte_debug", "malloc",
+                                "Whether or not to use the malloc options to debug memory usage (Mac OS-X *only*)",
+                                false, false, (int)false, &tmp);
+    mca_pls_rsh_component.debug_malloc = OPAL_INT_TO_BOOL(tmp);
+    
     mca_base_param_reg_string(c, "orted",
                               "The command name that the rsh pls component will invoke for the ORTE daemon",
                               false, false, "orted", 
                               &mca_pls_rsh_component.orted);
+    
+    /* see if we want to use valgrind to debug memory in the daemons */
+    mca_base_param_reg_int_name("orte_debug", "valgrind",
+                                "Whether or not to launch the orteds under valgrind (Linux *only*)",
+                                false, false, (int)false, &tmp);
+    if (tmp) {
+        asprintf(&ctmp, "valgrind %s", mca_pls_rsh_component.orted);
+        free(mca_pls_rsh_component.orted);
+        mca_pls_rsh_component.orted = ctmp;
+    }
+    
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh pls component",
                            false, false, 10,

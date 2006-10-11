@@ -511,7 +511,7 @@ int orte_odls_bproc_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_f
  * @retval error
  */
 int
-orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data)
+orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
 {
     odls_bproc_child_t *child;
     opal_list_item_t* item;

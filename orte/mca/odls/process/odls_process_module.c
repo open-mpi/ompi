@@ -418,7 +418,8 @@ static int orte_odls_process_fork_local_proc(
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range,
     bool want_processor,
-    size_t processor)
+    size_t processor,
+    char **base_environ)
 {
     pid_t pid;
     orte_iof_base_io_conf_t opts;
@@ -460,9 +461,9 @@ static int orte_odls_process_fork_local_proc(
     /* setup base environment: copy the current environ and merge
        in the app context environ */
     if (NULL != context->env) {
-        environ_copy = opal_environ_merge(environ, context->env);
+        environ_copy = opal_environ_merge(base_environ, context->env);
     } else {
-        environ_copy = opal_argv_copy(environ);
+        environ_copy = opal_argv_copy(base_environ);
     }
 
     /* special case handling for --prefix: this is somewhat icky,
@@ -597,7 +598,7 @@ static int orte_odls_process_fork_local_proc(
  * Launch all processes allocated to the current node.
  */
 
-static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data)
+static int orte_odls_process_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ)
 {
     int rc;
     orte_std_cntr_t i, j, kv, kv2, *sptr;
@@ -799,7 +800,8 @@ DOFORK:
         OPAL_THREAD_UNLOCK(&orte_odls_process.mutex);
         
         if (ORTE_SUCCESS != (rc = orte_odls_process_fork_local_proc(app, child, start,
-                                                                    range, want_processor, i))) {
+                                                                    range, want_processor,
+                                                                    i, base_environ))) {
             ORTE_ERROR_LOG(rc);
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
             opal_condition_signal(&orte_odls_process.cond);

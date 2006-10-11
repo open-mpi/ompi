@@ -48,7 +48,7 @@ typedef int (*orte_odls_base_module_subscribe_launch_data_fn_t)(orte_jobid_t job
 /**
  * Locally launch the provided processes
  */
-typedef int (*orte_odls_base_module_launch_local_processes_fn_t)(orte_gpr_notify_data_t *data);
+typedef int (*orte_odls_base_module_launch_local_processes_fn_t)(orte_gpr_notify_data_t *data, char **base_environ);
 
 /**
  * Kill the local processes on this node
