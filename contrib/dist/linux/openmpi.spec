@@ -34,14 +34,13 @@
 #
 #############################################################################
 
-# Part of the purpose of this specfile is to help Los Alamos National
-# Labs (LANL), so we're going to put in a bunch of defaults for them.
-
-%{!?lanl: %define lanl 0}
-
 # Help for OSCAR RPMs
 
 %{!?oscar: %define oscar 0}
+
+# Help for OFED RPMs
+
+%{!?ofed: %define ofed 0}
 
 # Define this if you want to make this SRPM build in /opt/NAME/VERSION-RELEASE
 # instead of the default /usr/
@@ -76,20 +75,15 @@
 # type: bool (0/1)
 %{!?build_all_in_one_rpm: %define build_all_in_one_rpm 1}
 
-#############################################################################
-#
-# LANL-specific defaults
-#
-#############################################################################
+# Should we leave the BUILD_ROOT around?  Default: no
+# type: bool (0/1)
+%{!?leave_build_root: %define leave_build_root 0}
 
-%if %{lanl}
-%define install_in_opt 1
-%define install_modulefile 1
-%define modulefile_path /usr/share/modules/modulefiles
-%define modulefile_subdir mpi
-%define modulefile_name %{name}-%{version}
-%define modules_rpm_name environment-modules
-%endif
+# Should we use the default "check_files" RPM step (i.e., check for
+# unpackaged files)?  It is discouraged to disable this, but some
+# installers need it (e.g., OFED, because it installs lots of other
+# stuff in the BUILD_ROOT before Open MPI).
+%{!?use_check_files: %define use_check_files 1}
 
 
 #############################################################################
@@ -105,6 +99,18 @@
 %define modulefile_subdir openmpi
 %define modulefile_name %{name}-%{version}
 %define modules_rpm_name modules-oscar
+%endif
+
+
+#############################################################################
+#
+# OFED-specific defaults
+#
+#############################################################################
+
+%if %{ofed}
+%define leave_build_root 1
+%define use_check_files 0
 %endif
 
 
@@ -131,6 +137,10 @@
 %global _sysconfdir /etc
 %else
 %global _sysconfdir %{_prefix}/etc
+%endif
+
+%if !%{use_check_files}
+%define __check_files %{nil}
 %endif
 
 %{!?configure_options: %define configure_options %{nil}}
@@ -240,8 +250,14 @@ This subpackage provides the documentation for Open MPI.
 # Unbelievably, some versions of RPM do not first delete the previous
 # installation root (e.g., it may have been left over from a prior
 # failed build).  This can lead to Badness later if there's files in
-# there that are not meant to be packaged.
+# there that are not meant to be packaged.  HOWEVER: in some cases, we
+# do not want to delete the prior RPM_BUILD_ROOT because there may be
+# other stuff in there that we need (e.g., the OFED installer installs
+# everything into RPM_BUILD_ROOT that OMPI needs to compile, like the
+# OpenIB drivers).
+%if !%{leave_build_root}
 rm -rf $RPM_BUILD_ROOT
+%endif
 
 %setup -q -n openmpi-%{version}
 
@@ -252,6 +268,33 @@ rm -rf $RPM_BUILD_ROOT
 #############################################################################
 
 %build
+
+# Non-gcc compilers cannot use FORTIFY_SOURCE (at least, not as of 6
+# Oct 2006).  So if we're not GCC, strip out any -DFORTIFY_SOURCE
+# arguments in the RPM_OPT_FLAGS before potentially propagating them
+# everywhere.  We can really only examine the basename of the
+# compiler, so search for it in a few places.
+
+fortify_source=1
+if test "$CC" != "" -a "`basename $CC`" != "gcc"; then
+    fortify_source=0
+else
+    compiler="`echo %{configure_options} | sed -e 's@.* CC=\([^ ]*\).*@\1@'`"
+    # If that didn't find it, try for CC at the beginning of the line
+    if test "$compiler" = "%{configure_options}"; then
+        compiler="`echo %{configure_options} | sed -e 's@^CC=\([^ ]*\).*@\1@'`"
+    fi
+
+    # Now that we *might* have the compiler name, do a best-faith
+    # effort to see if it's gcc.  Blah!
+    if test "$compiler" != "" -a "`basename $compiler`" != "gcc"; then
+        fortify_source=0
+    fi
+fi
+
+if test "$fortify_source" = 0; then
+    RPM_OPT_FLAGS="`echo $RPM_OPT_FLAGS | sed -e 's@-D_FORTIFY_SOURCE[=0-9]*@@'`"
+fi
 
 CFLAGS="%{?cflags:%{cflags}}%{!?cflags:$RPM_OPT_FLAGS}"
 CXXFLAGS="%{?cxxflags:%{cxxflags}}%{!?cxxflags:$RPM_OPT_FLAGS}"
@@ -270,13 +313,6 @@ export CFLAGS CXXFLAGS F77FLAGS FCFLAGS
 #############################################################################
 %install
 %{__make} install DESTDIR=$RPM_BUILD_ROOT %{?mflags_install}
-
-# Currently remove a few executables that are not yet ready for prime
-# time
-
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/openmpi"
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteconsole"
-rm -f "$RPM_BUILD_ROOT/%{_bindir}/orteprobe"
 
 # An attempt to make enviornment happier when installed into non /usr path
 
@@ -363,20 +399,29 @@ EOF
 %endif
 # End of install_in_opt if
 
+%if !%{build_all_in_one_rpm}
+
 # Build lists of files that are specific to each package that are not
 # easily identifiable by a single directory (e.g., the different
-# libraries).
+# libraries).  In a somewhat lame move, we can't just pipe everything
+# together because if the user, for example, did --disable-shared
+# --enable-static, the "grep" for .so files will not find anything and
+# therefore return a non-zero exit status.  This will cause RPM to
+# barf.  So be super lame and dump the egrep through /bin/true -- this
+# always gives a 0 exit status.
 
 # Runtime files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*.so|mca.*so" > runtime.files
+   egrep "lib.*.so|mca.*so" > runtime.files | /bin/true
 
 # Devel files
 find $RPM_BUILD_ROOT -type f -o -type l | \
    sed -e "s@$RPM_BUILD_ROOT@@" | \
-   egrep "lib.*\.a|lib.*\.la" > devel.files
+   egrep "lib.*\.a|lib.*\.la" > devel.files | /bin/true
 
+%endif
+# End of build_all_in_one_rpm
 
 #############################################################################
 #
@@ -384,8 +429,13 @@ find $RPM_BUILD_ROOT -type f -o -type l | \
 #
 #############################################################################
 %clean
-test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
+# Remove installed driver after rpm build finished
+rm -rf $RPM_BUILD_DIR/%{_name}-%{_version} 
 
+# Leave $RPM_BUILD_ROOT in order to build dependent packages, if desired
+%if !%{leave_build_root}
+test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
+%endif
 
 #############################################################################
 #
@@ -509,6 +559,11 @@ test "x$RPM_BUILD_ROOT" != "x" && rm -rf $RPM_BUILD_ROOT
 #
 #############################################################################
 %changelog
+* Fri Oct  6 2006 Jeff Squyes <jsquyres@cisco.com>
+- Remove LANL section; they don't want it
+- Add some help for OFED building
+- Remove some outdated "rm -f" lines for executables that we no longer ship
+
 * Wed Apr 26 2006 Jeff Squyres <jsquyres@cisco.com>
 - Revamp files listings to ensure that rpm -e will remove directories
   if rpm -i created them.
