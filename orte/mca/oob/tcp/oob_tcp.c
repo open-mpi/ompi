@@ -241,7 +241,7 @@ int mca_oob_tcp_component_open(void)
                               "event",
                               &listen_type);
     
-    if ((0 == strcmp(listen_type, "event")) || NULL == getenv("I_AM_MPIRUN")) {
+    if (0 == strcmp(listen_type, "event")) {
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_EVENT;
     } else if (0 == strcmp(listen_type, "listen_thread")) {
         mca_oob_tcp_component.tcp_listen_type = OOB_TCP_LISTEN_THREAD;
@@ -813,25 +813,6 @@ mca_oob_t* mca_oob_tcp_component_init(int* priority)
     memset(&mca_oob_tcp_component.tcp_recv_event, 0, sizeof(opal_event_t));
     memset(&mca_oob_tcp_component.tcp_send_event, 0, sizeof(opal_event_t));
 
-    /* create a listen socket */
-    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
-        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
-            return NULL;
-        }
-    } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
-        if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
-            opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
-            return NULL;
-        }
-        opal_free_list_init(&mca_oob_tcp_component.tcp_pending_connections_fl,
-                            sizeof(mca_oob_tcp_pending_connection_t),
-                            OBJ_CLASS(mca_oob_tcp_pending_connection_t),
-                            16,  /* initial number */
-                            -1,  /* maximum number */
-                            16);  /* increment to grow by */
-        opal_progress_register(mca_oob_tcp_listen_progress);
-    }
     return &mca_oob_tcp;
 }
 
@@ -1059,6 +1040,26 @@ int mca_oob_tcp_init(void)
                                                 orte_process_info.my_name))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+
+    /* create a listen socket */
+    if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
+        if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen socket");
+            return ORTE_ERROR;
+        }
+    } else if ((OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) && orte_process_info.seed) {
+        if (mca_oob_tcp_create_listen_thread() != ORTE_SUCCESS) {
+            opal_output(0, "mca_oob_tcp_init: unable to create listen thread");
+            return ORTE_ERROR;
+        }
+        opal_free_list_init(&mca_oob_tcp_component.tcp_pending_connections_fl,
+                            sizeof(mca_oob_tcp_pending_connection_t),
+                            OBJ_CLASS(mca_oob_tcp_pending_connection_t),
+                            16,  /* initial number */
+                            -1,  /* maximum number */
+                            16);  /* increment to grow by */
+        opal_progress_register(mca_oob_tcp_listen_progress);
     }
 
     /* iterate through the open connections and send an ident message to all peers -
