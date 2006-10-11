@@ -54,7 +54,6 @@ extern "C" {
      * Global instance of pls-wide framework data
      */
     ORTE_DECLSPEC extern orte_pls_base_t orte_pls_base;
-    ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls;
 
     /*
      * Global functions for MCA overall collective open and close
