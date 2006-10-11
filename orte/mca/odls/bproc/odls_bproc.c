@@ -524,6 +524,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     orte_buffer_t *ack;
     bool connect_stdin;
     orte_jobid_t jobid;
+    int cycle = 0;
 
     /* first, retrieve the job number we are to launch from the
      * returned data - we can extract the jobid directly from the
@@ -616,13 +617,15 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
             connect_stdin = false;
         }
 
-        rc = odls_bproc_setup_stdio(child->name, (int)child->name->vpid, 
+        rc = odls_bproc_setup_stdio(child->name, cycle,
                                     jobid, child->app_idx,
                                     connect_stdin);
         if (ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+
+        cycle++;
     }
 
     /* message to indicate that we are ready */

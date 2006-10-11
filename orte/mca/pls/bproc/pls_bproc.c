@@ -929,10 +929,18 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }
-fprintf(stderr, "launching app %s\n", map->apps[app_context]->app);
+    opal_output_verbose(1, orte_pls_base.pls_output,
+                        "launching app %s", map->apps[app_context]->app);
+
     while(0 != num_nodes) {
-fprintf(stderr, "\tlaunching cycle %d\n", i);
-for (dbg=0; dbg<num_nodes; dbg++) fprintf(stderr, "\t\tlaunching on node %d\n", node_list[dbg]);
+        if (0 < mca_pls_bproc_component.debug) {
+            opal_output_verbose(1, orte_pls_base.pls_output,
+                                "\tlaunching cycle %d", i);
+            for (dbg=0; dbg<num_nodes; dbg++) {
+                opal_output_verbose(1, orte_pls_base.pls_output,
+                                    "\t\tlaunching on node %d", node_list[dbg]);
+            }
+        }
 
         /* setup environment so the procs can figure out their names */
         rc = orte_ns_nds_bproc_put(cellid, jobid, vpid_start, global_vpid_start,
@@ -948,7 +956,7 @@ for (dbg=0; dbg<num_nodes; dbg++) fprintf(stderr, "\t\tlaunching on node %d\n", 
             goto cleanup;
         }
         if(0 < mca_pls_bproc_component.debug) {
-            opal_output(0, "pls_bproc: launching %d processes", num_nodes);
+            opal_output(0, "pls_bproc: launching %d processes:", num_nodes);
         }
         rc = bproc_vexecmove_io(num_nodes, node_list, pids, bproc_io, 3,
                                 map->apps[app_context]->app,
@@ -1153,6 +1161,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+
         orte_pls_bproc_setup_env(&map->apps[i]->env);
         num_processes += rc;
     }
@@ -1227,7 +1236,7 @@ int orte_pls_bproc_launch(orte_jobid_t jobid) {
     }
 
     vpid_launch = vpid_start;
-opal_output(0, "launching apps");
+
     /* for each application context launch the app */
     for(context=0; context < map->num_apps; context++) {
         rc = orte_rmgr.check_context_cwd(map->apps[context], true);
