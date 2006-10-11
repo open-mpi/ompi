@@ -47,6 +47,7 @@
 #include "opal/util/printf.h"
 #include "opal/util/show_help.h"
 #include "opal/util/trace.h"
+#include "opal/util/argv.h"
 
 #include "orte/dss/dss.h"
 #include "orte/class/orte_value_array.h"
@@ -198,8 +199,18 @@ int main(int argc, char *argv[])
     char *param;
     int i;
 
-    /* setup to check common command line options that just report and die */
+    /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
+
+    /* save the environment for use when launching application processes */
+    orted_globals.saved_environ = opal_argv_copy(environ);
+    /* clear it from any orted-related directives */
+    opal_unsetenv("MallocPreScribble", &orted_globals.saved_environ);
+    opal_unsetenv("MallocScribble", &orted_globals.saved_environ);
+    opal_unsetenv("MallocCheckHeapAbort", &orted_globals.saved_environ);
+    opal_unsetenv("MallocBadFreeAbort", &orted_globals.saved_environ);
+    
+    /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
     if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(cmd_line, false,
@@ -229,8 +240,9 @@ int main(int argc, char *argv[])
         if (1000 < i) i=0;        
     }
     
-    /* Okay, now on to serious business
-     * First, ensure the process info structure in instantiated and initialized
+    /* Okay, now on to serious business! */
+    
+    /* Ensure the process info structure in instantiated and initialized
      * and set the daemon flag to true
      */
     orte_process_info.daemon = true;
@@ -565,7 +577,7 @@ static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag
     /* pass the data to the orted_local_launcher and get a report on
      * success or failure of the launch
      */
-    if (ORTE_SUCCESS != (rc = orte_odls.launch_local_procs(data))) {
+    if (ORTE_SUCCESS != (rc = orte_odls.launch_local_procs(data, orted_globals.saved_environ))) {
         /* if there was an error, report it and wakeup the orted */
         ORTE_ERROR_LOG(rc);
         orted_globals.exit_condition = true;
@@ -675,7 +687,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             }
             
             /* launch the processes */
-            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(ndat))) {
+            if (ORTE_SUCCESS != (ret = orte_odls.launch_local_procs(ndat, orted_globals.saved_environ))) {
                 ORTE_ERROR_LOG(ret);
             }
 

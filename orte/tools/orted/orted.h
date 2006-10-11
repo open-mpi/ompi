@@ -40,6 +40,7 @@ typedef struct {
     char* vpid_start;
     char* num_procs;
     char* universe;
+    char **saved_environ;
     int bootproxy;
     int uri_pipe;
     opal_mutex_t mutex;

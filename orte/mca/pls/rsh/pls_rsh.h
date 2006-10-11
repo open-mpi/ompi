@@ -61,6 +61,7 @@ int orte_pls_rsh_signal_proc(const orte_process_name_t* proc_name, int32_t);
 struct orte_pls_rsh_component_t {
     orte_pls_base_component_t super;
     bool debug;
+    bool debug_malloc;
     bool reap;
     bool assume_same_shell;
     int delay;

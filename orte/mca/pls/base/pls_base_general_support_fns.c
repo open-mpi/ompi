@@ -47,6 +47,7 @@ static int lookup_set(char *a, char *b, char *c, int default_val,
 int orte_pls_base_mca_argv(int *argc, char ***argv)
 {
     lookup_set("orted", "spin", NULL, 0, "--spin", argc, argv);
+    lookup_set("orted", "no_daemonize", NULL, 0, "--no-daemonize", argc, argv);
     lookup_set("orte", "debug", NULL, 0, "--debug", argc, argv);
     lookup_set("orte", "debug", "daemons", 0, "--debug-daemons", argc, argv);
     lookup_set("orte", "debug", "daemons_file", 0, "--debug-daemons-file", argc, argv);

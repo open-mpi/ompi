@@ -236,18 +236,31 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { "orte", "debug", NULL, 'd', NULL, "debug-devel", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of OpenRTE" },
+    
     { "orte", "debug", "daemons", '\0', NULL, "debug-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_INT,
       "Enable debugging of any OpenRTE daemons used by this application" },
+    
     { "orte", "debug", "daemons_file", '\0', NULL, "debug-daemons-file", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Enable debugging of any OpenRTE daemons used by this application, storing output in files" },
+    
+    { "orte", "debug", "malloc", '\0', NULL, "debug-malloc", 0,
+        NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Enable debugging of OpenRTE using malloc options (Mac OS-X *only*)" },
+    
+    { "orte", "debug", "valgrind", '\0', NULL, "debug-valgrind", 0,
+        NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Enable debugging of OpenRTE using valgrind on daemons (Linux *only*)" },
+    
     { "orte", "no_daemonize", NULL, '\0', NULL, "no-daemonize", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not detach OpenRTE daemons used by this application" },
+    
     { "universe", NULL, NULL, '\0', NULL, "universe", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Set the universe name as username@hostname:universe_name for this application" },
+    
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
@@ -353,6 +366,32 @@ int orterun(int argc, char *argv[])
                                      false, false, (int)false, &iparam);
     if (iparam) {
         char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
+            return rc;
+        }
+        free(tmp);
+    }
+    id = mca_base_param_reg_int_name("orte_debug", "malloc",
+                                     "Whether or not to use the malloc options to debug memory usage (Mac OS-X *only*)",
+                                     false, false, (int)false, &iparam);
+    if (iparam) {
+        char *tmp = mca_base_param_environ_variable("orte", "debug", "malloc");
+        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
+            opal_show_help("help-orterun.txt", "orterun:environ", false,
+                           orterun_basename, tmp, "1", rc);
+            free(tmp);
+            return rc;
+        }
+        free(tmp);
+    }
+    id = mca_base_param_reg_int_name("orte_debug", "valgrind",
+                                     "Whether or not to launch the orteds under valgrind (Linux *only*)",
+                                     false, false, (int)false, &iparam);
+    if (iparam) {
+        char *tmp = mca_base_param_environ_variable("orte", "debug", "valgrind");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
