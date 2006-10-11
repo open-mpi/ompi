@@ -110,6 +110,7 @@ int orte_pls_rsh_component_open(void)
 {
     int tmp;
     char *ctmp;
+    char *valgrind = "valgrind --verbose --log-file=debug.out --num-callers=100 --tool=memcheck --trace-children=no --leak-check=full --show-reachable=yes";
     mca_base_component_t *c = &mca_pls_rsh_component.super.pls_version;
 
     /* initialize globals */
@@ -158,7 +159,7 @@ int orte_pls_rsh_component_open(void)
                                 "Whether or not to launch the orteds under valgrind (Linux *only*)",
                                 false, false, (int)false, &tmp);
     if (tmp) {
-        asprintf(&ctmp, "valgrind %s", mca_pls_rsh_component.orted);
+        asprintf(&ctmp, "%s %s", valgrind, mca_pls_rsh_component.orted);
         free(mca_pls_rsh_component.orted);
         mca_pls_rsh_component.orted = ctmp;
     }
