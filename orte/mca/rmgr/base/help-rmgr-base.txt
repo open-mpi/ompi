@@ -16,9 +16,24 @@
 # 
 # $HEADER$
 #
-[no-available-pls]
-No available launching agents were found.
+[chdir-error]
+Failed to change to the working directory:
 
-This is an unusual error; it means that Open RTE was unable to find
-any mechanism to launch proceses, and therefore is unable to start the
-process(es) required by your application.
+Host:      %s
+Directory: %s
+
+The error returned was "%s".  Execution will now abort.
+[argv0-not-found]
+Failed to find the following executable:
+
+Host:       %s
+Executable: %s
+
+Cannot continue.
+[argv0-not-accessible]
+Failed to find or execute the following executable:
+
+Host:       %s
+Executable: %s
+
+Cannot continue.

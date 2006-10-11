@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+dist_pkgdata_DATA += base/help-rmgr-base.txt
+
 headers += \
         base/rmgr_private.h \
         base/base.h
