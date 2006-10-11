@@ -431,8 +431,7 @@ int orterun(int argc, char *argv[])
                                      "Whether to properly daemonize the ORTE daemons or not",
                                      false, false, 0, &iparam);
     if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", NULL,
-                                                    "no_daemonize");
+        char *tmp = mca_base_param_environ_variable("orte", "no_daemonize", NULL);
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
                            orterun_basename, tmp, "1", rc);
