@@ -130,6 +130,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
     opal_list_item_t* item;
     opal_list_t new_nodes;
     FILE *fp;
+    orte_ras_node_t *node;
 
     /* show the Grid Engine's JOB_ID */
     if (mca_ras_gridengine_component.show_jobid ||
@@ -161,7 +162,6 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         num = strtok_r(NULL, " \n", &tok);
         queue = strtok_r(NULL, " \n", &tok);
         arch = strtok_r(NULL, " \n", &tok);
-        orte_ras_node_t *node;
         
         /* is this node already in the list */ 
         for(item =  opal_list_get_first(nodelist);
