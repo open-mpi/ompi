@@ -11,27 +11,6 @@
 #
 # This is the US/English general help file for Open RTE's orterun.
 #
-[orte-odls-process:chdir-error]
-Failed to change to the working directory:
-
-Host:      %s
-Directory: %s
-
-The error returned was "%s".  Execution will now abort.
-[orte-odls-process:argv0-not-found]
-Failed to find the following executable:
-
-Host:       %s
-Executable: %s
-
-Cannot continue.
-[orte-odls-process:argv0-not-accessible]
-Failed to find or execute the following executable:
-
-Host:       %s
-Executable: %s
-
-Cannot continue.
 [orte-odls-process:execv-error]
 Could not execute the executable "%s": %s
 

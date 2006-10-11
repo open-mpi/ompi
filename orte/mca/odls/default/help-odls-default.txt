@@ -18,20 +18,7 @@
 #
 # This is the US/English general help file for Open RTE's orted launcher.
 #
-[odls-default:chdir-error]
-Failed to change to the working directory:
 
-Host:      %s
-Directory: %s
-
-The error returned was "%s".  Execution will now abort.
-[odls-default:argv0-not-accessible]
-Failed to find or execute the following executable:
-
-Host:       %s
-Executable: %s
-
-Cannot continue.
 [odls-default:could-not-kill]
 WARNING: A process refused to die!
 
@@ -50,3 +37,11 @@ PID:   %d
 Errno: %d
 
 This process may still be running and/or consuming resources.
+
+[orte-odls-default:execv-error]
+Could not execute the executable "%s": %s
+
+This could mean that your PATH or executable name is wrong, or that you do not
+have the necessary permissions.  Please ensure that the executable is able to be
+found and executed.
+

@@ -442,18 +442,14 @@ static int orte_odls_process_fork_local_proc(
     }
 
     /* Try to change to the context cwd and check that the app
-       exists and is executable */
+       exists and is executable. The RMGR functions will print
+       out a pretty error message if either of these operations fails
+     */
     if (ORTE_SUCCESS != (i = orte_rmgr.check_context_cwd(context, true))) {
-        opal_show_help("help-odls-default.txt",
-                       "odls-default:chdir-error",
-                       true, orte_system_info.nodename, context->cwd);            
         /* Tell the parent that Badness happened */
         return ORTE_ERR_FATAL;
     }
     if (ORTE_SUCCESS != (i = orte_rmgr.check_context_app(context))) {
-        opal_show_help("help-odls-default.txt",
-                       "odls-default:argv0-not-accessible",
-                       true, orte_system_info.nodename, context->app);            
         /* Tell the parent that Badness happened */
         return ORTE_ERR_FATAL;
     }

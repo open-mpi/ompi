@@ -510,19 +510,15 @@ static int odls_default_fork_local_proc(
         orte_iof_base_setup_child(&opts);
 
         /* Try to change to the context cwd and check that the app
-           exists and is executable */
+           exists and is executable The resource manager functions will
+           take care of outputting a pretty error message, if required
+         */
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_cwd(context, true))) {
-            opal_show_help("help-odls-default.txt",
-                           "odls-default:chdir-error",
-                           true, orte_system_info.nodename, context->cwd);            
-            /* Tell the parent that Badness happened */
+           /* Tell the parent that Badness happened */
             write(p[1], &i, sizeof(int));
             exit(-1);
         }
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_app(context))) {
-            opal_show_help("help-odls-default.txt",
-                           "odls-default:argv0-not-accessible",
-                           true, orte_system_info.nodename, context->app);            
             /* Tell the parent that Badness happened */
             write(p[1], &i, sizeof(int));
             exit(-1);
@@ -655,7 +651,7 @@ static int odls_default_fork_local_proc(
         /* Exec the new executable */
 
         execve(context->app, context->argv, environ_copy);
-        opal_show_help("help-orted-launcer.txt", "orted-launcher:execv-error",
+        opal_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
                        true, context->app, strerror(errno));
         exit(-1);
     } else {
@@ -688,7 +684,6 @@ static int odls_default_fork_local_proc(
                    the SOH or else everyone else will hang. Don't bother
                    checking whether or not this worked - just fire and forget
                 */
-                ORTE_ERROR_LOG(i);
                 orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, rc);
                 return ORTE_ERR_FATAL;
                 break;
