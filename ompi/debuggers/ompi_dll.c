@@ -251,6 +251,7 @@ typedef struct communicator_t
     mqs_communicator        comm_info;		/* Info needed at the higher level */
 } communicator_t;
 
+#if defined(CODE_NOT_USED)
 /**********************************************************************/
 /* Functions to handle translation groups.
  * We have a list of these on the process info, so that we can
@@ -278,6 +279,7 @@ static int reverse_translate (group_t * this, int index)
 
     return MQS_INVALID_PROCESS;
 } /* reverse_translate */
+#endif  /* CODE_NOT_USED */
 
 /**********************************************************************/
 /* Search the group list for this group, if not found create it.
@@ -960,6 +962,7 @@ static int next_item_opal_list_t( mqs_process *proc, mpi_process_info *p_info,
     return mqs_ok;
 }
 
+#if defined(CODE_NOT_USED)
 /**
  * Parsing the ompi_free_list lists.
  *
@@ -982,6 +985,7 @@ static void ompi_free_list_t_dump_position( mqs_ompi_free_list_t_pos* position )
     printf( "position->fl_num_allocated             = %ld\n", (long)position->fl_num_allocated );
     printf( "position->fl_num_initial_alloc         = %ld\n", (long)position->fl_num_initial_alloc );
 }
+#endif  /* CODE_NOT_USED */
 
 static int ompi_free_list_t_init_parser( mqs_process *proc, mpi_process_info *p_info,
                                          mqs_ompi_free_list_t_pos* position, mqs_taddr_t free_list )
@@ -1104,6 +1108,7 @@ static int ompi_free_list_t_next_item( mqs_process *proc, mpi_process_info *p_in
     return mqs_ok;
 }
 
+#if defined(CODE_NOT_USED)
 static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
 {
     printf( "\n+===============================================+\n" );
@@ -1124,6 +1129,7 @@ static void dump_request( mqs_taddr_t current_item, mqs_pending_operation *res )
     }
     printf(   "+===============================================+\n\n" );
 }
+#endif  /* CODE_NOT_USED */
 
 /**
  * TODO: ompi_request_completed can be used to detect any changes in the request handles.
@@ -1358,8 +1364,6 @@ static int fetch_send (mqs_process *proc, mpi_process_info *p_info,
 int mqs_setup_operation_iterator (mqs_process *proc, int op)
 {
     mpi_process_info *p_info = (mpi_process_info *)mqs_get_process_info (proc);
-    mqs_image * image          = mqs_get_image (proc);
-    mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
 
     p_info->what = (mqs_op_class)op;
 
