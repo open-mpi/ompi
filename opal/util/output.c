@@ -675,15 +675,15 @@ static void output(int output_id, const char *format, va_list arglist)
 	/* stdout output */
 
 	if (ldi->ldi_stdout) {
-	    printf(temp_str);
-	    fflush(stdout);
+            write(fileno(stdout), temp_str, strlen(temp_str)); 
+            fflush(stdout);
 	}
 
 	/* stderr output */
 
 	if (ldi->ldi_stderr) {
-	    fprintf(stderr, temp_str);
-	    fflush(stderr);
+            write(fileno(stderr),temp_str, strlen(temp_str)); 
+            fflush(stderr);
 	}
 
 	/* File output -- first check to see if the file opening was
