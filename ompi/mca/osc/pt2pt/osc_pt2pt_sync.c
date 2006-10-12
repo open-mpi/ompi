@@ -422,7 +422,8 @@ ompi_osc_pt2pt_module_lock(int lock_type,
     assert(lock_type != 0);
 
     /* set our mode on the window */
-    ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
+    ompi_win_remove_mode(win, OMPI_WIN_FENCE);
+    ompi_win_append_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
     opal_output_verbose(50, ompi_osc_base_output,
                         "%d sending lock request to %d", 
@@ -493,7 +494,7 @@ ompi_osc_pt2pt_module_unlock(int target,
                                 out_count);
 
     /* set our mode on the window */
-    ompi_win_set_mode(win, 0);
+    ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
     return OMPI_SUCCESS;
 }
@@ -513,6 +514,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
     if (lock_type == MPI_LOCK_EXCLUSIVE) {
         if (module->p2p_lock_status == 0) {
             module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
+            ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
             opal_output_verbose(50, ompi_osc_base_output,
@@ -527,6 +529,7 @@ ompi_osc_pt2pt_passive_lock(ompi_osc_pt2pt_module_t *module,
         if (module->p2p_lock_status != MPI_LOCK_EXCLUSIVE) {
             module->p2p_lock_status = MPI_LOCK_SHARED;
             module->p2p_shared_count++;
+            ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
             opal_output_verbose(50, ompi_osc_base_output,
@@ -573,10 +576,12 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
     if (module->p2p_lock_status == MPI_LOCK_EXCLUSIVE) {
+        ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         module->p2p_lock_status = 0;
     } else {
         module->p2p_shared_count--;
         if (module->p2p_shared_count == 0) {
+            ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             module->p2p_lock_status = 0;
         }
     }
@@ -589,6 +594,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
     if (NULL != new_pending) {
         opal_output_verbose(50, ompi_osc_base_output,
                             "sending lock request to proc");
+        ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         /* set lock state and generate a lock request */
         module->p2p_lock_status = new_pending->lock_type;
         ompi_osc_pt2pt_control_send(module,
