@@ -911,14 +911,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             opal_setenv(var, "0", true, &env);
             
-            /* check for malloc debug options */
-            if (mca_pls_rsh_component.debug_malloc) {
-                opal_setenv("MallocPreScribble", "1", true, &env);
-                opal_setenv("MallocScribble", "1", true, &env);
-                opal_setenv("MallocCheckHeapAbort", "1", true, &env);
-                opal_setenv("MallocBadFreeAbort", "1", true, &env);
-            }
-            
             /* exec the daemon */
             if (mca_pls_rsh_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
