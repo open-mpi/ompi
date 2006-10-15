@@ -141,6 +141,20 @@ shell$ cc -c file2.c `mpicc -showme:compile`
 shell$ cc file1.o file2.o `mpicc -showme:link` -o my_mpi_program
 .
 .
+.SH NOTES
+.PP
+It is possible to make the wrapper compilers multi-lib aware.  That
+is, the libraries and includes specified may differ based on the
+compiler flags specified (for example, with the GNU compilers on
+Linux, a different library path may be used if -m32 is seen versus
+-m64 being seen).  This is not the default behavior in a standard
+build, but can be activated (for example, in a binary package
+providing both 32 and 64 bit support).  More information can be found
+at:
+.PP
+  https://svn.open-mpi.org/trac/ompi/wiki/compilerwrapper3264
+.
+.
 .SH FILES
 .PP
 The string that the wrapper compilers insert into the command line

@@ -1,3 +1,10 @@
+# There can be multiple blocks of configuration data, chosen by
+# compiler flags (using the compiler_args key to chose which block
+# should be activated.  This can be useful for multilib builds.  See the
+# multilib page at:
+#    https://svn.open-mpi.org/trac/ompi/wiki/compilerwrapper3264 
+# for more information.
+
 project=Open Run-Time Environment (ORTE)
 project_short=ORTE
 version=@ORTE_VERSION@
@@ -11,7 +18,5 @@ compiler_flags=@ORTE_WRAPPER_EXTRA_CFLAGS@
 linker_flags=@ORTE_WRAPPER_EXTRA_LDFLAGS@
 libs=-lorte -lopal @ORTE_WRAPPER_EXTRA_LIBS@
 required_file=
-libdir32=@ORTE_WRAPPER_32_BIT_LIBDIR@
-incdir32=@ORTE_WRAPPER_32_BIT_INCDIR@
-libdir64=@ORTE_WRAPPER_64_BIT_LIBDIR@
-incdir64=@ORTE_WRAPPER_64_BIT_INCDIR@
+includedir=@OPAL_INCLUDEDIR@
+libdir=@OPAL_LIBDIR@
