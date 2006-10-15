@@ -36,6 +36,23 @@
 
 #include <stdarg.h>
 
+#if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+// include so that we can smash SEEK_* properly
+#include <stdio.h>
+
+// smash SEEK_* #defines
+#ifdef SEEK_SET
+#undef SEEK_SET
+#undef SEEK_CUR
+#undef SEEK_END
+#endif
+
+// make globally scoped constants to replace smashed #defines
+extern const int SEEK_SET;
+extern const int SEEK_CUR;
+extern const int SEEK_END;
+#endif
+
 // forward declare so that we can still do inlining
 struct opal_mutex_t;
 

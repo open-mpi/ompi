@@ -74,6 +74,9 @@
 /* Whether we want MPI cxx support or not */
 #undef OMPI_WANT_CXX_BINDINGS
 
+/* do we want to try to work around C++ bindings SEEK_* issue? */
+#undef OMPI_WANT_MPI_CXX_SEEK
+
 /* Whether a const_cast on a 2-d array will work with the C++ compiler */
 #undef OMPI_CXX_SUPPORTS_2D_CONST_CAST
 

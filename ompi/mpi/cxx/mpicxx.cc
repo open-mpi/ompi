@@ -18,7 +18,19 @@
 
 //
 
+#include <stdio.h>
+static const int ompi_stdio_seek_set = SEEK_SET;
+static const int ompi_stdio_seek_cur = SEEK_CUR;
+static const int ompi_stdio_seek_end = SEEK_END;
+
 #include "mpicxx.h"
+
+#if OMPI_WANT_MPI_CXX_SEEK
+
+const int SEEK_SET = ompi_stdio_seek_set;
+const int SEEK_CUR = ompi_stdio_seek_cur;
+const int SEEK_END = ompi_stdio_seek_end;
+#endif
 
 namespace MPI {
 
@@ -258,6 +270,12 @@ const int MODE_APPEND = MPI_MODE_APPEND;
 const int MODE_SEQUENTIAL = MPI_MODE_SEQUENTIAL;
 
 const int DISPLACEMENT_CURRENT = MPI_DISPLACEMENT_CURRENT;
+
+#if OMPI_WANT_MPI_CXX_SEEK
+const int SEEK_SET = MPI_SEEK_SET;
+const int SEEK_CUR = MPI_SEEK_CUR;
+const int SEEK_END = MPI_SEEK_END;
+#endif
 
 const int MAX_DATAREP_STRING = MPI_MAX_DATAREP_STRING;
 
