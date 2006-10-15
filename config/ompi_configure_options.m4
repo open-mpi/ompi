@@ -259,6 +259,19 @@ else
     WANT_MPI_CXX_SUPPORT=0
 fi
 
+AC_MSG_CHECKING([if want MPI::SEEK_SET support])
+AC_ARG_ENABLE([mpi-cxx-seek],
+    [AC_HELP_STRING([--enable-mpi-cxx-seek],
+                   [enable support for MPI::SEEK_SET, MPI::SEEK_END, and MPI::SEEK_POS in C++ bindings (default: enabled)])])
+if test "$enable_mpi_cxx_seek" != "no" ; then
+  AC_MSG_RESULT([yes])
+  OMPI_WANT_MPI_CXX_SEEK=1
+else
+  AC_MSG_RESULT([no])
+  OMPI_WANT_MPI_CXX_SEEK=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_CXX_SEEK], [$OMPI_WANT_MPI_CXX_SEEK],
+    [do we want to try to work around C++ bindings SEEK_* issue?])
 
 #
 # Do we want to disable weak symbols for some reason?
