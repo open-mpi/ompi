@@ -37,8 +37,7 @@ int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == errhandler ||
-        ompi_errhandler_is_intrinsic(*errhandler)) {
+    if (NULL == errhandler) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                    "MPI_Errhandler_free");
     }
