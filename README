@@ -278,6 +278,10 @@ base as of this writing (12 Sep 2006):
   interface.  A "large" size that includes the two choice buffer MPI
   functions is possible in future versions of Open MPI.
 
+- MPI::SEEK_* constants are now supported in C++ MPI applications, but
+  only if "mpi.h" is included after system-level header files that
+  define the POSIX SEEK_* constants (such as <stdio.h> or <iostream>).
+
 ===========================================================================
 
 Building Open MPI
@@ -373,6 +377,14 @@ for a full list); a summary of the more commonly used ones follows:
   Disable building the C++ MPI bindings.  Note that this does *not*
   disable the C++ checks during configure; some of Open MPI's tools
   are written in C++ and therefore require a C++ compiler to be built.
+
+--disable-mpi-cxx-seek
+  Disable the MPI::SEEK_* constants.  Due to a problem with the MPI-2
+  specification, these constants can conflict with system-level SEEK_*
+  constants.  Open MPI attempts to work around this problem, but the
+  workaround may fail in some esoteric situations.  The
+  --disable-mpi-cxx-seek switch disables Open MPI's workarounds (and
+  therefore the MPI::SEEK_* constants will be unavailable).
 
 --disable-mpi-f77
   Disable building the Fortran 77 MPI bindings.

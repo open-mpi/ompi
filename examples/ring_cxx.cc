@@ -14,8 +14,8 @@
 // this means that you should not make calls to fseek(3) (and friends)
 // in a C++ source file that includes <mpi.h>!
 
-#include "mpi.h"
 #include <iostream>
+#include "mpi.h"
 
 int main(int argc, char *argv[])
 {
