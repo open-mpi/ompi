@@ -278,8 +278,6 @@ base as of this writing (12 Sep 2006):
   interface.  A "large" size that includes the two choice buffer MPI
   functions is possible in future versions of Open MPI.
 
-- MPI::SEEK_* constants are now supported in C++ MPI applications.
-
 ===========================================================================
 
 Building Open MPI
