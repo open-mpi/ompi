@@ -56,7 +56,7 @@ int MPI_File_open(MPI_Comm comm, char *filename, int amode,
 	
     }
 
-    /* Note that MPI-2:9.7 (p265) says that errors in MPI_FILE_OPEN
+    /* Note that MPI-2:9.7 (p261) says that errors in MPI_FILE_OPEN
        (before the file handle is created) should invoke the default
        error handler on MPI_FILE_NULL.  Hence, if we get a file handle
        out of ompi_file_open(), invoke the error handler on that.  If

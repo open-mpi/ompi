@@ -38,8 +38,11 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == file || 
-        MPI_FILE_NULL == file) {
+
+    /* Note that MPI-2:9.7 (p261) explicitly says that you are
+       allowed to set the error handler on MPI_FILE_NULL */
+
+    if (NULL == file) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE,
                                    "MPI_File_get_errhandler");
     } else if (NULL == errhandler) {
