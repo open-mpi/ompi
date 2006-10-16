@@ -37,8 +37,16 @@
 #include <stdarg.h>
 
 #if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+// We need to include the header files that define SEEK_* or use them
+// in ways that require them to be #defines so that if the user
+// includes them later, the double inclusion logic in the headers will
+// prevent trouble from occuring.
+
 // include so that we can smash SEEK_* properly
 #include <stdio.h>
+// include because on Linux, there is one place that assumes SEEK_* is
+// a #define (it's used in an enum).
+#include <iostream>
 
 // smash SEEK_* #defines
 #ifdef SEEK_SET
