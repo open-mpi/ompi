@@ -19,6 +19,8 @@
 #ifndef _OPAL_CRC_H_
 #define _OPAL_CRC_H_
 
+#include <stddef.h>
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
