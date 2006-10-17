@@ -39,8 +39,9 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-    /* Note that MPI-2:9.7 (p261) explicitly says that you are
-       allowed to set the error handler on MPI_FILE_NULL */
+    /* Note that MPI-2:9.7 (p265 in the ps; 261 in the pdf) explicitly
+       says that you are allowed to set the error handler on
+       MPI_FILE_NULL */
 
     if (NULL == file) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_FILE,
@@ -51,9 +52,8 @@ int MPI_File_get_errhandler( MPI_File file, MPI_Errhandler *errhandler)
     }
   }
 
-  /* Return the errhandler.  See lengthy comment in
-     comm_get_errhandler.c about why we increment the refcount. */
-
+  /* Retain the errhandler, corresponding to object refcount
+     decrease in errhandler_free.c. */
   OBJ_RETAIN(file->error_handler);
   *errhandler = file->error_handler;
 
