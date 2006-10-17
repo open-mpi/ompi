@@ -433,7 +433,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
     mca_btl_gm_frag_t* frag;
     mca_mpool_base_module_t* mpool = btl->btl_mpool;
-    long lb;
+    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);

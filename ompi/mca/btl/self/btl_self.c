@@ -270,7 +270,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
 {
     mca_btl_self_frag_t* frag;
     size_t max_data = *size;
-    long lb;
+    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc);

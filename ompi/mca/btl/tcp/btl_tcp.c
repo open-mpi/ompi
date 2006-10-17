@@ -337,7 +337,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
     size_t* size)
 {
     mca_btl_tcp_frag_t* frag;
-    long lb;
+    ptrdiff_t lb;
     int rc;
 
     MCA_BTL_TCP_FRAG_ALLOC_USER(frag, rc);

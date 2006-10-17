@@ -455,7 +455,7 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     mca_btl_mvapi_module_t* mvapi_btl; 
     mca_btl_mvapi_frag_t* frag; 
     mca_mpool_mvapi_registration_t * vapi_reg; 
-    long lb;
+    ptrdiff_t lb;
     int rc; 
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
