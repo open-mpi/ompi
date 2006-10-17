@@ -523,7 +523,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     mca_btl_openib_frag_t* frag; 
     mca_mpool_openib_registration_t * openib_reg; 
     int rc; 
-    long lb;
+    ptrdiff_t lb;
     size_t reg_len; 
 
     openib_btl = (mca_btl_openib_module_t*) btl; 

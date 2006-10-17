@@ -588,7 +588,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
 {
     mca_btl_udapl_frag_t* frag;
     mca_mpool_base_module_t* mpool = btl->btl_mpool;
-    long lb;
+    ptrdiff_t lb;
     int rc;
 
     OPAL_OUTPUT((0, "udapl_prepare_dst\n"));
