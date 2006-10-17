@@ -77,7 +77,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
     (request)->req_base.req_tag = tag;                                   \
     (request)->req_base.req_comm = comm;                                 \
     (request)->req_base.req_proc = NULL;                                 \
-    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent);  \
+    (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
     (request)->req_base.req_free_called = false;                         \
                                                                          \
     PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_ACTIVATE,                   \
