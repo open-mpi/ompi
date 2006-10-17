@@ -79,13 +79,11 @@ int orte_init_stage1(bool infrastructure)
     orte_jobid_t my_jobid;
     orte_cellid_t my_cellid;
 
-    /* register handler for errnum -> string converstion */
+    /* register handler for errnum -> string conversion */
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);
 
     /* Register all MCA Params */
-    /* AWF - uh, is ORTE_ERROR_LOG really available yet? */
     if (ORTE_SUCCESS != (ret = orte_register_params(infrastructure))) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_register_params";
         goto error;
     }
@@ -112,7 +110,6 @@ int orte_init_stage1(bool infrastructure)
      * Initialize the data storage service.
      */
     if (ORTE_SUCCESS != (ret = orte_dss_open())) {
-        ORTE_ERROR_LOG(ret);
         error = "orte_dss_open";
         goto error;
     }
@@ -450,11 +447,11 @@ int orte_init_stage1(bool infrastructure)
     }
 
     /*
-     * setup the errmgr
+     * setup the errmgr -- open has been done way before
      */
     if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
         ORTE_ERROR_LOG(ret);
-        error = "orte_smr_base_select";
+        error = "orte_errmgr_base_select";
         goto error;
     }
     

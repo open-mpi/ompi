@@ -111,6 +111,7 @@ typedef int (*orte_gpr_base_module_stop_compound_cmd_fn_t)(void);
  * executed. Failure of any command contained in the compound command will terminate
  * execution of the compound command list and return an error to the caller.
  *
+ * @param none
  * @retval ORTE_SUCCESS All commands in the list were successfully executed.
  * @retval ORTE_ERROR(s) A command in the list failed, returning the indicated
  * error code.
@@ -123,7 +124,8 @@ typedef int (*orte_gpr_base_module_stop_compound_cmd_fn_t)(void);
 typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
 
 
-/* Cleanup a job from the registry
+/*
+ * Cleanup a job from the registry
  * Remove all references to a given job from the registry. This includes removing
  * all segments "owned" by the job, and removing all process names from dictionaries
  * in the registry.
@@ -140,7 +142,8 @@ typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
  */
 typedef int (*orte_gpr_base_module_cleanup_job_fn_t)(orte_jobid_t jobid);
 
-/* Cleanup a process from the registry
+/*
+ * Cleanup a process from the registry
  * Remove all references to a given process from the registry. This includes removing
  * the process name from all dictionaries in the registry, all subscriptions, etc.
  * It also includes reducing any synchros on the job segment.
