@@ -64,11 +64,10 @@ typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 struct ompi_convertor_master_t;
 
 typedef struct dt_stack {
-    int16_t index;    /**< index in the element description */
-    int16_t type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
-    int32_t count;    /**< number of times we still have to do it */
-    int32_t end_loop; /**< for loops the end of the loop, otherwise useless */
-    long    disp;     /**< actual displacement depending on the count field */
+    int16_t   index;    /**< index in the element description */
+    int16_t   type;     /**< the type used for the last pack/unpack (original or DT_BYTE) */
+    size_t    count;    /**< number of times we still have to do it */
+    ptrdiff_t disp;     /**< actual displacement depending on the count field */
 } dt_stack_t;
 
 /**
@@ -99,7 +98,7 @@ struct ompi_convertor_t {
     uint32_t                      partial_length;  /**< amount of data left over from the last unpack */
     uint32_t                      checksum;     /**< checksum computed by pack/unpack operation */
     uint32_t                      csum_ui1;     /**< partial checksum computed by pack/unpack operation */
-    uint32_t                      csum_ui2;     /**< partial checksum computed by pack/unpack operation */
+    size_t                        csum_ui2;     /**< partial checksum computed by pack/unpack operation */
     dt_stack_t                    static_stack[DT_STATIC_STACK_SIZE];  /**< local stack for small datatypes */
 };
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION( ompi_convertor_t );

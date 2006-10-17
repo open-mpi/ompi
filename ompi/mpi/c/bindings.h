@@ -80,9 +80,9 @@ extern "C" {
             if ( (DDT)->flags & DT_FLAG_PREDEFINED ) {                  \
                 (RC) = MPI_ERR_BUFFER;                                  \
             } else {                                                    \
-                unsigned long size = 0;                                 \
-                long true_lb       = 0;                                 \
-                long true_extended = 0;                                 \
+                size_t size = 0;                                        \
+                ptrdiff_t true_lb       = 0;                            \
+                ptrdiff_t true_extended = 0;                            \
                 ompi_ddt_get_size((DDT), &size);                        \
                 ompi_ddt_get_true_extent((DDT), &true_lb, &true_extended); \
                 if ( 0 < size && 0 == true_lb ) {                       \

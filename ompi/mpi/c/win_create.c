@@ -66,7 +66,7 @@ int MPI_Win_create(void *base, MPI_Aint size, int disp_unit,
     }
 
     /* create window and return */
-    ret = ompi_win_create(base, size, disp_unit, comm,
+    ret = ompi_win_create(base, (size_t)size, disp_unit, comm,
                           info, win);
     if (OMPI_SUCCESS != ret) {
         *win = MPI_WIN_NULL;

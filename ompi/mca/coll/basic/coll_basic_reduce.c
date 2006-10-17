@@ -40,11 +40,8 @@ mca_coll_basic_reduce_lin_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm)
 {
-    int i;
-    int rank;
-    int err;
-    int size;
-    long true_lb, true_extent, lb, extent;
+    int i, rank, err, size;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
     char *inplace_temp = NULL;
@@ -276,15 +273,9 @@ mca_coll_basic_reduce_log_intra(void *sbuf, void *rbuf, int count,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm)
 {
-    int i;
-    int size;
-    int rank;
-    int vrank;
-    int err;
-    int peer;
-    int dim;
-    int mask;
-    long true_lb, true_extent, lb, extent;
+    int i, size, rank, vrank;
+    int err, peer, dim, mask;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *free_rbuf = NULL;
     char *pml_buffer = NULL;
@@ -490,11 +481,8 @@ mca_coll_basic_reduce_lin_inter(void *sbuf, void *rbuf, int count,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm)
 {
-    int i;
-    int rank;
-    int err;
-    int size;
-    long true_lb, true_extent, lb, extent;
+    int i, rank, err, size;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
 

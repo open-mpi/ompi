@@ -148,7 +148,8 @@ extern "C" {
 /*
  * Typedefs
  */
-typedef long MPI_Aint;
+#include <stddef.h>
+typedef ptrdiff_t MPI_Aint;
 typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;

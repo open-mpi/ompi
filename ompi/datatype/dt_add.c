@@ -27,13 +27,13 @@
 #define UNSET_CONTIGUOUS_FLAG( INT_VALUE )   (INT_VALUE) = (INT_VALUE) & (~(DT_FLAG_CONTIGUOUS | DT_FLAG_NO_GAPS))
 
 #if defined(__GNUC__) && !defined(__STDC__)
-#define LMAX(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _b : _a) })
-#define LMIN(A,B)  ({ long _a = (A), _b = (B); (_a < _b ? _a : _b); })
+#define LMAX(A,B)  ({ ptrdiff_t _a = (A), _b = (B); (_a < _b ? _b : _a) })
+#define LMIN(A,B)  ({ ptrdiff_t _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #define IMAX(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _b : _a); })
 #define IMIN(A,B)  ({ int _a = (A), _b = (B); (_a < _b ? _a : _b); })
 #else
-static inline long LMAX( long a, long b ) { return ( a < b ? b : a ); }
-static inline long LMIN( long a, long b ) { return ( a < b ? a : b ); }
+static inline ptrdiff_t LMAX( ptrdiff_t a, ptrdiff_t b ) { return ( a < b ? b : a ); }
+static inline ptrdiff_t LMIN( ptrdiff_t a, ptrdiff_t b ) { return ( a < b ? a : b ); }
 static inline int  IMAX( int a, int b ) { return ( a < b ? b : a ); }
 static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
 #endif  /* __GNU__ */
@@ -44,7 +44,7 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
         _new_lb = (_old_lb) + (_disp); \
         _new_ub = (_old_ub) + (_disp); \
     } else { \
-        long lower, upper; \
+        ptrdiff_t lower, upper; \
         upper = (_disp) + (_old_extent) * ((_count) - 1); \
         lower = (_disp); \
         if( lower < upper ) { \
@@ -74,12 +74,12 @@ static inline int  IMIN( int a, int b ) { return ( a < b ? a : b ); }
  * set to ZERO if it's a empty datatype.
  */
 int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
-                      uint32_t count, long disp, long extent )
+                      uint32_t count, ptrdiff_t disp, ptrdiff_t extent )
 {
     uint32_t newLength, place_needed = 0, i;
     short localFlags = 0;  /* no specific options yet */
     dt_elem_desc_t *pLast, *pLoop = NULL;
-    long lb, ub, true_lb, true_ub, epsilon, old_true_ub;
+    ptrdiff_t lb, ub, true_lb, true_ub, epsilon, old_true_ub;
 
     /* the extent should always be positive. So a negative
      * value here have a special meaning ie. default extent as
@@ -97,7 +97,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pdtBase->lb = disp;
                 pdtBase->flags |= DT_FLAG_USER_LB;
             }
-            if( (pdtBase->ub - pdtBase->lb) != (long)pdtBase->size ) {
+            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
                 pdtBase->flags &= ~DT_FLAG_NO_GAPS;
             }
             return OMPI_SUCCESS;
@@ -109,12 +109,12 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
                 pdtBase->ub = disp;
                 pdtBase->flags |= DT_FLAG_USER_UB;
             }
-            if( (pdtBase->ub - pdtBase->lb) != (long)pdtBase->size ) {
+            if( (pdtBase->ub - pdtBase->lb) != (ptrdiff_t)pdtBase->size ) {
                 pdtBase->flags &= ~DT_FLAG_NO_GAPS;
             }
             return OMPI_SUCCESS;
         }
-        place_needed = (extent == (long)pdtAdd->size ? 1 : 3);
+        place_needed = (extent == (ptrdiff_t)pdtAdd->size ? 1 : 3);
     } else {
         place_needed = pdtAdd->desc.used;
         if( count != 1 ) place_needed += 2;  /* for the loop markers */
@@ -222,7 +222,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
      */
     if( (pdtAdd->flags & (DT_FLAG_PREDEFINED | DT_FLAG_DATA)) == (DT_FLAG_PREDEFINED | DT_FLAG_DATA) ) {
         pdtBase->btypes[pdtAdd->id] += count;
-        if( (extent != (long)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
+        if( (extent != (ptrdiff_t)pdtAdd->size) && (count > 1) ) {  /* gaps around the datatype */
             localFlags = pdtAdd->flags & ~(DT_FLAG_COMMITED | DT_FLAG_CONTIGUOUS | DT_FLAG_NO_GAPS);
             CREATE_LOOP_START( pLast, count, 2, extent, localFlags );
             pLast++;
@@ -265,7 +265,7 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
              */
             if( count != 1 ) {
                 pLoop = pLast;
-                CREATE_LOOP_START( pLast, count, (long)pdtAdd->desc.used + 1, extent,
+                CREATE_LOOP_START( pLast, count, pdtAdd->desc.used + 1, extent,
                                    (pdtAdd->flags & ~(DT_FLAG_COMMITED)) );
                 pdtBase->btypes[DT_LOOP] += 2;
                 pdtBase->desc.used += 2;
@@ -302,12 +302,12 @@ int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd,
     if( disp != old_true_ub ) { /* is there a gap between the 2 datatypes ? */
         if( disp < old_true_ub ) pdtBase->flags |= DT_FLAG_OVERLAP;
     } else {
-        if( (localFlags & DT_FLAG_CONTIGUOUS)      /* both have to be contiguous */
-            && ( (((long)pdtAdd->size) == extent)  /* the size and the extent of the added
-                                                    * type have to match */
-                 || (count < 2)) ) {               /*  - if the count is bigger than 2 */
+        if( (localFlags & DT_FLAG_CONTIGUOUS)        /* both have to be contiguous */
+            && ( ((ptrdiff_t)pdtAdd->size == extent) /* the size and the extent of the
+                                                      * added type have to match */
+                 || (count < 2)) ) {                 /* if the count is bigger than 2 */
             SET_CONTIGUOUS_FLAG(pdtBase->flags);
-            if( ((long)pdtBase->size) == (pdtBase->ub - pdtBase->lb) )
+            if( (ptrdiff_t)pdtBase->size == (pdtBase->ub - pdtBase->lb) )
                 SET_NO_GAP_FLAG(pdtBase->flags);
         }
     }

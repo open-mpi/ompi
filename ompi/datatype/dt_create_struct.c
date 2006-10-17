@@ -20,11 +20,11 @@
 #include "ompi_config.h"
 #include "ompi/datatype/datatype.h"
 
-int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
+int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const MPI_Aint* pDisp,
                                 ompi_datatype_t* const * pTypes, ompi_datatype_t** newType )
 {
     int i;
-    long disp = 0, endto, lastExtent, lastDisp;
+    ptrdiff_t disp = 0, endto, lastExtent, lastDisp;
     int lastBlock;
     ompi_datatype_t *pdt, *lastType;
 
@@ -66,7 +66,7 @@ int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* 
     lastDisp = pDisp[0];
     endto = pDisp[0] + lastExtent * lastBlock;
 
-    pdt = ompi_ddt_create( disp );
+    pdt = ompi_ddt_create( (int32_t)disp );
 
     /* Do again the same loop but now add the elements */
     for( i = 1; i < count; i++ ) {

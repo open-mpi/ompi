@@ -47,12 +47,11 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *inbuf[2] = {(char*)NULL, (char*)NULL};
     char *accumbuf = (char*)NULL;
     char *sendtmpbuf = (char*)NULL;
-    long ext, lb;
-    unsigned long typelng;
+    ptrdiff_t ext, lb;
+    size_t typelng;
     int  allocedaccumbuf = 0;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
-
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -334,11 +333,8 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
                                 struct ompi_op_t *op,
                                 int root, struct ompi_communicator_t *comm)
 {
-    int i;
-    int rank;
-    int err;
-    int size;
-    long true_lb, true_extent, lb, extent;
+    int i, rank, err, size;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
     char *inplace_temp = NULL;

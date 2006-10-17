@@ -80,7 +80,7 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
     int rank;
     int root = 0;
     int rsize;
-    long lb, extent;
+    ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;

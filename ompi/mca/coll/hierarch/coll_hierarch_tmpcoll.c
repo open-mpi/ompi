@@ -109,12 +109,10 @@ int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
 				 struct ompi_op_t *op,
 				 int root, struct ompi_communicator_t *comm)
 {
-    int i;
-    int err;
-    int size;
+    int i, err, size;
     char *pml_buffer = NULL;
-    long extent, lb;
-    int rank=ompi_comm_rank(comm);;
+    ptrdiff_t extent, lb;
+    int rank = ompi_comm_rank(comm);;
 
     /* If not root, send data to the root. */
     if (rank != root) {

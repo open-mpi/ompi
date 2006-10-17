@@ -62,7 +62,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
                              struct ompi_op_t *op, 
                              int root, struct ompi_communicator_t *comm)
 {
-    int32_t size;
+    size_t size;
 
     /* There are several possibilities:
      *
@@ -77,7 +77,7 @@ int mca_coll_sm_reduce_intra(void *sbuf, void* rbuf, int count,
      */
 
     ompi_ddt_type_size(dtype, &size);
-    if (size > mca_coll_sm_component.sm_control_size) {
+    if ((int)size > mca_coll_sm_component.sm_control_size) {
         return comm->c_coll_basic_module->coll_reduce(sbuf, rbuf, count,
                                                       dtype, op, root, comm);
     } 
@@ -150,7 +150,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
     mca_coll_sm_in_use_flag_t *flag;
     ompi_convertor_t convertor;
     mca_coll_base_mpool_index_t *index;
-    int32_t ddt_size;
+    size_t ddt_size;
     size_t segment_ddt_count, segment_ddt_bytes, zero = 0;
 
     /* Setup some identities */
@@ -182,7 +182,7 @@ static int reduce_inorder(void *sbuf, void* rbuf, int count,
     
     if (root == rank) {
         char *reduce_temp_buffer, *free_buffer, *reduce_target;
-        long true_lb, true_extent, lb, extent;
+        ptrdiff_t true_lb, true_extent, lb, extent;
         char *inplace_temp;
         int peer;
         size_t count_left = (size_t)count;

@@ -59,8 +59,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
 
    /* If same datatypes used, just copy. */
    if (sdtype == rdtype) {
-      max_data = ( scount < rcount ? scount : rcount );
-      ompi_ddt_copy_content_same_ddt(rdtype, max_data, (char*)rbuf, (char*)sbuf);
+      int32_t count = ( scount < rcount ? scount : rcount );
+      ompi_ddt_copy_content_same_ddt(rdtype, count, (char*)rbuf, (char*)sbuf);
       return ((scount > rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
    }
 

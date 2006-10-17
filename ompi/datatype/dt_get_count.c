@@ -27,12 +27,12 @@
  *   positive = number of basic elements inside
  *   negative = some error occurs
  */
-int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSize )
+int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, size_t iSize )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
-    int rc, nbElems = 0;
-    int stack_pos = 0;
+    int32_t nbElems = 0, stack_pos = 0;
+	size_t local_size;
     dt_elem_desc_t* pElems;
 
     /* Normally the size should be less or equal to the size of the datatype.
@@ -45,7 +45,6 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
     pStack->index    = -1;
     pStack->disp     = 0;
     pElems           = datatype->desc.desc;
-    pStack->end_loop = datatype->desc.used;
     pos_desc         = 0;
 
     while( 1 ) {  /* loop forever the exit condition is on the last DT_END_LOOP */
@@ -68,8 +67,7 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
         if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
             ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
             do {
-                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops,
-                            0, pos_desc + loop->items );
+                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops, 0 );
                 pos_desc++;
             } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
@@ -78,15 +76,15 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, int32_t iSi
         while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
             /* now here we have a basic datatype */
             const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
-            rc = pElems[pos_desc].elem.count * basic_type->size;
-            if( rc >= iSize ) {
-                rc = iSize / basic_type->size;
-                nbElems += rc;
-                iSize -= rc * basic_type->size;
+            local_size = pElems[pos_desc].elem.count * basic_type->size;
+            if( local_size >= iSize ) {
+                local_size = iSize / basic_type->size;
+                nbElems += (int32_t)local_size;
+                iSize -= local_size * basic_type->size;
                 return (iSize == 0 ? nbElems : -1);
             }
             nbElems += pElems[pos_desc].elem.count;
-            iSize -= rc;
+            iSize -= local_size;
             pos_desc++;  /* advance to the next data */
         }
     }

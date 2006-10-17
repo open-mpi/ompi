@@ -39,22 +39,22 @@ OPAL_DECLSPEC unsigned long
 opal_bcopy_csum_partial(
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen,
-    unsigned long *  lastPartialLong,
-    unsigned long *  lastPartialLength
+    size_t copylen,
+    size_t csumlen,
+    unsigned long*  lastPartialLong,
+    size_t*  lastPartialLength
     );
 
 static inline unsigned long
 opal_bcopy_csum (
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen
+    size_t copylen,
+    size_t csumlen
     )
 {
     unsigned long plong = 0;
-    unsigned long plength = 0;
+    size_t plength = 0;
     return opal_bcopy_csum_partial(source, destination, copylen, csumlen, &plong, &plength);
 }
                                                                                                                   
@@ -62,55 +62,55 @@ OPAL_DECLSPEC unsigned int
 opal_bcopy_uicsum_partial (
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen,
-    unsigned int *  lastPartialInt,
-    unsigned int *  lastPartialLength
+    size_t copylen,
+    size_t csumlen,
+    unsigned int*  lastPartialInt,
+    size_t*  lastPartialLength
     );
 
 static inline unsigned int
 opal_bcopy_uicsum (
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen
+    size_t copylen,
+    size_t csumlen
     )
 {
     unsigned int pint = 0;
-    unsigned int plength = 0;
+    size_t plength = 0;
     return opal_bcopy_uicsum_partial(source, destination, copylen, csumlen, &pint, &plength);
 }
                                                                                                                   
 OPAL_DECLSPEC unsigned long 
 opal_csum_partial (
     const void *  source,
-    unsigned long csumlen,
-    unsigned long *  lastPartialLong,
-    unsigned long *  lastPartialLength
+    size_t csumlen,
+    unsigned long*  lastPartialLong,
+    size_t*  lastPartialLength
     );
 
 
 static inline unsigned long 
-opal_csum(const void *  source, unsigned long csumlen)
+opal_csum(const void *  source, size_t csumlen)
 {
     unsigned long lastPartialLong = 0;
-    unsigned long lastPartialLength = 0;
+    size_t lastPartialLength = 0;
     return opal_csum_partial(source, csumlen, &lastPartialLong, &lastPartialLength);
 }
 
 OPAL_DECLSPEC unsigned int
 opal_uicsum_partial (
     const void *  source,
-    unsigned long csumlen,
+    size_t csumlen,
     unsigned int *  lastPartialInt,
-    unsigned int *  lastPartialLength
+    size_t*  lastPartialLength
     );
 
 static inline unsigned int 
-opal_uicsum(const void *  source, unsigned long csumlen)
+opal_uicsum(const void *  source, size_t csumlen)
 {
     unsigned int lastPartialInt = 0;
-    unsigned int lastPartialLength = 0;
+    size_t lastPartialLength = 0;
     return opal_uicsum_partial(source, csumlen, &lastPartialInt, &lastPartialLength);
 }
                                                                                                                   
@@ -124,16 +124,16 @@ OPAL_DECLSPEC unsigned int
 opal_bcopy_uicrc_partial(
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long crclen,
+    size_t copylen,
+    size_t crclen,
     unsigned int partial_crc);
 
 static inline unsigned int 
 opal_bcopy_uicrc(
     const void *  source, 
     void *  destination,
-    unsigned long copylen, 
-    unsigned long crclen)
+    size_t copylen, 
+    size_t crclen)
 {
     return opal_bcopy_uicrc_partial(source, destination, copylen, crclen, CRC_INITIAL_REGISTER);
 }
@@ -141,12 +141,12 @@ opal_bcopy_uicrc(
 OPAL_DECLSPEC unsigned int 
 opal_uicrc_partial(
     const void *  source, 
-    unsigned long crclen, 
+    size_t crclen, 
     unsigned int partial_crc);
 
 
 static inline unsigned int 
-opal_uicrc(const void *  source, unsigned long crclen)
+opal_uicrc(const void *  source, size_t crclen)
 {
     return opal_uicrc_partial(source, crclen, CRC_INITIAL_REGISTER);
 }

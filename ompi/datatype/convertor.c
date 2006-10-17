@@ -31,7 +31,7 @@
 #include "ompi/datatype/convertor_internal.h"
 #include "ompi/datatype/dt_arch.h"
 
-extern int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
+extern size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 extern int ompi_convertor_create_stack_with_pos_general( ompi_convertor_t* convertor,
                                                          int starting_point, const int* sizes );
 
@@ -82,7 +82,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
 {
     ompi_convertor_master_t* master = ompi_convertor_master_list;
     int i;
-    int32_t* remote_sizes;
+    size_t* remote_sizes;
 
     while( NULL != master ) {
         if( master->remote_arch == remote_arch )
@@ -102,7 +102,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
      * the local ones. As master->remote_sizes is defined as being an array of
      * consts we have to manually cast it before using it for writing purposes.
      */
-    remote_sizes = (int32_t*)master->remote_sizes;
+    remote_sizes = (size_t*)master->remote_sizes;
     for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
         remote_sizes[i] = ompi_ddt_local_sizes[i];
     }
@@ -284,10 +284,6 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
         uint32_t i;
         char* base_pointer;
 
-        /*opal_output( 0, "ompi_convertor_unpack at %p max_data %ld bConverted %ld size %ld count %d\n",
-          pConv->pBaseBuf, (long)*max_data, (long)pConv->bConverted,
-          (long)pConv->local_size, pConv->count );
-          ompi_ddt_dump( pConv->pDesc );*/
         *max_data = pConv->bConverted;
         base_pointer = pConv->pBaseBuf + pConv->bConverted + 
             pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
@@ -314,23 +310,19 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
         pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
-    /*opal_output( 0, "ompi_convertor_unpack generic at %p max_data %ld bConverted %ld size %ld count %d\n",
-      pConv->pBaseBuf, (long)*max_data, (long)pConv->bConverted,
-      (long)pConv->local_size, pConv->count );
-      ompi_ddt_dump( pConv->pDesc );*/
 
     return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
 }
 
 static inline
 int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
-                                                 int starting_point, const int* sizes )
+                                                 size_t starting_point, const size_t* sizes )
 {
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     const ompi_datatype_t* pData = pConvertor->pDesc;
     dt_elem_desc_t* pElems;
     uint32_t count;
-    long extent;
+    ptrdiff_t extent;
 
     pStack = pConvertor->pStack;
     /* The prepare function already make the selection on which data representation
@@ -338,17 +330,16 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
      */
     pElems = pConvertor->use_desc->desc;
 
-    count = starting_point / pData->size;
+    count = (uint32_t)(starting_point / pData->size);
     extent = pData->ub - pData->lb;
 
     pStack[0].type     = DT_LOOP;  /* the first one is always the loop */
     pStack[0].count    = pConvertor->count - count;
     pStack[0].index    = -1;
-    pStack[0].end_loop = pConvertor->use_desc->used;
     pStack[0].disp     = count * extent;
 
     /* now compute the number of pending bytes */
-    count = starting_point - count * pData->size;
+    count = (uint32_t)(starting_point - count * pData->size);
     /* we save the current displacement starting from the begining
      * of this data.
      */
@@ -362,7 +353,6 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
         pStack[1].disp  = pData->true_lb + count;
     }
     pStack[1].index    = 0;  /* useless */
-    pStack[1].end_loop = 0;  /* useless */
 
     pConvertor->bConverted = starting_point;
     pConvertor->stack_pos = 1;
@@ -372,7 +362,7 @@ int ompi_convertor_create_stack_with_pos_contig( ompi_convertor_t* pConvertor,
 
 static inline
 int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
-                                             const int* sizes )
+                                             const size_t* sizes )
 {
     dt_stack_t* pStack = convertor->pStack;
     dt_elem_desc_t* pElems;
@@ -387,7 +377,6 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     pStack[0].index = -1;
     pStack[0].count = convertor->count;
     pStack[0].disp  = 0;
-    pStack[0].end_loop = convertor->use_desc->used;
     /* The prepare function already make the selection on which data representation
      * we have to use: normal one or the optimized version ?
      */
@@ -395,7 +384,6 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
 
     pStack[1].index = 0;
     pStack[1].disp = 0;
-    pStack[1].end_loop = 0;
     if( pElems[0].elem.common.type == DT_LOOP ) {
         pStack[1].count = pElems[0].loop.loops;
     } else {
@@ -555,7 +543,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+            if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size) 
                 || (1 >= convertor->count) )
                 convertor->fAdvance = ompi_pack_homogeneous_contig_checksum;
             else
@@ -565,7 +553,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
         }
     } else {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
-            if( ((datatype->ub - datatype->lb) == (long)datatype->size) 
+            if( ((datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size) 
                 || (1 >= convertor->count) )
                 convertor->fAdvance = ompi_pack_homogeneous_contig;
             else
@@ -641,8 +629,8 @@ void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
 {
     opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
-        opal_output( 0, "%d: pos %d count %d disp %ld end_loop %d ", stack_pos, pStack[stack_pos].index,
-                     pStack[stack_pos].count, pStack[stack_pos].disp, pStack[stack_pos].end_loop );
+        opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
+                     pStack[stack_pos].count, pStack[stack_pos].disp );
         if( pStack->index != -1 )
             opal_output( 0, "\t[desc count %d disp %ld extent %d]\n",
                          pDesc[pStack[stack_pos].index].elem.count,

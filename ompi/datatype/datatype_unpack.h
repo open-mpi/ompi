@@ -18,15 +18,16 @@ static inline void unpack_predefined_data( ompi_convertor_t* CONVERTOR, /* the c
                                            uint32_t* COUNT,              /* the number of elements */
                                            char** SOURCE,                /* the source pointer */
                                            char** DESTINATION,           /* the destination pointer */
-                                           uint32_t* SPACE )             /* the space in the destination buffer */
+                                           size_t* SPACE )               /* the space in the destination buffer */
 {
-    uint32_t _copy_count = *(COUNT), _copy_blength;
+    uint32_t _copy_count = *(COUNT);
+	size_t _copy_blength;
     ddt_elem_desc_t* _elem = &((ELEM)->elem);
     char* _destination = (*DESTINATION) + _elem->disp;
 
     _copy_blength = ompi_ddt_basicDatatypes[_elem->common.type]->size;
     if( (_copy_count * _copy_blength) > *(SPACE) ) {
-        _copy_count = *(SPACE) / _copy_blength;
+        _copy_count = (uint32_t)(*(SPACE) / _copy_blength);
         if( 0 == _copy_count ) return;  /* nothing to do */
     }
 
@@ -63,16 +64,16 @@ static inline void unpack_contiguous_loop( ompi_convertor_t* CONVERTOR,
                                            uint32_t* COUNT,
                                            char** SOURCE,
                                            char** DESTINATION,
-                                           uint32_t* SPACE )
+                                           size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
     ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + _loop->items);
     char* _destination = (*DESTINATION) + _end_loop->first_elem_disp;
-    size_t _copy_loops = *(COUNT);
+    uint32_t _copy_loops = *(COUNT);
     uint32_t _i;
 
     if( (_copy_loops * _end_loop->size) > *(SPACE) )
-        _copy_loops = *(SPACE) / _end_loop->size;
+        _copy_loops = (uint32_t)(*(SPACE) / _end_loop->size);
     for( _i = 0; _i < _copy_loops; _i++ ) {
         OMPI_DDT_SAFEGUARD_POINTER( _destination, _end_loop->size, (CONVERTOR)->pBaseBuf,
                                     (CONVERTOR)->pDesc, (CONVERTOR)->count );

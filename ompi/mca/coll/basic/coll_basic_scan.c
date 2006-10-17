@@ -42,10 +42,8 @@ mca_coll_basic_scan_intra(void *sbuf, void *rbuf, int count,
                           struct ompi_op_t *op,
                           struct ompi_communicator_t *comm)
 {
-    int size;
-    int rank;
-    int err;
-    long true_lb, true_extent, lb, extent;
+    int size, rank, err;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
 
