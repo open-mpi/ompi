@@ -65,7 +65,7 @@ OBJ_CLASS_INSTANCE(
  * key in info that does not match any mpool, an error will be returned.
  *
  * If the info parameter is MPI_INFO_NULL, then this function will try to allocate
- * the memory and register it wih as many mpools as possible. However, 
+ * the memory and register it with as many mpools as possible. However, 
  * if any of the registratons fail the mpool will simply be ignored.
  *
  * @param size the size of the memory area to allocate
