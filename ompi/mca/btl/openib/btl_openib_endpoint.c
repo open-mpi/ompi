@@ -600,7 +600,8 @@ static void mca_btl_openib_endpoint_recv(
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
-    }rc = orte_dss.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
+    }
+    rc = orte_dss.unpack(buffer, &rem_info.rem_psn_lp, &cnt, ORTE_UINT32);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
