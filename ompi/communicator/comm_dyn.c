@@ -354,6 +354,8 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     orte_std_cntr_t num_apps, ai;
     orte_jobid_t new_jobid=ORTE_JOBID_INVALID;
     orte_app_context_t **apps=NULL;
+    
+    opal_list_t attributes;
 
 
     /* parse the info object */
@@ -370,6 +372,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
     /* make sure the progress engine properly trips the event library */
     opal_progress_event_increment();
+    
+    /* setup to record the attributes */
+    OBJ_CONSTRUCT(&attributes, opal_list_t);
     
     /* we want to be able to default the prefix to the one used for this job
      * so that the ompi executables and libraries can be found. the user can
@@ -538,8 +543,19 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* cleanup */
     if (NULL != base_prefix) free(base_prefix);
 
+    /* tell the RTE that we want to the children to run inside of our allocation -
+     * don't go get one just for them
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMGR_USE_PARENT_ALLOCATION,
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid)))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&attributes);
+        opal_progress_event_decrement();
+        return MPI_ERR_SPAWN;
+    }
+
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, ORTE_PROC_STATE_NONE))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, ORTE_PROC_STATE_NONE, &attributes))) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_decrement();
         return MPI_ERR_SPAWN;

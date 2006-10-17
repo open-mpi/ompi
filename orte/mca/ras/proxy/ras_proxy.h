@@ -47,7 +47,7 @@ int orte_ras_proxy_finalize(void);
 /*
  * proxy function prototypes
  */
-int orte_ras_proxy_allocate(orte_jobid_t job);
+int orte_ras_proxy_allocate(orte_jobid_t job, opal_list_t *attributes);
 int orte_ras_proxy_deallocate(orte_jobid_t job);
 
 

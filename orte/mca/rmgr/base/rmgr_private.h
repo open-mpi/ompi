@@ -45,6 +45,16 @@ extern "C" {
 #endif
 
 /*
+ * Constants for command values
+ */
+#define ORTE_RMGR_SETUP_JOB_CMD      1
+#define ORTE_RMGR_SPAWN_JOB_CMD      2
+#define ORTE_RMGR_SETUP_GATES_CMD	 3
+    
+#define ORTE_RMGR_CMD  ORTE_UINT8
+typedef uint8_t orte_rmgr_cmd_t;
+    
+/*
  * Internal definitions
  */
 
@@ -91,13 +101,24 @@ int orte_rmgr_base_spawn_not_available(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions);
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes);
 
 ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
                                          orte_process_name_t *connect);
 
 ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
                                             orte_process_name_t *disconnect);
+
+orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
+
+int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
+                                 orte_data_type_t type, void *data);
+
+int orte_rmgr_base_update_attribute(opal_list_t* attr_list, char* key,
+                                    orte_data_type_t type, void *data);
+
+int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
 
 int orte_rmgr_base_finalize_not_available(void);
 
@@ -125,6 +146,13 @@ int orte_rmgr_base_pack_app_context(orte_buffer_t *buffer, void *src,
 int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
                                         orte_std_cntr_t num_vals, orte_data_type_t type);
 
+int orte_rmgr_base_pack_attr_list(orte_buffer_t *buffer, void *src,
+                                  orte_std_cntr_t num_vals, orte_data_type_t type);
+
+int orte_rmgr_base_pack_attribute(orte_buffer_t *buffer, void *src,
+                                  orte_std_cntr_t num_vals, orte_data_type_t type);
+
+
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
@@ -134,6 +162,12 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
                                           orte_std_cntr_t *num_vals, orte_data_type_t type);
 
+int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
+                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
+
+int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
+                                    orte_std_cntr_t *num_vals, orte_data_type_t type);
+
 
 /*
  * COMPARE FUNCTIONS
@@ -142,12 +176,20 @@ int orte_rmgr_base_compare_app_context(orte_app_context_t *value1, orte_app_cont
 
 int orte_rmgr_base_compare_app_context_map(orte_app_context_map_t *value1, orte_app_context_map_t *value2, orte_data_type_t type);
 
+int orte_rmgr_base_compare_attr_list(opal_list_t *value1, opal_list_t *value2, orte_data_type_t type);
+
+int orte_rmgr_base_compare_attribute(orte_attribute_t *value1, orte_attribute_t *value2, orte_data_type_t type);
+
 /*
  * COPY FUNCTIONS
  */
 int orte_rmgr_base_copy_app_context(orte_app_context_t **dest, orte_app_context_t *src, orte_data_type_t type);
 
 int orte_rmgr_base_copy_app_context_map(orte_app_context_map_t **dest, orte_app_context_map_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_copy_attr_list(opal_list_t **dest, opal_list_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_copy_attribute(orte_attribute_t **dest, orte_attribute_t *src, orte_data_type_t type);
 
 /*
  * PRINT FUNCTIONS
@@ -156,12 +198,21 @@ int orte_rmgr_base_print_app_context(char **output, char *prefix, orte_app_conte
 
 int orte_rmgr_base_print_app_context_map(char **output, char *prefix, orte_app_context_map_t *src, orte_data_type_t type);
 
+int orte_rmgr_base_print_attribute(char **output, char *prefix, orte_attribute_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_print_attr_list(char **output, char *prefix, opal_list_t *src, orte_data_type_t type);
+
+
 /*
  * SIZE FUNCTIONS
  */
 int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_data_type_t type);
 
 int orte_rmgr_base_size_app_context_map(size_t *size, orte_app_context_map_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_size_attr_list(size_t *size, opal_list_t *src, orte_data_type_t type);
+
+int orte_rmgr_base_size_attribute(size_t *size, orte_attribute_t *src, orte_data_type_t type);
 
 /*
  * RELEASE FUNCTIONS

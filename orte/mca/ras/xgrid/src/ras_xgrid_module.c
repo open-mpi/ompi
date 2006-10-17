@@ -16,26 +16,30 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/mca/ras/base/ras_private.h"
+
+#include "orte/dss/dss.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/gpr/gpr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
+
 #include "ras_xgrid.h"
 
 
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t jobid);
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -61,12 +65,31 @@ orte_ras_base_module_t orte_ras_xgrid_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-static int allocate(orte_jobid_t jobid)
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     int ret;
     opal_list_t nodes;
     opal_list_item_t* item;
+    orte_jobid_t *jptr;
+    orte_attribute_t *attr;
 
+    /* check the attributes to see if we are supposed to use the parent
+     * jobid's allocation. This can occur if we are doing a dynamic
+     * process spawn and don't want to go through the allocator again
+     */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        return ORTE_SUCCESS;
+    }
+    
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(jobid, &nodes))) {
         opal_output(orte_ras_base.ras_output,

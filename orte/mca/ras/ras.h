@@ -163,7 +163,10 @@
 #include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/ns/ns_types.h"
+
 #include "ras_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -177,7 +180,7 @@ extern "C" {
 /**
  * Allocate resources to a job.
  */
-typedef int (*orte_ras_base_module_allocate_fn_t)(orte_jobid_t jobid);
+typedef int (*orte_ras_base_module_allocate_fn_t)(orte_jobid_t jobid, opal_list_t *attributes);
 
 /**
  * Deallocate resources from a job

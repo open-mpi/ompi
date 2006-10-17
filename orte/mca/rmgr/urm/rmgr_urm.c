@@ -29,6 +29,7 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 
+#include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 
@@ -58,7 +59,8 @@ static int orte_rmgr_urm_spawn_job(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions);
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes);
 
 static int orte_rmgr_urm_module_init(void);
 
@@ -73,6 +75,10 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     orte_rmgr_base_disconnect,
     orte_rmgr_urm_module_finalize,
     /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_find_attribute,
+    orte_rmgr_base_add_attribute,
+    orte_rmgr_base_update_attribute,
+    orte_rmgr_base_delete_attribute,
     orte_rmgr_base_get_app_context,
     orte_rmgr_base_put_app_context,
     orte_rmgr_base_check_context_cwd,
@@ -272,7 +278,8 @@ static int orte_rmgr_urm_spawn_job(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfunc,
-    orte_proc_state_t cb_conditions)
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes)
 {
     int rc;
     orte_process_name_t* name;
@@ -313,7 +320,7 @@ static int orte_rmgr_urm_spawn_job(
         }
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

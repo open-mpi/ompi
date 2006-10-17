@@ -23,6 +23,7 @@ headers += \
         base/base.h
 
 libmca_rmgr_la_SOURCES += \
+        base/rmgr_base_attribute_fns.c \
         base/rmgr_base_check_context.c \
         base/rmgr_base_context.c \
         base/rmgr_base_con_discon.c \

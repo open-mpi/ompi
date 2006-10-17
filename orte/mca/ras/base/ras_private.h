@@ -27,6 +27,8 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
+#include "opal/class/opal_list.h"
+
 #include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/rml/rml_types.h"
@@ -51,7 +53,7 @@ typedef uint8_t orte_ras_cmd_flag_t;
 /*
  * API function definitions
  */
-ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job);
+ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job, opal_list_t *attributes);
 ORTE_DECLSPEC int orte_ras_base_deallocate(orte_jobid_t job);
 
 /*
@@ -74,6 +76,9 @@ orte_ras_node_t* orte_ras_base_node_lookup_no_op(orte_cellid_t, const char* node
  */
 ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid, 
                                                opal_list_t* nodes);
+
+ORTE_DECLSPEC int orte_ras_base_reallocate(orte_jobid_t parent_jobid,
+                                           orte_jobid_t child_jobid);
 
 /*
  * Query the registry for all available nodes 

@@ -36,9 +36,7 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
 {
     orte_gpr_value_t *values;
     orte_gpr_value_t value = ORTE_GPR_VALUE_EMPTY;
-    orte_gpr_keyval_t *keyvals;
-    orte_gpr_keyval_t keyval = ORTE_GPR_KEYVAL_EMPTY;
-    orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
+    orte_gpr_keyval_t *keyval;
     orte_std_cntr_t i;
     int rc;
 
@@ -47,12 +45,9 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
     value.addr_mode = addr_mode;
     value.segment = segment;
     value.cnt = 1;
-    keyvals = &keyval;
-    value.keyvals = &keyvals;
-    keyval.key = key;
-    keyval.value = &dval;
-    dval.type = data_value->type;
-    if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, data_value->data, data_value->type))) {
+    value.keyvals = &keyval;
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_create_keyval(&keyval, key,
+                                                          data_value->type, data_value->data))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -70,10 +65,13 @@ int orte_gpr_base_put_1(orte_gpr_addr_mode_t addr_mode,
     /* put the value on the registry */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &values))) {
         ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(keyval);
         return rc;
     }
 
-    /* no memory to clean up since we didn't allocate any */
+    /* cleanup */
+    OBJ_RELEASE(keyval);
+    
     return ORTE_SUCCESS;
 }
 

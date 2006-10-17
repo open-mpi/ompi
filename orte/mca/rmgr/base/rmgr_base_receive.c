@@ -93,9 +93,11 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
 {
     orte_buffer_t answer;
     orte_rmgr_cmd_t command;
-    orte_std_cntr_t count, num_context;
+    orte_std_cntr_t i, count, num_context;
     orte_jobid_t job;
     orte_app_context_t **context;
+    opal_list_item_t *item;
+    opal_list_t attrs;
     int rc;
 
     OPAL_TRACE(2);
@@ -179,21 +181,39 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
                 free(context);
                 return;
             }
-                
+            
+            /* unpack the attributes */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP_SPAWN;
+            }
+            
             /* process the request */
             /* init the job to be INVALID so we setup the job */
             job = ORTE_JOBID_INVALID;
             if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(context, num_context, &job,
-                                                          0, NULL, NULL, ORTE_PROC_STATE_NONE))) {
+                                                          0, NULL, NULL, ORTE_PROC_STATE_NONE, &attrs))) {
                 ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
+                goto CLEANUP_SPAWN;
             }
             
             /* return the new jobid */
             if(ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
             }
+
+CLEANUP_SPAWN:
+            for (i=0; i < num_context; i++) {
+                OBJ_RELEASE(context[i]);
+            }
+            if (NULL != context) free(context);
+
+            while (NULL != (item = opal_list_remove_first(&attrs))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&attrs);
             break;
 
         case ORTE_RMGR_SETUP_GATES_CMD:

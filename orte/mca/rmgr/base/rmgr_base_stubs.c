@@ -46,7 +46,8 @@ orte_rmgr_base_spawn_not_available(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions)
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes)
 {
     return ORTE_ERR_UNREACH;
 }

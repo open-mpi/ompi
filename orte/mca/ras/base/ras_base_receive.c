@@ -35,6 +35,7 @@
 #include "orte/dss/dss.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/mca/ras/base/ras_private.h"
@@ -93,6 +94,8 @@ void orte_ras_base_recv(int status, orte_process_name_t* sender,
     orte_ras_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_jobid_t job;
+    opal_list_item_t *item;
+    opal_list_t attrs;
     int rc;
 
     count = 1;
@@ -115,9 +118,23 @@ void orte_ras_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
-            if (ORTE_SUCCESS != (rc = orte_ras_base_allocate(job))) {
+            /* get the list of attributes */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP_ALLOC;
+            }
+            
+            if (ORTE_SUCCESS != (rc = orte_ras_base_allocate(job, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
+                
+CLEANUP_ALLOC:
+            while (NULL != (item = opal_list_remove_first(&attrs))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&attrs);
             break;
             
         case ORTE_RAS_DEALLOCATE_CMD:

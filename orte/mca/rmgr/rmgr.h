@@ -96,7 +96,8 @@ typedef int (*orte_rmgr_base_module_spawn_job_fn_t)(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions);
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes);
 
 
 /**
@@ -131,6 +132,80 @@ typedef int (*orte_rmgr_base_module_init_fn_t)(void);
  */
 
 typedef int (*orte_rmgr_base_module_finalize_fn_t)(void);
+
+/**
+    * GENERAL UTILITY FUNCTIONS
+ */
+
+/**
+ * Find an attribute
+ * Given a pointer array of attributes, return a pointer to the specified attribute
+ *
+ * @param attr_list A pointer to the list of attributes
+ * @param key The key indicating the attribute to be returned.
+ * @retval ptr A pointer to the orte_gpr_keyval_t containing the attribute.
+ * Note that this value is *not* being duplicated, nor is it being
+ * removed from the list, so alterations or release of the object will impact the list!
+ * @retval NULL The specified attribute was not found - this function does not
+ * consider this to be an error, so no ORTE_ERROR_LOG is printed out when this happens.
+ */
+typedef orte_attribute_t* (*orte_rmgr_base_module_find_attribute_fn_t)(opal_list_t* attr_list, char* key);
+
+/**
+ * Add an attribute
+ * Given a pointer array of attributes and the data for a new attribute,
+ * this function will create the gpr_keyval_t object for that attribute,
+ * populate it with the provided data, and append it to the list.
+ *
+ * @param attr_list A pointer to the list of attributes
+ * @param key The key for the attribute.
+ * @param type The data type to be stored in the attribute. A value
+ * of ORTE_UNDEF is acceptable to indicate that no data is being stored -
+ * the existence of the attribute on the list is all that is required.
+ * @param data A pointer to the data to be stored in the attribute. NULL
+ * is acceptable IF the data type is ORTE_UNDEF.
+ * @retval ORTE_SUCCESS Attribute was added to list.
+ * @retval ORTE_ERROR An appropriate error code indicating what went wrong.
+ */
+typedef int (*orte_rmgr_base_module_add_attribute_fn_t)(opal_list_t* attr_list, char* key,
+                                                        orte_data_type_t type, void *data);
+
+
+/**
+ * Update an attribute
+ * Given a pointer array of attributes and the data for a new attribute,
+ * this function will find the attribute matching the given key and
+ * replace the current value with the one given. If the attribute is NOT
+ * found on the list, it will be added to it.
+ *
+ * @param attr_list A pointer to the list of attributes
+ * @param key The key for the attribute.
+ * @param type The data type to be stored in the attribute. A value
+ * of ORTE_UNDEF is acceptable to indicate that no data is being stored -
+ * the existence of the attribute on the list is all that is required.
+ * @param data A pointer to the data to be stored in the attribute. NULL
+ * is acceptable IF the data type is ORTE_UNDEF.
+ * @retval ORTE_SUCCESS Attribute was added to list.
+ * @retval ORTE_ERROR An appropriate error code indicating what went wrong.
+ */
+typedef int (*orte_rmgr_base_module_update_attribute_fn_t)(opal_list_t* attr_list, char* key,
+                                                           orte_data_type_t type, void *data);
+
+
+/**
+ * Delete an attribute
+ * Given a pointer array of attributes, delete the specified attribute
+ *
+ * @param attr_list A pointer to the list of attributes
+ * @param key The key indicating the attribute to be deleted.
+ * @retval ORTE_SUCCESS Attribute was added to list.
+ * @retval ORTE_ERROR An appropriate error code indicating what went wrong. Note that
+ * an error code of NOT_FOUND will be returned if the specified attribute is
+ * not on the provided list - it is up to the caller to decide if this is an actual
+ * error. This function will NOT do an ORTE_ERROR_LOG in the case of NOT_FOUND.
+ */
+typedef int (*orte_rmgr_base_module_delete_attribute_fn_t)(opal_list_t* attr_list, char* key);
+
 
 /***   APP_CONTEXT FUNCTIONS   ***/
 /*
@@ -189,6 +264,10 @@ struct orte_rmgr_base_module_2_0_0_t {
     orte_rmgr_base_module_disconnect_fn_t			disconnect;
     orte_rmgr_base_module_finalize_fn_t             finalize;
     /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_module_find_attribute_fn_t       find_attribute;
+    orte_rmgr_base_module_add_attribute_fn_t        add_attribute;
+    orte_rmgr_base_module_update_attribute_fn_t     update_attribute;
+    orte_rmgr_base_module_delete_attribute_fn_t     delete_attribute;
     orte_rmgr_base_module_get_app_context_fn_t      get_app_context;
     orte_rmgr_base_module_store_app_context_fn_t    store_app_context;
     orte_rmgr_base_module_check_context_cwd_fn_t    check_context_cwd;

@@ -25,6 +25,8 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
@@ -222,6 +224,57 @@ int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
         }
     }
 
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
+                                    orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
+
+/*
+ * ATTRIBUTE LIST
+ */
+int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
+                                    orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+    orte_std_cntr_t count, num_attr, i;
+    orte_attribute_t *attr;
+    
+    count = 1;
+    if(ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &num_attr, &count, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* if there are any...unpack them */
+    for (i=0; i < num_attr; i++) {
+        attr = OBJ_NEW(orte_attribute_t);
+        if (NULL == attr) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        count = 1;
+        if(ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &attr, &count, ORTE_ATTRIBUTE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_list_append(dest, &attr->super);
+    }
+    
     return ORTE_SUCCESS;
 }
 

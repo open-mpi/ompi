@@ -26,7 +26,7 @@
 #include "ras_lsf_bproc.h"
 
 
-static int orte_ras_lsf_bproc_allocate(orte_jobid_t jobid)
+static int orte_ras_lsf_bproc_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     return ORTE_SUCCESS;
 }

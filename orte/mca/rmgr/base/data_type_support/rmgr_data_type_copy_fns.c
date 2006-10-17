@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
@@ -94,3 +95,49 @@ int orte_rmgr_base_copy_app_context_map(orte_app_context_map_t **dest, orte_app_
 
     return ORTE_SUCCESS;
 }
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_copy_attribute(orte_attribute_t **dest, orte_attribute_t *src, orte_data_type_t type)
+{
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)dest, src, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    return ORTE_SUCCESS;
+}
+
+/*
+ * ATTRIBUTE LIST
+ */
+int orte_rmgr_base_copy_attr_list(opal_list_t **dest, opal_list_t *src, orte_data_type_t type)
+{
+    int rc;
+    opal_list_item_t *item;
+    orte_attribute_t *attr;
+    
+    /* create the new object */
+    *dest = OBJ_NEW(opal_list_t);
+    if (NULL == *dest) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* copy data into it */
+    for (item = opal_list_get_first(src);
+         item != opal_list_get_end(src);
+         item = opal_list_get_next(item)) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&attr, item, ORTE_ATTRIBUTE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_list_append(*dest, &attr->super);
+    }
+    
+    return ORTE_SUCCESS;
+}
+

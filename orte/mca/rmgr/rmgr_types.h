@@ -23,6 +23,8 @@
 
 #include "opal/class/opal_object.h"
 
+#include "orte/mca/gpr/gpr_types.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -33,14 +35,13 @@ extern "C" {
 #define ORTE_RMGR_LAUNCHER      "orte-rmgr-launcher"
 
 /*
- * Constants for command values
+ * RMGR ATTRIBUTES
  */
-#define ORTE_RMGR_SETUP_JOB_CMD      1
-#define ORTE_RMGR_SPAWN_JOB_CMD      2
-#define ORTE_RMGR_SETUP_GATES_CMD	 3
+typedef orte_gpr_keyval_t orte_attribute_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
     
-#define ORTE_RMGR_CMD  ORTE_UINT8
-typedef uint8_t orte_rmgr_cmd_t;
+#define ORTE_RMGR_USE_PARENT_ALLOCATION     "orte-use-parent-alloc"
+    
 
 /* RESOURCE MANAGER DATA TYPES */
 

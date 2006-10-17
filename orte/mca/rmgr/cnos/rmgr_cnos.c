@@ -30,6 +30,8 @@
 #include <catamount/cnos_mpi_os.h>
 #endif
 
+#include "opal/class/opal_list.h"
+
 #include "orte/orte_constants.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/ns/ns.h"
@@ -49,7 +51,8 @@ static int orte_rmgr_cnos_spawn_job(
     orte_std_cntr_t num_connect,
     orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions);
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes);
 
 static int orte_rmgr_cnos_connect(orte_std_cntr_t num_connect,
                                   orte_process_name_t *connect);

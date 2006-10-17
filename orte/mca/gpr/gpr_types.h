@@ -40,10 +40,9 @@
 #include "orte/mca/schema/schema.h"
 #include "opal/class/opal_object.h"
 #include "orte/class/orte_pointer_array.h"
+
 #include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
-#include "orte/mca/rmgr/rmgr_types.h"
-#include "orte/mca/smr/smr_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -121,13 +120,12 @@ typedef uint16_t orte_gpr_addr_mode_t;
   * Key-value pairs for registry operations
   */
 typedef struct {
-    opal_object_t super;                /* required for this to be an object */
+    opal_list_item_t super;             /* required for this to be on a list */
     char *key;                          /* string key for this value */
     orte_data_value_t *value;           /* value */
 } orte_gpr_keyval_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
-#define ORTE_GPR_KEYVAL_EMPTY {{OBJ_CLASS(orte_gpr_keyval_t),0}, NULL, NULL}
 
 
 /** Return value structure for registry requests.
