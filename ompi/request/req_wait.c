@@ -20,7 +20,6 @@
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
 
-
 int ompi_request_wait(
     ompi_request_t ** req_ptr,
     ompi_status_public_t * status)
@@ -58,10 +57,10 @@ finished:
         status->_count     = req->req_status._count;
         status->_cancelled = req->req_status._cancelled;
     }
-    if( req->req_state == OMPI_REQUEST_INACTIVE ) {
-        return OMPI_SUCCESS;
-    }
     if( req->req_persistent ) {
+        if( req->req_state == OMPI_REQUEST_INACTIVE ) {
+            return OMPI_SUCCESS;
+        }
         req->req_state = OMPI_REQUEST_INACTIVE;
         return req->req_status.MPI_ERROR;
     }
