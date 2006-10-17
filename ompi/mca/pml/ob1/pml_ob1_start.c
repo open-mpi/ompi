@@ -27,6 +27,8 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
 {
     int rc;
     size_t i;
+    bool reuse_old_request = true;
+
     for(i=0; i<count; i++) {
         mca_pml_base_request_t *pml_request = (mca_pml_base_request_t*)requests[i];
         if(NULL == pml_request)
@@ -57,6 +59,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                     break;
                 }
 
+                reuse_old_request = false;
                 /* allocate a new request */
                 switch(pml_request->req_type) {
                     case MCA_PML_REQUEST_SEND: {
@@ -103,6 +106,17 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_SEND: 
             {
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
+                if( reuse_old_request ) {
+                    size_t offset = 0;
+                    /**
+                     * Reset the convertor in case we're dealing with the original request,
+                     * which when completed do not reset the convertor. For the other case
+                     * (freshly allocated request) the convertor_set_position is optimized,
+                     * it will not do anything is it's not required.
+                     */
+                    ompi_convertor_set_position( &sendreq->req_send.req_convertor,
+                                                 &offset );
+                }
                 MCA_PML_OB1_SEND_REQUEST_START(sendreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;

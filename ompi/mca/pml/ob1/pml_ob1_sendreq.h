@@ -108,19 +108,18 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 }
 
 
-static inline void mca_pml_ob1_free_rdma_resources(
-        mca_pml_ob1_send_request_t* sendreq)
+static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* sendreq)
 {
     size_t r;
 
     /* return mpool resources */
     for(r = 0; r < sendreq->req_rdma_cnt; r++) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;
-            if( NULL != reg ) {
-                reg->mpool->mpool_release(reg->mpool, reg);
-            }
+        if( NULL != reg ) {
+            reg->mpool->mpool_release(reg->mpool, reg);
         }
-        sendreq->req_rdma_cnt = 0;
+    }
+    sendreq->req_rdma_cnt = 0;
 }
 
 
@@ -151,7 +150,6 @@ do {                                                                            
                                                                                   \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                             &(sendreq->req_send.req_base), PERUSE_SEND);          \
-                                                                                  \
 } while(0)
 
 /*
@@ -174,7 +172,6 @@ do {                                                                            
                                                                                         \
         /* return mpool resources */                                                    \
         mca_pml_ob1_free_rdma_resources(sendreq);                                       \
-        sendreq->req_rdma_cnt = 0;                                                      \
                                                                                         \
         if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&            \
             sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {        \
@@ -190,13 +187,6 @@ do {                                                                            
                                                                                         \
         if( sendreq->req_send.req_base.req_free_called ) {                              \
             MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                                 \
-        } else {                                                                        \
-            if(sendreq->req_send.req_base.req_ompi.req_persistent &&                    \
-               (0 != sendreq->req_send.req_bytes_packed) ) {                            \
-                /* rewind convertor */                                                  \
-                size_t offset = 0;                                                      \
-                ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset); \
-            }                                                                           \
         }                                                                               \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                         \
 } while (0)
