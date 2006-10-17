@@ -153,17 +153,17 @@ struct ddt_elem_desc {
     ddt_elem_id_description common;   /**< basic data description and flags */
     uint32_t                count;    /**< number of blocks */
     uint32_t                blocklen; /**< number of elements on each block */
-    int32_t                 extent;   /**< extent of each block (in bytes) */
-    long                    disp;     /**< displacement of the first block */
+    ptrdiff_t               extent;   /**< extent of each block (in bytes) */
+    ptrdiff_t               disp;     /**< displacement of the first block */
 };
 typedef struct ddt_elem_desc ddt_elem_desc_t;
 
 struct ddt_loop_desc {
     ddt_elem_id_description common; /**< basic data description and flags */
     uint32_t                loops;  /**< number of elements */
-    uint32_t                unused; /**< not used right now */
     uint32_t                items;  /**< number of items in the loop */
-    long                    extent; /**< extent of the whole loop */
+    size_t                  unused; /**< not used right now */
+    ptrdiff_t               extent; /**< extent of the whole loop */
 };
 typedef struct ddt_loop_desc ddt_loop_desc_t;
 
@@ -171,8 +171,8 @@ struct ddt_endloop_desc {
     ddt_elem_id_description common;           /**< basic data description and flags */
     uint32_t                items;            /**< number of elements */
     uint32_t                unused;           /**< not used right now */
-    uint32_t                size;             /**< real size of the data in the loop */
-    long                    first_elem_disp;  /**< the displacement of the first block in the loop */
+    size_t                  size;             /**< real size of the data in the loop */
+    ptrdiff_t               first_elem_disp;  /**< the displacement of the first block in the loop */
 };
 typedef struct ddt_endloop_desc ddt_endloop_desc_t;
 
@@ -234,19 +234,18 @@ extern const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED];
 int32_t ompi_ddt_default_convertors_init( void );
 int32_t ompi_ddt_default_convertors_fini( void );
 
-#define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP, END_LOOP) \
+#define SAVE_STACK( PSTACK, INDEX, TYPE, COUNT, DISP) \
 do { \
    (PSTACK)->index    = (INDEX); \
    (PSTACK)->type     = (TYPE); \
    (PSTACK)->count    = (COUNT); \
    (PSTACK)->disp     = (DISP); \
-   (PSTACK)->end_loop = (END_LOOP); \
 } while(0)
 
-#define PUSH_STACK( PSTACK, STACK_POS, INDEX, TYPE, COUNT, DISP, END_LOOP) \
+#define PUSH_STACK( PSTACK, STACK_POS, INDEX, TYPE, COUNT, DISP) \
 do { \
    dt_stack_t* pTempStack = (PSTACK) + 1; \
-   SAVE_STACK( pTempStack, (INDEX), (TYPE), (COUNT), (DISP), (END_LOOP) );  \
+   SAVE_STACK( pTempStack, (INDEX), (TYPE), (COUNT), (DISP) );  \
    (STACK_POS)++; \
    (PSTACK) = pTempStack; \
 } while(0)

@@ -1071,7 +1071,7 @@ int mca_pml_ob1_send_request_put_frag(
     /* if registration doesnt exist - create one */
     if (mca_pml_ob1.leave_pinned_pipeline && reg == NULL) {
         unsigned char* base;
-        long lb;
+        ptrdiff_t lb;
         ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
         base = (unsigned char*)sendreq->req_send.req_convertor.pBaseBuf + lb + offset;
         reg = mca_pml_ob1_rdma_register(bml_btl, base, frag->rdma_length);

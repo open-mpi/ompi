@@ -58,9 +58,9 @@ ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
 {
     dt_stack_t* pStack = pConv->pStack;
     char *source_base = NULL;
-    size_t length = pConv->local_size - pConv->bConverted;
-    uint32_t iov_count, initial_amount = pConv->bConverted;
-    long initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+    uint32_t iov_count;
+    size_t length = pConv->local_size - pConv->bConverted, initial_amount = pConv->bConverted;
+    ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     *freeAfter = 0;
     source_base = (pConv->pBaseBuf + initial_displ + pStack[0].disp + pStack[1].disp);
@@ -107,20 +107,20 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
     char *user_memory, *packed_buffer;
-    long extent;
-    uint32_t max_allowed, i, index;
-    uint32_t iov_count, total_bytes_converted = 0;
-    long initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
+	uint32_t i, index, iov_count;
+    size_t max_allowed, total_bytes_converted = 0;
+    ptrdiff_t extent;
+    ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
     extent = pData->ub - pData->lb;
-    assert( (pData->flags & DT_FLAG_CONTIGUOUS) && ((long)pData->size != extent) );
+    assert( (pData->flags & DT_FLAG_CONTIGUOUS) && ((ptrdiff_t)pData->size != extent) );
 
     /* Limit the amount of packed data to the data left over on this convertor */
     max_allowed = pConv->local_size - pConv->bConverted;
     if( max_allowed > (*max_data) )
         max_allowed = (*max_data);
 
-    i = pConv->bConverted / pData->size;  /* how many we already pack */
+    i = (uint32_t)(pConv->bConverted / pData->size);  /* how many we already pack */
 
     *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
@@ -169,7 +169,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                         iov[index].iov_base = user_memory;
                         iov[index].iov_len = pData->size;
                         user_memory += extent;
-                        COMPUTE_CSUM( iov[index].iov_base, iov[index].iov_len, pConv );
+                        COMPUTE_CSUM( iov[index].iov_base, (size_t)iov[index].iov_len, pConv );
                     }
                     max_allowed -= iov[index].iov_len;
                     total_bytes_converted += iov[index].iov_len;
@@ -186,7 +186,8 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
         }
 
         {
-            uint32_t done, counter;
+            uint32_t counter;
+			size_t done;
 
             if( iov[iov_count].iov_base == NULL ) {
                 size_t length = iov[iov_count].iov_len;
@@ -212,7 +213,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                 total_bytes_converted += done;
             }
             user_memory = pConv->pBaseBuf + initial_displ + i * extent;
-            counter = max_allowed / pData->size;
+            counter = (uint32_t)(max_allowed / pData->size);
             if( counter > pConv->count ) counter = pConv->count;
             for( i = 0; i < counter; i++ ) {
                 OMPI_DDT_SAFEGUARD_POINTER( user_memory, pData->size, pConv->pBaseBuf, pData, pConv->count );
@@ -265,7 +266,8 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     dt_elem_desc_t* pElem;
     const ompi_datatype_t *pData = pConvertor->pDesc;
     char *source_base, *destination;
-    uint32_t iov_len_local, iov_count;
+    size_t iov_len_local;
+	uint32_t iov_count;
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_pack( %p, {%p, %d}, %d )\n", (void*)pConvertor,
                            iov[0].iov_base, iov[0].iov_len, *out_size ); );
@@ -279,7 +281,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     pStack = pConvertor->pStack + pConvertor->stack_pos;
     pos_desc     = pStack->index;
     source_base  = pConvertor->pBaseBuf + pStack->disp;
-    count_desc   = pStack->count;
+    count_desc   = (uint32_t)pStack->count;
     pStack--;
     pConvertor->stack_pos--;
     pElem = &(description[pos_desc]);
@@ -350,7 +352,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                                        pStack->count, pConvertor->stack_pos, pos_desc, pStack->disp, iov_len_local ); );
             }
             if( DT_LOOP == pElem->elem.common.type ) {
-                long local_disp = (long)source_base;
+                ptrdiff_t local_disp = (ptrdiff_t)source_base;
                 if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
                     PACK_CONTIGUOUS_LOOP( pConvertor, pElem, count_desc,
                                           source_base, destination, iov_len_local );
@@ -360,9 +362,9 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                     }
                     /* Save the stack with the correct last_count value. */
                 }
-                local_disp = (long)source_base - local_disp;
+                local_disp = (ptrdiff_t)source_base - local_disp;
                 PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_LOOP, count_desc,
-                            pStack->disp + local_disp, pos_desc + pElem->elem.disp + 1);
+                            pStack->disp + local_disp);
                 pos_desc++;
             update_loop_description:  /* update the current state */
                 source_base = pConvertor->pBaseBuf + pStack->disp;
@@ -402,7 +404,7 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
     }
     /* I complete an element, next step I should go to the next one */
     PUSH_STACK( pStack, pConvertor->stack_pos, pos_desc, DT_BYTE, count_desc,
-                source_base - pStack->disp - pConvertor->pBaseBuf, pos_desc );
+                source_base - pStack->disp - pConvertor->pBaseBuf );
     DO_DEBUG( opal_output( 0, "pack save stack stack_pos %d pos_desc %d count_desc %d disp %ld\n",
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
     return 0;

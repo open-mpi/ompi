@@ -45,7 +45,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
 {
     int err;
     char *rbuf_original = NULL, *inplace_temp = NULL;
-    long true_lb, true_extent, lb, extent;
+    ptrdiff_t true_lb, true_extent, lb, extent;
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
        allocate temp buffer) -- note that rank 0 can use IN_PLACE
@@ -112,8 +112,8 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
     int err;
     int i;
     char *tmpbuf = NULL, *ptmp;
-    long rlb, slb, rextent, sextent;
-    long incr;
+    ptrdiff_t rlb, slb, rextent, sextent;
+    ptrdiff_t incr;
     ompi_request_t *req;
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 

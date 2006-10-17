@@ -279,7 +279,7 @@ const ompi_datatype_t* ompi_ddt_basicDatatypes[DT_MAX_PREDEFINED] = {
 
 ompi_pointer_array_t *ompi_datatype_f_to_c_table = NULL;
 
-int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
+size_t ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
 
 #define COPY_DATA_DESC( PDST, PSRC )                                    \
     do {                                                                \
@@ -316,20 +316,20 @@ int ompi_ddt_local_sizes[DT_MAX_PREDEFINED];
         ompi_datatype_t* types[2];                                      \
         ompi_datatype_t* ptype;                                         \
         int bLength[2] = {1, 1};                                        \
-        long base, displ[2];                                            \
+        MPI_Aint base, displ[2];                                       \
                                                                         \
         types[0] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[MPIType1]; \
         types[1] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[MPIType2]; \
-        base = (long)(&(s[0]));                                         \
-        displ[0] = (long)(&(s[0].v1));                                  \
+        base = (ptrdiff_t)(&(s[0]));                                    \
+        displ[0] = (ptrdiff_t)(&(s[0].v1));                             \
         displ[0] -= base;                                               \
-        displ[1] = (long)(&(s[0].v2));                                  \
+        displ[1] = (ptrdiff_t)(&(s[0].v2));                             \
         displ[1] -= base;                                               \
                                                                         \
         ompi_ddt_create_struct( 2, bLength, displ, types, &ptype );     \
-        displ[0] = (long)(&(s[1]));                                     \
+        displ[0] = (ptrdiff_t)(&(s[1]));                                \
         displ[0] -= base;                                               \
-        if( displ[0] != (displ[1] + (long)sizeof(type2)) )              \
+        if( displ[0] != (displ[1] + (ptrdiff_t)sizeof(type2)) )         \
             ptype->ub = displ[0];  /* force a new extent for the datatype */ \
         ptype->flags |= (FLAGS);                                        \
         ptype->id = MPIDDT;                                             \
@@ -418,7 +418,7 @@ int32_t ompi_ddt_init( void )
 
         datatype->btypes[i]         = 1;
         /* Check if the data contain gaps */
-        if( (datatype->ub - datatype->lb) == (long)datatype->size ) {
+        if( (datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size ) {
             datatype->desc.desc[0].elem.common.flags |= DT_FLAG_NO_GAPS;
         }
     }
@@ -594,7 +594,7 @@ int32_t ompi_ddt_init( void )
     for( i = 0; i < ompi_mpi_cxx_ldblcplex.d_f_to_c_index; i++ ) {
         ompi_datatype_t* datatype = (ompi_datatype_t*)ompi_pointer_array_get_item( ompi_datatype_f_to_c_table, i );
 
-        if( (datatype->ub - datatype->lb) == (long)datatype->size ) {
+        if( (datatype->ub - datatype->lb) == (ptrdiff_t)datatype->size ) {
             datatype->flags |= DT_FLAG_NO_GAPS;
         } else {
             datatype->flags &= ~DT_FLAG_NO_GAPS;
@@ -714,11 +714,11 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
                                (int)pDesc->loop.extent );
 	else if( DT_END_LOOP == pDesc->elem.common.type )
 	    index += snprintf( ptr + index, length - index, "prev %d elements first elem displacement %ld size of data %d\n",
-                           (int)pDesc->end_loop.items, pDesc->end_loop.first_elem_disp,
+                           (int)pDesc->end_loop.items, (long)pDesc->end_loop.first_elem_disp,
                            (int)pDesc->end_loop.size );
         else
             index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) extent %d (size %ld)\n",
-                               (int)pDesc->elem.count, pDesc->elem.disp, pDesc->elem.disp,
+                               (int)pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp,
                                (int)pDesc->elem.extent, pDesc->elem.count * ompi_ddt_basicDatatypes[pDesc->elem.common.type]->size );
         pDesc++;
 
@@ -757,8 +757,8 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
                                                "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
                                                "nbElems %d loops %d flags %X (",
                      (void*)pData, pData->name, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
-                     pData->true_lb, pData->true_ub, pData->true_ub - pData->true_lb,
-                     pData->lb, pData->ub, pData->ub - pData->lb,
+                     (long)pData->true_lb, (long)pData->true_ub, (long)(pData->true_ub - pData->true_lb),
+                     (long)pData->lb, (long)pData->ub, (long)(pData->ub - pData->lb),
                      (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
     /* dump the flags */
     if( pData->flags == DT_FLAG_PREDEFINED )

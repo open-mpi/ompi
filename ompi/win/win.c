@@ -72,7 +72,7 @@ ompi_win_finalize(void)
 
 
 int
-ompi_win_create(void *base, long size, 
+ompi_win_create(void *base, size_t size, 
                 int disp_unit, ompi_communicator_t *comm,
                 ompi_info_t *info,
                 ompi_win_t** newwin)

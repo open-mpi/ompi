@@ -26,7 +26,7 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
 {
     ompi_datatype_t* pdt;
     int i, dLength, endat, disp;
-    long extent = oldType->ub - oldType->lb;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
@@ -62,13 +62,13 @@ int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* 
     return OMPI_SUCCESS;
 }
 
-int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pDisp,
+int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const MPI_Aint* pDisp,
                                   const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
     ompi_datatype_t* pdt;
     int i, dLength;
-    long extent = oldType->ub - oldType->lb;
-    long disp, endat;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
+    ptrdiff_t disp, endat;
 
     if( 0 == count ) {
         *newType = ompi_ddt_create( 0 );
@@ -108,7 +108,7 @@ int32_t ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
 {
    ompi_datatype_t* pdt;
    int i, dLength, endat, disp;
-   long extent = oldType->ub - oldType->lb;
+   ptrdiff_t extent = oldType->ub - oldType->lb;
 
    if( (count == 0) || (bLength == 0) ) {
       *newType = ompi_ddt_create(1);

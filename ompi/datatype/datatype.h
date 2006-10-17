@@ -35,6 +35,7 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#include <stddef.h>
 #include <string.h>
 #include "ompi/constants.h"
 #include "opal/class/opal_object.h"
@@ -96,13 +97,13 @@ typedef struct dt_type_desc {
  */
 typedef struct ompi_datatype_t {
     opal_object_t      super;    /**< basic superclass */
-    unsigned long      size;     /**< total size in bytes of the memory used by the data if
+    size_t             size;     /**< total size in bytes of the memory used by the data if
                                   * the data is put on a contiguous buffer */
     uint32_t           align;    /**< data should be aligned to */
-    long               true_lb;
-    long               true_ub;  /**< the true ub of the data without user defined lb and ub */
-    long               lb;       /**< lower bound in memory */
-    long               ub;       /**< upper bound in memory */
+    ptrdiff_t          true_lb;
+    ptrdiff_t          true_ub;  /**< the true ub of the data without user defined lb and ub */
+    ptrdiff_t          lb;       /**< lower bound in memory */
+    ptrdiff_t          ub;       /**< upper bound in memory */
     uint16_t           flags;    /**< the flags */
     uint16_t           id;       /**< data id, normally the index in the data array. */
     uint32_t           nbElems;  /**< total number of elements inside the datatype */
@@ -146,19 +147,19 @@ void ompi_ddt_dump( const ompi_datatype_t* pData );
 /* data creation functions */
 OMPI_DECLSPEC int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_contiguous( int count, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
+OMPI_DECLSPEC int32_t ompi_ddt_create_vector( int count, int bLength, int stride,
                                               const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_hvector( int count, int bLength, long stride,
+OMPI_DECLSPEC int32_t ompi_ddt_create_hvector( int count, int bLength, MPI_Aint stride,
                                                const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_indexed( int count, const int* pBlockLength, const int* pDisp,
                                                const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const long* pDisp,
+OMPI_DECLSPEC int32_t ompi_ddt_create_hindexed( int count, const int* pBlockLength, const MPI_Aint* pDisp,
                                                 const ompi_datatype_t* oldType, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_indexed_block( int count, int bLength, const int* pDisp,
                                                      const ompi_datatype_t* oldType, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const long* pDisp,
+OMPI_DECLSPEC int32_t ompi_ddt_create_struct( int count, const int* pBlockLength, const MPI_Aint* pDisp,
                                               ompi_datatype_t* const* pTypes, ompi_datatype_t** newType );
-OMPI_DECLSPEC int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long extent, ompi_datatype_t** newType );
+OMPI_DECLSPEC int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, MPI_Aint lb, MPI_Aint extent, ompi_datatype_t** newType );
 OMPI_DECLSPEC int32_t ompi_ddt_create_subarray( int ndims, const int* pSizes,
                                                 const int* pSubSizes, const int* pStarts,
                                                 int order, const ompi_datatype_t* oldType, ompi_datatype_t** newType );
@@ -169,22 +170,22 @@ OMPI_DECLSPEC int32_t ompi_ddt_create_darray( int size, int rank, int ndims,
                                               ompi_datatype_t** newType );
 
 OMPI_DECLSPEC int32_t ompi_ddt_add( ompi_datatype_t* pdtBase, const ompi_datatype_t* pdtAdd, uint32_t count,
-                                    long disp, long extent );
+                                    ptrdiff_t disp, ptrdiff_t extent );
 
-static inline int32_t ompi_ddt_type_lb( const ompi_datatype_t* pData, long* disp )
+static inline int32_t ompi_ddt_type_lb( const ompi_datatype_t* pData, ptrdiff_t* disp )
 { *disp = pData->lb; return 0; }
-static inline int32_t ompi_ddt_type_ub( const ompi_datatype_t* pData, long* disp )
+static inline int32_t ompi_ddt_type_ub( const ompi_datatype_t* pData, ptrdiff_t* disp )
 { *disp = pData->ub; return 0; }
-static inline int32_t ompi_ddt_type_size ( const ompi_datatype_t* pData, int32_t *size )
+static inline int32_t ompi_ddt_type_size ( const ompi_datatype_t* pData, size_t *size )
 { *size = pData->size; return 0; }
-static inline int32_t ompi_ddt_type_extent( const ompi_datatype_t* pData, long* extent )
+static inline int32_t ompi_ddt_type_extent( const ompi_datatype_t* pData, ptrdiff_t* extent )
 { *extent = pData->ub - pData->lb; return 0; }
 
-static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, long* lb, long* extent)
+static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, ptrdiff_t* lb, ptrdiff_t* extent)
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
-static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, long* true_lb, long* true_extent)
+static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, ptrdiff_t* true_lb, ptrdiff_t* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
-static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, unsigned long* size )
+static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, size_t* size )
 { *size = pData->size; return 0; }
 /*
  * This function return true (1) if the datatype representation depending on the count
@@ -194,11 +195,11 @@ static inline int32_t ompi_ddt_is_contiguous_memory_layout( const ompi_datatype_
 {
    if( !(datatype->flags & DT_FLAG_CONTIGUOUS) ) return 0;
    if( (count == 1) || (datatype->flags & DT_FLAG_NO_GAPS) ) return 1;
-   assert( (long)datatype->size != (datatype->ub - datatype->lb) );
+   assert( (ptrdiff_t)datatype->size != (datatype->ub - datatype->lb) );
    return 0;
 }
 
-OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, int32_t iSize );
+OMPI_DECLSPEC int32_t ompi_ddt_get_element_count( const ompi_datatype_t* pData, size_t iSize );
 OMPI_DECLSPEC int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* pData, int32_t count,
                                                       char* pDestBuf, char* pSrcBuf );
 
@@ -215,11 +216,11 @@ OMPI_DECLSPEC int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_da
  */
 OMPI_DECLSPEC int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
                                          int32_t * ci, int32_t * i,
-                                         int32_t * ca, long* a,
+                                         int32_t * ca, MPI_Aint* a,
                                          int32_t * cd, ompi_datatype_t** d, int32_t * type);
 OMPI_DECLSPEC int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
                                          int32_t ci, int32_t ** i,
-                                         int32_t ca, long* a,
+                                         int32_t ca, MPI_Aint* a,
                                          int32_t cd, ompi_datatype_t** d,int32_t type);
 OMPI_DECLSPEC int32_t ompi_ddt_copy_args( const ompi_datatype_t* source_data,
                                           ompi_datatype_t* dest_data );

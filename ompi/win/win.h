@@ -79,7 +79,7 @@ struct ompi_win_t {
     int w_disp_unit;
 
     void *w_baseptr;
-    long w_size;
+    size_t w_size;
 
     /** Current epoch / mode (access, expose, lock, etc.).  Checked by
         the argument checking code in the MPI layer, set by the OSC
@@ -97,7 +97,7 @@ OMPI_DECLSPEC extern ompi_win_t ompi_mpi_win_null;
 int ompi_win_init(void);
 int ompi_win_finalize(void);
 
-int ompi_win_create(void *base, long size, int disp_unit, 
+int ompi_win_create(void *base, size_t size, int disp_unit, 
                     ompi_communicator_t *comm, ompi_info_t *info,
                     ompi_win_t **newwin);
 

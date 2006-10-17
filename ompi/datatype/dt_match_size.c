@@ -43,7 +43,7 @@ ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
             continue;
         if( (datatype->flags & DT_FLAG_DATA_TYPE) != datakind )
             continue;
-        if( (unsigned long)size == datatype->size ) {
+        if( (size_t)size == datatype->size ) {
             return datatype;
         }
     }

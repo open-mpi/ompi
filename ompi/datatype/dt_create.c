@@ -106,14 +106,14 @@ ompi_datatype_t* ompi_ddt_create( int32_t expectedSize )
     return datatype;
 }
 
-int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, long lb, long extent, ompi_datatype_t** newType )
+int32_t ompi_ddt_create_resized( const ompi_datatype_t* oldType, MPI_Aint lb, MPI_Aint extent, ompi_datatype_t** newType )
 {
     ompi_ddt_duplicate( oldType, newType );
     (*newType)->lb = lb;
     (*newType)->ub = lb + extent;
 
     (*newType)->flags &= ~DT_FLAG_NO_GAPS;
-    if( (extent == (long)oldType->size) && (oldType->flags & DT_FLAG_CONTIGUOUS) ) {
+    if( (extent == (ptrdiff_t)oldType->size) && (oldType->flags & DT_FLAG_CONTIGUOUS) ) {
         (*newType)->flags |= DT_FLAG_NO_GAPS;
     }
     return OMPI_SUCCESS;

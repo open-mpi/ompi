@@ -23,22 +23,23 @@
 #include "ompi/datatype/convertor_internal.h"
 
 static inline void
-ompi_dt_swap_bytes(void *to_p, const void *from_p, const long size)
+ompi_dt_swap_bytes(void *to_p, const void *from_p, const size_t size)
 {
-    int i;
+    size_t i, back_i;
     uint8_t *to = (uint8_t*) to_p, *from = (uint8_t*) from_p;
-    for (i = 0 ; i < size ; i++) {
-        to[size - 1 - i] = from[i];
+	back_i = size - 1;
+    for (i = 0 ; i < size ; i++, back_i--) {
+        to[back_i] = from[i];
     }
 }
 
 
-#define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                       \
-static int32_t                                                          \
-copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
-                                const char* from, uint32_t from_len, long from_extent, \
-                                char* to, uint32_t to_length, long to_extent, \
-                                uint32_t *advance)                      \
+#define COPY_TYPE_HETEROGENEOUS( TYPENAME, TYPE )                                         \
+static int32_t                                                                            \
+copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,             \
+                                const char* from, size_t from_len, ptrdiff_t from_extent, \
+                                char* to, size_t to_length, ptrdiff_t to_extent,          \
+                                ptrdiff_t *advance)                     \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -53,8 +54,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
-    } else if (sizeof(TYPE) == to_extent &&                             \
-               sizeof(TYPE) == from_extent) {                           \
+    } else if ((ptrdiff_t)sizeof(TYPE) == to_extent &&                  \
+               (ptrdiff_t)sizeof(TYPE) == from_extent) {                \
          MEMCPY( to, from, count * sizeof(TYPE) );                      \
     } else {                                                            \
          /* source or destination are non-contigous */                  \
@@ -72,8 +73,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
 #define COPY_2TYPE_HETEROGENEOUS( TYPENAME, TYPE1, TYPE2 )              \
 static int32_t                                                          \
 copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
-                                const char* from, uint32_t from_len, long from_extent, \
-                                char* to, uint32_t to_length, long to_extent, \
+                                const char* from, uint32_t from_len, ptrdiff_t from_extent, \
+                                char* to, uint32_t to_length, ptrdiff_t to_extent, \
                                 uint32_t *advance)                      \
 {                                                                       \
     uint32_t i;                                                         \
@@ -96,8 +97,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
             to += to_extent;                                            \
             from += from_extent;                                        \
         }                                                               \
-    } else if (sizeof(TYPE1) + sizeof(TYPE2) == to_extent &&            \
-               sizeof(TYPE1) + sizeof(TYPE2) == from_extent) {          \
+    } else if ((ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == to_extent &&   \
+               (ptrdiff_t)(sizeof(TYPE1) + sizeof(TYPE2)) == from_extent) { \
         /* source and destination are contigous */                      \
         MEMCPY( to, from, count * (sizeof(TYPE1) + sizeof(TYPE2)) );    \
     } else {                                                            \
@@ -120,8 +121,8 @@ copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
 #define COPY_2COMPLEX_HETEROGENEOUS( TYPENAME, TYPE )                   \
 static int32_t                                                          \
 copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
-                                         const char* from, uint32_t from_len, long from_extent, \
-                                         char* to, uint32_t to_length, long to_extent, \
+                                         const char* from, uint32_t from_len, ptrdiff_t from_extent, \
+                                         char* to, uint32_t to_length, ptrdiff_t to_extent, \
                                          uint32_t *advance)             \
 {                                                                       \
     uint32_t i;                                                         \
@@ -161,13 +162,13 @@ copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t 
 
 
 static inline void
-datatype_check(char *type, uint32_t local_size, uint32_t remote_size, uint32_t *count, 
-               const char* from, uint32_t from_len, long from_extent,
-               char* to, uint32_t to_len, long to_extent)
+datatype_check(char *type, size_t local_size, size_t remote_size, uint32_t *count, 
+               const char* from, size_t from_len, ptrdiff_t from_extent,
+               char* to, size_t to_len, ptrdiff_t to_extent)
 {
     /* make sure the remote buffer is large enough to hold the data */  
     if( (remote_size * *count) > from_len ) {                       
-        *count = from_len / remote_size;                            
+        *count = (uint32_t)(from_len / remote_size);
         if( (*count * remote_size) != from_len ) {                  
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", 
                   from_len - (*count * remote_size) );              
@@ -184,8 +185,8 @@ datatype_check(char *type, uint32_t local_size, uint32_t remote_size, uint32_t *
 /* char has no endian issues, so don't really worry about it */
 static int32_t 
 copy_char_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
-                        const char* from, uint32_t from_len, long from_extent,
-                        char* to, uint32_t to_length, long to_extent,
+                        const char* from, uint32_t from_len, ptrdiff_t from_extent,
+                        char* to, uint32_t to_length, ptrdiff_t to_extent,
                         uint32_t *advance)
 {
     uint32_t i;
@@ -220,8 +221,8 @@ copy_char_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
     }
 static int32_t
 copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
-                            const char* from, uint32_t from_len, long from_extent,
-                            char* to, uint32_t to_length, long to_extent,
+                            const char* from, uint32_t from_len, ptrdiff_t from_extent,
+                            char* to, uint32_t to_length, ptrdiff_t to_extent,
                             uint32_t *advance)
 {
     uint32_t i;
@@ -277,8 +278,8 @@ copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
     }
 static int32_t
 copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
-                            const char* from, uint32_t from_len, long from_extent,
-                            char* to, uint32_t to_length, long to_extent,
+                            const char* from, uint32_t from_len, ptrdiff_t from_extent,
+                            char* to, uint32_t to_length, ptrdiff_t to_extent,
                             uint32_t *advance)
 {
     uint32_t i;

@@ -31,7 +31,7 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_darray";
 
-static MPI_Datatype cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, MPI_Datatype oldtype )
+static ompi_datatype_t* cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, ompi_datatype_t* oldtype )
 {
    int count, darg_last;
 
@@ -74,7 +74,7 @@ int MPI_Type_create_darray(int size,
 
 {
     int32_t i, darg_i, step, end_loop, *r;
-    MPI_Datatype temptype;
+    ompi_datatype_t* temptype;
 
     if (MPI_PARAM_CHECK) {
         int prod_psize = 1;
@@ -154,7 +154,6 @@ int MPI_Type_create_darray(int size,
     } while( i != end_loop );
 
     free( r );
-    /* This function is not yet implemented */
 
     {
         int* a_i[8];

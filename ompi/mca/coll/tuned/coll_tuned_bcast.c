@@ -43,8 +43,8 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     int new_sendcount;  /* used to mane the size for the next pipelined receive */
     int realsegsize;
     char *tmpbuf = (char*)buff;
-    long type_extent, lb;
-    int typelng;
+    size_t typelng;
+    ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
     ompi_coll_chain_t* chain;
 
@@ -245,9 +245,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     int sendcount[2];      /* the same like segcount, except for the last segment */ 
     int realsegsize[2];
     char *tmpbuf[2];
-    int type_size;
-    long type_extent;
-    long lb;
+    size_t type_size;
+    ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
     ompi_coll_tree_t *tree;
 
@@ -506,9 +505,8 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
     int sendcount;      /* the same like segcount, except for the last segment */ 
     int realsegsize;
     char *tmpbuf;
-    int type_size;
-    long type_extent;
-    long lb;
+    size_t type_size;
+    ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req, *send_reqs[2];
     ompi_coll_tree_t *tree;
 

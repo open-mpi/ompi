@@ -45,9 +45,10 @@ static inline void copy_predefined_data( const dt_elem_desc_t* ELEM,
                                          uint32_t COUNT,
                                          char* SOURCE,
                                          char* DESTINATION,
-                                         uint32_t* SPACE )
+                                         size_t* SPACE )
 {
-    uint32_t _copy_count = (COUNT), _copy_blength;
+    uint32_t _copy_count = (COUNT);
+	size_t _copy_blength;
     const ddt_elem_desc_t* _elem = &((ELEM)->elem);
     char* _source = (SOURCE) + _elem->disp;
     char* _destination = (DESTINATION) + _elem->disp;
@@ -87,7 +88,7 @@ static inline void copy_contiguous_loop( const dt_elem_desc_t* ELEM,
                                          uint32_t COUNT,
                                          char* SOURCE,
                                          char* DESTINATION,
-                                         uint32_t* SPACE )
+                                         size_t* SPACE )
 {
     ddt_loop_desc_t *_loop = (ddt_loop_desc_t*)(ELEM);
     ddt_endloop_desc_t* _end_loop = (ddt_endloop_desc_t*)((ELEM) + _loop->items);
@@ -96,7 +97,7 @@ static inline void copy_contiguous_loop( const dt_elem_desc_t* ELEM,
     size_t _copy_loops = (COUNT);
     uint32_t _i;
 
-    if( _loop->extent == (long)_end_loop->size ) {  /* the loop is contiguous */
+    if( _loop->extent == (ptrdiff_t)_end_loop->size ) {  /* the loop is contiguous */
         _copy_loops *= _end_loop->size;
         OMPI_DDT_SAFEGUARD_POINTER( _source, _copy_loops, (SOURCE_BASE),
                                     (DATATYPE), (TOTAL_COUNT) );
@@ -133,7 +134,7 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
     uint32_t count_desc;      /* the number of items already done in the actual pos_desc */
     dt_elem_desc_t* description;
     dt_elem_desc_t* pElem;
-    uint32_t iov_len_local;
+    size_t iov_len_local;
     char *source = source_base, *destination = destination_base;
 
     DO_DEBUG( opal_output( 0, "ompi_ddt_copy_content_same_ddt( %p, %d, dst %p, src %p )\n",
@@ -149,13 +150,13 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
      * do a memcpy.
      */
     if( (datatype->flags & DT_FLAG_CONTIGUOUS) == DT_FLAG_CONTIGUOUS ) {
-        long extent = (datatype->ub - datatype->lb);
+        ptrdiff_t extent = (datatype->ub - datatype->lb);
         /* Now that we know the datatype is contiguous, we should move the 2 pointers
          * source and destination to the correct displacement.
          */
         destination += datatype->lb;
         source      += datatype->lb;
-        if( (long)datatype->size == extent ) {  /* all contiguous == no gaps around */
+        if( (ptrdiff_t)datatype->size == extent ) {  /* all contiguous == no gaps around */
             size_t total_length = datatype->size * count;
             size_t memcpy_chunk = ompi_datatype_memcpy_block_size;
             while( total_length > 0 ) {
@@ -194,10 +195,8 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
 
     if( datatype->opt_desc.desc != NULL ) {
         description = datatype->opt_desc.desc;
-        pStack->end_loop = datatype->opt_desc.used;
     } else {
         description = datatype->desc.desc;
-        pStack->end_loop = datatype->desc.used;
     }
 
     if( description[0].elem.common.type == DT_LOOP )
@@ -241,16 +240,16 @@ int32_t ompi_ddt_copy_content_same_ddt( const ompi_datatype_t* datatype, int32_t
                                    pStack->count, stack_pos, pos_desc, pStack->disp, iov_len_local ); );
         }
         if( DT_LOOP == pElem->elem.common.type ) {
-            long local_disp = (long)source;
+            ptrdiff_t local_disp = (ptrdiff_t)source;
             if( pElem->loop.common.flags & DT_FLAG_CONTIGUOUS ) {
                 COPY_CONTIGUOUS_LOOP( pElem, datatype, source_base, count, count_desc,
                                       source, destination, iov_len_local );
                 pos_desc += pElem->loop.items + 1;
                 goto update_loop_description;
             }
-            local_disp = (long)source - local_disp;
+            local_disp = (ptrdiff_t)source - local_disp;
             PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, count_desc,
-                        pStack->disp + local_disp, pos_desc + pElem->elem.disp + 1);
+                        pStack->disp + local_disp);
             pos_desc++;
         update_loop_description:  /* update the current state */
             source      = source_base + pStack->disp;

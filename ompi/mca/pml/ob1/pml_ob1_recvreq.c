@@ -270,7 +270,7 @@ static int mca_pml_ob1_recv_request_ack(
                        mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
                 char* base;
                 char* align;
-                long lb;
+                ptrdiff_t lb;
                 
                 /* round this up/down to the next aligned address */
                 ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
@@ -696,7 +696,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
 
             if(0 == recvreq->req_rdma_cnt) {
                 char* base; 
-                long lb;
+                ptrdiff_t lb;
 
                 if(mca_pml_ob1.leave_pinned_pipeline) { 
                     /* lookup and/or create a cached registration */ 

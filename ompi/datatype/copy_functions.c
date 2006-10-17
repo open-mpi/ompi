@@ -31,19 +31,19 @@
  *   
  * Return value: Number of elements of type TYPE copied
  */
-#define COPY_TYPE( TYPENAME, TYPE, COUNT )                              \
-static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
-                            char* from, uint32_t from_len, long from_extent, \
-                            char* to, uint32_t to_len, long to_extent,  \
-                            uint32_t *advance)                          \
+#define COPY_TYPE( TYPENAME, TYPE, COUNT )                                      \
+static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count,       \
+                            char* from, size_t from_len, ptrdiff_t from_extent, \
+                            char* to, size_t to_len, ptrdiff_t to_extent,       \
+                            ptrdiff_t *advance)                         \
 {                                                                       \
     uint32_t i;                                                         \
-    uint32_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */      \
-    uint32_t local_TYPE_size = (COUNT) * sizeof(TYPE);                  \
+    size_t remote_TYPE_size = sizeof(TYPE) * (COUNT); /* TODO */        \
+    size_t local_TYPE_size = (COUNT) * sizeof(TYPE);                    \
                                                                         \
     /* make sure the remote buffer is large enough to hold the data */  \
     if( (remote_TYPE_size * count) > from_len ) {                       \
-        count = from_len / remote_TYPE_size;                            \
+        count = (uint32_t)(from_len / remote_TYPE_size);                \
         if( (count * remote_TYPE_size) != from_len ) {                  \
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
                   from_len - (count * remote_TYPE_size) );              \
@@ -54,8 +54,8 @@ static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
               #TYPE, count, from, from_len, to, to_len );               \
                                                                         \
-    if( (from_extent == (long)local_TYPE_size) &&                       \
-        (to_extent == (long)remote_TYPE_size) ) {                       \
+    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
+        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
         /* copy of contigous data at both source and destination */     \
         MEMCPY( to, from, count * local_TYPE_size );                    \
     } else {                                                            \
@@ -84,18 +84,18 @@ static int copy_##TYPENAME( ompi_convertor_t *pConvertor, uint32_t count, \
  *   
  * Return value: Number of elements of type TYPE copied
  */
-#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                        \
-static int copy_##TYPENAME##_##COUNT( ompi_convertor_t *pConvertor, uint32_t count, \
-                                      char* from, uint32_t from_len, long from_extent, \
-                                      char* to, uint32_t to_len, long to_extent, \
-                                      uint32_t *advance)                \
+#define COPY_CONTIGUOUS_BYTES( TYPENAME, COUNT )                                          \
+static int copy_##TYPENAME##_##COUNT( ompi_convertor_t *pConvertor, uint32_t count,       \
+                                      char* from, size_t from_len, ptrdiff_t from_extent, \
+                                      char* to, size_t to_len, ptrdiff_t to_extent,       \
+                                      ptrdiff_t *advance )              \
 {                                                                       \
     uint32_t i;                                                         \
-    uint32_t remote_TYPE_size = (COUNT); /* TODO */                     \
-    uint32_t local_TYPE_size = (COUNT);                                 \
+    size_t remote_TYPE_size = (size_t)(COUNT); /* TODO */               \
+    size_t local_TYPE_size = (size_t)(COUNT);                           \
                                                                         \
     if( (remote_TYPE_size * count) > from_len ) {                       \
-        count = from_len / remote_TYPE_size;                            \
+        count = (uint32_t)(from_len / remote_TYPE_size);                \
         if( (count * remote_TYPE_size) != from_len ) {                  \
             DUMP( "oops should I keep this data somewhere (excedent %d bytes)?\n", \
                   from_len - (count * remote_TYPE_size) );              \
@@ -106,8 +106,8 @@ static int copy_##TYPENAME##_##COUNT( ompi_convertor_t *pConvertor, uint32_t cou
         DUMP( "         copy %s count %d from buffer %p with length %d to %p space %d\n", \
               #TYPENAME, count, from, from_len, to, to_len );           \
                                                                         \
-    if( (from_extent == (long)local_TYPE_size) &&                       \
-        (to_extent == (long)remote_TYPE_size) ) {                       \
+    if( (from_extent == (ptrdiff_t)local_TYPE_size) &&                  \
+        (to_extent == (ptrdiff_t)remote_TYPE_size) ) {                  \
         MEMCPY( to, from, count * local_TYPE_size );                    \
     } else {                                                            \
         for( i = 0; i < count; i++ ) {                                  \

@@ -46,7 +46,7 @@ int mca_coll_hierarch_reduce_intra(void *sbuf, void *rbuf, int count,
     struct ompi_communicator_t *lcomm=NULL;
     int rank;
     int lroot, llroot;
-    long extent, true_extent, lb, true_lb;
+    ptrdiff_t extent, true_extent, lb, true_lb;
     char *tmpbuf=NULL, *tbuf=NULL;
     int ret=OMPI_SUCCESS;
 

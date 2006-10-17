@@ -36,7 +36,7 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
                             int count) 
 {
     int rc = MPI_SUCCESS;
-    int32_t size;
+    size_t size;
 
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -50,7 +50,7 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
 
     if (status != MPI_STATUS_IGNORE) {
         ompi_ddt_type_size( datatype, &size );
-        status->_count = count * size;
+        status->_count = (int)(count * size);
     }
     return MPI_SUCCESS;
 }

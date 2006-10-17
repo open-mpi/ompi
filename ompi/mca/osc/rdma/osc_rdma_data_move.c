@@ -644,7 +644,7 @@ ompi_osc_rdma_sendreq_recv_accum(ompi_osc_rdma_module_t *module,
         
     } else {
         ompi_osc_rdma_longreq_t *longreq;
-        long lb, extent, true_lb, true_extent;
+        ptrdiff_t lb, extent, true_lb, true_extent;
         size_t buflen;
 
         /* figure out how big a buffer we need */

@@ -43,12 +43,8 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm)
 {
-    int i;
-    int err;
-    int rank;
-    int size;
-    int count;
-    long true_lb, true_extent, lb, extent;
+    int i, err, rank, size, count;
+    ptrdiff_t true_lb, true_extent, lb, extent;
     int *disps = NULL;
     char *free_buffer = NULL;
     char *pml_buffer = NULL;
@@ -138,12 +134,9 @@ mca_coll_basic_reduce_scatter_inter(void *sbuf, void *rbuf, int *rcounts,
                                     struct ompi_op_t *op,
                                     struct ompi_communicator_t *comm)
 {
-    int err, i;
-    int rank;
-    int root = 0;
-    int rsize;
+    int err, i, rank, root = 0, rsize;
     int totalcounts, tcount;
-    long lb, extent;
+    ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *tmpbuf2 = NULL, *tbuf = NULL;
     ompi_request_t *req;
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;

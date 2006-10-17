@@ -66,16 +66,16 @@ unsigned long
 opal_bcopy_csum_partial (
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen,
+    size_t copylen,
+    size_t csumlen,
     unsigned long *  lastPartialLong,
-    unsigned long *  lastPartialLength
+    size_t*  lastPartialLength
     )
 {
     unsigned long *  src = (unsigned long *) source;
     unsigned long *  dest = (unsigned long *) destination;
     unsigned long csum = 0;
-    ssize_t csumlenresidue;
+    size_t csumlenresidue;
     unsigned long i, temp;
 
     csumlenresidue = (csumlen > copylen) ? (csumlen - copylen) : 0;
@@ -116,18 +116,18 @@ opal_bcopy_csum_partial (
 	    }
 	}
 	else { /* fast path... */
-	    unsigned long numLongs = copylen/sizeof(unsigned long);
+	    size_t numLongs = copylen/sizeof(unsigned long);
 	    for(i = 0; i < numLongs; i++) {
-		csum += *src;
-		*dest++ = *src++;
+		    csum += *src;
+		    *dest++ = *src++;
 	    }
 	    *lastPartialLong = 0;
 	    *lastPartialLength = 0;
 	    if (WORDALIGNED(copylen) && (csumlenresidue == 0)) {
-		return(csum);
+		    return(csum);
 	    }
 	    else {
-		copylen -= i * sizeof(unsigned long);
+		    copylen -= i * sizeof(unsigned long);
 	    }
 	}
     } else if (WORDALIGNED(source)) {
@@ -144,36 +144,36 @@ opal_bcopy_csum_partial (
 		copylen -= sizeof(unsigned long) - *lastPartialLength;
 		/* now we have an unaligned source and an unknown alignment for our destination */
 		if (WORDALIGNED(dest)) {
-		    unsigned long numLongs = copylen/sizeof(unsigned long);
+		    size_t numLongs = copylen/sizeof(unsigned long);
 		    for(i = 0; i < numLongs; i++) {
-			memcpy(&temp, src, sizeof(temp));
-			src++;
-			csum += temp;
-			*dest++ = temp;
+			    memcpy(&temp, src, sizeof(temp));
+			    src++;
+			    csum += temp;
+			    *dest++ = temp;
 		    }
 		    copylen -= i * sizeof(unsigned long);
 		}
 		else {
 		    for( ;copylen >= sizeof(*src); copylen -= sizeof(*src)) {
-			memcpy(&temp, src, sizeof(temp));
-			src++;
-			csum += temp;
-			memcpy(dest, &temp, sizeof(temp));
-			dest++;
+			    memcpy(&temp, src, sizeof(temp));
+			    src++;
+			    csum += temp;
+			    memcpy(dest, &temp, sizeof(temp));
+			    dest++;
 		    }
 		}
 		*lastPartialLong = 0;
 		*lastPartialLength = 0;
 	    }
 	    else { /* NO, we don't... */
-		memcpy(((char *)&temp + *lastPartialLength), src, copylen);
-		memcpy(dest, ((char *)&temp + *lastPartialLength), copylen);
-		src = (unsigned long *)((char *)src + copylen);
-		dest = (unsigned long *)((char *)dest + copylen);
-		csum += (temp - *lastPartialLong);
-		*lastPartialLong = temp;
-		*lastPartialLength += copylen;
-		copylen = 0;
+		    memcpy(((char *)&temp + *lastPartialLength), src, copylen);
+		    memcpy(dest, ((char *)&temp + *lastPartialLength), copylen);
+		    src = (unsigned long *)((char *)src + copylen);
+		    dest = (unsigned long *)((char *)dest + copylen);
+		    csum += (temp - *lastPartialLong);
+		    *lastPartialLong = temp;
+		    *lastPartialLength += copylen;
+		    copylen = 0;
 	    }
 	}
 	else {
@@ -256,20 +256,20 @@ opal_bcopy_csum_partial (
 		copylen -= sizeof(unsigned long) - *lastPartialLength;
 		/* now we have an unknown alignment for our source and destination */
 		if (WORDALIGNED(src) && WORDALIGNED(dest)) {
-		    unsigned long numLongs = copylen/sizeof(unsigned long);
+		    size_t numLongs = copylen/sizeof(unsigned long);
 		    for(i = 0; i < numLongs; i++) {
-			csum += *src;
-			*dest++ = *src++;
+			    csum += *src;
+			    *dest++ = *src++;
 		    }
 		    copylen -= i * sizeof(unsigned long);
 		}
 		else { /* safe but slower for all other alignments */
 		    for( ;copylen >= sizeof(*src); copylen -= sizeof(*src)) {
-			memcpy(&temp, src, sizeof(temp));
-			src++;
-			csum += temp;
-			memcpy(dest, &temp, sizeof(temp));
-			dest++;
+			    memcpy(&temp, src, sizeof(temp));
+			    src++;
+			    csum += temp;
+			    memcpy(dest, &temp, sizeof(temp));
+			    dest++;
 		    }
 		}
 		*lastPartialLong = 0;
@@ -359,7 +359,7 @@ opal_bcopy_csum_partial (
 	    memcpy(&temp, src, copylen);
 	    memcpy(dest, &temp, copylen);
 	}
-	if (csumlenresidue < (ssize_t)(sizeof(unsigned long) - copylen - *lastPartialLength)) {
+	if (csumlenresidue < (sizeof(unsigned long) - copylen - *lastPartialLength)) {
 	    temp = *lastPartialLong;
 	    memcpy(((char *)&temp + *lastPartialLength), src, (copylen + csumlenresidue));
 	    /* avoid unsigned arithmetic overflow by subtracting the old partial */
@@ -413,16 +413,16 @@ unsigned int
 opal_bcopy_uicsum_partial (
     const void *  source,
     void *  destination,
-    unsigned long copylen,
-    unsigned long csumlen,
-    unsigned int *  lastPartialInt,
-    unsigned int *  lastPartialLength
+    size_t copylen,
+    size_t csumlen,
+    unsigned int*  lastPartialInt,
+    size_t*  lastPartialLength
     )
 {
     unsigned int *  src = (unsigned int *) source;
     unsigned int *  dest = (unsigned int *) destination;
     unsigned int csum = 0;
-    ssize_t csumlenresidue;
+    size_t csumlenresidue;
     unsigned long i;
     unsigned int temp;
 
@@ -464,18 +464,18 @@ opal_bcopy_uicsum_partial (
 	    }
 	}
 	else { /* fast path... */
-	    unsigned long numLongs = copylen/sizeof(unsigned int);
+	    size_t numLongs = copylen/sizeof(unsigned int);
 	    for(i = 0; i < numLongs; i++) {
-		csum += *src;
-		*dest++ = *src++;
+		    csum += *src;
+		    *dest++ = *src++;
 	    }
 	    *lastPartialInt = 0;
 	    *lastPartialLength = 0;
 	    if (INTALIGNED(copylen) && (csumlenresidue == 0)) {
-		return(csum);
+		    return(csum);
 	    }
 	    else {
-		copylen -= i * sizeof(unsigned int);
+		    copylen -= i * sizeof(unsigned int);
 	    }
 	}
     } else if (INTALIGNED(source)) {
@@ -492,7 +492,7 @@ opal_bcopy_uicsum_partial (
 		copylen -= sizeof(unsigned int) - *lastPartialLength;
 		/* now we have an unaligned source and an unknown alignment for our destination */
 		if (INTALIGNED(dest)) {
-		    unsigned long numLongs = copylen/sizeof(unsigned int);
+		    size_t numLongs = copylen/sizeof(unsigned int);
 		    for(i = 0; i < numLongs; i++) {
 			memcpy(&temp, src, sizeof(temp));
 			src++;
@@ -604,7 +604,7 @@ opal_bcopy_uicsum_partial (
 		copylen -= sizeof(unsigned int) - *lastPartialLength;
 		/* now we have an unknown alignment for our source and destination */
 		if (INTALIGNED(src) && INTALIGNED(dest)) {
-		    unsigned long numLongs = copylen/sizeof(unsigned int);
+		    size_t numLongs = copylen/sizeof(unsigned int);
 		    for(i = 0; i < numLongs; i++) {
 			csum += *src;
 			*dest++ = *src++;
@@ -707,7 +707,7 @@ opal_bcopy_uicsum_partial (
 	    memcpy(&temp, src, copylen);
 	    memcpy(dest, &temp, copylen);
 	}
-	if (csumlenresidue < (ssize_t)(sizeof(unsigned int) - copylen - *lastPartialLength)) {
+	if (csumlenresidue < (sizeof(unsigned int) - copylen - *lastPartialLength)) {
 	    temp = *lastPartialInt;
 	    memcpy(((char *)&temp + *lastPartialLength), src, (copylen + csumlenresidue));
 	    /* avoid unsigned arithmetic overflow by subtracting the old partial
@@ -769,9 +769,9 @@ opal_bcopy_uicsum_partial (
 unsigned long
 opal_csum_partial (
     const void *  source,
-    unsigned long csumlen,
-    unsigned long *  lastPartialLong,
-    unsigned long *  lastPartialLength
+    size_t csumlen,
+    unsigned long*  lastPartialLong,
+    size_t* lastPartialLength
     )
 {
     unsigned long *  src = (unsigned long *) source;
@@ -811,17 +811,17 @@ opal_csum_partial (
 	    }
 	}
 	else { /* fast path... */
-	    unsigned long numLongs = csumlen/sizeof(unsigned long);
+	    size_t numLongs = csumlen/sizeof(unsigned long);
 	    for(i = 0; i < numLongs; i++) {
-		csum += *src++;
+		    csum += *src++;
 	    }
 	    *lastPartialLong = 0;
 	    *lastPartialLength = 0;
 	    if (WORDALIGNED(csumlen)) {
-		return(csum);
+		    return(csum);
 	    }
 	    else {
-		csumlen -= i * sizeof(unsigned long);
+		    csumlen -= i * sizeof(unsigned long);
 	    }
 	}
     } else {
@@ -919,9 +919,9 @@ opal_csum_partial (
 unsigned int
 opal_uicsum_partial (
     const void *  source,
-    unsigned long csumlen,
-    unsigned int *  lastPartialInt,
-    unsigned int *  lastPartialLength
+    size_t csumlen,
+    unsigned int*  lastPartialInt,
+    size_t*  lastPartialLength
     )
 {
     unsigned int *  src = (unsigned int *) source;
@@ -961,17 +961,17 @@ opal_uicsum_partial (
 	    }
 	}
 	else { /* fast path... */
-	    unsigned long numLongs = csumlen/sizeof(unsigned int);
+	    size_t numLongs = csumlen/sizeof(unsigned int);
 	    for(i = 0; i < numLongs; i++) {
-		csum += *src++;
+		    csum += *src++;
 	    }
 	    *lastPartialInt = 0;
 	    *lastPartialLength = 0;
 	    if (INTALIGNED(csumlen)) {
-		return(csum);
+		    return(csum);
 	    }
 	    else {
-		csumlen -= i * sizeof(unsigned int);
+		    csumlen -= i * sizeof(unsigned int);
 	    }
 	}
     } else {
@@ -1099,11 +1099,11 @@ void opal_initialize_crc_table(void)
 unsigned int opal_bcopy_uicrc_partial(
     const void *  source, 
     void *  destination,
-    unsigned long copylen, 
-    unsigned long crclen, 
+    size_t copylen, 
+    size_t crclen, 
     unsigned int partial_crc)
 {
-    unsigned long crclenresidue = (crclen > copylen) ? (crclen - copylen) : 0;
+    size_t crclenresidue = (crclen > copylen) ? (crclen - copylen) : 0;
     register int i, j;
     register unsigned char t;
     unsigned int tmp;
@@ -1162,7 +1162,7 @@ unsigned int opal_bcopy_uicrc_partial(
 
 
 unsigned int opal_uicrc_partial(
-    const void *  source, unsigned long crclen, unsigned int partial_crc) 
+    const void *  source, size_t crclen, unsigned int partial_crc) 
 {
     register int i, j;
     register unsigned char * t;

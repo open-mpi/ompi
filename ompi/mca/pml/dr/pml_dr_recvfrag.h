@@ -67,7 +67,7 @@ do {                                                                 \
 do {                                                                    \
     size_t i, length = 0;                                               \
     uint32_t ui1 = 0;                                                   \
-    uint32_t ui2 = 0;                                                   \
+    size_t ui2 = 0;                                                     \
     mca_pml_dr_buffer_t** buffers = frag->buffers;                      \
     bool do_csum = mca_pml_dr.enable_csum &&                            \
         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);                     \
