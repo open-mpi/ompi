@@ -30,6 +30,8 @@
 #include "opal/util/output.h"
 
 #include "orte/dss/dss.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "ras_tm.h"

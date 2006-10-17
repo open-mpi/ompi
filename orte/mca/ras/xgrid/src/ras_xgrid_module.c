@@ -30,6 +30,7 @@
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/ras/base/ras_private.h"
 
