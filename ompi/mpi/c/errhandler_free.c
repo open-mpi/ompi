@@ -37,13 +37,33 @@ int MPI_Errhandler_free(MPI_Errhandler *errhandler)
 
   if (MPI_PARAM_CHECK) {
     OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-    if (NULL == errhandler) {
+    /* Raise an MPI exception if we got NULL or if we got an intrinsic
+       *and* the reference count is 1 (meaning that this FREE would
+       actually free the underlying intrinsic object).  This is ugly
+       but necessary -- see below. */
+    if (NULL == errhandler ||
+        (ompi_errhandler_is_intrinsic(*errhandler) && 
+         1 == (*errhandler)->super.obj_reference_count)) {
       return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                    "MPI_Errhandler_free");
     }
   }
 
-  /* We have a valid errhandler, release it */
+  /* Return the errhandler.  According to MPI-2 errata, any errhandler
+     obtained by MPI_*_GET_ERRHANDLER or MPI_ERRHANDLER_GET must also
+     be freed by MPI_ERRHANDLER_FREE (including intrinsic error
+     handlers).  For example, this is valid:
+
+     int main() {
+         MPI_Errhandler errhdl;
+         MPI_Init(NULL, NULL);
+         MPI_Comm_get_errhandler(MPI_COMM_WORLD, &errhdl);
+         MPI_Errhandler_free(&errhdl);
+         MPI_Finalize();
+         return 0;
+     }
+     
+     So decrease the refcount here. */
 
   OBJ_RELEASE(*errhandler);
   *errhandler = MPI_ERRHANDLER_NULL;
