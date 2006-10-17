@@ -163,7 +163,7 @@ static int map_app_by_slot(
         * each time since we may remove nodes from the list (as they become fully
         * used) as we cycle through the loop */
         if(0 >= opal_list_get_size(nodes) ) {
-            /* No more nodes to allocate :( */
+            /* Everything is at max usage! :( */
             opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:alloc-error",
                            true, app->num_procs, app->app);
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -275,9 +275,28 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
         return rc;
     }
 
-    /** initialize the cur_node_item to point to the first node in the list */
+    /* initialize the cur_node_item to point to the first node in the list that has
+     * an available slot. We need to check the slot availability since we may be
+     * mapping a child job onto the same nodes used by its parent. In that case,
+     * even though we may have used some slots on a node, the system still considers
+     * the node available due to oversubscription rules. However, we don't want to
+     * start at the beginning of the nodelist again as we will be oversubscribing the
+     * node and causing majorly poor performance
+     */
+    for (cur_node_item = opal_list_get_first(&master_node_list);
+         cur_node_item != opal_list_get_end(&master_node_list);
+         cur_node_item = opal_list_get_next(cur_node_item)) {
+        node = (orte_ras_node_t*)cur_node_item;
+        if (node->node_slots > node->node_slots_inuse) {
+            goto MOVEON;
+        }
+    }
+    /* if we got here, then everyone is at or above the soft limit - just
+     * start with the first node on the list
+     */
     cur_node_item = opal_list_get_first(&master_node_list);
     
+MOVEON:    
     /** construct the list to hold any nodes that get fully used during this
      * mapping. We need to keep a record of these so we can update their
      * information on the registry when we are done, but we want to remove

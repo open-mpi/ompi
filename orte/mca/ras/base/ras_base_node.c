@@ -677,7 +677,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     int rc;
     orte_std_cntr_t num_values, i, j;
     orte_ras_node_t* node;
-    char* jobid_str, *key;
+    char* jobid_str, *key=NULL;
 
     num_values = opal_list_get_size(nodes);
     if (0 >= num_values) {
@@ -703,6 +703,14 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         }
     }
 
+    /* setup the allocation key */
+    if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    asprintf(&key, "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
+    free(jobid_str);
+    
     for(i=0, item =  opal_list_get_first(nodes);
         i < num_values && item != opal_list_get_end(nodes);
         i++, item = opal_list_get_next(item)) {
@@ -710,11 +718,6 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
 
         if(node->node_slots_alloc == 0)
             continue;
-
-        if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_str, jobid))) {
-            ORTE_ERROR_LOG(rc);
-            goto cleanup;
-        }
 
         /* setup index/keys for this node */
         rc = orte_schema.get_node_tokens(&(values[i]->tokens), &(values[i]->num_tokens), node->node_cellid, node->node_name);
@@ -725,16 +728,13 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         }
 
         /* setup node key/value pairs */
-        asprintf(&key, "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
-        free(jobid_str);
         if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[i]->keyvals[0]), key, ORTE_STD_CNTR, &(node->node_slots_alloc)))) {
             ORTE_ERROR_LOG(rc);
             free(key);
             goto cleanup;
         }
-        free(key);
     }
-
+    
     /* try the insert */
     if (ORTE_SUCCESS != (rc = orte_gpr.put(num_values, values))) {
         ORTE_ERROR_LOG(rc);
@@ -745,6 +745,8 @@ cleanup:
         OBJ_RELEASE(values[j]);
     }
     if (NULL != values) free(values);
+
+    if (NULL != key) free(key);
 
     return rc;
 }
