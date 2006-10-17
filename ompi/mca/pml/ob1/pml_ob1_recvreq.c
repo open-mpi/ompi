@@ -632,25 +632,24 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             int rc;
             bool release = false;
                
-            if(prev_bytes_remaining == bytes_remaining)
-                num_fail++;
-            else
-                num_fail = 0;
-
-            prev_bytes_remaining = bytes_remaining;
-
-            if(num_fail == num_tries) {
-                OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-                if(false == recvreq->req_pending) {
-                    opal_list_append(&mca_pml_ob1.recv_pending,
-                            (opal_list_item_t*)recvreq);
-                    recvreq->req_pending = true;
+            if(prev_bytes_remaining == bytes_remaining) {
+                if( ++num_fail == num_tries ) {
+                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+                    if(false == recvreq->req_pending) {
+                        opal_list_append(&mca_pml_ob1.recv_pending,
+                                (opal_list_item_t*)recvreq);
+                        recvreq->req_pending = true;
+                    }
+                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
                 }
-                OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-                return OMPI_ERR_OUT_OF_RESOURCE;
+            } else {
+                num_fail = 0;
+                prev_bytes_remaining = bytes_remaining;
             }
+
             ompi_convertor_set_position(&recvreq->req_recv.req_convertor,
-                    &recvreq->req_rdma_offset);
+                                        &recvreq->req_rdma_offset);
 
             if(recvreq->req_rdma_cnt) {
                 /*
@@ -699,7 +698,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                 char* base; 
                 long lb;
 
-                    
                 if(mca_pml_ob1.leave_pinned_pipeline) { 
                     /* lookup and/or create a cached registration */ 
                     ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc,
@@ -840,7 +838,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
-    */
+     */
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         opal_list_append(&proc->specific_receives, (opal_list_item_t*)request);
         if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
