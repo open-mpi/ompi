@@ -26,7 +26,7 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 
-int orte_ras_base_allocate_no_op(orte_jobid_t jobid)
+int orte_ras_base_allocate_no_op(orte_jobid_t jobid, opal_list_t *attributes) 
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

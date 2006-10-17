@@ -59,7 +59,7 @@ ORTE_DECLSPEC int orte_ras_base_deallocate(orte_jobid_t job);
 /*
  * NO_OP functions
  */
-int orte_ras_base_allocate_no_op(orte_jobid_t job);
+int orte_ras_base_allocate_no_op(orte_jobid_t job, opal_list_t *attributes);
 
 int orte_ras_base_node_insert_no_op(opal_list_t *);
 
