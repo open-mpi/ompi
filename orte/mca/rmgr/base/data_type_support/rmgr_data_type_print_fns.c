@@ -102,3 +102,79 @@ int orte_rmgr_base_print_app_context_map(char **output, char *prefix, orte_app_c
 
     return ORTE_SUCCESS;
 }
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_print_attribute(char **output, char *prefix, orte_attribute_t *src, orte_data_type_t type)
+{
+    char *tmp, *pfx2, *pfx3;
+    int rc;
+    
+    /* set default result */
+    *output = NULL;
+    
+    /* protect against NULL prefix */
+    if (NULL == prefix) {
+        asprintf(&pfx2, " ");
+    } else {
+        asprintf(&pfx2, "%s", prefix);
+    }
+    
+    asprintf(&pfx3, "%s\t", pfx2);
+    if (ORTE_SUCCESS != (rc = orte_dss.print(&tmp, pfx3, src, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+        free(pfx2);
+        free(pfx3);
+        return rc;
+    }
+    
+    asprintf(output, "%sAttribute:\n%s", pfx2, tmp);
+    
+    free(pfx2);
+    free(pfx3);
+    return ORTE_SUCCESS;
+}
+
+int orte_rmgr_base_print_attr_list(char **output, char *prefix, opal_list_t *src, orte_data_type_t type)
+{
+    opal_list_item_t *item;
+    char *tmp, *tmp2, *tmp3, *pfx2, *pfx3;
+    int rc;
+    
+    /* set default result */
+    *output = NULL;
+    
+    /* protect against NULL prefix */
+    if (NULL == prefix) {
+        asprintf(&pfx2, " ");
+    } else {
+        asprintf(&pfx2, "%s", prefix);
+    }
+    
+    asprintf(&tmp, "%sList of %ld Attributes:\n", pfx2, (long)opal_list_get_size(src));
+    
+    asprintf(&pfx3, "%s\t", pfx2);
+    for (item = opal_list_get_first(src);
+         item != opal_list_get_end(src);
+         item = opal_list_get_next(item)) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr_base_print_attribute(&tmp2, pfx3, (orte_attribute_t*)item, ORTE_ATTRIBUTE))) {
+            ORTE_ERROR_LOG(rc);
+            free(pfx2);
+            free(pfx3);
+            return rc;
+        }
+        asprintf(&tmp3, "%s%s\n", tmp, tmp2);
+        free(tmp);
+        free(tmp2);
+        tmp = tmp3;
+    }
+    
+    *output = tmp;
+    free(pfx2);
+    free(pfx3);
+    
+    return ORTE_SUCCESS;
+}
+

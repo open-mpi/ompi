@@ -21,8 +21,10 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/dss/dss_internal.h"
+#include "orte/dss/dss.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
 
@@ -48,3 +50,25 @@ int orte_rmgr_base_compare_app_context_map(orte_app_context_map_t *value1, orte_
     
     return ORTE_EQUAL;
 }
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_compare_attribute(orte_attribute_t *value1, orte_attribute_t *value2, orte_data_type_t type)
+{
+    return orte_dss.compare(value1, value2, ORTE_GPR_KEYVAL);
+}
+
+
+/*
+ * ATTRIBUTE LIST
+ */
+int orte_rmgr_base_compare_attr_list(opal_list_t *value1, opal_list_t *value2, orte_data_type_t type)
+{
+    if (opal_list_get_size(value1) > opal_list_get_size(value2)) return ORTE_VALUE1_GREATER;
+    if (opal_list_get_size(value2) > opal_list_get_size(value1)) return ORTE_VALUE2_GREATER;
+    
+    return ORTE_EQUAL;
+}
+

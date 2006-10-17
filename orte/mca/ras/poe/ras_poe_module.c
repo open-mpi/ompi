@@ -16,16 +16,20 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
 #include "opal/util/argv.h"
-#include "orte/orte_constants.h"
+
+#include "orte/dss/dss.h"
+
 #include "orte/mca/ras/poe/ras_poe.h"
 #include "orte/mca/ras/base/ras_private.h"
 
-static int orte_ras_poe_allocate(orte_jobid_t jobid)
+static int orte_ras_poe_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     char *poe_node_str;
     char **names; 
@@ -33,10 +37,29 @@ static int orte_ras_poe_allocate(orte_jobid_t jobid)
     opal_list_t nodes_list;
     orte_ras_node_t *node;
     opal_list_item_t* item;
+    orte_jobid_t *jptr;
+    orte_attribute_t *attr;
 
     poe_node_str = getenv("LOADL_PROCESSOR_LIST");
     if (NULL == poe_node_str) {
         return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* check the attributes to see if we are supposed to use the parent
+     * jobid's allocation. This can occur if we are doing a dynamic
+     * process spawn and don't want to go through the allocator again
+     */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        return ORTE_SUCCESS;
     }
     
     /* poe_node_str is something like "nodeA nodeA nodeB nodeB" */

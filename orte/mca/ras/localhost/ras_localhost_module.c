@@ -23,6 +23,7 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 
+#include "orte/dss/dss.h"
 #include "orte/util/sys_info.h"
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/rmgr/base/base.h"
@@ -35,7 +36,7 @@
 /*
  * Local functions
  */
-static int orte_ras_localhost_allocate(orte_jobid_t jobid);
+static int orte_ras_localhost_allocate(orte_jobid_t jobid, opal_list_t *attributes);
 static int orte_ras_localhost_deallocate(orte_jobid_t jobid);
 static int orte_ras_localhost_finalize(void);
 
@@ -66,14 +67,33 @@ orte_ras_base_module_t *orte_ras_localhost_init(int* priority)
 }
 
 
-static int orte_ras_localhost_allocate(orte_jobid_t jobid)
+static int orte_ras_localhost_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     bool empty;
     int ret;
     opal_list_t nodes;
     orte_ras_node_t *node;
     opal_list_item_t *item;
+    orte_attribute_t *attr;
+    orte_jobid_t *jptr;
 
+    /* check the attributes to see if we are supposed to use the parent
+        * jobid's allocation. This can occur if we are doing a dynamic
+        * process spawn and don't want to go through the allocator again
+        */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        return ORTE_SUCCESS;
+    }
+        
     /* If the node segment is not empty, do nothing */
 
     if (ORTE_SUCCESS != (ret = orte_ras_base_node_segment_empty(&empty))) {

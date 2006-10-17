@@ -126,11 +126,13 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_JOB_MAP             (orte_data_type_t)   54 /**< map of process locations */
 #define    ORTE_MAPPED_PROC         (orte_data_type_t)   55 /**< process entry on map */
 #define    ORTE_MAPPED_NODE         (orte_data_type_t)   56 /**< node entry on map */
+#define    ORTE_ATTRIBUTE           (orte_data_type_t)   57 /**< attribute used to control framework behavior */
+#define    ORTE_ATTR_LIST           (orte_data_type_t)   58 /**< list of attributes */
 
     /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   57 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   59 /**< command flag for communicating with the daemon */
 
 /* define the starting point for dynamically assigning data types */
-#define ORTE_DSS_ID_DYNAMIC 60
+#define ORTE_DSS_ID_DYNAMIC 70
 
 #endif

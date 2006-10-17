@@ -41,8 +41,7 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
                               void *user_tag)
 {
     orte_gpr_value_t *values;
-    orte_gpr_keyval_t *keyvals;
-    orte_gpr_keyval_t keyval = ORTE_GPR_KEYVAL_EMPTY;
+    orte_gpr_keyval_t *keyval;
     orte_gpr_value_t value = ORTE_GPR_VALUE_EMPTY;
     orte_gpr_subscription_t *subs;
     orte_gpr_subscription_t sub = ORTE_GPR_SUBSCRIPTION_EMPTY;
@@ -66,8 +65,7 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
     value.addr_mode = addr_mode;
     value.segment = segment;
     value.cnt = 1;
-    keyvals = &keyval;
-    value.keyvals = &keyvals;
+    value.keyvals = &keyval;
 
     value.tokens = tokens;
     /* must count the number of tokens */
@@ -78,8 +76,12 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
         }
     }
 
-    keyval.key = key;
-
+    if (ORTE_SUCCESS != (rc = orte_gpr_base_create_keyval(&keyval, key,
+                                                          ORTE_UNDEF, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* send the subscription */
     if (NULL == trig_name) { /* no trigger provided */
         if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 0, NULL))) {
@@ -95,7 +97,8 @@ int orte_gpr_base_subscribe_1(orte_gpr_subscription_id_t *id,
 
     }
 
-    /* no memory to cleanup since we didn't allocate anything */
+    /* cleanup */
+    OBJ_RELEASE(keyval);
 
     /* return the subscription id */
     *id = sub.id;

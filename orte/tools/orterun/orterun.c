@@ -295,6 +295,7 @@ int orterun(int argc, char *argv[])
     int id, iparam;
     orte_proc_state_t cb_states;
     orte_job_state_t exit_state;
+    opal_list_t attributes;
 
     /* Setup MCA params */
 
@@ -418,6 +419,8 @@ int orterun(int argc, char *argv[])
 
 
     /* Prep to start the application */
+    /* construct the list of attributes */
+    OBJ_CONSTRUCT(&attributes, opal_list_t);
 
     /** setup callbacks for abort signals */
     opal_signal_set(&term_handler, SIGTERM,
@@ -441,7 +444,7 @@ int orterun(int argc, char *argv[])
     /* Spawn the job */
 
     cb_states = ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
-    rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, 0, NULL, job_state_callback, cb_states);
+    rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, 0, NULL, job_state_callback, cb_states, &attributes);
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
@@ -500,11 +503,14 @@ int orterun(int argc, char *argv[])
     }
 
     /* All done */
+    OBJ_DESTRUCT(&attributes);
+    
     for (i = 0; i < num_apps; ++i) {
         OBJ_RELEASE(apps[i]);
     }
     free(apps);
     OBJ_RELEASE(apps_pa);
+    
     orte_finalize();
     free(orterun_basename);
     return rc;

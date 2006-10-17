@@ -24,6 +24,7 @@
 #endif
 
 #include "opal/util/argv.h"
+#include "opal/class/opal_list.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
@@ -184,3 +185,54 @@ int orte_rmgr_base_pack_app_context_map(orte_buffer_t *buffer, void *src,
 
     return ORTE_SUCCESS;
 }
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_pack_attribute(orte_buffer_t *buffer, void *src,
+                                  orte_std_cntr_t num_vals, orte_data_type_t type)
+{
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &src, num_vals, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
+
+/*
+ * ATTRIBUTE LIST
+ */
+int orte_rmgr_base_pack_attr_list(orte_buffer_t *buffer, void *src,
+                                  orte_std_cntr_t num_vals, orte_data_type_t type)
+{
+    int rc;
+    opal_list_t *attrs = (opal_list_t*)src;
+    opal_list_item_t *item;
+    orte_std_cntr_t num_attr;
+    
+    /* get the number of attributes and pack it */
+    num_attr = opal_list_get_size(attrs);
+    if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)&num_attr, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* if there were attributes, then pack those too */
+    if (0 < num_attr) {
+        for (item = opal_list_get_first(attrs);
+             item != opal_list_get_end(attrs);
+             item = opal_list_get_next(item)) {
+            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)item, 1, ORTE_ATTRIBUTE))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    
+    return ORTE_SUCCESS;
+}
+

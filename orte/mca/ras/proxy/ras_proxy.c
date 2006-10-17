@@ -41,7 +41,7 @@
  * functions
  */
 
-int orte_ras_proxy_allocate(orte_jobid_t job)
+int orte_ras_proxy_allocate(orte_jobid_t job, opal_list_t *attributes)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -64,6 +64,12 @@ int orte_ras_proxy_allocate(orte_jobid_t job)
     }
 
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attributes, 1, ORTE_ATTR_LIST))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;

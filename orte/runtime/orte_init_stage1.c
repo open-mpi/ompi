@@ -509,6 +509,7 @@ int orte_init_stage1(bool infrastructure)
             orte_rds_cell_desc_t *rds_item;
             orte_rds_cell_attr_t *new_attr;
             orte_ras_node_t *ras_item;
+            opal_list_t attrs;
 
             OBJ_CONSTRUCT(&single_host, opal_list_t);
             OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
@@ -606,7 +607,9 @@ int orte_init_stage1(bool infrastructure)
                you'll end up with the localhost *and* all the other
                nodes in your allocation on the node segment -- which
                is probably fine) */
-            orte_ras.allocate_job(my_jobid);
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            orte_ras.allocate_job(my_jobid, &attrs);
+            OBJ_DESTRUCT(&attrs);
 
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);

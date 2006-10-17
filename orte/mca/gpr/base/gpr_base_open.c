@@ -69,7 +69,7 @@ static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_gpr_keyval_t,              /* type name */
-    opal_object_t,                  /* parent "class" name */
+    opal_list_item_t,               /* parent "class" name */
     orte_gpr_keyval_construct,      /* constructor */
     orte_gpr_keyval_destructor);    /* destructor */
 
