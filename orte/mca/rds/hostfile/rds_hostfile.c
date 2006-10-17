@@ -126,6 +126,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
     orte_ras_node_t* node;
     bool update = false;
     bool got_count = false;
+    bool got_max = false;
 
     if (ORTE_RDS_HOSTFILE_STRING == token ||
         ORTE_RDS_HOSTFILE_HOSTNAME == token ||
@@ -265,6 +266,7 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
                 if (node->node_slots_max != rc) {
                     node->node_slots_max = rc;
                     update = true;
+                    got_max = true;
                 }
             } else {
                 opal_show_help("help-rds-hostfile.txt", "rds:max_slots_lt",
@@ -286,7 +288,11 @@ static int orte_rds_hostfile_parse_line(int token, opal_list_t* existing, opal_l
 done:
     if (update) {
         if (!got_count) {
-            ++node->node_slots;
+            if (got_max) {
+                node->node_slots = node->node_slots_max;
+            } else {
+                ++node->node_slots;
+            }
         }
         opal_list_append(updates, &node->super);
     } else {
