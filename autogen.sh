@@ -84,6 +84,13 @@ mca_m4_config_env_file="mca_m4_config_env"
 autogen_subdir_file="autogen.subdirs"
 topdir_file="opal/include/opal_config_bottom.h"
 
+if echo a | grep -E '(a|b)' >/dev/null 2>&1; then
+  egrep='grep -E'
+else
+  egrep=egrep
+fi
+
+
 ############################################################################
 #
 # Version check - does major,minor,release check (hopefully ignoring
@@ -290,8 +297,8 @@ find_and_delete() {
 	    echo "--> Errr... there's no configure.in or configure.ac file!"
 	fi
 	if test -n "$fad_cfile"; then
-	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | cut -d\( -f 2 | cut -d\) -f 1`"
-	fi	
+	    auxdir="`grep AC_CONFIG_AUX_DIR $fad_cfile | $egrep -v '^dnl' | cut -d\( -f 2 | cut -d\) -f 1`"
+	fi
 	if test -f "$auxdir/$fad_file"; then
 	    rm -f "$auxdir/$fad_file"
 	fi
@@ -340,11 +347,11 @@ EOF
         # If we need to make a version header template file, do so
 
         rgt_abs_dir="`pwd`"
-        rgt_component_name="`basename \"$rgt_abs_dir\"`"
-        rgt_component_type="`dirname \"$rgt_abs_dir\"`"
-        rgt_component_type="`basename \"$rgt_component_type\"`"
+        rgt_component_name=`basename "$rgt_abs_dir"`
+        rgt_component_type=`dirname "$rgt_abs_dir"`
+        rgt_component_type=`basename "$rgt_component_type"`
         rgt_ver_header="$rgt_abs_dir/$rgt_component_type-$rgt_component_name-version.h"
-        rgt_ver_header_base="`basename \"$rgt_ver_header\"`"
+        rgt_ver_header_base=`basename "$rgt_ver_header"`
         make_version_header_template "$rgt_ver_header_base" "$rgt_component_type" "$rgt_component_name"
 
 	happy=1
@@ -637,7 +644,7 @@ EOF
 
         elif test -f .ompi_ignore && \
              test -s .ompi_unignore && \
-             test -z "`grep -E $USER\$\|$USER@$HOST .ompi_unignore`" ; then
+             test -z "`$egrep $USER\$\|$USER@$HOST .ompi_unignore`" ; then
 
             # If we have a non-empty .ompi_unignore and our username
             # is in there somewhere, we ignore the .ompi_ignore (and
@@ -838,9 +845,9 @@ component_list_sort() {
 
     # get the list of priorities
     component_list=
-    cls_priority_list="`sort -r -n -u \"$cls_filename\" | cut -f1 -d' ' | xargs`"
+    cls_priority_list=`sort -r -n -u "$cls_filename" | cut -f1 -d' ' | xargs`
     for cls_priority in $cls_priority_list ; do
-        component_list="$component_list `grep \"^$cls_priority \" \"$cls_filename\" | cut -f2 -d' ' | xargs`"
+        component_list="$component_list "`grep "^$cls_priority " "$cls_filename" | cut -f2 -d' ' | xargs`
     done
 }
 
@@ -904,12 +911,12 @@ EOF
     echo $rg_cwd
     project_list=""
     for project_path in $config_project_list; do 
-        project="`basename \"$project_path\"`"
+        project=`basename "$project_path"`
         project_list="$project_list $project"
 
         framework_list=""
         for framework_path in $project_path/mca/*; do
-            framework="`basename \"$framework_path\"`"
+            framework=`basename "$framework_path"`
 
 	    if test "$framework" != "base" -a \
                 -d "$framework_path" ; then
@@ -932,7 +939,7 @@ EOF
                                 -f "$component_path/configure.params" -o \
                                 -f "$component_path/configure.ac"; then
 
-                                component="`basename \"$component_path\"`"
+                                component=`basename "$component_path"`
 
                                 process_dir "$component_path" "$rg_cwd" \
                                     "$project" "$framework" "$component"

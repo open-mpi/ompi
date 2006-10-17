@@ -20,95 +20,22 @@
 
 #import <stdio.h>
 
-#import "orte/mca/pls/base/base.h"
-#import "orte/orte_constants.h"
-#import "orte/mca/ns/ns.h"
-#import "orte/mca/ras/base/ras_base_node.h"
-#import "orte/mca/gpr/gpr.h"
-#import "orte/mca/rml/rml.h"
 #import "opal/util/path.h"
+
+#import "orte/orte_constants.h"
+#import "orte/mca/rml/rml.h"
+#import "orte/mca/ns/ns.h"
+#import "orte/mca/pls/base/base.h"
+#import "orte/mca/pls/base/pls_private.h"
+#import "orte/mca/pls/pls.h"
+#import "orte/mca/errmgr/errmgr.h"
+#import "orte/mca/ras/ras_types.h"
+#import "orte/mca/rmaps/rmaps.h"
+#import "orte/mca/smr/smr.h"
 
 #import "pls_xgrid_client.h"
 
 char **environ;
-
-/**
- * Set the daemons name in the registry.
- */
-
-static int
-mca_pls_xgrid_set_node_name(orte_ras_node_t* node, 
-			    orte_jobid_t jobid, 
-			    orte_process_name_t* name)
-{
-    orte_gpr_value_t *values[1], *value;
-    orte_gpr_keyval_t *kv;
-    char* jobid_string;
-    size_t i;
-    int rc;
-
-    values[0] = OBJ_NEW(orte_gpr_value_t);
-    if (NULL == values[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value = values[0];
-    value->cnt = 1;
-    value->addr_mode = ORTE_GPR_OVERWRITE;
-    value->segment = strdup(ORTE_NODE_SEGMENT);
-    value->keyvals = (orte_gpr_keyval_t**)malloc(value->cnt * sizeof(orte_gpr_keyval_t*));
-    if (NULL == value->keyvals) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-    if (NULL == value->keyvals[0]) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    kv = value->keyvals[0];
-    
-    if (ORTE_SUCCESS != 
-	(rc = orte_ns.convert_jobid_to_string(&jobid_string, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != 
-	(rc = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), 
-        node->node_cellid, node->node_name))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        free(jobid_string);
-        return rc;
-    }
-
-    asprintf(&(kv->key), "%s-%s", ORTE_NODE_BOOTPROXY_KEY, jobid_string);
-    kv->value = OBJ_NEW(orte_data_value_t);
-    if (NULL == kv->value) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        OBJ_RELEASE(value);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    kv->value->type = ORTE_NAME;
-    if (ORTE_SUCCESS != (rc = orte_dss.copy(&(kv->value->data), name, ORTE_NAME))) {
-        ORTE_ERROR_LOG(rc);
-	OBJ_RELEASE(value);
-	return rc;
-    }
-
-    rc = orte_gpr.put(1, values);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    OBJ_RELEASE(value);
-
-    return rc;
-}
 
 
 @implementation PlsXGridClient
@@ -171,7 +98,7 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 	    if (XGActionMonitorOutcomeSuccess != [actionMonitor outcome]) {
 		NSError *err = [actionMonitor error];
 		fprintf(stderr, "orte:pls:xgrid: cleanup failed: %s\n", 
-			[[err localizedFailureReason] cString]);
+			[[err localizedDescription] cString]);
 	    }
 	}
     }
@@ -217,20 +144,57 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 }
 
 
+- (NSString *)servicePrincipal;
+{
+    NSString *myServicePrincipal = [connection servicePrincipal];
+
+    if (myServicePrincipal == nil) {
+	myServicePrincipal = [NSString stringWithFormat:@"xgrid/%@", [connection name]];
+    }
+
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid: Kerberos servicePrincipal: %s",
+			[myServicePrincipal cString]);
+
+    return myServicePrincipal;
+}
+
+
 /* interface for launch */
 -(int) connect
 {
     connection = [[[XGConnection alloc] initWithHostname: controller_hostname
 					portnumber:0] autorelease];
-    authenticator = [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
 
-    /* this seems to be hard coded */
-    [authenticator setUsername:@"one-xgrid-client"];
-    [authenticator setPassword:controller_password];
+    if (nil == controller_password) {
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Using Kerberos authentication");
+
+	XGGSSAuthenticator *authenticator = 
+	    [[[XGGSSAuthenticator alloc] init] autorelease];
+
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Kerberos principal: %s",
+			    [[self servicePrincipal] cString]);
+		
+	[authenticator setServicePrincipal:[self servicePrincipal]];
+	[connection setAuthenticator:authenticator];
+
+    } else {
+	opal_output_verbose(1, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: Using password authentication");
+
+       XGTwoWayRandomAuthenticator *authenticator =
+	    [[[XGTwoWayRandomAuthenticator alloc] init] autorelease];
+
+	/* this seems to be hard coded */
+	[authenticator setUsername:@"one-xgrid-client"];
+	[authenticator setPassword:controller_password];
     
-    [connection setAuthenticator:authenticator];
+	[connection setAuthenticator:authenticator];
+    }
     [connection setDelegate: self];
-    
+
     /* get us connected */
     opal_mutex_lock(&state_mutex);
     [connection open];
@@ -239,16 +203,25 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
     }
     opal_mutex_unlock(&state_mutex);
 
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: connection name: %s", [[connection name] cString]);
+    /* if we're not connected when the condition is triggered, we
+       dont' have a connection and can't start.  exit. */
+    if ([connection state] != XGConnectionStateOpen) {
+	return ORTE_ERR_NOT_AVAILABLE;
+    }
+
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid: connection name: %s",
+			[[connection name] cString]);
     
     controller = [[XGController alloc] initWithConnection:connection];
+    /* need to call progress exactly once for some reason to get the
+       controller happy enough to allow us to assign the grid */
     opal_progress();
     grid = [controller defaultGrid];
-#if 0 /* gives a warning - need to figure out "right way" */
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: grid name: %s", [[grid name] cString]);
-#endif
+
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"pls: xgrid: grid name: %s",
+			[[grid identifier] cString]);
 
     return ORTE_SUCCESS;
 }
@@ -256,83 +229,133 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
 -(int) launchJob:(orte_jobid_t) jobid
 {
-    opal_list_t nodes, mapping_list;
+    orte_job_map_t *map;
     opal_list_item_t *item;
-    int ret;
     size_t num_nodes;
     orte_vpid_t vpid;
-    int i = 0;
+    int rc, i = 0;  
+    opal_list_t daemons;
+    orte_pls_daemon_info_t *dmn;
     char *orted_path;
+    char *nsuri = NULL, *gpruri = NULL;
+
+   /* Query the map for this job.
+     * We need the entire mapping for a couple of reasons:
+     *  - need the prefix to start with.
+     *  - need to know if we are launching on a subset of the allocated nodes
+     */
+    rc = orte_rmaps.get_job_map(&map, jobid);
+    if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+    num_nodes = opal_list_get_size(&map->nodes);
+
+    /*
+     * Allocate a range of vpids for the daemons.
+     */
+    if (0 == num_nodes) {
+        return ORTE_ERR_BAD_PARAM;
+    }
+    rc = orte_ns.reserve_range(0, num_nodes, &vpid);
+    if (ORTE_SUCCESS != rc) {
+        goto cleanup;
+    }
+
+    /* setup the orted triggers for passing their launch info */
+    if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* setup a list that will contain the info for all the daemons
+     * so we can store it on the registry when done
+     */
+    OBJ_CONSTRUCT(&daemons, opal_list_t);
 
     /* find orted */
     orted_path = opal_path_findv((char*) [orted cString], 0, environ, NULL); 
+    
+    /* setup ns contact info */
+    if (NULL != orte_process_info.ns_replica_uri) {
+        nsuri = strdup(orte_process_info.ns_replica_uri);
+    } else {
+        nsuri = orte_rml.get_uri();
+    }
 
-    /* query the list of nodes allocated to the job */
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    ret = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
-    if (ORTE_SUCCESS != ret) goto cleanup;
-
-    /* allocate vpids for the daemons */
-    num_nodes = opal_list_get_size(&nodes);
-    if (num_nodes == 0) return ORTE_ERR_BAD_PARAM;
-    ret = orte_ns.reserve_range(0, num_nodes, &vpid);
-    if (ORTE_SUCCESS != ret) goto cleanup;
+    /* setup gpr contact info */
+    if (NULL != orte_process_info.gpr_replica_uri) {
+        gpruri = strdup(orte_process_info.gpr_replica_uri);
+    } else {
+        gpruri = orte_rml.get_uri();
+    }
 
     /* build up the array of task specifications */
     NSMutableDictionary *taskSpecifications = [NSMutableDictionary dictionary];
-    
-    for (item =  opal_list_get_first(&nodes);
-	 item != opal_list_get_end(&nodes);
-	 item =  opal_list_get_next(item)) {
-        orte_ras_node_t* node = (orte_ras_node_t*)item;
-        orte_process_name_t* name;
-	char *name_str, *nsuri, *gpruri;
 
-        ret = orte_ns.create_process_name(&name, node->node_cellid, 0, vpid);
-        if(ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
+    /* Iterate through each of the nodes and spin
+     * up a daemon.
+     */
+    for (item =  opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item =  opal_list_get_next(item)) {
+        orte_mapped_node_t* rmaps_node = (orte_mapped_node_t*)item;
+        orte_process_name_t* name;
+        char* name_string;
+        
+        /* new daemon - setup to record its info */
+        dmn = OBJ_NEW(orte_pls_daemon_info_t);
+        dmn->active_job = jobid;
+        opal_list_append(&daemons, &dmn->super);
+        
+        /* record the node name in the daemon struct */
+        dmn->cell = rmaps_node->cell;
+        dmn->nodename = strdup(rmaps_node->nodename);
+        
+        /* initialize daemons process name */
+        rc = orte_ns.create_process_name(&name, rmaps_node->cell, 0, vpid);
+        if (ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
-	ret = orte_ns.get_proc_name_string(&name_str, name);
-	if (ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
+        
+        /* save it in the daemon struct */
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(dmn->name), name, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
             goto cleanup;
-	}
+        }
+        
+        /* setup per-node options */
+        opal_output_verbose(1, orte_pls_base.pls_output,
+            "orte:pls:xgrid: launching on node %s", 
+            rmaps_node->nodename);
+        
+        /* setup process name */
+        rc = orte_ns.get_proc_name_string(&name_string, name);
+        if (ORTE_SUCCESS != rc) {
+            opal_output(orte_pls_base.pls_output,
+            "orte:pls:xgrid: unable to create process name");
+            return rc;
+        }
 
-	if (NULL != orte_process_info.ns_replica_uri) {
-	    nsuri = strdup(orte_process_info.ns_replica_uri);
-	} else {
-	    nsuri = orte_rml.get_uri();
-	}
-
-	if (NULL != orte_process_info.gpr_replica_uri) {
-	    gpruri = strdup(orte_process_info.gpr_replica_uri);
-	} else {
-	    gpruri = orte_rml.get_uri();
-	}
-
-	NSMutableDictionary *task = [NSMutableDictionary dictionary];
-	[task setObject: [NSString stringWithCString: orted_path]
-	      forKey: XGJobSpecificationCommandKey];
-	NSArray *taskArguments = 
-	    [NSArray arrayWithObjects: @"--no-daemonize",
-		     @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
-		     @"--name", [NSString stringWithCString: name_str],
-		     @"--nodename", [NSString stringWithCString: node->node_name],
-		     @"--nsreplica", [NSString stringWithCString: nsuri],
-		     @"--gprreplica", [NSString stringWithCString: gpruri],
-		     nil];
-	[task setObject: taskArguments forKey: XGJobSpecificationArgumentsKey];
-
-	[taskSpecifications setObject: task 
-			    forKey: [NSString stringWithFormat: @"%d", i]];
-
-	/* add the node name into the registery */
-	mca_pls_xgrid_set_node_name(node, jobid, name);
-	
-	free(name_str); free(nsuri); free(gpruri);
-	vpid++; i++;
+        NSMutableDictionary *task = [NSMutableDictionary dictionary];
+        [task setObject: [NSString stringWithCString: orted_path]
+            forKey: XGJobSpecificationCommandKey];
+        NSArray *taskArguments = 
+        [NSArray arrayWithObjects: @"--no-daemonize",
+                @"--bootproxy", [NSString stringWithFormat: @"%d", jobid],
+                @"--name", [NSString stringWithCString: name_string],
+                            @"--num_procs", [NSString stringWithFormat: @"%d", 1],
+                @"--nodename", [NSString stringWithCString: rmaps_node->nodename],
+                @"--nsreplica", [NSString stringWithCString: nsuri],
+                @"--gprreplica", [NSString stringWithCString: gpruri],
+                nil];
+        [task setObject: taskArguments forKey: XGJobSpecificationArgumentsKey];
+    
+        [taskSpecifications setObject: task 
+                forKey: [NSString stringWithFormat: @"%d", i]];
+    
+        vpid++; i++;
     }
 
     /* job specification */
@@ -359,30 +382,41 @@ mca_pls_xgrid_set_node_name(orte_ras_node_t* node,
 
     /* we should have a result - find out if it worked */
     if (XGActionMonitorOutcomeSuccess == [actionMonitor outcome]) {
-	ret = ORTE_SUCCESS;
+	rc = ORTE_SUCCESS;
     } else {	
 	NSError *err = [actionMonitor error];
-	fprintf(stderr, "orte:pls:xgrid: launch failed: %s\n", 
-		[[err localizedFailureReason] cString]);
-	ret = ORTE_ERROR;
+	fprintf(stderr, "orte:pls:xgrid: launch failed: (%d) %s\n", 
+		[actionMonitor outcome],
+		[[err localizedDescription] cString]);
+	rc = ORTE_ERROR;
+	goto cleanup;
     }
 
     /* save the XGJob identifier somewhere we can get to it */
     [active_jobs setObject: [[actionMonitor results] objectForKey: @"jobIdentifier"]
 		 forKey: [NSString stringWithFormat: @"%d", jobid]];
 
+    /* all done, so store the daemon info on the registry */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
+        ORTE_ERROR_LOG(rc);
+    }
+
 cleanup:
-    while(NULL != (item = opal_list_remove_first(&nodes))) {
+    OBJ_RELEASE(map);
+    
+    if (NULL != nsuri) free(nsuri);
+    if (NULL != gpruri) free(gpruri);
+
+    /* deconstruct the daemon list */
+    while (NULL != (item = opal_list_remove_first(&daemons))) {
         OBJ_RELEASE(item);
     }
-    OBJ_DESTRUCT(&nodes);
+    OBJ_DESTRUCT(&daemons);
 
-    while(NULL != (item = opal_list_remove_first(&mapping_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mapping_list);
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid:launch: finished\n");
 
-    return ret;
+    return rc;
 }
 
 
@@ -405,7 +439,7 @@ cleanup:
     } else {	
 	NSError *err = [actionMonitor error];
 	fprintf(stderr, "orte:pls:xgrid: terminate failed: %s\n", 
-		[[err localizedFailureReason] cString]);
+		[[err localizedDescription] cString]);
 	ret = ORTE_ERROR;
     }
 
@@ -414,24 +448,51 @@ cleanup:
 
 
 /* delegate for changes */
--(void) connectionDidOpen:(XGConnection*) connection
+-(void) connectionDidOpen:(XGConnection*) myConnection
 {
+    /* this isn't an error condition -- we finally opened the
+       connection, so trigger the condition variable we're waiting
+       on */
     opal_condition_broadcast(&state_cond);
 }
 
 
--(void) connectionDidNotOpen:(XGConnection*) connection withError: (NSError*) error
+-(void) connectionDidNotOpen:(XGConnection*) myConnection withError: (NSError*) error
 {
     opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: got connectionDidNotOpen message");
+		"orte:pls:xgrid: Controller connection did not open: (%d) %s",
+		[error code],
+		[[error localizedDescription] cString]);
     opal_condition_broadcast(&state_cond);
 }
 
 
--(void) connectionDidClose:(XGConnection*) connection;
+-(void) connectionDidClose:(XGConnection*) myConnection;
 {
-    opal_output(orte_pls_base.pls_output,
-		"pls: xgrid: got connectionDidClose message");
+    // check for success
+    if ([myConnection error] != nil) {
+	switch ([[myConnection error] code]) {
+	case 200:
+	    /* success */
+	    break;
+	case 530:
+	case 535:
+	    opal_output(orte_pls_base.pls_output,
+			"orte:pls:xgrid: Connection to XGrid controller failed due to authentication error (%d):",
+			[[myConnection error] code]);
+	    break;
+	default:
+	    opal_output(orte_pls_base.pls_output,
+			"orte:pls:xgrid: Connection to XGrid controller unexpectedly closed: (%d) %s",
+			[[myConnection error] code],
+			[[[myConnection error] localizedDescription] cString]);
+	    break;
+	}
+    } else {
+	opal_output(orte_pls_base.pls_output,
+		    "orte:pls:xgrid: Connection to XGrid controller unexpectedly closed");
+    }
+
     opal_condition_broadcast(&state_cond);
 }
 

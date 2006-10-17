@@ -66,7 +66,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
 
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
-        int dsize;
+        size_t dsize;
 
         ompi_ddt_type_size (dtype, &dsize);
         dsize *= count;
@@ -111,7 +111,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int comsize;
         int alg, faninout, segsize;
-        int dsize;
+        size_t dsize;
 
         ompi_ddt_type_size (sdtype, &dsize);
         comsize = ompi_comm_size(comm);
@@ -190,7 +190,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
 
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
-        int dsize;
+        size_t dsize;
 
         ompi_ddt_type_size (datatype, &dsize);
         dsize *= count;
@@ -235,7 +235,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
 
        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
-        int dsize;
+        size_t dsize;
 
         ompi_ddt_type_size (datatype, &dsize);
         dsize *= count;

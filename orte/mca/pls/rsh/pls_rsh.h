@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -50,6 +50,7 @@ int orte_pls_rsh_finalize(void);
  */
 int orte_pls_rsh_launch(orte_jobid_t);
 int orte_pls_rsh_terminate_job(orte_jobid_t);
+int orte_pls_rsh_terminate_orteds(orte_jobid_t);
 int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc_name);
 int orte_pls_rsh_signal_job(orte_jobid_t, int32_t);
 int orte_pls_rsh_signal_proc(const orte_process_name_t* proc_name, int32_t);
@@ -60,6 +61,7 @@ int orte_pls_rsh_signal_proc(const orte_process_name_t* proc_name, int32_t);
 struct orte_pls_rsh_component_t {
     orte_pls_base_component_t super;
     bool debug;
+    bool debug_malloc;
     bool reap;
     bool assume_same_shell;
     int delay;
@@ -76,8 +78,8 @@ struct orte_pls_rsh_component_t {
 };
 typedef struct orte_pls_rsh_component_t orte_pls_rsh_component_t;
 
-ORTE_DECLSPEC extern orte_pls_rsh_component_t mca_pls_rsh_component;
-ORTE_DECLSPEC extern orte_pls_base_module_t orte_pls_rsh_module;
+ORTE_MODULE_DECLSPEC extern orte_pls_rsh_component_t mca_pls_rsh_component;
+extern orte_pls_base_module_t orte_pls_rsh_module;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

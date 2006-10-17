@@ -113,7 +113,7 @@ void mpi_file_iread_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
 #else
 /* Prototype to keep compiler happy */
 FORTRAN_API void FORT_CALL mpi_file_iread_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,
-			int *count,MPI_Datatype *datatype,
+			MPI_Fint *count,MPI_Datatype *datatype,
 			MPI_Fint *request, MPI_Fint *ierr );
 
 FORTRAN_API void FORT_CALL mpi_file_iread_at_(MPI_Fint *fh,MPI_Offset *offset,void *buf,

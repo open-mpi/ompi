@@ -33,7 +33,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC extern opal_class_t ompi_communicator_t_class;
+
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 
 #define OMPI_COMM_INTER      0x00000001
 #define OMPI_COMM_CART       0x00000002
@@ -41,10 +42,9 @@ OMPI_DECLSPEC extern opal_class_t ompi_communicator_t_class;
 #define OMPI_COMM_NAMEISSET  0x00000008
 #define OMPI_COMM_ISFREED    0x00000010
 #define OMPI_COMM_INTRINSIC  0x00000020
-#define OMPI_COMM_HIDDEN     0x00000040
-#define OMPI_COMM_DYNAMIC    0x00000080
-#define OMPI_COMM_INVALID    0x00000100
-#define OMPI_COMM_PML_ADDED  0x00000200
+#define OMPI_COMM_DYNAMIC    0x00000040
+#define OMPI_COMM_INVALID    0x00000080
+#define OMPI_COMM_PML_ADDED  0x00000100
 
 /* some utility #defines */
 #define OMPI_COMM_IS_INTER(comm) ((comm)->c_flags & OMPI_COMM_INTER)
@@ -52,13 +52,11 @@ OMPI_DECLSPEC extern opal_class_t ompi_communicator_t_class;
 #define OMPI_COMM_IS_CART(comm) ((comm)->c_flags & OMPI_COMM_CART)
 #define OMPI_COMM_IS_GRAPH(comm) ((comm)->c_flags & OMPI_COMM_GRAPH)
 #define OMPI_COMM_IS_INTRINSIC(comm) ((comm)->c_flags & OMPI_COMM_INTRINSIC)
-#define OMPI_COMM_IS_HIDDEN(comm) ((comm)->c_flags & OMPI_COMM_HIDDEN)
 #define OMPI_COMM_IS_FREED(comm) ((comm)->c_flags & OMPI_COMM_ISFREED)
-#define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags &OMPI_COMM_DYNAMIC)
-#define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags &OMPI_COMM_INVALID)
-#define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags &OMPI_COMM_PML_ADDED)
+#define OMPI_COMM_IS_DYNAMIC(comm) ((comm)->c_flags & OMPI_COMM_DYNAMIC)
+#define OMPI_COMM_IS_INVALID(comm) ((comm)->c_flags & OMPI_COMM_INVALID)
+#define OMPI_COMM_IS_PML_ADDED(comm) ((comm)->c_flags & OMPI_COMM_PML_ADDED)
 
-#define OMPI_COMM_SET_HIDDEN(comm) ((comm)->c_flags |= OMPI_COMM_HIDDEN)
 #define OMPI_COMM_SET_DYNAMIC(comm) ((comm)->c_flags |= OMPI_COMM_DYNAMIC)
 #define OMPI_COMM_SET_INVALID(comm) ((comm)->c_flags |= OMPI_COMM_INVALID)
 
@@ -138,7 +136,6 @@ struct ompi_communicator_t {
 
     /* Hooks for PML to hang things */
     struct mca_pml_comm_t  *c_pml_comm;
-    struct mca_pml_proc_t **c_pml_procs;
 
     mca_coll_base_module_1_0_0_t c_coll;
     /**< Selected collective module, saved by value for speed (instead
@@ -218,10 +215,7 @@ struct ompi_communicator_t {
      */
     static inline int ompi_comm_remote_size(ompi_communicator_t* comm)
     {
-        if ( comm->c_flags & OMPI_COMM_INTER )
-            return comm->c_remote_group->grp_proc_count;
-        else
-            return 0;
+        return (comm->c_flags & OMPI_COMM_INTER ? comm->c_remote_group->grp_proc_count : 0);
     }
 
     /* return pointer to communicator associated with context id cid,
@@ -229,7 +223,6 @@ struct ompi_communicator_t {
     static inline ompi_communicator_t *ompi_comm_lookup(uint32_t cid)
     {
         /* array of pointers to communicators, indexed by context ID */
-        OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
         return (ompi_communicator_t*)ompi_pointer_array_get_item(&ompi_mpi_communicators, cid);
     }
 

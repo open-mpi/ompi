@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -50,8 +50,6 @@ typedef struct {
     orte_data_value_t value;
 } orte_gpr_replica_ival_list_t;
 
-OBJ_CLASS_DECLARATION(orte_gpr_replica_ival_list_t);
-
 /* constructor */
 static void orte_gpr_replica_ival_list_constructor(orte_gpr_replica_ival_list_t* ptr)
 {
@@ -81,8 +79,6 @@ typedef struct {
     orte_gpr_replica_container_t *cptr;   /* pointer to the container */
     opal_list_t *ival_list;             /* list of ival_list_t of values found by get */
 } orte_gpr_replica_get_list_t;
-
-OBJ_CLASS_DECLARATION(orte_gpr_replica_get_list_t);
 
 /* constructor */
 static void orte_gpr_replica_get_list_constructor(orte_gpr_replica_get_list_t* ptr)
@@ -118,8 +114,8 @@ OBJ_CLASS_INSTANCE(
 
 int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                            size_t cnt, orte_gpr_keyval_t **keyvals)
+                            orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                            orte_std_cntr_t cnt, orte_gpr_keyval_t **keyvals)
 {
     orte_gpr_replica_container_t **cptr, *cptr2;
     orte_gpr_replica_itag_t itag;
@@ -127,7 +123,7 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_replica_itagval_t *iptr, **iptrs;
     bool overwrite, overwritten;
     int rc;
-    size_t i, j, k, m, n, index;
+    orte_std_cntr_t i, j, k, m, n, index;
 
     OPAL_TRACE(2);
 
@@ -289,8 +285,8 @@ int orte_gpr_replica_put_fn(orte_gpr_addr_mode_t addr_mode,
 
 int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
                 orte_gpr_replica_segment_t *seg,
-                orte_gpr_replica_itag_t *token_itags, size_t num_tokens,
-                size_t cnt, orte_gpr_keyval_t **keyvals,
+                orte_gpr_replica_itag_t *token_itags, orte_std_cntr_t num_tokens,
+                orte_std_cntr_t cnt, orte_gpr_keyval_t **keyvals,
                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     OPAL_TRACE(2);
@@ -301,9 +297,9 @@ int orte_gpr_replica_put_nb_fn(orte_gpr_addr_mode_t addr_mode,
 
 int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
-                            size_t *cnt, orte_gpr_value_t ***values)
+                            orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
+                            orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 {
     opal_list_t get_list;
     orte_gpr_replica_get_list_t *gptr;
@@ -313,7 +309,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_keyval_t **kptr;
     orte_gpr_replica_addr_mode_t tokmode, keymode;
     int rc;
-    size_t i, j, k, m;
+    orte_std_cntr_t i, j, k, m;
 
     OPAL_TRACE(2);
 
@@ -520,10 +516,10 @@ CLEANUP:
 
 int orte_gpr_replica_get_conditional_fn(orte_gpr_addr_mode_t addr_mode,
                             orte_gpr_replica_segment_t *seg,
-                            orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                            orte_gpr_replica_itag_t *keytags, size_t num_keys,
-                            size_t num_conditions, orte_gpr_replica_itagval_t **conditions,
-                            size_t *cnt, orte_gpr_value_t ***values)
+                            orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                            orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
+                            orte_std_cntr_t num_conditions, orte_gpr_replica_itagval_t **conditions,
+                            orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 {
     opal_list_t get_list;
     orte_gpr_replica_get_list_t *gptr;
@@ -533,7 +529,7 @@ int orte_gpr_replica_get_conditional_fn(orte_gpr_addr_mode_t addr_mode,
     orte_gpr_keyval_t **kptr;
     orte_gpr_replica_addr_mode_t tokmode, keymode;
     int rc;
-    size_t i, j, k, m, n;
+    orte_std_cntr_t i, j, k, m, n;
 
     OPAL_TRACE(2);
 
@@ -717,8 +713,8 @@ CLEANUP:
 
 int orte_gpr_replica_get_nb_fn(orte_gpr_addr_mode_t addr_mode,
                                 orte_gpr_replica_segment_t *seg,
-                                orte_gpr_replica_itag_t *tokentags, size_t num_tokens,
-                                orte_gpr_replica_itag_t *keytags, size_t num_keys,
+                                orte_gpr_replica_itag_t *tokentags, orte_std_cntr_t num_tokens,
+                                orte_gpr_replica_itag_t *keytags, orte_std_cntr_t num_keys,
                                 orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     OPAL_TRACE(2);

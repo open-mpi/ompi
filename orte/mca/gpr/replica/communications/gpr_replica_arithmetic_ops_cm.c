@@ -40,7 +40,7 @@ int orte_gpr_replica_recv_increment_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     orte_gpr_value_t *value;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, ret;
 
     OPAL_TRACE(3);
@@ -108,7 +108,7 @@ int orte_gpr_replica_recv_decrement_value_cmd(orte_buffer_t *cmd, orte_buffer_t 
     orte_gpr_value_t *value;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, ret;
 
     OPAL_TRACE(3);

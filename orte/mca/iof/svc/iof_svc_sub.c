@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -220,9 +220,9 @@ int orte_iof_svc_sub_forward(
             ORTE_IOF_BASE_FRAG_ALLOC(frag,rc);
             frag->frag_hdr.hdr_msg = *hdr;
             frag->frag_len = frag->frag_hdr.hdr_msg.msg_len;
-            frag->frag_iov[0].iov_base = (void*)&frag->frag_hdr;
+            frag->frag_iov[0].iov_base = (IOVBASE_TYPE*)&frag->frag_hdr;
             frag->frag_iov[0].iov_len = sizeof(frag->frag_hdr);
-            frag->frag_iov[1].iov_base = (void*)frag->frag_data;
+            frag->frag_iov[1].iov_base = (IOVBASE_TYPE*)frag->frag_data;
             frag->frag_iov[1].iov_len = frag->frag_len;
             memcpy(frag->frag_data, data, frag->frag_len);
             ORTE_IOF_BASE_HDR_MSG_NTOH(frag->frag_hdr.hdr_msg);

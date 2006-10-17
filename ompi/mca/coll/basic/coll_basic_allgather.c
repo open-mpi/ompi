@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -45,7 +45,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
 {
     int err;
     char *rbuf_original = NULL, *inplace_temp = NULL;
-    long true_lb, true_extent, lb, extent;
+    ptrdiff_t true_lb, true_extent, lb, extent;
 
     /* Handle MPI_IN_PLACE (see explanantion in reduce.c for how to
        allocate temp buffer) -- note that rank 0 can use IN_PLACE
@@ -56,13 +56,13 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
         ompi_ddt_get_extent(rdtype, &lb, &extent);
         ompi_ddt_get_true_extent(rdtype, &true_lb, &true_extent);
 
-        rbuf_original = rbuf;
+        rbuf_original = (char*)rbuf;
         sbuf = ((char*) rbuf) + (ompi_comm_rank(comm) * extent * rcount);
         sdtype = rdtype;
         scount = rcount;
 
-        inplace_temp = malloc((true_extent + (rcount - 1) * extent) * 
-                              ompi_comm_size(comm));
+        inplace_temp = (char*)malloc((true_extent + (rcount - 1) * extent) * 
+                                     ompi_comm_size(comm));
         if (NULL == inplace_temp) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -82,7 +82,7 @@ mca_coll_basic_allgather_intra(void *sbuf, int scount,
 
     if (MPI_SUCCESS == err && NULL != inplace_temp) {
         ompi_ddt_copy_content_same_ddt(rdtype, rcount * ompi_comm_size(comm),
-                                       rbuf_original, rbuf);
+                                       rbuf_original, (char*)rbuf);
         free(inplace_temp);
     }
 
@@ -112,8 +112,8 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
     int err;
     int i;
     char *tmpbuf = NULL, *ptmp;
-    long rlb, slb, rextent, sextent;
-    long incr;
+    ptrdiff_t rlb, slb, rextent, sextent;
+    ptrdiff_t incr;
     ompi_request_t *req;
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 

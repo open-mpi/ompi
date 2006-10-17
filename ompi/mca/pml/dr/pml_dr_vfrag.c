@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -24,7 +24,7 @@
 
 static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* vfrag); 
 static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
-
+static void mca_pml_dr_vfrag_cleanup_active_desc(mca_bml_base_btl_t* bml_btl);
 
 static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
 {
@@ -68,9 +68,10 @@ OBJ_CLASS_INSTANCE(
 static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
-    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x", __FILE__, __LINE__, __func__, vfrag));
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x vid: %d",
+                        __FILE__, __LINE__, __func__, vfrag, vfrag->vf_id));
 
     /* update pending counts */
     OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-vfrag->vf_pending);
@@ -81,6 +82,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
         /* declare btl dead */
         opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
                     vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+        mca_pml_dr_vfrag_cleanup_active_desc(vfrag->bml_btl);
         mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         mca_pml_dr_vfrag_reset(vfrag);
     } 
@@ -117,6 +119,7 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
         /* declare btl dead */
         opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
             vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+        mca_pml_dr_vfrag_cleanup_active_desc(vfrag->bml_btl);
         mca_bml.bml_del_btl(vfrag->bml_btl->btl);
         mca_pml_dr_vfrag_reset(vfrag);
     }
@@ -141,7 +144,7 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
 
 void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
     /* update counters - give new BTL a fair chance :-) */
     vfrag->vf_ack_cnt = 0;
@@ -172,7 +175,7 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 
 void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
     /* start wdog timer */
     MCA_PML_DR_VFRAG_WDOG_START(vfrag);
@@ -195,3 +198,18 @@ void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t* vfrag)
     }
 }
 
+
+static void mca_pml_dr_vfrag_cleanup_active_desc(mca_bml_base_btl_t* bml_btl) {  
+   opal_list_item_t* item;
+    
+    for (item = opal_list_get_first(&mca_pml_dr.send_active) ;
+         item != opal_list_get_end(&mca_pml_dr.send_active) ;
+         item = opal_list_get_next(item)) {
+        mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*) item;
+        mca_btl_base_descriptor_t* des = sendreq->req_descriptor;
+        if( des->des_context == bml_btl) { 
+            des->des_context = NULL;
+        }
+            
+    }
+}

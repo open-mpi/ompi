@@ -16,27 +16,31 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include <errno.h>
 #include <unistd.h>
 #include <string.h>
 
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/rmgr/base/base.h"
+
+#include "orte/dss/dss.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
+#include "orte/mca/gpr/gpr.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
+
 #include "ras_xgrid.h"
 
 
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t jobid);
-static int node_insert(opal_list_t *);
-static int node_query(opal_list_t *);
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
 static int deallocate(orte_jobid_t jobid);
 static int finalize(void);
 
@@ -48,8 +52,10 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist);
  */
 orte_ras_base_module_t orte_ras_xgrid_module = {
     allocate,
-    node_insert,
-    node_query,
+    orte_ras_base_node_insert,
+    orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     deallocate,
     finalize
 };
@@ -60,13 +66,31 @@ orte_ras_base_module_t orte_ras_xgrid_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-#include "orte/mca/gpr/gpr.h"
-static int allocate(orte_jobid_t jobid)
+static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     int ret;
     opal_list_t nodes;
     opal_list_item_t* item;
+    orte_jobid_t *jptr;
+    orte_attribute_t *attr;
 
+    /* check the attributes to see if we are supposed to use the parent
+     * jobid's allocation. This can occur if we are doing a dynamic
+     * process spawn and don't want to go through the allocator again
+     */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        return ORTE_SUCCESS;
+    }
+    
     OBJ_CONSTRUCT(&nodes, opal_list_t);
     if (ORTE_SUCCESS != (ret = discover(jobid, &nodes))) {
         opal_output(orte_ras_base.ras_output,
@@ -91,16 +115,6 @@ static int allocate(orte_jobid_t jobid)
     }
 
     return ret;
-}
-
-static int node_insert(opal_list_t *nodes)
-{
-    return orte_ras_base_node_insert(nodes);
-}
-
-static int node_query(opal_list_t *nodes)
-{
-    return orte_ras_base_node_query(nodes);
 }
 
 /*
@@ -130,10 +144,8 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
 {
     int ret;
     orte_ras_node_t *node;
-    opal_list_item_t* item;
-    opal_list_t new_nodes;
-    size_t num_requested = 0;
-    size_t i;
+    orte_std_cntr_t num_requested = 0;
+    orte_std_cntr_t i;
     char *hostname;
 
     /* how many slots do we need? */
@@ -142,32 +154,23 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
     }
 
     /* create a "node" for each slot */
-    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     for (i = 0 ; i < num_requested ; ++i) {
         asprintf(&hostname, "xgrid-node-%d", (int) i);
         node = OBJ_NEW(orte_ras_node_t);
         node->node_name = hostname;
-        node->node_arch = strdup("unknown");
+        node->node_arch = NULL;
         node->node_state = ORTE_NODE_STATE_UP;
         node->node_cellid = 0;
         node->node_slots_inuse = 0;
         node->node_slots_max = 0;
         node->node_slots = 1;
-        opal_list_append(&new_nodes, &node->super);
+        opal_list_append(nodelist, &node->super);
     }
 
     /* Add these nodes to the registry, and return all the values */
     opal_output(orte_ras_base.ras_output, 
                 "ras:xgrid:allocate:discover: done -- adding to registry");
-    ret = orte_ras_base_node_insert(&new_nodes);
-    for (item = opal_list_remove_first(&new_nodes);
-         NULL != item; item = opal_list_remove_first(&new_nodes)) {
-        if (ORTE_SUCCESS == ret) {
-            opal_list_append(nodelist, item);
-        } else {
-            OBJ_RELEASE(item);
-        }
-    }
+    ret = orte_ras_base_node_insert(nodelist);
 
     /* All done */
     if (ORTE_SUCCESS == ret) {
@@ -177,6 +180,6 @@ static int discover(orte_jobid_t jobid, opal_list_t* nodelist)
         opal_output(orte_ras_base.ras_output, 
                     "ras:xgrid:allocate:discover: failed (rc=%d)", ret);
     }
-    OBJ_DESTRUCT(&new_nodes);
+
     return ret;
 }

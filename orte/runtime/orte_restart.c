@@ -39,7 +39,7 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/base/base.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/univ_info.h"
@@ -87,7 +87,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_soh_base_close())) {
+    if (ORTE_SUCCESS != (rc = orte_smr_base_close())) {
         ORTE_ERROR_LOG(rc);
 	return rc;
     }
@@ -225,7 +225,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_soh_base_open())) {
+    if (ORTE_SUCCESS != (rc = orte_smr_base_open())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -246,7 +246,7 @@ int orte_restart(orte_process_name_t *name, const char* uri)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_soh_base_select())) {
+    if (ORTE_SUCCESS != (rc = orte_smr_base_select())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

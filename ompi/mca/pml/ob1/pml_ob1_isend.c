@@ -19,7 +19,6 @@
 #include "ompi_config.h"
 
 #include "pml_ob1.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "ompi/peruse/peruse-internal.h"

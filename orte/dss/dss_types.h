@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -49,7 +49,7 @@ typedef struct {
     orte_data_type_t type;              /* the type of value stored */
     void *data;
 } orte_data_value_t;
-OBJ_CLASS_DECLARATION(orte_data_value_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_data_value_t);
 
 #define ORTE_DATA_VALUE_EMPTY {{OBJ_CLASS(orte_data_value_t),0}, ORTE_UNDEF, NULL}
 
@@ -100,7 +100,7 @@ typedef uint8_t orte_dss_buffer_type_t;
     typedef struct orte_buffer_t orte_buffer_t;
 
     /** formalize the declaration */
-    OMPI_DECLSPEC OBJ_CLASS_DECLARATION (orte_buffer_t);
+    ORTE_DECLSPEC OBJ_CLASS_DECLARATION (orte_buffer_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -20,10 +20,14 @@
 #define  OPAL_MUTEX_H 1
 
 #include "opal_config.h"
+#if OMPI_HAVE_THREAD_SUPPORT
 #include "opal/sys/atomic.h"
+#endif  /* OMPI_HAVE_THREAD_SUPPORT */
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 /**
  * @file:
  *
@@ -34,7 +38,7 @@ extern "C" {
 /*
  * declaring this here so that CL does not complain
  */ 
-OMPI_DECLSPEC extern bool opal_uses_threads;
+OPAL_DECLSPEC extern bool opal_uses_threads;
 
 /**
  * Opaque mutex object

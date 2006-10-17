@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -38,6 +38,6 @@ int mca_coll_self_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     if (MPI_IN_PLACE == sbuf) {
         return MPI_SUCCESS;
     } else {
-        return ompi_ddt_copy_content_same_ddt(dtype, rcounts[0], rbuf, sbuf);
+        return ompi_ddt_copy_content_same_ddt(dtype, rcounts[0], (char*)rbuf, (char*)sbuf);
     }
 }

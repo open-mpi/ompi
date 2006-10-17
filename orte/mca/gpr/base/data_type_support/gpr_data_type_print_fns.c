@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -26,7 +28,7 @@
 
 #include "orte/mca/gpr/base/base.h"
 
-static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size);
+static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, orte_std_cntr_t src_size);
 
 /*
  * STANDARD PRINT FUNCTION - WORKS FOR EVERYTHING NON-STRUCTURED
@@ -116,7 +118,7 @@ int orte_gpr_base_print_gpr_value(char **output, char *prefix, orte_gpr_value_t 
 {
     orte_gpr_addr_mode_t addr;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
     int rc;
 
     /* set default result */
@@ -227,7 +229,7 @@ int orte_gpr_base_print_gpr_value(char **output, char *prefix, orte_gpr_value_t 
     asprintf(&pfx, "%s\t", prefx);
     for (j=0; j < value->cnt; j++) {
         if (ORTE_SUCCESS != (rc = orte_gpr_base_print_keyval(&tmp2, pfx,
-                                (void*)(value->keyvals[j]), ORTE_GPR_KEYVAL))) {
+                                (orte_gpr_keyval_t*)(value->keyvals[j]), ORTE_GPR_KEYVAL))) {
             ORTE_ERROR_LOG(rc);
             free(tmp);
             free(pfx);
@@ -251,7 +253,7 @@ int orte_gpr_base_print_subscription(char **output, char *prefix, orte_gpr_subsc
 {
     int rc;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
 
     /* set default result */
     *output = NULL;
@@ -315,7 +317,7 @@ int orte_gpr_base_print_subscription(char **output, char *prefix, orte_gpr_subsc
     /* indent another level for values */
     asprintf(&pfx, "%s\t", prefx);
     for (j=0; j < sub->cnt; j++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (void*)(sub->values[j]), ORTE_GPR_VALUE))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (orte_gpr_value_t*)(sub->values[j]), ORTE_GPR_VALUE))) {
             ORTE_ERROR_LOG(rc);
             free(tmp);
             free(pfx);
@@ -338,7 +340,7 @@ int orte_gpr_base_print_trigger(char **output, char *prefix, orte_gpr_trigger_t 
 {
     int rc;
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t j;
+    orte_std_cntr_t j;
 
     /* set default result */
     *output = NULL;
@@ -392,7 +394,7 @@ int orte_gpr_base_print_trigger(char **output, char *prefix, orte_gpr_trigger_t 
     /* indent another level for values */
     asprintf(&pfx, "%s\t", prefx);
     for (j=0; j < trig->cnt; j++) {
-        if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (void*)(trig->values[j]), ORTE_GPR_VALUE))) {
+        if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (orte_gpr_value_t*)(trig->values[j]), ORTE_GPR_VALUE))) {
             ORTE_ERROR_LOG(rc);
             free(tmp);
             free(pfx);
@@ -414,7 +416,7 @@ int orte_gpr_base_print_trigger(char **output, char *prefix, orte_gpr_trigger_t 
 int orte_gpr_base_print_notify_data(char **output, char *prefix, orte_gpr_notify_data_t *data, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_value_t **values;
     int rc;
 
@@ -442,7 +444,7 @@ int orte_gpr_base_print_notify_data(char **output, char *prefix, orte_gpr_notify
                        i < (data->values)->size; i++) {
             if (NULL != values[i]) {
                 j++;
-                if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (void*)values[i], ORTE_GPR_VALUE))) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_base_print_gpr_value(&tmp2, pfx, (orte_gpr_value_t*)values[i], ORTE_GPR_VALUE))) {
                     ORTE_ERROR_LOG(rc);
                     free(tmp);
                     return rc;
@@ -464,7 +466,7 @@ int orte_gpr_base_print_notify_data(char **output, char *prefix, orte_gpr_notify
 int orte_gpr_base_print_notify_msg(char **output, char *prefix, orte_gpr_notify_message_t *msg, orte_data_type_t type)
 {
     char *tmp, *tmp2, *tmp3, *pfx, *prefx;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_notify_data_t **data;
     int rc;
 
@@ -505,7 +507,7 @@ int orte_gpr_base_print_notify_msg(char **output, char *prefix, orte_gpr_notify_
                        i < (msg->data)->size; i++) {
             if (NULL != data[i]) {
                 j++;
-                if (ORTE_SUCCESS != (rc = orte_gpr_base_print_notify_data(&tmp2, pfx, (void*)data[i], ORTE_GPR_NOTIFY_DATA))) {
+                if (ORTE_SUCCESS != (rc = orte_gpr_base_print_notify_data(&tmp2, pfx, (orte_gpr_notify_data_t*)data[i], ORTE_GPR_NOTIFY_DATA))) {
                     ORTE_ERROR_LOG(rc);
                     free(tmp);
                     return rc;
@@ -523,7 +525,7 @@ int orte_gpr_base_print_notify_msg(char **output, char *prefix, orte_gpr_notify_
     return ORTE_SUCCESS;
 }
 
-static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size)
+static void orte_gpr_base_quick_print(char **output, char *type_name, char *prefix, void *src, orte_std_cntr_t src_size)
 {
     char *prefx;
     uint8_t *ui8;

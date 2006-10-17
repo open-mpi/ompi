@@ -43,7 +43,7 @@
 #include "orte/mca/schema/base/base.h"
 
 
-int orte_schema_base_get_proc_tokens(char ***proc_tokens, size_t* num_tokens, orte_process_name_t *proc)
+int orte_schema_base_get_proc_tokens(char ***proc_tokens, orte_std_cntr_t* num_tokens, orte_process_name_t *proc)
 {
     int rc;
     char** tokens;
@@ -82,7 +82,7 @@ CLEANUP:
     return rc;
 }
 
-int orte_schema_base_get_node_tokens(char ***node_tokens, size_t* num_tokens, orte_cellid_t cellid, char *nodename)
+int orte_schema_base_get_node_tokens(char ***node_tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid, char *nodename)
 {
     int rc;
     char** tokens;
@@ -118,7 +118,7 @@ CLEANUP:
     return rc;
 }
 
-int orte_schema_base_get_job_tokens(char ***job_tokens, size_t* num_tokens, orte_jobid_t jobid)
+int orte_schema_base_get_job_tokens(char ***job_tokens, orte_std_cntr_t* num_tokens, orte_jobid_t jobid)
 {
     int rc;
     char** tokens;
@@ -150,12 +150,12 @@ CLEANUP:
     return rc;
 }
 
-int orte_schema_base_get_cell_tokens(char ***cell_tokens, size_t* num_tokens, orte_cellid_t cellid)
+int orte_schema_base_get_cell_tokens(char ***cell_tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid)
 {
     int rc;
     char **tokens;
     char *site, *resource, *cellstr;
-    size_t n, i;
+    orte_std_cntr_t n, i;
 
     n = 1;
 

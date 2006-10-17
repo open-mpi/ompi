@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,6 +33,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
@@ -41,6 +42,10 @@
 
 #include "opal/types.h"
 #include "opal/class/opal_list.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 #define ORTE_NAME_ARGS(n) \
     (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->cellid), \
@@ -66,9 +71,9 @@
  * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
  * uses of it if these types change to be larger than (unsigned long)!
  */
-typedef uint32_t orte_jobid_t;
-typedef uint32_t orte_cellid_t;
-typedef uint32_t orte_vpid_t;
+typedef orte_std_cntr_t orte_jobid_t;
+typedef orte_std_cntr_t orte_cellid_t;
+typedef orte_std_cntr_t orte_vpid_t;
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
 typedef uint8_t orte_ns_cmd_flag_t;
 
@@ -82,11 +87,25 @@ typedef struct orte_process_name_t orte_process_name_t;
 /*
  * define maximum value for id's in any field
  */
-#define ORTE_CELLID_MAX ((orte_cellid_t)(1UL << 31))
-#define ORTE_JOBID_MAX  ((orte_jobid_t)(1UL << 31))
-#define ORTE_VPID_MAX   ((orte_vpid_t)(1UL << 31))
+#define ORTE_CELLID_MAX     ORTE_STD_CNTR_MAX
+#define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
+#define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
 
-extern orte_process_name_t orte_name_all;
+/*
+ * define invalid values
+ */
+#define ORTE_CELLID_INVALID     -999
+#define ORTE_JOBID_INVALID      -999
+#define ORTE_VPID_INVALID       -999
+
+/*
+ * define wildcard values
+ */
+#define ORTE_CELLID_WILDCARD     -1
+#define ORTE_JOBID_WILDCARD      -1
+#define ORTE_VPID_WILDCARD       -1
+
+ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
 
 /**
@@ -112,12 +131,16 @@ extern orte_process_name_t orte_name_all;
 
 /** List of names for general use
  */
-struct orte_name_services_namelist_t {
+struct orte_namelist_t {
     opal_list_item_t item;     /**< Allows this item to be placed on a list */
     orte_process_name_t *name;  /**< Name of a process */
 };
-typedef struct orte_name_services_namelist_t orte_name_services_namelist_t;
+typedef struct orte_namelist_t orte_namelist_t;
 
-OMPI_DECLSPEC    OBJ_CLASS_DECLARATION(orte_name_services_namelist_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_namelist_t);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

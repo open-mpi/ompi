@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -136,6 +137,82 @@ if test ! -d "$destdir"; then
     die "Could not cd to dest dir: $destdir"
 fi
 
+# if there's a $destdir/latest_snapshot.txt, see if anything has
+# happened since that r number.
+desired_r=
+if test -f "$destdir/latest_snapshot.txt"; then
+    # $r will be just an integer (not "r12345")
+    r=`cat $destdir/latest_snapshot.txt | sed -e 's/.*r\([0-9]*\)/\1/'`
+    if test -n "$debug"; then
+        echo "** last snapshot r: $r"
+    fi
+
+    # If the current HEAD is on this $svnroot, then we'll get a log
+    # message.  Otherwise, we'll get a single line of dashes.
+    file=/tmp/svn-log.txt.$$
+    svn log -r HEAD $svnroot > $file
+    # if we got more than 1 line, then extract the r number from the
+    # log message.
+    need_build=0
+    if test "`wc -l $file | awk '{ print $1}'`" != "1"; then
+        # $head_r will be "rXXXXX"
+        head_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
+        if test -n "$debug"; then
+            echo "** found HEAD r: $head_r"
+        fi
+
+        # If the head r is the same as the last_snapshot r, then exit
+        # nicely
+        rm -f /tmp/svn-log.txt.$$
+        if test "r$r" = "$head_r"; then
+            if test -n "$debug"; then
+                echo "** svn HEAD r is same as last_snapshot -- not doing anything"
+            fi
+            exit 0
+        fi
+
+        # If we get here, it means the head r is different than the
+        # last_snapshot r, and therefore we need to build.
+        need_build=1
+        desired_r=$head_r
+    fi
+
+    # If need_build still = 0, we know the r's are different.  But has
+    # anything happened on this branch since then?
+    if test "$need_build" = "0"; then
+        svn log -r HEAD:$r $svnroot > $file
+
+        # We'll definitely have at least one log message because we
+        # included the last snapshot number in the svn log command
+        # (i.e., we'll at least see the log message for that commit).
+        # So there's no need to check for a single line of dashes
+        # here.
+
+        # $last_commit_r will be "rXXXXX"
+        last_commit_r=`head -n 2 $file | tail -n 1 | awk '{ print $1 }'`
+        if test -n "$debug"; then
+            echo "** found last commit r: $last_commit_r"
+        fi
+
+        # If the head r is the same as the last_snapshot r, then exit
+        # nicely
+        rm -f $file
+        if test "r$r" = "$last_commit_r"; then
+            if test -n "$debug"; then
+                echo "** Last commit is same r as last_snapshot -- not doing anything"
+            fi
+            exit 0
+        fi
+
+        # If we get here, the r numbers didn't match, and we therefore
+        # need a new snapshot.
+        desired_r=$last_commit_r
+    fi
+fi
+if test -n "$debug"; then
+    echo "** we need a new snapshot"
+fi
+
 # move into the scratch directory and ensure we have an absolute
 # pathname for it
 if test ! -d "$scratch_root"; then
@@ -147,12 +224,23 @@ fi
 cd "$scratch_root"
 scratch_root="`pwd`"
 
-# get the snapshot number
-svn co -N "$svnroot" ompi > /dev/null 2>&1
-cd ompi
-svnr="r`svn info . | egrep '^Revision: [0-9]+' | awk '{ print $2 }'`"
-cd ..
-rm -rf ompi
+if test -n "$desired_r"; then
+    # we got a desired r number from above, so use that
+    # $svnr will be rXXXXX
+    svnr=$desired_r
+else
+    # we don't have a desired r number, so get the last r number of a
+    # commit
+    svn co -N "$svnroot" ompi > /dev/null 2>&1
+    cd ompi
+    # $svnr will be rXXXXX
+    svnr="r`svn info . | egrep '^Last Changed Rev: [0-9]+' | awk '{ print $4 }'`"
+    cd ..
+    rm -rf ompi
+fi
+if test -n "$debug"; then
+    echo "** making snapshot for r: $svnr"
+fi
 root="$scratch_root/create-$svnr"
 rm -rf "$root"
 mkdir "$root"
@@ -163,7 +251,8 @@ logdir="$root/logs"
 mkdir "$logdir"
 
 # checkout a clean version
-do_command "svn co $svnroot ompi"
+r=`echo $svnr | cut -c2-`
+do_command "svn co $svnroot -r $r ompi"
 
 # ensure that we append the SVN number on the official version number
 cd ompi

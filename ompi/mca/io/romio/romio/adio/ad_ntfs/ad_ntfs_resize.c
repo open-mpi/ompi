@@ -29,6 +29,7 @@ void ADIOI_NTFS_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 	    return;
 	}
     }
+    /*printf("setting file length to %d\n", size);fflush(stdout);*/
     /* --END ERROR HANDLING-- */
     result = SetEndOfFile(fd->fd_sys);
     /* --BEGIN ERROR HANDLING-- */

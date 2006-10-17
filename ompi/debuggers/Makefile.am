@@ -19,6 +19,7 @@
 include $(top_srcdir)/config/Makefile.options
 
 noinst_LTLIBRARIES = libdebuggers.la
+inst_LTLIBRARIES = libompitv.la
 
 # This is not quite in the Automake spirit, but we have to do it.
 # Since the totalview portion of the library must be built with -g, we
@@ -31,12 +32,18 @@ CFLAGS = $(CFLAGS_WITHOUT_OPTFLAGS) $(TOTALVIEW_DEBUG_FLAGS)
 
 # Source code files
 
-headers = \
-        debuggers.h
+headers = debuggers.h mpi_interface.h ompi_dll_defs.h
+
+instdir = $(libdir)/openmpi
 
 libdebuggers_la_SOURCES = \
         $(headers) \
         ompi_totalview.c
+libdebuggers_la_CFLAGS = -DOMPI_TV_DLL=\"$(instdir)/libompitv.so\"
+
+libompitv_la_SOURCES = ompi_dll.c
+libompitv_la_CFLAGS = -g
+libompitv_la_LDFLAGS = -module -avoid-version
 
 # Conditionally install the header files
 

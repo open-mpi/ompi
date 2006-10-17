@@ -31,6 +31,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/trace.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/rmgr/base/base.h"
 
 
@@ -49,20 +50,24 @@
 
 orte_rmgr_base_t orte_rmgr_base;
 orte_rmgr_base_module_t orte_rmgr = {
-    orte_rmgr_base_query_not_available,
+    NULL,
     orte_rmgr_base_create_not_available,
-    orte_rmgr_base_allocate_not_available,
-    orte_rmgr_base_deallocate_not_available,
-    orte_rmgr_base_map_not_available,
-    orte_rmgr_base_launch_not_available,
-    orte_rmgr_base_terminate_job_not_available,
-    orte_rmgr_base_terminate_proc_not_available,
-    orte_rmgr_base_signal_job_not_available,
-    orte_rmgr_base_signal_proc_not_available,
     orte_rmgr_base_spawn_not_available,
-    orte_rmgr_base_proc_stage_gate_init,
-    orte_rmgr_base_proc_stage_gate_mgr,
-    orte_rmgr_base_finalize_not_available
+    orte_rmgr_base_connect,
+    orte_rmgr_base_disconnect,
+    orte_rmgr_base_finalize_not_available,
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_find_attribute,
+    orte_rmgr_base_add_attribute,
+    orte_rmgr_base_update_attribute,
+    orte_rmgr_base_delete_attribute,
+    orte_rmgr_base_get_app_context,
+    orte_rmgr_base_put_app_context,
+    orte_rmgr_base_check_context_cwd,
+    orte_rmgr_base_check_context_app,
+    orte_rmgr_base_set_vpid_range,
+    orte_rmgr_base_get_vpid_range
+    
 };
 
 /*
@@ -89,7 +94,7 @@ static void orte_app_context_construct(orte_app_context_t* app_context)
 /* destructor - used to free any resources held by instance */
 static void orte_app_context_destructor(orte_app_context_t* app_context)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != app_context->app) {
         free (app_context->app);
@@ -114,8 +119,11 @@ static void orte_app_context_destructor(orte_app_context_t* app_context)
                 OBJ_RELEASE(app_context->map_data[i]);
             }
         }
-        free(app_context->map_data);
+        if (NULL != app_context->map_data) {
+            free(app_context->map_data);
+        }
     }
+    
     if (NULL != app_context->prefix_dir) {
         free(app_context->prefix_dir);
     }
@@ -148,6 +156,27 @@ OBJ_CLASS_INSTANCE(orte_app_context_map_t,
                    orte_app_context_map_construct,
                    orte_app_context_map_destruct);
 
+/*
+ * ATTRIBUTE
+ */
+static void orte_attribute_construct(orte_attribute_t *a)
+{
+    a->key = NULL;
+    a->value = NULL;
+}
+
+static void orte_attribute_destruct(orte_attribute_t *a)
+{
+    if (NULL != a->key) free(a->key);
+    if (NULL != a->value) OBJ_RELEASE(a->value);
+}
+
+
+OBJ_CLASS_INSTANCE(orte_attribute_t,
+                   opal_list_item_t,
+                   orte_attribute_construct,
+                   orte_attribute_destruct);
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -172,7 +201,7 @@ int orte_rmgr_base_open(void)
         orte_rmgr_base.rmgr_output = -1;
     }
 
-    /* register the base system types with the DPS */
+    /* register the base system types with the DSS */
     tmp = ORTE_APP_CONTEXT;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_app_context,
                                         orte_rmgr_base_unpack_app_context,
@@ -201,7 +230,35 @@ int orte_rmgr_base_open(void)
         return rc;
     }
 
-/* Open up all available components */
+    tmp = ORTE_ATTRIBUTE;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_attribute,
+                                                     orte_rmgr_base_unpack_attribute,
+                                                     (orte_dss_copy_fn_t)orte_rmgr_base_copy_attribute,
+                                                     (orte_dss_compare_fn_t)orte_rmgr_base_compare_attribute,
+                                                     (orte_dss_size_fn_t)orte_rmgr_base_size_attribute,
+                                                     (orte_dss_print_fn_t)orte_rmgr_base_print_attribute,
+                                                     (orte_dss_release_fn_t)orte_rmgr_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_ATTRIBUTE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_ATTR_LIST;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmgr_base_pack_attr_list,
+                                                     orte_rmgr_base_unpack_attr_list,
+                                                     (orte_dss_copy_fn_t)orte_rmgr_base_copy_attr_list,
+                                                     (orte_dss_compare_fn_t)orte_rmgr_base_compare_attr_list,
+                                                     (orte_dss_size_fn_t)orte_rmgr_base_size_attr_list,
+                                                     (orte_dss_print_fn_t)orte_rmgr_base_print_attr_list,
+                                                     (orte_dss_release_fn_t)orte_rmgr_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_ATTR_LIST", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* Open up all available components */
 
     if (ORTE_SUCCESS !=
         mca_base_components_open("rmgr", orte_rmgr_base.rmgr_output,

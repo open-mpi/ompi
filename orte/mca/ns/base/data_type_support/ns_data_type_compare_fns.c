@@ -42,28 +42,79 @@ int orte_ns_base_compare_name(orte_process_name_t *value1,
        return ORTE_VALUE1_GREATER;
     }
 
-    /* for this generic compare, go through the progression */
-    if (value1->cellid < value2->cellid) {
-        return ORTE_VALUE2_GREATER;
-    } else if (value1->cellid > value2->cellid) {
-        return ORTE_VALUE1_GREATER;
+    /** we have to take care of the special case where one of the
+    * values is ORTE_NAME_WILDCARD. If any of the fields are wildcard,
+    * then we want to just ignore that one field. However, in the case
+    * of ORTE_NAME_WILDCARD (where ALL of the fields are wildcard), this
+    * would automatically result in ORTE_EQUAL for any name in the other
+    * value - a totally useless result.
+    *
+    * Instead, what we want to know in this case is if the value actually
+    * *is* ORTE_NAME_WILDCARD. So, we need to detect if one of the values
+    * is ORTE_NAME_WILDCARD, and then specifically check the other one
+    * to see if it matches
+    */
+    if (value2->cellid == ORTE_CELLID_WILDCARD &&
+        value2->jobid == ORTE_JOBID_WILDCARD &&
+        value2->vpid == ORTE_VPID_WILDCARD) {
+        if (value1->cellid == ORTE_CELLID_WILDCARD &&
+            value1->jobid == ORTE_JOBID_WILDCARD &&
+            value1->vpid == ORTE_VPID_WILDCARD) {
+            return ORTE_EQUAL;
+        } else {
+            return ORTE_VALUE1_GREATER;
+        }
+    } else if (value1->cellid == ORTE_CELLID_WILDCARD &&
+               value1->jobid == ORTE_JOBID_WILDCARD &&
+               value1->vpid == ORTE_VPID_WILDCARD) {
+        if (value2->cellid == ORTE_CELLID_WILDCARD &&
+            value2->jobid == ORTE_JOBID_WILDCARD &&
+            value2->vpid == ORTE_VPID_WILDCARD) {
+            return ORTE_EQUAL;
+        } else {
+            return ORTE_VALUE2_GREATER;
+        }
     }
-
-    /* get here if jobid's are equal - now check process group */
-    if (value1->jobid < value2->jobid) {
-        return ORTE_VALUE2_GREATER;
-    } else if (value1->jobid > value2->jobid) {
-        return ORTE_VALUE1_GREATER;
+    
+    /** now that the special cases are done, go through the progression */
+    
+    /** check the cellids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->cellid != ORTE_CELLID_WILDCARD &&
+        value2->cellid != ORTE_CELLID_WILDCARD) {
+        if (value1->cellid < value2->cellid) {
+            return ORTE_VALUE2_GREATER;
+        } else if (value1->cellid > value2->cellid) {
+            return ORTE_VALUE1_GREATER;
+        }
     }
-
-    /* get here if cellid's and jobid's are equal - now check vpid */
-    if (value1->vpid < value2->vpid) {
-        return ORTE_VALUE2_GREATER;
-    } else if (value1->vpid > value2->vpid) {
-        return ORTE_VALUE1_GREATER;
+    
+    /** check the jobids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->jobid != ORTE_JOBID_WILDCARD &&
+        value2->jobid != ORTE_JOBID_WILDCARD) {
+        if (value1->jobid < value2->jobid) {
+            return ORTE_VALUE2_GREATER;
+        } else if (value1->jobid > value2->jobid) {
+            return ORTE_VALUE1_GREATER;
+        }
     }
-
-    /* only way to get here is if all fields are equal */
+    
+    /** check the vpids - if one of them is WILDCARD, then ignore
+    * this field since anything is okay
+    */
+    if (value1->vpid != ORTE_VPID_WILDCARD &&
+        value2->vpid != ORTE_VPID_WILDCARD) {
+        if (value1->vpid < value2->vpid) {
+            return ORTE_VALUE2_GREATER;
+        } else if (value1->vpid > value2->vpid) {
+            return ORTE_VALUE1_GREATER;
+        }
+    }
+    
+    /** only way to get here is if all fields are equal or WILDCARD */
     return ORTE_EQUAL;
 }
 
@@ -72,10 +123,14 @@ int orte_ns_base_compare_vpid(orte_vpid_t *value1,
                               orte_data_type_t type)
 
 {
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == ORTE_VPID_WILDCARD ||
+        *value2 == ORTE_VPID_WILDCARD) return ORTE_EQUAL;
+    
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
-
+    
     if (*value2 > *value1) return ORTE_VALUE2_GREATER;
-
+    
     return ORTE_EQUAL;
 }
 
@@ -83,10 +138,14 @@ int orte_ns_base_compare_jobid(orte_jobid_t *value1,
                                orte_jobid_t *value2,
                                orte_data_type_t type)
 {
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == ORTE_JOBID_WILDCARD ||
+        *value2 == ORTE_JOBID_WILDCARD) return ORTE_EQUAL;
+    
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
-
+    
     if (*value2 > *value1) return ORTE_VALUE2_GREATER;
-
+    
     return ORTE_EQUAL;
 }
 
@@ -94,9 +153,13 @@ int orte_ns_base_compare_cellid(orte_cellid_t *value1,
                                 orte_cellid_t *value2,
                                 orte_data_type_t type)
 {
+    /** if either value is WILDCARD, then return equal */
+    if (*value1 == ORTE_CELLID_WILDCARD ||
+        *value2 == ORTE_CELLID_WILDCARD) return ORTE_EQUAL;
+    
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
-
+    
     if (*value2 > *value1) return ORTE_VALUE2_GREATER;
-
+    
     return ORTE_EQUAL;
 }

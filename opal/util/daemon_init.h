@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -20,6 +20,10 @@
 #ifndef OPAL_DAEMON_INIT_H
 #define OPAL_DAEMON_INIT_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Turn a process into a daemon.
  *
@@ -33,6 +37,10 @@
  * @retval OPAL_SUCCESS Indicates that the conversion was successful
  * @retval OPAL_ERROR Indicates that the conversion was not successful - a fork could not be completed.
  */
-OMPI_DECLSPEC int opal_daemon_init(char *working_dir);
+OPAL_DECLSPEC int opal_daemon_init(char *working_dir);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OPAL_DAEMON_INIT_H */

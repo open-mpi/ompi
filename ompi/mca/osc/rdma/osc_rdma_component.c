@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -29,12 +29,14 @@
 #include "ompi/info/info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/osc/osc.h"
+#include "ompi/mca/osc/base/base.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/bml/bml.h"
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/datatype/dt_arch.h"
 
 static int ompi_osc_rdma_component_open(void);
+static int32_t registered_callback = 0;
 
 ompi_osc_rdma_component_t mca_osc_rdma_component = {
     { /* ompi_osc_base_component_t */
@@ -100,7 +102,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     if (flag == 0) goto info_not_found;
     value_len++;
 
-    value_string = malloc(sizeof(char) * value_len);
+    value_string = (char*)malloc(sizeof(char) * value_len);
     if (NULL == value_string) goto info_not_found;
 
     ret = ompi_info_get(info, key, value_len, value_string, &flag);
@@ -121,9 +123,7 @@ check_config_value_bool(char *key, ompi_info_t *info)
     ret = mca_base_param_lookup_int(param, &flag);
     if (OMPI_SUCCESS != ret) return false;
 
-    result = flag;
-
-    return result;
+    return OPAL_INT_TO_BOOL(flag);
 }
 
 
@@ -202,7 +202,8 @@ ompi_osc_rdma_component_finalize(void)
 
     if (0 != 
         (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.p2p_c_modules))) {
-        opal_output(0, "WARNING: There were %d Windows created but not freed.",
+        opal_output(ompi_osc_base_output,
+                    "WARNING: There were %d Windows created but not freed.",
                     num_modules);
     }
 
@@ -241,7 +242,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     char *sync_string;
 
     /* create module structure */
-    module = malloc(sizeof(ompi_osc_rdma_module_t));
+    module = (ompi_osc_rdma_module_t*)malloc(sizeof(ompi_osc_rdma_module_t));
     if (NULL == module) return OMPI_ERROR;
 
     /* fill in the function pointer part */
@@ -263,8 +264,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     }
 
     OBJ_CONSTRUCT(&module->p2p_pending_sendreqs, opal_list_t);
-    module->p2p_num_pending_sendreqs = malloc(sizeof(short) * 
-                                              ompi_comm_size(module->p2p_comm));
+    module->p2p_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+                                                      ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
         ompi_comm_free(&comm);
@@ -278,13 +279,15 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
 
     module->p2p_num_pending_out = 0;
     module->p2p_num_pending_in = 0;
+    module->p2p_num_post_msgs = 0;
+    module->p2p_num_complete_msgs = 0;
     module->p2p_tag_counter = 0;
 
     OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
 
     OBJ_CONSTRUCT(&(module->p2p_copy_pending_sendreqs), opal_list_t);
-    module->p2p_copy_num_pending_sendreqs = malloc(sizeof(short) * 
-                                                   ompi_comm_size(module->p2p_comm));
+    module->p2p_copy_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+                                                           ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_copy_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
         OBJ_DESTRUCT(&module->p2p_long_msgs);
@@ -302,8 +305,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     module->p2p_eager_send = check_config_value_bool("eager_send", info);
 
     /* fence data */
-    module->p2p_fence_coll_counts = malloc(sizeof(int) * 
-                                           ompi_comm_size(module->p2p_comm));
+    module->p2p_fence_coll_counts = (int*)malloc(sizeof(int) * 
+                                                 ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_fence_coll_counts) {
         free(module->p2p_copy_num_pending_sendreqs);
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
@@ -320,8 +323,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         module->p2p_fence_coll_counts[i] = 1;
     }
 
-    module->p2p_fence_coll_results = malloc(sizeof(int) * 
-                                            ompi_comm_size(module->p2p_comm));
+    module->p2p_fence_coll_results = (short*)malloc(sizeof(short) * 
+                                                    ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_fence_coll_results) {
         free(module->p2p_fence_coll_counts);
         free(module->p2p_copy_num_pending_sendreqs);
@@ -345,7 +348,8 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     } else if (0 == strcmp(sync_string, "alltoall")) {
         module->p2p_fence_sync_type = OSC_SYNC_ALLTOALL;
     } else {
-        opal_output(0, "invalid value for fence_sync_method parameter: %s\n", sync_string);
+        opal_output(ompi_osc_base_output,
+                    "invalid value for fence_sync_method parameter: %s\n", sync_string);
         return OMPI_ERROR;
     }
 
@@ -353,7 +357,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     module->p2p_pw_group = NULL;
     module->p2p_sc_group = NULL;
     module->p2p_sc_remote_active_ranks = 
-        malloc(sizeof(bool) * ompi_comm_size(module->p2p_comm));
+        (bool*)malloc(sizeof(bool) * ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_sc_remote_active_ranks) {
         free(module->p2p_fence_coll_results);
         free(module->p2p_fence_coll_counts);
@@ -369,7 +373,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         return OMPI_ERROR;
     }
     module->p2p_sc_remote_ranks = 
-        malloc(sizeof(int) * ompi_comm_size(module->p2p_comm));
+        (int*)malloc(sizeof(int) * ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_sc_remote_ranks) {
         free(module->p2p_sc_remote_active_ranks);
         free(module->p2p_fence_coll_results);
@@ -408,10 +412,12 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     /* sync memory - make sure all initialization completed */
     opal_atomic_mb();
 
-    /* register to receive fragment callbacks */
-    ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA,
-                               ompi_osc_rdma_component_fragment_cb,
-                               NULL);
+    /* register to receive fragment callbacks, if not already done */
+    if (OPAL_THREAD_ADD32(&registered_callback, 1) <= 1) {
+        ret = mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA,
+                                   ompi_osc_rdma_component_fragment_cb,
+                                   NULL);
+    }
 
 
     if (module->p2p_eager_send) {
@@ -554,7 +560,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             }
 
             /* create or get a pointer to our datatype */
-            proc = module->p2p_comm->c_pml_procs[header->hdr_origin]->proc_ompi;
+            proc = ompi_comm_peer_lookup( module->p2p_comm, header->hdr_origin );
             datatype = ompi_osc_rdma_datatype_create(proc, &payload);
 
             /* create replyreq sendreq */
@@ -614,7 +620,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
             module = ompi_osc_rdma_windx_to_module(header->hdr_windx);
             if (NULL == module) return;
 
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_post_msgs), -1);
         }
         break;
     case OMPI_OSC_RDMA_HDR_COMPLETE:
@@ -635,7 +641,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* we've heard from one more place, and have value reqs to
                process */
-            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+            OPAL_THREAD_ADD32(&(module->p2p_num_complete_msgs), -1);
             OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), header->hdr_value[0]);
         }
         break;
@@ -688,7 +694,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
     default:
         /* BWB - FIX ME - this sucks */
-        opal_output(0, "received packet for Window with unknown type");
-        abort();
+        opal_output(ompi_osc_base_output,
+                    "received packet for Window with unknown type");
    }
 }

@@ -48,7 +48,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_replica_component = {
+mca_ns_base_component_t mca_ns_replica_component = {
   {
     MCA_NS_BASE_VERSION_1_0_0,
 
@@ -348,7 +348,7 @@ int orte_ns_replica_finalize(void)
     orte_ns_replica_jobid_tracker_t **jptr;
     orte_ns_replica_tagitem_t **tag;
     orte_ns_replica_dti_t **dti;
-    size_t i;
+    orte_std_cntr_t i;
 
   /* free all tracking storage, but only if this component was initialized */
 
@@ -412,7 +412,8 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
     char *tagname, *site, *resource;
     orte_rml_tag_t oob_tag;
     orte_data_type_t type;
-    size_t count;
+    orte_std_cntr_t count, nprocs;
+    orte_process_name_t *procs;
     int rc=ORTE_SUCCESS, ret;
 
     count = 1;
@@ -572,7 +573,7 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
                  goto RETURN_ERROR;
               }
 
-              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_UINT32))) {
+              if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, (void*)&oob_tag, 1, ORTE_RML_TAG))) {
                   goto RETURN_ERROR;
               }
 
@@ -611,6 +612,33 @@ void orte_ns_replica_recv(int status, orte_process_name_t* sender,
             /* ignore this command */
             break;
 
+        case ORTE_NS_GET_JOB_PEERS_CMD:
+            /* unpack the jobid */
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+            /* process the request */
+            if (ORTE_SUCCESS != (rc = orte_ns_replica_get_job_peers(&procs, &nprocs, job))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            /* pack the answer */
+            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &nprocs, 1, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                goto RETURN_ERROR;
+            }
+                
+            if (nprocs > 0) {
+                if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &procs, nprocs, ORTE_NAME))) {
+                    ORTE_ERROR_LOG(rc);
+                    goto RETURN_ERROR;
+                }
+            }
+            break;
+            
         case ORTE_NS_DUMP_CELLS_CMD:
             if (ORTE_SUCCESS != (rc = orte_ns_replica_dump_cells_fn(&answer))) {
                 ORTE_ERROR_LOG(rc);

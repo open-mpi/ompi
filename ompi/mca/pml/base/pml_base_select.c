@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -24,7 +24,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/runtime/runtime.h"
+#include "orte/mca/errmgr/errmgr.h"
 #include "ompi/constants.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/pml/base/base.h"
@@ -103,7 +103,7 @@ int mca_pml_base_select(bool enable_progress_threads,
             best_module = module;
         }
         
-        om = malloc(sizeof(opened_component_t));
+        om = (opened_component_t*)malloc(sizeof(opened_component_t));
         if (NULL == om) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
@@ -117,9 +117,9 @@ int mca_pml_base_select(bool enable_progress_threads,
     if( NULL == best_component ) {
         opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
         if( NULL !=  mca_pml_base_pml ) {
-            orte_abort( 1, "PML %s cannot be selected", mca_pml_base_pml );
+            orte_errmgr.error_detected(1, "PML %s cannot be selected", mca_pml_base_pml, NULL);
         } else {
-            orte_abort(1, "No pml component available.  This shouldn't happen.");
+            orte_errmgr.error_detected(2, "No pml component available.  This shouldn't happen.", NULL);
         }
     } 
 

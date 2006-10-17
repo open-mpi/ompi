@@ -65,9 +65,14 @@ int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *na
     /* set default result */
     *output = NULL;
 
-    asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%lu,%lu,%lu]",
+    if (NULL == name) {
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
+                 (NULL == prefix ? " " : prefix));
+    } else {
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%lu,%lu,%lu]",
              (NULL == prefix ? " " : prefix), (unsigned long)name->cellid,
              (unsigned long)name->jobid, (unsigned long)name->vpid);
+    }
 
     return ORTE_SUCCESS;
 }

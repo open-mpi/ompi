@@ -27,7 +27,6 @@
 
 #include "pml_dr.h"
 #include "pml_dr_hdr.h"
-#include "pml_dr_proc.h"
 #include "pml_dr_vfrag.h"
 #include "pml_dr_comm.h"
 
@@ -288,7 +287,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - offset;               \
-                iov[iov_count].iov_base = (void*)((unsigned char*)segment->seg_addr.pval + offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
                 offset = 0;                                                       \
                 iov_count++;                                                      \
             }                                                                     \

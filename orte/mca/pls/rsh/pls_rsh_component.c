@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,6 +23,7 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
@@ -30,18 +31,22 @@
 #endif
 #include <ctype.h>
 
-#include "orte/orte_constants.h"
 #include "opal/util/argv.h"
 #include "opal/util/path.h"
 #include "opal/util/basename.h"
 #include "opal/util/show_help.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/rsh/pls_rsh.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
 
-extern char **environ;
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/pls_private.h"
+#include "orte/mca/pls/rsh/pls_rsh.h"
 
+#if !defined(__WINDOWS__)
+extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Local function
@@ -67,10 +72,10 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -118,7 +123,7 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "debug",
                            "Whether or not to enable debugging output for the rsh pls component (0 or 1)",
                            false, false, false, &tmp);
-    mca_pls_rsh_component.debug = tmp;
+    mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "num_concurrent",
                            "How many pls_rsh_agent instances to invoke concurrently (must be > 0)",
                            false, false, 128, &tmp);
@@ -128,17 +133,19 @@ int orte_pls_rsh_component_open(void)
         tmp = 1;
     }
     mca_pls_rsh_component.num_concurrent = tmp;
+
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
                                     "Whether or not to enable debugging output for all ORTE components (0 or 1)",
                                     false, false, false, &tmp);
-        mca_pls_rsh_component.debug = tmp;
+        mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     }
-
+    
     mca_base_param_reg_string(c, "orted",
                               "The command name that the rsh pls component will invoke for the ORTE daemon",
                               false, false, "orted", 
                               &mca_pls_rsh_component.orted);
+    
     mca_base_param_reg_int(c, "priority",
                            "Priority of the rsh pls component",
                            false, false, 10,
@@ -150,11 +157,11 @@ int orte_pls_rsh_component_open(void)
     mca_base_param_reg_int(c, "reap",
                            "If set to 1, wait for all the processes to complete before exiting.  Otherwise, quit immediately -- without waiting for confirmation that all other processes in the job have completed.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.reap = tmp;
+    mca_pls_rsh_component.reap = OPAL_INT_TO_BOOL(tmp);
     mca_base_param_reg_int(c, "assume_same_shell",
                            "If set to 1, assume that the shell on the remote node is the same as the shell on the local node.  Otherwise, probe for what the remote shell.",
                            false, false, 1, &tmp);
-    mca_pls_rsh_component.assume_same_shell = tmp;
+    mca_pls_rsh_component.assume_same_shell = OPAL_INT_TO_BOOL(tmp);
 
     mca_base_param_reg_string(c, "agent",
                               "The command used to launch executables on remote nodes (typically either \"ssh\" or \"rsh\")",
@@ -165,12 +172,20 @@ int orte_pls_rsh_component_open(void)
 }
 
 
+#if !defined(__WINDOWS__)
+extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
+
 orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
 {
     char *bname;
     size_t i;
-    extern char **environ;
 
+    /* if we are not an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     /* Take the string that was given to us by the pla_rsh_agent MCA
        param and search for it */
     mca_pls_rsh_component.agent_argv = 
@@ -214,6 +229,7 @@ orte_pls_base_module_t *orte_pls_rsh_component_init(int *priority)
         return NULL;
     }
     *priority = mca_pls_rsh_component.priority;
+    
     return &orte_pls_rsh_module;
 }
 

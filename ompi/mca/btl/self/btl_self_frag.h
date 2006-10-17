@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -22,7 +22,6 @@
 #define MCA_BTL_SELF_SEND_FRAG_H
 
 #include <sys/types.h>
-#include "ompi_config.h"
 #include "ompi/class/ompi_free_list.h"
 #include "btl_self.h"
 
@@ -44,7 +43,6 @@ typedef struct mca_btl_self_frag_t mca_btl_self_frag_rdma_t;
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_eager_t);
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_send_t);
 OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
-
 
 #define MCA_BTL_SELF_FRAG_ALLOC_EAGER(frag, rc)                              \
 {                                                                            \

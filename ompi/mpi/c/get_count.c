@@ -34,8 +34,8 @@ static const char FUNC_NAME[] = "MPI_Get_count";
 
 int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count) 
 {
-    int size = 0;
-    int rc   = MPI_SUCCESS;
+   size_t size = 0;
+   int rc      = MPI_SUCCESS;
 
    if (MPI_PARAM_CHECK) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,7 +49,7 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
          *count = 0;
       } else {
          *count = status->_count / size;
-         if( ((*count) * size) != status->_count )
+         if( (int)((*count) * size) != status->_count )
             *count = MPI_UNDEFINED;
       }
    }

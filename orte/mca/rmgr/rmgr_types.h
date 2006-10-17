@@ -19,6 +19,12 @@
 #ifndef ORTE_RMGR_TYPES_H
 #define ORTE_RMGR_TYPES_H
 
+#include "orte_config.h"
+
+#include "opal/class/opal_object.h"
+
+#include "orte/mca/gpr/gpr_types.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -29,22 +35,13 @@ extern "C" {
 #define ORTE_RMGR_LAUNCHER      "orte-rmgr-launcher"
 
 /*
- * Constants for command values
+ * RMGR ATTRIBUTES
  */
-#define ORTE_RMGR_CMD_QUERY          1
-#define ORTE_RMGR_CMD_CREATE         2
-#define ORTE_RMGR_CMD_ALLOCATE       3
-#define ORTE_RMGR_CMD_DEALLOCATE     4
-#define ORTE_RMGR_CMD_MAP            5
-#define ORTE_RMGR_CMD_LAUNCH         6
-#define ORTE_RMGR_CMD_TERM_JOB       7
-#define ORTE_RMGR_CMD_TERM_PROC      8
-#define ORTE_RMGR_CMD_SPAWN          9
-#define ORTE_RMGR_CMD_SIGNAL_JOB    10
-#define ORTE_RMGR_CMD_SIGNAL_PROC   11
-
-#define ORTE_RMGR_CMD  ORTE_UINT32
-typedef uint32_t orte_rmgr_cmd_t;
+typedef orte_gpr_keyval_t orte_attribute_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
+    
+#define ORTE_RMGR_USE_PARENT_ALLOCATION     "orte-use-parent-alloc"
+    
 
 /* RESOURCE MANAGER DATA TYPES */
 
@@ -72,7 +69,7 @@ typedef struct {
     char *map_data;
 } orte_app_context_map_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_map_t);
 
 
 /**
@@ -82,11 +79,11 @@ typedef struct {
     /** Parent object */
     opal_object_t super;
     /** Unique index when multiple apps per job */
-    size_t idx;
+    orte_std_cntr_t idx;
     /** Absolute pathname of argv[0] */
     char   *app;
     /** Number of copies of this process that are to be launched */
-    size_t num_procs;
+    orte_std_cntr_t num_procs;
     /** Standard argv-style array, including a final NULL pointer */
     char  **argv;
     /** Standard environ-style array, including a final NULL pointer */
@@ -96,7 +93,7 @@ typedef struct {
     /** Whether the cwd was set by the user or by the system */
     bool user_specified_cwd;
     /** Length of the map_data array, not including the final NULL entry */
-    size_t num_map;
+    orte_std_cntr_t num_map;
     /** Mapping data about how this app should be laid out across CPUs
         / nodes */
     orte_app_context_map_t **map_data;
@@ -105,7 +102,7 @@ typedef struct {
     char *prefix_dir;
 } orte_app_context_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_app_context_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

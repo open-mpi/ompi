@@ -149,7 +149,7 @@
 !     check the data read
       do i=1, bufcount
          if (readbuf(i) .ne. writebuf(i)) then
-	     errs = errs + 1
+             errs = errs + 1
              print *, 'Node ', mynod, '  readbuf ', readbuf(i),         &
      &          '  writebuf ', writebuf(i), '  i', i
          end if

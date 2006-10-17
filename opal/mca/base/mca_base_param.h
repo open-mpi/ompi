@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -111,11 +111,6 @@ struct mca_base_param_info_t {
  * Convenience typedef
  */
 typedef struct mca_base_param_info_t mca_base_param_info_t;
-/**
- * Make a real object for the info
- */
-OBJ_CLASS_DECLARATION(mca_base_param_info_t);
-
 
 /*
  * Global functions for MCA
@@ -125,6 +120,11 @@ OBJ_CLASS_DECLARATION(mca_base_param_info_t);
 extern "C" {
 #endif
     /**
+     * Make a real object for the info
+     */
+    OPAL_DECLSPEC OBJ_CLASS_DECLARATION(mca_base_param_info_t);
+
+    /**
      * Initialize the MCA parameter system.
      *
      * @retval OPAL_SUCCESS
@@ -133,7 +133,7 @@ extern "C" {
      * invoked internally (by mca_base_open()) and is only documented
      * here for completeness.
      */
-    OMPI_DECLSPEC int mca_base_param_init(void);
+    OPAL_DECLSPEC int mca_base_param_init(void);
 
     /**
      * Register an integer MCA parameter.
@@ -187,7 +187,7 @@ extern "C" {
      * complete, the parameter system will look up the current value
      * of the parameter and return it in {current_value}.
      */
-    OMPI_DECLSPEC int mca_base_param_reg_int(const mca_base_component_t *component,
+    OPAL_DECLSPEC int mca_base_param_reg_int(const mca_base_component_t *component,
                                              const char *param_name, 
                                              const char *help_msg,
                                              bool internal,
@@ -232,13 +232,24 @@ extern "C" {
      * framework name: for any given framework
      * "mpi": for parameters that apply to the overall MPI layer
      * "orte": for parameters that apply to the overall ORTE layer
+     * "btl": for parameters to the OMPI BTL framework
+     * ...etc.
+     *
+     * Note that the type should always be a framework or a level name
+     * (e.g., "btl" or "mpi") -- it should not include the component
+     * name, even if the componet is the base of a framework.  Hence,
+     * "btl_base" is not a valid type name.  Specifically, registering
+     * a parameter with an unrecognized type is not an error, but
+     * ompi_info has a hard-coded list of frameworks and levels;
+     * parameters that have recongized types, although they can be
+     * used by the user, will not be displayed by ompi_info.
      *
      * Note that if you use mca_base_param_find() to lookup the index
      * of the registered parameter, the "component" argument should be
      * NULL (because it is not specified in this registration
      * function, and is therefore registered with a NULL value).
      */
-    OMPI_DECLSPEC int mca_base_param_reg_int_name(const char *type,
+    OPAL_DECLSPEC int mca_base_param_reg_int_name(const char *type,
                                                   const char *param_name, 
                                                   const char *help_msg,
                                                   bool internal,
@@ -279,7 +290,7 @@ extern "C" {
      * string default value (which is \em not allowed to be NULL).
      * See mca_base_param_reg_int() for all other details.
      */
-    OMPI_DECLSPEC int mca_base_param_reg_string(const mca_base_component_t *component,
+    OPAL_DECLSPEC int mca_base_param_reg_string(const mca_base_component_t *component,
                                                 const char *param_name,
                                                 const char *help_msg,
                                                 bool internal,
@@ -329,13 +340,24 @@ extern "C" {
      * framework name: for any given framework
      * "mpi": for parameters that apply to the overall MPI layer
      * "orte": for parameters that apply to the overall ORTE layer
+     * "btl": for parameters to the OMPI BTL framework
+     * ...etc.
+     *
+     * Note that the type should always be a framework or a level name
+     * (e.g., "btl" or "mpi") -- it should not include the component
+     * name, even if the componet is the base of a framework.  Hence,
+     * "btl_base" is not a valid type name.  Specifically, registering
+     * a parameter with an unrecognized type is not an error, but
+     * ompi_info has a hard-coded list of frameworks and levels;
+     * parameters that have recongized types, although they can be
+     * used by the user, will not be displayed by ompi_info.
      *
      * Note that if you use mca_base_param_find() to lookup the index
      * of the registered parameter, the "component" argument should be
      * NULL (because it is not specified in this registration
      * function, and is therefore registered with a NULL value).
      */
-    OMPI_DECLSPEC int mca_base_param_reg_string_name(const char *type,
+    OPAL_DECLSPEC int mca_base_param_reg_string_name(const char *type,
                                                      const char *param_name,
                                                      const char *help_msg,
                                                      bool internal,
@@ -366,7 +388,7 @@ extern "C" {
      * versions will cross reference and attempt to find parameter
      * values on attributes.
      */
-    OMPI_DECLSPEC int mca_base_param_kv_associate(int index, int keyval);
+    OPAL_DECLSPEC int mca_base_param_kv_associate(int index, int keyval);
 
     /**
      * Look up an integer MCA parameter.
@@ -384,7 +406,7 @@ extern "C" {
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_int().
      */
-    OMPI_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
+    OPAL_DECLSPEC int mca_base_param_lookup_int(int index, int *value);
     
     /**
      * Look up an integer MCA parameter, to include looking in
@@ -406,7 +428,7 @@ extern "C" {
      * value.  The function mca_base_param_kv_associate() must have been
      * called first to associate a keyval with the index.
      */
-    OMPI_DECLSPEC int mca_base_param_kv_lookup_int(int index,
+    OPAL_DECLSPEC int mca_base_param_kv_lookup_int(int index,
                                                    struct opal_hash_table_t *attrs, 
                                                    int *value);
     
@@ -433,7 +455,7 @@ extern "C" {
      * The value of a specific MCA parameter can be looked up using the
      * return value from mca_base_param_register_string().
      */
-    OMPI_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
+    OPAL_DECLSPEC int mca_base_param_lookup_string(int index, char **value);
 
     /**
      * Look up a string MCA parameter, to include looking in attributes.
@@ -454,7 +476,7 @@ extern "C" {
      * parameter value.  The function mca_base_param_kv_associate() must
      * have been called first to associate a keyval with the index.
      */
-    OMPI_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
+    OPAL_DECLSPEC int mca_base_param_kv_lookup_string(int index, 
                                                       struct opal_hash_table_t *attrs, 
                                                       char **value);
 
@@ -476,7 +498,7 @@ extern "C" {
      * This function may be invoked multiple times; each time, the
      * last "set" value is replaced with the newest value.
      */
-    OMPI_DECLSPEC int mca_base_param_set_int(int index, int value);
+    OPAL_DECLSPEC int mca_base_param_set_int(int index, int value);
 
     /**
      * Sets an "override" value for an string MCA parameter.
@@ -500,7 +522,7 @@ extern "C" {
      * last "set" value is replaced with the newest value (the old
      * value is discarded).
      */
-    OMPI_DECLSPEC int mca_base_param_set_string(int index, char *value);
+    OPAL_DECLSPEC int mca_base_param_set_string(int index, char *value);
 
     /**
      * Unset a parameter that was previously set by
@@ -514,7 +536,7 @@ extern "C" {
      * Resets previous value that was set (if any) on the given MCA
      * parameter.
      */
-    OMPI_DECLSPEC int mca_base_param_unset(int index);
+    OPAL_DECLSPEC int mca_base_param_unset(int index);
 
     /**
      * Get the string name corresponding to the MCA parameter
@@ -529,7 +551,7 @@ extern "C" {
      * The string that is returned is owned by the caller; if
      * appropriate, it must be eventually freed by the caller.
      */
-    OMPI_DECLSPEC char *mca_base_param_env_var(const char *param_name);
+    OPAL_DECLSPEC char *mca_base_param_env_var(const char *param_name);
 
     /**
      * Find the index for an MCA parameter based on its names.
@@ -550,7 +572,7 @@ extern "C" {
      * can be used with mca_base_param_lookup_int() and
      * mca_base_param_lookup_string().
      */
-    OMPI_DECLSPEC int mca_base_param_find(const char *type, 
+    OPAL_DECLSPEC int mca_base_param_find(const char *type, 
                                           const char *component, 
                                           const char *param);
 
@@ -573,7 +595,7 @@ extern "C" {
      * MPI_INIT (at least, they're not displayed by default), thus
      * keeping them away from prying user eyes.
      */
-    OMPI_DECLSPEC int mca_base_param_set_internal(int index, bool internal);
+    OPAL_DECLSPEC int mca_base_param_set_internal(int index, bool internal);
 
     /**
      * Obtain a list of all the MCA parameters currently defined as
@@ -599,7 +621,7 @@ extern "C" {
      * mca_base_param_dump_release() when finished with the returned
      * info list to release all associated memory.
      */
-    OMPI_DECLSPEC int mca_base_param_dump(opal_list_t **info, bool internal);
+    OPAL_DECLSPEC int mca_base_param_dump(opal_list_t **info, bool internal);
 
     /**
      * Obtain a list of all the MCA parameters currently defined as
@@ -619,7 +641,7 @@ extern "C" {
      * its output is in terms of an argv-style array of key=value
      * strings, suitable for using in an environment.
      */
-    OMPI_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env,
+    OPAL_DECLSPEC int mca_base_param_build_env(char ***env, int *num_env,
                                                bool internal);
 
     /**
@@ -639,7 +661,7 @@ extern "C" {
      * the caller is finished with the info list, invoke this
      * function and all memory associated with the list will be freed.
      */
-    OMPI_DECLSPEC int mca_base_param_dump_release(opal_list_t *info);
+    OPAL_DECLSPEC int mca_base_param_dump_release(opal_list_t *info);
 
     /**
      * Shut down the MCA parameter system (normally only invoked by the
@@ -655,7 +677,7 @@ extern "C" {
      * when the process is shutting down (e.g., during MPI_FINALIZE).  It
      * is only documented here for completeness.
      */
-    OMPI_DECLSPEC int mca_base_param_finalize(void);
+    OPAL_DECLSPEC int mca_base_param_finalize(void);
 
     /***************************************************************
      * Deprecated interface
@@ -707,7 +729,7 @@ extern "C" {
      * returned, but the default value will be changed to reflect the
      * last registration.
      */
-    OMPI_DECLSPEC int mca_base_param_register_int(const char *type_name, 
+    OPAL_DECLSPEC int mca_base_param_register_int(const char *type_name, 
                                                   const char *component_name,
                                                   const char *param_name, 
                                                   const char *mca_param_name,
@@ -744,7 +766,7 @@ extern "C" {
      * associated string default value (which is \em not allowed to be NULL).
      * See mca_base_param_register_int() for all other details.
      */
-    OMPI_DECLSPEC int mca_base_param_register_string(const char *type_name, 
+    OPAL_DECLSPEC int mca_base_param_register_string(const char *type_name, 
                                                      const char *component_name,
                                                      const char *param_name, 
                                                      const char *mca_param_name,
@@ -770,7 +792,7 @@ extern "C" {
      * The string that is returned is owned by the caller; if
      * appropriate, it must be eventually freed by the caller.
      */
-    OMPI_DECLSPEC char *mca_base_param_environ_variable(const char *type,
+    OPAL_DECLSPEC char *mca_base_param_environ_variable(const char *type,
                                                         const char *comp,
                                                         const char *param);
 

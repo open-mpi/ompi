@@ -77,9 +77,7 @@ typedef uint64_t mca_pml_sequence_t;
 /**
  * Base PML proc structure
  *
- * Base PML structure for caching proc information on a communicator.
- * A PML should maintain an array of pointers to mca_pml_proc_t
- * structures in the c_pml_procs structure of every communicator.
+ * Base PML structure for storing proc information.
  * Note that the mca_pml_proc_t structure can not be instantiated
  * directly, so each PML *must* provide a class that inherits from
  * this class and provides the necessary integration logic.
@@ -108,11 +106,11 @@ struct mca_pml_endpoint_t;
 
 
 typedef enum {
-    MCA_PML_BASE_SEND_STANDARD,
-    MCA_PML_BASE_SEND_BUFFERED,
     MCA_PML_BASE_SEND_SYNCHRONOUS,
+    MCA_PML_BASE_SEND_COMPLETE,
+    MCA_PML_BASE_SEND_BUFFERED,
     MCA_PML_BASE_SEND_READY,
-    MCA_PML_BASE_SEND_COMPLETE
+    MCA_PML_BASE_SEND_STANDARD
 } mca_pml_base_send_mode_t;
 
 

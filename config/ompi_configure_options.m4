@@ -259,6 +259,19 @@ else
     WANT_MPI_CXX_SUPPORT=0
 fi
 
+AC_MSG_CHECKING([if want MPI::SEEK_SET support])
+AC_ARG_ENABLE([mpi-cxx-seek],
+    [AC_HELP_STRING([--enable-mpi-cxx-seek],
+                   [enable support for MPI::SEEK_SET, MPI::SEEK_END, and MPI::SEEK_POS in C++ bindings (default: enabled)])])
+if test "$enable_mpi_cxx_seek" != "no" ; then
+  AC_MSG_RESULT([yes])
+  OMPI_WANT_MPI_CXX_SEEK=1
+else
+  AC_MSG_RESULT([no])
+  OMPI_WANT_MPI_CXX_SEEK=0
+fi
+AC_DEFINE_UNQUOTED([OMPI_WANT_MPI_CXX_SEEK], [$OMPI_WANT_MPI_CXX_SEEK],
+    [do we want to try to work around C++ bindings SEEK_* issue?])
 
 #
 # Do we want to disable weak symbols for some reason?
@@ -500,6 +513,23 @@ AC_ARG_ENABLE([binaries],
 AM_CONDITIONAL([OMPI_INSTALL_BINARIES], [test "$enable_binaries" != "no"])
 
 #
+# Do we want to disable IPv6 support?
+#
+AC_MSG_CHECKING([if want IPv6 support])
+AC_ARG_ENABLE([ipv6],
+    [AC_HELP_STRING([--disable-ipv6],
+        [Disable IPv6 support (default: enabled, but only if the underlying system supports it)])])
+if test "$enable_ipv6" = "no"; then
+    AC_MSG_RESULT([no])
+    opal_want_ipv6=0
+else
+    AC_MSG_RESULT([yes (if underlying system supports it)])
+    opal_want_ipv6=1
+fi
+AC_DEFINE_UNQUOTED([OPAL_ENABLE_IPV6], [$opal_want_ipv6],
+                   [Enable IPv6 support, but only if the underlying system supports it])
+
+#
 # Do we want orterun's --prefix behavior to be enabled by default?
 #
 AC_MSG_CHECKING([if want orterun "--prefix" behavior to be enabled by default])
@@ -522,21 +552,4 @@ fi
 AC_DEFINE_UNQUOTED([ORTE_WANT_ORTERUN_PREFIX_BY_DEFAULT],
                    [$orte_want_orterun_prefix_by_default],
                    [Whether we want orterun to effect "--prefix $prefix" by default])
-
-#
-# Do we want to disable IPv6 support?
-#
-AC_MSG_CHECKING([if want IPv6 support])
-AC_ARG_ENABLE([ipv6],
-    [AC_HELP_STRING([--disable-ipv6],
-        [Disable IPv6 support (default: enabled, but only if the underlying system supports it)])])
-if test "$enable_ipv6" = "no"; then
-    AC_MSG_RESULT([no])
-    opal_want_ipv6=0
-else
-    AC_MSG_RESULT([yes (if underlying system supports it)])
-    opal_want_ipv6=1
-fi
-AC_DEFINE_UNQUOTED([OPAL_ENABLE_IPV6], [$opal_want_ipv6],
-                   [Enable IPv6 support, but only if the underlying system supports it])
 ])

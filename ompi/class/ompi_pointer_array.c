@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -71,62 +71,24 @@ void ompi_pointer_array_destruct(ompi_pointer_array_t *array)
  */
 int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
 {
-    void **p;
     int i;
     int index;
 
-    if (0) {
-        opal_output(0,"ompi_pointer_array_add:  IN:  "
-                " table %p (size %ld, lowest free %ld, number free %ld)"
-                " ptr = %p\n",
-                table, table->size, table->lowest_free, table->number_free,
-                ptr);
-    }
-
-    assert(table != NULL);
-
     OPAL_THREAD_LOCK(&(table->lock));
 
-    if (table->addr == NULL) {
-
-	/*
-	 * first time
-	 */
-
-        if (0) {
-	    opal_output(0,"ompi_pointer_array_add:  INIT: table %p\n", table);
-        }
-
-	p = (void **) malloc(TABLE_INIT * sizeof(void *));
-	if (p == NULL) {
-            OPAL_THREAD_UNLOCK(&(table->lock));
-            return OMPI_ERROR;
-	}
-	table->lowest_free = 0;
-	table->number_free = TABLE_INIT;
-	table->size = TABLE_INIT;
-	table->addr = p;
-        for (i = 0; i < table->size; i++) {
-            table->addr[i] = NULL;
-        }
-
-    } else if (table->number_free == 0) {
-
+    if (table->number_free == 0) {
         /* need to grow table */
-
-        if (!grow_table(table, table->size * TABLE_GROW, 
+        if (!grow_table(table, 
+						(NULL == table->addr ? TABLE_INIT : table->size * TABLE_GROW), 
                         OMPI_FORTRAN_HANDLE_MAX)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
 
-    assert(table->addr != NULL);
-    assert(table->size > 0);
-    assert(table->lowest_free >= 0);
-    assert(table->lowest_free < table->size);
-    assert(table->number_free > 0);
-    assert(table->number_free <= table->size);
+    assert( (table->addr != NULL) && (table->size > 0) );
+    assert( (table->lowest_free >= 0) && (table->lowest_free < table->size) );
+    assert( (table->number_free > 0) && (table->number_free <= table->size) );
 
     /*
      * add pointer to table, and return the index
@@ -146,14 +108,6 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
     }
     else {
         table->lowest_free = table->size;
-    }
-
-    if (0) {
-        opal_output(0,"ompi_pointer_array_add:  OUT: "
-                " table %p (size %ld, lowest free %ld, number free %ld)"
-                " addr[%d] = %p\n",
-                table, table->size, table->lowest_free, table->number_free,
-                index, ptr);
     }
 
     OPAL_THREAD_UNLOCK(&(table->lock));
@@ -176,14 +130,6 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
 {
     assert(table != NULL);
 
-#if 0
-    opal_output(0,"ompi_pointer_array_set_item: IN:  "
-                " table %p (size %ld, lowest free %ld, number free %ld)"
-                " addr[%d] = %p\n",
-                table, table->size, table->lowest_free, table->number_free,
-                index, table->addr[index]);
-#endif
-
     /* expand table if required to set a specific index */
 
     OPAL_THREAD_LOCK(&(table->lock));
@@ -191,7 +137,7 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
         if (!grow_table(table, ((index / TABLE_GROW) + 1) * TABLE_GROW,
                         index)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
-	    return OMPI_ERROR;
+			return OMPI_ERROR;
         }
     }
 
@@ -201,51 +147,51 @@ int ompi_pointer_array_set_item(ompi_pointer_array_t *table, int index,
     
     if ( NULL == table->addr[index] ) {
         table->addr[index] = value;
-	/* mark element as free, if NULL element */
-	if( NULL == value ) {
-	    if (index < table->lowest_free) {
-		table->lowest_free = index;
-	    }
-	}
-	else {
-	    table->number_free--;
-	    /* Reset lowest_free if required */
-	    if ( index == table->lowest_free ) {
-		int i;
-            
-		table->lowest_free=table->size;
-		for ( i=index; i<table->size; i++) {
-		    if ( NULL == table->addr[i] ){
-			table->lowest_free = i;
-			break;
-		    }                    
+		/* mark element as free, if NULL element */
+		if( NULL == value ) {
+			if (index < table->lowest_free) {
+				table->lowest_free = index;
+			}
 		}
-	    }
-	}
+		else {
+			table->number_free--;
+			/* Reset lowest_free if required */
+			if ( index == table->lowest_free ) {
+				int i;
+            
+				table->lowest_free=table->size;
+				for ( i=index; i<table->size; i++) {
+					if ( NULL == table->addr[i] ){
+						table->lowest_free = i;
+						break;
+					}                    
+				}
+			}
+		}
     }
     else {
         table->addr[index] = value;
-	/* mark element as free, if NULL element */
-	if( NULL == value ) {
-	    if (index < table->lowest_free) {
-		table->lowest_free = index;
-	    }
-	    table->number_free++;
-	}
-	else {
-	    /* Reset lowest_free if required */
-	    if ( index == table->lowest_free ) {
-		int i;
-            
-		table->lowest_free=table->size;
-		for ( i=index; i<table->size; i++) {
-		    if ( NULL == table->addr[i] ){
-			table->lowest_free = i;
-			break;
-		    }                    
+		/* mark element as free, if NULL element */
+		if( NULL == value ) {
+			if (index < table->lowest_free) {
+				table->lowest_free = index;
+			}
+			table->number_free++;
 		}
-	    }
-	}
+		else {
+			/* Reset lowest_free if required */
+			if ( index == table->lowest_free ) {
+				int i;
+            
+				table->lowest_free=table->size;
+				for ( i=index; i<table->size; i++) {
+					if ( NULL == table->addr[i] ){
+						table->lowest_free = i;
+						break;
+					}                    
+				}
+			}
+		}
     }
 	
 
@@ -372,7 +318,7 @@ static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard)
     
     new_size_int = (int) new_size;
     table->number_free += new_size_int - table->size;
-    table->addr = p;
+    table->addr = (void**)p;
     for (i = table->size; i < new_size_int; ++i) {
         table->addr[i] = NULL;
     }

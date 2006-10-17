@@ -27,27 +27,28 @@
 #ifndef _EVENT_H_
 #define _EVENT_H_
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 #include "opal_config.h"
 
 #include "opal/threads/mutex.h"
 #include "opal/event/event_rename.h"
 
+#ifdef HAVE_STDARG_H
+#include <stdarg.h>
+#endif
 
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #endif
-
-#include <stdarg.h>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #undef WIN32_LEAN_AND_MEAN
 typedef unsigned char u_char;
+#endif
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
 #endif
 
 #define OPAL_EVLIST_TIMEOUT	0x01
@@ -126,6 +127,11 @@ struct opal_event {
 
 	int ev_res;		/* result passed to event callback */
 	int ev_flags;
+#if defined(__WINDOWS__)
+    HANDLE base_handle;
+    HANDLE registered_handle;
+    struct opal_event* ev_similar;
+#endif  /* defined(__WINDOWS__) */
 };
 typedef struct opal_event opal_event_t;
 
@@ -154,15 +160,15 @@ struct opal_eventop {
 
 #define OPAL_TIMEOUT_DEFAULT	{1, 0}
 
-OMPI_DECLSPEC int opal_event_init(void);
-OMPI_DECLSPEC int opal_event_dispatch(void);
-OMPI_DECLSPEC int opal_event_base_dispatch(struct event_base *);
+OPAL_DECLSPEC int opal_event_init(void);
+OPAL_DECLSPEC int opal_event_dispatch(void);
+OPAL_DECLSPEC int opal_event_base_dispatch(struct event_base *);
 
-OMPI_DECLSPEC int opal_event_fini(void);
-OMPI_DECLSPEC int opal_event_enable(void);
-OMPI_DECLSPEC int opal_event_disable(void);
-OMPI_DECLSPEC bool opal_event_progress_thread(void);
-OMPI_DECLSPEC int opal_event_restart(void);
+OPAL_DECLSPEC int opal_event_fini(void);
+OPAL_DECLSPEC int opal_event_enable(void);
+OPAL_DECLSPEC int opal_event_disable(void);
+OPAL_DECLSPEC bool opal_event_progress_thread(void);
+OPAL_DECLSPEC int opal_event_restart(void);
 
 #define _EVENT_LOG_DEBUG 0
 #define _EVENT_LOG_MSG   1
@@ -176,9 +182,11 @@ int opal_event_base_set(struct event_base *, struct opal_event *);
 
 #define OPAL_EVLOOP_ONCE	0x01
 #define OPAL_EVLOOP_NONBLOCK	0x02
-#define OPAL_EVLOOP_ONELOOP     0x04
+    /* run once through the loop, but do have the default timeout.
+       Need to be both something special *AND* EVLOOP_ONCE */
+#define OPAL_EVLOOP_ONELOOP     0x05
 
-OMPI_DECLSPEC int opal_event_loop(int);
+OPAL_DECLSPEC int opal_event_loop(int);
 int opal_event_base_loop(struct event_base *, int);
 int opal_event_loopexit(struct timeval *);	/* Causes the loop to exit */
 int event_base_loopexit(struct event_base *, struct timeval *);
@@ -203,17 +211,17 @@ int event_base_loopexit(struct event_base *, struct timeval *);
 #define opal_signal_initialized(ev)	((ev)->ev_flags & OPAL_EVLIST_INIT)
 
 /* for internal use only */
-OMPI_DECLSPEC int   opal_event_add_i(struct opal_event *, struct timeval *);
-OMPI_DECLSPEC int   opal_event_del_i(struct opal_event *);
-OMPI_DECLSPEC void  opal_event_active_i(struct opal_event*, int, short);
-OMPI_DECLSPEC extern opal_mutex_t opal_event_lock;
-OMPI_DECLSPEC extern int opal_evsignal_restart(void);
+OPAL_DECLSPEC int   opal_event_add_i(struct opal_event *, struct timeval *);
+OPAL_DECLSPEC int   opal_event_del_i(struct opal_event *);
+OPAL_DECLSPEC void  opal_event_active_i(struct opal_event*, int, short);
+OPAL_DECLSPEC extern opal_mutex_t opal_event_lock;
+OPAL_DECLSPEC extern int opal_evsignal_restart(void);
 
 extern struct event_base *current_base;
 
 /* public functions */
 
-void
+OPAL_DECLSPEC void
 opal_event_set(struct opal_event *ev, int fd, short events,
       void (*callback)(int, short, void *), void *arg);
 
@@ -222,43 +230,23 @@ int opal_event_once(int, short, void (*)(int, short, void *), void *, struct tim
 static inline int
 opal_event_add(struct opal_event *ev, struct timeval *tv)
 {
-    extern opal_mutex_t opal_event_lock;
     int rc;
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        rc = opal_event_add_i(ev, tv);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        rc = opal_event_add_i(ev, tv);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_add_i(ev, tv));
     return rc;
 }
 
 static inline int 
 opal_event_del(struct opal_event *ev)
 {
-    extern opal_mutex_t opal_event_lock;
     int rc;
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        rc = opal_event_del_i(ev);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        rc = opal_event_del_i(ev);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, rc = opal_event_del_i(ev));
     return rc;
 }
                                                                                           
 static inline void 
 opal_event_active(struct opal_event* ev, int res, short ncalls)
 {
-    if(opal_using_threads()) {
-        opal_mutex_lock(&opal_event_lock);
-        opal_event_active_i(ev, res, ncalls);
-        opal_mutex_unlock(&opal_event_lock);
-    } else {
-        opal_event_active_i(ev, res, ncalls);
-    }
+    OPAL_THREAD_SCOPED_LOCK(&opal_event_lock, opal_event_active_i(ev, res, ncalls));
 }
                                                                                           
 static inline int
@@ -383,6 +371,14 @@ int evbuffer_read(struct evbuffer *, int, int);
 u_char *evbuffer_find(struct evbuffer *, const u_char *, size_t);
 void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_t, void *), void *);
 
+/* This is to prevent event library from picking up the win32_ops
+   since this will be picked up over select(). By using select, we can
+   pretty much use the OOB and PTL as is. Otherwise, there would have
+   to be a lot of magic to be done to get this to work */
+#if defined(__WINDOWS__)
+extern const struct opal_eventop opal_win32ops;
+#endif  /* defined(__WINDOWS__) */
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
@@ -398,6 +394,8 @@ void evbuffer_setcb(struct evbuffer *, void (*)(struct evbuffer *, size_t, size_
 #elif defined(HAVE_EPOLL) && HAVE_EPOLL
 #define OPAL_HAVE_WORKING_EVENTOPS 1
 #elif defined(HAVE_WORKING_KQUEUE) && HAVE_WORKING_KQUEUE
+#define OPAL_HAVE_WORKING_EVENTOPS 1
+#elif defined(__WINDOWS__)
 #define OPAL_HAVE_WORKING_EVENTOPS 1
 #else
 #define OPAL_HAVE_WORKING_EVENTOPS 0

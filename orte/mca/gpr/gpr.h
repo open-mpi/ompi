@@ -111,6 +111,7 @@ typedef int (*orte_gpr_base_module_stop_compound_cmd_fn_t)(void);
  * executed. Failure of any command contained in the compound command will terminate
  * execution of the compound command list and return an error to the caller.
  *
+ * @param none
  * @retval ORTE_SUCCESS All commands in the list were successfully executed.
  * @retval ORTE_ERROR(s) A command in the list failed, returning the indicated
  * error code.
@@ -123,7 +124,8 @@ typedef int (*orte_gpr_base_module_stop_compound_cmd_fn_t)(void);
 typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
 
 
-/* Cleanup a job from the registry
+/*
+ * Cleanup a job from the registry
  * Remove all references to a given job from the registry. This includes removing
  * all segments "owned" by the job, and removing all process names from dictionaries
  * in the registry.
@@ -140,7 +142,8 @@ typedef int (*orte_gpr_base_module_exec_compound_cmd_fn_t)(void);
  */
 typedef int (*orte_gpr_base_module_cleanup_job_fn_t)(orte_jobid_t jobid);
 
-/* Cleanup a process from the registry
+/*
+ * Cleanup a process from the registry
  * Remove all references to a given process from the registry. This includes removing
  * the process name from all dictionaries in the registry, all subscriptions, etc.
  * It also includes reducing any synchros on the job segment.
@@ -177,7 +180,7 @@ typedef int (*orte_gpr_base_module_cleanup_proc_fn_t)(orte_process_name_t *proc)
  * status_code = orte_gpr.preallocate_segment("MY_SEGMENT", num_slots);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_preallocate_segment_fn_t)(char *name, size_t num_slots);
+typedef int (*orte_gpr_base_module_preallocate_segment_fn_t)(char *name, orte_std_cntr_t num_slots);
 
 /*
  * Delete a segment from the registry (BLOCKING)
@@ -246,7 +249,7 @@ typedef int (*orte_gpr_base_module_delete_segment_nb_fn_t)(char *segment,
  * status_code = orte_gpr.put(1, &value);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_put_fn_t)(size_t cnt, orte_gpr_value_t **values);
+typedef int (*orte_gpr_base_module_put_fn_t)(orte_std_cntr_t cnt, orte_gpr_value_t **values);
 
 /* simplified version of the put command */
 typedef int (*orte_gpr_base_module_put_1_fn_t)(orte_gpr_addr_mode_t addr_mode,
@@ -255,7 +258,7 @@ typedef int (*orte_gpr_base_module_put_1_fn_t)(orte_gpr_addr_mode_t addr_mode,
 
 typedef int (*orte_gpr_base_module_put_N_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                                char *segment, char **tokens,
-                                               size_t n, char **keys,
+                                               orte_std_cntr_t n, char **keys,
                                                orte_data_value_t **data_values);
 
 
@@ -263,7 +266,7 @@ typedef int (*orte_gpr_base_module_put_N_fn_t)(orte_gpr_addr_mode_t addr_mode,
  * Put data on the registry (NON-BLOCKING)
  * A non-blocking version of put.
  */
-typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **values,
+typedef int (*orte_gpr_base_module_put_nb_fn_t)(orte_std_cntr_t cnt, orte_gpr_value_t **values,
                       orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
 
@@ -302,7 +305,7 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  *
  * @code
  * opal_list_t *keyval_list;
- * size_t cnt;
+ * orte_std_cntr_t cnt;
  * orte_gpr_value_t **values;
  *
  * status_code = orte_gpr.get(addr_mode, segment, tokens, keyval_list,
@@ -311,12 +314,12 @@ typedef int (*orte_gpr_base_module_put_nb_fn_t)(size_t cnt, orte_gpr_value_t **v
  */
 typedef int (*orte_gpr_base_module_get_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
-                                size_t *cnt, orte_gpr_value_t ***values);
+                                orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 typedef int (*orte_gpr_base_module_get_conditional_fn_t)(orte_gpr_addr_mode_t addr_mode,
                                 char *segment, char **tokens, char **keys,
-                                size_t num_conditions, orte_gpr_keyval_t **conditions,
-                                size_t *cnt, orte_gpr_value_t ***values);
+                                orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions,
+                                orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 /*
  * Get data from the registry (NON-BLOCKING)
@@ -376,7 +379,7 @@ typedef int (*orte_gpr_base_module_delete_entries_nb_fn_t)(
  * @param *segment (IN) A character string indicating the segment whose dictionary is to be
  * indexed. A value of NULL indicates that the global level dictionary is to be used.
  *
- * @param *cnt (IN) A pointer to a size_t location for storing the number of
+ * @param *cnt (IN) A pointer to a orte_std_cntr_t location for storing the number of
  * tokens in the index.
  * @param ***index (IN) The address to place a char** array of strings containing an
  * index of the specified dictionary.
@@ -392,7 +395,7 @@ typedef int (*orte_gpr_base_module_delete_entries_nb_fn_t)(
  * status_code = orte_gpr.index(segment, &cnt, &index);
  * @endcode
  */
-typedef int (*orte_gpr_base_module_index_fn_t)(char *segment, size_t *cnt, char ***index);
+typedef int (*orte_gpr_base_module_index_fn_t)(char *segment, orte_std_cntr_t *cnt, char ***index);
 
 /*
  * Obtain an index of a specified dictionary (NON-BLOCKING)
@@ -466,9 +469,9 @@ typedef int (*orte_gpr_base_module_index_nb_fn_t)(char *segment,
  * @endcode
  */
 typedef int (*orte_gpr_base_module_subscribe_fn_t)(
-                            size_t num_subs,
+                            orte_std_cntr_t num_subs,
                             orte_gpr_subscription_t **subscriptions,
-                            size_t num_trigs,
+                            orte_std_cntr_t num_trigs,
                             orte_gpr_trigger_t **triggers);
 
 /* simplified subscription functions */
@@ -490,7 +493,7 @@ typedef int (*orte_gpr_base_module_subscribe_N_fn_t)(orte_gpr_subscription_id_t 
                                                      orte_gpr_addr_mode_t addr_mode,
                                                      char *segment,
                                                      char **tokens,
-                                                     size_t n,
+                                                     orte_std_cntr_t n,
                                                      char **keys,
                                                      orte_gpr_notify_cb_fn_t cbfunc,
                                                      void *user_tag);
@@ -501,7 +504,7 @@ typedef int (*orte_gpr_base_module_define_trigger_fn_t)(orte_gpr_trigger_id_t *i
                                                      orte_gpr_addr_mode_t addr_mode,
                                                      char *segment,
                                                      char **tokens,
-                                                     size_t n,
+                                                     orte_std_cntr_t n,
                                                      char **keys,
                                                      orte_gpr_trigger_cb_fn_t cbfunc,
                                                      void *user_tag);
@@ -512,9 +515,9 @@ typedef int (*orte_gpr_base_module_define_trigger_level_fn_t)(orte_gpr_trigger_i
                                                      orte_gpr_addr_mode_t addr_mode,
                                                      char *segment,
                                                      char **tokens,
-                                                     size_t n,
+                                                     orte_std_cntr_t n,
                                                      char **keys,
-                                                     size_t *levels,
+                                                     orte_std_cntr_t *levels,
                                                      orte_gpr_trigger_cb_fn_t cbfunc,
                                                      void *user_tag);
 
@@ -647,8 +650,8 @@ typedef int (*orte_gpr_base_module_deliver_notify_msg_t)(orte_gpr_notify_message
 typedef int (*orte_gpr_base_module_create_value_fn_t)(orte_gpr_value_t **value,
                                                 orte_gpr_addr_mode_t addr_mode,
                                                 char *segment,
-                                                size_t cnt,  /**< Number of keyval objects */
-                                                size_t num_tokens);
+                                                orte_std_cntr_t cnt,  /**< Number of keyval objects */
+                                                orte_std_cntr_t num_tokens);
 /* Create a keyval object
  * To make it easier for users, this function will create an orte_gpr_keyval_t object,
  * including performing all the error checks to ensure adequate memory is available.
@@ -764,7 +767,7 @@ typedef mca_gpr_base_component_1_0_0_t mca_gpr_base_component_t;
 /*
  * global module that holds function pointers
  */
-OMPI_DECLSPEC extern orte_gpr_base_module_t orte_gpr; /* holds selected module's function pointers */
+ORTE_DECLSPEC extern orte_gpr_base_module_t orte_gpr; /* holds selected module's function pointers */
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

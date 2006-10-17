@@ -46,7 +46,7 @@ extern "C" {
      *
      * The caller is responsible for freeing the returned string.
      */
-    OMPI_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
+    OPAL_DECLSPEC char *opal_path_find(char *fname, char **pathv, int mode,
                                        char **envv);
 
     /**
@@ -67,7 +67,7 @@ extern "C" {
      *
      * The caller is responsible for freeing the returned string.
      */
-    OMPI_DECLSPEC char *opal_path_findv(char *fname, int mode, 
+    OPAL_DECLSPEC char *opal_path_findv(char *fname, int mode, 
                                         char **envv, char *wrkdir);
 
 #if defined(c_plusplus) || defined(__cplusplus)

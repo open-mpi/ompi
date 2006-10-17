@@ -40,7 +40,7 @@ int MPI_File_get_info(MPI_File mpi_fh, MPI_Info *info_used)
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_INFO";
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -50,9 +50,13 @@ int MPI_File_get_info(MPI_File mpi_fh, MPI_Info *info_used)
     /* --END ERROR HANDLING-- */
 
     error_code = MPI_Info_dup(fh->info, info_used);
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(fh, error_code);
+    /* --END ERROR HANDLING-- */
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return  error_code;
 }

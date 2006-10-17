@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,21 +26,22 @@
 
 #include "opal/util/show_help_lex.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * public functions
  */
-int opal_show_help_finish_parsing(void);
-
+extern int opal_show_help_finish_parsing(void);
 
 /*
  * local functions
  */
-#ifdef __cplusplus
- extern "C" {
-#endif
-     static int opal_show_help_yywrap(void);
-#ifdef __cplusplus
- }
+static int opal_show_help_yywrap(void);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
 #endif
 
 /*

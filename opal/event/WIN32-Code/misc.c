@@ -18,6 +18,7 @@
  *
  ****************************************************************************/
 
+#if 0
 int gettimeofday(struct timeval *tv, struct timezone *tz) {
   struct _timeb tb;
 
@@ -25,16 +26,17 @@ int gettimeofday(struct timeval *tv, struct timezone *tz) {
 		return -1;
 
 	_ftime(&tb);
-	tv->tv_sec = tb.time;
+	tv->tv_sec = (long)tb.time;
 	tv->tv_usec = ((int) tb.millitm) * 1000;
 	return 0;
 }
+#endif
 
 int
 win_read(int fd, void *buf, unsigned int length)
 {
 	DWORD dwBytesRead;
-	int res = ReadFile((HANDLE) fd, buf, length, &dwBytesRead, NULL);
+	int res = ReadFile((HANDLE)fd, buf, length, &dwBytesRead, NULL);
 	if (res == 0) {
 		DWORD error = GetLastError();
 		if (error == ERROR_NO_DATA)

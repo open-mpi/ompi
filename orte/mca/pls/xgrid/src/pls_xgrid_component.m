@@ -31,10 +31,11 @@
 #import "opal/util/argv.h"
 #import "opal/util/path.h"
 #import "opal/util/basename.h"
+
+#import "orte/util/proc_info.h"
 #import "orte/mca/pls/pls.h"
 #import "orte/mca/pls/base/base.h"
 #import "opal/mca/base/mca_base_param.h"
-#import "orte/mca/rml/rml.h"
 
 #import "pls_xgrid.h"
 #import "pls_xgrid_client.h"
@@ -63,10 +64,10 @@ orte_pls_xgrid_component_t mca_pls_xgrid_component = {
        about the component itself */
 
     {
-        /* Indicate that we are a pls v1.0.0 component (which also
+        /* Indicate that we are a pls v1.3.0 component (which also
            implies a specific MCA version) */
 
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
 
         /* Component name and version */
 
@@ -99,9 +100,20 @@ orte_pls_xgrid_component_t mca_pls_xgrid_component = {
 int
 orte_pls_xgrid_component_open(void)
 {
-    mca_base_param_register_string("pls", "xgrid", "orted", NULL, "orted");
-    mca_base_param_register_int("pls", "xgrid", "priority", NULL, 20);
-    mca_base_param_register_int("pls", "xgrid", "delete_job", NULL, 1);
+    mca_base_param_reg_string(&mca_pls_xgrid_component.super.pls_version,
+			      "orted",
+			      "The command name that the component will invoke for the ORTE daemon",
+			      false, false, "orted", NULL);
+
+    mca_base_param_reg_int(&mca_pls_xgrid_component.super.pls_version,
+			   "priority",
+			   "Priority of the xgrid pls component",
+			   false, false, 20, NULL);
+
+    mca_base_param_reg_int(&mca_pls_xgrid_component.super.pls_version,
+			   "delete_job",
+			   "Delete job from XGrid controller's database on job completion",
+			   false, false, 1, NULL);
 
     return ORTE_SUCCESS;
 }
@@ -119,16 +131,20 @@ orte_pls_xgrid_component_init(int *priority)
 {
     char *string;
     int ret, val, param;
+    
+    /* if we are NOT an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
 
-    if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME") ||
-        NULL == getenv("XGRID_CONTROLLER_PASSWORD")) {
-	opal_output(orte_pls_base.pls_output,
+    if (NULL == getenv("XGRID_CONTROLLER_HOSTNAME")) {
+	opal_output_verbose(10, orte_pls_base.pls_output,
 		    "orte:pls:xgrid: not available: controller info not set");
         return NULL;
     }
 
-    opal_output(orte_pls_base.pls_output,
-		"orte:pls:xgrid: initializing PlsXGridClient");
+    opal_output_verbose(1, orte_pls_base.pls_output,
+			"orte:pls:xgrid: initializing PlsXGridClient");
     mca_pls_xgrid_component.pool = [[NSAutoreleasePool alloc] init];
     mca_pls_xgrid_component.client = [[PlsXGridClient alloc] init];
 
@@ -139,8 +155,10 @@ orte_pls_xgrid_component_init(int *priority)
     if (NULL != string) free(string);
 
     /* setup contact information */
-    [mca_pls_xgrid_component.client setControllerPasswordAsCString: 
-				getenv("XGRID_CONTROLLER_PASSWORD")];
+    if (NULL != getenv("XGRID_CONTROLLER_PASSWORD")) {
+	[mca_pls_xgrid_component.client setControllerPasswordAsCString: 
+				    getenv("XGRID_CONTROLLER_PASSWORD")];
+    }
     [mca_pls_xgrid_component.client setControllerHostnameAsCString: 
 				getenv("XGRID_CONTROLLER_HOSTNAME")];
 
@@ -154,14 +172,16 @@ orte_pls_xgrid_component_init(int *priority)
 
     opal_progress_register(orte_pls_xgrid_progress);
 
-    opal_output(orte_pls_base.pls_output, "orte:pls:xgrid: initialized");
-
     ret = [mca_pls_xgrid_component.client connect];
     if (ret != ORTE_SUCCESS) {
-	opal_output(orte_pls_base.pls_output,
-		    "orte:pls:xgrid: connection failed");
+	opal_output_verbose(10, orte_pls_base.pls_output,
+			    "orte:pls:xgrid: not available: connection failed");
 	orte_pls_xgrid_finalize();
+	return NULL;
     }
+
+    opal_output_verbose(10, orte_pls_base.pls_output,
+			"orte:pls:xgrid: initialized");
 
     return &orte_pls_xgrid_module;
 }

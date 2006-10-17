@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -40,27 +40,27 @@
  *     a layer of abstraction over multiple physical devices (e.g. NICs),
  * (3) a list containing multiple BTL modules where each BTL module
  *     corresponds to a single physical device.
- * 
+ *
  * During module initialization, the module should post any addressing
  * information required by its peers. An example would be the TCP
  * listen port opened by the TCP module for incoming connection
  * requests. This information is published to peers via the
  * mca_pml_base_modex_send() interface. Note that peer information is not
- * guaranteed to be available via mca_pml_base_modex_recv() during the 
- * module's init function. However, it will be available during 
+ * guaranteed to be available via mca_pml_base_modex_recv() during the
+ * module's init function. However, it will be available during
  * BTL selection (mca_btl_base_add_proc_fn_t()).
  *
  * BTL Selection:
  *
- * The upper layer builds an ordered list of the available BTL modules sorted 
+ * The upper layer builds an ordered list of the available BTL modules sorted
  * by their exclusivity ranking. This is a relative ranking that is used
- * to determine the set of BTLs that may be used to reach a given destination.  
- * During startup the BTL modules are queried via their 
+ * to determine the set of BTLs that may be used to reach a given destination.
+ * During startup the BTL modules are queried via their
  * mca_btl_base_add_proc_fn_t() to determine if they are able to reach
- * a given destination.  The BTL module with the highest ranking that 
- * returns success is selected. Subsequent BTL modules are selected only 
+ * a given destination.  The BTL module with the highest ranking that
+ * returns success is selected. Subsequent BTL modules are selected only
  * if they have the same exclusivity ranking.
- * 
+ *
  * An example of how this might be used:
  *
  * BTL         Exclusivity   Comments
@@ -73,36 +73,36 @@
  * TCP               0       Selected based on network reachability
  *
  * When a BTL module is selected, it may choose to optionally return a
- * pointer to an an mca_btl_base_endpoint_t data structure to the PML. 
+ * pointer to an an mca_btl_base_endpoint_t data structure to the PML.
  * This pointer is treated as an opaque handle by the PML and is
- * returned to the BTL on subsequent data transfer calls to the 
- * corresponding destination process.  The actual contents of the  
- * data structure are defined on a per BTL basis, and may be used to 
- * cache addressing or connection information, such as a TCP socket 
+ * returned to the BTL on subsequent data transfer calls to the
+ * corresponding destination process.  The actual contents of the
+ * data structure are defined on a per BTL basis, and may be used to
+ * cache addressing or connection information, such as a TCP socket
  * or IB queue pair.
  *
  * Progress:
  *
  * By default, the library provides for polling based progress of outstanding
- * requests. The BTL component exports an interface function (btlm_progress)
+ * requests. The BTL component exports an interface function (btl_progress)
  * that is called in a polling mode by the PML during calls into the MPI
  * library. Note that the btlm_progress() function is called on the BTL component
  * rather than each BTL module. This implies that the BTL author is responsible
- * for iterating over the pending operations in each of the BTL modules associated 
+ * for iterating over the pending operations in each of the BTL modules associated
  * with the component.
- * 
+ *
  * On platforms where threading support is provided, the library provides the
- * option of building with asynchronous threaded progress. In this case, the BTL 
+ * option of building with asynchronous threaded progress. In this case, the BTL
  * author is responsible for providing a thread to progress pending operations.
- * A thread is associated with the BTL component/module such that transport specific 
- * functionality/APIs may be used to block the thread ubtll a pending operation 
- * completes. This thread MUST NOT poll for completion as this would oversubscribe 
- * the CPU. 
+ * A thread is associated with the BTL component/module such that transport specific
+ * functionality/APIs may be used to block the thread until a pending operation
+ * completes. This thread MUST NOT poll for completion as this would oversubscribe
+ * the CPU.
  *
  * Note that in the threaded case the PML may choose to use a hybrid approach,
  * such that polling is implemented from the user thread for a fixed number of
- * cycles before relying on the background thread(s) to complete requests. If 
- * possible the BTL should support the use of both modes concurrebtly.
+ * cycles before relying on the background thread(s) to complete requests. If
+ * possible the BTL should support the use of both modes concurrently.
  *
  */
 
@@ -113,6 +113,10 @@
 
 #include "ompi/types.h"
 #include "ompi/mca/mpool/mpool.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /*
  * BTL types
@@ -153,6 +157,8 @@ typedef uint8_t mca_btl_base_tag_t;
 #define MCA_BTL_EXCLUSIVITY_DEFAULT  1024      /* GM/IB/etc. */
 #define MCA_BTL_EXCLUSIVITY_LOW      0         /* TCP used as a last resort */
 
+/* error callback flags */
+#define MCA_BTL_ERROR_FLAGS_FATAL 0x1
 
 /**
  * Asynchronous callback function on completion of an operation.
@@ -200,7 +206,7 @@ struct mca_btl_base_descriptor_t {
 };
 typedef struct mca_btl_base_descriptor_t mca_btl_base_descriptor_t;
 
-OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_base_descriptor_t);
 
                                                                                                                
 #define MCA_BTL_DES_FLAGS_DEREGISTER   0x0001
@@ -275,14 +281,25 @@ typedef int (*mca_btl_base_component_progress_fn_t)(void);
  *  and component open/close/init functions.
  */
 
-struct mca_btl_base_component_1_0_0_t {
+struct mca_btl_base_component_1_0_1_t {
   mca_base_component_t btl_version;
   mca_base_component_data_1_0_0_t btl_data;
   mca_btl_base_component_init_fn_t btl_init;
   mca_btl_base_component_progress_fn_t btl_progress;
 };
-typedef struct mca_btl_base_component_1_0_0_t mca_btl_base_component_1_0_0_t;
-typedef struct mca_btl_base_component_1_0_0_t mca_btl_base_component_t;
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
+
+/* add the 1_0_0_t typedef for source compatability 
+ *   we can do this safely because 1_0_0 components are the same as 
+ *  1_0_1 components, the difference is in the btl module. 
+ *  Fortunately the only difference in the module is an additional interface
+ *  function added to 1_0_1. We can therefore safely treat an older module just
+ *  just like the new one so long as we check the component version 
+ *  prior to invoking the new interface function.
+ */
+typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_0_t;
+
 
 
 /*
@@ -387,6 +404,32 @@ typedef int (*mca_btl_base_module_register_fn_t)(
     mca_btl_base_tag_t tag,
     mca_btl_base_module_recv_cb_fn_t cbfunc,
     void* cbdata
+);
+
+
+/**
+ * Callback function that is called asynchronously on receipt
+ * of an error from the transport layer 
+ * 
+ */
+
+typedef void (*mca_btl_base_module_error_cb_fn_t)(
+        struct mca_btl_base_module_t* btl,
+        int32_t flags                             
+);
+
+
+/**
+ * Register a callback function that is called on receipt
+ * of an error.
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ *
+ */
+typedef int (*mca_btl_base_module_register_error_fn_t)(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_module_error_cb_fn_t cbfunc
 );
 
 
@@ -514,10 +557,10 @@ struct mca_btl_base_module_t {
     uint32_t    btl_flags;            /**< flags (put/get...) */
 
     /* BTL function table */
-    mca_btl_base_module_add_procs_fn_t   btl_add_procs;
-    mca_btl_base_module_del_procs_fn_t   btl_del_procs;
-    mca_btl_base_module_register_fn_t    btl_register;
-    mca_btl_base_module_finalize_fn_t    btl_finalize;
+    mca_btl_base_module_add_procs_fn_t      btl_add_procs;
+    mca_btl_base_module_del_procs_fn_t      btl_del_procs;
+    mca_btl_base_module_register_fn_t       btl_register;
+    mca_btl_base_module_finalize_fn_t       btl_finalize;
 
     mca_btl_base_module_alloc_fn_t       btl_alloc;
     mca_btl_base_module_free_fn_t        btl_free;
@@ -527,19 +570,37 @@ struct mca_btl_base_module_t {
     mca_btl_base_module_put_fn_t         btl_put;
     mca_btl_base_module_get_fn_t         btl_get;
     mca_btl_base_module_dump_fn_t        btl_dump; /* diagnostics */
-
+   
     /* the mpool associated with this btl (optional) */ 
     mca_mpool_base_module_t*             btl_mpool; 
+    /* register a default error handler */ 
+    mca_btl_base_module_register_error_fn_t btl_register_error;
+    
 };
 typedef struct mca_btl_base_module_t mca_btl_base_module_t;
 
 /*
+ * Macro for use in modules that are of type btl v1.0.1
+ */
+#define MCA_BTL_BASE_VERSION_1_0_1 \
+  /* coll v1.0 is chained to MCA v1.0 */ \
+  MCA_BASE_VERSION_1_0_0, \
+  /* btl v1.0 */ \
+  "btl", 1, 0, 1
+
+
+/*
  * Macro for use in modules that are of type btl v1.0.0
+ *  alows older btl sources to compile..
  */
 #define MCA_BTL_BASE_VERSION_1_0_0 \
   /* coll v1.0 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
   /* btl v1.0 */ \
   "btl", 1, 0, 0
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* OMPI_MCA_BTL_H */

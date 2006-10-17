@@ -215,11 +215,7 @@ static void find_dyn_components(const char *path, const char *type_name,
   dir = path_to_use;
   if (NULL != dir) {
     do {
-#ifdef __WINDOWS__
-      end = strchr(dir, ';');
-#else
-      end = strchr(dir, ':');
-#endif
+      end = strchr(dir, OPAL_ENV_SEP);
       if (NULL != end) {
         *end = '\0';
       }
@@ -273,7 +269,7 @@ static void find_dyn_components(const char *path, const char *type_name,
  */
 static int save_filename(const char *filename, lt_ptr data)
 {
-  int len, prefix_len, total_len;
+  size_t len, prefix_len, total_len;
   char *prefix;
   const char *basename;
   component_file_item_t *component_file;
@@ -286,7 +282,7 @@ static int save_filename(const char *filename, lt_ptr data)
   if (NULL != params->name) {
     len += strlen(params->name);
   }
-  prefix = malloc(len);
+  prefix = (char*)malloc(len);
   snprintf(prefix, len, component_template, params->type);
   prefix_len = strlen(prefix);
   if (NULL != params->name) {
@@ -332,7 +328,7 @@ static int save_filename(const char *filename, lt_ptr data)
 static int open_component(component_file_item_t *target_file, 
                        opal_list_t *found_components)
 {
-  int len, show_errors, param;
+  int show_errors, param;
   lt_dlhandle component_handle;
   mca_base_component_t *component_struct;
   char *struct_name, *err;
@@ -340,6 +336,7 @@ static int open_component(component_file_item_t *target_file,
   opal_list_item_t *cur;
   mca_base_component_list_item_t *mitem;
   dependency_item_t *ditem;
+  size_t len;
 
   opal_output_verbose(40, 0, "mca: base: component_find: examining dyanmic %s MCA component \"%s\"",
                      target_file->type, target_file->name, NULL);
@@ -392,8 +389,8 @@ static int open_component(component_file_item_t *target_file,
         opal_output(0, "mca: base: component_find: unable to open %s %s: %s (ignored)", 
                     target_file->type, target_file->name, err);
     }
-    opal_output_verbose(40, 0, "mca: base: component_find: unable to open: %s (ignored)", 
-                        err, NULL);
+    opal_output_verbose(40, 0, "mca: base: component_find: unable to open %s: %s (ignored)", 
+                        target_file->filename, err, NULL);
     free(err);
     target_file->status = FAILED_TO_LOAD;
     free_dependency_list(&dependencies);
@@ -404,7 +401,7 @@ static int open_component(component_file_item_t *target_file,
      Malloc out enough space for it. */
 
   len = strlen(target_file->type) + strlen(target_file->name) + 32;
-  struct_name = malloc(len);
+  struct_name = (char*)malloc(len);
   if (NULL == struct_name) {
     lt_dlclose(component_handle);
     target_file->status = FAILED_TO_LOAD;
@@ -423,7 +420,7 @@ static int open_component(component_file_item_t *target_file,
     return OPAL_ERR_OUT_OF_RESOURCE;
   }
 
-  component_struct = lt_dlsym(component_handle, struct_name);
+  component_struct = (mca_base_component_t*)lt_dlsym(component_handle, struct_name);
   if (NULL == component_struct) {
     if (0 != show_errors) {
         opal_output(0, "mca: base: component_find: \"%s\" does not appear to be a valid "
@@ -486,7 +483,7 @@ static int check_ompi_info(component_file_item_t *target_file,
                            opal_list_t *dependencies, 
                            opal_list_t *found_components)
 {
-  int len;
+  size_t len;
   FILE *fp;
   char *depname;
   char buffer[BUFSIZ], *p;
@@ -494,7 +491,7 @@ static int check_ompi_info(component_file_item_t *target_file,
   /* Form the filename */
 
   len = strlen(target_file->filename) + strlen(ompi_info_suffix) + 16;
-  depname = malloc(len);
+  depname = (char*)malloc(len);
   if (NULL == depname)
     return OPAL_ERR_OUT_OF_RESOURCE;
   snprintf(depname, len, "%s%s", target_file->filename, ompi_info_suffix);
@@ -583,7 +580,7 @@ static int check_dependency(char *line, component_file_item_t *target_file,
   /* Ensure that this was a valid dependency statement */
 
   type = line;
-  name = strchr(line, ':');
+  name = strchr(line, OPAL_ENV_SEP);
   if (NULL == name) {
     return OPAL_ERR_OUT_OF_RESOURCE;
   }

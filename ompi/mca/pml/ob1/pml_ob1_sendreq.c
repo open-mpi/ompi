@@ -25,7 +25,6 @@
 #include "ompi/mca/mpool/mpool.h" 
 #include "pml_ob1.h"
 #include "pml_ob1_hdr.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvreq.h"
@@ -90,12 +89,13 @@ static int mca_pml_ob1_send_request_free(struct ompi_request_t** request)
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     sendreq->req_send.req_base.req_free_called = true;
-    if( true == sendreq->req_send.req_base.req_pml_complete ) {
-        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
-    }
 
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(sendreq->req_send.req_base), PERUSE_SEND );
+
+    if( true == sendreq->req_send.req_base.req_pml_complete ) {
+        MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );
+    }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
@@ -117,16 +117,11 @@ static void mca_pml_ob1_send_request_construct(mca_pml_ob1_send_request_t* req)
     req->req_rdma_cnt = 0;
 }
 
-static void mca_pml_ob1_send_request_destruct(mca_pml_ob1_send_request_t* req)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_send_request_t,
     mca_pml_base_send_request_t,
     mca_pml_ob1_send_request_construct,
-    mca_pml_ob1_send_request_destruct);
+    NULL);
 
 /**
  * Completion of a short message - nothing left to schedule. Note that this
@@ -362,8 +357,8 @@ int mca_pml_ob1_send_request_start_buffered(
     segment = descriptor->des_src;
 
     /* pack the data into the BTL supplied buffer */
-    iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + 
-             sizeof(mca_pml_ob1_rendezvous_hdr_t));
+    iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + 
+                                    sizeof(mca_pml_ob1_rendezvous_hdr_t));
     iov.iov_len = size;
     iov_count = 1;
     max_data = size;
@@ -384,7 +379,7 @@ int mca_pml_ob1_send_request_start_buffered(
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
@@ -417,7 +412,7 @@ int mca_pml_ob1_send_request_start_buffered(
         return rc;
     }
 
-    iov.iov_base = (void*)(((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset);
+    iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)sendreq->req_send.req_addr) + sendreq->req_send_offset);
     iov.iov_len = max_data = sendreq->req_send.req_bytes_packed - sendreq->req_send_offset;
 
     if((rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
@@ -483,7 +478,7 @@ int mca_pml_ob1_send_request_start_copy(
     max_data = size;
     if(size > 0) { 
         /* pack the data into the supplied buffer */
-        iov.iov_base = (void*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
         iov.iov_len = size;
         iov_count = 1;
         if((rc = ompi_convertor_pack(
@@ -504,7 +499,7 @@ int mca_pml_ob1_send_request_start_copy(
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -582,7 +577,7 @@ int mca_pml_ob1_send_request_start_prepare(
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -679,7 +674,7 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
          hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
          hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-         hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+         hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
          hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
          hdr->hdr_rndv.hdr_src_req.pval = sendreq;
          hdr->hdr_rget.hdr_des.pval = src;
@@ -734,7 +729,7 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
          hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
          hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-         hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+         hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
          hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
          hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
@@ -817,7 +812,7 @@ int mca_pml_ob1_send_request_start_rndv(
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
     hdr->hdr_match.hdr_src = sendreq->req_send.req_base.req_comm->c_my_rank;
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
-    hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;
+    hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
     hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
@@ -867,11 +862,11 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 
     do {
         /* allocate remaining bytes to BTLs */
-        int32_t bytes_remaining = sendreq->req_rdma_offset -
+        size_t bytes_remaining = sendreq->req_rdma_offset -
             sendreq->req_send_offset;
         size_t prev_bytes_remaining = 0, num_fail = 0;
 
-        while(bytes_remaining > 0 &&
+        while((int32_t)bytes_remaining > 0 &&
                 (sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth
                  ||
                  sendreq->req_rdma_offset < sendreq->req_send.req_bytes_packed))
@@ -1004,7 +999,7 @@ static void mca_pml_ob1_put_completion(
     int status)
 {
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
-    mca_pml_ob1_send_request_t* sendreq = frag->rdma_req;
+    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)frag->rdma_req;
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) des->des_context;
 
     /* check completion status */
@@ -1050,11 +1045,11 @@ int mca_pml_ob1_send_request_put_frag(
         mca_pml_ob1_rdma_frag_t* frag
         )
 {
-    mca_pml_ob1_send_request_t* sendreq = frag->rdma_req;
+    mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)frag->rdma_req;
     mca_mpool_base_registration_t* reg = NULL;
     mca_bml_base_btl_t* bml_btl;
     mca_btl_base_descriptor_t* des;
-    size_t offset = frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
+    size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
     size_t i, save_size = frag->rdma_length;
     int rc;
     bool release = false; 
@@ -1076,7 +1071,7 @@ int mca_pml_ob1_send_request_put_frag(
     /* if registration doesnt exist - create one */
     if (mca_pml_ob1.leave_pinned_pipeline && reg == NULL) {
         unsigned char* base;
-        long lb;
+        ptrdiff_t lb;
         ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
         base = (unsigned char*)sendreq->req_send.req_convertor.pBaseBuf + lb + offset;
         reg = mca_pml_ob1_rdma_register(bml_btl, base, frag->rdma_length);
@@ -1111,7 +1106,7 @@ int mca_pml_ob1_send_request_put_frag(
     des->des_cbdata = frag;
 
     PERUSE_TRACE_COMM_OMPI_EVENT( PERUSE_COMM_REQ_XFER_CONTINUE,
-                                  &(sendreq->req_send.req_base), size, PERUSE_SEND );
+                                  &(sendreq->req_send.req_base), save_size, PERUSE_SEND );
 
     if(OMPI_SUCCESS != (rc = mca_bml_base_put(bml_btl, des))) {
         mca_bml_base_free(bml_btl, des);

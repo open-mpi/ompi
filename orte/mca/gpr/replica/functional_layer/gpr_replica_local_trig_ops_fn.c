@@ -41,10 +41,10 @@
  * REGISTRATION
  */
 int
-orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions)
+orte_gpr_replica_enter_local_subscription(orte_std_cntr_t cnt, orte_gpr_subscription_t **subscriptions)
 {
     orte_gpr_replica_local_subscriber_t *sub;
-    size_t i;
+    orte_std_cntr_t i;
 
     OPAL_TRACE(2);
     
@@ -73,10 +73,10 @@ orte_gpr_replica_enter_local_subscription(size_t cnt, orte_gpr_subscription_t **
 
 
 int
-orte_gpr_replica_enter_local_trigger(size_t cnt, orte_gpr_trigger_t **trigs)
+orte_gpr_replica_enter_local_trigger(orte_std_cntr_t cnt, orte_gpr_trigger_t **trigs)
 {
     orte_gpr_replica_local_trigger_t *trig, **tptr;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
 
     OPAL_TRACE(2);
 
@@ -153,7 +153,7 @@ MOVEON:
 
 int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber_t *sub)
 {
-    size_t index;
+    orte_std_cntr_t index;
     
     OPAL_TRACE(2);
  
@@ -171,7 +171,7 @@ int orte_gpr_replica_remove_local_subscription(orte_gpr_replica_local_subscriber
 
 int orte_gpr_replica_remove_local_trigger(orte_gpr_replica_local_trigger_t *trig)
 {
-    size_t index;
+    orte_std_cntr_t index;
     
     OPAL_TRACE(2);
  

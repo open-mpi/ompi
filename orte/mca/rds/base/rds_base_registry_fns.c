@@ -33,6 +33,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/schema/schema.h"
 
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 int orte_rds_base_store_resource(opal_list_t *resources)
@@ -41,7 +42,7 @@ int orte_rds_base_store_resource(opal_list_t *resources)
     opal_list_item_t *item;
     orte_gpr_value_t **values;
     orte_rds_cell_attr_t *attr;
-    size_t i, j, num_vals, num_attr;
+    orte_std_cntr_t i, j, num_vals, num_attr;
     int rc;
 
     if (NULL == resources) {

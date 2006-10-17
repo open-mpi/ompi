@@ -45,8 +45,8 @@ int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
         }
     }
 
-    /* Return the errhandler.  See lengthy comment in
-       comm_get_errhandler.c about why we increment the refcount. */
+    /* Retain the errhandler, corresponding to object refcount
+       decrease in errhandler_free.c. */
     OBJ_RETAIN(win->error_handler);
     *errhandler = win->error_handler;
 

@@ -49,6 +49,10 @@
 #include <sys/stat.h>
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * @param path A pointer to a string that contains the path name to be built.
  * @param mode A mode_t bit mask that specifies the access permissions for the
@@ -59,7 +63,7 @@
  * specified access permissions.
  */
 
-OMPI_DECLSPEC int opal_os_dirpath_create(const char *path, const mode_t mode);
+OPAL_DECLSPEC int opal_os_dirpath_create(const char *path, const mode_t mode);
 
 /**
  * Check to see if a directory is empty
@@ -69,7 +73,7 @@ OMPI_DECLSPEC int opal_os_dirpath_create(const char *path, const mode_t mode);
  * @retval true If the directory is empty
  * @retval false If the directory is not empty
  */
-OMPI_DECLSPEC bool opal_os_dirpath_is_empty(const char *path);
+OPAL_DECLSPEC bool opal_os_dirpath_is_empty(const char *path);
 
 /**
  * Check access to the directory
@@ -82,7 +86,7 @@ OMPI_DECLSPEC bool opal_os_dirpath_is_empty(const char *path);
  * @retval OPAL_ERR_NOT_FOUND If directory does not exist
  * @retval OPAL_ERROR   If directory exists, and permissions do not match
  */
-OMPI_DECLSPEC int opal_os_dirpath_access(const char *path, const mode_t mode );
+OPAL_DECLSPEC int opal_os_dirpath_access(const char *path, const mode_t mode );
 
 /**
  * Callback for opal_os_dirpath_destroy(). Call for every file/directory before
@@ -111,8 +115,12 @@ typedef bool (*opal_os_dirpath_destroy_callback_fn_t)(const char *root, const ch
  * @retval OPAL_ERROR If the directory cannnot be removed, accessed properly, or contains
  *                    directories that could not be removed..
  */
-OMPI_DECLSPEC int opal_os_dirpath_destroy(const char *path, 
+OPAL_DECLSPEC int opal_os_dirpath_destroy(const char *path, 
                                           bool recursive, 
                                           opal_os_dirpath_destroy_callback_fn_t cbfunc);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

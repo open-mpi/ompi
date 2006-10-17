@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -68,9 +68,10 @@ struct cmd_line_option_t {
 typedef struct cmd_line_option_t cmd_line_option_t;
 static void option_constructor(cmd_line_option_t *cmd);
 static void option_destructor(cmd_line_option_t *cmd);
-static OBJ_CLASS_INSTANCE(cmd_line_option_t,
-                          opal_list_item_t,
-                          option_constructor, option_destructor);
+
+OBJ_CLASS_INSTANCE(cmd_line_option_t,
+                   opal_list_item_t,
+                   option_constructor, option_destructor);
 
 /*
  * An option that was used in the argv that was parsed
@@ -99,9 +100,9 @@ struct cmd_line_param_t {
 typedef struct cmd_line_param_t cmd_line_param_t;
 static void param_constructor(cmd_line_param_t *cmd);
 static void param_destructor(cmd_line_param_t *cmd);
-static OBJ_CLASS_INSTANCE(cmd_line_param_t,
-                          opal_list_item_t,
-                          param_constructor, param_destructor);
+OBJ_CLASS_INSTANCE(cmd_line_param_t,
+                   opal_list_item_t,
+                   param_constructor, param_destructor);
 
 /*
  * Instantiate the opal_cmd_line_t class
@@ -481,7 +482,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
  */
 char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 {
-    int i, len, prev_len;
+    size_t i, len, prev_len;
     int argc;
     size_t j;
     char **argv;
@@ -504,8 +505,8 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
     /* First, take the original list and sort it */
 
-    sorted = malloc(sizeof(cmd_line_option_t *) * 
-                    opal_list_get_size(&cmd->lcl_options));
+    sorted = (cmd_line_option_t**)malloc(sizeof(cmd_line_option_t *) * 
+                                         opal_list_get_size(&cmd->lcl_options));
     if (NULL == sorted) {
         return NULL;
     }
@@ -1037,7 +1038,7 @@ static int split_shorts(opal_cmd_line_t *cmd, char *token, char **args,
        (argv[i] + 1), will be empty by the time it gets down here),
        just return that we didn't find a short option. */
 
-    len = strlen(token);
+    len = (int)strlen(token);
     if (0 == len) {
         return OPAL_ERR_BAD_PARAM;
     }
@@ -1118,7 +1119,7 @@ static void set_dest(cmd_line_option_t *option, char *sval)
 {
     int ival = atoi(sval);
     long lval = strtol(sval, NULL, 10);
-    char *str;
+    char *str = NULL;
 
     /* Set MCA param.  We do this in the environment because the MCA
        parameter may not have been registered yet -- and if it isn't

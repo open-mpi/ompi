@@ -42,7 +42,6 @@ int MPI_File_get_type_extent(MPI_File mpi_fh, MPI_Datatype datatype,
     ADIO_File fh;
     static char myname[] = "MPI_FILE_GET_TYPE_EXTENT";
 
-    MPID_CS_ENTER();
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -58,6 +57,5 @@ int MPI_File_get_type_extent(MPI_File mpi_fh, MPI_Datatype datatype,
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
     return error_code;
 }

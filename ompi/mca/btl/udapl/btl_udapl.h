@@ -50,7 +50,7 @@ extern "C" {
  */
 
 struct mca_btl_udapl_component_t {
-    mca_btl_base_component_1_0_0_t super;  /**< base BTL component */ 
+    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */ 
     
     size_t  udapl_num_btls; /**< number of hcas available to the uDAPL component */
     size_t  udapl_max_btls; /**< maximum number of supported hcas */
@@ -74,7 +74,7 @@ struct mca_btl_udapl_component_t {
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
-extern mca_btl_udapl_component_t mca_btl_udapl_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_udapl_component_t mca_btl_udapl_component;
 
 
 

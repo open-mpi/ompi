@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -40,10 +40,9 @@
 #include "orte/mca/schema/schema.h"
 #include "opal/class/opal_object.h"
 #include "orte/class/orte_pointer_array.h"
+
 #include "orte/dss/dss_types.h"
 #include "orte/mca/ns/ns_types.h"
-#include "orte/mca/rmgr/rmgr_types.h"
-#include "orte/mca/soh/soh_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -67,9 +66,9 @@ extern "C" {
 typedef uint8_t orte_gpr_notify_action_t;
 #define ORTE_GPR_NOTIFY_ACTION_T ORTE_UINT8
 
-typedef uint32_t orte_gpr_subscription_id_t;
-#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_UINT32
-#define ORTE_GPR_SUBSCRIPTION_ID_MAX (1UL << 31)
+typedef int32_t orte_gpr_subscription_id_t;
+#define ORTE_GPR_SUBSCRIPTION_ID_T ORTE_INT32
+#define ORTE_GPR_SUBSCRIPTION_ID_MAX INT32_MAX
 
 
 #define ORTE_GPR_TRIG_INCLUDE_TRIG_CNTRS    (uint8_t)0x01   /**< Include the trigger data in the notification msg */
@@ -84,9 +83,9 @@ typedef uint32_t orte_gpr_subscription_id_t;
 typedef uint8_t orte_gpr_trigger_action_t;
 #define ORTE_GPR_TRIGGER_ACTION_T ORTE_UINT8
 
-typedef uint32_t orte_gpr_trigger_id_t;
-#define ORTE_GPR_TRIGGER_ID_T ORTE_UINT32
-#define ORTE_GPR_TRIGGER_ID_MAX (1UL << 31)
+typedef int32_t orte_gpr_trigger_id_t;
+#define ORTE_GPR_TRIGGER_ID_T ORTE_INT32
+#define ORTE_GPR_TRIGGER_ID_MAX INT32_MAX
 
 
 /** Define the addressing mode bit-masks for registry operations.
@@ -121,13 +120,12 @@ typedef uint16_t orte_gpr_addr_mode_t;
   * Key-value pairs for registry operations
   */
 typedef struct {
-    opal_object_t super;                /* required for this to be an object */
+    opal_list_item_t super;             /* required for this to be on a list */
     char *key;                          /* string key for this value */
     orte_data_value_t *value;           /* value */
 } orte_gpr_keyval_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
-#define ORTE_GPR_KEYVAL_EMPTY {{OBJ_CLASS(orte_gpr_keyval_t),0}, NULL, NULL}
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_keyval_t);
 
 
 /** Return value structure for registry requests.
@@ -145,13 +143,13 @@ typedef struct {
     opal_object_t super;                    /**< Makes this an object */
     orte_gpr_addr_mode_t addr_mode;         /**< Address mode that was used for combining keys/tokens */
     char *segment;                          /**< Name of the segment this came from */
-    size_t cnt;                             /**< Number of keyval objects returned */
+    orte_std_cntr_t cnt;                             /**< Number of keyval objects returned */
     orte_gpr_keyval_t **keyvals;            /**< Contiguous array of keyval object pointers */
-    size_t num_tokens;                      /**< Number of tokens from the container that held these keyvals */
+    orte_std_cntr_t num_tokens;                      /**< Number of tokens from the container that held these keyvals */
     char **tokens;                          /**< List of tokens that described the container */
 } orte_gpr_value_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
 #define ORTE_GPR_VALUE_EMPTY {{OBJ_CLASS(orte_gpr_value_t),0}, 0, NULL, 0, NULL, 0, NULL}
 
 /** Return structure for notification messages
@@ -159,16 +157,16 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
  * Each block of data is associated with a specified callback function and contains
  * data from a single segment, one or more containers with one or more keyvals/container.
  */
-typedef struct {
+typedef struct orte_gpr_notify_data_t {
     opal_object_t super;            /**< Makes this an object */
     char *target;                   /**< Name of the associated subscripton, if provided */
     orte_gpr_subscription_id_t id;  /**< Number of the associated subscription */
     bool remove;                    /**< Remove this subscription from recipient's tracker */
-    size_t cnt;                     /**< Number of value objects returned, one per container */
+    orte_std_cntr_t cnt;                     /**< Number of value objects returned, one per container */
     orte_pointer_array_t *values;   /**< Array of value objects returned */
 } orte_gpr_notify_data_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_data_t);
 
 /** Return message for notify requests
  */
@@ -184,11 +182,11 @@ typedef struct {
     orte_gpr_trigger_id_t id;   /**< trigger id, if message comes from trigger
                                     (ORTE_GPR_TRIGGER_ID_MAX otherwise) */
     bool remove;                /**< Remove this trigger from recipient's tracker */
-    size_t cnt;                 /**< number of data objects */
+    orte_std_cntr_t cnt;                 /**< number of data objects */
     orte_pointer_array_t *data; /**< Contiguous array of pointers to data objects */
 } orte_gpr_notify_message_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_notify_message_t);
 
 /** Notify callback function
  * notify_msg = message containing data provided by trigger
@@ -220,14 +218,14 @@ typedef struct {
     char *name;                             /**< A unique name for this subscription - can be NULL */
     orte_gpr_subscription_id_t id;          /**< id number of this subscription, as assigned by system */
     orte_gpr_notify_action_t action;        /**< what causes subscription to fire */
-    size_t cnt;                             /**< Number of values included */
+    orte_std_cntr_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the data to be returned */
     orte_gpr_notify_cb_fn_t cbfunc;         /**< the callback function */
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_subscription_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
 #define ORTE_GPR_SUBSCRIPTION_EMPTY {{OBJ_CLASS(orte_gpr_subscription_t),0}, NULL, ORTE_GPR_SUBSCRIPTION_ID_MAX, 0, 0, NULL, 0, NULL}
 
 /** Structure for registering triggers
@@ -241,14 +239,14 @@ typedef struct {
     char *name;                             /**< A unique name for this trigger - can be NULL */
     orte_gpr_trigger_id_t id;               /**< id number of this trigger, as assigned by system */
     orte_gpr_trigger_action_t action;       /**< trigger characteristics */
-    size_t cnt;                             /**< Number of values included */
+    orte_std_cntr_t cnt;                             /**< Number of values included */
     orte_gpr_value_t **values;              /**< Contiguous array of pointers to value objects
                                                  describing the objects to be monitored */
     orte_gpr_trigger_cb_fn_t cbfunc;        /**< the callback function */
     void *user_tag;                         /**< User-provided tag to be used in cbfunc */
 } orte_gpr_trigger_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
 #define ORTE_GPR_TRIGGER_EMPTY {{OBJ_CLASS(orte_gpr_trigger_t),0}, NULL, ORTE_GPR_TRIGGER_ID_MAX, 0, 0, NULL, 0, NULL}
 
 #if defined(c_plusplus) || defined(__cplusplus)

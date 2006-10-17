@@ -51,7 +51,7 @@ extern "C" {
  */
 
 struct mca_btl_gm_component_t {
-    mca_btl_base_component_1_0_0_t super;  /**< base BTL component */ 
+    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */ 
     
     size_t  gm_num_btls; /**< number of hcas available to the GM component */
     size_t  gm_max_btls; /**< maximum number of supported hcas */
@@ -75,9 +75,7 @@ struct mca_btl_gm_component_t {
 }; 
 typedef struct mca_btl_gm_component_t mca_btl_gm_component_t;
 
-extern mca_btl_gm_component_t mca_btl_gm_component;
-
-
+OMPI_MODULE_DECLSPEC extern mca_btl_gm_component_t mca_btl_gm_component;
 
 /**
  * BTL Module Interface
@@ -110,6 +108,7 @@ struct mca_btl_gm_module_t {
     opal_thread_t gm_thread;
     bool gm_progress;
 #endif
+    mca_btl_base_module_error_cb_fn_t error_cb; 
 }; 
 typedef struct mca_btl_gm_module_t mca_btl_gm_module_t;
 extern mca_btl_gm_module_t mca_btl_gm_module;
@@ -257,6 +256,31 @@ extern int mca_btl_gm_register(
     mca_btl_base_tag_t tag, 
     mca_btl_base_module_recv_cb_fn_t cbfunc, 
     void* cbdata); 
+
+
+/**
+ * Register a callback function that is called on error..
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if cleanup was successful
+ */
+
+int mca_btl_gm_register_error_cb(
+    struct mca_btl_base_module_t* btl,
+    mca_btl_base_module_error_cb_fn_t cbfunc
+);
+
+/**
+ * Register a callback function that is called on error.
+ *
+ * @param btl (IN)     BTL module
+ * @return             Status indicating if registration was successful
+ *
+ */
+
+extern int mca_btl_gm_register_error_cb(
+    struct mca_btl_base_module_t* btl, 
+    mca_btl_base_module_error_cb_fn_t cbfunc); 
     
 /**
  * Allocate a descriptor with a segment of the requested size.
@@ -356,6 +380,7 @@ do {                                                                            
        if(NULL != frag) {                                                                       \
            switch(frag->type) {                                                                 \
            case MCA_BTL_GM_SEND:                                                                \
+           case MCA_BTL_GM_EAGER:                                                               \
                mca_btl_gm_send_nl(&btl->super, frag->endpoint, &frag->base, frag->hdr->tag);    \
                break;                                                                           \
            case MCA_BTL_GM_PUT:                                                                 \

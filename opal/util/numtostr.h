@@ -30,7 +30,7 @@
  *  @param num (IN)      Input number
  *  @return              String containing number (NULL on failure)
  */
-OMPI_DECLSPEC char* opal_ltostr(long num);
+OPAL_DECLSPEC char* opal_ltostr(long num);
 
 
 /**
@@ -40,6 +40,6 @@ OMPI_DECLSPEC char* opal_ltostr(long num);
  * @param num (IN)       Input number
  * @return               String containing number (NULL on failure)
  */
-OMPI_DECLSPEC char* opal_dtostr(double num);
+OPAL_DECLSPEC char* opal_dtostr(double num);
 
 #endif /* OMPI_NUMTOSTR_UTIL */

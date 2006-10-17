@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -19,10 +19,36 @@
  * Function: - OS, CPU and compiler dependent configuration
  */
 
-#ifndef ORTE_CONFIG_H_
-#define ORTE_CONFIG_H_
+#ifndef ORTE_CONFIG_H
+#define ORTE_CONFIG_H
 
 #include "opal_config.h"
-#define ORTE_DECLSPEC OMPI_DECLSPEC
+
+#if defined(__WINDOWS__)
+
+#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
+#    if defined(ORTE_EXPORTS)
+#      define ORTE_DECLSPEC         __declspec(dllexport)
+#      define ORTE_MODULE_DECLSPEC
+#    else
+#      define ORTE_DECLSPEC         __declspec(dllimport)
+#      if defined(ORTE_MODULE_EXPORTS)
+#        define ORTE_MODULE_DECLSPEC __declspec(dllexport)
+#      else
+#        define ORTE_MODULE_DECLSPEC __declspec(dllimport)
+#      endif  /* defined(ORTE_MODULE_EXPORTS) */
+#    endif  /* defined(ORTE_EXPORTS) */
+#  else          /* building static library or external includes */
+#    if defined(ORTE_IMPORTS)
+#      define ORTE_DECLSPEC        __declspec(dllimport)
+#    else
+#      define ORTE_DECLSPEC
+#    endif  /* defined(ORTE_IMPORTS) */
+#    define ORTE_MODULE_DECLSPEC
+#  endif
+#else
+#  define ORTE_DECLSPEC
+#  define ORTE_MODULE_DECLSPEC
+#endif  /* defined(__WINDOWS__) */
 
 #endif

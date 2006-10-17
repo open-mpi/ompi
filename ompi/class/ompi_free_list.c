@@ -154,10 +154,10 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
         flist->fl_alignment;
 
     if (NULL != flist->fl_mpool)
-        alloc_ptr = flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
-                                                 alloc_size, 0, 0, &user_out);
+        alloc_ptr = (ompi_free_list_memory_t*)flist->fl_mpool->mpool_alloc(flist->fl_mpool, 
+                                                                           alloc_size, 0, 0, &user_out);
     else
-        alloc_ptr = malloc(alloc_size);
+        alloc_ptr = (ompi_free_list_memory_t*)malloc(alloc_size);
 
     if(NULL == alloc_ptr)
         return OMPI_ERR_TEMP_OUT_OF_RESOURCE;
@@ -241,4 +241,32 @@ int ompi_free_list_parse( ompi_free_list_t* list,
 
     position->last_memory = (unsigned char*)((opal_list_item_t*)position->last_memory)->opal_list_next;
     goto dig_for_the_requests;
+}
+
+/**
+ * This function resize the free_list to contain at least the specified
+ * number of elements. We do not create all of them in the same memory
+ * segment. Instead we will several time the fl_num_per_alloc elements
+ * until we reach the required number of the maximum allowed by the 
+ * initialization.
+ */
+int
+ompi_free_list_resize(ompi_free_list_t* flist, size_t size)
+{
+    ssize_t inc_num;
+    int ret = OMPI_SUCCESS;
+
+    if (flist->fl_num_allocated > size) {
+        return OMPI_SUCCESS;
+    }
+    OPAL_THREAD_LOCK(&((flist)->fl_lock));
+    inc_num = size - flist->fl_num_allocated;
+    while( inc_num > 0 ) {
+        ret = ompi_free_list_grow(flist, flist->fl_num_per_alloc);
+        if( OMPI_SUCCESS != ret ) break;
+        inc_num = size - flist->fl_num_allocated;
+    }
+    OPAL_THREAD_UNLOCK(&((flist)->fl_lock));
+
+    return ret;
 }

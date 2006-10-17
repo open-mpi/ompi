@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -77,7 +77,7 @@ orte_iof_base_setup_prefork(orte_iof_base_io_conf_t *opts)
 #if OMPI_ENABLE_PTY_SUPPORT
     if (opts->usepty) {
         ret = opal_openpty(&(opts->p_stdout[0]), &(opts->p_stdout[1]),
-                           NULL, NULL, NULL);
+                           (char*)NULL, (struct termios*)NULL, (struct winsize*)NULL);
     } else {
         ret = -1;
     }
@@ -165,7 +165,7 @@ orte_iof_base_setup_child(orte_iof_base_io_conf_t *opts)
 
         close(opts->p_stdin[0]);
         /* connect input to /dev/null */
-        fd = open("/dev/null", O_RDONLY);
+        fd = open("/dev/null", O_RDONLY, 0);
         if(fd > fileno(stdin)) {
             dup2(fd, fileno(stdin));
             close(fd);
@@ -190,7 +190,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
     if (! opts->usepty) {
         close(opts->p_stdout[1]);
     }
-        close(opts->p_stdin[0]);
+    close(opts->p_stdin[0]);
     close(opts->p_stderr[1]);
 
     /* connect stdin endpoint */
@@ -203,7 +203,7 @@ orte_iof_base_setup_parent(const orte_process_name_t* name,
             return ret;
         }
     } else {
-        close(opts->p_stdin[0]);
+        close(opts->p_stdin[1]);
     }
 
     /* connect read end to IOF */

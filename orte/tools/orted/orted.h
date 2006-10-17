@@ -20,29 +20,14 @@
 #define ORTED_H
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
-#include <string.h>
-
-#include "opal/class/opal_list.h"
 #include "opal/threads/mutex.h"
 #include "opal/threads/condition.h"
-
-#include "opal/util/cmd_line.h"
-#include "opal/mca/mca.h"
-
-/*
- * Definitions needed for communication
- */
-#define ORTE_DAEMON_HOSTFILE_CMD        0x01
-#define ORTE_DAEMON_SCRIPTFILE_CMD      0x02
-#define ORTE_DAEMON_CONTACT_QUERY_CMD   0x03
-#define ORTE_DAEMON_HEARTBEAT_CMD       0xfe
-#define ORTE_DAEMON_EXIT_CMD            0xff
-
-
-/*
- * Globals
- */
+#
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 typedef struct {
     bool help;
@@ -55,16 +40,18 @@ typedef struct {
     char* vpid_start;
     char* num_procs;
     char* universe;
+    char **saved_environ;
     int bootproxy;
     int uri_pipe;
     opal_mutex_t mutex;
     opal_condition_t condition;
     bool exit_condition;
+    bool spin;
     int mpi_call_yield;
+    int reap;
 } orted_globals_t;
 
-extern orted_globals_t orted_globals;
-
+    
 /*
  * Version-related strings and functions
  */
@@ -93,5 +80,8 @@ extern orted_globals_t orted_globals;
 /* extern char *path_pkglibdir; */
 /* extern char *path_sysconfdir; */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTED_H */

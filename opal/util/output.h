@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -90,16 +90,6 @@ struct opal_output_stream_t {
     opal_object_t super;
 
     /**
-     * Indicates whether the output of the stream is
-     * debugging/developer-only output or not.
-     *
-     * This field should be "true" if the output is for debugging
-     * purposes only.  In that case, the output will never be sent to
-     * the stream unless OPAL was configured with --enable-debug.
-     */
-    bool lds_is_debugging;
-
-    /**
      * Indicate the starting verbosity level of the stream.
      *
      * Verbose levels are a convenience mechanisms, and are only
@@ -113,20 +103,6 @@ struct opal_output_stream_t {
      */
     int lds_verbose_level;
     
-    /**
-     * Indicates whether output of the stream should be sent to the
-     * syslog or not.
-     *
-     * If this field is true, output from this stream is sent to the
-     * syslog, and the following fields are also examined:
-     *
-     * - lds_syslog_priority
-     * - lds_syslog_ident
-     * - lds_prefix
-     *
-     * If this field is false, the above three fields are ignored.
-     */
-    bool lds_want_syslog;
     /**
      * When opal_output_stream_t::lds_want_syslog is true, this field is
      * examined to see what priority output from the stream should be
@@ -143,7 +119,11 @@ struct opal_output_stream_t {
      * 
      * If a NULL value is given, the string "opal" is used.
      */
+#if !defined(__WINDOWS__)
     char *lds_syslog_ident;
+#else
+    HANDLE lds_syslog_ident;
+#endif  /* !defined(__WINDOWS__) */
     
     /**
      * String prefix added to all output on the stream.
@@ -154,6 +134,31 @@ struct opal_output_stream_t {
      */
     char *lds_prefix;
     
+    /**
+     * Indicates whether the output of the stream is
+     * debugging/developer-only output or not.
+     *
+     * This field should be "true" if the output is for debugging
+     * purposes only.  In that case, the output will never be sent to
+     * the stream unless OPAL was configured with --enable-debug.
+     */
+    bool lds_is_debugging;
+
+    /**
+     * Indicates whether output of the stream should be sent to the
+     * syslog or not.
+     *
+     * If this field is true, output from this stream is sent to the
+     * syslog, and the following fields are also examined:
+     *
+     * - lds_syslog_priority
+     * - lds_syslog_ident
+     * - lds_prefix
+     *
+     * If this field is false, the above three fields are ignored.
+     */
+    bool lds_want_syslog;
+
     /**
      * Whether to send stream output to stdout or not.
      *
@@ -205,15 +210,6 @@ struct opal_output_stream_t {
      * Convenience typedef
      */    
     typedef struct opal_output_stream_t opal_output_stream_t;
-    /**
-     * Declare the class of this type.  Note that the constructor for
-     * this class is for convenience only -- it is \em not necessary
-     * to be invoked.  If the constructor it used, it sets all values
-     * in the struct to be false / 0 (i.e., turning off all output).
-     * The intended usage is to invoke the constructor and then enable
-     * the output fields that you want.
-     */
-    OBJ_CLASS_DECLARATION(opal_output_stream_t);
 
     /**
      * Initializes the output stream system and opens a default
@@ -230,7 +226,7 @@ struct opal_output_stream_t {
      * By definition, the default verbose stream has a handle ID of 0,
      * and has a verbose level of 0.
      */
-    OMPI_DECLSPEC bool opal_output_init(void);
+    OPAL_DECLSPEC bool opal_output_init(void);
     
     /**
      * Shut down the output stream system.
@@ -238,7 +234,7 @@ struct opal_output_stream_t {
      * Shut down the output stream system, including the default verbose
      * stream.
      */
-    OMPI_DECLSPEC void opal_output_finalize(void);
+    OPAL_DECLSPEC void opal_output_finalize(void);
 
     /**
      * Opens an output stream.
@@ -262,7 +258,7 @@ struct opal_output_stream_t {
      * when open_open() / opal_output() is directed to send output to a
      * file but the process session directory does not yet exist.
      */
-    OMPI_DECLSPEC int opal_output_open(opal_output_stream_t *lds);
+    OPAL_DECLSPEC int opal_output_open(opal_output_stream_t *lds);
 
     /**
      * Re-opens / redirects an output stream.
@@ -276,7 +272,7 @@ struct opal_output_stream_t {
      * passed is invalid, this call is effectively the same as opening a
      * new stream with a specific stream handle.
      */
-    OMPI_DECLSPEC int opal_output_reopen(int output_id, opal_output_stream_t *lds);
+    OPAL_DECLSPEC int opal_output_reopen(int output_id, opal_output_stream_t *lds);
     
     /**
      * Enables and disables output streams.
@@ -295,7 +291,7 @@ struct opal_output_stream_t {
      * to the stream via OPAL_OUTPUT() or opal_output() until the output
      * is re-enabled.
      */
-    OMPI_DECLSPEC bool opal_output_switch(int output_id, bool enable);
+    OPAL_DECLSPEC bool opal_output_switch(int output_id, bool enable);
 
     /**
      * \internal
@@ -306,7 +302,7 @@ struct opal_output_stream_t {
      * typically only invoked after a restart (i.e., in a new process)
      * where output streams need to be re-initialized.
      */
-    OMPI_DECLSPEC void opal_output_reopen_all(void);
+    OPAL_DECLSPEC void opal_output_reopen_all(void);
 
     /**
      * Close an output stream.
@@ -318,7 +314,7 @@ struct opal_output_stream_t {
      * re-used; it is possible that after a stream is closed, if another
      * stream is opened, it will get the same handle value.
      */
-    OMPI_DECLSPEC void opal_output_close(int output_id);
+    OPAL_DECLSPEC void opal_output_close(int output_id);
 
     /**
      * Main function to send output to a stream.
@@ -345,7 +341,7 @@ struct opal_output_stream_t {
      * created, opal_output() will automatically create the file and
      * writing to it.
      */
-    OMPI_DECLSPEC void opal_output(int output_id, const char *format, ...);
+    OPAL_DECLSPEC void opal_output(int output_id, const char *format, ...);
     
     /**
      * Send output to a stream only if the passed verbosity level is
@@ -375,7 +371,7 @@ struct opal_output_stream_t {
      *
      * @see opal_output_set_verbosity()
      */
-    OMPI_DECLSPEC void opal_output_verbose(int verbose_level, int output_id, 
+    OPAL_DECLSPEC void opal_output_verbose(int verbose_level, int output_id, 
                                            const char *format, ...);
     
     /**
@@ -387,7 +383,7 @@ struct opal_output_stream_t {
      * This function sets the verbosity level on a given stream.  It
      * will be used for all future invocations of opal_output_verbose().
      */
-    OMPI_DECLSPEC void opal_output_set_verbosity(int output_id, int level);
+    OPAL_DECLSPEC void opal_output_set_verbosity(int output_id, int level);
 
     /**
      * Set characteristics for output files.
@@ -429,7 +425,7 @@ struct opal_output_stream_t {
      * this function affects both new streams \em and any stream that
      * was previously opened but had not yet output anything.
      */
-    OMPI_DECLSPEC void opal_output_set_output_file_info(const char *dir,
+    OPAL_DECLSPEC void opal_output_set_output_file_info(const char *dir,
                                                         const char *prefix,
                                                         char **olddir,
                                                         char **oldprefix);
@@ -471,6 +467,17 @@ struct opal_output_stream_t {
      */
 #define OPAL_OUTPUT_VERBOSE(a)
 #endif
+
+/**
+ * Declare the class of this type.  Note that the constructor for
+ * this class is for convenience only -- it is \em not necessary
+ * to be invoked.  If the constructor it used, it sets all values
+ * in the struct to be false / 0 (i.e., turning off all output).
+ * The intended usage is to invoke the constructor and then enable
+ * the output fields that you want.
+ */
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_output_stream_t);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

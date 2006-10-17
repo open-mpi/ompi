@@ -79,7 +79,7 @@ struct ompi_win_t {
     int w_disp_unit;
 
     void *w_baseptr;
-    long w_size;
+    size_t w_size;
 
     /** Current epoch / mode (access, expose, lock, etc.).  Checked by
         the argument checking code in the MPI layer, set by the OSC
@@ -97,7 +97,7 @@ OMPI_DECLSPEC extern ompi_win_t ompi_mpi_win_null;
 int ompi_win_init(void);
 int ompi_win_finalize(void);
 
-int ompi_win_create(void *base, long size, int disp_unit, 
+int ompi_win_create(void *base, size_t size, int disp_unit, 
                     ompi_communicator_t *comm, ompi_info_t *info,
                     ompi_win_t **newwin);
 
@@ -161,13 +161,13 @@ static inline void ompi_win_remove_mode(ompi_win_t *win,
 /* already in an access epoch */
 static inline bool ompi_win_access_epoch(ompi_win_t *win) {
     int16_t mode = ompi_win_get_mode(win);
-    return (OMPI_WIN_ACCESS_EPOCH & mode);
+    return (0 != (OMPI_WIN_ACCESS_EPOCH & mode) ? true : false);
 }
 
 /* already in an exposure epoch */
 static inline bool ompi_win_exposure_epoch(ompi_win_t *win) {
     int16_t mode = ompi_win_get_mode(win);
-    return (OMPI_WIN_EXPOSE_EPOCH & mode);
+    return (0 != (OMPI_WIN_EXPOSE_EPOCH & mode) ? true : false);
 }
 
 /* we're either already in an access epoch or can easily start one
@@ -175,7 +175,7 @@ static inline bool ompi_win_exposure_epoch(ompi_win_t *win) {
    communication call. */
 static inline bool ompi_win_comm_allowed(ompi_win_t *win) {
     int16_t mode = ompi_win_get_mode(win);
-    return (OMPI_WIN_ACCESS_EPOCH & mode || OMPI_WIN_FENCE & mode);
+    return (0 != (OMPI_WIN_ACCESS_EPOCH & mode || OMPI_WIN_FENCE & mode) ? true : false);
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

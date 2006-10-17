@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -839,7 +839,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
     char *rnamebuf=NULL;
-    size_t size_len;
+    orte_std_cntr_t size_len;
     int int_len, rlen;
     orte_buffer_t *sbuf=NULL, *rbuf=NULL;
     void *sendbuf;
@@ -870,9 +870,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
-        if (OMPI_SUCCESS != (rc = opal_size2int(size_len, &int_len, true))) {
-            goto err_exit;
-        }
+        int_len = (int)size_len;
         
         rc = MCA_PML_CALL(send (&int_len, 1, MPI_INT, remote_leader, tag, 
                                 MCA_PML_BASE_SEND_STANDARD, bridge_comm ));
@@ -1155,7 +1153,7 @@ int ompi_topo_create (ompi_communicator_t *old_comm,
 
     /* allocate the data for the common good */
 
-    new_comm->c_topo_comm = malloc(sizeof(mca_topo_base_comm_t));
+    new_comm->c_topo_comm = (mca_topo_base_comm_t*)malloc(sizeof(mca_topo_base_comm_t));
     if (NULL == new_comm->c_topo_comm) {
         OBJ_RELEASE(new_comm);
         return OMPI_ERR_OUT_OF_RESOURCE;

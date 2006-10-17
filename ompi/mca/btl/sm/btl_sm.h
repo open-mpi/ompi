@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -50,7 +50,6 @@
 extern "C" {
 #endif
 
-
 /*
  * Shared Memory resource managment
  */
@@ -81,7 +80,7 @@ typedef mca_btl_base_recv_reg_t mca_btl_sm_recv_reg_t;
  * Shared Memory (SM) BTL module.
  */
 struct mca_btl_sm_component_t {
-    mca_btl_base_component_1_0_0_t super;  /**< base BTL component */
+    mca_btl_base_component_1_0_1_t super;  /**< base BTL component */
     int sm_free_list_num;              /**< initial size of free lists */
     int sm_free_list_max;              /**< maximum size of free lists */
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
@@ -143,7 +142,7 @@ struct mca_btl_sm_component_t {
 #endif
 };
 typedef struct mca_btl_sm_component_t mca_btl_sm_component_t;
-extern mca_btl_sm_component_t mca_btl_sm_component;
+OMPI_MODULE_DECLSPEC extern mca_btl_sm_component_t mca_btl_sm_component;
 
 /**
  * Register shared memory module parameters with the MCA framework
@@ -351,9 +350,9 @@ void mca_btl_sm_component_event_thread(opal_object_t*);
 #define MCA_BTL_SM_SIGNAL_PEER(peer)
 #endif
 
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
 #endif
 

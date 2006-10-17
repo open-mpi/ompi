@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -29,6 +29,8 @@
 
 #include "opal/class/opal_list.h"
 #include "opal/mca/mca.h"
+
+#include "orte/mca/rml/rml_types.h"
 #include "orte/mca/rds/rds.h"
 
 
@@ -48,17 +50,16 @@ struct orte_rds_base_selected_t {
     orte_rds_base_module_t* module;
 };
 typedef struct orte_rds_base_selected_t orte_rds_base_selected_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_base_selected_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_base_selected_t);
 
 
 /*
  * API function definitions
  */
-OMPI_DECLSPEC int orte_rds_base_open(void);
-OMPI_DECLSPEC int orte_rds_base_select(void);
-OMPI_DECLSPEC int orte_rds_base_finalize(void);
-OMPI_DECLSPEC int orte_rds_base_close(void);
-OMPI_DECLSPEC int orte_rds_base_query(void);
+ORTE_DECLSPEC int orte_rds_base_open(void);
+ORTE_DECLSPEC int orte_rds_base_select(void);
+ORTE_DECLSPEC int orte_rds_base_finalize(void);
+ORTE_DECLSPEC int orte_rds_base_close(void);
 
 /*
  * globals that might be needed
@@ -66,20 +67,12 @@ OMPI_DECLSPEC int orte_rds_base_query(void);
 
 typedef struct orte_rds_base_t {
     int rds_output;
+    bool no_op_selected;
     opal_list_t rds_components;
     opal_list_t rds_selected;
 } orte_rds_base_t;
 
-OMPI_DECLSPEC extern orte_rds_base_t orte_rds_base;
-
-/*
- * external API functions will be documented in the mca/ns/ns.h file
- */
-
-/*
- * utility functions for use within the RDS
- */
-int orte_rds_base_store_resource(opal_list_t *resource_list);
+ORTE_DECLSPEC extern orte_rds_base_t orte_rds_base;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

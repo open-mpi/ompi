@@ -40,7 +40,7 @@
 
 #include "gpr_proxy.h"
 
-int orte_gpr_proxy_put(size_t cnt, orte_gpr_value_t **values)
+int orte_gpr_proxy_put(orte_std_cntr_t cnt, orte_gpr_value_t **values)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
@@ -92,7 +92,7 @@ int orte_gpr_proxy_put(size_t cnt, orte_gpr_value_t **values)
     return ret;
 }
 
-int orte_gpr_proxy_put_nb(size_t cnt, orte_gpr_value_t **values,
+int orte_gpr_proxy_put_nb(orte_std_cntr_t cnt, orte_gpr_value_t **values,
                           orte_gpr_notify_cb_fn_t cbfunc, void *user_tag)
 {
     OPAL_TRACE(1);
@@ -102,7 +102,7 @@ int orte_gpr_proxy_put_nb(size_t cnt, orte_gpr_value_t **values,
 
 int orte_gpr_proxy_get(orte_gpr_addr_mode_t mode,
                        char *segment, char **tokens, char **keys,
-                       size_t *cnt, orte_gpr_value_t ***values)
+                       orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 
 {
     orte_buffer_t *cmd;
@@ -167,8 +167,8 @@ int orte_gpr_proxy_get(orte_gpr_addr_mode_t mode,
 
 int orte_gpr_proxy_get_conditional(orte_gpr_addr_mode_t mode,
                        char *segment, char **tokens, char **keys,
-                       size_t num_conditions, orte_gpr_keyval_t **conditions,
-                       size_t *cnt, orte_gpr_value_t ***values)
+                       orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions,
+                       orte_std_cntr_t *cnt, orte_gpr_value_t ***values)
 
 {
     orte_buffer_t *cmd;

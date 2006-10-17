@@ -63,8 +63,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
 {                                                                       \
     do{                                                                 \
         ompi_free_list_item_t* item;                                    \
-        ompi_proc =                                                     \
-            comm->c_pml_procs[dst]->proc_ompi;                          \
+        ompi_proc = ompi_comm_peer_lookup( comm, dst );                 \
                                                                         \
         if(NULL == ompi_proc) {                                         \
             rc = OMPI_ERR_OUT_OF_RESOURCE;                              \
@@ -83,8 +82,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
                                           ompi_proc, rc)                \
 {                                                                       \
     ompi_free_list_item_t* item;                                        \
-    ompi_proc =                                                         \
-        comm->c_pml_procs[dst]->proc_ompi;                              \
+    ompi_proc = ompi_comm_peer_lookup( comm, dst );                     \
     if(NULL == ompi_proc) {                                             \
         rc = OMPI_ERR_OUT_OF_RESOURCE;                                  \
         sendreq = NULL;                                                 \
@@ -237,7 +235,7 @@ do {                                                                    \
         if (NULL == sendreq->req_buff) {                                \
             ret = MPI_ERR_BUFFER;                                       \
         } else {                                                        \
-            iov.iov_base = sendreq->req_buff;                           \
+            iov.iov_base = (IOVBASE_TYPE*)sendreq->req_buff;            \
             max_data = iov.iov_len = sendreq->req_count;                \
             iov_count = 1;                                              \
             ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor, \

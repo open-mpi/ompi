@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -35,7 +35,6 @@ OBJ_CLASS_INSTANCE(ompi_group_t,
  * Table for Fortran <-> C group handle conversion
  */
 ompi_pointer_array_t *ompi_group_f_to_c_table;
-ompi_pointer_array_t ompi_group_table;
 
 /*
  * Predefined group objects
@@ -180,8 +179,7 @@ static void ompi_group_destruct(ompi_group_t *group)
 int ompi_group_init(void)
 {
     /* initialize ompi_group_f_to_c_table */
-    OBJ_CONSTRUCT(&ompi_group_table, ompi_pointer_array_t);
-    ompi_group_f_to_c_table = &ompi_group_table;
+    ompi_group_f_to_c_table = OBJ_NEW(ompi_pointer_array_t);
     
     /* add MPI_GROUP_NULL to table */
     OBJ_CONSTRUCT(&ompi_mpi_group_null, ompi_group_t);
@@ -212,7 +210,7 @@ int ompi_group_finalize(void)
     ompi_mpi_group_null.grp_flags = 0;
     OBJ_DESTRUCT(&ompi_mpi_group_empty);
 
-    OBJ_DESTRUCT(ompi_group_f_to_c_table);
+    OBJ_RELEASE(ompi_group_f_to_c_table);
     
     return OMPI_SUCCESS;
 }

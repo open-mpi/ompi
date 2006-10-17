@@ -80,7 +80,7 @@ int orte_gpr_replica_delete_entries(orte_gpr_addr_mode_t addr_mode,
     int rc;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *token_itags=NULL, *key_itags=NULL;
-    size_t num_tokens = 0, num_keys = 0;
+    orte_std_cntr_t num_tokens = 0, num_keys = 0;
 
     OPAL_TRACE(1);
 
@@ -148,7 +148,7 @@ int orte_gpr_replica_delete_entries_nb(
 }
 
 
-int orte_gpr_replica_index(char *segment, size_t *cnt, char ***index)
+int orte_gpr_replica_index(char *segment, orte_std_cntr_t *cnt, char ***index)
 {
     orte_gpr_replica_segment_t *seg=NULL;
     int rc;

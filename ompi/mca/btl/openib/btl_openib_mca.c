@@ -294,13 +294,9 @@ int btl_openib_register_mca_params(void)
                   8, &ival, REGINT_GE_ONE));
     mca_btl_openib_component.srq_sd_max = (uint32_t) ival;
 
-    CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages "
-                  "(automatically disabled if SRQ is enabled)", 
+    CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages ",
                   1, &ival, 0));
     mca_btl_openib_component.use_eager_rdma = (uint32_t) (ival != 0);
-    if (mca_btl_openib_component.use_srq) {
-        mca_btl_openib_component.use_eager_rdma = 0;
-    }
 
     CHECK(reg_int("eager_rdma_threshold", 
                   "Use RDMA for short messages after this number of "
@@ -367,7 +363,7 @@ int btl_openib_register_mca_params(void)
 
     CHECK(reg_int("flags", "BTL flags, added together: SEND=1, PUT=2, GET=4 "
                   "(cannot be 0)",
-                  MCA_BTL_FLAGS_PUT | MCA_BTL_FLAGS_NEED_ACK |
+                  MCA_BTL_FLAGS_RDMA | MCA_BTL_FLAGS_NEED_ACK |
                   MCA_BTL_FLAGS_NEED_CSUM, &ival, REGINT_GE_ZERO));
     mca_btl_openib_module.super.btl_flags = (uint32_t) ival;
     

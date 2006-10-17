@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -69,7 +69,7 @@ static void orte_gpr_keyval_destructor(orte_gpr_keyval_t* keyval)
 /* define instance of opal_class_t */
 OBJ_CLASS_INSTANCE(
     orte_gpr_keyval_t,              /* type name */
-    opal_object_t,                  /* parent "class" name */
+    opal_list_item_t,               /* parent "class" name */
     orte_gpr_keyval_construct,      /* constructor */
     orte_gpr_keyval_destructor);    /* destructor */
 
@@ -91,7 +91,7 @@ static void orte_gpr_value_construct(orte_gpr_value_t* reg_val)
 static void orte_gpr_value_destructor(orte_gpr_value_t* reg_val)
 {
     char **tokens;
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != reg_val->segment) free(reg_val->segment);
 
@@ -138,7 +138,7 @@ static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_data_destructor(orte_gpr_notify_data_t* ptr)
 {
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_value_t **values;
 
     if (NULL != ptr->target) free(ptr->target);
@@ -180,7 +180,7 @@ static void orte_gpr_subscription_construct(orte_gpr_subscription_t* sub)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_subscription_destructor(orte_gpr_subscription_t* sub)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != sub->name) free(sub->name);
 
@@ -216,7 +216,7 @@ static void orte_gpr_trigger_construct(orte_gpr_trigger_t* trig)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_trigger_destructor(orte_gpr_trigger_t* trig)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL != trig->name) free(trig->name);
 
@@ -252,7 +252,7 @@ static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
 /* destructor - used to free any resources held by instance */
 static void orte_gpr_notify_message_destructor(orte_gpr_notify_message_t* msg)
 {
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_gpr_notify_data_t **data;
 
     if (NULL != msg->target) free(msg->target);
@@ -318,7 +318,8 @@ int orte_gpr_base_open(void)
         kill_prefix.lds_verbose_level = value;
     }
     orte_gpr_base_output = opal_output_open(&kill_prefix);
-    
+    OBJ_DESTRUCT(&kill_prefix);
+
     id = mca_base_param_register_int("gpr", "base", "maxsize", NULL,
                                      ORTE_GPR_ARRAY_MAX_SIZE);
     mca_base_param_lookup_int(id, &param);
@@ -513,7 +514,6 @@ int orte_gpr_base_open(void)
     }
 
     /* Open up all available components */
-
     if (ORTE_SUCCESS !=
         mca_base_components_open("gpr",
                                  orte_gpr_base_output,

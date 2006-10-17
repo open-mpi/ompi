@@ -24,6 +24,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/resfile/rds_resfile.h"
 
 #define ORTE_RDS_RESFILE_MAX_LINE_LENGTH 512
@@ -228,12 +229,15 @@ int orte_rds_resfile_query(void)
     FILE *fp;
     char *input_line, *site;
 
+    if (orte_rds_resfile_queried) {
+        /* if we have previously been queried, then our info
+         * is already on the registry, so just return
+         */
+        return ORTE_SUCCESS;
+    }
+    
     OPAL_LOCK(&mca_rds_resfile_component.lock);
 
-    if (orte_rds_resfile_queried) {
-       OPAL_UNLOCK(&mca_rds_resfile_component.lock);
-       return ORTE_SUCCESS;
-    }
     orte_rds_resfile_queried = true;
 
     /* get the resource filename */
@@ -297,12 +301,6 @@ CLEANUP:
 
     OPAL_UNLOCK(&mca_rds_resfile_component.lock);
 
-    return ORTE_SUCCESS;
-}
-
-
-int orte_rds_resfile_finalize(void)
-{
     return ORTE_SUCCESS;
 }
 

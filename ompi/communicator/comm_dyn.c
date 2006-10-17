@@ -2,13 +2,14 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -47,20 +48,22 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/soh/soh_types.h"
+#include "orte/mca/smr/smr_types.h"
 #include "orte/mca/rml/rml.h"
 
 #include "orte/runtime/runtime.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                orte_process_name_t *port, int send_first,
                                ompi_communicator_t **newcomm, orte_rml_tag_t tag )
 {
     int size, rsize, rank, rc;
-    size_t num_vals;
-    size_t rnamebuflen = 0;
+    orte_std_cntr_t num_vals;
+    orte_std_cntr_t rnamebuflen = 0;
     int rnamebuflen_int = 0;
     void *rnamebuf=NULL;
 
@@ -97,6 +100,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         }
 
         if (ORTE_SUCCESS != (rc = orte_dss.pack(nbuf, &size, 1, ORTE_INT))) {
+            ORTE_ERROR_LOG(rc);
             goto exit;
         }
         ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
@@ -117,22 +121,24 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         }
 
         if (ORTE_SUCCESS != (rc = orte_dss.unload(nrbuf, &rnamebuf, &rnamebuflen))) {
+            ORTE_ERROR_LOG(rc);
             goto exit;
         }
     }
 
     /* First convert the size_t to an int so we can cast in the bcast to a void *
-     * if we don't then we will get badness when using big vs little endian */
-    if (OMPI_SUCCESS != (rc = opal_size2int(rnamebuflen, &rnamebuflen_int, true))) {
-        goto exit;
-    }
+     * if we don't then we will get badness when using big vs little endian
+     * THIS IS NO LONGER REQUIRED AS THE LENGTH IS NOW A STD_CNTR_T, WHICH
+     * CORRELATES TO AN INT32
+     */
+    rnamebuflen_int = (int)rnamebuflen;
 
     /* bcast the buffer-length to all processes in the local comm */
     rc = comm->c_coll.coll_bcast (&rnamebuflen_int, 1, MPI_INT, root, comm );
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
-    rnamebuflen = (size_t)rnamebuflen_int;
+    rnamebuflen = rnamebuflen_int;
 
     if ( rank != root ) {
         /* non root processes need to allocate the buffer manually */
@@ -158,11 +164,13 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
     if ( ORTE_SUCCESS != ( rc = orte_dss.load(nrbuf, rnamebuf, rnamebuflen))) {
+        ORTE_ERROR_LOG(rc);
         goto exit;
     }
 
     num_vals = 1;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(nrbuf, &rsize, &num_vals, ORTE_INT))) {
+        ORTE_ERROR_LOG(rc);
         goto exit;
     }
 
@@ -264,7 +272,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
                                           ompi_proc_t *proc, orte_rml_tag_t tag)
 {
     int rc;
-    size_t num_vals;
+    orte_std_cntr_t num_vals;
     orte_process_name_t *rport, tbuf;
     ompi_proc_t *rproc=NULL;
     bool isnew = false;
@@ -277,12 +285,19 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == sbuf) {
             return NULL;
         }
-        if (ORTE_SUCCESS != orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME)) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(sbuf);
             return NULL;
         }
+
         rc = orte_rml.send_buffer(port, sbuf, tag, 0);
         OBJ_RELEASE(sbuf);
-
+	if ( 0 > rc ) {
+	    ORTE_ERROR_LOG(rc);
+	    return NULL;
+	}
+	    
         rport = port;
     }
     else {
@@ -292,9 +307,16 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == rbuf) {
             return NULL;
         }
-        rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag);
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(rbuf);
+            return NULL;
+        }
+
         num_vals = 1;
-        if (ORTE_SUCCESS != orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME)) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(rbuf);
             return NULL;
         }
         OBJ_RELEASE(rbuf);
@@ -329,9 +351,11 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     char prefix[OMPI_PATH_MAX];
     char *base_prefix;
 
-    size_t num_apps, ai;
-    orte_jobid_t new_jobid;
+    orte_std_cntr_t num_apps, ai;
+    orte_jobid_t new_jobid=ORTE_JOBID_INVALID;
     orte_app_context_t **apps=NULL;
+    
+    opal_list_t attributes;
 
 
     /* parse the info object */
@@ -349,20 +373,26 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* make sure the progress engine properly trips the event library */
     opal_progress_event_increment();
     
+    /* setup to record the attributes */
+    OBJ_CONSTRUCT(&attributes, opal_list_t);
+    
     /* we want to be able to default the prefix to the one used for this job
      * so that the ompi executables and libraries can be found. the user can
      * later override this value by providing an MPI_Info value. for now, though,
      * let's get the default value off the registry
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_base_get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.get_app_context(orte_process_info.my_name->jobid, &apps, &num_apps))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     /* we'll just use the prefix from the first member of the app_context array.
      * this shouldn't matter as they all should be the same. it could be NULL, of
      * course (user might not have specified it), so we need to protect against that.
+     *
+     * It's possible that no app_contexts are returned (e.g., during a comm_spawn
+     * from a singleton), so check first
      */
-    if (NULL != apps[0]->prefix_dir) {
+    if (NULL != apps && NULL != apps[0]->prefix_dir) {
         base_prefix = strdup(apps[0]->prefix_dir);
     } else {
         base_prefix = NULL;
@@ -513,8 +543,19 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* cleanup */
     if (NULL != base_prefix) free(base_prefix);
 
+    /* tell the RTE that we want to the children to run inside of our allocation -
+     * don't go get one just for them
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMGR_USE_PARENT_ALLOCATION,
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid)))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&attributes);
+        opal_progress_event_decrement();
+        return MPI_ERR_SPAWN;
+    }
+
     /* spawn procs */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn(apps, count, &new_jobid, NULL, ORTE_PROC_STATE_NONE))) {
+    if (ORTE_SUCCESS != (rc = orte_rmgr.spawn_job(apps, count, &new_jobid, 0, NULL, NULL, ORTE_PROC_STATE_NONE, &attributes))) {
         ORTE_ERROR_LOG(rc);
         opal_progress_event_decrement();
         return MPI_ERR_SPAWN;
@@ -557,8 +598,9 @@ int ompi_comm_dyn_init (void)
        its pieces, which are : port_name and tag */
     oob_port = ompi_parse_port (port_name, &tag);
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&port_proc_name, oob_port))) {
-          return rc;
-        }
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
 
     rc = ompi_comm_connect_accept (MPI_COMM_WORLD, root, port_proc_name,
                   send_first, &newcomm, tag );
@@ -752,7 +794,7 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
 #define OMPI_COMM_MAXJOBIDS 64
 void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 {
-    int i, j, numjobids=0;
+    int i, j, numjobids=0, rc;
     int size, rsize;
     int found;
     orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
@@ -770,7 +812,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
+        ORTE_ERROR_LOG(rc);
         return;
     }
     found = 0;
@@ -789,7 +832,8 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
+        ORTE_ERROR_LOG(rc);
         return;
     }
     found = 0;

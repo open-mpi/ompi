@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -23,46 +23,54 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
 
 #include <fcntl.h>
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
-#include "orte/orte_constants.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
 #include "opal/util/opal_environ.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/gpr.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/pls/poe/pls_poe.h"
 #include "orte/mca/ns/ns.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/sds/base/base.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/util/univ_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/runtime/orte_wait.h"
 
+/* remove for ORTE 2.0 */
+#include "orte/mca/sds/base/base.h"
+
+#include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/poe/pls_poe.h"
+
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Local functions
  */
-static int pls_poe_launch(orte_jobid_t jobid);
+static int pls_poe_launch_job(orte_jobid_t jobid);
 static int pls_poe_terminate_job(orte_jobid_t jobid);
+static int pls_poe_terminate_orteds(orte_jobid_t jobid);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
 static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal);
 static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_poe_finalize(void);
 
-orte_pls_base_module_1_0_0_t orte_pls_poe_module = {
-    pls_poe_launch,
+orte_pls_base_module_t orte_pls_poe_module = {
+    pls_poe_launch_job,
     pls_poe_terminate_job,
+    pls_poe_terminate_orteds,
     pls_poe_terminate_proc,
     pls_poe_signal_job,
     pls_poe_signal_proc,
@@ -115,7 +123,7 @@ int pls_poe_launch_interactive_orted(orte_jobid_t jobid)
 {
     opal_list_t nodes, mapping_list;
     opal_list_item_t* item;
-    size_t num_nodes;
+    orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
     int node_name_index1;
     int node_name_index2;
@@ -328,33 +336,34 @@ poe_wait_job - call back when POE finish
 */
 static void poe_wait_job(pid_t pid, int status, void* cbdata)
 {
-    opal_list_t map;
-    opal_list_item_t* item;
+    orte_job_map_t *map;
+    opal_list_item_t *item, *item2;
     int rc;
 
     /* query allocation for the job */
-    OBJ_CONSTRUCT(&map, opal_list_t);
-    rc = orte_rmaps_base_get_map(mca_pls_poe_component.jobid,&map);
+    rc = orte_rmaps.get_job_map(&map, mca_pls_poe_component.jobid);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
 
-    for(item =  opal_list_get_first(&map);
-        item != opal_list_get_end(&map);
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
-        orte_rmaps_base_map_t* map = (orte_rmaps_base_map_t*) item;
-        size_t i;
+        orte_mapped_node_t* node = (orte_mapped_node_t*) item;
 
-        for(i = 0 ; i < map->num_procs ; ++i) {
-            orte_session_dir_finalize(&(map->procs[i])->proc_name);
-            rc = orte_soh.set_proc_soh(&(map->procs[i]->proc_name),
+        for (item2 = opal_list_get_first(&node->procs);
+             item2 != opal_list_get_end(&node->procs);
+             item2 = opal_list_get_next(item2)) {
+            orte_mapped_proc_t* proc = (orte_mapped_proc_t*)item2;
+            
+            orte_session_dir_finalize(&(proc->name));
+            rc = orte_smr.set_proc_state(&(proc->name),
                                         ORTE_PROC_STATE_ABORTED, status);
-        }
-        if(ORTE_SUCCESS != rc) {
-            ORTE_ERROR_LOG(rc);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+            }
         }
     }
-    OBJ_DESTRUCT(&map);
 }
 
 /**
@@ -369,7 +378,7 @@ poe_create_cmd_file - create POE command file
 static int poe_create_cmd_file(
     FILE *cfp,
     orte_app_context_t* context,
-    orte_rmaps_base_proc_t* proc,
+    orte_mapped_proc_t* proc,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range)
 {
@@ -418,7 +427,7 @@ static int poe_create_cmd_file(
     free(uri);
 
     /* push name into environment */
-    orte_ns_nds_env_put(&proc->proc_name, vpid_start, vpid_range, &environ_copy);
+    orte_ns_nds_env_put(&proc->name, vpid_start, vpid_range, &environ_copy);
 
     if (context->argv == NULL) {
         context->argv = malloc(sizeof(char*)*2);
@@ -449,12 +458,12 @@ poe_launch_interactive - launch an interactive job
 @param jobid JOB Identifier [IN]
 @return error number
 */
-static inline int poe_launch_interactive(orte_jobid_t jobid)
+static inline int poe_launch_interactive_job(orte_jobid_t jobid)
 {
-    opal_list_t map, nodes, mapping_list;
-    opal_list_item_t* item;
+    orte_job_map_t *map;
+    opal_list_item_t *item, *item2;
     orte_vpid_t vpid_start, vpid_range;
-    size_t num_nodes, num_procs;
+    orte_std_cntr_t num_nodes, num_procs;
     FILE *hfp, *cfp;
     char** argv;
     int argc;
@@ -469,50 +478,46 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
 
     mca_pls_poe_component.jobid = jobid;
 
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    OBJ_CONSTRUCT(&mapping_list, opal_list_t);
-    rc = orte_rmaps_base_mapped_node_query(&mapping_list, &nodes, jobid);
+    /* get the map for this job */
+    rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-
-    num_nodes = opal_list_get_size(&nodes);
+    
+    num_nodes = opal_list_get_size(&map->nodes);
 
     if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
 
-        /* Create a tempolary hostlist file if user specify */
+    /* Create a temporary hostlist file if user specify */
 
-        if( (NULL==(mca_pls_poe_component.hostfile=tempnam(NULL,NULL))) ||
-            (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        for(item =  opal_list_get_first(&nodes);
-            item != opal_list_get_end(&nodes);
-            item =  opal_list_get_next(item)) {
-            orte_ras_node_t* node = (orte_ras_node_t*)item;
-            fprintf(hfp,"%s\n",node->node_name);
-        }
-        fclose(hfp);
+    if( (NULL==(mca_pls_poe_component.hostfile=tempnam(NULL,NULL))) ||
+        (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
-
-    rc = orte_rmgr_base_get_job_slots(jobid, &num_procs);
-    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-
-    OBJ_CONSTRUCT(&map, opal_list_t);
-    rc = orte_rmaps_base_get_map(jobid,&map);
-    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-
-    rc = orte_rmaps_base_get_vpid_range(jobid, &vpid_start, &vpid_range);
-    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
-
-    /* Create a tempolary POE command file */
-
-    for(item =  opal_list_get_first(&map);
-        item != opal_list_get_end(&map);
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
-        orte_rmaps_base_map_t* map2 = (orte_rmaps_base_map_t*)item;
-        size_t i;
-        for(i=0; i<map2->num_procs; i++) {
-            rc = poe_create_cmd_file(cfp, map2->app, map2->procs[i], vpid_start, vpid_range);
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+        fprintf(hfp,"%s\n",node->nodename);
+    }
+    fclose(hfp);
+
+    rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
+    if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
+
+    /* Create a temporary POE command file */
+
+    num_procs = 0;
+    for(item =  opal_list_get_first(&map->nodes);
+        item != opal_list_get_end(&map->nodes);
+        item =  opal_list_get_next(item)) {
+        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+
+        for (item2 = opal_list_get_first(&node->procs);
+             item2 != opal_list_get_end(&node->procs);
+             item2 = opal_list_get_next(item2)) {
+            orte_mapped_proc_t* proc = (orte_mapped_proc_t*)item2;
+            rc = poe_create_cmd_file(cfp, map->apps[proc->app_idx], proc, vpid_start, vpid_range);
             if(ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }
+            num_procs++;
         }
     }
     fclose(cfp);
@@ -577,20 +582,8 @@ static inline int poe_launch_interactive(orte_jobid_t jobid)
 
 
 cleanup:
-    while(NULL != (item = opal_list_remove_first(&map))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&map);
-    while(NULL != (item = opal_list_remove_first(&nodes))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&nodes);
-
-    while(NULL != (item = opal_list_remove_first(&mapping_list))) {
-        OBJ_RELEASE(item);
-    }
-    OBJ_DESTRUCT(&mapping_list);
-
+    OBJ_RELEASE(map);
+    
     return rc;
 }
 
@@ -600,10 +593,10 @@ pls_poe_launch - launch a POE job
 @param jobid JOB Identifier [IN]
 @return error number
 */
-static int pls_poe_launch(orte_jobid_t jobid)
+static int pls_poe_launch_job(orte_jobid_t jobid)
 {
     if(0 == strncmp(mca_pls_poe_component.class,"interactive",11)) {
-        return poe_launch_interactive(jobid);
+        return poe_launch_interactive_job(jobid);
     }
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -615,6 +608,11 @@ static int pls_poe_terminate_job(orte_jobid_t jobid)
 
 
 static int pls_poe_terminate_proc(const orte_process_name_t *name)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
+static int pls_poe_terminate_orteds(orte_jobid_t jobid)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -631,7 +629,7 @@ static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal)
 }
 
 /**
-pls_poe_finalize - clean up tempolary files
+pls_poe_finalize - clean up temporary files
 @return error number
 */
 static int pls_poe_finalize(void)

@@ -16,26 +16,21 @@
  * $HEADER$
  */
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+
 #include <errno.h>
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
 #include <string.h>
 
-#include "orte/orte_constants.h"
-
 #include "opal/util/trace.h"
 
-#include "orte/dss/dss.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/rds/base/base.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/rmaps/base/base.h"
-#include "orte/mca/pls/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 /*
  *  Create the job segment and initialize the application context.
@@ -44,11 +39,11 @@
 int orte_rmgr_base_put_app_context(
     orte_jobid_t jobid,
     orte_app_context_t** app_context,
-    size_t num_context)
+    orte_std_cntr_t num_context)
 {
     orte_gpr_value_t *value;
-    size_t i;
-    size_t job_slots;
+    orte_std_cntr_t i;
+    orte_std_cntr_t job_slots;
     int rc;
     char *segment;
 
@@ -61,7 +56,6 @@ int orte_rmgr_base_put_app_context(
 
     /* put context info on the job segment of the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
-        OBJ_RELEASE(value);
         return rc;
     }
     
@@ -130,13 +124,13 @@ static int orte_rmgr_base_cmp_app_context(
 int orte_rmgr_base_get_app_context(
     orte_jobid_t jobid,
     orte_app_context_t*** app_context,
-    size_t* num_context)
+    orte_std_cntr_t* num_context)
 {
     char *segment;
     char *tokens[2];
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0, index = 0;
+    orte_std_cntr_t i, num_values = 0, index = 0;
     int rc;
 
     OPAL_TRACE(2);
@@ -176,7 +170,7 @@ int orte_rmgr_base_get_app_context(
     for(i=0; i<num_values; i++) {
         orte_gpr_value_t* value = values[i];
         orte_gpr_keyval_t** keyvals = value->keyvals;
-        size_t k;
+        orte_std_cntr_t k;
         for(k=0; k < value->cnt; k++) {
             if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&((*app_context)[index++]), keyvals[k]->value, ORTE_APP_CONTEXT))) {
                 ORTE_ERROR_LOG(rc);
@@ -203,13 +197,13 @@ cleanup:
  * Query for the total number of process slots requested for the job.
  */
 
-int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
+int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, orte_std_cntr_t* proc_slots)
 {
     char *segment;
     char *tokens[2];
     char *keys[2];
     orte_gpr_value_t** values = NULL;
-    size_t i, num_values = 0, *ps;
+    orte_std_cntr_t i, num_values = 0, *ps;
     int rc;
 
     OPAL_TRACE(2);
@@ -247,7 +241,7 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
     if(1 != num_values || values[0]->cnt != 1) {
         return ORTE_ERR_NOT_FOUND;
     }
-    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ps, values[0]->keyvals[0]->value, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&ps, values[0]->keyvals[0]->value, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -265,7 +259,7 @@ int orte_rmgr_base_get_job_slots(orte_jobid_t jobid, size_t* proc_slots)
  * Set the total number of process slots requested for the job.
  */
 
-int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
+int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, orte_std_cntr_t proc_slots)
 {
     orte_gpr_value_t *value;
     char *segment;
@@ -276,7 +270,6 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
     /* put context info on the job segment of the registry */
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
         return rc;
     }
 
@@ -292,7 +285,7 @@ int orte_rmgr_base_set_job_slots(orte_jobid_t jobid, size_t proc_slots)
 
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
                                                      ORTE_JOB_SLOTS_KEY,
-                                                     ORTE_SIZE,
+                                                     ORTE_STD_CNTR,
                                                      &proc_slots))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;

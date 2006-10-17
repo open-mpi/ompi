@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -421,7 +421,7 @@ static int mca_oob_tcp_peer_start_connect(mca_oob_tcp_peer_t* peer)
 static void mca_oob_tcp_peer_complete_connect(mca_oob_tcp_peer_t* peer)
 {
     int so_error = 0;
-    ompi_socklen_t so_length = sizeof(so_error);
+    opal_socklen_t so_length = sizeof(so_error);
 
     /* unregister from receiving event notifications */
     opal_event_del(&peer->peer_send_event);
@@ -510,7 +510,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
              * get stuck in the orte_wait_kill when receiving messages in the 
              * tcp OOB. */
             OPAL_THREAD_UNLOCK(&peer->peer_lock);
-            orte_errmgr.abort();
+            orte_errmgr.error_detected(1, "OOB: Connection to HNP lost", NULL);
         }
     }
 
@@ -533,7 +533,7 @@ void mca_oob_tcp_peer_shutdown(mca_oob_tcp_peer_t* peer)
     if (peer->peer_sd >= 0) {
         opal_event_del(&peer->peer_recv_event);
         opal_event_del(&peer->peer_send_event);
-        close(peer->peer_sd);
+        CLOSE_THE_SOCKET(peer->peer_sd);
         peer->peer_sd = -1;
     } 
       
@@ -830,8 +830,8 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
     char buff[255];
     int sndbuf,rcvbuf,nodelay,flags;
     struct sockaddr_in inaddr;
-    ompi_socklen_t optlen;
-    ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
+    opal_socklen_t optlen;
+    opal_socklen_t addrlen = sizeof(struct sockaddr_in);
                                                                                                             
     getsockname(peer->peer_sd, (struct sockaddr*)&inaddr, &addrlen);
     sprintf(src, "%s", inet_ntoa(inaddr.sin_addr));

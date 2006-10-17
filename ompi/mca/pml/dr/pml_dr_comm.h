@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -21,8 +21,6 @@
 #ifndef MCA_PML_DR_COMM_H
 #define MCA_PML_DR_COMM_H
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
 #include "opal/class/opal_list.h"
 #include "ompi/class/ompi_seq_tracker.h"
 #include "ompi/communicator/communicator.h"

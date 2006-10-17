@@ -74,7 +74,7 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     char *procname, *segment, *jobidstring;
     orte_jobid_t jobid;
     int rc;
-    size_t i, j;
+    orte_std_cntr_t i, j;
 
     OPAL_TRACE(2);
     

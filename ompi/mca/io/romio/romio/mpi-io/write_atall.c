@@ -55,7 +55,6 @@ int MPI_File_write_at_all(MPI_File mpi_fh, MPI_Offset offset, void *buf,
     error_code = MPIOI_File_write_all(mpi_fh, offset, ADIO_EXPLICIT_OFFSET,
 				      buf, count, datatype, myname, status);
 
-
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, fh, datatype, count);
 #endif /* MPI_hpux */

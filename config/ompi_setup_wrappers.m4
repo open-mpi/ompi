@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+dnl                         Use is subject to license terms.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -146,7 +148,6 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OPAL_WRAPPER_EXTRA_INCLUDES])
     AC_MSG_RESULT([$OPAL_WRAPPER_EXTRA_INCLUDES])
 
-
     #
     # ORTE
     #
@@ -182,7 +183,6 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     ORTE_WRAPPER_EXTRA_INCLUDES="$OPAL_WRAPPER_EXTRA_INCLUDES"
     AC_SUBST([ORTE_WRAPPER_EXTRA_INCLUDES])
     AC_MSG_RESULT([$ORTE_WRAPPER_EXTRA_INCLUDES])
-
 
     #
     # OMPI
@@ -239,7 +239,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     # compiler should work even if there is no language support.
     if test "$WANT_MPI_CXX_SUPPORT" = "1" ; then
         OMPI_WRAPPER_CXX_LIB="-lmpi_cxx"
-        OMPI_WRAPPER_CXX_REQUIRED_FILE="libmpi_cxx.la"
+        OMPI_WRAPPER_CXX_REQUIRED_FILE=""
     else
         OMPI_WRAPPER_CXX_LIB=""
         OMPI_WRAPPER_CXX_REQUIRED_FILE=""
@@ -255,7 +255,7 @@ AC_DEFUN([OMPI_SETUP_WRAPPER_FINAL],[
     AC_SUBST([OMPI_WRAPPER_F77_REQUIRED_FILE])
 
     if test "$OMPI_WANT_F90_BINDINGS" = "1" ; then
-        OMPI_WRAPPER_F90_REQUIRED_FILE="libmpi_f90.la"
+        OMPI_WRAPPER_F90_REQUIRED_FILE=""
     else
         OMPI_WRAPPER_F90_REQUIRED_FILE="not supported"
     fi

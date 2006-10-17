@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -236,7 +236,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
         switch(frag->hdr.type) {
         case MCA_BTL_TCP_HDR_TYPE_SEND:
             if(frag->iov_idx == 1 && frag->hdr.size) {
-                frag->iov[1].iov_base = (void*)(frag+1);
+                frag->iov[1].iov_base = (IOVBASE_TYPE*)(frag+1);
                 frag->iov[1].iov_len = frag->hdr.size;
                 frag->segments[0].seg_addr.pval = frag+1;
                 frag->segments[0].seg_len = frag->hdr.size;
@@ -246,13 +246,13 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             break;
         case MCA_BTL_TCP_HDR_TYPE_PUT:
             if(frag->iov_idx == 1) {
-                frag->iov[1].iov_base = (void*)frag->segments;
+                frag->iov[1].iov_base = (IOVBASE_TYPE*)frag->segments;
                 frag->iov[1].iov_len = frag->hdr.count * sizeof(mca_btl_base_segment_t);
                 frag->iov_cnt++;
                 goto repeat;
             } else if (frag->iov_idx == 2) {
                 for(i=0; i<frag->hdr.count; i++) {
-                    frag->iov[i+2].iov_base = frag->segments[i].seg_addr.pval;
+                    frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
                     frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                     frag->iov_cnt++;
                 }

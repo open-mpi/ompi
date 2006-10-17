@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -31,9 +31,6 @@
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
-#include "opal/threads/mutex.h"
-#include "opal/threads/condition.h"
-
 #include "opal/class/opal_list.h"
 
 #include "opal/mca/mca.h"
@@ -51,15 +48,15 @@
 extern "C" {
 #endif
 
-    OMPI_DECLSPEC int orte_schema_base_open(void);
-    OMPI_DECLSPEC int orte_schema_base_select(void);
-    OMPI_DECLSPEC int orte_schema_base_close(void);
+    ORTE_DECLSPEC int orte_schema_base_open(void);
+    ORTE_DECLSPEC int orte_schema_base_select(void);
+    ORTE_DECLSPEC int orte_schema_base_close(void);
 
     /* general usage functions */
-int orte_schema_base_get_proc_tokens(char ***tokens, size_t* num_tokens, orte_process_name_t *proc);
-int orte_schema_base_get_node_tokens(char ***tokens, size_t* num_tokens, orte_cellid_t cellid, char *nodename);
-int orte_schema_base_get_job_tokens(char ***tokens, size_t* num_tokens, orte_jobid_t jobid);
-int orte_schema_base_get_cell_tokens(char ***tokens, size_t* num_tokens, orte_cellid_t cellid);
+int orte_schema_base_get_proc_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_process_name_t *proc);
+int orte_schema_base_get_node_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid, char *nodename);
+int orte_schema_base_get_job_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_jobid_t jobid);
+int orte_schema_base_get_cell_tokens(char ***tokens, orte_std_cntr_t* num_tokens, orte_cellid_t cellid);
 int orte_schema_base_get_job_segment_name(char **name, orte_jobid_t jobid);
 int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *name);
 int orte_schema_base_store_my_info(void);
@@ -74,17 +71,17 @@ int orte_schema_base_get_std_subscription_name(char **name,
                                                orte_jobid_t jobid);
 
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
 /*
  * globals that might be needed inside the gpr
  */
 extern int orte_schema_base_output;
 extern bool orte_schema_base_selected;
-extern opal_list_t orte_schema_base_components_available;
-extern mca_schema_base_component_t orte_schema_base_selected_component;
+ORTE_DECLSPEC extern opal_list_t orte_schema_base_components_available;
+ORTE_DECLSPEC extern mca_schema_base_component_t orte_schema_base_selected_component;
 extern bool orte_schema_initialized;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

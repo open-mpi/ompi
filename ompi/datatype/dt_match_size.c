@@ -37,13 +37,13 @@ ompi_ddt_match_size( int size, uint16_t datakind, uint16_t datalang )
 
     for( i = 0; i < ompi_ddt_number_of_predefined_data; i++ ) {
 
-        datatype = ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, i);
+        datatype = (ompi_datatype_t*)ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, i);
 
         if( (datatype->flags & DT_FLAG_DATA_LANGUAGE) != datalang )
             continue;
         if( (datatype->flags & DT_FLAG_DATA_TYPE) != datakind )
             continue;
-        if( (unsigned long)size == datatype->size ) {
+        if( (size_t)size == datatype->size ) {
             return datatype;
         }
     }

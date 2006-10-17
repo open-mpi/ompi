@@ -35,23 +35,23 @@ extern "C" {
  */
 typedef int (*orte_schema_get_proc_tokens_fn_t)(
     char ***tokens, 
-    size_t* num_tokens, 
+    orte_std_cntr_t* num_tokens, 
     orte_process_name_t *proc);
 
 typedef int (*orte_schema_get_job_tokens_fn_t)(
     char ***tokens, 
-    size_t* num_tokens, 
+    orte_std_cntr_t* num_tokens, 
     orte_jobid_t jobid);
 
 typedef int (*orte_schema_get_node_tokens_fn_t)(
     char ***tokens, 
-    size_t* num_tokens, 
+    orte_std_cntr_t* num_tokens, 
     orte_cellid_t cellid, 
     char *nodename);
 
 typedef int (*orte_schema_get_cell_tokens_fn_t)(
     char ***tokens, 
-    size_t* num_tokens, 
+    orte_std_cntr_t* num_tokens, 
     orte_cellid_t cellid);
 
 typedef int (*orte_schema_get_job_segment_name_fn_t)(char **name, orte_jobid_t jobid);
@@ -131,7 +131,7 @@ typedef mca_schema_base_component_1_0_0_t mca_schema_base_component_t;
   /* schema v1.0 */ \
   "schema", 1, 0, 0
 
-OMPI_DECLSPEC extern orte_schema_base_module_t orte_schema;
+ORTE_DECLSPEC extern orte_schema_base_module_t orte_schema;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

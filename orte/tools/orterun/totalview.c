@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,18 +52,21 @@
 /*
  * The environment
  */
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/util/show_help.h"
 #include "opal/util/path.h"
+#include "opal/util/os_path.h"
 #include "opal/class/opal_list.h"
 #include "opal/mca/base/base.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr_types.h"
-#include "orte/mca/rmaps/base/rmaps_base_map.h"
+#include "orte/mca/rmaps/rmaps.h"
 #include "orte/runtime/runtime.h"
 #include "totalview.h"
 
@@ -86,8 +89,6 @@ volatile int MPIR_debug_state = 0;
 volatile int MPIR_i_am_starter = 0;
 volatile int MPIR_debug_gate = 0;
 volatile int MPIR_acquired_pre_main = 0;
-
-void *MPIR_Breakpoint(void);
 
 /* --- end MPICH/TotalView interface definitions */
 
@@ -332,9 +333,12 @@ void orte_totalview_init_before_spawn(void)
  */
 void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 {
-    opal_list_t list_of_resource_maps;
-    opal_list_item_t *item;
-    size_t i;
+    orte_job_map_t *map;
+    opal_list_item_t *item, *item2;
+    orte_mapped_node_t *node;
+    orte_mapped_proc_t *proc;
+    orte_app_context_t *appctx;
+    orte_std_cntr_t i;
     int rc;
 
     if (MPIR_proctable) {
@@ -363,23 +367,18 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
 
         MPIR_debug_state = 1;
 
-        OBJ_CONSTRUCT(&list_of_resource_maps, opal_list_t);
+        /* Get the resource map for this job */
 
-        /* Get a list of the resource maps for this job */
-
-        rc = orte_rmaps_base_get_map(jobid, &list_of_resource_maps);
+        rc = orte_rmaps.get_job_map(&map, jobid);
         if (ORTE_SUCCESS != rc) {
-            opal_output(0, "Error: Can't get list of resource maps\n");
+            opal_output(0, "Error: Can't get resource map\n");
             ORTE_ERROR_LOG(rc);
         }
 
         /* find the total number of processes in the job */
 
-        for (item =  opal_list_get_first(&list_of_resource_maps);
-             item != opal_list_get_end(&list_of_resource_maps);
-             item =  opal_list_get_next(item)) {
-            orte_rmaps_base_map_t *map = (orte_rmaps_base_map_t*) item;
-            MPIR_proctable_size += map->num_procs;
+        for (i=0; i < map->num_apps; i++) {
+            MPIR_proctable_size += map->apps[i]->num_procs;
         }
 
         /* allocate MPIR_proctable */
@@ -388,25 +387,31 @@ void orte_totalview_init_after_spawn(orte_jobid_t jobid)
                                                          MPIR_proctable_size);
         if (MPIR_proctable == NULL) {
             opal_output(0, "Error: Out of memory\n");
-            OBJ_DESTRUCT(&list_of_resource_maps);
+            OBJ_RELEASE(map);
         }
 
         /* initialize MPIR_proctable */
 
-        for (item =  opal_list_get_first(&list_of_resource_maps);
-             item != opal_list_get_end(&list_of_resource_maps);
+        i=0;
+        for (item =  opal_list_get_first(&map->nodes);
+             item != opal_list_get_end(&map->nodes);
              item =  opal_list_get_next(item)) {
-            orte_rmaps_base_map_t *map = (orte_rmaps_base_map_t*) item;
-            for (i = 0; i < map->num_procs; i++) {
-                orte_rmaps_base_proc_t *proc = map->procs[i];
-                MPIR_proctable[i].host_name = proc->proc_node->node->node_name;
-                MPIR_proctable[i].executable_name = proc->app;
-                MPIR_proctable[i].pid = proc->local_pid;
+            node = (orte_mapped_node_t*)item;
+            
+            for (item2 = opal_list_get_first(&node->procs);
+                 item2 != opal_list_get_end(&node->procs);
+                 item2 = opal_list_get_next(item2)) {
+                proc = (orte_mapped_proc_t*)item2;
+                appctx = map->apps[proc->app_idx];
+                
+                MPIR_proctable[i].host_name = strdup(node->nodename);
+                MPIR_proctable[i].executable_name =
+                    opal_os_path( false, appctx->cwd, appctx->app, NULL );
+                MPIR_proctable[i].pid = proc->pid;
+                i++;
             }
         }
-
-        OBJ_DESTRUCT(&list_of_resource_maps);
-
+        OBJ_RELEASE(map);
     }
 
     if (orte_debug_flag) {

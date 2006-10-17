@@ -48,7 +48,7 @@ int MPI_File_read_shared(MPI_File mpi_fh, void *buf, int count,
     ADIO_Offset off, shared_fp;
     ADIO_File fh;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -118,9 +118,14 @@ int MPI_File_read_shared(MPI_File mpi_fh, void *buf, int count,
 	/* For strided and atomic mode, locking is done in ADIO_ReadStrided */
     }
 
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(fh, error_code);
+    /* --END ERROR HANDLING-- */
+
 fn_exit:
-    MPID_CS_EXIT();
     MPIR_Nest_decr();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

@@ -39,7 +39,7 @@ OBJ_CLASS_INSTANCE(orte_bitmap_t, opal_object_t,
 static void
 orte_bitmap_construct(orte_bitmap_t *bm)
 {
-    size_t size;
+    orte_std_cntr_t size;
 
     size = DEFAULT_BITMAP_SIZE / SIZE_OF_CHAR;
 
@@ -60,9 +60,9 @@ orte_bitmap_destruct(orte_bitmap_t *bm)
 
 
 int
-orte_bitmap_resize(orte_bitmap_t *bm, size_t bit)
+orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit)
 {
-    size_t index, new_size, i;
+    orte_std_cntr_t index, new_size, i;
 
     index = bit / SIZE_OF_CHAR;
     index += (bit % SIZE_OF_CHAR == 0) ? 0 : 1;
@@ -98,9 +98,9 @@ orte_bitmap_resize(orte_bitmap_t *bm, size_t bit)
 }
 
 int
-orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit)
+orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit)
 {
-    size_t index, offset;
+    orte_std_cntr_t index, offset;
     int rc;
 
     if (NULL == bm) {
@@ -125,9 +125,9 @@ orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit)
 
 
 int
-orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit)
+orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit)
 {
-    size_t index, offset;
+    orte_std_cntr_t index, offset;
     int rc;
 
     if (NULL == bm) {
@@ -151,9 +151,9 @@ orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit)
 
 
 int
-orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit)
+orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit)
 {
-    size_t index, offset;
+    orte_std_cntr_t index, offset;
 
     if ((bit > bm->legal_numbits - 1) || (NULL == bm)) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -192,7 +192,7 @@ orte_bitmap_clear_all_bits(orte_bitmap_t *bm)
 int
 orte_bitmap_set_all_bits(orte_bitmap_t *bm)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     if (NULL == bm) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
@@ -207,9 +207,9 @@ orte_bitmap_set_all_bits(orte_bitmap_t *bm)
 
 
 int
-orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm, size_t *position)
+orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm, orte_std_cntr_t *position)
 {
-    size_t i = 0;
+    orte_std_cntr_t i = 0;
     unsigned char temp;
     unsigned char all_ones = 0xff;
 

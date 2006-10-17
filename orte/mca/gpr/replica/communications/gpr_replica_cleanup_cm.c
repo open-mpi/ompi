@@ -39,7 +39,7 @@ int orte_gpr_replica_recv_cleanup_job_cmd(orte_buffer_t *input_buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_CLEANUP_JOB_CMD;
     orte_jobid_t jobid=0;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, ret;
     
     OPAL_TRACE(3);
@@ -76,7 +76,7 @@ int orte_gpr_replica_recv_cleanup_proc_cmd(orte_buffer_t *input_buffer,
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_CLEANUP_PROC_CMD;
     orte_process_name_t proc;
-    size_t n;
+    orte_std_cntr_t n;
     int rc, ret;
     
     OPAL_TRACE(3);

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,14 +19,17 @@
 #include "ompi_config.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/iof/iof.h"
+#include "ompi/constants.h"
 
+#if defined(__WINDOWS__)
+#include <io.h>
+#endif  /* defined(__WINDOWS__) */
 
 int ompi_mpi_init_io(void)
 {
     int fds[2];
     int rc;
 
-#ifndef __WINDOWS__
     /* We need to add a NULL component for iof. Until then, this will have to do */
     /* setup stdin */
     rc = pipe(fds);
@@ -75,7 +78,7 @@ int ompi_mpi_init_io(void)
         fds[0]);
     if(rc != OMPI_SUCCESS)
         return rc;
-#endif
+
     return OMPI_SUCCESS;
 }
 

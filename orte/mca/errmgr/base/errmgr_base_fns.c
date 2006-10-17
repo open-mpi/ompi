@@ -23,18 +23,14 @@
 #endif
 #include <stdlib.h>
 #include "orte/orte_constants.h"
-#include "orte/mca/schema/schema.h"
 
-#include "orte/runtime/runtime.h"
-#include "orte/runtime/orte_wait.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 #include "orte/util/proc_info.h"
-#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/ns_types.h"
 
-#include "orte/mca/rmgr/rmgr.h"
-
-#include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/errmgr/base/errmgr_private.h"
 
 
 void orte_errmgr_base_log(int error_code, char *filename, int line)
@@ -49,55 +45,37 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
                         ORTE_NAME_ARGS(orte_process_info.my_name),
                         ORTE_ERROR_NAME(error_code), filename, line);
     }
-    /* orte_errmgr_base_error_detected(error_code); */
 }
 
-void orte_errmgr_base_proc_aborted(orte_process_name_t *proc)
+int orte_errmgr_base_proc_aborted_not_avail(orte_gpr_notify_message_t *msg)
 {
-    orte_jobid_t job;
-    int rc;
-    
-    OPAL_TRACE(1);
-    
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&job, proc))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    
-    orte_rmgr.terminate_job(job);
+    return ORTE_ERR_NOT_AVAILABLE;
 }
 
-void orte_errmgr_base_incomplete_start(orte_jobid_t job)
+int orte_errmgr_base_incomplete_start_not_avail(orte_gpr_notify_message_t *msgb)
 {
-     OPAL_TRACE(1);
-    
-   orte_rmgr.terminate_job(job);
+    return ORTE_ERR_NOT_AVAILABLE;
 }
 
-void orte_errmgr_base_error_detected(int error_code)
+void orte_errmgr_base_error_detected(int error_code, char *fmt, ...)
 {
-    OPAL_TRACE(1);
-    
+    /* we can't know if any output is available yet, so
+     * we just exit */
+    exit(error_code);
 }
 
-void orte_errmgr_base_abort()
+void orte_errmgr_base_abort(void)
 {
-    OPAL_TRACE(1);
-    
-    /* kill and reap all children */
-    orte_wait_kill(9);
-
-    /* abnormal exit */
-    orte_abort(-1, NULL);
+    /* guess we should exit */
+    exit(-1);
 }
 
-int orte_errmgr_base_register_job(orte_jobid_t job)
+int orte_errmgr_base_register_job_not_avail(orte_jobid_t job)
 {
-    /* register subscription for process_status values
-     * changing to abnormal termination codes
-     */
-     
-    OPAL_TRACE(1);
-    
-     return ORTE_SUCCESS;
+    return ORTE_ERR_NOT_AVAILABLE;
+}
+
+int orte_errmgr_base_abort_procs_request_not_avail(orte_process_name_t *procs, orte_std_cntr_t num_procs)
+{
+    return ORTE_ERR_NOT_AVAILABLE;
 }

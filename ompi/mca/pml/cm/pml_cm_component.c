@@ -20,13 +20,13 @@
 
 #include "pml_cm_sendreq.h"
 #include "pml_cm_recvreq.h"
+#include "pml_cm_component.h"
 
 static int mca_pml_cm_component_open(void);
 static int mca_pml_cm_component_close(void);
 static mca_pml_base_module_t* mca_pml_cm_component_init( int* priority,
                             bool enable_progress_threads, bool enable_mpi_threads);
 static int mca_pml_cm_component_fini(void);
-
 
 mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
 
@@ -174,7 +174,7 @@ mca_pml_cm_component_init(int* priority,
 
     /* initialize buffered send code */
     if(OMPI_SUCCESS != mca_pml_base_bsend_init(enable_mpi_threads)) {
-        opal_output(0, "mca_pml_ob1_component_init: mca_pml_bsend_init failed\n");
+        opal_output(0, "mca_pml_cm_component_init: mca_pml_bsend_init failed\n");
         return NULL;
     }
 

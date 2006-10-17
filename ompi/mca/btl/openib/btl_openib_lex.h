@@ -51,6 +51,7 @@ extern int btl_openib_ini_yynewlines;
 #define YY_NEVER_INTERACTIVE 0
 #define YY_MAIN 0
 #define YY_NO_UNPUT 1
+#define YY_SKIP_YYWRAP 1
 
 enum {
     BTL_OPENIB_INI_PARSE_DONE,

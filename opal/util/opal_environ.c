@@ -27,6 +27,9 @@
 #include "opal/util/opal_environ.h"
 #include "opal/constants.h"
 
+#if !defined(__WINDOWS__)
+extern char** environ;
+#endif  /* !defined(__WINDOWS__) */
 
 /*
  * Merge two environ-like char arrays, ensuring that there are no
@@ -82,7 +85,6 @@ char **opal_environ_merge(char **minor, char **major)
     return ret;
 }
 
-
 /*
  * Portable version of setenv(), allowing editing of any environ-like
  * array
@@ -93,7 +95,6 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     int i;
     char *newvalue, *compare;
     size_t len;
-    extern char **environ;
 
     /* Make the new value */
 
@@ -108,7 +109,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
 
     /* Check the bozo case */
 
-    if (NULL == env) {
+    if( NULL == env ) {
         return OPAL_ERR_BAD_PARAM;
     } else if (NULL == *env) {
         i = 0;
@@ -117,8 +118,7 @@ int opal_setenv(const char *name, const char *value, bool overwrite,
     }
 
     /* If this is the "environ" array, use putenv */
-
-    if (*env == environ) {
+    if( *env == environ ) {
         /* THIS IS POTENTIALLY A MEMORY LEAK!  But I am doing it
            because so that we don't violate the law of least
            astonishmet for OPAL developers (i.e., those that don't

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,7 +53,7 @@ struct ompi_pointer_array_t {
         It does \em not necessarily imply indices all above this index
         are not taken! */
     int lowest_free;
-    /** number of fee elements in the list */
+    /** number of free elements in the list */
     int number_free;
     /** size of list, i.e. number of elements in addr */
     int size;
@@ -68,8 +68,6 @@ typedef struct ompi_pointer_array_t ompi_pointer_array_t;
  * Class declaration
  */
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_pointer_array_t);
-
-
 
 /**
  * Add a pointer to the array (Grow the array, if need be)
@@ -107,6 +105,10 @@ static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table,
                                                 int index)
 {
     void *p;
+
+	if( table->size <= index ) {
+		return NULL;
+	}
     OPAL_THREAD_LOCK(&(table->lock));
     p = table->addr[index];
     OPAL_THREAD_UNLOCK(&(table->lock));

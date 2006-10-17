@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,7 +53,7 @@ int MPI_Win_get_attr(MPI_Win win, int win_keyval,
        MPI attribute behavior. */
 
     ret = ompi_attr_get_c(win->w_keyhash, win_keyval, 
-                          attribute_val, flag);
+                          (void**)attribute_val, flag);
 
     /* MPI-2 Section 6.2.2 says that for MPI_WIN_BASE, base will be a
        pointer to the window in C/C++ and an integer representation of

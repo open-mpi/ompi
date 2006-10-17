@@ -56,6 +56,8 @@ struct orte_ras_base_cmp_t {
     int priority;
 };
 typedef struct orte_ras_base_cmp_t orte_ras_base_cmp_t;
+/** Class declaration */
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_base_cmp_t);
 
 
 /*
@@ -63,45 +65,23 @@ typedef struct orte_ras_base_cmp_t orte_ras_base_cmp_t;
  */
 ORTE_DECLSPEC int orte_ras_base_open(void);
 ORTE_DECLSPEC int orte_ras_base_find_available(void);
-ORTE_DECLSPEC int orte_ras_base_allocate(orte_jobid_t job,
-                                         orte_ras_base_module_t **m);
 ORTE_DECLSPEC int orte_ras_base_finalize(void);
 ORTE_DECLSPEC int orte_ras_base_close(void);
 
-ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid, 
-                                               opal_list_t* nodes);
 
 /*
  * globals that might be needed
  */
-
-
 typedef struct orte_ras_base_t {
     int ras_output;
     opal_list_t ras_opened;
     bool ras_opened_valid;
     opal_list_t ras_available;
     bool ras_available_valid;
-    size_t ras_num_nodes;
+    orte_std_cntr_t ras_num_nodes;
 } orte_ras_base_t;
  
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;
-
-/** Class declaration */
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_ras_base_cmp_t);
-
-
-/** Local data type functions */
-int orte_ras_base_copy_node(orte_ras_node_t **dest, orte_ras_node_t *src, orte_data_type_t type);
-int orte_ras_base_compare_node(orte_ras_node_t *value1, orte_ras_node_t *value2, orte_data_type_t type);
-int orte_ras_base_pack_node(orte_buffer_t *buffer, void *src,
-                            size_t num_vals, orte_data_type_t type);
-int orte_ras_base_print_node(char **output, char *prefix, orte_ras_node_t *src, orte_data_type_t type);
-void orte_ras_base_std_obj_release(orte_data_value_t *value);
-int orte_ras_base_size_node(size_t *size, orte_ras_node_t *src, orte_data_type_t type);
-int orte_ras_base_unpack_node(orte_buffer_t *buffer, void *dest,
-                              size_t *num_vals, orte_data_type_t type);
-
 
 /*
  * external API functions will be documented in the mca/ns/ns.h file

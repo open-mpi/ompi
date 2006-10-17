@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -79,7 +79,7 @@ int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_v
 
     /* Lookup the pack function for this type and call it */
 
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type))) {
         ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
         return ORTE_ERR_PACK_FAILURE;
     }
@@ -320,13 +320,13 @@ int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
     for (i = 0; i < num_vals; ++i) {
         if (NULL == ssrc[i]) {  /* got zero-length string/NULL pointer - store NULL */
             len = 0;
-            if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &len, 1, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
         } else {
             len = strlen(ssrc[i]) + 1;
-            if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &len, 1, ORTE_SIZE))) {
+            if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &len, 1, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(ret);
                 return ret;
             }
@@ -396,7 +396,7 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 
         /* Lookup the pack function for this type and call it */
 
-        if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, sdv[i]->type))) {
+        if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, sdv[i]->type))) {
             ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
             return ORTE_ERR_PACK_FAILURE;
         }
@@ -418,22 +418,6 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
 }
 
 /*
- * ORTE_DAEMON_CMD
- */
-int orte_dss_pack_daemon_cmd(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
-                             orte_data_type_t type)
-{
-    int ret;
-    
-    /* Turn around and pack the real type */
-    if (ORTE_SUCCESS != (ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-
-/*
  * ORTE_BYTE_OBJECT
  */
 int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t num,
@@ -447,7 +431,7 @@ int orte_dss_pack_byte_object(orte_buffer_t *buffer, void *src, orte_std_cntr_t 
 
     for (i = 0; i < num; ++i) {
         n = sbyteptr[i]->size;
-        if (ORTE_SUCCESS != (ret = orte_dss_pack_sizet(buffer, &n, 1, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &n, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }

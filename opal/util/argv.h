@@ -63,7 +63,7 @@ extern "C" {
    * value into the argv array; there is no need to keep the original
    * string (i.e., the arg parameter) after invoking this function.
    */
-OMPI_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
+OPAL_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
 
   /**
    * Append to an argv-style array, but ignore the size of the array.
@@ -80,7 +80,7 @@ OMPI_DECLSPEC  int opal_argv_append(int *argc, char ***argv, const char *arg);
    * argv-style arrays that do not have integers that are actively
    * maintaing their sizes.
    */
-OMPI_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
+OPAL_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
 
   /**
    * Free a NULL-terminated argv array.
@@ -95,7 +95,7 @@ OMPI_DECLSPEC  int opal_argv_append_nosize(char ***argv, const char *arg);
    * not safe to invoke this function with a non-NULL-terminated argv
    * array.
    */
-OMPI_DECLSPEC  void opal_argv_free(char **argv);
+OPAL_DECLSPEC  void opal_argv_free(char **argv);
   
   /**
    * Split a string into a NULL-terminated argv array.
@@ -111,7 +111,7 @@ OMPI_DECLSPEC  void opal_argv_free(char **argv);
    * argument (i.e., it can be freed after calling this function
    * without invalidating the output argv).
    */
-OMPI_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter);
+OPAL_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter);
 
   /**
    * Return the length of a NULL-terminated argv array.
@@ -123,7 +123,7 @@ OMPI_DECLSPEC  char **opal_argv_split(const char *src_string, int delimiter);
    *
    * The argv array must be NULL-terminated.
    */
-OMPI_DECLSPEC  int opal_argv_count(char **argv);
+OPAL_DECLSPEC  int opal_argv_count(char **argv);
 
   /**
    * Join all the elements of an argv array into a single
@@ -141,7 +141,7 @@ OMPI_DECLSPEC  int opal_argv_count(char **argv);
    *
    * It is the callers responsibility to free the returned string.
    */
-OMPI_DECLSPEC  char *opal_argv_join(char **argv, int delimiter);
+OPAL_DECLSPEC  char *opal_argv_join(char **argv, int delimiter);
 
   /**
    * Return the number of bytes consumed by an argv array.
@@ -152,7 +152,7 @@ OMPI_DECLSPEC  char *opal_argv_join(char **argv, int delimiter);
    * array.  This includes the number of bytes used by each of the
    * strings as well as the pointers used in the argv array.
    */
-OMPI_DECLSPEC  size_t opal_argv_len(char **argv);
+OPAL_DECLSPEC  size_t opal_argv_len(char **argv);
 
   /**
    * Copy a NULL-terminated argv array.
@@ -166,7 +166,7 @@ OMPI_DECLSPEC  size_t opal_argv_len(char **argv);
    * Specifically, the output argv will be an array of the same length
    * as the input argv, and strcmp(argv_in[i], argv_out[i]) will be 0.
    */
-OMPI_DECLSPEC  char **opal_argv_copy(char **argv);
+OPAL_DECLSPEC  char **opal_argv_copy(char **argv);
 
     /**
      * Delete one or more tokens from the middle of an argv.
@@ -193,7 +193,7 @@ OMPI_DECLSPEC  char **opal_argv_copy(char **argv);
      * free()ed (it is assumed that the argv "owns" the memory that
      * the pointer points to).
      */
-OMPI_DECLSPEC  int opal_argv_delete(int *argc, char ***argv, 
+OPAL_DECLSPEC  int opal_argv_delete(int *argc, char ***argv, 
                                     int start, int num_to_delete);
 
     /**
@@ -217,7 +217,7 @@ OMPI_DECLSPEC  int opal_argv_delete(int *argc, char ***argv,
      * source points to are strdup'ed into the new locations in
      * target).
      */
-OMPI_DECLSPEC  int opal_argv_insert(char ***target, int start, char **source);
+OPAL_DECLSPEC  int opal_argv_insert(char ***target, int start, char **source);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

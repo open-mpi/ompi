@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,9 +33,14 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/gpr/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
+#include "orte/mca/rds/base/base.h"
+#include "orte/mca/ras/base/base.h"
+#include "orte/mca/rmaps/base/base.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/schema/base/base.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
@@ -61,25 +66,37 @@ int orte_system_finalize(void)
         free(contact_path);
     }
     
-    /* rmgr close depends on wait/iof */
+    /* rmgr and odls close depend on wait/iof */
     orte_rmgr_base_close();
+    orte_odls_base_close();
     orte_wait_finalize();
     orte_iof_base_close();
 
     orte_ns_base_close();
     orte_gpr_base_close();
     orte_schema_base_close();
+    
+    /* finalize selected modules so they can de-register
+     * their receives
+     */
+    orte_rds_base_close();
+    orte_ras_base_close();
+    orte_rmaps_base_close();
+    orte_pls_base_close();
+    /* the errmgr close function retains the base
+     * module so that error logging can continue
+     */
+    orte_errmgr_base_close();
+    
+    /* now can close the rml */
     orte_rml_base_close();
     orte_dss_close();
-    orte_errmgr_base_close();
     
     opal_progress_finalize();
 
     opal_event_fini();
 
-#ifndef __WINDOWS__
     orte_session_dir_finalize(orte_process_info.my_name);
-#endif
 
     /* clean out the global structures */
     orte_sys_info_finalize();

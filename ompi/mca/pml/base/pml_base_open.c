@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -45,8 +45,8 @@ int mca_pml_base_progress(void)
 /*
  * Global variables
  */
-int mca_pml_base_output = -1;
-OMPI_DECLSPEC mca_pml_base_module_t mca_pml = {
+int mca_pml_base_output = 0;
+mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
     NULL,                    /* pml_control */

@@ -26,7 +26,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 /*
  * APP CONTEXT
@@ -34,7 +34,8 @@
 int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_data_type_t type)
 {
     int j, rc, count;
-    size_t i, map_size;
+    orte_std_cntr_t i;
+    size_t map_size;
 
     /* account for the object itself */
     *size = sizeof(orte_app_context_t);
@@ -60,7 +61,7 @@ int orte_rmgr_base_size_app_context(size_t *size, orte_app_context_t *src, orte_
     if (0 < count) {
         /* account for array of char* */
         *size += count * sizeof(char*);
-        for (i=0; i < (size_t)count; i++) {
+        for (i=0; i < count; i++) {
             *size += strlen(src->env[i]);
         }
     }
@@ -102,3 +103,44 @@ int orte_rmgr_base_size_app_context_map(size_t *size, orte_app_context_map_t *sr
 
     return ORTE_SUCCESS;
 }
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_size_attribute(size_t *size, orte_attribute_t *src, orte_data_type_t type)
+{
+    int rc;
+    size_t tsize;
+    
+    *size = 0;
+    
+    if (ORTE_SUCCESS != (orte_dss.size(&tsize, src, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    *size = tsize;
+    return rc;
+}
+
+int orte_rmgr_base_size_attr_list(size_t *size, opal_list_t *src, orte_data_type_t type)
+{
+    int rc;
+    opal_list_item_t *item;
+    size_t tsize;
+    
+    *size = 0;
+    
+    for (item = opal_list_get_first(src);
+         item != opal_list_get_end(src);
+         item = opal_list_get_next(item)) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr_base_size_attribute(&tsize, (orte_attribute_t*)item, ORTE_ATTRIBUTE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        *size += tsize;
+    }
+    
+    return ORTE_SUCCESS;
+}
+

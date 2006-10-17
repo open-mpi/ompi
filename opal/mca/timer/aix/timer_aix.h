@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -20,6 +20,10 @@
 #define OPAL_MCA_TIMER_AIX_TIMER_AIX_H
 
 #include <sys/time.h>
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 typedef uint64_t opal_timer_t;
 
@@ -65,5 +69,9 @@ opal_timer_base_get_freq()
 #endif
 #define OPAL_TIMER_USEC_NATIVE 1
 #define OPAL_TIMER_USEC_SUPPORTED 1
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

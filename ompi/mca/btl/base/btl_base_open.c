@@ -112,9 +112,10 @@ int mca_btl_base_open(void)
       mca_base_param_register_string("btl","base","include",NULL,NULL), &mca_btl_base_include);
   mca_base_param_lookup_string(
       mca_base_param_register_string("btl","base","exclude",NULL,NULL), &mca_btl_base_exclude);
-  mca_base_param_reg_int_name("btl", "base_warn_component_unused", 
+  mca_base_param_reg_int_name("btl", "base_warn_component_unused",
       "This parameter is used to turn on warning messages when certain NICs are not used",
       false, false, 1, &mca_btl_base_warn_component_unused);
+
   /* All done */
   return OMPI_SUCCESS;
 }

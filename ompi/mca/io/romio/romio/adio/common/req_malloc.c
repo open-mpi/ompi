@@ -23,7 +23,12 @@ struct ADIOI_RequestD *ADIOI_Malloc_request(void)
 
     if (!ADIOI_Req_avail_head) {
 	ADIOI_Req_avail_head = (ADIOI_Req_node *) 
-	              ADIOI_Malloc(NUM*sizeof(ADIOI_Req_node));  
+	              ADIOI_Malloc(NUM*sizeof(ADIOI_Req_node));
+	if (ADIOI_Req_avail_head == NULL)
+	{
+	    /* FIXME: Insert error here */
+	    return NULL;
+	}
 	curr = ADIOI_Req_avail_head;
 	for (i=1; i<NUM; i++) {
 	    curr->next = ADIOI_Req_avail_head+i;

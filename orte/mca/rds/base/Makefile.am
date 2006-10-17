@@ -17,6 +17,7 @@
 #
 
 headers += \
+        base/rds_private.h \
         base/base.h
 
 libmca_rds_la_SOURCES += \
@@ -24,4 +25,6 @@ libmca_rds_la_SOURCES += \
         base/rds_base_select.c \
         base/rds_base_open.c \
         base/rds_base_query.c \
+        base/rds_base_no_ops.c \
+        base/rds_base_receive.c \
         base/rds_base_registry_fns.c

@@ -42,13 +42,9 @@ mca_coll_basic_scatterv_intra(void *sbuf, int *scounts,
                               struct ompi_datatype_t *rdtype, int root,
                               struct ompi_communicator_t *comm)
 {
-    int i;
-    int rank;
-    int size;
-    int err;
+    int i, rank, size, err;
     char *ptmp;
-    long lb;
-    long extent;
+    ptrdiff_t lb, extent;
 
     /* Initialize */
 
@@ -118,13 +114,9 @@ mca_coll_basic_scatterv_inter(void *sbuf, int *scounts,
                               struct ompi_datatype_t *rdtype, int root,
                               struct ompi_communicator_t *comm)
 {
-    int i;
-    int rank;
-    int size;
-    int err;
+    int i, rank, size, err;
     char *ptmp;
-    long lb;
-    long extent;
+    ptrdiff_t lb, extent;
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 
     /* Initialize */

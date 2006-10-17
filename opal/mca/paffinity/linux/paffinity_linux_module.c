@@ -122,7 +122,7 @@ static int make_mask(unsigned int *len, unsigned long **mask)
 
     linux_module_get_num_procs(&num_procs);
     *len = num_procs / 8;
-    if (*len != num_procs * 8) {
+    if (*len != (unsigned int)num_procs * 8) {
         ++*len;
     }
 

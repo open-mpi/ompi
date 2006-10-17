@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,6 +25,8 @@
 
 #include "orte/orte_types.h"
 #include "opal/class/opal_object.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 #include "orte/class/orte_pointer_array.h"
 #include "orte/dss/dss_types.h"
 #include "orte/util/proc_info.h"
@@ -57,7 +59,7 @@ int orte_gpr_proxy_finalize(void);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_subscription_id_t id;         /**< id of this subscription */
-     size_t index;                          /**< location of this subscription in array */
+     orte_std_cntr_t index;                          /**< location of this subscription in array */
      char *name;
      orte_gpr_notify_cb_fn_t callback;      /**< Function to be called for notificaiton */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -69,7 +71,7 @@ OBJ_CLASS_DECLARATION(orte_gpr_proxy_subscriber_t);
 typedef struct {
      opal_object_t super;                   /**< Allows this to be an object */
      orte_gpr_trigger_id_t id;              /**< id of this trigger */
-     size_t index;                          /**< location of this trigger in array */
+     orte_std_cntr_t index;                          /**< location of this trigger in array */
      char *name;
      orte_gpr_trigger_cb_fn_t callback;     /**< Function to be called for notification */
      void *user_tag;                        /**< User-provided tag for callback function */
@@ -94,7 +96,6 @@ typedef struct {
     opal_condition_t compound_cmd_condition;
     int compound_cmd_waiting;
 } orte_gpr_proxy_globals_t;
-
 
 extern orte_gpr_proxy_globals_t orte_gpr_proxy_globals;
 
@@ -130,7 +131,7 @@ int orte_gpr_proxy_delete_entries_nb(
                             char *segment, char **tokens, char **keys,
                             orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
-int orte_gpr_proxy_index(char *segment, size_t *cnt, char ***index);
+int orte_gpr_proxy_index(char *segment, orte_std_cntr_t *cnt, char ***index);
 
 int orte_gpr_proxy_index_nb(char *segment,
                         orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
@@ -147,19 +148,19 @@ int orte_gpr_proxy_cleanup_proc(orte_process_name_t *proc);
 /*
  * Put-get functions
  */
-int orte_gpr_proxy_put(size_t cnt, orte_gpr_value_t **values);
+int orte_gpr_proxy_put(orte_std_cntr_t cnt, orte_gpr_value_t **values);
 
-int orte_gpr_proxy_put_nb(size_t cnt, orte_gpr_value_t **values,
+int orte_gpr_proxy_put_nb(orte_std_cntr_t cnt, orte_gpr_value_t **values,
                           orte_gpr_notify_cb_fn_t cbfunc, void *user_tag);
 
 int orte_gpr_proxy_get(orte_gpr_addr_mode_t addr_mode,
                        char *segment, char **tokens, char **keys,
-                       size_t *cnt, orte_gpr_value_t ***values);
+                       orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 int orte_gpr_proxy_get_conditional(orte_gpr_addr_mode_t addr_mode,
                                    char *segment, char **tokens, char **keys,
-                                   size_t num_conditions, orte_gpr_keyval_t **conditions,
-                                   size_t *cnt, orte_gpr_value_t ***values);
+                                   orte_std_cntr_t num_conditions, orte_gpr_keyval_t **conditions,
+                                   orte_std_cntr_t *cnt, orte_gpr_value_t ***values);
 
 int orte_gpr_proxy_get_nb(orte_gpr_addr_mode_t addr_mode,
                           char *segment, char **tokens, char **keys,
@@ -169,9 +170,9 @@ int orte_gpr_proxy_get_nb(orte_gpr_addr_mode_t addr_mode,
 /*
  * Subscribe functions
  */
-int orte_gpr_proxy_subscribe(size_t num_subs,
+int orte_gpr_proxy_subscribe(orte_std_cntr_t num_subs,
                              orte_gpr_subscription_t **subscriptions,
-                             size_t num_trigs,
+                             orte_std_cntr_t num_trigs,
                              orte_gpr_trigger_t **trigs);
 
 int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number);
@@ -213,7 +214,7 @@ int orte_gpr_proxy_dump_segment_size(char *segment);
 /*
  * General operations
  */
-int orte_gpr_proxy_preallocate_segment(char *name, size_t num_slots);
+int orte_gpr_proxy_preallocate_segment(char *name, orte_std_cntr_t num_slots);
 
 int orte_gpr_proxy_deliver_notify_msg(orte_gpr_notify_message_t *msg);
 
@@ -230,17 +231,22 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
  */
 
 int
-orte_gpr_proxy_enter_subscription(size_t cnt, orte_gpr_subscription_t **subscriptions);
+orte_gpr_proxy_enter_subscription(orte_std_cntr_t cnt, orte_gpr_subscription_t **subscriptions);
 
 int
 orte_gpr_proxy_remove_subscription(orte_gpr_proxy_subscriber_t *sub);
 
 int
-orte_gpr_proxy_enter_trigger(size_t cnt, orte_gpr_trigger_t **triggers);
+orte_gpr_proxy_enter_trigger(orte_std_cntr_t cnt, orte_gpr_trigger_t **triggers);
 
 
 int
 orte_gpr_proxy_remove_trigger(orte_gpr_proxy_trigger_t *trig);
+
+/*
+ *
+ */
+ORTE_MODULE_DECLSPEC extern mca_gpr_base_component_t mca_gpr_proxy_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

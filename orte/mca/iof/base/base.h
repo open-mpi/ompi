@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,13 +61,12 @@ typedef struct orte_iof_base_t orte_iof_base_t;
 
 
 
-OMPI_DECLSPEC int orte_iof_base_open(void);
-OMPI_DECLSPEC int orte_iof_base_close(void);
-OMPI_DECLSPEC int orte_iof_base_select(void);
-OMPI_DECLSPEC int orte_iof_base_flush(void);
+ORTE_DECLSPEC int orte_iof_base_open(void);
+ORTE_DECLSPEC int orte_iof_base_close(void);
+ORTE_DECLSPEC int orte_iof_base_select(void);
+ORTE_DECLSPEC int orte_iof_base_flush(void);
 
-
-OMPI_DECLSPEC extern orte_iof_base_t orte_iof_base;
+ORTE_DECLSPEC extern orte_iof_base_t orte_iof_base;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

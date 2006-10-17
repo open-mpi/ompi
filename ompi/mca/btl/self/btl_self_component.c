@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -52,7 +52,7 @@ mca_btl_self_component_t mca_btl_self_component = {
         {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
-            MCA_BTL_BASE_VERSION_1_0_0,
+            MCA_BTL_BASE_VERSION_1_0_1,
             "self", /* MCA component name */
             OMPI_MAJOR_VERSION,  /* MCA component major version */
             OMPI_MINOR_VERSION,  /* MCA component minor version */
@@ -155,7 +155,7 @@ mca_btl_base_module_t** mca_btl_self_component_init(
 
     /* allocate the Shared Memory PTL */
     *num_btls = 1;
-    btls = malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
+    btls = (mca_btl_base_module_t**)malloc((*num_btls)*sizeof(mca_btl_base_module_t*));
     if (NULL == btls) {
         return NULL;
     }

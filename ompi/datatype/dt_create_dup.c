@@ -29,7 +29,7 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
 {
     int32_t desc_length = oldType->desc.used + 1;  /* +1 because of the fake DT_END_LOOP entry */
     ompi_datatype_t* pdt = ompi_ddt_create( desc_length );
-    void* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
+    dt_elem_desc_t* temp = pdt->desc.desc; /* temporary copy of the desc pointer */
     int32_t old_index = pdt->d_f_to_c_index;
 
     memcpy( pdt, oldType, sizeof(ompi_datatype_t) );
@@ -42,20 +42,25 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
        the top level (specifically, MPI_TYPE_DUP). */
     pdt->d_keyhash = NULL;
 
-    memcpy( pdt->desc.desc, oldType->desc.desc, sizeof(dt_elem_desc_t) * desc_length );
+    /**
+     * Allow duplication of MPI_UB and MPI_LB.
+     */
+    if( 0 != oldType->desc.used ) {
+        memcpy( pdt->desc.desc, oldType->desc.desc, sizeof(dt_elem_desc_t) * desc_length );
+        /* TODO: if the data was commited update the opt_desc field */
+        if( 0 != oldType->opt_desc.used ) {
+            desc_length = pdt->opt_desc.used + 1;
+            pdt->opt_desc.desc = (dt_elem_desc_t*)malloc( desc_length * sizeof(dt_elem_desc_t) );
+            /*
+             * Yes, the pdt->opt_desc.length is just the opt_desc.used of the old Type.
+             */
+            pdt->opt_desc.length = oldType->opt_desc.used;
+            pdt->opt_desc.used = oldType->opt_desc.used;
+            memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, desc_length * sizeof(dt_elem_desc_t) );
+        }
+    }
     pdt->id  = 0;
     pdt->args = NULL;
-    /* TODO: if the data was commited update the opt_desc field */
-    if( 0 != oldType->opt_desc.used ) {
-        desc_length = pdt->opt_desc.used + 1;
-        pdt->opt_desc.desc = malloc( desc_length * sizeof(dt_elem_desc_t) );
-        /*
-         * Yes, the pdt->opt_desc.length is just the opt_desc.used of the old Type.
-         */
-        pdt->opt_desc.length = oldType->opt_desc.used;
-        pdt->opt_desc.used = oldType->opt_desc.used;
-        memcpy( pdt->opt_desc.desc, oldType->opt_desc.desc, desc_length * sizeof(dt_elem_desc_t) );
-    }
     *newType = pdt;
     return OMPI_SUCCESS;
 }

@@ -68,8 +68,7 @@ static bool test1(void)
         orte_system_info.release == NULL ||
         orte_system_info.version == NULL ||
         orte_system_info.machine == NULL ||
-        orte_system_info.user == NULL ||
-        orte_system_info.path_sep == NULL)
+        orte_system_info.user == NULL)
         return(false);
 
     return true;

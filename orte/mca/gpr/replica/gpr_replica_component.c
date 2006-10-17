@@ -45,7 +45,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-OMPI_COMP_EXPORT mca_gpr_base_component_t mca_gpr_replica_component = {
+mca_gpr_base_component_t mca_gpr_replica_component = {
     {
     MCA_GPR_BASE_VERSION_1_0_0,
 
@@ -326,7 +326,7 @@ int orte_gpr_replica_module_init(void)
  */
 int orte_gpr_replica_finalize(void)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_gpr_subscription_id_t j;
     orte_gpr_trigger_id_t k;
     orte_gpr_replica_segment_t** seg;

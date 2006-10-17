@@ -29,7 +29,7 @@ extern "C"
 {
 #endif
 
-  OMPI_COMP_EXPORT extern orte_rml_component_t mca_rml_cnos_component;
+  ORTE_DECLSPEC extern orte_rml_component_t mca_rml_cnos_component;
 
   int orte_rml_cnos_open(void);
   int orte_rml_cnos_close(void);

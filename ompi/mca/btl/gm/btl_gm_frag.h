@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -23,14 +23,15 @@
 #define MCA_BTL_GM_FRAG_ALIGN (8)
 #include "ompi_config.h"
 #include "btl_gm.h" 
+#include "ompi/mca/btl/base/btl_base_error.h"
+
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t);
-
 
 typedef enum {
+    MCA_BTL_GM_EAGER,
     MCA_BTL_GM_SEND,
     MCA_BTL_GM_PUT,
     MCA_BTL_GM_GET
@@ -50,11 +51,11 @@ struct mca_btl_gm_frag_t {
     size_t size; 
     enum gm_priority priority;
     mca_btl_gm_frag_type_t type;
-    ompi_free_list_t* my_list;
+    
 }; 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_t; 
-OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t); 
 
+OBJ_CLASS_DECLARATION(mca_btl_gm_frag_t);
 
 typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_eager_t; 
     
@@ -68,7 +69,6 @@ typedef struct mca_btl_gm_frag_t mca_btl_gm_frag_user_t;
     
 OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t); 
 
-
 /*
  * Macros to allocate/return descriptors from module specific
  * free list(s).
@@ -78,34 +78,49 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 {                                                                  \
                                                                    \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_eager, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_gm_module_t*)btl)->gm_frag_eager, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
-    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_eager;   \
 }
 
 #define MCA_BTL_GM_FRAG_ALLOC_MAX(btl, frag, rc)                   \
 {                                                                  \
                                                                    \
     ompi_free_list_item_t *item;                                        \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_max, item, rc); \
-    frag = (mca_btl_gm_frag_t*) item;                              \
-    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_max;     \
+    OMPI_FREE_LIST_GET(&((mca_btl_gm_module_t*)btl)->gm_frag_max, item, rc); \
+    frag = (mca_btl_gm_frag_t*) item;                                   \
 }
 
 #define MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc)                  \
 {                                                                  \
     ompi_free_list_item_t *item;                                   \
-    OMPI_FREE_LIST_WAIT(&((mca_btl_gm_module_t*)btl)->gm_frag_user, item, rc); \
+    OMPI_FREE_LIST_GET(&((mca_btl_gm_module_t*)btl)->gm_frag_user, item, rc); \
     frag = (mca_btl_gm_frag_t*) item;                              \
-    frag->my_list = &((mca_btl_gm_module_t*)btl)->gm_frag_user;    \
 }
 
 #define MCA_BTL_GM_FRAG_RETURN(btl, frag)                          \
-{                                                                  \
-    OMPI_FREE_LIST_RETURN(frag->my_list,                           \
-        (ompi_free_list_item_t*)(frag));                           \
-}
-
+do {                                                               \
+        ompi_free_list_t* mylist;                                  \
+        mca_btl_gm_module_t* btl_gm = (mca_btl_gm_module_t*) btl;  \
+        mca_btl_gm_frag_t* frag_gm = (mca_btl_gm_frag_t*) frag;    \
+        switch(frag_gm->type) {                                    \
+        case MCA_BTL_GM_EAGER:                                     \
+            mylist = &btl_gm->gm_frag_eager;                       \
+            break;                                                 \
+        case MCA_BTL_GM_SEND:                                      \
+            mylist = &btl_gm->gm_frag_max;                         \
+            break;                                                 \
+        case MCA_BTL_GM_PUT:                                       \
+        case MCA_BTL_GM_GET:                                       \
+            mylist = &btl_gm->gm_frag_user;                        \
+            break;                                                 \
+        default:                                                   \
+            BTL_ERROR(("Unknown frag type\n"));                    \
+            break;                                                 \
+        }                                                          \
+        OMPI_FREE_LIST_RETURN(mylist,                              \
+                              (ompi_free_list_item_t*)(frag));     \
+} while (0);
+    
 
 /* called with mca_btl_gm_component.gm_lock held */
                                                                                                        

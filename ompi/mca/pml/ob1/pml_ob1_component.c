@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -26,14 +26,13 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/base/pml_base_bsend.h"
 #include "pml_ob1.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_sendreq.h"
 #include "pml_ob1_recvreq.h"
 #include "pml_ob1_rdmafrag.h"
 #include "pml_ob1_recvfrag.h"
 #include "ompi/mca/bml/base/base.h" 
-
+#include "pml_ob1_component.h"
 
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_pckt_pending_t,
@@ -171,7 +170,7 @@ int mca_pml_ob1_component_open(void)
     mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
     mca_base_param_lookup_int(param, &value); 
-    mca_pml_ob1.leave_pinned = value; 
+    mca_pml_ob1.leave_pinned = OPAL_INT_TO_BOOL(value); 
     
     mca_base_param_register_int("mpi", NULL, "leave_pinned_pipeline", "leave_pinned_pipeline", 0); 
     param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline"); 

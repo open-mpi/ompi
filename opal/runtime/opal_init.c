@@ -37,6 +37,8 @@
 #include "opal/util/stacktrace.h"
 #include "opal/util/keyval_parse.h"
 
+int opal_initialized = 0;
+
 static const char *
 opal_err2str(int errnum)
 {
@@ -123,6 +125,12 @@ opal_init_util(void)
     int ret;
     char *error = NULL;
 
+    if( ++opal_initialized != 1 ) {
+        if( opal_initialized < 1 ) {
+            return OPAL_ERROR;
+        }
+        return OPAL_SUCCESS;
+    }
     /* initialize the memory allocator */
     opal_malloc_init();
 

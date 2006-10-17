@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -304,13 +304,11 @@ static int opal_ifinit(void)
      */
 
     #define MAX_INTERFACES 10 /* Anju: for now assume there are no more than this */
-    int ret;
     SOCKET sd; 
     INTERFACE_INFO if_list[MAX_INTERFACES];
     int num_interfaces;
     unsigned long num_bytes_returned;
     int i;
-    SOCKADDR_IN *sock_address;
     unsigned int interface_counter = 0;
     opal_if_t intf;
     opal_if_t *intf_ptr;
@@ -367,7 +365,7 @@ static int opal_ifinit(void)
             intf.if_flags = if_list[i].iiFlags;
 
             /* fill in the index in the table */
-            intf.if_index = opal_list_get_size(&opal_if_list)+1;
+            intf.if_index = (int)opal_list_get_size(&opal_if_list)+1;
 
             /* generate the interface name on your own ....
                loopback: lo
@@ -380,7 +378,7 @@ static int opal_ifinit(void)
             }
 
             /* copy all this into a persistent form and store it in the list */
-            intf_ptr = malloc(sizeof(opal_if_t));
+            intf_ptr = (opal_if_t*)malloc(sizeof(opal_if_t));
             if (NULL == intf_ptr) {
                 opal_output (0,"opal_ifinit: Unable to malloc %d bytes",sizeof(opal_list_t));
                 return OPAL_ERR_OUT_OF_RESOURCE;
@@ -516,7 +514,7 @@ int opal_ifcount(void)
 {
     if(opal_ifinit() != OPAL_SUCCESS)
         return (-1);
-    return opal_list_get_size(&opal_if_list);
+    return (int)opal_list_get_size(&opal_if_list);
 }
 
 

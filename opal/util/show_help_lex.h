@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +52,7 @@ extern int opal_show_help_yynewlines;
 #define YY_NEVER_INTERACTIVE 0
 #define YY_MAIN 0
 #define YY_NO_UNPUT 1
+#define YY_SKIP_YYWRAP 1
 
 enum {
     OPAL_SHOW_HELP_PARSE_DONE,

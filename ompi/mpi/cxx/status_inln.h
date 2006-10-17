@@ -34,7 +34,7 @@ MPI::Status::Is_cancelled() const
 {
   int t;
   (void)MPI_Test_cancelled(const_cast<MPI_Status*>(&mpi_status), &t);
-  return (bool) t;
+  return OPAL_INT_TO_BOOL(t);
 }
 
 inline int

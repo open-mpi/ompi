@@ -43,7 +43,7 @@ struct ompi_peruse_handle_t {
 };
 
 typedef struct ompi_peruse_handle_t ompi_peruse_handle_t;
-OMPI_DECLSPEC extern opal_class_t ompi_peruse_handle_t_class;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_peruse_handle_t);
 
 enum {
     PERUSE_TYPE_INVALID=-1,

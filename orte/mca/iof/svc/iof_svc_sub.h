@@ -1,8 +1,23 @@
+/*
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ *
+ * Additional copyrights may follow
+ *
+ * $HEADER$
+ */
+
 #ifndef MCA_IOF_SVC_SUBSCRIPT_H
 #define MCA_IOF_SVC_SUBSCRIPT_H
-
-#include "orte/class/orte_pointer_array.h"
-#include "orte/class/orte_proc_table.h"
 
 /**
  * A subscription routes data from a specified set
@@ -10,6 +25,11 @@
  * endpoints.
  */
 
+#include "opal/class/opal_hash_table.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 struct orte_iof_svc_fwd_t {
     opal_list_item_t super;
@@ -105,6 +125,10 @@ int orte_iof_svc_fwd_create(
 int orte_iof_svc_fwd_delete(
     orte_iof_svc_sub_t* sub,
     orte_iof_svc_pub_t* pub);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif
 

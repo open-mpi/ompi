@@ -29,7 +29,10 @@
 #endif
 
 /*
- * OMPI_BUILDING and OMPI_BUILDING_WIN_DSO define how ompi_config.h
+ * If we build a static library, Visual C define the _LIB symbol. In the
+ * case of a shared library _USERDLL get defined.
+ *
+ * OMPI_BUILDING and _LIB define how ompi_config.h
  * handles configuring all of Open MPI's "compatibility" code.  Both
  * constants will always be defined by the end of ompi_config.h.
  *
@@ -39,35 +42,9 @@
  * respected.  If ompi_config.h is included before mpi.h, it will
  * default to 1.  If mpi.h is included before ompi_config.h, it will
  * default to 0.
- *
- * If OMPI_BUILDING is 1, ompi_config.h will:
- *   - everything that happens with OMPI_BUILDING set to 0
- *   - include a bunch of header files (stdint.h, stdtypes.h, etc.)
- *   - potentially override malloc, free, etc. for memory debugging
- *   - provide C bool type
- *   - set ompi_building code to import all OMPI interfaces (windows)
- *
- * If OMPI_BUILDING is 0, ompi_config.h will:
- *   - set configuration #defines
- *   - define the fortran complex types
- *   - set the ompi_building code to export all the interfaces
- *     (unless OMPI_BUILDING_WIN_DSO is set to 1) (windows)
- *
- * If OMPI_BUILDING_WIN_DSO is 1, ompi_config.h will:
- *   - configure the OMPI_DECLSPEC defines to assume we are building a
- *     dynamic shared object for a component on Windows.  This will set
- *     all the import/export flags appropriately.
- *
- * If OMPI_BUILDING_WIN_DSO is 0 (or unset), ompi_config.h will:
- *   - configure the OMPI_DECLSPEC defines to assume we are not building
- *     a DSO component for Windows .
  */
 #ifndef OMPI_BUILDING
 #define OMPI_BUILDING 1
-#endif
-
-#ifndef OMPI_BUILDING_WIN_DSO
-#define OMPI_BUILDING_WIN_DSO 0
 #endif
 
 /***********************************************************************
@@ -85,38 +62,56 @@
  * Windows library interface declaration code
  *
  **********************************************************************/
-#ifndef __WINDOWS__
-#  if defined(_WIN32) || defined(WIN32)
+#if !defined(__WINDOWS__)
+#  if defined(_WIN32) || defined(WIN32) || defined(WIN64)
 #    define __WINDOWS__
 #  endif
-#endif
+#endif  /* !defined(__WINDOWS__) */
 
 #if defined(__WINDOWS__)
 
-#  if OMPI_BUILDING_WIN_DSO
-     /* building a component - need to import libmpi and export our
-        struct */
-#    define OMPI_COMP_EXPORT __declspec(dllexport)
-#    define OMPI_DECLSPEC __declspec(dllimport)
-#  else
-#    if OMPI_BUILDING
-       /* building libmpi (or something in libmpi) - need to export libmpi
-          interface */
-#      define OMPI_COMP_EXPORT
-#      define OMPI_DECLSPEC __declspec(dllexport)
+#  if defined(_USRDLL)    /* building shared libraries (.DLL) */
+#    if defined(OPAL_EXPORTS)
+#      define OPAL_DECLSPEC        __declspec(dllexport)
+#      define OPAL_MODULE_DECLSPEC
 #    else
-       /* building something using libmpi - export the libmpi interface */
-#      define OMPI_COMP_EXPORT
-#      define OMPI_DECLSPEC __declspec(dllimport)
-#    endif
-#  endif
+#      define OPAL_DECLSPEC        __declspec(dllimport)
+#      if defined(OPAL_MODULE_EXPORTS)
+#        define OPAL_MODULE_DECLSPEC __declspec(dllexport)
+#      else
+#        define OPAL_MODULE_DECLSPEC __declspec(dllimport)
+#      endif  /* defined(OPAL_MODULE_EXPORTS) */
+#    endif  /* defined(OPAL_EXPORTS) */
+#  else          /* building static library */
+#    if defined(OPAL_IMPORTS)
+#      define OPAL_DECLSPEC        __declspec(dllimport)
+#    else
+#      define OPAL_DECLSPEC
+#    endif  /* defined(OPAL_IMPORTS) */
+#    define OPAL_MODULE_DECLSPEC
+#  endif  /* defined(_USRDLL) */
 #  if OMPI_BUILDING
 #    include "opal/win32/win_compat.h"
-#  endif
+#  endif  /* OMPI_BUILDING */
 #else
-   /* On Unix - get rid of the defines */ 
-#  define OMPI_COMP_EXPORT
-#  define OMPI_DECLSPEC
+   /* On Unix - this define is plain useless */
+#  define OPAL_DECLSPEC
+#  define OPAL_MODULE_DECLSPEC
+#endif  /* defined(__WINDOWS__) */
+
+/*
+ * Do we have <stdint.h>?
+ */
+#ifdef HAVE_STDINT_H
+#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
+/* When using a C++ compiler, the max / min value #defines for std
+   types are only included if __STDC_LIMIT_MACROS is set before
+   including stdint.h */
+#define __STDC_LIMIT_MACROS
+#endif
+#include <stdint.h>
+#else
+#include "opal_stdint.h"
 #endif
 
 /***********************************************************************
@@ -133,17 +128,13 @@
  * constants.  OMPI_NEED_C_BOOL will be true if the compiler either
  * needs <stdbool.h> or doesn't define the bool type at all.
  */
-#if !defined(__cplusplus)
+#if !(defined(c_plusplus) || defined(__cplusplus))
 #    if OMPI_NEED_C_BOOL
 #        if OMPI_USE_STDBOOL_H
              /* If we're using <stdbool.h>, there is an implicit
                 assumption that the C++ bool is the same size and has
                 the same alignment. */
 #            include <stdbool.h>
-#        elif defined(__WINDOWS__)
-#            define bool BOOL
-#            define false FALSE
-#            define true TRUE
 #        else
              /* We need to create a bool type and ensure that it's the
                 same size / alignment as the C++ bool size /
@@ -151,7 +142,7 @@
 #            define false 0
 #            define true 1
 #            if SIZEOF_BOOL == SIZEOF_CHAR && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_CHAR
-typedef char bool;
+typedef unsigned char bool;
 #            elif SIZEOF_BOOL == SIZEOF_SHORT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_SHORT
 typedef short bool;
 #            elif SIZEOF_BOOL == SIZEOF_INT && OMPI_ALIGNMENT_CXX_BOOL == OMPI_ALIGNMENT_INT
@@ -163,8 +154,8 @@ typedef long long bool;
 #            else
 #                error Cannot find a C type that corresponds to the size and alignment of C++ bool!
 #            endif
-#        endif
-#    endif
+#        endif  /* OMPI_USE_STDBOOL_H */
+#    endif  /* OMPI_NEED_C_BOOL */
 #endif
 
 /*
@@ -180,28 +171,16 @@ typedef long long bool;
 #endif
 
 /*
- * Set the compile-time path-separator on this system
+ * Set the compile-time path-separator on this system and variable separator
  */
 #ifdef __WINDOWS__
-#define OMPI_PATH_SEP "\\"
+#define OPAL_PATH_SEP "\\"
+#define OPAL_ENV_SEP  ';'
 #else
-#define OMPI_PATH_SEP "/"
+#define OPAL_PATH_SEP "/"
+#define OPAL_ENV_SEP  ':'
 #endif
 
-/*
- * Do we have <stdint.h>?
- */
-#ifdef HAVE_STDINT_H
-#if defined(__cplusplus) && !defined(__STDC_LIMIT_MACROS)
-/* When using a C++ compiler, the max / min value #defines for std
-   types are only included if __STDC_LIMIT_MACROS is set before
-   including stdint.h */
-#define __STDC_LIMIT_MACROS
-#endif
-#include <stdint.h>
-#else
-#include "opal_stdint.h"
-#endif
 
 /*
  * Do we want memory debugging?
@@ -331,6 +310,36 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #if defined(HAVE_DECL___FUNC__) && !HAVE_DECL___FUNC__
 #define __func__ __FILE__
 #endif
+
+/**
+ * Because of the way we're using the opal_object inside Open MPI (i.e.
+ * dynamic resolution at run-time to derive all objects from the basic
+ * type), on Windows we have to build everything on C++ mode, simply
+ * because the C mode does not support dynamic resolution in DLL. Therefore,
+ * no automatic conversion is allowed. All types have to be explicitly casted
+ * or the compiler generate an error. This is true even for the void* type. As
+ * we use void* to silence others compilers in the resolution of the addr member
+ * of the iovec structure, we have now to find a way around. The simplest solution
+ * is to define a special type for this field (just for casting). It can be
+ * set to void* on all platforms with the exception of windows where it has to be
+ * char*.
+ */
+#if defined(__WINDOWS__)
+#define IOVBASE_TYPE  char
+#else
+#define IOVBASE_TYPE  void
+#endif  /* defined(__WINDOWS__) */
+
+/**
+ * If we generate our own bool type, we need a special way to cast the result
+ * in such a way to keep the compilers silent. Right now, th only compiler who
+ * complain about int to bool conversions is the Microsoft compiler.
+ */
+#if defined(__WINDOWS__)
+#  define OPAL_INT_TO_BOOL(VALUE)  ((VALUE) != 0 ? true : false)
+#else
+#  define OPAL_INT_TO_BOOL(VALUE)  (bool)(VALUE)
+#endif  /* defined(__WINDOWS__) */
 
 /**
  * Top level define to check 2 things: a) if we want ipv6 support, and

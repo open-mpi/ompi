@@ -17,24 +17,25 @@
  */
 
 #include "orte_config.h"
+#include "orte/orte_constants.h"
+#include "orte/orte_types.h"
 
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
-#include "orte/orte_constants.h"
-#include "orte/orte_types.h"
-#include "orte/mca/ras/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/rmgr/base/base.h"
-#include "orte/mca/ras/base/ras_base_node.h"
-#include "orte/mca/errmgr/errmgr.h"
 
+#include "orte/dss/dss.h"
+#include "orte/mca/rmgr/rmgr.h"
+#include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/proc_info.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/dash_host/ras_dash_host.h"
 
 
 /*
  * Local functions
  */
-static int orte_ras_dash_host_allocate(orte_jobid_t jobid);
+static int orte_ras_dash_host_allocate(orte_jobid_t jobid, opal_list_t *attributes);
 static int orte_ras_dash_host_deallocate(orte_jobid_t jobid);
 static int orte_ras_dash_host_finalize(void);
 
@@ -46,6 +47,8 @@ orte_ras_base_module_t orte_ras_dash_host_module = {
     orte_ras_dash_host_allocate,
     orte_ras_base_node_insert,
     orte_ras_base_node_query,
+    orte_ras_base_node_query_alloc,
+    orte_ras_base_node_lookup,
     orte_ras_dash_host_deallocate,
     orte_ras_dash_host_finalize
 };
@@ -53,22 +56,46 @@ orte_ras_base_module_t orte_ras_dash_host_module = {
 
 orte_ras_base_module_t *orte_ras_dash_host_init(int* priority)
 {
+    /* if we are not an HNP, then we must not be selected */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
+    
     *priority = mca_ras_dash_host_component.priority;
     return &orte_ras_dash_host_module;
 }
 
 
-static int orte_ras_dash_host_allocate(orte_jobid_t jobid)
+static int orte_ras_dash_host_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     opal_list_t nodes;
     opal_list_item_t* item;
     orte_app_context_t **context;
-    size_t i, j, k, num_context;
+    orte_std_cntr_t i, j, k, num_context;
     int rc;
     char **mapped_nodes = NULL, **mini_map;
     orte_ras_node_t *node;
     bool empty;
+    orte_jobid_t *jptr;
+    orte_attribute_t *attr;
 
+    /* check the attributes to see if we are supposed to use the parent
+        * jobid's allocation. This can occur if we are doing a dynamic
+        * process spawn and don't want to go through the allocator again
+        */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        return ORTE_SUCCESS;
+    }
+    
     /* If the node segment is not empty, do nothing */
 
     if (ORTE_SUCCESS != (rc = orte_ras_base_node_segment_empty(&empty))) {
@@ -83,7 +110,7 @@ static int orte_ras_dash_host_allocate(orte_jobid_t jobid)
 
     /* Otherwise, get the context */
 
-    rc = orte_rmgr_base_get_app_context(jobid, &context, &num_context);
+    rc = orte_rmgr.get_app_context(jobid, &context, &num_context);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -185,7 +212,7 @@ cleanup:
     for (i = 0; i < num_context; i++) {
         OBJ_RELEASE(context[i]);
     }
-    free(context);
+    if (NULL != context) free(context);
     return rc;
 }
 

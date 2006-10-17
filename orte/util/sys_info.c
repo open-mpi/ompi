@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -47,27 +47,24 @@ orte_sys_info_t orte_system_info = {
                  /* .release =     */            NULL,
                  /* .version =     */            NULL,
                  /* .machine =     */            NULL,
-                 /* .path_sep =    */            NULL,
                  /* .user =        */            NULL,
                  /* .suffix =      */            NULL};
 
 int orte_sys_info(void)
 {
     struct utsname sys_info;
-    int uid;
 
 #ifndef __WINDOWS__
+    int uid;
 	struct passwd *pwdent;
-	char *sep = "/";
 #else
-    #define INFO_BUF_SIZE 32768
+    #define INFO_BUF_SIZE 256
     TCHAR info_buf[INFO_BUF_SIZE];
     DWORD info_buf_length = INFO_BUF_SIZE;
-	char *sep = "\\";
 #endif
 
 	if (orte_system_info.init) {
-	return ORTE_SUCCESS;
+        return ORTE_SUCCESS;
     }
 
     if (0 > uname(&sys_info)) {  /* have an error - set utsname values to indicate */
@@ -104,8 +101,6 @@ int orte_sys_info(void)
         orte_system_info.version = strdup(sys_info.version);
         orte_system_info.machine = strdup(sys_info.machine);
     }
-
-    orte_system_info.path_sep = strdup(sep);
 
 	/* get the name of the user */
 #ifndef __WINDOWS__
@@ -161,11 +156,6 @@ int orte_sys_info_finalize(void)
     if (NULL != orte_system_info.machine) {
         free(orte_system_info.machine);
         orte_system_info.machine = NULL;
-    }
-        
-    if (NULL != orte_system_info.path_sep) {
-        free(orte_system_info.path_sep);
-        orte_system_info.path_sep = NULL;
     }
         
     if (NULL != orte_system_info.user) {

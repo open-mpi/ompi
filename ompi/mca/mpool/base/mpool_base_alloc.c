@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -65,7 +65,7 @@ OBJ_CLASS_INSTANCE(
  * key in info that does not match any mpool, an error will be returned.
  *
  * If the info parameter is MPI_INFO_NULL, then this function will try to allocate
- * the memory and register it wih as many mpools as possible. However, 
+ * the memory and register it with as many mpools as possible. However, 
  * if any of the registratons fail the mpool will simply be ignored.
  *
  * @param size the size of the memory area to allocate
@@ -146,7 +146,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
     else
     {
         ompi_info_get_nkeys(info, &num_keys);
-        key = malloc(MPI_MAX_INFO_KEY + 1);
+        key = (char*)malloc(MPI_MAX_INFO_KEY + 1);
         for(i = 0; i < num_keys; i++)
         {
             match_found = false;
@@ -155,7 +155,7 @@ void * mca_mpool_base_alloc(size_t size, ompi_info_t * info)
                 continue;
             }
             mpool_requested = true;
-            value = malloc(MPI_MAX_INFO_VAL+1);
+            value = (char*)malloc(MPI_MAX_INFO_VAL+1);
             if ( NULL == value ) {
                 break;
             }

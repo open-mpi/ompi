@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -57,7 +57,7 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/session_dir.h"
 #include "orte/util/universe_setup_file_io.h"
-#include "orte/mca/soh/soh.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/rds/rds_types.h"
 #include "orte/mca/ns/ns.h"
@@ -66,7 +66,9 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_setup_hnp.h"
 
+#if !defined(__WINDOWS__)
 extern char **environ;
+#endif  /* !defined(__WINDOWS__) */
 
 /* Local condition variables and mutex
  */
@@ -97,7 +99,6 @@ static void orte_setup_hnp_wait(pid_t wpid, int status, void *data);
  */
 int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
 {
-#ifndef __WINDOWS__
     char **argv, *param, *uri, *uid, *hn=NULL;
     char *path, *name_string, *orteprobe;
     int argc, rc=ORTE_SUCCESS, id, intparam;
@@ -106,7 +107,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     orte_cellid_t cellid=ORTE_CELLID_MAX, *cptr;
     orte_jobid_t jobid;
     orte_vpid_t vpid;
-    size_t i, j, k, cnt=0;
+    orte_std_cntr_t i, j, k, cnt=0;
     orte_gpr_value_t **values=NULL, *value;
     orte_gpr_keyval_t **keyvals;
     char *keys[4], *tokens[3], *cellname;
@@ -139,7 +140,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
         keyvals = values[0]->keyvals;
         for (i=0; i < values[0]->cnt; i++) {
             if (0 == strcmp(keyvals[i]->key, ORTE_RDS_FE_NAME)) {
-                hn = strdup(keyvals[i]->value->data);
+                hn = strdup((const char*)keyvals[i]->value->data);
                 continue;
             }
             if (0 == strcmp(keyvals[i]->key, ORTE_RDS_FE_SSH)) {
@@ -185,7 +186,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
             keyvals = values[i]->keyvals;
             for (j=0; j < values[i]->cnt; j++) {
                 if ((0 == strcmp(keyvals[j]->key, ORTE_RDS_FE_NAME)) &&
-                     0 == strcmp(keyvals[j]->value->data, headnode)) {
+                     0 == strcmp((const char*)keyvals[j]->value->data, headnode)) {
                     /* okay, this is the right cell - now need to find
                      * the ssh flag (if provided) and cellid
                      */
@@ -457,6 +458,7 @@ MOVEON:
         goto CLEANUP;
     }
 
+#ifndef __WINDOWS__
     /* fork a child to exec the rsh/ssh session */
     orte_setup_hnp_rc = ORTE_SUCCESS;
     pid = fork();
@@ -511,22 +513,21 @@ MOVEON:
 
         return orte_setup_hnp_rc;
     }
-
-CLEANUP:
-    return rc;
-
 #else
-    printf ("This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
+    ORTE_ERROR_LOG(ORTE_ERROR);
+    opal_output(0, "This function has not been implemented in windows yet, file %s line %d\n", __FILE__, __LINE__);
     abort();
 #endif
 
+CLEANUP:
+    return rc;
 }
 
 static void orte_setup_hnp_recv(int status, orte_process_name_t* sender,
                                 orte_buffer_t* buffer, orte_rml_tag_t tag,
                                 void* cbdata)
 {
-    size_t n=1;
+    orte_std_cntr_t n=1;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_setup_hnp_mutex);

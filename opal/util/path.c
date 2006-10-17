@@ -24,21 +24,13 @@
 #endif
 
 #include "opal/util/path.h"
+#include "opal/util/os_path.h"
 #include "opal/util/argv.h"
-
-/*
- * PATH environment variable separator
- */
-#ifdef __WINDOWS__
-#define PATHENVSEP  ';'
-#else
-#define PATHENVSEP  ':'
-#endif
+#include "opal/util/output.h"
 
 static void path_env_load(char *path, int *pargc, char ***pargv);
 static char *path_access(char *fname, char *path, int mode);
 static char *list_env_get(char *var, char **list);
-
 
 /**
  *  Locates a file with certain permissions
@@ -53,7 +45,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
 
     /* If absolute path is given, return it without searching. */
 
-    if ('/' == *fname) {
+    if (OPAL_PATH_SEP[0] == *fname) {
         return path_access(fname, "", mode);
     }
 
@@ -68,15 +60,14 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
     while (pathv[i] && NULL == fullpath) {
 
         /* Replace environment variable at the head of the string. */
-
         if ('$' == *pathv[i]) {
-            delimit = strchr(pathv[i], '/');
+            delimit = strchr(pathv[i], OPAL_PATH_SEP[0]);
             if (delimit) {
                 *delimit = '\0';
             }
             env = list_env_get(pathv[i]+1, envv);
             if (delimit) {
-                *delimit = '/';
+                *delimit = OPAL_PATH_SEP[0];
             }
             if (NULL != env) {
                 if (!delimit) {
@@ -98,7 +89,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
         }
         i++;
     }
-    return fullpath;
+    return opal_make_filename_os_friendly(fullpath);
 }
 
 /*
@@ -170,19 +161,9 @@ static char *path_access(char *fname, char *path, int mode)
     char *fullpath;
 
     /* Allocate space for the full pathname. */
-
-    fullpath = (char*) malloc(strlen(path) + strlen(fname) + 2);
-    if (NULL == fullpath) {
+    fullpath = opal_os_path( false, path, fname, NULL );
+    if( NULL == fullpath )
         return NULL;
-    }
-
-    if (strlen(path) > 0) {
-        strcpy(fullpath, path);
-        strcat(fullpath, "/");
-        strcat(fullpath, fname);
-    } else {
-        strcpy(fullpath, fname);
-    }
 
     /* Get status on the full path name to check for existance.  Then
        check the permissions. */
@@ -222,7 +203,7 @@ static void path_env_load(char *path, int *pargc, char ***pargv)
 
        /* Locate the delimiter. */
 
-        for (p = path; *p && (*p != PATHENVSEP); ++p) {
+        for (p = path; *p && (*p != OPAL_ENV_SEP); ++p) {
             continue;
         }
 
@@ -258,7 +239,7 @@ static void path_env_load(char *path, int *pargc, char ***pargv)
  */
 static char *list_env_get(char *var, char **list)
 {
-    int n;
+    size_t n;
 
     if (NULL != list) {
         n = strlen(var);

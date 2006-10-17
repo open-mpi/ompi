@@ -94,7 +94,7 @@ extern FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_( MPI_Fint *, voi
 void mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 				   MPI_Fint *datatype, MPI_Fint *ierr );
 
-void mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,int *count,
+void mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,MPI_Fint *count,
                        MPI_Fint *datatype, MPI_Fint *ierr ){
     MPI_File fh_c;
     MPI_Datatype datatype_c;
@@ -109,7 +109,7 @@ void mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,int *count,
 FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,MPI_Fint *count,
 				   MPI_Fint *datatype, MPI_Fint *ierr );
 
-FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,int *count,
+FORTRAN_API void FORT_CALL mpi_file_write_ordered_begin_(MPI_Fint *fh,void *buf,MPI_Fint *count,
                        MPI_Fint *datatype, MPI_Fint *ierr ){
     MPI_File fh_c;
     

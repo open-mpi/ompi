@@ -163,7 +163,10 @@
 #include "orte/orte_constants.h"
 
 #include "opal/mca/mca.h"
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/ns/ns_types.h"
+
 #include "ras_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -177,7 +180,7 @@ extern "C" {
 /**
  * Allocate resources to a job.
  */
-typedef int (*orte_ras_base_module_allocate_fn_t)(orte_jobid_t jobid);
+typedef int (*orte_ras_base_module_allocate_fn_t)(orte_jobid_t jobid, opal_list_t *attributes);
 
 /**
  * Deallocate resources from a job
@@ -200,24 +203,38 @@ typedef int (*orte_ras_base_module_node_insert_fn_t)(opal_list_t *);
 typedef int (*orte_ras_base_module_node_query_fn_t)(opal_list_t *);
 
 /**
- * ras module version 1.0.0
+    * Query the registry for all nodes allocated to a specific job
  */
-struct orte_ras_base_module_1_0_0_t {
+typedef int (*orte_ras_base_module_node_query_alloc_fn_t)(opal_list_t*, orte_jobid_t);
+
+/*
+ * Query the registry for a specific node 
+ */
+typedef orte_ras_node_t* (*orte_ras_base_module_node_lookup_fn_t)(orte_cellid_t, const char* nodename);
+
+/**
+ * ras module version 1.3.0
+ */
+struct orte_ras_base_module_1_3_0_t {
     /** Allocation function pointer */
-    orte_ras_base_module_allocate_fn_t allocate;
+    orte_ras_base_module_allocate_fn_t              allocate_job;
     /** Node Insertion function pointer */
-    orte_ras_base_module_node_insert_fn_t node_insert;
+    orte_ras_base_module_node_insert_fn_t           node_insert;
     /** Node Query function pointer */
-    orte_ras_base_module_node_query_fn_t node_query;
+    orte_ras_base_module_node_query_fn_t            node_query;
+    /* node query allocate function pointer */
+    orte_ras_base_module_node_query_alloc_fn_t      node_query_alloc;
+    /* node lookup */
+    orte_ras_base_module_node_lookup_fn_t           node_lookup;
     /** Deallocation function pointer */
-    orte_ras_base_module_deallocate_fn_t deallocate;
+    orte_ras_base_module_deallocate_fn_t            deallocate_job;
     /** Finalization function pointer */
-    orte_ras_base_module_finalize_fn_t finalize;
+    orte_ras_base_module_finalize_fn_t              finalize;
 };
 /** Convenience typedef */
-typedef struct orte_ras_base_module_1_0_0_t orte_ras_base_module_1_0_0_t;
+typedef struct orte_ras_base_module_1_3_0_t orte_ras_base_module_1_3_0_t;
 /** Convenience typedef */
-typedef orte_ras_base_module_1_0_0_t orte_ras_base_module_t;
+typedef orte_ras_base_module_1_3_0_t orte_ras_base_module_t;
 
 /*
  * ras component
@@ -232,7 +249,7 @@ typedef orte_ras_base_module_t* (*orte_ras_base_component_init_fn_t)(int* priori
 /**
  * ras component version 1.0.0
  */
-struct orte_ras_base_component_1_0_0_t {
+struct orte_ras_base_component_1_3_0_t {
     /** Base MCA structure */
     mca_base_component_t ras_version;
     /** Base MCA data */
@@ -241,24 +258,24 @@ struct orte_ras_base_component_1_0_0_t {
     orte_ras_base_component_init_fn_t ras_init;
 };
 /** Convenience typedef */
-typedef struct orte_ras_base_component_1_0_0_t orte_ras_base_component_1_0_0_t;
+typedef struct orte_ras_base_component_1_3_0_t orte_ras_base_component_1_3_0_t;
 /** Convenience typedef */
-typedef orte_ras_base_component_1_0_0_t orte_ras_base_component_t;
+typedef orte_ras_base_component_1_3_0_t orte_ras_base_component_t;
 
 
 /**
  * Macro for use in components that are of type ras v1.0.0
  */
-#define ORTE_RAS_BASE_VERSION_1_0_0 \
-  /* ras v1.0 is chained to MCA v1.0 */ \
+#define ORTE_RAS_BASE_VERSION_1_3_0 \
+  /* ras v1.3 is chained to MCA v1.0 */ \
   MCA_BASE_VERSION_1_0_0, \
-  /* ras v1.0 */ \
-  "ras", 1, 0, 0
+  /* ras v1.3 */ \
+  "ras", 1, 3, 0
 
 /*
  * global module that holds function pointers
  */
-OMPI_DECLSPEC extern orte_ras_base_module_t orte_ras;
+ORTE_DECLSPEC extern orte_ras_base_module_t orte_ras;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,8 +25,11 @@
 
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
+
 #include "opal/mca/mca.h"
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
+
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rml/rml.h"
@@ -46,10 +49,12 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count, index;
+    orte_std_cntr_t count, index;
     int rc;
     orte_ns_proxy_cell_info_t *new_cell;
 
+    OPAL_TRACE(1);
+    
     /* set the default value of error */
     *cellid = ORTE_CELLID_MAX;
 
@@ -79,7 +84,7 @@ int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resourc
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -156,10 +161,12 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_cellid_t j;
-    size_t i, count, index;
+    orte_std_cntr_t i, count, index;
     orte_ns_proxy_cell_info_t **cell, *new_cell;
     int rc, ret=ORTE_SUCCESS;
 
+    OPAL_TRACE(1);
+    
     /* see if we already have the info locally */
     OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
 
@@ -202,7 +209,7 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -256,7 +263,7 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &ret, &count, ORTE_INT))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &ret, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -296,9 +303,11 @@ int orte_ns_proxy_create_jobid(orte_jobid_t *job)
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* set default value */
     *job = ORTE_JOBID_MAX;
 
@@ -362,9 +371,11 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count;
     int rc;
 
+    OPAL_TRACE(1);
+    
     /* set default return value */
     *starting_vpid = ORTE_VPID_MAX;
 
@@ -434,14 +445,16 @@ int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range, orte_vpid_t
  * PEER functions
  */
 int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
-                                  size_t *num_procs, orte_jobid_t job)
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
-    size_t count;
+    orte_std_cntr_t count, nprocs;
     int rc;
 
+    OPAL_TRACE_ARG1(1, job);
+    
     /* set default value */
     *procs = NULL;
     *num_procs = 0;
@@ -452,7 +465,15 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     }
 
     command = ORTE_NS_GET_JOB_PEERS_CMD;
+    /* pack the command */
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, (void*)&command, 1, ORTE_NS_CMD))) { /* got a problem */
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
+    /* pack the jobid */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
@@ -491,27 +512,28 @@ int orte_ns_proxy_get_job_peers(orte_process_name_t **procs,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &num_procs, &count, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &nprocs, &count, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         return rc;
     }
 
     /* allocate space for array of proc names */
-    if (0 < *num_procs) {
-        *procs = (orte_process_name_t*)malloc((*num_procs) * sizeof(orte_process_name_t));
+    if (0 < nprocs) {
+        *procs = (orte_process_name_t*)malloc((nprocs) * sizeof(orte_process_name_t));
         if (NULL == *procs) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             OBJ_RELEASE(answer);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
 
-        if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, procs, num_procs, ORTE_NAME))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, procs, &nprocs, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(answer);
             return rc;
         }
     }
+    *num_procs = nprocs;
 
     OBJ_RELEASE(answer);
     return ORTE_SUCCESS;
@@ -525,7 +547,8 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_ns_proxy_tagitem_t* tagitem, **tags;
-    size_t count, i, j;
+    orte_std_cntr_t count, i;
+    orte_rml_tag_t j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
@@ -612,7 +635,7 @@ int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag,
     }
 
     count = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_UINT32))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, tag, &count, ORTE_RML_TAG))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(answer);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -655,7 +678,7 @@ int orte_ns_proxy_define_data_type(const char *name,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_ns_proxy_dti_t **dti, *dtip;
-    size_t count, i, j;
+    orte_std_cntr_t count, i, j;
     int rc=ORTE_SUCCESS;
 
     if (NULL == name || 0 < *type) {
@@ -700,7 +723,7 @@ int orte_ns_proxy_define_data_type(const char *name,
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &name, 1, ORTE_STRING))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, (void*)&name, 1, ORTE_STRING))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -802,7 +825,7 @@ int orte_ns_proxy_create_my_name(void)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -820,7 +843,7 @@ int orte_ns_proxy_dump_cells(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i;
+    orte_std_cntr_t i;
     orte_cellid_t j;
     orte_ns_proxy_cell_info_t **ptr;
     int rc;
@@ -838,7 +861,7 @@ int orte_ns_proxy_dump_cells(void)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -897,7 +920,7 @@ int orte_ns_proxy_dump_jobs(void)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -928,7 +951,8 @@ int orte_ns_proxy_dump_tags(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j;
+    orte_std_cntr_t i;
+    orte_rml_tag_t j;
     orte_ns_proxy_tagitem_t **ptr;
     int rc;
 
@@ -945,7 +969,7 @@ int orte_ns_proxy_dump_tags(void)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);
@@ -989,7 +1013,7 @@ int orte_ns_proxy_dump_datatypes(void)
     orte_buffer_t cmd;
     orte_buffer_t answer;
     orte_ns_cmd_flag_t command;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_ns_proxy_dti_t **ptr;
     int rc;
 
@@ -1006,7 +1030,7 @@ int orte_ns_proxy_dump_datatypes(void)
         return rc;
     }
 
-    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, MCA_OOB_TAG_NS, 0)) {
+    if (0 > orte_rml.send_buffer(orte_ns_proxy.my_replica, &cmd, ORTE_RML_TAG_NS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_DESTRUCT(&cmd);
         OPAL_THREAD_UNLOCK(&orte_ns_proxy.mutex);

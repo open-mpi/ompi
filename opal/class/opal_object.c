@@ -33,7 +33,7 @@
 /*
  * Instantiation of class descriptor for the base class.  This is
  * special, since be mark it as already initialized, with no parent
- * and no constructor or desctructor
+ * and no constructor or destructor.
  */
 opal_class_t opal_object_t_class = {
     "opal_object_t", /* name */
@@ -187,7 +187,7 @@ static void expand_array(void)
     int i;
 
     max_classes += increment;
-    classes = realloc(classes, sizeof(void *) * max_classes);
+    classes = (void**)realloc(classes, sizeof(void *) * max_classes);
     if (NULL == classes) {
         perror("class malloc failed");
         exit(-1);

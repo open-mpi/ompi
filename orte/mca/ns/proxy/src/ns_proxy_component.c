@@ -45,7 +45,7 @@
 /*
  * Struct of function pointers that need to be initialized
  */
-OMPI_COMP_EXPORT mca_ns_base_component_t mca_ns_proxy_component = {
+mca_ns_base_component_t mca_ns_proxy_component = {
   {
     MCA_NS_BASE_VERSION_1_0_0,
 
@@ -318,7 +318,7 @@ int orte_ns_proxy_finalize(void)
     orte_ns_proxy_cell_info_t **cptr;
     orte_ns_proxy_tagitem_t **tag;
     orte_ns_proxy_dti_t **dti;
-    size_t i;
+    orte_std_cntr_t i;
 
   /* free all tracking storage, but only if this component was initialized */
 

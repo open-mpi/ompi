@@ -62,7 +62,7 @@ void ADIOI_GRIDFTP_Fcntl(ADIO_File fd, int flag, ADIO_Fcntl_t *fcntl_struct,
 				    MPIR_ERR_RECOVERABLE,
                                     myname, __LINE__, MPI_ERR_IO,
 				    "**io", "**io %s", 
-				    globus_object_printable_to_string(result));
+				    globus_object_printable_to_string(globus_error_get(result)));
 		    return;
 		}
 	    globus_mutex_lock(&fcntl_size_lock);

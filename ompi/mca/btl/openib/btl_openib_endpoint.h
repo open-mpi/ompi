@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,17 +34,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
-
 
 struct mca_btl_openib_frag_t;
-
-struct mca_btl_openib_port_info_t {
-    uint32_t mtu;
-    uint64_t subnet; 
-};
-typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
-
 
 /**
  * State of IB endpoint connection.
@@ -93,6 +84,9 @@ struct mca_btl_openib_rem_info_t {
 
     /* MTU of remote process */
     uint32_t                    rem_mtu;
+
+    /* index of remote endpoint in endpoint array */
+    uint32_t                    rem_index;
 }; 
 typedef struct mca_btl_openib_rem_info_t mca_btl_openib_rem_info_t; 
 
@@ -129,13 +123,9 @@ struct mca_btl_base_endpoint_t {
     opal_list_t                 pending_send_frags;
     /**< list of pending send frags for this endpotint */
     
-    opal_list_t                 pending_frags_hp; 
-    /**< list of pending high priority frags */ 
-
-    opal_list_t                 pending_frags_lp; 
-    /**< list of pending low priority frags */ 
-
-    
+    opal_list_t                 pending_frags[2]; /**< list of pending frags */ 
+    opal_list_t                 pending_get_frags; /**< list of pending rget ops */
+    opal_list_t                 pending_put_frags; /**< list of pending rput ops */
 
     mca_btl_openib_rem_info_t   rem_info;
     
@@ -143,26 +133,19 @@ struct mca_btl_base_endpoint_t {
     uint32_t                    lcl_psn_lp; 
     /* Local processes port sequence number (Low and High) */
  
-    struct ibv_qp*              lcl_qp_hp;
-    struct ibv_qp*              lcl_qp_lp;
-    /* Local QP (Low and High) */
+    struct ibv_qp*              lcl_qp[2]; /* Local QP (Low and High) */
 
     struct ibv_qp_attr*         lcl_qp_attr_hp; 
     struct ibv_qp_attr*         lcl_qp_attr_lp; 
     /* Local QP attributes (Low and High) */
     
-    int32_t                     sd_tokens_hp;  /**< number of high priority send tokens */
-    int32_t                     sd_tokens_lp;  /**< number of low priority send tokens */
+    int32_t                     sd_tokens[2];  /**< number of send tokens */
     int32_t                     get_tokens;    /**< number of available get tokens */
 
-    int32_t rd_posted_hp;   /**< number of high priority descriptors posted to the nic*/
-    int32_t rd_posted_lp;   /**< number of low priority descriptors posted to the nic*/
-    int32_t rd_credits_hp;  /**< number of high priority credits to return to peer */
-    int32_t rd_credits_lp;  /**< number of low priority credits to return to peer */
-    int32_t sd_credits_hp;  /**< number of send wqe entries being used to return credits */
-    int32_t sd_credits_lp;  /**< number of send wqe entries being used to return credits */
-    int32_t sd_wqe_hp;      /**< number of available send wqe entries */
-    int32_t sd_wqe_lp;      /**< number of available send wqe entries */
+    int32_t rd_posted[2];   /**< number of descriptors posted to the nic*/
+    int32_t rd_credits[2];  /**< number of credits to return to peer */
+    int32_t sd_credits[2];  /**< number of send wqe entries being used to return credits */
+    int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
     uint16_t subnet; /**< subnet of this endpoint*/
 
@@ -171,99 +154,77 @@ struct mca_btl_base_endpoint_t {
     /**< info about remote RDMA buffer */
     mca_btl_openib_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
-    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
-    struct mca_btl_openib_frag_t *hp_credit_frag; /**< frag for sending explicit high priority credits */
-    struct mca_btl_openib_frag_t *lp_credit_frag; /**< frag for sending explicit low priority credits */
+    int32_t eager_rdma_index; /**< index into RDMA buffers pointer array */
+    uint32_t index;           /**< index of the endpoint in endpoints array */
+    struct mca_btl_openib_frag_t *credit_frag[2]; /**< frags for sending explicit high priority credits */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;
 typedef mca_btl_base_endpoint_t  mca_btl_openib_endpoint_t;
 
+OBJ_CLASS_DECLARATION(mca_btl_openib_endpoint_t);
+
 int  mca_btl_openib_endpoint_send(mca_btl_base_endpoint_t* endpoint, struct mca_btl_openib_frag_t* frag);
 int  mca_btl_openib_endpoint_connect(mca_btl_base_endpoint_t*);
 void mca_btl_openib_post_recv(void);
-void mca_btl_openib_endpoint_send_credits_hp(mca_btl_base_endpoint_t*);
-void mca_btl_openib_endpoint_send_credits_lp(mca_btl_base_endpoint_t*);
+void mca_btl_openib_endpoint_send_credits(mca_btl_base_endpoint_t*, const int);
 void mca_btl_openib_endpoint_connect_eager_rdma(mca_btl_openib_endpoint_t*);
-    
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_HIGH(endpoint, \
-                                             additional) \
-{ \
-   do { \
-    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(endpoint->rd_posted_hp <= mca_btl_openib_component.rd_low+additional && \
-       endpoint->rd_posted_hp < openib_btl->rd_num) { \
-        MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(openib_btl->rd_num -  \
-                                            endpoint->rd_posted_hp, \
-                                            endpoint, \
-                                            &openib_btl->recv_free_eager, \
-                                            endpoint->rd_posted_hp, \
-                                            endpoint->rd_credits_hp, \
-                                            endpoint->lcl_qp_hp); \
-    } \
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-   } while(0); \
+
+static inline int btl_openib_endpoint_post_rr(mca_btl_base_endpoint_t *endpoint,
+        const int additional, const int prio)
+{
+    mca_btl_openib_module_t *openib_btl = endpoint->endpoint_btl;
+
+    OPAL_THREAD_LOCK(&openib_btl->ib_lock);
+    if(endpoint->rd_posted[prio] <=
+            mca_btl_openib_component.rd_low + additional &&
+            endpoint->rd_posted[prio] < openib_btl->rd_num) {
+        int rc;
+        int32_t i, num_post = openib_btl->rd_num - endpoint->rd_posted[prio];
+        struct ibv_recv_wr* bad_wr;
+        ompi_free_list_t *free_list;
+
+        if(BTL_OPENIB_HP_QP == prio)
+            free_list = &openib_btl->recv_free_eager;
+        else
+            free_list = &openib_btl->recv_free_max;
+
+        for(i = 0; i < num_post; i++) {
+           ompi_free_list_item_t* item;
+           mca_btl_openib_frag_t* frag;
+           OMPI_FREE_LIST_WAIT(free_list, item, rc);
+           frag = (mca_btl_openib_frag_t*)item;
+           frag->endpoint = endpoint;
+           if(ibv_post_recv(endpoint->lcl_qp[prio], &frag->wr_desc.rd_desc,
+                       &bad_wr)) {
+               BTL_ERROR(("error posting receive errno says %s\n",
+                           strerror(errno)));
+               return OMPI_ERROR;
+           }
+        }
+        OPAL_THREAD_ADD32(&endpoint->rd_posted[prio], num_post);
+        OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], num_post);
+     }
+     OPAL_THREAD_UNLOCK(&openib_btl->ib_lock);
+     return OMPI_SUCCESS;
 }
 
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_LOW(endpoint, \
-                                            additional) { \
-    do { \
-    mca_btl_openib_module_t * openib_btl = endpoint->endpoint_btl; \
-    OPAL_THREAD_LOCK(&openib_btl->ib_lock); \
-    if(endpoint->rd_posted_lp <= mca_btl_openib_component.rd_low+additional && \
-       endpoint->rd_posted_lp < openib_btl->rd_num){ \
-       MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(openib_btl->rd_num - \
-                                            endpoint->rd_posted_lp,  \
-                                            endpoint, \
-                                            &openib_btl->recv_free_max, \
-                                            endpoint->rd_posted_lp, \
-                                            endpoint->rd_credits_lp, \
-                                            endpoint->lcl_qp_lp \
-                                            ); } \
-    OPAL_THREAD_UNLOCK(&openib_btl->ib_lock); \
-    } while(0); \
+static inline int btl_openib_check_send_credits(
+        mca_btl_openib_endpoint_t *endpoint, const int prio)
+{
+    if(!mca_btl_openib_component.use_srq &&
+            endpoint->rd_credits[prio] >= mca_btl_openib_component.rd_win)
+        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+
+    if(BTL_OPENIB_LP_QP == prio) /* nothing more for low prio QP */
+        return 0;
+
+    /* for high prio check eager RDMA credits */
+    if(endpoint->eager_rdma_local.credits >= mca_btl_openib_component.rd_win)
+        return OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], 1) == 1;
+
+    return 0;
 }
-
-#define MCA_BTL_OPENIB_ENDPOINT_POST_RR_SUB(cnt, \
-                                            my_endpoint, \
-                                            frag_list, \
-                                            rd_posted, \
-                                            rd_credits, \
-                                            qp ) \
-do { \
-    int32_t i; \
-    int rc; \
-    int32_t num_post = cnt; \
-    struct ibv_recv_wr* bad_wr; \
-    for(i = 0; i < num_post; i++) { \
-        ompi_free_list_item_t* item; \
-        mca_btl_openib_frag_t* frag; \
-        OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
-        frag = (mca_btl_openib_frag_t*) item; \
-        frag->endpoint = my_endpoint; \
-        frag->sg_entry.length = frag->size + \
-            ((unsigned char*) frag->segment.seg_addr.pval-  \
-             (unsigned char*) frag->hdr);  \
-        if(ibv_post_recv(qp, \
-            &frag->wr_desc.rd_desc, \
-            &bad_wr)) { \
-            BTL_ERROR(("error posting receive errno says %s\n", strerror(errno))); \
-            return OMPI_ERROR; \
-        }\
-    }\
-    OPAL_THREAD_ADD32(&(rd_posted), num_post); \
-    OPAL_THREAD_ADD32(&(rd_credits), num_post); \
-} while(0); 
-
-#define BTL_OPENIB_INSERT_PENDING(frag, frag_list, tokens, lock) \
-do{ \
-     OPAL_THREAD_LOCK(&lock); \
-     opal_list_append(&frag_list, (opal_list_item_t *)frag); \
-     OPAL_THREAD_UNLOCK(&lock); \
-     OPAL_THREAD_ADD32(&tokens, 1); \
- } while(0); 
-
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

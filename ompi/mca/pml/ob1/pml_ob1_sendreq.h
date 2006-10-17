@@ -22,7 +22,6 @@
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/pml/base/pml_base_sendreq.h"
 #include "ompi/mca/mpool/base/base.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_comm.h"
 #include "pml_ob1_hdr.h"
 #include "pml_ob1_rdma.h"
@@ -63,7 +62,6 @@ struct mca_pml_ob1_send_request_t {
 };
 typedef struct mca_pml_ob1_send_request_t mca_pml_ob1_send_request_t;
 
-
 OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 
 
@@ -73,8 +71,7 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    ompi_proc_t *proc =                                                    \
-         comm->c_pml_procs[dst]->proc_ompi;                                \
+    ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );                \
     ompi_free_list_item_t* item;                                           \
                                                                            \
     if(NULL == proc) {                                                     \
@@ -111,19 +108,18 @@ OBJ_CLASS_DECLARATION(mca_pml_ob1_send_request_t);
 }
 
 
-static inline void mca_pml_ob1_free_rdma_resources(
-        mca_pml_ob1_send_request_t* sendreq)
+static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* sendreq)
 {
     size_t r;
 
     /* return mpool resources */
     for(r = 0; r < sendreq->req_rdma_cnt; r++) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;
-            if( NULL != reg ) {
-                reg->mpool->mpool_release(reg->mpool, reg);
-            }
+        if( NULL != reg ) {
+            reg->mpool->mpool_release(reg->mpool, reg);
         }
-        sendreq->req_rdma_cnt = 0;
+    }
+    sendreq->req_rdma_cnt = 0;
 }
 
 
@@ -154,7 +150,6 @@ do {                                                                            
                                                                                   \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                             &(sendreq->req_send.req_base), PERUSE_SEND);          \
-                                                                                  \
 } while(0)
 
 /*
@@ -177,7 +172,6 @@ do {                                                                            
                                                                                         \
         /* return mpool resources */                                                    \
         mca_pml_ob1_free_rdma_resources(sendreq);                                       \
-        sendreq->req_rdma_cnt = 0;                                                      \
                                                                                         \
         if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&            \
             sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {        \
@@ -193,13 +187,6 @@ do {                                                                            
                                                                                         \
         if( sendreq->req_send.req_base.req_free_called ) {                              \
             MCA_PML_OB1_SEND_REQUEST_RETURN( sendreq );                                 \
-        } else {                                                                        \
-            if(sendreq->req_send.req_base.req_ompi.req_persistent &&                    \
-               (0 != sendreq->req_send.req_bytes_packed) ) {                            \
-                /* rewind convertor */                                                  \
-                size_t offset = 0;                                                      \
-                ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset); \
-            }                                                                           \
         }                                                                               \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                                         \
 } while (0)
@@ -333,7 +320,7 @@ static inline int mca_pml_ob1_send_request_start_btl(
           (ompi_convertor_need_buffers(&sendreq->req_send.req_convertor) == false) {
             if( 0 != (sendreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 sendreq->req_endpoint,
-                sendreq->req_send.req_addr,
+                (unsigned char*)sendreq->req_send.req_addr,
                 sendreq->req_send.req_bytes_packed,
                 sendreq->req_rdma))) {
                 rc = mca_pml_ob1_send_request_start_rdma(sendreq, bml_btl,

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,7 +44,7 @@ extern "C" {
  * System information structure
  *
  * The orte_sys_info() function fills the sysname, nodename, release, version, machine,
- * path_sep, and user fields
+ * and user fields
  *
  */
 struct orte_sys_info_t {
@@ -57,11 +57,6 @@ struct orte_sys_info_t {
     char *release;	   /**< Release level of the operating system. */
     char *version;	   /**< Version of the operating system release. */
     char *machine;	   /**< Type of hardware composing this node. */
-    char *path_sep;        /**< Path separation char, saved as string.
-			    * The character used to separate directories in the path - 
-			    * a value that is usually either a '\' or '/', depending
-			    * upon the operating system
-			    */
     char *user;            /**< User id on this system. */
     char *suffix;          /**< Automatic suffix added to file names.
 			    * Some computing environments automatically "tag" files
@@ -72,7 +67,7 @@ struct orte_sys_info_t {
 };
 typedef struct orte_sys_info_t orte_sys_info_t;
 
-OMPI_DECLSPEC extern orte_sys_info_t orte_system_info;
+ORTE_DECLSPEC extern orte_sys_info_t orte_system_info;
 
 
 /**
@@ -88,7 +83,7 @@ OMPI_DECLSPEC extern orte_sys_info_t orte_system_info;
  * @retval ORTE_SUCCESS If values are successfully determined.
  * @retval ORTE_ERROR If the system does not provide the requested information.
  */
-OMPI_DECLSPEC int orte_sys_info(void);
+ORTE_DECLSPEC int orte_sys_info(void);
 
 /*
  * \internal
@@ -100,7 +95,7 @@ OMPI_DECLSPEC int orte_sys_info(void);
  * @retval ORTE_SUCCESS If all values successfully released
  * @retval ORTE_ERROR If any problems occur
  */
-OMPI_DECLSPEC int orte_sys_info_finalize(void);
+ORTE_DECLSPEC int orte_sys_info_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

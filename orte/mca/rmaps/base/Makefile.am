@@ -20,13 +20,21 @@ dist_pkgdata_DATA = base/help-orte-rmaps-base.txt
 
 headers += \
         base/base.h \
-        base/rmaps_base_node.h \
-        base/rmaps_base_map.h
+        base/rmaps_class_instances.h \
+        base/rmaps_private.h
 
 libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
-        base/rmaps_base_map.h \
-        base/rmaps_base_map.c \
-        base/rmaps_base_node.c \
+        base/rmaps_base_registry_fns.c \
+        base/rmaps_base_map_job.c \
+        base/rmaps_base_support_fns.c \
         base/rmaps_base_open.c \
-        base/rmaps_base_select.c
+        base/rmaps_base_receive.c \
+        base/rmaps_base_find_avail.c \
+        base/data_type_support/rmaps_data_type_compare_fns.c \
+        base/data_type_support/rmaps_data_type_copy_fns.c \
+        base/data_type_support/rmaps_data_type_packing_fns.c \
+        base/data_type_support/rmaps_data_type_print_fns.c \
+        base/data_type_support/rmaps_data_type_release_fns.c \
+        base/data_type_support/rmaps_data_type_size_fns.c \
+        base/data_type_support/rmaps_data_type_unpacking_fns.c

@@ -33,17 +33,25 @@
  */
 
 typedef uint32_t orte_rml_tag_t;
+#define ORTE_RML_TAG    ORTE_UINT32
 
-#define ORTE_RML_TAG_NS          1
-#define ORTE_RML_TAG_GPR         2
-#define ORTE_RML_TAG_GPR_NOTIFY  3
-#define ORTE_RML_TAG_DAEMON      4
-#define ORTE_RML_TAG_IOF_SVC     5
-#define ORTE_RML_TAG_IOF_CLNT    6
-#define ORTE_RML_TAG_XCAST       7
-#define ORTE_RML_TAG_RMGR_SVC    8
-#define ORTE_RML_TAG_RMGR_CLNT   9
-#define ORTE_RML_TAG_PROBE       10
+#define ORTE_RML_TAG_NS              1
+#define ORTE_RML_TAG_GPR             2
+#define ORTE_RML_TAG_GPR_NOTIFY      3
+#define ORTE_RML_TAG_DAEMON          4
+#define ORTE_RML_TAG_IOF_SVC         5
+#define ORTE_RML_TAG_IOF_CLNT        6
+#define ORTE_RML_TAG_XCAST           7
+#define ORTE_RML_TAG_RMGR            8
+#define ORTE_RML_TAG_PROBE           9
+#define ORTE_RML_TAG_RDS            10
+#define ORTE_RML_TAG_RAS            11
+#define ORTE_RML_TAG_RMAPS          12
+#define ORTE_RML_TAG_PLS            13
+#define ORTE_RML_TAG_PLS_ORTED      14
+#define ORTE_RML_TAG_ERRMGR         15
+#define ORTE_RML_TAG_BPROC          16
+#define ORTE_RML_TAG_BPROC_ABORT    17
 #define ORTE_RML_TAG_DYNAMIC     2000
 #define ORTE_RML_TAG_MAX UINT32_MAX
 
@@ -60,6 +68,7 @@ typedef uint32_t orte_rml_tag_t;
                                * size for the receive and return the allocated buffer and size in the first
                                * element of the iovec array. */
 #define ORTE_RML_PERSISTENT 0x08 /**< posted non-blocking recv is persistent */
+#define ORTE_RML_NON_PERSISTENT  0x00
                                                                                                                                         
 /**
  * The wildcard for receives from any peer.

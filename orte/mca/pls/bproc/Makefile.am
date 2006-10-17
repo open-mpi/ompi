@@ -33,6 +33,7 @@ endif
 sources = \
     pls_bproc.h \
     pls_bproc.c \
+    pls_bproc_state.c \
     pls_bproc_component.c
 
 mcacomponentdir = $(libdir)/openmpi

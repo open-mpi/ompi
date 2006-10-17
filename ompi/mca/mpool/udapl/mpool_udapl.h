@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,7 +36,7 @@ struct mca_mpool_udapl_component_t {
     char* rcache_name; 
 };
 typedef struct mca_mpool_udapl_component_t mca_mpool_udapl_component_t;
-OMPI_COMP_EXPORT extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
+OMPI_DECLSPEC extern mca_mpool_udapl_component_t mca_mpool_udapl_component;
 
 
 struct mca_mpool_base_resources_t {
@@ -59,8 +59,7 @@ struct mca_mpool_udapl_registration_t {
     DAT_RMR_CONTEXT rmr_context; /* remote memory region context handle */
 };
 typedef struct mca_mpool_udapl_registration_t mca_mpool_udapl_registration_t;
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_mpool_udapl_registration_t);
-
+OBJ_CLASS_DECLARATION(mca_mpool_udapl_registration_t);
 
 /**
   * Report a uDAPL error - for debugging

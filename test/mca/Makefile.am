@@ -19,4 +19,4 @@
 
 
 SUBDIRS = oob schema
-DIST_SUBDIRS = gpr gpr/remote ns oob ras rds rmaps rmgr schema soh
+DIST_SUBDIRS = gpr gpr/remote ns oob ras rds rmaps rmgr schema smr

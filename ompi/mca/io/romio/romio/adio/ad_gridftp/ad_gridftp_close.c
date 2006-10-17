@@ -23,10 +23,10 @@ void ADIOI_GRIDFTP_Close(ADIO_File fd, int *error_code)
     {
 	    globus_err_handler("globus_ftp_client_operationattr_destroy",
 		    myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCESS, MPIR_ERR_RECOVERABLE,
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 		    myname, __LINE__, MPI_ERR_IO,
 		    "**io",
-		    "**io %s",globus_object_printable_to_string(result));
+		    "**io %s",globus_object_printable_to_string(globus_error_get(result)));
 	    return;
     }
     result=globus_ftp_client_handle_destroy(&(gridftp_fh[fd->fd_sys]));
@@ -34,10 +34,10 @@ void ADIOI_GRIDFTP_Close(ADIO_File fd, int *error_code)
     {
 	    globus_err_handler("globus_ftp_client_handle_destroy",
 		    myname,result);
-	    *error_code = MPIO_Err_create_code(MPI_SUCESS, MPIR_ERR_RECOVERABLE,
+	    *error_code = MPIO_Err_create_code(MPI_SUCCESS, MPIR_ERR_RECOVERABLE,
 		    myname, __LINE__, MPI_ERR_IO,
 		    "**io",
-		    "**io %s", globus_object_printable_to_string(result));
+		    "**io %s", globus_object_printable_to_string(globus_error_get(result)));
 	    return;
     }
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -33,6 +33,7 @@
 #include "orte/dss/dss.h"
 #include "opal/class/opal_object.h"
 #include "orte/mca/ns/ns_types.h"
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
@@ -42,9 +43,9 @@ extern "C" {
 struct mca_oob_tcp_addr_t {
     opal_object_t super;
     orte_process_name_t addr_name;
-    uint32_t addr_count;               
-    uint32_t addr_next;
-    uint32_t addr_alloc;
+    orte_std_cntr_t addr_count;               
+    orte_std_cntr_t addr_next;
+    orte_std_cntr_t addr_alloc;
     bool addr_matched;
     struct sockaddr_in* addr_inet;    
 };

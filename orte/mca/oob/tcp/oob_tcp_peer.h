@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -72,12 +72,6 @@ struct mca_oob_tcp_peer_t {
  */
 typedef struct mca_oob_tcp_peer_t mca_oob_tcp_peer_t;
 
-/*
- * Class declaration.
- */
-
-OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
-
 /**
  * Get a new peer data structure
  */ 
@@ -102,6 +96,12 @@ OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+/*
+ * Class declaration.
+ */
+
+OBJ_CLASS_DECLARATION(mca_oob_tcp_peer_t);
 
 /**
  * Lookup a peer in the cache - if it doesn't exists

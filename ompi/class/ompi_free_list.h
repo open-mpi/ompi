@@ -29,9 +29,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
-struct mca_mem_pool_t;
 
+struct mca_mem_pool_t;
 
 struct ompi_free_list_t
 {
@@ -50,6 +49,7 @@ struct ompi_free_list_t
     opal_list_t fl_allocations;
 };
 typedef struct ompi_free_list_t ompi_free_list_t;
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_t);
 
 struct ompi_free_list_item_t
 { 
@@ -58,7 +58,7 @@ struct ompi_free_list_item_t
 }; 
 typedef struct ompi_free_list_item_t ompi_free_list_item_t; 
 
-OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
+OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_free_list_item_t);
 
 /**
  * Initialize a free list.
@@ -99,6 +99,12 @@ static inline int ompi_free_list_init(
 
 
 OMPI_DECLSPEC int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements);
+
+/* Grow the free list to be *at least* size elements.  This function
+   will not shrink the list if it is already larger than size and may
+   grow it past size if necessary (it will grow in
+   num_elements_per_alloc chunks) */
+OMPI_DECLSPEC int ompi_free_list_resize(ompi_free_list_t *flist, size_t size);
 
 /* Allow to walk through the all allocated items. Not thread-safe, not
  * protected, this function should never be used except for debugging purposes.
@@ -177,7 +183,11 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
                 if(ompi_free_list_grow((fl), (fl)->fl_num_per_alloc)
                         == OMPI_SUCCESS) {
                     if( 0 < (fl)->fl_num_waiting ) {
-                        opal_condition_broadcast(&((fl)->fl_condition));
+                        if( 1 == (fl)->fl_num_waiting ) {
+                            opal_condition_signal(&((fl)->fl_condition));
+                        } else {
+                            opal_condition_broadcast(&((fl)->fl_condition));
+                        }
                     }
                 } else {
                     (fl)->fl_num_waiting++;
@@ -215,7 +225,11 @@ static inline int __ompi_free_list_wait( ompi_free_list_t* fl,
         if( &(fl)->super.opal_lifo_ghost == original ) {                \
             OPAL_THREAD_LOCK(&(fl)->fl_lock);                           \
             if((fl)->fl_num_waiting > 0) {                              \
-                opal_condition_signal(&((fl)->fl_condition));           \
+                if( 1 == (fl)->fl_num_waiting ) {                       \
+                    opal_condition_signal(&((fl)->fl_condition));       \
+                } else {                                                \
+                    opal_condition_broadcast(&((fl)->fl_condition));    \
+                }                                                       \
             }                                                           \
             OPAL_THREAD_UNLOCK(&(fl)->fl_lock);                         \
         }                                                               \

@@ -34,7 +34,7 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
     int done, i, err; 
 
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     if (count == 1)  {
             MPIR_Nest_decr();
 	    err = MPIO_Test( requests, flag, statuses );
@@ -75,7 +75,7 @@ int MPIO_Testall(int count, MPIO_Request requests[], int *flag,
 
     err = MPI_SUCCESS;
 fn_exit:
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return err;
 }
 

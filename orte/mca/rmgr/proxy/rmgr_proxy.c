@@ -23,101 +23,107 @@
 #endif  /* HAVE_STRING_H */
 
 #include "orte/orte_constants.h"
+
+#include "opal/class/opal_list.h"
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
+#include "orte/mca/rds/rds.h"
+#include "orte/mca/ras/ras.h"
+#include "orte/mca/rmaps/rmaps.h"
+#include "orte/mca/pls/pls.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/iof/iof.h"
+#include "orte/mca/smr/smr.h"
 
+#include "orte/mca/rmgr/base/rmgr_private.h"
 #include "orte/mca/rmgr/proxy/rmgr_proxy.h"
 
 
-static int orte_rmgr_proxy_query(void);
-
-static int orte_rmgr_proxy_create(
+static int orte_rmgr_proxy_setup_job(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid);
 
-static int orte_rmgr_proxy_allocate(
-    orte_jobid_t jobid);
+static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid);
 
-static int orte_rmgr_proxy_deallocate(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_proxy_map(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_proxy_launch(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_proxy_terminate_job(
-    orte_jobid_t jobid);
-
-static int orte_rmgr_proxy_terminate_proc(
-    const orte_process_name_t* proc_name);
-
-static int orte_rmgr_proxy_signal_job(
-        orte_jobid_t jobid, int32_t signal);
-
-static int orte_rmgr_proxy_signal_proc(
-        const orte_process_name_t* proc_name,
-        int32_t signal);
-
-static int orte_rmgr_proxy_spawn(
+static int orte_rmgr_proxy_spawn_job(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfn,
-    orte_proc_state_t cb_conditions);
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes);
 
 orte_rmgr_base_module_t orte_rmgr_proxy_module = {
-    orte_rmgr_proxy_query,
-    orte_rmgr_proxy_create,
-    orte_rmgr_proxy_allocate,
-    orte_rmgr_proxy_deallocate,
-    orte_rmgr_proxy_map,
-    orte_rmgr_proxy_launch,
-    orte_rmgr_proxy_terminate_job,
-    orte_rmgr_proxy_terminate_proc,
-    orte_rmgr_proxy_signal_job,
-    orte_rmgr_proxy_signal_proc,
-    orte_rmgr_proxy_spawn,
-    orte_rmgr_base_proc_stage_gate_init,
-    orte_rmgr_base_proc_stage_gate_mgr,
+    NULL, /* don't need special init */
+    orte_rmgr_proxy_setup_job,
+    orte_rmgr_proxy_spawn_job,
+    orte_rmgr_base_connect,
+    orte_rmgr_base_disconnect,
     NULL, /* finalize */
+    /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_base_find_attribute,
+    orte_rmgr_base_add_attribute,
+    orte_rmgr_base_update_attribute,
+    orte_rmgr_base_delete_attribute,
+    orte_rmgr_base_get_app_context,
+    orte_rmgr_base_put_app_context,
+    orte_rmgr_base_check_context_cwd,
+    orte_rmgr_base_check_context_app,
+    orte_rmgr_base_set_vpid_range,
+    orte_rmgr_base_get_vpid_range
 };
 
 
 /*
- *  Create the job segment and initialize the application context. Could
- *  do this in the proxy - but allowing the seed to do this moves responsibility
- *  for the stage gates to the seed. This allows the client to disconnect.
+ *  Setup the job segment and initialize the application context. Could
+ *  do this in the proxy - but allowing the HNP to do this moves the registry
+ *  and name service actions to the HNP for efficiency.
  */
 
-static int orte_rmgr_proxy_create(
+static int orte_rmgr_proxy_setup_job(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid)
 {
     orte_buffer_t cmd;
     orte_buffer_t rsp;
+    orte_std_cntr_t count;
+    orte_rmgr_cmd_t command=ORTE_RMGR_SETUP_JOB_CMD;
     int rc;
 
     OPAL_TRACE(1);
 
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    rc = orte_rmgr_base_pack_create_cmd(&cmd, app_context, num_context);
-    if(ORTE_SUCCESS != rc) {
+
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_RMGR_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    
+    /* pack the number of app_contexts */
+    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &num_context, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    
+    /* and pack them */
+    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, app_context, num_context, ORTE_APP_CONTEXT))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
     }
 
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
+    /* send the command */
+    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -126,40 +132,65 @@ static int orte_rmgr_proxy_create(
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
     }
 
-    rc = orte_rmgr_base_unpack_create_rsp(&rsp, jobid);
-    if(ORTE_SUCCESS != rc) {
+    /* get the returned command */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, &command, &count, ORTE_RMGR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
     }
+    /* and check it to ensure valid comm */
+    if (ORTE_RMGR_SETUP_JOB_CMD != command) {
+        OBJ_DESTRUCT(&rsp);
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    /* get the jobid */
+    count = 1;
+    if(ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, jobid, &count, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
     OBJ_DESTRUCT(&rsp);
     return rc;
 }
 
-static int orte_rmgr_proxy_cmd(orte_rmgr_cmd_t cmd_id, orte_jobid_t jobid)
+static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 {
     orte_buffer_t cmd;
     orte_buffer_t rsp;
+    orte_std_cntr_t count;
+    orte_rmgr_cmd_t command=ORTE_RMGR_SETUP_GATES_CMD;
     int rc;
 
-    OPAL_TRACE(2);
+    OPAL_TRACE(1);
 
     /* construct command */
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    rc = orte_rmgr_base_pack_cmd(&cmd, cmd_id, jobid);
-    if(ORTE_SUCCESS != rc) {
+
+    /* pack the command */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_RMGR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
     }
 
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
+    /* pack the jobid */
+    if(ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &jobid, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+
+    /* send the command */
+    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -168,190 +199,30 @@ static int orte_rmgr_proxy_cmd(orte_rmgr_cmd_t cmd_id, orte_jobid_t jobid)
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
     }
 
-    rc = orte_rmgr_base_unpack_rsp(&rsp);
-    if(ORTE_SUCCESS != rc) {
+    /* get the returned command */
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rsp, &command, &count, ORTE_RMGR_CMD))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
     }
+    /* and check it to ensure valid comm */
+    if (ORTE_RMGR_SETUP_GATES_CMD != command) {
+        OBJ_DESTRUCT(&rsp);
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+
     OBJ_DESTRUCT(&rsp);
     return rc;
 }
 
-
-static int orte_rmgr_proxy_query(void)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_QUERY, 0);
-}
-
-static int orte_rmgr_proxy_allocate(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_ALLOCATE, jobid);
-}
-
-static int orte_rmgr_proxy_deallocate(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_DEALLOCATE, jobid);
-}
-
-static int orte_rmgr_proxy_map(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_MAP, jobid);
-}
-
-static int orte_rmgr_proxy_launch(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_LAUNCH, jobid);
-}
-
-static int orte_rmgr_proxy_terminate_job(orte_jobid_t jobid)
-{
-    OPAL_TRACE(1);
-
-    return orte_rmgr_proxy_cmd(ORTE_RMGR_CMD_TERM_JOB, jobid);
-}
-
-static int orte_rmgr_proxy_terminate_proc(const orte_process_name_t* proc_name)
-{
-    orte_buffer_t cmd;
-    orte_buffer_t rsp;
-    int rc;
-
-    OPAL_TRACE(1);
-
-    /* construct command */
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    rc = orte_rmgr_base_pack_terminate_proc_cmd(&cmd, proc_name);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    OBJ_DESTRUCT(&cmd);
-
-    /* wait for response */
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-
-    rc = orte_rmgr_base_unpack_rsp(&rsp);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-    OBJ_DESTRUCT(&rsp);
-    return ORTE_SUCCESS;
-}
-
-static int orte_rmgr_proxy_signal_job(orte_jobid_t jobid, int32_t signal)
-{
-    orte_buffer_t cmd;
-    orte_buffer_t rsp;
-    int rc;
-
-    OPAL_TRACE(1);
-
-    /* construct command */
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    rc = orte_rmgr_base_pack_signal_job_cmd(&cmd, jobid, signal);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    OBJ_DESTRUCT(&cmd);
-
-    /* wait for response */
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-
-    rc = orte_rmgr_base_unpack_rsp(&rsp);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-    OBJ_DESTRUCT(&rsp);
-    return ORTE_SUCCESS;
-}
-
-static int orte_rmgr_proxy_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
-{
-    orte_buffer_t cmd;
-    orte_buffer_t rsp;
-    int rc;
-
-    OPAL_TRACE(1);
-
-    /* construct command */
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    rc = orte_rmgr_base_pack_signal_proc_cmd(&cmd, proc_name, signal);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR_SVC, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&cmd);
-        return rc;
-    }
-    OBJ_DESTRUCT(&cmd);
-
-    /* wait for response */
-    OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR_CLNT))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-
-    rc = orte_rmgr_base_unpack_rsp(&rsp);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_DESTRUCT(&rsp);
-        return rc;
-    }
-    OBJ_DESTRUCT(&rsp);
-    return ORTE_SUCCESS;
-}
 
 static void orte_rmgr_proxy_wireup_stdin(orte_jobid_t jobid)
 {
@@ -380,12 +251,12 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t** keyvals;
     orte_jobid_t jobid;
-    size_t i, j, k;
+    orte_std_cntr_t i, j, k;
     int rc;
 
     OPAL_TRACE(1);
 
-    /* stupid ISO C forbids conversion of object pointer to function
+    /* ISO C forbids conversion of object pointer to function
        pointer.  So we do this, which is the same thing, but without
        the warning from GCC */
     cbfunc_union.ptr = cbdata;
@@ -444,10 +315,6 @@ static void orte_rmgr_proxy_callback(orte_gpr_notify_data_t *data, void *cbdata)
                     (*cbfunc)(jobid,ORTE_PROC_STATE_TERMINATED);
                     continue;
                 }
-                if(strcmp(keyval->key, ORTE_PROC_NUM_ABORTED) == 0) {
-                    (*cbfunc)(jobid,ORTE_PROC_STATE_ABORTED);
-                    continue;
-                }
             }
         }
     }
@@ -481,39 +348,42 @@ static void orte_rmgr_proxy_wireup_callback(orte_gpr_notify_data_t *data, void *
  */
 
 
-static int orte_rmgr_proxy_spawn(
+static int orte_rmgr_proxy_spawn_job(
     orte_app_context_t** app_context,
-    size_t num_context,
+    orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
     orte_rmgr_cb_fn_t cbfunc,
-    orte_proc_state_t cb_conditions)
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes)
 {
     int rc;
-    orte_process_name_t* name;
+    orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
 
     OPAL_TRACE(1);
 
     /*
      * Perform resource discovery.
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_query())) {
+    if (ORTE_SUCCESS != (rc = orte_rds.query())) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
     /*
-     * Initialize job segment and allocate resources
+     * Setup job and allocate resources
      */
     if (ORTE_SUCCESS !=
-        (rc = orte_rmgr_proxy_create(app_context,num_context,jobid))) {
+        (rc = orte_rmgr_proxy_setup_job(app_context,num_context,jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_allocate(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_map(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -522,26 +392,38 @@ static int orte_rmgr_proxy_spawn(
      * setup I/O forwarding
      */
 
-    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
+    name.jobid = *jobid;
+
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
+    /* setup the launch system's stage gate counters and subscriptions */
+    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_setup_stage_gates(*jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
-    rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
+    rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
+    /*
+     * Define the ERRMGR's callbacks as required
+     */
+    if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /*
      * setup callback
      */
@@ -553,13 +435,13 @@ static int orte_rmgr_proxy_spawn(
         } cbfunc_union;
         void *cbdata;
 
-        /* stupid ISO C forbids conversion of object pointer to function
+        /* ISO C forbids conversion of object pointer to function
            pointer.  So we do this, which is the same thing, but without
            the warning from GCC */
         cbfunc_union.func = cbfunc;
         cbdata = cbfunc_union.ptr;
 
-        rc = orte_rmgr_base_proc_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, cbdata, cb_conditions);
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, cbdata, cb_conditions);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -569,12 +451,11 @@ static int orte_rmgr_proxy_spawn(
     /*
      * launch the job
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_launch(*jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls.launch_job(*jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    orte_ns.free_name(&name);
     return ORTE_SUCCESS;
 }
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +23,8 @@
 #endif
 #include <stdio.h>
 
+#include MCA_timer_IMPLEMENTATION_HEADER
+#include "opal/prefetch.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 
@@ -38,10 +41,21 @@ static const char FUNC_NAME[] = "MPI_Wtime";
 
 double MPI_Wtime(void)
 {
-    struct timeval tv;
     double wtime;
+#if OPAL_TIMER_USEC_NATIVE
+    wtime = (double)opal_timer_base_get_usec() / 1000000.0;
+#else
+
+#if defined(__WINDOWS__)
+    wtime = ((double)opal_timer_base_get_cycles()) / ((double)opal_timer_base_get_freq());
+    return wtime;
+#else
+    struct timeval tv;
     gettimeofday(&tv, NULL);
     wtime = tv.tv_sec;
     wtime += (double)tv.tv_usec / 1000000.0;
+#endif  /* defined(__WINDOWS__) */
+
+#endif  /* OPAL_TIMER_USEC_NATIVE */
     return wtime;
 }

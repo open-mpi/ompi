@@ -214,7 +214,7 @@ int32_t ompi_ddt_set_args( ompi_datatype_t* pData,
 int32_t ompi_ddt_print_args( const ompi_datatype_t* pData )
 {
     int32_t i;
-    ompi_ddt_args_t* pArgs = pData->args;
+    ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)pData->args;
 
     if( pData->flags & DT_FLAG_PREDEFINED ) {
         /* nothing to do for predefined data-types */
@@ -286,7 +286,7 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
                            int32_t* ca, MPI_Aint* a,
                            int32_t* cd, MPI_Datatype* d, int32_t* type)
 {
-    ompi_ddt_args_t* pArgs = pData->args;
+    ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)pData->args;
 
     if( pData->flags & DT_FLAG_PREDEFINED ) {
         switch(which){
@@ -330,7 +330,7 @@ int32_t ompi_ddt_get_args( const ompi_datatype_t* pData, int32_t which,
 int32_t ompi_ddt_copy_args( const ompi_datatype_t* source_data,
                             ompi_datatype_t* dest_data )
 {
-    ompi_ddt_args_t* pArgs = source_data->args;
+    ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)source_data->args;
 
     /* If required then increase the reference count of the arguments. This avoid us
      * to make one more copy for a read only piece of memory.
@@ -349,7 +349,7 @@ int32_t ompi_ddt_copy_args( const ompi_datatype_t* source_data,
 int32_t ompi_ddt_release_args( ompi_datatype_t* pData )
 {
     int i;
-    ompi_ddt_args_t* pArgs = pData->args;
+    ompi_ddt_args_t* pArgs = (ompi_ddt_args_t*)pData->args;
 
     assert( 0 < pArgs->ref_count );
     pArgs->ref_count--;
@@ -428,7 +428,7 @@ static inline int __ompi_ddt_pack_description( ompi_datatype_t* datatype,
 int ompi_ddt_get_pack_description( ompi_datatype_t* datatype,
                                    const void** packed_buffer )
 {
-    ompi_ddt_args_t* args = datatype->args;
+    ompi_ddt_args_t* args = (ompi_ddt_args_t*)datatype->args;
     int next_index = DT_MAX_PREDEFINED;
     void* recursive_buffer;
 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -49,6 +49,7 @@ mca_bml_r2_module_t mca_bml_r2 = {
         mca_bml_r2_del_btl,
         mca_bml_r2_del_proc_btl,
         mca_bml_r2_register, 
+        mca_bml_r2_register_error,
         mca_bml_r2_finalize, 
         mca_bml_r2_progress
     }
@@ -99,7 +100,7 @@ int mca_bml_r2_progress( void ) {
     int count = 0;
 
     /*
-     * Progress each of the PTL modules
+     * Progress each of the BTL modules
      */
     for(i=0; i<mca_bml_r2.num_btl_progress; i++) {
         int rc = mca_bml_r2.btl_progress[i]();
@@ -108,7 +109,6 @@ int mca_bml_r2_progress( void ) {
         }
     }
     return count;
-    
 }
 
 
@@ -371,23 +371,28 @@ int mca_bml_r2_add_procs(
         /* (1) determine the total bandwidth available across all btls
          *     note that we need to do this here, as we may already have btls configured
          * (2) determine the highest priority ranking for latency
+         * (3) compute the maximum amount of bytes that can be send without any
+         *     weighting. Once the left over is smaller than this number we will
+         *     start using the weight to compute the correct amount.
          */
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
+        bml_endpoint->bml_max_send_length = 0;
+        bml_endpoint->bml_max_rdma_length = 0;
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
             mca_btl_base_module_t* btl = bml_btl->btl;
-            total_bandwidth += bml_btl->btl->btl_bandwidth; 
+            total_bandwidth += bml_btl->btl->btl_bandwidth;
             if(btl->btl_latency < latency) {
                 latency = btl->btl_latency;
             }
+            bml_endpoint->bml_max_send_length += bml_btl->btl->btl_bandwidth;
         }
         
         /* (1) set the weight of each btl as a percentage of overall bandwidth
          * (2) copy all btl instances at the highest priority ranking into the
          *     list of btls used for first fragments
          */
-
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);
@@ -581,7 +586,7 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     }
 
     /* remove from bml list */
-    modules = malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
+    modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
     for(i=0,m=0; i<mca_bml_r2.num_btl_modules; i++) {
         if(mca_bml_r2.btl_modules[i] != btl) {
             modules[m++] = mca_bml_r2.btl_modules[i];
@@ -712,6 +717,40 @@ int mca_bml_r2_register(
         rc = btl->btl_register(btl, tag, cbfunc, data);  
         if(OMPI_SUCCESS != rc) {
             return rc;
+        }
+    }
+    return OMPI_SUCCESS; 
+}
+
+
+/*
+ *  Register an error handler with/ all active btls
+ *   if they support error handlers..
+ */
+
+int mca_bml_r2_register_error( 
+                        mca_btl_base_module_error_cb_fn_t  cbfunc
+                        )
+{
+    uint32_t  i; 
+    int rc;
+    mca_btl_base_module_t *btl; 
+    uint32_t ver;
+    
+    for(i = 0; i < mca_bml_r2.num_btl_modules; i++) { 
+        btl = mca_bml_r2.btl_modules[i]; 
+        /* this wont work for version numbers greater than 256... seems 
+           reasonable.. */
+        ver = btl->btl_component->btl_version.mca_type_major_version << 16 |
+            btl->btl_component->btl_version.mca_type_minor_version << 8 |
+            btl->btl_component->btl_version.mca_type_release_version;
+        /* is version number greater than or equal to 1.0.1? */
+        if(ver >= ((1 << 16) |  (0 << 8) | 1) &&            
+           NULL != btl->btl_register_error) { 
+            rc = btl->btl_register_error(btl, cbfunc);  
+            if(OMPI_SUCCESS != rc) {
+                return rc;
+            }
         }
     }
     return OMPI_SUCCESS; 

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -75,7 +75,7 @@ mca_btl_tcp_component_t mca_btl_tcp_component = {
             /* Indicate that we are a pml v1.0.0 component (which also implies a
                specific MCA version) */
 
-            MCA_BTL_BASE_VERSION_1_0_0,
+            MCA_BTL_BASE_VERSION_1_0_1,
 
             "tcp", /* MCA component name */
             1,  /* MCA component major version */
@@ -221,7 +221,10 @@ int mca_btl_tcp_component_open(void)
     mca_btl_tcp_module.super.btl_max_rdma_size =
         mca_btl_tcp_param_register_int("max_rdma_size", INT_MAX);
     mca_btl_tcp_module.super.btl_flags  =
-        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_PUT|MCA_BTL_FLAGS_SEND_INPLACE);
+        mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_PUT |
+                                       MCA_BTL_FLAGS_SEND_INPLACE |
+                                       MCA_BTL_FLAGS_NEED_CSUM | 
+                                       MCA_BTL_FLAGS_NEED_ACK );
     return OMPI_SUCCESS;
 }
 
@@ -233,9 +236,6 @@ int mca_btl_tcp_component_open(void)
 int mca_btl_tcp_component_close(void)
 {
     opal_list_item_t* item;
-#ifdef __WINDOWS__
-    WSACleanup();
-#endif
 
     if(NULL != mca_btl_tcp_component.tcp_if_include)
         free(mca_btl_tcp_component.tcp_if_include);
@@ -246,7 +246,7 @@ int mca_btl_tcp_component_close(void)
  
     if (mca_btl_tcp_component.tcp_listen_sd >= 0) {
         opal_event_del(&mca_btl_tcp_component.tcp_recv_event);
-        close(mca_btl_tcp_component.tcp_listen_sd);
+        CLOSE_THE_SOCKET(mca_btl_tcp_component.tcp_listen_sd);
         mca_btl_tcp_component.tcp_listen_sd = -1;
     }
 
@@ -268,6 +268,11 @@ int mca_btl_tcp_component_close(void)
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_max);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_frag_user);
     OBJ_DESTRUCT(&mca_btl_tcp_component.tcp_lock);
+
+#ifdef __WINDOWS__
+    WSACleanup();
+#endif
+
     return OMPI_SUCCESS;
 }
 
@@ -386,7 +391,7 @@ static int mca_btl_tcp_component_create_listen(void)
 {
     int flags;
     struct sockaddr_in inaddr; 
-    ompi_socklen_t addrlen;
+    opal_socklen_t addrlen;
 
     /* create a listen socket for incoming connections */
     mca_btl_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
@@ -551,14 +556,14 @@ int mca_btl_tcp_component_control(int param, void* value, size_t size)
 static void mca_btl_tcp_component_accept(void)
 {
     while(true) {
-        ompi_socklen_t addrlen = sizeof(struct sockaddr_in);
+        opal_socklen_t addrlen = sizeof(struct sockaddr_in);
         struct sockaddr_in addr;
         mca_btl_tcp_event_t *event;
         int sd = accept(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&addr, &addrlen);
         if(sd < 0) {
             if(opal_socket_errno == EINTR)
                 continue;
-            if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK)
+            if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
                 BTL_ERROR(("accept() failed with errno %d.", opal_socket_errno));
             return;
         }
@@ -583,7 +588,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     struct sockaddr_in addr;
     int retval;
     mca_btl_tcp_proc_t* btl_proc;
-    ompi_socklen_t addr_len = sizeof(addr);
+    opal_socklen_t addr_len = sizeof(addr);
     mca_btl_tcp_event_t *event = (mca_btl_tcp_event_t *)user;
 
     /* accept new connections on the listen socket */
@@ -596,7 +601,7 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     /* recv the process identifier */
     retval = recv(sd, (char *)&guid, sizeof(guid), 0);
     if(retval != sizeof(guid)) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
     OMPI_PROCESS_NAME_NTOH(guid);
@@ -615,20 +620,20 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
     btl_proc = mca_btl_tcp_proc_lookup(&guid);
     if(NULL == btl_proc) {
         BTL_ERROR(("errno=%d",errno));
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
         BTL_ERROR(("getpeername() failed with errno=%d", opal_socket_errno));
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
 
     /* are there any existing peer instances will to accept this connection */
     if(mca_btl_tcp_proc_accept(btl_proc, &addr, sd) == false) {
-        close(sd);
+        CLOSE_THE_SOCKET(sd);
         return;
     }
 }

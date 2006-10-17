@@ -158,14 +158,14 @@ int orte_univ_info(void)
 
         id = mca_base_param_register_int("universe", "persistence", NULL, NULL, orte_universe_info.persistence);
         mca_base_param_lookup_int(id, &tmp);
-        orte_universe_info.persistence = (tmp ? true : false);
+        orte_universe_info.persistence = OPAL_INT_TO_BOOL(tmp);
 
         id = mca_base_param_register_string("universe", "scope", NULL, NULL, orte_universe_info.scope);
         mca_base_param_lookup_string(id, &(orte_universe_info.scope));
 
         id = mca_base_param_register_int("universe", "console", NULL, NULL, orte_universe_info.console);
         mca_base_param_lookup_int(id, &tmp);
-        orte_universe_info.console = (tmp ? true : false);
+        orte_universe_info.console = OPAL_INT_TO_BOOL(tmp);
 
         id = mca_base_param_register_string("universe", "uri", NULL, NULL, orte_universe_info.seed_uri);
         mca_base_param_lookup_string(id, &(orte_universe_info.seed_uri));

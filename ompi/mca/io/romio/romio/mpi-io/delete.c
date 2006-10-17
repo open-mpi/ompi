@@ -49,7 +49,7 @@ int MPI_File_delete(char *filename, MPI_Info info)
 
     MPIU_UNREFERENCED_ARG(info);
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     /* first check if ADIO has been initialized. If not, initialize it */
@@ -108,6 +108,10 @@ int MPI_File_delete(char *filename, MPI_Info info)
 
     /* call the fs-specific delete function */
     (fsops->ADIOI_xxx_Delete)(filename, &error_code);
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(MPI_FILE_NULL, error_code);
+    /* --END ERROR HANDLING-- */
 	
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, MPI_FILE_NULL, MPI_DATATYPE_NULL, -1);
@@ -115,6 +119,6 @@ int MPI_File_delete(char *filename, MPI_Info info)
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();   
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
     return error_code;
 }

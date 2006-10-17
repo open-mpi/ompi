@@ -370,8 +370,9 @@ void ADIOI_GEN_SetInfo(ADIO_File fd, MPI_Info users_info, int *error_code)
 	    fd->hints->deferred_open = 0;
     }
 
-    if ((fd->file_system == ADIO_PIOFS) || (fd->file_system == ADIO_PVFS)) {
-    /* no data sieving for writes in PIOFS and PVFS, because they do not
+    if ((fd->file_system == ADIO_PIOFS) || (fd->file_system == ADIO_PVFS) ||
+		    (fd->file_system == ADIO_PVFS2) ) {
+    /* no data sieving for writes in PIOFS, PVFS and PVFS2, because they do not
        support file locking */
        	MPI_Info_get(info, "ind_wr_buffer_size", MPI_MAX_INFO_VAL,
 		     value, &flag);

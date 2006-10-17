@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -16,14 +16,18 @@
  * $HEADER$
  */
 
+#ifndef ORTE_MCA_RDS_TYPES_H
+#define ORTE_MCA_RDS_TYPES_H
+
 #include "orte_config.h"
 
 #include "opal/class/opal_list.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/ns/ns_types.h"
 
-#ifndef ORTE_MCA_RDS_TYPES_H
-#define ORTE_MCA_RDS_TYPES_H
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 /* resource descriptor object */
 typedef struct {
@@ -41,7 +45,7 @@ typedef struct {
     opal_list_t attributes;
 } orte_rds_cell_desc_t;
 
-OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_cell_desc_t);
 
 /* resource attribute object */
 typedef struct {
@@ -51,7 +55,7 @@ typedef struct {
     orte_gpr_keyval_t keyval;
 } orte_rds_cell_attr_t;
 
-OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
 
 
 /* name of resource */
@@ -146,5 +150,9 @@ OBJ_CLASS_DECLARATION(orte_rds_cell_attr_t);
 #define ORTE_RDS_NODE_ARCH     "orte-rds-arch*"          /* architecture info */
 #define ORTE_RDS_INTERCONNECT   "orte-rds-arch-interconnect*"
 #define ORTE_RDS_CPU            "orte-rds-arch-cpu*"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif

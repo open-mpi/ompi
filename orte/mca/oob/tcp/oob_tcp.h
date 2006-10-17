@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -34,13 +34,12 @@
 #include "opal/threads/condition.h"
 #include "orte/mca/oob/tcp/oob_tcp_peer.h"
 #include "orte/mca/oob/tcp/oob_tcp_msg.h"
+#include "opal/mca/timer/base/base.h"
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-
 
 /*
  * standard component functions
@@ -225,6 +224,7 @@ void mca_oob_tcp_registry_callback(
 
 void mca_oob_tcp_set_socket_options(int sd);
 
+typedef enum { OOB_TCP_EVENT, OOB_TCP_LISTEN_THREAD } mca_oob_tcp_listen_type_t;
 /**
  *  OOB TCP Component
 */
@@ -256,6 +256,19 @@ struct mca_oob_tcp_component_t {
     opal_condition_t   tcp_match_cond;       /**< condition variable used in finalize */
     int                tcp_match_count;      /**< number of matched recvs in progress */
     int                tcp_debug;            /**< debug level */
+
+    bool               tcp_shutdown;
+    mca_oob_tcp_listen_type_t tcp_listen_type;
+    opal_thread_t tcp_listen_thread;
+    opal_free_list_t tcp_pending_connections_fl;
+    opal_list_t tcp_pending_connections;
+    opal_list_t tcp_copy_out_connections;
+    opal_list_t tcp_copy_in_connections;
+    opal_mutex_t tcp_pending_connections_lock;
+    opal_timer_t tcp_last_copy_time;
+    opal_timer_t tcp_copy_delta;
+    int tcp_copy_max_size;
+    int tcp_copy_spin_count;
 };
 
 /**
@@ -263,8 +276,21 @@ struct mca_oob_tcp_component_t {
  */
 typedef struct mca_oob_tcp_component_t mca_oob_tcp_component_t;
 
-OMPI_COMP_EXPORT extern mca_oob_tcp_component_t mca_oob_tcp_component;
+ORTE_MODULE_DECLSPEC extern mca_oob_tcp_component_t mca_oob_tcp_component;
 
+#if defined(__WINDOWS__)
+#define CLOSE_THE_SOCKET(socket)    closesocket(socket)
+#else
+#define CLOSE_THE_SOCKET(socket)    close(socket)
+#endif  /* defined(__WINDOWS__) */
+
+struct mca_oob_tcp_pending_connection_t {
+        opal_free_list_item_t super;
+        int fd;
+        struct sockaddr_in addr;
+    };
+    typedef struct mca_oob_tcp_pending_connection_t mca_oob_tcp_pending_connection_t;
+    OBJ_CLASS_DECLARATION(mca_oob_tcp_pending_connection_t);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

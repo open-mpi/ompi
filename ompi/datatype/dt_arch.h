@@ -19,17 +19,16 @@
 #ifndef DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
 #define DATATYPE_ARCH_H_HAS_BEEN_INCLUDED
 
-#include "ompi_config.h"
 #include <float.h>
 #include <assert.h>
 #include "ompi/constants.h"
 
 /***************************************************
 ** This file tries to classify the most relevant
-** plattforms regarding their data representation.
+** platforms regarding their data representation.
 ** Three aspects are important:
 ** - byte ordering (little or big endian)
-** - intgere representation
+** - integer representation
 ** - floating point representation.
 
 ** In addition, don't forget about the C/Fortran problems.

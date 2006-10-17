@@ -84,6 +84,6 @@ void ADIOI_UFS_Open(ADIO_File fd, int *error_code)
 					       "**io %s", strerror(errno));
 	}
     }
-    /* --END ERROR HANDLING */
+    /* --END ERROR HANDLING-- */
     else *error_code = MPI_SUCCESS;
 }

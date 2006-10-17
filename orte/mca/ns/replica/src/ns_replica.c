@@ -23,11 +23,13 @@
 #include <stdio.h>
 #include <string.h>
 
-#include "orte/dss/dss.h"
 #include "opal/threads/mutex.h"
-
 #include "opal/util/output.h"
+#include "opal/util/trace.h"
+
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+
 #include "orte/mca/ns/base/base.h"
 #include "ns_replica.h"
 
@@ -44,8 +46,10 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
 {
     orte_ns_replica_cell_tracker_t *new_cell;
     int rc;
-    size_t index;
+    orte_std_cntr_t index;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *cellid = ORTE_CELLID_MAX;
@@ -86,10 +90,12 @@ int orte_ns_replica_create_cellid(orte_cellid_t *cellid, char *site, char *resou
 int orte_ns_replica_get_cell_info(orte_cellid_t cellid,
                                 char **site, char **resource)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_cellid_t j;
     orte_ns_replica_cell_tracker_t **cell;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     cell = (orte_ns_replica_cell_tracker_t**)(orte_ns_replica.cells)->addr;
@@ -118,8 +124,10 @@ int orte_ns_replica_create_jobid(orte_jobid_t *jobid)
 {
     orte_ns_replica_jobid_tracker_t *ptr;
     int rc;
-    size_t index;
+    orte_std_cntr_t index;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     *jobid = ORTE_JOBID_MAX;
@@ -161,9 +169,11 @@ int orte_ns_replica_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                   orte_vpid_t *start)
 {
     orte_ns_replica_jobid_tracker_t **ptr;
-    size_t j;
+    orte_std_cntr_t j;
     orte_jobid_t k;
 
+    OPAL_TRACE(1);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     /* find the jobid */
@@ -197,13 +207,15 @@ PROCESS:
 }
 
 int orte_ns_replica_get_job_peers(orte_process_name_t **procs,
-                                  size_t *num_procs, orte_jobid_t job)
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job)
 {
     orte_ns_replica_jobid_tracker_t **ptr;
     orte_process_name_t *nptr;
-    size_t j;
+    orte_std_cntr_t j;
     orte_jobid_t k;
 
+    OPAL_TRACE_ARG1(1, job);
+    
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
 
     /* find the jobid */
@@ -240,7 +252,7 @@ PROCESS:
         nptr->vpid = (orte_vpid_t)k;
         nptr++;
     }
-    *num_procs = (size_t)ptr[j]->next_vpid;
+    *num_procs = (orte_std_cntr_t)ptr[j]->next_vpid;
 
     OPAL_THREAD_UNLOCK(&orte_ns_replica.mutex);
     return ORTE_SUCCESS;
@@ -273,7 +285,7 @@ int orte_ns_replica_dump_cells(void)
 
 int orte_ns_replica_dump_cells_fn(orte_buffer_t *buffer)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_cellid_t j;
     orte_ns_replica_cell_tracker_t **cell;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
@@ -340,7 +352,7 @@ int orte_ns_replica_dump_jobs(void)
 
 int orte_ns_replica_dump_jobs_fn(orte_buffer_t *buffer)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_cellid_t j;
     orte_ns_replica_jobid_tracker_t **ptr;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
@@ -401,7 +413,8 @@ int orte_ns_replica_dump_tags(void)
 
 int orte_ns_replica_dump_tags_fn(orte_buffer_t *buffer)
 {
-    size_t i, j;
+    orte_std_cntr_t i;
+    orte_rml_tag_t j;
     orte_ns_replica_tagitem_t **ptr;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
     int rc;
@@ -459,7 +472,7 @@ int orte_ns_replica_dump_datatypes(void)
 
 int orte_ns_replica_dump_datatypes_fn(orte_buffer_t *buffer)
 {
-    size_t i, j;
+    orte_std_cntr_t i, j;
     orte_ns_replica_dti_t **ptr;
     char tmp_out[NS_REPLICA_MAX_STRING_SIZE], *tmp;
     int rc;
@@ -501,7 +514,8 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
                                    char *name)
 {
     orte_ns_replica_tagitem_t *tagitem, **tags;
-    size_t i, j;
+    orte_std_cntr_t i;
+    orte_rml_tag_t j;
     int rc;
 
     OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
@@ -527,7 +541,7 @@ int orte_ns_replica_assign_rml_tag(orte_rml_tag_t *tag,
     *tag = ORTE_RML_TAG_MAX;
 
     /* check if tag is available - need to do this since the tag type
-     * is probably not going to be a size_t, so we cannot just rely
+     * is probably not going to be a orte_std_cntr_t, so we cannot just rely
      * on the pointer_array's size limits to protect us. NOTE: need to
      * reserve ORTE_RML_TAG_MAX as an invalid value, so can't let
      * num_tags get there
@@ -571,7 +585,7 @@ int orte_ns_replica_define_data_type(const char *name,
                                      orte_data_type_t *type)
 {
     orte_ns_replica_dti_t **dti, *dtip;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc;
 
     if (NULL == name || 0 < *type) {
@@ -599,7 +613,7 @@ int orte_ns_replica_define_data_type(const char *name,
     *type = ORTE_DSS_ID_MAX;
 
     /* check if id is available - need to do this since the data type
-     * is probably not going to be a size_t, so we cannot just rely
+     * is probably not going to be a orte_std_cntr_t, so we cannot just rely
      * on the pointer_array's size limits to protect us.
       */
     if (ORTE_DSS_ID_MAX-2 < orte_ns_replica.num_dts) {

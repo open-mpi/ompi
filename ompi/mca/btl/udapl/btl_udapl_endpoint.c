@@ -181,7 +181,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
     mca_btl_udapl_addr_t addr;
     mca_btl_udapl_proc_t* proc;
     mca_btl_base_endpoint_t* ep;
-    size_t cnt = 1;
+    int32_t cnt = 1;
     size_t i;
     int rc;
 
@@ -321,7 +321,7 @@ int mca_btl_udapl_endpoint_finish_connect(struct mca_btl_udapl_module_t* btl,
                     ep->endpoint_connection_seq = *connection_seq;
                     ep->endpoint_eager = endpoint;
                     rc = mca_btl_udapl_endpoint_finish_eager(ep);
-                } else if(MCA_BTL_UDAPL_CONN_MAX == ep->endpoint_state) {
+               } else if(MCA_BTL_UDAPL_CONN_MAX == ep->endpoint_state) {
                     /* Check to see order of messages received are in
                      * the same order the actual connections are made.
                      * If they are not we need to swap the eager and

@@ -1,7 +1,7 @@
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University.
  *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
+ * Copyright (c) 2004-2006 The Trustees of the University of Tennessee.
  *                         All rights reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
@@ -24,6 +24,10 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+
+#if defined(__cplusplus) || defined(c_plusplus)
+extern "C" {
+#endif
 
 struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
@@ -91,19 +95,25 @@ struct ompi_osc_pt2pt_module_t {
 
     /** For MPI_Fence synchronization, the number of messages to send
         in epoch.  For Start/Complete, the number of updates for this
-        Complete.  For Post/Wait (poorly named), the number of
-        Complete counters we're waiting for.  For lock, the number of
+        Complete.  For lock, the number of
         messages waiting for completion on on the origin side.  Not
         protected by p2p_lock - must use atomic counter operations. */
     volatile int32_t p2p_num_pending_out;
 
     /** For MPI_Fence synchronization, the number of expected incoming
-        messages.  For Start/Complete, the number of expected Post
         messages.  For Post/Wait, the number of expected updates from
         complete. For lock, the number of messages on the passive side
         we are waiting for.  Not protected by p2p_lock - must use
         atomic counter operations. */
     volatile int32_t p2p_num_pending_in;
+
+    /** Number of "ping" messages from the remote post group we've
+        received */
+    volatile int32_t p2p_num_post_msgs;
+
+    /** Number of "count" messages from the remote complete group
+        we've received */
+    volatile int32_t p2p_num_complete_msgs;
 
     /** cyclic counter for a unique tag for long messages.  Not
         protected by the p2p_lock - must use create_send_tag() to
@@ -140,18 +150,12 @@ struct ompi_osc_pt2pt_module_t {
 };
 typedef struct ompi_osc_pt2pt_module_t ompi_osc_pt2pt_module_t;
 
-
-extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
-
+OMPI_MODULE_DECLSPEC extern ompi_osc_pt2pt_component_t mca_osc_pt2pt_component;
 
 /*
  * Helper macro for grabbing the module structure from a window instance
  */
 #if OMPI_ENABLE_DEBUG
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 static inline ompi_osc_pt2pt_module_t* P2P_MODULE(struct ompi_win_t* win) 
 {
@@ -163,19 +167,9 @@ static inline ompi_osc_pt2pt_module_t* P2P_MODULE(struct ompi_win_t* win)
     return module;
 }
 
-#if defined(c_plusplus) || defined(__cplusplus)
-}
-#endif
-
-
 #else
 #define P2P_MODULE(win) ((ompi_osc_pt2pt_module_t*) win->w_osc_module)
 #endif
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
-
 
 /*
  * Component functions 

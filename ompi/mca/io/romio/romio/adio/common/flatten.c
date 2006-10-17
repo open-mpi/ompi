@@ -1,6 +1,7 @@
-/* -*- Mode: C; c-basic-offset:4 ; -*- */
-/* 
- *   $Id: flatten.c,v 1.22 2005/08/12 18:56:56 thakur Exp $
+/* -*- Mode: C; c-basic-offset:4 ; -*- 
+ *  vim: ts=8 sts=4 sw=4 noexpandtab 
+ *
+ *   $Id: flatten.c,v 1.24 2006/07/05 20:40:13 robl Exp $
  *
  *   Copyright (C) 1997 University of Chicago. 
  *   See COPYRIGHT notice in top-level directory.
@@ -217,7 +218,8 @@ void ADIOI_Flatten(MPI_Datatype datatype, ADIOI_Flatlist_node *flat,
 	    MPI_Type_size(types[0], &old_size);
 	    flat->blocklens[j] = ints[1] * old_size;
 	    for (i=j+1; i<j+top_count; i++) {
-		flat->indices[i] = flat->indices[i-1] + ints[2]*old_size;
+		flat->indices[i] = flat->indices[i-1] + 
+		    (unsigned) ints[2] * (unsigned) old_size;
 		flat->blocklens[i] = flat->blocklens[j];
 	    }
 	    *curr_index = i;
@@ -731,14 +733,17 @@ int ADIOI_Count_contiguous_blocks(MPI_Datatype datatype, int *curr_index)
  * together, resulting in a shorter blocklist (and thus fewer
  * contiguous operations).
  *
- * Q: IS IT SAFE TO REMOVE THE 0-LENGTH BLOCKS TOO?
+ * NOTE: a further optimization would be to remove zero length blocks. However,
+ * we do not do this as parts of the code use the presence of zero length
+ * blocks to indicate UB and LB.  
+ *
  */
 void ADIOI_Optimize_flattened(ADIOI_Flatlist_node *flat_type)
 {
     int i, j, opt_blocks;
     int *opt_blocklens;
     ADIO_Offset *opt_indices;
-    
+
     opt_blocks = 1;
     
     /* save number of noncontiguous blocks in opt_blocks */

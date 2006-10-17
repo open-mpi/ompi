@@ -37,6 +37,6 @@
  *    is not a valid signal-number
  *               
  */
-OMPI_DECLSPEC int opal_util_register_stackhandlers (void);
+OPAL_DECLSPEC int opal_util_register_stackhandlers (void);
 
 #endif /* OMPI_STACKTRACE_H */

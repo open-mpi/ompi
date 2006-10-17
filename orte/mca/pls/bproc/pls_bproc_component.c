@@ -34,7 +34,7 @@
 orte_pls_bproc_component_t mca_pls_bproc_component = {
     {
         {
-        ORTE_PLS_BASE_VERSION_1_0_0,
+        ORTE_PLS_BASE_VERSION_1_3_0,
         "bproc", /* MCA component name */
         ORTE_MAJOR_VERSION,  /* MCA component major version */
         ORTE_MINOR_VERSION,  /* MCA component minor version */
@@ -72,6 +72,7 @@ int orte_pls_bproc_component_open(void) {
     mca_pls_bproc_component.num_procs = 0;
     mca_pls_bproc_component.num_daemons = 0;
     mca_pls_bproc_component.done_launching = false;
+    mca_pls_bproc_component.recv_issued = false;
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
 
@@ -120,7 +121,7 @@ orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
     if(orte_process_info.seed == false)
         return NULL;
 
-    /* okay, we are in a daemon - now check to see if BProc is running here */
+    /* okay, we are in an HNP - now check to see if BProc is running here */
     ret = bproc_version(&version);
     if (ret != 0) {
         return NULL;

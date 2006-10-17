@@ -209,10 +209,12 @@ int mca_base_component_repository_link(const char *src_type,
 void mca_base_component_repository_release(const mca_base_component_t *component)
 {
 #if OMPI_WANT_LIBLTDL
-  repository_item_t *ri = find_component(component->mca_type_name, 
-                                         component->mca_component_name);
-  if (NULL != ri) {
-    OBJ_RELEASE(ri);
+  if (initialized) {
+    repository_item_t *ri = find_component(component->mca_type_name, 
+                                           component->mca_component_name);
+    if (NULL != ri) {
+      OBJ_RELEASE(ri);
+    }
   }
 #endif
 }

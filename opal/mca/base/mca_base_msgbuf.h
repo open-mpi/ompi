@@ -75,7 +75,7 @@ typedef struct mca_base_msgbuffer_s* mca_base_msgbuf_t;
  * unlimited buffer. 
  *
  * Giving a req size just makes it more memory efficient. */
-OMPI_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize);
+OPAL_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize);
 
 /* make a copy of an existing buffer 
  * 
@@ -86,7 +86,7 @@ OMPI_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_new (size_t reqsize);
  *
  * this is usefull for the registry and is needed as unpack is 
  * destructive */
-OMPI_DECLSPEC int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, mca_base_msgbuf_t orgbufid);
+OPAL_DECLSPEC int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, mca_base_msgbuf_t orgbufid);
 
 /* set a buffer to a block of memory so that you do not pack/memory copy
  *
@@ -99,7 +99,7 @@ OMPI_DECLSPEC int  mca_base_msgbuf_copy (mca_base_msgbuf_t* copybufid, mca_base_
  * to pack a buffer but do a send from memory directly 
  * a free on this special buffer just frees its structure not the memory 
  */
-OMPI_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t datasize);
+OPAL_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t datasize);
 
 /* explicit free of a buffer when not auto freeing them 
  * 
@@ -110,7 +110,7 @@ OMPI_DECLSPEC mca_base_msgbuf_t mca_base_msgbuf_construct (void* ptr, size_t dat
  * This routine resets the handle the user passing inso that they can only 
  * free it once
  */
-OMPI_DECLSPEC int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid);
+OPAL_DECLSPEC int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid);
 
 /* pack and non-string typed data 
  *
@@ -124,7 +124,7 @@ OMPI_DECLSPEC int mca_base_msgbuf_free (mca_base_msgbuf_t* bufid);
  * If the buffer fills up, it will automatically resize unless allocated
  * with fixed buffer size.
  */
-OMPI_DECLSPEC int  mca_base_msgbuf_pack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
+OPAL_DECLSPEC int  mca_base_msgbuf_pack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
 
 
 /* unpack non-string typed data 
@@ -141,7 +141,7 @@ OMPI_DECLSPEC int  mca_base_msgbuf_pack (mca_base_msgbuf_t bufid, void* ptr, siz
  * request, the routine will unpack what it can and then return an error.
  * The user is responsible for unpacking a message correctly.
  */
-OMPI_DECLSPEC int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
+OPAL_DECLSPEC int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr, size_t num_items, mca_base_msgbuf_data_t datatype);
 
 /* pack a NULL terminated string 
  *
@@ -153,7 +153,7 @@ OMPI_DECLSPEC int  mca_base_msgbuf_unpack (mca_base_msgbuf_t bufid, void* ptr, s
  * If the buffer fills up, it will automatically resize unless allocated
  * with a fixed buffer size.
  */
-OMPI_DECLSPEC int  mca_base_msgbuf_pack_string (mca_base_msgbuf_t bufid, char* strptr);
+OPAL_DECLSPEC int  mca_base_msgbuf_pack_string (mca_base_msgbuf_t bufid, char* strptr);
 
 /* unpack a NULL terminated string 
  *
@@ -167,7 +167,7 @@ OMPI_DECLSPEC int  mca_base_msgbuf_pack_string (mca_base_msgbuf_t bufid, char* s
  * then the routine truncates the string but always NULL terminates it.
  *
  */
-OMPI_DECLSPEC int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr, size_t maxlen);
+OPAL_DECLSPEC int  mca_base_msgbuf_unpack_string (mca_base_msgbuf_t bufid, char* strptr, size_t maxlen);
 
 
 /* constants */

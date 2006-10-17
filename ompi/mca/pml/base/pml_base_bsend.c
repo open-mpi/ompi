@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -144,8 +144,8 @@ int mca_pml_base_bsend_attach(void* addr, int size)
     }
 
     /* setup local variables */
-    mca_pml_bsend_base = addr;
-    mca_pml_bsend_addr = addr;
+    mca_pml_bsend_base = (unsigned char*)addr;
+    mca_pml_bsend_addr = (unsigned char*)addr;
     mca_pml_bsend_size = size;
     mca_pml_bsend_count = 0;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
@@ -226,7 +226,7 @@ int mca_pml_base_bsend_request_start(ompi_request_t* request)
         /* The convertor is already initialized in the begining so we just have to
          * pack the data in the newly allocated buffer.
          */
-        iov.iov_base = sendreq->req_addr;
+        iov.iov_base = (IOVBASE_TYPE*)sendreq->req_addr;
         iov.iov_len = sendreq->req_bytes_packed;
         iov_count = 1;
         max_data = iov.iov_len;

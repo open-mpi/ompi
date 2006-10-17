@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -37,6 +37,7 @@
 #define ORTE_BITMAP_H
 
 #include "orte_config.h"
+#include "orte/orte_types.h"
 
 #include <string.h>
 
@@ -46,11 +47,12 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 struct orte_bitmap_t {
     opal_object_t super; /**< Subclass of opal_object_t */
     unsigned char *bitmap; /**< The actual bitmap array of characters */
-    size_t array_size;  /**< The actual array size that maintains the bitmap */
-    size_t legal_numbits; /**< The number of bits which are legal (the
+    orte_std_cntr_t array_size;  /**< The actual array size that maintains the bitmap */
+    orte_std_cntr_t legal_numbits; /**< The number of bits which are legal (the
                 actual bitmap may contain more bits, since
                 it needs to be rounded to the nearest
                 char  */
@@ -58,7 +60,7 @@ struct orte_bitmap_t {
 
 typedef struct orte_bitmap_t orte_bitmap_t;
 
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
 
 
 /**
@@ -72,7 +74,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(orte_bitmap_t);
  * @return ORTE error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
+ORTE_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -85,7 +87,7 @@ OMPI_DECLSPEC int orte_bitmap_resize(orte_bitmap_t *bm, size_t bit);
  * @return OMPI error code or success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit);
+ORTE_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -97,7 +99,7 @@ OMPI_DECLSPEC int orte_bitmap_set_bit(orte_bitmap_t *bm, size_t bit);
  * @return ORTE error code if the bit is out of range, else success
  *
  */
-OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit);
+ORTE_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -110,7 +112,7 @@ OMPI_DECLSPEC int orte_bitmap_clear_bit(orte_bitmap_t *bm, size_t bit);
   *         0 if the bit is not set
   *
   */
-OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit);
+ORTE_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, orte_std_cntr_t bit);
 
 
 /**
@@ -121,8 +123,8 @@ OMPI_DECLSPEC int orte_bitmap_is_set_bit(orte_bitmap_t *bm, size_t bit);
 
  * @return err        ORTE_SUCCESS on success
  */
-OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
-                                                           size_t *position);
+ORTE_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
+                                                           orte_std_cntr_t *position);
 
 
 /**
@@ -132,7 +134,7 @@ OMPI_DECLSPEC int orte_bitmap_find_and_set_first_unset_bit(orte_bitmap_t *bm,
  * @return ORTE error code if bm is NULL
  *
  */
-OMPI_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
+ORTE_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
 
 
 /**
@@ -141,7 +143,7 @@ OMPI_DECLSPEC int orte_bitmap_clear_all_bits(orte_bitmap_t *bm);
  * @return ORTE error code if bm is NULL
  *
  */
-OMPI_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
+ORTE_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
 
 
 /**
@@ -154,7 +156,7 @@ OMPI_DECLSPEC int orte_bitmap_set_all_bits(orte_bitmap_t *bm);
  */
 static inline int orte_bitmap_size(orte_bitmap_t *bm)
 {
-    return (NULL == bm) ? 0 : bm->legal_numbits;
+    return (NULL == bm) ? 0 : (int)bm->legal_numbits;
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)

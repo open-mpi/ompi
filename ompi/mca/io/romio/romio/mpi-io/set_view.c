@@ -44,7 +44,7 @@ int MPI_File_set_view(MPI_File mpi_fh, MPI_Offset disp, MPI_Datatype etype,
     ADIO_Offset shared_fp, byte_off;
     ADIO_File fh;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -137,6 +137,13 @@ int MPI_File_set_view(MPI_File mpi_fh, MPI_Offset disp, MPI_Datatype etype,
 
     ADIO_Set_view(fh, disp, etype, filetype, info, &error_code);
 
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS) {
+	error_code = MPIO_Err_return_file(fh, error_code);
+	goto fn_exit;
+    }
+    /* --END ERROR HANDLING-- */
+
     /* reset shared file pointer to zero */
     if ((fh->file_system != ADIO_PIOFS) &&
 	(fh->file_system != ADIO_PVFS) &&
@@ -153,6 +160,10 @@ int MPI_File_set_view(MPI_File mpi_fh, MPI_Offset disp, MPI_Datatype etype,
 	   stored in bytes. */
 
 	ADIO_Set_shared_fp(fh, 0, &error_code);
+	/* --BEGIN ERROR HANDLING-- */
+	if (error_code != MPI_SUCCESS)
+	    error_code = MPIO_Err_return_file(fh, error_code);
+	/* --END ERROR HANDLING-- */
     }
 
     if ((fh->file_system != ADIO_PIOFS) &&
@@ -164,7 +175,7 @@ int MPI_File_set_view(MPI_File mpi_fh, MPI_Offset disp, MPI_Datatype etype,
 
 fn_exit:
     MPIR_Nest_decr();
-    MPID_CS_EXIT();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

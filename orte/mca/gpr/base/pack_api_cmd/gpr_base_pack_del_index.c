@@ -57,7 +57,7 @@ int orte_gpr_base_pack_delete_entries(orte_buffer_t *cmd,
 {
     orte_gpr_cmd_flag_t command;
     char **ptr;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     OPAL_TRACE(3);
@@ -88,7 +88,7 @@ int orte_gpr_base_pack_delete_entries(orte_buffer_t *cmd,
     }
 
     /* pack number of tokens */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         return rc;
     }
 
@@ -110,7 +110,7 @@ int orte_gpr_base_pack_delete_entries(orte_buffer_t *cmd,
     }
 
     /* pack number of keys */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_SIZE))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &n, 1, ORTE_STD_CNTR))) {
         return rc;
     }
 

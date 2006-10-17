@@ -35,9 +35,9 @@ typedef uint8_t orte_data_type_t;  /** data type indicators used in ORTE */
 #define ORTE_DSS_ID_MAX     UINT8_MAX
 #define ORTE_DSS_ID_INVALID ORTE_DSS_ID_MAX
 
-typedef size_t orte_std_cntr_t;  /** standard counters used in ORTE */
-#define ORTE_STD_CNTR_T         ORTE_SIZE
-#define ORTE_STD_CNTR_MAX       SIZE_MAX
+typedef int32_t orte_std_cntr_t;  /** standard counters used in ORTE */
+#define ORTE_STD_CNTR_T         ORTE_INT32
+#define ORTE_STD_CNTR_MAX       INT32_MAX
 #define ORTE_STD_CNTR_INVALID   -1
 
 /* define a structure to hold generic byte objects */
@@ -45,10 +45,6 @@ typedef struct {
     orte_std_cntr_t size;
     uint8_t *bytes;
 } orte_byte_object_t;
-
-/* define the orted command flag type */
-typedef uint16_t orte_daemon_cmd_flag_t;
-#define ORTE_DAEMON_CMD_T   ORTE_UINT16
 
 /**
  * handle differences in iovec
@@ -127,10 +123,16 @@ typedef void* orte_iov_base_ptr_t;
 #define    ORTE_CELL_DESC           (orte_data_type_t)   51 /**< describe attributes of cells */
 #define    ORTE_SLOT_DESC           (orte_data_type_t)   52 /**< describes slot allocations/reservations */
 #define    ORTE_RAS_NODE			(orte_data_type_t)	 53 /**< node information */
+#define    ORTE_JOB_MAP             (orte_data_type_t)   54 /**< map of process locations */
+#define    ORTE_MAPPED_PROC         (orte_data_type_t)   55 /**< process entry on map */
+#define    ORTE_MAPPED_NODE         (orte_data_type_t)   56 /**< node entry on map */
+#define    ORTE_ATTRIBUTE           (orte_data_type_t)   57 /**< attribute used to control framework behavior */
+#define    ORTE_ATTR_LIST           (orte_data_type_t)   58 /**< list of attributes */
+
     /* DAEMON communication type */
-#define    ORTE_DAEMON_CMD          (orte_data_type_t)   54 /**< command flag for communicating with the daemon */
+#define    ORTE_DAEMON_CMD          (orte_data_type_t)   59 /**< command flag for communicating with the daemon */
 
 /* define the starting point for dynamically assigning data types */
-#define ORTE_DSS_ID_DYNAMIC 60
+#define ORTE_DSS_ID_DYNAMIC 70
 
 #endif

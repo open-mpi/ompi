@@ -64,7 +64,9 @@ mca_btl_portals_module_t mca_btl_portals_module = {
         mca_btl_portals_send,
         mca_btl_portals_put,
         mca_btl_portals_get,
-        mca_btl_base_dump
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
     },
 };
 
@@ -425,7 +427,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     ptl_md_t md;
     ptl_handle_me_t me_h;
     int ret;
-    long lb;
+    ptrdiff_t lb;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
 

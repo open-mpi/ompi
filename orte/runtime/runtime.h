@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -69,18 +69,22 @@
 extern "C" {
 #endif
 
-    /* globals used by RTE - instanced in orte_init.c */
+/* globals used by RTE - instanced in orte_init.c */
 
-    OMPI_DECLSPEC extern int orte_debug_flag;
+    ORTE_DECLSPEC extern int orte_debug_flag;
 
     /**
-     * Abort the current application with a pretty-print error message
+     * Abort the current application
      *
-     * Aborts currently running application with \code abort(), pretty
-     * printing an error message if possible.  Error message should be
-     * specified using the standard \code printf() format.
+     * Aborts currently running application, NOTE: We do NOT call the
+     * regular C-library "abort" function, even
+     * though that would have alerted us to the fact that this is
+     * an abnormal termination, because it would automatically cause
+     * a core file to be generated. The "report" flag indicates if the
+     * function should create an appropriate file to alert the local
+     * orted that termination was abnormal.
      */
-OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
+ORTE_DECLSPEC    int orte_abort(int status, bool report);
 
 
     /**
@@ -95,10 +99,10 @@ OMPI_DECLSPEC    int orte_abort(int status, char *fmt, ...);
      * @param infrastructure Whether we are ORTE infrastructure or an ORTE 
      * application
      */
-OMPI_DECLSPEC    int orte_init(bool infrastructure);
-OMPI_DECLSPEC    int orte_system_init(bool infrastructure);
-OMPI_DECLSPEC    int orte_init_stage1(bool infrastructure);
-OMPI_DECLSPEC    int orte_init_stage2(void);
+ORTE_DECLSPEC    int orte_init(bool infrastructure);
+ORTE_DECLSPEC    int orte_system_init(bool infrastructure);
+ORTE_DECLSPEC    int orte_init_stage1(bool infrastructure);
+ORTE_DECLSPEC    int orte_init_stage2(void);
 
     /**
      * Initialize parameters for ORTE.
@@ -106,34 +110,34 @@ OMPI_DECLSPEC    int orte_init_stage2(void);
      * @retval ORTE_SUCCESS Upon success.
      * @retval ORTE_ERROR Upon failure.
      */
-OMPI_DECLSPEC    int orte_register_params(bool infrastructure);
+ORTE_DECLSPEC    int orte_register_params(bool infrastructure);
 
     /**
      * Re-init the Open run time environment.
      *
      * Restart selected components with a new process name.
      */
-OMPI_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
+ORTE_DECLSPEC    int orte_restart(orte_process_name_t* name, const char* uri);
 
     /**
      * Finalize the Open run time environment. Any function calling \code
      * orte_init should call \code orte_finalize. 
      *
      */
-OMPI_DECLSPEC    int orte_finalize(void);
-OMPI_DECLSPEC    int orte_system_finalize(void);
+ORTE_DECLSPEC    int orte_finalize(void);
+ORTE_DECLSPEC    int orte_system_finalize(void);
 
-    /*
-     * Change state as processes complete registration/unregistration
-     */
+/*
+ * Change state as processes complete registration/unregistration
+ */
 
-OMPI_DECLSPEC    void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata);
+ORTE_DECLSPEC    void orte_all_procs_registered(orte_gpr_notify_message_t* match, void* cbdata);
 
-OMPI_DECLSPEC    void orte_all_procs_unregistered(orte_gpr_notify_message_t* match, void* cbdata);
+ORTE_DECLSPEC    void orte_all_procs_unregistered(orte_gpr_notify_message_t* match, void* cbdata);
 
-OMPI_DECLSPEC	 int orte_monitor_procs_registered(void);
+ORTE_DECLSPEC	 int orte_monitor_procs_registered(void);
 
-OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
+ORTE_DECLSPEC    int orte_monitor_procs_unregistered(void);
 
     /**
      * Obtain a listing of all the universes on the machine
@@ -144,7 +148,7 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval ORTE_SUCCESS Upon successful search.
      * @retval ORTE_ERROR Upon unsuccessful search.
      */
-    OMPI_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
+    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
 
     /**
      * Check for universe existence
@@ -166,17 +170,17 @@ OMPI_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval OMPI_CONNECTION_REFUSED Universe found and contact made, but
      * universe refused to allow connection.
      */
-OMPI_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
+ORTE_DECLSPEC    int orte_universe_exists(orte_universe_t *univ);
 
     /**
      * Setup I/O forwarding.
      */
-OMPI_DECLSPEC   int ompi_rte_init_io(void);
+ORTE_DECLSPEC   int ompi_rte_init_io(void);
 
     /**
      * Establish a Head Node Process on a cluster's front end
      */
-OMPI_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
+ORTE_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

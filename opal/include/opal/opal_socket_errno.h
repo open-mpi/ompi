@@ -50,7 +50,7 @@
 #define ENETDOWN          WSAENETDOWN        
 #define ENETUNREACH       WSAENETUNREACH     
 #define ENETRESET         WSAENETRESET       
-#define ECONNABOPALD      WSAECONNABOPALD    
+#define ECONNABORTED      WSAECONNABORTED    
 #define ECONNRESET        WSAECONNRESET      
 #define ENOBUFS           WSAENOBUFS         
 #define EISCONN           WSAEISCONN         
@@ -103,7 +103,7 @@ static __inline int opal_get_socket_errno(void) {
       case WSAENETDOWN: return ENETDOWN;       
       case WSAENETUNREACH: return ENETUNREACH;      
       case WSAENETRESET: return ENETRESET;      
-      case WSAECONNABOPALD: return ECONNABOPALD;     
+      case WSAECONNABORTED: return ECONNABORTED;     
       case WSAECONNRESET: return ECONNRESET;      
       case WSAENOBUFS: return ENOBUFS;         
       case WSAEISCONN: return EISCONN;         

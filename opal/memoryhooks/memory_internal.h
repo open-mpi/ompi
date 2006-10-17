@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,8 +30,8 @@ extern "C" {
 
 void opal_mem_hooks_set_support(int support);
 
-void opal_mem_hooks_release_hook(void *buf, size_t length, int from_alloc);
-void opal_mem_hooks_alloc_hook(void *buf, size_t length, int from_alloc);
+void opal_mem_hooks_release_hook(void *buf, size_t length, bool from_alloc);
+void opal_mem_hooks_alloc_hook(void *buf, size_t length, bool from_alloc);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

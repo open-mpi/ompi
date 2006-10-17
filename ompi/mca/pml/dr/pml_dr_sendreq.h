@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,7 +30,6 @@
 #include "ompi/mca/bml/bml.h" 
 #include "ompi/mca/btl/btl.h"
 
-#include "pml_dr_proc.h"
 #include "pml_dr_comm.h"
 #include "pml_dr_hdr.h"
 #include "pml_dr_vfrag.h"
@@ -64,7 +63,6 @@ struct mca_pml_dr_send_request_t {
 };
 typedef struct mca_pml_dr_send_request_t mca_pml_dr_send_request_t;
 
-
 OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
 
 
@@ -74,8 +72,7 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
     sendreq,                                                               \
     rc)                                                                    \
 {                                                                          \
-    ompi_proc_t *proc =                                                    \
-         comm->c_pml_procs[dst]->proc_ompi;                                \
+    ompi_proc_t *proc = ompi_comm_peer_lookup( comm, dst );                \
     ompi_free_list_item_t* item;                                           \
                                                                            \
     if(NULL == proc) {                                                     \
@@ -85,6 +82,8 @@ OBJ_CLASS_DECLARATION(mca_pml_dr_send_request_t);
         OMPI_FREE_LIST_WAIT(&mca_pml_dr.send_requests, item, rc);          \
         sendreq = (mca_pml_dr_send_request_t*)item;                        \
         sendreq->req_send.req_base.req_proc = proc;                        \
+        opal_list_append(&mca_pml_dr.send_active,                          \
+                         (opal_list_item_t*) sendreq);                     \
     }                                                                      \
 }
 
@@ -117,12 +116,12 @@ do {                                                                            
     (sendreq)->req_send.req_base.req_peer = (int32_t)peer;                          \
     (sendreq)->req_send.req_base.req_tag = (int32_t)tag;                            \
     (sendreq)->req_send.req_base.req_comm = comm;                                   \
-    (sendreq)->req_send.req_base.req_pml_complete = (persistent ? true : false);    \
+    (sendreq)->req_send.req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent);    \
     (sendreq)->req_send.req_base.req_free_called = false;                           \
     (sendreq)->req_send.req_base.req_ompi.req_status._cancelled = 0;                \
                                                                                     \
     /* initialize datatype convertor for this request */                            \
-/*     if(count > 0) {      */                                                            \
+/*     if(count > 0) {      */                                                      \
         /* We will create a convertor specialized for the        */                 \
         /* remote architecture and prepared with the datatype.   */                 \
         ompi_convertor_copy_and_prepare_for_send(                                   \
@@ -134,9 +133,9 @@ do {                                                                            
                             &(sendreq)->req_send.req_convertor );                   \
         ompi_convertor_get_packed_size(&(sendreq)->req_send.req_convertor,          \
                                        &((sendreq)->req_send.req_bytes_packed) );   \
-   /*  } else {   */                                                                      \
-   /*       (sendreq)->req_send.req_bytes_packed = 0;   */                                \
-   /*  }  */                                                                              \
+   /*  } else {   */                                                                \
+   /*       (sendreq)->req_send.req_bytes_packed = 0;   */                          \
+   /*  }  */                                                                        \
 } while(0)
 
 
@@ -240,6 +239,8 @@ do {                                                                            
 #define MCA_PML_DR_SEND_REQUEST_PML_COMPLETE(sendreq)                               \
 do {                                                                                \
     assert( false == sendreq->req_send.req_base.req_pml_complete );                 \
+    opal_list_remove_item(&mca_pml_dr.send_active,                                  \
+                          (opal_list_item_t*) sendreq);                             \
     if (sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED &&            \
         sendreq->req_send.req_addr != sendreq->req_send.req_base.req_addr) {        \
         mca_pml_base_bsend_request_fini((ompi_request_t*)sendreq);                  \
@@ -352,6 +353,8 @@ do {                                                                  \
         OPAL_THREAD_UNLOCK(&ompi_request_lock);                       \
         if(NULL == sendreq)                                           \
             break;                                                    \
+        opal_list_append(&mca_pml_dr.send_active,                     \
+                         (opal_list_item_t*) sendreq);                \
         mca_pml_dr_send_request_schedule(sendreq);                    \
     }                                                                 \
 } while (0)

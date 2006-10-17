@@ -54,8 +54,10 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
         NULL, /* put */
-        NULL, /* get */ 
-        mca_btl_base_dump 
+        NULL, /* get */
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
     }
 };
 

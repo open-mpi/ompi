@@ -45,8 +45,8 @@ extern "C" {
  * Well known addresses
  */
 
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_any;
-OMPI_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_any;
+ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
 
 
 /*
@@ -331,12 +331,6 @@ typedef int (*orte_rml_module_recv_cancel_fn_t)(orte_process_name_t* peer, orte_
  */
 
 /**
- * A barrier across all processes w/in the job.
- */
-
-typedef int (*orte_rml_module_barrier_fn_t)(void);
-
-/**
  * xcast function for sending common messages to all processes
  */
 
@@ -402,7 +396,6 @@ struct orte_rml_module_t {
     orte_rml_module_recv_buffer_fn_t     recv_buffer;
     orte_rml_module_recv_buffer_nb_fn_t  recv_buffer_nb;
     orte_rml_module_recv_cancel_fn_t     recv_cancel;
-    orte_rml_module_barrier_fn_t         barrier;
     orte_rml_module_xcast_fn_t           xcast;
     orte_rml_module_exception_fn_t       add_exception_handler;
     orte_rml_module_exception_fn_t       del_exception_handler;
@@ -440,7 +433,7 @@ typedef struct orte_rml_component_1_0_0_t orte_rml_component_t;
  * This is the RML instance that all functions are called through.
  */
 
-OMPI_DECLSPEC extern orte_rml_module_t orte_rml;
+ORTE_DECLSPEC extern orte_rml_module_t orte_rml;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

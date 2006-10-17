@@ -358,16 +358,16 @@ static OBJ_CLASS_INSTANCE(opal_ptr_hash_node_t,
 
 
 static inline uint32_t opal_hash_value(size_t mask, const void *key,
-                                       uint32_t keysize)
+                                       size_t keysize)
 {
-    uint32_t h, i;
+    size_t h, i;
     const unsigned char *p;
     
     h = 0;
     p = (const unsigned char *)key;
     for (i = 0; i < keysize; i++, p++)
         h = HASH_MULTIPLIER*h + *p;
-    return (h & mask);
+    return (uint32_t)(h & mask);
 }
 
 int opal_hash_table_get_value_ptr(opal_hash_table_t* ht, const void* key,

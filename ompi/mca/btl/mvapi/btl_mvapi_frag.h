@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -32,7 +32,6 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t);
 
 struct mca_btl_mvapi_header_t {
     mca_btl_base_tag_t tag;
@@ -100,8 +99,8 @@ struct mca_btl_mvapi_frag_t {
     ompi_free_list_t* my_list;
 }; 
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_frag_t; 
-OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t); 
 
+OBJ_CLASS_DECLARATION(mca_btl_mvapi_frag_t);
 
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_send_frag_eager_t; 
     
@@ -122,9 +121,6 @@ OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_eager_t);
 typedef struct mca_btl_mvapi_frag_t mca_btl_mvapi_recv_frag_max_t; 
     
 OBJ_CLASS_DECLARATION(mca_btl_mvapi_recv_frag_max_t); 
-
-
-    
 
 /*
  * Allocate an IB send descriptor

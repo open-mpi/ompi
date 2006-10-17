@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -117,7 +117,7 @@ int ompi_comm_nextcid ( ompi_communicator_t* newcomm,
     int nextcid;
     int done=0;
     int response=0, glresponse=0;
-    int flag;
+    bool flag;
     int start=ompi_mpi_communicators.lowest_free;
     int i;
     
@@ -634,7 +634,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
     int rc;
     int local_leader, local_rank;
     orte_process_name_t *remote_leader=NULL;
-    size_t size_count;
+    orte_std_cntr_t size_count;
     
     local_leader  = (*((int*)lleader));
     remote_leader = (orte_process_name_t*)rleader;
@@ -665,7 +665,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         sbuf = OBJ_NEW(orte_buffer_t);
         rbuf = OBJ_NEW(orte_buffer_t);
         
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, tmpbuf, count, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, tmpbuf, (orte_std_cntr_t)count, ORTE_INT))) {
             goto exit;
         }
 
@@ -683,9 +683,7 @@ static int ompi_comm_allreduce_intra_oob (int *inbuf, int *outbuf,
         }
         OBJ_RELEASE(sbuf);
         OBJ_RELEASE(rbuf);
-        if (ORTE_SUCCESS != (rc = opal_size2int(size_count, &count, true))) {
-            goto exit;
-        }
+        count = (int)size_count;
 
         if ( &ompi_mpi_op_max == op ) {
             for ( i = 0 ; i < count; i++ ) {

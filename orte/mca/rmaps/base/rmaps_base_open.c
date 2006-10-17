@@ -25,6 +25,10 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/output.h"
 
+#include "orte/dss/dss.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
 
 
@@ -38,18 +42,24 @@
 
 
 /*
- * Local functions
- */
-static void cmp_constructor(orte_rmaps_base_cmp_t *cmp);
-static void cmp_destructor(orte_rmaps_base_cmp_t *cmp);
-static int compare(opal_list_item_t **a, opal_list_item_t **b);
-
-/*
  * Global variables
  */
 orte_rmaps_base_t orte_rmaps_base;
-OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, opal_list_item_t,
-                   cmp_constructor, cmp_destructor);
+
+/*
+ * Declare the RMAPS module to hold the API function pointers
+ */
+orte_rmaps_base_module_t orte_rmaps = {
+    orte_rmaps_base_map_job,
+    orte_rmaps_base_get_job_map,
+    orte_rmaps_base_get_node_map,
+    orte_rmaps_base_finalize
+};
+
+/*
+ * Include all the RMAPS class instance declarations
+ */
+#include "orte/mca/rmaps/base/rmaps_class_instances.h"
 
 
 /**
@@ -58,13 +68,9 @@ OBJ_CLASS_INSTANCE(orte_rmaps_base_cmp_t, opal_list_item_t,
  */
 int orte_rmaps_base_open(void)
 {
-    opal_list_item_t *item;
-    mca_base_component_list_item_t *cli;
-    orte_rmaps_base_component_t *component;
-    orte_rmaps_base_module_t *module;
-    int param, priority, value;
-    orte_rmaps_base_cmp_t *cmp;
+    int param, rc, value;
     char *policy;
+    orte_data_type_t tmp;
 
     /* Debugging / verbose output */
 
@@ -82,10 +88,24 @@ int orte_rmaps_base_open(void)
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot | node]",
                                            false, false, "slot", &policy);
+    
+    opal_output(orte_rmaps_base.rmaps_output, "Scheduling policy: %s", policy);
+    
     if (0 == strcmp(policy, "node")) {
-        mca_base_param_set_string(param, "node");
+        orte_rmaps_base.bynode = true;
+    } else {
+        orte_rmaps_base.bynode = false;
     }
 
+    /* Do we want one ppn if num_procs not specified */
+    param = mca_base_param_reg_int_name("rmaps", "base_pernode",
+                                        "Request one ppn if num procs not specified",
+                                        false, false, 0, &value);
+
+    if ((int)true == value) {
+        orte_rmaps_base.per_node = true;
+    }
+    
     /* Should we schedule on the local node or not? */
 
     mca_base_param_reg_int_name("rmaps", "base_schedule_local",
@@ -103,9 +123,51 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.oversubscribe = false;
     }
     
+    /** register the base system types with the DSS */
+    tmp = ORTE_JOB_MAP;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_map,
+                                                     orte_rmaps_base_unpack_map,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_map,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_map,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_map,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_map,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_JOB_MAP", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_MAPPED_PROC;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_mapped_proc,
+                                                     orte_rmaps_base_unpack_mapped_proc,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_mapped_proc,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_mapped_proc,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_mapped_proc,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_mapped_proc,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_MAPPED_PROC", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    tmp = ORTE_MAPPED_NODE;
+    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_mapped_node,
+                                                     orte_rmaps_base_unpack_mapped_node,
+                                                     (orte_dss_copy_fn_t)orte_rmaps_base_copy_mapped_node,
+                                                     (orte_dss_compare_fn_t)orte_rmaps_base_compare_mapped_node,
+                                                     (orte_dss_size_fn_t)orte_rmaps_base_size_mapped_node,
+                                                     (orte_dss_print_fn_t)orte_rmaps_base_print_mapped_node,
+                                                     (orte_dss_release_fn_t)orte_rmaps_base_std_obj_release,
+                                                     ORTE_DSS_STRUCTURED,
+                                                     "ORTE_MAPPED_NODE", &tmp))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     
     /* Open up all the components that we can find */
-
     if (ORTE_SUCCESS != 
         mca_base_components_open("rmaps", orte_rmaps_base.rmaps_output,
                                  mca_rmaps_base_static_components, 
@@ -113,79 +175,7 @@ int orte_rmaps_base_open(void)
        return ORTE_ERROR;
     }
 
-    /* Query all the opened components and see if they want to run */
-
-    OBJ_CONSTRUCT(&orte_rmaps_base.rmaps_available, opal_list_t);
-    for (item = opal_list_get_first(&orte_rmaps_base.rmaps_opened); 
-         opal_list_get_end(&orte_rmaps_base.rmaps_opened) != item; 
-         item = opal_list_get_next(item)) {
-        cli = (mca_base_component_list_item_t *) item;
-        component = (orte_rmaps_base_component_t *) cli->cli_component;
-        opal_output(orte_rmaps_base.rmaps_output,
-                    "orte:base:open: querying component %s", 
-                    component->rmaps_version.mca_component_name);
-
-        /* Call the component's init function and see if it wants to be
-           selected */
-
-        module = component->rmaps_init(&priority);
-
-        /* If we got a non-NULL module back, then the component wants
-           to be considered for selection */
-
-        if (NULL != module) {
-            opal_output(orte_rmaps_base.rmaps_output,
-                        "orte:base:open: component %s returns priority %d", 
-                        component->rmaps_version.mca_component_name,
-                        priority);
-
-            cmp = OBJ_NEW(orte_rmaps_base_cmp_t);
-            cmp->component = component;
-            cmp->module = module;
-            cmp->priority = priority;
-
-            opal_list_append(&orte_rmaps_base.rmaps_available, &cmp->super);
-        } else {
-            opal_output(orte_rmaps_base.rmaps_output,
-                        "orte:base:open: component %s does NOT want to be considered for selection", 
-                        component->rmaps_version.mca_component_name);
-        }
-    }
-
-    /* Sort the resulting available list in priority order */
-
-    opal_list_sort(&orte_rmaps_base.rmaps_available, compare);
-
     /* All done */
 
     return ORTE_SUCCESS;
-}
-
-
-static void cmp_constructor(orte_rmaps_base_cmp_t *cmp)
-{
-    cmp->component = NULL;
-    cmp->module = NULL;
-    cmp->priority = -1;
-}
-
-
-static void cmp_destructor(orte_rmaps_base_cmp_t *cmp)
-{
-    cmp_constructor(cmp);
-}
-
-
-static int compare(opal_list_item_t **a, opal_list_item_t **b)
-{
-    orte_rmaps_base_cmp_t *aa = *((orte_rmaps_base_cmp_t **) a);
-    orte_rmaps_base_cmp_t *bb = *((orte_rmaps_base_cmp_t **) b);
-
-    if (aa->priority > bb->priority) {
-        return 1;
-    } else if (aa->priority == bb->priority) {
-        return 0;
-    } else {
-        return -1;
-    }
 }

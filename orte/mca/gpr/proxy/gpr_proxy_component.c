@@ -305,7 +305,7 @@ int orte_gpr_proxy_module_init(void)
  */
 int orte_gpr_proxy_finalize(void)
 {
-    size_t i;
+    orte_std_cntr_t i;
     orte_gpr_subscription_id_t j;
     orte_gpr_trigger_id_t k;
     orte_gpr_proxy_subscriber_t **lsubs;
@@ -365,7 +365,7 @@ void orte_gpr_proxy_notify_recv(int status, orte_process_name_t* sender,
 {
     orte_gpr_cmd_flag_t command;
     orte_gpr_notify_message_t *msg;
-    size_t n;
+    orte_std_cntr_t n;
     int rc;
 
     n = 1;

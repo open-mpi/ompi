@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -61,12 +61,13 @@ static int mca_pml_ob1_recv_request_free(struct ompi_request_t** request)
 
     OPAL_THREAD_LOCK(&ompi_request_lock);
     recvreq->req_recv.req_base.req_free_called = true;
-    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
-        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
-    }
 
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_NOTIFY,
                              &(recvreq->req_recv.req_base), PERUSE_RECV );
+
+    if( true == recvreq->req_recv.req_base.req_pml_complete ) {
+        MCA_PML_OB1_RECV_REQUEST_RETURN( recvreq );
+    }
 
     OPAL_THREAD_UNLOCK(&ompi_request_lock);
 
@@ -121,16 +122,11 @@ static void mca_pml_ob1_recv_request_construct(mca_pml_ob1_recv_request_t* reque
     request->req_rdma_cnt = 0;
 }
 
-static void mca_pml_ob1_recv_request_destruct(mca_pml_ob1_recv_request_t* request)
-{
-}
-
-
 OBJ_CLASS_INSTANCE(
     mca_pml_ob1_recv_request_t,
     mca_pml_base_recv_request_t,
     mca_pml_ob1_recv_request_construct,
-    mca_pml_ob1_recv_request_destruct);
+    NULL);
 
 
 /*
@@ -256,7 +252,7 @@ static int mca_pml_ob1_recv_request_ack(
            hdr->hdr_match.hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_CONTIG) {
             recvreq->req_rdma_cnt = mca_pml_ob1_rdma_btls(
                 bml_endpoint,
-                recvreq->req_recv.req_base.req_addr,
+                (unsigned char*)recvreq->req_recv.req_base.req_addr,
                 recvreq->req_recv.req_bytes_packed,
                 recvreq->req_rdma);
 
@@ -274,7 +270,7 @@ static int mca_pml_ob1_recv_request_ack(
                        mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
                 char* base;
                 char* align;
-                long lb;
+                ptrdiff_t lb;
                 
                 /* round this up/down to the next aligned address */
                 ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc, &lb);
@@ -328,7 +324,7 @@ static void mca_pml_ob1_rget_completion(
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
-    mca_pml_ob1_recv_request_t* recvreq = frag->rdma_req;
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
 
     /* check completion status */
     if(OMPI_SUCCESS != status) {
@@ -363,7 +359,7 @@ static void mca_pml_ob1_rget_completion(
 int mca_pml_ob1_recv_request_get_frag(
         mca_pml_ob1_rdma_frag_t* frag)
 {
-    mca_pml_ob1_recv_request_t* recvreq = frag->rdma_req;
+    mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)frag->rdma_req;
     mca_bml_base_endpoint_t* bml_endpoint = frag->rdma_ep;
     mca_bml_base_btl_t* bml_btl;
     mca_btl_base_descriptor_t* descriptor;
@@ -381,7 +377,7 @@ int mca_pml_ob1_recv_request_get_frag(
     /* is there an existing registration for this btl */
     reg = mca_pml_ob1_rdma_registration(
         bml_btl, 
-        recvreq->req_recv.req_base.req_addr,
+        (unsigned char*)recvreq->req_recv.req_base.req_addr,
         recvreq->req_recv.req_bytes_packed);
     if(NULL != reg) {
          recvreq->req_rdma[0].bml_btl = bml_btl; 
@@ -636,25 +632,24 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             int rc;
             bool release = false;
                
-            if(prev_bytes_remaining == bytes_remaining)
-                num_fail++;
-            else
-                num_fail = 0;
-
-            prev_bytes_remaining = bytes_remaining;
-
-            if(num_fail == num_tries) {
-                OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-                if(false == recvreq->req_pending) {
-                    opal_list_append(&mca_pml_ob1.recv_pending,
-                            (opal_list_item_t*)recvreq);
-                    recvreq->req_pending = true;
+            if(prev_bytes_remaining == bytes_remaining) {
+                if( ++num_fail == num_tries ) {
+                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+                    if(false == recvreq->req_pending) {
+                        opal_list_append(&mca_pml_ob1.recv_pending,
+                                (opal_list_item_t*)recvreq);
+                        recvreq->req_pending = true;
+                    }
+                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+                    return OMPI_ERR_OUT_OF_RESOURCE;
                 }
-                OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-                return OMPI_ERR_OUT_OF_RESOURCE;
+            } else {
+                num_fail = 0;
+                prev_bytes_remaining = bytes_remaining;
             }
+
             ompi_convertor_set_position(&recvreq->req_recv.req_convertor,
-                    &recvreq->req_rdma_offset);
+                                        &recvreq->req_rdma_offset);
 
             if(recvreq->req_rdma_cnt) {
                 /*
@@ -701,9 +696,8 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
 
             if(0 == recvreq->req_rdma_cnt) {
                 char* base; 
-                long lb;
+                ptrdiff_t lb;
 
-                    
                 if(mca_pml_ob1.leave_pinned_pipeline) { 
                     /* lookup and/or create a cached registration */ 
                     ompi_ddt_type_lb(recvreq->req_recv.req_convertor.pDesc,
@@ -792,7 +786,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             }
 
             /* run progress as the prepare (pinning) can take some time */
-            /* mca_pml_ob1_progress(); */
+            mca_bml.bml_progress();
         }
     } while(OPAL_THREAD_ADD32(&recvreq->req_lock,-1) > 0);
 
@@ -844,7 +838,7 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 
     /* We didn't find any matches.  Record this irecv so we can match 
      * it when the message comes in.
-    */
+     */
     if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_IPROBE) { 
         opal_list_append(&proc->specific_receives, (opal_list_item_t*)request);
         if(request->req_recv.req_base.req_type != MCA_PML_REQUEST_PROBE) {
@@ -977,7 +971,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
     }
     return NULL;
  find_fragment:
-    request->req_recv.req_base.req_proc = proc->proc_ompi;
+    request->req_recv.req_base.req_proc = proc->ompi_proc;
     if( !((MCA_PML_REQUEST_IPROBE == request->req_recv.req_base.req_type) ||
           (MCA_PML_REQUEST_PROBE == request->req_recv.req_base.req_type)) ) {
         PERUSE_TRACE_MSG_EVENT( PERUSE_COMM_MSG_REMOVE_FROM_UNEX_Q,

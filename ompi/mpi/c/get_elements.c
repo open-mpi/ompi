@@ -34,7 +34,8 @@ static const char FUNC_NAME[] = "MPI_Get_elements";
 
 int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count) 
 {
-   int size, i;
+   int i;
+   size_t size;
 
    if (MPI_PARAM_CHECK) {
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);

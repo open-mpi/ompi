@@ -24,24 +24,50 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/rds/base/rds_private.h"
 #include "orte/mca/rds/base/base.h"
 
 
 int orte_rds_base_finalize(void)
 {
     opal_list_item_t* item;
+    int rc;
 
+    /* if we are using the "null" component, then do nothing */
+    if (orte_rds_base.no_op_selected) {
+        return ORTE_SUCCESS;
+    }
+    
     /* Finalize all selected modules */
     while((item = opal_list_remove_first(&orte_rds_base.rds_selected)) != NULL) {
         orte_rds_base_selected_t* selected = (orte_rds_base_selected_t*)item;
-        selected->module->finalize();
+        selected->component->rds_fini();
         OBJ_RELEASE(selected);
     }
+
+    /* if we are an HNP, then cancel our receive */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_rds_base_comm_stop())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+
+    
     return ORTE_SUCCESS;
 }
     
 int orte_rds_base_close(void)
 {
+    /* if we are using the "null" component, then do nothing */
+    if (orte_rds_base.no_op_selected) {
+        return ORTE_SUCCESS;
+    }
+
     /* Close all remaining available components (may be one if this is a
        Open RTE program, or [possibly] multiple if this is ompi_info) */
 

@@ -19,6 +19,10 @@
 
 #include "ompi_config.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
+
 #include "mpi.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/paffinity/base/base.h"
@@ -41,8 +45,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/schema/schema.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "ompi/constants.h"
@@ -102,7 +105,7 @@ bool ompi_mpi_maffinity_setup = false;
  * corresponding dummy function that is invoked from this function).
  *
  * Additionally, there can be/are strange linking paths such that
- * ompi_info needs symbols symbols such as ompi_fortran_status_ignore,
+ * ompi_info needs symbols such as ompi_fortran_status_ignore,
  * which, if they weren't here with a collection of other global
  * symbols that are initialized (which seems to force this .o file to
  * be pulled into the resolution process, because ompi_info certainly
@@ -203,6 +206,9 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     size_t nprocs;
     char *error = NULL;
     bool compound_cmd = false;
+    bool timing = false;
+    int param, value;
+    struct timeval ompistart, ompistop;
 
     /* Join the run-time environment - do the things that don't hit
        the registry */
@@ -212,6 +218,19 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
+    /* check to see if we want timing information */
+    param = mca_base_param_reg_int_name("orte", "timing",
+                                        "Request that critical timing loops be measured",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        timing = true;
+        if (0 != gettimeofday(&ompistart, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain start time");
+            ompistart.tv_sec = 0;
+            ompistart.tv_usec = 0;
+        }
+    }
+    
     /* Setup ORTE stage 1, note that we are not infrastructre  */
     
     if (ORTE_SUCCESS != (ret = orte_init_stage1(false))) {
@@ -475,13 +494,29 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     }
     
     /* Let system know we are at STG1 Barrier */
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG1, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "set process state failed";
         goto error;
     }
 
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (timing) {
+        if (0 != gettimeofday(&ompistop, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain stop time");
+        } else {
+            opal_output(0, "ompi_mpi_init: time from start to exec_compound_cmd %ld sec %ld usec",
+                        (long int)(ompistop.tv_sec - ompistart.tv_sec),
+                        (long int)(ompistop.tv_usec - ompistart.tv_usec));
+            if (0 != gettimeofday(&ompistart, NULL)) {
+                opal_output(0, "ompi_mpi_init: could not obtain new start time");
+                ompistart.tv_sec = ompistop.tv_sec;
+                ompistart.tv_usec = ompistop.tv_usec;
+            }
+        }
+    }
+    
     /* if the compound command is operative, execute it */
 
     if (compound_cmd) {
@@ -492,7 +527,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         }
     }
 
-     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (timing) {
+        if (0 != gettimeofday(&ompistop, NULL)) {
+            opal_output(0, "ompi_mpi_init: could not obtain stop time after compound_cmd");
+        } else {
+            opal_output(0, "ompi_mpi_init: time to exec_compound_cmd %ld sec %ld usec",
+                        (long int)(ompistop.tv_sec - ompistart.tv_sec),
+                        (long int)(ompistop.tv_usec - ompistart.tv_usec));
+        }
+    }
+    
+    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
                                  orte_gpr.deliver_notify_msg, NULL))) {
         ORTE_ERROR_LOG(ret);
@@ -585,7 +631,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* Let system know we are at STG2 Barrier */
 
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG2, 0))) {
         ORTE_ERROR_LOG(ret);
         error = "set process state failed";

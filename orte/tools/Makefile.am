@@ -21,13 +21,19 @@
 # This makefile.am does not stand on its own - it is included from orte/Makefile.am
 
 SUBDIRS += \
+	tools/console \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers
+	tools/wrappers \
+	tools/orte-ps \
+	tools/orte-clean
 
 DIST_SUBDIRS += \
+	tools/console \
 	tools/orted \
 	tools/orteprobe \
 	tools/orterun \
-	tools/wrappers
+	tools/wrappers \
+	tools/orte-ps \
+	tools/orte-clean

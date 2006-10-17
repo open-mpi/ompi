@@ -46,7 +46,7 @@ mca_btl_template_module_t mca_btl_template_module = {
         0, /* flags */
         mca_btl_template_add_procs,
         mca_btl_template_del_procs,
-        mca_btl_template_register, 
+        mca_btl_template_register,
         mca_btl_template_finalize,
         mca_btl_template_alloc, 
         mca_btl_template_free, 
@@ -54,7 +54,10 @@ mca_btl_template_module_t mca_btl_template_module = {
         mca_btl_template_prepare_dst,
         mca_btl_template_send,
         mca_btl_template_put,
-        NULL /* get */ 
+        NULL, /* get */ 
+        NULL, /*dump */
+        NULL, /* mpool */
+        NULL /* register error cb */
     }
 };
 

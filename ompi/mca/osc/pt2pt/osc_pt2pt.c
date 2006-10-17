@@ -19,6 +19,7 @@
 #include "osc_pt2pt.h"
 #include "osc_pt2pt_sendreq.h"
 
+#include "opal/runtime/opal_progress.h"
 #include "opal/threads/mutex.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
@@ -31,6 +32,10 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
     int ret = OMPI_SUCCESS;
     int tmp;
     ompi_osc_pt2pt_module_t *module = P2P_MODULE(win);
+
+    while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
+        opal_progress();
+    }
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {

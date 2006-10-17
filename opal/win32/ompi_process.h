@@ -28,9 +28,9 @@ extern "C"
 {
 #endif
 
-OMPI_DECLSPEC pid_t waitpid (pid_t pid, int *status, int options) ;
+OPAL_DECLSPEC pid_t waitpid (pid_t pid, int *status, int options) ;
 
-OMPI_DECLSPEC int kill(pid_t pid, int sig) ;
+OPAL_DECLSPEC int kill(pid_t pid, int sig) ;
 
 #if defined(c_plusplus) || defined (__cplusplus)
 }

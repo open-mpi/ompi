@@ -26,11 +26,7 @@ static void opal_atomic_lifo_construct( opal_atomic_lifo_t* lifo )
     lifo->opal_lifo_ghost.opal_list_next = &(lifo->opal_lifo_ghost);
 }
 
-static void opal_atomic_lifo_destruct( opal_atomic_lifo_t* lifo )
-{
-}
-
 OBJ_CLASS_INSTANCE( opal_atomic_lifo_t,
                     opal_object_t,
                     opal_atomic_lifo_construct,
-                    opal_atomic_lifo_destruct );
+                    NULL );

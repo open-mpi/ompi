@@ -37,9 +37,9 @@
 #include "gpr_replica_api.h"
 
 int
-orte_gpr_replica_subscribe(size_t num_subs,
+orte_gpr_replica_subscribe(orte_std_cntr_t num_subs,
                            orte_gpr_subscription_t **subscriptions,
-                           size_t num_trigs,
+                           orte_std_cntr_t num_trigs,
                            orte_gpr_trigger_t **trigs)
 {
     int rc;
@@ -106,7 +106,7 @@ orte_gpr_replica_subscribe(size_t num_subs,
 int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 {
     orte_gpr_replica_local_subscriber_t **subs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc;
 
     OPAL_TRACE(1);
@@ -142,7 +142,7 @@ int orte_gpr_replica_unsubscribe(orte_gpr_subscription_id_t sub_number)
 int orte_gpr_replica_cancel_trigger(orte_gpr_trigger_id_t trig)
 {
     orte_gpr_replica_local_trigger_t **trigs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc;
 
     OPAL_TRACE(1);

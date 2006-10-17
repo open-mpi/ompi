@@ -23,41 +23,45 @@
 #include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
-#include "orte/mca/pls/base/base.h"
 #include "opal/util/output.h"
 
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/pls/base/pls_private.h"
+#include "orte/mca/pls/base/base.h"
 
 int orte_pls_base_finalize(void)
 {
-    /* Finalize all available modules */
-    if (orte_pls_base.pls_available_valid) {
-        opal_list_item_t* item;
-        while (NULL != 
-               (item = opal_list_remove_first(&orte_pls_base.pls_available))) {
-            orte_pls_base_cmp_t* cmp = (orte_pls_base_cmp_t*) item;
-            opal_output(orte_pls_base.pls_output,
-                        "orte:base:close: finalizing module %s",
-                        cmp->component->pls_version.mca_component_name);
-            if (NULL != cmp->module->finalize) {
-                cmp->module->finalize();
-            }
-            OBJ_RELEASE(cmp);
+    int rc;
+    
+    /* Finalize the selected module */
+    orte_pls.finalize();
+
+    /* if we are an HNP, then stop our receive */
+    if (orte_process_info.seed) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_comm_stop())) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
     }
-    orte_pls_base.pls_available_valid = false;
+    
     return ORTE_SUCCESS;
 }
 
 
 int orte_pls_base_close(void)
 {
-    /* Close all remaining open components */
-    if (orte_pls_base.pls_opened_valid) {
-        orte_pls_base.pls_opened_valid = false;
-        mca_base_components_close(orte_pls_base.pls_output, 
-                                  &orte_pls_base.pls_opened, NULL);
-        OBJ_DESTRUCT(&orte_pls_base.pls_opened);
+    /* finalize selected module */
+    if (orte_pls_base.selected) {
+        orte_pls.finalize();
     }
+    
+    /* Close all open components */
+    mca_base_components_close(orte_pls_base.pls_output, 
+                                &orte_pls_base.available_components, NULL);
+    OBJ_DESTRUCT(&orte_pls_base.available_components);
+
     return ORTE_SUCCESS;
 }
 

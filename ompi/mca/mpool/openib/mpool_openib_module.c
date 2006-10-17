@@ -227,23 +227,3 @@ int mca_mpool_openib_retain(struct mca_mpool_base_module_t* mpool,
     OPAL_THREAD_ADD32(&registration->ref_count, 1); 
     return OMPI_SUCCESS; 
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

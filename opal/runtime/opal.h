@@ -34,7 +34,7 @@ extern "C" {
  * \note If this function is called, opal_init_util() should *not* be
  * called.
  */
-OMPI_DECLSPEC int opal_init(void);
+OPAL_DECLSPEC int opal_init(void);
 
 /**
  * Finalize the OPAL layer, including the MCA system. 
@@ -45,7 +45,7 @@ OMPI_DECLSPEC int opal_init(void);
  * \note If this function is called, opal_finalize_util() should *not*
  * be called.
  */
-OMPI_DECLSPEC int opal_finalize(void);
+OPAL_DECLSPEC int opal_finalize(void);
 
 /**
  * Initialize the OPAL layer, excluding the MCA system.
@@ -56,7 +56,7 @@ OMPI_DECLSPEC int opal_finalize(void);
  * \note If this function is called, opal_init() should *not*
  * be called.
  */
-OMPI_DECLSPEC int opal_init_util(void);
+OPAL_DECLSPEC int opal_init_util(void);
 
 /**
  * Finalize the OPAL layer, excluding the MCA system. 
@@ -67,12 +67,12 @@ OMPI_DECLSPEC int opal_init_util(void);
  * \note If this function is called, opal_finalize() should *not*
  * be called.
  */
-OMPI_DECLSPEC int opal_finalize_util(void);
+OPAL_DECLSPEC int opal_finalize_util(void);
 
 /**
  * Internal function.  Do not call.
  */
-OMPI_DECLSPEC int opal_register_params(void);
+OPAL_DECLSPEC int opal_register_params(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

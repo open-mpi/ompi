@@ -46,7 +46,7 @@ orte_ras_base_component_t mca_ras_loadleveler_component = {
         /* Indicate that we are a ras v1.3.0 component (which also
            implies a specific MCA version) */
         
-        ORTE_RAS_BASE_VERSION_1_0_0,
+        ORTE_RAS_BASE_VERSION_1_3_0,
         
         /* Component name and version */
         

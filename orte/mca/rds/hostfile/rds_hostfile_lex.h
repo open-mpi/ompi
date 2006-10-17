@@ -53,6 +53,7 @@ extern orte_rds_value_t  orte_rds_hostfile_value;
 #define YY_NEVER_INTERACTIVE 0
 #define YY_MAIN 0
 #define YY_NO_UNPUT 1
+#define YY_SKIP_YYWRAP 1
 
 #define ORTE_RDS_HOSTFILE_DONE           0
 #define ORTE_RDS_HOSTFILE_ERROR          1

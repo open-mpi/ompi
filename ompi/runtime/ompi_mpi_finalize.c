@@ -45,8 +45,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/rml/rml.h"
-#include "orte/mca/soh/soh.h"
-#include "orte/mca/soh/base/base.h"
+#include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/runtime/runtime.h"
 
@@ -133,7 +132,7 @@ int ompi_mpi_finalize(void)
     }
 */
     /* Set process status to "at stg3" */
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_AT_STG3, 0))) {
         ORTE_ERROR_LOG(ret);
     }
@@ -277,15 +276,15 @@ int ompi_mpi_finalize(void)
     }
     
     /* Set process status to "finalized" */
-    if (ORTE_SUCCESS != (ret = orte_soh.set_proc_soh(orte_process_info.my_name,
+    if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name,
                                 ORTE_PROC_STATE_FINALIZED, 0))) {
         ORTE_ERROR_LOG(ret);
     }
 
     /*
-     * Wait for everyone to get here. This is necessary to allow the soh
+     * Wait for everyone to get here. This is necessary to allow the smr
      * to update the job state for singletons. Otherwise, we finalize
-     * the RTE while the soh is trying to do the update - which causes
+     * the RTE while the smr is trying to do the update - which causes
      * an ugly race condition
      */
     if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,

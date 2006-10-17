@@ -36,6 +36,31 @@
 
 #include <stdarg.h>
 
+#if !defined(OMPI_IGNORE_CXX_SEEK) & OMPI_WANT_MPI_CXX_SEEK
+// We need to include the header files that define SEEK_* or use them
+// in ways that require them to be #defines so that if the user
+// includes them later, the double inclusion logic in the headers will
+// prevent trouble from occuring.
+
+// include so that we can smash SEEK_* properly
+#include <stdio.h>
+// include because on Linux, there is one place that assumes SEEK_* is
+// a #define (it's used in an enum).
+#include <iostream>
+
+// smash SEEK_* #defines
+#ifdef SEEK_SET
+#undef SEEK_SET
+#undef SEEK_CUR
+#undef SEEK_END
+#endif
+
+// make globally scoped constants to replace smashed #defines
+extern const int SEEK_SET;
+extern const int SEEK_CUR;
+extern const int SEEK_END;
+#endif
+
 // forward declare so that we can still do inlining
 struct opal_mutex_t;
 
@@ -65,6 +90,15 @@ extern "C" int
 ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
                                    void *attribute_val, void *extra_state);
 
+/**
+ * Windows bool type is not any kind of integer. Special care should
+ * be taken in order to cast it correctly.
+ */
+#if defined(WIN32) || defined(_WIN32) || defined(WIN64)
+#define OPAL_INT_TO_BOOL(VALUE)  ((VALUE) != 0 ? true : false)
+#else
+#define OPAL_INT_TO_BOOL(VALUE)  ((bool)(VALUE))
+#endif  /* defined(WIN32) || defined(_WIN32) || defined(WIN64) */
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
 #include "ompi/mpi/cxx/pmpicxx.h"

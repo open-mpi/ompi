@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -25,20 +25,22 @@
 #include <netinet/in.h>
 #endif
 
+#include "opal/class/opal_list.h"
+
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/rmgr/base/base.h"
+#include "orte/mca/rmgr/base/rmgr_private.h"
 
 /*
  * APP_CONTEXT
  */
 int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
-                                 size_t *num_vals, orte_data_type_t type)
+                                 orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
-    int rc, count;
+    int rc;
     orte_app_context_t **app_context;
-    size_t i, max_n=1;
+    orte_std_cntr_t i, max_n=1, count;
     int8_t have_prefix, user_specified;
 
     /* unpack into array of app_context objects */
@@ -55,7 +57,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the app index number */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->idx),
-                    &max_n, ORTE_SIZE))) {
+                    &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -71,14 +73,14 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* get the number of processes */
         max_n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_procs),
-                    &max_n, ORTE_SIZE))) {
+                    &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         /* get the number of argv strings that were packed */
         max_n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
             }
@@ -93,7 +95,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
             app_context[i]->argv[count] = NULL;
 
             /* and unpack them */
-            max_n = (size_t)count;
+            max_n = count;
             if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, app_context[i]->argv, &max_n, ORTE_STRING))) {
                 ORTE_ERROR_LOG(rc);
                 return rc;
@@ -102,7 +104,7 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
 
         /* get the number of env strings */
         max_n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_INT))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &count, &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -147,13 +149,13 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
         /* unpack the map data */
         max_n=1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(app_context[i]->num_map),
-                   &max_n, ORTE_SIZE))) {
+                   &max_n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
         if (app_context[i]->num_map > 0) {
-            app_context[i]->map_data = malloc(sizeof(orte_app_context_map_t*) * app_context[i]->num_map);
+            app_context[i]->map_data = (orte_app_context_map_t**)malloc(sizeof(orte_app_context_map_t*) * app_context[i]->num_map);
             if (NULL == app_context[i]->map_data) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -190,11 +192,11 @@ int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
  * APP_CONTEXT_MAP
  */
 int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
-                                  size_t *num_vals, orte_data_type_t type)
+                                  orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
     orte_app_context_map_t **app_context_map;
-    size_t i, max_n=1;
+    orte_std_cntr_t i, max_n=1;
 
     /* unpack into array of app_context_map objects */
     app_context_map = (orte_app_context_map_t**) dest;
@@ -222,6 +224,57 @@ int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
         }
     }
 
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * ATTRIBUTE
+ */
+int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
+                                    orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+    
+    if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_GPR_KEYVAL))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
+
+/*
+ * ATTRIBUTE LIST
+ */
+int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
+                                    orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int rc;
+    orte_std_cntr_t count, num_attr, i;
+    orte_attribute_t *attr;
+    
+    count = 1;
+    if(ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &num_attr, &count, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* if there are any...unpack them */
+    for (i=0; i < num_attr; i++) {
+        attr = OBJ_NEW(orte_attribute_t);
+        if (NULL == attr) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        count = 1;
+        if(ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &attr, &count, ORTE_ATTRIBUTE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        opal_list_append(dest, &attr->super);
+    }
+    
     return ORTE_SUCCESS;
 }
 

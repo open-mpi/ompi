@@ -31,6 +31,10 @@
 #include "opal/mca/mca.h"
 #include "orte/tools/orted/orted.h"
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Globals
  */
@@ -47,5 +51,9 @@ typedef struct {
 } orteprobe_globals_t;
 
 extern orteprobe_globals_t orteprobe_globals;
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTEPROBE_H */

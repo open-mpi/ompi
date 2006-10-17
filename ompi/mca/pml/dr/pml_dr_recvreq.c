@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -195,7 +195,7 @@ void mca_pml_dr_recv_request_ack(
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr = src_ptr;
     ack->hdr_dst_ptr.pval = recvreq;
-    ack->hdr_common.hdr_csum = (do_csum? 
+    ack->hdr_common.hdr_csum = (uint16_t)(do_csum? 
                                 opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
                                 OPAL_CSUM_ZERO);
 

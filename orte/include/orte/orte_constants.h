@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -20,6 +20,11 @@
 #define ORTE_CONSTANTS_H
 
 #include "opal/constants.h"
+#include "orte_config.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
 #define ORTE_ERR_BASE            OPAL_ERR_MAX
 
@@ -93,7 +98,11 @@ enum {
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)
 
 /* include the prototype for the error-to-string converter */
-const char * orte_err2str(int errnum);
+ORTE_DECLSPEC const char* orte_err2str(int errnum);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* ORTE_CONSTANTS_H */
 

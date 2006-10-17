@@ -69,14 +69,14 @@ static DWORD WINAPI iwrite_thread(LPVOID lpParameter)
 int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count, 
 		    MPI_Datatype datatype, MPIO_Request *request)
 {
-    int error_code;
+    int error_code=MPI_SUCCESS;
     MPI_Status *status;
 #if defined(HAVE_WINDOWS_H) && defined(USE_WIN_THREADED_IO)
     iwrite_args *args;
     HANDLE hThread;
 #endif
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     status = (MPI_Status *) ADIOI_Malloc(sizeof(MPI_Status));
@@ -113,6 +113,11 @@ int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count,
     /* ROMIO-1 doesn't do anything with status.MPI_ERROR */
     status->MPI_ERROR = error_code;
 
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(mpi_fh, error_code);
+    /* --END ERROR HANDLING-- */
+
     /* kick off the request */
     MPI_Grequest_start(MPIU_Greq_query_fn, MPIU_Greq_free_fn, 
 	MPIU_Greq_cancel_fn, status, request);
@@ -123,11 +128,11 @@ int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count,
 
     /* FIXME: Shouldn't status be freed before leaving this function */
 
-    MPID_CS_EXIT();
     MPIR_Nest_decr();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     /* passed the buck to the blocking version...*/
-    return MPI_SUCCESS;
+    return error_code;
 }
 #else
 int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count, 
@@ -145,6 +150,11 @@ int MPI_File_iwrite(MPI_File mpi_fh, void *buf, int count,
 
     error_code = MPIOI_File_iwrite(mpi_fh, (MPI_Offset) 0, ADIO_INDIVIDUAL,
 				   buf, count, datatype, myname, request);
+
+    /* --BEGIN ERROR HANDLING-- */
+    if (error_code != MPI_SUCCESS)
+	error_code = MPIO_Err_return_file(mpi_fh, error_code);
+    /* --END ERROR HANDLING-- */
 
 #ifdef MPI_hpux
     HPMP_IO_END(fl_xmpi, mpi_fh, datatype, count);
@@ -173,7 +183,7 @@ int MPIOI_File_iwrite(MPI_File mpi_fh,
     ADIO_Offset off;
     ADIO_File fh;
 
-    MPID_CS_ENTER();
+    MPIU_THREAD_SINGLE_CS_ENTER("io");
     MPIR_Nest_incr();
 
     fh = MPIO_File_resolve(mpi_fh);
@@ -258,8 +268,8 @@ int MPIOI_File_iwrite(MPI_File mpi_fh,
 			   offset, request, &error_code);
     }
 fn_exit:
-    MPID_CS_EXIT();
     MPIR_Nest_decr();
+    MPIU_THREAD_SINGLE_CS_EXIT("io");
 
     return error_code;
 }

@@ -26,10 +26,10 @@
  *
  */
 
-int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
+int32_t ompi_ddt_create_vector( int count, int bLength, int stride,
                                 const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-    long extent = oldType->ub - oldType->lb;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
     ompi_datatype_t *pTempData, *pData;
 
     if( 0 == count ) {
@@ -56,10 +56,10 @@ int32_t ompi_ddt_create_vector( int count, int bLength, long stride,
     return OMPI_SUCCESS;
 }
 
-int32_t ompi_ddt_create_hvector( int count, int bLength, long stride,
+int32_t ompi_ddt_create_hvector( int count, int bLength, MPI_Aint stride,
                                  const ompi_datatype_t* oldType, ompi_datatype_t** newType )
 {
-    long extent = oldType->ub - oldType->lb;
+    ptrdiff_t extent = oldType->ub - oldType->lb;
     ompi_datatype_t *pTempData, *pData;
 
     if( 0 == count ) {

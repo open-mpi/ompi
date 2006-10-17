@@ -1,0 +1,84 @@
+/* Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2005 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
+ * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ *                         University of Stuttgart.  All rights reserved.
+ * Copyright (c) 2004-2005 The Regents of the University of California.
+ *                         All rights reserved.
+ * $COPYRIGHT$
+ * 
+ * Additional copyrights may follow
+ * 
+ * $HEADER$
+ */
+/** @file:
+ */
+
+#ifndef ORTE_MCA_RMAPS_TYPES_H
+#define ORTE_MCA_RMAPS_TYPES_H
+
+#include "orte_config.h"
+#include "orte/orte_constants.h"
+
+#include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rmgr/rmgr_types.h"
+
+/*
+ * General MAP types
+ */
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+/****   JOB_MAP OBJECTS   ***/
+/*
+ * Mapped process info for job_map
+ */
+struct orte_mapped_proc_t {
+    opal_list_item_t super;
+    orte_process_name_t name;	/* process name */
+    orte_std_cntr_t	rank;		/* process rank */
+    orte_std_cntr_t	app_idx;	/* index of app_context for this process */
+    pid_t pid;
+};
+typedef struct orte_mapped_proc_t orte_mapped_proc_t;
+OBJ_CLASS_DECLARATION(orte_mapped_proc_t);
+
+/*
+ * Mapping of nodes to process ranks.
+ */
+struct orte_mapped_node_t {
+    opal_list_item_t super;
+    orte_cellid_t cell;	 			/* cell where this node is located */
+    char *nodename;		 			/* name of node */
+    char *username;
+    orte_process_name_t *daemon;	/* name of the daemon on this node
+                                     * NULL => daemon not assigned yet
+                                     */
+    bool oversubscribed;            /* whether or not the #procs > #processors */
+    opal_list_t procs;   			/* list of mapped_proc objects on this node */
+};
+typedef struct orte_mapped_node_t orte_mapped_node_t;
+OBJ_CLASS_DECLARATION(orte_mapped_node_t);
+
+/*
+ * Structure that represents the mapping of a job to an
+ * allocated set of resources.
+ */
+struct orte_job_map_t {
+    opal_object_t super;
+    orte_jobid_t job;
+    orte_std_cntr_t num_apps;	/* number of app_contexts */
+    orte_app_context_t **apps;	/* the array of app_contexts for this job */
+    opal_list_t nodes;			/* list of mapped_node_t */
+};
+typedef struct orte_job_map_t orte_job_map_t;
+ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_job_map_t);
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+#endif

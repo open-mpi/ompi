@@ -77,7 +77,6 @@ orte_rml_module_t orte_rml_oob_module = {
     (orte_rml_module_recv_buffer_fn_t)mca_oob_recv_packed,
     (orte_rml_module_recv_buffer_nb_fn_t)mca_oob_recv_packed_nb,
     (orte_rml_module_recv_cancel_fn_t)mca_oob_recv_cancel,
-    (orte_rml_module_barrier_fn_t)mca_oob_barrier,
     (orte_rml_module_xcast_fn_t)mca_oob_xcast,
     (orte_rml_module_exception_fn_t)mca_oob_add_exception_handler,
     (orte_rml_module_exception_fn_t)mca_oob_del_exception_handler

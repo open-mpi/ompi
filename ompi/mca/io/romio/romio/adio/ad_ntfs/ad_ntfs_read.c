@@ -60,6 +60,15 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 		}
 	    }
 	}
+	/*
+	{
+	    ADIO_Fcntl_t fcntl_struct;
+	    int error_code;
+	    ADIO_Fcntl(fd, ADIO_FCNTL_GET_FSIZE, &fcntl_struct, &error_code);
+	    printf("File size b: %d\n", fcntl_struct.fsize);
+	}
+	printf("ReadFile(%d bytes)\n", len);fflush(stdout);
+	*/
 	err = ReadFile(fd->fd_sys, buf, len, &dwNumRead, pOvl);
 	/* --BEGIN ERROR HANDLING-- */
 	if (err == FALSE)
@@ -70,6 +79,7 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	    case ERROR_IO_PENDING:
 		break;
 	    case ERROR_HANDLE_EOF:
+		/*printf("EOF error\n");fflush(stdout);*/
 		SetEvent(pOvl->hEvent);
 		break;
 	    default:
@@ -88,13 +98,16 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	if (err == FALSE)
 	{
 	    err = GetLastError();
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-		MPIR_ERR_RECOVERABLE, myname,
-		__LINE__, MPI_ERR_IO, "**io",
-		"**io %s", ADIOI_NTFS_Strerror(err));
-	    CloseHandle(pOvl->hEvent);
-	    ADIOI_Free(pOvl);
-	    return;
+	    if (err != ERROR_HANDLE_EOF) /* Ignore EOF errors */
+	    {
+		*error_code = MPIO_Err_create_code(MPI_SUCCESS,
+		    MPIR_ERR_RECOVERABLE, myname,
+		    __LINE__, MPI_ERR_IO, "**io",
+		    "**io %s", ADIOI_NTFS_Strerror(err));
+		CloseHandle(pOvl->hEvent);
+		ADIOI_Free(pOvl);
+		return;
+	    }
 	}
 	/* --END ERROR HANDLING-- */
 	if (!CloseHandle(pOvl->hEvent))
@@ -132,6 +145,15 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 		}
 	    }
 	}
+	/*
+	{
+	    ADIO_Fcntl_t fcntl_struct;
+	    int error_code;
+	    ADIO_Fcntl(fd, ADIO_FCNTL_GET_FSIZE, &fcntl_struct, &error_code);
+	    printf("File size c: %d\n", fcntl_struct.fsize);
+	}
+	printf("ReadFile(%d bytes)\n", len);fflush(stdout);
+	*/
 	err = ReadFile(fd->fd_sys, buf, len, &dwNumRead, pOvl);
 	/* --BEGIN ERROR HANDLING-- */
 	if (err == FALSE)
@@ -142,6 +164,7 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	    case ERROR_IO_PENDING:
 		break;
 	    case ERROR_HANDLE_EOF:
+		/*printf("EOF error\n");fflush(stdout);*/
 		SetEvent(pOvl->hEvent);
 		break;
 	    default:
@@ -160,13 +183,16 @@ void ADIOI_NTFS_ReadContig(ADIO_File fd, void *buf, int count,
 	if (err == FALSE)
 	{
 	    err = GetLastError();
-	    *error_code = MPIO_Err_create_code(MPI_SUCCESS,
-		MPIR_ERR_RECOVERABLE, myname,
-		__LINE__, MPI_ERR_IO, "**io",
-		"**io %s", ADIOI_NTFS_Strerror(err));
-	    CloseHandle(pOvl->hEvent);
-	    ADIOI_Free(pOvl);
-	    return;
+	    if (err != ERROR_HANDLE_EOF) /* Ignore EOF errors */
+	    {
+		*error_code = MPIO_Err_create_code(MPI_SUCCESS,
+		    MPIR_ERR_RECOVERABLE, myname,
+		    __LINE__, MPI_ERR_IO, "**io",
+		    "**io %s", ADIOI_NTFS_Strerror(err));
+		CloseHandle(pOvl->hEvent);
+		ADIOI_Free(pOvl);
+		return;
+	    }
 	}
 	/* --END ERROR HANDLING-- */
 	if (!CloseHandle(pOvl->hEvent))

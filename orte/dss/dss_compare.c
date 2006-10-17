@@ -1,8 +1,10 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University.
- *                         All rights reserved.
- * Copyright (c) 2004-2005 The Trustees of the University of Tennessee.
- *                         All rights reserved.
+ * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ *                         University Research and Technology
+ *                         Corporation.  All rights reserved.
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
+ *                         of Tennessee Research Foundation.  All rights
+ *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
@@ -40,7 +42,7 @@ int orte_dss_compare(void *value1, void *value2, orte_data_type_t type)
     /* Lookup the compare function for this type and call it */
 
     if (!(type < orte_dss_types->size) ||
-         (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type)))) {
+         (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type)))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         return ORTE_ERR_UNKNOWN_DATA_TYPE;
     }
@@ -222,16 +224,6 @@ int orte_dss_compare_std_cntr(orte_std_cntr_t *value1, orte_std_cntr_t *value2, 
 
 /* ORTE_DATA_TYPE */
 int orte_dss_compare_dt(orte_data_type_t *value1, orte_data_type_t *value2, orte_data_type_t type)
-{
-    if (*value1 > *value2) return ORTE_VALUE1_GREATER;
-
-    if (*value2 > *value1) return ORTE_VALUE2_GREATER;
-
-    return ORTE_EQUAL;
-}
-
-/* ORTE_DAEMON_CMD */
-int orte_dss_compare_daemon_cmd(orte_daemon_cmd_flag_t *value1, orte_daemon_cmd_flag_t *value2, orte_data_type_t type)
 {
     if (*value1 > *value2) return ORTE_VALUE1_GREATER;
 

@@ -40,15 +40,12 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     int rank, size, step;
     int sendto, recvfrom;
     void * tmpsend, *tmprecv;
-    MPI_Aint sext, rext;
-    long lb;
-
+    ptrdiff_t lb, sext, rext;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_pairwise rank %d", rank));
-
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
@@ -91,22 +88,18 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
 {
     int i, k, line = -1;
     int rank, size;
-    MPI_Aint sext, rext;
     int sendto, recvfrom, distance, *displs=NULL, *blen=NULL;
     int maxpacksize, packsize, position;
     char * tmpbuf=NULL, *packbuf=NULL;
-    long lb;
+    ptrdiff_t lb, sext, rext;
     int err = 0;
     int weallocated = 0;
     MPI_Datatype iddt;
-
-
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_bruck rank %d", rank));
-
 
     err = ompi_ddt_get_extent (sdtype, &lb, &sext);
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
@@ -258,8 +251,7 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
     int rank;
     int sendto, recvfrom;
     void * tmpsend, *tmprecv;
-    MPI_Aint sext, rext;
-    long lb;
+    ptrdiff_t sext, rext, lb;
 
     rank = ompi_comm_rank(comm);
 

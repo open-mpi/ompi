@@ -13,10 +13,18 @@
 
 void ADIOI_GEN_Resize(ADIO_File fd, ADIO_Offset size, int *error_code)
 {
-    int err;
+    int err, rank;
     static char myname[] = "ADIOI_GEN_RESIZE";
 
-    err = ftruncate(fd->fd_sys, size);
+    MPI_Comm_rank(fd->comm, &rank);
+
+    /* first aggregator performs ftruncate() */
+    if (rank == fd->hints->ranklist[0]) {
+	err = ftruncate(fd->fd_sys, size);
+    }
+
+    /* bcast return value */
+    MPI_Bcast(&err, 1, MPI_INT, fd->hints->ranklist[0], fd->comm);
 
     /* --BEGIN ERROR HANDLING-- */
     if (err == -1) {

@@ -11,6 +11,8 @@
 #include "adio_extern.h"
 
 /* MPICH2 error handling implementation */
+/* FIXME: These external prototypes should be included from 
+   mpich2/src/include/mpiext.h */
 int MPIR_Err_create_code_valist(int, int, const char [], int, int, 
 				const char [], const char [], va_list );
 int MPIR_Err_is_fatal(int);
@@ -18,6 +20,8 @@ int MPIR_Err_is_fatal(int);
 void MPIR_Get_file_error_routine( MPI_Errhandler, 
 				  void (**)(MPI_File *, int *, ...), 
 				  int * );
+int MPIR_File_call_cxx_errhandler( MPI_File *, int *, 
+				   void (*)(MPI_File *, int *, ... ) );
 
 int MPIO_Err_create_code(int lastcode, int fatal, const char fcname[],
 			 int line, int error_class, const char generic_msg[],
@@ -89,7 +93,10 @@ int MPIO_Err_return_file(MPI_File mpi_fh, int error_code)
     }
     /* --END ERROR HANDLING-- */
     else if (kind == 2) {
-	(*c_errhandler)( &mpi_fh, &error_code, 0 );
+	(*c_errhandler)( &mpi_fh, &error_code, 0 ); 
+    }
+    else if (kind == 3) {
+	MPIR_File_call_cxx_errhandler( &mpi_fh, &error_code, c_errhandler );
     }
 
     /* kind == 1 just returns */

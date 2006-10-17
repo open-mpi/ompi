@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -30,54 +30,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/dss/dss_internal.h"
-
-#define UNPACK_SIZE_MISMATCH(unpack_type, remote_type, ret)      \
-    do { \
-        switch(remote_type) { \
-        case ORTE_UINT8: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint8_t, remote_type); \
-            break; \
-        case ORTE_INT8: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int8_t, remote_type); \
-            break; \
-        case ORTE_UINT16: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint16_t, remote_type); \
-            break; \
-        case ORTE_INT16: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int16_t, remote_type); \
-            break; \
-        case ORTE_UINT32: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint32_t, remote_type); \
-            break; \
-        case ORTE_INT32: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int32_t, remote_type); \
-            break; \
-        case ORTE_UINT64: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, uint64_t, remote_type); \
-            break; \
-        case ORTE_INT64: \
-            UNPACK_SIZE_MISMATCH_FOUND(unpack_type, int64_t, remote_type); \
-            break; \
-        default: \
-            ret = ORTE_ERR_NOT_FOUND; \
-            ORTE_ERROR_LOG(ret); \
-        } \
-    } while (0)
-
-/* NOTE: do not need to deal with endianness here, as the unpacking of
-   the underling sender-side type will do that for us.  Repeat: the
-   data in tmpbuf[] is already in host byte order. */
-#define UNPACK_SIZE_MISMATCH_FOUND(unpack_type, tmptype, tmpdsstype)   \
-    do { \
-        orte_std_cntr_t i; \
-        tmptype *tmpbuf = malloc(sizeof(tmptype) * *num_vals);          \
-        ret = orte_dss_unpack_buffer(buffer, tmpbuf, num_vals, tmpdsstype); \
-        for (i = 0 ; i < *num_vals ; ++i) {                             \
-            ((unpack_type*) dest)[i] = tmpbuf[i];                       \
-        }                                                               \
-        free(tmpbuf); \
-    } while (0)
-
 
 int orte_dss_unpack(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
                     orte_data_type_t type)
@@ -181,7 +133,7 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
 
     /* Lookup the unpack function for this type and call it */
 
-    if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, type))) {
+    if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, type))) {
         ORTE_ERROR_LOG(ORTE_ERR_UNPACK_FAILURE);
         return ORTE_ERR_UNPACK_FAILURE;
     }
@@ -492,14 +444,14 @@ int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
     char **sdest = (char**) dest;
 
     for (i = 0; i < (*num_vals); ++i) {
-        if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(buffer, &len, &n, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &len, &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
         if (0 ==  len) {   /* zero-length string - unpack the NULL */
             sdest[i] = NULL;
         } else {
-        sdest[i] = malloc(len);
+        sdest[i] = (char*)malloc(len);
             if (NULL == sdest[i]) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
                 return ORTE_ERR_OUT_OF_RESOURCE;
@@ -604,49 +556,6 @@ int orte_dss_unpack_data_type(orte_buffer_t *buffer, void *dest, orte_std_cntr_t
 }
 
 /*
- * ORTE_DAEMON_CMD
- */
-int orte_dss_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest, orte_std_cntr_t *num_vals,
-                               orte_data_type_t type)
-{
-    int ret;
-    orte_data_type_t remote_type;
-    
-    /* if the buffer is fully described, then we can do some magic to handle
-     * the heterogeneous case. if not, then we can only shoot blind - it is the
-     * user's responsibility to ensure we are in a homogeneous environment.
-     */
-    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
-        /* see what type was actually packed */
-        if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
-        if (remote_type == ORTE_DAEMON_CMD_T) {
-            /* fast path it if the sizes are the same */
-            /* Turn around and unpack the real type */
-            if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            /* slow path - types are different sizes */
-            UNPACK_SIZE_MISMATCH(orte_daemon_cmd_flag_t, remote_type, ret);
-        }
-        return ret;
-    }
-    
-    /* if we get here, then this buffer is NOT fully described. just unpack it
-     * using the local size - user gets the pain if it's wrong
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
-    
-    return ret;
-}
-
-/*
  * ORTE_DATA_VALUE
  */
 int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest, orte_std_cntr_t *num,
@@ -687,7 +596,7 @@ int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest, orte_std_cntr_
 
         /* Lookup the unpack function for this type and call it */
 
-        if (NULL == (info = orte_pointer_array_get_item(orte_dss_types, ddv[i]->type))) {
+        if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, ddv[i]->type))) {
             ORTE_ERROR_LOG(ORTE_ERR_PACK_FAILURE);
             return ORTE_ERR_PACK_FAILURE;
         }
@@ -732,7 +641,7 @@ int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest, orte_std_cntr
         }
 
         /* unpack object size in bytes */
-        if (ORTE_SUCCESS != (ret = orte_dss_unpack_sizet(buffer, &(dbyteptr[i]->size), &m, ORTE_SIZE))) {
+        if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &(dbyteptr[i]->size), &m, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }

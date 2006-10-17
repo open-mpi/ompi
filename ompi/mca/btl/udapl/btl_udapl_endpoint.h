@@ -84,14 +84,14 @@ struct mca_btl_base_endpoint_t {
     int32_t endpoint_max_sends;
     /**< number of sends that may be posted */
 
+    int32_t endpoint_connection_seq;
+    /**< sequence number of sendrecv message for the connection est */
+
     opal_mutex_t endpoint_lock;
     /**< lock for concurrent access to endpoint state */
 
     mca_btl_udapl_addr_t endpoint_addr;
     /**< remote address on the other side of this endpoint */
-
-    int32_t endpoint_connection_seq;
-    /**< sequence number of sendrecv message for the connection est */
 
     DAT_EP_HANDLE endpoint_eager;
     DAT_EP_HANDLE endpoint_max;

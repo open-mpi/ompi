@@ -33,7 +33,7 @@
 
 #include "orte/util/proc_info.h"
 
-OMPI_DECLSPEC orte_proc_info_t orte_process_info = {
+ORTE_DECLSPEC orte_proc_info_t orte_process_info = {
     /*  .my_name =              */   NULL,
     /*  .singleton =            */   false,
     /*  .vpid_start =           */   0,
@@ -65,7 +65,13 @@ int orte_proc_info(void)
     
     id = mca_base_param_register_int("seed", NULL, NULL, NULL, orte_process_info.seed);
     mca_base_param_lookup_int(id, &tmp);
-    orte_process_info.seed = (tmp ? true : false);
+    orte_process_info.seed = OPAL_INT_TO_BOOL(tmp);
+    /* if we are a seed, then make sure the daemon flag is NOT set so that
+     * framework components are properly selected
+     */
+    if (orte_process_info.seed) {
+        orte_process_info.daemon = false;
+    }
 
     id = mca_base_param_register_string("gpr", "replica", "uri", NULL, orte_process_info.gpr_replica_uri);
     mca_base_param_lookup_string(id, &(orte_process_info.gpr_replica_uri));

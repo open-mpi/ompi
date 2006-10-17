@@ -30,6 +30,8 @@
 #endif
 
 #include "opal/util/few.h"
+#include "opal/util/basename.h"
+#include "opal/util/argv.h"
 #include "opal/constants.h"
 
 int opal_few(char *argv[], int *status)
@@ -82,41 +84,44 @@ int opal_few(char *argv[], int *status)
 
 #else
 
-    /* Welcome to windows land. This is apparently a simple fork() exec() 
-       procedure and hence should not be too difficult to implement */
-       HANDLE new_process;
-       STARTUPINFO si;
-       PROCESS_INFORMATION pi;
-       DWORD process_stat;
+    STARTUPINFO si;
+    PROCESS_INFORMATION pi;
+    DWORD process_stat;
+    char* command  = argv[0];
+    char* exec_command;
 
-       /* it does seem as if the environment is getting propogated, so I 
-          will follow the same procedure in my code */
+    ZeroMemory (&si, sizeof(si));
+    ZeroMemory (&pi, sizeof(pi));
 
-          /* ANJU: Have to implement signal handling */
+    _flushall();  /* Push all output */
 
-       ZeroMemory (&si, sizeof(si));
-       ZeroMemory (&pi, sizeof(pi));
-       
-       GetStartupInfo (&si);
-       if (!CreateProcess (argv[0], 
-                           argv, 
-                           NULL,
-                           NULL,
-                           TRUE,
-                           0,  
-                           NULL,
-                           NULL,
-                           &si,
-                           &pi)){
-         /* actual error can be got by simply calling GetLastError() */
-         return OPAL_ERROR; 
-       }
+    GetStartupInfo (&si);
+    argv[0] = opal_basename( command );
+    exec_command = opal_argv_join( argv, ' ' );
+    free( argv[0] );
+    argv[0] = command;
+    if (!CreateProcess (argv[0],
+                        (LPSTR)exec_command,
+                        NULL,
+                        NULL,
+                        TRUE,
+                        0,
+                        NULL,
+                        NULL,
+                        &si,
+                        &pi)){
+        *status = (int)GetLastError();
+        return OPAL_ERROR;
+    }
 
-       /* wait for child to die */
-       WaitForSingleObject(pi.hProcess, INFINITE);
-       GetExitCodeProcess(pi.hProcess, &process_stat);
+    /* wait for child to die */
+    WaitForSingleObject(pi.hProcess, INFINITE);
+    if( 0 == GetExitCodeProcess(pi.hProcess, &process_stat) ) {
+        *status = (int)GetLastError();
+        return OPAL_ERROR;
+    }
+    *status = (int)process_stat;
 
-       SetLastError(process_stat);
-       return OPAL_SUCCESS;
+    return OPAL_SUCCESS;
 #endif
 }

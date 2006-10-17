@@ -40,7 +40,7 @@ extern "C" {
    buffers  are  used  in  the  order specified.  Operates just like write
    except that data is taken from iov instead of a contiguous buffer.
  */
-OMPI_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
+OPAL_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
 
 /* 
    readv  reads  data  from file descriptor fd, and puts the result in the
@@ -49,7 +49,7 @@ OMPI_DECLSPEC int writev (int fd, struct iovec *iov, int cnt);
    like read except that data is put in iov  instead  of  a  contiguous
    buffer.
  */
-OMPI_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
+OPAL_DECLSPEC int readv (int fd, struct iovec *iov, int cnt);
 
 #if defined(c_plusplus) || defined (__cplusplus)
 }

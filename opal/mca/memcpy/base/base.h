@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * $COPYRIGHT$
@@ -46,7 +46,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int opal_memcpy_base_open(void);
+    OPAL_DECLSPEC int opal_memcpy_base_open(void);
     
 
     /**
@@ -60,9 +60,9 @@ extern "C" {
      *
      * It must be the last function invoked on the memcpy MCA framework.
      */
-    OMPI_DECLSPEC int opal_memcpy_base_close(void);
+    OPAL_DECLSPEC int opal_memcpy_base_close(void);
 
-    extern opal_list_t opal_memcpy_base_components_opened;
+    OPAL_DECLSPEC extern opal_list_t opal_memcpy_base_components_opened;
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

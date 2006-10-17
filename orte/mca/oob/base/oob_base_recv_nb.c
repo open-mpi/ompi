@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -104,7 +104,7 @@ int mca_oob_recv_packed_nb(
     mca_oob_callback_packed_fn_t cbfunc,
     void* cbdata)
 {
-    mca_oob_recv_cbdata_t *oob_cbdata = malloc(sizeof(mca_oob_recv_cbdata_t));
+    mca_oob_recv_cbdata_t *oob_cbdata = (mca_oob_recv_cbdata_t*)malloc(sizeof(mca_oob_recv_cbdata_t));
     int rc;
 
     if(NULL == oob_cbdata) {
@@ -141,7 +141,7 @@ static void mca_oob_recv_callback(
     int tag,
     void* cbdata)
 {
-    mca_oob_recv_cbdata_t *oob_cbdata = cbdata;
+    mca_oob_recv_cbdata_t *oob_cbdata = (mca_oob_recv_cbdata_t*)cbdata;
     orte_buffer_t buffer;
 
     /* validate status */

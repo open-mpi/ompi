@@ -41,16 +41,16 @@
 #include "gpr_proxy.h"
 
 int
-orte_gpr_proxy_subscribe(size_t num_subs,
+orte_gpr_proxy_subscribe(orte_std_cntr_t num_subs,
                          orte_gpr_subscription_t **subscriptions,
-                         size_t num_trigs,
+                         orte_std_cntr_t num_trigs,
                          orte_gpr_trigger_t **trigs)
 {
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     orte_gpr_proxy_subscriber_t **subs;
     int rc = ORTE_SUCCESS, ret;
-    size_t i;
+    orte_std_cntr_t i;
 
     OPAL_TRACE(1);
 
@@ -188,7 +188,7 @@ int orte_gpr_proxy_unsubscribe(orte_gpr_subscription_id_t sub_number)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     orte_gpr_proxy_subscriber_t **subs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc, ret;
 
     OPAL_TRACE(1);
@@ -294,7 +294,7 @@ int orte_gpr_proxy_cancel_trigger(orte_gpr_trigger_id_t trig)
     orte_buffer_t *cmd;
     orte_buffer_t *answer;
     orte_gpr_proxy_trigger_t **trigs;
-    size_t i, j;
+    orte_std_cntr_t i, j;
     int rc, ret;
 
     OPAL_TRACE(1);

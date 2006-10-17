@@ -31,7 +31,7 @@
 
 static const char FUNC_NAME[] = "MPI_Type_create_darray";
 
-static MPI_Datatype cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, MPI_Datatype oldtype )
+static ompi_datatype_t* cyclic( int32_t darg, int32_t gsize, int32_t r, int32_t psize, ompi_datatype_t* oldtype )
 {
    int count, darg_last;
 
@@ -74,7 +74,7 @@ int MPI_Type_create_darray(int size,
 
 {
     int32_t i, darg_i, step, end_loop, *r;
-    MPI_Datatype temptype;
+    ompi_datatype_t* temptype;
 
     if (MPI_PARAM_CHECK) {
         int prod_psize = 1;
@@ -96,7 +96,8 @@ int MPI_Type_create_darray(int size,
             if( (MPI_DISTRIBUTE_BLOCK != distrib_array[i]) && (MPI_DISTRIBUTE_CYCLIC != distrib_array[i]) &&
                 (MPI_DISTRIBUTE_NONE != distrib_array[i]) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-            } else if( (gsize_array[i] < 1) || (darg_array[i] < 0) || (psize_array[i] < 0) ) {
+            } else if( (gsize_array[i] < 1) || (psize_array[i] < 0) ||
+                       ((darg_array[i] < 0) && (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) ) ) {
                 return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
             } else if( (MPI_DISTRIBUTE_DFLT_DARG != darg_array[i]) &&
                        (MPI_DISTRIBUTE_BLOCK == distrib_array[i]) &&
@@ -153,7 +154,6 @@ int MPI_Type_create_darray(int size,
     } while( i != end_loop );
 
     free( r );
-    /* This function is not yet implemented */
 
     {
         int* a_i[8];

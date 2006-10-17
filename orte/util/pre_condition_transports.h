@@ -33,7 +33,11 @@
 
 #include "orte/mca/rmgr/rmgr_types.h"
 
-int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context);
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
+ORTE_DECLSPEC int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

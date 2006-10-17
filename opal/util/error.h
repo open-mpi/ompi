@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -19,6 +19,10 @@
 #ifndef OPAL_UTIL_ERROR_H
 #define OPAL_UTIL_ERROR_H
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /**
  * Prints error message for errnum on stderr
  *
@@ -31,7 +35,7 @@
  * If errnum is OPAL_ERR_IN_ERRNO, the system perror is called with
  * the argument \c msg.
  */
-OMPI_DECLSPEC void opal_perror(int errnum, const char *msg);
+OPAL_DECLSPEC void opal_perror(int errnum, const char *msg);
 
 /**
  * Return string for given error message
@@ -47,7 +51,7 @@ OMPI_DECLSPEC void opal_perror(int errnum, const char *msg);
  * If the errnum is not a known value, the returned value may be
  * overwritten by subsequent calls to opal_strerror.
  */
-OMPI_DECLSPEC const char *opal_strerror(int errnum);
+OPAL_DECLSPEC const char *opal_strerror(int errnum);
 
 /**
  * Return string for given error message
@@ -58,7 +62,7 @@ OMPI_DECLSPEC const char *opal_strerror(int errnum);
  * if an unknown value for \c errnum is passed, the returned buffer
  * will not be overwritten by subsequent calls to opal_strerror_r().
  */
-OMPI_DECLSPEC int opal_strerror_r(int errnum, char *strerrbuf, size_t buflen);
+OPAL_DECLSPEC int opal_strerror_r(int errnum, char *strerrbuf, size_t buflen);
 
 
 typedef const char * (*opal_err2str_fn_t)(int errnum);
@@ -74,14 +78,9 @@ typedef const char * (*opal_err2str_fn_t)(int errnum);
  * \note A maximum of 5 converters can be registered.  The 6th
  * converter registration attempt will return OPAL_ERR_OUT_OF_RESOURCE
  */
-OMPI_DECLSPEC int opal_error_register(const char *project,
+OPAL_DECLSPEC int opal_error_register(const char *project,
                                       int err_base, int err_max,
                                       opal_err2str_fn_t converter);
-
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

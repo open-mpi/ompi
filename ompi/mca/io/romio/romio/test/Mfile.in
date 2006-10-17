@@ -68,11 +68,11 @@ pfcoll_test: pfcoll_test.f
 #
 # Make sure that we remove executables for specific architectures
 clean:
-	@-/bin/rm -f *.o *~ PI* $(EXECS) *.out core pt2pt.diff $(OTHEREXECS) \
+	@-rm -f *.o *~ PI* $(EXECS) *.out core pt2pt.diff $(OTHEREXECS) \
 		*.trace rdb.* startup.* mpif.h ${srcdir}/*.o *.stdo
 	@-rm -f work.pc work.pcl
 	@-for file in $(EXECS) Makefile ; do \
-	   /bin/rm -f $$file.sun4 $$file.alpha $$file.IRIX $$file.freebsd ;\
+	   rm -f $$file.sun4 $$file.alpha $$file.IRIX $$file.freebsd ;\
 	done
 .c:
 	$(CC) $(CFLAGS) -o $* $< $(LIBS)

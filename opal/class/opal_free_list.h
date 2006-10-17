@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -44,14 +44,14 @@ struct opal_free_list_t
     opal_list_t fl_allocations;
 };
 typedef struct opal_free_list_t opal_free_list_t;
-OBJ_CLASS_DECLARATION(opal_free_list_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_t);
 
 struct opal_free_list_item_t
 { 
     opal_list_item_t super; 
 }; 
 typedef struct opal_free_list_item_t opal_free_list_item_t; 
-OBJ_CLASS_DECLARATION(opal_free_list_item_t);
+OPAL_DECLSPEC OBJ_CLASS_DECLARATION(opal_free_list_item_t);
 
 /**
  * Initialize a free list.
@@ -64,7 +64,7 @@ OBJ_CLASS_DECLARATION(opal_free_list_item_t);
  * @param num_elements_per_alloc   Number of elements to grow by per allocation.
  */
  
-OMPI_DECLSPEC int opal_free_list_init(
+OPAL_DECLSPEC int opal_free_list_init(
     opal_free_list_t *free_list, 
     size_t element_size,
     opal_class_t* element_class,
@@ -72,7 +72,7 @@ OMPI_DECLSPEC int opal_free_list_init(
     int max_elements_to_alloc,
     int num_elements_per_alloc);
 
-OMPI_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
+OPAL_DECLSPEC int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements);
     
 /**
  * Attemp to obtain an item from a free list. 

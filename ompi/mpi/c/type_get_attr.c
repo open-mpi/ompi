@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -57,7 +57,7 @@ int MPI_Type_get_attr (MPI_Datatype type,
        MPI attribute behavior. */
 
     ret = ompi_attr_get_c(type->d_keyhash, type_keyval, 
-                          attribute_val, flag);
+                          (void**)attribute_val, flag);
     OMPI_ERRHANDLER_RETURN(ret, MPI_COMM_WORLD,
                            MPI_ERR_OTHER, FUNC_NAME);  
 }

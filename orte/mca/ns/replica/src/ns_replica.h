@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -45,7 +45,6 @@ struct orte_ns_replica_cell_tracker_t {
 typedef struct orte_ns_replica_cell_tracker_t orte_ns_replica_cell_tracker_t;
 
 OBJ_CLASS_DECLARATION(orte_ns_replica_cell_tracker_t);
-
 
 /*
  * object for tracking vpids/jobids
@@ -152,7 +151,7 @@ int orte_ns_replica_reserve_range(orte_jobid_t job,
  * Peer functions
  */
 int orte_ns_replica_get_job_peers(orte_process_name_t **procs, 
-                                  size_t *num_procs, orte_jobid_t job);
+                                  orte_std_cntr_t *num_procs, orte_jobid_t job);
 
 
 /*
@@ -182,6 +181,11 @@ int orte_ns_replica_define_data_type(const char *name,
                                      orte_data_type_t *type);
 
 int orte_ns_replica_create_my_name(void);
+
+/*
+ *
+ */
+ORTE_MODULE_DECLSPEC extern mca_ns_base_component_t mca_ns_replica_component;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -66,6 +66,9 @@ struct mca_common_sm_mmap_t {
     unsigned char  *data_addr;
     size_t map_size;
     char map_path[OMPI_PATH_MAX];
+#if defined(__WINDOWS__)
+    HANDLE hMappedObject;
+#endif  /* defined(__WINDOWS__) */
 };
 typedef struct mca_common_sm_mmap_t mca_common_sm_mmap_t;
 

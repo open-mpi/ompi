@@ -28,7 +28,8 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
     # default list of header files.
     if test "x$ompi_cv_c_compiler_vendor" = "xmicrosoft" ; then
         #
-        #    LDFLAGS="$LDFLAGS /DEFAULTLIB:Ws2_32.lib /DEFAULTLIB:Advapi32.lib"
+        SAVE_LDFLAGS="$LDFLAGS"
+        LDFLAGS="$LDFLAGS Ws2_32.lib Advapi32.lib"
         #
         AC_CHECK_HEADERS([windows.h winsock2.h wdm.h])
 
@@ -101,23 +102,24 @@ AC_DEFUN([OMPI_MICROSOFT_COMPILER],[
                        $ompi_windows_have_support_for_64_bits_atomic,
                        [Whether we support 64 bits atomic operations on Windows])
 
-    ompi_show_title "Type tests"
+        ompi_show_title "Windows Type tests"
 
-    AC_DEFINE([pid_t], [int], [Windows pid_t type is an int])
-    AC_DEFINE_UNQUOTED([SIZEOF_PID_T], $ac_cv_sizeof_int,
-                       [and here is it's size])
-    AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1],
-                                           [Whether we have socklen_t or not])],
-                   [AC_DEFINE(socklen_t, unsigned int,
-                              [Define to unsigned int if you dont have it])],
-                   [#include <winsock2.h>
-                    #include <ws2tcpip.h>])
+        AC_DEFINE([pid_t], [int], [Windows pid_t type is an int])
+        AC_DEFINE_UNQUOTED([SIZEOF_PID_T], $ac_cv_sizeof_int,
+                           [and here is it's size])
+        AC_CHECK_TYPES([socklen_t], [AC_DEFINE([HAVE_SOCKLEN_T], [1],
+                                               [Whether we have socklen_t or not])],
+                       [AC_DEFINE(socklen_t, unsigned int,
+                                  [Define to unsigned int if you dont have it])],
+                       [#include <winsock2.h>
+                        #include <ws2tcpip.h>])
 
-    AC_CHECK_TYPES([struct sockaddr_in], [], [],
-                   [AC_INCLUDES_DEFAULT
-                    #include <winsock2.h>
-                    #include <ws2tcpip.h>])
+        AC_CHECK_TYPES([struct sockaddr_in], [], [],
+                       [AC_INCLUDES_DEFAULT
+                        #include <winsock2.h>
+                        #include <ws2tcpip.h>])
 
+        LDFLAGS="$SAVE_LDFLAGS"
 fi
 
 ])

@@ -1,9 +1,8 @@
-/* @file */
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -29,10 +28,6 @@
 #if OPAL_ENABLE_TRACE
 
 #include "opal/util/output.h"
-
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C" {
-#endif
 
 #define OPAL_TRACE(verbose) \
     do {                                                                       \
@@ -60,10 +55,13 @@ extern "C" {
 
 #endif /* ENABLE_TRACE */
 
-extern int opal_trace_handle;
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
-OMPI_DECLSPEC void opal_trace_init(void);
-OMPI_DECLSPEC void opal_trace_finalize(void);
+OPAL_DECLSPEC extern int opal_trace_handle;
+OPAL_DECLSPEC void opal_trace_init(void);
+OPAL_DECLSPEC void opal_trace_finalize(void);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

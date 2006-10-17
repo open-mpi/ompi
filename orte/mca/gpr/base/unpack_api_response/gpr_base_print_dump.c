@@ -38,7 +38,7 @@
 int orte_gpr_base_print_dump(orte_buffer_t *buffer)
 {
     char *line;
-    size_t n;
+    orte_std_cntr_t n;
     orte_data_type_t type;
     int rc;
 

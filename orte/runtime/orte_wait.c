@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -39,6 +39,11 @@
 #include "opal/threads/condition.h"
 #include "orte/orte_constants.h"
 #include "orte/runtime/orte_wait.h"
+
+static volatile int cb_enabled = true;
+static opal_mutex_t mutex;
+static opal_list_t pending_pids;
+static opal_list_t registered_cb;
 
 #ifdef HAVE_WAITPID
 
@@ -123,10 +128,6 @@ static OBJ_CLASS_INSTANCE(registered_cb_item_t, opal_list_item_t, NULL, NULL);
  * Local Variables
  *
  ********************************************************************/
-static volatile int cb_enabled = true;
-static opal_mutex_t mutex;
-static opal_list_t pending_pids;
-static opal_list_t registered_cb;
 static struct opal_event handler;
 
 
@@ -198,10 +199,8 @@ orte_wait_finalize(void)
 int 
 orte_wait_kill(int sig)
 {
-    opal_list_t children;
     opal_list_item_t* item;
 
-    OBJ_CONSTRUCT(&children, opal_list_t);
     OPAL_THREAD_LOCK(&mutex);
     do_waitall(0);
     while (NULL != (item = opal_list_remove_first(&registered_cb))) {
@@ -616,51 +615,284 @@ internal_waitpid_callback(int fd, short event, void *arg)
 
 #else /* HAVE_WAITPID */
 
+typedef struct {
+    opal_list_item_t super;
+    pid_t pid;
+    HANDLE registered_handle;
+    orte_wait_fn_t callback;
+    void *data;
+    int status;
+} opal_process_handle_t;
+
+static void opal_process_handle_construct( opal_object_t* obj )
+{
+    opal_process_handle_t* handle = (opal_process_handle_t*)obj;
+
+    handle->registered_handle = INVALID_HANDLE_VALUE;
+    handle->pid               = 0;
+    handle->callback          = NULL;
+    handle->data              = NULL;
+}
+static void opal_process_handle_destruct( opal_object_t* obj )
+{
+    opal_process_handle_t* handle = (opal_process_handle_t*)obj;
+
+    if( INVALID_HANDLE_VALUE != handle->registered_handle ) {
+        if( 0 == UnregisterWait( handle->registered_handle ) ) {
+            int error = GetLastError();
+        }
+        if( 0 == CloseHandle( handle->registered_handle ) ) {
+            int error = GetLastError();
+        }
+        handle->registered_handle = INVALID_HANDLE_VALUE;
+    }
+}
+
+static OBJ_CLASS_INSTANCE( opal_process_handle_t, opal_list_item_t,
+                           opal_process_handle_construct, opal_process_handle_destruct );
+
 int
-orte_wait_init(void) {
+orte_wait_init(void)
+{
+    OBJ_CONSTRUCT(&mutex, opal_mutex_t);
+    OBJ_CONSTRUCT(&registered_cb, opal_list_t);
+    OBJ_CONSTRUCT(&pending_pids, opal_list_t);
     return ORTE_SUCCESS;
 }
 
 int
 orte_wait_finalize(void)
 {
+    opal_list_item_t* item;
+
+    OPAL_THREAD_LOCK(&mutex);
+    OPAL_THREAD_UNLOCK(&mutex);
+
+    while (NULL != (item = opal_list_remove_first(&pending_pids))) {
+        OBJ_RELEASE(item);
+    }
+    while (NULL != (item = opal_list_remove_first(&registered_cb))) {
+        OBJ_RELEASE(item);
+    }
+
+    OBJ_DESTRUCT(&mutex);
+    OBJ_DESTRUCT(&registered_cb);
+    OBJ_DESTRUCT(&pending_pids);
+
     return ORTE_SUCCESS;
 }
+
+/**
+ * Internal function which find a corresponding process structure
+ * based on the pid. If create is true and the pid does not have a
+ * corresponding process structure, one will be automatically
+ * created and attached to the end of the list.
+ */
+static opal_process_handle_t* opal_find_pid_in_list(opal_list_t* list, pid_t pid, bool create)
+{
+    opal_list_item_t *item = NULL;
+    opal_process_handle_t *handle = NULL;
+
+    for (item = opal_list_get_first(list) ;
+         item != opal_list_get_end(list) ;
+         item = opal_list_get_next(item)) {
+        handle = (opal_process_handle_t*) item;
+
+        if (handle->pid == pid) {
+            return handle;
+        }
+    }
+
+    if (create) {
+        handle = OBJ_NEW(opal_process_handle_t);
+        if (NULL == handle) return NULL;
+
+        handle->pid = pid;
+        handle->callback = NULL;
+        handle->data = NULL;
+        opal_list_append(list, (opal_list_item_t*)handle);
+        return handle;
+    }
+
+    return NULL;
+}
+#define find_pending_pid(PID, CREATE)  opal_find_pid_in_list( &pending_pids, (PID), (CREATE) )
+#define find_pending_cb(PID, CREATE)   opal_find_pid_in_list( &registered_cb, (PID), (CREATE) )
 
 pid_t
 orte_waitpid(pid_t wpid, int *status, int options)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    opal_process_handle_t* pending;
+
+    OPAL_THREAD_LOCK(&mutex);
+
+    /**
+     * Is the child already gone ?
+     */
+    pending = find_pending_pid( wpid, false );
+    if( NULL != pending ) {
+        *status = pending->status;
+        opal_list_remove_item( &pending_pids, (opal_list_item_t*)pending );
+        OBJ_RELEASE(pending);
+        OPAL_THREAD_UNLOCK(&mutex);
+        return wpid;
+    }
+
+    /**
+     * Do we have any registered callback for this particular pid ?
+     */
+    pending = find_pending_cb( wpid, false );
+    if( NULL != pending ) {
+        opal_list_remove_item( &registered_cb, (opal_list_item_t*)pending );
+        OBJ_RELEASE( pending );
+    }
+
+    /**
+     * No luck so far. Wait until the process complete ...
+     */
+    if( WAIT_OBJECT_0 == WaitForSingleObject( (HANDLE)wpid, INFINITE ) ) {
+        DWORD exitCode;
+        /* Process completed. Grab the exit value and return. */
+        if( 0 == GetExitCodeProcess( (HANDLE)wpid, &exitCode ) ) {
+            int error = GetLastError();
+        }
+        *status = (int)exitCode;
+    }
+    OPAL_THREAD_UNLOCK(&mutex);
+    return wpid;
+}
+
+static void CALLBACK trigger_process_detection( void* lpParameter, BOOLEAN TimerOrWaitFired )
+{
+    opal_process_handle_t* handle = (opal_process_handle_t*)lpParameter;
+    DWORD exitCode;
+
+    opal_list_remove_item( &registered_cb, (opal_list_item_t*)handle );
+    /**
+     * As this item will never be triggered again, we can safely remove the
+     * registered handle.
+     */
+    if( 0 == UnregisterWait( handle->registered_handle ) ) {
+        int error = GetLastError();
+    }
+    if( 0 == CloseHandle( handle->registered_handle ) ) {
+        int error = GetLastError();
+    }
+    handle->registered_handle = INVALID_HANDLE_VALUE;
+    /**
+     * Get the exit code of the process.
+     */
+    if( 0 == GetExitCodeProcess( (HANDLE)handle->pid, &exitCode ) ) {
+        int error = GetLastError();
+    }
+    handle->status = (int)exitCode;
+    handle->callback(handle->pid, handle->status, handle->data);
+    OBJ_RELEASE( handle );
 }
 
 int
 orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    opal_process_handle_t* handle;
+
+    if (wpid <= 0) return ORTE_ERR_NOT_IMPLEMENTED;
+    if (NULL == callback) return ORTE_ERR_BAD_PARAM;
+
+    OPAL_THREAD_LOCK(&mutex);
+    handle = find_pending_pid(wpid, false);
+    if( handle != NULL ) {
+        opal_list_remove_item( &pending_pids, (opal_list_item_t*)handle );
+        OBJ_RELEASE(handle);
+        return ORTE_SUCCESS;
+    }
+    handle = find_pending_cb( wpid, true );
+    handle->pid = wpid;
+    handle->callback = callback;
+    handle->data = data;
+
+    RegisterWaitForSingleObject( &handle->registered_handle, (HANDLE)handle->pid, 
+                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINWAITTHREAD);
+
+    OPAL_THREAD_UNLOCK(&mutex);
+
+    return OPAL_SUCCESS;
 }
 
 int
 orte_wait_cb_cancel(pid_t wpid)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    opal_process_handle_t* pending;
+
+    OPAL_THREAD_LOCK(&mutex);
+
+    /**
+     * Do we have any registered callback for this particular pid ?
+     */
+    pending = find_pending_cb( wpid, false );
+    if( NULL != pending ) {
+        opal_list_remove_item( &registered_cb, (opal_list_item_t*)pending );
+        OBJ_RELEASE( pending );
+        OPAL_THREAD_UNLOCK(&mutex);
+        return ORTE_SUCCESS;
+    }
+    OPAL_THREAD_UNLOCK(&mutex);
+    return ORTE_ERR_BAD_PARAM;
 }
 
 int
 orte_wait_cb_disable(void)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    OPAL_THREAD_LOCK(&mutex);
+    cb_enabled = false;
+    OPAL_THREAD_UNLOCK(&mutex);
+
+    return ORTE_SUCCESS;
 }
 
 int
 orte_wait_cb_enable(void)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    OPAL_THREAD_LOCK(&mutex);
+    cb_enabled = true;
+    OPAL_THREAD_UNLOCK(&mutex);
+
+    return ORTE_SUCCESS;
 }
 
 int
 orte_wait_kill(int sig)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    opal_list_item_t* item;
+
+    /**
+     * First pass. For all registered processes not yet triggered, terminate the
+     * process. Once this first pass is done, we will try to cleanup the ressources
+     */
+    OPAL_THREAD_LOCK(&mutex);
+
+    for (item = opal_list_get_first(&registered_cb) ;
+         item != opal_list_get_end(&registered_cb) ;
+         item = opal_list_get_next(item)) {
+        opal_process_handle_t* handle = (opal_process_handle_t*)item;
+
+        if( 0 == TerminateProcess( (HANDLE)handle->pid, sig ) ) {
+            int error = GetLastError();
+        }
+    }
+
+    /* Give them a chance to complete the kill. */
+    SleepEx( 1000, TRUE );
+
+    /* And now clean all ressources. */
+    while (NULL != (item = opal_list_remove_first(&registered_cb))) {
+        OBJ_RELEASE(item);
+    }
+    while (NULL != (item = opal_list_remove_first(&pending_pids))) {
+        OBJ_RELEASE(item);
+    }
+
+    OPAL_THREAD_UNLOCK(&mutex);
+    return ORTE_SUCCESS;
 }
 
 #endif

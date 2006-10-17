@@ -22,7 +22,6 @@
 #define OMPI_PML_OB1_RECV_REQUEST_H
 
 #include "pml_ob1.h"
-#include "pml_ob1_proc.h"
 #include "pml_ob1_rdma.h"
 #include "pml_ob1_rdmafrag.h"
 #include "ompi/proc/proc.h"
@@ -55,7 +54,6 @@ struct mca_pml_ob1_recv_request_t {
     bool req_ack_sent; /**< whether ack was sent to the sender */
 };
 typedef struct mca_pml_ob1_recv_request_t mca_pml_ob1_recv_request_t;
-
 
 OBJ_CLASS_DECLARATION(mca_pml_ob1_recv_request_t);
 
@@ -104,9 +102,10 @@ do {                                                                \
                                     tag,                            \
                                     comm,                           \
                                     persistent);                    \
+    (request)->req_bytes_delivered = 0;                             \
     if( MPI_ANY_SOURCE != src ) {                                   \
         (request)->req_recv.req_base.req_proc =                     \
-            comm->c_pml_comm->procs[src].proc_ompi;                 \
+            comm->c_pml_comm->procs[src].ompi_proc;                 \
         if( (0 != (datatype)->size) && (0 != count) ) {             \
             ompi_convertor_copy_and_prepare_for_recv(               \
                 (request)->req_recv.req_base.req_proc->proc_convertor, \
@@ -115,6 +114,8 @@ do {                                                                \
                 (request)->req_recv.req_base.req_addr,              \
                 0,                                                  \
                 &(request)->req_recv.req_convertor );               \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor, \
+                                              &(request)->req_bytes_delivered );  \
         }                                                           \
     }                                                               \
 } while(0)
@@ -162,15 +163,14 @@ do {                                                                            
     } else {                                                                    \
         /* initialize request status */                                         \
         recvreq->req_recv.req_base.req_pml_complete = true;                     \
+        recvreq->req_recv.req_base.req_ompi.req_status._count =                 \
+            recvreq->req_bytes_received;                                        \
         if (recvreq->req_bytes_received > recvreq->req_bytes_delivered) {       \
-            recvreq->req_recv.req_base.req_ompi.req_status._count =     \
-                recvreq->req_bytes_delivered;                           \
-            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =  \
-                MPI_ERR_TRUNCATE;                                       \
-        } else {                                                        \
-            recvreq->req_recv.req_base.req_ompi.req_status._count =     \
-                recvreq->req_bytes_received;                            \
-        }                                                               \
+            recvreq->req_recv.req_base.req_ompi.req_status._count =             \
+                recvreq->req_bytes_delivered;                                   \
+            recvreq->req_recv.req_base.req_ompi.req_status.MPI_ERROR =          \
+                MPI_ERR_TRUNCATE;                                               \
+        }                                                                       \
         MCA_PML_OB1_RECV_REQUEST_MPI_COMPLETE( recvreq );                       \
     }                                                                           \
     OPAL_THREAD_UNLOCK(&ompi_request_lock);                                     \
@@ -242,13 +242,13 @@ do {                                                                            
 do {                                                                               \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
-    (request)->req_bytes_delivered = (request)->req_recv.req_bytes_packed;         \
                                                                                    \
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
                                                                                    \
     if((request)->req_recv.req_bytes_packed > 0) {                                 \
-        if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \
+        if( (MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer) ||           \
+            (0 == (request)->req_bytes_delivered) ) {                              \
             ompi_convertor_copy_and_prepare_for_recv(                              \
                          (request)->req_recv.req_base.req_proc->proc_convertor,    \
                          (request)->req_recv.req_base.req_datatype,                \
@@ -256,9 +256,9 @@ do {                                                                            
                          (request)->req_recv.req_base.req_addr,                    \
                          0,                                                        \
                          &(request)->req_recv.req_convertor );                     \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,  \
+                                              &(request)->req_bytes_delivered );   \
         }                                                                          \
-        ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor,      \
-                                          &(request)->req_bytes_delivered );       \
         PERUSE_TRACE_COMM_EVENT (PERUSE_COMM_REQ_XFER_BEGIN,                       \
                                  &((request)->req_recv.req_base), PERUSE_RECV);    \
     }                                                                              \
@@ -292,7 +292,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
-                iov[iov_count].iov_base = (void*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \

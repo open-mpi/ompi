@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
@@ -39,7 +39,7 @@ orte_pointer_array_t *orte_dss_types;
 orte_data_type_t orte_dss_num_reg_types;
 orte_dss_buffer_type_t default_buf_type;
 
-OMPI_DECLSPEC orte_dss_t orte_dss = {
+orte_dss_t orte_dss = {
     orte_dss_set,
     orte_dss_get,
     orte_dss_arith,
@@ -58,7 +58,8 @@ OMPI_DECLSPEC orte_dss_t orte_dss = {
     orte_dss_load,
     orte_dss_register,
     orte_dss_lookup_data_type,
-    orte_dss_dump_data_types
+    orte_dss_dump_data_types,
+    orte_dss_dump
 };
 
 /**
@@ -426,19 +427,6 @@ int orte_dss_open(void)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    tmp = ORTE_DAEMON_CMD;
-    if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_daemon_cmd,
-                                          orte_dss_unpack_daemon_cmd,
-                                          (orte_dss_copy_fn_t)orte_dss_std_copy,
-                                          (orte_dss_compare_fn_t)orte_dss_compare_daemon_cmd,
-                                          (orte_dss_size_fn_t)orte_dss_std_size,
-                                          (orte_dss_print_fn_t)orte_dss_print_daemon_cmd,
-                                          (orte_dss_release_fn_t)orte_dss_std_release,
-                                          ORTE_DSS_UNSTRUCTURED,
-                                          "ORTE_DATA_TYPE", &tmp))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
     tmp = ORTE_BYTE_OBJECT;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_dss_pack_byte_object,
                                           orte_dss_unpack_byte_object,
@@ -461,12 +449,12 @@ int orte_dss_open(void)
 
 int orte_dss_close(void)
 {
-    size_t i;
+    orte_std_cntr_t i;
 
     orte_dss_initialized = false;
 
     for (i = 0 ; i < orte_pointer_array_get_size(orte_dss_types) ; ++i) {
-        orte_dss_type_info_t *info = orte_pointer_array_get_item(orte_dss_types, i);
+        orte_dss_type_info_t *info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, i);
         if (NULL != info) {
             OBJ_RELEASE(info);
         }

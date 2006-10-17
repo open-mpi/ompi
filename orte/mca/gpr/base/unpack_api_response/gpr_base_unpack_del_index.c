@@ -35,7 +35,7 @@ int orte_gpr_base_unpack_delete_segment(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -63,7 +63,7 @@ int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret)
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    size_t n;
+    orte_std_cntr_t n;
 
     OPAL_TRACE(3);
 
@@ -87,10 +87,10 @@ int orte_gpr_base_unpack_delete_entries(orte_buffer_t *buffer, int *ret)
 }
 
 
-int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, size_t *cnt, char ***index)
+int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, orte_std_cntr_t *cnt, char ***index)
 {
     orte_gpr_cmd_flag_t command;
-    size_t n;
+    orte_std_cntr_t n;
     orte_data_type_t type;
     int rc;
 

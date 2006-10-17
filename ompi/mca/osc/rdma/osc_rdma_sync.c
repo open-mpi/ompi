@@ -26,6 +26,7 @@
 #include "opal/runtime/opal_progress.h"
 #include "opal/threads/mutex.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/mca/osc/base/base.h"
 
 
 /* should have p2p_lock before calling */
@@ -177,9 +178,10 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)));
 
-        opal_output(-1, "fence: waiting on %d in and %d out",
-                    P2P_MODULE(win)->p2p_num_pending_in,
-                    P2P_MODULE(win)->p2p_num_pending_out);
+        opal_output_verbose(50, ompi_osc_base_output,
+                            "fence: waiting on %d in and %d out",
+                            P2P_MODULE(win)->p2p_num_pending_in,
+                            P2P_MODULE(win)->p2p_num_pending_out);
 
         /* try to start all the requests.  We've copied everything we
            need out of pending_sendreqs, so don't need the lock
@@ -192,7 +194,8 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
             ret = ompi_osc_rdma_sendreq_send(P2P_MODULE(win), req);
 
             if (OMPI_SUCCESS != ret) {
-                opal_output(0, "fence: failure in starting sendreq (%d).  Will try later.",
+                opal_output_verbose(5, ompi_osc_base_output,
+                            "fence: failure in starting sendreq (%d).  Will try later.",
                             ret);
                 opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
             }
@@ -269,7 +272,7 @@ ompi_osc_rdma_module_start(ompi_group_t *group,
 
     /* possible we've already received a couple in messages, so
        atomicall add however many we're going to wait for */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_in),
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_post_msgs),
                       ompi_group_size(P2P_MODULE(win)->p2p_sc_group));
 
     return OMPI_SUCCESS;
@@ -285,7 +288,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
     opal_list_item_t *item;
 
     /* wait for all the post messages */
-    while (0 != P2P_MODULE(win)->p2p_num_pending_in) {
+    while (0 != P2P_MODULE(win)->p2p_num_post_msgs) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
 
@@ -316,8 +319,9 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
         ret = ompi_osc_rdma_sendreq_send(P2P_MODULE(win), req);
 
         if (OMPI_SUCCESS != ret) {
-            opal_output(0, "complete: failure in starting sendreq (%d).  Will try later.",
-                        ret);
+            opal_output_verbose(5, ompi_osc_base_output,
+                                "complete: failure in starting sendreq (%d).  Will try later.",
+                                ret);
             opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
         }
     }
@@ -363,7 +367,7 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
     ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out),
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_complete_msgs),
                       ompi_group_size(P2P_MODULE(win)->p2p_pw_group));
 
     /* send a hello counter to everyone in group */
@@ -383,7 +387,7 @@ ompi_osc_rdma_module_wait(ompi_win_t *win)
     ompi_group_t *group;
 
     while (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-           0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+           0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
 
@@ -409,10 +413,10 @@ ompi_osc_rdma_module_test(ompi_win_t *win,
     ompi_group_t *group;
 
     if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-        0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+        0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
         if (0 != (P2P_MODULE(win)->p2p_num_pending_in) ||
-            0 != (P2P_MODULE(win)->p2p_num_pending_out)) {
+            0 != (P2P_MODULE(win)->p2p_num_complete_msgs)) {
             *flag = 0;
             return OMPI_SUCCESS;
         }
@@ -451,15 +455,17 @@ ompi_osc_rdma_module_lock(int lock_type,
                            int assert,
                            ompi_win_t *win)
 {
-    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( P2P_MODULE(win)->p2p_comm, target );
 
     assert(lock_type != 0);
 
     /* set our mode on the window */
-    ompi_win_set_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
+    ompi_win_remove_mode(win, OMPI_WIN_FENCE);
+    ompi_win_append_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
-    opal_output(-1, "%d sending lock request to %d", 
-                P2P_MODULE(win)->p2p_comm->c_my_rank, target);
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "%d sending lock request to %d", 
+                        P2P_MODULE(win)->p2p_comm->c_my_rank, target);
     /* generate a lock request */
     ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                 proc,
@@ -479,7 +485,7 @@ ompi_osc_rdma_module_unlock(int target,
     int32_t out_count;
     opal_list_item_t *item;
     int ret;
-    ompi_proc_t *proc = P2P_MODULE(win)->p2p_comm->c_pml_procs[target]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( P2P_MODULE(win)->p2p_comm, target );
 
     while (0 == P2P_MODULE(win)->p2p_lock_received_ack) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
@@ -503,8 +509,9 @@ ompi_osc_rdma_module_unlock(int target,
         ret = ompi_osc_rdma_sendreq_send(P2P_MODULE(win), req);
 
         if (OMPI_SUCCESS != ret) {
-            opal_output(0, "unlock: failure in starting sendreq (%d).  Will try later.",
-                        ret);
+            opal_output_verbose(5, ompi_osc_base_output,
+                                "unlock: failure in starting sendreq (%d).  Will try later.",
+                                ret);
             opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
         }
     }
@@ -515,8 +522,9 @@ ompi_osc_rdma_module_unlock(int target,
     }
 
     /* send the unlock request */
-    opal_output(-1, "%d sending unlock request to %d", 
-                P2P_MODULE(win)->p2p_comm->c_my_rank, target);
+    opal_output_verbose(50, ompi_osc_base_output, 
+                        "%d sending unlock request to %d", 
+                        P2P_MODULE(win)->p2p_comm->c_my_rank, target);
     ompi_osc_rdma_control_send(P2P_MODULE(win), 
                                 proc,
                                 OMPI_OSC_RDMA_HDR_UNLOCK_REQ,
@@ -524,7 +532,7 @@ ompi_osc_rdma_module_unlock(int target,
                                 out_count);
 
     /* set our mode on the window */
-    ompi_win_set_mode(win, 0);
+    ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
     return OMPI_SUCCESS;
 }
@@ -537,17 +545,19 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
 {
     bool send_ack = false;
     int ret = OMPI_SUCCESS;
-    ompi_proc_t *proc = module->p2p_comm->c_pml_procs[origin]->proc_ompi;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin );
     ompi_osc_rdma_pending_lock_t *new_pending;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
     if (lock_type == MPI_LOCK_EXCLUSIVE) {
         if (module->p2p_lock_status == 0) {
             module->p2p_lock_status = MPI_LOCK_EXCLUSIVE;
+            ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
-            opal_output(-1, "%d queuing lock request from %d (%d)", 
-                        module->p2p_comm->c_my_rank, origin, lock_type);
+            opal_output_verbose(50, ompi_osc_base_output,
+                                "%d queuing lock request from %d (%d)", 
+                                module->p2p_comm->c_my_rank, origin, lock_type);
             new_pending = OBJ_NEW(ompi_osc_rdma_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -557,10 +567,12 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
         if (module->p2p_lock_status != MPI_LOCK_EXCLUSIVE) {
             module->p2p_lock_status = MPI_LOCK_SHARED;
             module->p2p_shared_count++;
+            ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             send_ack = true;
         } else {
-            opal_output(-1, "queuing lock request from %d (%d)", 
-                        module->p2p_comm->c_my_rank, origin, lock_type);
+            opal_output_verbose(50, ompi_osc_base_output,
+                                "queuing lock request from %d (%d)", 
+                                module->p2p_comm->c_my_rank, origin, lock_type);
             new_pending = OBJ_NEW(ompi_osc_rdma_pending_lock_t);
             new_pending->proc = proc;
             new_pending->lock_type = lock_type;
@@ -572,8 +584,9 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (send_ack) {
-        opal_output(-1, "%d sending lock ack to %d", 
-                    module->p2p_comm->c_my_rank, origin);
+        opal_output_verbose(50, ompi_osc_base_output,
+                            "%d sending lock ack to %d", 
+                            module->p2p_comm->c_my_rank, origin);
         ompi_osc_rdma_control_send(module, proc,
                                     OMPI_OSC_RDMA_HDR_LOCK_REQ,
                                     module->p2p_comm->c_my_rank,
@@ -601,10 +614,12 @@ ompi_osc_rdma_passive_unlock(ompi_osc_rdma_module_t *module,
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
     if (module->p2p_lock_status == MPI_LOCK_EXCLUSIVE) {
+        ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         module->p2p_lock_status = 0;
     } else {
         module->p2p_shared_count--;
         if (module->p2p_shared_count == 0) {
+            ompi_win_remove_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
             module->p2p_lock_status = 0;
         }
     }
@@ -615,7 +630,9 @@ ompi_osc_rdma_passive_unlock(ompi_osc_rdma_module_t *module,
     OPAL_THREAD_UNLOCK(&(module->p2p_lock));
 
     if (NULL != new_pending) {
-        opal_output(-1, "sending lock request to proc");
+        opal_output_verbose(50, ompi_osc_base_output,
+                            "sending lock request to proc");
+        ompi_win_append_mode(module->p2p_win, OMPI_WIN_EXPOSE_EPOCH);
         /* set lock state and generate a lock request */
         module->p2p_lock_status = new_pending->lock_type;
         ompi_osc_rdma_control_send(module,

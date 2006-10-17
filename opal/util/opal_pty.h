@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -30,16 +30,24 @@
 # endif
 #endif
 
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 #if OMPI_ENABLE_PTY_SUPPORT 
 
-int opal_openpty(int *amaster, int *aslave, char *name, 
-                 struct termios *termp, struct winsize *winp);
+OPAL_DECLSPEC int opal_openpty(int *amaster, int *aslave, char *name, 
+                               struct termios *termp, struct winsize *winp);
 
 #else
 
-int opal_openpty(int *amaster, int *aslave, char *name,
-                 void *termp, void *winpp);
+OPAL_DECLSPEC int opal_openpty(int *amaster, int *aslave, char *name,
+                               void *termp, void *winpp);
 
+#endif
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
 #endif
 
 #endif /* OPAL_UTIL_PTY_H */

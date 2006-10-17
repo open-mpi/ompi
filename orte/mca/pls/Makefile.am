@@ -25,7 +25,7 @@ nobase_orte_HEADERS =
 dist_pkgdata_DATA =
 
 # local files
-headers = pls.h
+headers = pls.h pls_types.h
 libmca_pls_la_SOURCES += $(headers)
 
 # Conditionally install the header files

@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -53,7 +53,7 @@ extern "C" {
      * functions -- it is not considered a public interface member --
      * and is only mentioned here for completeness.
      */
-    OMPI_DECLSPEC int opal_backtrace_base_open(void);
+    OPAL_DECLSPEC int opal_backtrace_base_open(void);
     
 
     /**
@@ -67,9 +67,9 @@ extern "C" {
      *
      * It must be the last function invoked on the backtrace MCA framework.
      */
-    OMPI_DECLSPEC int opal_backtrace_base_close(void);
+    OPAL_DECLSPEC int opal_backtrace_base_close(void);
 
-    extern opal_list_t opal_backtrace_base_components_opened;
+    OPAL_DECLSPEC extern opal_list_t opal_backtrace_base_components_opened;
     
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -24,15 +24,21 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+
+#include "orte/util/proc_info.h"
+#include "orte/mca/errmgr/errmgr.h"
+
+#include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
 
 
 int orte_ras_base_finalize(void)
 {
     opal_list_item_t* item;
+    int rc;
 
-    /* Finalize all available modules */
     if (orte_ras_base.ras_available_valid) {
+        /* Finalize all available modules */
         while (NULL != 
                (item = opal_list_remove_first(&orte_ras_base.ras_available))) {
             orte_ras_base_cmp_t* cmp = (orte_ras_base_cmp_t*)item;
@@ -40,6 +46,13 @@ int orte_ras_base_finalize(void)
             OBJ_RELEASE(cmp);
         }
         OBJ_DESTRUCT(&orte_ras_base.ras_available);
+
+        /* if we are an HNP, stop the receive */
+        if (orte_process_info.seed) {
+            if (ORTE_SUCCESS != (rc = orte_ras_base_comm_stop())) {
+                ORTE_ERROR_LOG(rc);
+            }
+        }
     }
 
     return ORTE_SUCCESS;
@@ -48,11 +61,13 @@ int orte_ras_base_finalize(void)
 
 int orte_ras_base_close(void)
 {
-    /* Close all remaining available components (may be one if this is a
-       Open RTE program, or [possibly] multiple if this is ompi_info) */
+    if (orte_ras_base.ras_opened_valid) {
+        /* Close all remaining available components (may be one if this is a
+        Open RTE program, or [possibly] multiple if this is ompi_info) */
 
-    mca_base_components_close(orte_ras_base.ras_output, 
-                              &orte_ras_base.ras_opened, NULL);
+        mca_base_components_close(orte_ras_base.ras_output, 
+                                  &orte_ras_base.ras_opened, NULL);
+    }
   
     return ORTE_SUCCESS;
 }

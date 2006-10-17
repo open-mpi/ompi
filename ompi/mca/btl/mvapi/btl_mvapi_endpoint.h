@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -36,8 +36,8 @@
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-OBJ_CLASS_DECLARATION(mca_btl_mvapi_endpoint_t);
 
+OBJ_CLASS_DECLARATION(mca_btl_mvapi_endpoint_t);
 
 struct mca_btl_mvapi_frag_t; 
    
@@ -156,7 +156,7 @@ struct mca_btl_base_endpoint_t {
     /**< info about remote RDMA buffer */
     mca_btl_mvapi_eager_rdma_local_t eager_rdma_local;
     /**< info about local RDMA buffer */
-    size_t eager_rdma_index; /**< index into RDMA buffers pointer array */
+    int32_t eager_rdma_index; /**< index into RDMA buffers pointer array */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

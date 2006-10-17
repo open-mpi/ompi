@@ -42,7 +42,7 @@ Thanks for your time.
 ===========================================================================
 
 The following abbreviated list of release notes applies to this code
-base as of this writing (3 October 2006):
+base as of this writing (12 Sep 2006):
 
 - Open MPI includes support for a wide variety of supplemental
   hardware and software package.  When configuring Open MPI, you may
@@ -75,7 +75,6 @@ base as of this writing (3 October 2006):
   - SLURM
   - XGrid
   - Cray XT-3 / Red Storm
-  - LoadLeveler / POE
   - Sun N1 Grid Engine (N1GE) 6 and open source Grid Engine
 
 - The majority of Open MPI's documentation is here in this file and on
@@ -224,6 +223,11 @@ base as of this writing (3 October 2006):
   MCA parameter btl_mx_max_send_size can be used to vary the maximum
   size of subsequent fragments.
 
+- The Open Fabrics Enterprise Distribution (OFED) software package
+  v1.0 will not work properly with Open MPI v1.2 (and later) due to
+  how its Mellanox InfiniBand plugin driver is created.  The problem
+  is fixed OFED v1.1 (and beyond).
+
 - The current version of the Open MPI point-to-point engine does not
   yet support hardware-level MPI message matching.  As such, MPI
   message matching must be performed in software, artificially
@@ -336,10 +340,6 @@ for a full list); a summary of the more commonly used ones follows:
   Specify the directory where the TM libraries and header files are
   located.  This enables PBS / Torque support in Open MPI.
 
---with-loadleveler=<directory>
-  Specify the directory where the LoadLeveler libraries and header
-  file are located.  This enables LoadLeveler support in Open MPI.
-
 --with-mpi-param_check(=value)
   "value" can be one of: always, never, runtime.  If --with-mpi-param
   is not specified, "runtime" is the default.  If --with-mpi-param
@@ -373,6 +373,14 @@ for a full list); a summary of the more commonly used ones follows:
   Disable building the C++ MPI bindings.  Note that this does *not*
   disable the C++ checks during configure; some of Open MPI's tools
   are written in C++ and therefore require a C++ compiler to be built.
+
+--disable-mpi-cxx-seek
+  Disable the MPI::SEEK_* constants.  Due to a problem with the MPI-2
+  specification, these constants can conflict with system-level SEEK_*
+  constants.  Open MPI attempts to work around this problem, but the
+  workaround may fail in some esoteric situations.  The
+  --disable-mpi-cxx-seek switch disables Open MPI's workarounds (and
+  therefore the MPI::SEEK_* constants will be unavailable).
 
 --disable-mpi-f77
   Disable building the Fortran 77 MPI bindings.
