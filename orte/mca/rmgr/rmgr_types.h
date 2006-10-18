@@ -39,7 +39,13 @@ extern "C" {
  */
 typedef orte_gpr_keyval_t orte_attribute_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
-    
+
+/* define some booleans to make code more legible. These
+ * control the action of the rmgr.merge_attributes function
+ */
+#define ORTE_RMGR_ATTR_NO_OVERRIDE  false
+#define ORTE_RMGR_ATTR_OVERRIDE     true
+
 
 /* RESOURCE MANAGER DATA TYPES */
 

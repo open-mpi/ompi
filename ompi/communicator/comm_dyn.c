@@ -47,6 +47,7 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ras/ras_types.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/smr/smr_types.h"
@@ -357,6 +358,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     orte_app_context_t **apps=NULL;
     
     opal_list_t attributes;
+    opal_list_item_t *item;
 
 
     /* parse the info object */
@@ -548,7 +550,18 @@ ompi_comm_start_processes(int count, char **array_of_commands,
      * don't go get one just for them
      */
     if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RAS_USE_PARENT_ALLOCATION,
-                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid)))) {
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid),
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&attributes);
+        opal_progress_event_decrement();
+        return MPI_ERR_SPAWN;
+    }
+
+    /* tell the RTE that we want the children mapped the same way as their parent */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMAPS_USE_PARENT_PLAN,
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid),
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&attributes);
         opal_progress_event_decrement();
@@ -564,6 +577,9 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
     /* clean up */
     opal_progress_event_decrement();
+    while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attributes);
+
     for ( i=0; i<count; i++) {
     OBJ_RELEASE(apps[i]);
     }

@@ -43,14 +43,14 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
 {
     orte_job_map_t *mapping;
     orte_mapped_proc_t *proc;
-    orte_cellid_t *cellptr, cell;
+    orte_cellid_t *cellptr, cell=ORTE_CELLID_INVALID;
     orte_std_cntr_t *sptr;
-    bool *bptr, oversub;
+    bool *bptr, oversub=false;
     pid_t *pidptr;
     orte_process_name_t *pptr;
     char *segment;
-    char *node_name;
-    char *username;
+    char *node_name=NULL;
+    char *username=NULL;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t* keyval;
     orte_std_cntr_t v, kv, num_values;
@@ -408,6 +408,199 @@ cleanup:
     }
     if(NULL != values)
         free(values);
+    return rc;
+}
+
+
+/* Mapping plans are associated with a job - hence, they are stored in the job's
+ * container on the JOB_MASTER_SEGMENT
+ */
+int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
+{
+    int rc;
+    orte_attribute_t *attr;
+    orte_gpr_value_t *value;
+    orte_std_cntr_t i, j, num_attrs_found, num_tokens;
+    char *attrs[] = {
+        ORTE_RMAPS_MAP_POLICY,
+        ORTE_RMAPS_PERNODE,
+        ORTE_RMAPS_NO_USE_LOCAL,
+        ORTE_RMAPS_NO_OVERSUB,
+        ORTE_RMAPS_DESIRED_MAPPER,
+        ORTE_RMAPS_USE_PARENT_PLAN,
+        ORTE_RMAPS_BOOKMARK
+    };
+    orte_std_cntr_t num_attrs_defd;
+    
+    OPAL_TRACE(2);
+    
+    num_attrs_defd = sizeof(attrs)/sizeof(char*);
+    
+    /* count the number of attributes we will need to store */
+    num_attrs_found = 0;
+    for (i=0; i < num_attrs_defd; i++) {
+        if (NULL != orte_rmgr.find_attribute(attr_list, attrs[i])) num_attrs_found++;
+    }
+
+    /* if nothing found, then nothing to do! */
+    if (0 == num_attrs_found) return ORTE_SUCCESS;
+    
+    /* setup to store the found values */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
+                                                    ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                    ORTE_JOBINFO_SEGMENT, num_attrs_found, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* setup the tokens to point to this job's container */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&(value->tokens), &num_tokens, job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    
+    /* copy the data that is to be stored */
+    for (i=0, j=0; i < num_attrs_defd; i++) {
+        if (NULL != (attr = orte_rmgr.find_attribute(attr_list, attrs[i]))) {
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[j]), attr->key,
+                                                             attr->value->type, attr->value->data))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            j++;
+        }
+    }
+    
+    /* put the data onto the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    /* cleanup memory */
+    OBJ_RELEASE(value);
+    
+    return rc;
+}
+
+
+int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
+{
+    int rc;
+    orte_gpr_value_t **values, *value;
+    orte_gpr_keyval_t *kval;
+    orte_std_cntr_t i, num_vals, num_tokens;
+    char *attrs[] = {
+        ORTE_RMAPS_MAP_POLICY,
+        ORTE_RMAPS_PERNODE,
+        ORTE_RMAPS_NO_USE_LOCAL,
+        ORTE_RMAPS_NO_OVERSUB,
+        ORTE_RMAPS_DESIRED_MAPPER,
+        ORTE_RMAPS_USE_PARENT_PLAN,
+        ORTE_RMAPS_BOOKMARK
+    };
+    orte_std_cntr_t num_attrs_defd;
+    char **tokens;
+    
+    OPAL_TRACE(2);
+    
+    num_attrs_defd = sizeof(attrs)/sizeof(char*);
+    
+    /* setup the tokens to point to this job's container */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&tokens, &num_tokens, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* query the mapping plan data from the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_KEYS_OR|ORTE_GPR_TOKENS_OR,
+                                           ORTE_JOBINFO_SEGMENT,
+                                           tokens, attrs,
+                                           &num_vals, &values))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* should only be one value returned here since there is only one
+     * container/job on the segment - error otherwise
+     */
+    if (1 != num_vals) {
+        ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
+        return ORTE_ERR_GPR_DATA_CORRUPT;
+    }
+    
+    /* update the data on the list. This will OVERWRITE any matching data
+     * on that list....USER BEWARE!
+     */
+    value = values[0];
+    for (i=0; i < value->cnt; i++) {
+        kval = value->keyvals[i];
+        
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
+                                                          kval->value->type,
+                                                          kval->value->data,
+                                                          ORTE_RMGR_ATTR_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+    }
+    
+    OBJ_RELEASE(value);
+    
+    return ORTE_SUCCESS;
+}
+
+
+int orte_rmaps_base_update_mapping_state(orte_jobid_t parent_job,
+                                         opal_list_t *attrs)
+{
+    int rc;
+    orte_attribute_t *attr;
+    orte_gpr_value_t *value;
+    orte_std_cntr_t num_tokens;
+    
+    OPAL_TRACE(2);
+    
+    /* see if the bookmark is present - if not, we report this as an error so
+     * that the RMAPS component developer can correct it
+     */
+    if (NULL == (attr = orte_rmgr.find_attribute(attrs, ORTE_RMAPS_BOOKMARK))) {
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* setup to store the bookmark */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value,
+                                                    ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
+                                                    ORTE_JOBINFO_SEGMENT, 1, 0))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* setup the tokens to point to this job's container */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_tokens(&(value->tokens), &num_tokens, parent_job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    
+    /* copy the data that is to be stored */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), attr->key,
+                                                     attr->value->type, attr->value->data))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(value);
+        return rc;
+    }
+    
+    /* put the data onto the registry */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    /* cleanup memory */
+    OBJ_RELEASE(value);
+    
     return rc;
 }
 

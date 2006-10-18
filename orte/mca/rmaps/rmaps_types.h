@@ -39,6 +39,8 @@ extern "C" {
 #define ORTE_RMAPS_NO_USE_LOCAL         "orte-map-no-use-local"
 #define ORTE_RMAPS_NO_OVERSUB           "orte-map-no-oversubscribe"
 #define ORTE_RMAPS_DESIRED_MAPPER       "orte-map-desired"
+#define ORTE_RMAPS_USE_PARENT_PLAN      "orte-map-use-parent-plan"
+#define ORTE_RMAPS_BOOKMARK             "orte-map-bookmark"
     
 /****   JOB_MAP OBJECTS   ***/
 /*
