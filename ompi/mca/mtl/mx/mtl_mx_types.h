@@ -69,13 +69,13 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
  *                  |                 |
  */
 
-#define MX_SOURCE_MASK   0x0000FFFF00000000
-#define MX_TAG_MASK      0x00000000FFFFFFFF
+#define MX_SOURCE_MASK   0x0000FFFF00000000ULL
+#define MX_TAG_MASK      0x00000000FFFFFFFFULL
 
 #define MX_SOURCE_IGNR   ~MX_SOURCE_MASK
     /* we need to keep top bit (sign bit) of the tag 
        collectives use this to distinguish the message */
-#define MX_TAG_IGNR      0xFFFFFFFF80000000 
+#define MX_TAG_IGNR      0xFFFFFFFF80000000ULL
 
 /* get the tag from the bits */ 
 #define MX_GET_TAG(match_bits, tag)                 \
