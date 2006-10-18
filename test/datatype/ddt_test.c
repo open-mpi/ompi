@@ -43,6 +43,9 @@ mpicc -DHAVE_CONFIG_H -I. -I../../include -I../../../ompi-trunk/include  -I../..
 static uint32_t outputFlags = CHECK_PACK_UNPACK;
 uint32_t remote_arch;
 
+void print_double_mat( unsigned int N, double* mat );
+ompi_datatype_t* lower_matrix( unsigned int mat_size );
+
 /**
  * Cache cleanup.
  */
@@ -60,7 +63,7 @@ static void cache_trash( void )
 /**
  * Data-type functions.
  */
-ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
+static ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
 {
    ompi_datatype_t* type1;
 
@@ -70,11 +73,11 @@ ompi_datatype_t* create_inversed_vector( ompi_datatype_t* type, int length )
    return type1;
 }
 
-int mpich_typeub( void )
+static int mpich_typeub( void )
 {
    int errs = 0;
-   long extent, lb, extent1, extent2, extent3;
-   long displ[2];
+   MPI_Aint extent, lb, extent1, extent2, extent3;
+   MPI_Aint displ[2];
    int blens[2];
    ompi_datatype_t *type1, *type2, *type3, *types[2];
 
@@ -83,7 +86,7 @@ int mpich_typeub( void )
    ompi_ddt_get_extent( type1, &lb, &extent );
    extent1 = 5 * sizeof(int);
    if (extent != extent1) {
-      printf("EXTENT 1 %ld != %ld\n",extent,extent1);
+      printf("EXTENT 1 %ld != %ld\n", (long)extent, (long)extent1);
       errs++;
       printf("extent(type1)=%ld\n",(long)extent);
    }
@@ -102,7 +105,7 @@ int mpich_typeub( void )
    ompi_ddt_commit( &type2 );
    ompi_ddt_get_extent( type2, &lb, &extent );
    if (extent != extent2) {
-      printf("EXTENT 2 %ld != %ld\n",extent,extent2);
+      printf("EXTENT 2 %ld != %ld\n", (long)extent, (long)extent2);
       errs++;
       printf("extent(type2)=%ld\n",(long)extent);
    }
@@ -121,7 +124,7 @@ int mpich_typeub( void )
 
    ompi_ddt_get_extent( type3, &lb, &extent );
    if (extent != extent3) {
-      printf("EXTENT 3 %ld != %ld\n",extent,extent3);
+      printf("EXTENT 3 %ld != %ld\n", (long)extent, (long)extent3);
       errs++;
       printf("extent(type3)=%ld\n",(long)extent);
    }
@@ -132,10 +135,11 @@ int mpich_typeub( void )
    return errs;
 }
 
-int mpich_typeub2( void )
+static int mpich_typeub2( void )
 {
-   int blocklen[3], err = 0, sz1, sz2, sz3;
-   long disp[3], lb, ub, ex1, ex2, ex3;
+   int blocklen[3], err = 0;
+   size_t sz1, sz2, sz3;
+   MPI_Aint disp[3], lb, ub, ex1, ex2, ex3;
    ompi_datatype_t *types[3], *dt1, *dt2, *dt3;
 
    blocklen[0] = 1;
@@ -156,7 +160,7 @@ int mpich_typeub2( void )
 
    /* Values should be lb = -3, ub = 6 extent 9; size depends on implementation */
    if (lb != -3 || ub != 6 || ex1 != 9) {
-      printf("Example 3.26 type1 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex1, sz1);
+      printf("Example 3.26 type1 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex1, (int)sz1);
       err++;
    }
    else
@@ -168,7 +172,7 @@ int mpich_typeub2( void )
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
-      printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex2, sz2);
+      printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex2, (int)sz2);
       err++;
    }
    else
@@ -180,7 +184,7 @@ int mpich_typeub2( void )
    /* Values should be lb = -3, ub = 15, extent = 18, size depends on implementation */
    if (lb != -3 || ub != 15 || ex2 != 18) {
       printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
-      printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex2, sz2);
+      printf("Example 3.26 type2 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex2, (int)sz2);
       err++;
    }
    else
@@ -198,7 +202,7 @@ int mpich_typeub2( void )
    /* Another way to express type2 */
    if (lb != -3 || ub != 15 || ex3 != 18) {
       printf("type3 lb %d ub %d extent %d size %d\n", (int)-3, (int)15, (int)18, 8);
-      printf("type3 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex3, sz2);
+      printf("type3 lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex3, (int)sz2);
       err++;
    }
    else
@@ -210,10 +214,11 @@ int mpich_typeub2( void )
    return err;
 }
 
-int mpich_typeub3( void )
+static int mpich_typeub3( void )
 {
-   int blocklen[2], sz, err = 0, idisp[3];
-   long disp[3], lb, ub, ex;
+   int blocklen[2], err = 0, idisp[3];
+   size_t sz;
+   MPI_Aint disp[3], lb, ub, ex;
    ompi_datatype_t *types[3], *dt1, *dt2, *dt3, *dt4, *dt5;
 
    /* Create a datatype with explicit LB and UB */
@@ -244,8 +249,8 @@ int mpich_typeub3( void )
    ompi_ddt_type_extent( dt2, &ex );   ompi_ddt_type_size( dt2, &sz );
 
    if (lb != -7 || ub != 13 || ex != 20) {
-      printf("hindexed lb %d ub %d extent %d size %d\n", (int)-7, (int)13, (int)20, sz);
-      printf("hindexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
+      printf("hindexed lb %d ub %d extent %d size %d\n", (int)-7, (int)13, (int)20, (int)sz);
+      printf("hindexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, (int)sz);
       err++;
    }
    else
@@ -258,8 +263,8 @@ int mpich_typeub3( void )
    ompi_ddt_type_extent( dt3, &ex );   ompi_ddt_type_size( dt3, &sz );
 
    if (lb != -39 || ub != 69 || ex != 108) {
-      printf("indexed lb %d ub %d extent %d size %d\n", (int)-39, (int)69, (int)108, sz);
-      printf("indexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
+      printf("indexed lb %d ub %d extent %d size %d\n", (int)-39, (int)69, (int)108, (int)sz);
+      printf("indexed lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, (int)sz);
       err++;
    }
    else
@@ -272,8 +277,8 @@ int mpich_typeub3( void )
    ompi_ddt_type_extent( dt4, &ex );   ompi_ddt_type_size( dt4, &sz );
 
    if (lb != -3 || ub != 20 || ex != 23) {
-      printf("hvector lb %d ub %d extent %d size %d\n", (int)-3, (int)20, (int)23, sz);
-      printf("hvector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
+      printf("hvector lb %d ub %d extent %d size %d\n", (int)-3, (int)20, (int)23, (int)sz);
+      printf("hvector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, (int)sz);
       err++;
    }
    else
@@ -286,8 +291,8 @@ int mpich_typeub3( void )
    ompi_ddt_type_extent( dt5, &ex );   ompi_ddt_type_size( dt5, &sz );
 
    if (lb != -3 || ub != 132 || ex != 135) {
-      printf("vector lb %d ub %d extent %d size %d\n", (int)-3, (int)132, (int)135, sz);
-      printf("vector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, sz);
+      printf("vector lb %d ub %d extent %d size %d\n", (int)-3, (int)132, (int)135, (int)sz);
+      printf("vector lb %d ub %d extent %d size %d\n", (int)lb, (int)ub, (int)ex, (int)sz);
       err++;
    }
    else
@@ -317,7 +322,7 @@ void print_double_mat( unsigned int N, double* mat )
    }
 }
 
-int init_random_upper_matrix( unsigned int N, double* mat )
+static int init_random_upper_matrix( unsigned int N, double* mat )
 {
     unsigned int i, j;
 
@@ -332,7 +337,7 @@ int init_random_upper_matrix( unsigned int N, double* mat )
     return OMPI_SUCCESS;  
 }
 
-int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
+static int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
 {
    unsigned int i, j;
 
@@ -352,7 +357,7 @@ int check_diag_matrix( unsigned int N, double* mat1, double* mat2 )
    return OMPI_SUCCESS;
 }
 
-ompi_datatype_t* upper_matrix( unsigned int mat_size )
+static ompi_datatype_t* upper_matrix( unsigned int mat_size )
 {
     int *disp, *blocklen;
     unsigned int i;
@@ -400,7 +405,7 @@ ompi_datatype_t* lower_matrix( unsigned int mat_size )
 
 extern long conversion_elapsed;
 
-int test_upper( unsigned int length )
+static int test_upper( unsigned int length )
 {
     double *mat1, *mat2, *inbuf;
     ompi_datatype_t *pdt;
@@ -472,7 +477,7 @@ int test_upper( unsigned int length )
     return rc;
 }
 
-ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
+static ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
 {
    ompi_datatype_t *pdt, *pdt_line;
    int disp[2];
@@ -490,7 +495,7 @@ ompi_datatype_t* test_matrix_borders( unsigned int size, unsigned int width )
    return pdt;
 }
 
-ompi_datatype_t* test_contiguous( void )
+static ompi_datatype_t* test_contiguous( void )
 {
     ompi_datatype_t *pdt, *pdt1, *pdt2;
 
@@ -522,11 +527,11 @@ typedef struct __struct_char_double {
     double d;
 } char_double_t;
 
-ompi_datatype_t* test_struct_char_double( void )
+static ompi_datatype_t* test_struct_char_double( void )
 {
     char_double_t data;
     int lengths[] = {1, 1};
-    long displ[] = {0, 0};
+    MPI_Aint displ[] = {0, 0};
     ompi_datatype_t *pdt;
     ompi_datatype_t* types[] = { &ompi_mpi_char, &ompi_mpi_double };
 
@@ -541,7 +546,7 @@ ompi_datatype_t* test_struct_char_double( void )
     return pdt;
 }
 
-ompi_datatype_t* test_create_twice_two_doubles( void )
+static ompi_datatype_t* test_create_twice_two_doubles( void )
 {
     ompi_datatype_t* pdt;
 
@@ -581,7 +586,7 @@ static int blacs_length[] = { 13, 13, 13, 13, 13, 13, 12, 11, 10, 9, 8, 7, 6, 5,
 static int blacs_indices[] = { 1144/4, 1232/4, 1320/4, 1408/4, 1496/4, 1584/4, 1676/4, 1768/4,
                                1860/4, 1952/4, 2044/4, 2136/4, 2228/4, 2320/4, 2412/4, 2504/4,
                                2596/4, 2688/4 };
-ompi_datatype_t* test_create_blacs_type( void )
+static ompi_datatype_t* test_create_blacs_type( void )
 {
     ompi_datatype_t *pdt;
 
@@ -593,7 +598,7 @@ ompi_datatype_t* test_create_blacs_type( void )
     return pdt;
 }
 
-ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
+static ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
 {
     ompi_datatype_t *pdt;
 
@@ -605,7 +610,7 @@ ompi_datatype_t* test_create_blacs_type1( ompi_datatype_t* base_type )
     return pdt;
 }
 
-ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
+static ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
 {
     ompi_datatype_t *pdt;
 
@@ -617,13 +622,13 @@ ompi_datatype_t* test_create_blacs_type2( ompi_datatype_t* base_type )
     return pdt;
 }
 
-ompi_datatype_t* test_struct( void )
+static ompi_datatype_t* test_struct( void )
 {
     ompi_datatype_t* types[] = { &ompi_mpi_float  /* ompi_ddt_basicDatatypes[DT_FLOAT] */,
                                  NULL, 
                                  &ompi_mpi_char  /* ompi_ddt_basicDatatypes[DT_CHAR] */ };
     int lengths[] = { 2, 1, 3 };
-    long disp[] = { 0, 16, 26 };
+    MPI_Aint disp[] = { 0, 16, 26 };
     ompi_datatype_t* pdt, *pdt1;
    
     printf( "test struct\n" );
@@ -659,10 +664,10 @@ typedef struct {
 #define SSTRANGE_CNT 10
 #define USE_RESIZED
 
-ompi_datatype_t* create_strange_dt( void )
+static ompi_datatype_t* create_strange_dt( void )
 {
     sdata_intern v[2];
-    long displ[3];
+    MPI_Aint displ[3];
     ompi_datatype_t* types[3] = { &ompi_mpi_int };
     sstrange t[2];
     int pBlock[3] = {1, 10, 1}, dispi[3];
@@ -712,7 +717,7 @@ ompi_datatype_t* create_strange_dt( void )
     return pdt;
 }
 
-ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count )
+static ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count )
 {
     ompi_datatype_t* contiguous;
 
@@ -721,7 +726,7 @@ ompi_datatype_t* create_contiguous_type( const ompi_datatype_t* data, int count 
     return contiguous;
 }
 
-ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count, int length, int stride )
+static ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count, int length, int stride )
 {
     ompi_datatype_t* vector;
 
@@ -739,9 +744,9 @@ ompi_datatype_t* create_vector_type( const ompi_datatype_t* data, int count, int
  *  - and one using 2 convertors created from different data-types.
  *
  */
-int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
+static int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
 {
-    long extent;
+    MPI_Aint extent;
     void *pdst, *psrc;
     TIMER_DATA_TYPE start, end;
     long total_time;
@@ -774,11 +779,12 @@ int local_copy_ddt_count( ompi_datatype_t* pdt, int count )
     return OMPI_SUCCESS;
 }
 
-int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count,
-                                          ompi_datatype_t* recv_type, int recv_count,
-                                          int chunk )
+static int
+local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count,
+                                      ompi_datatype_t* recv_type, int recv_count,
+                                      int chunk )
 {
-    long send_extent, recv_extent;
+    MPI_Aint send_extent, recv_extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     ompi_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
@@ -863,9 +869,9 @@ int local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_c
     return OMPI_SUCCESS;
 }
 
-int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
+static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk )
 {
-    long extent;
+    MPI_Aint extent;
     void *pdst = NULL, *psrc = NULL, *ptemp = NULL;
     ompi_convertor_t *send_convertor = NULL, *recv_convertor = NULL;
     struct iovec iov;
