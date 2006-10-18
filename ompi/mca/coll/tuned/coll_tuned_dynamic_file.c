@@ -273,8 +273,6 @@ static int getnext (FILE *fptr)
             if ('#'==trash) skiptonewline (fptr);
         }
     } while (1);
-
-    return rc;
 }
 
 static void skiptonewline (FILE *fptr)
