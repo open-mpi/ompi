@@ -29,16 +29,16 @@
 #include "coll_tuned_util.h"
 
 int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
-                              int dest, int stag,
-                              void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
-                              int source, int rtag,
-                              struct ompi_communicator_t* comm,
-                              ompi_status_public_t* status )
+                                     int dest, int stag,
+                                     void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
+                                     int source, int rtag,
+                                     struct ompi_communicator_t* comm,
+                                     ompi_status_public_t* status )
 
 { /* post receive first, then send, then waitall... should be fast (I hope) */
-int err, line = 0;
-ompi_request_t* reqs[2];
-ompi_status_public_t statuses[2];
+    int err, line = 0;
+    ompi_request_t* reqs[2];
+    ompi_status_public_t statuses[2];
 
     /* post new irecv */
     err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, comm, &reqs[0]));
@@ -68,14 +68,14 @@ ompi_status_public_t statuses[2];
  */
 
 int ompi_coll_tuned_sendrecv_actual_localcompleted ( 
-      void* sendbuf, int scount, ompi_datatype_t* sdatatype, int dest, int stag,
-      void* recvbuf, int rcount, ompi_datatype_t* rdatatype, int source, int rtag, 
-      struct ompi_communicator_t* comm, ompi_status_public_t* status )
+                                                    void* sendbuf, int scount, ompi_datatype_t* sdatatype, int dest, int stag,
+                                                    void* recvbuf, int rcount, ompi_datatype_t* rdatatype, int source, int rtag, 
+                                                    struct ompi_communicator_t* comm, ompi_status_public_t* status )
 
 { /* post receive first, then [local] sync send, then wait... should be fast (I hope) */
-int err, line = 0;
-ompi_request_t* req;
-ompi_status_public_t tmpstatus;
+    int err, line = 0;
+    ompi_request_t* req;
+    ompi_status_public_t tmpstatus;
 
     /* post new irecv */
     err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, comm, &req));
@@ -98,3 +98,4 @@ ompi_status_public_t tmpstatus;
     OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
     return (err);
 }
+

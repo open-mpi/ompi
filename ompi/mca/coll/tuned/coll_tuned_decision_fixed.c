@@ -37,21 +37,13 @@
  */
 int
 ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm)
+                                           struct ompi_datatype_t *dtype,
+                                           struct ompi_op_t *op,
+                                           struct ompi_communicator_t *comm)
 {
-/*     int size; */
-/*     int contig; */
-/*     int dsize; */
-
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
-/*     size = ompi_comm_size(comm); */
-
     return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm));
-
-
 }
 
 /*
@@ -63,16 +55,13 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
  */
 
 int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount, 
-                                    struct ompi_datatype_t *rdtype, 
-                                    struct ompi_communicator_t *comm)
+                                             struct ompi_datatype_t *sdtype,
+                                             void* rbuf, int rcount, 
+                                             struct ompi_datatype_t *rdtype, 
+                                             struct ompi_communicator_t *comm)
 {
-    int comsize;
-    int rank;
-    int err;
-    unsigned long dsize;
-    unsigned long total_dsize;
+    int comsize, rank, err;
+    size_t dsize, total_dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
@@ -87,21 +76,19 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     /* else we need data size for decision function */
     err = ompi_ddt_get_size (sdtype, &dsize);
     if (err != MPI_SUCCESS) { 
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
-    total_dsize = dsize * scount * (unsigned long)comsize;   /* needed for decision */
+    total_dsize = dsize * scount * comsize;   /* needed for decision */
 
     if (comsize >= 12 && total_dsize <= 768) {
         return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
-    else if (total_dsize <= 131072) {
+    if (total_dsize <= 131072) {
         return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
-    else {
-        return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    }
+    return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
 }
 
 
@@ -122,11 +109,10 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 
     if (2==comsize)
         return ompi_coll_tuned_barrier_intra_two_procs(comm);
-    else
-/*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
+    /*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
     return ompi_coll_tuned_barrier_intra_recursivedoubling(comm);
-/*     return ompi_coll_tuned_barrier_intra_bruck(comm); */
-/*     return ompi_coll_tuned_barrier_intra_linear(comm); */
+    /*     return ompi_coll_tuned_barrier_intra_bruck(comm); */
+    /*     return ompi_coll_tuned_barrier_intra_linear(comm); */
 
 }
 
@@ -139,16 +125,12 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
  *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
-                                   struct ompi_datatype_t *datatype, int root,
-                                   struct ompi_communicator_t *comm)
+                                          struct ompi_datatype_t *datatype, int root,
+                                          struct ompi_communicator_t *comm)
 {
-    int comsize;
-    int rank;
-    int err;
-    unsigned long msgsize;
-    unsigned long dsize;
+    int comsize, rank, err;
     int segsize = 0;
-
+    size_t msgsize, dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed"));
 
@@ -158,7 +140,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     /* else we need data size for decision function */
     err = ompi_ddt_get_size (datatype, &dsize);
     if (err != MPI_SUCCESS) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
@@ -166,34 +148,29 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 
     /* this is based on gige measurements */
 
-    if ((comsize  < 4)) {
-        segsize = 0;
+    if (comsize  < 4) {
         return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    else if (comsize == 4) {
-       if (msgsize < 524288) segsize = 0;
-       else msgsize = 16384;
-       return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    if (comsize == 4) {
+        if (msgsize < 524288) segsize = 0;
+        else segsize = 16384;
+        return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    else if (comsize > 4 && comsize <= 8 && msgsize < 4096) {
-       segsize = 0;
-       return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+    if (comsize <= 8 && msgsize < 4096) {
+        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    else if (comsize > 8 && msgsize >= 32768 && msgsize < 524288) {
-       segsize = 16384;
-       return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    if (comsize > 8 && msgsize >= 32768 && msgsize < 524288) {
+        segsize = 16384;
+        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    else if (comsize > 4 && msgsize >= 524288) {
-       segsize = 16384;
-       return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+    if (msgsize >= 524288) {
+        segsize = 16384;
+        return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
     }
-    else {
-       segsize = 0;
-       /* once tested can swap this back in */
-/*        return ompi_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
-       return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
-    }
-
+    segsize = 0;
+    /* once tested can swap this back in */
+    /* return ompi_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
+    return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
 }
 
 /*
@@ -205,19 +182,12 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
  *                                        
  */
 int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
-                                          int count, struct ompi_datatype_t* datatype,
-                                          struct ompi_op_t* op, int root,
-                                          struct ompi_communicator_t* comm)
+                                            int count, struct ompi_datatype_t* datatype,
+                                            struct ompi_op_t* op, int root,
+                                            struct ompi_communicator_t* comm)
 {
-    int comsize;
-    int rank;
-    int err;
-/*     int contig; */
-    unsigned long msgsize;
-    unsigned long dsize;
-    int segsize = 0;
-/*     int fanout = 0; */
-
+    int comsize, rank, err, segsize = 0, fanout = 0;
+    size_t msgsize, dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
 
@@ -227,39 +197,33 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     /* need data size for decision function */
     err = ompi_ddt_get_size (datatype, &dsize);
     if (err != MPI_SUCCESS) {
-            OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
+        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
     }
 
-    msgsize = dsize * (unsigned long)count;   /* needed for decision */
+    msgsize = dsize * count;   /* needed for decision */
 
-        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm);
-#ifdef coconuts
-     /* for small messages use linear algorithm */
-     if (msgsize <= 4096) {
+    /* for small messages use linear algorithm */
+    if (msgsize <= 4096) {
         segsize = 0;
-        fanout = size-1;
-/* when linear implemented or taken from basic put here, right now using chain as a linear system */
-/* it is implemented and I shouldn't be calling a chain with a fanout bigger than MAXTREEFANOUT from topo.h! */
+        fanout = comsize - 1;
+        /* when linear implemented or taken from basic put here, right now using chain as a linear system */
+        /* it is implemented and I shouldn't be calling a chain with a fanout bigger than MAXTREEFANOUT from topo.h! */
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
-/*        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout); */
-     } else if (msgsize <= 65536 ) {
-        segsize = 32768;
-        fanout = 8;
+        /*        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout); */
+    }
+    if (msgsize < 524288) {
+        if (msgsize <= 65536 ) {
+            segsize = 32768;
+            fanout = 8;
+        } else {
+            segsize = 1024;
+            fanout = comsize/2;
+        }
+        /* later swap this for a binary tree */
+        /*         fanout = 2; */
         return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
-     } else if (msgsize < 524288) {
-        segsize = 1024;
-        fanout = size/2;
-/* later swap this for a binary tree */
-/*         fanout = 2; */
-        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout);
-     } else 
-#endif
-     {
-        segsize = 1024;
-        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
-     }
-
+    }
+    segsize = 1024;
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
 }
-
-

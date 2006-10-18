@@ -42,24 +42,24 @@
 /* recheck the setting of forced, called on module create (i.e. for each new comm) */
                                                                                                           
 int ompi_coll_tuned_forced_getvalues (coll_tuned_force_algorithm_mca_param_indices_t mca_params, 
-                                        coll_tuned_force_algorithm_params_t *forced_values)
+                                      coll_tuned_force_algorithm_params_t *forced_values)
 {
-   mca_base_param_lookup_int (mca_params.algorithm_param_index,    &(forced_values->algorithm));
-   mca_base_param_lookup_int (mca_params.segsize_param_index,      &(forced_values->segsize));
-   mca_base_param_lookup_int (mca_params.tree_fanout_param_index,  &(forced_values->tree_fanout));
-   mca_base_param_lookup_int (mca_params.chain_fanout_param_index, &(forced_values->chain_fanout));
+    mca_base_param_lookup_int (mca_params.algorithm_param_index,    &(forced_values->algorithm));
+    mca_base_param_lookup_int (mca_params.segsize_param_index,      &(forced_values->segsize));
+    mca_base_param_lookup_int (mca_params.tree_fanout_param_index,  &(forced_values->tree_fanout));
+    mca_base_param_lookup_int (mca_params.chain_fanout_param_index, &(forced_values->chain_fanout));
 
-return (MPI_SUCCESS);
+    return (MPI_SUCCESS);
 }
 
 
 /* special version of above just for barrier which only has one option available (at the moment...) */
 int ompi_coll_tuned_forced_getvalues_barrier (coll_tuned_force_algorithm_mca_param_indices_t mca_params, 
-                                        coll_tuned_force_algorithm_params_t *forced_values)
+                                              coll_tuned_force_algorithm_params_t *forced_values)
 {
-   mca_base_param_lookup_int (mca_params.algorithm_param_index,    &(forced_values->algorithm));
+    mca_base_param_lookup_int (mca_params.algorithm_param_index,    &(forced_values->algorithm));
 
-return (MPI_SUCCESS);
+    return (MPI_SUCCESS);
 }
 
 
