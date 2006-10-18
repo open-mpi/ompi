@@ -148,6 +148,7 @@ do {                                                                            
         (sendreq)->req_send.req_bytes_packed;                                     \
    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) ); \
                                                                                   \
+   /* Could be moved to MCA_PML_BASE_REQUEST_MPI_COMPLETE, but before broadcast */ \
    PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_COMPLETE,                             \
                             &(sendreq->req_send.req_base), PERUSE_SEND);          \
 } while(0)
@@ -352,16 +353,16 @@ static inline int mca_pml_ob1_send_request_start(
         return OMPI_ERR_UNREACH;
     }
 
+    sendreq->req_endpoint = endpoint;
+    sendreq->req_state = 0;
     sendreq->req_lock = 0;
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
-    sendreq->req_state = 0;
     sendreq->req_send_offset = 0;
     sendreq->req_got_put_ack = false;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);
-    sendreq->req_endpoint = endpoint;
 
     MCA_PML_BASE_SEND_START( &sendreq->req_send.req_base );
 

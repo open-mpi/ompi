@@ -108,8 +108,8 @@ typedef struct ompi_request_t ompi_request_t;
  */
 #define OMPI_REQUEST_INIT(request, persistent)        \
     do {                                              \
-        (request)->req_state = OMPI_REQUEST_INACTIVE; \
         (request)->req_complete = false;              \
+        (request)->req_state = OMPI_REQUEST_INACTIVE; \
         (request)->req_persistent = (persistent);     \
     } while (0); 
 
