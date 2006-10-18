@@ -69,14 +69,15 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
                                                                          \
     OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);        \
     (request)->req_bytes_packed = 0;                                     \
-    (request)->req_base.req_sequence = 0;                                \
     (request)->req_base.req_addr = addr;                                 \
     (request)->req_base.req_count = count;                               \
-    (request)->req_base.req_datatype = datatype;                         \
     (request)->req_base.req_peer = src;                                  \
     (request)->req_base.req_tag = tag;                                   \
     (request)->req_base.req_comm = comm;                                 \
     (request)->req_base.req_proc = NULL;                                 \
+    (request)->req_base.req_sequence = 0;                                \
+    (request)->req_base.req_datatype = datatype;                         \
+    /* What about req_type ? */                                          \
     (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
     (request)->req_base.req_free_called = false;                         \
                                                                          \
@@ -91,8 +92,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
 #define MCA_PML_BASE_RECV_START( request )                                      \
     do {                                                                        \
         (request)->req_pml_complete = false;                                    \
-        (request)->req_ompi.req_complete = false;                               \
-        (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;                    \
                                                                                 \
         /* always set the req_status.MPI_TAG to ANY_TAG before starting the     \
          * request. This field is used if cancelled to find out if the request  \
@@ -101,6 +100,9 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_base_recv_request_t);
         (request)->req_ompi.req_status.MPI_TAG = OMPI_ANY_TAG;                  \
         (request)->req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;                \
         (request)->req_ompi.req_status._cancelled = 0;                          \
+                                                                                \
+        (request)->req_ompi.req_complete = false;                               \
+        (request)->req_ompi.req_state = OMPI_REQUEST_ACTIVE;                    \
     } while (0)
 
 /** 

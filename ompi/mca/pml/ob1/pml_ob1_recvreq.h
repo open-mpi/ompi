@@ -215,10 +215,11 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 #define MCA_PML_OB1_RECV_REQUEST_START(request)                                   \
 do {                                                                              \
     /* init/re-init the request */                                                \
-    (request)->req_bytes_received = 0;                                            \
-    (request)->req_bytes_delivered = 0;                                           \
     (request)->req_lock = 0;                                                      \
     (request)->req_pipeline_depth = 0;                                            \
+    (request)->req_bytes_received = 0;                                            \
+    (request)->req_bytes_delivered = 0;                                           \
+    /* What about req_rdma_cnt ? */                                               \
     (request)->req_rdma_idx = 0;                                                  \
     (request)->req_pending = false;                                               \
     (request)->req_ack_sent = false;                                              \
@@ -240,8 +241,8 @@ do {                                                                            
 
 #define MCA_PML_OB1_RECV_REQUEST_MATCHED( request, hdr )                           \
 do {                                                                               \
-    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
     (request)->req_recv.req_base.req_ompi.req_status.MPI_SOURCE = (hdr)->hdr_src;  \
+    (request)->req_recv.req_base.req_ompi.req_status.MPI_TAG = (hdr)->hdr_tag;     \
                                                                                    \
     PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_MSG_MATCH_POSTED_REQ,                     \
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
