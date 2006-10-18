@@ -65,8 +65,6 @@ int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain );
 int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
 int ompi_coll_tuned_topo_dump_chain (ompi_coll_chain_t* chain, int rank);
 
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

@@ -54,9 +54,9 @@
  */
 int
 ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
-                               struct ompi_datatype_t *dtype,
-                               struct ompi_op_t *op,
-                               struct ompi_communicator_t *comm)
+                                             struct ompi_datatype_t *dtype,
+                                             struct ompi_op_t *op,
+                                             struct ompi_communicator_t *comm)
 {
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_dynamic"));
@@ -64,7 +64,7 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
     /* check to see if we have some filebased rules */
     if (comm->c_coll_selected_data->com_rules[ALLREDUCE]) {
 
-       /* we do, so calc the message size or what ever we need and use this for the evaluation */
+        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
         size_t dsize;
 
@@ -72,20 +72,18 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[ALLREDUCE], 
-                                                    dsize, &faninout, &segsize);
+                                                        dsize, &faninout, &segsize);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
             return ompi_coll_tuned_allreduce_intra_do_this (sbuf, rbuf, count, dtype, op, comm, 
-                                                        alg, faninout, segsize);
+                                                            alg, faninout, segsize);
         } /* found a method */
     } /*end if any com rules to check */
 
     if (comm->c_coll_selected_data->user_forced[ALLREDUCE].algorithm) {
         return ompi_coll_tuned_allreduce_intra_do_forced (sbuf, rbuf, count, dtype, op, comm);
     }
-    else {
-        return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
-    }
+    return ompi_coll_tuned_allreduce_intra_dec_fixed (sbuf, rbuf, count, dtype, op, comm);
 }
 
 /*
@@ -97,10 +95,10 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
  */
 
 int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount, 
-                                    struct ompi_datatype_t *rdtype, 
-                                    struct ompi_communicator_t *comm)
+                                               struct ompi_datatype_t *sdtype,
+                                               void* rbuf, int rcount, 
+                                               struct ompi_datatype_t *rdtype, 
+                                               struct ompi_communicator_t *comm)
 {
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_dynamic"));
@@ -108,7 +106,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     /* check to see if we have some filebased rules */
     if (comm->c_coll_selected_data->com_rules[ALLTOALL]) {
 
-       /* we do, so calc the message size or what ever we need and use this for the evaluation */
+        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int comsize;
         int alg, faninout, segsize;
         size_t dsize;
@@ -118,11 +116,11 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
         dsize *= comsize * scount;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[ALLTOALL], 
-                                                    dsize, &faninout, &segsize);
+                                                        dsize, &faninout, &segsize);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
             return ompi_coll_tuned_alltoall_intra_do_this (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm,
-                                                        alg, faninout, segsize);
+                                                           alg, faninout, segsize);
         } /* found a method */
     } /*end if any com rules to check */
 
@@ -130,9 +128,7 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
     if (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
         return ompi_coll_tuned_alltoall_intra_do_forced (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
-    else {
-        return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
-    }
+    return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
 }
 
 /*
@@ -150,25 +146,22 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
     /* check to see if we have some filebased rules */
     if (comm->c_coll_selected_data->com_rules[BARRIER]) {
 
-       /* we do, so calc the message size or what ever we need and use this for the evaluation */
+        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[BARRIER], 
-                                                    0, &faninout, &segsize);
+                                                        0, &faninout, &segsize);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
             return ompi_coll_tuned_barrier_intra_do_this (comm,
-                                                        alg, faninout, segsize);
+                                                          alg, faninout, segsize);
         } /* found a method */
     } /*end if any com rules to check */
 
     if (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
-       return ompi_coll_tuned_barrier_intra_do_forced (comm);
+        return ompi_coll_tuned_barrier_intra_do_forced (comm);
     }
-    else {
-       return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
-    }
-
+    return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
 }
 
 /*
@@ -179,8 +172,8 @@ int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
  *   Returns:   - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
-                                   struct ompi_datatype_t *datatype, int root,
-                                   struct ompi_communicator_t *comm)
+                                            struct ompi_datatype_t *datatype, int root,
+                                            struct ompi_communicator_t *comm)
 {
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:bcast_intra_dec_dynamic"));
@@ -188,7 +181,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
     /* check to see if we have some filebased rules */
     if (comm->c_coll_selected_data->com_rules[BCAST]) {
 
-       /* we do, so calc the message size or what ever we need and use this for the evaluation */
+        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
         size_t dsize;
 
@@ -196,7 +189,7 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[BCAST], 
-                                                    dsize, &faninout, &segsize);
+                                                        dsize, &faninout, &segsize);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
             return ompi_coll_tuned_bcast_intra_do_this (buff, count, datatype, root, comm,
@@ -206,12 +199,9 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
 
 
     if (comm->c_coll_selected_data->user_forced[BCAST].algorithm) {
-       return ompi_coll_tuned_bcast_intra_do_forced (buff, count, datatype, root, comm);
+        return ompi_coll_tuned_bcast_intra_do_forced (buff, count, datatype, root, comm);
     }
-    else {
-       return ompi_coll_tuned_bcast_intra_dec_fixed (buff, count, datatype, root, comm);
-    }
-
+    return ompi_coll_tuned_bcast_intra_dec_fixed (buff, count, datatype, root, comm);
 }
 
 /*
@@ -223,9 +213,9 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
  *                                        
  */
 int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
-                                          int count, struct ompi_datatype_t* datatype,
-                                          struct ompi_op_t* op, int root,
-                                          struct ompi_communicator_t* comm)
+                                              int count, struct ompi_datatype_t* datatype,
+                                              struct ompi_op_t* op, int root,
+                                              struct ompi_communicator_t* comm)
 {
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "coll:tuned:reduce_intra_dec_dynamic"));
@@ -233,7 +223,7 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
     /* check to see if we have some filebased rules */
     if (comm->c_coll_selected_data->com_rules[REDUCE]) {
 
-       /* we do, so calc the message size or what ever we need and use this for the evaluation */
+        /* we do, so calc the message size or what ever we need and use this for the evaluation */
         int alg, faninout, segsize;
         size_t dsize;
 
@@ -241,20 +231,17 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
         dsize *= count;
 
         alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[REDUCE], 
-                                                    dsize, &faninout, &segsize);
+                                                        dsize, &faninout, &segsize);
 
         if (alg) { /* we have found a valid choice from the file based rules for this message size */
             return  ompi_coll_tuned_reduce_intra_do_this (sendbuf, recvbuf, count, datatype, op, root, comm, 
-                                                        alg, faninout, segsize);
+                                                          alg, faninout, segsize);
         } /* found a method */
     } /*end if any com rules to check */
 
     if (comm->c_coll_selected_data->user_forced[REDUCE].algorithm) {
-       return ompi_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype, op, root, comm);
+        return ompi_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype, op, root, comm);
     }
-    else {
-       return ompi_coll_tuned_reduce_intra_dec_fixed (sendbuf, recvbuf, count, datatype, op, root, comm);
-    }
-
+    return ompi_coll_tuned_reduce_intra_dec_fixed (sendbuf, recvbuf, count, datatype, op, root, comm);
 }
 

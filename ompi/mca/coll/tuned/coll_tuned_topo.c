@@ -68,8 +68,8 @@ static int calculate_num_nodes_up_to_level( int fanout, int level )
 
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_tree( int fanout,
-                             struct ompi_communicator_t* comm,
-                             int root )
+                                 struct ompi_communicator_t* comm,
+                                 int root )
 {
     int rank, size;
     int schild, sparent;
@@ -187,7 +187,7 @@ int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
 
 ompi_coll_tree_t*
 ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
-                        int root )
+                                   int root )
 {
     int childs = 0;
     int rank;
@@ -256,8 +256,8 @@ ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
 
 ompi_coll_chain_t*
 ompi_coll_tuned_topo_build_chain( int fanout,
-                       struct ompi_communicator_t* comm,
-                       int root )
+                                  struct ompi_communicator_t* comm,
+                                  int root )
 {
     int rank, size;
     int srank; /* shifted rank */
@@ -428,23 +428,23 @@ int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain )
 
 int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank)
 {
-int i;
-OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:topo_dump_tree %1d tree root %d fanout %d BM %1d nextsize %d prev %d", rank, 
-        tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize, tree->tree_prev));
-if (tree->tree_nextsize) {
-    for (i=0;i<tree->tree_nextsize;i++) OPAL_OUTPUT((ompi_coll_tuned_stream,"[%1d] %d", i, tree->tree_next[i]));
-}
-return (0);
+    int i;
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:topo_dump_tree %1d tree root %d fanout %d BM %1d nextsize %d prev %d", rank, 
+                 tree->tree_root, tree->tree_bmtree, tree->tree_fanout, tree->tree_nextsize, tree->tree_prev));
+    if (tree->tree_nextsize) {
+        for (i=0;i<tree->tree_nextsize;i++) OPAL_OUTPUT((ompi_coll_tuned_stream,"[%1d] %d", i, tree->tree_next[i]));
+    }
+    return (0);
 }
 
 int ompi_coll_tuned_topo_dump_chain (ompi_coll_chain_t* chain, int rank)
 {
-int i;
-OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:topo_dump_chain %1d chain root %d fanout %d nextsize %d prev %d\n", rank, 
-        chain->chain_root, chain->chain_numchain, chain->chain_nextsize, chain->chain_prev));
-if (chain->chain_nextsize) {
-    for (i=0;i<chain->chain_nextsize;i++) OPAL_OUTPUT((ompi_coll_tuned_stream,"[%1d] %d ", i, chain->chain_next[i]));
-}
-return (0);
+    int i;
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:topo:topo_dump_chain %1d chain root %d fanout %d nextsize %d prev %d\n", rank, 
+                 chain->chain_root, chain->chain_numchain, chain->chain_nextsize, chain->chain_prev));
+    if (chain->chain_nextsize) {
+        for (i=0;i<chain->chain_nextsize;i++) OPAL_OUTPUT((ompi_coll_tuned_stream,"[%1d] %d ", i, chain->chain_next[i]));
+    }
+    return (0);
 }
 

@@ -31,10 +31,10 @@
 #include "coll_tuned_util.h"
 
 int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount, 
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm)
+                                            struct ompi_datatype_t *sdtype,
+                                            void* rbuf, int rcount,
+                                            struct ompi_datatype_t *rdtype,
+                                            struct ompi_communicator_t *comm)
 {
     int line = -1, err = 0;
     int rank, size, step;
@@ -54,37 +54,37 @@ int ompi_coll_tuned_alltoall_intra_pairwise(void *sbuf, int scount,
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
 
 
-   /* Perform pairwise exchange - starting from 1 so the local copy is last */
-   for (step = 1; step < size+1; step++) {
+    /* Perform pairwise exchange - starting from 1 so the local copy is last */
+    for (step = 1; step < size+1; step++) {
 
-      /* who do we talk to in this step? */
-      sendto  = (rank+step)%size;
-      recvfrom = (rank+size-step)%size;
+        /* who do we talk to in this step? */
+        sendto  = (rank+step)%size;
+        recvfrom = (rank+size-step)%size;
 
-      /* where from are we sending and where from are we receiving actual data ? */
-      tmpsend = (char*)sbuf+sendto*sext*scount;
-      tmprecv = (char*)rbuf+recvfrom*rext*rcount;
+        /* where from are we sending and where from are we receiving actual data ? */
+        tmpsend = (char*)sbuf+sendto*sext*scount;
+        tmprecv = (char*)rbuf+recvfrom*rext*rcount;
 
-      /* send and receive */
-      err = ompi_coll_tuned_sendrecv( tmpsend, scount, sdtype, sendto, MCA_COLL_BASE_TAG_ALLTOALL,
-                            tmprecv, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_ALLTOALL,
-                            comm, MPI_STATUS_IGNORE, rank);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-   }
+        /* send and receive */
+        err = ompi_coll_tuned_sendrecv( tmpsend, scount, sdtype, sendto, MCA_COLL_BASE_TAG_ALLTOALL,
+                                        tmprecv, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_ALLTOALL,
+                                        comm, MPI_STATUS_IGNORE, rank);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+    }
 
-   return MPI_SUCCESS;
+    return MPI_SUCCESS;
  
  err_hndl:
     OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-   return err;
+    return err;
 }
 
 
 int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm)
+                                         struct ompi_datatype_t *sdtype,
+                                         void* rbuf, int rcount,
+                                         struct ompi_datatype_t *rdtype,
+                                         struct ompi_communicator_t *comm)
 {
     int i, k, line = -1;
     int rank, size;
@@ -145,107 +145,107 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
     err = ompi_ddt_copy_content_same_ddt (sdtype, (int32_t) ((size-rank)*scount),
                                           tmpbuf, ((char*)sbuf)+rank*scount*sext);
     if (err<0) {
-       line = __LINE__; err = -1; goto err_hndl;
+        line = __LINE__; err = -1; goto err_hndl;
     }
 
     if (rank != 0) {
         err = ompi_ddt_copy_content_same_ddt (sdtype, (int32_t) (rank*scount),
-                                           tmpbuf+(size-rank)*scount*sext, (char*)sbuf);
-        if (err<0) {
-           line = __LINE__; err = -1; goto err_hndl;
-        }
-    }
-
-   /* perform communication step */
-   for (distance = 1; distance < size; distance<<=1) {
-
-      /* send data to "sendto" */
-      sendto = (rank+distance)%size;
-      recvfrom = (rank-distance+size)%size;
-      packsize = 0;
-      k = 0;
-
-      /* create indexed datatype */
-      for (i = 1; i < size; i++) {
-         if ((i&distance) == distance) {
-            displs[k] = i*scount; blen[k] = scount;
-            k++;
-         }
-      }
-      /* Set indexes and displacements */
-      err = MPI_Type_indexed(k, blen, displs, sdtype, &iddt);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-      /* Commit the new datatype */
-      err = MPI_Type_commit(&iddt);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-
-      /* have the new distribution ddt, pack and exchange data */
-      err = MPI_Pack(tmpbuf, 1, iddt, packbuf, maxpacksize, &packsize, comm);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-
-      /* Sendreceive */
-      err = ompi_coll_tuned_sendrecv ( packbuf, packsize, MPI_PACKED, sendto, 
-                            MCA_COLL_BASE_TAG_ALLTOALL,
-                            rbuf, packsize, MPI_PACKED, recvfrom, 
-                            MCA_COLL_BASE_TAG_ALLTOALL,
-                            comm, MPI_STATUS_IGNORE, rank);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
-      /* Unpack data from rbuf to tmpbuf */
-      position = 0;
-      err = MPI_Unpack(rbuf, packsize, &position,
-                         tmpbuf, 1, iddt, comm);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
-
-      /* free ddt */
-      err = MPI_Type_free(&iddt);
-      if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
-   } /* end of for (distance = 1... */
-
-   /* Step 3 - local rotation - */
-   for (i = 0; i < size; i++) {
-
-        err = ompi_ddt_copy_content_same_ddt (rdtype, (int32_t) rcount,
-                                           ((char*)rbuf)+(((rank-i+size)%size)*rcount*rext), 
-                                           tmpbuf+i*rcount*rext);
+                                              tmpbuf+(size-rank)*scount*sext, (char*)sbuf);
         if (err<0) {
             line = __LINE__; err = -1; goto err_hndl;
         }
-   }
+    }
+
+    /* perform communication step */
+    for (distance = 1; distance < size; distance<<=1) {
+
+        /* send data to "sendto" */
+        sendto = (rank+distance)%size;
+        recvfrom = (rank-distance+size)%size;
+        packsize = 0;
+        k = 0;
+
+        /* create indexed datatype */
+        for (i = 1; i < size; i++) {
+            if ((i&distance) == distance) {
+                displs[k] = i*scount; blen[k] = scount;
+                k++;
+            }
+        }
+        /* Set indexes and displacements */
+        err = MPI_Type_indexed(k, blen, displs, sdtype, &iddt);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+        /* Commit the new datatype */
+        err = MPI_Type_commit(&iddt);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+
+        /* have the new distribution ddt, pack and exchange data */
+        err = MPI_Pack(tmpbuf, 1, iddt, packbuf, maxpacksize, &packsize, comm);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+
+        /* Sendreceive */
+        err = ompi_coll_tuned_sendrecv ( packbuf, packsize, MPI_PACKED, sendto, 
+                                         MCA_COLL_BASE_TAG_ALLTOALL,
+                                         rbuf, packsize, MPI_PACKED, recvfrom, 
+                                         MCA_COLL_BASE_TAG_ALLTOALL,
+                                         comm, MPI_STATUS_IGNORE, rank);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+
+        /* Unpack data from rbuf to tmpbuf */
+        position = 0;
+        err = MPI_Unpack(rbuf, packsize, &position,
+                         tmpbuf, 1, iddt, comm);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
+
+        /* free ddt */
+        err = MPI_Type_free(&iddt);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
+    } /* end of for (distance = 1... */
+
+    /* Step 3 - local rotation - */
+    for (i = 0; i < size; i++) {
+
+        err = ompi_ddt_copy_content_same_ddt (rdtype, (int32_t) rcount,
+                                              ((char*)rbuf)+(((rank-i+size)%size)*rcount*rext), 
+                                              tmpbuf+i*rcount*rext);
+        if (err<0) {
+            line = __LINE__; err = -1; goto err_hndl;
+        }
+    }
 
  
     if (err<0) {
-       line = __LINE__; err = -1; goto err_hndl;
+        line = __LINE__; err = -1; goto err_hndl;
     }
 
-   /* Step 4 - clean up */
-   if (tmpbuf != NULL) free(tmpbuf);
-   if (packbuf != NULL) free(packbuf);
-   if (weallocated) {
-      if (displs != NULL) free(displs);
-      if (blen != NULL) free(blen);
-   }
+    /* Step 4 - clean up */
+    if (tmpbuf != NULL) free(tmpbuf);
+    if (packbuf != NULL) free(packbuf);
+    if (weallocated) {
+        if (displs != NULL) free(displs);
+        if (blen != NULL) free(blen);
+    }
 
-   return OMPI_SUCCESS;
+    return OMPI_SUCCESS;
 
  err_hndl:
     OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-   if (tmpbuf != NULL) free(tmpbuf);
-   if (packbuf != NULL) free(packbuf);
-   if (weallocated) {
-      if (displs != NULL) free(displs);
-      if (blen != NULL) free(blen);
-   }
- return err;
+    if (tmpbuf != NULL) free(tmpbuf);
+    if (packbuf != NULL) free(packbuf);
+    if (weallocated) {
+        if (displs != NULL) free(displs);
+        if (blen != NULL) free(blen);
+    }
+    return err;
 
 }
 
 
 int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm)
+                                             struct ompi_datatype_t *sdtype,
+                                             void* rbuf, int rcount,
+                                             struct ompi_datatype_t *rdtype,
+                                             struct ompi_communicator_t *comm)
 {
     int line = -1, err = 0;
     int rank;
@@ -273,8 +273,8 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
 
     /* send and receive */
     err = ompi_coll_tuned_sendrecv ( tmpsend, scount, sdtype, sendto, MCA_COLL_BASE_TAG_ALLTOALL,
-                            tmprecv, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_ALLTOALL,
-                            comm, MPI_STATUS_IGNORE, rank );
+                                     tmprecv, rcount, rdtype, recvfrom, MCA_COLL_BASE_TAG_ALLTOALL,
+                                     comm, MPI_STATUS_IGNORE, rank );
     if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
 
     /* ddt sendrecv your own data */
@@ -287,7 +287,7 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
 
  err_hndl:
     OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-   return err;
+    return err;
 }
 
 
@@ -311,10 +311,10 @@ int ompi_coll_tuned_alltoall_intra_two_procs(void *sbuf, int scount,
 
 
 int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm)
+                                                struct ompi_datatype_t *sdtype,
+                                                void* rbuf, int rcount,
+                                                struct ompi_datatype_t *rdtype,
+                                                struct ompi_communicator_t *comm)
 {
     int i;
     int rank;
@@ -443,51 +443,51 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
 
     ompi_coll_tuned_forced_max_algorithms[ALLTOALL] = max_alg;
 
-rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                           "alltoall_algorithm_count",
-                           "Number of alltoall algorithms available",
-                           false, true, max_alg, NULL);
+    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                                 "alltoall_algorithm_count",
+                                 "Number of alltoall algorithms available",
+                                 false, true, max_alg, NULL);
 
 
-mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "alltoall_algorithm",
-                           "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
-                           false, false, 0, NULL);
+    mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                                                      "alltoall_algorithm",
+                                                                      "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
+                                                                      false, false, 0, NULL);
 
-mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "alltoall_algorithm_segmentsize",
-                           "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                           false, false, 0, NULL);
+    mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                                                    "alltoall_algorithm_segmentsize",
+                                                                    "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                                                    false, false, 0, NULL);
 
-mca_param_indices->tree_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "alltoall_algorithm_tree_fanout",
-                           "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
-                           false, false, 
-                           ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                           NULL);
+    mca_param_indices->tree_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                                                        "alltoall_algorithm_tree_fanout",
+                                                                        "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                                                                        false, false, 
+                                                                        ompi_coll_tuned_init_tree_fanout, /* get system wide default */
+                                                                        NULL);
 
-mca_param_indices->chain_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "alltoall_algorithm_chain_fanout",
-                           "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
-                           false, false, 
-                           ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                           NULL);
+    mca_param_indices->chain_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                                                         "alltoall_algorithm_chain_fanout",
+                                                                         "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                                                                         false, false, 
+                                                                         ompi_coll_tuned_init_chain_fanout, /* get system wide default */
+                                                                         NULL);
 
-return (MPI_SUCCESS);
+    return (MPI_SUCCESS);
 }
 
 
 
 int ompi_coll_tuned_alltoall_intra_do_forced(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm)
+                                             struct ompi_datatype_t *sdtype,
+                                             void* rbuf, int rcount,
+                                             struct ompi_datatype_t *rdtype,
+                                             struct ompi_communicator_t *comm)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced selected algorithm %d",
-                                            comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm));
+                 comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm));
 
-switch (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
+    switch (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
     case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
@@ -495,7 +495,7 @@ switch (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
     case (4):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?", 
-                    comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
+                     comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
         return (MPI_ERR_ARG);
     } /* switch */
 
@@ -503,16 +503,16 @@ switch (comm->c_coll_selected_data->user_forced[ALLTOALL].algorithm) {
 
 
 int ompi_coll_tuned_alltoall_intra_do_this(void *sbuf, int scount,
-                                    struct ompi_datatype_t *sdtype,
-                                    void* rbuf, int rcount,
-                                    struct ompi_datatype_t *rdtype,
-                                    struct ompi_communicator_t *comm,
-                                    int algorithm, int faninout, int segsize)
+                                           struct ompi_datatype_t *sdtype,
+                                           void* rbuf, int rcount,
+                                           struct ompi_datatype_t *rdtype,
+                                           struct ompi_communicator_t *comm,
+                                           int algorithm, int faninout, int segsize)
 {
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this selected algorithm %d topo faninout %d segsize %d", 
-                                        algorithm, faninout, segsize));
+                 algorithm, faninout, segsize));
 
-switch (algorithm) {
+    switch (algorithm) {
     case (0):   return ompi_coll_tuned_alltoall_intra_dec_fixed (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (1):   return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     case (2):   return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
@@ -520,7 +520,7 @@ switch (algorithm) {
     case (4):   return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:alltoall_intra_do_this attempt to select algorithm %d when only 0-%d is valid?", 
-                    algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
+                     algorithm, ompi_coll_tuned_forced_max_algorithms[ALLTOALL]));
         return (MPI_ERR_ARG);
     } /* switch */
 

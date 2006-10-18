@@ -65,7 +65,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
 
     if (rank > 0) { /* receive message from the left */
         err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, left, 
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
     }
 
@@ -77,14 +77,14 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
     /* root needs to receive from the last node */
     if (rank == 0) {
         err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, left, 
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
     }
 
     /* Allow nodes to exit */
     if (rank > 0) { /* post Receive from left */
         err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, left, 
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl; }
     }
 
@@ -96,15 +96,15 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
     /* rank 0 post receive from the last node */
     if (rank == 0) {
         err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, left, 
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
         if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;  }
     }
 
     return MPI_SUCCESS;
 
  err_hndl:
-     OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-   return err;
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
+    return err;
 }
 
 
@@ -131,13 +131,13 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
         if (rank >= adjsize) {
             /* send message to lower ranked node */
             err = MCA_PML_CALL(send((void*)NULL, 0, MPI_BYTE, rank-adjsize, 
-                            MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_STANDARD, comm));
+                                    MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_STANDARD, comm));
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
 
             /* post receive from lower ranked node */
             err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, rank-adjsize,
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                    MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
 
@@ -145,7 +145,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
 
             /* receive message from high level rank */
             err = MCA_PML_CALL(recv((void*)NULL, 0, MPI_BYTE, rank+adjsize,
-                              MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
+                                    MCA_COLL_BASE_TAG_BARRIER, comm, MPI_STATUS_IGNORE));
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
@@ -160,8 +160,8 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
             if (remote >= adjsize) continue;
 
             err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER, 
-                                   NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER,
-                                   comm, MPI_STATUS_IGNORE, rank);
+                                                           NULL, 0, MPI_BYTE, remote, MCA_COLL_BASE_TAG_BARRIER,
+                                                           comm, MPI_STATUS_IGNORE, rank);
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
@@ -173,7 +173,7 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
 
             /* send enter message to higher ranked node */
             err = MCA_PML_CALL(send((void*)NULL, 0, MPI_BYTE, rank+adjsize, 
-                            MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
+                                    MCA_COLL_BASE_TAG_BARRIER, MCA_PML_BASE_SEND_SYNCHRONOUS, comm));
 
             if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
         }
@@ -181,9 +181,9 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
 
     return MPI_SUCCESS;
 
-    err_hndl:
-     OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-        return err;
+ err_hndl:
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
+    return err;
 }
 
 
@@ -206,16 +206,16 @@ int ompi_coll_tuned_barrier_intra_bruck(struct ompi_communicator_t *comm)
         from = (rank + size - distance)%size;
         to   = (rank + distance)%size;
         err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, to, MCA_COLL_BASE_TAG_BARRIER,
-                                    NULL, 0, MPI_BYTE, from, MCA_COLL_BASE_TAG_BARRIER,
-                                    comm, MPI_STATUS_IGNORE, rank);
-       if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
+                                                       NULL, 0, MPI_BYTE, from, MCA_COLL_BASE_TAG_BARRIER,
+                                                       comm, MPI_STATUS_IGNORE, rank);
+        if (err != MPI_SUCCESS) { line = __LINE__; goto err_hndl;}
     }
 
     return MPI_SUCCESS;
 
-    err_hndl:
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
-        return err;
+ err_hndl:
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,line,err,rank));
+    return err;
 }
 
 
@@ -233,13 +233,13 @@ int ompi_coll_tuned_barrier_intra_two_procs(struct ompi_communicator_t *comm)
 
     if (0==rank) {
         err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER, 
-                                   NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER,
-                                   comm, MPI_STATUS_IGNORE, rank);
+                                                       NULL, 0, MPI_BYTE, 1, MCA_COLL_BASE_TAG_BARRIER,
+                                                       comm, MPI_STATUS_IGNORE, rank);
     }
     else {
         err = ompi_coll_tuned_sendrecv_localcompleted (NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
-                                   NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
-                                   comm, MPI_STATUS_IGNORE, rank);
+                                                       NULL, 0, MPI_BYTE, 0, MCA_COLL_BASE_TAG_BARRIER,
+                                                       comm, MPI_STATUS_IGNORE, rank);
     }
 
     return (err);
@@ -334,39 +334,39 @@ int ompi_coll_tuned_barrier_intra_check_forced_init (coll_tuned_force_algorithm_
     int rc;
     int max_alg = 5;
 
-  ompi_coll_tuned_forced_max_algorithms[BARRIER] = max_alg;
+    ompi_coll_tuned_forced_max_algorithms[BARRIER] = max_alg;
 
-rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
-                           "barrier_algorithm_count",
-                           "Number of barrier algorithms available",
-                           false, true, max_alg, NULL);
+    rc = mca_base_param_reg_int (&mca_coll_tuned_component.super.collm_version,
+                                 "barrier_algorithm_count",
+                                 "Number of barrier algorithms available",
+                                 false, true, max_alg, NULL);
 
-mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "barrier_algorithm",
-                           "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only",
-                           false, false, 0, NULL);
+    mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                                                      "barrier_algorithm",
+                                                                      "Which barrier algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 double ring, 3: recursive doubling 4: bruck, 5: two proc only",
+                                                                      false, false, 0, NULL);
 
-return (MPI_SUCCESS);
+    return (MPI_SUCCESS);
 }
 
 
 
 int ompi_coll_tuned_barrier_intra_do_forced(struct ompi_communicator_t *comm)
 {
-   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced selected algorithm %d",
-                                        comm->c_coll_selected_data->user_forced[BARRIER].algorithm));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced selected algorithm %d",
+                 comm->c_coll_selected_data->user_forced[BARRIER].algorithm));
 
-switch (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
+    switch (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
     case (1):   return ompi_coll_tuned_barrier_intra_basic_linear (comm); 
     case (2):   return ompi_coll_tuned_barrier_intra_doublering (comm);
     case (3):   return ompi_coll_tuned_barrier_intra_recursivedoubling (comm);
     case (4):   return ompi_coll_tuned_barrier_intra_bruck (comm);
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm);
-/*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
+        /*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
-                    comm->c_coll_selected_data->user_forced[BARRIER].algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
+                     comm->c_coll_selected_data->user_forced[BARRIER].algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
     } /* switch */
 
@@ -375,19 +375,19 @@ switch (comm->c_coll_selected_data->user_forced[BARRIER].algorithm) {
 
 int ompi_coll_tuned_barrier_intra_do_this (struct ompi_communicator_t *comm, int algorithm, int faninout, int segsize)
 {
-   OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this selected algorithm %d topo fanin/out%d", algorithm, faninout));
 
-switch (algorithm) {
+    switch (algorithm) {
     case (0):   return ompi_coll_tuned_barrier_intra_dec_fixed (comm);
     case (1):   return ompi_coll_tuned_barrier_intra_basic_linear (comm); 
     case (2):   return ompi_coll_tuned_barrier_intra_doublering (comm);
     case (3):   return ompi_coll_tuned_barrier_intra_recursivedoubling (comm);
     case (4):   return ompi_coll_tuned_barrier_intra_bruck (comm);
     case (5):   return ompi_coll_tuned_barrier_intra_two_procs (comm);
-/*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
+        /*     case (6):   return ompi_coll_tuned_barrier_intra_bmtree_step (comm); */
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:barrier_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
-                    algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
+                     algorithm, ompi_coll_tuned_forced_max_algorithms[BARRIER]));
         return (MPI_ERR_ARG);
     } /* switch */
 
