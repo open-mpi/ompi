@@ -65,7 +65,7 @@ ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
                            bool *free_on_error)
 {
     size_t max_data;
-    long lb;
+    ptrdiff_t lb;
 
     ompi_convertor_get_packed_size(convertor, &max_data);
 
