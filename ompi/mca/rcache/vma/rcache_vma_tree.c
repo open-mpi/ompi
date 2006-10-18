@@ -401,7 +401,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
         return OMPI_ERROR;
 
     while(vma != (mca_rcache_vma_t*)opal_list_get_end(&vma_rcache->vma_list)
-            && vma->start <= (uintptr_t)reg->base) {
+            && vma->start <= (uintptr_t)reg->bound) {
         mca_rcache_vma_remove_reg(vma, reg);
         
         if(opal_list_is_empty(&vma->reg_list)) {
