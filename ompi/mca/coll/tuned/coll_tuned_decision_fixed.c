@@ -71,8 +71,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     int comsize;
     int rank;
     int err;
-    unsigned long dsize;
-    unsigned long total_dsize;
+    size_t dsize, total_dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
@@ -145,8 +144,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     int comsize;
     int rank;
     int err;
-    unsigned long msgsize;
-    unsigned long dsize;
+    size_t msgsize, dsize;
     int segsize = 0;
 
 
@@ -213,8 +211,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     int rank;
     int err;
 /*     int contig; */
-    unsigned long msgsize;
-    unsigned long dsize;
+    size_t msgsize, dsize;
     int segsize = 0;
 /*     int fanout = 0; */
 

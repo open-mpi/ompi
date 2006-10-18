@@ -719,7 +719,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
         else
             index += snprintf( ptr + index, length - index, "count %d disp 0x%lx (%ld) extent %d (size %ld)\n",
                                (int)pDesc->elem.count, (long)pDesc->elem.disp, (long)pDesc->elem.disp,
-                               (int)pDesc->elem.extent, pDesc->elem.count * ompi_ddt_basicDatatypes[pDesc->elem.common.type]->size );
+                               (int)pDesc->elem.extent, (long)(pDesc->elem.count * ompi_ddt_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
         if( length <= index ) break;
@@ -756,7 +756,7 @@ void ompi_ddt_dump( const ompi_datatype_t* pData )
     index += snprintf( buffer, length - index, "Datatype %p[%s] size %ld align %d id %d length %d used %d\n"
                                                "true_lb %ld true_ub %ld (true_extent %ld) lb %ld ub %ld (extent %ld)\n"
                                                "nbElems %d loops %d flags %X (",
-                     (void*)pData, pData->name, pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
+                     (void*)pData, pData->name, (long)pData->size, (int)pData->align, pData->id, (int)pData->desc.length, (int)pData->desc.used,
                      (long)pData->true_lb, (long)pData->true_ub, (long)(pData->true_ub - pData->true_lb),
                      (long)pData->lb, (long)pData->ub, (long)(pData->ub - pData->lb),
                      (int)pData->nbElems, (int)pData->btypes[DT_LOOP], (int)pData->flags );
