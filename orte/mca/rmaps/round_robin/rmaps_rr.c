@@ -342,7 +342,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
              item = opal_list_get_next(item)) {
             node = (orte_ras_node_t*)item;
             
-            if (0 != strcmp(sptr, node->node_name)) {
+            if (0 == strcmp(sptr, node->node_name)) {
                 cur_node_item = item;
                 break;
             }
