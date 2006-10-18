@@ -111,6 +111,35 @@ ORTE_DECLSPEC	int orte_rmaps_base_put_job_map(orte_job_map_t *map);
 
 
 /*
+ * Store a mapping plan
+ * Given a list of attributes, this function stores all the RMAPS-specific
+ * attributes on the registry for later use - e.g., by a child job that
+ * wants to be mapped in an fashion identical to that of its parent
+ */
+int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attrs);
+
+/*
+ * Get a mapping plan
+ * Given a jobid, retrieve the stored mapping plan for that job. The
+ * RMAPS-specific attributes will UPDATE the provided list to avoid
+ * the possibility of duplicate list entries. Any existing RMAPS-specific
+ * entries on the provided list will, therefore, be OVERWRITTEN.
+ */
+int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attrs);
+
+/*
+ * Update the mapping state
+ * Dynamically spawned child jobs that share resources with their parent
+ * need to know where the parent job stopped mapping so they can pickup
+ * from the right place. Once the child is mapped, however, we need to update
+ * that info for the *parent* so that any additional children can have the
+ * right info.
+ */
+int orte_rmaps_base_update_mapping_state(orte_jobid_t parent_job,
+                                         opal_list_t *attrs);
+
+
+/*
  * communication functions
  */
 int orte_rmaps_base_comm_start(void);

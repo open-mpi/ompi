@@ -35,6 +35,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
@@ -288,6 +289,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
     bool modify_app_context = false;
+    char *sptr;
+    orte_attribute_t *attr;
 
     OPAL_TRACE(1);
     
@@ -326,31 +329,33 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         return rc;
     }
 
-    /* initialize the cur_node_item to point to the first node in the list that has
-     * an available slot. We need to check the slot availability since we may be
-     * mapping a child job onto the same nodes used by its parent. In that case,
-     * even though we may have used some slots on a node, the system still considers
-     * the node available due to oversubscription rules. However, we don't want to
-     * start at the beginning of the nodelist again as we will be oversubscribing the
-     * node and causing majorly poor performance
-     */
-    for (cur_node_item = opal_list_get_first(&master_node_list);
-         cur_node_item != opal_list_get_end(&master_node_list);
-         cur_node_item = opal_list_get_next(cur_node_item)) {
-#if 0
-        node = (orte_ras_node_t*)cur_node_item;
-        if (node->node_slots > node->node_slots_inuse) {
-            goto MOVEON;
+    /* if a bookmark exists from some prior mapping, set us to start there */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_BOOKMARK))) {
+        cur_node_item = NULL;
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-#endif
-        goto MOVEON;  /* until I get this fixed...this runs slow, but doesn't hang */
+        /* find this node on the master list */
+        for (item = opal_list_get_first(&master_node_list);
+             item != opal_list_get_end(&master_node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_ras_node_t*)item;
+            
+            if (0 != strcmp(sptr, node->node_name)) {
+                cur_node_item = item;
+                break;
+            }
+        }
+        /* see if we found it - if not, just start at the beginning */
+        if (NULL == cur_node_item) {
+            cur_node_item = opal_list_get_first(&master_node_list);            
+        }
+    } else {
+        /* if no bookmark, then just start at the beginning of the list */
+        cur_node_item = opal_list_get_first(&master_node_list);
     }
-    /* if we got here, then everyone is at or above the soft limit - just
-     * start with the first node on the list
-     */
-    cur_node_item = opal_list_get_first(&master_node_list);
     
-MOVEON:    
     /** construct the list to hold any nodes that get fully used during this
      * mapping. We need to keep a record of these so we can update their
      * information on the registry when we are done, but we want to remove
@@ -561,9 +566,19 @@ MOVEON:
     if (modify_app_context) {
         if (ORTE_SUCCESS != (rc = orte_rmgr.store_app_context(jobid, map->apps, 1))) {
             ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
     }
     
+    /* save a bookmark indicating what node we finished with so that subsequent children (if any)
+     * can start at the right place
+     */
+    node = (orte_ras_node_t*)cur_node_item;
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_BOOKMARK,
+                                                      ORTE_STRING, node->node_name,
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
 cleanup:
     while(NULL != (item = opal_list_remove_first(&master_node_list))) {

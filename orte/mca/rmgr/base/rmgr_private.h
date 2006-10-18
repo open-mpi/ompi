@@ -55,9 +55,8 @@ extern "C" {
 typedef uint8_t orte_rmgr_cmd_t;
     
 /*
- * Internal definitions
+ * Base functions that are common to all implementations - can be overridden
  */
-
 ORTE_DECLSPEC int orte_rmgr_base_get_app_context(
     orte_jobid_t jobid,
     orte_app_context_t*** app_context,
@@ -85,10 +84,27 @@ ORTE_DECLSPEC int orte_rmgr_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t 
 
 ORTE_DECLSPEC int orte_rmgr_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range);
 
+ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
+                                         orte_process_name_t *connect);
+
+ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
+                                            orte_process_name_t *disconnect);
+
+orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
+
+int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
+                                 orte_data_type_t type, void *data,
+                                 bool overwrite);
+
+int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
+
+int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
+
 
 /*
- * Base functions that are common to all implementations - can be overridden
+ * Internal definitions
  */
+
 int orte_rmgr_base_create_not_available(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
@@ -103,22 +119,6 @@ int orte_rmgr_base_spawn_not_available(
     orte_rmgr_cb_fn_t cbfn,
     orte_proc_state_t cb_conditions,
     opal_list_t *attributes);
-
-ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
-                                         orte_process_name_t *connect);
-
-ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
-                                            orte_process_name_t *disconnect);
-
-orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
-
-int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
-                                 orte_data_type_t type, void *data);
-
-int orte_rmgr_base_update_attribute(opal_list_t* attr_list, char* key,
-                                    orte_data_type_t type, void *data);
-
-int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
 
 int orte_rmgr_base_finalize_not_available(void);
 
