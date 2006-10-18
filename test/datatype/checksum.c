@@ -137,7 +137,8 @@ int main( int argc, char* argv[] )
      * the checksum directly to see if there is any difference.
      */
     {
-        uint32_t ui1 = 0, ui2 = 0;
+        uint32_t ui1 = 0;
+        size_t ui2 = 0;
         manual_checksum = OPAL_CSUM_PARTIAL( packed, sizeof(int) * SIZE, &ui1, &ui2 );
     }
     printf( "manual checksum     %x\n", manual_checksum );

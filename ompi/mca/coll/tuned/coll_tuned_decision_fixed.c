@@ -85,7 +85,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     }
 
     /* else we need data size for decision function */
-    err = ompi_ddt_get_size (sdtype, &dsize);
+    err = ompi_ddt_type_size(sdtype, &dsize);
     if (err != MPI_SUCCESS) { 
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
@@ -156,7 +156,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     rank = ompi_comm_rank(comm);
 
     /* else we need data size for decision function */
-    err = ompi_ddt_get_size (datatype, &dsize);
+    err = ompi_ddt_type_size(datatype, &dsize);
     if (err != MPI_SUCCESS) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);
@@ -225,7 +225,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
-    err = ompi_ddt_get_size (datatype, &dsize);
+    err = ompi_ddt_type_size(datatype, &dsize);
     if (err != MPI_SUCCESS) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
         return (err);

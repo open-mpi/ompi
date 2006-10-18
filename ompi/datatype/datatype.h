@@ -185,8 +185,6 @@ static inline int32_t ompi_ddt_get_extent( const ompi_datatype_t* pData, ptrdiff
 { *lb = pData->lb; *extent = pData->ub - pData->lb; return 0; }
 static inline int32_t ompi_ddt_get_true_extent( const ompi_datatype_t* pData, ptrdiff_t* true_lb, ptrdiff_t* true_extent)
 { *true_lb = pData->true_lb; *true_extent = (pData->true_ub - pData->true_lb); return 0; }
-static inline int32_t ompi_ddt_get_size( const ompi_datatype_t* pData, size_t* size )
-{ *size = pData->size; return 0; }
 /*
  * This function return true (1) if the datatype representation depending on the count
  * is contiguous in the memory. And false (0) otherwise.
