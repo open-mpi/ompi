@@ -56,7 +56,7 @@
 /**
  * Mapping function
  */
-typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job, char *desired_mapper);
+typedef int (*orte_rmaps_base_module_map_fn_t)(orte_jobid_t job, opal_list_t *attributes);
 
 /**
  * Get the map of a job from the registry

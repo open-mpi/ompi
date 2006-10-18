@@ -25,7 +25,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -42,12 +44,83 @@ static orte_rmaps_base_module_t *select_any(void);
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper)
+int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
 {
     orte_rmaps_base_module_t *module=NULL;
+    orte_attribute_t *attr;
+    char *desired_mapper;
     int rc;
     
-    if (NULL != desired_mapper) {
+    /* check the attributes to see if anything in the environment
+     * has been overridden. If not, then install the environment
+     * values to correctly control the behavior of the RMAPS component.
+     */
+    if (NULL == (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
+        /* was NOT provided - use what was set by the environment */
+        if (orte_rmaps_base.bynode) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                              ORTE_STRING, "bynode"))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                              ORTE_STRING, "byslot"))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }            
+        }
+    }
+    
+    if (NULL == (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
+        /* was NOT provided - add it if it was set by the environment. Note that this
+         * attribute only cares if it exists - its value is irrelevant and hence
+         * not provided
+         */
+        if (orte_rmaps_base.per_node) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_PERNODE,
+                                                              ORTE_UNDEF, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    
+    if (NULL == (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_USE_LOCAL))) {
+        /* was NOT provided - add it if it was set by the environment. Note that this
+        * attribute only cares if it exists - its value is irrelevant and hence
+        * not provided
+        */
+        if (orte_rmaps_base.no_use_local) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_NO_USE_LOCAL,
+                                                              ORTE_UNDEF, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    
+    if (NULL == (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_OVERSUB))) {
+        /* was NOT provided - add it if it was set by the environment. Note that this
+        * attribute only cares if it exists - its value is irrelevant and hence
+        * not provided
+        */
+        if (!orte_rmaps_base.oversubscribe) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_NO_OVERSUB,
+                                                              ORTE_UNDEF, NULL))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+    }
+    
+    /* see if they provided a desired mapper */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DESIRED_MAPPER))) {
+        /* they did - extract its name */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&desired_mapper, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         module = select_preferred(desired_mapper);
     } else {
         module = select_any();
@@ -61,7 +134,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper)
         return ORTE_ERR_NOT_FOUND;
     }
     
-    if (ORTE_SUCCESS != (rc = module->map_job(job, desired_mapper))) {
+    if (ORTE_SUCCESS != (rc = module->map_job(job, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

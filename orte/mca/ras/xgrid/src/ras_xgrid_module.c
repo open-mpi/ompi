@@ -78,7 +78,7 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
      * jobid's allocation. This can occur if we are doing a dynamic
      * process spawn and don't want to go through the allocator again
      */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMGR_USE_PARENT_ALLOCATION))) {
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
         /* attribute was given - just reallocate to the new jobid */
         if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
             ORTE_ERROR_LOG(ret);

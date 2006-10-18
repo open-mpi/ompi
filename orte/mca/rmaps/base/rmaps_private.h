@@ -76,7 +76,7 @@ OBJ_CLASS_DECLARATION(orte_rmaps_base_cmp_t);
  * All calls to rmaps.map_job are routed through this function. This allows callers to
  * the RMAPS framework to specify the particular mapper they wish to use.
  */
-ORTE_DECLSPEC int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper);
+ORTE_DECLSPEC int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes);
 
 /*
  * Get job map
@@ -132,7 +132,8 @@ void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
 int orte_rmaps_base_add_proc_to_map(orte_job_map_t *map, orte_cellid_t cell, char *nodename,
                                     char *username, bool oversubscribed, orte_mapped_proc_t *proc);
 
-ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots);
+ORTE_DECLSPEC int orte_rmaps_base_get_target_nodes(opal_list_t* node_list, orte_jobid_t jobid,
+                                                   orte_std_cntr_t *total_num_slots, bool no_use_local);
 ORTE_DECLSPEC int orte_rmaps_base_update_node_usage(opal_list_t *nodes);
 ORTE_DECLSPEC int orte_rmaps_base_get_mapped_targets(opal_list_t *mapped_node_list,
                                                      orte_app_context_t *app,
@@ -144,7 +145,8 @@ ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_map_t *map,
                                              orte_jobid_t jobid, orte_vpid_t vpid,
                                              orte_std_cntr_t app_idx,
                                              opal_list_t *nodes,
-                                             opal_list_t *fully_used_nodes);
+                                             opal_list_t *fully_used_nodes,
+                                             bool oversubscribe);
 
 /** Local data type functions */
 void orte_rmaps_base_std_obj_release(orte_data_value_t *value);

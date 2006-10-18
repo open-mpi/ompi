@@ -36,6 +36,10 @@ struct orte_rmaps_round_robin_component_t {
     orte_rmaps_base_component_t super;
     int debug;
     int priority;
+    bool bynode;
+    bool per_node;
+    bool no_use_local;
+    bool oversubscribe;
 };
 typedef struct orte_rmaps_round_robin_component_t orte_rmaps_round_robin_component_t;
 

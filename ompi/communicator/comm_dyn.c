@@ -46,6 +46,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ras/ras_types.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/smr/smr_types.h"
@@ -546,7 +547,7 @@ ompi_comm_start_processes(int count, char **array_of_commands,
     /* tell the RTE that we want to the children to run inside of our allocation -
      * don't go get one just for them
      */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMGR_USE_PARENT_ALLOCATION,
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RAS_USE_PARENT_ALLOCATION,
                                                       ORTE_JOBID, &(orte_process_info.my_name->jobid)))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&attributes);

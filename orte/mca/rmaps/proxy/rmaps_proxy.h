@@ -61,7 +61,7 @@ extern orte_rmaps_proxy_globals_t orte_rmaps_proxy_globals;
 /*
  * Component API functions
  */
-int orte_rmaps_proxy_map(orte_jobid_t job, char *desired_mapper);
+int orte_rmaps_proxy_map(orte_jobid_t job, opal_list_t *attributes);
 
 /*
  * Global component.
