@@ -29,6 +29,12 @@
 extern "C" {
 #endif
 
+/*
+ * RAS Attributes
+ */
+#define ORTE_RAS_USE_PARENT_ALLOCATION     "orte-use-parent-alloc"
+    
+
 /**
  * Struct for holding information about a node (a local copy of what
  * is in the node segment in the registry).

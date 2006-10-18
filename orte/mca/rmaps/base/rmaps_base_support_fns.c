@@ -96,11 +96,11 @@ static bool is_mapped(opal_list_item_t *item,
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots)
+int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots, bool nolocal)
 {
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
-    int id, rc, nolocal;
+    int rc;
     orte_std_cntr_t num_slots=0;
 
     /** set default answer */
@@ -114,10 +114,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
 
     /* If the "no local" option was set, then remove the local node
         from the list */
-    
-    id = mca_base_param_find("rmaps", NULL, "base_schedule_local");
-    mca_base_param_lookup_int(id, &nolocal);
-    if (0 == nolocal) {
+    if (nolocal) {
         for (item  = opal_list_get_first(allocated_nodes);
              item != opal_list_get_end(allocated_nodes);
              item  = opal_list_get_next(item) ) {
@@ -298,7 +295,8 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
                                orte_jobid_t jobid, orte_vpid_t vpid,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
-                               opal_list_t *fully_used_nodes)
+                               opal_list_t *fully_used_nodes,
+                               bool oversubscribe)
 {
     orte_process_name_t *name;
     orte_mapped_proc_t *proc;
@@ -349,7 +347,7 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
      */
     if ((0 != current_node->node_slots_max  &&
         current_node->node_slots_inuse >= current_node->node_slots_max) ||
-        (!orte_rmaps_base.oversubscribe && oversub)) {
+        (!oversubscribe && oversub)) {
         opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
         /* add it to the list of fully used nodes */
         opal_list_append(fully_used_nodes, &current_node->super);

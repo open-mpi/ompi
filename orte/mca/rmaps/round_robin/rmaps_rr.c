@@ -114,7 +114,8 @@ static int map_app_by_node(
         /* Allocate a slot on this node */
         node = (orte_ras_node_t*) cur_node_item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
-                                             nodes, max_used_nodes))) {
+                                             nodes, max_used_nodes,
+                                             mca_rmaps_round_robin_component.oversubscribe))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -198,7 +199,8 @@ static int map_app_by_slot(
         
         for( i = 0; i < num_slots_to_take; ++i) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
-                                                 nodes, max_used_nodes))) {
+                                                 nodes, max_used_nodes,
+                                                 mca_rmaps_round_robin_component.oversubscribe))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -230,10 +232,51 @@ static int map_app_by_slot(
    
 
 /*
+ * Process the attributes and push them into our local "global"
+ */
+static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
+{
+    int rc;
+    char *policy;
+    orte_attribute_t *attr;
+    
+    mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
+        /* they specified a mapping policy - extract its name */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&policy, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 == strcmp(policy, "bynode")) {
+            mca_rmaps_round_robin_component.bynode = true;
+        }
+    }
+    
+    mca_rmaps_round_robin_component.per_node = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
+        /* was provided - set boolean accordingly */
+         mca_rmaps_round_robin_component.per_node = true;
+    }
+    
+    mca_rmaps_round_robin_component.no_use_local = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_USE_LOCAL))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.no_use_local = true;
+    }
+    
+    mca_rmaps_round_robin_component.oversubscribe = true;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_OVERSUB))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.oversubscribe = false;
+    }
+    
+    return ORTE_SUCCESS;
+}
+/*
  * Create a round-robin mapping for the job.
  */
 
-static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
+static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
 {
     orte_app_context_t *app;
     orte_job_map_t* map;
@@ -247,6 +290,12 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     bool modify_app_context = false;
 
     OPAL_TRACE(1);
+    
+    /* setup the local environment from the attributes */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_rr_process_attrs(attributes))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
     /* create the map object */
     map = OBJ_NEW(orte_job_map_t);
@@ -269,7 +318,9 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
      * mappings from the user
      */
     OBJ_CONSTRUCT(&master_node_list, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid, &total_num_slots))) {
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid,
+                                                              &total_num_slots,
+                                                              mca_rmaps_round_robin_component.no_use_local))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&master_node_list);
         return rc;
@@ -286,10 +337,13 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     for (cur_node_item = opal_list_get_first(&master_node_list);
          cur_node_item != opal_list_get_end(&master_node_list);
          cur_node_item = opal_list_get_next(cur_node_item)) {
+#if 0
         node = (orte_ras_node_t*)cur_node_item;
         if (node->node_slots > node->node_slots_inuse) {
             goto MOVEON;
         }
+#endif
+        goto MOVEON;  /* until I get this fixed...this runs slow, but doesn't hang */
     }
     /* if we got here, then everyone is at or above the soft limit - just
      * start with the first node on the list
@@ -334,7 +388,8 @@ MOVEON:
             /** If the user has specified a mapping for this app_context, then we
             * create a working node list that contains only those nodes.
             */
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app, &master_node_list, &mapped_num_slots))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app,
+                                                                         &master_node_list, &mapped_num_slots))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -346,7 +401,7 @@ MOVEON:
                /** set the num_procs to equal the number of slots on these mapped nodes - if
                    user has specified "-pernode", then set it to the number of nodes
                 */
-                if (orte_rmaps_base.per_node) {
+                if (mca_rmaps_round_robin_component.per_node) {
                     app->num_procs = opal_list_get_size(&mapped_node_list);
                 } else {
                     app->num_procs = mapped_num_slots;
@@ -366,7 +421,7 @@ MOVEON:
                 /** set the num_procs to equal the number of slots on these mapped nodes - if
                 user has specified "-pernode", then set it to the number of nodes
                 */
-                if (orte_rmaps_base.per_node) {
+                if (mca_rmaps_round_robin_component.per_node) {
                     app->num_procs = opal_list_get_size(&master_node_list);
                 } else {
                     app->num_procs = total_num_slots;
@@ -391,7 +446,7 @@ MOVEON:
         num_procs += app->num_procs;
 
         /* Make assignments */
-        if (orte_rmaps_base.bynode) {
+        if (mca_rmaps_round_robin_component.bynode) {
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);

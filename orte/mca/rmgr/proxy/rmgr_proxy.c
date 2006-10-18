@@ -383,7 +383,7 @@ static int orte_rmgr_proxy_spawn_job(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

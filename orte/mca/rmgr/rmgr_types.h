@@ -40,8 +40,6 @@ extern "C" {
 typedef orte_gpr_keyval_t orte_attribute_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
     
-#define ORTE_RMGR_USE_PARENT_ALLOCATION     "orte-use-parent-alloc"
-    
 
 /* RESOURCE MANAGER DATA TYPES */
 

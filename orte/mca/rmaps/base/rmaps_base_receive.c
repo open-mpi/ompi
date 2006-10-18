@@ -95,7 +95,8 @@ void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
     orte_rmaps_cmd_flag_t command;
     orte_std_cntr_t count;
     orte_jobid_t job;
-    char *desired_mapper;
+    opal_list_t attrs;
+    opal_list_item_t *item;
     int rc;
 
     /* get the command */
@@ -125,18 +126,24 @@ void orte_rmaps_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
             
-            /* get any desired mapper */
+            /* get any attributes */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
             count = 1;
-            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &desired_mapper, &count, ORTE_STRING))) {
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
                 
             /* process the request */
-            if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(job, desired_mapper))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(job, &attrs))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
+        
+            while (NULL != (item = opal_list_remove_first(&attrs))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&attrs);
             break;
 
        default:

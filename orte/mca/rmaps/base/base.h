@@ -61,6 +61,8 @@ extern "C" {
         bool oversubscribe;
         /** do we want one ppn if num_procs not specified */
         bool per_node;
+        /* do we not allow use of the localhost */
+        bool no_use_local;
     } orte_rmaps_base_t;
     ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_rmaps_base_t);
     /**

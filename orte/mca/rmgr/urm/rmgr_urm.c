@@ -325,7 +325,7 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
