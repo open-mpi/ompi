@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -254,13 +254,16 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  *
  * @param object        Pointer to the object
  */
+#if OMPI_ENABLE_DEBUG
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
-        assert(NULL != object);                                         \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         opal_obj_update((opal_object_t *) (object), 1);                 \
         assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
+#else
+#define OBJ_RETAIN(object)  opal_obj_update((opal_object_t *) (object), 1);
+#endif
 
 /**
  * Helper macro for the debug mode to store the locations where the status of
@@ -286,9 +289,9 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  *
  * @param object        Pointer to the object
  */
+#if OMPI_ENABLE_DEBUG
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        assert(NULL != object);                                         \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
             opal_obj_run_destructors((opal_object_t *) (object));       \
@@ -297,6 +300,16 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
             object = NULL;                                              \
         }                                                               \
     } while (0)
+#else
+#define OBJ_RELEASE(object)                                             \
+    do {                                                                \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            free(object);                                               \
+            object = NULL;                                              \
+        }                                                               \
+    } while (0)
+#endif
 
 
 /**
