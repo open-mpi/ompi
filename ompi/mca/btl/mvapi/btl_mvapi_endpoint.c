@@ -1034,7 +1034,7 @@ static void mca_btl_mvapi_endpoint_credits_lp(
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_lp,-1);
 
-    /* check to see if there are addditional credits to return */
+    /* check to see if there are additional credits to return */
     if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-1)) > 0) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_lp,-credits);
         if (endpoint->rd_credits_lp >= mca_btl_mvapi_component.rd_win &&
@@ -1106,7 +1106,7 @@ static void mca_btl_mvapi_endpoint_credits_hp(
     /* we don't acquire a wqe or token for credit message - so decrement */
     OPAL_THREAD_ADD32(&endpoint->sd_wqe_hp,-1);
 
-    /* check to see if there are addditional credits to return */
+    /* check to see if there are additional credits to return */
     if ((credits = OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-1)) > 0) {
         OPAL_THREAD_ADD32(&endpoint->sd_credits_hp,-credits);
         if ((endpoint->rd_credits_hp >= mca_btl_mvapi_component.rd_win ||
