@@ -498,7 +498,8 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         ORTE_RMAPS_NO_OVERSUB,
         ORTE_RMAPS_DESIRED_MAPPER,
         ORTE_RMAPS_USE_PARENT_PLAN,
-        ORTE_RMAPS_BOOKMARK
+        ORTE_RMAPS_BOOKMARK,
+        NULL
     };
     orte_std_cntr_t num_attrs_defd;
     char **tokens;
