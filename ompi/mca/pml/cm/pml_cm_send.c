@@ -121,7 +121,8 @@ mca_pml_cm_send(void *buf,
                 mca_pml_base_send_mode_t sendmode,
                 ompi_communicator_t* comm)
 {
-    int ret;
+    int ret = OMPI_ERROR;
+
     if(sendmode == MCA_PML_BASE_SEND_BUFFERED) { 
         mca_pml_cm_hvy_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
@@ -146,8 +147,6 @@ mca_pml_cm_send(void *buf,
         }
         
         ompi_request_free( (ompi_request_t**)&sendreq );
-
-        return ret;
     } else { 
         mca_pml_cm_thin_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
@@ -209,8 +208,7 @@ mca_pml_cm_send(void *buf,
         }
         
         ompi_request_free( (ompi_request_t**)&sendreq );
-        
-        return ret;
     }
-    return OMPI_ERROR;
+    
+    return ret;
 }
