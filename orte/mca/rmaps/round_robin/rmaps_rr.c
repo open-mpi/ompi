@@ -219,12 +219,15 @@ static int map_app_by_slot(
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
              */
-            if(num_alloc >= app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            if(num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
                 break;
             }
         }
 
-        cur_node_item = next;
+        /* if we still have procs to map, or this node is full, move to next node */
+        if (num_alloc < app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            cur_node_item = next;
+        }
 
     }
 
@@ -285,6 +288,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
+    char *save_bookmark;
     orte_vpid_t vpid_start, job_vpid_start=0;
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
@@ -349,12 +353,17 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         }
         /* see if we found it - if not, just start at the beginning */
         if (NULL == cur_node_item) {
-            cur_node_item = opal_list_get_first(&master_node_list);            
+            cur_node_item = opal_list_get_first(&master_node_list); 
         }
     } else {
         /* if no bookmark, then just start at the beginning of the list */
         cur_node_item = opal_list_get_first(&master_node_list);
     }
+    
+    /* save the node name for the bookmark just in case we don't do anything
+     * useful down below
+     */
+    save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
     
     /** construct the list to hold any nodes that get fully used during this
      * mapping. We need to keep a record of these so we can update their
@@ -462,6 +471,12 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
+
+        /* save the next node name bookmark as we will - in the case of mapped nodes -
+         * release the node information being pointed to by cur_node_item
+         */
+        free(save_bookmark);
+        save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
 
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
@@ -573,9 +588,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     /* save a bookmark indicating what node we finished with so that subsequent children (if any)
      * can start at the right place
      */
-    node = (orte_ras_node_t*)cur_node_item;
     if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_BOOKMARK,
-                                                      ORTE_STRING, node->node_name,
+                                                      ORTE_STRING, save_bookmark,
                                                       ORTE_RMGR_ATTR_OVERRIDE))) {
         ORTE_ERROR_LOG(rc);
     }
@@ -590,6 +604,8 @@ cleanup:
     OBJ_DESTRUCT(&fully_used_nodes);
     OBJ_DESTRUCT(&mapped_node_list);
 
+    free(save_bookmark);
+    
     return rc;
 }
 
