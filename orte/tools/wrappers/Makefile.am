@@ -44,6 +44,9 @@ endif # OMPI_INSTALL_BINARIES
 
 endif # WANT_INSTALL_HEADERS
 
+maintainer-clean-local:
+	rm -f ortecc.1 ortec++.1
+
 ortecc.1: $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1
 	rm -f ortecc.1
 	sed -e 's/@COMMAND@/ortecc/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > ortecc.1
