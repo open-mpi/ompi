@@ -30,6 +30,7 @@
 
 #include "orte/mca/ras/base/ras_private.h"
 #include "orte/mca/ras/base/base.h"
+#include "orte/mca/ras/base/proxy/ras_base_proxy.h"
 
 
 /*
@@ -92,6 +93,7 @@ int orte_ras_base_open(void)
     /* Defaults */
 
     orte_ras_base.ras_opened_valid = false;
+    orte_ras_base.ras_using_proxy = false;
     orte_ras_base.ras_available_valid = false;
 
     /** register the base system types with the DSS */
@@ -136,6 +138,15 @@ int orte_ras_base_open(void)
                                  mca_ras_base_static_components, 
                                  &orte_ras_base.ras_opened, true)) {
         return ORTE_ERROR;
+    }
+
+    /* if we are not on a HNP, select the proxy 'module' */
+    if (!orte_process_info.seed) {
+        orte_ras = orte_ras_base_proxy_module;
+        /* initialize the module */
+        orte_ras_base_proxy_init(&rc);
+        orte_ras_base.ras_using_proxy = true;
+        return ORTE_SUCCESS;
     }
 
     /* All done */

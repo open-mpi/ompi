@@ -243,34 +243,16 @@ static int orte_ras_bjs_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     opal_list_item_t* item;
     int rc;
     orte_app_context_t **context = NULL;
-    orte_std_cntr_t i, num_context;
-    orte_jobid_t *jptr;
-    orte_attribute_t *attr;
+    orte_std_cntr_t i, num_context = 0;
 
-    /* check the attributes to see if we are supposed to use the parent
-        * jobid's allocation. This can occur if we are doing a dynamic
-        * process spawn and don't want to go through the allocator again
-        */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
-        /* attribute was given - just reallocate to the new jobid */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = orte_ras_base_reallocate(*jptr, jobid))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        return ORTE_SUCCESS;
-    }
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
     
     rc = orte_rmgr.get_app_context(jobid, &context, &num_context);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto cleanup;
     }
 
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_bjs_discover(&nodes, context, num_context))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
