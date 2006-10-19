@@ -74,6 +74,9 @@ endif # CASE_SENSITIVE_FS
 
 endif # OMPI_INSTALL_BINARIES
 
+maintainer-clean-local:
+	rm -f mpicc.1 mpic++.1 mpicxx.1 mpif77.1 mpif90.1
+
 mpicc.1: $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1
 	rm -f mpicc.1
 	sed -e 's/@COMMAND@/mpicc/g' -e 's/@PROJECT@/Open MPI/g' -e 's/@PROJECT_SHORT@/OMPI/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > mpicc.1
