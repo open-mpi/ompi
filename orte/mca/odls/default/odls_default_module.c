@@ -531,6 +531,12 @@ static int odls_default_fork_local_proc(
         } else {
             environ_copy = opal_argv_copy(base_environ);
         }
+        /* purge any disallowed component directives */
+        opal_unsetenv("rds", &environ_copy);
+        opal_unsetenv("ras", &environ_copy);
+        opal_unsetenv("rmaps", &environ_copy);
+        opal_unsetenv("pls", &environ_copy);
+        opal_unsetenv("rmgr", &environ_copy);        
 
         /* special case handling for --prefix: this is somewhat icky,
            but at least some users do this.  :-\ It is possible that
