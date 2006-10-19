@@ -49,7 +49,6 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *sendtmpbuf = (char*)NULL;
     ptrdiff_t ext, lb;
     size_t typelng;
-    int  allocedaccumbuf = 0;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
 
@@ -58,19 +57,14 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", rank, fanout, segsize));
 
-
-    /* ----------------------------------------------------------------- */
-
     /* setup the chain topology.
      * if the previous chain topology is the same, then use this cached copy
      * other wise recreate it.
      */
-
     if ((comm->c_coll_selected_data->cached_chain) && (comm->c_coll_selected_data->cached_chain_root == root)
         && (comm->c_coll_selected_data->cached_chain_fanout == fanout)) {
         chain = comm->c_coll_selected_data->cached_chain;
-    }
-    else {
+    } else {
         if (comm->c_coll_selected_data->cached_chain) { /* destroy previous chain if defined */
             ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_chain);
         }
@@ -79,11 +73,10 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         comm->c_coll_selected_data->cached_chain_fanout = fanout;
     }
 
-
-
-    /* ----------------------------------------------------------------- */
-    /* Determine number of segments and number of elements
-       sent per operation  */
+    /**
+     * Determine number of segments and number of elements
+     * sent per operation
+     */
     ompi_ddt_get_extent( datatype, &lb, &ext );
     ompi_ddt_type_size( datatype, &typelng );
     if( segsize > typelng ) {
@@ -96,36 +89,10 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     }
     realsegsize = segcount * ext;
 
-    /*     printf("rank %d root %d count %d \t\t segsize %d typesize %d typeext %d realsegsize %d segcount %d num_segments %d\n", */
-    /*             rank, root, count, segsize, typelng, ext, realsegsize, segcount, num_segments); */
-
-    /*     ompi_coll_tuned_topo_dump_chain (chain, rank); */
-
-
-    if (sendbuf != MPI_IN_PLACE) { 
-        sendtmpbuf = (char*) sendbuf; 
-    }
-    else { 
-        sendtmpbuf = (char *) recvbuf; 
-    }
-
-    /* handle special case when size == 1 */
-    if (1 == size ) {
-        if (sendbuf != MPI_IN_PLACE) {
-            ompi_ddt_copy_content_same_ddt( datatype, count, (char*)recvbuf, (char*)sendbuf );
-        }
-        return MPI_SUCCESS;
-    }
-
-    /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
-    if (recvbuf) {
-        accumbuf = (char *) recvbuf;
-        allocedaccumbuf = 0;
-    }
-    else {
-        accumbuf = (char*) malloc(realsegsize);
-        if (accumbuf == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
-        allocedaccumbuf = 1;
+    
+    sendtmpbuf = (char*) sendbuf; 
+    if( sendbuf == MPI_IN_PLACE ) { 
+        sendtmpbuf = (char *)recvbuf; 
     }
 
     /* ----------------------------------------------------------------- */
@@ -133,6 +100,14 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* non-leaf nodes -
        wait for children to send me data & forward up (if needed) */
     if( chain->chain_nextsize > 0 ) {
+        /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
+        if( NULL != recvbuf ) {
+            accumbuf = (char*)recvbuf;
+	} else {
+            accumbuf = (char*)malloc(realsegsize);
+	    if (accumbuf == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
+	}
+
         /* Allocate two buffers for incoming segments */
         inbuf[0] = (char*) malloc(realsegsize);
         if (inbuf[0] == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
@@ -255,11 +230,9 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         } /* end of for each segment */
 
         /* clean up */
-        /*        if (inbuf!=NULL) { */
-        if (inbuf[0] != NULL) free(inbuf[0]);
-        if (inbuf[1] != NULL) free(inbuf[1]);
-        if (allocedaccumbuf) free(accumbuf);
-        /*        } */
+        if( inbuf[0] != NULL) free(inbuf[0]);
+        if( inbuf[1] != NULL) free(inbuf[1]);
+        if( NULL == recvbuf ) free(accumbuf);
     }
 
     /* leaf nodes */
@@ -280,11 +253,9 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* error handler */
  error_hndl:
     OPAL_OUTPUT (( ompi_coll_tuned_stream, "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret ));
-    /*      if( inbuf != NULL ) { */
     if( inbuf[0] != NULL ) free(inbuf[0]);
     if( inbuf[1] != NULL ) free(inbuf[1]);
-    if (allocedaccumbuf) free(accumbuf);
-    /*    } */
+    if( (NULL == recvbuf) && (NULL != accumbuf) ) free(accumbuf);
     return ret;
 }
 
