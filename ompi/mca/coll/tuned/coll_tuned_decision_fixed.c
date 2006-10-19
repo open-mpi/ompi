@@ -107,13 +107,26 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 
     comsize = ompi_comm_size(comm);
 
-    if (2==comsize)
+    if( 2 == comsize )
         return ompi_coll_tuned_barrier_intra_two_procs(comm);
-    /*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
+    /**
+     * Basic optimisation. If we have a power of 2 number of nodes
+     * the use the recursive doubling algorithm, otherwise
+     * bruck is the one we want.
+     */
+    {
+        bool has_one = false;
+        for( ; comsize > 0; comsize >>= 1 ) {
+            if( comsize & 0x1 ) {
+                if( has_one )
+                    return ompi_coll_tuned_barrier_intra_bruck(comm);
+                has_one = true;
+            }
+        }
+    }
     return ompi_coll_tuned_barrier_intra_recursivedoubling(comm);
-    /*     return ompi_coll_tuned_barrier_intra_bruck(comm); */
     /*     return ompi_coll_tuned_barrier_intra_linear(comm); */
-
+    /*         return ompi_coll_tuned_barrier_intra_doublering(comm); */
 }
 
 
