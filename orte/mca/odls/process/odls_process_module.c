@@ -462,12 +462,12 @@ static int orte_odls_process_fork_local_proc(
         environ_copy = opal_argv_copy(base_environ);
     }
     /* purge any disallowed component directives */
-    opal_unsetenv("rds", &environ_copy);
-    opal_unsetenv("ras", &environ_copy);
-    opal_unsetenv("rmaps", &environ_copy);
-    opal_unsetenv("pls", &environ_copy);
-    opal_unsetenv("rmgr", &environ_copy);        
-
+    if (ORTE_SUCCESS != orte_odls_base_purge_environment(&environ_copy)) {
+        /* Tell the parent that Badness happened */
+        return ORTE_ERR_FATAL;
+    }
+    
+    
     /* special case handling for --prefix: this is somewhat icky,
        but at least some users do this.  :-\ It is possible that
        when using --prefix, the user will also "-x PATH" and/or

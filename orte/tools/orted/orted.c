@@ -196,6 +196,7 @@ int main(int argc, char *argv[])
     char *jobidstring;
     orte_gpr_value_t *value;
     char *segment;
+	char *param;
     int i;
 
     /* initialize the globals */
@@ -205,11 +206,31 @@ int main(int argc, char *argv[])
      * specific components. We want to be free to select the proxy components,
      * so we have to ensure that we aren't picking up directives intended for HNPs.
      */
-    opal_unsetenv("rds", &environ);
-    opal_unsetenv("ras", &environ);
-    opal_unsetenv("rmaps", &environ);
-    opal_unsetenv("pls", &environ);
-    opal_unsetenv("rmgr", &environ);
+    if(NULL == (param = mca_base_param_environ_variable("rds",NULL,NULL))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    unsetenv(param);
+    free(param);
+    if(NULL == (param = mca_base_param_environ_variable("ras",NULL,NULL))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    unsetenv(param);
+    free(param);
+    if(NULL == (param = mca_base_param_environ_variable("rmaps",NULL,NULL))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    unsetenv(param);
+    free(param);
+    if(NULL == (param = mca_base_param_environ_variable("pls",NULL,NULL))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    unsetenv(param);
+    free(param);
+    if(NULL == (param = mca_base_param_environ_variable("rmgr",NULL,NULL))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    unsetenv(param);
+    free(param);
     
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);
