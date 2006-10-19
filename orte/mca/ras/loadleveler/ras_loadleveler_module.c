@@ -83,7 +83,7 @@ orte_ras_base_module_t orte_ras_loadleveler_module = {
  */
 static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
-    int i, rc, ret;
+    int i, ret;
     opal_list_t nodes_list;
     opal_list_item_t* item;
     orte_ras_node_t* node;
@@ -92,29 +92,13 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
     orte_jobid_t *jptr;
     orte_attribute_t *attr;
 
-    /* check the attributes to see if we are supposed to use the parent
-     * jobid's allocation. This can occur if we are doing a dynamic
-     * process spawn and don't want to go through the allocator again
-     */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
-        /* attribute was given - just reallocate to the new jobid */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (ORTE_SUCCESS != (rc = orte_ras_base_reallocate(*jptr, jobid))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        return ORTE_SUCCESS;
-    }
-    
-    rc = orte_ras_loadleveler_get_hostlist(&num_hosts, &hostlist);
-    if(ORTE_SUCCESS != rc) {
-        return rc;
+    OBJ_CONSTRUCT(&nodes_list, opal_list_t);
+
+    ret = orte_ras_loadleveler_get_hostlist(&num_hosts, &hostlist);
+    if(ORTE_SUCCESS != ret) {
+        goto cleanup;
     }
 
-    OBJ_CONSTRUCT(&nodes_list, opal_list_t);
     for (i = 0; i < num_hosts; i++) {
         /* check for duplicated nodes */
         for (item = opal_list_get_first(&nodes_list); 
@@ -131,7 +115,8 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
             /* we did not find a duplicate, so add a new item to the list */
             node = OBJ_NEW(orte_ras_node_t);
             if (NULL == node) {
-                return ORTE_ERR_OUT_OF_RESOURCE;
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto cleanup;
             }
             node->node_name = strdup(hostlist[i]);
             node->node_arch = orte_ras_loadleveler_get_host_arch(hostlist[i]);
@@ -145,14 +130,15 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
     }       
     ret = orte_ras_base_node_insert(&nodes_list);
     ret = orte_ras_base_allocate_nodes(jobid, &nodes_list);
-            
+
+cleanup:            
     while (NULL != (item = opal_list_remove_first(&nodes_list))) {
         OBJ_RELEASE(item);    
     }       
     OBJ_DESTRUCT(&nodes_list);
     opal_argv_free(hostlist);
             
-    return ORTE_SUCCESS;
+    return ret;
 }
 
 /*

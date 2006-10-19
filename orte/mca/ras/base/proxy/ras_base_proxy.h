@@ -1,5 +1,4 @@
-/* -*- C -*-
- * 
+/* 
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
@@ -29,26 +28,28 @@ extern "C" {
 #endif
 
 /* my replica */
-extern orte_process_name_t *orte_ras_proxy_replica;
+extern orte_process_name_t *orte_ras_base_proxy_replica;
+
+extern orte_ras_base_module_t orte_ras_base_proxy_module;
 
 /*
  * Module open / close
  */
-int orte_ras_proxy_open(void);
-int orte_ras_proxy_close(void);
+int orte_ras_base_proxy_open(void);
+int orte_ras_base_proxy_close(void);
 
 
 /*
  * Startup / Shutdown
  */
-orte_ras_base_module_t* orte_ras_proxy_init(int* priority);
-int orte_ras_proxy_finalize(void);
+orte_ras_base_module_t* orte_ras_base_proxy_init(int* priority);
+int orte_ras_base_proxy_finalize(void);
 
 /*
  * proxy function prototypes
  */
-int orte_ras_proxy_allocate(orte_jobid_t job, opal_list_t *attributes);
-int orte_ras_proxy_deallocate(orte_jobid_t job);
+int orte_ras_base_proxy_allocate(orte_jobid_t job, opal_list_t *attributes);
+int orte_ras_base_proxy_deallocate(orte_jobid_t job);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

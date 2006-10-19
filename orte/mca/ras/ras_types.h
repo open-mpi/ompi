@@ -33,6 +33,8 @@ extern "C" {
  * RAS Attributes
  */
 #define ORTE_RAS_USE_PARENT_ALLOCATION     "orte-use-parent-alloc"
+#define ORTE_RAS_USE_NEW_ALLOCATION        "orte-use-new-alloc"
+#define ORTE_RAS_INITIAL_ALLOCATION        "orte-initial-alloc"
     
 
 /**

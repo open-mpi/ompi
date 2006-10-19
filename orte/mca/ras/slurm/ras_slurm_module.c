@@ -37,13 +37,13 @@
 /*
  * Local functions
  */
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes);
-static int deallocate(orte_jobid_t jobid);
-static int finalize(void);
+static int orte_ras_slurm_allocate(orte_jobid_t jobid, opal_list_t *attributes);
+static int orte_ras_slurm_deallocate(orte_jobid_t jobid);
+static int orte_ras_slurm_finalize(void);
 
-static int discover(char *regexp, opal_list_t *nodelist);
-static int parse_ranges(char *base, char *ranges, char ***nodelist);
-static int parse_range(char *base, char *range, char ***nodelist);
+static int orte_ras_slurm_discover(char *regexp, opal_list_t *nodelist);
+static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***nodelist);
+static int orte_ras_slurm_parse_range(char *base, char *range, char ***nodelist);
 
 
 
@@ -51,13 +51,13 @@ static int parse_range(char *base, char *range, char ***nodelist);
  * Global variable
  */
 orte_ras_base_module_t orte_ras_slurm_module = {
-    allocate,
+    orte_ras_slurm_allocate,
     orte_ras_base_node_insert,
     orte_ras_base_node_query,
     orte_ras_base_node_query_alloc,
     orte_ras_base_node_lookup,
-    deallocate,
-    finalize
+    orte_ras_slurm_deallocate,
+    orte_ras_slurm_finalize
 };
 
 /**
@@ -65,32 +65,15 @@ orte_ras_base_module_t orte_ras_slurm_module = {
  * requested number of nodes/process slots to the job.
  *  
  */
-static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
+static int orte_ras_slurm_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     int ret;
     char *slurm_node_str;
     opal_list_t nodes;
     opal_list_item_t* item;
-    orte_jobid_t *jptr;
-    orte_attribute_t *attr;
 
-    /* check the attributes to see if we are supposed to use the parent
-     * jobid's allocation. This can occur if we are doing a dynamic
-     * process spawn and don't want to go through the allocator again
-     */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
-        /* attribute was given - just reallocate to the new jobid */
-        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        return ORTE_SUCCESS;
-    }
-    
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+  
     slurm_node_str = getenv("SLURM_NODELIST");
     if (NULL == slurm_node_str) {
         opal_show_help("help-ras-slurm.txt", "env-var-not-found", 1,
@@ -98,8 +81,7 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
         return ORTE_ERR_NOT_FOUND;
     }
 
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
-    if (ORTE_SUCCESS != (ret = discover(slurm_node_str, &nodes))) {
+    if (ORTE_SUCCESS != (ret = orte_ras_slurm_discover(slurm_node_str, &nodes))) {
         opal_output(orte_ras_base.ras_output,
                     "ras:slurm:allocate: discover failed!");
         return ret;
@@ -127,7 +109,7 @@ static int allocate(orte_jobid_t jobid, opal_list_t *attributes)
 /*
  * There's really nothing to do here
  */
-static int deallocate(orte_jobid_t jobid)
+static int orte_ras_slurm_deallocate(orte_jobid_t jobid)
 {
     opal_output(orte_ras_base.ras_output, 
                 "ras:slurm:deallocate: success (nothing to do)");
@@ -138,7 +120,7 @@ static int deallocate(orte_jobid_t jobid)
 /*
  * There's really nothing to do here
  */
-static int finalize(void)
+static int orte_ras_slurm_finalize(void)
 {
     opal_output(orte_ras_base.ras_output, 
                 "ras:slurm:finalize: success (nothing to do)");
@@ -155,7 +137,7 @@ static int finalize(void)
  *  - check for additional nodes that have already been allocated
  */
 
-static int discover(char *regexp, opal_list_t* nodelist)
+static int orte_ras_slurm_discover(char *regexp, opal_list_t* nodelist)
 {
     int i, j, len, ret, count, reps;
     char *base, **names = NULL;
@@ -211,7 +193,7 @@ static int discover(char *regexp, opal_list_t* nodelist)
             return ORTE_ERR_NOT_FOUND;
         }
         
-        ret = parse_ranges(base, base + i + 1, &names);
+        ret = orte_ras_slurm_parse_ranges(base, base + i + 1, &names);
     }
 
     /* Find the number of slots per node */
@@ -295,7 +277,7 @@ static int discover(char *regexp, opal_list_t* nodelist)
 /*
  * Parse one or more ranges in a set
  */
-static int parse_ranges(char *base, char *ranges, char ***names)
+static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
 {
     int i, len, ret;
     char *start, *orig;
@@ -306,7 +288,7 @@ static int parse_ranges(char *base, char *ranges, char ***names)
     for (orig = start = ranges, i = 0; i < len; ++i) {
         if (',' == ranges[i]) {
             ranges[i] = '\0';
-            if (ORTE_SUCCESS != (ret = parse_range(base, start, names))) {
+            if (ORTE_SUCCESS != (ret = orte_ras_slurm_parse_range(base, start, names))) {
                 return ret;
             }
             start = ranges + i + 1;
@@ -319,7 +301,7 @@ static int parse_ranges(char *base, char *ranges, char ***names)
         opal_output(orte_ras_base.ras_output, 
                     "ras:slurm:allocate:discover: parse range %s (2)",
                     start);
-        if (ORTE_SUCCESS != (ret = parse_range(base, start, names))) {
+        if (ORTE_SUCCESS != (ret = orte_ras_slurm_parse_range(base, start, names))) {
             return ret;
         }
     }
@@ -333,7 +315,7 @@ static int parse_ranges(char *base, char *ranges, char ***names)
 /*
  * Parse a single range in a set
  */
-static int parse_range(char *base, char *range, char ***names)
+static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
 {
     char *str, temp1[BUFSIZ], temp2[BUFSIZ];
     size_t i, j, start, end;

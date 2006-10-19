@@ -76,6 +76,7 @@ typedef struct orte_ras_base_t {
     int ras_output;
     opal_list_t ras_opened;
     bool ras_opened_valid;
+    bool ras_using_proxy;
     opal_list_t ras_available;
     bool ras_available_valid;
     orte_std_cntr_t ras_num_nodes;

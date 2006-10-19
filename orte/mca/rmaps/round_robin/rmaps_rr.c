@@ -117,8 +117,15 @@ static int map_app_by_node(
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
                                              nodes, max_used_nodes,
                                              mca_rmaps_round_robin_component.oversubscribe))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+            /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+             * really isn't an error - we just need to break from the loop
+             * since the node is fully used up. For now, just don't report
+             * an error
+             */
+            if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
 
         ++num_alloc;
