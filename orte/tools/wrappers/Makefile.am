@@ -17,48 +17,37 @@
 # $HEADER$
 #
 
-if OMPI_INSTALL_BINARIES
+if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
 	ortecc-wrapper-data.txt \
 	ortec++-wrapper-data.txt
 
-if CASE_SENSITIVE_FS
+if OMPI_INSTALL_BINARIES
+
+man_MANS = \
+	ortecc.1 \
+	ortec++.1
+
+EXTRA_DIST = $(man_MANS)
+
 install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
-	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
-	(cd $(DESTDIR)$(bindir); rm -f orteCC$(EXEEXT); $(LN_S) opal_wrapper orteCC)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f orteCC-wrapper-data.txt; $(LN_S) ortec++-wrapper-data.txt orteCC-wrapper-data.txt)
-
-install-data-hook:
-	(cd $(DESTDIR)$(mandir)/man1; rm -f ortecc.1; $(LN_S) opalcc.1 ortecc.1)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f ortec++.1; $(LN_S) opalcc.1 ortec++.1)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f orteCC.1; $(LN_S) opalcc.1 orteCC.1)
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT) \
-	$(DESTDIR)$(bindir)/ortec++$(EXEEXT) \
-	$(DESTDIR)$(bindir)/orteCC$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/ortecc.1 \
-	$(DESTDIR)$(mandir)/man1/ortec++.1 \
-	$(DESTDIR)$(mandir)/man1/orteCC.1 \
-	$(DESTDIR)$(pkgdatadir)/orteCC-wrapper-data.txt
-
-else
-install-exec-hook:
+	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
 	(cd $(DESTDIR)$(bindir); rm -f ortecc$(EXEEXT); $(LN_S) opal_wrapper ortecc)
 	(cd $(DESTDIR)$(bindir); rm -f ortec++$(EXEEXT); $(LN_S) opal_wrapper ortec++)
 
-install-data-hook:
-	(cd $(DESTDIR)$(mandir)/man1; rm -f ortecc.1; $(LN_S) opalcc.1 ortecc.1)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f ortec++.1; $(LN_S) opalcc.1 ortec++.1)
-
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/ortecc$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/ortecc.1 \
-	$(DESTDIR)$(mandir)/man1/ortec++.1 \
 	$(DESTDIR)$(bindir)/ortec++$(EXEEXT)
 
-endif
+endif # OMPI_INSTALL_BINARIES
 
-endif
+endif # WANT_INSTALL_HEADERS
+
+ortecc.1: $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1
+	rm -f ortecc.1
+	sed -e 's/@COMMAND@/ortecc/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > ortecc.1
+
+ortec++.1: $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1
+	rm -f ortec++.1
+	sed -e 's/@COMMAND@/ortec++/g' -e 's/@PROJECT@/OpenRTE/g' -e 's/@PROJECT_SHORT@/ORTE/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > ortec++.1

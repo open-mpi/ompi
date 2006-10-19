@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 nodist_pkgdata_DATA = 
 dist_pkgdata_DATA = \
 	help-orte-clean.txt
@@ -32,3 +34,4 @@ EXTRA_DIST = orte-clean.1
 orte_clean_LDADD = $(top_builddir)/orte/liborte.la
 orte_clean_DEPENDENCIES = $(top_builddir)/orte/liborte.la
 
+endif # OMPI_INSTALL_BINARIES

@@ -17,71 +17,63 @@
 # $HEADER$
 #
 
+DEFS="-DEXEEXT=\"$(EXEEXT)\""
+
+if OMPI_INSTALL_BINARIES
+
+# install even if we don't want the headers / opalcc, as we need it
+# for the MPI layer
 opal_wrapper_SOURCES = \
 	opal_wrapper.c
 
 opal_wrapper_LDADD = $(top_builddir)/opal/libopal.la
 opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopal.la
 
-DEFS="-DEXEEXT=\"$(EXEEXT)\""
+bin_PROGRAMS = opal_wrapper
 
-# Whether or not --enable-binaries was given to configure (useful for
-# multi-lib installations).  If this was not given, we do not build /
-# install anything in this directory.
+endif # OMPI_INSTALL_BINARIES
 
-if OMPI_INSTALL_BINARIES
+if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
 	opalcc-wrapper-data.txt \
 	opalc++-wrapper-data.txt
 
+# Whether or not --enable-binaries was given to configure (useful for
+# multi-lib installations).  If this was not given, we do not build /
+# install the applications / man pages
+
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = \
 	help-opal-wrapper.txt
 
-bin_PROGRAMS = opal_wrapper
-
 # List all man pages that will be installed
 
-man_MANS = opalcc.1
+man_MANS = \
+	opalcc.1 \
+	opalc++.1
 
-# MANS are not automatically distributed
+EXTRA_DIST = \
+	opal_wrapper.1 \
+	$(man_MANS)
 
-EXTRA_DIST = $(man_MANS)
-
-if CASE_SENSITIVE_FS
-install-exec-hook:
-	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
-	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
-	(cd $(DESTDIR)$(bindir); rm -f opalCC$(EXEEXT); $(LN_S) opal_wrapper opalCC)
-	(cd $(DESTDIR)$(pkgdatadir); rm -f opalCC-wrapper-data.txt; $(LN_S) opalc++-wrapper-data.txt opalCC-wrapper-data.txt)
-
-install-data-hook:
-	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
-	(cd $(DESTDIR)$(mandir)/man1; rm -f opalCC.1; $(LN_S) opalcc.1 opalCC.1)
-
-uninstall-local:
-	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
-	$(DESTDIR)$(bindir)/opalc++$(EXEEXT) \
-	$(DESTDIR)$(bindir)/opalCC$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/opalc++.1 \
-	$(DESTDIR)$(mandir)/man1/opalCC.1 \
-	$(DESTDIR)$(pkgdatadir)/opalCC-wrapper-data.txt
-
-else
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
 
-install-data-hook:
-	(cd $(DESTDIR)$(mandir)/man1; rm -f opalc++.1; $(LN_S) opalcc.1 opalc++.1)
-
 uninstall-local:
 	rm -f $(DESTDIR)$(bindir)/opalcc$(EXEEXT) \
-	$(DESTDIR)$(bindir)/opalc++$(EXEEXT) \
-	$(DESTDIR)$(mandir)/man1/opalc++.1
+	$(DESTDIR)$(bindir)/opalc++$(EXEEXT)
 
-endif
+endif # OPAL_INSTALL_BINARIES
 
-else
+endif # WANT_INSTALL_HEADERS
 
-endif
+opalcc.1: opal_wrapper.1
+	rm -f opalcc.1
+	sed -e 's/@COMMAND@/opalcc/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > opalcc.1
+
+opalc++.1: opal_wrapper.1
+	rm -f opalc++.1
+	sed -e 's/@COMMAND@/opalc++/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C++/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > opalc++.1
