@@ -115,7 +115,7 @@ int ompi_coll_tuned_barrier_intra_doublering(struct ompi_communicator_t *comm)
 int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *comm)
 {
     int rank, size, adjsize;
-    int i, err, line;
+    int err, line;
     int mask, remote;
 
     rank = ompi_comm_rank(comm);
@@ -123,8 +123,8 @@ int ompi_coll_tuned_barrier_intra_recursivedoubling(struct ompi_communicator_t *
     OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_barrier_intra_recursivedoubling rank %d", rank));
 
     /* do nearest power of 2 less than size calc */
-    adjsize = 1;
-    for(i=0;adjsize*2<size;adjsize*=2) { }
+    for( adjsize = 1; adjsize <= size; adjsize <<= 1 );
+    adjsize >>= 1;
 
     /* if size is not exact power of two, perform an extra step */
     if (adjsize != size) {
