@@ -196,20 +196,24 @@ int main(int argc, char *argv[])
     char *jobidstring;
     orte_gpr_value_t *value;
     char *segment;
-    char *param;
     int i;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
 
+    /* Protect the daemon and any child processes from MCA params that select
+     * specific components. We want to be free to select the proxy components,
+     * so we have to ensure that we aren't picking up directives intended for HNPs.
+     */
+    opal_unsetenv("rds", &environ);
+    opal_unsetenv("ras", &environ);
+    opal_unsetenv("rmaps", &environ);
+    opal_unsetenv("pls", &environ);
+    opal_unsetenv("rmgr", &environ);
+    
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);
-    /* clear it from any orted-related directives */
-    opal_unsetenv("MallocPreScribble", &orted_globals.saved_environ);
-    opal_unsetenv("MallocScribble", &orted_globals.saved_environ);
-    opal_unsetenv("MallocCheckHeapAbort", &orted_globals.saved_environ);
-    opal_unsetenv("MallocBadFreeAbort", &orted_globals.saved_environ);
-    
+
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
@@ -291,41 +295,6 @@ int main(int argc, char *argv[])
         }
     }
 
-    /* Protect the daemon from MCA params that select specific components. We want
-     * the daemon to be free to select the proxy components, so we have to ensure
-     * that we aren't picking up directives intended for HNPs.
-     */
-    if(NULL == (param = mca_base_param_environ_variable("rds",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, &environ);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("ras",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, &environ);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("rmaps",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, &environ);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("pls",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, &environ);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("rmgr",NULL,NULL))) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    opal_unsetenv(param, &environ);
-    free(param);
-    
     /* turn on debug if debug_file is requested so output will be generated */
     if (orted_globals.debug_daemons_file) {
         orted_globals.debug_daemons = true;
@@ -613,7 +582,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* unpack the command */
