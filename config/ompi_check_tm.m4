@@ -27,7 +27,7 @@ AC_DEFUN([OMPI_CHECK_TM],[
                                 [Directory where the tm software is installed])])
 
     AS_IF([test "$with_tm" = "no"],
-          [ompi_check_tm_hapy="no"],
+          [ompi_check_tm_happy="no"],
           [ompi_check_tm_happy="yes"
            AS_IF([test ! -z "$with_tm" -a "$with_tm" != "yes"],
                  [ompi_check_tm_dir="$with_tm"],
