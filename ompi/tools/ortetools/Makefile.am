@@ -16,6 +16,8 @@
 # $HEADER$
 #
 
+if OMPI_INSTALL_BINARIES
+
 dist_pkgdata_DATA = 
 
 man_MANS =  mpirun.1 \
@@ -49,3 +51,5 @@ ompi-clean.1: $(top_srcdir)/orte/tools/orte-clean/orte-clean.1
 
 distclean-local:
 	rm -f mpirun.1 mpiexec.1 ompi-ps.1 ompi-clean.1
+
+endif # OMPI_INSTALL_BINARIES
