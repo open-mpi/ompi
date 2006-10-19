@@ -50,6 +50,8 @@ typedef struct orte_odls_globals_t {
 
 ORTE_DECLSPEC extern orte_odls_globals_t orte_odls_globals;
         
+int orte_odls_base_purge_environment(char ***environ);
+
 /*
  * data type functions
  */
