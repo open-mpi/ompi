@@ -67,9 +67,10 @@ version 1.0.
 1.1.3
 -----
 
-- Fix several MPI_*ERRHANDLER* functions with respect to what
-  arguments they allowed and the behavior that they effected.  Thanks
-  to Lisandro Dalcin for reporting the problems.
+- Fix several MPI_*ERRHANDLER* functions and MPI_GROUP_TRANSLATE_RANKS
+  with respect to what arguments they allowed and the behavior that
+  they effected.  Thanks to Lisandro Dalcin for reporting the
+  problems.
 
 
 1.1.2
