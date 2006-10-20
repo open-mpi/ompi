@@ -123,6 +123,10 @@
  **********************************************************************/
 #if OMPI_BUILDING
 
+#ifndef HAVE_PTRDIFF_T
+typedef OMPI_PTRDIFF_TYPE ptrdiff_t;
+#endif
+
 /*
  * If we're in C, we may need to bring in the bool type and true/false
  * constants.  OMPI_NEED_C_BOOL will be true if the compiler either

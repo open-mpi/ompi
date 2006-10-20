@@ -71,6 +71,9 @@
 /* Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's */
 #undef OMPI_MPI_OFFSET_TYPE
 
+/* type to use for ptrdiff_t, if it does not exist, set to ptrdiff_t if it does exist */
+#undef OMPI_PTRDIFF_TYPE
+
 /* Whether we want MPI cxx support or not */
 #undef OMPI_WANT_CXX_BINDINGS
 
@@ -92,6 +95,9 @@
 /* MPI datatype corresponding to MPI_Offset */
 #undef OMPI_OFFSET_DATATYPE
 
+/* Define to 1 if you have the ANSI C header files. */
+#undef STDC_HEADERS
+
 /* A  type that allows us to have sentinel type values that are still
    valid */
 #undef ompi_fortran_bogus_type_t
@@ -112,9 +118,14 @@
 #define MPI_Fint ompi_fortran_integer_t
 #endif
 
-#endif
+#endif /* #ifndef OMPI_CONFIG_H */
 
 /* @OMPI_END_CONFIGURE_SECTION@ */
+
+/* include for ptrdiff_t */
+#ifdef STDC_HEADERS
+#include <stddef.h>
+#endif
 
 #ifndef OMPI_BUILDING
 #define OMPI_BUILDING 0
@@ -148,8 +159,8 @@ extern "C" {
 /*
  * Typedefs
  */
-#include <stddef.h>
-typedef ptrdiff_t MPI_Aint;
+
+typedef OMPI_PTRDIFF_TYPE MPI_Aint;
 typedef OMPI_MPI_OFFSET_TYPE MPI_Offset;
 typedef struct ompi_communicator_t *MPI_Comm;
 typedef struct ompi_datatype_t *MPI_Datatype;
