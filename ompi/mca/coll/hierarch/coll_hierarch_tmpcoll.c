@@ -112,7 +112,7 @@ int mca_coll_hierarch_reduce_tmp(void *sbuf, void *rbuf, int count,
     int i, err, size;
     char *pml_buffer = NULL;
     ptrdiff_t extent, lb;
-    int rank = ompi_comm_rank(comm);;
+    int rank = ompi_comm_rank(comm);
 
     /* If not root, send data to the root. */
     if (rank != root) {
