@@ -57,7 +57,7 @@ ompi_bitmap_init(ompi_bitmap_t *bm, int size)
     int actual_size;
 
     if ((size <= 0) || (size > OMPI_FORTRAN_HANDLE_MAX) || (NULL == bm)) {
-	return OMPI_ERR_BAD_PARAM;
+	    return OMPI_ERR_BAD_PARAM;
     }
 
     bm->legal_numbits = size;

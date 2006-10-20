@@ -45,6 +45,6 @@ int MPI_Type_size(MPI_Datatype type, int *size)
 
   /* Simple */
 
-  *size = type->size;
+  *size = (int)type->size;
   return MPI_SUCCESS;
 }

@@ -201,7 +201,7 @@ static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_b
     if( 1 == array->arr_size ) {
         return &array->bml_btls[0];  /* force the return to avoid a jump */
     } else {
-        uint32_t current_position = array->arr_index;  /* force to always start from zero */
+        size_t current_position = array->arr_index;  /* force to always start from zero */
         if( (current_position + 1) == array->arr_size ) {
             array->arr_index = 0;  /* next time serve from the beginning */
         } else {

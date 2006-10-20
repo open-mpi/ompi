@@ -43,12 +43,12 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
 {
     int ret, line, rank, size, i = 0;
     int recvcount, sendcount, prevcount, inbi, previnbi;
-    int segcount, segindex, num_segments, realsegsize;
+    int segcount, segindex, num_segments;
     char *inbuf[2] = {(char*)NULL, (char*)NULL};
     char *accumbuf = (char*)NULL;
     char *sendtmpbuf = (char*)NULL;
     ptrdiff_t ext, lb;
-    size_t typelng;
+    size_t typelng, realsegsize;
     ompi_request_t* reqs[2];
     ompi_coll_chain_t* chain;
 
@@ -80,7 +80,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     ompi_ddt_get_extent( datatype, &lb, &ext );
     ompi_ddt_type_size( datatype, &typelng );
     if( segsize > typelng ) {
-        segcount     = segsize/typelng;
+        segcount     = (int)(segsize / typelng);
         num_segments = count/segcount;
         if( (count % segcount) != 0 ) num_segments++;
     } else  {

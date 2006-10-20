@@ -107,13 +107,13 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     struct mca_bml_base_endpoint_t **bml_endpoints = NULL;
     int rc;
-    size_t i;
+    int32_t i;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    rc = ompi_bitmap_init(&reachable, nprocs);
+    rc = ompi_bitmap_init(&reachable, (int)nprocs);
     if(OMPI_SUCCESS != rc)
         return rc;
 
@@ -157,7 +157,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                         NULL);
 
     /* initialize pml endpoint data */
-    for (i = 0 ; i < nprocs ; ++i) {
+    for (i = 0 ; i < (int32_t)nprocs ; ++i) {
         int idx;
         mca_pml_dr_endpoint_t *endpoint;
 
@@ -184,7 +184,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         endpoint->bml_endpoint = bml_endpoints[i];
     }
     
-    for(i = 0; i < nprocs; i++) { 
+    for(i = 0; i < (int32_t)nprocs; i++) { 
         mca_pml_dr_endpoint_t* ep =  (mca_pml_dr_endpoint_t*) 
             ompi_pointer_array_get_item(&mca_pml_dr.endpoints, i);
             ep->src = mca_pml_dr.my_rank;

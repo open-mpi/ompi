@@ -92,8 +92,8 @@ void ompi_info::do_version(bool want_all, opal_cmd_line_t *cmd_line)
   } else {
     count = opal_cmd_line_get_ninsts(cmd_line, "version");
     for (i = 0; i < count; ++i) {
-      arg1 = opal_cmd_line_get_param(cmd_line, "version", i, 0);
-      scope = opal_cmd_line_get_param(cmd_line, "version", i, 1);
+      arg1 = opal_cmd_line_get_param(cmd_line, "version", (int)i, 0);
+      scope = opal_cmd_line_get_param(cmd_line, "version", (int)i, 1);
 
       // Version of Open MPI
  

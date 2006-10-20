@@ -71,7 +71,7 @@ int ompi_comm_init(void)
     OBJ_CONSTRUCT(&ompi_mpi_comm_world, ompi_communicator_t);
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_world(&size);
-    group->grp_proc_count    = size;
+    group->grp_proc_count    = (int)size;
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
     ompi_set_group_rank(group, ompi_proc_local());
     ompi_group_increment_proc_count (group);
@@ -81,7 +81,7 @@ int ompi_comm_init(void)
     ompi_mpi_comm_world.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_world.c_local_group  = group;
     ompi_mpi_comm_world.c_remote_group = group;
-    ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim(size);
+    ompi_mpi_comm_world.c_cube_dim     = opal_cube_dim((int)size);
     ompi_mpi_comm_world.error_handler  = &ompi_mpi_errors_are_fatal;
     OBJ_RETAIN( &ompi_mpi_errors_are_fatal );
     OMPI_COMM_SET_PML_ADDED(&ompi_mpi_comm_world);
@@ -103,7 +103,7 @@ int ompi_comm_init(void)
     group = OBJ_NEW(ompi_group_t);
     group->grp_proc_pointers = ompi_proc_self(&size);
     group->grp_my_rank       = 0;
-    group->grp_proc_count    = size;
+    group->grp_proc_count    = (int)size;
     group->grp_flags        |= OMPI_GROUP_INTRINSIC;
 
     ompi_mpi_comm_self.c_contextid    = 1;

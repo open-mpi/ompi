@@ -59,7 +59,7 @@ int MPI_Info_delete(MPI_Info info, char *key) {
                                           FUNC_NAME);
         }
 
-        key_length = (key) ? strlen (key) : 0;
+        key_length = (key) ? (int)strlen (key) : 0;
         if ((NULL == key) || (0 == key_length) ||
             (MPI_MAX_INFO_KEY <= key_length)) {
           return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INFO_KEY,

@@ -82,7 +82,7 @@ void ompi_info::do_params(bool want_all, bool want_internal)
 
   count = opal_cmd_line_get_ninsts(cmd_line, "param");
   for (i = 0; i < count; ++i) {
-    type = opal_cmd_line_get_param(cmd_line, "param", i, 0);
+    type = opal_cmd_line_get_param(cmd_line, "param", (int)i, 0);
     if (type_all == type) {
       want_all = true;
       break;
@@ -97,8 +97,8 @@ void ompi_info::do_params(bool want_all, bool want_internal)
     }
   } else {
     for (i = 0; i < count; ++i) {
-      type = opal_cmd_line_get_param(cmd_line, "param", i, 0);
-      component = opal_cmd_line_get_param(cmd_line, "param", i, 1);
+      type = opal_cmd_line_get_param(cmd_line, "param", (int)i, 0);
+      component = opal_cmd_line_get_param(cmd_line, "param", (int)i, 1);
 
       for (found = false, i = 0; i < mca_types.size(); ++i) {
         if (mca_types[i] == type) {

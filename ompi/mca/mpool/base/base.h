@@ -48,11 +48,11 @@ static inline unsigned int my_log2(unsigned long val) {
     return count > 0 ? count-1: 0;
 }
 static inline void *down_align_addr(void* addr, unsigned int shift) {
-    return (void*) (((unsigned long) addr) & (~(unsigned long) 0) << shift); 
+    return (void*) (((intptr_t) addr) & (~(intptr_t) 0) << shift); 
 }
 
 static inline void *up_align_addr(void*addr, unsigned int shift) { 
-    return (void*) ((((unsigned long) addr) | ~((~(unsigned long) 0) << shift))); 
+    return (void*) ((((intptr_t) addr) | ~((~(intptr_t) 0) << shift))); 
 }
 
 struct mca_mpool_base_selected_module_t {

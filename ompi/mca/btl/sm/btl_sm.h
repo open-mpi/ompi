@@ -86,7 +86,7 @@ struct mca_btl_sm_component_t {
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
     int sm_exclusivity;                /**< exclusivity setting */
     int sm_latency;                    /**< lowest latency */
-    int sm_max_procs;                  /**< upper limit on the number of processes using the shared memory pool */
+    uint32_t sm_max_procs;             /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                /**< number of extra procs to allow */
     char* sm_mpool_name;               /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
@@ -111,8 +111,7 @@ struct mca_btl_sm_component_t {
     int *sm_proc_connect;    /* scratch array used by the 0'th btl to
                               * set indicate sm connectivty.  Used by
                               * the 1'st btl */
-    size_t num_smp_procs;      /**< current number of smp procs on this
-                              host */
+    uint32_t num_smp_procs;  /**< current number of smp procs on this host */
     int num_smp_procs_same_base_addr;  /* number of procs with same
                                           base shared memory virtual
                                           address as this process */
