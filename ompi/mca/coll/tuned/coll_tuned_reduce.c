@@ -49,7 +49,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     char *sendtmpbuf = (char*)NULL;
     ptrdiff_t ext, lb;
     size_t typelng, realsegsize;
-    ompi_request_t* reqs[2];
+    ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
     ompi_coll_chain_t* chain;
 
     size = ompi_comm_size(comm);
