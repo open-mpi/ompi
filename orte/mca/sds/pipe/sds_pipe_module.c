@@ -77,7 +77,7 @@ orte_sds_pipe_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    orte_process_info.num_procs = num_procs;
+    orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
 
     close(fd);
     return ORTE_SUCCESS;

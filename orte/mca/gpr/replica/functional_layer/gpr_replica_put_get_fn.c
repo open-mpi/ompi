@@ -440,7 +440,7 @@ int orte_gpr_replica_get_fn(orte_gpr_addr_mode_t addr_mode,
         }
         (*values)[i]->addr_mode = addr_mode;
         (*values)[i]->segment = strdup(seg->name);
-        (*values)[i]->cnt = opal_list_get_size(gptr->ival_list);
+        (*values)[i]->cnt = (orte_std_cntr_t)opal_list_get_size(gptr->ival_list);
         cptr2 = gptr->cptr;
         (*values)[i]->num_tokens = cptr2->num_itags;
         (*values)[i]->tokens = (char **)malloc(cptr2->num_itags * sizeof(char*));
@@ -637,7 +637,7 @@ MOVEON:
         }
         (*values)[i]->addr_mode = addr_mode;
         (*values)[i]->segment = strdup(seg->name);
-        (*values)[i]->cnt = opal_list_get_size(gptr->ival_list);
+        (*values)[i]->cnt = (orte_std_cntr_t)opal_list_get_size(gptr->ival_list);
         cptr2 = gptr->cptr;
         (*values)[i]->num_tokens = cptr2->num_itags;
         (*values)[i]->tokens = (char **)malloc(cptr2->num_itags * sizeof(char*));

@@ -272,7 +272,7 @@ int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        opal_list_append(dest, &attr->super);
+        opal_list_append((opal_list_t*)dest, &attr->super);
     }
     
     return ORTE_SUCCESS;

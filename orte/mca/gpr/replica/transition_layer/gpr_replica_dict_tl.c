@@ -56,7 +56,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    len = strlen(name);
+    len = (orte_std_cntr_t)strlen(name);
     
     /* check seg's dictionary to ensure uniqueness */
     ptr = (char**)(seg->dict)->addr;
@@ -64,7 +64,7 @@ orte_gpr_replica_create_itag(orte_gpr_replica_itag_t *itag,
                    i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            len2 = strlen(ptr[i]);
+            len2 = (orte_std_cntr_t)strlen(ptr[i]);
             if ((len == len2 && 0 == strncmp(ptr[i], name, len))) {
                 /* already present */
                 if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
@@ -170,7 +170,7 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
         return ORTE_SUCCESS;
 	}
 
-    len = strlen(name);
+    len = (orte_std_cntr_t)strlen(name);
     
     /* want specified token-itag pair in that segment's dictionary */
     ptr = (char**)((seg->dict)->addr);
@@ -178,7 +178,7 @@ orte_gpr_replica_dict_lookup(orte_gpr_replica_itag_t *itag,
                    i < (seg->dict)->size; i++) {
         if (NULL != ptr[i]) {
             j++;
-            len2 = strlen(ptr[i]);
+            len2 = (orte_std_cntr_t)strlen(ptr[i]);
 	        if (len == len2 && 0 == strncmp(ptr[i], name, len)) {
                if (i < ORTE_GPR_REPLICA_ITAG_MAX) {
                    *itag = (orte_gpr_replica_itag_t)i;

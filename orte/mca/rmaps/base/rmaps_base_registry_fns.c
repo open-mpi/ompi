@@ -279,7 +279,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         item != opal_list_get_end(&map->nodes);
         item =  opal_list_get_next(item)) {
         node = (orte_mapped_node_t*)item;
-        num_procs += opal_list_get_size(&node->procs);
+        num_procs += (orte_std_cntr_t)opal_list_get_size(&node->procs);
     }
     if(num_procs == 0) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);

@@ -16,6 +16,9 @@
 
 #include "opal/threads/condition.h"
 #include "opal/mca/mca.h"
+
+#include "orte/mca/rmgr/rmgr_types.h"
+
 #include "orte/mca/odls/odls.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

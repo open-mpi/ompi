@@ -217,7 +217,7 @@ int orte_ras_base_node_query_alloc(opal_list_t* nodes, orte_jobid_t jobid)
     }
 
     asprintf(&keys[alloc_key_posn], "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
-    keys_len = strlen(keys[alloc_key_posn]);
+    keys_len = (orte_std_cntr_t)strlen(keys[alloc_key_posn]);
     free(jobid_str);
 
     /* query selected node entries */
@@ -520,7 +520,7 @@ int orte_ras_base_node_insert(opal_list_t* nodes)
     };
     orte_ras_node_t* node;
 
-    num_values = opal_list_get_size(nodes);
+    num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -630,7 +630,7 @@ int orte_ras_base_node_delete(opal_list_t* nodes)
     orte_ras_node_t* node;
     char** tokens;
 
-    num_values = opal_list_get_size(nodes);
+    num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
@@ -679,7 +679,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     orte_ras_node_t* node;
     char* jobid_str, *key=NULL;
 
-    num_values = opal_list_get_size(nodes);
+    num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
