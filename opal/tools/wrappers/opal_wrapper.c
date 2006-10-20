@@ -317,7 +317,9 @@ data_init(const char *appname)
     if (NULL == datafile) return OPAL_ERR_TEMP_OUT_OF_RESOURCE;
 
     ret = opal_util_keyval_parse(datafile, data_callback);
-
+	if( OPAL_SUCCESS != ret ) {
+		fprintf(stderr, "Cannot open configuration file %s\n", datafile );
+	}
     free(datafile);
 
     return ret;
