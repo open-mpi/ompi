@@ -270,9 +270,9 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
       /* initialize the cell info tracker */
       if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.cells),
-                                orte_ns_replica.block_size,
-                                orte_ns_replica.max_size,
-                                orte_ns_replica.block_size))) {
+                                (orte_std_cntr_t)orte_ns_replica.block_size,
+                                (orte_std_cntr_t)orte_ns_replica.max_size,
+                                (orte_std_cntr_t)orte_ns_replica.block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
@@ -280,9 +280,9 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
 
       /* initialize the job id tracker */
       if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.jobids),
-                                orte_ns_replica.block_size,
-                                orte_ns_replica.max_size,
-                                orte_ns_replica.block_size))) {
+                                (orte_std_cntr_t)orte_ns_replica.block_size,
+                                (orte_std_cntr_t)orte_ns_replica.max_size,
+                                (orte_std_cntr_t)orte_ns_replica.block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
@@ -291,9 +291,9 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
       /* initialize the taglist */
 
       if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.tags),
-                                orte_ns_replica.block_size,
-                                orte_ns_replica.max_size,
-                                orte_ns_replica.block_size))) {
+                                (orte_std_cntr_t)orte_ns_replica.block_size,
+                                (orte_std_cntr_t)orte_ns_replica.max_size,
+                                (orte_std_cntr_t)orte_ns_replica.block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }
@@ -302,9 +302,9 @@ mca_ns_base_module_t* orte_ns_replica_init(int *priority)
       /* initialize the dtlist */
 
       if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_replica.dts),
-                                orte_ns_replica.block_size,
-                                orte_ns_replica.max_size,
-                                orte_ns_replica.block_size))) {
+                                (orte_std_cntr_t)orte_ns_replica.block_size,
+                                (orte_std_cntr_t)orte_ns_replica.max_size,
+                                (orte_std_cntr_t)orte_ns_replica.block_size))) {
             ORTE_ERROR_LOG(rc);
             return NULL;
         }

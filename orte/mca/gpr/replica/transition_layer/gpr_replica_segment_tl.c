@@ -53,7 +53,7 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
         return ORTE_SUCCESS;
     }
     
-    len = strlen(segment);
+    len = (orte_std_cntr_t)strlen(segment);
 
     /* search the registry segments to find which one is being referenced */
     ptr = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments->addr);

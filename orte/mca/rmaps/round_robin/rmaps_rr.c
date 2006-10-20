@@ -423,9 +423,9 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                    user has specified "-pernode", then set it to the number of nodes
                 */
                 if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = opal_list_get_size(&mapped_node_list);
+                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
                 } else {
-                    app->num_procs = mapped_num_slots;
+                    app->num_procs = (orte_std_cntr_t)mapped_num_slots;
                 }
                 modify_app_context = true;
             }
@@ -443,7 +443,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                 user has specified "-pernode", then set it to the number of nodes
                 */
                 if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = opal_list_get_size(&master_node_list);
+                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
                 } else {
                     app->num_procs = total_num_slots;
                 }

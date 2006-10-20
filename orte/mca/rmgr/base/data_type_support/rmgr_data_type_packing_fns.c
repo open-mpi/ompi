@@ -215,7 +215,7 @@ int orte_rmgr_base_pack_attr_list(orte_buffer_t *buffer, void *src,
     orte_std_cntr_t num_attr;
     
     /* get the number of attributes and pack it */
-    num_attr = opal_list_get_size(attrs);
+    num_attr = (orte_std_cntr_t)opal_list_get_size(attrs);
     if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, (void*)&num_attr, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;

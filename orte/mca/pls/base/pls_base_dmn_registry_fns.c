@@ -62,7 +62,7 @@ int orte_pls_base_store_active_daemons(opal_list_t *daemons)
     int rc, i, num_daemons;
     
     /* determine the number of daemons */
-    num_daemons = opal_list_get_size(daemons);
+    num_daemons = (int)opal_list_get_size(daemons);
 
     if (0 == num_daemons) {
         return ORTE_SUCCESS;

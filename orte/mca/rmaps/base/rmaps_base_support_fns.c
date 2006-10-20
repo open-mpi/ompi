@@ -370,7 +370,7 @@ int orte_rmaps_base_update_node_usage(opal_list_t *nodes)
     orte_std_cntr_t num_values, i, j;
     orte_ras_node_t* node;
     
-    num_values = opal_list_get_size(nodes);
+    num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;

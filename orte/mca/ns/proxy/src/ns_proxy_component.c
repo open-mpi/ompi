@@ -256,9 +256,9 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
 
           /* initialize the cell info tracker */
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.cells),
-                                    orte_ns_proxy.block_size,
-                                    orte_ns_proxy.max_size,
-                                    orte_ns_proxy.block_size))) {
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.max_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size))) {
                 ORTE_ERROR_LOG(rc);
                 return NULL;
             }
@@ -268,9 +268,9 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
           /* initialize the taglist */
 
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.tags),
-                                    orte_ns_proxy.block_size,
-                                    orte_ns_proxy.max_size,
-                                    orte_ns_proxy.block_size))) {
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.max_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size))) {
                 ORTE_ERROR_LOG(rc);
                 return NULL;
             }
@@ -279,9 +279,9 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
           /* initialize the dtlist */
 
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.dts),
-                                    orte_ns_proxy.block_size,
-                                    orte_ns_proxy.max_size,
-                                    orte_ns_proxy.block_size))) {
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.max_size,
+                                    (orte_std_cntr_t)orte_ns_proxy.block_size))) {
                 ORTE_ERROR_LOG(rc);
                 return NULL;
             }

@@ -213,7 +213,7 @@ int orte_gpr_replica_dump_callbacks_fn(orte_buffer_t *buffer)
     sprintf(tmp_out, "\nDUMP OF GPR REGISTERED CALLBACKS\n");
     orte_gpr_replica_dump_load_string(buffer, &tmp_out);
 
-    if (0 >= (k= opal_list_get_size(&(orte_gpr_replica.callbacks)))) {
+    if (0 >= (k = (orte_std_cntr_t)opal_list_get_size(&(orte_gpr_replica.callbacks)))) {
         sprintf(tmp_out, "--- None registered at this time ---");
         orte_gpr_replica_dump_load_string(buffer, &tmp_out);
     } else {

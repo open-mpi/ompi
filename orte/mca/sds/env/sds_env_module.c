@@ -126,7 +126,7 @@ orte_sds_env_set_name(void)
     }
     
     orte_process_info.vpid_start = (orte_vpid_t)vpid_start;
-    orte_process_info.num_procs = (size_t)num_procs;
+    orte_process_info.num_procs = (orte_std_cntr_t)num_procs;
     return ORTE_SUCCESS;
 }
 

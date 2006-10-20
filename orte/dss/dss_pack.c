@@ -325,7 +325,7 @@ int orte_dss_pack_string(orte_buffer_t *buffer, void *src,
                 return ret;
             }
         } else {
-            len = strlen(ssrc[i]) + 1;
+            len = (orte_std_cntr_t)strlen(ssrc[i]) + 1;
             if (ORTE_SUCCESS != (ret = orte_dss_pack_std_cntr(buffer, &len, 1, ORTE_STD_CNTR))) {
                 ORTE_ERROR_LOG(ret);
                 return ret;

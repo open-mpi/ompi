@@ -58,7 +58,7 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
     
     /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
-    *bytes_used = buffer->bytes_used;
+    *bytes_used = (orte_std_cntr_t)buffer->bytes_used;
 
     /* dereference everything in buffer */
     buffer->base_ptr = NULL;
