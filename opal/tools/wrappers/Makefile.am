@@ -19,6 +19,11 @@
 
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 
+EXTRA_DIST = \
+	opal_wrapper.1 \
+	opalcc.1 \
+	opalc++.1
+
 if OMPI_INSTALL_BINARIES
 
 # install even if we don't want the headers / opalcc, as we need it
@@ -54,10 +59,6 @@ man_MANS = \
 	opalcc.1 \
 	opalc++.1
 
-EXTRA_DIST = \
-	opal_wrapper.1 \
-	$(man_MANS)
-
 install-exec-hook:
 	(cd $(DESTDIR)$(bindir); rm -f opalcc$(EXEEXT); $(LN_S) opal_wrapper opalcc)
 	(cd $(DESTDIR)$(bindir); rm -f opalc++$(EXEEXT); $(LN_S) opal_wrapper opalc++)
@@ -72,8 +73,6 @@ endif # WANT_INSTALL_HEADERS
 
 maintainer-clean-local:
 	rm -f opalcc.1 opalc++.1
-
-opal_wrapper.1:
 
 opalcc.1: opal_wrapper.1
 	rm -f opalcc.1

@@ -17,6 +17,10 @@
 # $HEADER$
 #
 
+EXTRA_DIST = \
+	ortecc.1 \
+	ortec++.1
+
 if WANT_INSTALL_HEADERS
 
 nodist_pkgdata_DATA = \
@@ -28,8 +32,6 @@ if OMPI_INSTALL_BINARIES
 man_MANS = \
 	ortecc.1 \
 	ortec++.1
-
-EXTRA_DIST = $(man_MANS)
 
 install-exec-hook:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"

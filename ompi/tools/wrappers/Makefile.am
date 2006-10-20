@@ -17,6 +17,13 @@
 # $HEADER$
 #
 
+EXTRA_DIST = \
+	mpicc.1 \
+	mpic++.1 \
+	mpicxx.1 \
+	mpif77.1 \
+	mpif90.1
+
 dist_pkgdata_DATA = mpicc-wrapper-data.txt \
 	mpic++-wrapper-data.txt \
 	mpif77-wrapper-data.txt \
@@ -30,8 +37,6 @@ man_MANS = \
 	mpicxx.1 \
 	mpif77.1 \
 	mpif90.1
-
-EXTRA_DIST = $(man_MANS)
 
 install-exec-hook-always:
 	test -z "$(bindir)" || $(mkdir_p) "$(DESTDIR)$(bindir)"
