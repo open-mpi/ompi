@@ -30,7 +30,7 @@
 #define OMPI_SVN_R "@OMPI_SVN_R@"
 #ifdef OMPI_VERSION
 /* If we included version.h, we want the real version, not the
-   stripped (no-r number) verstion */
+   stripped (no-r number) version */
 #undef OMPI_VERSION
 #endif
 #define OMPI_VERSION "@OMPI_VERSION@"
