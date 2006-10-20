@@ -75,7 +75,7 @@ static int32_t                                                          \
 copy_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
                                 const char* from, uint32_t from_len, ptrdiff_t from_extent, \
                                 char* to, uint32_t to_length, ptrdiff_t to_extent, \
-                                uint32_t *advance)                      \
+                                ptrdiff_t *advance)                      \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -123,7 +123,7 @@ static int32_t                                                          \
 copy_2complex_##TYPENAME##_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count, \
                                          const char* from, uint32_t from_len, ptrdiff_t from_extent, \
                                          char* to, uint32_t to_length, ptrdiff_t to_extent, \
-                                         uint32_t *advance)             \
+                                         ptrdiff_t *advance)            \
 {                                                                       \
     uint32_t i;                                                         \
                                                                         \
@@ -187,7 +187,7 @@ static int32_t
 copy_char_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
                         const char* from, uint32_t from_len, ptrdiff_t from_extent,
                         char* to, uint32_t to_length, ptrdiff_t to_extent,
-                        uint32_t *advance)
+                        ptrdiff_t *advance)
 {
     uint32_t i;
 
@@ -223,7 +223,7 @@ static int32_t
 copy_cxx_bool_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
                             const char* from, uint32_t from_len, ptrdiff_t from_extent,
                             char* to, uint32_t to_length, ptrdiff_t to_extent,
-                            uint32_t *advance)
+                            ptrdiff_t *advance)
 {
     uint32_t i;
 
@@ -280,7 +280,7 @@ static int32_t
 copy_fortran_logical_heterogeneous(ompi_convertor_t *pConvertor, uint32_t count,
                             const char* from, uint32_t from_len, ptrdiff_t from_extent,
                             char* to, uint32_t to_length, ptrdiff_t to_extent,
-                            uint32_t *advance)
+                            ptrdiff_t *advance)
 {
     uint32_t i;
 
