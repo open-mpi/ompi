@@ -365,6 +365,15 @@ int main(int argc, char *argv[])
         }
     }
 
+    /* output a message indicating we are alive, our name, and our pid
+     * for debugging purposes
+     */
+    if (orted_globals.debug_daemons) {
+        fprintf(stderr, "Daemon [%ld,%ld,%ld] checking in as pid %ld on host %s\n",
+                ORTE_NAME_ARGS(orte_process_info.my_name), (long)orte_process_info.pid,
+                orte_system_info.nodename);
+    }
+
     /* setup the thread lock and condition variables */
     OBJ_CONSTRUCT(&orted_globals.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);

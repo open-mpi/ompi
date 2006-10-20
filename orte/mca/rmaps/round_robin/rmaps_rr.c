@@ -231,11 +231,15 @@ static int map_app_by_slot(
             }
         }
 
-        /* if we still have procs to map, or this node is full, move to next node */
-        if (num_alloc < app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
-            cur_node_item = next;
+        /* we move on to the next node in all cases EXCEPT if we came
+         * out of the loop without having taken a full bite AND the
+         * node is NOT max'd out
+         *
+         */
+        if (i < (num_slots_to_take-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
+            continue;
         }
-
+        cur_node_item = next;
     }
 
     return ORTE_SUCCESS;
