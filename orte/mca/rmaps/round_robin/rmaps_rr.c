@@ -499,8 +499,10 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         /* save the next node name bookmark as we will - in the case of mapped nodes -
          * release the node information being pointed to by cur_node_item
          */
-        free(save_bookmark);
-        save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
+        if(NULL != cur_node_item) {
+            free(save_bookmark);
+            save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
+        }
 
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
@@ -564,6 +566,23 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                 
                 /** now put that node on the fully_used_nodes list */
                 opal_list_append(&fully_used_nodes, &node->super);
+            }
+            /* now we need to update cur_node_item, as it was previously pointing into
+             * the mapped_node_list. First we see if we can find our bookmark */
+            cur_node_item = NULL;
+            for (item = opal_list_get_first(&master_node_list);
+                 item != opal_list_get_end(&master_node_list);
+                 item = opal_list_get_next(item)) {
+                node = (orte_ras_node_t*)item;
+                
+                if (0 == strcmp(save_bookmark, node->node_name)) {
+                    cur_node_item = item;
+                    break;
+                }   
+            }   
+            /* see if we found it - if not, just start at the beginning */
+            if (NULL == cur_node_item) {
+                cur_node_item = opal_list_get_first(&master_node_list);
             }
 
         } else {
