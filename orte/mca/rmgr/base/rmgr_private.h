@@ -90,15 +90,15 @@ ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
 ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
                                             orte_process_name_t *disconnect);
 
-orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
+ORTE_DECLSPEC orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
 
-int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
-                                 orte_data_type_t type, void *data,
-                                 bool overwrite);
+ORTE_DECLSPEC int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
+                                               orte_data_type_t type, void *data,
+                                               bool overwrite);
 
-int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
+ORTE_DECLSPEC int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
 
-int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
+ORTE_DECLSPEC int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
 
 
 /*
@@ -156,17 +156,17 @@ int orte_rmgr_base_pack_attribute(orte_buffer_t *buffer, void *src,
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
-int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
-                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
+                                                    orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
-                                          orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
+                                                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
-                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
+                                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
-                                    orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
+                                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 
 /*
