@@ -506,7 +506,36 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
 
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
-            /** before we get rid of the mapped_node_list, we first need to update
+            /* we need to adjust our bookmark so it points to the node in the
+             * master node list - this allows the cur_node_item to "survive"
+             * the disassembly of the mapped_node_list
+             */
+            if (NULL != cur_node_item) {
+                node = (orte_ras_node_t*)cur_node_item;
+                /* This can be a little tricky due to all the corner
+                 * cases. If the mapped_node_list only has ONE entry on it, then the
+                 * cur_node_item will always point at it, even if we used everything
+                 * on that node. What we will do, therefore, is check the usage of the
+                 * cur_node_item to see if it has reached the soft limit. If so, we find
+                 * the node after that one on the master node list
+                 */
+                for (item = opal_list_get_first(&master_node_list);
+                     item != opal_list_get_end(&master_node_list);
+                     item = opal_list_get_next(item)) {
+                    node2 = (orte_ras_node_t*)item;
+                    if (0 == strcmp(node->node_name, node2->node_name)) {
+                        if (node->node_slots <= node->node_slots_inuse) {
+                            /* we are at or beyond the soft limit */
+                            cur_node_item = opal_list_get_next(item);
+                        } else {
+                            cur_node_item = item;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            /* as we get rid of the mapped_node_list, we need to update
             * corresponding entries in the master_node_list so we accurately
             * track the usage of slots. Also, any node that was "used up" will have
             * been removed from the mapped_node_list - we now also must ensure that
@@ -519,6 +548,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
             *
             * Still, some effort to improve the efficiency of this process
             * may be in order for the future.
+            *
             */
             while (NULL != (item = opal_list_remove_first(&mapped_node_list))) {
                 node = (orte_ras_node_t*)item;
@@ -556,33 +586,22 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                     node2 = (orte_ras_node_t*)item2;
 
                     /** if we have a match, then remove the entry from the
-                     * master_node_list
+                     * master_node_list. if that entry was our bookmark,
+                     * shift the bookmark to the next entry on the list
                      */
                     if (0 == strcmp(node2->node_name, node->node_name)) {
+                        if (0 == strcmp(node->node_name,
+                                        ((orte_ras_node_t*)cur_node_item)->node_name)) {
+                            cur_node_item = opal_list_get_next(item2);
+                        }
                         opal_list_remove_item(&master_node_list, item2);
+                        OBJ_RELEASE(item2);
                         break;
                     }
                 }
                 
                 /** now put that node on the fully_used_nodes list */
                 opal_list_append(&fully_used_nodes, &node->super);
-            }
-            /* now we need to update cur_node_item, as it was previously pointing into
-             * the mapped_node_list. First we see if we can find our bookmark */
-            cur_node_item = NULL;
-            for (item = opal_list_get_first(&master_node_list);
-                 item != opal_list_get_end(&master_node_list);
-                 item = opal_list_get_next(item)) {
-                node = (orte_ras_node_t*)item;
-                
-                if (0 == strcmp(save_bookmark, node->node_name)) {
-                    cur_node_item = item;
-                    break;
-                }   
-            }   
-            /* see if we found it - if not, just start at the beginning */
-            if (NULL == cur_node_item) {
-                cur_node_item = opal_list_get_first(&master_node_list);
             }
 
         } else {
