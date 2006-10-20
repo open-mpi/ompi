@@ -134,6 +134,11 @@ AC_DEFUN([OMPI_CHECK_OPENIB],[
                         [$ompi_check_openib_have_device_list],
                         [Whether install of OpenIB includes ibv_get_device_list API])
 
+	 AC_CHECK_FUNCS([ibv_resize_cq], [ompi_check_openib_have_resize_cq=1], [ompi_check_openib_have_resize_cq=0])
+         AC_DEFINE_UNQUOTED([OMPI_MCA_]m4_translit([$1], [a-z], [A-Z])[_HAVE_RESIZE_CQ],
+                            [$ompi_check_openib_have_resize_cq],
+			    [Whether install of OpenIB includes resize completion queue support])
+			    
          CPPFLAGS="$ompi_check_openib_$1_save_CPPFLAGS"
          LDFLAGS="$ompi_check_openib_$1_save_LDFLAGS"
          LIBS="$ompi_check_openib_$1_save_LIBS"],
