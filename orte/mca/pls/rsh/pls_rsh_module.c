@@ -387,6 +387,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     char *uri, *param;
     char **argv, **tmp;
     char *prefix_dir;
+    char **env;
     int argc;
     int rc;
     sigset_t sigs;
@@ -635,6 +636,60 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     lib_base = opal_basename(OPAL_LIBDIR);
     bin_base = opal_basename(OPAL_BINDIR);
 
+    /* copy the environment so we can modify it with opal functions. The
+     * environment is the same for all daemons, so we only need to do
+     * this once
+    */
+    env = opal_argv_copy(environ);
+    
+    /* If we have a prefix, then modify the PATH and
+        LD_LIBRARY_PATH environment variables
+    */
+    if (NULL != prefix_dir) {
+        char *oldenv, *newenv;
+        
+        /* Reset PATH */
+        newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+        oldenv = getenv("PATH");
+        if (NULL != oldenv) {
+            char *temp;
+            asprintf(&temp, "%s:%s", newenv, oldenv );
+            free( newenv );
+            newenv = temp;
+        }
+        opal_setenv("PATH", newenv, true, &env);
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: reset PATH: %s", newenv);
+        }
+        free(newenv);
+        
+        /* Reset LD_LIBRARY_PATH */
+        newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
+        oldenv = getenv("LD_LIBRARY_PATH");
+        if (NULL != oldenv) {
+            char* temp;
+            asprintf(&temp, "%s:%s", newenv, oldenv);
+            free(newenv);
+            newenv = temp;
+        }
+        opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
+        if (mca_pls_rsh_component.debug) {
+            opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
+                        newenv);
+        }
+        free(newenv);
+    }
+    
+    /* ensure we aren't the seed */
+    param = mca_base_param_environ_variable("seed",NULL,NULL);
+    opal_setenv(param, "0", true, &env);
+    free(param);
+    
+    /* clean out any MCA component selection directives that
+     * won't work on remote nodes
+     */
+    orte_pls_base_purge_mca_params(&env);
+    
     /*
      * Iterate through each of the nodes
      */
@@ -700,7 +755,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         /* child */
         if (pid == 0) {
             char* name_string;
-            char** env;
             char* var;
             long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
@@ -708,9 +762,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 opal_output(0, "pls:rsh: launching on node %s\n",
                             rmaps_node->nodename);
             }
-
-            /* copy the environment so we can modify it with opal functions */
-            env = opal_argv_copy(environ);
 
             /* We don't need to sense an oversubscribed condition and set the sched_yield
              * for the node as we are only launching the daemons at this time. The daemons
@@ -754,44 +805,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 }
 
                 
-                /* If we have a prefix, then modify the PATH and
-                   LD_LIBRARY_PATH environment variables
-                 */
-                 if (NULL != prefix_dir) {
-                    char *oldenv, *newenv;
-
-                    /* Reset PATH */
-                    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
-                    oldenv = getenv("PATH");
-                    if (NULL != oldenv) {
-                        char *temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv );
-                        free( newenv );
-                        newenv = temp;
-                    }
-                    opal_setenv("PATH", newenv, true, &env);
-                    if (mca_pls_rsh_component.debug) {
-                        opal_output(0, "pls:rsh: reset PATH: %s", newenv);
-                    }
-                    free(newenv);
-
-                    /* Reset LD_LIBRARY_PATH */
-                    newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
-                    oldenv = getenv("LD_LIBRARY_PATH");
-                    if (NULL != oldenv) {
-                        char* temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv);
-                        free(newenv);
-                        newenv = temp;
-                    }
-                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
-                    if (mca_pls_rsh_component.debug) {
-                        opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
-                                    newenv);
-                    }
-                    free(newenv);
-                }
-
                 /* Since this is a local execution, we need to
                    potentially whack the final ")" in the argv (if
                    sh/csh conditionals, from above).  Note that we're
@@ -913,30 +926,6 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             sigprocmask(0, 0, &sigs);
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
             
-            /* setup environment */
-            var = mca_base_param_environ_variable("seed",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            
-            /* clean out any MCA component selection directives that
-             * won't work on remote nodes
-             */
-            var = mca_base_param_environ_variable("rds",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            var = mca_base_param_environ_variable("ras",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            var = mca_base_param_environ_variable("rmaps",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            var = mca_base_param_environ_variable("pls",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            var = mca_base_param_environ_variable("rmgr",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-            free(var);
-            
             /* exec the daemon */
             if (mca_pls_rsh_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
@@ -945,6 +934,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     free(param);
                 }
             }
+            
             execve(exec_path, exec_argv, env);
             opal_output(0, "pls:rsh: execv failed with errno=%d\n", errno);
             exit(-1);
@@ -999,6 +989,7 @@ cleanup:
 
     free(jobid_string);  /* done with this variable */
     opal_argv_free(argv);
+    opal_argv_free(env);
 
     return rc;
 }

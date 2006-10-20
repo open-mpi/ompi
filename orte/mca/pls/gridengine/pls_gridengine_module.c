@@ -203,6 +203,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     char *prefix_dir;
     char *uri, *param;
     char **argv;
+    char **env;
     int argc;
     int rc;
     sigset_t sigs;
@@ -333,7 +334,19 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     free(uri);
     free(param);
 
-    if (mca_pls_gridengine_component.debug) {
+     /* setup environment. The environment is common to all the daemons
+      * so we only need to do this once
+      */
+     env = opal_argv_copy(environ);
+     param = mca_base_param_environ_variable("seed",NULL,NULL);
+     opal_setenv(param, "0", true, &env);
+     
+     /* clean out any MCA component selection directives that
+      * won't work on remote nodes
+      */
+     orte_pls_base_purge_mca_params(&env);
+     
+     if (mca_pls_gridengine_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
             opal_output(0, "pls:gridengine: final template argv:");
@@ -356,7 +369,45 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
      */
     prefix_dir = map->apps[0]->prefix_dir;
 
-    /*
+     /* If we have a prefix, then modify the PATH and
+        LD_LIBRARY_PATH environment variables.
+      */
+     if (NULL != prefix_dir) {
+         char *oldenv, *newenv;
+         
+         /* Reset PATH */
+         newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+         oldenv = getenv("PATH");
+         if (NULL != oldenv) {
+             char *temp;
+             asprintf(&temp, "%s:%s", newenv, oldenv);
+             free( newenv );
+             newenv = temp;
+         }
+         opal_setenv("PATH", newenv, true, &env);
+         if (mca_pls_gridengine_component.debug) {
+             opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
+         }
+         free(newenv);
+         
+         /* Reset LD_LIBRARY_PATH */
+         newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
+         oldenv = getenv("LD_LIBRARY_PATH");
+         if (NULL != oldenv) {
+             char* temp;
+             asprintf(&temp, "%s:%s", newenv, oldenv);
+             free(newenv);
+             newenv = temp;
+         }
+         opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
+         if (mca_pls_gridengine_component.debug) {
+             opal_output(0, "pls:gridengine: reset LD_LIBRARY_PATH: %s",
+                         newenv);
+         }
+         free(newenv);
+     }
+                     
+                     /*
      * Iterate through the nodes.
      */
     for(n_item =  opal_list_get_first(&map->nodes);
@@ -442,7 +493,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
         /* child */
         if (pid == 0) {
             char* name_string;
-            char** env;
             char* var;
             long fd, fdmax = sysconf(_SC_OPEN_MAX);
 
@@ -494,45 +544,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
                 opal_output(0, "pls:gridengine: orted_path=%s", orted_path);
             }
             
-            /* If we have a prefix, then modify the PATH and
-               LD_LIBRARY_PATH environment variables.  We're
-               already in the child process, so it's ok to modify
-               environ. */
-            if (NULL != prefix_dir) {
-                char *oldenv, *newenv;
-                
-                /* Reset PATH */
-                newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
-                oldenv = getenv("PATH");
-                if (NULL != oldenv) {
-                    char *temp;
-                    asprintf(&temp, "%s:%s", newenv, oldenv);
-                    free( newenv );
-                    newenv = temp;
-                }
-                opal_setenv("PATH", newenv, true, &environ);
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: reset PATH: %s", newenv);
-                }
-                free(newenv);
-                
-                /* Reset LD_LIBRARY_PATH */
-                newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
-                oldenv = getenv("LD_LIBRARY_PATH");
-                if (NULL != oldenv) {
-                    char* temp;
-                    asprintf(&temp, "%s:%s", newenv, oldenv);
-                    free(newenv);
-                    newenv = temp;
-                }
-                opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
-                if (mca_pls_gridengine_component.debug) {
-                    opal_output(0, "pls:gridengine: reset LD_LIBRARY_PATH: %s",
-                        newenv);
-                }
-                free(newenv);
-            }
-
             var = getenv("HOME");
             if (NULL != var) {
                 if (mca_pls_gridengine_component.debug) {
@@ -592,11 +603,6 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
 #endif
             
-            /* setup environment */
-            env = opal_argv_copy(environ);
-            var = mca_base_param_environ_variable("seed",NULL,NULL);
-            opal_setenv(var, "0", true, &env);
-
             /* exec the daemon */
             if (mca_pls_gridengine_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
@@ -641,6 +647,7 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     
     free(jobid_string);  /* done with this variable */
     opal_argv_free(argv);
+    opal_argv_free(env);
     
     return rc;
 }

@@ -116,7 +116,6 @@ static int orte_rmgr_urm_setup_job(
     orte_jobid_t* jobid)
 {
     int rc;
-    char *param;
     orte_std_cntr_t i;
     
     OPAL_TRACE(1);
@@ -130,31 +129,9 @@ static int orte_rmgr_urm_setup_job(
     /* for each app_context, we need to purge their environment of HNP
      * MCA component selection directives
      */
-    param = mca_base_param_environ_variable("rds",NULL,NULL);
     for (i=0; i < num_context; i++) {
-        opal_setenv(param, "proxy", true, &app_context[i]->env);
+        orte_rmgr_base_purge_mca_params(&app_context[i]->env);
     }
-    free(param);
-    param = mca_base_param_environ_variable("ras",NULL,NULL);
-    for (i=0; i < num_context; i++) {
-        opal_setenv(param, "proxy", true, &app_context[i]->env);
-    }
-    free(param);
-    param = mca_base_param_environ_variable("rmaps",NULL,NULL);
-    for (i=0; i < num_context; i++) {
-        opal_setenv(param, "proxy", true, &app_context[i]->env);
-    }
-    free(param);
-    param = mca_base_param_environ_variable("pls",NULL,NULL);
-    for (i=0; i < num_context; i++) {
-        opal_setenv(param, "proxy", true, &app_context[i]->env);
-    }
-    free(param);
-    param = mca_base_param_environ_variable("rmgr",NULL,NULL);
-    for (i=0; i < num_context; i++) {
-        opal_setenv(param, "proxy", true, &app_context[i]->env);
-    }
-    free(param);
     
     /* create and initialize job segment */ /* JJH C/N mapping before this */
     if (ORTE_SUCCESS !=

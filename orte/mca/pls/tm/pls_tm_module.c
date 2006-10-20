@@ -284,6 +284,11 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     var = mca_base_param_environ_variable("seed",NULL,NULL);
     opal_setenv(var, "0", true, &env);
 
+    /* clean out any MCA component selection directives that
+     * won't work on remote nodes
+     */
+    orte_pls_base_purge_mca_params(&env);
+    
     /* If we have a prefix, then modify the PATH and
         LD_LIBRARY_PATH environment variables. We only allow
         a single prefix to be specified. Since there will
