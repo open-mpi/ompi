@@ -474,9 +474,9 @@ int mca_btl_sm_component_progress(void)
             {
                 /* completion callback */
                 frag->base.des_src = 
-                    ( mca_btl_base_segment_t* )((unsigned char*)frag->base.des_dst + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_src->seg_addr.pval =
-                    ((unsigned char*)frag->base.des_src->seg_addr.pval +
+                    ( mca_btl_base_segment_t* )((ptrdiff_t)frag->base.des_dst + mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_src->seg_addr.pval = (void*)
+                    ((ptrdiff_t)frag->base.des_src->seg_addr.pval +
                      mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_dst = frag->base.des_src;
                 frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, frag->rc);
@@ -487,9 +487,9 @@ int mca_btl_sm_component_progress(void)
                 /* recv upcall */
                 mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + frag->tag;
                 frag->base.des_dst = (mca_btl_base_segment_t*)
-                    ((unsigned char*)frag->base.des_src + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_dst->seg_addr.pval = 
-                    ((unsigned char*)frag->base.des_dst->seg_addr.pval +
+                    ((ptrdiff_t)frag->base.des_src + mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                frag->base.des_dst->seg_addr.pval = (void*)
+                    ((ptrdiff_t)frag->base.des_dst->seg_addr.pval +
                     mca_btl_sm_component.sm_offset[peer_smp_rank]);
                 frag->base.des_src = frag->base.des_dst;
                 reg->cbfunc(&mca_btl_sm[1].super,frag->tag,&frag->base,reg->cbdata);

@@ -15,8 +15,8 @@ do { \
     if(OMPI_CB_FREE == fifo->head) { \
         /* no queues have been allocated - allocate now */ \
         rc=ompi_fifo_init_same_base_addr( \
-            mca_btl_sm_component.size_of_cb_queue, \
-            mca_btl_sm_component.cb_lazy_free_freq, \
+            (int)mca_btl_sm_component.size_of_cb_queue, \
+            (int)mca_btl_sm_component.cb_lazy_free_freq, \
             /* at this stage we are not doing anything with memory \
             * locality */ \
             0,0,0, \

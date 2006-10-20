@@ -112,7 +112,7 @@ typedef struct ompi_cb_fifo_t ompi_cb_fifo_t;
  *
  */
 static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
-        bool flush_entries_read, bool *queue_empty, ssize_t offset) 
+        bool flush_entries_read, bool *queue_empty, ptrdiff_t offset) 
 {
     int index = 0,clearIndex, i;
     void **q_ptr;

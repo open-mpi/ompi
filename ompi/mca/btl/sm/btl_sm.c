@@ -152,9 +152,9 @@ int mca_btl_sm_add_procs_same_base_addr(
     struct mca_btl_base_endpoint_t **peers,
     ompi_bitmap_t* reachability)
 {
-    int return_code=OMPI_SUCCESS, cnt,len;
-    size_t i,j,proc,size,n_to_allocate,length;
-    int32_t n_local_procs;
+    int return_code = OMPI_SUCCESS, cnt, len;
+    size_t i, j, size, n_to_allocate, length;
+    int32_t n_local_procs, proc;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *btl_sm;
     ompi_fifo_t *my_fifos;
@@ -165,8 +165,8 @@ int mca_btl_sm_add_procs_same_base_addr(
     volatile int *tmp_int_ptr;
 
     /* initializion */
-    for(i=0 ; i < nprocs ; i++ ) {
-        peers[i]=NULL;
+    for( i = 0 ; i < nprocs ; i++ ) {
+        peers[i] = NULL;
     }
     btl_sm=(mca_btl_sm_t *)btl;
 
@@ -179,8 +179,8 @@ int mca_btl_sm_add_procs_same_base_addr(
     }
 
     /* initialize and sm_proc_connect*/
-    for(proc=0 ; proc < nprocs ; proc++ ) {
-        mca_btl_sm_component.sm_proc_connect[proc]=0;
+    for( proc = 0 ; proc < (int32_t)nprocs ; proc++ ) {
+        mca_btl_sm_component.sm_proc_connect[proc] = 0;
     }
 
     /* get pointer to my proc structure */
@@ -195,7 +195,7 @@ int mca_btl_sm_add_procs_same_base_addr(
      * host to shared memory reachbility list.  Also, get number
      * of local procs in the prcs list. */
     n_local_procs=0;
-    for( proc=0 ; proc < nprocs; proc++ ) {
+    for( proc=0 ; proc < (int32_t)nprocs; proc++ ) {
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
         char path[PATH_MAX];
 #endif
@@ -285,8 +285,8 @@ int mca_btl_sm_add_procs_same_base_addr(
 
     if ( !mca_btl_sm[0].btl_inited ) {
         /* set the shared memory offset */
-        mca_btl_sm_component.sm_offset=(ssize_t *)
-            malloc(n_to_allocate*sizeof(ssize_t));
+        mca_btl_sm_component.sm_offset=(ptrdiff_t*)
+            malloc(n_to_allocate*sizeof(ptrdiff_t));
             if(NULL == mca_btl_sm_component.sm_offset ) {
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
             goto CLEANUP;
@@ -303,7 +303,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 
     /* set local proc's smp rank in the peers structure for
      * rapid access */
-    for( proc=0 ; proc < nprocs; proc++ ) {
+    for( proc=0 ; proc < (int32_t)nprocs; proc++ ) {
         struct mca_btl_base_endpoint_t* peer = peers[proc];
         if(NULL != peer) {
             mca_btl_sm_component.sm_peers[peer->peer_smp_rank] = peer;
@@ -575,7 +575,7 @@ int mca_btl_sm_add_procs_same_base_addr(
 
     /* set connectivity */
     cnt=0;
-    for(proc = 0 ; proc < nprocs ; proc++ ) {
+    for(proc = 0 ; proc < (int32_t)nprocs ; proc++ ) {
 
         struct mca_btl_base_endpoint_t* peer = peers[proc];
         if(peer == NULL)
