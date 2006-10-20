@@ -73,6 +73,8 @@ endif # WANT_INSTALL_HEADERS
 maintainer-clean-local:
 	rm -f opalcc.1 opalc++.1
 
+opal_wrapper.1:
+
 opalcc.1: opal_wrapper.1
 	rm -f opalcc.1
 	sed -e 's/@COMMAND@/opalcc/g' -e 's/@PROJECT@/Open PAL/g' -e 's/@PROJECT_SHORT@/OPAL/g' -e 's/@LANGUAGE@/C/g' < $(top_srcdir)/opal/tools/wrappers/opal_wrapper.1 > opalcc.1
