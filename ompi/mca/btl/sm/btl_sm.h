@@ -86,7 +86,7 @@ struct mca_btl_sm_component_t {
     int sm_free_list_inc;              /**< number of elements to alloc when growing free lists */
     int sm_exclusivity;                /**< exclusivity setting */
     int sm_latency;                    /**< lowest latency */
-    uint32_t sm_max_procs;             /**< upper limit on the number of processes using the shared memory pool */
+    int32_t sm_max_procs;              /**< upper limit on the number of processes using the shared memory pool */
     int sm_extra_procs;                /**< number of extra procs to allow */
     char* sm_mpool_name;               /**< name of shared memory pool module */
     mca_mpool_base_module_t* sm_mpool; /**< shared memory pool */
