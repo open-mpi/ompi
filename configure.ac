@@ -199,7 +199,8 @@ AC_CHECK_TYPES(uint64_t)
 AC_CHECK_TYPES(intptr_t)
 AC_CHECK_TYPES(uintptr_t)
 AC_CHECK_TYPES(mode_t)
-
+AC_CHECK_TYPES(ssize_t)
+AC_CHECK_TYPES(ptrdiff_t)
 
 #
 # Check for type sizes
@@ -219,6 +220,12 @@ AC_CHECK_SIZEOF(float)
 AC_CHECK_SIZEOF(double)
 AC_CHECK_SIZEOF(void *)
 AC_CHECK_SIZEOF(size_t)
+if test $ac_cv_type_ssize_t = yes ; then
+    AC_CHECK_SIZEOF(ssize_t)
+fi
+if test $ac_cv_type_ptrdiff_t = yes; then
+    AC_CHECK_SIZEOF(ptrdiff_t)
+fi
 
 #
 # Check for type alignments
@@ -769,6 +776,22 @@ if test "$MPI_OFFSET_TYPE" = "not found"; then
 	AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(OMPI_MPI_OFFSET_TYPE, $MPI_OFFSET_TYPE, [Type of MPI_Offset -- has to be defined here and typedef'ed later because mpi.h does not get AC SUBST's])
+
+#
+# Check for MPI_Aint type.  Yes, there are platforms where
+# sizeof(void*) != sizeof(long) (64 bit Windows, apparently).
+#
+if test $ac_cv_type_ptrdiff_t = yes ; then
+    ompi_ptrdiff_t="ptrdiff_t"
+elif test $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long ; then
+    ompi_ptrdiff_t="long"
+elif test $ac_cv_type_long_long = yes -a $ac_cv_sizeof_void_p -eq $ac_cv_sizeof_long_long ; then
+    ompi_ptrdiff_t="long long"
+else
+    AC_MSG_ERROR([Could not find datatype to emulate ptrdiff_t.  Cannot continue])
+fi
+AC_DEFINE_UNQUOTED([OMPI_PTRDIFF_TYPE], [$ompi_ptrdiff_t],
+    [type to use for ptrdiff_t])
 
 #
 # If we haven't already, figure out an MPI datatype that corresponds
