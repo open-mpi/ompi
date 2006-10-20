@@ -125,7 +125,7 @@ int orte_rmgr_base_finalize_not_available(void);
 /*
  * Support functions
  */
-void orte_rmgr_base_purge_mca_params(char ***env);
+ORTE_DECLSPEC void orte_rmgr_base_purge_mca_params(char ***env);
 
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
 
