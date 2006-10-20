@@ -39,6 +39,8 @@
 #include "opal/util/show_help.h"
 #include "opal/util/basename.h"
 #include "opal/util/path.h"
+#include "opal/util/opal_environ.h"
+#include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -172,3 +174,27 @@ int orte_rmgr_base_check_context_app(orte_app_context_t *context)
     return ORTE_SUCCESS;
 }
 
+void orte_rmgr_base_purge_mca_params(char ***env)
+{
+    char *param;
+
+    param = mca_base_param_environ_variable("rds",NULL,NULL);
+    opal_setenv(param, "proxy", true, env);
+    free(param);
+    
+    param = mca_base_param_environ_variable("ras",NULL,NULL);
+    opal_setenv(param, "proxy", true, env);
+    free(param);
+    
+    param = mca_base_param_environ_variable("rmaps",NULL,NULL);
+    opal_setenv(param, "proxy", true, env);
+    free(param);
+    
+    param = mca_base_param_environ_variable("pls",NULL,NULL);
+    opal_setenv(param, "proxy", true, env);
+    free(param);
+    
+    param = mca_base_param_environ_variable("rmgr",NULL,NULL);
+    opal_setenv(param, "proxy", true, env);
+    free(param);
+}

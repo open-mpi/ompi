@@ -21,6 +21,7 @@
 #include "orte/orte_constants.h"
 
 #include "opal/util/argv.h"
+#include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
 
 #include "orte/mca/pls/base/pls_private.h"
@@ -55,3 +56,23 @@ int orte_pls_base_mca_argv(int *argc, char ***argv)
     return ORTE_SUCCESS;
 }
 
+void orte_pls_base_purge_mca_params(char ***env)
+{
+    char *var;
+    
+    var = mca_base_param_environ_variable("rds",NULL,NULL);
+    opal_setenv(var, "proxy", true, env);
+    free(var);
+    var = mca_base_param_environ_variable("ras",NULL,NULL);
+    opal_setenv(var, "proxy", true, env);
+    free(var);
+    var = mca_base_param_environ_variable("rmaps",NULL,NULL);
+    opal_setenv(var, "proxy", true, env);
+    free(var);
+    var = mca_base_param_environ_variable("pls",NULL,NULL);
+    opal_setenv(var, "proxy", true, env);
+    free(var);
+    var = mca_base_param_environ_variable("rmgr",NULL,NULL);
+    opal_setenv(var, "proxy", true, env);
+    free(var);
+}

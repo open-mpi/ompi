@@ -367,13 +367,18 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
 
+    /* clean out any MCA component selection directives that
+     * won't work on remote nodes
+     */
+    orte_pls_base_purge_mca_params(&env);
+    
     /* exec the daemon */
     rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
     if (ORTE_SUCCESS != rc) {
         opal_output(0, "pls:slurm: start_procs returned error %d", rc);
         goto cleanup;
     }
-
+    
     /* JMS: short we stash the srun pid in the gpr somewhere for cleanup? */
     /* JMS: how do we catch when srun dies? */
 

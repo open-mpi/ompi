@@ -514,6 +514,11 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
 
     OPAL_TRACE(1);
     
+    /* clean out any MCA component selection directives that
+     * won't work on remote nodes
+     */
+    orte_pls_base_purge_mca_params(envp);
+    
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done
      */
