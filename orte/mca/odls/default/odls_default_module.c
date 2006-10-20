@@ -531,12 +531,6 @@ static int odls_default_fork_local_proc(
         } else {
             environ_copy = opal_argv_copy(base_environ);
         }
-        /* purge any disallowed component directives */
-        if (ORTE_SUCCESS != orte_odls_base_purge_environment(&environ_copy)) {
-            /* Tell the parent that Badness happened */
-            write(p[1], &i, sizeof(int));
-            exit(-1);
-        }
 
         /* special case handling for --prefix: this is somewhat icky,
            but at least some users do this.  :-\ It is possible that

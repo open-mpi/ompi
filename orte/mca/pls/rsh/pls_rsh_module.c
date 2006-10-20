@@ -922,19 +922,19 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              * won't work on remote nodes
              */
             var = mca_base_param_environ_variable("rds",NULL,NULL);
-            opal_unsetenv(var, &env);
+            opal_setenv(var, "0", true, &env);
             free(var);
             var = mca_base_param_environ_variable("ras",NULL,NULL);
-            opal_unsetenv(var, &env);
+            opal_setenv(var, "0", true, &env);
             free(var);
             var = mca_base_param_environ_variable("rmaps",NULL,NULL);
-            opal_unsetenv(var, &env);
+            opal_setenv(var, "0", true, &env);
             free(var);
             var = mca_base_param_environ_variable("pls",NULL,NULL);
-            opal_unsetenv(var, &env);
+            opal_setenv(var, "0", true, &env);
             free(var);
             var = mca_base_param_environ_variable("rmgr",NULL,NULL);
-            opal_unsetenv(var, &env);
+            opal_setenv(var, "0", true, &env);
             free(var);
             
             /* exec the daemon */

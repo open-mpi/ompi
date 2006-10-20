@@ -5,6 +5,8 @@ int main(int argc, char* argv[])
 {
     int msg;
     MPI_Comm parent, child;
+    int rank, size;
+    char hostname[512];
 
     MPI_Init(NULL, NULL);
     MPI_Comm_get_parent(&parent);
@@ -22,11 +24,14 @@ int main(int argc, char* argv[])
     } 
     /* Otherwise, we're the child */
     else {
-        printf("Hello from the child!\n");
+        MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+        MPI_Comm_size(MPI_COMM_WORLD, &size);
+        gethostname(hostname, 512);
+        printf("Hello from the child %d of %d on host %s\n", rank, size, hostname);
         MPI_Recv(&msg, 1, MPI_INT, 0, 1, parent, MPI_STATUS_IGNORE);
-        printf("Child received msg: %d\n", msg);
+        printf("Child %d received msg: %d\n", rank, msg);
         MPI_Comm_disconnect(&parent);
-        printf("Child disconnected\n");
+        printf("Child %d disconnected\n", rank);
     }
 
     MPI_Finalize();
