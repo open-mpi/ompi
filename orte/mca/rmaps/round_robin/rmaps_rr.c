@@ -196,14 +196,27 @@ static int map_app_by_slot(
          * If node_slots == 0, assume 1 slot for that node. 
          * JJH - is this assumption fully justified?
          *
-         * If we are now oversubscribing the nodes, then we still take
-         * a full node_slots from each node until either everything is done,
-         * or all nodes have hit their hard limit. This preserves the ratio
-         * of processes between the nodes (e.g., if one node has twice as
+         * If we are now oversubscribing the nodes, then we still take:
+         * (a) if the node has not been used yet, we take a full node_slots
+         * (b) if some of the slots are in-use, then we take the number of
+         *     remaining slots before hitting the soft limit (node_slots)
+         * (c) if we are at or above the soft limit, we take a full node_slots
+         *
+         * Note: if node_slots is zero, then we always just take 1 slot
+         *
+         * We continue this process until either everything is done,
+         * or all nodes have hit their hard limit. This algorithm ensures we
+         * fully utilize each node before oversubscribing, and preserves the ratio
+         * of processes between the nodes thereafter (e.g., if one node has twice as
          * many processes as another before oversubscribing, it will continue
          * to do so after oversubscribing).
          */
-        num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
+        if (0 == node->node_slots_inuse ||
+            node->node_slots_inuse >= node->node_slots) {
+            num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
+        } else {
+            num_slots_to_take = node->node_slots - node->node_slots_inuse;
+        }
         
         for( i = 0; i < num_slots_to_take; ++i) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
