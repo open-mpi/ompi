@@ -705,9 +705,9 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
 
     for( i = 0; i < nbElems; i++ ) {
         index += _dump_data_flags( pDesc->elem.common.flags, ptr + index, length );
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
         index += snprintf( ptr + index, length - index, "%15s ", ompi_ddt_basicDatatypes[pDesc->elem.common.type]->name );
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
         if( DT_LOOP == pDesc->elem.common.type )
             index += snprintf( ptr + index, length - index, "%d times the next %d elements extent %d\n",
                                (int)pDesc->loop.loops, (int)pDesc->loop.items,
@@ -722,7 +722,7 @@ static int __dump_data_desc( dt_elem_desc_t* pDesc, int nbElems, char* ptr, size
                                (int)pDesc->elem.extent, (long)(pDesc->elem.count * ompi_ddt_basicDatatypes[pDesc->elem.common.type]->size) );
         pDesc++;
 
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
     }
     return index;
 }
@@ -739,7 +739,7 @@ static inline int __dt_contain_basic_datatypes( const ompi_datatype_t* pData, ch
         if( pData->bdt_used & mask )
             index += snprintf( ptr + index, length - index, "%s ", ompi_ddt_basicDatatypes[i]->name );
         mask <<= 1;
-        if( length <= index ) break;
+        if( length <= (size_t)index ) break;
     }
     return index;
 }

@@ -308,7 +308,7 @@ void ompi_attr_create_predefined_callback(
                                 ORTE_ERROR_LOG(rc);
                                 return;
                             }
-                            universe_size += *sptr;
+                            universe_size += (unsigned int)(*sptr);
                         }
                     }
                 }

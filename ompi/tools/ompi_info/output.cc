@@ -82,7 +82,7 @@ void ompi_info::out(const string& pretty_message, const string &plain_message,
     string v = value;
     string filler;
 
-    int num_spaces = centerpoint - pretty_message.length();
+    int num_spaces = (int)(centerpoint - pretty_message.length());
     if (num_spaces > 0) {
       spaces = string(num_spaces, ' ');
     }

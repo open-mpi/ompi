@@ -47,7 +47,7 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
  
     tmpstring = ompi_mpi_errcode_get_string (errorcode);
     strcpy(string, tmpstring);
-    *resultlen = strlen(string);
+    *resultlen = (int)strlen(string);
     
     return MPI_SUCCESS;
 }

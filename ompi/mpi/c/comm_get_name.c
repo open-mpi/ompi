@@ -56,7 +56,7 @@ int MPI_Comm_get_name(MPI_Comm comm, char *name, int *length)
 #endif
     if ( comm->c_flags & OMPI_COMM_NAMEISSET ) {
         strncpy ( name, comm->c_name, MPI_MAX_OBJECT_NAME );
-        *length = strlen ( comm->c_name );
+        *length = (int)strlen( comm->c_name );
     }
     else {
         memset ( name, 0, MPI_MAX_OBJECT_NAME );

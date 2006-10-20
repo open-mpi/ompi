@@ -41,7 +41,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     int num_segments;   /* Number of segmenets */
     int sendcount;      /* the same like segcount, except for the last segment */ 
     int new_sendcount;  /* used to mane the size for the next pipelined receive */
-    int realsegsize;
+    size_t realsegsize;
     char *tmpbuf = (char*)buff;
     size_t typelng;
     ptrdiff_t type_extent, lb;
@@ -105,7 +105,6 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     }
     
     err = ompi_ddt_get_extent (datatype, &lb, &type_extent);
-
 
     realsegsize = segcount*type_extent;
     /* set the buffer pointer */
@@ -180,7 +179,6 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
                                      chain->chain_next[i],
                                      MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
-            if (err != MPI_SUCCESS) OPAL_OUTPUT((ompi_coll_tuned_stream,"sendcount %d i %d chain_next %d", sendcount, i, chain->chain_next[i]));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
         } /* end of for each child */
     } 
@@ -243,7 +241,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
     uint32_t counts[2];
     int num_segments[2];   /* Number of segmenets */
     int sendcount[2];      /* the same like segcount, except for the last segment */ 
-    int realsegsize[2];
+    size_t realsegsize[2];
     char *tmpbuf[2];
     size_t type_size;
     ptrdiff_t type_extent, lb;
@@ -503,7 +501,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
     int segcount;       /* Number of elements sent with each segment */
     int num_segments;   /* Number of segmenets */
     int sendcount;      /* the same like segcount, except for the last segment */ 
-    int realsegsize;
+    size_t realsegsize;
     char *tmpbuf;
     size_t type_size;
     ptrdiff_t type_extent, lb;

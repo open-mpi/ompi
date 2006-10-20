@@ -54,7 +54,7 @@ int MPI_Get_processor_name(char *name, int *resultlen)
     
     /* A simple implementation of this function using gethostname*/
     gethostname (tmp, MPI_MAX_PROCESSOR_NAME);
-    len = strlen (tmp);
+    len = (int)strlen (tmp);
     strncpy ( name, tmp, len);
 
     if ( MPI_MAX_PROCESSOR_NAME > len ) {

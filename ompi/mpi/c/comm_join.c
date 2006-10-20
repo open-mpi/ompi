@@ -77,7 +77,7 @@ int MPI_Comm_join(int fd, MPI_Comm *intercomm)
     if (ORTE_SUCCESS != (rc = orte_ns.get_proc_name_string (&name, &(myproc[0]->proc_name)))) {
         return rc;
     }
-    llen   = strlen(name)+1;
+    llen   = (uint32_t)(strlen(name)+1);
     len    = htonl(llen);
     
     ompi_socket_send( fd, (char *) &len, sizeof(uint32_t));
@@ -121,11 +121,11 @@ static int ompi_socket_send (int fd, char *buf, int len )
     char *c_ptr;
     int ret = OMPI_SUCCESS;
     
-    num      = (size_t) len;
-    c_ptr      = buf;
+    num   = len;
+    c_ptr = buf;
 
     do {
-	s_num = (size_t) num;
+	    s_num = (size_t) num;
         a = write ( fd, c_ptr, s_num ); 
         if ( a == -1 ) {
             if ( errno == EINTR ) {

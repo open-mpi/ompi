@@ -175,7 +175,7 @@ ompi_win_get_name(ompi_win_t *win, char *win_name, int *length)
 {
     OPAL_THREAD_LOCK(&(win->w_lock));
     strncpy(win_name, win->w_name, MPI_MAX_OBJECT_NAME);
-    *length = strlen(win->w_name);
+    *length = (int)strlen(win->w_name);
     OPAL_THREAD_UNLOCK(&(win->w_lock));
 
     return OMPI_SUCCESS;

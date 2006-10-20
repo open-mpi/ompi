@@ -152,15 +152,15 @@ int mca_btl_sm_add_procs_same_base_addr(
     struct mca_btl_base_endpoint_t **peers,
     ompi_bitmap_t* reachability)
 {
-    int return_code=OMPI_SUCCESS;
+    int return_code=OMPI_SUCCESS, cnt,len;
     size_t i,j,proc,size,n_to_allocate,length;
-    int n_local_procs,cnt,len;
+    uint32_t n_local_procs;
     ompi_proc_t* my_proc; /* pointer to caller's proc structure */
     mca_btl_sm_t *btl_sm;
     ompi_fifo_t *my_fifos;
     ompi_fifo_t * volatile *fifo_tmp;
     bool same_sm_base;
-    ssize_t diff;
+    ptrdiff_t diff;
     volatile char **tmp_ptr;
     volatile int *tmp_int_ptr;
 

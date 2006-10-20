@@ -1,18 +1,64 @@
 The actual version of Open MPI compile and run under Windows. The simplest
 way to get access to a windows distribution is to download one from the
-download section on the Open MPI web site (http://www.open-mpi.org).
+download section on the Open MPI web site (http://www.open-mpi.org) or to
+check it out via SVN (information on the above mentioned web-site).
 
-The rest of this document is only for confirmed developpers, who has spare
+The rest of the document is divided on 2. The first section is for an easy setup,
+based on some files we distribute (32 and 64 bits versions). The second one is
+only for advanced users, who want to deeply dig into the software.
+
+First approach: Simple and strait-forward
+
+Step 1: untar in the root directory of the Open MPI distribution one of our tgz
+        file from contrib/platform/win32/
+
+Step 2: go in ompi/datatype and copy
+        datatype_pack.c   to datatype_pack_checksum.c
+        datatype_unpack.c to datatype_unpack_checksum.c
+        
+Step 3: Add the following to ompi/tools/ompi_info/ompi_info.h after you
+        change the relevant information inside (replace everything between @).
+
+#define OMPI_CONFIGURE_USER "@USER_NAME@"
+#define OMPI_CONFIGURE_HOST "@HOST_NAME@"
+#define OMPI_CONFIGURE_DATE "@TODAY_DATE@"
+#define OMPI_BUILD_USER OMPI_CONFIGURE_USER
+#define OMPI_BUILD_HOST OMPI_CONFIGURE_HOST
+#define OMPI_BUILD_DATE OMPI_CONFIGURE_DATE
+#define OMPI_BUILD_CFLAGS "/Od /Gm /EHsc /RTC1 /MDd"
+#define OMPI_BUILD_CPPFLAGS "-I${HOME}/ompi-trunk -I${HOME}opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
+#define OMPI_BUILD_CXXFLAGS "/Od /Gm /EHsc /RTC1 /MDd"
+#define OMPI_BUILD_CXXCPPFLAGS "-I${HOME}/ompi-trunk -I../../.. -I$(HOME}/ompi-trunk/opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
+#define OMPI_BUILD_FFLAGS ""
+#define OMPI_BUILD_FCFLAGS ""
+#define OMPI_BUILD_LDFLAGS " "
+#define OMPI_BUILD_LIBS " "
+#define OMPI_CC_ABSOLUTE "cl"
+#define OMPI_CXX_ABSOLUTE "cl"
+#define OMPI_F77_ABSOLUTE "none"
+#define OMPI_F90_ABSOLUTE "none"
+#define OMPI_F90_BUILD_SIZE "small"
+
+Step 4: Open the Open MPI project (.sln file) from the root directory of the distribution
+Step 5: Choose which version you want to build (from the project manager)
+Step 6: Add the build directory to your PATH
+Step *: Have fun ...
+Step *+1: If you have any problems, find any bugs please feel free to report to
+          users@open-mpi.org
+
+Second approach: Confirmed users
+
+The rest of this document is only for confirmed developers, who has spare
 time or an urgent necessity to compile their own windows version.
 
 Compiling Open MPI natively on Windows require several tools. Of course
 one need the Microsoft Visual Studio for their C/C++ compiler as well as
 for the ml (assembler compiler) and the link utilities. But the current
 version require some GNU tools as well. Here is the list of such tools:
-1. Download any Unix for Windows environment. I have sucesfully used
+1. Download any Unix for Windows environment. I have successfully used
   cygwin and minGW.
 2. Make the default shell ash.exe (install it if it's not installed by
-  default) as it will higly decrease the configuration and compilation
+  default) as it will highly decrease the configuration and compilation
   time.
 3. Download a very recent libtool (I'm using the pre 2.0 from their CVS HEAD).
 
@@ -22,7 +68,4 @@ UNIX environments: configure and make.
 
 All questions, complaints and requests about the Windows port should be sent 
 by email to bosilca at open-mpi dot org.
-
-  And don't forget: have as much fun as I had doing this port :)
-    george.
 

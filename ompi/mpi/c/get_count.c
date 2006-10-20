@@ -48,7 +48,7 @@ int MPI_Get_count(MPI_Status *status, MPI_Datatype datatype, int *count)
       if( size == 0 ) {
          *count = 0;
       } else {
-         *count = status->_count / size;
+         *count = (int)(status->_count / size);
          if( (int)((*count) * size) != status->_count )
             *count = MPI_UNDEFINED;
       }

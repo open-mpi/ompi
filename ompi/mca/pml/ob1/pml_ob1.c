@@ -114,7 +114,7 @@ int mca_pml_ob1_add_procs(ompi_proc_t** procs, size_t nprocs)
         return OMPI_SUCCESS;
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
-    rc = ompi_bitmap_init(&reachable, nprocs);
+    rc = ompi_bitmap_init(&reachable, (int)nprocs);
     if(OMPI_SUCCESS != rc)
         return rc;
 
@@ -278,7 +278,7 @@ int mca_pml_ob1_send_fin_btl(
 void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
 {
     mca_pml_ob1_pckt_pending_t *pckt;
-    int i, rc, s = opal_list_get_size(&mca_pml_ob1.pckt_pending);
+    int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_ob1.pckt_pending);
 
     for(i = 0; i < s; i++) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
@@ -324,7 +324,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
 void mca_pml_ob1_process_pending_rdma(void)
 {
     mca_pml_ob1_rdma_frag_t* frag;
-    int i, rc, s = opal_list_get_size(&mca_pml_ob1.rdma_pending);
+    int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_ob1.rdma_pending);
 
     for(i = 0; i < s; i++) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);

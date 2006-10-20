@@ -91,7 +91,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
     int ret = OMPI_SUCCESS, i;
 
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
-        int num_pending;
+        size_t num_pending;
 
         /* check that the user didn't lie to us - since NOPRECEDED
            must be specified by all processes if it is specified by
@@ -176,7 +176,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
            atomicall add however many we're going to wait for */
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_in), incoming_reqs);
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
-                          opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)));
+                          (int32_t)opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)));
 
         opal_output_verbose(50, ompi_osc_base_output,
                             "fence: waiting on %d in and %d out",
@@ -497,7 +497,7 @@ ompi_osc_rdma_module_unlock(int target,
 
     /* try to start all the requests.  We've copied everything we need
        out of pending_sendreqs, so don't need the lock here */
-    out_count = opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs));
+    out_count = (int32_t)opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs));
 
     OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), out_count);
 
