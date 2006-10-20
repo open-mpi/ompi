@@ -196,42 +196,11 @@ int main(int argc, char *argv[])
     char *jobidstring;
     orte_gpr_value_t *value;
     char *segment;
-	char *param;
     int i;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
 
-    /* Protect the daemon and any child processes from MCA params that select
-     * specific components. We want to be free to select the proxy components,
-     * so we have to ensure that we aren't picking up directives intended for HNPs.
-     */
-    if(NULL == (param = mca_base_param_environ_variable("rds",NULL,NULL))) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    unsetenv(param);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("ras",NULL,NULL))) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    unsetenv(param);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("rmaps",NULL,NULL))) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    unsetenv(param);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("pls",NULL,NULL))) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    unsetenv(param);
-    free(param);
-    if(NULL == (param = mca_base_param_environ_variable("rmgr",NULL,NULL))) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
-    }
-    unsetenv(param);
-    free(param);
-    
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);
 
