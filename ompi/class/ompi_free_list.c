@@ -188,61 +188,6 @@ int ompi_free_list_grow(ompi_free_list_t* flist, size_t num_elements)
     return OMPI_SUCCESS;
 }
 
-/* This function is not protected. It should be never used when the
- * process s still active. It was designed for debugger, in order
- * to provide them with a fast mechanism to look into the queues
- * (mostly the MPI request queue).
- */
-int ompi_free_list_parse( ompi_free_list_t* list,
-                          struct ompi_free_list_pos_t* position,
-                          opal_list_item_t** return_item )
-{
-    /* Make sure we are in one of the free list allocations */
-    if( NULL == position->last_memory ) {
-        position->last_memory = (unsigned char*)opal_list_get_first( &(list->fl_allocations) );
-        position->last_item = NULL;
-    }
-
- dig_for_the_requests:
-    /* If the request will be the first on this memory region, it's easy. */
-    if( NULL == position->last_item ) {
-        unsigned long ptr = (unsigned long)position->last_memory;
-
-        ptr += sizeof(ompi_free_list_memory_t);
-
-        ptr = align_to(ptr + list->fl_header_space, list->fl_alignment) -
-            list->fl_header_space;
-        *return_item = (opal_list_item_t*)ptr;
-        return 0;
-    }
-    /* else go to the next request */
-    position->last_item += list->fl_elem_size;
-
-    {
-        /* otherwise go to the next one. Once there make sure we're still on the
-         * memory fragment, otherwise go to the next fragment.
-         */
-        size_t frag_length = (list->fl_elem_size * list->fl_num_per_alloc + 
-                              + sizeof(ompi_free_list_memory_t) +
-                              list->fl_header_space + list->fl_alignment);
-
-        if( position->last_item < (position->last_memory + frag_length) ) {
-            *return_item = (opal_list_item_t*)position->last_item;
-            return 0;
-        }
-    }
-
-    /* we're outside the fragment. Try to go to the next one ... */
-    if( opal_list_get_end(&(list->fl_allocations)) ==
-        ((opal_list_item_t*)position->last_memory)->opal_list_next ) {
-        *return_item = NULL;
-        return 0;  /* nothing anymore */
-    }
-
-    position->last_memory = (unsigned char*)((opal_list_item_t*)position->last_memory)->opal_list_next;
-    goto dig_for_the_requests;
-}
-
 /**
  * This function resize the free_list to contain at least the specified
  * number of elements. We do not create all of them in the same memory
