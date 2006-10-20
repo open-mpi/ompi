@@ -26,7 +26,7 @@ Step 3: Add the following to ompi/tools/ompi_info/ompi_info.h after you
 #define OMPI_BUILD_HOST OMPI_CONFIGURE_HOST
 #define OMPI_BUILD_DATE OMPI_CONFIGURE_DATE
 #define OMPI_BUILD_CFLAGS "/Od /Gm /EHsc /RTC1 /MDd"
-#define OMPI_BUILD_CPPFLAGS "-I${HOME}/ompi-trunk -I${HOME}opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
+#define OMPI_BUILD_CPPFLAGS "-I${HOME}/ompi-trunk -I${HOME}/opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
 #define OMPI_BUILD_CXXFLAGS "/Od /Gm /EHsc /RTC1 /MDd"
 #define OMPI_BUILD_CXXCPPFLAGS "-I${HOME}/ompi-trunk -I../../.. -I$(HOME}/ompi-trunk/opal/include -I${HOME}/ompi-trunk/orte/include -I${HOME}/ompi-trunk/ompi/include"
 #define OMPI_BUILD_FFLAGS ""
