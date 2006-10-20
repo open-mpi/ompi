@@ -429,7 +429,7 @@ void *ompi_fifo_read_from_tail_same_base_addr( ompi_fifo_t *fifo)
  *
  */
 static inline void *ompi_fifo_read_from_tail(ompi_fifo_t *fifo, 
-                                             ssize_t offset) 
+                                             ptrdiff_t offset) 
 {
     /* local parameters */
     void *return_value;
