@@ -23,6 +23,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/coll/coll.h"
 #include "ompi/mca/coll/base/coll_tags.h"
+#include "ompi/op/op.h"
 #include "coll_tuned.h"
 #include "ompi/mca/pml/pml.h"
 #include "opal/util/bit_ops.h"
@@ -203,6 +204,13 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     size_t msgsize, dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
+
+    /**
+     * If the operation is non commutative we only have one reduce algorithm right now.
+     */
+    if( !ompi_op_is_commute(op) ) {
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+    }
 
     comsize = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
