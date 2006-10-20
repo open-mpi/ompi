@@ -205,11 +205,11 @@ ompi_free_list_resize(ompi_free_list_t* flist, size_t size)
         return OMPI_SUCCESS;
     }
     OPAL_THREAD_LOCK(&((flist)->fl_lock));
-    inc_num = size - flist->fl_num_allocated;
+    inc_num = (ssize_t)size - (ssize_t)flist->fl_num_allocated;
     while( inc_num > 0 ) {
         ret = ompi_free_list_grow(flist, flist->fl_num_per_alloc);
         if( OMPI_SUCCESS != ret ) break;
-        inc_num = size - flist->fl_num_allocated;
+        inc_num = (ssize_t)size - (ssize_t)flist->fl_num_allocated;
     }
     OPAL_THREAD_UNLOCK(&((flist)->fl_lock));
 
