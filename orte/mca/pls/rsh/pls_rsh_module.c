@@ -413,6 +413,10 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    if (mca_pls_rsh_component.debug) {
+        orte_dss.dump(0, map, ORTE_JOB_MAP);
+    }
+
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
 
     /*
@@ -705,6 +709,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                             rmaps_node->nodename);
             }
 
+            /* copy the environment so we can modify it with opal functions */
+            env = opal_argv_copy(environ);
+
             /* We don't need to sense an oversubscribed condition and set the sched_yield
              * for the node as we are only launching the daemons at this time. The daemons
              * are now smart enough to set the oversubscribed condition themselves when
@@ -746,11 +753,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     }
                 }
 
+                
                 /* If we have a prefix, then modify the PATH and
-                   LD_LIBRARY_PATH environment variables.  We're
-                   already in the child process, so it's ok to modify
-                   environ. */
-                if (NULL != prefix_dir) {
+                   LD_LIBRARY_PATH environment variables
+                 */
+                 if (NULL != prefix_dir) {
                     char *oldenv, *newenv;
 
                     /* Reset PATH */
@@ -762,7 +769,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         free( newenv );
                         newenv = temp;
                     }
-                    opal_setenv("PATH", newenv, true, &environ);
+                    opal_setenv("PATH", newenv, true, &env);
                     if (mca_pls_rsh_component.debug) {
                         opal_output(0, "pls:rsh: reset PATH: %s", newenv);
                     }
@@ -777,7 +784,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                         free(newenv);
                         newenv = temp;
                     }
-                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
                     if (mca_pls_rsh_component.debug) {
                         opal_output(0, "pls:rsh: reset LD_LIBRARY_PATH: %s",
                                     newenv);
@@ -814,7 +821,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     }
                     /* Ignore errors -- what are we going to do?
                        (and we ignore errors on the remote nodes
-                       in the fork pls, so this is consistent) */
+                       in the odls, so this is consistent) */
                     chdir(var);
                 }
             } else {
@@ -907,9 +914,28 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             sigprocmask(SIG_UNBLOCK, &sigs, 0);
             
             /* setup environment */
-            env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             opal_setenv(var, "0", true, &env);
+            free(var);
+            
+            /* clean out any MCA component selection directives that
+             * won't work on remote nodes
+             */
+            var = mca_base_param_environ_variable("rds",NULL,NULL);
+            opal_unsetenv(var, &env);
+            free(var);
+            var = mca_base_param_environ_variable("ras",NULL,NULL);
+            opal_unsetenv(var, &env);
+            free(var);
+            var = mca_base_param_environ_variable("rmaps",NULL,NULL);
+            opal_unsetenv(var, &env);
+            free(var);
+            var = mca_base_param_environ_variable("pls",NULL,NULL);
+            opal_unsetenv(var, &env);
+            free(var);
+            var = mca_base_param_environ_variable("rmgr",NULL,NULL);
+            opal_unsetenv(var, &env);
+            free(var);
             
             /* exec the daemon */
             if (mca_pls_rsh_component.debug) {
