@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -201,11 +202,16 @@ int opal_unsetenv(const char *name, char ***env)
         if (found) {
             (*env)[i] = (*env)[i + 1];
         } else if (0 == strncmp((*env)[i], compare, len)) {
-            free((*env)[i]);
+#if !defined(__WINDOWS__)
+            if (environ != *env) {
+                free((*env)[i]);
+            }
+#endif
             (*env)[i] = (*env)[i + 1];
             found = true;
         }
     }
+    free(compare);
 
     /* All done */
 
