@@ -224,6 +224,7 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
             if (NULL != nodename) {
                 dmn->nodename = strdup(nodename);
             }
+            
             /* add this daemon to the list */
             opal_list_append(daemons, &dmn->super);
         }

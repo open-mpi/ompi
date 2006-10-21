@@ -49,10 +49,13 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_RMAPS          12
 #define ORTE_RML_TAG_PLS            13
 #define ORTE_RML_TAG_PLS_ORTED      14
-#define ORTE_RML_TAG_ERRMGR         15
-#define ORTE_RML_TAG_BPROC          16
-#define ORTE_RML_TAG_BPROC_ABORT    17
+#define ORTE_RML_TAG_PLS_ORTED_ACK  15
+#define ORTE_RML_TAG_ERRMGR         16
+#define ORTE_RML_TAG_BPROC          17
+#define ORTE_RML_TAG_BPROC_ABORT    18
+
 #define ORTE_RML_TAG_DYNAMIC     2000
+
 #define ORTE_RML_TAG_MAX UINT32_MAX
 
                                                                                                                                         

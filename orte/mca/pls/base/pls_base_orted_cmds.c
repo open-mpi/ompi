@@ -65,7 +65,7 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
         }
             
         OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED)) {
+        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         }
         OBJ_DESTRUCT(&answer);  
@@ -116,7 +116,7 @@ int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
         }
             
         OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED)) {
+        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         }
         OBJ_DESTRUCT(&answer);  
@@ -168,7 +168,7 @@ int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal)
         }
         
         OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED)) {
+        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         }
         OBJ_DESTRUCT(&answer);  
@@ -219,7 +219,7 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
         }
         
         OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED)) {
+        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         }
         OBJ_DESTRUCT(&answer);  

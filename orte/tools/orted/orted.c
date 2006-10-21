@@ -581,7 +581,9 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received message from [%ld,%ld,%ld]",
+                   ORTE_NAME_ARGS(orte_process_info.my_name),
+                   ORTE_NAME_ARGS(sender));
     }
 
     /* unpack the command */
@@ -611,6 +613,10 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
 
         /****    KILL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_KILL_LOCAL_PROCS:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received kill_local_procs",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
             /* unpack the jobid - could be JOBID_WILDCARD, which would indicatge
              * we should kill all local procs. Otherwise, only kill those within
              * the specified jobid
@@ -628,6 +634,10 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             
         /****    SIGNAL_LOCAL_PROCS   ****/
         case ORTE_DAEMON_SIGNAL_LOCAL_PROCS:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received signal_local_procs",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
             /* get the signal */
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &signal, &n, ORTE_INT32))) {
@@ -648,6 +658,10 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
 
             /****    ADD_LOCAL_PROCS   ****/
         case ORTE_DAEMON_ADD_LOCAL_PROCS:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received add_local_procs",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
             /* unpack the notify data object */
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(ret);
@@ -665,10 +679,14 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
            
             /****    EXIT COMMAND    ****/
         case ORTE_DAEMON_EXIT_CMD:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received exit",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
             /* send the response before we wakeup because otherwise
              * we'll depart before it gets out!
              */
-            if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED, 0)) {
+            if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
                 ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             }
             orted_globals.exit_condition = true;
@@ -682,7 +700,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
 
 DONE:
     /* send the response */
-    if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED, 0)) {
+    if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
     }
     OBJ_RELEASE(answer);
@@ -714,7 +732,9 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     OPAL_THREAD_LOCK(&orted_globals.mutex);
     
     if (orted_globals.debug_daemons) {
-        opal_output(0, "[%lu,%lu,%lu] ompid: received message", ORTE_NAME_ARGS(orte_process_info.my_name));
+        opal_output(0, "[%lu,%lu,%lu] orted_recv: received message from [%ld,%ld,%ld]",
+                    ORTE_NAME_ARGS(orte_process_info.my_name),
+                    ORTE_NAME_ARGS(sender));
     }
     
     answer = OBJ_NEW(orte_buffer_t);
@@ -731,6 +751,11 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
     
     /****    EXIT COMMAND    ****/
     if (ORTE_DAEMON_EXIT_CMD == command) {
+        if (orted_globals.debug_daemons) {
+            opal_output(0, "[%lu,%lu,%lu] orted_recv: received exit",
+                        ORTE_NAME_ARGS(orte_process_info.my_name));
+        }
+        
         orted_globals.exit_condition = true;
         opal_condition_signal(&orted_globals.condition);
         
