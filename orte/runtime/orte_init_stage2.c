@@ -42,12 +42,6 @@ int orte_init_stage2(void)
      * Initialize the selected modules now that all components/name are available.
      */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.init())) {
-        ORTE_ERROR_LOG(ret);
-        error_str = "orte_rml.init";
-        goto return_error;
-    }
-
     if (ORTE_SUCCESS != (ret = orte_ns.init())) {
         ORTE_ERROR_LOG(ret);
         error_str = "orte_ns.init";

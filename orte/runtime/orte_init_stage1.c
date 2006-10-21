@@ -262,6 +262,16 @@ int orte_init_stage1(bool infrastructure)
     /* all done with sds - clean up and call it a day */
     orte_sds_base_close();
 
+    /* initialize the rml module so it can open its interfaces - this
+     * is needed so that we can get a uri for ourselves if we are an
+     * HNP
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.init())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rml.init";
+        goto error;
+    }
+    
     /* if I'm the seed, set the seed uri to be me! */
     if (orte_process_info.seed) {
         if (NULL != orte_universe_info.seed_uri) {
