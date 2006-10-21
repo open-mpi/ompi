@@ -67,6 +67,9 @@ version 1.0.
 1.1.3
 -----
 
+- Fix a problem for when $FC and/or $F77 were specified as multiple
+  tokens.  Thanks to Orion Poplawski for identifying the problem and
+  to Ralf Wildenhues for suggesting the fix.
 - Fix several MPI_*ERRHANDLER* functions and MPI_GROUP_TRANSLATE_RANKS
   with respect to what arguments they allowed and the behavior that
   they effected.  Thanks to Lisandro Dalcin for reporting the
