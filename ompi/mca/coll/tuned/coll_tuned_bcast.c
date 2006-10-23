@@ -805,29 +805,33 @@ int ompi_coll_tuned_bcast_intra_check_forced_init (coll_tuned_force_algorithm_mc
                                  false, true, max_alg, NULL);
 
 
-    mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                      "bcast_algorithm",
-                                                                      "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree.",
-                                                                      false, false, 0, NULL);
+    mca_param_indices->algorithm_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "bcast_algorithm",
+                                 "Which bcast algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 chain, 3: pipeline, 4: split binary tree, 5: binary tree.",
+                                 false, false, 0, NULL);
 
-    mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                    "bcast_algorithm_segmentsize",
-                                                                    "Segment size in bytes used by default for bcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                                                    false, false, 0, NULL);
+    mca_param_indices->segsize_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "bcast_algorithm_segmentsize",
+                                 "Segment size in bytes used by default for bcast algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                 false, false, 0, NULL);
 
-    mca_param_indices->tree_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                        "bcast_algorithm_tree_fanout",
-                                                                        "Fanout for n-tree used for bcast algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
-                                                                        false, false,
-                                                                        ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                                                        NULL);
+    mca_param_indices->tree_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "bcast_algorithm_tree_fanout",
+                                 "Fanout for n-tree used for bcast algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                                 false, false,
+                                 ompi_coll_tuned_init_tree_fanout, /* get system wide default */
+                                 NULL);
 
-    mca_param_indices->chain_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                         "bcast_algorithm_chain_fanout",
-                                                                         "Fanout for chains used for bcast algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
-                                                                         false, false,
-                                                                         ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                                                         NULL);
+    mca_param_indices->chain_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "bcast_algorithm_chain_fanout",
+                                 "Fanout for chains used for bcast algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                                 false, false,
+                                 ompi_coll_tuned_init_chain_fanout, /* get system wide default */
+                                 NULL);
 
     return (MPI_SUCCESS);
 }
