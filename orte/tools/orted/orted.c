@@ -546,10 +546,12 @@ static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag
      * success or failure of the launch
      */
     if (ORTE_SUCCESS != (rc = orte_odls.launch_local_procs(data, orted_globals.saved_environ))) {
-        /* if there was an error, report it and wakeup the orted */
+        /* if there was an error, report it.
+         * NOTE: it is absolutely imperative that we do not cause the orted to EXIT when
+         * this happens!!! If we do, then the HNP will "hang" as the orted will no longer
+         * be around to receive messages telling it what to do in response to the failure
+         */
         ORTE_ERROR_LOG(rc);
-        orted_globals.exit_condition = true;
-        opal_condition_signal(&orted_globals.condition);
     }
     
     /* all done - return and let the orted sleep until something happens */
