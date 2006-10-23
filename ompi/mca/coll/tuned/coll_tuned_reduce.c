@@ -99,7 +99,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
         accumbuf = (char*)recvbuf;
         if( NULL == accumbuf ) {
-            accumbuf = (char*)malloc(ext);  /* TO BE OPTIMIZED */
+            accumbuf = (char*)malloc(realsegsize * num_segments);  /* TO BE OPTIMIZED */
 	    if (accumbuf == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
 	}
 
