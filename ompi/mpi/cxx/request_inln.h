@@ -330,4 +330,22 @@ inline bool MPI::Request::Get_status() const
     return OPAL_INT_TO_BOOL(flag);
 }
 
+inline MPI::Grequest
+MPI::Grequest::Start(Query_function *query_fn, Free_function *free_fn,
+	Cancel_function *cancel_fn, void *extra)
+{
+    MPI_Request grequest = 0;
+
+    (void) MPI_Grequest_start((MPI_Grequest_query_function *) query_fn,
+	    (MPI_Grequest_free_function *) free_fn,
+	    (MPI_Grequest_cancel_function *) cancel_fn, extra, &grequest);
+
+    return(grequest);
+}
+
+inline void
+MPI::Grequest::Complete()
+{
+    (void) MPI_Grequest_complete(mpi_request);
+}
 
