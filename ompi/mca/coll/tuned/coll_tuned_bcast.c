@@ -46,7 +46,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     size_t typelng;
     ptrdiff_t type_extent, lb;
     ompi_request_t *base_req, *new_req;
-    ompi_coll_chain_t* chain;
+    ompi_coll_tree_t* chain;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -69,7 +69,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     }
     else {
         if (comm->c_coll_selected_data->cached_chain) { /* destroy previous chain if defined */
-            ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_chain);    
+            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);    
         }
         comm->c_coll_selected_data->cached_chain = chain = ompi_coll_tuned_topo_build_chain( chains, comm, root );
         comm->c_coll_selected_data->cached_chain_root = root;
@@ -120,9 +120,9 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
             /* determine how many elements are being sent in this round */
             if( segindex == (num_segments - 1) ) 
                 sendcount = count - segindex*segcount;
-            for( i = 0; i < chain->chain_nextsize; i++ ) {
+            for( i = 0; i < chain->tree_nextsize; i++ ) {
                 err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
-                                        chain->chain_next[i],
+                                        chain->tree_next[i],
                                         MCA_COLL_BASE_TAG_BCAST,
                                         MCA_PML_BASE_SEND_STANDARD,comm));
                 if( MPI_SUCCESS != err ) { line = __LINE__; goto error_hndl; }
@@ -133,14 +133,14 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
     } 
 
     /* intermediate nodes code */
-    else if (chain->chain_nextsize > 0) { 
+    else if (chain->tree_nextsize > 0) { 
         /* Create the pipeline. We first post the first receive, then in the loop we
          * post the next receive and after that wait for the previous receive to 
          * complete and we disseminating the data to all children.
          */
         new_sendcount = sendcount = segcount;
         err = MCA_PML_CALL(irecv( tmpbuf, sendcount, datatype,
-                                  chain->chain_prev, MCA_COLL_BASE_TAG_BCAST,
+                                  chain->tree_prev, MCA_COLL_BASE_TAG_BCAST,
                                   comm, &base_req));
         if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
@@ -150,16 +150,16 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
                 new_sendcount = count - segindex*segcount;
             /* post new irecv */
             err = MCA_PML_CALL(irecv( tmpbuf + realsegsize, new_sendcount,
-                                      datatype, chain->chain_prev,
+                                      datatype, chain->tree_prev,
                                       MCA_COLL_BASE_TAG_BCAST, comm, &new_req));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
 
             /* wait for and forward current segment */
             err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
-            for( i = 0; i < chain->chain_nextsize; i++ ) {  
+            for( i = 0; i < chain->tree_nextsize; i++ ) {  
                 /* send data to children */
                 err = MCA_PML_CALL(send( tmpbuf, sendcount, datatype, 
-                                         chain->chain_next[i],
+                                         chain->tree_next[i],
                                          MCA_COLL_BASE_TAG_BCAST,
                                          MCA_PML_BASE_SEND_STANDARD, comm));
                 if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
@@ -173,10 +173,10 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
 
         /* wait for the last segment and forward current segment */
         err = ompi_request_wait_all( 1, &base_req, MPI_STATUSES_IGNORE );
-        for( i = 0; i < chain->chain_nextsize; i++ ) {  
+        for( i = 0; i < chain->tree_nextsize; i++ ) {  
             /* send data to children */
             err = MCA_PML_CALL(send( tmpbuf, sendcount, datatype, 
-                                     chain->chain_next[i],
+                                     chain->tree_next[i],
                                      MCA_COLL_BASE_TAG_BCAST,
                                      MCA_PML_BASE_SEND_STANDARD, comm));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
@@ -192,7 +192,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
                 sendcount = count - segindex*segcount;
             /* receive segments */
             err = MCA_PML_CALL(recv( tmpbuf, sendcount, datatype,
-                                     chain->chain_prev, MCA_COLL_BASE_TAG_BCAST,
+                                     chain->tree_prev, MCA_COLL_BASE_TAG_BCAST,
                                      comm, MPI_STATUS_IGNORE));
             if (err != MPI_SUCCESS) { line = __LINE__; goto error_hndl; }
             /* update the initial pointer to the buffer */
