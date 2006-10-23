@@ -262,6 +262,305 @@ int orte_init_stage1(bool infrastructure)
     /* all done with sds - clean up and call it a day */
     orte_sds_base_close();
 
+    /*
+     * Now that we know for certain if we are an HNP and/or a daemon,
+     * setup the resource management frameworks. This includes opening
+     * and selecting the daemon launch framework - that framework "knows"
+     * what to do if it isn't in a daemon, and everyone needs that framework
+     * to at least register its datatypes.
+     */
+    if (ORTE_SUCCESS != (ret = orte_rds_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rds_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rds_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rds_base_select";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_ras_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ras_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_ras_base_find_available())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_ras_base_find_available";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmaps_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmaps_base_find_available())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmaps_base_find_available";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_pls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pls_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_pls_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_pls_base_select";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_select";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmgr_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_rmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_rmgr_base_select";
+        goto error;
+    }
+    
+    /*
+     * setup the state monitor
+     */
+    if (ORTE_SUCCESS != (ret = orte_smr_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_smr_base_open";
+        goto error;
+    }
+    
+    if (ORTE_SUCCESS != (ret = orte_smr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_smr_base_select";
+        goto error;
+    }
+    
+    /*
+     * setup the errmgr -- open has been done way before
+     */
+    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_errmgr_base_select";
+        goto error;
+    }
+    
+    /* if we are a singleton or the seed, setup the infrastructure for our job */
+    
+    if(orte_process_info.singleton || orte_process_info.seed) {
+        char *site, *resource;
+        orte_app_context_t *app;
+        
+        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ns.get_jobid for singleton/seed";
+            goto error;
+        }
+        
+        /* If there is no existing cellid, create one */
+        my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
+        ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
+        if (ORTE_ERR_NOT_FOUND == ret) {
+            /* Create a new Cell ID */
+            ret = orte_ns.create_cellid(&my_cellid, "unknown", orte_system_info.nodename);
+            if (ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                error = "orte_ns.create_cellid for singleton/seed";
+                goto error;
+            }
+            
+            if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
+                my_cellid = 0;
+            }
+        }
+        else if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ns.get_cell_inf for singleton/seedo";
+            goto error;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_ns.get_cellid for singleton/seed";
+            goto error;
+        }
+        
+        /* set the rest of the infrastructure */
+        app = OBJ_NEW(orte_app_context_t);
+        app->app = strdup("unknown");
+        app->num_procs = 1;
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_put_app_context(my_jobid, &app, 1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rmgr_base_put_app_context for singleton/seed";
+            goto error;
+        }
+        OBJ_RELEASE(app);
+        
+        if (ORTE_SUCCESS != (ret = orte_rmgr.set_vpid_range(my_jobid,0,1))) {
+            ORTE_ERROR_LOG(ret);
+            error = "orte_rmgr.set_vpid_range for singleton/seed";
+            goto error;
+        }
+        
+        if (orte_process_info.singleton) {
+            /* setup a fake node structure - this is required to support
+            * the MPI attributes function that is sitting on a trigger
+            * waiting for info on available node slots. since we can't
+            * really know that info for a singleton, we make the assumption
+            * that the allocation is unity and place a structure on the
+            * registry for it
+            *
+            * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
+            * FOR ANY OTHER CASE
+            */
+            opal_list_t single_host, rds_single_host;
+            orte_rds_cell_desc_t *rds_item;
+            orte_rds_cell_attr_t *new_attr;
+            orte_ras_node_t *ras_item;
+            opal_list_t attrs;
+            
+            OBJ_CONSTRUCT(&single_host, opal_list_t);
+            OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
+            ras_item = OBJ_NEW(orte_ras_node_t);
+            rds_item = OBJ_NEW(orte_rds_cell_desc_t);
+            if (NULL == ras_item || NULL == rds_item) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "singleton node structure construction";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            
+            rds_item->site   = strdup("Singleton");
+            rds_item->name   = strdup(orte_system_info.nodename);
+            rds_item->cellid = my_cellid;
+            
+            /* Set up data structure for RAS item */
+            ras_item->node_name        = strdup(rds_item->name);
+            ras_item->node_arch        = strdup("unknown");
+            ras_item->node_cellid      = rds_item->cellid;
+            ras_item->node_slots_inuse = 0;
+            ras_item->node_slots       = 1;
+            
+            opal_list_append(&single_host, &ras_item->super);
+            
+            /* Set up data structure for RDS item */
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "singleton OBJ_NEW(orte_rds_cell_attr_t) for ORTE_RDS_NAME";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "singleton OBJ_NEW(orte_data_value_t) for ORTE_RDS_NAME";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.value->type   = ORTE_STRING;
+            new_attr->keyval.value->data   = strdup(ras_item->node_name);
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+            
+            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
+            if (NULL == new_attr) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "singleton OBJ_NEW(orte_rds_cell_attr_t) for ORTE_CELLID_KEY";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
+            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
+            if (NULL == new_attr->keyval.value) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                error = "singleton OBJ_NEW(orte_data_value_t) for ORTE_CELLID";
+                ret = ORTE_ERR_OUT_OF_RESOURCE;
+                goto error;
+            }
+            new_attr->keyval.value->type   = ORTE_CELLID;
+            if (ORTE_SUCCESS != (ret = orte_dss.copy(&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton orte_dss.copy for ORTE_CELLID";
+                goto error;
+            }
+            opal_list_append(&(rds_item->attributes), &new_attr->super);
+            
+            opal_list_append(&rds_single_host, &rds_item->super);
+            
+            /* Store into registry */
+            ret = orte_rds.store_resource(&rds_single_host);
+            if (ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton orte_rds.store_resource";
+                goto error;
+            }
+            
+            /* JMS: This isn't quite right and should be fixed after
+                1.0 -- we shouldn't be doing this manually here.  We
+                should somehow be invoking a real RAS component to do
+                this for us. */
+            ret = orte_ras_base_node_insert(&single_host);
+            if (ORTE_SUCCESS != ret ) {
+                ORTE_ERROR_LOG(ret);
+                error = "singleton orte_ras.node_insert";
+                goto error;;
+            }
+            
+            /* JMS: Same as above -- fix this after 1.0: force a
+                selection so that orte_ras has initialized pointers in
+                case anywhere else tries to use it.  This may end up
+                putting a bunch more nodes on the node segment - e.g.,
+                if you're in a SLURM allocation and you "./a.out",
+                you'll end up with the localhost *and* all the other
+                nodes in your allocation on the node segment -- which
+                is probably fine */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(my_jobid, &attrs))) {
+                ORTE_ERROR_LOG(ret);
+                error = "allocate for a singleton";
+                goto error;
+            }
+            OBJ_DESTRUCT(&attrs);
+            
+            OBJ_DESTRUCT(&single_host);
+            OBJ_DESTRUCT(&rds_single_host);
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton orte_rmgr_base_proc_stage_gate_init";
+            goto error;
+        }
+        
+        /* set our state to LAUNCHED */
+        if (ORTE_SUCCESS != (ret = orte_smr.set_proc_state(orte_process_info.my_name, ORTE_PROC_STATE_LAUNCHED, 0))) {
+            ORTE_ERROR_LOG(ret);
+            error = "singleton could not set launched state";
+            goto error;
+        }
+    }
+
     /* initialize the rml module so it can open its interfaces - this
      * is needed so that we can get a uri for ourselves if we are an
      * HNP
@@ -271,7 +570,7 @@ int orte_init_stage1(bool infrastructure)
         error = "orte_rml.init";
         goto error;
     }
-    
+
     /* if I'm the seed, set the seed uri to be me! */
     if (orte_process_info.seed) {
         if (NULL != orte_universe_info.seed_uri) {
@@ -362,286 +661,6 @@ int orte_init_stage1(bool infrastructure)
         free(contact_path);
     }
 
-    /*
-     * Now that we know for certain if we are an HNP and/or a daemon,
-     * setup the resource management frameworks. This includes opening
-     * and selecting the daemon launch framework - that framework "knows"
-     * what to do if it isn't in a daemon, and everyone needs that framework
-     * to at least register its datatypes.
-     */
-    if (ORTE_SUCCESS != (ret = orte_rds_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rds_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rds_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rds_base_select";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_ras_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ras_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_ras_base_find_available())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_ras_base_find_available";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmaps_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmaps_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmaps_base_find_available())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmaps_base_find_available";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_pls_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pls_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_pls_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_pls_base_select";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_odls_base_open";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_odls_base_select";
-        goto error;
-    }
-    
-    if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmgr_base_open";
-        goto error;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_rmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_rmgr_base_select";
-        goto error;
-    }
-
-    /*
-     * setup the state monitor
-     */
-    if (ORTE_SUCCESS != (ret = orte_smr_base_open())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_smr_base_open";
-        goto error;
-    }
-
-    if (ORTE_SUCCESS != (ret = orte_smr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_smr_base_select";
-        goto error;
-    }
-
-    /*
-     * setup the errmgr -- open has been done way before
-     */
-    if (ORTE_SUCCESS != (ret = orte_errmgr_base_select())) {
-        ORTE_ERROR_LOG(ret);
-        error = "orte_errmgr_base_select";
-        goto error;
-    }
-    
-    /* if we are a singleton or the seed, setup the infrastructure for our job */
-
-    if(orte_process_info.singleton || orte_process_info.seed) {
-        char *site, *resource;
-
-        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_jobid";
-            goto error;
-        }
-
-        /* If there is no existing cellid, create one */
-        my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
-        ret = orte_ns.get_cell_info(my_cellid, &site, &resource);
-        if (ORTE_ERR_NOT_FOUND == ret) {
-            /* Create a new Cell ID */
-            ret = orte_ns.create_cellid(&my_cellid, "unknown", orte_system_info.nodename);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_ns.create_cellid";
-                goto error;
-            }
-
-            if(my_cellid != 0) { /* JJH Assertion/Repair until cellid's are fixed */
-                my_cellid = 0;
-            }
-        }
-        else if (ORTE_SUCCESS != ret) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_cell_info";
-            goto error;
-        }
-
-        if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_cellid";
-            goto error;
-        }
-
-        if (orte_process_info.singleton) {
-            /* setup a fake node structure - this is required to support
-             * the MPI attributes function that is sitting on a trigger
-             * waiting for info on available node slots. since we can't
-             * really know that info for a singleton, we make the assumption
-             * that the allocation is unity and place a structure on the
-             * registry for it
-             *
-             * THIS ONLY SHOULD BE DONE FOR SINGLETONS - DO NOT DO IT
-             * FOR ANY OTHER CASE
-             */
-            opal_list_t single_host, rds_single_host;
-            orte_rds_cell_desc_t *rds_item;
-            orte_rds_cell_attr_t *new_attr;
-            orte_ras_node_t *ras_item;
-            opal_list_t attrs;
-
-            OBJ_CONSTRUCT(&single_host, opal_list_t);
-            OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
-            ras_item = OBJ_NEW(orte_ras_node_t);
-            rds_item = OBJ_NEW(orte_rds_cell_desc_t);
-            if (NULL == ras_item || NULL == rds_item) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "singleton node structure construction";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-
-            rds_item->site   = strdup("Singleton");
-            rds_item->name   = strdup(orte_system_info.nodename);
-            rds_item->cellid = my_cellid;
-
-            /* Set up data structure for RAS item */
-            ras_item->node_name        = strdup(rds_item->name);
-            ras_item->node_arch        = strdup("unknown");
-            ras_item->node_cellid      = rds_item->cellid;
-            ras_item->node_slots_inuse = 0;
-            ras_item->node_slots       = 1;
-
-            opal_list_append(&single_host, &ras_item->super);
-
-            /* Set up data structure for RDS item */
-            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
-            if (NULL == new_attr) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "OBJ_NEW(orte_rds_cell_attr_t) for ORTE_RDS_NAME";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.key          = strdup(ORTE_RDS_NAME);
-            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
-            if (NULL == new_attr->keyval.value) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "OBJ_NEW(orte_data_value_t) for ORTE_RDS_NAME";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.value->type   = ORTE_STRING;
-            new_attr->keyval.value->data   = strdup(ras_item->node_name);
-            opal_list_append(&(rds_item->attributes), &new_attr->super);
-
-            new_attr = OBJ_NEW(orte_rds_cell_attr_t);
-            if (NULL == new_attr) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "OBJ_NEW(orte_rds_cell_attr_t) for ORTE_CELLID_KEY";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.key          = strdup(ORTE_CELLID_KEY);
-            new_attr->keyval.value = OBJ_NEW(orte_data_value_t);
-            if (NULL == new_attr->keyval.value) {
-                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                error = "OBJ_NEW(orte_data_value_t) for ORTE_CELLID";
-                ret = ORTE_ERR_OUT_OF_RESOURCE;
-                goto error;
-            }
-            new_attr->keyval.value->type   = ORTE_CELLID;
-            if (ORTE_SUCCESS != (ret = orte_dss.copy(&(new_attr->keyval.value->data), &(rds_item->cellid), ORTE_CELLID))) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_dss.copy for ORTE_CELLID";
-                goto error;
-            }
-            opal_list_append(&(rds_item->attributes), &new_attr->super);
-
-            opal_list_append(&rds_single_host, &rds_item->super);
-
-            /* Store into registry */
-            ret = orte_rds.store_resource(&rds_single_host);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_rds.store_resource";
-                goto error;
-            }
-
-            /* JMS: This isn't quite right and should be fixed after
-               1.0 -- we shouldn't be doing this manually here.  We
-               should somehow be invoking a real RAS component to do
-               this for us. */
-            ret = orte_ras_base_node_insert(&single_host);
-            if (ORTE_SUCCESS != ret ) {
-                ORTE_ERROR_LOG(ret);
-                error = "orte_ras.node_insert";
-                goto error;;
-            }
-
-            /* JMS: Same as above -- fix this after 1.0: force a
-               selection so that orte_ras has initialized pointers in
-               case anywhere else tries to use it.  This may end up
-               putting a bunch more nodes on the node segment (e.g.,
-               if you're in a SLURM allocation and you "./a.out",
-               you'll end up with the localhost *and* all the other
-               nodes in your allocation on the node segment -- which
-               is probably fine) */
-            OBJ_CONSTRUCT(&attrs, opal_list_t);
-            orte_ras.allocate_job(my_jobid, &attrs);
-            OBJ_DESTRUCT(&attrs);
-
-            OBJ_DESTRUCT(&single_host);
-            OBJ_DESTRUCT(&rds_single_host);
-        }
-
-        /* set the rest of the infrastructure */
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_set_job_slots(my_jobid,1))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr_base_set_job_slots";
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = orte_rmgr.set_vpid_range(my_jobid,0,1))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr.set_vpid_range";
-            goto error;
-        }
-        if (ORTE_SUCCESS != (ret = orte_rmgr_base_proc_stage_gate_init(my_jobid))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_rmgr_base_proc_stage_gate_init";
-            goto error;
-        }
-    }
 
 error:
     if (ret != ORTE_SUCCESS) {
