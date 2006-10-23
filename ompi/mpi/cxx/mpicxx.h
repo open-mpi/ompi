@@ -121,6 +121,7 @@ namespace MPI {
   class Group;
   class Op;
   class Request;
+  class Grequest;
   class Status;
   class Info;
   class Win;
