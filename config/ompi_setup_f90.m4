@@ -87,8 +87,10 @@ else
     else
         OMPI_WANT_F90_BINDINGS=1
         OMPI_F90="$FC"
-        BASEF90="`basename $FC`"
-        OMPI_F90_ABSOLUTE="`which $FC`"
+        set dummy $OMPI_F90
+        OMPI_F90_ARGV0=[$]2
+        BASEF90="`basename $OMPI_F90_ARGV0`"
+        OMPI_F90_ABSOLUTE="`which $OMPI_F90_ARGV0`"
     fi
 fi
 # make sure the compiler actually works, if not cross-compiling
@@ -115,7 +117,7 @@ AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
 # BWB - FIX ME - remove once everyone updates to LT 2.0.
 # 
 AS_IF([test $OMPI_WANT_F90_BINDINGS -eq 1],
-      [if test $OMPI_F77 != $OMPI_F90; then
+      [if test $BASEF77 != $BASEF90; then
            lt_ver=`grep '^VERSION' $srcdir/config/ltmain.sh | cut -f2 -d= | cut -f1 -d'.'`
            if test $lt_ver -lt 2 ; then 
                AC_MSG_ERROR([You appear to be trying to build the Fortran 90
