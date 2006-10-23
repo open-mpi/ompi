@@ -58,8 +58,10 @@ if test -z "$F77"; then
     OMPI_F77_ABSOLUTE="none"
 else
     OMPI_F77="$F77"
-    BASEF77="`basename $OMPI_F77`"
-    OMPI_F77_ABSOLUTE="`which $F77`"
+    set dummy $OMPI_F77
+    OMPI_F77_ARGV0=[$]2
+    BASEF77="`basename $OMPI_F77_ARGV0`"
+    OMPI_F77_ABSOLUTE="`which $OMPI_F77_ARGV0`"
     
     if test "$OMPI_WANT_F77_BINDINGS" = "0" ; then
         AC_MSG_WARN([*** Fortran 77 bindings disabled by user])

@@ -87,8 +87,10 @@ else
     else
         OMPI_WANT_F90_BINDINGS=1
         OMPI_F90="$FC"
-        BASEF90="`basename $FC`"
-        OMPI_F90_ABSOLUTE="`which $FC`"
+        set dummy $OMPI_F90
+        OMPI_F90_ARGV0=[$]2
+        BASEF90="`basename $OMPI_F90_ARGV0`"
+        OMPI_F90_ABSOLUTE="`which $OMPI_F90_ARGV0`"
     fi
 fi
 # make sure the compiler actually works, if not cross-compiling
