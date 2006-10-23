@@ -21,49 +21,46 @@
 
 #include "ompi_config.h"
 
-#if defined(c_plusplus) || defined(__cplusplus)
-extern "C"
-{
-#endif
-
 #define MAXTREEFANOUT 32
 
-typedef struct ompi_coll_tree_t {
-    int32_t tree_root;
-    int32_t tree_fanout;
-    int32_t tree_bmtree;
-    int32_t tree_prev;
-    int32_t tree_next[MAXTREEFANOUT];
-    int32_t tree_nextsize;
-} ompi_coll_tree_t;
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
 
-typedef struct ompi_coll_chain_t {
-    int32_t chain_root;
-    int32_t chain_prev;
-    int32_t chain_next[MAXTREEFANOUT];
-    int32_t chain_nextsize;
-    int32_t chain_numchain;
-} ompi_coll_chain_t;
+    typedef struct ompi_coll_tree_t {
+        int32_t tree_root;
+        int32_t tree_fanout;
+        int32_t tree_bmtree;
+        int32_t tree_prev;
+        int32_t tree_next[MAXTREEFANOUT];
+        int32_t tree_nextsize;
+    } ompi_coll_tree_t;
 
-ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_tree( int fanout,
-                             struct ompi_communicator_t* com,
-                             int root );
-int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree );
+    typedef struct ompi_coll_chain_t {
+        int32_t chain_root;
+        int32_t chain_prev;
+        int32_t chain_next[MAXTREEFANOUT];
+        int32_t chain_nextsize;
+        int32_t chain_numchain;
+    } ompi_coll_chain_t;
 
-ompi_coll_tree_t*
-ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
-                        int root );
+    ompi_coll_tree_t*
+    ompi_coll_tuned_topo_build_tree( int fanout,
+                                     struct ompi_communicator_t* com,
+                                     int root );
+    int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree );
 
-ompi_coll_chain_t*
-ompi_coll_tuned_topo_build_chain( int fanout,
-                       struct ompi_communicator_t* com,
-                       int root );
-int ompi_coll_tuned_topo_destroy_chain( ompi_coll_chain_t** chain );
+    ompi_coll_tree_t*
+    ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
+                                       int root );
 
-/* debugging stuff, will be removed later */
-int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
-int ompi_coll_tuned_topo_dump_chain (ompi_coll_chain_t* chain, int rank);
+    ompi_coll_tree_t*
+    ompi_coll_tuned_topo_build_chain( int fanout,
+                                      struct ompi_communicator_t* com,
+                                      int root );
+
+    /* debugging stuff, will be removed later */
+    int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

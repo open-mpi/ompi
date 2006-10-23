@@ -513,10 +513,10 @@ int ompi_coll_tuned_module_finalize(struct ompi_communicator_t *comm)
         ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bmtree);
     }
     if (comm->c_coll_selected_data->cached_chain) { /* destroy general chain if defined */
-        ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_chain);
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);
     }
     if (comm->c_coll_selected_data->cached_pipeline) { /* destroy pipeline if defined */
-        ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_pipeline);
+        ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_pipeline);
     }
 
     /* if any algorithm rules are cached on the communicator, only free them if its MCW */

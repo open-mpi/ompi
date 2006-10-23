@@ -311,12 +311,12 @@ struct mca_coll_base_comm_t {
    int cached_bmtree_root;
 
    /* chained tree (fanout followed by pipelines) */
-   ompi_coll_chain_t *cached_chain;
+   ompi_coll_tree_t *cached_chain;
    int cached_chain_root;
    int cached_chain_fanout; 
 
    /* pipeline */
-   ompi_coll_chain_t *cached_pipeline;
+   ompi_coll_tree_t *cached_pipeline;
    int cached_pipeline_root;
 
    /* extra data required by the decision functions */

@@ -50,7 +50,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     ptrdiff_t ext, lb;
     size_t typelng, realsegsize;
     ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
-    ompi_coll_chain_t* chain;
+    ompi_coll_tree_t* chain;
 
     size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -66,7 +66,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         chain = comm->c_coll_selected_data->cached_chain;
     } else {
         if (comm->c_coll_selected_data->cached_chain) { /* destroy previous chain if defined */
-            ompi_coll_tuned_topo_destroy_chain (&comm->c_coll_selected_data->cached_chain);
+            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);
         }
         comm->c_coll_selected_data->cached_chain = chain = ompi_coll_tuned_topo_build_chain(fanout,comm,root);
         comm->c_coll_selected_data->cached_chain_root = root;
@@ -95,7 +95,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     }
 
     /* non-leaf nodes - wait for children to send me data & forward up (if needed) */
-    if( chain->chain_nextsize > 0 ) {
+    if( chain->tree_nextsize > 0 ) {
         /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
         accumbuf = (char*)recvbuf;
         if( NULL == accumbuf ) {
@@ -108,7 +108,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         if( inbuf[0] == NULL ) { line = __LINE__; ret = -1; goto error_hndl; }
         /* if there is chance to overlap communication -
            allocate second buffer */
-        if( (num_segments > 1) || (chain->chain_nextsize > 1) ) {
+        if( (num_segments > 1) || (chain->tree_nextsize > 1) ) {
             inbuf[1] = (char*) malloc(realsegsize);
             if( inbuf[1] == NULL ) { line = __LINE__; ret = -1; goto error_hndl;}
         } else {
@@ -127,7 +127,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                 recvcount = count - segcount*segindex;
 
             /* for each child */
-            for( i = 0; i < chain->chain_nextsize; i++ ) {
+            for( i = 0; i < chain->tree_nextsize; i++ ) {
                 /**
                  * We try to overlap communication:
                  * either with next segment or with the next child
@@ -148,7 +148,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                             local_recvbuf = accumbuf + segindex * realsegsize;
                         }
                     }
-                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount,datatype, chain->chain_next[i],
+                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount,datatype, chain->tree_next[i],
                                              MCA_COLL_BASE_TAG_REDUCE, comm, &reqs[inbi]));
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                 }
@@ -172,7 +172,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     ompi_op_reduce(op, local_op_buffer, accumbuf+segindex*realsegsize, recvcount, datatype );
                 } else if ( segindex > 0 ) {
                     void* local_op_buffer = inbuf[previnbi];
-                    if( chain->chain_nextsize <= 1 ) {
+                    if( chain->tree_nextsize <= 1 ) {
                         if( !((MPI_IN_PLACE == sendbuf) && (rank == root)) ) {            
                             local_op_buffer = sendtmpbuf+(segindex-1)*realsegsize;
                         }
@@ -183,7 +183,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     if (rank != root) {
                         /* send combined/accumulated data to parent */
                         ret = MCA_PML_CALL( send(accumbuf+(segindex-1)*realsegsize,
-                                                 prevcount,datatype, chain->chain_prev,
+                                                 prevcount,datatype, chain->tree_prev,
                                                  MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
                         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                     }
@@ -210,7 +210,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
             if (segindex < num_segments-1) sendcount = segcount;
             else sendcount = count - segindex*segcount;
             ret = MCA_PML_CALL( send((char*)sendbuf+segindex*realsegsize, sendcount,
-                                     datatype, chain->chain_prev,
+                                     datatype, chain->tree_prev,
                                      MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
         }
