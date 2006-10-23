@@ -172,19 +172,23 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     ompi_op_reduce(op, local_op_buffer, accumbuf+segindex*realsegsize, recvcount, datatype );
                 } else if ( segindex > 0 ) {
                     void* local_op_buffer = inbuf[previnbi];
+                    void* accumulator = accumbuf + (segindex-1) * realsegsize;
+
                     if( chain->tree_nextsize <= 1 ) {
                         if( !((MPI_IN_PLACE == sendbuf) && (rank == root)) ) {            
                             local_op_buffer = sendtmpbuf+(segindex-1)*realsegsize;
                         }
                     }
-                    ompi_op_reduce(op, local_op_buffer, accumbuf+(segindex-1)*realsegsize, prevcount, datatype );
+                    ompi_op_reduce(op, local_op_buffer, accumulator, prevcount, datatype );
 
-                    /* all reduced on available data this step (i) complete, pass to the next process unless your the root */
+                    /* all reduced on available data this step (i) complete, pass to
+                     * the next process unless your the root
+                     */
                     if (rank != root) {
                         /* send combined/accumulated data to parent */
-                        ret = MCA_PML_CALL( send(accumbuf+(segindex-1)*realsegsize,
-                                                 prevcount,datatype, chain->tree_prev,
-                                                 MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
+                        ret = MCA_PML_CALL( send( accumulator, prevcount, datatype,
+                                                  chain->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
+                                                  MCA_PML_BASE_SEND_STANDARD, comm) );
                         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                     }
 
@@ -396,29 +400,33 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
                                  false, true, max_alg, NULL);
 
 
-    mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                      "reduce_algorithm",
-                                                                      "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline",
-                                                                      false, false, 0, NULL);
+    mca_param_indices->algorithm_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "reduce_algorithm",
+                                 "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline",
+                                 false, false, 0, NULL);
 
-    mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                    "reduce_algorithm_segmentsize",
-                                                                    "Segment size in bytes used by default for reduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                                                    false, false, 0, NULL);
+    mca_param_indices->segsize_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "reduce_algorithm_segmentsize",
+                                 "Segment size in bytes used by default for reduce algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                 false, false, 0, NULL);
 
-    mca_param_indices->tree_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                        "reduce_algorithm_tree_fanout",
-                                                                        "Fanout for n-tree used for reduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
-                                                                        false, false,
-                                                                        ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                                                        NULL);
+    mca_param_indices->tree_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "reduce_algorithm_tree_fanout",
+                                 "Fanout for n-tree used for reduce algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                                 false, false,
+                                 ompi_coll_tuned_init_tree_fanout, /* get system wide default */
+                                 NULL);
 
-    mca_param_indices->chain_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                         "reduce_algorithm_chain_fanout",
-                                                                         "Fanout for chains used for reduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
-                                                                         false, false,
-                                                                         ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                                                         NULL);
+    mca_param_indices->chain_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "reduce_algorithm_chain_fanout",
+                                 "Fanout for chains used for reduce algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                                 false, false,
+                                 ompi_coll_tuned_init_chain_fanout, /* get system wide default */
+                                 NULL);
     return (MPI_SUCCESS);
 }
 
