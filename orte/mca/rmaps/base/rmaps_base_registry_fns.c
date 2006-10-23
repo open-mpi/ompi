@@ -523,10 +523,17 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
         return rc;
     }
     
-    /* should only be one value returned here since there is only one
-     * container/job on the segment - error otherwise
+    /*  It is okay for there to be 0 values returned as this just means a mapping plan
+     * was not previously stored on the registry
      */
-    if (1 != num_vals) {
+    if (0 == num_vals) {
+        return ORTE_SUCCESS;
+    }
+    
+    /* should only be one value returned here since there is only one
+     * container/job on the segment - error otherwise.
+     */
+    if (1 < num_vals) {
         ORTE_ERROR_LOG(ORTE_ERR_GPR_DATA_CORRUPT);
         return ORTE_ERR_GPR_DATA_CORRUPT;
     }

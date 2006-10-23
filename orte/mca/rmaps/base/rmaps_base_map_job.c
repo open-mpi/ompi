@@ -75,7 +75,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapping_plan(parent_job, &working_attrs))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&working_attrs);
-            return rc;
+            return rc;                
         }
         /* go through the parent policy and "fill" anything that was missing in the
          * list of attributes provided. We specifically don't overwrite anything provided
