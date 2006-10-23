@@ -44,7 +44,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
     struct ompi_proc_t *proc1_pointer, *proc2_pointer;
     
 
-    if ( group1 == MPI_GROUP_EMPTY || group2 == MPI_GROUP_EMPTY) {
+    if ( MPI_GROUP_EMPTY == group1 || MPI_GROUP_EMPTY == group2 ) {
 	for (proc = 0; proc < n_ranks ; proc++) {
 	    ranks2[proc] = MPI_UNDEFINED;
 	}
@@ -53,7 +53,7 @@ int ompi_group_translate_ranks ( ompi_group_t *group1,
     /* loop over all ranks */
     for (proc = 0; proc < n_ranks; proc++) {
         rank=ranks1[proc];
-	if (rank == MPI_PROC_NULL) {
+	if ( MPI_PROC_NULL == rank) {
 	    ranks2[proc] = MPI_PROC_NULL;
 	}
 	else {
