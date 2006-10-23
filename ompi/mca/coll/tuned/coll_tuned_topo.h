@@ -36,14 +36,6 @@ extern "C" {
         int32_t tree_nextsize;
     } ompi_coll_tree_t;
 
-    typedef struct ompi_coll_chain_t {
-        int32_t chain_root;
-        int32_t chain_prev;
-        int32_t chain_next[MAXTREEFANOUT];
-        int32_t chain_nextsize;
-        int32_t chain_numchain;
-    } ompi_coll_chain_t;
-
     ompi_coll_tree_t*
     ompi_coll_tuned_topo_build_tree( int fanout,
                                      struct ompi_communicator_t* com,
