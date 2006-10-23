@@ -222,14 +222,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         return (err);
     }
 
-    /* handle special case when size == 1 */
-    if( 1 == comsize ) {
-        if( sendbuf != MPI_IN_PLACE ) {
-            ompi_ddt_copy_content_same_ddt( datatype, count, (char*)recvbuf, (char*)sendbuf );
-        }
-        return MPI_SUCCESS;
-    }
-
     msgsize = dsize * count;   /* needed for decision */
 
     /* for small messages use linear algorithm */

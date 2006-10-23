@@ -259,7 +259,6 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
      * and if using fixed OR dynamic rule sets.
      * Right now you cannot mix them, maybe later on it can be changed
      * but this would probably add an extra if and funct call to the path
-     *
      */
 
     if (OMPI_COMM_IS_INTER(comm)) {
@@ -271,6 +270,14 @@ ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
             to_use = &inter_fixed;
         }
     } else { /* is an intra comm */
+        /**
+         * If the communicator size is less than 2 we have specialized modules
+         * to handle the intra collective communications.
+         */
+        if( ompi_comm_size(comm) < 2) {
+            *priority = 0;
+            return NULL;
+        }
         if (ompi_coll_tuned_use_dynamic_rules) {
             OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:module_query using intra_dynamic"));
             to_use = &intra_dynamic;
