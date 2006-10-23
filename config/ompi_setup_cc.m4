@@ -32,6 +32,10 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
     OMPI_C_COMPILER_VENDOR([ompi_c_vendor])
 
+    # Check for standard headers, needed here because needed before
+    # the types checks.
+    AC_HEADER_STDC
+
     # GNU C and autotools are inconsistent about whether this is
     # defined so let's make it true everywhere for now...  However, IBM
     # XL compilers on PPC Linux behave really badly when compiled with
