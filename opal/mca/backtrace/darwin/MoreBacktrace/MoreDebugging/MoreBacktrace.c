@@ -105,6 +105,19 @@ First checked in.  This code still has bugs, but I've written enough code that c
 	}
 #endif
 
+/* OMPI CHANGE: This is a total hack, but in OS X 10.5 (Leopard), they
+ * renamed all the registers in the thread state structure if
+ * __DARWIN_UNIX03 is defined.  So adapt. 
+ */
+#if defined(__DARWIN_UNIX03) && __DARWIN_UNIX03
+#define srr0 __srr0
+#define lr   __lr
+#define r1   __r1
+#define eip  __eip
+#define ebp  __ebp
+#define esp  __esp
+#endif
+
 /////////////////////////////////////////////////////////////////
 
 // A new architecture will require substantial changes to this file.
