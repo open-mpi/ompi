@@ -113,6 +113,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
+    orte_vpid_t start_vpid;
     char *jobid_string;
     char *uri, *param;
     char **argv;
@@ -159,6 +160,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
+    start_vpid = vpid; 
 
     /* setup the orted triggers for passing their launch info */
     if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
@@ -338,7 +340,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
 
     /* setup the daemon info for each node */
-    vpid = 0;
+    vpid = start_vpid;
     for (item = opal_list_get_first(&map->nodes);
          item != opal_list_get_end(&map->nodes);
          item = opal_list_get_next(item)) {
@@ -559,6 +561,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
 
         /* When not in debug mode, tie stdout/stderr to dev null so we
            don't see messages from orted */
+        /* XXX: this prevents --debug-daemons from working */
         if (!mca_pls_slurm_component.debug) {
             fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
             if (fd >= 0) {
