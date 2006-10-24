@@ -463,11 +463,20 @@ int orte_rmaps_base_store_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
     /* copy the data that is to be stored */
     for (i=0, j=0; i < num_attrs_defd; i++) {
         if (NULL != (attr = orte_rmgr.find_attribute(attr_list, attrs[i]))) {
-            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[j]), attr->key,
-                                                             attr->value->type, attr->value->data))) {
-                ORTE_ERROR_LOG(rc);
-                OBJ_RELEASE(value);
-                return rc;
+            if (NULL != attr->value) {
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[j]), attr->key,
+                                                                 attr->value->type, attr->value->data))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(value);
+                    return rc;
+                }
+            } else {
+                if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[j]), attr->key,
+                                                                 ORTE_UNDEF, NULL))) {
+                    ORTE_ERROR_LOG(rc);
+                    OBJ_RELEASE(value);
+                    return rc;
+                }
             }
             j++;
         }
