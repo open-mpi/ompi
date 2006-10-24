@@ -503,7 +503,7 @@ static int pls_slurm_finalize(void)
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
-    int fd;
+    int fd, id, debug_daemons;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -559,10 +559,14 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
-        /* When not in debug mode, tie stdout/stderr to dev null so we
-           don't see messages from orted */
-        /* XXX: this prevents --debug-daemons from working */
-        if (!mca_pls_slurm_component.debug) {
+        /* When not in debug mode and --debug-daemons was not passed,
+         * tie stdout/stderr to dev null so we don't see messages from orted */
+        id = mca_base_param_find("orte", "debug", "daemons");
+        if(id < 0) {
+            id = mca_base_param_register_int("orte", "debug", "daemons", NULL, 0);
+        }
+        mca_base_param_lookup_int(id, &debug_daemons);
+        if (0 == mca_pls_slurm_component.debug && 0 == debug_daemons) {
             fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
             if (fd >= 0) {
                 if (fd != 1) {
