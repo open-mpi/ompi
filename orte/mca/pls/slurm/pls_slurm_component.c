@@ -107,6 +107,11 @@ static int pls_slurm_open(void)
     mca_base_param_reg_int(comp, "debug", "Enable debugging of slurm pls",
                            false, false, 0, 
                            &mca_pls_slurm_component.debug);
+    if (mca_pls_slurm_component.debug == 0) {
+        mca_base_param_reg_int_name("orte", "debug",
+                                    "Whether or not to enable debugging output for all ORTE components (0 or 1)",
+                                    false, false, false, &mca_pls_slurm_component.debug);
+    }
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, 
