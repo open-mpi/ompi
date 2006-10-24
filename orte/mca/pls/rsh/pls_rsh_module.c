@@ -420,6 +420,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
 
+    if (mca_pls_rsh_component.debug_daemons &&
+        mca_pls_rsh_component.num_concurrent < num_nodes) {
+        /* we can't run in this situation, so pretty print the error
+        * and exit
+        */
+        opal_show_help("help-pls-rsh.txt", "deadlock-params",
+                       true, mca_pls_rsh_component.num_concurrent, num_nodes);
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&active_daemons);
+        return ORTE_ERR_FATAL;
+    }
+
     /*
      * After a discussion between Ralph & Jeff, we concluded that we
      * really are handling the prefix dir option incorrectly. It currently

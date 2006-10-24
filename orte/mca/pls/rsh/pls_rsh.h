@@ -62,6 +62,7 @@ struct orte_pls_rsh_component_t {
     orte_pls_base_component_t super;
     bool debug;
     bool debug_malloc;
+    bool debug_daemons;
     bool reap;
     bool assume_same_shell;
     int delay;
