@@ -141,7 +141,7 @@ int orte_pls_rsh_component_open(void)
         mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     }
     
-    mca_base_param_reg_int(c, "debug_daemons",
+    mca_base_param_reg_int_name("orte", "debug_daemons",
                            "Whether or not to enable debugging daemons (0 or 1)",
                            false, false, false, &tmp);
     mca_pls_rsh_component.debug_daemons = OPAL_INT_TO_BOOL(tmp);
