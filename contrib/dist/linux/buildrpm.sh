@@ -109,6 +109,9 @@ if test "$rpmtopdir" != ""; then
 elif test -d /usr/src/RPM; then
     need_root=1
     rpmtopdir="/usr/src/RPM"
+elif test -d /usr/src/packages; then
+    need_root=1
+    rpmtopdir="/usr/src/packages"
 else
     need_root=1
     rpmtopdir="/usr/src/redhat"
