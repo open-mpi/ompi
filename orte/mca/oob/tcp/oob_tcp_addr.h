@@ -53,6 +53,8 @@ typedef struct mca_oob_tcp_addr_t mca_oob_tcp_addr_t;
 
 OBJ_CLASS_DECLARATION(mca_oob_tcp_addr_t);
 
+#define MCA_OOB_TCP_ADDR_TYPE_AFINET   0x01
+
 /**
  * Unpack the contact information posted by the peer.
  */
