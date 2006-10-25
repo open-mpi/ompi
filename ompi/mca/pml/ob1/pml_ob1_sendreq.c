@@ -967,14 +967,15 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 #endif  /* OMPI_WANT_PERUSE */
 
             /* initiate send - note that this may complete before the call returns */
+            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
             rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
                 
             if(rc == OMPI_SUCCESS) {
                 bytes_remaining -= size;
                 /* update state */
                 sendreq->req_send_offset += size;
-                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
-            } else {
+            } else { 
+                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
                 mca_bml_base_free(bml_btl,des);
                 continue;
             }
