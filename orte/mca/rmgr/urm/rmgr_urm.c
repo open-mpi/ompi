@@ -408,9 +408,9 @@ static int orte_rmgr_urm_spawn_job(
          if (0 != gettimeofday(&urmstop, NULL)) {
              opal_output(0, "rmgr_urm: could not obtain stop time");
          } else {
-             opal_output(0, "rmgr_urm: job setup time is %ld sec %ld usec",
-                         (long int)(urmstop.tv_sec - urmstart.tv_sec),
-                         (long int)(urmstop.tv_usec - urmstart.tv_usec));
+             opal_output(0, "rmgr_urm: job setup time is %ld usec",
+                         (long int)((urmstop.tv_sec - urmstart.tv_sec)*1000000 +
+                                    (urmstop.tv_usec - urmstart.tv_usec)));
          }
      }
      
@@ -422,7 +422,18 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
-    return ORTE_SUCCESS;
+     /* check for timing request - get start time if so */
+     if (mca_rmgr_urm_component.timing) {
+         if (0 != gettimeofday(&urmstart, NULL)) {
+             opal_output(0, "rmgr_urm: could not obtain launch stop time");
+         } else {
+             opal_output(0, "rmgr_urm: launch time is %ld usec",
+                         (long int)((urmstart.tv_sec - urmstop.tv_sec)*1000000 +
+                                    (urmstart.tv_usec - urmstop.tv_usec)));             
+         }
+     }
+     
+     return ORTE_SUCCESS;
 }
 
 

@@ -54,7 +54,7 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
  * finishes setting up the component struct.
  */
 int orte_pls_bproc_component_open(void) {
-    int rc;
+    int rc, tmp, value;
     char *policy;
     
     /* init parameters */
@@ -87,6 +87,15 @@ int orte_pls_bproc_component_open(void) {
         mca_pls_bproc_component.bynode = true;
     } else {
         mca_pls_bproc_component.bynode = false;
+    }
+    
+    tmp = mca_base_param_reg_int_name("orte", "timing",
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
+    if (value != 0) {
+        mca_pls_bproc_component.timing = true;
+    } else {
+        mca_pls_bproc_component.timing = false;
     }
     
     /* init the list to hold the daemon names */

@@ -63,6 +63,7 @@ struct orte_pls_rsh_component_t {
     bool debug;
     bool debug_malloc;
     bool debug_daemons;
+    bool timing;
     bool reap;
     bool assume_same_shell;
     int delay;

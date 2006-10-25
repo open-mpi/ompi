@@ -30,10 +30,17 @@
 #include <unistd.h>
 #endif
 #include <signal.h>
+#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
 #ifdef HAVE_SCHED_H
 #include <sched.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
 #endif
 #include <errno.h>
 #include <tm.h>
@@ -138,8 +145,19 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     tm_event_t event;
     opal_list_t daemons;
     orte_pls_daemon_info_t *dmn;
-
-   /* Query the map for this job.
+    struct timeval launchstart, launchstop, completionstart, completionstop;
+    struct timeval jobstart, jobstop;
+    int maxtime=0, mintime=99999999, maxiter, miniter, deltat;
+    float avgtime=0.0;
+    
+    /* check for timing request - get start time if so */
+    if (mca_pls_tm_component.timing) {
+        if (0 != gettimeofday(&jobstart, NULL)) {
+            opal_output(0, "pls_tm: could not obtain job start time");
+        }
+    }
+    
+    /* Query the map for this job.
      * We need the entire mapping for a couple of reasons:
      *  - need the prefix to start with.
      *  - need to know if we are launching on a subset of the allocated nodes
@@ -397,6 +415,15 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
             }
         }
         
+        /* check for timing request - get start time if so */
+        if (mca_pls_tm_component.timing) {
+            if (0 != gettimeofday(&launchstart, NULL)) {
+                opal_output(0, "pls_tm: could not obtain start time");
+                launchstart.tv_sec = 0;
+                launchstart.tv_usec = 0;
+            }
+        }
+        
         rc = pls_tm_start_proc(node->nodename, argc, argv, env,
                                 tm_task_ids + launched, 
                                 tm_events + launched);
@@ -404,6 +431,25 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
             opal_output(0, "pls:tm: start_procs returned error %d", rc);
             goto cleanup;
         }
+        /* check for timing request - get stop time and process if so */
+        if (mca_pls_tm_component.timing) {
+            if (0 != gettimeofday(&launchstop, NULL)) {
+                opal_output(0, "pls_tm: could not obtain stop time");
+            } else {
+                deltat = (launchstop.tv_sec - launchstart.tv_sec)*1000000 +
+                         (launchstop.tv_usec - launchstart.tv_usec);
+                avgtime = avgtime + deltat / num_nodes;
+                if (deltat < mintime) {
+                    mintime = deltat;
+                    miniter = launched;
+                }
+                if (deltat > maxtime) {
+                    maxtime = deltat;
+                    maxiter = launched;
+                }
+            }
+        }
+        
         launched++;
         ++vpid;
         free(name);
@@ -415,6 +461,15 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
         opal_output(0, "pls:tm:launch: finished spawning orteds\n");
     }
 
+    /* check for timing request - get start time for launch completion */
+    if (mca_pls_tm_component.timing) {
+        if (0 != gettimeofday(&completionstart, NULL)) {
+            opal_output(0, "pls_tm: could not obtain completion start time");
+            completionstart.tv_sec = 0;
+            completionstart.tv_usec = 0;
+        }
+    }
+    
     /* all done, so store the daemon info on the registry */
     if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
         ORTE_ERROR_LOG(rc);
@@ -429,7 +484,23 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
             return ORTE_ERR_IN_ERRNO;
         }
     }
-
+    
+    /* check for timing request - get stop time for launch completion and report */
+    if (mca_pls_tm_component.timing) {
+        if (0 != gettimeofday(&completionstop, NULL)) {
+            opal_output(0, "pls_tm: could not obtain completion stop time");
+        } else {
+            deltat = (launchstop.tv_sec - launchstart.tv_sec)*1000000 +
+                     (launchstop.tv_usec - launchstart.tv_usec);
+            opal_output(0, "pls_tm: launch completion required %d usec", deltat);
+        }
+        opal_output(0, "pls_tm: Launch statistics:");
+        opal_output(0, "pls_tm: Average time to launch an orted: %f usec", avgtime);
+        opal_output(0, "pls_tm: Max time to launch an orted: %d usec at iter %d", maxtime, maxiter);
+        opal_output(0, "pls_tm: Min time to launch an orted: %d usec at iter %d", mintime, miniter);
+    }
+    
+    
  cleanup:
     OBJ_RELEASE(map);
     
@@ -456,6 +527,17 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     }
     OBJ_DESTRUCT(&daemons);
 
+    /* check for timing request - get stop time and process if so */
+    if (mca_pls_tm_component.timing) {
+        if (0 != gettimeofday(&jobstop, NULL)) {
+            opal_output(0, "pls_tm: could not obtain stop time");
+        } else {
+            deltat = (jobstop.tv_sec - jobstart.tv_sec)*1000000 +
+                     (jobstop.tv_usec - jobstart.tv_usec);
+            opal_output(0, "pls_tm: launch of entire job required %d usec", deltat);
+        }
+    }
+    
     if (mca_pls_tm_component.debug) {
         opal_output(0, "pls:tm:launch: finished\n");
     }

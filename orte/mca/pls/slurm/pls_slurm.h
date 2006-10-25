@@ -32,6 +32,7 @@ extern "C" {
         orte_pls_base_component_t super;
         int priority;
         int debug;
+        bool timing;
         char *orted;
         char *custom_args;
     };

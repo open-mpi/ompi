@@ -511,13 +511,15 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     opal_list_t daemons;
     orte_pls_daemon_info_t *dmn;
     opal_list_item_t *item;
+    struct timeval joblaunchstart, launchstart, launchstop;
 
     OPAL_TRACE(1);
     
-    /* clean out any MCA component selection directives that
-     * won't work on remote nodes
-     */
-    orte_pls_base_purge_mca_params(envp);
+    if (mca_pls_bproc_component.timing) {
+        if (0 != gettimeofday(&joblaunchstart, NULL)) {
+            opal_output(0, "pls_bproc: could not obtain start time");
+        }
+    }
     
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done
@@ -633,7 +635,25 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
 
     /* launch the daemons */
     mca_pls_bproc_component.num_daemons += num_daemons;
+    
+    if (mca_pls_bproc_component.timing) {
+        if (0 != gettimeofday(&launchstart, NULL)) {
+            opal_output(0, "pls_bproc: could not obtain start time");
+        }
+    }
+
     rc = bproc_vexecmove(num_daemons, daemon_list, pids, orted_path, argv, *envp);
+    
+    if (mca_pls_bproc_component.timing) {
+        if (0 != gettimeofday(&launchstop, NULL)) {
+             opal_output(0, "pls_bproc: could not obtain stop time");
+         } else {
+             opal_output(0, "pls_bproc: daemon launch time is %ld usec",
+                         (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
+                         (launchstop.tv_usec - launchstart.tv_usec));
+         }
+    }
+    
     if(rc != num_daemons) {
         opal_show_help("help-pls-bproc.txt", "daemon-launch-number", true,
                        num_daemons, rc, orted_path);
@@ -699,6 +719,16 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
     }
     *num_launched = num_daemons;
 
+    if (mca_pls_bproc_component.timing) {
+        if (0 != gettimeofday(&launchstop, NULL)) {
+            opal_output(0, "pls_bproc: could not obtain stop time");
+        } else {
+            opal_output(0, "pls_bproc: total job launch time is %ld usec",
+                        (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
+                        (launchstop.tv_usec - joblaunchstart.tv_usec));
+        }
+    }
+        
 cleanup:
     if(NULL != argv) {
         opal_argv_free(argv);
