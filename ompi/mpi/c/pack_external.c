@@ -58,9 +58,14 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     OBJ_CONSTRUCT(&local_convertor, ompi_convertor_t);
 
-    /* The resulting convertor will be set to the position zero */
+    /* The resulting convertor will be set to the position zero. We have to use
+     * CONVERTOR_SEND_CONVERSION in order to force the convertor to do anything
+     * more than just packing the data.
+     */
     ompi_convertor_copy_and_prepare_for_send( ompi_mpi_external32_convertor,
-                                              datatype, incount, inbuf, 0, &local_convertor );
+                                              datatype, incount, inbuf,
+                                              CONVERTOR_SEND_CONVERSION,
+                                              &local_convertor );
 
     /* Check for truncation */
     ompi_convertor_get_packed_size( &local_convertor, &size );

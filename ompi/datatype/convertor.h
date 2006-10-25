@@ -39,7 +39,7 @@ extern "C" {
  */
 /* keep the last 16 bits free for data flags */
 #define CONVERTOR_DATATYPE_MASK    0x0000FFFF
-#define CONVERTOR_USELESS          0x00010000
+#define CONVERTOR_SEND_CONVERSION  0x00010000
 #define CONVERTOR_RECV             0x00020000
 #define CONVERTOR_SEND             0x00040000
 #define CONVERTOR_HOMOGENEOUS      0x00080000
