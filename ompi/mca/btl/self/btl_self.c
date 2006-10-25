@@ -178,9 +178,9 @@ extern int mca_btl_self_free(
     mca_btl_base_descriptor_t* des)
 {
     mca_btl_self_frag_t* frag = (mca_btl_self_frag_t*)des;
-    if(frag->size <= mca_btl_self.btl_eager_limit) {
+    if(frag->size == mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_RETURN_EAGER(frag);
-    } else if (frag->size <= mca_btl_self.btl_max_send_size) {
+    } else if (frag->size == mca_btl_self.btl_max_send_size) {
         MCA_BTL_SELF_FRAG_RETURN_SEND(frag);
     } else {
         MCA_BTL_SELF_FRAG_RETURN_RDMA(frag);
