@@ -554,13 +554,24 @@ int orte_rmaps_base_get_mapping_plan(orte_jobid_t job, opal_list_t *attr_list)
     for (i=0; i < value->cnt; i++) {
         kval = value->keyvals[i];
         
-        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
-                                                          kval->value->type,
-                                                          kval->value->data,
-                                                          ORTE_RMGR_ATTR_OVERRIDE))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(value);
-            return rc;
+        if (NULL != kval->value) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
+                                                              kval->value->type,
+                                                              kval->value->data,
+                                                              ORTE_RMGR_ATTR_OVERRIDE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attr_list, kval->key,
+                                                              ORTE_UNDEF,
+                                                              NULL,
+                                                              ORTE_RMGR_ATTR_OVERRIDE))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(value);
+                return rc;
+            }
         }
     }
     
