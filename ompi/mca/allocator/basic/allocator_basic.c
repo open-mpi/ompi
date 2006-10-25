@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -172,8 +173,11 @@ void *mca_allocator_basic_alloc(
     size_t allocated_size;
     OPAL_THREAD_LOCK(&module->seg_lock);
 
-    /* search the list for a segment of the required size */
+    /* add the size of the header into the amount we need to request */
     size += sizeof(size_t);
+    /* normalize size so we don't end up with seg_addr on an odd boundary */
+    size += sizeof(size_t) - (size & (sizeof(size_t) - 1));
+    /* search the list for a segment of the required size */
     for(item =  (ompi_free_list_item_t*) opal_list_get_first(&module->seg_list);
         item != (ompi_free_list_item_t*) opal_list_get_end(&module->seg_list);
         item =  (ompi_free_list_item_t*) opal_list_get_next(&item->super)) {
