@@ -63,7 +63,13 @@ static inline int ompi_mpi_errcode_get_class (int errcode)
     ompi_mpi_errcode_t *err;
 
     err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
-    return err->cls;
+    /* If we get a bogus errcode, return MPI_ERR_UNKNOWN */
+    if (NULL != err) {
+        return err->cls;
+    } else {
+        extern ompi_mpi_errcode_t ompi_err_unknown;
+        return ompi_err_unknown.cls;
+    }
 }
 /** 
  * Return the error string 
@@ -73,7 +79,13 @@ static inline char* ompi_mpi_errcode_get_string (int errcode)
     ompi_mpi_errcode_t *err;
     
     err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
-    return err->errstring;
+    /* If we get a bogus errcode, return a string indicating that this
+       truly should not happen */
+    if (NULL != err) {
+        return err->errstring;
+    } else {
+        return "Unknown error (this should not happen!)";
+    }
 }
 
 
