@@ -83,12 +83,33 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
 
     for(i=opal_ifbegin(); i>0; i=opal_ifnext(i)) {
         struct sockaddr_in inaddr;
+        uint8_t type;
+        uint32_t ipaddr;
+        uint16_t port;
+
         opal_ifindextoaddr(i, (struct sockaddr*)&inaddr, sizeof(inaddr));
         if(opal_ifcount() > 1 && 
            opal_ifislocalhost((struct sockaddr*) &inaddr))
             continue;
-        inaddr.sin_port = mca_oob_tcp_component.tcp_listen_port;
-        orte_dss.pack(buffer,&inaddr,sizeof(inaddr),ORTE_BYTE);
+
+           switch (inaddr.sin_family) { 
+ 	        case AF_INET: 
+ 	            type = MCA_OOB_TCP_ADDR_TYPE_AFINET; 
+ 	            break; 
+ 	        default: 
+ 	            /* shouldn't get here, as opal_if shouldn't allow anything 
+ 	               but AFINET.  Will need another case once IPv6 code is 
+ 	               committed. */ 
+ 	            continue; 
+ 	        } 
+ 	        orte_dss.pack(buffer, &type, 1, ORTE_INT8); 
+ 	 
+ 	        port = mca_oob_tcp_component.tcp_listen_port; 
+ 	        orte_dss.pack(buffer, &port, sizeof(port), ORTE_BYTE); 
+ 	 
+ 	        /* This will need to be adjusted for IPv6 */ 
+ 	        ipaddr = (uint32_t) inaddr.sin_addr.s_addr; 
+ 	        orte_dss.pack(buffer, &ipaddr, sizeof(ipaddr), ORTE_BYTE); 
     }
     return ORTE_SUCCESS;
 }
@@ -125,12 +146,42 @@ mca_oob_tcp_addr_t* mca_oob_tcp_addr_unpack(orte_buffer_t* buffer)
         }
         addr->addr_alloc = addr->addr_count;
         for(i=0; i<addr->addr_count; i++) {
-            orte_std_cntr_t inaddr_size = sizeof(struct sockaddr_in);
-            rc = orte_dss.unpack(buffer, addr->addr_inet+i, &inaddr_size, ORTE_BYTE);
+            uint8_t type;
+            uint32_t ipaddr;
+            uint16_t port;
+ 	    /* unpack and expand family */ 
+ 	    count = 1; 
+ 	    rc = orte_dss.unpack(buffer, &type, &count, ORTE_INT8);             
             if(rc != ORTE_SUCCESS) {
                 OBJ_RELEASE(addr);
                 return NULL;
             }
+            switch (type) { 
+            case MCA_OOB_TCP_ADDR_TYPE_AFINET: 
+                addr->addr_inet[i].sin_family = AF_INET; 
+                break; 
+            default: 
+                OBJ_RELEASE(addr); 
+                return NULL; 
+            } 
+ 	 
+            /* and the listen port */ 
+            count = sizeof(port);
+            rc = orte_dss.unpack(buffer, &port, &count, ORTE_BYTE); 
+            if(rc != ORTE_SUCCESS) { 
+                OBJ_RELEASE(addr); 
+                return NULL; 
+            } 
+            addr->addr_inet[i].sin_port = port; 
+ 
+            /* and the address.  need to fix for IPv6 */ 
+            count = sizeof(ipaddr);
+            rc = orte_dss.unpack(buffer, &ipaddr, &count, ORTE_BYTE); 
+            if(rc != ORTE_SUCCESS) { 
+                OBJ_RELEASE(addr); 
+                return NULL; 
+            } 
+            addr->addr_inet[i].sin_addr.s_addr = ipaddr; 
         }
     }
     return addr;
