@@ -108,7 +108,7 @@ orte_pls_rsh_component_t mca_pls_rsh_component = {
 
 int orte_pls_rsh_component_open(void)
 {
-    int tmp;
+    int tmp, value;
     mca_base_component_t *c = &mca_pls_rsh_component.super.pls_version;
 
     /* initialize globals */
@@ -140,12 +140,20 @@ int orte_pls_rsh_component_open(void)
                                     false, false, false, &tmp);
         mca_pls_rsh_component.debug = OPAL_INT_TO_BOOL(tmp);
     }
-    
     mca_base_param_reg_int_name("orte", "debug_daemons",
-                           "Whether or not to enable debugging daemons (0 or 1)",
-                           false, false, false, &tmp);
+                                "Whether or not to enable debugging of daemons (0 or 1)",
+                                false, false, false, &tmp);
     mca_pls_rsh_component.debug_daemons = OPAL_INT_TO_BOOL(tmp);
     
+    tmp = mca_base_param_reg_int_name("orte", "timing",
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
+    if (value != 0) {
+        mca_pls_rsh_component.timing = true;
+    } else {
+        mca_pls_rsh_component.timing = false;
+    }
+
     mca_base_param_reg_string(c, "orted",
                               "The command name that the rsh pls component will invoke for the ORTE daemon",
                               false, false, "orted", 

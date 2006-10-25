@@ -38,6 +38,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -132,7 +135,14 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     char *cur_prefix;
     opal_list_t daemons;
     orte_pls_daemon_info_t *dmn;
+    struct timeval joblaunchstart, launchstart, launchstop;
 
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&joblaunchstart, NULL)) {
+            opal_output(0, "pls_slurm: could not obtain job start time");
+        }        
+    }
+    
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done
      */
@@ -369,18 +379,33 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
 
-    /* clean out any MCA component selection directives that
-     * won't work on remote nodes
-     */
-    orte_pls_base_purge_mca_params(&env);
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&launchstart, NULL)) {
+            opal_output(0, "pls_slurm: could not obtain start time");
+        }        
+    }
     
     /* exec the daemon */
     rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
+    
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&launchstop, NULL)) {
+             opal_output(0, "pls_slurm: could not obtain stop time");
+         } else {
+             opal_output(0, "pls_slurm: daemon block launch time is %ld usec",
+                         (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
+                         (launchstop.tv_usec - launchstart.tv_usec));
+             opal_output(0, "pls_slurm: total job launch time is %ld usec",
+                         (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
+                         (launchstop.tv_usec - joblaunchstart.tv_usec));
+         }
+    }
+
     if (ORTE_SUCCESS != rc) {
         opal_output(0, "pls:slurm: start_procs returned error %d", rc);
         goto cleanup;
     }
-    
+
     /* JMS: short we stash the srun pid in the gpr somewhere for cleanup? */
     /* JMS: how do we catch when srun dies? */
 

@@ -111,6 +111,8 @@ struct orte_pls_bproc_component_t {
      * we will look for it in the user's path */
     int debug;
     /**< If greater than 0 print debugging information */
+    bool timing;
+    /**< If true, report launch timing info */
     int num_procs;
     /**< The number of processes that are running */
     int priority;
