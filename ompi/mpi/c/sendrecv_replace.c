@@ -70,7 +70,6 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         unsigned char recv_data[2048];
         size_t packed_size, max_data;
         uint32_t iov_count;
-        int free_after;
         ompi_status_public_t recv_status;
         ompi_proc_t* proc = ompi_comm_peer_lookup(comm,dest);
         if(proc == NULL) {
@@ -108,7 +107,7 @@ int MPI_Sendrecv_replace(void * buf, int count, MPI_Datatype datatype,
         iov.iov_len = recv_status._count;
         iov_count = 1;
         max_data = recv_status._count;
-        ompi_convertor_unpack(&convertor, &iov, &iov_count, &max_data, &free_after);
+        ompi_convertor_unpack(&convertor, &iov, &iov_count, &max_data );
 
         /* return status to user */
         if(status != MPI_STATUS_IGNORE) {

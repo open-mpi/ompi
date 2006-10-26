@@ -827,7 +827,6 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
-    int32_t free_after;
     int rc;
 
     MCA_BTL_SM_FRAG_ALLOC2(frag, rc);
@@ -841,7 +840,7 @@ struct mca_btl_base_descriptor_t* mca_btl_sm_prepare_src(
     iov.iov_len = max_data;
     iov.iov_base = (IOVBASE_TYPE*)(((unsigned char*)(frag+1)) + reserve);
 
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
     if(rc < 0) {
         MCA_BTL_SM_FRAG_RETURN(frag);
         return NULL;

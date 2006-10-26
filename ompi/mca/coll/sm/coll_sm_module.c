@@ -57,7 +57,6 @@
  * Global variables
  */
 uint32_t mca_coll_sm_iov_size = 1;
-int32_t mca_coll_sm_bogus_free_after = 0;
 
 
 /*

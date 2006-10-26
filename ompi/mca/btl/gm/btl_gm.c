@@ -271,7 +271,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
-    int32_t free_after;
     int rc;
 
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
@@ -293,7 +292,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
                                                                                                     
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
@@ -330,7 +329,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
                                                                                                 
         frag->segment.seg_len = max_data;
         frag->segment.seg_addr.pval = iov.iov_base;
@@ -363,7 +362,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         *size  = max_data;
         if( rc < 0 ) {
             MCA_BTL_GM_FRAG_RETURN(btl, frag);
@@ -389,7 +388,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
                                                                                                     
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         *size  = max_data;
                                                                                                     
         if( rc < 0 ) {

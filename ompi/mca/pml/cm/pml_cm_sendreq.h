@@ -227,7 +227,6 @@ do {                                                                    \
     struct iovec iov;                                                   \
     unsigned int iov_count;                                             \
     size_t max_data;                                                    \
-    int freeAfter;                                                      \
                                                                         \
     if(sendreq->req_count > 0) {                                        \
         sendreq->req_buff =                                             \
@@ -241,7 +240,7 @@ do {                                                                    \
             ompi_convertor_pack( &sendreq->req_send.req_base.req_convertor, \
                                  &iov,                                  \
                                  &iov_count,                            \
-                                 &max_data, &freeAfter);                \
+                                 &max_data );                           \
             ompi_convertor_prepare_for_send( &sendreq->req_send.req_base.req_convertor, MPI_PACKED, \
                                              max_data, sendreq->req_buff ); \
         }                                                               \

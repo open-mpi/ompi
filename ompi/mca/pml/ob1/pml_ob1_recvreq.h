@@ -284,7 +284,6 @@ do {                                                                            
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
-        int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
         mca_btl_base_segment_t* segment = segments;                               \
                                                                                   \
@@ -305,8 +304,7 @@ do {                                                                            
         ompi_convertor_unpack( &(request)->req_recv.req_convertor,                \
                                iov,                                               \
                                &iov_count,                                        \
-                               &max_data,                                         \
-                               &free_after);                                      \
+                               &max_data );                                       \
         bytes_delivered = max_data;                                               \
     }                                                                             \
 } while (0)

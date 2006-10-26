@@ -439,7 +439,6 @@ extern "C" {
  * these are thread safe)
  */
 extern uint32_t mca_coll_sm_iov_size;
-extern int32_t mca_coll_sm_bogus_free_after;
 
 
 /**
@@ -487,7 +486,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
         ((rank) * mca_coll_sm_component.sm_fragment_size); \
     (max_data) = (iov).iov_len = mca_coll_sm_component.sm_fragment_size; \
     ompi_convertor_pack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
-                        &(max_data), &mca_coll_sm_bogus_free_after)
+                        &(max_data) )
 
 /**
  * Macro to copy a single segment out from a shared segment to a user
@@ -497,7 +496,7 @@ extern int32_t mca_coll_sm_bogus_free_after;
     (iov).iov_base = (((char*) (index)->mcbmi_data) + \
                       ((src_rank) * mca_coll_sm_component.sm_fragment_size)); \
     ompi_convertor_unpack(&(convertor), &(iov), &mca_coll_sm_iov_size, \
-                          &(max_data), &mca_coll_sm_bogus_free_after)
+                          &(max_data) )
 
 /**
  * Macro to memcpy a fragment between one shared segment and another

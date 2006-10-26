@@ -50,8 +50,7 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     
     ret = ompi_mtl_datatype_pack(convertor, 
                                  &mtl_mx_request.mx_segment[0].segment_ptr, 
-                                 &length, 
-                                 &mtl_mx_request.free_after);
+                                 &length);
     
     
     mtl_mx_request.mx_segment[0].segment_length = length;
@@ -147,8 +146,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
     
     ret = ompi_mtl_datatype_pack(convertor, 
                                  &mtl_mx_request->mx_segment[0].segment_ptr, 
-                                 &length, 
-                                 &mtl_mx_request->free_after);
+                                 &length);
     mtl_mx_request->mx_segment[0].segment_length = length;
     mtl_mx_request->convertor = convertor;
     mtl_mx_request->type = OMPI_MTL_MX_ISEND;

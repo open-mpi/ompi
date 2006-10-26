@@ -37,7 +37,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
                void *outbuf, int outcount, MPI_Datatype datatype,
                MPI_Comm comm) 
 {
-    int rc = 1, freeAfter;
+    int rc = 1;
     ompi_convertor_t local_convertor;
     struct iovec outvec;
     unsigned int iov_count;
@@ -81,8 +81,7 @@ int MPI_Unpack(void *inbuf, int insize, int *position,
         
         /* Do the actual unpacking */
         iov_count = 1;
-        rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count,
-                                    &size, &freeAfter );
+        rc = ompi_convertor_unpack( &local_convertor, &outvec, &iov_count, &size );
         *position += size;
         OBJ_DESTRUCT( &local_convertor );
         

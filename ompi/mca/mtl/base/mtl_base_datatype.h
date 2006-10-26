@@ -32,7 +32,6 @@ ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-    int32_t free_after;
     size_t max_data;
 
     ompi_convertor_get_packed_size(convertor, &max_data);
@@ -48,8 +47,7 @@ ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
         *freeAfter = false;
     }
     
-    ompi_convertor_pack(convertor, &iov, &iov_count, &max_data,
-                        &free_after);
+    ompi_convertor_pack( convertor, &iov, &iov_count, &max_data );
     
     *buffer = iov.iov_base;
     *buffer_len = iov.iov_len;
@@ -91,7 +89,6 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-    int32_t free_after;
     size_t max_data;
 
     iov.iov_len = buffer_len;
@@ -100,8 +97,7 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
 
     
     if (max_data > 0 && ompi_convertor_need_buffers(convertor)) {
-        ompi_convertor_unpack(convertor, &iov, &iov_count,
-                          &max_data, &free_after);
+        ompi_convertor_unpack(convertor, &iov, &iov_count, &max_data );
 
         free(buffer);
     }
