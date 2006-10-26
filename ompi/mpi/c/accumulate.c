@@ -59,6 +59,10 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             rc = MPI_ERR_OP;
         } else if (!ompi_win_comm_allowed(win)) {
             rc = MPI_ERR_RMA_SYNC;
+        } else if ( target_disp < 0 ) {
+            rc = MPI_ERR_DISP;
+        } else if ( (origin_count < 0) || (target_count < 0) ) {
+            rc = MPI_ERR_COUNT;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, origin_datatype, origin_count);
         }
