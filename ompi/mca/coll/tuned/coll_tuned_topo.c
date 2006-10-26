@@ -169,6 +169,128 @@ ompi_coll_tuned_topo_build_tree( int fanout,
     return tree;
 }
 
+/*
+ * Constructs in-order binary tree which can be used for non-commutative reduce 
+ * operations.
+ * Root of this tree is always rank (size-1) and fanout is 2.
+ * Here are some of the examples of this tree:
+ * size == 2                   size = 4                 size = 9
+ *      1                           3                        8
+ *     /                          /   \                    /   \
+ *    0                          2     1                  7      3
+ *                                    /                 /  \    / \
+ *                                   0                 6    5  2   1
+ *                                                         /      /
+ *                                                        4      0
+ */
+ompi_coll_tree_t*
+ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm )
+{
+    int rank, size;
+    int myrank, rightsize, delta;
+    int parent, lchild, rchild;
+    ompi_coll_tree_t* tree;
+
+    /* 
+     * Get size and rank of the process in this communicator 
+     */
+    size = ompi_comm_size(comm);
+    rank = ompi_comm_rank(comm);
+
+    tree = (ompi_coll_tree_t*)malloc(sizeof(ompi_coll_tree_t));
+    if (!tree) {
+        OPAL_OUTPUT((ompi_coll_tuned_stream,
+                     "coll:tuned:topo_build_tree PANIC::out of memory"));
+        return NULL;
+    }
+
+    tree->tree_root     = MPI_UNDEFINED;
+    tree->tree_nextsize = MPI_UNDEFINED;
+
+    /* 
+     * Initialize tree
+     */
+    tree->tree_fanout   = 2;
+    tree->tree_bmtree   = 0;
+    tree->tree_root     = size - 1;
+    tree->tree_prev     = -1;
+    tree->tree_nextsize = 0;
+    tree->tree_next[0]  = -1;
+    tree->tree_next[1]  = -1;
+    OPAL_OUTPUT((ompi_coll_tuned_stream, 
+                 "coll:tuned:topo_build_in_order_tree Building fo %d rt %d", 
+                 tree->tree_fanout, tree->tree_root));
+
+    /* 
+     * Build the tree
+     */
+    myrank = rank;
+    parent = size - 1;
+    delta = 0;
+
+    while ( 1 ) {
+        /* Compute the size of the right subtree */
+        rightsize = size >> 1;
+
+        /* Determine the left and right child of this parent  */
+        lchild = -1;
+        rchild = -1;
+        if (size - 1 > 0) {
+            lchild = parent - 1;
+            if (lchild > 0) { 
+                rchild = rightsize - 1;
+            }
+        }
+       
+        /* The following cases are possible: myrank can be 
+           - a parent,
+           - belong to the left subtree, or
+           - belong to the right subtee
+           Each of the cases need to be handled differently.
+        */
+          
+        if (myrank == parent) {
+            /* I am the parent:
+               - compute real ranks of my children, and exit the loop. */
+            if (lchild >= 0) tree->tree_next[0] = lchild + delta;
+            if (rchild >= 0) tree->tree_next[1] = rchild + delta;
+            break;
+        }
+        if (myrank > rchild) {
+            /* I belong to the left subtree:
+               - If I am the left child, compute real rank of my parent
+               - Iterate down through tree: 
+               compute new size, shift ranks down, and update delta.
+            */
+            if (myrank == lchild) {
+                tree->tree_prev = parent + delta;
+            }
+            size = size - rightsize - 1;
+            delta = delta + rightsize;
+            myrank = myrank - rightsize;
+            parent = size - 1;
+
+        } else {
+            /* I belong to the right subtree:
+               - If I am the right child, compute real rank of my parent
+               - Iterate down through tree:  
+               compute new size and parent, 
+               but the delta and rank do not need to change.
+            */
+            if (myrank == rchild) {
+                tree->tree_prev = parent + delta;
+            }
+            size = rightsize;
+            parent = rchild;
+        }
+    }
+    
+    if (tree->tree_next[0] >= 0) { tree->tree_nextsize = 1; }
+    if (tree->tree_next[1] >= 0) { tree->tree_nextsize += 1; }
+
+    return tree;
+}
+
 int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree )
 {
     ompi_coll_tree_t *ptr;

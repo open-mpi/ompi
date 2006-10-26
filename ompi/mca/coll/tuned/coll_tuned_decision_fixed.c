@@ -61,16 +61,16 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              struct ompi_datatype_t *rdtype, 
                                              struct ompi_communicator_t *comm)
 {
-    int comsize, rank, err;
+    int communicator_size, rank, err;
     size_t dsize, total_dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
-    comsize = ompi_comm_size(comm);
+    communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* special case */
-    if (comsize==2) {
+    if (communicator_size==2) {
         return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
 
@@ -81,9 +81,9 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
         return (err);
     }
 
-    total_dsize = dsize * scount * comsize;   /* needed for decision */
+    total_dsize = dsize * scount * communicator_size;   /* needed for decision */
 
-    if (comsize >= 12 && total_dsize <= 768) {
+    if (communicator_size >= 12 && total_dsize <= 768) {
         return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     if (total_dsize <= 131072) {
@@ -102,13 +102,13 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  */
 int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 {
-    int comsize;
+    int communicator_size;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed"));
 
-    comsize = ompi_comm_size(comm);
+    communicator_size = ompi_comm_size(comm);
 
-    if( 2 == comsize )
+    if( 2 == communicator_size )
         return ompi_coll_tuned_barrier_intra_two_procs(comm);
     /**
      * Basic optimisation. If we have a power of 2 number of nodes
@@ -117,8 +117,8 @@ int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
      */
     {
         bool has_one = false;
-        for( ; comsize > 0; comsize >>= 1 ) {
-            if( comsize & 0x1 ) {
+        for( ; communicator_size > 0; communicator_size >>= 1 ) {
+            if( communicator_size & 0x1 ) {
                 if( has_one )
                     return ompi_coll_tuned_barrier_intra_bruck(comm);
                 has_one = true;
@@ -142,13 +142,19 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm)
 {
-    int comsize, rank, err;
+    const double a0 = -7.8710;
+    const double b0 = 41.1613;
+    const double a1 = 0.0150;
+    const double b1 = 11.2445;
+    const double a2 = 0.0023;
+    const double b2 = 3.8074;
+    int communicator_size, rank, err;
     int segsize = 0;
-    size_t msgsize, dsize;
+    size_t message_size, dsize;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed"));
 
-    comsize = ompi_comm_size(comm);
+    communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* else we need data size for decision function */
@@ -158,26 +164,64 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
         return (err);
     }
 
-    msgsize = dsize * (unsigned long)count;   /* needed for decision */
+    message_size = dsize * (unsigned long)count;   /* needed for decision */
 
+    if ((message_size <= 1024) && (communicator_size < 12)) {
+        /* Linear_0K */
+        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
+    } else if (message_size < 8192) {
+        if ((communicator_size < 12) || 
+            (communicator_size < (a0 * (message_size / 1024.0) + b0))) {
+            /* Binary_0K */
+            segsize = 0;
+        } else {
+            /* Binary_1K */
+            segsize = 1024;
+        }
+        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+    } else if (message_size <= 35000) {
+        if (communicator_size <= 12) {
+            /* Binary_8K */
+            segsize = 1024 << 3;
+            return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+        } else {
+            /* SplittedBinary_1K */
+            segsize = 1024;
+            return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, root, comm, segsize);
+        }
+
+    } else if (communicator_size > (a1 * (message_size / 1024.0) + b1)) {
+        /* SplittedBinary_8K */
+        segsize = 1024 << 3;
+        return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, root, comm, segsize);
+    }
+    if (communicator_size > (a2 * (message_size / 1024.0) + b2)) {
+        /* Pipeline_8K */
+        segsize = 1024 << 3;
+    } else {
+        /* Pipeline_64K */
+        segsize = 1024 << 6;
+    }
+    return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+#if 0
     /* this is based on gige measurements */
 
-    if (comsize  < 4) {
+    if (communicator_size  < 4) {
         return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    if (comsize == 4) {
-        if (msgsize < 524288) segsize = 0;
+    if (communicator_size == 4) {
+        if (message_size < 524288) segsize = 0;
         else segsize = 16384;
         return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    if (comsize <= 8 && msgsize < 4096) {
+    if (communicator_size <= 8 && message_size < 4096) {
         return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
     }
-    if (comsize > 8 && msgsize >= 32768 && msgsize < 524288) {
+    if (communicator_size > 8 && message_size >= 32768 && message_size < 524288) {
         segsize = 16384;
         return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
     }
-    if (msgsize >= 524288) {
+    if (message_size >= 524288) {
         segsize = 16384;
         return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
     }
@@ -185,6 +229,7 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     /* once tested can swap this back in */
     /* return ompi_coll_tuned_bcast_intra_bmtree (buff, count, datatype, root, comm, segsize); */
     return ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
+#endif  /* 0 */
 }
 
 /*
@@ -200,8 +245,16 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                             struct ompi_op_t* op, int root,
                                             struct ompi_communicator_t* comm)
 {
-    int comsize, rank, err, segsize = 0, fanout = 0;
-    size_t msgsize, dsize;
+    int communicator_size, rank, err, segsize = 0;
+    size_t message_size, dsize;
+    const double a1 =  0.6016 / 1024.0; /* [1/B] */
+    const double b1 =  1.3496;
+    const double a2 =  0.0410 / 1024.0; /* [1/B] */
+    const double b2 =  9.7128;
+    const double a3 =  0.0422 / 1024.0; /* [1/B] */
+    const double b3 =  1.1614;
+    const double a4 =  0.0033 / 1024.0; /* [1/B] */
+    const double b4 =  1.6761;
 
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
 
@@ -212,7 +265,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
     }
 
-    comsize = ompi_comm_size(comm);
+    communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
@@ -222,24 +275,58 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         return (err);
     }
 
-    msgsize = dsize * count;   /* needed for decision */
+    message_size = dsize * count;   /* needed for decision */
 
-    /* for small messages use linear algorithm */
-    if (msgsize <= 4096) {
+    if (((communicator_size < 20) && (message_size < 512)) ||
+        ((communicator_size < 10) && (message_size <= 1024))){
+        /* Linear_0K */
+        return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
+    } else if ((communicator_size < 8) && (message_size < 20480)) {
+        /* Binomial_0K */
         segsize = 0;
-        fanout = comsize - 1;
+        return ompi_coll_tuned_reduce_intra_binomial(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    } else if (message_size < 2048) {
+        /* Binary_0K */
+        segsize = 0;
+        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    } else if (communicator_size > (a1 * message_size + b1)) {
+        /* Binary_1K */
+        segsize = 1024;
+        return ompi_coll_tuned_reduce_intra_binary(sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    } else if (communicator_size > (a2 * message_size + b2)) {
+        /* Pipeline_1K */
+        segsize = 1024;
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    } else if (communicator_size > (a3 * message_size + b3)) {
+        /* Binary_32K */
+        segsize = 32*1024;
+        return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+    }
+    if (communicator_size > (a4 * message_size + b4)) {
+        /* Pipeline_32K */
+        segsize = 32*1024;
+    } else {
+        /* Pipeline_64K */
+        segsize = 64*1024;
+    }
+    return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+#if 0
+    /* for small messages use linear algorithm */
+    if (message_size <= 4096) {
+        segsize = 0;
+        fanout = communicator_size - 1;
         /* when linear implemented or taken from basic put here, right now using chain as a linear system */
         /* it is implemented and I shouldn't be calling a chain with a fanout bigger than MAXTREEFANOUT from topo.h! */
         return ompi_coll_tuned_reduce_intra_basic_linear (sendbuf, recvbuf, count, datatype, op, root, comm); 
         /*        return ompi_coll_tuned_reduce_intra_chain (sendbuf, recvbuf, count, datatype, op, root, comm, segsize, fanout); */
     }
-    if (msgsize < 524288) {
-        if (msgsize <= 65536 ) {
+    if (message_size < 524288) {
+        if (message_size <= 65536 ) {
             segsize = 32768;
             fanout = 8;
         } else {
             segsize = 1024;
-            fanout = comsize/2;
+            fanout = communicator_size/2;
         }
         /* later swap this for a binary tree */
         /*         fanout = 2; */
@@ -247,4 +334,5 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     }
     segsize = 1024;
     return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+#endif  /* 0 */
 }
