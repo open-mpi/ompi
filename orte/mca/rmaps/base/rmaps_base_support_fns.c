@@ -101,6 +101,7 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
     int rc;
+    size_t nodelist_size;
     orte_std_cntr_t num_slots=0;
 
     /** set default answer */
@@ -111,6 +112,8 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
+    nodelist_size = opal_list_get_size(allocated_nodes);
 
     /* If the "no local" option was set, then remove the local node
         from the list */
@@ -148,6 +151,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
 
     /* Sanity check to make sure we have resources available */
     if (0 == opal_list_get_size(allocated_nodes)) {
+        /* so there are 3 reasons we could be erroring here:
+         * 1. There were no nodes allocated to this job 
+         * 2. The local node was the only one available and nolocal was passed 
+         * 3. All the nodes were full */
+        if(0 == nodelist_size) {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:no-available-resources", true);
+        } else if(nolocal) {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:nolocal-no-available-resources", true);
+        } else {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:all-available-resources-used", true);
+        }
         ORTE_ERROR_LOG(ORTE_ERR_TEMP_OUT_OF_RESOURCE);
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
     }
