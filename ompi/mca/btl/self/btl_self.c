@@ -64,35 +64,35 @@ mca_btl_base_module_t mca_btl_self = {
     mca_btl_self_prepare_dst,
     mca_btl_self_send, 
     mca_btl_self_rdma,  /* put */
-    mca_btl_self_rdma,
+    mca_btl_self_rdma,  /* get */
     mca_btl_base_dump,
     NULL, /* mpool */
     NULL /* register error cb */
 };
 
 
-int mca_btl_self_add_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs, 
-    struct ompi_proc_t **procs, 
-    struct mca_btl_base_endpoint_t **peers,
-    ompi_bitmap_t* reachability)
+int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl, 
+                            size_t nprocs, 
+                            struct ompi_proc_t **procs, 
+                            struct mca_btl_base_endpoint_t **peers,
+                            ompi_bitmap_t* reachability )
 {
     size_t i;
-    for(i=0; i<nprocs; i++) {
-        if(procs[i] == ompi_proc_local_proc) {
-            ompi_bitmap_set_bit(reachability, i);
+
+    for( i = 0; i < nprocs; i++ ) {
+        if( procs[i] == ompi_proc_local_proc ) {
+            ompi_bitmap_set_bit( reachability, i );
+            break;  /* there will always be only one ... */
         }
     }
     return OMPI_SUCCESS;
 }
 
 
-int mca_btl_self_del_procs(
-    struct mca_btl_base_module_t* btl, 
-    size_t nprocs,
-    struct ompi_proc_t **procs, 
-    struct mca_btl_base_endpoint_t **peers)
+int mca_btl_self_del_procs( struct mca_btl_base_module_t* btl, 
+                            size_t nprocs,
+                            struct ompi_proc_t **procs, 
+                            struct mca_btl_base_endpoint_t **peers )
 {
     return OMPI_SUCCESS;
 }
@@ -129,11 +129,10 @@ int mca_btl_self_finalize(struct mca_btl_base_module_t* btl)
  * resources associated with the peer.
  */
 
-int mca_btl_self_register(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_tag_t tag,
-    mca_btl_base_module_recv_cb_fn_t cbfunc,
-    void* cbdata)
+int mca_btl_self_register( struct mca_btl_base_module_t* btl,
+                           mca_btl_base_tag_t tag,
+                           mca_btl_base_module_recv_cb_fn_t cbfunc,
+                           void* cbdata )
 {
     mca_btl_self_component.self_reg[tag].cbfunc = cbfunc;
     mca_btl_self_component.self_reg[tag].cbdata = cbdata;
@@ -147,9 +146,8 @@ int mca_btl_self_register(
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
-    struct mca_btl_base_module_t* btl,
-    size_t size)
+mca_btl_base_descriptor_t* mca_btl_self_alloc( struct mca_btl_base_module_t* btl,
+                                               size_t size )
 {
     mca_btl_self_frag_t* frag;
     int rc;
@@ -163,7 +161,9 @@ extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
         return NULL; 
     }
     
-    frag->base.des_flags = 0;
+    frag->base.des_flags   = 0;
+    frag->base.des_src     = &(frag->segment);
+    frag->base.des_src_cnt = 1;
     return (mca_btl_base_descriptor_t*)frag;
 }
                                                                                                                    
@@ -173,11 +173,16 @@ extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-extern int mca_btl_self_free(
-    struct mca_btl_base_module_t* btl,
-    mca_btl_base_descriptor_t* des)
+int mca_btl_self_free( struct mca_btl_base_module_t* btl,
+                       mca_btl_base_descriptor_t* des )
 {
     mca_btl_self_frag_t* frag = (mca_btl_self_frag_t*)des;
+
+    frag->base.des_src     = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_dst     = NULL;
+    frag->base.des_dst_cnt = 0;
+
     if(frag->size == mca_btl_self.btl_eager_limit) {
         MCA_BTL_SELF_FRAG_RETURN_EAGER(frag);
     } else if (frag->size == mca_btl_self.btl_max_send_size) {
@@ -206,11 +211,13 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
-    int32_t free_after;
     int rc;
 
     /* non-contigous data */
-    if(ompi_convertor_need_buffers(convertor) || max_data < mca_btl_self.btl_max_send_size || reserve != 0) {
+    if( ompi_convertor_need_buffers(convertor) ||
+        max_data < mca_btl_self.btl_max_send_size ||
+        reserve != 0 ) {
+
         MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc);
         if(NULL == frag) {
             return NULL;
@@ -222,7 +229,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)(frag+1) + reserve);
 
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if(rc < 0) {
             MCA_BTL_SELF_FRAG_RETURN_SEND(frag);
             return NULL;
@@ -240,20 +247,19 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
         iov.iov_base = NULL;
 
         /* convertor should return offset into users buffer */
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, &free_after);
+        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
         if(rc < 0) {
             MCA_BTL_SELF_FRAG_RETURN_RDMA(frag);
             return NULL;
         }
         frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = max_data;
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
         frag->base.des_flags = 0;
         *size = max_data;
     }
+    frag->base.des_src          = &frag->segment;
+    frag->base.des_src_cnt      = 1;
+    frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     return &frag->base;
 }
 
@@ -282,15 +288,12 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
     ompi_ddt_type_lb( convertor->pDesc, &lb );
     frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->segment.seg_len = reserve + max_data;
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
+    frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
     return &frag->base;
 }
-
- 
  
 /**
  * Initiate a send to the peer.
@@ -299,11 +302,10 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
  * @param peer (IN)     BTL peer addressing
  */
 
-int mca_btl_self_send(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* des,
-    mca_btl_base_tag_t tag)
+int mca_btl_self_send( struct mca_btl_base_module_t* btl,
+                       struct mca_btl_base_endpoint_t* endpoint,
+                       struct mca_btl_base_descriptor_t* des,
+                       mca_btl_base_tag_t tag )
 {
     /**
      * We have to set the dst before the call to the function and reset them
@@ -327,10 +329,9 @@ int mca_btl_self_send(
  * @param peer (IN)     BTL peer addressing
  */
                                                                                                                            
-extern int mca_btl_self_rdma(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* endpoint,
-    struct mca_btl_base_descriptor_t* des)
+int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
+                       struct mca_btl_base_endpoint_t* endpoint,
+                       struct mca_btl_base_descriptor_t* des )
 {
     mca_btl_base_segment_t* src = des->des_src;
     mca_btl_base_segment_t* dst = des->des_dst;
@@ -398,5 +399,3 @@ extern int mca_btl_self_rdma(
     des->des_cbfunc(btl,endpoint,des,OMPI_SUCCESS);
     return OMPI_SUCCESS;
 }
-
-

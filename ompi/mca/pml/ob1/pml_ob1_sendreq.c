@@ -360,7 +360,6 @@ int mca_pml_ob1_send_request_start_buffered(
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data;
-    int32_t free_after;
     int rc;
 
     /* allocate descriptor */
@@ -380,8 +379,7 @@ int mca_pml_ob1_send_request_start_buffered(
         &sendreq->req_send.req_convertor,
         &iov,
         &iov_count,
-        &max_data,
-        &free_after)) < 0) {
+        &max_data)) < 0) {
         mca_bml_base_free(bml_btl, descriptor);
         return rc;
     }
@@ -432,8 +430,7 @@ int mca_pml_ob1_send_request_start_buffered(
     if((rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
                                   &iov,
                                   &iov_count,
-                                  &max_data,
-                                  &free_after)) < 0) {
+                                  &max_data)) < 0) {
         mca_bml_base_free(bml_btl, descriptor);
         return rc;
     }
@@ -474,7 +471,6 @@ int mca_pml_ob1_send_request_start_copy(
     struct iovec iov;
     unsigned int iov_count;
     size_t max_data;
-    int32_t free_after;
     int rc;
 
     /* allocate descriptor */
@@ -499,8 +495,7 @@ int mca_pml_ob1_send_request_start_copy(
                                      &sendreq->req_send.req_convertor,
                                      &iov,
                                      &iov_count,
-                                     &max_data,
-                                     &free_after)) < 0) {
+                                     &max_data)) < 0) {
             mca_bml_base_free(bml_btl, descriptor);
             return rc;
         }

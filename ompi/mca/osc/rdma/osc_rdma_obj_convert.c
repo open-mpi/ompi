@@ -48,7 +48,6 @@ ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
         ompi_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
-        int32_t free_after = 0;
         size_t max_data;
         ompi_proc_t *proc;
 
@@ -76,8 +75,7 @@ ompi_osc_rdma_process_op(ompi_osc_rdma_module_t *module,
         ompi_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
-                              &max_data,
-                              &free_after);
+                              &max_data);
         OBJ_DESTRUCT(&convertor);
     } else {
         /* reductions other than MPI_REPLACE.  Since user-defined

@@ -224,7 +224,7 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
  */
 int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                              struct iovec* iov, uint32_t* out_size,
-                             size_t* max_data, int32_t* freeAfter )
+                             size_t* max_data )
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
@@ -265,12 +265,12 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         return 0;
     }
 
-    return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
+    return pConv->fAdvance( pConv, iov, out_size, max_data );
 }
 
 int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
                                struct iovec* iov, uint32_t* out_size,
-                               size_t* max_data, int32_t* freeAfter )
+                               size_t* max_data )
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
@@ -311,7 +311,7 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
         return 1;
     }
 
-    return pConv->fAdvance( pConv, iov, out_size, max_data, freeAfter );
+    return pConv->fAdvance( pConv, iov, out_size, max_data );
 }
 
 static inline
@@ -500,7 +500,6 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
     /* Here I should check that the data is not overlapping */
 
     convertor->flags      |= CONVERTOR_RECV;
-    convertor->memAlloc_fn = NULL;
 
     OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
@@ -537,7 +536,6 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  const void* pUserBuf )
 {
     convertor->flags            |= CONVERTOR_SEND;
-    convertor->memAlloc_fn       = NULL;
 
     OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
@@ -586,8 +584,6 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
     destination->count             = source->count;
     destination->pBaseBuf          = source->pBaseBuf;
     destination->fAdvance          = source->fAdvance;
-    destination->memAlloc_fn       = source->memAlloc_fn;
-    destination->memAlloc_userdata = source->memAlloc_userdata;
     destination->master            = source->master;
     destination->local_size        = source->local_size;
     destination->remote_size       = source->remote_size;

@@ -276,7 +276,6 @@ do {                                                                            
         struct iovec iov[MCA_BTL_DES_MAX_SEGMENTS];                               \
         uint32_t iov_count = 0;                                                   \
         size_t max_data = bytes_received;                                         \
-        int32_t free_after = 0;                                                   \
         size_t n, offset = seg_offset;                                            \
         bool do_csum = mca_pml_dr.enable_csum &&                                  \
             (request->req_endpoint->bml_endpoint->btl_flags_or & MCA_BTL_FLAGS_NEED_CSUM); \
@@ -300,8 +299,7 @@ do {                                                                            
             &(request)->req_recv.req_convertor,                                   \
             iov,                                                                  \
             &iov_count,                                                           \
-            &max_data,                                                            \
-            &free_after);                                                         \
+            &max_data);                                                           \
         bytes_delivered = max_data;                                               \
         if(bytes_received && !bytes_delivered) assert(0);                         \
         csum = (do_csum ?                                                         \

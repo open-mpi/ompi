@@ -37,7 +37,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
                       MPI_Datatype datatype, void *outbuf,
                       MPI_Aint outsize, MPI_Aint *position) 
 {
-    int rc, freeAfter;
+    int rc;
     ompi_convertor_t local_convertor;
     struct iovec invec;
     unsigned int iov_count;
@@ -69,7 +69,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* Check for truncation */
     ompi_convertor_get_packed_size( &local_convertor, &size );
-    if( (*position + size) > (unsigned int)outsize ) {  /* we can cast as we already checked for < 0 */
+    if( (*position + size) > (size_t)outsize ) {  /* we can cast as we already checked for < 0 */
         OBJ_DESTRUCT( &local_convertor );
         return OMPI_ERRHANDLER_INVOKE( MPI_COMM_WORLD, MPI_ERR_TRUNCATE, FUNC_NAME );
     }
@@ -80,7 +80,7 @@ int MPI_Pack_external(char *datarep, void *inbuf, int incount,
 
     /* Do the actual packing */
     iov_count = 1;
-    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size, &freeAfter );
+    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
 

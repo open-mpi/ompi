@@ -38,7 +38,7 @@ static const char FUNC_NAME[] = "MPI_Pack";
 int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
              void *outbuf, int outsize, int *position, MPI_Comm comm)
 {
-    int rc, freeAfter;
+    int rc;
     ompi_convertor_t local_convertor;
     struct iovec invec;
     unsigned int iov_count;
@@ -77,7 +77,7 @@ int MPI_Pack(void *inbuf, int incount, MPI_Datatype datatype,
 
     /* Do the actual packing */
     iov_count = 1;
-    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size, &freeAfter );
+    rc = ompi_convertor_pack( &local_convertor, &invec, &iov_count, &size );
     *position += size;
     OBJ_DESTRUCT( &local_convertor );
 
