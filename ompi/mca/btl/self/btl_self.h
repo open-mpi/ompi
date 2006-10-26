@@ -59,12 +59,12 @@ OMPI_MODULE_DECLSPEC extern mca_btl_self_component_t mca_btl_self_component;
 /**
  * Register shared memory module parameters with the MCA framework
  */
-extern int mca_btl_self_component_open(void);
+int mca_btl_self_component_open(void);
 
 /**
  * Any final cleanup before being unloaded.
  */
-extern int mca_btl_self_component_close(void);
+int mca_btl_self_component_close(void);
 
 /**
  * SELF module initialization.
@@ -74,7 +74,7 @@ extern int mca_btl_self_component_close(void);
  * @param enable_mpi_threads (IN)         Flag indicating whether BTL must support multilple simultaneous invocations from different threads
  *
  */
-extern mca_btl_base_module_t** mca_btl_self_component_init(
+mca_btl_base_module_t** mca_btl_self_component_init(
     int *num_btls, 
     bool enable_progress_threads,
     bool enable_mpi_threads
@@ -90,7 +90,7 @@ extern mca_btl_base_module_t mca_btl_self;
  * @return     OMPI_SUCCESS or error status on failure.
  */
 
-extern int mca_btl_self_finalize(
+int mca_btl_self_finalize(
     struct mca_btl_base_module_t* btl
 );
 
@@ -109,7 +109,7 @@ extern int mca_btl_self_finalize(
  * 
  */
 
-extern int mca_btl_self_add_procs(
+int mca_btl_self_add_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -132,7 +132,7 @@ extern int mca_btl_self_add_procs(
  * 
  */
 
-extern int mca_btl_self_add_procs_same_base_addr(
+int mca_btl_self_add_procs_same_base_addr(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -150,7 +150,7 @@ extern int mca_btl_self_add_procs_same_base_addr(
  * @return             Status indicating if cleanup was successful
  *
  */
-extern int mca_btl_self_del_procs(
+int mca_btl_self_del_procs(
     struct mca_btl_base_module_t* btl,
     size_t nprocs,
     struct ompi_proc_t **procs,
@@ -170,7 +170,7 @@ extern int mca_btl_self_del_procs(
  * resources associated with the peer.
  */
 
-extern int mca_btl_self_register(
+int mca_btl_self_register(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_tag_t tag,
     mca_btl_base_module_recv_cb_fn_t cbfunc,
@@ -184,7 +184,7 @@ extern int mca_btl_self_register(
  * @param btl (IN)      BTL module
  * @param size (IN)     Request segment size.
  */
-extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
+mca_btl_base_descriptor_t* mca_btl_self_alloc(
     struct mca_btl_base_module_t* btl,
     size_t size
 );
@@ -195,7 +195,7 @@ extern mca_btl_base_descriptor_t* mca_btl_self_alloc(
  * @param btl (IN)      BTL module
  * @param segment (IN)  Allocated segment.
  */
-extern int mca_btl_self_free(
+int mca_btl_self_free(
     struct mca_btl_base_module_t* btl,
     mca_btl_base_descriptor_t* segment
 );
@@ -236,7 +236,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-extern int mca_btl_self_send(
+int mca_btl_self_send(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor,
@@ -250,7 +250,7 @@ extern int mca_btl_self_send(
  * @param peer (IN)     BTL peer addressing
  */
                                                                                                             
-extern int mca_btl_self_rdma(
+int mca_btl_self_rdma(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
     struct mca_btl_base_descriptor_t* descriptor
