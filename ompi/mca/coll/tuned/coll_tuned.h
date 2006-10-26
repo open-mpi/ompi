@@ -201,6 +201,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_gatherv_inter_dec_dynamic(GATHER_ARGS);
 
   /* Reduce */
+    int ompi_coll_tuned_reduce_generic( REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment );
   int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
@@ -209,6 +210,8 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_reduce_intra_basic_linear(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_chain(REDUCE_ARGS, uint32_t segsize, int fanout);
   int ompi_coll_tuned_reduce_intra_pipeline(REDUCE_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_reduce_intra_binary(REDUCE_ARGS, uint32_t segsize);
+  int ompi_coll_tuned_reduce_intra_binomial(REDUCE_ARGS, uint32_t segsize);
   int ompi_coll_tuned_reduce_inter_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_inter_dec_dynamic(REDUCE_ARGS);
 
@@ -338,4 +341,59 @@ struct mca_coll_base_comm_t {
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
+
+#define COLL_TUNED_UPDATE_BINTREE( OMPI_COMM, ROOT )                                       \
+do {                                                                                       \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;                   \
+    if( !( (coll_comm->cached_bintree)                                                     \
+           && (coll_comm->cached_bintree_root == (ROOT)) ) ) {                             \
+        if( coll_comm->cached_bintree ) { /* destroy previous binomial if defined */       \
+            ompi_coll_tuned_topo_destroy_tree( &(coll_comm->cached_bintree) );             \
+        }                                                                                  \
+        coll_comm->cached_bintree = ompi_coll_tuned_topo_build_tree(2,(OMPI_COMM),(ROOT)); \
+        coll_comm->cached_bintree_root = (ROOT);                                           \
+    }                                                                                      \
+} while (0)
+
+#define COLL_TUNED_UPDATE_BMTREE( OMPI_COMM, ROOT )                                          \
+do {                                                                                         \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;                     \
+    if( !( (coll_comm->cached_bmtree)                                                        \
+           && (coll_comm->cached_bmtree_root == (ROOT)) ) ) {                                \
+        if( coll_comm->cached_bmtree ) { /* destroy previous binomial if defined */          \
+            ompi_coll_tuned_topo_destroy_tree( &(coll_comm->cached_bmtree) );                \
+        }                                                                                    \
+        coll_comm->cached_bmtree = ompi_coll_tuned_topo_build_bmtree( (OMPI_COMM), (ROOT) ); \
+        coll_comm->cached_bmtree_root = (ROOT);                                              \
+    }                                                                                        \
+} while (0)
+
+#define COLL_TUNED_UPDATE_PIPELINE( OMPI_COMM, ROOT )                                            \
+do {                                                                                             \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;                         \
+    if( !( (coll_comm->cached_pipeline)                                                          \
+           && (coll_comm->cached_pipeline_root == (ROOT)) ) ) {                                  \
+        if (coll_comm->cached_pipeline) { /* destroy previous pipeline if defined */             \
+            ompi_coll_tuned_topo_destroy_tree( &(coll_comm->cached_pipeline) );                  \
+        }                                                                                        \
+        coll_comm->cached_pipeline = ompi_coll_tuned_topo_build_chain( 1, (OMPI_COMM), (ROOT) ); \
+        coll_comm->cached_pipeline_root = (ROOT);                                                \
+    }                                                                                            \
+} while (0)
+
+#define COLL_TUNED_UPDATE_CHAIN( OMPI_COMM, ROOT, FANOUT )                                       \
+do {                                                                                             \
+    mca_coll_base_comm_t* coll_comm = (OMPI_COMM)->c_coll_selected_data;                         \
+    if( !( (coll_comm->cached_chain)                                                             \
+           && (coll_comm->cached_chain_root == (ROOT))                                           \
+           && (coll_comm->cached_chain_fanout == (FANOUT)) ) ) {                                 \
+        if( coll_comm->cached_chain) { /* destroy previous chain if defined */                   \
+            ompi_coll_tuned_topo_destroy_tree( &(coll_comm->cached_chain) );                     \
+        }                                                                                        \
+        coll_comm->cached_chain = ompi_coll_tuned_topo_build_chain((FANOUT),(OMPI_COMM),(ROOT)); \
+        coll_comm->cached_chain_root = (ROOT);                                                   \
+        coll_comm->cached_chain_fanout = (FANOUT);                                               \
+    }                                                                                            \
+} while (0)
+
 #endif /* MCA_COLL_TUNED_EXPORT_H */

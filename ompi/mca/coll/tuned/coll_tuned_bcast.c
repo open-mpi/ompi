@@ -57,24 +57,8 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
         return MPI_SUCCESS;
     }
 
-    /*
-     * setup the chain topology.
-     * if the previous chain topology is the same, then use this cached copy
-     * other wise recreate it.
-     */
-
-    if ((comm->c_coll_selected_data->cached_chain) && (comm->c_coll_selected_data->cached_chain_root == root) 
-        && (comm->c_coll_selected_data->cached_chain_fanout == chains)) {
-        chain = comm->c_coll_selected_data->cached_chain;
-    }
-    else {
-        if (comm->c_coll_selected_data->cached_chain) { /* destroy previous chain if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);    
-        }
-        comm->c_coll_selected_data->cached_chain = chain = ompi_coll_tuned_topo_build_chain( chains, comm, root );
-        comm->c_coll_selected_data->cached_chain_root = root;
-        comm->c_coll_selected_data->cached_chain_fanout = chains;
-    }
+    /* setup the chain topology. */
+    COLL_TUNED_UPDATE_CHAIN( comm, root, chains );
 
     ompi_ddt_type_size( datatype, &typelng );
 
@@ -257,23 +241,8 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
         return MPI_SUCCESS;
     }
 
-    /*
-     * setup the tree topology.
-     * if the previous tree topology is the same, then use this cached copy
-     * other wise recreate it.
-     */
-
-    if ((comm->c_coll_selected_data->cached_bintree) && (comm->c_coll_selected_data->cached_bintree_root == root)) {
-        tree = comm->c_coll_selected_data->cached_bintree;
-    }
-    else {
-        if (comm->c_coll_selected_data->cached_bintree) { /* destroy previous tree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);    
-        }
-        comm->c_coll_selected_data->cached_bintree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
-        comm->c_coll_selected_data->cached_bintree_root = root;
-    }
-
+    /* setup the binary tree topology. */
+    COLL_TUNED_UPDATE_BINTREE( comm, root );
 
     err = ompi_ddt_type_size( datatype, &type_size );
 
@@ -517,22 +486,8 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
         return MPI_SUCCESS;
     }
 
-    /*
-     * setup the tree topology.
-     * if the previous tree topology is the same, then use this cached copy
-     * other wise recreate it.
-     */
-
-    if ((comm->c_coll_selected_data->cached_bintree) && (comm->c_coll_selected_data->cached_bintree_root == root)) {
-        tree = comm->c_coll_selected_data->cached_bintree;
-    }
-    else {
-        if (comm->c_coll_selected_data->cached_bintree) { /* destroy previous bintree if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_bintree);    
-        }
-        comm->c_coll_selected_data->cached_bintree = tree = ompi_coll_tuned_topo_build_tree( 2, comm, root );
-        comm->c_coll_selected_data->cached_bintree_root = root;
-    }
+    /* setup the tree topology. */
+    COLL_TUNED_UPDATE_BINTREE( comm, root );
 
     err = ompi_ddt_type_size( datatype, &type_size );
 

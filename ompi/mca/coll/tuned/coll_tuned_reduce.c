@@ -29,73 +29,44 @@
 #include "coll_tuned.h"
 #include "coll_tuned_topo.h"
 
-/* Attention: this version of the reduce operations does not
-   work for:
-   - non-commutative operations
-   - segment sizes which are not multiplies of the extent of the datatype
-     meaning that at least one datatype must fit in the segment !
-*/
-
-int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
-                                        ompi_datatype_t* datatype, ompi_op_t* op,
-                                        int root, ompi_communicator_t* comm, uint32_t segsize,
-                                        int fanout)
+/**
+ * This is a generic implementation of the reduce protocol. It used the tree
+ * provided as an argument and execute all operations using a segment of
+ * count times a datatype.
+ * For the last communication it will update the count in order to limit
+ * th number of datatype to the original count (original_count)
+ */
+int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_count,
+                                    ompi_datatype_t* datatype, ompi_op_t* op,
+                                    int root, ompi_communicator_t* comm,
+                                    ompi_coll_tree_t* tree, int count_by_segment )
 {
-    int ret, line, rank, size, i = 0;
-    int recvcount, sendcount, prevcount, inbi, previnbi;
-    int segcount, segindex, num_segments;
     char *inbuf[2] = {(char*)NULL, (char*)NULL};
-    char *accumbuf = (char*)NULL;
-    char *sendtmpbuf = (char*)NULL;
-    ptrdiff_t ext, lb;
+    char *local_op_buffer, *accumbuf, *sendtmpbuf;
+    ptrdiff_t extent, lower_bound;
     size_t typelng, realsegsize;
     ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
-    ompi_coll_tree_t* chain;
-
-    size = ompi_comm_size(comm);
-    rank = ompi_comm_rank(comm);
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", rank, fanout, segsize));
-
-    /* setup the chain topology.
-     * if the previous chain topology is the same, then use this cached copy
-     * other wise recreate it.
-     */
-    if ((comm->c_coll_selected_data->cached_chain) && (comm->c_coll_selected_data->cached_chain_root == root)
-        && (comm->c_coll_selected_data->cached_chain_fanout == fanout)) {
-        chain = comm->c_coll_selected_data->cached_chain;
-    } else {
-        if (comm->c_coll_selected_data->cached_chain) { /* destroy previous chain if defined */
-            ompi_coll_tuned_topo_destroy_tree (&comm->c_coll_selected_data->cached_chain);
-        }
-        comm->c_coll_selected_data->cached_chain = chain = ompi_coll_tuned_topo_build_chain(fanout,comm,root);
-        comm->c_coll_selected_data->cached_chain_root = root;
-        comm->c_coll_selected_data->cached_chain_fanout = fanout;
-    }
+    int num_segments, line, ret, segindex, i, rank;
+    int recvcount, prevcount, inbi, previnbi;
 
     /**
      * Determine number of segments and number of elements
      * sent per operation
      */
-    ompi_ddt_get_extent( datatype, &lb, &ext );
+    ompi_ddt_get_extent( datatype, &lower_bound, &extent );
     ompi_ddt_type_size( datatype, &typelng );
-    if( segsize > typelng ) {
-        segcount     = (int)(segsize / typelng);
-        num_segments = count/segcount;
-        if( (count % segcount) != 0 ) num_segments++;
-    } else  {
-        segcount     = count;
-        num_segments = 1;
-    }
-    realsegsize = segcount * ext;
+    num_segments = (original_count + count_by_segment - 1) / count_by_segment;
+    realsegsize = count_by_segment * extent;
 
     sendtmpbuf = (char*) sendbuf; 
     if( sendbuf == MPI_IN_PLACE ) { 
         sendtmpbuf = (char *)recvbuf; 
     }
 
+    rank = ompi_comm_rank(comm);
+
     /* non-leaf nodes - wait for children to send me data & forward up (if needed) */
-    if( chain->tree_nextsize > 0 ) {
+    if( tree->tree_nextsize > 0 ) {
         /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
         accumbuf = (char*)recvbuf;
         if( NULL == accumbuf ) {
@@ -108,7 +79,7 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         if( inbuf[0] == NULL ) { line = __LINE__; ret = -1; goto error_hndl; }
         /* if there is chance to overlap communication -
            allocate second buffer */
-        if( (num_segments > 1) || (chain->tree_nextsize > 1) ) {
+        if( (num_segments > 1) || (tree->tree_nextsize > 1) ) {
             inbuf[1] = (char*) malloc(realsegsize);
             if( inbuf[1] == NULL ) { line = __LINE__; ret = -1; goto error_hndl;}
         } else {
@@ -122,12 +93,12 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
         for( segindex = 0; segindex <= num_segments; segindex++ ) {
             prevcount = recvcount;
             /* recvcount - number of elements in current segment */
-            recvcount = segcount;
+            recvcount = count_by_segment;
             if( segindex == (num_segments-1) )
-                recvcount = count - segcount*segindex;
+                recvcount = original_count - count_by_segment * segindex;
 
             /* for each child */
-            for( i = 0; i < chain->tree_nextsize; i++ ) {
+            for( i = 0; i < tree->tree_nextsize; i++ ) {
                 /**
                  * We try to overlap communication:
                  * either with next segment or with the next child
@@ -144,11 +115,11 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                          * BUT if we are root and are USING MPI_IN_PLACE this is wrong ek!
                          * check for root might not be needed as it should be checked higher up
                          */
-                        if( !((MPI_IN_PLACE==sendbuf) && (rank==root)) ) {
+                        if( !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
                             local_recvbuf = accumbuf + segindex * realsegsize;
                         }
                     }
-                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount,datatype, chain->tree_next[i],
+                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount,datatype, tree->tree_next[i],
                                              MCA_COLL_BASE_TAG_REDUCE, comm, &reqs[inbi]));
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                 }
@@ -157,25 +128,24 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                 /* wait on data from last child for previous segment */
                 ret = ompi_request_wait_all( 1, &reqs[previnbi], MPI_STATUSES_IGNORE );
                 if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+                local_op_buffer = inbuf[previnbi];
                 if( i > 0 ) {
                     /* our first operation is to combine our own [sendbuf] data with the data
                      * we recvd from down stream (but only if we are not root and not using
                      * MPI_IN_PLACE)
                      */
-                    void* local_op_buffer = inbuf[previnbi];
                     if( 1 == i ) {
-                        if( !((MPI_IN_PLACE == sendbuf) && (rank == root)) ) {
+                        if( !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {
                             local_op_buffer = sendtmpbuf + segindex * realsegsize;
                         }
                     }
                     /* apply operation */
                     ompi_op_reduce(op, local_op_buffer, accumbuf+segindex*realsegsize, recvcount, datatype );
                 } else if ( segindex > 0 ) {
-                    void* local_op_buffer = inbuf[previnbi];
                     void* accumulator = accumbuf + (segindex-1) * realsegsize;
 
-                    if( chain->tree_nextsize <= 1 ) {
-                        if( !((MPI_IN_PLACE == sendbuf) && (rank == root)) ) {            
+                    if( tree->tree_nextsize <= 1 ) {
+                        if( !((MPI_IN_PLACE == sendbuf) && (rank == tree->tree_root)) ) {            
                             local_op_buffer = sendtmpbuf+(segindex-1)*realsegsize;
                         }
                     }
@@ -184,10 +154,10 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
                     /* all reduced on available data this step (i) complete, pass to
                      * the next process unless your the root
                      */
-                    if (rank != root) {
+                    if (rank != tree->tree_root) {
                         /* send combined/accumulated data to parent */
                         ret = MCA_PML_CALL( send( accumulator, prevcount, datatype,
-                                                  chain->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
+                                                  tree->tree_prev, MCA_COLL_BASE_TAG_REDUCE,
                                                   MCA_PML_BASE_SEND_STANDARD, comm) );
                         if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                     }
@@ -210,25 +180,58 @@ int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
     /* leaf nodes */
     else {
         /* Send segmented data to parents */
-        for (segindex = 0; segindex < num_segments; segindex++) {
-            if (segindex < num_segments-1) sendcount = segcount;
-            else sendcount = count - segindex*segcount;
-            ret = MCA_PML_CALL( send((char*)sendbuf+segindex*realsegsize, sendcount,
-                                     datatype, chain->tree_prev,
+        segindex = 0;
+        while( original_count > 0 ) {
+            if( original_count < count_by_segment ) count_by_segment = original_count;
+            ret = MCA_PML_CALL( send((char*)sendbuf + segindex * realsegsize, count_by_segment,
+                                     datatype, tree->tree_prev,
                                      MCA_COLL_BASE_TAG_REDUCE, MCA_PML_BASE_SEND_STANDARD, comm) );
             if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
+            segindex++;
+            original_count -= count_by_segment;
         }
     }
+    return OMPI_SUCCESS;
 
-    return MPI_SUCCESS;
-
-    /* error handler */
- error_hndl:
+ error_hndl:  /* error handler */
     OPAL_OUTPUT (( ompi_coll_tuned_stream, "ERROR_HNDL: node %d file %s line %d error %d\n", rank, __FILE__, line, ret ));
     if( inbuf[0] != NULL ) free(inbuf[0]);
     if( inbuf[1] != NULL ) free(inbuf[1]);
     if( (NULL == recvbuf) && (NULL != accumbuf) ) free(accumbuf);
     return ret;
+}
+
+/* Attention: this version of the reduce operations does not
+   work for:
+   - non-commutative operations
+   - segment sizes which are not multiplies of the extent of the datatype
+     meaning that at least one datatype must fit in the segment !
+*/
+
+int ompi_coll_tuned_reduce_intra_chain( void *sendbuf, void *recvbuf, int count,
+                                        ompi_datatype_t* datatype, ompi_op_t* op,
+                                        int root, ompi_communicator_t* comm, uint32_t segsize,
+                                        int fanout)
+{
+    int segcount;
+    size_t typelng;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_chain rank %d fo %d ss %5d", ompi_comm_rank(comm), fanout, segsize));
+
+    COLL_TUNED_UPDATE_CHAIN( comm, root, fanout );
+    /**
+     * Determine number of segments and number of elements
+     * sent per operation
+     */
+    ompi_ddt_type_size( datatype, &typelng );
+    if( segsize > typelng ) {
+        segcount     = (int)(segsize / typelng);
+    } else  {
+        segcount     = count;
+    }
+
+    return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, op, root, comm,
+                                           comm->c_coll_selected_data->cached_chain, segcount );
 }
 
 
@@ -237,17 +240,84 @@ int ompi_coll_tuned_reduce_intra_pipeline( void *sendbuf, void *recvbuf,
                                            ompi_op_t* op, int root,
                                            ompi_communicator_t* comm, uint32_t segsize )
 {
-    int rank;
+    int segcount;
+    size_t typelng;
 
-    rank = ompi_comm_rank(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_pipeline rank %d ss %5d", rank, segsize));
+    COLL_TUNED_UPDATE_PIPELINE( comm, root );
 
-    return ompi_coll_tuned_reduce_intra_chain( sendbuf,recvbuf, count,
-                                               datatype, op, root, comm,
-                                               segsize, 1 );
+    /**
+     * Determine number of segments and number of elements
+     * sent per operation
+     */
+    ompi_ddt_type_size( datatype, &typelng );
+    if( segsize > typelng ) {
+        segcount     = (int)(segsize / typelng);
+    } else  {
+        segcount     = count;
+    }
+
+    return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, op, root, comm,
+                                           comm->c_coll_selected_data->cached_pipeline, segcount );
 }
 
+int ompi_coll_tuned_reduce_intra_binary( void *sendbuf, void *recvbuf,
+                                         int count, ompi_datatype_t* datatype,
+                                         ompi_op_t* op, int root,
+                                         ompi_communicator_t* comm, uint32_t segsize )
+{
+    int segcount;
+    size_t typelng;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binary rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
+
+    COLL_TUNED_UPDATE_BINTREE( comm, root );
+
+    /**
+     * Determine number of segments and number of elements
+     * sent per operation
+     */
+    ompi_ddt_type_size( datatype, &typelng );
+    if( segsize > typelng ) {
+        segcount     = (int)(segsize / typelng);
+    } else  {
+        segcount     = count;
+    }
+
+    return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, op, root, comm,
+                                           comm->c_coll_selected_data->cached_bintree, segcount );
+}
+
+int ompi_coll_tuned_reduce_intra_binomial( void *sendbuf, void *recvbuf,
+                                           int count, ompi_datatype_t* datatype,
+                                           ompi_op_t* op, int root,
+                                           ompi_communicator_t* comm, uint32_t segsize )
+{
+    int segcount;
+    size_t typelng;
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_binomial rank %d ss %5d",
+                 ompi_comm_rank(comm), segsize));
+
+    COLL_TUNED_UPDATE_BMTREE( comm, root );
+
+    /**
+     * Determine number of segments and number of elements
+     * sent per operation
+     */
+    ompi_ddt_type_size( datatype, &typelng );
+    if( segsize > typelng ) {
+        segcount     = (int)(segsize / typelng);
+    } else  {
+        segcount     = count;
+    }
+
+    return ompi_coll_tuned_reduce_generic( sendbuf, recvbuf, count, datatype, op, root, comm,
+                                           comm->c_coll_selected_data->cached_bmtree, segcount );
+}
 
 /*
  * Linear functions are copied from the BASIC coll module
@@ -358,7 +428,6 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
         }
 
         /* Perform the reduction */
-
         ompi_op_reduce(op, inbuf, rbuf, count, dtype);
     }
 
@@ -371,22 +440,22 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
     }
 
     /* All done */
-
     return MPI_SUCCESS;
 }
 
 /* copied function (with appropriate renaming) ends here */
 
 
-/* The following are used by dynamic and forced rules */
-
-/* publish details of each algorithm and if its forced/fixed/locked in */
-/* as you add methods/algorithms you must update this and the query/map routines */
-
-/* this routine is called by the component only */
-/* this makes sure that the mca parameters are set to their initial values and perms */
-/* module does not call this they call the forced_getvalues routine instead */
-
+/**
+ * The following are used by dynamic and forced rules
+ *
+ * publish details of each algorithm and if its forced/fixed/locked in
+ * as you add methods/algorithms you must update this and the query/map routines
+ *
+ * this routine is called by the component only
+ * this makes sure that the mca parameters are set to their initial values and perms
+ * module does not call this they call the forced_getvalues routine instead
+ */
 int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
     int rc;

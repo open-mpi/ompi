@@ -40,7 +40,8 @@ extern "C" {
     ompi_coll_tuned_topo_build_tree( int fanout,
                                      struct ompi_communicator_t* com,
                                      int root );
-    int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree );
+    ompi_coll_tree_t*
+    ompi_coll_tuned_topo_build_in_order_bintree( struct ompi_communicator_t* comm );
 
     ompi_coll_tree_t*
     ompi_coll_tuned_topo_build_bmtree( struct ompi_communicator_t* comm,
@@ -50,6 +51,8 @@ extern "C" {
     ompi_coll_tuned_topo_build_chain( int fanout,
                                       struct ompi_communicator_t* com,
                                       int root );
+
+    int ompi_coll_tuned_topo_destroy_tree( ompi_coll_tree_t** tree );
 
     /* debugging stuff, will be removed later */
     int ompi_coll_tuned_topo_dump_tree (ompi_coll_tree_t* tree, int rank);
