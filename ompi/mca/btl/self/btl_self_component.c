@@ -145,10 +145,9 @@ int mca_btl_self_component_close(void)
 /*
  *  SELF component initialization
  */
-mca_btl_base_module_t** mca_btl_self_component_init(
-    int *num_btls, 
-    bool enable_progress_threads,
-    bool enable_mpi_threads)
+mca_btl_base_module_t** mca_btl_self_component_init( int *num_btls, 
+                                                     bool enable_progress_threads,
+                                                     bool enable_mpi_threads )
 {
     mca_btl_base_module_t **btls = NULL;
     *num_btls = 0;
@@ -161,27 +160,27 @@ mca_btl_base_module_t** mca_btl_self_component_init(
     }
 
     /* initialize free lists */
-    ompi_free_list_init(&mca_btl_self_component.self_frags_eager, 
-        sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
-        OBJ_CLASS(mca_btl_self_frag_eager_t),
-        mca_btl_self_component.free_list_num,
-        mca_btl_self_component.free_list_max,
-        mca_btl_self_component.free_list_inc,
-        NULL);
-    ompi_free_list_init(&mca_btl_self_component.self_frags_send, 
-        sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
-        OBJ_CLASS(mca_btl_self_frag_send_t),
-        mca_btl_self_component.free_list_num,
-        mca_btl_self_component.free_list_max,
-        mca_btl_self_component.free_list_inc,
-        NULL);
-    ompi_free_list_init(&mca_btl_self_component.self_frags_rdma, 
-        sizeof(mca_btl_self_frag_rdma_t),
-        OBJ_CLASS(mca_btl_self_frag_rdma_t),
-        mca_btl_self_component.free_list_num,
-        mca_btl_self_component.free_list_max,
-        mca_btl_self_component.free_list_inc,
-        NULL);
+    ompi_free_list_init( &mca_btl_self_component.self_frags_eager, 
+                         sizeof(mca_btl_self_frag_eager_t) + mca_btl_self.btl_eager_limit,
+                         OBJ_CLASS(mca_btl_self_frag_eager_t),
+                         mca_btl_self_component.free_list_num,
+                         mca_btl_self_component.free_list_max,
+                         mca_btl_self_component.free_list_inc,
+                         NULL );
+    ompi_free_list_init( &mca_btl_self_component.self_frags_send, 
+                         sizeof(mca_btl_self_frag_send_t) + mca_btl_self.btl_max_send_size,
+                         OBJ_CLASS(mca_btl_self_frag_send_t),
+                         mca_btl_self_component.free_list_num,
+                         mca_btl_self_component.free_list_max,
+                         mca_btl_self_component.free_list_inc,
+                         NULL );
+    ompi_free_list_init( &mca_btl_self_component.self_frags_rdma, 
+                         sizeof(mca_btl_self_frag_rdma_t),
+                         OBJ_CLASS(mca_btl_self_frag_rdma_t),
+                         mca_btl_self_component.free_list_num,
+                         mca_btl_self_component.free_list_max,
+                         mca_btl_self_component.free_list_inc,
+                         NULL );
 
     /* get pointer to the btls */
     btls[0] = (mca_btl_base_module_t *)(&mca_btl_self);
