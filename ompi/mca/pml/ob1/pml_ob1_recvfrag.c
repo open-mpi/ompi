@@ -228,7 +228,6 @@ void mca_pml_ob1_recv_frag_callback(
         if( generic_recv != (mca_pml_ob1_recv_request_t *)                         \
             opal_list_get_end(generic_receives) ) {                                \
                                                                                    \
-            generic_recv->req_recv.req_base.req_proc = proc->ompi_proc;            \
             /* Match made */                                                       \
             return_match = generic_recv;                                           \
                                                                                    \
@@ -551,6 +550,7 @@ rematch:
 
         /* if match found, process data */
         if (match) {
+            match->req_recv.req_base.req_proc = proc->ompi_proc;
 
             /*
              * update delivered sequence number information, if needed.
