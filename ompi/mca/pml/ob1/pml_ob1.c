@@ -281,16 +281,27 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
     int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_ob1.pckt_pending);
 
     for(i = 0; i < s; i++) {
+        mca_bml_base_btl_t *send_dst;
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         pckt = (mca_pml_ob1_pckt_pending_t*)
             opal_list_remove_first(&mca_pml_ob1.pckt_pending);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
         if(NULL == pckt)
             break;
+        send_dst = mca_bml_base_btl_array_find(
+                &pckt->proc->proc_bml->btl_eager, bml_btl->btl);
+        if(NULL == send_dst) {
+            OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+            opal_list_append(&mca_pml_ob1.pckt_pending,
+                    (opal_list_item_t*)pckt);
+            OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+            continue;
+        }
+
         switch(pckt->hdr.hdr_common.hdr_type) {
             case MCA_PML_OB1_HDR_TYPE_ACK:
                 rc = mca_pml_ob1_recv_request_ack_send_btl(pckt->proc,
-                        bml_btl,
+                        send_dst,
                         pckt->hdr.hdr_ack.hdr_src_req.pval,
                         pckt->hdr.hdr_ack.hdr_dst_req.pval,
                         pckt->hdr.hdr_ack.hdr_rdma_offset);
@@ -304,7 +315,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 }
                 break;
             case MCA_PML_OB1_HDR_TYPE_FIN:
-                rc = mca_pml_ob1_send_fin_btl(pckt->proc, bml_btl,
+                rc = mca_pml_ob1_send_fin_btl(pckt->proc, send_dst,
                         pckt->hdr.hdr_fin.hdr_des.pval);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {

@@ -255,7 +255,7 @@ do {                                                            \
         (ompi_free_list_item_t*)pckt);                          \
 } while(0)
 
-#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D)                   \
+#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D)                        \
     do {                                                            \
         mca_pml_ob1_pckt_pending_t *_pckt;                          \
         int _rc;                                                    \
