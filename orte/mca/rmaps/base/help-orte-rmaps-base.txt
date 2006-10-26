@@ -42,3 +42,14 @@ that match the requested mapping:
 
 OR the requested resources in that mapping have already been consumed. Verify that you have mapped the allocated resources properly using the 
 --host specification.
+[orte-rmaps-base:nolocal-no-available-resources]
+There are no available nodes allocated to this job. This could be because
+no nodes were found or all the available nodes were already used.
+
+Note that since the -nolocal option was given no processes can be 
+launched on the local node.
+[orte-rmaps-base:no-available-resources]
+There are no nodes allocated to this job.
+[orte-rmaps-base:all-available-resources-used]
+All nodes which are allocated for this job are already filled.
+
