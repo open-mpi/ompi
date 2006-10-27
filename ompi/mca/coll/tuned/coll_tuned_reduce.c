@@ -42,7 +42,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                                     ompi_coll_tree_t* tree, int count_by_segment )
 {
     char *inbuf[2] = {(char*)NULL, (char*)NULL};
-    char *local_op_buffer, *accumbuf, *sendtmpbuf;
+    char *local_op_buffer, *accumbuf = NULL, *sendtmpbuf;
     ptrdiff_t extent, lower_bound;
     size_t typelng, realsegsize;
     ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};

@@ -59,6 +59,7 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
 
     /* setup the chain topology. */
     COLL_TUNED_UPDATE_CHAIN( comm, root, chains );
+    chain = comm->c_coll_selected_data->cached_chain;
 
     ompi_ddt_type_size( datatype, &typelng );
 
@@ -243,6 +244,7 @@ ompi_coll_tuned_bcast_intra_split_bintree ( void* buffer,
 
     /* setup the binary tree topology. */
     COLL_TUNED_UPDATE_BINTREE( comm, root );
+    tree = comm->c_coll_selected_data->cached_bintree;
 
     err = ompi_ddt_type_size( datatype, &type_size );
 
@@ -488,6 +490,7 @@ ompi_coll_tuned_bcast_intra_bintree ( void* buffer,
 
     /* setup the tree topology. */
     COLL_TUNED_UPDATE_BINTREE( comm, root );
+    tree = comm->c_coll_selected_data->cached_bintree;
 
     err = ompi_ddt_type_size( datatype, &type_size );
 
