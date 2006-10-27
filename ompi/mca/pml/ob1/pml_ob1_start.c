@@ -113,10 +113,8 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
                 if( reuse_old_request && (sendreq->req_send.req_bytes_packed != 0) ) {
                     size_t offset = 0;
                     /**
-                     * Reset the convertor in case we're dealing with the original request,
-                     * which when completed do not reset the convertor. For the other case
-                     * (freshly allocated request) the convertor_set_position is optimized,
-                     * it will not do anything is it's not required.
+                     * Reset the convertor in case we're dealing with the original
+		     * request, which when completed do not reset the convertor.
                      */
                     ompi_convertor_set_position( &sendreq->req_send.req_convertor,
                                                  &offset );
