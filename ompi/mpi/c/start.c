@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/request/request.h"
+#include "ompi/errhandler/errhandler.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Start = PMPI_Start
@@ -47,8 +49,14 @@ int MPI_Start(MPI_Request *request)
     switch((*request)->req_type) {
     case OMPI_REQUEST_PML:
         return MCA_PML_CALL(start(1, request));
-    default:
+        break;
+
+    case OMPI_REQUEST_NOOP:
         return MPI_SUCCESS;
+        break;
+
+    default:
+        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
     }
 }
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -35,6 +36,9 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
     for (i = 0 ; i < count ; i++) {
         mca_pml_cm_request_t *pml_request =
             (mca_pml_cm_request_t*)requests[i];
+        if (OMPI_REQUEST_PML != requests[i]->req_type) {
+            continue;
+        }
         if (NULL == pml_request) { 
 /*             opal_output(0, "hmm, null request!\n"); */
             continue;

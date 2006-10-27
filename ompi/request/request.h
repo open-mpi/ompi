@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -182,6 +183,14 @@ OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
  */
 
 OMPI_DECLSPEC int ompi_request_init(void);
+
+/**
+ * Free a persistent request to a MPI_PROC_NULL peer (there's no
+ * freelist to put it back to, so we have to actually OBJ_RELEASE it).
+ */
+
+OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **request);
+
 
 /**
  * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
