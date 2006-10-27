@@ -38,7 +38,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
         if(NULL == pml_request)
             continue;
 
-        /* If the persistent request is currebtly active - obtain the
+        /* If the persistent request is currently active - obtain the
          * request lock and verify the status is incomplete. if the
          * pml layer has not completed the request - mark the request
          * as free called - so that it will be freed when the request
@@ -110,7 +110,7 @@ int mca_pml_ob1_start(size_t count, ompi_request_t** requests)
             case MCA_PML_REQUEST_SEND: 
             {
                 mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)pml_request;
-                if( reuse_old_request ) {
+                if( reuse_old_request && (sendreq->req_send.req_bytes_packed != 0) ) {
                     size_t offset = 0;
                     /**
                      * Reset the convertor in case we're dealing with the original request,
