@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -60,6 +61,13 @@ static int ompi_request_null_cancel(ompi_request_t* request, int flag)
 static int ompi_request_empty_free(ompi_request_t** request)
 {
     *request = &ompi_request_null;
+    return OMPI_SUCCESS;
+}
+
+int ompi_request_persistent_proc_null_free(ompi_request_t** request)
+{
+    (*request)->req_state = OMPI_REQUEST_INVALID;
+    OBJ_RELEASE(*request);
     return OMPI_SUCCESS;
 }
 

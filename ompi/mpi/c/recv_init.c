@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +57,15 @@ int MPI_Recv_init(void *buf, int count, MPI_Datatype type, int source,
     }
 
     if (MPI_PROC_NULL == source) { 
-        *request = &ompi_request_empty;
+        *request = OBJ_NEW(ompi_request_t);
+        /* Other fields were initialized by the constructor for
+           ompi_request_t */
+        (*request)->req_type = OMPI_REQUEST_NOOP;
+        (*request)->req_status = ompi_request_empty.req_status;
+        (*request)->req_complete = true;
+        (*request)->req_state = OMPI_REQUEST_INACTIVE;
+        (*request)->req_persistent = true;
+        (*request)->req_free = ompi_request_persistent_proc_null_free;
         return MPI_SUCCESS;
     }
 
