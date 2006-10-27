@@ -115,6 +115,7 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
                                              buf,                       \
                                              0,                         \
                                              &req_send->req_base.req_convertor ); \
+    req_send->req_base.req_ompi.req_mpi_object.comm = comm;             \
     req_send->req_base.req_ompi.req_status.MPI_SOURCE =                  \
         comm->c_my_rank;                                                \
     req_send->req_base.req_ompi.req_status.MPI_TAG = tag;                \

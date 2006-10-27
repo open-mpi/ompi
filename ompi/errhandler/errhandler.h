@@ -114,6 +114,13 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 
 
 /**
+ * Forward declaration so that we don't have to include
+ * request/request.h here.
+ */
+struct ompi_request_t;
+
+
+/**
  * This is the macro to check the state of MPI and determine whether
  * it was properly initialized and not yet finalized.
  *
@@ -255,6 +262,16 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
   int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
 			     int type, int err_code, const char *message);
 
+
+  /**
+   * Invoke an MPI exception on the first request found in the array
+   * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.
+   * This function should not be invoked unless there is a request
+   * that is known to have a failure.
+   */
+  int ompi_errhandler_request_invoke(int count, 
+                                     struct ompi_request_t **requests,
+                                     const char *message);
 
   /**
    * Create a ompi_errhandler_t

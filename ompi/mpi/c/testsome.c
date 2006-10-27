@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,8 +38,6 @@ int MPI_Testsome(int incount, MPI_Request *requests,
                  int *outcount, int *indices,
                  MPI_Status *statuses)
 {
-    int rc;
-
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -52,6 +51,9 @@ int MPI_Testsome(int incount, MPI_Request *requests,
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    rc = ompi_request_test_some(incount, requests, outcount, indices, statuses);
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    if (OMPI_SUCCESS == ompi_request_test_some(incount, requests, outcount, 
+                                               indices, statuses)) {
+        return MPI_SUCCESS;
+    }
+    return ompi_errhandler_request_invoke(incount, requests, FUNC_NAME);
 }

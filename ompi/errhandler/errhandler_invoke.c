@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "ompi/communicator/communicator.h"
 #include "ompi/win/win.h"
 #include "ompi/file/file.h"
+#include "ompi/request/request.h"
 #include "ompi/errhandler/errhandler.h"
 #include "ompi/mpi/f77/fint_2_int.h"
 
@@ -75,4 +77,57 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     
     /* All done */
     return err_code;
+}
+
+int ompi_errhandler_request_invoke(int count, 
+                                   struct ompi_request_t **requests,
+                                   const char *message)
+{
+    int i, ec;
+    ompi_mpi_object_t mpi_object;
+
+    /* Find the first request that has an error.  In an error
+       condition, the request will not have been reset back to
+       MPI_REQUEST_NULL, so there's no need to cache values from
+       before we call ompi_request_test(). */
+    for (i = 0; i < count; ++i) {
+        if (MPI_REQUEST_NULL != requests[i] &&
+            MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+            break;
+        }
+    }
+    /* This shouldn't happen */
+    if (i >= count) {
+        return MPI_SUCCESS;
+    }
+
+    ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
+    mpi_object = requests[i]->req_mpi_object;
+    switch (requests[i]->req_type) {
+    case OMPI_REQUEST_PML:
+        return ompi_errhandler_invoke(mpi_object.comm->error_handler,
+                                      mpi_object.comm,
+                                      mpi_object.comm->errhandler_type,
+                                      ec, message);
+        break;
+    case OMPI_REQUEST_IO:
+        return ompi_errhandler_invoke(mpi_object.file->error_handler,
+                                      mpi_object.file,
+                                      mpi_object.file->errhandler_type,
+                                      ec, message);
+        break;
+    case OMPI_REQUEST_WIN:
+        return ompi_errhandler_invoke(mpi_object.win->error_handler,
+                                      mpi_object.win,
+                                      mpi_object.win->errhandler_type,
+                                      ec, message);
+        break;
+    default:
+        /* Covers REQUEST_GEN, REQUEST_NULL, REQUEST_MAX */
+        return ompi_errhandler_invoke(MPI_COMM_WORLD->error_handler,
+                                      MPI_COMM_WORLD,
+                                      MPI_COMM_WORLD->errhandler_type,
+                                      ec, message);
+        break;
+    }
 }

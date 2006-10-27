@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,9 +36,8 @@ static const char FUNC_NAME[] = "MPI_Wait";
 
 int MPI_Wait(MPI_Request *request, MPI_Status *status)
 {
-    int rc;
     if ( MPI_PARAM_CHECK ) {
-        rc = MPI_SUCCESS;
+        int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (request == NULL) {
             rc = MPI_ERR_REQUEST;
@@ -56,6 +56,8 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
         return MPI_SUCCESS;
     }
 
-    rc = ompi_request_wait(request, status);
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
+        return MPI_SUCCESS;
+    }
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }
