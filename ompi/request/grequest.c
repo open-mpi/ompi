@@ -44,7 +44,6 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
 
 static void ompi_grequest_construct(ompi_grequest_t* greq)
 {
-    OMPI_REQUEST_INIT(&greq->greq_base, false);
     greq->greq_base.req_free     = ompi_grequest_free;
     greq->greq_base.req_cancel   = ompi_grequest_cancel;
     greq->greq_base.req_type = OMPI_REQUEST_GEN;
@@ -75,6 +74,7 @@ int ompi_grequest_start(
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
+    greq->greq_base.req_state = OMPI_REQUEST_ACTIVE;
     greq->greq_state = gstate;
     greq->greq_query.c_query = gquery_fn;
     greq->greq_free.c_free = gfree_fn;
@@ -88,6 +88,7 @@ int ompi_grequest_complete(ompi_grequest_t* grequest)
     int rc = OMPI_SUCCESS;
     OPAL_THREAD_LOCK(&ompi_request_lock);
     grequest->greq_base.req_complete = true;
+    grequest->greq_base.req_status = ompi_status_empty;
     if(grequest->greq_query.c_query != NULL)
         rc = grequest->greq_query.c_query(grequest->greq_state, &grequest->greq_base.req_status);
     if(ompi_request_waiting)
