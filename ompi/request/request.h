@@ -27,7 +27,6 @@
 #include "mpi.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_pointer_array.h"
-#include "ompi/errhandler/errhandler.h"
 #include "opal/threads/condition.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -47,6 +46,7 @@ typedef enum {
     OMPI_REQUEST_GEN,      /**< MPI-2 generalized request */
     OMPI_REQUEST_WIN,      /**< MPI-2 one-sided request */
     OMPI_REQUEST_NULL,     /**< NULL request */
+    OMPI_REQUEST_NOOP,     /**< A request that does nothing (e.g., to PROC_NULL) */
     OMPI_REQUEST_MAX       /**< Maximum request type */
 } ompi_request_type_t;
 
@@ -80,6 +80,30 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
 
 
 /**
+ * Forward declaration
+ */
+struct ompi_communicator_t;
+
+/**
+ * Forward declaration
+ */
+struct ompi_win_t;
+
+/**
+ * Forward declaration
+ */
+struct ompi_file_t;
+
+/**
+ * Union for holding several different MPI pointer types on the request
+ */
+typedef union ompi_mpi_object_t {
+    struct ompi_communicator_t *comm;
+    struct ompi_file_t *file;
+    struct ompi_win_t *win;
+} ompi_mpi_object_t;
+
+/**
  * Main top-level request struct definition 
  */
 struct ompi_request_t {
@@ -92,6 +116,7 @@ struct ompi_request_t {
     int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
     ompi_request_free_fn_t req_free;           /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */
+    ompi_mpi_object_t req_mpi_object;          /**< Pointer to MPI object that created this request */
 };
 
 /**

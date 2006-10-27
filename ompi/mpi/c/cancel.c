@@ -44,12 +44,8 @@ int MPI_Cancel(MPI_Request *request)
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {
-            rc = MPI_ERR_REQUEST;
+            return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
         }
-        /* JMS: Tim will fix to invoke on the communicator/window/file
-           on the request (i.e., not COMM_WORLD), if the request is
-           available/valid */
-        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, "MPI_Cancel");
     }
 
     if (MPI_REQUEST_NULL == *request) {

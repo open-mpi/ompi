@@ -47,6 +47,7 @@ static void ompi_grequest_construct(ompi_grequest_t* greq)
     greq->greq_base.req_free     = ompi_grequest_free;
     greq->greq_base.req_cancel   = ompi_grequest_cancel;
     greq->greq_base.req_type = OMPI_REQUEST_GEN;
+    greq->greq_base.req_mpi_object.comm = &ompi_mpi_comm_world;
 }
 
 static void ompi_grequest_destruct(ompi_grequest_t* greq)

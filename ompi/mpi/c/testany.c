@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -35,7 +36,6 @@ static const char FUNC_NAME[] = "MPI_Testany";
 
 int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, MPI_Status *status) 
 {
-    int rc;
     if ( MPI_PARAM_CHECK ) {
         int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -49,7 +49,10 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    rc = ompi_request_test_any(count, requests, index, completed, status);
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    if (OMPI_SUCCESS == ompi_request_test_any(count, requests, 
+                                              index, completed, status)) {
+        return MPI_SUCCESS;
+    }
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
 }
 

@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -36,6 +37,7 @@ static const char FUNC_NAME[] = "MPI_Test";
 int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status) 
 {
     int rc;
+
     if ( MPI_PARAM_CHECK ) {
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -48,12 +50,13 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     }
 
     rc = ompi_request_test(request, completed, status);
-    if(*completed < 0) {
+    if (*completed < 0) {
         *completed = 0;
     }
 
-    /* JMS: Tim will fix to invoke on the communicator/window/file on
-       the request (i.e., not COMM_WORLD) */
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    if (OMPI_SUCCESS == rc) {
+        return MPI_SUCCESS;
+    }
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }
 
