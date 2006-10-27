@@ -33,7 +33,6 @@ int main( int argc, char* argv[] )
     int i;
     uint32_t iov_count;
     size_t max_data;
-    int32_t free_after;
     uint32_t pack_checksum, contiguous_checksum, sparse_checksum, manual_checksum;
     struct iovec iov[2];
     ompi_convertor_t* convertor;
@@ -62,7 +61,7 @@ int main( int argc, char* argv[] )
      * of the buffered operation.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
     ompi_convertor_prepare_for_send( convertor, sparse, SIZE, sparse_array );
 
     iov[0].iov_base = packed;
@@ -70,7 +69,7 @@ int main( int argc, char* argv[] )
     max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, iov, &iov_count, &max_data, &free_after );
+    ompi_convertor_pack( convertor, iov, &iov_count, &max_data );
     pack_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -80,7 +79,7 @@ int main( int argc, char* argv[] )
      * be sent over the network (still simulation).
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
     ompi_convertor_prepare_for_send( convertor, MPI_INT, SIZE, packed );
 
     iov[0].iov_base = array;
@@ -88,7 +87,7 @@ int main( int argc, char* argv[] )
     max_data = iov[0].iov_len;
 
     iov_count = 1;
-    ompi_convertor_pack( convertor, iov, &iov_count, &max_data, &free_after );
+    ompi_convertor_pack( convertor, iov, &iov_count, &max_data );
     contiguous_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
@@ -99,7 +98,7 @@ int main( int argc, char* argv[] )
      * separate iovec.
      */
     convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
-    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL, NULL, NULL );
+    ompi_convertor_personalize( convertor, CONVERTOR_WITH_CHECKSUM, NULL );
     ompi_convertor_prepare_for_recv( convertor, sparse, SIZE, sparse_array );
 
     max_data = sizeof(int) * SIZE;
@@ -109,7 +108,7 @@ int main( int argc, char* argv[] )
     iov[1].iov_len = max_data - iov[0].iov_len;
 
     iov_count = 2;
-    ompi_convertor_unpack( convertor, iov, &iov_count, &max_data, &free_after );
+    ompi_convertor_unpack( convertor, iov, &iov_count, &max_data );
     sparse_checksum = convertor->checksum;
 
     OBJ_RELEASE(convertor);
