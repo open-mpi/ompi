@@ -479,32 +479,32 @@ int mca_pml_ob1_send_request_start_copy(
     if( 0 == size ) {
         MCA_PML_OB1_DES_ALLOC( bml_btl, descriptor,
                                sizeof(mca_pml_ob1_match_hdr_t) );
-	if( OPAL_UNLIKELY(NULL == descriptor) ) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	segment = descriptor->des_src;
-	descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;
+        if( OPAL_UNLIKELY(NULL == descriptor) ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        segment = descriptor->des_src;
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion_cache;
     } else {
         mca_bml_base_alloc( bml_btl, &descriptor,
-			    sizeof(mca_pml_ob1_match_hdr_t) + size );
-	if( OPAL_UNLIKELY(NULL == descriptor) ) {
-	    return OMPI_ERR_OUT_OF_RESOURCE;
-	}
-	segment = descriptor->des_src;
+                            sizeof(mca_pml_ob1_match_hdr_t) + size );
+        if( OPAL_UNLIKELY(NULL == descriptor) ) {
+            return OMPI_ERR_OUT_OF_RESOURCE;
+        }
+        segment = descriptor->des_src;
 
-	/* pack the data into the supplied buffer */
-	iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
-	iov.iov_len = size;
-	iov_count = 1;
-	rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
+        /* pack the data into the supplied buffer */
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
+        iov.iov_len = size;
+        iov_count = 1;
+        rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
                                   &iov,
                                   &iov_count,
                                   &max_data );
-	if( OPAL_UNLIKELY(rc < 0) ) {
-	    mca_bml_base_free(bml_btl, descriptor);
-	    return rc;
-	}
-	descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
+        if( OPAL_UNLIKELY(rc < 0) ) {
+            mca_bml_base_free(bml_btl, descriptor);
+            return rc;
+        }
+        descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     }
     
     /* build match header */
