@@ -413,11 +413,17 @@ void mca_pml_ob1_send_request_put(
      mca_btl_base_module_t* btl,
      mca_pml_ob1_rdma_hdr_t* hdr);
 
-int mca_pml_ob1_send_request_put_frag(
-        mca_pml_ob1_rdma_frag_t* frag);
+int mca_pml_ob1_send_request_put_frag(mca_pml_ob1_rdma_frag_t* frag);
 
-void mca_pml_ob1_send_request_process_pending(
-        mca_bml_base_btl_t *bml_btl);
+/* This function tries to continue sendreq that was stuck because of resource
+ * unavailability. A sendreq may be added to send_pending list if there is no
+ * resource to send initial packet or there is not resource to schedule data
+ * for sending. The reason the sendreq was added to the list is stored inside
+ * sendreq struct and appropriate operation is retried when resource became
+ * available. bml_btl passed to the function doesn't represents sendreq
+ * destination, it represents BTL on which resource was freed, so only this BTL
+ * should be considered for sending packets */
+void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
