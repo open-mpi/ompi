@@ -385,10 +385,13 @@ static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
 
-int mca_pml_ob1_recv_request_get_frag(
-        mca_pml_ob1_rdma_frag_t* frag);
+int mca_pml_ob1_recv_request_get_frag(mca_pml_ob1_rdma_frag_t* frag);
 
+/* This function tries to continue recvreq that stuck due to resource
+ * unavailability. Recvreq is added to recv_pending list if scheduling of put
+ * operation cannot be accomplished for some reason. */
 void mca_pml_ob1_recv_request_process_pending(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

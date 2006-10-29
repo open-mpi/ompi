@@ -290,8 +290,17 @@ static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc, void *hdr_des)
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
-
+/* This function tries to resend FIN/ACK packets from pckt_pending queue.
+ * Packets are added to the queue when sending of FIN or ACK is failed due to
+ * resource unavailability. bml_btl passed to the function doesn't represents
+ * packet's destination, it represents BTL on which resource was freed, so only
+ * this BTL should be considered for resending packets */
 void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl);
+
+/* This function retries failed PUT/GET operations on frag. When RDMA operation
+ * cannot be accomplished for some reason, frag is put on the rdma_pending list.
+ * Later the operation is retried. The destination of RDMA operation is stored
+ * inside the frag structure */
 void mca_pml_ob1_process_pending_rdma(void);
 
 #define MCA_PML_OB1_PROGRESS_PENDING(bml_btl)                   \
