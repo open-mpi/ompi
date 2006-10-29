@@ -31,8 +31,8 @@
 #include "ompi/mca/bml/base/base.h"
 #include "ompi/datatype/dt_arch.h"
 
-void mca_pml_ob1_send_request_process_pending(
-        mca_bml_base_btl_t *bml_btl)
+
+void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
 {
     int i, s = opal_list_get_size(&mca_pml_ob1.send_pending);
 
@@ -40,6 +40,7 @@ void mca_pml_ob1_send_request_process_pending(
     for(i = 0; i < s; i++) {
         mca_pml_ob1_send_pending_t pending_type;
         mca_pml_ob1_send_request_t* sendreq;
+        mca_bml_base_btl_t *send_dst;
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         sendreq = (mca_pml_ob1_send_request_t*)
             opal_list_remove_first(&mca_pml_ob1.send_pending);
@@ -56,15 +57,28 @@ void mca_pml_ob1_send_request_process_pending(
             }
             break;
         case MCA_PML_OB1_SEND_PENDING_START:
-            if(mca_pml_ob1_send_request_start_btl(sendreq, bml_btl) ==
+            send_dst = mca_bml_base_btl_array_find(
+                    &sendreq->req_endpoint->btl_eager, bml_btl->btl);
+            if(NULL == send_dst ||
+                    mca_pml_ob1_send_request_start_btl(sendreq, send_dst) ==
                     OMPI_ERR_OUT_OF_RESOURCE) {
-                /* prepend to the pending list to minimaze reordering */
-                OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
-                sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_START;
-                opal_list_prepend(&mca_pml_ob1.send_pending,
-                        (opal_list_item_t*)sendreq);
-                OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
-                return;
+                    /* if dst of this sendreq cannot be reached through the
+                     * endpoint or no resources put request back on the list */
+                    OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
+                    sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_START;
+                    if(NULL == send_dst) {
+                        opal_list_append(&mca_pml_ob1.send_pending,
+                                (opal_list_item_t*)sendreq);
+                    } else {
+                        /* prepend to the pending list to minimaze reordering */
+                        opal_list_prepend(&mca_pml_ob1.send_pending,
+                                (opal_list_item_t*)sendreq);
+                    }
+                    OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
+                    /* if no destination try next request otherwise give up,
+                     * no more resources on this btl */
+                    if(send_dst != NULL)
+                        return;
             }
             break;
         default:
