@@ -33,7 +33,7 @@
 /*
  * Map a job
  */
-int orte_rmaps_proxy_map(orte_jobid_t job, char *desired_mapper)
+int orte_rmaps_proxy_map(orte_jobid_t job, opal_list_t *attributes)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -63,10 +63,8 @@ int orte_rmaps_proxy_map(orte_jobid_t job, char *desired_mapper)
         return rc;
     }
     
-    /* pack the desired mapper - since the DSS can handle NULL strings, don't
-     * bother checking for that here
-     */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &desired_mapper, 1, ORTE_STRING))) {
+    /* pack the attributes */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attributes, 1, ORTE_ATTR_LIST))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;

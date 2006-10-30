@@ -95,7 +95,7 @@ orte_pls_tm_component_t mca_pls_tm_component = {
 
 static int pls_tm_open(void)
 {
-    int tmp;
+    int tmp, value;
     mca_base_component_t *comp = &mca_pls_tm_component.super.pls_version;
 
     mca_base_param_reg_int(comp, "debug", "Enable debugging of the TM pls",
@@ -114,7 +114,16 @@ static int pls_tm_open(void)
                            "Whether the launching process should check for the pls_tm_orted executable in the PATH before launching (the TM API does not give an idication of failure; this is a somewhat-lame workaround; non-zero values enable this check)",
                            false, false, (int) true, &tmp);
     mca_pls_tm_component.want_path_check = (bool) tmp;
-
+    
+    tmp = mca_base_param_reg_int_name("orte", "timing",
+                                        "Request that critical timing loops be measured",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        mca_pls_tm_component.timing = true;
+    } else {
+        mca_pls_tm_component.timing = false;
+    }
+    
     mca_pls_tm_component.checked_paths = NULL;
 
     return ORTE_SUCCESS;

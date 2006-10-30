@@ -48,11 +48,15 @@ int orte_rmgr_base_copy_app_context(orte_app_context_t **dest, orte_app_context_
 
     /* copy data into it */
     (*dest)->idx = src->idx;
-    (*dest)->app = strdup(src->app);
+    if (NULL != src->app) {
+        (*dest)->app = strdup(src->app);
+    }
     (*dest)->num_procs = src->num_procs;
     (*dest)->argv = opal_argv_copy(src->argv);
     (*dest)->env = opal_argv_copy(src->env);
-    (*dest)->cwd = strdup(src->cwd);
+    if (NULL != src->cwd) {
+        (*dest)->cwd = strdup(src->cwd);
+    }
     (*dest)->user_specified_cwd = src->user_specified_cwd;
     (*dest)->num_map = src->num_map;
 
@@ -91,7 +95,9 @@ int orte_rmgr_base_copy_app_context_map(orte_app_context_map_t **dest, orte_app_
 
     /* copy data into it */
     (*dest)->map_type = src->map_type;
-    (*dest)->map_data = strdup(src->map_data);
+    if (NULL != src->map_data) {
+        (*dest)->map_data = strdup(src->map_data);
+    }
 
     return ORTE_SUCCESS;
 }

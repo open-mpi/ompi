@@ -110,7 +110,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
             }
         }
 
-        free(itags);
+        if (NULL != itags) free(itags);
         itags = NULL;
     }
 
@@ -127,7 +127,7 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
                 OBJ_RELEASE(values[i]);
             }
         }
-        free(values);
+        if (NULL != values) free(values);
     }
 
     if (ORTE_SUCCESS != (rc = orte_dss.pack(answer, &ret, 1, ORTE_INT))) {
@@ -267,15 +267,17 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
     if (NULL != tokens) {
         for (i=0; i<num_tokens; i++) {
             free(tokens[i]);
+            tokens[i] = NULL;
         }
-        free(tokens);
+        if (NULL != tokens) free(tokens);
     }
 
     if (NULL != keys) {
         for (i=0; i<num_keys; i++) {
             free(keys[i]);
+            keys[i] = NULL;
         }
-        free(keys);
+        if (NULL != keys) free(keys);
     }
 
     if (NULL != tokentags) {
@@ -291,7 +293,7 @@ int orte_gpr_replica_recv_get_cmd(orte_buffer_t *input_buffer,
             if (NULL != values[i])
                 OBJ_RELEASE(values[i]);
         }
-        free(values);
+        if (NULL != values) free(values);
     }
 
     /* pack response code */
@@ -482,15 +484,17 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
     if (NULL != tokens) {
         for (i=0; i<num_tokens; i++) {
             free(tokens[i]);
+            tokens[i] = NULL;
         }
-        free(tokens);
+        if (NULL != tokens) free(tokens);
     }
 
     if (NULL != keys) {
         for (i=0; i<num_keys; i++) {
             free(keys[i]);
+            keys[i] = NULL;
         }
-        free(keys);
+        if (NULL != keys) free(keys);
     }
 
     if (NULL != tokentags) {
@@ -506,7 +510,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
             if (NULL != values[i])
                 OBJ_RELEASE(values[i]);
         }
-        free(values);
+        if (NULL != values) free(values);
     }
 
     if (NULL != conds) {
@@ -515,7 +519,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
                 OBJ_RELEASE(conds[i]);
             }
         }
-        free(conds);
+        if (NULL != conds) free(conds);
     }
     if (NULL != conditions) {
         for (i=0; i < num_conditions; i++) {
@@ -523,7 +527,7 @@ int orte_gpr_replica_recv_get_conditional_cmd(orte_buffer_t *input_buffer,
                 OBJ_RELEASE(conditions[i]);
             }
         }
-        free(conditions);
+        if (NULL != conditions) free(conditions);
     }
 
 /* pack response code */

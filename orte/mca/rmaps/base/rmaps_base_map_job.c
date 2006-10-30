@@ -25,7 +25,9 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
 #include "orte/mca/rmaps/base/base.h"
@@ -42,12 +44,121 @@ static orte_rmaps_base_module_t *select_any(void);
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper)
+int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
 {
     orte_rmaps_base_module_t *module=NULL;
+    orte_attribute_t *attr;
+    char *desired_mapper;
+    opal_list_t working_attrs;
+    opal_list_item_t *item;
+    orte_jobid_t *jptr, parent_job=ORTE_JOBID_INVALID;
     int rc;
     
-    if (NULL != desired_mapper) {
+    /* check the attributes to see if anything in the environment
+     * has been overridden. If not, then install the environment
+     * values to correctly control the behavior of the RMAPS component.
+     */
+    
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_USE_PARENT_PLAN))) {
+        /* was provided - lookup the specified jobid's mapping plan and use it. This
+         * includes the FULL list of mapping attributes that were used. We will
+         * subsequently override those settings with anything that was specifically
+         * provided by the caller
+         */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        parent_job = *jptr;
+        /* lookup that job's mapping policy */
+        OBJ_CONSTRUCT(&working_attrs, opal_list_t);
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapping_plan(parent_job, &working_attrs))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&working_attrs);
+            return rc;                
+        }
+        /* go through the parent policy and "fill" anything that was missing in the
+         * list of attributes provided. We specifically don't overwrite anything provided
+         * by the caller - the caller is allowed to "override" any specific attribute
+         * of the parent's plan
+         */
+        if (ORTE_SUCCESS != (rc = orte_rmgr.merge_attributes(attributes, &working_attrs,
+                                                             ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_DESTRUCT(&working_attrs);
+            return rc;
+        }
+        /* clean up */
+        while (NULL != (item = opal_list_remove_first(&working_attrs))) {
+            OBJ_RELEASE(item);
+        }
+        OBJ_DESTRUCT(&working_attrs);
+    }
+
+
+    /* check the mapping policy */
+    if (orte_rmaps_base.bynode) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                          ORTE_STRING, "bynode",
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    } else {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                          ORTE_STRING, "byslot",
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }            
+    }
+       
+     /* check pernode - add it if it was set by the environment. Note that this
+     * attribute only cares if it exists - its value is irrelevant and hence
+     * not provided
+     */
+    if (orte_rmaps_base.per_node) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_PERNODE,
+                                                          ORTE_UNDEF, NULL,
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* check no_local - add it if it was set by the environment. Note that this
+    * attribute only cares if it exists - its value is irrelevant and hence
+    * not provided
+    */
+    if (orte_rmaps_base.no_use_local) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_NO_USE_LOCAL,
+                                                          ORTE_UNDEF, NULL,
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* check no-oversubscribe - add it if it was set by the environment. Note that this
+    * attribute only cares if it exists - its value is irrelevant and hence
+    * not provided
+    */
+    if (!orte_rmaps_base.oversubscribe) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_NO_OVERSUB,
+                                                          ORTE_UNDEF, NULL,
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* see if they provided a desired mapper */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DESIRED_MAPPER))) {
+        /* they did - extract its name */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&desired_mapper, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
         module = select_preferred(desired_mapper);
     } else {
         module = select_any();
@@ -61,9 +172,32 @@ int orte_rmaps_base_map_job(orte_jobid_t job, char *desired_mapper)
         return ORTE_ERR_NOT_FOUND;
     }
     
-    if (ORTE_SUCCESS != (rc = module->map_job(job, desired_mapper))) {
+    /* go ahead and map the job */
+    if (ORTE_SUCCESS != (rc = module->map_job(job, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+    
+    /* store the mapping plan in case we need it later. We need to do this AFTER
+     * the mapping component finishes in case the component added/modified the
+     * attributes. The component should, at the least, have updated the
+     * attribute indicating where it stopped so that any subsequent mappings by
+     * child jobs can know where to start
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_base_store_mapping_plan(job, attributes))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* if we were using a parent policy, then we need to update that job's info
+     * on where we finished mapping. The mapping components provide that info
+     * via the attributes
+     */
+    if (ORTE_JOBID_INVALID != parent_job) {
+        if (ORTE_SUCCESS != (rc = orte_rmaps_base_update_mapping_state(parent_job, attributes))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
     return ORTE_SUCCESS;

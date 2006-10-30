@@ -262,9 +262,9 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
 
         /* initialize the subscription tracker */
         if (ORTE_SUCCESS != (ret = orte_pointer_array_init(&(orte_gpr_proxy_globals.subscriptions),
-                                orte_gpr_array_block_size,
-                                orte_gpr_array_max_size,
-                                orte_gpr_array_block_size))) {
+                                (orte_std_cntr_t)orte_gpr_array_block_size,
+                                (orte_std_cntr_t)orte_gpr_array_max_size,
+                                (orte_std_cntr_t)orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(ret);
             return NULL;
         }
@@ -272,9 +272,9 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
 
         /* initialize the trigger counter */
         if (ORTE_SUCCESS != (ret = orte_pointer_array_init(&(orte_gpr_proxy_globals.triggers),
-                                orte_gpr_array_block_size,
-                                orte_gpr_array_max_size,
-                                orte_gpr_array_block_size))) {
+                                (orte_std_cntr_t)orte_gpr_array_block_size,
+                                (orte_std_cntr_t)orte_gpr_array_max_size,
+                                (orte_std_cntr_t)orte_gpr_array_block_size))) {
             ORTE_ERROR_LOG(ret);
             return NULL;
         }

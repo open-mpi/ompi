@@ -32,6 +32,8 @@
 #include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
+#include "opal/mca/base/mca_base_param.h"
+#include "opal/util/opal_environ.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rds/rds.h"
@@ -77,7 +79,7 @@ orte_rmgr_base_module_t orte_rmgr_urm_module = {
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_find_attribute,
     orte_rmgr_base_add_attribute,
-    orte_rmgr_base_update_attribute,
+    orte_rmgr_base_merge_attributes,
     orte_rmgr_base_delete_attribute,
     orte_rmgr_base_get_app_context,
     orte_rmgr_base_put_app_context,
@@ -114,7 +116,8 @@ static int orte_rmgr_urm_setup_job(
     orte_jobid_t* jobid)
 {
     int rc;
-
+    orte_std_cntr_t i;
+    
     OPAL_TRACE(1);
 
     /* allocate a jobid  */
@@ -123,6 +126,13 @@ static int orte_rmgr_urm_setup_job(
         return rc;
     }
 
+    /* for each app_context, we need to purge their environment of HNP
+     * MCA component selection directives
+     */
+    for (i=0; i < num_context; i++) {
+        orte_rmgr_base_purge_mca_params(&app_context[i]->env);
+    }
+    
     /* create and initialize job segment */ /* JJH C/N mapping before this */
     if (ORTE_SUCCESS !=
         (rc = orte_rmgr_base_put_app_context(*jobid, app_context,
@@ -325,7 +335,7 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -398,9 +408,9 @@ static int orte_rmgr_urm_spawn_job(
          if (0 != gettimeofday(&urmstop, NULL)) {
              opal_output(0, "rmgr_urm: could not obtain stop time");
          } else {
-             opal_output(0, "rmgr_urm: job setup time is %ld sec %ld usec",
-                         (long int)(urmstop.tv_sec - urmstart.tv_sec),
-                         (long int)(urmstop.tv_usec - urmstart.tv_usec));
+             opal_output(0, "rmgr_urm: job setup time is %ld usec",
+                         (long int)((urmstop.tv_sec - urmstart.tv_sec)*1000000 +
+                                    (urmstop.tv_usec - urmstart.tv_usec)));
          }
      }
      
@@ -412,7 +422,18 @@ static int orte_rmgr_urm_spawn_job(
         return rc;
     }
 
-    return ORTE_SUCCESS;
+     /* check for timing request - get start time if so */
+     if (mca_rmgr_urm_component.timing) {
+         if (0 != gettimeofday(&urmstart, NULL)) {
+             opal_output(0, "rmgr_urm: could not obtain launch stop time");
+         } else {
+             opal_output(0, "rmgr_urm: launch time is %ld usec",
+                         (long int)((urmstart.tv_sec - urmstop.tv_sec)*1000000 +
+                                    (urmstart.tv_usec - urmstop.tv_usec)));             
+         }
+     }
+     
+     return ORTE_SUCCESS;
 }
 
 

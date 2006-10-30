@@ -104,6 +104,8 @@ int orte_rmaps_base_open(void)
 
     if ((int)true == value) {
         orte_rmaps_base.per_node = true;
+    } else {
+        orte_rmaps_base.per_node = false;
     }
     
     /* Should we schedule on the local node or not? */
@@ -111,6 +113,11 @@ int orte_rmaps_base_open(void)
     mca_base_param_reg_int_name("rmaps", "base_schedule_local",
                                 "If nonzero, allow scheduling MPI applications on the same node as mpirun (default).  If zero, do not schedule any MPI applications on the same node as mpirun",
                                 false, false, 1, &value);
+    if (0 == value) {
+        orte_rmaps_base.no_use_local = true;
+    } else {
+        orte_rmaps_base.no_use_local = false;
+    }
 
     /* Should we oversubscribe or not? */
     

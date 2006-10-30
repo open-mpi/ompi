@@ -28,6 +28,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
 
+#include "orte/mca/ras/base/proxy/ras_base_proxy.h"
 #include "orte/mca/ras/base/ras_private.h"
 
 /*
@@ -39,56 +40,168 @@ int orte_ras_base_allocate(orte_jobid_t jobid, opal_list_t *attributes)
     int ret;
     opal_list_item_t *item;
     orte_ras_base_cmp_t *cmp;
+    opal_list_t nodes;
+    orte_attribute_t * attr;
+    orte_jobid_t * jptr;
 
-    /* If no components are available, then return an error */
-    if (opal_list_is_empty(&orte_ras_base.ras_available)) {
+    /* so there are a lot of possibilities here */
+    /* 1: we are not on the head node, so use the proxy component */
+    if (!orte_process_info.seed) {
+        return orte_ras_base_proxy_allocate(jobid, attributes);
+    }
+
+    /* 2: either no attributes were passed, or ORTE_RAS_INITIAL_ALLOCATION 
+     * was passed. This means that if the node segment is empty, we
+     * want to allocate new nodes. Otherwise allocate all the existing nodes to
+     * our job */
+    if(NULL == attributes || opal_list_is_empty(attributes) ||
+       NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_INITIAL_ALLOCATION))) {
+        OBJ_CONSTRUCT(&nodes, opal_list_t);
+        /* See if there are any nodes already on the registry. Most of the time
+         * these would have been put there by the RDS reading the hostfile. */
+        if (ORTE_SUCCESS != (ret = orte_ras_base_node_query(&nodes))) {
+            OBJ_DESTRUCT(&nodes);
+            return ret;
+        }
+        /* If there are any nodes at all, allocate them all to this job */
+        if (!opal_list_is_empty(&nodes)) {
+            opal_output(orte_ras_base.ras_output,
+                        "orte:ras:base:allocate: reallocating nodes that are already on registry");
+            ret = orte_ras_base_allocate_nodes(jobid, &nodes);
+            OBJ_DESTRUCT(&nodes);
+            return ret;
+        }
+
+        /* there were no nodes already on the registry, so get them from the
+         * RAS components */
+     
+        /* If no components are available, then return an error */
+        if (opal_list_is_empty(&orte_ras_base.ras_available)) {
+            opal_output(orte_ras_base.ras_output,
+                        "orte:ras:base:allocate: no components available!");
+            ret = ORTE_ERR_NOT_FOUND;
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+
+        /* Otherwise, go through the [already sorted in priority order]
+         * list and initialize them until one of them puts something on
+         * the node segment */
+        for (item = opal_list_get_first(&orte_ras_base.ras_available);
+             item != opal_list_get_end(&orte_ras_base.ras_available);
+             item = opal_list_get_next(item)) {
+            cmp = (orte_ras_base_cmp_t *) item;
+            opal_output(orte_ras_base.ras_output,
+                        "orte:ras:base:allocate: attemping to allocate using module: %s",
+                        cmp->component->ras_version.mca_component_name);
+
+            if (NULL != cmp->module->allocate_job) {
+                ret = cmp->module->allocate_job(jobid, attributes);
+                if (ORTE_SUCCESS == ret) {
+                    bool empty;
+
+                    if (ORTE_SUCCESS != 
+                        (ret = orte_ras_base_node_segment_empty(&empty))) {
+                        ORTE_ERROR_LOG(ret);
+                        return ret;
+                    }
+
+                    /* If this module put something on the node segment,
+                       we're done */
+
+                    if (!empty) {
+                        opal_output(orte_ras_base.ras_output,
+                                    "orte:ras:base:allocate: found good module: %s",
+                                    cmp->component->ras_version.mca_component_name);
+                        return ORTE_SUCCESS;
+                    }
+                }
+            }
+        }
+    
+        /* We didn't find anyone who put anything on the node segment */
         opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:select: no components available!");
+                    "orte:ras:base:allocate: no module put anything in the node segment");
         ret = ORTE_ERR_NOT_FOUND;
         ORTE_ERROR_LOG(ret);
         return ret;
     }
 
-    /* Otherwise, go through the [already sorted in priority order]
-       list and initialize them until one of them puts something on
-       the node segment */
-
-    for (item = opal_list_get_first(&orte_ras_base.ras_available);
-         item != opal_list_get_end(&orte_ras_base.ras_available);
-         item = opal_list_get_next(item)) {
-        cmp = (orte_ras_base_cmp_t *) item;
+    /* Case 3: We want to use our parent's allocation. This can occur if we 
+     * are doing a dynamic process spawn and don't want to do go through 
+     * the allocators again. */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_PARENT_ALLOCATION))) {
         opal_output(orte_ras_base.ras_output,
-                    "orte:ras:base:allocate: attemping to allocate using module: %s",
-                    cmp->component->ras_version.mca_component_name);
+                    "orte:ras:base:allocate: reallocating parent's allocation as our own");
+        /* attribute was given - just reallocate to the new jobid */
+        if (ORTE_SUCCESS != (ret = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        if (ORTE_SUCCESS != (ret = orte_ras_base_reallocate(*jptr, jobid))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+        return ORTE_SUCCESS;
+    }
 
-        if (NULL != cmp->module->allocate_job) {
-            ret = cmp->module->allocate_job(jobid, attributes);
-            if (ORTE_SUCCESS == ret) {
-                bool empty;
+    /* Case 4: We want to use a new allocation. This can happen if we
+     * are spawning a new process that does not want to use its parent's
+     * allocation.  */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RAS_USE_NEW_ALLOCATION))) {
+        /* If no components are available, then return an error */
+        if (opal_list_is_empty(&orte_ras_base.ras_available)) {
+            opal_output(orte_ras_base.ras_output,
+                        "orte:ras:base:allocate: no components available!");
+            ret = ORTE_ERR_NOT_FOUND;
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
 
-                if (ORTE_SUCCESS != 
-                    (ret = orte_ras_base_node_segment_empty(&empty))) {
-                    ORTE_ERROR_LOG(ret);
-                    return ret;
-                }
+        /* Otherwise, go through the [already sorted in priority order]
+         * list and initialize them until one of them puts something on
+         * the node segment */
+        for (item = opal_list_get_first(&orte_ras_base.ras_available);
+             item != opal_list_get_end(&orte_ras_base.ras_available);
+             item = opal_list_get_next(item)) {
+            cmp = (orte_ras_base_cmp_t *) item;
+            opal_output(orte_ras_base.ras_output,
+                        "orte:ras:base:allocate: attemping to allocate using module: %s",
+                        cmp->component->ras_version.mca_component_name);
 
-                /* If this module put something on the node segment,
-                   we're done */
+            if (NULL != cmp->module->allocate_job) {
+                ret = cmp->module->allocate_job(jobid, attributes);
+                if (ORTE_SUCCESS == ret) {
+                    bool empty;
 
-                if (!empty) {
-                    opal_output(orte_ras_base.ras_output,
-                                "orte:ras:base:allocate: found good module: %s",
-                                cmp->component->ras_version.mca_component_name);
-                    return ORTE_SUCCESS;
+                    if (ORTE_SUCCESS != 
+                        (ret = orte_ras_base_node_segment_empty(&empty))) {
+                        ORTE_ERROR_LOG(ret);
+                        return ret;
+                    }
+
+                    /* If this module put something on the node segment,
+                       we're done */
+
+                    if (!empty) {
+                        opal_output(orte_ras_base.ras_output,
+                                    "orte:ras:base:allocate: found good module: %s",
+                                    cmp->component->ras_version.mca_component_name);
+                        return ORTE_SUCCESS;
+                    }
                 }
             }
         }
+    
+        /* We didn't find anyone who put anything on the node segment */
+        opal_output(orte_ras_base.ras_output,
+                    "orte:ras:base:allocate: no module put anything in the node segment");
+        ret = ORTE_ERR_NOT_FOUND;
+        ORTE_ERROR_LOG(ret);
+        return ret;
     }
 
-    /* We didn't find anyone who put anything on the node segment */
-
-    opal_output(orte_ras_base.ras_output,
-                "orte:ras:base:allocate: no module put anything in the node segment");
+    /* none of the above cases fit. This is not a good thing... */
     ret = ORTE_ERR_NOT_FOUND;
     ORTE_ERROR_LOG(ret);
     return ret;
@@ -96,6 +209,10 @@ int orte_ras_base_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 
 int orte_ras_base_deallocate(orte_jobid_t job)
 {
+    /* if we are not a HNP, then use proxy */
+    if (!orte_process_info.seed) {
+        return orte_ras_base_proxy_deallocate(job);
+    }
     return ORTE_SUCCESS;
 }
 
@@ -110,6 +227,7 @@ int orte_ras_base_reallocate(orte_jobid_t parent_jobid,
     opal_list_t current_alloc;
     opal_list_item_t *item;
     int rc;
+
     
     OBJ_CONSTRUCT(&current_alloc, opal_list_t);
     

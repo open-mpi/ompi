@@ -18,7 +18,8 @@
 
 headers += \
         base/base.h \
-        base/ras_private.h
+        base/ras_private.h \
+        base/proxy/ras_base_proxy.h
 
 libmca_ras_la_SOURCES += \
         base/ras_base_alloc.c \
@@ -35,4 +36,6 @@ libmca_ras_la_SOURCES += \
 	base/data_type_support/ras_data_type_print_fns.c \
 	base/data_type_support/ras_data_type_release_fns.c \
 	base/data_type_support/ras_data_type_size_fns.c \
-	base/data_type_support/ras_data_type_unpacking_fns.c
+	base/data_type_support/ras_data_type_unpacking_fns.c \
+    base/proxy/ras_base_proxy.c \
+    base/proxy/ras_base_proxy_component.c

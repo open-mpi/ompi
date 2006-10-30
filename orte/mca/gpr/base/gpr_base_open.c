@@ -129,9 +129,9 @@ static void orte_gpr_notify_data_construct(orte_gpr_notify_data_t* ptr)
     ptr->id = ORTE_GPR_SUBSCRIPTION_ID_MAX;
     ptr->remove = false;
     ptr->cnt = 0;
-    orte_pointer_array_init(&(ptr->values), orte_gpr_array_block_size,
-                            orte_gpr_array_max_size,
-                            orte_gpr_array_block_size);
+    orte_pointer_array_init(&(ptr->values), (orte_std_cntr_t)orte_gpr_array_block_size,
+                            (orte_std_cntr_t)orte_gpr_array_max_size,
+                            (orte_std_cntr_t)orte_gpr_array_block_size);
 
 }
 
@@ -244,9 +244,9 @@ static void orte_gpr_notify_message_construct(orte_gpr_notify_message_t* msg)
     msg->id = ORTE_GPR_TRIGGER_ID_MAX;
     msg->remove = false;
     msg->cnt = 0;
-    orte_pointer_array_init(&(msg->data), orte_gpr_array_block_size,
-                            orte_gpr_array_max_size,
-                            orte_gpr_array_block_size);
+    orte_pointer_array_init(&(msg->data), (orte_std_cntr_t)orte_gpr_array_block_size,
+                            (orte_std_cntr_t)orte_gpr_array_max_size,
+                            (orte_std_cntr_t)orte_gpr_array_block_size);
 }
 
 /* destructor - used to free any resources held by instance */

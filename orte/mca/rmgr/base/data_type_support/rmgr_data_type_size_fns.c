@@ -115,7 +115,7 @@ int orte_rmgr_base_size_attribute(size_t *size, orte_attribute_t *src, orte_data
     
     *size = 0;
     
-    if (ORTE_SUCCESS != (orte_dss.size(&tsize, src, ORTE_GPR_KEYVAL))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.size(&tsize, src, ORTE_GPR_KEYVAL))) {
         ORTE_ERROR_LOG(rc);
     }
     

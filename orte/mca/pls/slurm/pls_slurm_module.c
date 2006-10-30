@@ -38,6 +38,9 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -113,6 +116,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     opal_list_item_t *item;
     size_t num_nodes;
     orte_vpid_t vpid;
+    orte_vpid_t start_vpid;
     char *jobid_string;
     char *uri, *param;
     char **argv;
@@ -131,7 +135,14 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     char *cur_prefix;
     opal_list_t daemons;
     orte_pls_daemon_info_t *dmn;
+    struct timeval joblaunchstart, launchstart, launchstop;
 
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&joblaunchstart, NULL)) {
+            opal_output(0, "pls_slurm: could not obtain job start time");
+        }        
+    }
+    
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done
      */
@@ -159,6 +170,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
     }
+    start_vpid = vpid; 
 
     /* setup the orted triggers for passing their launch info */
     if (ORTE_SUCCESS != (rc = orte_smr.init_orted_stage_gates(jobid, num_nodes, NULL, NULL))) {
@@ -338,7 +350,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     }
 
     /* setup the daemon info for each node */
-    vpid = 0;
+    vpid = start_vpid;
     for (item = opal_list_get_first(&map->nodes);
          item != opal_list_get_end(&map->nodes);
          item = opal_list_get_next(item)) {
@@ -367,8 +379,28 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
 
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&launchstart, NULL)) {
+            opal_output(0, "pls_slurm: could not obtain start time");
+        }        
+    }
+    
     /* exec the daemon */
     rc = pls_slurm_start_proc(argc, argv, env, cur_prefix);
+    
+    if (mca_pls_slurm_component.timing) {
+        if (0 != gettimeofday(&launchstop, NULL)) {
+             opal_output(0, "pls_slurm: could not obtain stop time");
+         } else {
+             opal_output(0, "pls_slurm: daemon block launch time is %ld usec",
+                         (launchstop.tv_sec - launchstart.tv_sec)*1000000 + 
+                         (launchstop.tv_usec - launchstart.tv_usec));
+             opal_output(0, "pls_slurm: total job launch time is %ld usec",
+                         (launchstop.tv_sec - joblaunchstart.tv_sec)*1000000 + 
+                         (launchstop.tv_usec - joblaunchstart.tv_usec));
+         }
+    }
+
     if (ORTE_SUCCESS != rc) {
         opal_output(0, "pls:slurm: start_procs returned error %d", rc);
         goto cleanup;
@@ -496,7 +528,7 @@ static int pls_slurm_finalize(void)
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix)
 {
-    int fd;
+    int fd, id, debug_daemons;
     char *exec_argv = opal_path_findv(argv[0], 0, env, NULL);
 
     if (NULL == exec_argv) {
@@ -552,9 +584,14 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             free(newenv);
         }
 
-        /* When not in debug mode, tie stdout/stderr to dev null so we
-           don't see messages from orted */
-        if (!mca_pls_slurm_component.debug) {
+        /* When not in debug mode and --debug-daemons was not passed,
+         * tie stdout/stderr to dev null so we don't see messages from orted */
+        id = mca_base_param_find("orte", "debug", "daemons");
+        if(id < 0) {
+            id = mca_base_param_register_int("orte", "debug", "daemons", NULL, 0);
+        }
+        mca_base_param_lookup_int(id, &debug_daemons);
+        if (0 == mca_pls_slurm_component.debug && 0 == debug_daemons) {
             fd = open("/dev/null", O_CREAT|O_WRONLY|O_TRUNC, 0666);
             if (fd >= 0) {
                 if (fd != 1) {

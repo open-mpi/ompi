@@ -103,10 +103,16 @@ orte_pls_slurm_component_t mca_pls_slurm_component = {
 static int pls_slurm_open(void)
 {
     mca_base_component_t *comp = &mca_pls_slurm_component.super.pls_version;
+    int tmp, value;
 
     mca_base_param_reg_int(comp, "debug", "Enable debugging of slurm pls",
                            false, false, 0, 
                            &mca_pls_slurm_component.debug);
+    if (mca_pls_slurm_component.debug == 0) {
+        mca_base_param_reg_int_name("orte", "debug",
+                                    "Whether or not to enable debugging output for all ORTE components (0 or 1)",
+                                    false, false, false, &mca_pls_slurm_component.debug);
+    }
 
     mca_base_param_reg_int(comp, "priority", "Default selection priority",
                            false, false, 75, 
@@ -117,6 +123,15 @@ static int pls_slurm_open(void)
                               false, false, "orted",
                               &mca_pls_slurm_component.orted);
 
+    tmp = mca_base_param_reg_int_name("orte", "timing",
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
+    if (value != 0) {
+        mca_pls_slurm_component.timing = true;
+    } else {
+        mca_pls_slurm_component.timing = false;
+    }
+    
     mca_base_param_reg_string(comp, "args",
                               "Custom arguments to srun",
                               false, false, NULL,

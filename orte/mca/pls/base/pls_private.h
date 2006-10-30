@@ -96,6 +96,7 @@ extern "C" {
      * general utilities
      */
     int orte_pls_base_mca_argv(int *argc, char ***argv);
+    void orte_pls_base_purge_mca_params(char ***env);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

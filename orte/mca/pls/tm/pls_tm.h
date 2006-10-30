@@ -37,6 +37,7 @@ extern "C" {
         bool want_path_check;
         char *orted;
         char **checked_paths;
+        bool timing;
     };
     typedef struct orte_pls_tm_component_t orte_pls_tm_component_t;
 

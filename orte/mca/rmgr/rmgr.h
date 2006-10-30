@@ -139,7 +139,7 @@ typedef int (*orte_rmgr_base_module_finalize_fn_t)(void);
 
 /**
  * Find an attribute
- * Given a pointer array of attributes, return a pointer to the specified attribute
+ * Given a list of attributes, return a pointer to the specified attribute
  *
  * @param attr_list A pointer to the list of attributes
  * @param key The key indicating the attribute to be returned.
@@ -153,9 +153,13 @@ typedef orte_attribute_t* (*orte_rmgr_base_module_find_attribute_fn_t)(opal_list
 
 /**
  * Add an attribute
- * Given a pointer array of attributes and the data for a new attribute,
+ * Given a list of attributes and the data for a new attribute,
  * this function will create the gpr_keyval_t object for that attribute,
- * populate it with the provided data, and append it to the list.
+ * populate it with the provided data, and append it to the list. If
+ * overwrite is set to true AND the value is found on the list, then
+ * it will be overwritten with the new value. If overwrite is NOT set
+ * and the value is found on the list, it will be left alone - the value
+ * will NOT be updated with the one provided.
  *
  * @param attr_list A pointer to the list of attributes
  * @param key The key for the attribute.
@@ -164,19 +168,22 @@ typedef orte_attribute_t* (*orte_rmgr_base_module_find_attribute_fn_t)(opal_list
  * the existence of the attribute on the list is all that is required.
  * @param data A pointer to the data to be stored in the attribute. NULL
  * is acceptable IF the data type is ORTE_UNDEF.
+ * @param overwrite Indicates if a pre-existing value can be overwritten or not
  * @retval ORTE_SUCCESS Attribute was added to list.
  * @retval ORTE_ERROR An appropriate error code indicating what went wrong.
  */
 typedef int (*orte_rmgr_base_module_add_attribute_fn_t)(opal_list_t* attr_list, char* key,
-                                                        orte_data_type_t type, void *data);
+                                                        orte_data_type_t type, void *data,
+                                                        bool overwrite);
 
 
 /**
- * Update an attribute
- * Given a pointer array of attributes and the data for a new attribute,
- * this function will find the attribute matching the given key and
- * replace the current value with the one given. If the attribute is NOT
- * found on the list, it will be added to it.
+ * Merge two attribute lists
+ * Given two lists of attributes, this function will merge the second list into
+ * the first. The boolean defines how to handle matching entries - if set to
+ * true (ORTE_RMGR_ATTR_OVERRIDE), entries in the second list will OVERWRITE
+ * matching entries in the first list. If set to false (ORTE_RMGR_ATTR_NO_OVERRIDE)
+ * matching entries in the second list will be ignored.
  *
  * @param attr_list A pointer to the list of attributes
  * @param key The key for the attribute.
@@ -188,8 +195,9 @@ typedef int (*orte_rmgr_base_module_add_attribute_fn_t)(opal_list_t* attr_list, 
  * @retval ORTE_SUCCESS Attribute was added to list.
  * @retval ORTE_ERROR An appropriate error code indicating what went wrong.
  */
-typedef int (*orte_rmgr_base_module_update_attribute_fn_t)(opal_list_t* attr_list, char* key,
-                                                           orte_data_type_t type, void *data);
+typedef int (*orte_rmgr_base_module_merge_attributes_fn_t)(opal_list_t* target,
+                                                           opal_list_t* source,
+                                                           bool override);
 
 
 /**
@@ -266,7 +274,7 @@ struct orte_rmgr_base_module_2_0_0_t {
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_module_find_attribute_fn_t       find_attribute;
     orte_rmgr_base_module_add_attribute_fn_t        add_attribute;
-    orte_rmgr_base_module_update_attribute_fn_t     update_attribute;
+    orte_rmgr_base_module_merge_attributes_fn_t     merge_attributes;
     orte_rmgr_base_module_delete_attribute_fn_t     delete_attribute;
     orte_rmgr_base_module_get_app_context_fn_t      get_app_context;
     orte_rmgr_base_module_store_app_context_fn_t    store_app_context;

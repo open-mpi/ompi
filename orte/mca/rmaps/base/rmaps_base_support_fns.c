@@ -96,11 +96,12 @@ static bool is_mapped(opal_list_item_t *item,
 /*
  * Query the registry for all nodes allocated to a specified job
  */
-int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots)
+int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t jobid, orte_std_cntr_t *total_num_slots, bool nolocal)
 {
     opal_list_item_t *item, *next;
     orte_ras_node_t *node;
-    int id, rc, nolocal;
+    int rc;
+    size_t nodelist_size;
     orte_std_cntr_t num_slots=0;
 
     /** set default answer */
@@ -112,12 +113,11 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
         return rc;
     }
 
+    nodelist_size = opal_list_get_size(allocated_nodes);
+
     /* If the "no local" option was set, then remove the local node
         from the list */
-    
-    id = mca_base_param_find("rmaps", NULL, "base_schedule_local");
-    mca_base_param_lookup_int(id, &nolocal);
-    if (0 == nolocal) {
+    if (nolocal) {
         for (item  = opal_list_get_first(allocated_nodes);
              item != opal_list_get_end(allocated_nodes);
              item  = opal_list_get_next(item) ) {
@@ -151,6 +151,20 @@ int orte_rmaps_base_get_target_nodes(opal_list_t *allocated_nodes, orte_jobid_t 
 
     /* Sanity check to make sure we have resources available */
     if (0 == opal_list_get_size(allocated_nodes)) {
+        /* so there are 3 reasons we could be erroring here:
+         * 1. There were no nodes allocated to this job 
+         * 2. The local node was the only one available and nolocal was passed 
+         * 3. All the nodes were full */
+        if(0 == nodelist_size) {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:no-available-resources", true);
+        } else if(nolocal) {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:nolocal-no-available-resources", true);
+        } else {
+            opal_show_help("help-orte-rmaps-base.txt", 
+                           "orte-rmaps-base:all-available-resources-used", true);
+        }
         ORTE_ERROR_LOG(ORTE_ERR_TEMP_OUT_OF_RESOURCE);
         return ORTE_ERR_TEMP_OUT_OF_RESOURCE;
     }
@@ -298,7 +312,8 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
                                orte_jobid_t jobid, orte_vpid_t vpid,
                                orte_std_cntr_t app_idx,
                                opal_list_t *nodes,
-                               opal_list_t *fully_used_nodes)
+                               opal_list_t *fully_used_nodes,
+                               bool oversubscribe)
 {
     orte_process_name_t *name;
     orte_mapped_proc_t *proc;
@@ -349,7 +364,7 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
      */
     if ((0 != current_node->node_slots_max  &&
         current_node->node_slots_inuse >= current_node->node_slots_max) ||
-        (!orte_rmaps_base.oversubscribe && oversub)) {
+        (!oversubscribe && oversub)) {
         opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
         /* add it to the list of fully used nodes */
         opal_list_append(fully_used_nodes, &current_node->super);
@@ -372,7 +387,7 @@ int orte_rmaps_base_update_node_usage(opal_list_t *nodes)
     orte_std_cntr_t num_values, i, j;
     orte_ras_node_t* node;
     
-    num_values = opal_list_get_size(nodes);
+    num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;

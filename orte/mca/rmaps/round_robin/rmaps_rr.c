@@ -35,6 +35,7 @@
 #include "opal/util/show_help.h"
 #include "opal/util/argv.h"
 
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
@@ -114,9 +115,17 @@ static int map_app_by_node(
         /* Allocate a slot on this node */
         node = (orte_ras_node_t*) cur_node_item;
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
-                                             nodes, max_used_nodes))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
+                                             nodes, max_used_nodes,
+                                             mca_rmaps_round_robin_component.oversubscribe))) {
+            /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
+             * really isn't an error - we just need to break from the loop
+             * since the node is fully used up. For now, just don't report
+             * an error
+             */
+            if (ORTE_ERR_NODE_FULLY_USED != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
         }
 
         ++num_alloc;
@@ -187,18 +196,32 @@ static int map_app_by_slot(
          * If node_slots == 0, assume 1 slot for that node. 
          * JJH - is this assumption fully justified?
          *
-         * If we are now oversubscribing the nodes, then we still take
-         * a full node_slots from each node until either everything is done,
-         * or all nodes have hit their hard limit. This preserves the ratio
-         * of processes between the nodes (e.g., if one node has twice as
+         * If we are now oversubscribing the nodes, then we still take:
+         * (a) if the node has not been used yet, we take a full node_slots
+         * (b) if some of the slots are in-use, then we take the number of
+         *     remaining slots before hitting the soft limit (node_slots)
+         * (c) if we are at or above the soft limit, we take a full node_slots
+         *
+         * Note: if node_slots is zero, then we always just take 1 slot
+         *
+         * We continue this process until either everything is done,
+         * or all nodes have hit their hard limit. This algorithm ensures we
+         * fully utilize each node before oversubscribing, and preserves the ratio
+         * of processes between the nodes thereafter (e.g., if one node has twice as
          * many processes as another before oversubscribing, it will continue
          * to do so after oversubscribing).
          */
-        num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
+        if (0 == node->node_slots_inuse ||
+            node->node_slots_inuse >= node->node_slots) {
+            num_slots_to_take = (node->node_slots == 0) ? 1 : node->node_slots;
+        } else {
+            num_slots_to_take = node->node_slots - node->node_slots_inuse;
+        }
         
         for( i = 0; i < num_slots_to_take; ++i) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
-                                                 nodes, max_used_nodes))) {
+                                                 nodes, max_used_nodes,
+                                                 mca_rmaps_round_robin_component.oversubscribe))) {
                 /** if the code is ORTE_ERR_NODE_FULLY_USED, then we know this
                  * really isn't an error - we just need to break from the loop
                  * since the node is fully used up. For now, just don't report
@@ -216,13 +239,20 @@ static int map_app_by_slot(
             /** if all the procs have been mapped OR we have fully used up this node, then
              * break from the loop
              */
-            if(num_alloc >= app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
+            if(num_alloc == app->num_procs || ORTE_ERR_NODE_FULLY_USED == rc) {
                 break;
             }
         }
 
+        /* we move on to the next node in all cases EXCEPT if we came
+         * out of the loop without having taken a full bite AND the
+         * node is NOT max'd out
+         *
+         */
+        if (i < (num_slots_to_take-1) && ORTE_ERR_NODE_FULLY_USED != rc) {
+            continue;
+        }
         cur_node_item = next;
-
     }
 
     return ORTE_SUCCESS;
@@ -230,10 +260,51 @@ static int map_app_by_slot(
    
 
 /*
+ * Process the attributes and push them into our local "global"
+ */
+static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
+{
+    int rc;
+    char *policy;
+    orte_attribute_t *attr;
+    
+    mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
+        /* they specified a mapping policy - extract its name */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&policy, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 == strcmp(policy, "bynode")) {
+            mca_rmaps_round_robin_component.bynode = true;
+        }
+    }
+    
+    mca_rmaps_round_robin_component.per_node = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
+        /* was provided - set boolean accordingly */
+         mca_rmaps_round_robin_component.per_node = true;
+    }
+    
+    mca_rmaps_round_robin_component.no_use_local = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_USE_LOCAL))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.no_use_local = true;
+    }
+    
+    mca_rmaps_round_robin_component.oversubscribe = true;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_OVERSUB))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.oversubscribe = false;
+    }
+    
+    return ORTE_SUCCESS;
+}
+/*
  * Create a round-robin mapping for the job.
  */
 
-static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
+static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
 {
     orte_app_context_t *app;
     orte_job_map_t* map;
@@ -241,12 +312,21 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
+    char *save_bookmark;
     orte_vpid_t vpid_start, job_vpid_start=0;
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
     bool modify_app_context = false;
+    char *sptr;
+    orte_attribute_t *attr;
 
     OPAL_TRACE(1);
+    
+    /* setup the local environment from the attributes */
+    if (ORTE_SUCCESS != (rc = orte_rmaps_rr_process_attrs(attributes))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
     
     /* create the map object */
     map = OBJ_NEW(orte_job_map_t);
@@ -269,34 +349,46 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, char *ignore)
      * mappings from the user
      */
     OBJ_CONSTRUCT(&master_node_list, opal_list_t);
-    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid, &total_num_slots))) {
+    if(ORTE_SUCCESS != (rc = orte_rmaps_base_get_target_nodes(&master_node_list, jobid,
+                                                              &total_num_slots,
+                                                              mca_rmaps_round_robin_component.no_use_local))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&master_node_list);
         return rc;
     }
 
-    /* initialize the cur_node_item to point to the first node in the list that has
-     * an available slot. We need to check the slot availability since we may be
-     * mapping a child job onto the same nodes used by its parent. In that case,
-     * even though we may have used some slots on a node, the system still considers
-     * the node available due to oversubscription rules. However, we don't want to
-     * start at the beginning of the nodelist again as we will be oversubscribing the
-     * node and causing majorly poor performance
-     */
-    for (cur_node_item = opal_list_get_first(&master_node_list);
-         cur_node_item != opal_list_get_end(&master_node_list);
-         cur_node_item = opal_list_get_next(cur_node_item)) {
-        node = (orte_ras_node_t*)cur_node_item;
-        if (node->node_slots > node->node_slots_inuse) {
-            goto MOVEON;
+    /* if a bookmark exists from some prior mapping, set us to start there */
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_BOOKMARK))) {
+        cur_node_item = NULL;
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&sptr, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
+        /* find this node on the master list */
+        for (item = opal_list_get_first(&master_node_list);
+             item != opal_list_get_end(&master_node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_ras_node_t*)item;
+            
+            if (0 == strcmp(sptr, node->node_name)) {
+                cur_node_item = item;
+                break;
+            }
+        }
+        /* see if we found it - if not, just start at the beginning */
+        if (NULL == cur_node_item) {
+            cur_node_item = opal_list_get_first(&master_node_list); 
+        }
+    } else {
+        /* if no bookmark, then just start at the beginning of the list */
+        cur_node_item = opal_list_get_first(&master_node_list);
     }
-    /* if we got here, then everyone is at or above the soft limit - just
-     * start with the first node on the list
-     */
-    cur_node_item = opal_list_get_first(&master_node_list);
     
-MOVEON:    
+    /* save the node name for the bookmark just in case we don't do anything
+     * useful down below
+     */
+    save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
+    
     /** construct the list to hold any nodes that get fully used during this
      * mapping. We need to keep a record of these so we can update their
      * information on the registry when we are done, but we want to remove
@@ -334,7 +426,8 @@ MOVEON:
             /** If the user has specified a mapping for this app_context, then we
             * create a working node list that contains only those nodes.
             */
-            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app, &master_node_list, &mapped_num_slots))) {
+            if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapped_targets(&mapped_node_list, app,
+                                                                         &master_node_list, &mapped_num_slots))) {
                 ORTE_ERROR_LOG(rc);
                 goto cleanup;
             }
@@ -346,10 +439,10 @@ MOVEON:
                /** set the num_procs to equal the number of slots on these mapped nodes - if
                    user has specified "-pernode", then set it to the number of nodes
                 */
-                if (orte_rmaps_base.per_node) {
-                    app->num_procs = opal_list_get_size(&mapped_node_list);
+                if (mca_rmaps_round_robin_component.per_node) {
+                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
                 } else {
-                    app->num_procs = mapped_num_slots;
+                    app->num_procs = (orte_std_cntr_t)mapped_num_slots;
                 }
                 modify_app_context = true;
             }
@@ -366,8 +459,8 @@ MOVEON:
                 /** set the num_procs to equal the number of slots on these mapped nodes - if
                 user has specified "-pernode", then set it to the number of nodes
                 */
-                if (orte_rmaps_base.per_node) {
-                    app->num_procs = opal_list_get_size(&master_node_list);
+                if (mca_rmaps_round_robin_component.per_node) {
+                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
                 } else {
                     app->num_procs = total_num_slots;
                 }
@@ -391,7 +484,7 @@ MOVEON:
         num_procs += app->num_procs;
 
         /* Make assignments */
-        if (orte_rmaps_base.bynode) {
+        if (mca_rmaps_round_robin_component.bynode) {
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
@@ -403,9 +496,46 @@ MOVEON:
             goto cleanup;
         }
 
+        /* save the next node name bookmark as we will - in the case of mapped nodes -
+         * release the node information being pointed to by cur_node_item
+         */
+        if(NULL != cur_node_item) {
+            free(save_bookmark);
+            save_bookmark = strdup(((orte_ras_node_t*)cur_node_item)->node_name);
+        }
+
         /** cleanup the mapped_node_list, if necessary */
         if (0 < app->num_map) {
-            /** before we get rid of the mapped_node_list, we first need to update
+            /* we need to adjust our bookmark so it points to the node in the
+             * master node list - this allows the cur_node_item to "survive"
+             * the disassembly of the mapped_node_list
+             */
+            if (NULL != cur_node_item) {
+                node = (orte_ras_node_t*)cur_node_item;
+                /* This can be a little tricky due to all the corner
+                 * cases. If the mapped_node_list only has ONE entry on it, then the
+                 * cur_node_item will always point at it, even if we used everything
+                 * on that node. What we will do, therefore, is check the usage of the
+                 * cur_node_item to see if it has reached the soft limit. If so, we find
+                 * the node after that one on the master node list
+                 */
+                for (item = opal_list_get_first(&master_node_list);
+                     item != opal_list_get_end(&master_node_list);
+                     item = opal_list_get_next(item)) {
+                    node2 = (orte_ras_node_t*)item;
+                    if (0 == strcmp(node->node_name, node2->node_name)) {
+                        if (node->node_slots <= node->node_slots_inuse) {
+                            /* we are at or beyond the soft limit */
+                            cur_node_item = opal_list_get_next(item);
+                        } else {
+                            cur_node_item = item;
+                        }
+                        break;
+                    }
+                }
+            }
+            
+            /* as we get rid of the mapped_node_list, we need to update
             * corresponding entries in the master_node_list so we accurately
             * track the usage of slots. Also, any node that was "used up" will have
             * been removed from the mapped_node_list - we now also must ensure that
@@ -418,6 +548,7 @@ MOVEON:
             *
             * Still, some effort to improve the efficiency of this process
             * may be in order for the future.
+            *
             */
             while (NULL != (item = opal_list_remove_first(&mapped_node_list))) {
                 node = (orte_ras_node_t*)item;
@@ -455,10 +586,16 @@ MOVEON:
                     node2 = (orte_ras_node_t*)item2;
 
                     /** if we have a match, then remove the entry from the
-                     * master_node_list
+                     * master_node_list. if that entry was our bookmark,
+                     * shift the bookmark to the next entry on the list
                      */
                     if (0 == strcmp(node2->node_name, node->node_name)) {
+                        if (0 == strcmp(node->node_name,
+                                        ((orte_ras_node_t*)cur_node_item)->node_name)) {
+                            cur_node_item = opal_list_get_next(item2);
+                        }
                         opal_list_remove_item(&master_node_list, item2);
+                        OBJ_RELEASE(item2);
                         break;
                     }
                 }
@@ -506,9 +643,18 @@ MOVEON:
     if (modify_app_context) {
         if (ORTE_SUCCESS != (rc = orte_rmgr.store_app_context(jobid, map->apps, 1))) {
             ORTE_ERROR_LOG(rc);
+            goto cleanup;
         }
     }
     
+    /* save a bookmark indicating what node we finished with so that subsequent children (if any)
+     * can start at the right place
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_BOOKMARK,
+                                                      ORTE_STRING, save_bookmark,
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
+        ORTE_ERROR_LOG(rc);
+    }
 
 cleanup:
     while(NULL != (item = opal_list_remove_first(&master_node_list))) {
@@ -520,6 +666,8 @@ cleanup:
     OBJ_DESTRUCT(&fully_used_nodes);
     OBJ_DESTRUCT(&mapped_node_list);
 
+    free(save_bookmark);
+    
     return rc;
 }
 

@@ -55,9 +55,8 @@ extern "C" {
 typedef uint8_t orte_rmgr_cmd_t;
     
 /*
- * Internal definitions
+ * Base functions that are common to all implementations - can be overridden
  */
-
 ORTE_DECLSPEC int orte_rmgr_base_get_app_context(
     orte_jobid_t jobid,
     orte_app_context_t*** app_context,
@@ -85,10 +84,27 @@ ORTE_DECLSPEC int orte_rmgr_base_set_vpid_range(orte_jobid_t jobid, orte_vpid_t 
 
 ORTE_DECLSPEC int orte_rmgr_base_get_vpid_range(orte_jobid_t jobid, orte_vpid_t *start, orte_vpid_t *range);
 
+ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
+                                         orte_process_name_t *connect);
+
+ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
+                                            orte_process_name_t *disconnect);
+
+ORTE_DECLSPEC orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
+
+ORTE_DECLSPEC int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
+                                               orte_data_type_t type, void *data,
+                                               bool overwrite);
+
+ORTE_DECLSPEC int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
+
+ORTE_DECLSPEC int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
+
 
 /*
- * Base functions that are common to all implementations - can be overridden
+ * Internal definitions
  */
+
 int orte_rmgr_base_create_not_available(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
@@ -104,27 +120,13 @@ int orte_rmgr_base_spawn_not_available(
     orte_proc_state_t cb_conditions,
     opal_list_t *attributes);
 
-ORTE_DECLSPEC int orte_rmgr_base_connect(orte_std_cntr_t num_connect,
-                                         orte_process_name_t *connect);
-
-ORTE_DECLSPEC int orte_rmgr_base_disconnect(orte_std_cntr_t num_disconnect,
-                                            orte_process_name_t *disconnect);
-
-orte_gpr_keyval_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* key);
-
-int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
-                                 orte_data_type_t type, void *data);
-
-int orte_rmgr_base_update_attribute(opal_list_t* attr_list, char* key,
-                                    orte_data_type_t type, void *data);
-
-int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key);
-
 int orte_rmgr_base_finalize_not_available(void);
 
 /*
  * Support functions
  */
+ORTE_DECLSPEC void orte_rmgr_base_purge_mca_params(char ***env);
+
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job);
 
 ORTE_DECLSPEC int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg);
@@ -156,17 +158,17 @@ int orte_rmgr_base_pack_attribute(orte_buffer_t *buffer, void *src,
 /*
  * DATA TYPE UNPACKING FUNCTIONS
  */
-int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
-                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_app_context(orte_buffer_t *buffer, void *dest,
+                                                    orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
-                                          orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_app_context_map(orte_buffer_t *buffer, void *dest,
+                                                        orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
-                                      orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_attr_list(orte_buffer_t *buffer, void *dest,
+                                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
-int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
-                                    orte_std_cntr_t *num_vals, orte_data_type_t type);
+ORTE_DECLSPEC int orte_rmgr_base_unpack_attribute(orte_buffer_t *buffer, void *dest,
+                                                  orte_std_cntr_t *num_vals, orte_data_type_t type);
 
 
 /*

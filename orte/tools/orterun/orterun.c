@@ -757,8 +757,6 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
     }
-
-        
 }
 
 
@@ -788,41 +786,50 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 
 static int init_globals(void)
 {
-    struct globals_t tmp = {
-        /* help =           */  false,
-        /* version =        */  false,
-        /* verbose =        */  false,
-        /* quiet =          */  false,
-        /* exit =           */  false,
-        /* no_wait =        */  false,
-        /* by_node =        */  false,
-        /* by_slot =        */  false,
-        /* per_node =		*/	false,
-        /* no_oversub =     */  false,
-        /* debugger =       */  false,
-        /* no_local =       */  false,
-        /* num_procs =      */  0,
-        /* exit_status =    */  0,
-        /* hostfile =       */  NULL,
-        /* env_val =        */  NULL,
-        /* appfile =        */  NULL,
-        /* wdir =           */  NULL,
-        /* path =           */  NULL
-    };
-
     /* Only CONSTRUCT things once */
-
     if (!globals_init) {
         OBJ_CONSTRUCT(&orterun_globals.lock, opal_mutex_t);
         OBJ_CONSTRUCT(&orterun_globals.cond, opal_condition_t);
+        orterun_globals.hostfile =    NULL;
+        orterun_globals.env_val =     NULL;
+        orterun_globals.appfile =     NULL;
+        orterun_globals.wdir =        NULL;
+        orterun_globals.path =        NULL;
     }
 
     /* Reset the other fields every time */
 
-    orterun_globals = tmp;
+    orterun_globals.help                       = false;
+    orterun_globals.version                    = false;
+    orterun_globals.verbose                    = false;
+    orterun_globals.quiet                      = false;
+    orterun_globals.exit                       = false;
+    orterun_globals.no_wait_for_job_completion = false;
+    orterun_globals.by_node                    = false;
+    orterun_globals.by_slot                    = false;
+    orterun_globals.per_node                   = false;
+    orterun_globals.no_oversubscribe           = false;
+    orterun_globals.debugger                   = false;
+    orterun_globals.no_local_schedule          = false;
+    orterun_globals.num_procs                  = 0;
+    orterun_globals.exit_status                = 0;
+    if( NULL == orterun_globals.hostfile )
+        free( orterun_globals.hostfile );
+    orterun_globals.hostfile =    NULL;
+    if( NULL == orterun_globals.env_val )
+        free( orterun_globals.env_val );
+    orterun_globals.env_val =     NULL;
+    if( NULL == orterun_globals.appfile )
+        free( orterun_globals.appfile );
+    orterun_globals.appfile =     NULL;
+    if( NULL == orterun_globals.wdir )
+        free( orterun_globals.wdir );
+    orterun_globals.wdir =        NULL;
+    if( NULL != orterun_globals.path )
+        free( orterun_globals.path );
+    orterun_globals.path =        NULL;
 
     /* All done */
-
     globals_init = true;
     return ORTE_SUCCESS;
 }

@@ -50,3 +50,12 @@ remote agents (typically rsh or ssh) to invoke concurrently while
 launching parallel jobs.  
 
 This value has automatically be reset to 1; processing will continue.
+
+[deadlock-params]
+The rsh launcher has been given a number of %d concurrent daemons to
+launch and is in a debug-daemons option. However, the total number of
+daemons to launch (%d) is greater than this value. This is a scenario that
+will cause the system to deadlock.
+
+To avoid deadlock, either increase the number of concurrent daemons, or
+remove the debug-daemons flag.

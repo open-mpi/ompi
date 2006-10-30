@@ -41,9 +41,6 @@
 #ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif
@@ -129,8 +126,14 @@ static const char * orte_pls_rsh_shell_name[] = {
     "unknown"
 };
 
+/* local global storage of timing variables */
+static unsigned long  mintime=999999999, miniter, maxtime=0, maxiter;
+static float avgtime=0.0;
+static struct timeval *launchstart;   
+static struct timeval joblaunchstart, joblaunchstop;
+
 /* local global storage of the list of active daemons */
-opal_list_t active_daemons;
+static opal_list_t active_daemons;
 
 
 /**
@@ -281,6 +284,8 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
     orte_mapped_proc_t *proc;
     opal_list_item_t *item;
     int rc;
+    unsigned long deltat;
+    struct timeval launchstop;
 
     /* if ssh exited abnormally, set the child processes to aborted
        and print something useful to the user.  The usual reasons for
@@ -345,24 +350,66 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
         } else {
             opal_output(0, "No extra status information is available: %d.", status);
         }
-    }
+        OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
+        /* tell the system that this daemon is gone */
+        if (ORTE_SUCCESS != (rc = orte_pls_base_remove_daemon(info))) {
+            ORTE_ERROR_LOG(rc);
+        }
+        
+        /* remove the daemon from our local list */
+        opal_list_remove_item(&active_daemons, &info->super);
+        OBJ_RELEASE(info);
+        OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
+    } /* if abnormal exit */
 
     /* release any waiting threads */
     OPAL_THREAD_LOCK(&mca_pls_rsh_component.lock);
-    /* tell the system that this daemon is gone */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_remove_daemon(info))) {
-        ORTE_ERROR_LOG(rc);
+    /* first check timing request */
+    if (mca_pls_rsh_component.timing) {
+        if (0 != gettimeofday(&launchstop, NULL)) {
+            opal_output(0, "pls_rsh: could not obtain stop time");
+        } else {
+            deltat = (launchstop.tv_sec - launchstart[info->name->vpid].tv_sec)*1000000 +
+                     (launchstop.tv_usec - launchstart[info->name->vpid].tv_usec);
+            avgtime = avgtime + deltat;
+            if (deltat < mintime) {
+                mintime = deltat;
+                miniter = (unsigned long)info->name->vpid;
+            }
+            if (deltat > maxtime) {
+                maxtime = deltat;
+                maxiter = (unsigned long)info->name->vpid;
+            }
+            
+        }
     }
 
-    /* remove the daemon from our local list */
-    opal_list_remove_item(&active_daemons, &info->super);
-    OBJ_RELEASE(info);
-    
     if (mca_pls_rsh_component.num_children-- >=
         mca_pls_rsh_component.num_concurrent ||
         mca_pls_rsh_component.num_children == 0) {
         opal_condition_signal(&mca_pls_rsh_component.cond);
     }
+
+    if (mca_pls_rsh_component.timing && mca_pls_rsh_component.num_children == 0) {
+        if (0 != gettimeofday(&joblaunchstop, NULL)) {
+            opal_output(0, "pls_rsh: could not obtain job launch stop time");
+        } else {
+            deltat = (joblaunchstop.tv_sec - joblaunchstart.tv_sec)*1000000 +
+                     (joblaunchstop.tv_usec - joblaunchstart.tv_usec);
+            opal_output(0, "pls_rsh: total time to launch job is %lu usec", deltat);
+            if (mintime < 999999999) {
+                /* had at least one non-local node */
+                avgtime = avgtime/opal_list_get_size(&active_daemons);
+                opal_output(0, "pls_rsh: average time to launch one daemon %f usec", avgtime);
+                opal_output(0, "pls_rsh: min time to launch a daemon was %lu usec for iter %lu", mintime, miniter);
+                opal_output(0, "pls_rsh: max time to launch a daemon was %lu usec for iter %lu", maxtime, maxiter);
+            } else {
+                opal_output(0, "No nonlocal launches to report for timing info");
+            }
+        }
+        free(launchstart);
+    }
+    
     OPAL_THREAD_UNLOCK(&mca_pls_rsh_component.lock);
 
 }
@@ -395,6 +442,14 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     bool local_bash = false, local_csh = false;
     char *lib_base = NULL, *bin_base = NULL;
     orte_pls_daemon_info_t *dmn;
+
+    if (mca_pls_rsh_component.timing) {
+        if (0 != gettimeofday(&joblaunchstart, NULL)) {
+            opal_output(0, "pls_rsh: could not obtain start time");
+            joblaunchstart.tv_sec = 0;
+            joblaunchstart.tv_usec = 0;
+        }        
+    }
     
     /* setup a list that will contain the info for all the daemons
      * so we can store it on the registry when done and use it
@@ -414,6 +469,18 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     }
 
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
+
+    if (mca_pls_rsh_component.debug_daemons &&
+        mca_pls_rsh_component.num_concurrent < num_nodes) {
+        /* we can't run in this situation, so pretty print the error
+         * and exit
+         */
+        opal_show_help("help-pls-rsh.txt", "deadlock-params",
+                       true, mca_pls_rsh_component.num_concurrent, num_nodes);
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&active_daemons);
+        return ORTE_ERR_FATAL;
+    }
 
     /*
      * After a discussion between Ralph & Jeff, we concluded that we
@@ -634,6 +701,11 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /*
      * Iterate through each of the nodes
      */
+    if (mca_pls_rsh_component.timing) {
+        /* allocate space to track the start times */
+        launchstart = (struct timeval*)malloc((num_nodes+vpid) * sizeof(struct timeval));
+    }
+    
     for(n_item =  opal_list_get_first(&map->nodes);
         n_item != opal_list_get_end(&map->nodes);
         n_item =  opal_list_get_next(n_item)) {
@@ -641,9 +713,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         pid_t pid;
         char *exec_path;
         char **exec_argv;
-
+        
         rmaps_node = (orte_mapped_node_t*)n_item;
-
+        
+        if (mca_pls_rsh_component.timing) {
+            if (0 != gettimeofday(&launchstart[vpid], NULL)) {
+                opal_output(0, "pls_rsh: could not obtain start time");
+            }
+        }
+        
         /* new daemon - setup to record its info */
         dmn = OBJ_NEW(orte_pls_daemon_info_t);
         dmn->active_job = jobid;
@@ -679,7 +757,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             goto cleanup;
         }
 
-        /* rsh a child to exec the rsh/ssh session */
+        /* fork a child to exec the rsh/ssh session */
         
         /* set the process state to "launched" */
         if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(name, ORTE_PROC_STATE_LAUNCHED, 0))) {
@@ -725,6 +803,15 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     opal_output(0, "pls:rsh: %s is a LOCAL node\n",
                                 rmaps_node->nodename);
                 }
+                if (mca_pls_rsh_component.timing) {
+                    /* since this is a local launch, the daemon will never reach
+                     * the waitpid callback - so set the start value to
+                     * something nonsensical
+                     */
+                    launchstart[vpid].tv_sec = 0;
+                    launchstart[vpid].tv_usec = 0;
+                }
+                
                 exec_argv = &argv[local_exec_index];
                 exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
 

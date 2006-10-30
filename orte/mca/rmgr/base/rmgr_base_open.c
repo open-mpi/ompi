@@ -59,7 +59,7 @@ orte_rmgr_base_module_t orte_rmgr = {
     /**   SUPPORT FUNCTIONS   ***/
     orte_rmgr_base_find_attribute,
     orte_rmgr_base_add_attribute,
-    orte_rmgr_base_update_attribute,
+    orte_rmgr_base_merge_attributes,
     orte_rmgr_base_delete_attribute,
     orte_rmgr_base_get_app_context,
     orte_rmgr_base_put_app_context,

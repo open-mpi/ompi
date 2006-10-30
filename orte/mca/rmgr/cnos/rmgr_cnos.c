@@ -83,6 +83,15 @@ static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
                                          orte_vpid_t *start,
                                          orte_vpid_t *range);
 
+static orte_gpr_keyval_t* orte_rmgr_cnos_find_attribute(opal_list_t* attr_list, char* key);
+
+static int orte_rmgr_cnos_add_attribute(opal_list_t* attr_list, char* key,
+                                 orte_data_type_t type, void *data, bool overwrite);
+
+static int orte_rmgr_cnos_merge_attributes(opal_list_t* target, opal_list_t* source, bool override);
+
+static int orte_rmgr_cnos_delete_attribute(opal_list_t* attr_list, char* key);
+
 orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     NULL, /* don't need special init */
     orte_rmgr_cnos_setup_job,
@@ -91,6 +100,10 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
     orte_rmgr_cnos_disconnect,
     orte_rmgr_cnos_finalize,
     /**   SUPPORT FUNCTIONS   ***/
+    orte_rmgr_cnos_find_attribute,
+    orte_rmgr_cnos_add_attribute,
+    orte_rmgr_cnos_merge_attributes,
+    orte_rmgr_cnos_delete_attribute,
     orte_rmgr_cnos_get_app_context,
     orte_rmgr_cnos_put_app_context,
     orte_rmgr_cnos_check_context_cwd,
@@ -185,3 +198,25 @@ static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
+
+static orte_gpr_keyval_t* orte_rmgr_cnos_find_attribute(opal_list_t* attr_list, char* key)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_add_attribute(opal_list_t* attr_list, char* key,
+                                        orte_data_type_t type, void *data)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_merge_attributes(opal_list_t* target, opal_list_t* source, bool override)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+static int orte_rmgr_cnos_delete_attribute(opal_list_t* attr_list, char* key)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+

@@ -461,7 +461,7 @@ static int orte_odls_process_fork_local_proc(
     } else {
         environ_copy = opal_argv_copy(base_environ);
     }
-
+    
     /* special case handling for --prefix: this is somewhat icky,
        but at least some users do this.  :-\ It is possible that
        when using --prefix, the user will also "-x PATH" and/or
