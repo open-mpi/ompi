@@ -56,7 +56,7 @@ int MPI_Start(MPI_Request *request)
         break;
 
     default:
-        OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
+        return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_REQUEST, FUNC_NAME);
     }
 }
 
