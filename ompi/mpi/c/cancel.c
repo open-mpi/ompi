@@ -44,7 +44,8 @@ int MPI_Cancel(MPI_Request *request)
         rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (NULL == request) {
-            return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
+            OMPI_ERRHANDLER_RETURN(MPI_ERR_REQUEST, MPI_COMM_WORLD, 
+                                   MPI_ERR_REQUEST, FUNC_NAME);
         }
     }
 
@@ -52,6 +53,6 @@ int MPI_Cancel(MPI_Request *request)
         return MPI_SUCCESS;
     }
     rc = ompi_request_cancel(*request);
-    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, "MPI_Cancel");
+    OMPI_ERRHANDLER_RETURN(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
 }
 

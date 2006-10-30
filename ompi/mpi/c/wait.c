@@ -59,5 +59,5 @@ int MPI_Wait(MPI_Request *request, MPI_Status *status)
     if (OMPI_SUCCESS == ompi_request_wait(request, status)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME, true);
 }

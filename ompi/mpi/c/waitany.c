@@ -51,10 +51,8 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
-
     if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, index, status)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true);
 }
-
