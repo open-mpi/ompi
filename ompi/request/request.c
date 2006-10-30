@@ -68,6 +68,7 @@ int ompi_request_persistent_proc_null_free(ompi_request_t** request)
 {
     (*request)->req_state = OMPI_REQUEST_INVALID;
     OBJ_RELEASE(*request);
+    *request = &ompi_request_null;
     return OMPI_SUCCESS;
 }
 
