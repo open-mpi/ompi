@@ -53,6 +53,5 @@ int MPI_Testany(int count, MPI_Request requests[], int *index, int *completed, M
                                               index, completed, status)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true);
 }
-

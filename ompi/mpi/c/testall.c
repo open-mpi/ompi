@@ -45,10 +45,10 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
+
     if (OMPI_SUCCESS == ompi_request_test_all(count, requests, flag, 
                                               statuses)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, false);
 }
-

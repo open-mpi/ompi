@@ -53,6 +53,5 @@ int MPI_Waitall(int count, MPI_Request *requests, MPI_Status *statuses)
     if (OMPI_SUCCESS == ompi_request_wait_all(count, requests, statuses)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, false);
 }
-

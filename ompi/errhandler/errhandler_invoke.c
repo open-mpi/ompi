@@ -79,9 +79,11 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
     return err_code;
 }
 
+
 int ompi_errhandler_request_invoke(int count, 
                                    struct ompi_request_t **requests,
-                                   const char *message)
+                                   const char *message,
+                                   bool use_actual_err_code)
 {
     int i, ec;
     ompi_mpi_object_t mpi_object;
@@ -96,12 +98,16 @@ int ompi_errhandler_request_invoke(int count,
             break;
         }
     }
-    /* This shouldn't happen */
+    /* If there were no errors, return SUCCESS */
     if (i >= count) {
         return MPI_SUCCESS;
     }
 
-    ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
+    if (use_actual_err_code) {
+        ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
+    } else {
+        ec = MPI_ERR_IN_STATUS;
+    }
     mpi_object = requests[i]->req_mpi_object;
     switch (requests[i]->req_type) {
     case OMPI_REQUEST_PML:
