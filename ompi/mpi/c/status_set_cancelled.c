@@ -38,6 +38,5 @@ int MPI_Status_set_cancelled(MPI_Status *status, int flag)
     }
 
     status->_cancelled = flag;
-
-    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
+    return MPI_SUCCESS;
 }
