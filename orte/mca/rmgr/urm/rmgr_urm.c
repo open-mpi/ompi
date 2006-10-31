@@ -294,6 +294,7 @@ static int orte_rmgr_urm_spawn_job(
     int rc;
     orte_process_name_t* name;
     struct timeval urmstart, urmstop;
+    orte_job_map_t *map;
 
     OPAL_TRACE(1);
 
@@ -329,17 +330,34 @@ static int orte_rmgr_urm_spawn_job(
             return rc;
         }
     }
+     
+     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_SETUP)) {
+         return ORTE_SUCCESS;
+     }
 
     if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
+     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_ALLOC)) {
+         return ORTE_SUCCESS;
+     }
+     
+     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
 
+     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
+         orte_rmaps.get_job_map(&map, *jobid);
+         orte_dss.dump(0, map, ORTE_JOB_MAP);
+     }
+     
+     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_MAP)) {
+         return ORTE_SUCCESS;
+     }
+     
      /*
      * setup I/O forwarding
      */

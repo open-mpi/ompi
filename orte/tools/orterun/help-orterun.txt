@@ -79,6 +79,12 @@ that was returned: %d.
 %s was unable to set
  %s = %s
 in the environment. Returned value %d instead of ORTE_SUCCESS.
+[orterun:precondition]
+%s was unable to precondition transports
+Returned value %d instead of ORTE_SUCCESS.
+[orterun:attr-failed]
+%s was unable to define an attribute
+Returned value %d instead of ORTE_SUCCESS.
 [orterun:proc-aborted]
 %s noticed that job rank %lu with PID %lu on node %s exited on signal %d.
 [orterun:abnormal-exit]

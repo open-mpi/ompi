@@ -64,6 +64,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/smr/smr.h"
@@ -112,6 +113,7 @@ struct globals_t {
     bool no_oversubscribe;
     bool debugger;
     bool no_local_schedule;
+    bool displaymapatlaunch;
     int num_procs;
     int exit_status;
     char *hostfile;
@@ -197,7 +199,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
-
+    { NULL, NULL, NULL, '\0', "display-map-at-launch", "display-map-at-launch", 0,
+        &orterun_globals.displaymapatlaunch, OPAL_CMD_LINE_TYPE_BOOL,
+        "Display the process map just before launch"},
+    
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
       &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
@@ -422,6 +427,14 @@ int orterun(int argc, char *argv[])
     /* construct the list of attributes */
     OBJ_CONSTRUCT(&attributes, opal_list_t);
 
+    if (orterun_globals.displaymapatlaunch) {
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP,
+                                                          ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
+            opal_show_help("help-orterun.txt", "orterun:attr-failed", false,
+                           orterun_basename, NULL, NULL, rc);
+        }
+    }
+    
     /** setup callbacks for abort signals */
     opal_signal_set(&term_handler, SIGTERM,
                     abort_signal_callback, &term_handler);
@@ -811,6 +824,7 @@ static int init_globals(void)
     orterun_globals.no_oversubscribe           = false;
     orterun_globals.debugger                   = false;
     orterun_globals.no_local_schedule          = false;
+    orterun_globals.displaymapatlaunch         = false;
     orterun_globals.num_procs                  = 0;
     orterun_globals.exit_status                = 0;
     if( NULL == orterun_globals.hostfile )
