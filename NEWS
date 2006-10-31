@@ -101,6 +101,9 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
+- Add "mpi_preconnect_all" MCA parameter to force wireup of all MPI
+  connections during MPI_INIT (vs. making connections lazily whenever
+  the first MPI communication occurs between a pair of peers).
 - Fix a problem for when $FC and/or $F77 were specified as multiple
   tokens.  Thanks to Orion Poplawski for identifying the problem and
   to Ralf Wildenhues for suggesting the fix.
