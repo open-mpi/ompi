@@ -120,7 +120,7 @@ struct mca_btl_openib_component_t {
     uint32_t use_eager_rdma;
     int32_t eager_rdma_threshold;
     uint32_t eager_rdma_num;
-    uint32_t max_eager_rdma;
+    int32_t max_eager_rdma;
     uint32_t btls_per_lid;
     uint32_t max_lmc;
     uint32_t buffer_alignment;
@@ -203,7 +203,7 @@ struct mca_btl_openib_module_t {
 
     size_t eager_rdma_frag_size; /**< length of eager frag */
     orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
-    volatile uint32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
+    volatile int32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
    
