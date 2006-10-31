@@ -104,6 +104,12 @@ extern "C" {
      */
     void ompi_mpi_wait_for_totalview(void);
 
+    /**
+     * Do a preconnect of MPI connections (i.e., force connections to
+     * be made if they will be made).
+     */
+    int ompi_init_do_preconnect(void);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif

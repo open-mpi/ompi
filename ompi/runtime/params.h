@@ -100,6 +100,15 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      */
     OMPI_DECLSPEC extern bool ompi_mpi_abort_print_stack;
 
+    
+    /**
+     * Whether we should force all connections to be created during
+     * MPI_INIT (vs. potentially making all the connection lazily upon
+     * first communication with an MPI peer process).
+     */
+
+    OMPI_DECLSPEC extern bool ompi_mpi_preconnect_all;
+
     /**
      * Whether  MPI_ABORT  should  print  out an  identifying  message
      * (e.g., hostname  and PID)  and loop waiting  for a  debugger to

@@ -28,4 +28,6 @@ libmpi_la_SOURCES += \
         runtime/ompi_mpi_abort.c \
         runtime/ompi_mpi_init.c \
         runtime/ompi_mpi_finalize.c \
-        runtime/ompi_mpi_params.c
+        runtime/ompi_mpi_params.c \
+        runtime/ompi_mpi_preconnect.c
+

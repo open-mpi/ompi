@@ -623,6 +623,18 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                        "MPI_INIT", "MPI_INIT", error, err_msg, ret);
         return ret;
     }
+    
+    /* If we want the connection warmup, go do it */
+    if (ompi_mpi_preconnect_all) { 
+        if (OMPI_SUCCESS != (ret = ompi_init_do_preconnect())) {
+            error = "ompi_mpi_do_preconnect_all() failed";
+            /* This will loop back up above, but ret != OMPI_SUCCESS,
+               so we'll end up returning out of this function before
+               getting here (and therefore avoiding an infinite
+               loop) */
+            goto error;
+        }
+    }
 
     /* put the event library in "high performance MPI mode" */
     if (OMPI_SUCCESS != opal_progress_mpi_enable()) {
