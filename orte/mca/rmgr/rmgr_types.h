@@ -46,6 +46,11 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 #define ORTE_RMGR_ATTR_NO_OVERRIDE  false
 #define ORTE_RMGR_ATTR_OVERRIDE     true
 
+/* define some useful attributes */
+#define ORTE_RMGR_STOP_AFTER_SETUP  "orte-rmgr-stop-setup"
+#define ORTE_RMGR_STOP_AFTER_ALLOC  "orte-rmgr-stop-alloc"
+#define ORTE_RMGR_STOP_AFTER_MAP    "orte-rmgr-stop-map"
+
 
 /* RESOURCE MANAGER DATA TYPES */
 

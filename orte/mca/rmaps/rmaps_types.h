@@ -41,6 +41,7 @@ extern "C" {
 #define ORTE_RMAPS_DESIRED_MAPPER       "orte-map-desired"
 #define ORTE_RMAPS_USE_PARENT_PLAN      "orte-map-use-parent-plan"
 #define ORTE_RMAPS_BOOKMARK             "orte-map-bookmark"
+#define ORTE_RMAPS_DISPLAY_AFTER_MAP    "orte-map-display"
     
 /****   JOB_MAP OBJECTS   ***/
 /*
