@@ -1206,8 +1206,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(!buf)
        goto unlock_rdma_local;
 
-    buf = (char*)(((uintptr_t)buf+mca_btl_openib_component.buffer_alignment) & ~(mca_btl_openib_component.buffer_alignment-1));
-    buf = buf + openib_btl->eager_rdma_frag_size - sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit - sizeof(mca_btl_openib_header_t) - sizeof(mca_btl_openib_frag_t);
+    buf = (char*)(((uintptr_t)buf + mca_btl_openib_component.buffer_alignment) &
+            ~((uintptr_t)mca_btl_openib_component.buffer_alignment - 1));
+    buf = buf + openib_btl->eager_rdma_frag_size -
+        sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit -
+        sizeof(mca_btl_openib_header_t) - sizeof(mca_btl_openib_frag_t);
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
