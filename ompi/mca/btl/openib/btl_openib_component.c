@@ -689,7 +689,6 @@ btl_openib_component_init(int *num_btl_modules,
                 mca_btl_openib_component.max_eager_rdma, 
                 0);
         openib_btl->eager_rdma_buffers_count = 0;
-        OBJ_CONSTRUCT(&openib_btl->eager_rdma_lock, opal_mutex_t); 
         
         orte_pointer_array_init(&openib_btl->endpoints, 10, INT_MAX, 100);
         btls[i] = &openib_btl->super;
@@ -994,9 +993,7 @@ static int btl_openib_component_progress(void)
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
         mca_btl_openib_module_t* openib_btl = &mca_btl_openib_component.openib_btls[i];
 
-        OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);
         c = openib_btl->eager_rdma_buffers_count;
-        OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
 
         for(j = 0; j < c; j++) {
             endpoint = 
