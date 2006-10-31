@@ -50,16 +50,8 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, size_t iSiz
     while( 1 ) {  /* loop forever the exit condition is on the last DT_END_LOOP */
         if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
             if( --(pStack->count) == 0 ) { /* end of loop */
-                stack_pos--;
-                pStack--;
-                if( stack_pos == -1 )
-                    return nbElems;  /* completed */
-            }
-            if( pStack->index == -1 ) {
-                pStack->disp += (datatype->ub - datatype->lb);
-            } else {
-                assert( DT_LOOP == pElems[pStack->index].elem.common.type );
-                pStack->disp += pElems[pStack->index].loop.extent;
+                stack_pos--; pStack--;
+                if( stack_pos == -1 ) return nbElems;  /* completed */
             }
             pos_desc = pStack->index + 1;
             continue;
@@ -71,7 +63,6 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, size_t iSiz
                 pos_desc++;
             } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
             DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
-            continue;
         }
         while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
             /* now here we have a basic datatype */
@@ -89,3 +80,65 @@ int32_t ompi_ddt_get_element_count( const ompi_datatype_t* datatype, size_t iSiz
         }
     }
 }
+
+int32_t ompi_ddt_set_element_count( const ompi_datatype_t* datatype, uint32_t count, size_t* length )
+{
+    dt_stack_t* pStack;   /* pointer to the position on the stack */
+    uint32_t pos_desc;    /* actual position in the description of the derived datatype */
+    int32_t stack_pos = 0;
+    uint32_t local_length;
+    dt_elem_desc_t* pElems;
+
+    /**
+     * Handle all complete multiple of the datatype.
+     */
+    for( pos_desc = 4; pos_desc < DT_MAX_PREDEFINED; pos_desc++ ) {
+        local_length += datatype->btypes[pos_desc];
+    }
+    pos_desc = count / local_length;
+    count = count % local_length;
+    *length = datatype->size * pos_desc;
+    if( 0 == count ) {
+        return 0;
+    }
+
+    DUMP( "dt_set_element_count( %p, %d )\n", (void*)datatype, count );
+    pStack = (dt_stack_t*)alloca( sizeof(dt_stack_t) * (datatype->btypes[DT_LOOP] + 2) );
+    pStack->count    = 1;
+    pStack->index    = -1;
+    pStack->disp     = 0;
+    pElems           = datatype->desc.desc;
+    pos_desc         = 0;
+
+    while( 1 ) {  /* loop forever the exit condition is on the last DT_END_LOOP */
+        if( DT_END_LOOP == pElems[pos_desc].elem.common.type ) { /* end of the current loop */
+            if( --(pStack->count) == 0 ) { /* end of loop */
+                stack_pos--; pStack--;
+                if( stack_pos == -1 ) return 0;
+            }
+            pos_desc = pStack->index + 1;
+            continue;
+        }
+        if( DT_LOOP == pElems[pos_desc].elem.common.type ) {
+            ddt_loop_desc_t* loop = &(pElems[pos_desc].loop);
+            do {
+                PUSH_STACK( pStack, stack_pos, pos_desc, DT_LOOP, loop->loops, 0 );
+                pos_desc++;
+            } while( DT_LOOP == pElems[pos_desc].elem.common.type ); /* let's start another loop */
+            DDT_DUMP_STACK( pStack, stack_pos, pElems, "advance loops" );
+        }
+        while( pElems[pos_desc].elem.common.flags & DT_FLAG_DATA ) {
+            /* now here we have a basic datatype */
+            const ompi_datatype_t* basic_type = BASIC_DDT_FROM_ELEM(pElems[pos_desc]);
+            local_length = pElems[pos_desc].elem.count;
+            if( local_length >= count ) {
+                *length += count * basic_type->size;
+                return 0;
+            }
+            *length += local_length * basic_type->size;
+            count -= local_length;
+            pos_desc++;  /* advance to the next data */
+        }
+    }
+}
+

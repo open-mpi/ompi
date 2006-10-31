@@ -49,8 +49,13 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
     }
 
     if (status != MPI_STATUS_IGNORE) {
-        ompi_ddt_type_size( datatype, &size );
-        status->_count = (int)(count * size);
+        if( ompi_ddt_is_predefined(datatype) ) {
+            ompi_ddt_type_size( datatype, &size );
+            status->_count = (int)(count * size);
+        } else {
+            ompi_ddt_set_element_count( datatype, count, &size );
+            status->_count = (int)size;
+        }
     }
     return MPI_SUCCESS;
 }
