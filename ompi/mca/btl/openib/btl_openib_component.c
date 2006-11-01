@@ -901,7 +901,7 @@ int mca_btl_openib_component_progress()
                     opal_show_help("help-mpi-btl-openib.txt", "btl_openib:retry-exceeded", true);
                 }
 
-                return OMPI_ERROR;
+                abort();
             }
 
             /* Handle work completions */
@@ -999,7 +999,7 @@ int mca_btl_openib_component_progress()
                 BTL_PEER_ERROR(remote_proc, ("error polling LP CQ with status %s status number %d for wr_id %llu opcode %d", 
                                              mca_btl_openib_component_status_to_string(wc.status), 
                                              wc.status, wc.wr_id, wc.opcode)); 
-                return OMPI_ERROR;
+                abort();
             }
 
             /* Handle n/w completions */
