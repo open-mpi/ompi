@@ -411,7 +411,7 @@ static int test_upper( unsigned int length )
     ompi_datatype_t *pdt;
     ompi_convertor_t * pConv;
     char *ptr;
-    int rc, freeAfter;
+    int rc;
     unsigned int i, j, iov_count, split_chunk, total_length;
     size_t max_data;
     struct iovec a;
@@ -455,7 +455,7 @@ static int test_upper( unsigned int length )
         a.iov_len = split_chunk;
         iov_count = 1;
         max_data = split_chunk;
-        ompi_convertor_unpack( pConv, &a, &iov_count, &max_data, &freeAfter );
+        ompi_convertor_unpack( pConv, &a, &iov_count, &max_data );
         ptr += max_data;
         i -= max_data;
         if( mat2[0] != inbuf[0] ) assert(0);
@@ -790,7 +790,7 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
     struct iovec iov;
     uint32_t iov_count;
     size_t max_data;
-    int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
+    int32_t length = 0, done1 = 0, done2 = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
@@ -837,14 +837,12 @@ local_copy_with_convertor_2datatypes( ompi_datatype_t* send_type, int send_count
         iov.iov_len = chunk;
 
         if( done1 == 0 ) {
-            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &free_after );
-            assert( free_after == 0 );
+            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
         }
 
         if( done2 == 0 ) {
             GET_TIME( unpack_start );
-            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &free_after );
-            assert( free_after == 0 );
+            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
             GET_TIME( unpack_end );
             unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
@@ -877,7 +875,7 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
     struct iovec iov;
     uint32_t iov_count;
     size_t max_data;
-    int32_t free_after = 0, length = 0, done1 = 0, done2 = 0;
+    int32_t length = 0, done1 = 0, done2 = 0;
     TIMER_DATA_TYPE start, end, unpack_start, unpack_end;
     long total_time, unpack_time = 0;
 
@@ -923,14 +921,12 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
         iov.iov_len = chunk;
 
         if( done1 == 0 ) {
-            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &free_after );
-            assert( free_after == 0 );
+            done1 = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
         }
 
         if( done2 == 0 ) {
             GET_TIME( unpack_start );
-            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &free_after );
-            assert( free_after == 0 );
+            done2 = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
             GET_TIME( unpack_end );
             unpack_time += ELAPSED_TIME( unpack_start, unpack_end );
         }
