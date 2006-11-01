@@ -202,10 +202,6 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 
 #define OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( CONVERTOR, IOV, OUT, MAX_DATA ) \
     do {                                                                \
-        (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                         \
-        (CONVERTOR)->csum_ui1 = 0;                                      \
-        (CONVERTOR)->csum_ui2 = 0;                                      \
-                                                                        \
         /* protect against over packing data */                         \
         if( (CONVERTOR)->flags & CONVERTOR_COMPLETED ) {                \
             (IOV)[0].iov_len = 0;                                       \
@@ -213,6 +209,9 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
             *(MAX_DATA) = 0;                                            \
             return 1;  /* nothing to do */                              \
         }                                                               \
+        (CONVERTOR)->checksum = OPAL_CSUM_ZERO;                         \
+        (CONVERTOR)->csum_ui1 = 0;                                      \
+        (CONVERTOR)->csum_ui2 = 0;                                      \
         assert( (CONVERTOR)->bConverted < (CONVERTOR)->local_size );    \
     } while(0)
 
@@ -422,11 +421,13 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  */
 #define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
+        uint64_t bdt_mask;                                              \
+                                                                        \
+        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
+        /* Compute the local and remote sizes */                        \
+        convertor->local_size      = convertor->count * datatype->size; \
         convertor->pBaseBuf        = (char*)pUserBuf;                   \
         convertor->count           = count;                             \
-                                                                        \
-        /* Compute the local and remote sizes */                        \
-        convertor->local_size = convertor->count * datatype->size;      \
         /* Grab the datatype part of the flags */                       \
         convertor->flags         &= CONVERTOR_TYPE_MASK;                \
         convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
@@ -434,24 +435,22 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
                                                                         \
         /* If the data is empty we just mark the convertor as           \
          * completed. With this flag set the pack and unpack functions  \
-         * will not do anything. In order to decrease the data          \
-         * dependencies (and to speed-up this code) we will not test    \
-         * the convertor->local_size but we can test the 2 components.  \
+         * will not do anything.
          */                                                             \
-        if( (0 == convertor->count) || (0 == datatype->size) ) {        \
+        if( 0 == convertor->local_size ) {                              \
             convertor->flags |= CONVERTOR_COMPLETED;                    \
-            convertor->local_size = convertor->remote_size = 0;         \
+            convertor->remote_size = 0;                                 \
             return OMPI_SUCCESS;                                        \
         }                                                               \
                                                                         \
-        convertor->flags |= CONVERTOR_HOMOGENEOUS;                      \
-        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
+        if( 0 == bdt_mask ) {                                           \
+            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
         } else {                                                        \
             ompi_convertor_master_t* master;                            \
             int i;                                                      \
-            uint64_t bdt_mask = datatype->bdt_used;                     \
+            bdt_mask = datatype->bdt_used;                              \
             master = convertor->master;                                 \
             convertor->remote_size = 0;                                 \
             for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {            \
@@ -462,9 +461,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             }                                                           \
             convertor->remote_size *= convertor->count;                 \
             convertor->use_desc = &(datatype->desc);                    \
-            bdt_mask = datatype->bdt_used & master->hetero_mask;        \
-            if( 0 != bdt_mask )                                         \
-                convertor->flags ^= CONVERTOR_HOMOGENEOUS;              \
         }                                                               \
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
