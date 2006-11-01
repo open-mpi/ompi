@@ -56,8 +56,7 @@ typedef struct ompi_convertor_t ompi_convertor_t;
 typedef int32_t (*convertor_advance_fct_t)( ompi_convertor_t* pConvertor,
                                             struct iovec* iov,
                                             uint32_t* out_size,
-                                            size_t* max_data,
-                                            int32_t* freeAfter );
+                                            size_t* max_data );
 typedef void*(*memalloc_fct_t)( size_t* pLength, void* userdata );
 
 /* The master convertor struct (defined in convertor_internal.h) */
@@ -89,8 +88,6 @@ struct ompi_convertor_t {
     dt_stack_t*                   pStack;       /**< the local stack for the actual conversion */
     uint32_t                      stack_size;   /**< size of the allocated stack */
     convertor_advance_fct_t       fAdvance;     /**< pointer to the pack/unpack functions */
-    memalloc_fct_t                memAlloc_fn;  /**< pointer to the memory allocation function */
-    void*                         memAlloc_userdata;  /**< user data for the malloc function */
     struct ompi_convertor_master_t* master;     /* the master convertor */
     /* All others fields get modified for every call to pack/unpack functions */
     uint32_t                      stack_pos;    /**< the actual position on the stack */
@@ -124,8 +121,7 @@ OMPI_DECLSPEC int32_t
 ompi_convertor_pack( ompi_convertor_t* pConv,
                      struct iovec* iov,
                      uint32_t* out_size,
-                     size_t* max_data,
-                     int32_t* freeAfter );
+                     size_t* max_data );
 
 /*
  *
@@ -134,8 +130,7 @@ OMPI_DECLSPEC int32_t
 ompi_convertor_unpack( ompi_convertor_t* pConv,
                        struct iovec* iov,
                        uint32_t* out_size,
-                       size_t* max_data,
-                       int32_t* freeAfter );
+                       size_t* max_data );
 
 /*
  *
@@ -280,12 +275,9 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
  */
 static inline int32_t
 ompi_convertor_personalize( ompi_convertor_t* convertor, uint32_t flags,
-                            size_t* position,
-                            memalloc_fct_t allocfn, void* userdata )
+                            size_t* position )
 {
     convertor->flags |= flags;
-    convertor->memAlloc_fn = allocfn;
-    convertor->memAlloc_userdata = userdata;
 
     if( NULL == position )
         return OMPI_SUCCESS;

@@ -58,8 +58,7 @@ int32_t
 ompi_unpack_general_function( ompi_convertor_t* pConvertor,
                               struct iovec* iov,
                               uint32_t* out_size,
-                              size_t* max_data,
-                              int32_t* freeAfter )
+                              size_t* max_data )
 {
     dt_stack_t* pStack;      /* pointer to the position on the stack */
     uint32_t pos_desc;       /* actual position in the description of the derived datatype */
@@ -184,8 +183,7 @@ int32_t
 ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                          struct iovec* iov,
                                          uint32_t* out_size,
-                                         size_t* max_data,
-                                         int32_t* freeAfter )
+                                         size_t* max_data )
 {
     const ompi_datatype_t *pData = pConv->pDesc;
     char *user_memory, *packed_buffer;
@@ -345,8 +343,7 @@ ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pEle
 int32_t
 ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
                                      struct iovec* iov, uint32_t* out_size,
-                                     size_t* max_data,
-                                     int32_t* freeAfter )
+                                     size_t* max_data )
 {
     dt_stack_t* pStack;                /* pointer to the position on the stack */
     uint32_t pos_desc;                 /* actual position in the description of the derived datatype */

@@ -53,8 +53,7 @@ int32_t
 ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
                                        struct iovec* iov,
                                        uint32_t* out_size,
-                                       size_t* max_data,
-                                       int* freeAfter )
+                                       size_t* max_data )
 {
     dt_stack_t* pStack = pConv->pStack;
     char *source_base = NULL;
@@ -62,7 +61,6 @@ ompi_pack_homogeneous_contig_function( ompi_convertor_t* pConv,
     size_t length = pConv->local_size - pConv->bConverted, initial_amount = pConv->bConverted;
     ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
 
-    *freeAfter = 0;
     source_base = (pConv->pBaseBuf + initial_displ + pStack[0].disp + pStack[1].disp);
 
     /* There are some optimizations that can be done if the upper level
@@ -101,8 +99,7 @@ int32_t
 ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
                                                  struct iovec* iov,
                                                  uint32_t* out_size,
-                                                 size_t* max_data,
-                                                 int* freeAfter )
+                                                 size_t* max_data )
 {
     const ompi_datatype_t* pData = pConv->pDesc;
     dt_stack_t* pStack = pConv->pStack;
@@ -122,7 +119,6 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
 
     i = (uint32_t)(pConv->bConverted / pData->size);  /* how many we already pack */
 
-    *freeAfter = 0;
     /* There are some optimizations that can be done if the upper level
      * does not provide a buffer.
      */
@@ -189,17 +185,6 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
             uint32_t counter;
 			size_t done;
 
-            if( iov[iov_count].iov_base == NULL ) {
-                size_t length = iov[iov_count].iov_len;
-                if( 0 == length ) length = max_allowed;
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)pConv->memAlloc_fn( &length, pConv->memAlloc_userdata );
-                iov[iov_count].iov_len = length;
-                (*freeAfter) |= (1 << 0);
-                if( max_allowed < (size_t)iov[iov_count].iov_len )
-                    iov[iov_count].iov_len = max_allowed;
-                else
-                    max_allowed = iov[iov_count].iov_len;
-            }
             packed_buffer = iov[iov_count].iov_base;
             done = pConv->bConverted - i * pData->size;  /* how much data left last time */
             user_memory += done;
@@ -254,8 +239,7 @@ ompi_pack_homogeneous_contig_with_gaps_function( ompi_convertor_t* pConv,
 int32_t
 ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                                    struct iovec* iov, uint32_t* out_size,
-                                   size_t* max_data,
-                                   int32_t* freeAfter )
+                                   size_t* max_data )
 {
     dt_stack_t* pStack;       /* pointer to the position on the stack */
     uint32_t pos_desc;        /* actual position in the description of the derived datatype */
@@ -293,20 +277,6 @@ ompi_generic_simple_pack_function( ompi_convertor_t* pConvertor,
                            pConvertor->stack_pos, pStack->index, pStack->count, pStack->disp ); );
 
     for( iov_count = 0; iov_count < (*out_size); iov_count++ ) {
-        if( iov[iov_count].iov_base == NULL ) {
-            /*
-             *  ALLOCATE SOME MEMORY ...
-             */
-            size_t length = iov[iov_count].iov_len;
-            if( length <= 0 )
-                length = pConvertor->local_size - pConvertor->bConverted;
-            if( ((*max_data) - total_packed) < length )
-                length = (*max_data) - total_packed;
-            assert( 0 < length );
-            iov[iov_count].iov_base = (IOVBASE_TYPE*)pConvertor->memAlloc_fn( &length, pConvertor->memAlloc_userdata );
-            iov[iov_count].iov_len = length;
-            *freeAfter = (*freeAfter) | (1 << iov_count);
-        }
         destination = iov[iov_count].iov_base;
         iov_len_local = iov[iov_count].iov_len;
         while( 1 ) {

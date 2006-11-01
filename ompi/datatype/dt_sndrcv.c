@@ -46,7 +46,6 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    int length, completed;
    uint32_t iov_count;
    size_t max_data;
-   int32_t freeAfter;
 
    /* First check if we really have something to do */
    if (0 == rcount) {
@@ -68,14 +67,14 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
    if (rdtype == MPI_PACKED) {
       send_convertor = OBJ_NEW(ompi_convertor_t);
       ompi_convertor_prepare_for_send( send_convertor, sdtype, scount, sbuf );
-      ompi_convertor_personalize( send_convertor, 0, 0, NULL, NULL );
+      ompi_convertor_personalize( send_convertor, 0, 0 );
 
       iov_count = 1;
       iov.iov_len = rcount;
       iov.iov_base = (IOVBASE_TYPE*)rbuf;
       max_data = ( (size_t)iov.iov_len > (scount * sdtype->size) ? (scount * sdtype->size) : iov.iov_len );
 
-      err = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      err = ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
       OBJ_RELEASE( send_convertor );
       return ((max_data < (uint32_t)rcount) ? MPI_ERR_TRUNCATE : MPI_SUCCESS);
    }
@@ -90,7 +89,7 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
       iov.iov_base = (IOVBASE_TYPE*)sbuf;
       max_data = ( (size_t)iov.iov_len < (rcount * rdtype->size) ? iov.iov_len : (rcount * rdtype->size) );
 
-      err = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      err = ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
       if( scount > (int32_t)(rcount * rdtype->size) )
          err = MPI_ERR_TRUNCATE;
       OBJ_RELEASE( recv_convertor );
@@ -110,8 +109,8 @@ int32_t ompi_ddt_sndrcv( void *sbuf, int32_t scount, const ompi_datatype_t* sdty
       iov.iov_len = length;
       iov_count = 1;
       max_data = length;
-      completed |= ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data, &freeAfter );
-      completed |= ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data, &freeAfter );
+      completed |= ompi_convertor_pack( send_convertor, &iov, &iov_count, &max_data );
+      completed |= ompi_convertor_unpack( recv_convertor, &iov, &iov_count, &max_data );
    }
    free( iov.iov_base );
    OBJ_RELEASE( send_convertor );

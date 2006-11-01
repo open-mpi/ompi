@@ -244,14 +244,13 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
             written_data + sendreq->req_origin_bytes_packed) {
             struct iovec iov;
             uint32_t iov_count = 1;
-            int32_t free_after;
             size_t max_data = sendreq->req_origin_bytes_packed;
 
             iov.iov_len = max_data;
             iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
-                                      &max_data, &free_after);
+                                      &max_data );
             if (ret < 0) {
                 ret = OMPI_ERR_FATAL;
                 goto cleanup;
@@ -424,14 +423,13 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
         written_data + replyreq->rep_target_bytes_packed) {
         struct iovec iov;
         uint32_t iov_count = 1;
-        int32_t free_after;
         size_t max_data = replyreq->rep_target_bytes_packed;
 
         iov.iov_len = max_data;
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
-                                  &max_data, &free_after);
+                                  &max_data );
         if (ret < 0) {
             ret = OMPI_ERR_FATAL;
             goto cleanup;
@@ -504,7 +502,6 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         ompi_convertor_t convertor;
         struct iovec iov;
         uint32_t iov_count = 1;
-        int32_t free_after = 0;
         size_t max_data;
         ompi_proc_t *proc;
 
@@ -525,8 +522,7 @@ ompi_osc_rdma_sendreq_recv_put(ompi_osc_rdma_module_t *module,
         ompi_convertor_unpack(&convertor, 
                               &iov,
                               &iov_count,
-                              &max_data,
-                              &free_after);
+                              &max_data );
         OBJ_DESTRUCT(&convertor);
         OBJ_RELEASE(datatype);
         OPAL_THREAD_ADD32(&(module->p2p_num_pending_in), -1);
@@ -728,7 +724,6 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
 
         struct iovec iov;
         uint32_t iov_count = 1;
-        int32_t free_after = 0;
         size_t max_data;
 
         iov.iov_len = header->hdr_msg_length;
@@ -737,8 +732,7 @@ ompi_osc_rdma_replyreq_recv(ompi_osc_rdma_module_t *module,
         ompi_convertor_unpack(&sendreq->req_origin_convertor,
                               &iov,
                               &iov_count,
-                              &max_data,
-                              &free_after);
+                              &max_data );
 
         OPAL_THREAD_ADD32(&(sendreq->req_module->p2p_num_pending_out), -1);
         ompi_osc_rdma_sendreq_free(sendreq);

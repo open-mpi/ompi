@@ -103,7 +103,6 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
 
         struct iovec iov;
         uint32_t iov_count = 1;
-        int32_t free_after;
         size_t max_data;
 
         ompi_mtl_portals_recv_short_block_t *block = 
@@ -123,7 +122,7 @@ ompi_mtl_portals_get_data(ompi_mtl_portals_event_t *recv_event,
         /* pull out the data */
         if (iov.iov_len > 0) {
             ompi_convertor_unpack(convertor, &iov, &iov_count,
-                                  &max_data, &free_after);
+                                  &max_data );
         }
 
         /* if synchronous, return an ack */

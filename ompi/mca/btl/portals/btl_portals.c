@@ -304,7 +304,6 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
     size_t max_data = *size;
     struct iovec iov;
     uint32_t iov_count = 1;
-    int32_t free_after;
     int ret;
 
     assert(&mca_btl_portals_module == (mca_btl_portals_module_t*) btl_base);
@@ -323,7 +322,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         iov.iov_len = max_data;
         iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
         ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
-                                  &max_data, &free_after);
+                                  &max_data );
         *size  = max_data;
         if ( ret < 0 ) {
             return NULL;
@@ -352,8 +351,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         iov.iov_len = max_data;
         iov.iov_base = NULL;
 
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data, 
-                            &free_after);
+        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
 
         frag->segments[0].seg_len = max_data;
         frag->segments[0].seg_addr.pval = iov.iov_base;
