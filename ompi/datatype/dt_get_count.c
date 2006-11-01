@@ -86,7 +86,7 @@ int32_t ompi_ddt_set_element_count( const ompi_datatype_t* datatype, uint32_t co
     dt_stack_t* pStack;   /* pointer to the position on the stack */
     uint32_t pos_desc;    /* actual position in the description of the derived datatype */
     int32_t stack_pos = 0;
-    uint32_t local_length;
+    uint32_t local_length = 0;
     dt_elem_desc_t* pElems;
 
     /**
