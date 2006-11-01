@@ -515,7 +515,9 @@ static void mca_btl_gm_send_callback( struct gm_port* port, void* context, gm_st
     switch(status) {
         case GM_TRY_AGAIN:
         case GM_SEND_TIMED_OUT:
+#if GM_API_VERSION > 0x200
         case GM_TIMED_OUT:
+#endif
             /* drop all sends to this destination port */
             gm_drop_sends(
                 btl->port,
@@ -700,7 +702,9 @@ static void mca_btl_gm_put_callback( struct gm_port* port, void* context, gm_sta
     switch(status) {
         case GM_TRY_AGAIN:
         case GM_SEND_TIMED_OUT:
+#if GM_API_VERSION > 0x200
         case GM_TIMED_OUT:
+#endif
             /* drop all sends to this destination port */
 
             gm_drop_sends(
@@ -846,7 +850,9 @@ static void mca_btl_gm_get_callback( struct gm_port* port, void* context, gm_sta
     switch(status) {
         case GM_TRY_AGAIN:
         case GM_SEND_TIMED_OUT:
+#if GM_API_VERSION > 0x200
         case GM_TIMED_OUT:
+#endif
             /* drop all sends to this destination port */
             gm_drop_sends(
                 btl->port,

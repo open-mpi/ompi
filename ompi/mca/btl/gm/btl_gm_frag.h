@@ -99,7 +99,7 @@ OBJ_CLASS_DECLARATION(mca_btl_gm_frag_user_t);
 
 #define MCA_BTL_GM_FRAG_RETURN(btl, frag)                          \
 do {                                                               \
-        ompi_free_list_t* mylist;                                  \
+        ompi_free_list_t* mylist = NULL;                           \
         mca_btl_gm_module_t* btl_gm = (mca_btl_gm_module_t*) btl;  \
         mca_btl_gm_frag_t* frag_gm = (mca_btl_gm_frag_t*) frag;    \
         switch(frag_gm->type) {                                    \
