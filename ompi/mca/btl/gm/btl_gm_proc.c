@@ -191,11 +191,11 @@ int mca_btl_gm_proc_insert(
             gm_endpoint->endpoint_addr.node_id);
     }
 #else
-    gm_endpoint->gm_addr.node_id = gm_host_name_to_node_id( gm_btl->gm_port,
-        gm_endpoint->gm_addr.global_id);
-    if( GM_NO_SUCH_NODE_ID == gm_endpoint->gm_addr.node_id ) {
-        ompi_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
-            __FILE__, __LINE__, gm_endpoint->gm_addr.global_id);
+    gm_endpoint->endpoint_addr.node_id = gm_host_name_to_node_id( gm_btl->port,
+        gm_endpoint->endpoint_addr.global_id);
+    if( GM_NO_SUCH_NODE_ID == gm_endpoint->endpoint_addr.node_id ) {
+        opal_output( 0, "[%s:%d] unable to convert the remote host name (%s) to a host id",
+            __FILE__, __LINE__, gm_endpoint->endpoint_addr.global_id);
         return OMPI_ERROR;
     }
 #endif  /* GM_API_VERSION > 0x200 */
