@@ -203,6 +203,7 @@ struct mca_btl_openib_module_t {
 
     size_t eager_rdma_frag_size; /**< length of eager frag */
     orte_pointer_array_t *eager_rdma_buffers; /**< RDMA buffers to poll */
+    opal_mutex_t eager_rdma_buffres_lock; /**< should be held while adding new rdma buffer */
     volatile int32_t eager_rdma_buffers_count; /**< number of RDMA buffers */
 
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */

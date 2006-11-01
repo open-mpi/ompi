@@ -1228,6 +1228,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
             buf);
 
+    /* lock is held during eager_rdma_buffers update in order to prevent hole
+     * in the array if mca_btl_openib_endpoint_send_eager_rdma() fails and
+     * another thread was creating eager RDMA buffer for another endpoint and
+     * allocated array index bigger then ours */
+    OPAL_THREAD_LOCK(&openib_btl->eager_rdma_buffres_lock);
     if(orte_pointer_array_add(&index, openib_btl->eager_rdma_buffers, endpoint)
             != ORTE_SUCCESS)
 	   goto cleanup;
@@ -1235,10 +1240,12 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
         /* from this point progress function starts to poll new buffer */
         OPAL_THREAD_ADD32(&openib_btl->eager_rdma_buffers_count, 1);
+        OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_buffres_lock);
         return;
     }
 
     orte_pointer_array_set_item(openib_btl->eager_rdma_buffers, index, NULL);
+    OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_buffres_lock);
 cleanup:
     openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
            buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
