@@ -162,6 +162,7 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
 {
+    if( 0 == pConvertor->local_size ) return 0;
     return !ompi_ddt_is_contiguous_memory_layout( pConvertor->pDesc, pConvertor->count );
 }
 
