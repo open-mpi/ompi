@@ -72,48 +72,48 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
 
     {   
 
-    /* First, the mca_component_t struct containing meta information
-      about the component itself */
+        /* First, the mca_component_t struct containing meta information
+           about the component itself */
 
-    {
-       /* Indicate that we are a coll v1.0.0 component (which also implies a
-          specific MCA version) */
+        {
+            /* Indicate that we are a coll v1.0.0 component (which also implies a
+               specific MCA version) */
 
-       MCA_COLL_BASE_VERSION_1_0_0,
+            MCA_COLL_BASE_VERSION_1_0_0,
 
-       /* Component name and version */
+            /* Component name and version */
 
-       "tuned",
-       OMPI_MAJOR_VERSION,
-       OMPI_MINOR_VERSION,
-       OMPI_RELEASE_VERSION,
+            "tuned",
+            OMPI_MAJOR_VERSION,
+            OMPI_MINOR_VERSION,
+            OMPI_RELEASE_VERSION,
 
-       /* Component open and close functions */
+            /* Component open and close functions */
 
-       tuned_open,
-       tuned_close
-     },
+            tuned_open,
+            tuned_close
+        },
 
-     /* Next the MCA v1.0.0 component meta data */
+        /* Next the MCA v1.0.0 component meta data */
 
-     {
-      /* Whether the component is checkpointable or not */
+        {
+            /* Whether the component is checkpointable or not */
 
-      true
-     },
+            true
+        },
 
-     /* Initialization / querying functions */
+        /* Initialization / querying functions */
 
-     ompi_coll_tuned_init_query,
-     ompi_coll_tuned_comm_query,
-     NULL
-   },
+        ompi_coll_tuned_init_query,
+        ompi_coll_tuned_comm_query,
+        NULL
+    },
 
     /* priority of the module */
     0,
 
-     /* Tuned component specific information */
-     /* Note some of this WAS in the module */
+    /* Tuned component specific information */
+    /* Note some of this WAS in the module */
     NULL /* ompi_coll_alg_rule_t ptr */       
 };
 
@@ -122,7 +122,7 @@ static int tuned_open(void)
 {
     int param;
 
-/*     ompi_coll_tuned_component_t *ct = &ompi_coll_tuned_component; */
+    /*     ompi_coll_tuned_component_t *ct = &ompi_coll_tuned_component; */
 
     /* Use a low priority, but allow other components to be lower */
     
@@ -149,13 +149,13 @@ static int tuned_open(void)
 
     /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
     if (ompi_coll_tuned_use_dynamic_rules) {
-/*         char *default_name; */
-/*         asprintf(&default_name, "~/.openmpi/openmpi-coll-tuned-params.conf"); */
+        /*         char *default_name; */
+        /*         asprintf(&default_name, "~/.openmpi/openmpi-coll-tuned-params.conf"); */
         mca_base_param_reg_string(&mca_coll_tuned_component.super.collm_version,
-                               "dynamic_rules_filename",
-                               "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
-                               false, false, ompi_coll_tuned_dynamic_rules_filename,
-                               &ompi_coll_tuned_dynamic_rules_filename);
+                                  "dynamic_rules_filename",
+                                  "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
+                                  false, false, ompi_coll_tuned_dynamic_rules_filename,
+                                  &ompi_coll_tuned_dynamic_rules_filename);
     }
 
     /* some initial guesses at topology parameters */
@@ -176,7 +176,7 @@ static int tuned_open(void)
         int verbose;
         mca_base_param_lookup_int(param, &verbose);
         if (verbose > 0) {
-           ompi_coll_tuned_stream = opal_output_open(NULL);
+            ompi_coll_tuned_stream = opal_output_open(NULL);
         }
     }
 
@@ -190,7 +190,7 @@ static int tuned_open(void)
     if (ompi_coll_tuned_use_dynamic_rules) {
         ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
-/*         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALLV]); */
+        /*         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALLV]); */
         ompi_coll_tuned_barrier_intra_check_forced_init(&ompi_coll_tuned_forced_params[BARRIER]);
         ompi_coll_tuned_bcast_intra_check_forced_init(&ompi_coll_tuned_forced_params[BCAST]);
         ompi_coll_tuned_reduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCE]);

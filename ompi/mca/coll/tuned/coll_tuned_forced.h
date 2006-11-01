@@ -61,8 +61,6 @@ int ompi_coll_tuned_forced_getvalues (coll_tuned_force_algorithm_mca_param_indic
 int ompi_coll_tuned_forced_getvalues_barrier (coll_tuned_force_algorithm_mca_param_indices_t mca_params,
                                         coll_tuned_force_algorithm_params_t *forced_values);
 
-
-
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
