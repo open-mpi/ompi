@@ -103,15 +103,14 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
 /* receive posting */
 #define MX_SET_RECV_BITS(match_bits, mask_bits, contextid, source, tag) \
 {                                                                       \
-    match_bits = 0;                                                     \
-    mask_bits = ~match_bits;                                            \
     match_bits = contextid;                                             \
     match_bits = (match_bits << 16);                                    \
                                                                         \
     if (MPI_ANY_SOURCE == source) {                                     \
         match_bits = (match_bits << 32);                                \
-        mask_bits &= MX_SOURCE_IGNR;                                    \
+        mask_bits = MX_SOURCE_IGNR;                                     \
     } else {                                                            \
+        mask_bits = ~0;                                                 \
         match_bits |= source;                                           \
         match_bits = (match_bits << 32);                                \
     }                                                                   \
@@ -121,8 +120,6 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
     } else {                                                            \
         match_bits |= (MX_TAG_MASK & tag);                              \
     }                                                                   \
-                                                                        \
-    mask_bits = mask_bits;                                              \
 }
     
 
