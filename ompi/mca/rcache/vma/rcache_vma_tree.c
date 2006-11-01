@@ -91,15 +91,15 @@ static int mca_rcache_vma_tree_node_compare_closest(void *key1, void *key2)
     if(vma->start <= addr)
         return 0;
     prev_vma = (mca_rcache_vma_t *)opal_list_get_prev(&vma->super.super);
-    if(NULL == prev_vma || prev_vma->end < addr)
+    if(prev_vma == (mca_rcache_vma_t *)opal_list_get_end(&vma->rcache->vma_list)
+            || prev_vma->end < addr)
         return 0;
 
     return -1;
 }
 
-static inline mca_rcache_vma_t *mca_rcache_vma_new(ompi_rb_tree_t *tree,
-        uintptr_t start,
-        uintptr_t end)
+static inline mca_rcache_vma_t *mca_rcache_vma_new(
+        mca_rcache_vma_module_t *vma_rcache, uintptr_t start, uintptr_t end)
 {
     int rc;
     mca_rcache_vma_t *vma = OBJ_NEW(mca_rcache_vma_t);
@@ -109,8 +109,9 @@ static inline mca_rcache_vma_t *mca_rcache_vma_new(ompi_rb_tree_t *tree,
 
     vma->start = start;
     vma->end = end;
+    vma->rcache = vma_rcache;
 
-    rc = ompi_rb_tree_insert(tree, vma, vma);
+    rc = ompi_rb_tree_insert(&vma_rcache->rb_tree, vma, vma);
 
     return vma;
 }
@@ -309,7 +310,7 @@ int mca_rcache_vma_tree_insert(
         if((mca_rcache_vma_t*)opal_list_get_end(&vma_rcache->vma_list) == i) {
             vma = NULL;
             if(mca_rcache_vma_can_insert(vma_rcache, reg->flags, end - begin + 1))
-                vma = mca_rcache_vma_new(&vma_rcache->rb_tree, begin, end);
+                vma = mca_rcache_vma_new(vma_rcache, begin, end);
 
             if(!vma)
                 goto remove;
@@ -323,7 +324,7 @@ int mca_rcache_vma_tree_insert(
             uintptr_t tend = (i->start <= end)?(i->start - 1):end;
             vma = NULL;
             if(mca_rcache_vma_can_insert(vma_rcache, reg->flags, tend - begin + 1))
-                vma = mca_rcache_vma_new(&vma_rcache->rb_tree, begin, tend);
+                vma = mca_rcache_vma_new(vma_rcache, begin, tend);
 
             if(!vma)
                 goto remove;
@@ -337,7 +338,7 @@ int mca_rcache_vma_tree_insert(
             mca_rcache_vma_add_reg(vma, reg);
         } else if(i->start == begin) {
             if (i->end > end) {
-                vma = mca_rcache_vma_new(&vma_rcache->rb_tree, end+1, i->end);
+                vma = mca_rcache_vma_new(vma_rcache, end+1, i->end);
                 if(!vma)
                     goto remove;
 
@@ -356,7 +357,7 @@ int mca_rcache_vma_tree_insert(
                 begin = i->end + 1;
             }
         } else {
-                vma = mca_rcache_vma_new(&vma_rcache->rb_tree, begin, i->end);
+                vma = mca_rcache_vma_new(vma_rcache, begin, i->end);
 
                 if(!vma)
                     goto remove;
@@ -374,7 +375,7 @@ int mca_rcache_vma_tree_insert(
         i = (mca_rcache_vma_t*)opal_list_get_next(&i->super);
     }
 
-    return 0;
+    return OMPI_SUCCESS;
 
 remove:
     mca_rcache_vma_tree_delete(vma_rcache, reg);

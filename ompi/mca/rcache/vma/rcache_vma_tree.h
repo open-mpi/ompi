@@ -51,6 +51,7 @@ struct mca_rcache_vma_t
     uintptr_t start;                 /**< the base of the memory range */
     uintptr_t end;                   /**< the bound of the memory range */
     opal_list_t reg_list;            /**< list of regs on this vma */
+    mca_rcache_vma_module_t *rcache; /**< pointer to rcache vma belongs to */
 };
 typedef struct mca_rcache_vma_t mca_rcache_vma_t;
 
