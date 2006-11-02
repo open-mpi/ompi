@@ -23,6 +23,8 @@
 #include <strings.h>
 #endif
 
+#include "opal/prefetch.h"
+
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/datatype/datatype_internal.h"
@@ -203,7 +205,7 @@ ompi_convertor_t* ompi_convertor_create( int32_t remote_arch, int32_t mode )
 #define OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( CONVERTOR, IOV, OUT, MAX_DATA ) \
     do {                                                                \
         /* protect against over packing data */                         \
-        if( (CONVERTOR)->flags & CONVERTOR_COMPLETED ) {                \
+        if( OPAL_UNLIKELY((CONVERTOR)->flags & CONVERTOR_COMPLETED) ) { \
             (IOV)[0].iov_len = 0;                                       \
             *(OUT) = 0;                                                 \
             *(MAX_DATA) = 0;                                            \
@@ -241,7 +243,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         if( (*max_data) < pending_length )
             pending_length = (*max_data);
 
-        for( i = 0; (i < *out_size) && (0 != pending_length); i++ ) {
+        for( i = 0; i < *out_size; i++ ) {
             base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
 
             if( iov[i].iov_len > pending_length )
@@ -253,6 +255,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             }
             pConv->bConverted += iov[i].iov_len;
+            if( pending_length == iov[i].iov_len ) break;
             pending_length -= iov[i].iov_len;
         }
         *out_size = i;
@@ -366,6 +369,11 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     dt_stack_t* pStack = convertor->pStack;
     dt_elem_desc_t* pElems;
 
+    /* The prepare function already make the selection on which data representation
+     * we have to use: normal one or the optimized version ?
+     */
+    pElems = convertor->use_desc->desc;
+
     convertor->stack_pos      = 1;
     convertor->partial_length = 0;
     convertor->bConverted     = 0;
@@ -376,10 +384,6 @@ int ompi_convertor_create_stack_at_begining( ompi_convertor_t* convertor,
     pStack[0].index = -1;
     pStack[0].count = convertor->count;
     pStack[0].disp  = 0;
-    /* The prepare function already make the selection on which data representation
-     * we have to use: normal one or the optimized version ?
-     */
-    pElems = convertor->use_desc->desc;
 
     pStack[1].index = 0;
     pStack[1].disp = 0;
@@ -423,9 +427,10 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
     {                                                                   \
         uint64_t bdt_mask;                                              \
                                                                         \
-        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
-        /* Compute the local and remote sizes */                        \
+        /* Compute the local in advance */                              \
         convertor->local_size      = convertor->count * datatype->size; \
+        bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
+                                                                        \
         convertor->pBaseBuf        = (char*)pUserBuf;                   \
         convertor->count           = count;                             \
         /* Grab the datatype part of the flags */                       \
