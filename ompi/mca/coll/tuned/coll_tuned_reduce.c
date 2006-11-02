@@ -472,7 +472,7 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                                  "reduce_algorithm",
-                                 "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline",
+                                 "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline, 4 binary, 5 binomial",
                                  false, false, 0, NULL);
 
     mca_param_indices->segsize_param_index
@@ -516,6 +516,10 @@ int ompi_coll_tuned_reduce_intra_do_forced(void *sbuf, void* rbuf, int count,
                                                            comm->c_coll_selected_data->user_forced[REDUCE].chain_fanout); 
     case (3):   return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype, op, root, comm, 
                                                               comm->c_coll_selected_data->user_forced[REDUCE].segsize); 
+    case (4):   return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype, op, root, comm, 
+                                                            comm->c_coll_selected_data->user_forced[REDUCE].segsize); 
+    case (5):   return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype, op, root, comm, 
+                                                              comm->c_coll_selected_data->user_forced[REDUCE].segsize); 
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_forced attempt to select algorithm %d when only 0-%d is valid?",
                      comm->c_coll_selected_data->user_forced[REDUCE].algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
@@ -540,6 +544,10 @@ int ompi_coll_tuned_reduce_intra_do_this(void *sbuf, void* rbuf, int count,
                                                            segsize, faninout);
     case (3):   return ompi_coll_tuned_reduce_intra_pipeline (sbuf, rbuf, count, dtype, op, root, comm, 
                                                               segsize);
+    case (4):   return ompi_coll_tuned_reduce_intra_binary (sbuf, rbuf, count, dtype, op, root, comm, 
+                                                            segsize); 
+    case (5):   return ompi_coll_tuned_reduce_intra_binomial (sbuf, rbuf, count, dtype, op, root, comm, 
+                                                              segsize); 
     default:
         OPAL_OUTPUT((ompi_coll_tuned_stream,"coll:tuned:reduce_intra_do_this attempt to select algorithm %d when only 0-%d is valid?",
                      algorithm, ompi_coll_tuned_forced_max_algorithms[REDUCE]));
