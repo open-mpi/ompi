@@ -297,6 +297,10 @@ int btl_openib_register_mca_params(void)
     CHECK(reg_int("use_eager_rdma", "Use RDMA for eager messages ",
                   1, &ival, 0));
     mca_btl_openib_component.use_eager_rdma = (uint32_t) (ival != 0);
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    /* Fast rdma path isn't supported by PROGRESS_THREAD */
+    mca_btl_openib_component.use_eager_rdma = 0;
+#endif
 
     CHECK(reg_int("eager_rdma_threshold", 
                   "Use RDMA for short messages after this number of "

@@ -618,6 +618,14 @@ int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
     }
 #endif 
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    if(openib_btl->hca->progress) {
+        openib_btl->hca->progress = false;
+        if (pthread_cancel(openib_btl->hca->thread.t_handle))
+            BTL_ERROR(("Failed to cancel OpenIB progress thread"));
+        opal_thread_join(&openib_btl->hca->thread, NULL);
+    }
+#endif
     return OMPI_SUCCESS;
 }
 
@@ -763,6 +771,8 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
  */ 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 {
+    int rc;
+
     /* Allocate Protection Domain */ 
     openib_btl->poll_cq = false; 
     
@@ -796,6 +806,17 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     } 
     
     /* Create the low and high priority queue pairs */ 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+    openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
+        ibv_create_cq(openib_btl->hca->ib_dev_context,
+                mca_btl_openib_component.ib_cq_size, openib_btl->hca->ib_channel); 
+#else
+    openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
+        ibv_create_cq(openib_btl->hca->ib_dev_context,
+                mca_btl_openib_component.ib_cq_size, openib_btl, openib_btl->hca->ib_channel, 0); 
+#endif
+#else /* OMPI_ENABLE_PROGRESS_THREADS DISABLED */
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_LP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
@@ -805,6 +826,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL, NULL, 0); 
 #endif
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
     
     if(NULL == openib_btl->ib_cq[BTL_OPENIB_LP_QP]) {
         BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
@@ -813,6 +835,25 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         return OMPI_ERROR;
     }
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    if(ibv_req_notify_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], 0)) {
+        BTL_ERROR(("error requesting low priority cq notification for %s"
+                    " errno says %s\n",
+                    ibv_get_device_name(openib_btl->hca->ib_dev),
+                    strerror(errno)));
+        return OMPI_ERROR;
+    }
+
+#if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
+    openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
+        ibv_create_cq(openib_btl->hca->ib_dev_context,
+                mca_btl_openib_component.ib_cq_size, openib_btl->hca->ib_channel); 
+#else
+    openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
+        ibv_create_cq(openib_btl->hca->ib_dev_context,
+                mca_btl_openib_component.ib_cq_size, openib_btl, openib_btl->hca->ib_channel, 0); 
+#endif    
+#else /* OMPI_ENABLE_PROGRESS_THREADS DISABLED */
 #if OMPI_MCA_BTL_OPENIB_IBV_CREATE_CQ_ARGS == 3
     openib_btl->ib_cq[BTL_OPENIB_HP_QP] =
         ibv_create_cq(openib_btl->hca->ib_dev_context,
@@ -822,6 +863,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         ibv_create_cq(openib_btl->hca->ib_dev_context,
                 mca_btl_openib_component.ib_cq_size, NULL, NULL, 0); 
 #endif    
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */   
 
     if(NULL == openib_btl->ib_cq[BTL_OPENIB_HP_QP]) {
         BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
@@ -829,7 +871,25 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
                   strerror(errno))); 
         return OMPI_ERROR;
     }
+
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    if(ibv_req_notify_cq(openib_btl->ib_cq[BTL_OPENIB_HP_QP], 0)) {
+        BTL_ERROR(("error requesting high priority cq notification for %s"
+                    " errno says %s\n",
+                    ibv_get_device_name(openib_btl->hca->ib_dev),
+                    strerror(errno)));
+        return OMPI_ERROR;
+    }
+    OPAL_THREAD_LOCK(&openib_btl->hca->hca_lock);
+    if (!openib_btl->hca->progress){
+        openib_btl->hca->progress = true;
+        if(OPAL_SUCCESS != (rc = opal_thread_start(&openib_btl->hca->thread))) {
+            BTL_ERROR(("Unable to create progress thread, retval=%d", rc));
+            return rc;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&openib_btl->hca->hca_lock);
+#endif
         
-    
     return OMPI_SUCCESS;
 }

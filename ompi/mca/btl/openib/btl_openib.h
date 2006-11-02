@@ -151,6 +151,12 @@ typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
 
 struct mca_btl_openib_hca_t {
     struct ibv_device *ib_dev;  /* the ib device */
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    struct ibv_comp_channel *ib_channel; /* Channel event for the HCA */
+    opal_thread_t thread;                /* Progress thread */
+    volatile bool progress;              /* Progress status */
+#endif
+    opal_mutex_t hca_lock;          /* hca level lock */ 
     struct ibv_context *ib_dev_context;
     struct ibv_device_attr ib_dev_attr;
     struct ibv_pd *ib_pd;
@@ -212,6 +218,9 @@ struct mca_btl_openib_module_t {
     
 extern mca_btl_openib_module_t mca_btl_openib_module;
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+extern void* mca_btl_openib_progress_thread(opal_object_t*);
+#endif
 /**
  * Register a callback function that is called on receipt
  * of a fragment.

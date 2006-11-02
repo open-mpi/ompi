@@ -77,6 +77,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                                          size_t byte_len, const int prio);
 static char* btl_openib_component_status_to_string(enum ibv_wc_status status);
 static int btl_openib_component_progress(void);
+static int btl_openib_module_progress(mca_btl_openib_module_t *openib_btl);
 static void btl_openib_frag_progress_pending(
          mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
          const int prio);
@@ -314,6 +315,7 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
     hca->ib_dev = ib_dev;
     hca->ib_dev_context = ibv_open_device(ib_dev);
     hca->btls = 0;
+    OBJ_CONSTRUCT(&hca->hca_lock, opal_mutex_t); 
     if(NULL == hca->ib_dev_context){ 
         BTL_ERROR(("error obtaining device context for %s errno says %s\n",
                     ibv_get_device_name(ib_dev), strerror(errno))); 
@@ -402,7 +404,18 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
          goto dealloc_pd;
     }
    
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    hca->ib_channel = ibv_create_comp_channel(hca->ib_dev_context);
+    if (NULL == hca->ib_channel) {
+        BTL_ERROR(("error creating channel for %s errno says %s\n",
+                    ibv_get_device_name(hca->ib_dev),
+                    strerror(errno)));
+        goto mpool_destroy;
+    }
+#endif
+
     ret = OMPI_SUCCESS; 
+
     /* Note ports are 1 based hence j = 1 */
     for(i = 1; i <= hca->ib_dev_attr.phys_port_cnt; i++){
         struct ibv_port_attr ib_port_attr;
@@ -427,9 +440,21 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         }
     }
 
-    if (hca->btls != 0)
+    if (hca->btls != 0){
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+        /* Prepare data for thread, but not starting it */
+        OBJ_CONSTRUCT(&hca->thread, opal_thread_t);
+        hca->thread.t_run = mca_btl_openib_progress_thread;
+        hca->thread.t_arg = hca;
+        hca->progress = false;
+#endif
         return ret;
+    }
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+    ibv_destroy_comp_channel(hca->ib_channel);
+#endif
+mpool_destroy:
     mca_mpool_base_module_destroy(hca->mpool);
 dealloc_pd:
     ibv_dealloc_pd(hca->ib_pd);
@@ -469,15 +494,6 @@ btl_openib_component_init(int *num_btl_modules,
     /* initialization */
     *num_btl_modules = 0;
     num_devs = 0; 
-
-    /* openib BTL does not currently support progress threads, so
-       disable the component if they were requested */
-    if (enable_progress_threads) {
-        mca_btl_base_error_no_nics("OpenIB", "HCA");
-        mca_btl_openib_component.ib_num_btls = 0;
-        btl_openib_modex_send();
-        return NULL;
-    }
 
     seedv[0] = orte_process_info.my_name->vpid;
     seedv[1] = opal_sys_timer_get_cycles();
@@ -974,6 +990,49 @@ static void btl_openib_frag_progress_pending(
      }
 }
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 1
+void* mca_btl_openib_progress_thread(opal_object_t* arg)
+{
+    mca_btl_openib_module_t* openib_btl;
+    opal_thread_t* thread = (opal_thread_t*)arg;
+    mca_btl_openib_hca_t* hca = thread->t_arg;
+    unsigned int ev_lp, ev_hp;
+    struct ibv_cq *ev_cq;
+    void *ev_ctx;
+    int qp;
+
+    /* This thread enter in a cancel enabled state */
+    pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
+    pthread_setcanceltype( PTHREAD_CANCEL_ASYNCHRONOUS, NULL );
+
+    while (hca->progress) {
+        while(opal_progress_threads()) {
+            while(opal_progress_threads())
+                sched_yield();
+            usleep(100); /* give app a chance to re-enter library */
+        }
+
+        if(ibv_get_cq_event(hca->ib_channel, &ev_cq, &ev_ctx))
+            BTL_ERROR(("Failed to get CQ event with error %s",
+                        strerror(errno)));
+        if(ibv_req_notify_cq(ev_cq, 0)) {
+            BTL_ERROR(("Couldn't request CQ notification with error %s",
+                        strerror(errno)));
+        }
+        openib_btl=(mca_btl_openib_module_t*)ev_ctx;
+
+        if (ev_cq == openib_btl->ib_cq[BTL_OPENIB_LP_QP])
+            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_LP_QP], 1);
+        else
+            ibv_ack_cq_events (openib_btl->ib_cq[BTL_OPENIB_HP_QP], 1);
+
+        while(btl_openib_module_progress(openib_btl));
+    }
+
+    return PTHREAD_CANCELED;
+}
+#endif
+
 /*
  *  IB component progress.
  */
@@ -1042,23 +1101,32 @@ static int btl_openib_component_progress(void)
     if(count) return count;
 
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        openib_btl = &mca_btl_openib_component.openib_btls[i];
-        
-        /* We have two completion queues, one for "high" priority and one for
-         * "low". Check high priority before low priority */
-        for(qp = 0; qp < 2; qp++) {
-            ne = ibv_poll_cq(openib_btl->ib_cq[qp], 1, &wc);
+        return btl_openib_module_progress(&mca_btl_openib_component.openib_btls[i]);
+    }
+}
 
-            if(0 == ne)
-                continue;
+static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
+{
+    static char *qp_name[] = {"HP", "LP"};
+    int i, j, c, qp;
+    int count = 0,ne = 0, ret;
+    mca_btl_openib_frag_t* frag; 
+    mca_btl_openib_endpoint_t* endpoint; 
+    struct ibv_wc wc; 
 
-            if(ne < 0 || wc.status != IBV_WC_SUCCESS)
-                goto error;
+    for(qp = 0; qp < 2; qp++) {
+        ne = ibv_poll_cq(openib_btl->ib_cq[qp], 1, &wc);
 
-            frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
-            endpoint = frag->endpoint;
-            /* Handle work completions */
-            switch(wc.opcode) {
+        if(0 == ne)
+            continue;
+
+        if(ne < 0 || wc.status != IBV_WC_SUCCESS)
+            goto error;
+
+        frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
+        endpoint = frag->endpoint;
+        /* Handle work completions */
+        switch(wc.opcode) {
             case IBV_WC_RDMA_READ:
                 assert(BTL_OPENIB_LP_QP == qp);
                 OPAL_THREAD_ADD32(&endpoint->get_tokens, 1);
@@ -1124,7 +1192,6 @@ static int btl_openib_component_progress(void)
                 openib_btl->error_cb(&openib_btl->super,
                         MCA_BTL_ERROR_FLAGS_FATAL);
                 break;
-            }
         }
     }
     return count;
@@ -1139,8 +1206,8 @@ error:
         if(frag) { 
             endpoint = (mca_btl_openib_endpoint_t*) frag->endpoint; 
             if(endpoint && 
-               endpoint->endpoint_proc && 
-               endpoint->endpoint_proc->proc_ompi) {
+                    endpoint->endpoint_proc && 
+                    endpoint->endpoint_proc->proc_ompi) {
                 remote_proc = endpoint->endpoint_proc->proc_ompi; 
             }
         }
@@ -1149,7 +1216,7 @@ error:
                         "status number %d for wr_id %llu opcode %d",
                         qp_name[qp],
                         btl_openib_component_status_to_string(wc.status), 
-                       wc.status, wc.wr_id, wc.opcode)); 
+                        wc.status, wc.wr_id, wc.opcode)); 
         if(wc.status == IBV_WC_RETRY_EXC_ERR) { 
             opal_show_help("help-mpi-btl-openib.txt",
                     "btl_openib:retry-exceeded", true);
