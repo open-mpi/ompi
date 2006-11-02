@@ -59,5 +59,4 @@ EXTRA_DIST = \
         ompi_setup_f90.m4
 
 maintainer-clean-local:
-	rm -f mca_m4_config_include.m4 \
-	mca_no_configure_components.m4 ompi_get_version.sh
+	rm -f ompi_get_version.sh
