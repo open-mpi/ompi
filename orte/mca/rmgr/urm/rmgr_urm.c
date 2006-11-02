@@ -312,7 +312,7 @@ static int orte_rmgr_urm_spawn_job(
     /* check for any flow directives to control what we do */
     if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
         /* something was specified - get the value */
-        if (ORTE_SUCCESS != (rc = orte_dss.get(&fptr, flow->value, ORTE_RMGR_FLOW))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.get(&fptr, flow->value, ORTE_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -361,13 +361,12 @@ static int orte_rmgr_urm_spawn_job(
              ORTE_ERROR_LOG(rc);
              return rc;
          }         
+         if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
+             orte_rmaps.get_job_map(&map, *jobid);
+             orte_dss.dump(0, map, ORTE_JOB_MAP);
+         }
      }
 
-     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
-         orte_rmaps.get_job_map(&map, *jobid);
-         orte_dss.dump(0, map, ORTE_JOB_MAP);
-     }
-     
      /* if we don't want to launch, then just return here - don't setup the io forwarding
       * or do any of the remaining pre-launch things
       */
