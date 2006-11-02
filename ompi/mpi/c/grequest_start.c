@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -40,6 +41,10 @@ int MPI_Grequest_start(MPI_Grequest_query_function *query_fn,
     int rc;
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == request) {
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, 
+                                          FUNC_NAME);
+        }
     }
 
     rc = ompi_grequest_start(query_fn,free_fn,cancel_fn,extra_state,request);

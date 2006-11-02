@@ -242,59 +242,9 @@ static inline int ompi_request_free(ompi_request_t** request)
  * request handle at index set to NULL.
  */
 
-
-static inline int ompi_request_test( ompi_request_t ** rptr,
+OMPI_DECLSPEC int ompi_request_test( ompi_request_t ** rptr,
                                      int *completed,
-                                     ompi_status_public_t * status )
-{
-    int rc;
-    ompi_request_t *request = *rptr;
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    int do_it_once = 0;
-
- recheck_request_status:
-#endif
-    opal_atomic_mb();
-    if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-        *completed = true;
-        if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
-        }
-        return OMPI_SUCCESS;
-    }
-    if (request->req_complete) {
-        *completed = true;
-        if (MPI_STATUS_IGNORE != status) {
-            /* See MPI-1.2, sec 3.2.5, p.22 */
-            int old_error = status->MPI_ERROR;
-            *status = request->req_status;
-            status->MPI_ERROR = old_error;
-        }
-        if( request->req_persistent ) {
-            request->req_state = OMPI_REQUEST_INACTIVE;
-            return request->req_status.MPI_ERROR;
-        }
-        rc = request->req_status.MPI_ERROR;
-        if (OMPI_SUCCESS != ompi_request_free(rptr)) {
-            return OMPI_ERROR;
-        } else {
-            return rc;
-        }
-    }
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    if( 0 == do_it_once ) {
-        /**
-         * If we run the opal_progress then check the status of the request before
-         * leaving. We will call the opal_progress only once per call.
-         */
-        opal_progress();
-        do_it_once++;
-        goto recheck_request_status;
-    }
-#endif
-    *completed = false;
-    return OMPI_SUCCESS;
-}
+                                     ompi_status_public_t * status );
 
 /**
  * Non-blocking test for request completion.

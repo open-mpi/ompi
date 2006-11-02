@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,6 +20,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "ompi/request/request.h"
+#include "ompi/request/grequest.h"
 
 int ompi_request_wait(
     ompi_request_t ** req_ptr,
@@ -49,7 +51,12 @@ int ompi_request_wait(
 finished:
 #endif
 
-    /* return status */
+    /* return status.  If it's a generalized request, we *have* to
+       invoke the query_fn, even if the user procided STATUS_IGNORE.
+       MPI-2:8.2. */
+    if (OMPI_REQUEST_GEN == req->req_type) {
+        ompi_grequest_invoke_query(req, &req->req_status);
+    }
     if( MPI_STATUS_IGNORE != status ) {
         /* See MPI-1.2, sec 3.2.5, p.22 */
         status->MPI_TAG    = req->req_status.MPI_TAG;
@@ -161,7 +168,11 @@ finished:
         }
     } else {
         assert( true == request->req_complete );
-        /* return status */
+        /* Per note above, we have to call gen request query_fn even
+           if STATUS_IGNORE was provided */
+        if (OMPI_REQUEST_GEN == request->req_type) {
+            rc = ompi_grequest_invoke_query(request, &request->req_status);
+        }
         if (MPI_STATUS_IGNORE != status) {
             /* See MPI-1.2, sec 3.2.5, p.22 */
             int old_error = status->MPI_ERROR;
@@ -260,6 +271,9 @@ int ompi_request_wait_all(
         for( i = 0; i < count; i++, rptr++ ) {
             request = *rptr;
             assert( true == request->req_complete );
+            if (OMPI_REQUEST_GEN == request->req_type) {
+                ompi_grequest_invoke_query(request, &request->req_status);
+            }
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 statuses[i] = ompi_status_empty;
             } else {
@@ -281,6 +295,11 @@ int ompi_request_wait_all(
             request = *rptr;
 
             assert( true == request->req_complete );
+            /* Per note above, we have to call gen request query_fn
+               even if STATUSES_IGNORE was provided */
+            if (OMPI_REQUEST_GEN == request->req_type) {
+                rc = ompi_grequest_invoke_query(request, &request->req_status);
+            }
             if( request->req_state == OMPI_REQUEST_INACTIVE ) {
                 rc = ompi_status_empty.MPI_ERROR;
             } else {
@@ -407,6 +426,11 @@ finished:
             request = requests[indices[i]];
             assert( true == request->req_complete );
             /* return status */
+            /* Per note above, we have to call gen request query_fn even
+               if STATUS_IGNORE was provided */
+            if (OMPI_REQUEST_GEN == request->req_type) {
+                ompi_grequest_invoke_query(request, &request->req_status);
+            }
             if (MPI_STATUSES_IGNORE != statuses) {
                 statuses[i] = request->req_status;
             }
