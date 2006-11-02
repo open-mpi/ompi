@@ -19,6 +19,15 @@
 #ifndef OPAL_MEMORY_MEMORY_INTERNAL_H
 #define OPAL_MEMORY_MEMORY_INTERNAL_H
 
+#include "opal_config.h"
+#ifdef HAVE_STDBOOL_H
+# include <stdbool.h>
+#endif
+#ifdef HAVE_SYS_TYPES_H
+# include <sys/types.h>
+#endif
+
+
 #define OPAL_MEMORY_FREE_SUPPORT   0x0001
 #define OPAL_MEMORY_MALLOC_SUPPORT 0x0002
 #define OPAL_MEMORY_CHUNK_SUPPORT  0x0004
