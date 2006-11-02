@@ -482,7 +482,7 @@ int opal_cmd_line_parse(opal_cmd_line_t *cmd, bool ignore_unknown,
  */
 char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 {
-    size_t i, len, prev_len;
+    size_t i, len;
     int argc;
     size_t j;
     char **argv;
@@ -498,7 +498,6 @@ char *opal_cmd_line_get_usage_msg(opal_cmd_line_t *cmd)
 
     /* Make an argv of all the usage strings */
 
-    prev_len = 0;
     argc = 0;
     argv = NULL;
     ret = NULL;
