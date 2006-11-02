@@ -28,10 +28,6 @@ AC_DEFUN([MCA_memory_ptmalloc2_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_memory_ptmalloc2_CONFIG],[
-    AC_ARG_WITH([memory-manager],
-        [AC_HELP_STRING([--with-memory-manager=TYPE],
-                       [Use TYPE for intercepting memory management
-                        calls to control memory pinning.])])
 
     AC_ARG_ENABLE([ptmalloc2-opt-sbrk],
         [AC_HELP_STRING([--enable-ptmalloc2-opt-sbrk],

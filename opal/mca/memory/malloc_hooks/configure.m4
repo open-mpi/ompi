@@ -28,10 +28,6 @@ AC_DEFUN([MCA_memory_malloc_hooks_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_memory_malloc_hooks_CONFIG],[
-    AC_ARG_WITH([memory-manager],
-        [AC_HELP_STRING([--with-memory-manager=TYPE],
-                       [Use TYPE for intercepting memory management
-                        calls to control memory pinning.])])
 
     AS_IF([test "$with_memory_manager" = "malloc_hooks"],
           [memory_malloc_hooks_happy="yes"
