@@ -55,7 +55,6 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
  * to create any desired "flow" through the RMGR's spawn
  * procedure.
  */
-#define ORTE_RMGR_FLOW     ORTE_UINT8
 #define ORTE_RMGR_SETUP    0x01
 #define ORTE_RMGR_ALLOC    0x02
 #define ORTE_RMGR_MAP      0x04
