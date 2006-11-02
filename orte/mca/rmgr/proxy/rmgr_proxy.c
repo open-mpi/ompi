@@ -361,9 +361,23 @@ static int orte_rmgr_proxy_spawn_job(
     int rc;
     orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
     orte_job_map_t *map;
+    orte_attribute_t *flow;
+    uint8_t flags, *fptr;
 
     OPAL_TRACE(1);
-
+    
+    /* check for any flow directives to control what we do */
+    if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
+        /* something was specified - get the value */
+        if (ORTE_SUCCESS != (rc = orte_dss.get(&fptr, flow->value, ORTE_RMGR_FLOW))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        flags = *fptr;
+    } else {
+        flags = 0xff;
+    }
+    
     /*
      * Perform resource discovery.
      */
@@ -371,49 +385,50 @@ static int orte_rmgr_proxy_spawn_job(
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
+    
     /*
      * Setup job and allocate resources
      */
-    if (ORTE_SUCCESS !=
-        (rc = orte_rmgr_proxy_setup_job(app_context,num_context,jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_SETUP)) {
-        return ORTE_SUCCESS;
+    if (flags & ORTE_RMGR_SETUP) {
+        if (ORTE_SUCCESS !=
+            (rc = orte_rmgr_proxy_setup_job(app_context,num_context,jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_ALLOC)) {
-        return ORTE_SUCCESS;
+    if (flags & ORTE_RMGR_ALLOC) {
+        if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    if (flags & ORTE_RMGR_MAP) {    
+        if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
-
+    
     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
         orte_rmaps.get_job_map(&map, *jobid);
         orte_dss.dump(0, map, ORTE_JOB_MAP);
     }
     
-    if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_MAP)) {
+    /* if we don't want to launch, then just return here - don't setup the io forwarding
+        * or do any of the remaining pre-launch things
+        */
+    if (!(flags & ORTE_RMGR_LAUNCH)) {
         return ORTE_SUCCESS;
     }
     
     /*
      * setup I/O forwarding
      */
-
+    
     name.jobid = *jobid;
-
+    
     if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
         ORTE_ERROR_LOG(rc);
         return rc;

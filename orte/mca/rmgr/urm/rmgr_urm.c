@@ -295,6 +295,8 @@ static int orte_rmgr_urm_spawn_job(
     orte_process_name_t* name;
     struct timeval urmstart, urmstop;
     orte_job_map_t *map;
+    orte_attribute_t *flow;
+    uint8_t flags, *fptr;
 
     OPAL_TRACE(1);
 
@@ -307,6 +309,18 @@ static int orte_rmgr_urm_spawn_job(
         }
     }
     
+    /* check for any flow directives to control what we do */
+    if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
+        /* something was specified - get the value */
+        if (ORTE_SUCCESS != (rc = orte_dss.get(&fptr, flow->value, ORTE_RMGR_FLOW))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        flags = *fptr;
+    } else {
+        flags = 0xff;
+    }
+
     /*
      * Perform resource discovery.
      */
@@ -319,42 +333,45 @@ static int orte_rmgr_urm_spawn_job(
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
      
-    /* If the jobid = ORTE_JOBID_INVALID, then we need to
+    /* Only do this step if we have been asked to do it via the ORTE_RMGR_SPAWN_FLOW
+     * attribute, or if no flow flags were provided
+     * If the jobid = ORTE_JOBID_INVALID, then we need to
      * get one assigned to us. Otherwise, we are entering
      * with a valid jobid, so no need to get one
      */
-    if (ORTE_JOBID_INVALID == *jobid) { /* setup the job */
-        if (ORTE_SUCCESS !=
-            (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    }
-     
-     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_SETUP)) {
-         return ORTE_SUCCESS;
-     }
-
-    if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_ALLOC)) {
-         return ORTE_SUCCESS;
+     if (flags & ORTE_RMGR_SETUP) {
+         if (ORTE_JOBID_INVALID == *jobid) { /* setup the job */
+             if (ORTE_SUCCESS !=
+                 (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
+                 ORTE_ERROR_LOG(rc);
+                 return rc;
+             }
+         }     
      }
      
-     if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+     if (flags & ORTE_RMGR_ALLOC) {
+         if (ORTE_SUCCESS != (rc = orte_ras.allocate_job(*jobid, attributes))) {
+             ORTE_ERROR_LOG(rc);
+             return rc;
+         }         
+     }
+
+     if (flags & ORTE_RMGR_MAP) {
+         if (ORTE_SUCCESS != (rc = orte_rmaps.map_job(*jobid, attributes))) {
+             ORTE_ERROR_LOG(rc);
+             return rc;
+         }         
+     }
 
      if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
          orte_rmaps.get_job_map(&map, *jobid);
          orte_dss.dump(0, map, ORTE_JOB_MAP);
      }
      
-     if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMGR_STOP_AFTER_MAP)) {
+     /* if we don't want to launch, then just return here - don't setup the io forwarding
+      * or do any of the remaining pre-launch things
+      */
+     if (!(flags & ORTE_RMGR_LAUNCH)) {
          return ORTE_SUCCESS;
      }
      
