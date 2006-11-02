@@ -243,8 +243,8 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
         if( (*max_data) < pending_length )
             pending_length = (*max_data);
 
+        base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
         for( i = 0; i < *out_size; i++ ) {
-            base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
 
             if( iov[i].iov_len > pending_length )
                 iov[i].iov_len = pending_length;
@@ -252,11 +252,15 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             if( NULL == iov[i].iov_base ) {
                 iov[i].iov_base = base_pointer;
             } else {
+                OMPI_DDT_SAFEGUARD_POINTER( base_pointer, iov[i].iov_len,
+                                            pConv->pBaseBuf,
+                                            pConv->pDesc, pConv->count );
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             }
             pConv->bConverted += iov[i].iov_len;
             if( pending_length == iov[i].iov_len ) break;
             pending_length -= iov[i].iov_len;
+            base_pointer += iov[i].iov_len;
         }
         *out_size = i;
         *max_data = pConv->bConverted - initial_bConverted;
@@ -428,19 +432,20 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         uint64_t bdt_mask;                                              \
                                                                         \
         /* Compute the local in advance */                              \
-        convertor->local_size      = convertor->count * datatype->size; \
+        convertor->local_size = count * datatype->size;                 \
         bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
                                                                         \
-        convertor->pBaseBuf        = (char*)pUserBuf;                   \
-        convertor->count           = count;                             \
+        convertor->pBaseBuf   = (char*)pUserBuf;                        \
+        convertor->count      = count;                                  \
         /* Grab the datatype part of the flags */                       \
-        convertor->flags         &= CONVERTOR_TYPE_MASK;                \
-        convertor->flags         |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
-        convertor->pDesc          = (ompi_datatype_t*)datatype;         \
+        convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
+        convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
+        convertor->pDesc      = (ompi_datatype_t*)datatype;             \
+        convertor->bConverted = 0;                                      \
                                                                         \
         /* If the data is empty we just mark the convertor as           \
-         * completed. With this flag set the pack and unpack functions  \
-         * will not do anything.
+         * completed. With this flag set the pack and unpack            \
+         * functions will not do anything.                              \
          */                                                             \
         if( 0 == convertor->local_size ) {                              \
             convertor->flags |= CONVERTOR_COMPLETED;                    \
@@ -474,7 +479,6 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
             ((convertor->flags & CONVERTOR_SEND) ||                     \
              (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {            \
-            convertor->bConverted = 0;                                  \
             return OMPI_SUCCESS;                                        \
         }                                                               \
         {                                                               \
