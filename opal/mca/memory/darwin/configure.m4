@@ -28,10 +28,6 @@ AC_DEFUN([MCA_memory_darwin_COMPILE_MODE], [
 #                        [action-if-cant-compile])
 # ------------------------------------------------
 AC_DEFUN([MCA_memory_darwin_CONFIG],[
-    AC_ARG_WITH([memory-manager],
-        [AC_HELP_STRING([--with-memory-manager=TYPE],
-                       [Use TYPE for intercepting memory management
-                        calls to control memory pinning.])])
 
     AS_IF([test "$with_memory_manager" = "darwin"],
           [memory_darwin_happy="yes"
