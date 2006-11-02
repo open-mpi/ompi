@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,9 +31,14 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_grequest_t);
 /*
  * Fortran types for the generalized request functions.
  */
-typedef void (MPI_F_Grequest_query_function)(void* extra_state, MPI_Status* status, int* ierr );
-typedef void (MPI_F_Grequest_free_function)( void* extra_state, int* err );
-typedef void (MPI_F_Grequest_cancel_function)( void* extra_state, int* complete, int* ierr );
+typedef void (MPI_F_Grequest_query_function)(MPI_Aint *extra_state, 
+                                             MPI_Fint *status, 
+                                             MPI_Fint *ierr);
+typedef void (MPI_F_Grequest_free_function)(MPI_Aint *extra_state, 
+                                            MPI_Fint *ierr);
+typedef void (MPI_F_Grequest_cancel_function)(MPI_Aint *extra_state, 
+                                              MPI_Flogical *complete, 
+                                              MPI_Fint *ierr);
 
 typedef union {
     MPI_Grequest_query_function*   c_query;
@@ -55,6 +61,7 @@ struct ompi_grequest_t {
     MPI_Grequest_free_fct_t greq_free;
     MPI_Grequest_cancel_fct_t greq_cancel;
     void *greq_state;
+    bool greq_funcs_are_c;
 };
 typedef struct ompi_grequest_t ompi_grequest_t;
 
@@ -62,7 +69,6 @@ typedef struct ompi_grequest_t ompi_grequest_t;
 /*
  * Start a generalized request.
  */
-
 OMPI_DECLSPEC int ompi_grequest_start(
     MPI_Grequest_query_function *gquery,
     MPI_Grequest_free_function *gfree,
@@ -71,9 +77,15 @@ OMPI_DECLSPEC int ompi_grequest_start(
     ompi_request_t** request);
 
 /*
- * Mark a generalized request as complete.
+ * Complete a generalized request
  */
-OMPI_DECLSPEC int ompi_grequest_complete(ompi_grequest_t*);
+OMPI_DECLSPEC int ompi_grequest_complete(ompi_request_t *req);
+
+/*
+ * Invoke the query function on a generalized request
+ */
+OMPI_DECLSPEC int ompi_grequest_invoke_query(ompi_request_t *request,
+                                             ompi_status_public_t *status);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
