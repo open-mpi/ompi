@@ -47,9 +47,19 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
 #define ORTE_RMGR_ATTR_OVERRIDE     true
 
 /* define some useful attributes */
-#define ORTE_RMGR_STOP_AFTER_SETUP  "orte-rmgr-stop-setup"
-#define ORTE_RMGR_STOP_AFTER_ALLOC  "orte-rmgr-stop-alloc"
-#define ORTE_RMGR_STOP_AFTER_MAP    "orte-rmgr-stop-map"
+#define ORTE_RMGR_SPAWN_FLOW    "orte-rmgr-spawn"
+
+/* flags that can be combined to script the RMGR's spawn procedure
+ * These flags are used as the value to be associated with
+ * the ORTE_RMGR_FLOW attribute. They can be OR'd together
+ * to create any desired "flow" through the RMGR's spawn
+ * procedure.
+ */
+#define ORTE_RMGR_FLOW     ORTE_UINT8
+#define ORTE_RMGR_SETUP    0x01
+#define ORTE_RMGR_ALLOC    0x02
+#define ORTE_RMGR_MAP      0x04
+#define ORTE_RMGR_LAUNCH   0x08
 
 
 /* RESOURCE MANAGER DATA TYPES */
