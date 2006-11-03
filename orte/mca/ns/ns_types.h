@@ -108,6 +108,8 @@ typedef struct orte_process_name_t orte_process_name_t;
 ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
 #define ORTE_NAME_ALL   &orte_name_all
 
+#define ORTE_PROC_MY_NAME    orte_process_info.my_name
+
 /**
  * Convert process name from host to network byte order.
  *
