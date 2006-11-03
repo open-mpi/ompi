@@ -17,11 +17,16 @@
  */
 
 #include "orte_config.h"
-#include <string.h>
-
 #include "orte/orte_constants.h"
+
+#include <string.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif  /* HAVE_SYS_TIME_H */
+
 #include "opal/threads/condition.h"
 #include "opal/util/output.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/oob/oob.h"
@@ -94,14 +99,17 @@ int mca_oob_xcast(
     int tag = ORTE_RML_TAG_XCAST;
     int status;
     orte_proc_state_t state;
+    struct timeval sendstart, sendstop;
 
     /* check to see if I am the root process name */
     if(NULL != root && ORTE_EQUAL == orte_dss.compare(root, orte_process_info.my_name, ORTE_NAME)) {
         mca_oob_xcast_t *xcast = OBJ_NEW(mca_oob_xcast_t);
         xcast->counter = num_peers;
+        
         /* check for timing request - if so, we want to printout the size of the message being sent */
         if (orte_oob_base_timing) {
             opal_output(0, "oob_xcast: message size is %lu bytes", (unsigned long)buffer->bytes_used);
+            gettimeofday(&sendstart, NULL);
         }
         
         for(i=0; i<num_peers; i++) {
@@ -124,6 +132,15 @@ int mca_oob_xcast(
         while(xcast->counter > 0) {
             opal_condition_wait(&xcast->cond, &xcast->mutex);
         }
+
+        /* check for timing request - if so, report comm time */
+        if (orte_oob_base_timing) {
+            gettimeofday(&sendstop, NULL);
+            opal_output(0, "oob_xcast: time to send was %ld usec",
+                        (long int)((sendstop.tv_sec - sendstart.tv_sec)*1000000 +
+                                   (sendstop.tv_usec - sendstart.tv_usec)));
+        }
+        
         OPAL_THREAD_UNLOCK(&xcast->mutex);
         OBJ_RELEASE(xcast);
 
