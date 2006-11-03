@@ -70,9 +70,6 @@ done
 
 for kind in $ckinds
 do
-    case "$kind" in  4)   size_kind='8'  ;  esac
-    case "$kind" in  8)   size_kind='16'  ;  esac
-    case "$kind" in  16)  size_kind='32'  ;  esac
     proc="${procedure}${rank}DC${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
@@ -80,7 +77,7 @@ do
     echo "  complex*${kind}, intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_COMPLEX${size_kind}"
+    echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
@@ -144,9 +141,6 @@ do
 
   for kind in $ckinds
   do
-    case "$kind" in  4)   size_kind='8'  ;  esac
-    case "$kind" in  8)   size_kind='16'  ;  esac
-    case "$kind" in  16)  size_kind='32'  ;  esac
     proc="${procedure}${rank}DC${kind}"
     echo "subroutine ${proc}(x, size, ierr)"
     echo "  implicit none"
@@ -154,7 +148,7 @@ do
     echo "  complex*${kind}, dimension(${dim}), intent(in) :: x"
     echo "  integer, intent(out) :: size"
     echo "  integer, intent(out) :: ierr"
-    echo "  size = OMPI_SIZEOF_F90_COMPLEX${size_kind}"
+    echo "  size = OMPI_SIZEOF_F90_COMPLEX${kind}"
     echo "  ierr = 0"
     echo "end subroutine ${proc}"
     echo
