@@ -70,6 +70,8 @@ First checked in.  This code still has bugs, but I've written enough code that c
 
 // Our Prototypes
 
+#include "opal_config.h"
+
 #include "MoreBacktrace.h"
 
 // Mac OS Interfaces
@@ -109,7 +111,7 @@ First checked in.  This code still has bugs, but I've written enough code that c
  * renamed all the registers in the thread state structure if
  * __DARWIN_UNIX03 is defined.  So adapt. 
  */
-#if defined(__DARWIN_UNIX03) && __DARWIN_UNIX03
+#if !defined(HAVE_PPC_THREAD_STATE_T_SRR0)
 #define srr0 __srr0
 #define lr   __lr
 #define r1   __r1

@@ -45,6 +45,15 @@ AC_DEFUN([MCA_backtrace_darwin_CONFIG],[
     backtrace_darwin_CFLAGS="`echo $CFLAGS | sed 's/-pedantic//g'`"
     AC_SUBST([backtrace_darwin_CFLAGS])
 
+    # see if registers are prefixed with __ or not.  On systems
+    # previous to Leopard, they were not.  On leopard, it depends on
+    # whether code is compiled in UNIX03 mode or not.  Check PPC even
+    # if on x86 because x86 always has PPC includes, but the other way
+    # around is not guaranteed.
+    AS_IF([test "$backtrace_darwin_happy" = "yes"],
+          [AC_CHECK_MEMBERS([ppc_thread_state_t.srr0], [], [], [
+#include <mach/ppc/thread_status.h>])])
+
     AS_IF([test "$backtrace_darwin_happy" = "yes"], 
           [$1], [$2])
 ])
