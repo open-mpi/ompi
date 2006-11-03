@@ -114,6 +114,11 @@ int orte_gpr_proxy_exec_compound_cmd(void)
     OPAL_THREAD_LOCK(&orte_gpr_proxy_globals.wait_for_compound_mutex);
     rc = ORTE_SUCCESS;
     
+    if (orte_gpr_proxy_globals.timing) {
+        opal_output(0, "gpr_proxy [%ld]: compound cmd size %lu", (long)ORTE_PROC_MY_NAME->vpid,
+                    (unsigned long)orte_gpr_proxy_globals.compound_cmd->bytes_used);
+    }
+    
     if (0 > orte_rml.send_buffer(orte_process_info.gpr_replica, orte_gpr_proxy_globals.compound_cmd, ORTE_RML_TAG_GPR, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         rc = ORTE_ERR_COMM_FAILURE;
