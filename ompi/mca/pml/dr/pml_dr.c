@@ -233,5 +233,10 @@ int mca_pml_dr_dump(
 void mca_pml_dr_error_handler(
         struct mca_btl_base_module_t* btl,
         int32_t flags) { 
-    orte_errmgr.abort();
+    /* try failover ! */
+    mca_pml_dr_sendreq_cleanup_active(btl);
+    mca_bml.bml_del_btl(btl);
+    /* orte_errmgr.abort(); */
 }
+
+

@@ -1145,3 +1145,18 @@ void mca_pml_dr_send_request_frag_ack(
 }
 
 
+void mca_pml_dr_sendreq_cleanup_active(mca_btl_base_module_t* btl) {  
+   opal_list_item_t* item;
+    
+    for (item = opal_list_get_first(&mca_pml_dr.send_active) ;
+         item != opal_list_get_end(&mca_pml_dr.send_active) ;
+         item = opal_list_get_next(item)) {
+        mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*) item;
+        mca_btl_base_descriptor_t* des = sendreq->req_descriptor;
+        mca_bml_base_btl_t* bml_btl = des->des_context;
+        if( bml_btl && bml_btl->btl == btl) { 
+            des->des_context = NULL;
+        }
+            
+    }
+}
