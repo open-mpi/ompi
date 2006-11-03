@@ -484,6 +484,8 @@ void mca_pml_dr_send_request_frag_ack(
     mca_btl_base_module_t* btl,
     mca_pml_dr_ack_hdr_t*);
 
+void mca_pml_dr_sendreq_cleanup_active(mca_btl_base_module_t* btl);
+
  
 #if defined(c_plusplus) || defined(__cplusplus)
 }
