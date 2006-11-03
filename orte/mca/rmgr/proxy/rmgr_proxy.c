@@ -369,7 +369,7 @@ static int orte_rmgr_proxy_spawn_job(
     /* check for any flow directives to control what we do */
     if (NULL != (flow = orte_rmgr.find_attribute(attributes, ORTE_RMGR_SPAWN_FLOW))) {
         /* something was specified - get the value */
-        if (ORTE_SUCCESS != (rc = orte_dss.get(&fptr, flow->value, ORTE_UINT8))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&fptr, flow->value, ORTE_UINT8))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

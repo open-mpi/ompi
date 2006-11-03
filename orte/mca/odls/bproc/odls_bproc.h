@@ -59,7 +59,7 @@ int orte_odls_bproc_finalize(void);
 int orte_odls_bproc_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
 int orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
 int orte_odls_bproc_kill_local_procs(orte_jobid_t job, bool set_state);
-int orte_odls_bproc_signal_local_procs(orte_process_name_t* proc_name, int32_t signal);
+int orte_odls_bproc_signal_local_procs(const orte_process_name_t* proc_name, int32_t signal);
 
 /**
  * ODLS bproc_orted component
