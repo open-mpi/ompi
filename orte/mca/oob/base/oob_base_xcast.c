@@ -99,6 +99,11 @@ int mca_oob_xcast(
     if(NULL != root && ORTE_EQUAL == orte_dss.compare(root, orte_process_info.my_name, ORTE_NAME)) {
         mca_oob_xcast_t *xcast = OBJ_NEW(mca_oob_xcast_t);
         xcast->counter = num_peers;
+        /* check for timing request - if so, we want to printout the size of the message being sent */
+        if (orte_oob_base_timing) {
+            opal_output(0, "oob_xcast: message size is %lu bytes", (unsigned long)buffer->bytes_used);
+        }
+        
         for(i=0; i<num_peers; i++) {
             /* check status of peer to ensure they are alive */
             if (ORTE_SUCCESS != (rc = orte_smr.get_proc_state(&state, &status, peers+i))) {

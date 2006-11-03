@@ -44,6 +44,11 @@ extern "C" {
 #endif
 
 /*
+ * global flag for use in timing tests
+ */
+ORTE_DECLSPEC extern bool orte_oob_base_timing;
+    
+/*
  * Well known address
  */
 
