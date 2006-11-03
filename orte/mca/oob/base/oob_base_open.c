@@ -44,6 +44,7 @@ char* mca_oob_base_exclude = NULL;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
 opal_list_t mca_oob_base_exception_handlers;
+bool orte_oob_base_timing = false;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -51,6 +52,8 @@ opal_list_t mca_oob_base_exception_handlers;
  */
 int mca_oob_base_open(void)
 {
+    int param, value;
+    
   /* Open up all available components */
 
   OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
@@ -72,6 +75,15 @@ int mca_oob_base_open(void)
                                  "Components to exclude for oob framework selection",
                                  false, false, NULL, &mca_oob_base_exclude);
 
+  param = mca_base_param_reg_int_name("orte", "timing",
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
+  if (value != 0) {
+      orte_oob_base_timing = true;
+  } else {
+      orte_oob_base_timing = false;
+  }
+  
   /* All done */
   return ORTE_SUCCESS;
 }
