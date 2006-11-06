@@ -214,6 +214,7 @@ int ompi_mtl_mx_progress( void ) {
                         MPI_ERR_INTERN;
                 }
                 mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
+                return completed;
             }
             if(OMPI_MTL_MX_IRECV == mtl_mx_request->type) { 
                 
@@ -242,6 +243,7 @@ int ompi_mtl_mx_progress( void ) {
                         MPI_ERR_INTERN;
                 }
                 mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
+                return completed;
             }
             
         } else { 
