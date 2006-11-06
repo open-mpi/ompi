@@ -138,11 +138,6 @@ do {                                                                            
    /*  }  */                                                                        \
 } while(0)
 
-
-/**
- * Start a send request. 
- */
-    
 #define MCA_PML_DR_SEND_REQUEST_START(sendreq, rc)                                        \
 do {                                                                                      \
     mca_pml_dr_comm_t* comm = sendreq->req_send.req_base.req_comm->c_pml_comm;            \

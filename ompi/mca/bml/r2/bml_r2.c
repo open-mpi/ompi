@@ -561,12 +561,17 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     opal_list_item_t* item;
     mca_btl_base_module_t** modules;
     mca_btl_base_component_progress_fn_t * btl_progress_new; 
-    
+    bool found = false;
     
     procs = ompi_proc_all(&num_procs);
     if(NULL == procs)
         return OMPI_SUCCESS;
-
+    
+    if(opal_list_get_size(&mca_btl_base_modules_initialized) == 2){ 
+        opal_output(0, "only one BTL left, can't failover");
+        return OMPI_SUCCESS;
+    }
+    
     /* dont use this btl for any peers */
     for(p=0; p<num_procs; p++) {
         ompi_proc_t* proc = procs[p];
@@ -581,10 +586,14 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
         if(sm->btl_module == btl) {
             opal_list_remove_item(&mca_btl_base_modules_initialized, item);
             free(sm);
+            found = true;
             break;
         }
     }
-
+    if(!found) {
+        /* doesn't even exist */
+        return OMPI_SUCCESS;
+    }
     /* remove from bml list */
     modules = (mca_btl_base_module_t**)malloc(sizeof(mca_btl_base_module_t*) * mca_bml_r2.num_btl_modules-1);
     for(i=0,m=0; i<mca_bml_r2.num_btl_modules; i++) {
@@ -596,30 +605,26 @@ int mca_bml_r2_del_btl(mca_btl_base_module_t* btl)
     mca_bml_r2.btl_modules = modules;
     mca_bml_r2.num_btl_modules = m;
 
-    
-    /* remove progress function so btl_progress isn't 
-       called on the failed BTL */ 
-    if(mca_bml_r2.num_btl_progress <= 1) { 
-        /* nothing left to send on! */ 
-        opal_output(0, "%s:%d:%s: only one BTL, can't fail-over!", 
-                    __FILE__, __LINE__, __func__);
-        return OMPI_ERROR;
-    }
-    /* figure out which progress functions to keep */
-    btl_progress_new = (mca_btl_base_component_progress_fn_t*)
-        malloc(sizeof(mca_btl_base_component_progress_fn_t) * 
-               (mca_bml_r2.num_btl_progress - 1));
-    j = 0;
-    for(i = 0; i < mca_bml_r2.num_btl_progress; i++) { 
-        if(btl->btl_component->btl_progress != mca_bml_r2.btl_progress[i]) { 
-            btl_progress_new[j] = mca_bml_r2.btl_progress[i];
-            j++;
+        
+    if(btl->btl_component->btl_progress) { 
+        /* figure out which progress functions to keep */
+        /* don't need to keep any if this is the last one.. */
+        if(mca_bml_r2.num_btl_progress > 1) { 
+            btl_progress_new = (mca_btl_base_component_progress_fn_t*)
+                malloc(sizeof(mca_btl_base_component_progress_fn_t) * 
+                       (mca_bml_r2.num_btl_progress - 1));
+            j = 0;
+            for(i = 0; i < mca_bml_r2.num_btl_progress; i++) { 
+                if(btl->btl_component->btl_progress != mca_bml_r2.btl_progress[i]) { 
+                    btl_progress_new[j] = mca_bml_r2.btl_progress[i];
+                    j++;
+                }
+            }
+            free(mca_bml_r2.btl_progress);
+            mca_bml_r2.btl_progress = btl_progress_new;
         }
+        mca_bml_r2.num_btl_progress--; 
     }
-    free(mca_bml_r2.btl_progress);
-    mca_bml_r2.btl_progress = btl_progress_new;
-    mca_bml_r2.num_btl_progress--; 
-    
     /* cleanup */
     btl->btl_finalize(btl);
     free(procs);
@@ -659,7 +664,7 @@ int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
             }
         }
     }
-    
+
     /* remove btl from RDMA list */
     if(mca_bml_base_btl_array_remove(&ep->btl_rdma, btl)) { 
         

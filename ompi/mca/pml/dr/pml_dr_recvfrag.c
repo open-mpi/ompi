@@ -144,7 +144,8 @@ void mca_pml_dr_recv_frag_callback(
             if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {    
                 MCA_PML_DR_DEBUG(0,(0, "%s:%d: got a duplicate vfrag vfrag id %d\n", 
                                     __FILE__, __LINE__, hdr->hdr_common.hdr_vid));
-                mca_pml_dr_recv_frag_ack(ep->bml_endpoint,                                                    
+                mca_pml_dr_recv_frag_ack(btl, 
+                                         ep->bml_endpoint,                                                    
                                          &hdr->hdr_common,                                             
                                          hdr->hdr_match.hdr_src_ptr.pval,                              
                                          1, 0);                                                        
@@ -198,7 +199,8 @@ void mca_pml_dr_recv_frag_callback(
                     if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
                         MCA_PML_DR_DEBUG(0, (0, "%s:%d: acking duplicate matched rendezvous from sequence tracker\n",
 											 __FILE__, __LINE__));
-                        mca_pml_dr_recv_frag_ack(ep->bml_endpoint, 
+                        mca_pml_dr_recv_frag_ack(btl,
+                                                 ep->bml_endpoint, 
                                                  &hdr->hdr_common, 
                                                  hdr->hdr_match.hdr_src_ptr.pval, 
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
@@ -219,13 +221,14 @@ void mca_pml_dr_recv_frag_callback(
                     mca_pml_dr_comm_proc_check_matched(proc, hdr->hdr_common.hdr_vid);
                  if(NULL != recvreq) {
                      MCA_PML_DR_DEBUG(0,(0, "%s:%d: acking duplicate matched rendezvous from pending matched vfrag id %d\n",
-										 __FILE__, __LINE__, hdr->hdr_common.hdr_vid));
-					 mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
-                        hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
+                                         __FILE__, __LINE__, hdr->hdr_common.hdr_vid));
+                     mca_pml_dr_recv_request_ack(btl, recvreq, &hdr->hdr_common, 
+                                                 hdr->hdr_match.hdr_src_ptr, recvreq->req_bytes_received, 1);
                 } else { 
-                    if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
+                     if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs_matched, hdr->hdr_common.hdr_vid)) {
                         MCA_PML_DR_DEBUG(0,(0, "%s:%d: acking duplicate matched rendezvous from sequence tracker\n", __FILE__, __LINE__));
-                        mca_pml_dr_recv_frag_ack(ep->bml_endpoint, 
+                        mca_pml_dr_recv_frag_ack(btl, 
+                                                 ep->bml_endpoint, 
                                                  &hdr->hdr_common, 
                                                  hdr->hdr_match.hdr_src_ptr.pval, 
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
@@ -277,7 +280,8 @@ void mca_pml_dr_recv_frag_callback(
             /* seq_recvs protected by matching lock */
             if(ompi_seq_tracker_check_duplicate(&ep->seq_recvs, hdr->hdr_common.hdr_vid)) {
                 MCA_PML_DR_DEBUG(0,(0, "%s:%d: acking duplicate fragment\n", __FILE__, __LINE__));
-                mca_pml_dr_recv_frag_ack(ep->bml_endpoint,
+                mca_pml_dr_recv_frag_ack(btl,
+                                         ep->bml_endpoint,
                                          &hdr->hdr_common,
                                          hdr->hdr_frag.hdr_src_ptr.pval,
                                          ~(uint64_t) 0, 0);
@@ -694,7 +698,8 @@ rematch:
             }
             MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
             if(do_csum && csum != hdr->hdr_csum) { 
-                mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
+                mca_pml_dr_recv_frag_ack(btl, 
+                                         (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
                 MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %d length %d)\n", 
                              __FILE__, __LINE__, csum, hdr->hdr_csum, num_segments,
@@ -730,7 +735,8 @@ rematch:
         }
         MCA_PML_DR_RECV_FRAG_INIT(frag,ompi_proc,hdr,segments,num_segments,btl,csum);
         if(do_csum && csum != hdr->hdr_csum) { 
-            mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
+            mca_pml_dr_recv_frag_ack(btl, 
+                                     (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
                                      &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
             MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
                          __FILE__, __LINE__, csum, hdr->hdr_csum));
@@ -755,7 +761,8 @@ rematch:
         MCA_PML_DR_DEBUG(1,(0, "%s:%d: received short message, acking now vfrag id: %d\n", 
                             __FILE__, __LINE__, hdr->hdr_common.hdr_vid));
             
-        mca_pml_dr_recv_frag_ack((mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
+        mca_pml_dr_recv_frag_ack(btl,
+                                 (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
                                  &hdr->hdr_common, hdr->hdr_src_ptr.pval, 1, 0);
     }
 
@@ -773,6 +780,7 @@ rematch:
 
 
 void mca_pml_dr_recv_frag_ack(
+    mca_btl_base_module_t* btl,
     mca_bml_base_endpoint_t* endpoint,
     mca_pml_dr_common_hdr_t* hdr,
     void *src_ptr,
@@ -785,7 +793,11 @@ void mca_pml_dr_recv_frag_ack(
     mca_pml_dr_ack_hdr_t* ack;
     int rc;
     bool do_csum;
-    bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+    
+    /* use the same BTL for ACK's makes failover SANE */
+    bml_btl = mca_bml_base_btl_array_find(&endpoint->btl_eager,
+                                          btl);
+    
     do_csum = mca_pml_dr.enable_csum && 
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
 
