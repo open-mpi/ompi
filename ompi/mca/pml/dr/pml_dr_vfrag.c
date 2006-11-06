@@ -120,10 +120,14 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
     /* check for hung btl */
     if(++vfrag->vf_ack_cnt == mca_pml_dr.ack_retry_max) {
         /* declare btl dead */
-        opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
-            vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
-        mca_pml_dr_sendreq_cleanup_active(vfrag->bml_btl->btl);
-        mca_bml.bml_del_btl(vfrag->bml_btl->btl);
+        if(vfrag->bml_btl->btl) { 
+            opal_output(0, "%s:%d:%s: failing BTL: %s", __FILE__, __LINE__, __func__, 
+                        vfrag->bml_btl->btl->btl_component->btl_version.mca_component_name);
+            mca_pml_dr_sendreq_cleanup_active(vfrag->bml_btl->btl);
+            mca_bml.bml_del_btl(vfrag->bml_btl->btl);
+        } else { 
+            opal_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
+        }   
         mca_pml_dr_vfrag_reset(vfrag);
     }
 
