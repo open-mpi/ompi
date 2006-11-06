@@ -1238,7 +1238,6 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         return;
     }
 
-cleanup:
     openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
            buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
 unlock_rdma_local:

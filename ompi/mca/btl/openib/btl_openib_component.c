@@ -453,8 +453,8 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     ibv_destroy_comp_channel(hca->ib_channel);
-#endif
 mpool_destroy:
+#endif
     mca_mpool_base_module_destroy(hca->mpool);
 dealloc_pd:
     ibv_dealloc_pd(hca->ib_pd);
@@ -1038,13 +1038,10 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
  */
 static int btl_openib_component_progress(void)
 {
-    static char *qp_name[] = {"HP", "LP"};
-    int i, j, c, qp;
-    int count = 0,ne = 0, ret;
+    int i, j, c;
+    int count = 0, ret;
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
-    struct ibv_wc wc; 
-    mca_btl_openib_module_t* openib_btl;
 
     /* Poll for RDMA completions - if any succeed, we don't process the slower
      * queues.
@@ -1101,14 +1098,16 @@ static int btl_openib_component_progress(void)
     if(count) return count;
 
     for(i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
-        return btl_openib_module_progress(&mca_btl_openib_component.openib_btls[i]);
+        count += btl_openib_module_progress(&mca_btl_openib_component.openib_btls[i]);
     }
+
+    return count;
 }
 
 static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
 {
     static char *qp_name[] = {"HP", "LP"};
-    int i, j, c, qp;
+    int qp;
     int count = 0,ne = 0, ret;
     mca_btl_openib_frag_t* frag; 
     mca_btl_openib_endpoint_t* endpoint; 
