@@ -252,9 +252,6 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
             if( NULL == iov[i].iov_base ) {
                 iov[i].iov_base = base_pointer;
             } else {
-                OMPI_DDT_SAFEGUARD_POINTER( base_pointer, iov[i].iov_len,
-                                            pConv->pBaseBuf,
-                                            pConv->pDesc, pConv->count );
                 MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             }
             pConv->bConverted += iov[i].iov_len;
