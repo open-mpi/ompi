@@ -150,7 +150,13 @@ static int discover(opal_list_t* nodelist)
     opal_list_t new_nodes;
     tm_node_id *tm_node_ids;
     char *hostname, *arch;
+    struct timeval start, stop;
 
+    /* check for timing request - get start time if so */
+    if (orte_ras_base.timing) {
+        gettimeofday(&start, NULL);
+    }
+    
     /* Ignore anything that the user already specified -- we're
        getting nodes only from TM. */
 
@@ -168,6 +174,15 @@ static int discover(opal_list_t* nodelist)
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
 
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (orte_ras_base.timing) {
+        gettimeofday(&stop, NULL);
+        opal_output(0, "ras_tm: time to do nodeinfo is %ld usec",
+                    (long int)((stop.tv_sec - start.tv_sec)*1000000 +
+                               (stop.tv_usec - start.tv_usec)));
+         gettimeofday(&start, NULL);
+    }
+    
     /* Iterate through all the nodes and make an entry for each.  TM
        node ID's will never be duplicated, but they may end up
        resolving to the same hostname (i.e., vcpu's on a single
@@ -221,6 +236,15 @@ static int discover(opal_list_t* nodelist)
         }
     }
 
+    /* check for timing request - get stop time and report elapsed time if so */
+    if (orte_ras_base.timing) {
+        gettimeofday(&stop, NULL);
+        opal_output(0, "ras_tm: time to get hostnames is %ld usec",
+                    (long int)((stop.tv_sec - start.tv_sec)*1000000 +
+                               (stop.tv_usec - start.tv_usec)));
+        gettimeofday(&start, NULL);
+    }
+    
     /* Add these nodes to the registry, and return all the values */
 
     opal_output(orte_ras_base.ras_output, 
@@ -236,7 +260,6 @@ static int discover(opal_list_t* nodelist)
     }
 
     /* All done */
-
     if (ORTE_SUCCESS == ret) {
         opal_output(orte_ras_base.ras_output, 
                     "ras:tm:allocate:discover: success");

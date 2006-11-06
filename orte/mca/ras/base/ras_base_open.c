@@ -132,6 +132,16 @@ int orte_ras_base_open(void)
         return ORTE_SUCCESS;
     }
 
+    /* check for timing tests */
+    param = mca_base_param_reg_int_name("orte", "timing",
+                                        "Request that critical timing loops be measured",
+                                        false, false, 0, &value);
+    if (value != 0) {
+        orte_ras_base.timing = true;
+    } else {
+        orte_ras_base.timing = false;
+    }
+    
     /* Open up all available components */
     if (ORTE_SUCCESS != 
         mca_base_components_open("ras", orte_ras_base.ras_output,
