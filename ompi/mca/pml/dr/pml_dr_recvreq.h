@@ -177,11 +177,12 @@ void mca_pml_dr_recv_request_match_specific(mca_pml_dr_recv_request_t* request);
  * Ack a matched request.
  */
 void mca_pml_dr_recv_request_ack(
-    mca_pml_dr_recv_request_t* recvreq,
-    mca_pml_dr_common_hdr_t* hdr,
-    ompi_ptr_t src_ptr,
-    size_t vlen,
-    uint64_t vmask);
+                                 mca_btl_base_module_t* blt,
+                                 mca_pml_dr_recv_request_t* recvreq,
+                                 mca_pml_dr_common_hdr_t* hdr,
+                                 ompi_ptr_t src_ptr,
+                                 size_t vlen,
+                                 uint64_t vmask);
 
 /**
  * Start an initialized request.

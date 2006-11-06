@@ -36,7 +36,7 @@
  *  as we need to put the match back on the list if the checksum 
  *  fails for later matching 
  */ 
-#define MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum,recvreq,hdr,csum,bytes_received) \
+#define MCA_PML_DR_RECV_REQUEST_MATCH_ACK(btl,do_csum,recvreq,hdr,csum,bytes_received) \
 if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
     /* failed the csum, put the request back on the list for         \
      * matching later on retransmission                              \
@@ -46,10 +46,11 @@ if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
     } else {                                                         \
         mca_pml_dr_recv_request_match_specific(recvreq);             \
     }                                                                \
-    mca_pml_dr_recv_frag_ack(recvreq->req_endpoint->bml_endpoint,   \
-        &hdr->hdr_common,                                            \
-        hdr->hdr_match.hdr_src_ptr.pval,                             \
-        0, 0);                                                       \
+    mca_pml_dr_recv_frag_ack(btl,                                    \
+                             recvreq->req_endpoint->bml_endpoint,    \
+                             &hdr->hdr_common,                       \
+                             hdr->hdr_match.hdr_src_ptr.pval,        \
+                             0, 0);                                  \
     MCA_PML_DR_DEBUG(0,(0, "%s:%d: [rank %d -> rank %d] "            \
                         "data checksum failed 0x%08x != 0x%08x\n",   \
                         __FILE__, __LINE__,                          \
@@ -59,7 +60,7 @@ if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
 } else if (recvreq->req_acked == false) {                            \
     MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",           \
                         __FILE__, __LINE__, recvreq->req_vfrag0.vf_id)); \
-    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common,              \
+    mca_pml_dr_recv_request_ack(btl, recvreq, &hdr->hdr_common,         \
                                 hdr->hdr_match.hdr_src_ptr, bytes_received, 1); \
 }
 
@@ -162,11 +163,12 @@ static void mca_pml_dr_ctl_completion(
  */
 
 void mca_pml_dr_recv_request_ack(
-    mca_pml_dr_recv_request_t* recvreq,
-    mca_pml_dr_common_hdr_t* hdr,
-    ompi_ptr_t src_ptr,
-    size_t vlen,
-    uint64_t mask)
+                                 mca_btl_base_module_t* btl,
+                                 mca_pml_dr_recv_request_t* recvreq,
+                                 mca_pml_dr_common_hdr_t* hdr,
+                                 ompi_ptr_t src_ptr,
+                                 size_t vlen,
+                                 uint64_t mask)
 {
     mca_btl_base_descriptor_t* des;
     mca_bml_base_btl_t* bml_btl;
@@ -174,8 +176,11 @@ void mca_pml_dr_recv_request_ack(
     int rc;
     bool do_csum;
     
+    
+    /* use the same BTL for ACK's makes failover SANE */
+    bml_btl = mca_bml_base_btl_array_find(&recvreq->req_endpoint->bml_endpoint->btl_eager,
+                                          btl);
     /* allocate descriptor */
-    bml_btl = mca_bml_base_btl_array_get_next(&recvreq->req_endpoint->bml_endpoint->btl_eager);
     do_csum = mca_pml_dr.enable_csum && 
         (bml_btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM);
     MCA_PML_DR_DES_ALLOC(bml_btl, des, sizeof(mca_pml_dr_ack_hdr_t));
@@ -254,7 +259,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum, recvreq,hdr,csum,bytes_received);
+             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(btl,do_csum, recvreq,hdr,csum,bytes_received);
                 
              break;
 
@@ -272,7 +277,7 @@ void mca_pml_dr_recv_request_progress(
                  bytes_received,
                  bytes_delivered,
                  csum);
-             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(do_csum, recvreq,hdr,csum,bytes_received);
+             MCA_PML_DR_RECV_REQUEST_MATCH_ACK(btl,do_csum, recvreq,hdr,csum,bytes_received);
              
             break;
 
@@ -283,7 +288,8 @@ void mca_pml_dr_recv_request_progress(
                 if(vfrag->vf_ack == vfrag->vf_mask) { 
                     MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",
                                         __FILE__, __LINE__, vfrag->vf_id));
-                    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
+                    mca_pml_dr_recv_request_ack(btl,
+                                                recvreq, &hdr->hdr_common, 
                                                 hdr->hdr_frag.hdr_src_ptr, 
                                                 vfrag->vf_size, 
                                                 vfrag->vf_mask);
@@ -318,7 +324,7 @@ void mca_pml_dr_recv_request_progress(
                     ompi_seq_tracker_insert(&recvreq->req_endpoint->seq_recvs, vfrag->vf_id);
                     MCA_PML_DR_DEBUG(1,(0, "%s:%d: sending ack, vfrag ID %d",
                                         __FILE__, __LINE__, vfrag->vf_id));
-                    mca_pml_dr_recv_request_ack(recvreq, &hdr->hdr_common, 
+                    mca_pml_dr_recv_request_ack(btl, recvreq, &hdr->hdr_common, 
                                                 hdr->hdr_frag.hdr_src_ptr, 
                                                 vfrag->vf_size, vfrag->vf_mask);
                 }
