@@ -28,33 +28,51 @@ extern "C" {
 #endif
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_grequest_t);
 
-/*
- * Fortran types for the generalized request functions.
+/**
+ * Fortran type for generalized request query function
  */
 typedef void (MPI_F_Grequest_query_function)(MPI_Aint *extra_state, 
                                              MPI_Fint *status, 
                                              MPI_Fint *ierr);
+/**
+ * Fortran type for generalized request free function
+ */
 typedef void (MPI_F_Grequest_free_function)(MPI_Aint *extra_state, 
                                             MPI_Fint *ierr);
+/**
+ * Fortran type for generalized request cancel function
+ */
 typedef void (MPI_F_Grequest_cancel_function)(MPI_Aint *extra_state, 
                                               MPI_Flogical *complete, 
                                               MPI_Fint *ierr);
 
+/**
+ * Union for query function for use in ompi_grequest_t
+ */
 typedef union {
     MPI_Grequest_query_function*   c_query;
     MPI_F_Grequest_query_function* f_query;
 } MPI_Grequest_query_fct_t;
 
+/**
+ * Union for free function for use in ompi_grequest_t
+ */
 typedef union {
     MPI_Grequest_free_function*   c_free;
     MPI_F_Grequest_free_function* f_free;
 } MPI_Grequest_free_fct_t;
 
+/**
+ * Union for cancel function for use in ompi_grequest_t
+ */
 typedef union {
     MPI_Grequest_cancel_function*   c_cancel;
     MPI_F_Grequest_cancel_function* f_cancel;
 } MPI_Grequest_cancel_fct_t;
 
+/**
+ * Main structure for MPI generalized requests
+ */
 struct ompi_grequest_t {
     ompi_request_t greq_base;
     MPI_Grequest_query_fct_t greq_query;
@@ -63,11 +81,13 @@ struct ompi_grequest_t {
     void *greq_state;
     bool greq_funcs_are_c;
 };
+/**
+ * Convenience typedef
+ */
 typedef struct ompi_grequest_t ompi_grequest_t;
 
-
-/*
- * Start a generalized request.
+/**
+ * Start a generalized request (back end for MPI_GREQUEST_START)
  */
 OMPI_DECLSPEC int ompi_grequest_start(
     MPI_Grequest_query_function *gquery,
@@ -76,12 +96,12 @@ OMPI_DECLSPEC int ompi_grequest_start(
     void* gstate,
     ompi_request_t** request);
 
-/*
- * Complete a generalized request
+/**
+ * Complete a generalized request (back end for MPI_GREQUEST_COMPLETE)
  */
 OMPI_DECLSPEC int ompi_grequest_complete(ompi_request_t *req);
 
-/*
+/**
  * Invoke the query function on a generalized request
  */
 OMPI_DECLSPEC int ompi_grequest_invoke_query(ompi_request_t *request,

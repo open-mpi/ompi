@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -89,3 +90,16 @@ MPI::Status::Set_error(int error)
 {
   mpi_status.MPI_ERROR = error;
 }
+
+inline void
+MPI::Status::Set_elements(const MPI::Datatype& datatype, int count)
+{
+    MPI_Status_set_elements(&mpi_status, datatype, count);
+}
+
+inline void
+MPI::Status::Set_cancelled(bool flag)
+{
+    mpi_status._cancelled = (int) flag;
+}
+
