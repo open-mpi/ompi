@@ -233,6 +233,15 @@ int mca_oob_tcp_component_open(void)
                            10,
                            &mca_oob_tcp_component.tcp_timeout);
 
+    
+    mca_base_param_reg_int(&mca_oob_tcp_component.super.oob_base,
+                           "connect_sleep",
+                           "Enable (1) /Disable (0)  random sleep for connection wireup",
+                           false,
+                           false,
+                           1,
+                           &mca_oob_tcp_component.connect_sleep);
+
     mca_base_param_reg_string(&mca_oob_tcp_component.super.oob_base,
                               "listen_mode",
                               "Mode for HNP to accept incoming connections: event, listen_thread",
@@ -1030,9 +1039,13 @@ int mca_oob_tcp_init(void)
 
     /* random delay to stagger connections back to seed */
 #if defined(__WINDOWS__)
-    Sleep((orte_process_info.my_name->vpid % randval % 1000) * 100);
+    if(1 == mca_oob_tcp_component.connect_sleep) {
+        Sleep((orte_process_info.my_name->vpid % randval % 1000) * 100);
+    }
 #else
-    usleep((orte_process_info.my_name->vpid % randval % 1000) * 1000);
+    if(1 == mca_oob_tcp_component.connect_sleep) {
+        usleep((orte_process_info.my_name->vpid % randval % 1000) * 1000);
+    }
 #endif
 
     /* get my jobid */

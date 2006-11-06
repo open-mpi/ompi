@@ -269,6 +269,7 @@ struct mca_oob_tcp_component_t {
     opal_timer_t tcp_copy_delta;
     int tcp_copy_max_size;
     int tcp_copy_spin_count;
+    int connect_sleep;
 };
 
 /**
