@@ -204,11 +204,95 @@ int orte_universe_search(opal_list_t *universe_list)
     return (opal_list_is_empty(universe_list) ? exit_status : ORTE_SUCCESS);
 }
 
+static int orte_universe_check_connect(orte_universe_t *uni)
+{
+	if (!orte_universe_info.console) {  /* if we aren't trying to connect a console */
+	    if (!uni->persistence ||   /* if the target universe is not persistent... */
+            (0 == strncmp(uni->scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
+            /* also need to check "local" and that we did not specify the exact
+             * matching universe name
+             */
+            if (orte_debug_flag) {
+                opal_output(0, "connect_uni: connection not allowed");
+            }
+            /* NOTE: THIS IS NOT AN ERROR - DON'T ERROR_LOG IT */
+            return ORTE_ERR_NO_CONNECTION_ALLOWED;
+	    }
+	}
+
+    if (orte_debug_flag) {
+        opal_output(0, "connect_uni: contact info to set: %s", uni->seed_uri);
+    }
+
+
+    /* ping to verify it's alive */
+    if (ORTE_SUCCESS != orte_rml.ping(uni->seed_uri, &ompi_rte_ping_wait)) {
+        if (orte_debug_flag) {
+            ORTE_ERROR_LOG(ORTE_ERR_CONNECTION_FAILED);
+        }
+        return ORTE_ERR_CONNECTION_FAILED;
+    }
+
+    return ORTE_SUCCESS;
+}
+
+
 int orte_universe_exists(orte_universe_t *univ)
 {
     char *contact_file;
+    opal_list_t universes;
+    opal_list_item_t *item;
+    orte_universe_t *uniptr;
     int ret;
 
+    /* if the user didn't provide a name for our universe, then we have to check
+     * for other universe names we could join. It is virtually impossible for
+     * another universe to have our exact default universe name as they would
+     * have to have the same PID - and that would be bad in so many ways!
+     */
+    if (orte_universe_info.default_name) {
+        /* if we just have the default name - i.e., no name was specified -
+         * then get a list of all universes known on the local system. All
+         * we can do here is just loop through the session directory tree
+         * for universes - we have no better discovery mechanism at this time
+         */
+        OBJ_CONSTRUCT(&universes, opal_list_t);
+        if (ORTE_SUCCESS != (ret = orte_universe_search(&universes))) {
+            /* if nothing was found, that's okay - report anything else */
+            if (ORTE_ERR_NOT_FOUND != ret) {
+                ORTE_ERROR_LOG(ret);
+            }
+            return ret;
+        }
+        /* if the list is empty, then we can just return */
+        if (opal_list_is_empty(&universes)) return ORTE_ERR_NOT_FOUND;
+        
+        /* we have no real criteria for picking one over the other, so
+         * we just loop through the returned objects and pick the first
+         * one that will support connection
+         */
+        while (NULL != (item = opal_list_remove_first(&universes))) {
+            uniptr = (orte_universe_t*)item;
+            if (ORTE_SUCCESS == orte_universe_check_connect(uniptr)) {
+                univ->name = strdup(uniptr->name);
+                univ->host = strdup(uniptr->host);
+                univ->uid = strdup(uniptr->uid);
+                univ->persistence = uniptr->persistence;
+                univ->scope = strdup(uniptr->scope);
+                univ->seed_uri = strdup(uniptr->seed_uri);
+                univ->console_connected = uniptr->console_connected;
+                return ORTE_SUCCESS;
+            }
+        }
+        
+        /* if we get here, then we did not success in connecting to
+         * anyone - report that situation
+         */
+        return ORTE_ERR_NOT_FOUND;
+    }
+    
+    /* if the user did provide a name, then see if we can join it */
+    
     /* check to see if local universe session directory already exists */
     if (ORTE_SUCCESS != orte_session_dir(false,
 					 orte_process_info.tmpdir_base,
@@ -242,32 +326,5 @@ int orte_universe_exists(orte_universe_t *univ)
 	    opal_output(0, "connect_uni: contact info read");
 	}
 
-	if (!orte_universe_info.console) {  /* if we aren't trying to connect a console */
-	    if (!univ->persistence ||   /* if the target universe is not persistent... */
-		(0 == strncmp(univ->scope, "exclusive", strlen("exclusive")))) {  /* ...or no connection allowed */
-		/* also need to check "local" and that we did not specify the exact
-		 * matching universe name
-		 */
-		if (orte_debug_flag) {
-		    opal_output(0, "connect_uni: connection not allowed");
-		}
-        /* NOTE: THIS IS NOT AN ERROR - DON'T ERROR_LOG IT */
-		return ORTE_ERR_NO_CONNECTION_ALLOWED;
-	    }
-	}
-
-	if (orte_debug_flag) {
-	    opal_output(0, "connect_uni: contact info to set: %s", univ->seed_uri);
-	}
-
-
-	/* if persistent, ping to verify it's alive */
-	if (ORTE_SUCCESS != orte_rml.ping(univ->seed_uri, &ompi_rte_ping_wait)) {
-        if (orte_debug_flag) {
-            ORTE_ERROR_LOG(ORTE_ERR_CONNECTION_FAILED);
-        }
-	    return ORTE_ERR_CONNECTION_FAILED;
-	}
-
-	return ORTE_SUCCESS;
+    return orte_universe_check_connect(univ);
 }
