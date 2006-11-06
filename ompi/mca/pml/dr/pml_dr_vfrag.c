@@ -88,7 +88,9 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
             opal_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
         }
         mca_pml_dr_vfrag_reset(vfrag);
-    } 
+    } else if(NULL == vfrag->bml_btl->btl) { 
+        mca_pml_dr_vfrag_reset(vfrag);
+    }
 
     /* back off watchdog timer */
     vfrag->vf_wdog_tv.tv_sec = 
@@ -128,6 +130,8 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
         } else { 
             opal_output(0, "%s:%d:%s: failing already failed BTL", __FILE__, __LINE__, __func__);
         }   
+        mca_pml_dr_vfrag_reset(vfrag);
+    } else if(NULL == vfrag->bml_btl->btl) { 
         mca_pml_dr_vfrag_reset(vfrag);
     }
 
