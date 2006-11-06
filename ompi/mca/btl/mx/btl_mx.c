@@ -395,7 +395,6 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
-#if 0
     if( 4096 > total_length ) {
         mx_status_t mx_status;
         uint32_t mx_result;
@@ -405,9 +404,9 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         if( MX_SUCCESS != mx_return ) 
             return OMPI_SUCCESS;
         /* call the completion callback */
-        frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+        if( mx_result )
+            frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
     }
-#endif
     return OMPI_SUCCESS;
 }
 
