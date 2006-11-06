@@ -771,8 +771,6 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
  */ 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 {
-    int rc;
-
     /* Allocate Protection Domain */ 
     openib_btl->poll_cq = false; 
     
@@ -882,6 +880,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     }
     OPAL_THREAD_LOCK(&openib_btl->hca->hca_lock);
     if (!openib_btl->hca->progress){
+        int rc;
         openib_btl->hca->progress = true;
         if(OPAL_SUCCESS != (rc = opal_thread_start(&openib_btl->hca->thread))) {
             BTL_ERROR(("Unable to create progress thread, retval=%d", rc));
