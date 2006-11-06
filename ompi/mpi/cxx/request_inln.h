@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -315,6 +316,9 @@ inline bool MPI::Request::Get_status(MPI::Status& status) const
     int flag;
     MPI_Status c_status;
 
+    // Call the underlying MPI function rather than simply returning
+    // status.mpi_status because we may have to invoke the generalized
+    // request query function
     (void)MPI_Request_get_status(mpi_request, &flag, &c_status);
     if (flag) {
         status = c_status;
@@ -326,6 +330,9 @@ inline bool MPI::Request::Get_status() const
 {
     int flag;
 
+    // Call the underlying MPI function rather than simply returning
+    // status.mpi_status because we may have to invoke the generalized
+    // request query function
     (void)MPI_Request_get_status(mpi_request, &flag, MPI_STATUS_IGNORE);
     return OPAL_INT_TO_BOOL(flag);
 }
@@ -335,10 +342,17 @@ MPI::Grequest::Start(Query_function *query_fn, Free_function *free_fn,
 	Cancel_function *cancel_fn, void *extra)
 {
     MPI_Request grequest = 0;
+    struct Grequest_intercept_t *new_extra = 
+        new struct MPI::Grequest_intercept_t;
 
-    (void) MPI_Grequest_start((MPI_Grequest_query_function *) query_fn,
-	    (MPI_Grequest_free_function *) free_fn,
-	    (MPI_Grequest_cancel_function *) cancel_fn, extra, &grequest);
+    new_extra->git_extra = extra;
+    new_extra->git_cxx_query_fn = query_fn;
+    new_extra->git_cxx_free_fn = free_fn;
+    new_extra->git_cxx_cancel_fn = cancel_fn;
+    (void) MPI_Grequest_start(ompi_mpi_cxx_grequest_query_fn_intercept,
+                              ompi_mpi_cxx_grequest_free_fn_intercept,
+                              ompi_mpi_cxx_grequest_cancel_fn_intercept,
+                              new_extra, &grequest);
 
     return(grequest);
 }
