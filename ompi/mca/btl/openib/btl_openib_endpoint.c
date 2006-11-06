@@ -1191,10 +1191,13 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     mca_btl_openib_module_t* openib_btl = endpoint->endpoint_btl;
     char *buf;
     unsigned int i;
+    orte_std_cntr_t index;
 
-    OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
-    if (endpoint->eager_rdma_local.base.pval)
-        goto unlock_rdma_local;
+    /* Set local rdma pointer to 1 temporarily so other threads will not try
+     * to enter the function */
+    if(!opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, NULL,
+                (void*)1))
+        return;
 
     buf = openib_btl->super.btl_mpool->mpool_alloc(openib_btl->super.btl_mpool,
             openib_btl->eager_rdma_frag_size * 
@@ -1206,8 +1209,11 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     if(!buf)
        goto unlock_rdma_local;
 
-    buf = (char*)(((uintptr_t)buf+mca_btl_openib_component.buffer_alignment) & ~(mca_btl_openib_component.buffer_alignment-1));
-    buf = buf + openib_btl->eager_rdma_frag_size - sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit - sizeof(mca_btl_openib_header_t) - sizeof(mca_btl_openib_frag_t);
+    buf = (char*)(((uintptr_t)buf + mca_btl_openib_component.buffer_alignment) &
+            ~((uintptr_t)mca_btl_openib_component.buffer_alignment - 1));
+    buf = buf + openib_btl->eager_rdma_frag_size -
+        sizeof(mca_btl_openib_footer_t) - openib_btl->super.btl_eager_limit -
+        sizeof(mca_btl_openib_header_t) - sizeof(mca_btl_openib_frag_t);
 
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
@@ -1218,28 +1224,25 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         ((mca_btl_openib_frag_t*)item)->type = MCA_BTL_OPENIB_FRAG_EAGER_RDMA;
     }
 
-    OPAL_THREAD_LOCK(&openib_btl->eager_rdma_lock);
-    if(orte_pointer_array_add (&endpoint->eager_rdma_index,
-                openib_btl->eager_rdma_buffers, endpoint) < 0)
-	   goto cleanup;
+    /* set local rdma pointer to real value */
+    opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
+            buf);
 
-    endpoint->eager_rdma_local.base.pval = buf;
-    openib_btl->eager_rdma_buffers_count++;
-    if (mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
-        OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
-        OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+    if(mca_btl_openib_endpoint_send_eager_rdma(endpoint) == 0) {
+        /* This can never fail because max number of entries allocated
+         * at init time */
+        orte_pointer_array_add(&index, openib_btl->eager_rdma_buffers,
+                endpoint);
+        /* from this point progress function starts to poll new buffer */
+        OPAL_THREAD_ADD32(&openib_btl->eager_rdma_buffers_count, 1);
         return;
     }
 
-    openib_btl->eager_rdma_buffers_count--;
-    endpoint->eager_rdma_local.base.pval = NULL;
-    orte_pointer_array_set_item(openib_btl->eager_rdma_buffers,
-            endpoint->eager_rdma_index, NULL);
-
 cleanup:
-    OPAL_THREAD_UNLOCK(&openib_btl->eager_rdma_lock);
     openib_btl->super.btl_mpool->mpool_free(openib_btl->super.btl_mpool,
-            buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
+           buf, (mca_mpool_base_registration_t*)endpoint->eager_rdma_local.reg);
 unlock_rdma_local:
-    OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
+    /* set local rdma pointer back to zero. Will retry later */
+    opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, 
+            endpoint->eager_rdma_local.base.pval, NULL);
 }

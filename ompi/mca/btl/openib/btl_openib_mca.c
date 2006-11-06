@@ -311,7 +311,7 @@ int btl_openib_register_mca_params(void)
                   "with the \"dr\" pml) "
                   "(must be >= 0)",
                   16, &ival, REGINT_GE_ZERO));
-    mca_btl_openib_component.max_eager_rdma = (uint32_t) ival;
+    mca_btl_openib_component.max_eager_rdma = (int32_t) ival;
 
     CHECK(reg_int("eager_rdma_num", "Number of RDMA buffers to allocate "
                   "for small messages"
