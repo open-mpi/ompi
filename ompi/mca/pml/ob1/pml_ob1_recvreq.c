@@ -677,7 +677,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
              * anything larger than the eager limit
              */
             if(num_btl_avail == 1 ||
-                    bytes_remaining < bml_btl->btl_max_rdma_size) {
+                    bytes_remaining < bml_btl->btl_eager_limit) {
                 size = bytes_remaining;
             } else {
                 /* 
@@ -689,8 +689,11 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
                  */
                 size = (size_t)(bml_btl->btl_weight * bytes_remaining);
             }
-            /* makes sure that we don't exceed BTL max rdma size */
-            if( size > bml_btl->btl_max_rdma_size ) {
+            /* makes sure that we don't exceed BTL max rdma size
+             * if memory is not pinned already */
+            if(0 == recvreq->req_rdma_cnt &&
+                    bml_btl->btl_max_rdma_size != 0 &&
+                    size > bml_btl->btl_max_rdma_size) {
                 size = bml_btl->btl_max_rdma_size;
             }
 
