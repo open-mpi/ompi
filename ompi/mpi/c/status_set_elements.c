@@ -44,18 +44,20 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
             rc = MPI_ERR_TYPE;
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
+        } else if (NULL == status ||
+                   MPI_STATUS_IGNORE == status || 
+                   MPI_STATUSES_IGNORE == status) {
+            rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
-    if (status != MPI_STATUS_IGNORE) {
-        if( ompi_ddt_is_predefined(datatype) ) {
-            ompi_ddt_type_size( datatype, &size );
-            status->_count = (int)(count * size);
-        } else {
-            ompi_ddt_set_element_count( datatype, count, &size );
-            status->_count = (int)size;
-        }
+    if( ompi_ddt_is_predefined(datatype) ) {
+        ompi_ddt_type_size( datatype, &size );
+        status->_count = (int)(count * size);
+    } else {
+        ompi_ddt_set_element_count( datatype, count, &size );
+        status->_count = (int)size;
     }
     return MPI_SUCCESS;
 }
