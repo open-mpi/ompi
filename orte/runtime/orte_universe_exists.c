@@ -55,7 +55,7 @@
 
 static struct timeval ompi_rte_ping_wait = {2, 0};
 
-int orte_universe_search(opal_list_t *universe_list)
+int orte_universe_search(opal_list_t *universe_list, bool report_broken_files)
 {
     int ret, exit_status = ORTE_SUCCESS;
 #ifndef __WINDOWS__
@@ -128,8 +128,10 @@ int orte_universe_search(opal_list_t *universe_list)
         
         univ = OBJ_NEW(orte_universe_t);
         if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
-            printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
-            exit_status = ret;
+            if (report_broken_files) {
+                printf("universe_search: Unable to read the file (%s)\n", univ_setup_filename);
+                exit_status = ret;
+            }
             OBJ_RELEASE(univ);
         } else {
             OBJ_RETAIN(univ);
@@ -173,8 +175,10 @@ int orte_universe_search(opal_list_t *universe_list)
     
         univ = OBJ_NEW(orte_universe_t);
         if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
-            printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
-            exit_status = ret;
+            if (report_broken_files) {
+                printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
+                exit_status = ret;
+            }
             OBJ_RELEASE(univ);
         } else {
             OBJ_RETAIN(univ);
@@ -257,7 +261,7 @@ int orte_universe_exists(orte_universe_t *univ)
          * for universes - we have no better discovery mechanism at this time
          */
         OBJ_CONSTRUCT(&universes, opal_list_t);
-        if (ORTE_SUCCESS != (ret = orte_universe_search(&universes))) {
+        if (ORTE_SUCCESS != (ret = orte_universe_search(&universes, false))) {
             /* if nothing was found, that's okay - report anything else */
             if (ORTE_ERR_NOT_FOUND != ret) {
                 ORTE_ERROR_LOG(ret);
