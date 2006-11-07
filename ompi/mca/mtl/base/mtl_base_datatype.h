@@ -32,31 +32,24 @@ ompi_mtl_datatype_pack(struct ompi_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-    size_t max_data;
 
-    ompi_convertor_get_packed_size(convertor, &max_data);
-    if( 0 == max_data ) {
-        *freeAfter  = false;
+    ompi_convertor_get_packed_size(convertor, buffer_len);
+    *freeAfter  = false;
+    if( 0 == *buffer_len ) {
         *buffer     = NULL;
-        *buffer_len = 0;
         return OMPI_SUCCESS;
     }
-    iov.iov_len = max_data;
-
+    iov.iov_len = *buffer_len;
+    iov.iov_base = NULL;
     if (ompi_convertor_need_buffers(convertor)) {
-        iov.iov_base = malloc(max_data);
+        iov.iov_base = malloc(*buffer_len);
         if (NULL == iov.iov_base) return OMPI_ERR_OUT_OF_RESOURCE;
         *freeAfter = true;
-
-    } else {
-        iov.iov_base = NULL;
-        *freeAfter = false;
     }
     
-    ompi_convertor_pack( convertor, &iov, &iov_count, &max_data );
+    ompi_convertor_pack( convertor, &iov, &iov_count, buffer_len );
     
     *buffer = iov.iov_base;
-    *buffer_len = iov.iov_len;
 
     return OMPI_SUCCESS;
 }
@@ -68,28 +61,22 @@ ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
                            size_t *buffer_len,
                            bool *free_on_error)
 {
-    size_t max_data;
     ptrdiff_t lb;
 
-    ompi_convertor_get_packed_size(convertor, &max_data);
-
-    if( 0 == max_data ) {
+    ompi_convertor_get_packed_size(convertor, buffer_len);
+    *free_on_error = false;
+    if( 0 == *buffer_len ) {
         *buffer = NULL;
-        *free_on_error = false;
         *buffer_len = 0;
         return OMPI_SUCCESS;
     }
     if (ompi_convertor_need_buffers(convertor)) {
-        *buffer = malloc(max_data);
+        *buffer = malloc(*buffer_len);
         *free_on_error = true;
     } else {
         ompi_ddt_type_lb(convertor->pDesc, &lb);
         *buffer = convertor->pBaseBuf + lb;
-        *free_on_error = false;
     }
-
-    *buffer_len = max_data;
-
     return OMPI_SUCCESS;
 }
 
@@ -101,14 +88,12 @@ ompi_mtl_datatype_unpack(struct ompi_convertor_t *convertor,
 {
     struct iovec iov;
     uint32_t iov_count = 1;
-    size_t max_data;
 
-    iov.iov_len = buffer_len;
-    iov.iov_base = buffer;
-    max_data = iov.iov_len;
+    if (buffer_len > 0 && ompi_convertor_need_buffers(convertor)) {
+        iov.iov_len = buffer_len;
+        iov.iov_base = buffer;
 
-    if (max_data > 0 && ompi_convertor_need_buffers(convertor)) {
-        ompi_convertor_unpack(convertor, &iov, &iov_count, &max_data );
+        ompi_convertor_unpack(convertor, &iov, &iov_count, &buffer_len );
 
         free(buffer);
     }
