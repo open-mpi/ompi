@@ -34,7 +34,14 @@ static const char FUNC_NAME[] = "MPI_Status_set_cancelled";
 int MPI_Status_set_cancelled(MPI_Status *status, int flag) 
 {
     if (MPI_PARAM_CHECK) {
+        int rc = MPI_SUCCESS;
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+        if (NULL == status ||
+            MPI_STATUS_IGNORE == status || 
+            MPI_STATUSES_IGNORE == status) {
+            rc = MPI_ERR_ARG;
+        }
+        OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     status->_cancelled = flag;
