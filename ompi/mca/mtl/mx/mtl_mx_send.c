@@ -17,6 +17,9 @@
  */
 
 #include "ompi_config.h"
+
+#include "opal/prefetch.h"
+
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
@@ -36,34 +39,31 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
 {
     mx_return_t mx_return;
     uint64_t match_bits;
-    int ret;
     mca_mtl_mx_request_t mtl_mx_request;
     size_t length;
     mx_status_t mx_status;
     uint32_t result;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
     mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
+    char* where;
 
     assert(mtl == &ompi_mtl_mx.super);
 
     MX_SET_SEND_BITS(match_bits, comm->c_contextid, comm->c_my_rank, tag); 
     
-    ret = ompi_mtl_datatype_pack(convertor, 
-                                 &mtl_mx_request.mx_segment[0].segment_ptr, 
-                                 &length,
-                                 &mtl_mx_request.free_after);
+    ompi_mtl_datatype_pack(convertor, 
+                           &mtl_mx_request.mx_segment[0].segment_ptr, 
+                           &length,
+                           &mtl_mx_request.free_after);
 
     mtl_mx_request.mx_segment[0].segment_length = length;
     mtl_mx_request.convertor = convertor;
     mtl_mx_request.type = OMPI_MTL_MX_ISEND;
 
-    if (OMPI_SUCCESS != ret) return ret;
-    
-    if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
-        
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "issend bits: 0x%016llx\n", match_bits));
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "issend bits: 0x%016llx\n", match_bits));
 
+    if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
         mx_return = mx_issend( ompi_mtl_mx.mx_endpoint, 
                                mtl_mx_request.mx_segment, 
                                1,
@@ -72,18 +72,8 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                                &mtl_mx_request, 
                                &mtl_mx_request.mx_request
                                );
-        if(mx_return != MX_SUCCESS ) { 
-            char peer_name[MX_MAX_HOSTNAME_LEN];
-            if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
-                sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
-            }
-            opal_output(ompi_mtl_base_output, "Error in mx_issend (error %s) sending to %s\n", mx_strerror(mx_return), peer_name);
-        }
+        where = "mx_issend";
     } else { 
-
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "isend bits: 0x%016llx\n", match_bits));
-
         mx_return = mx_isend( ompi_mtl_mx.mx_endpoint, 
                               mtl_mx_request.mx_segment,
                               1,
@@ -92,15 +82,16 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                               &mtl_mx_request,
                               &mtl_mx_request.mx_request
                               );
-        
-        if(mx_return != MX_SUCCESS ) { 
-            char peer_name[MX_MAX_HOSTNAME_LEN];
-            if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
-                sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
-            }
-            opal_output(ompi_mtl_base_output, "Error in mx_isend (error %s) sending to %s\n", mx_strerror(mx_return), peer_name);
+        where = "mx_isend";
+    }
+    if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
+        char peer_name[MX_MAX_HOSTNAME_LEN];
+        if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
+            sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
         }
-  
+        opal_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
+                    where, mx_strerror(mx_return), peer_name);
+        return OMPI_ERROR;
     }
     
     do { 
@@ -108,11 +99,11 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
                             &mtl_mx_request.mx_request,
                             &mx_status,
                             &result);
-        if(mx_return != MX_SUCCESS) { 
+        if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
             opal_output(ompi_mtl_base_output, "Error in mx_wait (error %s)\n", mx_strerror(mx_return));
             abort();
         }
-        if(result && mx_status.code != MX_STATUS_SUCCESS) { 
+        if( OPAL_UNLIKELY(result && mx_status.code != MX_STATUS_SUCCESS) ) { 
             opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_send, mx_wait returned something other than MX_STATUS_SUCCESS: mx_status(%d).\n", 
                         mx_status);
             abort();
@@ -134,31 +125,28 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
 {
     mx_return_t mx_return;
     uint64_t match_bits;
-    int ret;
     mca_mtl_mx_request_t * mtl_mx_request = (mca_mtl_mx_request_t*) mtl_request;
     size_t length;
     ompi_proc_t* ompi_proc = ompi_comm_peer_lookup( comm, dest );
     mca_mtl_mx_endpoint_t* mx_endpoint = (mca_mtl_mx_endpoint_t*) ompi_proc->proc_pml;
+    char* where;
 
     assert(mtl == &ompi_mtl_mx.super);
 
     MX_SET_SEND_BITS(match_bits, comm->c_contextid, comm->c_my_rank, tag); 
     
-    ret = ompi_mtl_datatype_pack(convertor, 
-                                 &mtl_mx_request->mx_segment[0].segment_ptr, 
-                                 &length,
-                                 &mtl_mx_request->free_after);
+    ompi_mtl_datatype_pack(convertor, 
+                           &mtl_mx_request->mx_segment[0].segment_ptr, 
+                           &length,
+                           &mtl_mx_request->free_after);
     mtl_mx_request->mx_segment[0].segment_length = length;
     mtl_mx_request->convertor = convertor;
     mtl_mx_request->type = OMPI_MTL_MX_ISEND;
 
-    if (OMPI_SUCCESS != ret) return ret;
-    
-    if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
-        
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "issend bits: 0x%016llx\n", match_bits));
+    OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
+                         "issend bits: 0x%016llx\n", match_bits));
 
+    if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
         mx_return = mx_issend( ompi_mtl_mx.mx_endpoint, 
                                mtl_mx_request->mx_segment, 
                                1,
@@ -167,17 +155,8 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
                                mtl_mx_request, 
                                &mtl_mx_request->mx_request
                                );
-        if(mx_return != MX_SUCCESS ) { 
-            char peer_name[MX_MAX_HOSTNAME_LEN];
-            if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
-                sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
-            }
-            opal_output(ompi_mtl_base_output, "Error in mx_issend (error %s) sending to %s\n", mx_strerror(mx_return), peer_name);
-        }
+        where = "mx_issend";
     } else { 
-        OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                             "isend bits:  0x%016llx\n", match_bits));
-
         mx_return = mx_isend( ompi_mtl_mx.mx_endpoint, 
                               mtl_mx_request->mx_segment,
                               1,
@@ -186,16 +165,16 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
                               mtl_mx_request,
                               &mtl_mx_request->mx_request
                               );
-        
-        if(mx_return != MX_SUCCESS ) { 
-            char peer_name[MX_MAX_HOSTNAME_LEN];
-            if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
-                sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
-            }
-            opal_output(ompi_mtl_base_output, "Error in mx_isend (error %s) sending to %s\n", mx_strerror(mx_return), peer_name);
-        }
-  
+        where = "mx_isend";
     }
-    
-    return mx_return == MX_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR;
+    if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
+        char peer_name[MX_MAX_HOSTNAME_LEN];
+        if(MX_SUCCESS != mx_nic_id_to_hostname( mx_endpoint->mx_peer->nic_id, peer_name)) { 
+            sprintf( peer_name, "unknown %lx nic_id", (long)mx_endpoint->mx_peer->nic_id ); 
+        }
+        opal_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
+                    where, mx_strerror(mx_return), peer_name);
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
 }

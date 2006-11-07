@@ -72,9 +72,7 @@ ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                           mask_bits,
                           mtl_mx_request, 
                           &mtl_mx_request->mx_request);
-    
-    
-    if(mx_return != MX_SUCCESS) { 
+    if(mx_return != MX_SUCCESS) {
         opal_output(ompi_mtl_base_output, "Error in mx_irecv (error %s)\n", mx_strerror(mx_return));
         return OMPI_ERROR;
     }
