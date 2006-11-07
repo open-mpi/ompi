@@ -18,6 +18,8 @@
 
 #include "ompi_config.h"
 
+#include "opal/prefetch.h"
+
 #include "ompi/mca/mtl/mtl.h"
 #include "ompi/communicator/communicator.h"
 #include "opal/class/opal_list.h"
@@ -104,7 +106,7 @@ int ompi_mtl_mx_module_init(){
     opal_progress_register(ompi_mtl_mx_progress);
     
     
-    return(mx_return==MX_SUCCESS ? OMPI_SUCCESS : OMPI_ERROR); 
+    return OMPI_SUCCESS; 
     
         
 }
@@ -178,7 +180,7 @@ int ompi_mtl_mx_progress( void ) {
                              &mx_request, 
                              &result);
         
-        if(mx_return != MX_SUCCESS) { 
+        if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
             opal_output(ompi_mtl_base_output, "Error in mx_ipeek (error %s)\n", mx_strerror(mx_return));
         }
         if(result) { 
@@ -187,11 +189,11 @@ int ompi_mtl_mx_progress( void ) {
                                 &mx_request, 
                                 &mx_status,
                                 &result);
-            if(mx_return != MX_SUCCESS) { 
+            if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) { 
                 opal_output(ompi_mtl_base_output, "Error in mx_test (error %s)\n", mx_strerror(mx_return));
                 abort();
             }
-            if(0 == result) { 
+            if( OPAL_UNLIKELY(0 == result) ) { 
                 opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_progress, mx_ipeek returned a request, mx_test on the request resulted failure.\n");
                 abort();
             }
@@ -200,23 +202,8 @@ int ompi_mtl_mx_progress( void ) {
                 if(mtl_mx_request->free_after) { 
                     free(mtl_mx_request->mx_segment[0].segment_ptr);
                 }
-                switch (mx_status.code) {
-                case MX_STATUS_SUCCESS:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        OMPI_SUCCESS;
-                    break;
-                case MX_STATUS_TRUNCATED:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        MPI_ERR_TRUNCATE;
-                    break;
-                default:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        MPI_ERR_INTERN;
-                }
-                mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
-                return completed;
-            }
-            if(OMPI_MTL_MX_IRECV == mtl_mx_request->type) { 
+            } else {
+                assert( OMPI_MTL_MX_IRECV == mtl_mx_request->type );
                 
                 ompi_mtl_datatype_unpack(mtl_mx_request->convertor, 
                                          mtl_mx_request->mx_segment[0].segment_ptr, 
@@ -228,24 +215,19 @@ int ompi_mtl_mx_progress( void ) {
                            mtl_mx_request->super.ompi_req->req_status.MPI_TAG); 
                 mtl_mx_request->super.ompi_req->req_status._count = 
                     mx_status.xfer_length;
-                
-                switch (mx_status.code) {
-                case MX_STATUS_SUCCESS:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        OMPI_SUCCESS;
-                    break;
-                case MX_STATUS_TRUNCATED:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        MPI_ERR_TRUNCATE;
-                    break;
-                default:
-                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = 
-                        MPI_ERR_INTERN;
+            }
+            /* suppose everything went just fine ... */
+            mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = OMPI_SUCCESS;
+            if( OPAL_UNLIKELY(MX_STATUS_SUCCESS != mx_status.code) ) {
+                if( MX_STATUS_TRUNCATED == mx_status.code ) {
+                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = MPI_ERR_TRUNCATE;
+                } else {
+                    mtl_mx_request->super.ompi_req->req_status.MPI_ERROR = MPI_ERR_INTERN;
                 }
-                mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
                 return completed;
             }
-            
+            mtl_mx_request->super.completion_callback(&mtl_mx_request->super);
+            return completed;
         } else { 
             return completed;
         }
