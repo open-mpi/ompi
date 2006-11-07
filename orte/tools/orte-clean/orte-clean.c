@@ -132,7 +132,7 @@ main(int argc, char *argv[])
     if( orte_clean_globals.verbose ) {
         printf("orte_clean: Acquiring universe list...\n");
     }
-    if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result, true) ) ) {
         exit_status = ret;
         goto cleanup;
     }

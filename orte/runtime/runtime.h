@@ -148,7 +148,7 @@ ORTE_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval ORTE_SUCCESS Upon successful search.
      * @retval ORTE_ERROR Upon unsuccessful search.
      */
-    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list);
+    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list, bool report_broken_files);
 
     /**
      * Check for universe existence
