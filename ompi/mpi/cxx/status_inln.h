@@ -100,6 +100,6 @@ MPI::Status::Set_elements(const MPI::Datatype& datatype, int count)
 inline void
 MPI::Status::Set_cancelled(bool flag)
 {
-    mpi_status._cancelled = (int) flag;
+    MPI_Status_set_cancelled(&mpi_status, (int) flag);
 }
 
