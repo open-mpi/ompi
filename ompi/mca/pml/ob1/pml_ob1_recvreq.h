@@ -102,22 +102,6 @@ do {                                                                \
                                     tag,                            \
                                     comm,                           \
                                     persistent);                    \
-    (request)->req_bytes_delivered = 0;                             \
-    if( MPI_ANY_SOURCE != src ) {                                   \
-        (request)->req_recv.req_base.req_proc =                     \
-            comm->c_pml_comm->procs[src].ompi_proc;                 \
-        if( (0 != (datatype)->size) && (0 != count) ) {             \
-            ompi_convertor_copy_and_prepare_for_recv(               \
-                (request)->req_recv.req_base.req_proc->proc_convertor, \
-                (request)->req_recv.req_base.req_datatype,          \
-                (request)->req_recv.req_base.req_count,             \
-                (request)->req_recv.req_base.req_addr,              \
-                0,                                                  \
-                &(request)->req_recv.req_convertor );               \
-            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor, \
-                                              &(request)->req_bytes_delivered );  \
-        }                                                           \
-    }                                                               \
 } while(0)
 
 /**
@@ -216,8 +200,8 @@ void mca_pml_ob1_recv_request_match_specific(mca_pml_ob1_recv_request_t* request
 do {                                                                              \
     /* init/re-init the request */                                                \
     (request)->req_lock = 0;                                                      \
-    (request)->req_pipeline_depth = 0;                                            \
-    (request)->req_bytes_received = 0;                                            \
+    (request)->req_pipeline_depth  = 0;                                           \
+    (request)->req_bytes_received  = 0;                                           \
     (request)->req_bytes_delivered = 0;                                           \
     /* What about req_rdma_cnt ? */                                               \
     (request)->req_rdma_idx = 0;                                                  \
@@ -230,6 +214,21 @@ do {                                                                            
     if((request)->req_recv.req_base.req_peer == OMPI_ANY_SOURCE) {                \
         mca_pml_ob1_recv_request_match_wild(request);                             \
     } else {                                                                      \
+        (request)->req_recv.req_base.req_proc =                                   \
+            (request)->req_recv.req_base.req_comm->c_pml_comm->procs              \
+                [(request)->req_recv.req_base.req_peer].ompi_proc;                \
+        if( (0 != (request)->req_recv.req_base.req_datatype->size) &&             \
+            (0 != (request)->req_recv.req_base.req_count) ) {                     \
+            ompi_convertor_copy_and_prepare_for_recv(                             \
+                (request)->req_recv.req_base.req_proc->proc_convertor,            \
+                (request)->req_recv.req_base.req_datatype,                        \
+                (request)->req_recv.req_base.req_count,                           \
+                (request)->req_recv.req_base.req_addr,                            \
+                0,                                                                \
+                &(request)->req_recv.req_convertor );                             \
+            ompi_convertor_get_unpacked_size( &(request)->req_recv.req_convertor, \
+                                              &(request)->req_bytes_delivered );  \
+        }                                                                         \
         mca_pml_ob1_recv_request_match_specific(request);                         \
     }                                                                             \
 } while (0)
@@ -248,8 +247,7 @@ do {                                                                            
                              &((request)->req_recv.req_base), PERUSE_RECV );       \
                                                                                    \
     if((request)->req_recv.req_bytes_packed > 0) {                                 \
-        if( (MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer) ||           \
-            (0 == (request)->req_bytes_delivered) ) {                              \
+        if( MPI_ANY_SOURCE == (request)->req_recv.req_base.req_peer ) {            \
             ompi_convertor_copy_and_prepare_for_recv(                              \
                          (request)->req_recv.req_base.req_proc->proc_convertor,    \
                          (request)->req_recv.req_base.req_datatype,                \
