@@ -38,7 +38,17 @@ int MPI_Get_elements(MPI_Status *status, MPI_Datatype datatype, int *count)
    size_t size;
 
    if (MPI_PARAM_CHECK) {
+      int err = MPI_SUCCESS;
       OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
+      if (NULL == status || MPI_STATUSES_IGNORE == status || 
+          MPI_STATUS_IGNORE == status || NULL == count) {
+          err = MPI_ERR_ARG;
+      } else if (NULL == datatype || MPI_DATATYPE_NULL == datatype) {
+          err = MPI_ERR_TYPE;
+      } else {
+          OMPI_CHECK_DATATYPE_FOR_RECV(err, datatype, 1);
+      }
+      OMPI_ERRHANDLER_CHECK(err, MPI_COMM_WORLD, err, FUNC_NAME);
    }
 
    *count = 0;
