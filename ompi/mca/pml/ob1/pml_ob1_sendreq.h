@@ -145,7 +145,7 @@ do {                                                                            
         (sendreq)->req_send.req_base.req_tag;                                     \
    (sendreq)->req_send.req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
    (sendreq)->req_send.req_base.req_ompi.req_status._count =                      \
-        (sendreq)->req_send.req_bytes_packed;                                     \
+        (int)(sendreq)->req_send.req_bytes_packed;                                \
    MCA_PML_BASE_REQUEST_MPI_COMPLETE( &((sendreq)->req_send.req_base.req_ompi) ); \
                                                                                   \
    /* Could be moved to MCA_PML_BASE_REQUEST_MPI_COMPLETE, but before broadcast */ \

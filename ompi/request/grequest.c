@@ -52,7 +52,7 @@ static int ompi_grequest_cancel(ompi_request_t* req, int flag)
                                             greq->greq_base.req_complete);
         } else {
             fflag = (MPI_Flogical) greq->greq_base.req_complete;
-            greq->greq_cancel.f_cancel(greq->greq_state, &fflag, &ierr);
+            greq->greq_cancel.f_cancel((MPI_Aint*)greq->greq_state, &fflag, &ierr);
             rc = OMPI_FINT_2_INT(ierr);
         }
     }
@@ -125,7 +125,7 @@ static void ompi_grequest_destruct(ompi_grequest_t* greq)
         if (greq->greq_funcs_are_c) {
             greq->greq_free.c_free(greq->greq_state);
         } else {
-            greq->greq_free.f_free(greq->greq_state, &ierr);
+            greq->greq_free.f_free((MPI_Aint*)greq->greq_state, &ierr);
         }
     }
 
@@ -214,7 +214,7 @@ int ompi_grequest_invoke_query(ompi_request_t *request,
         } else {
             MPI_Fint ierr;
             MPI_Fint fstatus[sizeof(MPI_Status) / sizeof(int)];
-            g->greq_query.f_query(g->greq_state, fstatus, &ierr);
+            g->greq_query.f_query((MPI_Aint*)g->greq_state, fstatus, &ierr);
             MPI_Status_f2c(fstatus, status);
             rc = OMPI_FINT_2_INT(ierr);
         }

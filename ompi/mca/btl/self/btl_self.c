@@ -77,9 +77,9 @@ int mca_btl_self_add_procs( struct mca_btl_base_module_t* btl,
                             struct mca_btl_base_endpoint_t **peers,
                             ompi_bitmap_t* reachability )
 {
-    size_t i;
+    int i;
 
-    for( i = 0; i < nprocs; i++ ) {
+    for( i = 0; i < (int)nprocs; i++ ) {
         if( procs[i] == ompi_proc_local_proc ) {
             ompi_bitmap_set_bit( reachability, i );
             break;  /* there will always be only one ... */

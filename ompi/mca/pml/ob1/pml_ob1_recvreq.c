@@ -37,7 +37,7 @@ static mca_pml_ob1_recv_frag_t* mca_pml_ob1_recv_request_match_specific_proc(
 void mca_pml_ob1_recv_request_process_pending(void)
 {
     mca_pml_ob1_recv_request_t* recvreq;
-    int i, s = opal_list_get_size(&mca_pml_ob1.recv_pending);
+    int i, s = (int)opal_list_get_size(&mca_pml_ob1.recv_pending);
 
     for(i = 0; i < s; i++) {
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
