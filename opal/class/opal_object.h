@@ -290,25 +290,23 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
  * @param object        Pointer to the object
  */
 #if OMPI_ENABLE_DEBUG
-#define OBJ_RELEASE(OBJECT)                                             \
+#define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        opal_object_t* _object = (opal_object_t*)(OBJECT);              \
-        assert(NULL != _object->obj_class);                             \
-        if (0 == opal_obj_update(_object, -1)) {                        \
-            opal_obj_run_destructors(_object);                          \
-            OBJ_REMEMBER_FILE_AND_LINENO( _object, __FILE__, __LINE__ ); \
-            free(_object);                                              \
-            (OBJECT) = NULL;                                            \
+        assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
+            free(object);                                               \
+            object = NULL;                                              \
         }                                                               \
     } while (0)
 #else
-#define OBJ_RELEASE(OBJECT)                                             \
+#define OBJ_RELEASE(object)                                             \
     do {                                                                \
-        opal_object_t* _object = (opal_object_t*)(OBJECT);              \
-        if (0 == opal_obj_update(_object, -1)) {                        \
-            opal_obj_run_destructors(_object);                          \
-            free(_object);                                              \
-            (OBJECT) = NULL;                                            \
+        if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            opal_obj_run_destructors((opal_object_t *) (object));       \
+            free(object);                                               \
+            object = NULL;                                              \
         }                                                               \
     } while (0)
 #endif
