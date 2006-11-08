@@ -459,7 +459,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
 int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
     int rc;
-    int max_alg = 3;
+    int max_alg = 5;
 
     ompi_coll_tuned_forced_max_algorithms[REDUCE] = max_alg;
 
