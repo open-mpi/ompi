@@ -177,7 +177,7 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
     if(NULL != addr)
         *((void**)addr) = mca_pml_bsend_base;
     if(NULL != size)
-        *size = mca_pml_bsend_size;
+        *size = (int)mca_pml_bsend_size;
 
     /* reset local variables */
     mca_pml_bsend_base = NULL;

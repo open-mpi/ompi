@@ -1153,7 +1153,7 @@ void mca_pml_dr_sendreq_cleanup_active(mca_btl_base_module_t* btl) {
          item = opal_list_get_next(item)) {
         mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*) item;
         mca_btl_base_descriptor_t* des = sendreq->req_descriptor;
-        mca_bml_base_btl_t* bml_btl = des->des_context;
+        mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
         if( bml_btl && bml_btl->btl == btl) { 
             des->des_context = NULL;
         }

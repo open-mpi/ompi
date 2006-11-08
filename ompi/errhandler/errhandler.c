@@ -218,7 +218,7 @@ ompi_errhandler_t *ompi_errhandler_create(ompi_errhandler_type_t object_type,
  */
 static void ompi_errhandler_construct(ompi_errhandler_t *new_errhandler)
 {
-  size_t ret_val;
+  int ret_val;
 
   /* assign entry in fortran <-> c translation array */
 

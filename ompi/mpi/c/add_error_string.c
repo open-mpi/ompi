@@ -45,7 +45,7 @@ int MPI_Add_error_string(int errorcode, char *string)
                                           FUNC_NAME);
     }
 
-    rc = ompi_mpi_errcode_add_string (errorcode, string, strlen(string)+1);
+    rc = ompi_mpi_errcode_add_string (errorcode, string, (int)(strlen(string)+1));
     if ( OMPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
