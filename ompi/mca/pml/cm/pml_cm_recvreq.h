@@ -25,9 +25,6 @@
 
 struct mca_pml_cm_thin_recv_request_t {
     mca_pml_cm_request_t req_base;
-    struct ompi_communicator_t *req_comm; /**< communicator pointer */
-    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
 };
 typedef struct mca_pml_cm_thin_recv_request_t mca_pml_cm_thin_recv_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
@@ -38,12 +35,9 @@ struct mca_pml_cm_hvy_recv_request_t {
     size_t req_count;                     /**< count of user datatype elements */
     int32_t req_peer;                     /**< peer process - rank w/in this communicator */
     int32_t req_tag;                      /**< user defined tag */
-    struct ompi_communicator_t *req_comm; /**< communicator pointer */
-    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
-    void *req_buff;                  /**< pointer to send buffer - may not be application buffer */
-    size_t req_bytes_packed;         /**< packed size of a message given the datatype and count */
+    void *req_buff;                       /**< pointer to send buffer - may not be application buffer */
+    size_t req_bytes_packed;              /**< packed size of a message given the datatype and count */
     bool req_blocking;
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
 }; 
 typedef struct mca_pml_cm_hvy_recv_request_t mca_pml_cm_hvy_recv_request_t;
 
@@ -95,8 +89,8 @@ do {                                                                    \
     (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
     (request)->req_base.req_pml_complete = false;                       \
     (request)->req_base.req_free_called = false;                        \
-    request->req_comm = comm;                                           \
-    request->req_datatype = datatype;                                   \
+    request->req_base.req_comm = comm;                                  \
+    request->req_base.req_datatype = datatype;                          \
     OBJ_RETAIN(comm);                                                   \
     OBJ_RETAIN(datatype);                                               \
                                                                         \
@@ -128,10 +122,10 @@ do {                                                                    \
     (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
     (request)->req_base.req_pml_complete = OPAL_INT_TO_BOOL(persistent); \
     (request)->req_base.req_free_called = false;                        \
-    request->req_comm = comm;                                           \
+    request->req_base.req_comm = comm;                                  \
+    request->req_base.req_datatype = datatype;                          \
     request->req_tag = tag;                                             \
     request->req_peer = src;                                            \
-    request->req_datatype = datatype;                                   \
     request->req_addr = addr;                                           \
     request->req_count = count;                                         \
     OBJ_RETAIN(comm);                                                   \
@@ -177,7 +171,7 @@ do {                                                                    \
                               src,                                      \
                               tag,                                      \
                               &recvreq->req_base.req_convertor,         \
-                              &recvreq->req_mtl));                      \
+                              &recvreq->req_base.req_mtl));             \
 } while (0)
 
 
@@ -197,11 +191,11 @@ do {                                                                    \
     request->req_base.req_ompi.req_status.MPI_ERROR = OMPI_SUCCESS;     \
     request->req_base.req_ompi.req_status._cancelled = 0;               \
     ret = OMPI_MTL_CALL(irecv(ompi_mtl,                                 \
-                              request->req_comm,                        \
+                              request->req_base.req_comm,               \
                               request->req_peer,                        \
                               request->req_tag,                         \
                               &recvreq->req_base.req_convertor,         \
-                              &recvreq->req_mtl));                      \
+                              &recvreq->req_base.req_mtl));             \
 } while (0)
 
 
@@ -271,8 +265,8 @@ do {                                                                    \
  */
 #define MCA_PML_CM_HVY_RECV_REQUEST_RETURN(recvreq)                     \
 {                                                                       \
-    OBJ_RELEASE((recvreq)->req_comm);                                   \
-    OBJ_RELEASE((recvreq)->req_datatype);                               \
+    OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
+    OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_hvy_recv_requests,      \
@@ -284,8 +278,8 @@ do {                                                                    \
  */
 #define MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq)                    \
 {                                                                       \
-    OBJ_RELEASE((recvreq)->req_comm);                                   \
-    OBJ_RELEASE((recvreq)->req_datatype);                               \
+    OBJ_RELEASE((recvreq)->req_base.req_comm);                          \
+    OBJ_RELEASE((recvreq)->req_base.req_datatype);                      \
     OMPI_REQUEST_FINI(&(recvreq)->req_base.req_ompi);                   \
     ompi_convertor_cleanup( &((recvreq)->req_base.req_convertor) );     \
     OMPI_FREE_LIST_RETURN( &ompi_pml_cm.cm_thin_recv_requests,          \

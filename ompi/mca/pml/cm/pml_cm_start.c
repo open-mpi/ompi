@@ -40,7 +40,6 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             continue;
         }
         if (NULL == pml_request) { 
-/*             opal_output(0, "hmm, null request!\n"); */
             continue;
         }
         /* If the persistent request is currebtly active - obtain the
@@ -51,16 +50,12 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
          */
         switch (pml_request->req_ompi.req_state) {
         case OMPI_REQUEST_INACTIVE:
-/*             opal_output(0, "ereIbe!\n"); */
             if (pml_request->req_pml_complete == true)
                 break;
             
         case OMPI_REQUEST_ACTIVE: {
-            
-            
             /* otherwise fall through */
             ompi_request_t *request;
-/*             opal_output(0, "ereIam!\n"); */
             
             OPAL_THREAD_LOCK(&ompi_request_lock);
             if (pml_request->req_pml_complete == false) {
@@ -76,27 +71,25 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             switch (pml_request->req_pml_type) {
             case MCA_PML_CM_REQUEST_SEND_HEAVY: {
                 mca_pml_cm_hvy_send_request_t* sendreq = (mca_pml_cm_hvy_send_request_t*) pml_request;
-                rc = mca_pml_cm_isend_init(
-                                           sendreq->req_addr,
-                                           sendreq->req_count,
-                                           sendreq->req_send.req_datatype,
-                                           sendreq->req_peer,
-                                           sendreq->req_tag,
-                                           sendreq->req_send.req_send_mode,
-                                           sendreq->req_send.req_comm,
-                                           &request);
+                rc = mca_pml_cm_isend_init( sendreq->req_addr,
+                                            sendreq->req_count,
+                                            sendreq->req_send.req_base.req_datatype,
+                                            sendreq->req_peer,
+                                            sendreq->req_tag,
+                                            sendreq->req_send.req_send_mode,
+                                            sendreq->req_send.req_base.req_comm,
+                                            &request );
                 break;
             }
             case MCA_PML_CM_REQUEST_RECV_HEAVY: {
                 mca_pml_cm_hvy_recv_request_t* recvreq = (mca_pml_cm_hvy_recv_request_t*) pml_request;
-                rc = mca_pml_cm_irecv_init(
-                                           recvreq->req_addr,
-                                           recvreq->req_count,
-                                           recvreq->req_datatype,
-                                           recvreq->req_peer,
-                                           recvreq->req_tag,
-                                           recvreq->req_comm,
-                                           &request);
+                rc = mca_pml_cm_irecv_init( recvreq->req_addr,
+                                            recvreq->req_count,
+                                            recvreq->req_base.req_datatype,
+                                            recvreq->req_peer,
+                                            recvreq->req_tag,
+                                            recvreq->req_base.req_comm,
+                                            &request );
                 break;
             }
             default:
@@ -111,7 +104,6 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             break;
         }
         default:
-/*             opal_output(0,"unknown request state!\n"); */
             return OMPI_ERR_REQUEST;
         }
         
@@ -130,17 +122,14 @@ mca_pml_cm_start(size_t count, ompi_request_t** requests)
             {
                 mca_pml_cm_hvy_recv_request_t* recvreq =
                     (mca_pml_cm_hvy_recv_request_t*)pml_request;
-/*                 opal_output(0, "calling recv request start\n"); */
                 MCA_PML_CM_HVY_RECV_REQUEST_START(recvreq, rc);
                 if(rc != OMPI_SUCCESS)
                     return rc;
                 break;
             }
         default:
-/*             opal_output(0, "can't start an unknown request type!"); */
             return OMPI_ERR_REQUEST;
         }
     }
     return OMPI_SUCCESS;
-    
 }

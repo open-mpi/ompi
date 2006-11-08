@@ -11,6 +11,8 @@
 
 #include "ompi_config.h"
 
+#include "opal/prefetch.h"
+
 #include "ompi/request/request.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
@@ -33,7 +35,7 @@ mca_pml_cm_irecv_init(void *addr,
     ompi_proc_t* ompi_proc;
     
     MCA_PML_CM_HVY_RECV_REQUEST_ALLOC(recvreq, ret);
-    if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) return ret;
     
     MCA_PML_CM_HVY_RECV_REQUEST_INIT(recvreq, ompi_proc, comm, tag, src, 
                                      datatype, addr, count, true); 
@@ -58,7 +60,7 @@ mca_pml_cm_irecv(void *addr,
     ompi_proc_t* ompi_proc;
     
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
-    if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != ret) ) return ret;
     
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
@@ -71,7 +73,7 @@ mca_pml_cm_irecv(void *addr,
     
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
 
-    if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) recvreq;
+    if( OPAL_LIKELY(OMPI_SUCCESS == ret) ) *request = (ompi_request_t*) recvreq;
 
     return ret;
 }
@@ -91,7 +93,7 @@ mca_pml_cm_recv(void *addr,
     ompi_proc_t* ompi_proc;
     
     MCA_PML_CM_THIN_RECV_REQUEST_ALLOC(recvreq, ret);
-    if (NULL == recvreq || OMPI_SUCCESS != ret) return ret;
+    if( OPAL_LIKELY(OMPI_SUCCESS != ret) ) return ret;
 
     MCA_PML_CM_THIN_RECV_REQUEST_INIT(recvreq,
                                       ompi_proc,
@@ -104,9 +106,10 @@ mca_pml_cm_recv(void *addr,
     
     
     MCA_PML_CM_THIN_RECV_REQUEST_START(recvreq, comm, tag, src, ret);
-    if (OMPI_SUCCESS != ret) {
+    if( OPAL_LIKELY(OMPI_SUCCESS != ret) ) {
         /* BWB - XXX - need cleanup of request here */
         MCA_PML_CM_THIN_RECV_REQUEST_RETURN(recvreq);
+        return ret;
     }
 
     if (recvreq->req_base.req_ompi.req_complete == false) {
