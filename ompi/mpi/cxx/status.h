@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -97,6 +98,10 @@ public:
   virtual int Get_error() const;
 
   virtual void Set_error(int error);
+
+  virtual void Set_elements(const MPI::Datatype& datatype, int count);
+
+  virtual void Set_cancelled(bool flag);
 
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

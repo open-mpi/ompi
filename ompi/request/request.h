@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -27,7 +28,6 @@
 #include "mpi.h"
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_pointer_array.h"
-#include "ompi/errhandler/errhandler.h"
 #include "opal/threads/condition.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -47,6 +47,7 @@ typedef enum {
     OMPI_REQUEST_GEN,      /**< MPI-2 generalized request */
     OMPI_REQUEST_WIN,      /**< MPI-2 one-sided request */
     OMPI_REQUEST_NULL,     /**< NULL request */
+    OMPI_REQUEST_NOOP,     /**< A request that does nothing (e.g., to PROC_NULL) */
     OMPI_REQUEST_MAX       /**< Maximum request type */
 } ompi_request_type_t;
 
@@ -80,6 +81,30 @@ typedef int (*ompi_request_cancel_fn_t)(struct ompi_request_t* request, int flag
 
 
 /**
+ * Forward declaration
+ */
+struct ompi_communicator_t;
+
+/**
+ * Forward declaration
+ */
+struct ompi_win_t;
+
+/**
+ * Forward declaration
+ */
+struct ompi_file_t;
+
+/**
+ * Union for holding several different MPI pointer types on the request
+ */
+typedef union ompi_mpi_object_t {
+    struct ompi_communicator_t *comm;
+    struct ompi_file_t *file;
+    struct ompi_win_t *win;
+} ompi_mpi_object_t;
+
+/**
  * Main top-level request struct definition 
  */
 struct ompi_request_t {
@@ -92,6 +117,7 @@ struct ompi_request_t {
     int req_f_to_c_index;                      /**< Index in Fortran <-> C translation array */
     ompi_request_free_fn_t req_free;           /**< Called by free */
     ompi_request_cancel_fn_t req_cancel;       /**< Optional function to cancel the request */
+    ompi_mpi_object_t req_mpi_object;          /**< Pointer to MPI object that created this request */
 };
 
 /**
@@ -159,6 +185,14 @@ OMPI_DECLSPEC extern ompi_status_public_t  ompi_status_empty;
 OMPI_DECLSPEC int ompi_request_init(void);
 
 /**
+ * Free a persistent request to a MPI_PROC_NULL peer (there's no
+ * freelist to put it back to, so we have to actually OBJ_RELEASE it).
+ */
+
+OMPI_DECLSPEC int ompi_request_persistent_proc_null_free(ompi_request_t **request);
+
+
+/**
  * Shut down the MPI_Request subsystem; invoked during MPI_FINALIZE.
  */
 
@@ -208,59 +242,9 @@ static inline int ompi_request_free(ompi_request_t** request)
  * request handle at index set to NULL.
  */
 
-
-static inline int ompi_request_test( ompi_request_t ** rptr,
+OMPI_DECLSPEC int ompi_request_test( ompi_request_t ** rptr,
                                      int *completed,
-                                     ompi_status_public_t * status )
-{
-    int rc;
-    ompi_request_t *request = *rptr;
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    int do_it_once = 0;
-
- recheck_request_status:
-#endif
-    opal_atomic_mb();
-    if( request->req_state == OMPI_REQUEST_INACTIVE ) {
-        *completed = true;
-        if (MPI_STATUS_IGNORE != status) {
-            *status = ompi_status_empty;
-        }
-        return OMPI_SUCCESS;
-    }
-    if (request->req_complete) {
-        *completed = true;
-        if (MPI_STATUS_IGNORE != status) {
-            /* See MPI-1.2, sec 3.2.5, p.22 */
-            int old_error = status->MPI_ERROR;
-            *status = request->req_status;
-            status->MPI_ERROR = old_error;
-        }
-        if( request->req_persistent ) {
-            request->req_state = OMPI_REQUEST_INACTIVE;
-            return request->req_status.MPI_ERROR;
-        }
-        rc = request->req_status.MPI_ERROR;
-        if (OMPI_SUCCESS != ompi_request_free(rptr)) {
-            return OMPI_ERROR;
-        } else {
-            return rc;
-        }
-    }
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    if( 0 == do_it_once ) {
-        /**
-         * If we run the opal_progress then check the status of the request before
-         * leaving. We will call the opal_progress only once per call.
-         */
-        opal_progress();
-        do_it_once++;
-        goto recheck_request_status;
-    }
-#endif
-    *completed = false;
-    return OMPI_SUCCESS;
-}
+                                     ompi_status_public_t * status );
 
 /**
  * Non-blocking test for request completion.

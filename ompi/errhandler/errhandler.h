@@ -114,6 +114,13 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
 
 
 /**
+ * Forward declaration so that we don't have to include
+ * request/request.h here.
+ */
+struct ompi_request_t;
+
+
+/**
  * This is the macro to check the state of MPI and determine whether
  * it was properly initialized and not yet finalized.
  *
@@ -255,6 +262,31 @@ OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;
   int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object, 
 			     int type, int err_code, const char *message);
 
+
+  /**
+   * Invoke an MPI exception on the first request found in the array
+   * that has a non-MPI_SUCCESS value for MPI_ERROR in its status.  It
+   * is safe to invoke this function if none of the requests have an
+   * outstanding error; MPI_SUCCESS will be returned.
+   * 
+   * If use_actual_err_code is true and at least one of the requests
+   * has a non-MPI_SUCCESS error code, the MPI exception will be
+   * invoked with that error code (to include MPI_ERRORS_RETURN,
+   * meaning that the actual error code will be returned out of the
+   * top-level MPI API function).  If use_actual_err_code is false and
+   * at least one of the requests has a non-MPI_SUCCESS error code,
+   * the MPI exception will be invoked with MPI_ERR_IN_STATUS.
+   *
+   * It is expected that per MPI-1, MPI_TEST, MPI_TESTANY, MPI_WAIT,
+   * and MPI_WAITANY will invoke this function with
+   * (use_actual_err_code = true), and MPI_TESTALL, MPI_TESTSOME,
+   * MPI_WAITALL, and MPI_WAITSOME will invoke this function with
+   * (use_actual_err_code = false).
+   */
+  int ompi_errhandler_request_invoke(int count, 
+                                     struct ompi_request_t **requests,
+                                     const char *message,
+                                     bool use_actual_err_code);
 
   /**
    * Create a ompi_errhandler_t

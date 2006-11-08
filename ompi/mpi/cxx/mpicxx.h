@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -89,6 +90,17 @@ ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval,
 extern "C" int
 ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
                                    void *attribute_val, void *extra_state);
+
+//
+// MPI generalized request intercepts
+//
+
+extern "C" int 
+ompi_mpi_cxx_grequest_query_fn_intercept(void *state, MPI_Status *status);
+extern "C" int 
+ompi_mpi_cxx_grequest_free_fn_intercept(void *state);
+extern "C" int 
+ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int canceled);
 
 /**
  * Windows bool type is not any kind of integer. Special care should
