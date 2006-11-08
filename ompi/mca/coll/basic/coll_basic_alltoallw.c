@@ -46,7 +46,7 @@ mca_coll_basic_alltoallw_intra(void *sbuf, int *scounts, int *sdisps,
     int err;
     char *psnd;
     char *prcv;
-    size_t nreqs;
+    int nreqs;
     MPI_Request *preq;
 
     /* Initialize. */
@@ -159,7 +159,7 @@ mca_coll_basic_alltoallw_inter(void *sbuf, int *scounts, int *sdisps,
     int err;
     char *psnd;
     char *prcv;
-    size_t nreqs;
+    int nreqs;
     MPI_Request *preq;
 
     /* Initialize. */

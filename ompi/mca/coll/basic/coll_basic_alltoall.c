@@ -91,7 +91,6 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
 
-    nreqs = (size - 1) * 2;
     req = rreq = comm->c_coll_basic_data->mccb_reqs;
     sreq = rreq + size - 1;
 
@@ -100,31 +99,32 @@ mca_coll_basic_alltoall_intra(void *sbuf, int scount,
 
     /* Post all receives first -- a simple optimization */
 
-    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq) {
+    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq, ++nreqs) {
         err =
             MCA_PML_CALL(irecv_init
                          (prcv + (i * rcvinc), rcount, rdtype, i,
                           MCA_COLL_BASE_TAG_ALLTOALL, comm, rreq));
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(req, rreq - req);
+            mca_coll_basic_free_reqs(req, nreqs);
             return err;
         }
     }
 
     /* Now post all sends */
 
-    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq) {
+    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq, ++nreqs) {
         err =
             MCA_PML_CALL(isend_init
                          (psnd + (i * sndinc), scount, sdtype, i,
                           MCA_COLL_BASE_TAG_ALLTOALL,
                           MCA_PML_BASE_SEND_STANDARD, comm, sreq));
         if (MPI_SUCCESS != err) {
-            mca_coll_basic_free_reqs(req, sreq - req);
+            mca_coll_basic_free_reqs(req, nreqs);
             return err;
         }
     }
 
+    nreqs = (size - 1) * 2;
     /* Start your engines.  This will never return an error. */
 
     MCA_PML_CALL(start(nreqs, req));

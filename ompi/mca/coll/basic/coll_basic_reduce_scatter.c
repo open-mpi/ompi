@@ -46,8 +46,7 @@ mca_coll_basic_reduce_scatter_intra(void *sbuf, void *rbuf, int *rcounts,
     int i, err, rank, size, count;
     ptrdiff_t true_lb, true_extent, lb, extent;
     int *disps = NULL;
-    char *free_buffer = NULL;
-    char *pml_buffer = NULL;
+    char *free_buffer = NULL, *pml_buffer = NULL;
 
     /* Initialize */
 

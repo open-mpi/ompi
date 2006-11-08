@@ -369,7 +369,6 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Initiate all send/recv to/from others. */
 
-    nreqs = (size - 1) * 2;
     req = rreq = comm->c_coll_basic_data->mcct_reqs;
     sreq = rreq + size - 1;
 
@@ -378,7 +377,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Post all receives first -- a simple optimization */
 
-    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq) {
+    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq, ++nreqs) {
         err =
             MCA_PML_CALL(irecv_init
                          (prcv + (i * rcvinc), rcount, rdtype, i,
@@ -391,7 +390,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Now post all sends */
 
-    for (i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq) {
+    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq, ++nreqs) {
         err =
             MCA_PML_CALL(isend_init
                          (psnd + (i * sndinc), scount, sdtype, i,
@@ -403,6 +402,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
         }
     }
 
+    nreqs = (size - 1) * 2;
     /* Start your engines.  This will never return an error. */
 
     MCA_PML_CALL(start(nreqs, req));

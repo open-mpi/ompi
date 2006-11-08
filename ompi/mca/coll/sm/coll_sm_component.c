@@ -247,7 +247,7 @@ static int sm_open(void)
     mca_base_param_reg_int(c, "shared_mem_used_bootstrap",
                            "Amount of shared memory used in the shared memory bootstrap area (in bytes)",
                            false, true,
-                           size1, NULL);
+                           (int)size1, NULL);
 
     /* Calculate how much space we need in the data mpool.  This
        formula taken directly from coll_sm_module.c. */
@@ -265,7 +265,7 @@ static int sm_open(void)
     mca_base_param_reg_int(c, "shared_mem_used_data",
                            "Amount of shared memory used in the shared memory data area for info_num_procs processes (in bytes)",
                            false, true,
-                           size2, NULL);
+                           (int)size2, NULL);
 
     return OMPI_SUCCESS;
 }

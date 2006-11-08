@@ -73,10 +73,11 @@ ompi_coll_tuned_bcast_intra_chain ( void *buff, int count,
         /* segment the message (ompi_ddt_type_size() will never return
            a negative value in typelng; it returns an int [vs. an
            unsigned type] because of the MPI spec) */
-	if (segsize < ((uint32_t) typelng)) {
-            segsize = typelng; /* push segsize up to hold one type */
+        if (segsize < ((uint32_t)typelng)) {
+            segcount = 1;
+        } else {
+            segcount = segsize / typelng;
         }
-        segcount = segsize / typelng;
         if (segcount > count) { /* we have a single underfilled segment */
             segcount = count;
             num_segments = 1;
