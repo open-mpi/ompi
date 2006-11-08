@@ -150,7 +150,7 @@ int ompi_file_close(ompi_file_t **file)
  */
 int ompi_file_finalize(void)
 {
-    size_t i, max;
+    int i, max;
     size_t num_unnamed;
     ompi_file_t *file;
 
