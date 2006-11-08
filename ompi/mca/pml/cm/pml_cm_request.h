@@ -35,9 +35,6 @@ typedef enum {
     MCA_PML_CM_REQUEST_NULL
 } mca_pml_cm_request_type_t;
 
-
-
-
 /**
  *  Base type for PML CM P2P requests 
  */
@@ -46,6 +43,9 @@ struct mca_pml_cm_request_t {
     volatile bool req_pml_complete;       /**< flag indicating if the pt-2-pt layer is done with this request */
     volatile bool req_free_called;        /**< flag indicating if the user has freed this request */
     mca_pml_cm_request_type_t req_pml_type;
+    struct ompi_communicator_t *req_comm; /**< communicator pointer */
+    struct ompi_datatype_t *req_datatype; /**< pointer to data type */
+    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
     ompi_convertor_t req_convertor;       /**< always need the convertor */
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;

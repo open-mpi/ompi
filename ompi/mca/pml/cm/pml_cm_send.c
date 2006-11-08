@@ -10,6 +10,8 @@
 
 #include "ompi_config.h"
 
+#include "opal/prefetch.h"
+
 #include "ompi/datatype/datatype.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/convertor.h"
@@ -32,7 +34,7 @@ mca_pml_cm_isend_init(void* buf,
     ompi_proc_t* ompi_proc;
     
     MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-    if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+    if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
     
     MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, ompi_proc, comm, tag, dst, 
                                      datatype, sendmode, true, false, buf, count);
@@ -60,7 +62,7 @@ mca_pml_cm_isend(void* buf,
         ompi_proc_t* ompi_proc;
         
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
         
         MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq, 
                                          ompi_proc, 
@@ -76,14 +78,13 @@ mca_pml_cm_isend(void* buf,
         
         MCA_PML_CM_HVY_SEND_REQUEST_START( sendreq, ret);
         
-        if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) sendreq;
-       
-        
+        if (OPAL_LIKELY(OMPI_SUCCESS == ret)) *request = (ompi_request_t*) sendreq;
+
     } else { 
         mca_pml_cm_thin_send_request_t* sendreq;
         ompi_proc_t* ompi_proc;
         MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
         
         MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq, 
                                           ompi_proc, 
@@ -104,7 +105,7 @@ mca_pml_cm_isend(void* buf,
                                            false, 
                                            ret);
         
-        if (OMPI_SUCCESS == ret) *request = (ompi_request_t*) sendreq;
+        if (OPAL_LIKELY(OMPI_SUCCESS == ret)) *request = (ompi_request_t*) sendreq;
         
     }
        
@@ -127,7 +128,7 @@ mca_pml_cm_send(void *buf,
         mca_pml_cm_hvy_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
         MCA_PML_CM_HVY_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
         
         MCA_PML_CM_HVY_SEND_REQUEST_INIT(sendreq,
                                          ompi_proc,
@@ -141,7 +142,7 @@ mca_pml_cm_send(void *buf,
                                          buf,
                                          count);
         MCA_PML_CM_HVY_SEND_REQUEST_START(sendreq, ret);
-        if (OMPI_SUCCESS != ret) {
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
             MCA_PML_CM_HVY_SEND_REQUEST_RETURN(sendreq);
             return ret;
         }
@@ -151,7 +152,7 @@ mca_pml_cm_send(void *buf,
         mca_pml_cm_thin_send_request_t *sendreq;
         ompi_proc_t * ompi_proc;
         MCA_PML_CM_THIN_SEND_REQUEST_ALLOC(sendreq, comm, dst, ompi_proc, ret);
-        if (NULL == sendreq || OMPI_SUCCESS != ret) return ret;
+        if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) return ret;
         
         MCA_PML_CM_THIN_SEND_REQUEST_INIT(sendreq,
                                           ompi_proc,
@@ -170,7 +171,7 @@ mca_pml_cm_send(void *buf,
                                                sendmode,
                                                false,
                                                ret);
-            if (OMPI_SUCCESS != ret) {
+            if (OPAL_UNLIKELY(OMPI_SUCCESS != ret)) {
                 MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq);
                 return ret;
             }
@@ -191,12 +192,10 @@ mca_pml_cm_send(void *buf,
                     ompi_request_waiting--;
                 }
             }
+        
+            ompi_request_free( (ompi_request_t**)&sendreq );
         } else {
             MCA_PML_CM_SEND_REQUEST_START_SETUP((&sendreq->req_send));
-            if (OMPI_SUCCESS != ret) {
-                MCA_PML_CM_THIN_SEND_REQUEST_RETURN(sendreq);
-                return ret;
-            }
             
             ret = OMPI_MTL_CALL(send(ompi_mtl,                             
                                      comm, 
@@ -204,10 +203,10 @@ mca_pml_cm_send(void *buf,
                                      tag,  
                                      &sendreq->req_send.req_base.req_convertor,
                                      sendmode));
+            /* Allow a quick path for the request return */
+            sendreq->req_send.req_base.req_free_called = true;
             MCA_PML_CM_THIN_SEND_REQUEST_PML_COMPLETE(sendreq);
         }
-        
-        ompi_request_free( (ompi_request_t**)&sendreq );
     }
     
     return ret;

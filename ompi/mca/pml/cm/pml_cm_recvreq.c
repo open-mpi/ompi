@@ -64,8 +64,8 @@ mca_pml_cm_hvy_recv_request_free(struct ompi_request_t** request)
 static void 
 mca_pml_cm_thin_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 {
-    recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;
-    recvreq->req_mtl.completion_callback = mca_pml_cm_thin_recv_request_completion;
+    recvreq->req_base.req_mtl.ompi_req = (ompi_request_t*) recvreq;
+    recvreq->req_base.req_mtl.completion_callback = mca_pml_cm_thin_recv_request_completion;
 
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_thin_recv_request_free;
     recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
@@ -76,8 +76,8 @@ mca_pml_cm_thin_recv_request_construct(mca_pml_cm_thin_recv_request_t* recvreq)
 static void 
 mca_pml_cm_hvy_recv_request_construct(mca_pml_cm_hvy_recv_request_t* recvreq)
 {
-    recvreq->req_mtl.ompi_req = (ompi_request_t*) recvreq;
-    recvreq->req_mtl.completion_callback = mca_pml_cm_hvy_recv_request_completion;
+    recvreq->req_base.req_mtl.ompi_req = (ompi_request_t*) recvreq;
+    recvreq->req_base.req_mtl.completion_callback = mca_pml_cm_hvy_recv_request_completion;
 
     recvreq->req_base.req_ompi.req_free = mca_pml_cm_hvy_recv_request_free;
     recvreq->req_base.req_ompi.req_cancel = mca_pml_cm_cancel;
