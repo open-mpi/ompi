@@ -47,7 +47,7 @@ mca_coll_basic_alltoallv_intra(void *sbuf, int *scounts, int *sdisps,
     int err;
     char *psnd;
     char *prcv;
-    size_t nreqs;
+    int nreqs;
     MPI_Aint sndextent;
     MPI_Aint rcvextent;
     MPI_Request *preq;

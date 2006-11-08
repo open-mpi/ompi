@@ -76,10 +76,7 @@ mca_coll_basic_allreduce_inter(void *sbuf, void *rbuf, int count,
                                struct ompi_op_t *op,
                                struct ompi_communicator_t *comm)
 {
-    int err, i;
-    int rank;
-    int root = 0;
-    int rsize;
+    int err, i, rank, root = 0, rsize;
     ptrdiff_t lb, extent;
     char *tmpbuf = NULL, *pml_buffer = NULL;
     ompi_request_t *req[2];

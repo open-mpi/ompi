@@ -161,7 +161,7 @@ mca_coll_basic_bcast_log_intra(void *buff, int count,
                                           MCA_PML_BASE_SEND_STANDARD,
                                           comm, preq++));
             if (MPI_SUCCESS != err) {
-                mca_coll_basic_free_reqs(reqs, preq - reqs);
+                mca_coll_basic_free_reqs(reqs, nreqs);
                 return err;
             }
         }

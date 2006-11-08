@@ -106,14 +106,9 @@ mca_coll_basic_allgather_inter(void *sbuf, int scount,
                                struct ompi_datatype_t *rdtype,
                                struct ompi_communicator_t *comm)
 {
-    int rank;
-    int root = 0;
-    int size, rsize;
-    int err;
-    int i;
+    int rank, root = 0, size, rsize, err, i;
     char *tmpbuf = NULL, *ptmp;
-    ptrdiff_t rlb, slb, rextent, sextent;
-    ptrdiff_t incr;
+    ptrdiff_t rlb, slb, rextent, sextent, incr;
     ompi_request_t *req;
     ompi_request_t **reqs = comm->c_coll_basic_data->mccb_reqs;
 
