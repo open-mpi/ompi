@@ -44,6 +44,8 @@ typedef struct ompi_mpi_errcode_t ompi_mpi_errcode_t;
 OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_errcodes;
 OMPI_DECLSPEC extern int ompi_mpi_errcode_lastused;
 
+OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
+
 /** 
  * Check for a valid error code
  */
@@ -67,7 +69,6 @@ static inline int ompi_mpi_errcode_get_class (int errcode)
     if (NULL != err) {
         return err->cls;
     } else {
-        extern ompi_mpi_errcode_t ompi_err_unknown;
         return ompi_err_unknown.cls;
     }
 }
