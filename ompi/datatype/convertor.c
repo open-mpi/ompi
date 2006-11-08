@@ -424,31 +424,12 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
  *
  * I consider here that the convertor is clean, either never initialized or already cleanup.
  */
-#define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
+#define OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf )  \
     {                                                                   \
         uint64_t bdt_mask;                                              \
                                                                         \
-        /* Compute the local in advance */                              \
-        convertor->local_size = count * datatype->size;                 \
         bdt_mask = datatype->bdt_used & convertor->master->hetero_mask; \
-                                                                        \
-        convertor->pBaseBuf   = (char*)pUserBuf;                        \
-        convertor->count      = count;                                  \
-        /* Grab the datatype part of the flags */                       \
-        convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
-        convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
-        convertor->pDesc      = (ompi_datatype_t*)datatype;             \
-        convertor->bConverted = 0;                                      \
-                                                                        \
-        /* If the data is empty we just mark the convertor as           \
-         * completed. With this flag set the pack and unpack            \
-         * functions will not do anything.                              \
-         */                                                             \
-        if( 0 == convertor->local_size ) {                              \
-            convertor->flags |= CONVERTOR_COMPLETED;                    \
-            convertor->remote_size = 0;                                 \
-            return OMPI_SUCCESS;                                        \
-        }                                                               \
+        OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf ); \
                                                                         \
         if( 0 == bdt_mask ) {                                           \
             convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
@@ -580,7 +561,7 @@ int ompi_convertor_clone( const ompi_convertor_t* source,
                           int32_t copy_stack )
 {
     destination->remoteArch        = source->remoteArch;
-    destination->flags             = source->flags | CONVERTOR_CLONE;
+    destination->flags             = source->flags;
     destination->pDesc             = source->pDesc;
     destination->use_desc          = source->use_desc;
     destination->count             = source->count;
