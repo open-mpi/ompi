@@ -43,7 +43,7 @@ extern "C" {
 #define CONVERTOR_RECV             0x00020000
 #define CONVERTOR_SEND             0x00040000
 #define CONVERTOR_HOMOGENEOUS      0x00080000
-#define CONVERTOR_CLONE            0x00100000
+#define CONVERTOR_NO_OP            0x00100000
 #define CONVERTOR_WITH_CHECKSUM    0x00200000
 #define CONVERTOR_TYPE_MASK        0x00FF0000
 #define CONVERTOR_STATE_START      0x01000000
@@ -162,8 +162,10 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
 {
-    if( 0 == pConvertor->local_size ) return 0;
-    return !ompi_ddt_is_contiguous_memory_layout( pConvertor->pDesc, pConvertor->count );
+    if( (pConvertor->count == 1) && (pConvertor->flags & DT_FLAG_NO_GAPS) ) return 0;
+    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
+    return 1;
+    /*return !ompi_ddt_is_contiguous_memory_layout( pConvertor->pDesc, pConvertor->count );*/
 }
 
 /*
@@ -186,6 +188,47 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
     *pSize = pConv->remote_size;
 }
 
+/**
+ * Basic convertor initialization. This is performed for all types of convertors,
+ * but is the only thing required for convertors working on contiguous or
+ * predefined datatyps.
+ */
+#define OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf )  \
+    {                                                                   \
+        /* Compute the local in advance */                              \
+        convertor->local_size = count * datatype->size;                 \
+        convertor->pBaseBuf   = (char*)pUserBuf;                        \
+        convertor->count      = count;                                  \
+                                                                        \
+        /* Grab the datatype part of the flags */                       \
+        convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
+        convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
+        convertor->pDesc      = (ompi_datatype_t*)datatype;             \
+        convertor->bConverted = 0;                                      \
+                                                                        \
+        /* If the data is empty we just mark the convertor as           \
+         * completed. With this flag set the pack and unpack functions  \
+         * will not do anything. In order to decrease the data          \
+         * dependencies (and to speed-up this code) we will not test    \
+         * the convertor->local_size but we can test the 2 components.  \
+         */                                                             \
+        if( 0 == (convertor->count | datatype->size) ) {                \
+            convertor->flags |= (CONVERTOR_COMPLETED | DT_FLAG_CONTIGUOUS | CONVERTOR_NO_OP); \
+            convertor->remote_size = 0;                                 \
+            return OMPI_SUCCESS;                                        \
+        }                                                               \
+                                                                        \
+        convertor->flags |= CONVERTOR_HOMOGENEOUS;                      \
+        if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
+            convertor->remote_size = convertor->local_size;             \
+            convertor->use_desc = &(datatype->opt_desc);                \
+            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) == DT_FLAG_CONTIGUOUS ) { \
+                convertor->flags |= CONVERTOR_NO_OP;                    \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
+        }                                                               \
+    }
+
 /*
  *
  */
@@ -203,8 +246,10 @@ ompi_convertor_copy_and_prepare_for_send( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->flags      = (pSrcConv->flags | flags | CONVERTOR_SEND);
     convertor->master     = pSrcConv->master;
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+
     return ompi_convertor_prepare_for_send( convertor, datatype, count, pUserBuf );
 }
 
@@ -225,8 +270,9 @@ ompi_convertor_copy_and_prepare_for_recv( const ompi_convertor_t* pSrcConv,
                                           ompi_convertor_t* convertor )
 {
     convertor->remoteArch = pSrcConv->remoteArch;
-    convertor->flags      = (pSrcConv->flags | flags);
+    convertor->flags      = (pSrcConv->flags | flags | CONVERTOR_RECV);
     convertor->master     = pSrcConv->master;
+    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
 
     return ompi_convertor_prepare_for_recv( convertor, datatype, count, pUserBuf );
 }
@@ -262,8 +308,7 @@ ompi_convertor_set_position( ompi_convertor_t* convertor,
 
     if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&
         (convertor->flags & DT_FLAG_NO_GAPS) &&
-        ((convertor->flags & CONVERTOR_SEND) ||
-         (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {
+        (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) {
         /* Contiguous and no checkpoint and no homogeneous unpack */
         convertor->bConverted = *position;
         return OMPI_SUCCESS;
