@@ -43,7 +43,6 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
 {
     int i, size, rank ;
     int err;
-    int * a_i[3];
     MPI_Aint extent;
     MPI_Aint lb;
     char *send_buf = NULL;
@@ -64,7 +63,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
             send_buf += (rcounts[i] * extent);
         }
     } else {
-        send_buf = sbuf;
+        send_buf = (char*)sbuf;
         send_type = sdtype;
     }
 
@@ -84,7 +83,7 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
      * from each process. MPI_TYPE_INDEXED with params 
      *                    size,rcount,displs,rdtype,newtype
      * should do the trick.
-     * Use underlying ddt functions to create, set args, commit the
+     * Use underlying ddt functions to create, and commit the
      * new datatype on each process, then broadcast and destroy the
      * datatype.
      */
@@ -94,14 +93,6 @@ mca_coll_basic_allgatherv_intra(void *sbuf, int scount,
         return err;
     }
     
-    a_i[0] = &size;
-    a_i[1] = rcounts;
-    a_i[2] = disps;
-    err = ompi_ddt_set_args(newtype, 2 * size + 1, a_i, 0, NULL, 1, &sdtype,
-                            MPI_COMBINER_INDEXED);
-    if(MPI_SUCCESS != err) {
-       return err;
-    }
     err = ompi_ddt_commit(&newtype);
     if(MPI_SUCCESS != err) {
        return err;
