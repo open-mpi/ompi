@@ -229,8 +229,7 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( !(pConv->flags & CONVERTOR_WITH_CHECKSUM) &&
-        (pConv->flags & DT_FLAG_NO_GAPS) ) {
+    if( pConv->flags & CONVERTOR_NO_OP ) {
         /* We are doing conversion on a contiguous datatype on a homogeneous
          * environment. The convertor contain minimal informations, we only
          * use the bConverted to manage the conversion.
@@ -277,9 +276,7 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
 {
     OMPI_CONVERTOR_SET_STATUS_BEFORE_PACK_UNPACK( pConv, iov, out_size, max_data );
 
-    if( !(pConv->flags & CONVERTOR_WITH_CHECKSUM) &&
-        ((pConv->flags & (CONVERTOR_HOMOGENEOUS | DT_FLAG_NO_GAPS)) ==
-         (CONVERTOR_HOMOGENEOUS | DT_FLAG_NO_GAPS)) ) {
+    if( pConv->flags & CONVERTOR_NO_OP ) {
         /* We are doing conversion on a contiguous datatype on a homogeneous
          * environment. The convertor contain minimal informations, we only
          * use the bConverted to manage the conversion.
@@ -450,10 +447,10 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         assert( NULL != convertor->use_desc->desc );                    \
         /* For predefined datatypes (contiguous) do nothing more */     \
         /* if checksum is enabled then always continue */               \
-        if( !(convertor->flags & CONVERTOR_WITH_CHECKSUM) &&            \
-            (convertor->flags & DT_FLAG_NO_GAPS) &&                     \
-            ((convertor->flags & CONVERTOR_SEND) ||                     \
-             (convertor->flags & CONVERTOR_HOMOGENEOUS)) ) {            \
+        if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) \
+             == DT_FLAG_NO_GAPS) &&                                     \
+            (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) { \
+            convertor->flags |= CONVERTOR_NO_OP;                        \
             return OMPI_SUCCESS;                                        \
         }                                                               \
         {                                                               \
@@ -479,7 +476,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 {
     /* Here I should check that the data is not overlapping */
 
-    convertor->flags      |= CONVERTOR_RECV;
+    convertor->flags |= CONVERTOR_RECV;
 
     OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
 
@@ -515,7 +512,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
                                  int32_t count,
                                  const void* pUserBuf )
 {
-    convertor->flags            |= CONVERTOR_SEND;
+    convertor->flags |= CONVERTOR_SEND;
 
     OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
 
