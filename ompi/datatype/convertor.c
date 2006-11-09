@@ -452,7 +452,7 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
             (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) { \
             return OMPI_SUCCESS;                                        \
         }                                                               \
-        convertor->flags ^= CONVERTOR_NO_OP;                            \
+        convertor->flags &= ~CONVERTOR_NO_OP;                           \
         {                                                               \
             uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1; \
                                                                         \
