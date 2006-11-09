@@ -202,6 +202,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
         /* Grab the datatype part of the flags */                       \
         convertor->flags     &= CONVERTOR_TYPE_MASK;                    \
         convertor->flags     |= (CONVERTOR_DATATYPE_MASK & datatype->flags); \
+        convertor->flags     |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
         convertor->pDesc      = (ompi_datatype_t*)datatype;             \
         convertor->bConverted = 0;                                      \
                                                                         \
@@ -212,7 +213,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
          * the convertor->local_size but we can test the 2 components.  \
          */                                                             \
         if( 0 == (convertor->count | datatype->size) ) {                \
-            convertor->flags |= (CONVERTOR_COMPLETED | CONVERTOR_NO_OP); \
+            convertor->flags |= CONVERTOR_COMPLETED;                    \
             convertor->remote_size = 0;                                 \
             return OMPI_SUCCESS;                                        \
         }                                                               \
@@ -221,15 +222,12 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
             if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
-                convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
                 return OMPI_SUCCESS;                                    \
             }                                                           \
             if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) \
                  == DT_FLAG_CONTIGUOUS) && (1 == count) ) {             \
-                convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
                 return OMPI_SUCCESS;                                    \
             }                                                           \
-            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
         }                                                               \
     }
 

@@ -426,12 +426,12 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf ); \
                                                                         \
         if( 0 == bdt_mask ) {                                           \
-            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
         } else {                                                        \
             ompi_convertor_master_t* master;                            \
             int i;                                                      \
+            convertor->flags ^= CONVERTOR_HOMOGENEOUS;                  \
             bdt_mask = datatype->bdt_used;                              \
             master = convertor->master;                                 \
             convertor->remote_size = 0;                                 \
@@ -450,9 +450,9 @@ int32_t ompi_convertor_set_position_nocheck( ompi_convertor_t* convertor,
         if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) \
              == DT_FLAG_NO_GAPS) &&                                     \
             (convertor->flags & (CONVERTOR_SEND | CONVERTOR_HOMOGENEOUS)) ) { \
-            convertor->flags |= CONVERTOR_NO_OP;                        \
             return OMPI_SUCCESS;                                        \
         }                                                               \
+        convertor->flags ^= CONVERTOR_NO_OP;                            \
         {                                                               \
             uint32_t required_stack_length = datatype->btypes[DT_LOOP] + 1; \
                                                                         \
