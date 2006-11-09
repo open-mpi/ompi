@@ -73,7 +73,7 @@ ompi_unpack_general_function( ompi_convertor_t* pConvertor,
     size_t oCount = extent * pConvertor->count;
     size_t iCount, total_bytes_converted = 0;
     char* pInput;
-	int32_t rc;
+    int32_t rc;
     uint32_t iov_count;
 
     /* For the general case always use the user data description */
@@ -188,7 +188,7 @@ ompi_unpack_homogeneous_contig_function( ompi_convertor_t* pConv,
     const ompi_datatype_t *pData = pConv->pDesc;
     char *user_memory, *packed_buffer;
     uint32_t iov_count, i;
-	size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
+    size_t bConverted, remaining, length, initial_bytes_converted = pConv->bConverted;
     dt_stack_t* stack = &(pConv->pStack[1]);
     ptrdiff_t extent = pData->ub - pData->lb;
     ptrdiff_t initial_displ = pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
@@ -355,7 +355,7 @@ ompi_generic_simple_unpack_function( ompi_convertor_t* pConvertor,
     const ompi_datatype_t *pData = pConvertor->pDesc;
     char *user_memory_base, *packed_buffer;
     size_t iov_len_local;
-	uint32_t iov_count;
+    uint32_t iov_count;
 
     DO_DEBUG( opal_output( 0, "ompi_convertor_generic_simple_unpack( %p, {%p, %lu}, %u )\n",
                            (void*)pConvertor, iov[0].iov_base, (size_t)iov[0].iov_len, *out_size ); );
