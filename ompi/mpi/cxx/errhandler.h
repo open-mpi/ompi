@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -27,7 +28,7 @@ public:
 
   inline virtual ~Errhandler() { }
 
-  inline Errhandler(const MPI_Errhandler &i)
+  inline Errhandler(MPI_Errhandler i)
     : pmpi_errhandler(i) { }
 
  // copy / assignment
@@ -65,7 +66,7 @@ public:
 
   inline virtual ~Errhandler() { }
 
-  inline Errhandler(const MPI_Errhandler &i)
+  inline Errhandler(MPI_Errhandler i)
     : mpi_errhandler(i) {}
 
  // copy / assignment

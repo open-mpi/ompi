@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -36,7 +37,7 @@ public:
   // copy / assignment
   Info(const Info& data) : pmpi_info(data.pmpi_info) { }
 
-  Info(const MPI_Info &i) : pmpi_info(i) { }
+  Info(MPI_Info i) : pmpi_info(i) { }
 
   Info& operator=(const Info& data) {
     pmpi_info = data.pmpi_info; return *this; }
@@ -57,7 +58,7 @@ public:
   // copy
   Info(const Info& data) : mpi_info(data.mpi_info) { }
 
-  Info(const MPI_Info &i) : mpi_info(i) { }
+  Info(MPI_Info i) : mpi_info(i) { }
 
   virtual ~Info() {}
 

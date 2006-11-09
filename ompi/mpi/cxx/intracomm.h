@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -35,7 +36,7 @@ public:
   //  into account.
   Intracomm(const Intracomm& data) : Comm(data), pmpi_comm(data) { }
 
-  Intracomm(const MPI_Comm& data) : Comm(data), pmpi_comm(data) { }
+  Intracomm(MPI_Comm data) : Comm(data), pmpi_comm(data) { }
   
   Intracomm(const PMPI::Intracomm& data) 
     : Comm((const PMPI::Comm&)data), pmpi_comm(data) { }
@@ -60,7 +61,7 @@ public:
 #else
   Intracomm(const Intracomm& data) : Comm(data.mpi_comm) { }
 
-  inline Intracomm(const MPI_Comm& data);
+  inline Intracomm(MPI_Comm data);
 
   // assignment
   Intracomm& operator=(const Intracomm& data) {
