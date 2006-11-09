@@ -38,10 +38,6 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
 {
     int rc = MPI_SUCCESS;
 
-    if (dest == MPI_PROC_NULL) {
-        return MPI_SUCCESS;
-    }
-
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
         if (ompi_comm_invalid(comm)) {
@@ -50,13 +46,18 @@ int MPI_Send(void *buf, int count, MPI_Datatype type, int dest,
             rc = MPI_ERR_COUNT;
         } else if (tag < 0 || tag > mca_pml.pml_max_tag) {
             rc = MPI_ERR_TAG;
-        } else if (ompi_comm_peer_invalid(comm, dest)) {
+        } else if (ompi_comm_peer_invalid(comm, dest) && 
+                   (MPI_PROC_NULL != dest)) {
             rc = MPI_ERR_RANK;
         } else {
             OMPI_CHECK_DATATYPE_FOR_SEND(rc, type, count);
             OMPI_CHECK_USER_BUFFER(rc, buf, type, count);
         }
         OMPI_ERRHANDLER_CHECK(rc, comm, rc, FUNC_NAME);
+    }
+
+    if (MPI_PROC_NULL == dest) {
+        return MPI_SUCCESS;
     }
 
     rc = MCA_PML_CALL(send(buf, count, type, dest, tag, MCA_PML_BASE_SEND_STANDARD, comm));

@@ -191,3 +191,44 @@ private:
   PMPI::Prequest pmpi_request;
 #endif 
 };
+
+
+//
+// Generalized requests
+//
+class Grequest : public MPI::Request {
+  public:
+    typedef int Query_function(void *, Status&);
+    typedef int Free_function(void *);
+    typedef int Cancel_function(void *, bool);
+
+    Grequest() {}
+    Grequest(const Request& req) : Request(req) {}
+    Grequest(const MPI_Request &req) : Request(req) {}
+    virtual ~Grequest() {}
+
+    Grequest& operator=(const Request& req) {
+	mpi_request = req; return(*this);
+    }
+
+    Grequest& operator=(const Grequest& req) {
+	mpi_request = req.mpi_request; return(*this);
+    }
+
+    static Grequest Start(Query_function *, Free_function *,
+	    Cancel_function *, void *);
+
+    virtual void Complete();
+};
+
+//
+// Type used for intercepting Generalized requests in the C++ layer so
+// that the type can be converted to C++ types before invoking the
+// user-specified C++ callbacks.
+//
+struct Grequest_intercept_t {
+    void *git_extra;
+    Grequest::Query_function *git_cxx_query_fn;
+    Grequest::Free_function *git_cxx_free_fn;
+    Grequest::Cancel_function *git_cxx_cancel_fn;
+};

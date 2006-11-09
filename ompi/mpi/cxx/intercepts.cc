@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -285,3 +286,37 @@ ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval,
   return ret; 
 }
 
+// For similar reasons as above, we need to intercept calls for the 3
+// generalized request callbacks (convert arguments to C++ types and
+// invoke the C++ callback signature).
+
+extern "C" int
+ompi_mpi_cxx_grequest_query_fn_intercept(void *state, MPI_Status *status)
+{
+    struct MPI::Grequest_intercept_t *data = 
+        (struct MPI::Grequest_intercept_t *) state;
+
+    MPI::Status s(*status);
+    int ret = data->git_cxx_query_fn(data->git_extra, s);
+    *status = s;
+    return ret;
+}
+
+extern "C" int
+ompi_mpi_cxx_grequest_free_fn_intercept(void *state)
+{
+    struct MPI::Grequest_intercept_t *data = 
+        (struct MPI::Grequest_intercept_t *) state;
+    int ret = data->git_cxx_free_fn(data->git_extra);
+    // Delete the struct that was "new"ed in MPI::Grequest::Start()
+    delete data;
+    return ret;
+}
+
+extern "C" int
+ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int cancelled)
+{
+    struct MPI::Grequest_intercept_t *data = 
+        (struct MPI::Grequest_intercept_t *) state;
+    return data->git_cxx_cancel_fn(data->git_extra, (bool) cancelled);
+}

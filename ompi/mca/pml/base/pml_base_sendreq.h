@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,6 +83,7 @@ typedef struct mca_pml_base_send_request_t mca_pml_base_send_request_t;
       OBJ_RETAIN(datatype);                                               \
                                                                           \
       OMPI_REQUEST_INIT(&(request)->req_base.req_ompi, persistent);       \
+      (request)->req_base.req_ompi.req_mpi_object.comm = comm;            \
       (request)->req_addr = addr;                                         \
       (request)->req_count = count;                                       \
       (request)->req_datatype = datatype;                                 \

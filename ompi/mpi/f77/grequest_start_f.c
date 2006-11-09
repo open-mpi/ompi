@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -70,6 +71,11 @@ void mpi_grequest_start_f(MPI_F_Grequest_query_function* query_fn,
 			       (MPI_Grequest_cancel_function *) cancel_fn, 
 			       extra_state, &c_req));
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
+        /* Manually override the function pointer type flag on the
+           grequest to indicate that these are Fortran functions */
+        ompi_grequest_t *g = (ompi_grequest_t*) c_req;
+        g->greq_funcs_are_c = false;
+
         *request = MPI_Request_c2f(c_req);
     }
 }
