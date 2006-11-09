@@ -171,6 +171,7 @@ static int tuned_open(void)
                            false, false, ompi_coll_tuned_init_chain_fanout,
                            &ompi_coll_tuned_init_chain_fanout);
 
+#if OMPI_ENABLE_DEBUG
     param = mca_base_param_find("coll", NULL, "base_verbose");
     if (param >= 0) {
         int verbose;
@@ -179,6 +180,7 @@ static int tuned_open(void)
             ompi_coll_tuned_stream = opal_output_open(NULL);
         }
     }
+#endif  /* OMPI_ENABLE_DEBUG */
 
     /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
     /* the user can redo this before every comm dup/create if they like */
