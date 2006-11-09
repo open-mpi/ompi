@@ -120,8 +120,6 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
 
 static int tuned_open(void)
 {
-    int param;
-
     /*     ompi_coll_tuned_component_t *ct = &ompi_coll_tuned_component; */
 
     /* Use a low priority, but allow other components to be lower */
@@ -172,12 +170,16 @@ static int tuned_open(void)
                            &ompi_coll_tuned_init_chain_fanout);
 
 #if OMPI_ENABLE_DEBUG
-    param = mca_base_param_find("coll", NULL, "base_verbose");
-    if (param >= 0) {
-        int verbose;
-        mca_base_param_lookup_int(param, &verbose);
-        if (verbose > 0) {
-            ompi_coll_tuned_stream = opal_output_open(NULL);
+    {
+        int param;
+
+        param = mca_base_param_find("coll", NULL, "base_verbose");
+        if (param >= 0) {
+            int verbose;
+            mca_base_param_lookup_int(param, &verbose);
+            if (verbose > 0) {
+                ompi_coll_tuned_stream = opal_output_open(NULL);
+            }
         }
     }
 #endif  /* OMPI_ENABLE_DEBUG */
