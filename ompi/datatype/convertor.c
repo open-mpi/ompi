@@ -231,41 +231,41 @@ int32_t ompi_convertor_pack( ompi_convertor_t* pConv,
 
     if( !(pConv->flags & CONVERTOR_WITH_CHECKSUM) &&
         (pConv->flags & DT_FLAG_NO_GAPS) ) {
-        /* We are doing conversion on a predefined contiguous datatype. The
-         * convertor contain minimal informations, we only use the bConverted
-         * to manage the conversion.
+        /* We are doing conversion on a contiguous datatype on a homogeneous
+         * environment. The convertor contain minimal informations, we only
+         * use the bConverted to manage the conversion.
          */
         uint32_t i;
-        size_t initial_bConverted = pConv->bConverted;
-        size_t pending_length = pConv->local_size - pConv->bConverted;
         char* base_pointer;
+        size_t pending_length = pConv->local_size - pConv->bConverted;
 
-        if( (*max_data) < pending_length )
-            pending_length = (*max_data);
-
-        base_pointer = pConv->pBaseBuf + pConv->bConverted + pConv->pDesc->true_lb;
+        *max_data = pending_length;
+        base_pointer = pConv->pBaseBuf + pConv->bConverted + 
+            pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
         for( i = 0; i < *out_size; i++ ) {
-
-            if( iov[i].iov_len > pending_length )
-                iov[i].iov_len = pending_length;
-
-            if( NULL == iov[i].iov_base ) {
-                iov[i].iov_base = base_pointer;
-            } else {
-                MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+            if( iov[i].iov_len >= pending_length ) {
+                goto complete_contiguous_data_pack;
             }
-            pConv->bConverted += iov[i].iov_len;
-            if( pending_length == iov[i].iov_len ) break;
+            if( NULL == iov[i].iov_base )
+                iov[i].iov_base = base_pointer;
+            else
+                MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
             pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
         }
-        *out_size = i;
-        *max_data = pConv->bConverted - initial_bConverted;
-        if( pConv->bConverted == pConv->local_size ) {
-            pConv->flags |= CONVERTOR_COMPLETED;
-            return 1;
-        }
+        *max_data -= pending_length;
+        pConv->bConverted += (*max_data);
         return 0;
+    complete_contiguous_data_pack:
+        iov[i].iov_len = pending_length;
+        if( NULL == iov[i].iov_base )
+            iov[i].iov_base = base_pointer;
+        else
+            MEMCPY( iov[i].iov_base, base_pointer, iov[i].iov_len );
+        pConv->bConverted = pConv->local_size;
+        *out_size = i + 1;
+        pConv->flags |= CONVERTOR_COMPLETED;
+        return 1;
     }
 
     return pConv->fAdvance( pConv, iov, out_size, max_data );
@@ -286,30 +286,27 @@ int32_t ompi_convertor_unpack( ompi_convertor_t* pConv,
          */
         uint32_t i;
         char* base_pointer;
+        size_t pending_length = pConv->local_size - pConv->bConverted;
 
-        *max_data = pConv->bConverted;
+        *max_data = pending_length;
         base_pointer = pConv->pBaseBuf + pConv->bConverted + 
             pConv->use_desc->desc[pConv->use_desc->used].end_loop.first_elem_disp;
         for( i = 0; i < *out_size; i++ ) {
-            if( (pConv->bConverted + iov[i].iov_len) >= pConv->local_size ) {
-                goto predefined_data_unpack;
+            if( iov[i].iov_len >= pending_length ) {
+                goto complete_contiguous_data_unpack;
             }
             MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
-            /*opal_output( 0, "copy at %p %d bytes [initial ptr %p]\n", base_pointer,
-              iov[i].iov_len, pConv->pBaseBuf );*/
-            pConv->bConverted += iov[i].iov_len;
+            pending_length -= iov[i].iov_len;
             base_pointer += iov[i].iov_len;
         }
-        *max_data = pConv->bConverted - (*max_data);
+        *max_data -= pending_length;
+        pConv->bConverted += (*max_data);
         return 0;
-    predefined_data_unpack:
-        iov[i].iov_len = pConv->local_size - pConv->bConverted;
+    complete_contiguous_data_unpack:
+        iov[i].iov_len = pending_length;
         MEMCPY( base_pointer, iov[i].iov_base, iov[i].iov_len );
-        /*opal_output( 0, "copy at %p %d bytes [initial ptr %p] *last*\n", base_pointer,
-          iov[i].iov_len, pConv->pBaseBuf );*/
         pConv->bConverted = pConv->local_size;
         *out_size = i + 1;
-        *max_data = pConv->bConverted - (*max_data);
         pConv->flags |= CONVERTOR_COMPLETED;
         return 1;
     }
@@ -484,7 +481,7 @@ ompi_convertor_prepare_for_recv( ompi_convertor_t* convertor,
 
     convertor->flags      |= CONVERTOR_RECV;
 
-    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+    OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -520,7 +517,7 @@ ompi_convertor_prepare_for_send( ompi_convertor_t* convertor,
 {
     convertor->flags            |= CONVERTOR_SEND;
 
-    OMPI_CONVERTOR_PREPARE( convertor, datatype, count, pUserBuf );
+    OMPI_CONVERTOR_PREPARE_INTERNAL( convertor, datatype, count, pUserBuf );
 
     if( convertor->flags & CONVERTOR_WITH_CHECKSUM ) {
         if( datatype->flags & DT_FLAG_CONTIGUOUS ) {
