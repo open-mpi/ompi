@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -113,6 +113,7 @@ enum {
     ORTE_PLS_RSH_SHELL_TCSH,
     ORTE_PLS_RSH_SHELL_CSH,
     ORTE_PLS_RSH_SHELL_KSH,
+    ORTE_PLS_RSH_SHELL_SH,
     ORTE_PLS_RSH_SHELL_UNKNOWN
 };
 
@@ -123,6 +124,7 @@ static const char * orte_pls_rsh_shell_name[] = {
     "tcsh",       /* tcsh has to be first otherwise strstr finds csh */
     "csh",
     "ksh",
+    "sh",
     "unknown"
 };
 
@@ -240,13 +242,25 @@ static int orte_pls_rsh_probe(orte_mapped_node_t * node, orte_pls_rsh_shell * sh
     /* Search for the substring of known shell-names */
     for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
                           sizeof(orte_pls_rsh_shell_name[0])); i++) {
-        if (NULL != strstr (outbuf, orte_pls_rsh_shell_name[i])) {
-          *shell = i;
-          break;
+        char *sh_name = NULL;
+
+        sh_name = rindex(outbuf, '/');
+        if ( sh_name != NULL ) {
+            sh_name++; /* skip '/' */
+            
+            /* We cannot use "echo -n $SHELL" because -n is not portable. Therefore
+             * we have to remove the "\n" */
+            if ( sh_name[strlen(sh_name)-1] == '\n' ) {
+                sh_name[strlen(sh_name)-1] = '\0';
+            }
+            if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
+                *shell = i;
+                break;
+            }
         }
     }
     if (mca_pls_rsh_component.debug) {
-        opal_output(0, "pls:rsh: node:%s has SHELL:%s\n",
+        opal_output(0, "pls:rsh: node:%s has SHELL: %s\n",
                     node->nodename, orte_pls_rsh_shell_name[*shell]);
     }
     return rc;
@@ -380,7 +394,6 @@ static void orte_pls_rsh_wait_daemon(pid_t pid, int status, void* cbdata)
                 maxtime = deltat;
                 maxiter = (unsigned long)info->name->vpid;
             }
-            
         }
     }
 
@@ -438,8 +451,8 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int rc;
     sigset_t sigs;
     struct passwd *p;
-    bool remote_bash = false, remote_csh = false;
-    bool local_bash = false, local_csh = false;
+    bool remote_sh = false, remote_csh = false; 
+    bool local_sh = false, local_csh = false;
     char *lib_base = NULL, *bin_base = NULL;
     orte_pls_daemon_info_t *dmn;
 
@@ -527,22 +540,43 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     /* What is our local shell? */
     p = getpwuid(getuid());
     if (NULL != p) {
-        local_csh = (strstr(p->pw_shell, "csh") != 0) ? true : false;
-        if ((strstr(p->pw_shell, "bash") != 0) ||
-            (strstr(p->pw_shell, "zsh") != 0)) {
-            local_bash = true;
-        } else {
-            local_bash = false;
+        int i         = 0;
+        char *sh_name = NULL;
+
+        sh_name = rindex(p->pw_shell, '/');
+        sh_name++;
+        for (i = 0; i < (int)(sizeof (orte_pls_rsh_shell_name)/
+                              sizeof(orte_pls_rsh_shell_name[0])); i++) {
+            if ( 0 == strcmp(sh_name, orte_pls_rsh_shell_name[i]) ) {
+                switch (i) {
+                case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
+                case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
+                case ORTE_PLS_RSH_SHELL_BASH: local_sh = true; break;
+                case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
+                case ORTE_PLS_RSH_SHELL_CSH:  local_csh = true; break;
+                default:
+                    opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+                                orte_pls_rsh_shell_name[i]);
+                    remote_sh = true;
+                    break;
+                }
+            }
         }
+        if ( i == ORTE_PLS_RSH_SHELL_UNKNOWN ) {
+            opal_output(0, "WARNING: local probe returned unhandled shell:%s assuming bash\n",
+                        orte_pls_rsh_shell_name[i]);
+            remote_sh = true;
+        }
+        
         if (mca_pls_rsh_component.debug) {
-            opal_output(0, "pls:rsh: local csh: %d, local bash: %d\n",
-                        local_csh, local_bash);
+            opal_output(0, "pls:rsh: local csh: %d, local sh: %d\n",
+                        local_csh, local_sh);
         }
     }
 
     /* What is our remote shell? */
     if (mca_pls_rsh_component.assume_same_shell) {
-        remote_bash = local_bash;
+        remote_sh = local_sh;
         remote_csh = local_csh;
         if (mca_pls_rsh_component.debug) {
             opal_output(0, "pls:rsh: assuming same remote shell as local shell");
@@ -558,19 +592,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         }
 
         switch (shell) {
+        case ORTE_PLS_RSH_SHELL_SH:  /* fall through */
         case ORTE_PLS_RSH_SHELL_KSH: /* fall through */
-        case ORTE_PLS_RSH_SHELL_BASH: remote_bash = true; break;
+        case ORTE_PLS_RSH_SHELL_BASH: remote_sh = true; break;
         case ORTE_PLS_RSH_SHELL_TCSH: /* fall through */
         case ORTE_PLS_RSH_SHELL_CSH:  remote_csh = true; break;
         default:
             opal_output(0, "WARNING: rsh probe returned unhandled shell:%s assuming bash\n",
                         orte_pls_rsh_shell_name[shell]);
-            remote_bash = true;
+            remote_sh = true;
         }
     }
     if (mca_pls_rsh_component.debug) {
-        opal_output(0, "pls:rsh: remote csh: %d, remote bash: %d\n",
-                    remote_csh, remote_bash);
+        opal_output(0, "pls:rsh: remote csh: %d, remote sh: %d\n",
+                    remote_csh, remote_sh);
     }
 
     /*
@@ -583,9 +618,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     /* Do we need to source .profile on the remote side? */
 
-    if (!(remote_csh || remote_bash)) {
+    if (!(remote_csh || remote_sh)) {
         int i;
-        tmp = opal_argv_split("( ! [ -e ./.profile ] || . ./.profile;", ' ');
+        tmp = opal_argv_split("( test ! -e ./.profile || . ./.profile;", ' ');
         if (NULL == tmp) {
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
@@ -653,7 +688,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     free(param);
 
     local_exec_index_end = argc;
-    if (!(remote_csh || remote_bash)) {
+    if (!(remote_csh || remote_sh)) {
         opal_argv_append(&argc, &argv, ")");
     }
     if (mca_pls_rsh_component.debug) {
@@ -913,7 +948,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                 exec_path = strdup(mca_pls_rsh_component.agent_path);
 
                 if (NULL != prefix_dir) {
-                    if (remote_bash) {
+                    if (remote_sh) {
                         asprintf (&argv[local_exec_index],
                                   "PATH=%s/%s:$PATH ; export PATH ; "
                                   "LD_LIBRARY_PATH=%s/%s:$LD_LIBRARY_PATH ; export LD_LIBRARY_PATH ; "
