@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -27,7 +28,7 @@ public:
 
   // construction
   Request() { }
-  Request(const MPI_Request &i) : pmpi_request(i) { }
+  Request(MPI_Request i) : pmpi_request(i) { }
 
   // copy / assignment
   Request(const Request& r) : pmpi_request(r.pmpi_request) { }
@@ -58,7 +59,7 @@ public:
   // construction / destruction
   Request() { mpi_request = MPI_REQUEST_NULL; }
   virtual ~Request() {}
-  Request(const MPI_Request &i) : mpi_request(i) { }
+  Request(MPI_Request i) : mpi_request(i) { }
 
   // copy / assignment
   Request(const Request& r) : mpi_request(r.mpi_request) { }

@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -29,7 +30,7 @@ public:
   // copy
   Intercomm(const Comm_Null& data) : Comm(data) { }
   // inter-language operability
-  Intercomm(const MPI_Comm& data) : Comm(data) { }
+  Intercomm(MPI_Comm data) : Comm(data) { }
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
   // copy

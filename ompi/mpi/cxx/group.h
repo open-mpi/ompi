@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -27,7 +28,7 @@ public:
 
   // construction
   inline Group() { }
-  inline Group(const MPI_Group &i) : pmpi_group(i) { }
+  inline Group(MPI_Group i) : pmpi_group(i) { }
   // copy
   inline Group(const Group& g) : pmpi_group(g.pmpi_group) { }
 
@@ -58,7 +59,7 @@ public:
 
   // construction
   inline Group() : mpi_group(MPI_GROUP_NULL) { }
-  inline Group(const MPI_Group &i) : mpi_group(i) { }
+  inline Group(MPI_Group i) : mpi_group(i) { }
 
   // copy
   inline Group(const Group& g) : mpi_group(g.mpi_group) { }
