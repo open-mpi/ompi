@@ -162,10 +162,9 @@ static inline int ompi_convertor_cleanup( ompi_convertor_t* convertor )
 static inline int32_t
 ompi_convertor_need_buffers( const ompi_convertor_t* pConvertor )
 {
-    if( (pConvertor->count == 1) && (pConvertor->flags & DT_FLAG_NO_GAPS) ) return 0;
-    if( pConvertor->flags & DT_FLAG_CONTIGUOUS ) return 0;
+    if( pConvertor->flags & DT_FLAG_NO_GAPS ) return 0;
+    if( (pConvertor->count == 1) && (pConvertor->flags & DT_FLAG_CONTIGUOUS) ) return 0;
     return 1;
-    /*return !ompi_ddt_is_contiguous_memory_layout( pConvertor->pDesc, pConvertor->count );*/
 }
 
 /*
@@ -213,19 +212,24 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
          * the convertor->local_size but we can test the 2 components.  \
          */                                                             \
         if( 0 == (convertor->count | datatype->size) ) {                \
-            convertor->flags |= (CONVERTOR_COMPLETED | DT_FLAG_CONTIGUOUS | CONVERTOR_NO_OP); \
+            convertor->flags |= (CONVERTOR_COMPLETED | CONVERTOR_NO_OP); \
             convertor->remote_size = 0;                                 \
             return OMPI_SUCCESS;                                        \
         }                                                               \
                                                                         \
-        convertor->flags |= CONVERTOR_HOMOGENEOUS;                      \
         if( convertor->remoteArch == ompi_mpi_local_arch ) {            \
             convertor->remote_size = convertor->local_size;             \
             convertor->use_desc = &(datatype->opt_desc);                \
-            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) == DT_FLAG_CONTIGUOUS ) { \
-                convertor->flags |= CONVERTOR_NO_OP;                    \
+            if( (convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_NO_GAPS)) == DT_FLAG_NO_GAPS ) { \
+                convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
                 return OMPI_SUCCESS;                                    \
             }                                                           \
+            if( ((convertor->flags & (CONVERTOR_WITH_CHECKSUM | DT_FLAG_CONTIGUOUS)) \
+                 == DT_FLAG_CONTIGUOUS) && (1 == count) ) {             \
+                convertor->flags |= (CONVERTOR_NO_OP | CONVERTOR_HOMOGENEOUS); \
+                return OMPI_SUCCESS;                                    \
+            }                                                           \
+            convertor->flags |= CONVERTOR_HOMOGENEOUS;                  \
         }                                                               \
     }
 
