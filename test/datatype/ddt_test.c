@@ -431,7 +431,7 @@ static int test_upper( unsigned int length )
     ptr = (char*)inbuf;
     /* copy upper matrix in the array simulating the input buffer */
     for( i = 0; i < length; i++ ) {
-        uint32_t pos = i * length;
+        uint32_t pos = i * length + i;
         for( j = i; j < length; j++, pos++ ) {
             *inbuf = mat1[pos];
             inbuf++;
@@ -886,9 +886,8 @@ static int local_copy_with_convertor( ompi_datatype_t* pdt, int count, int chunk
     ptemp = malloc( chunk );
 
     {
-        int i;
-        for( i = 0; i < (count * extent); i++ )
-            ((char*)psrc)[i] = i % 128 + 32;
+        int i = 0;
+        for( ; i < (count * extent); ((char*)psrc)[i] = i % 128 + 32, i++ );
     }
     memset( pdst, 0, count * extent );
 
