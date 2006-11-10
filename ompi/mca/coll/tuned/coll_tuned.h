@@ -397,4 +397,20 @@ do {                                                                            
     }                                                                                            \
 } while (0)
 
+/**
+ * This macro give a generic way to compute the best count of
+ * the segment (i.e. the number of complete datatypes that
+ * can fit in the specified SEGSIZE). Beware, when this macro
+ * is called, the SEGCOUNT should be initialized to the count as
+ * expected by the collective call.
+ */
+#define COLL_TUNED_COMPUTED_SEGCOUNT(SEGSIZE, TYPELNG, SEGCOUNT)        \
+    if( (SEGSIZE) >= (TYPELNG) ) {                                      \
+        size_t residual;                                                \
+        (SEGCOUNT) = (int)((SEGSIZE) / (TYPELNG));                      \
+        residual = (SEGSIZE) - (SEGCOUNT) * (TYPELNG);                  \
+        if( residual > ((TYPELNG) >> 1) )                               \
+            (SEGCOUNT)++;                                               \
+    }                                                                   \
+
 #endif /* MCA_COLL_TUNED_EXPORT_H */

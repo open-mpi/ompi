@@ -61,10 +61,8 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              struct ompi_datatype_t *rdtype, 
                                              struct ompi_communicator_t *comm)
 {
-    int communicator_size, rank, err;
+    int communicator_size, rank;
     size_t dsize, total_dsize;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
@@ -75,13 +73,11 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
     }
 
     /* else we need data size for decision function */
-    err = ompi_ddt_type_size(sdtype, &dsize);
-    if (err != MPI_SUCCESS) { 
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
-        return (err);
-    }
-
+    ompi_ddt_type_size(sdtype, &dsize);
     total_dsize = dsize * scount * communicator_size;   /* needed for decision */
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_alltoall_intra_dec_fixed rank %d com_size %d msg_length %ld",
+                 rank, communicator_size, total_dsize));
 
     if (communicator_size >= 12 && total_dsize <= 768) {
         return ompi_coll_tuned_alltoall_intra_bruck (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
@@ -102,11 +98,10 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
  */
 int ompi_coll_tuned_barrier_intra_dec_fixed(struct ompi_communicator_t *comm)
 {
-    int communicator_size;
+    int communicator_size = ompi_comm_size(comm);
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed"));
-
-    communicator_size = ompi_comm_size(comm);
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_barrier_intra_dec_fixed com_size %d",
+                 communicator_size));
 
     if( 2 == communicator_size )
         return ompi_coll_tuned_barrier_intra_two_procs(comm);
@@ -148,23 +143,20 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     const double b1 = 11.2445;
     const double a2 = 0.0023;
     const double b2 = 3.8074;
-    int communicator_size, rank, err;
+    int communicator_size, rank;
     int segsize = 0;
     size_t message_size, dsize;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed"));
 
     communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* else we need data size for decision function */
-    err = ompi_ddt_type_size(datatype, &dsize);
-    if (err != MPI_SUCCESS) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
-        return (err);
-    }
-
+    ompi_ddt_type_size(datatype, &dsize);
     message_size = dsize * (unsigned long)count;   /* needed for decision */
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed "
+                 "root %d rank %d com_size %d msg_length %ld",
+                 root, rank, communicator_size, message_size));
 
     if ((message_size <= 1024) && (communicator_size < 12)) {
         /* Linear_0K */
@@ -245,7 +237,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
                                             struct ompi_op_t* op, int root,
                                             struct ompi_communicator_t* comm)
 {
-    int communicator_size, rank, err, segsize = 0;
+    int communicator_size, rank, segsize = 0;
     size_t message_size, dsize;
     const double a1 =  0.6016 / 1024.0; /* [1/B] */
     const double b1 =  1.3496;
@@ -255,8 +247,6 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     const double b3 =  1.1614;
     const double a4 =  0.0033 / 1024.0; /* [1/B] */
     const double b4 =  1.6761;
-
-    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"));
 
     /**
      * If the operation is non commutative we only have one reduce algorithm right now.
@@ -269,13 +259,12 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     rank = ompi_comm_rank(comm);
 
     /* need data size for decision function */
-    err = ompi_ddt_type_size(datatype, &dsize);
-    if (err != MPI_SUCCESS) {
-        OPAL_OUTPUT((ompi_coll_tuned_stream,"%s:%4d\tError occurred %d, rank %2d", __FILE__,__LINE__,err,rank));
-        return (err);
-    }
-
+    ompi_ddt_type_size(datatype, &dsize);
     message_size = dsize * count;   /* needed for decision */
+
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_reduce_intra_dec_fixed"
+                 "root %d rank %d com_size %d msg_length %ld",
+                 root, rank, communicator_size, message_size));
 
     if (((communicator_size < 20) && (message_size < 512)) ||
         ((communicator_size < 10) && (message_size <= 1024))){

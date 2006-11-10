@@ -448,30 +448,40 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                  "Number of alltoall algorithms available",
                                  false, true, max_alg, NULL);
 
+    mca_param_indices->algorithm_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "alltoall_algorithm",
+                                 "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
+                                 false, false, 0, NULL);
+    if( mca_param_indices->algorithm_param_index > max_alg ) {
+        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
+            opal_output( 0, "Alltoall algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+                         mca_param_indices->algorithm_param_index, max_alg );
+        }
+        mca_param_indices->algorithm_param_index = 0;
+    }
+    
+    mca_param_indices->segsize_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "alltoall_algorithm_segmentsize",
+                                 "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
+                                 false, false, 0, NULL);
+    
+    mca_param_indices->tree_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "alltoall_algorithm_tree_fanout",
+                                 "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
+                                 false, false, 
+                                 ompi_coll_tuned_init_tree_fanout, /* get system wide default */
+                                 NULL);
 
-    mca_param_indices->algorithm_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                      "alltoall_algorithm",
-                                                                      "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
-                                                                      false, false, 0, NULL);
-
-    mca_param_indices->segsize_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                    "alltoall_algorithm_segmentsize",
-                                                                    "Segment size in bytes used by default for alltoall algorithms. Only has meaning if algorithm is forced and supports segmenting. 0 bytes means no segmentation.",
-                                                                    false, false, 0, NULL);
-
-    mca_param_indices->tree_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                        "alltoall_algorithm_tree_fanout",
-                                                                        "Fanout for n-tree used for alltoall algorithms. Only has meaning if algorithm is forced and supports n-tree topo based operation.",
-                                                                        false, false, 
-                                                                        ompi_coll_tuned_init_tree_fanout, /* get system wide default */
-                                                                        NULL);
-
-    mca_param_indices->chain_fanout_param_index = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                                                                         "alltoall_algorithm_chain_fanout",
-                                                                         "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
-                                                                         false, false, 
-                                                                         ompi_coll_tuned_init_chain_fanout, /* get system wide default */
-                                                                         NULL);
+    mca_param_indices->chain_fanout_param_index
+        = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                                 "alltoall_algorithm_chain_fanout",
+                                 "Fanout for chains used for alltoall algorithms. Only has meaning if algorithm is forced and supports chain topo based operation.",
+                                 false, false, 
+                                 ompi_coll_tuned_init_chain_fanout, /* get system wide default */
+                                 NULL);
 
     return (MPI_SUCCESS);
 }
