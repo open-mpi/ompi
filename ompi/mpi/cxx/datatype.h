@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -31,7 +32,7 @@ public:
   inline Datatype() { }
 
   // inter-language operability
-  inline Datatype(const MPI_Datatype &i) : pmpi_datatype(i) { }
+  inline Datatype(MPI_Datatype i) : pmpi_datatype(i) { }
 
   // copy / assignment
   inline Datatype(const Datatype& dt) : pmpi_datatype(dt.pmpi_datatype) { }
@@ -67,7 +68,7 @@ public:
   inline Datatype() : mpi_datatype(MPI_DATATYPE_NULL) { }
   inline virtual ~Datatype() {}
   // inter-language operability
-  inline Datatype(const MPI_Datatype &i) : mpi_datatype(i) { }
+  inline Datatype(MPI_Datatype i) : mpi_datatype(i) { }
 
   // copy / assignment
   inline Datatype(const Datatype& dt) : mpi_datatype(dt.mpi_datatype) { }
