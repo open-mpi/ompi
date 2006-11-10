@@ -72,6 +72,19 @@ int MPI_Allgatherv(void *sendbuf, int sendcount, MPI_Datatype sendtype,
         }
     }
 
+    /* Do we need to do anything?  Everyone had to give the same 
+       signature, which means that everyone must have given a
+       sum(recvounts) > 0 if there's anything to do. */
+
+    for (i = 0; i < ompi_comm_size(comm); ++i) {
+        if (0 != recvcounts[i]) {
+            break;
+        }
+    }
+    if (i >= ompi_comm_size(comm)) {
+        return MPI_SUCCESS;
+    }
+
     /* Invoke the coll component to perform the back-end operation */
 
     err = comm->c_coll.coll_allgatherv(sendbuf, sendcount, sendtype, 
