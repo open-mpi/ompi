@@ -28,8 +28,8 @@ version 1.0.
 - Used better performing basic algorithm for MPI_ALLGATHERV.
 - Added a workaround for a bug in the Intel 9.1 C++ compiler (all
   versions up to and including 20060925) in the MPI C++ bindings that
-  caused run-time failures.  Thanks to the Sandia Thunderbird team for
-  reporting this problem.
+  caused run-time failures.  Thanks to Scott Weitzenkamp for reporting
+  this problem.
 - Fix MPI_SIZEOF implementation in the F90 bindings for COMPLEX
   variable types.
 - Fixes for persistent requests involving MPI_PROC_NULL.  Thanks to
