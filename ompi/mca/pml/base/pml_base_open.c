@@ -74,6 +74,8 @@ char *mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
+    char* default_pml;
+
     /* Open up all available components */
 
     if (OMPI_SUCCESS != 
@@ -88,18 +90,28 @@ int mca_pml_base_open(void)
 
     mca_pml_base_selected_component.pmlm_finalize = NULL;
 
+    /**
+     * Right now our selection of BTLs is completely broken. If we have
+     * multiple PMLs we will open all BTLs several times, leading to
+     * undefined behaviors. The simplest solution, at least until we
+     * figure out the correct way to do it, is to force a default value
+     * in the mca_pml_base_pml global.
+     */
+#if MCA_pml_DIRECT_CALL
+    default_pml = stringify(MCA_pml_DIRECT_CALL_COMPONENT);
+#else
+    default_pml = "ob1";
+#endif
+
     mca_base_param_lookup_string(
         mca_base_param_register_string("pml",
                                        NULL,
                                        NULL,
                                        NULL,
-#if MCA_pml_DIRECT_CALL
-                                       stringify(MCA_pml_DIRECT_CALL_COMPONENT)
-#else
-                                       "ob1"
-#endif
-                                       ),
+                                       default_pml),
         &mca_pml_base_pml);
+    if( NULL == mca_pml_base_pml )
+        mca_pml_base_pml = default_pml;
 
     return OMPI_SUCCESS;
 }
