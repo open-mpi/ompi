@@ -45,8 +45,8 @@ struct mca_pml_cm_request_t {
     mca_pml_cm_request_type_t req_pml_type;
     struct ompi_communicator_t *req_comm; /**< communicator pointer */
     struct ompi_datatype_t *req_datatype; /**< pointer to data type */
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory */
     ompi_convertor_t req_convertor;       /**< always need the convertor */
+    mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_request_t mca_pml_cm_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_request_t);
