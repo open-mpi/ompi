@@ -442,8 +442,7 @@ ompi_coll_tuned_reduce_intra_basic_linear(void *sbuf, void *rbuf, int count,
  */
 int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc;
-    int max_alg = 5;
+    int rc, requested_alg, max_alg = 5;
 
     ompi_coll_tuned_forced_max_algorithms[REDUCE] = max_alg;
 
@@ -457,12 +456,13 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
                                  "reduce_algorithm",
                                  "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline, 4 binary, 5 binomial",
                                  false, false, 0, NULL);
-    if( mca_param_indices->algorithm_param_index > max_alg ) {
+    mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
+    if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
             opal_output( 0, "Reduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
-                         mca_param_indices->algorithm_param_index, max_alg );
+                         requested_alg, max_alg );
         }
-        mca_param_indices->algorithm_param_index = 0;
+        mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
     }
 
     mca_param_indices->segsize_param_index

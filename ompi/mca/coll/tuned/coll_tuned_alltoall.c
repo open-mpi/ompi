@@ -438,8 +438,7 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
 int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices)
 {
-    int rc;
-    int max_alg = 4;
+    int rc, max_alg = 4, requested_alg;
 
     ompi_coll_tuned_forced_max_algorithms[ALLTOALL] = max_alg;
 
@@ -453,12 +452,13 @@ int ompi_coll_tuned_alltoall_intra_check_forced_init (coll_tuned_force_algorithm
                                  "alltoall_algorithm",
                                  "Which alltoall algorithm is used. Can be locked down to choice of: 0 ignore, 1 basic linear, 2 pairwise, 3: modified bruck, 4: two proc only.",
                                  false, false, 0, NULL);
-    if( mca_param_indices->algorithm_param_index > max_alg ) {
+    mca_base_param_lookup_int(mca_param_indices->algorithm_param_index, &(requested_alg));
+    if( requested_alg > max_alg ) {
         if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
             opal_output( 0, "Alltoall algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
-                         mca_param_indices->algorithm_param_index, max_alg );
+                         requested_alg, max_alg );
         }
-        mca_param_indices->algorithm_param_index = 0;
+        mca_base_param_set_int( mca_param_indices->algorithm_param_index, 0);
     }
     
     mca_param_indices->segsize_param_index
