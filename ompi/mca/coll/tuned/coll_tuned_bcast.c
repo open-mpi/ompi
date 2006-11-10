@@ -267,7 +267,7 @@ ompi_coll_tuned_bcast_intra_pipeline( void* buffer,
                                       struct ompi_communicator_t* comm, 
                                       uint32_t segsize )
 {
-    int segcount;
+    int segcount = count;
     size_t typelng;
 
     COLL_TUNED_UPDATE_PIPELINE( comm, root );
@@ -293,7 +293,7 @@ ompi_coll_tuned_bcast_intra_chain( void* buffer,
                                    struct ompi_communicator_t* comm, 
                                    uint32_t segsize, int32_t chains )
 {
-    int segcount;
+    int segcount = count;
     size_t typelng;
 
     COLL_TUNED_UPDATE_CHAIN( comm, root, chains );
@@ -319,7 +319,7 @@ ompi_coll_tuned_bcast_intra_binomial( void* buffer,
                                       struct ompi_communicator_t* comm, 
                                       uint32_t segsize )
 {
-    int segcount;
+    int segcount = count;
     size_t typelng;
 
     COLL_TUNED_UPDATE_BMTREE( comm, root );
