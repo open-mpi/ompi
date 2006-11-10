@@ -405,7 +405,8 @@ do {                                                                            
  * expected by the collective call.
  */
 #define COLL_TUNED_COMPUTED_SEGCOUNT(SEGSIZE, TYPELNG, SEGCOUNT)        \
-    if( (SEGSIZE) >= (TYPELNG) ) {                                      \
+    if( ((SEGSIZE) >= (TYPELNG)) &&                                     \
+        ((SEGSIZE) < ((TYPELNG) * (SEGCOUNT))) ) {                      \
         size_t residual;                                                \
         (SEGCOUNT) = (int)((SEGSIZE) / (TYPELNG));                      \
         residual = (SEGSIZE) - (SEGCOUNT) * (TYPELNG);                  \

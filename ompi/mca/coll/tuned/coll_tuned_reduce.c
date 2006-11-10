@@ -119,7 +119,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                             local_recvbuf = accumbuf + segindex * realsegsize;
                         }
                     }
-                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount,datatype, tree->tree_next[i],
+                    ret = MCA_PML_CALL(irecv(local_recvbuf, recvcount, datatype, tree->tree_next[i],
                                              MCA_COLL_BASE_TAG_REDUCE, comm, &reqs[inbi]));
                     if (ret != MPI_SUCCESS) { line = __LINE__; goto error_hndl;  }
                 }
