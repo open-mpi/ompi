@@ -140,11 +140,11 @@ ompi_coll_tuned_bcast_intra_generic( void* buffer,
             for( i = 0; i < tree->tree_nextsize; i++ ) {  /* send data to children */
                 /* send data */
 #if defined(COLL_TUNED_BCAST_USE_BLOCKING)
-                err = MCA_PML_CALL(send(tmpbuf, sendcount, datatype,
+                err = MCA_PML_CALL(send(tmpbuf, count_by_segment, datatype,
                                         tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
                                         MCA_PML_BASE_SEND_STANDARD, comm));
 #else
-                err = MCA_PML_CALL(isend(tmpbuf, sendcount, datatype,
+                err = MCA_PML_CALL(isend(tmpbuf, count_by_segment, datatype,
                                          tree->tree_next[i], MCA_COLL_BASE_TAG_BCAST,
                                          MCA_PML_BASE_SEND_STANDARD, comm, &send_reqs[i]));
 #endif  /* COLL_TUNED_BCAST_USE_BLOCKING */
