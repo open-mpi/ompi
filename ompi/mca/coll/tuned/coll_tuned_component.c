@@ -120,55 +120,6 @@ mca_coll_tuned_component_t mca_coll_tuned_component = {
 
 static int tuned_open(void)
 {
-    /*     ompi_coll_tuned_component_t *ct = &ompi_coll_tuned_component; */
-
-    /* Use a low priority, but allow other components to be lower */
-    
-    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "priority",
-                           "Priority of the tuned coll component",
-                           false, false, ompi_coll_tuned_priority,
-                           &ompi_coll_tuned_priority);
-
-    /* parameter for pre-allocated memory requests etc */
-    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "pre_allocate_memory_comm_size_limit",
-                           "Size of communicator were we stop pre-allocating memory for the fixed internal buffer used for message requests etc that is hung off the communicator data segment. I.e. if you have a 100'000 nodes you might not want to pre-allocate 200'000 request handle slots per communicator instance!",
-                           false, false, ompi_coll_tuned_preallocate_memory_comm_size_limit,
-                           &ompi_coll_tuned_preallocate_memory_comm_size_limit);
-    
-    /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
-    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "use_dynamic_rules",
-                           "Switch used to decide if we use static (compiled/if statements) or dynamic (built at runtime) decision function rules",
-                           false, false, ompi_coll_tuned_use_dynamic_rules,
-                           &ompi_coll_tuned_use_dynamic_rules);
-
-
-    /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
-    if (ompi_coll_tuned_use_dynamic_rules) {
-        /*         char *default_name; */
-        /*         asprintf(&default_name, "~/.openmpi/openmpi-coll-tuned-params.conf"); */
-        mca_base_param_reg_string(&mca_coll_tuned_component.super.collm_version,
-                                  "dynamic_rules_filename",
-                                  "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
-                                  false, false, ompi_coll_tuned_dynamic_rules_filename,
-                                  &ompi_coll_tuned_dynamic_rules_filename);
-    }
-
-    /* some initial guesses at topology parameters */
-    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "init_tree_fanout",
-                           "Inital fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
-                           false, false, ompi_coll_tuned_init_tree_fanout,
-                           &ompi_coll_tuned_init_tree_fanout);
-
-    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
-                           "init_chain_fanout",
-                           "Inital fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
-                           false, false, ompi_coll_tuned_init_chain_fanout,
-                           &ompi_coll_tuned_init_chain_fanout);
-
 #if OMPI_ENABLE_DEBUG
     {
         int param;
@@ -184,6 +135,33 @@ static int tuned_open(void)
     }
 #endif  /* OMPI_ENABLE_DEBUG */
 
+    /* Use a low priority, but allow other components to be lower */    
+    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                           "priority",
+                           "Priority of the tuned coll component",
+                           false, false, ompi_coll_tuned_priority,
+                           &ompi_coll_tuned_priority);
+
+    /* parameter for pre-allocated memory requests etc */
+    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                           "pre_allocate_memory_comm_size_limit",
+                           "Size of communicator were we stop pre-allocating memory for the fixed internal buffer used for message requests etc that is hung off the communicator data segment. I.e. if you have a 100'000 nodes you might not want to pre-allocate 200'000 request handle slots per communicator instance!",
+                           false, false, ompi_coll_tuned_preallocate_memory_comm_size_limit,
+                           &ompi_coll_tuned_preallocate_memory_comm_size_limit);
+    
+    /* some initial guesses at topology parameters */
+    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                           "init_tree_fanout",
+                           "Inital fanout used in the tree topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                           false, false, ompi_coll_tuned_init_tree_fanout,
+                           &ompi_coll_tuned_init_tree_fanout);
+
+    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                           "init_chain_fanout",
+                           "Inital fanout used in the chain (fanout followed by pipeline) topologies for each communicator. This is only an initial guess, if a tuned collective needs a different fanout for an operation, it build it dynamically. This parameter is only for the first guess and might save a little time",
+                           false, false, ompi_coll_tuned_init_chain_fanout,
+                           &ompi_coll_tuned_init_chain_fanout);
+
     /* now check that the user hasn't overrode any of the decision functions if dynamic rules are enabled */
     /* the user can redo this before every comm dup/create if they like */
     /* this is useful for benchmarking and user knows best tuning */
@@ -191,10 +169,23 @@ static int tuned_open(void)
     /* the actual values are looked up during comm create via module init */
    
     /* intra functions first */
+    /* if dynamic rules allowed then look up dynamic rules config filename, else we leave it an empty filename (NULL) */
+    /* by default DISABLE dynamic rules and instead use fixed [if based] rules */
+    mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
+                           "use_dynamic_rules",
+                           "Switch used to decide if we use static (compiled/if statements) or dynamic (built at runtime) decision function rules",
+                           false, false, ompi_coll_tuned_use_dynamic_rules,
+                           &ompi_coll_tuned_use_dynamic_rules);
+
     if (ompi_coll_tuned_use_dynamic_rules) {
+        mca_base_param_reg_string(&mca_coll_tuned_component.super.collm_version,
+                                  "dynamic_rules_filename",
+                                  "Filename of configuration file that contains the dynamic (@runtime) decision function rules",
+                                  false, false, ompi_coll_tuned_dynamic_rules_filename,
+                                  &ompi_coll_tuned_dynamic_rules_filename);
         ompi_coll_tuned_allreduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLREDUCE]);
         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALL]);
-        /*         ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALLV]); */
+        /*ompi_coll_tuned_alltoall_intra_check_forced_init(&ompi_coll_tuned_forced_params[ALLTOALLV]); */
         ompi_coll_tuned_barrier_intra_check_forced_init(&ompi_coll_tuned_forced_params[BARRIER]);
         ompi_coll_tuned_bcast_intra_check_forced_init(&ompi_coll_tuned_forced_params[BCAST]);
         ompi_coll_tuned_reduce_intra_check_forced_init(&ompi_coll_tuned_forced_params[REDUCE]);

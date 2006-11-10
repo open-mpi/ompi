@@ -468,12 +468,18 @@ int ompi_coll_tuned_reduce_intra_check_forced_init (coll_tuned_force_algorithm_m
                                  "Number of reduce algorithms available",
                                  false, true, max_alg, NULL);
 
-
     mca_param_indices->algorithm_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
                                  "reduce_algorithm",
                                  "Which reduce algorithm is used. Can be locked down to choice of: 0 ignore, 1 linear, 2 chain, 3 pipeline, 4 binary, 5 binomial",
                                  false, false, 0, NULL);
+    if( mca_param_indices->algorithm_param_index > max_alg ) {
+        if( 0 == ompi_comm_rank( MPI_COMM_WORLD ) ) {
+            opal_output( 0, "Reduce algorithm #%d is not available (range [0..%d]). Switching back to ignore(0)\n",
+                         mca_param_indices->algorithm_param_index, max_alg );
+        }
+        mca_param_indices->algorithm_param_index = 0;
+    }
 
     mca_param_indices->segsize_param_index
         = mca_base_param_reg_int(&mca_coll_tuned_component.super.collm_version,
