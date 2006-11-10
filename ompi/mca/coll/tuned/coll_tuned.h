@@ -168,6 +168,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_barrier_intra_linear(BARRIER_ARGS);
 
   /* Bcast */
+  int ompi_coll_tuned_bcast_intra_generic( BCAST_ARGS, uint32_t count_by_segment, ompi_coll_tree_t* tree );
   int ompi_coll_tuned_bcast_intra_dec_fixed(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_dec_dynamic(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_do_forced(BCAST_ARGS);
@@ -176,7 +177,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_bcast_intra_basic_linear(BCAST_ARGS);
   int ompi_coll_tuned_bcast_intra_chain(BCAST_ARGS, uint32_t segsize, int32_t chains);
   int ompi_coll_tuned_bcast_intra_pipeline(BCAST_ARGS, uint32_t segsize);
-  int ompi_coll_tuned_bcast_intra_bmtree(BCAST_ARGS, uint32_t segsize, int32_t chains);
+  int ompi_coll_tuned_bcast_intra_binomial(BCAST_ARGS, uint32_t segsize);
   int ompi_coll_tuned_bcast_intra_bintree(BCAST_ARGS, uint32_t segsize);
   int ompi_coll_tuned_bcast_intra_split_bintree(BCAST_ARGS, uint32_t segsize);
   int ompi_coll_tuned_bcast_inter_dec_fixed(BCAST_ARGS);
@@ -201,7 +202,7 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_gatherv_inter_dec_dynamic(GATHER_ARGS);
 
   /* Reduce */
-    int ompi_coll_tuned_reduce_generic( REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment );
+  int ompi_coll_tuned_reduce_generic( REDUCE_ARGS, ompi_coll_tree_t* tree, int count_by_segment );
   int ompi_coll_tuned_reduce_intra_dec_fixed(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_dec_dynamic(REDUCE_ARGS);
   int ompi_coll_tuned_reduce_intra_do_forced(REDUCE_ARGS);
