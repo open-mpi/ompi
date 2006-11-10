@@ -107,13 +107,12 @@ extern mca_mtl_mx_component_t mca_mtl_mx_component;
     match_bits = (match_bits << 16);                                    \
                                                                         \
     if (MPI_ANY_SOURCE == source) {                                     \
-        match_bits = (match_bits << 32);                                \
         mask_bits = MX_SOURCE_IGNR;                                     \
     } else {                                                            \
         mask_bits = ~0;                                                 \
         match_bits |= source;                                           \
-        match_bits = (match_bits << 32);                                \
     }                                                                   \
+    match_bits = (match_bits << 32);                                    \
                                                                         \
     if (MPI_ANY_TAG == tag) {                                           \
         mask_bits &= MX_TAG_IGNR;                                       \
