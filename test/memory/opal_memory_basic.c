@@ -27,7 +27,11 @@
 #include "opal/runtime/opal.h"
 #include "opal/memoryhooks/memory.h"
 
-int counter = 0;
+/* 
+ * The counter variable is volatile to avoid (wrong) compiler optimisations, 
+ * which can lead to wrong code.
+ */
+volatile int counter = 0;
 const int bigsize = 100 * 1024 * 1024;
 
 static void
