@@ -1,12 +1,11 @@
 #!/bin/ksh
 
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
-#                         Use is subject to license terms.
 
 #
-# This script takes as input a path to a prototype space of files that are to be
+# This scipt takes as input to the prototype space of files that are to be
 # encapsulated in Solaris packages.  The installation must include both 32 and
-# 64 bit libaries and prefixed in the correct manner.
+# 64 bit libraries and prefixes in the correct manner.
 #
 # The steps to build are as follows using vpaths:
 # % cd ompi-trunk
@@ -55,22 +54,21 @@
 # .../ompi-trunk/contrib/dist/solaris/$PLATFORM/$ARCH/$DATE unless otherwise
 # specified by the -b option to bld_solaris_pkgs
 #
-# This is not the ideal case for long term use.  There needs to be changes to
-# build dynamic packages instead of the static packages we have now.
-#
 
-PATH=/usr/bin/usr/sbin:${PATH}
+PATH=/usr/bin:/usr/sbin:${PATH}
 
 #
 # global variables
 #
 ARCH=`uname -p`
 DATE=`date +'%Y.%m.%d'`
-PKGNAMES="SUNWompi SUNWompimn SUNWorte SUNWortemn SUNWomsc"
+PKGNAMES="SUNWompi SUNWompimn SUNWomsc"
 PLATFORM=`uname -s`
 PROTO=
 SED_PKGINFO_PROTO=sed_pkginfo_proto
 SPOOLDEV=`pwd`"/${PLATFORM}/${ARCH}/${DATE}"
+MY_IDNAME=`id | awk -F"(" '{print $2}' | awk -F")" '{print $1}'`
+MY_IDGRP=`id | awk -F"(" '{print $3}' | awk -F")" '{print $1}'`
 
 #
 # build_package: This function takes as input the name of the package to build
@@ -100,33 +98,66 @@ function build_package
 }
 
 #
+# build_prototype: This function will create and update dynamic prototype files
+#   for open mpi
+#
+function build_prototype
+{
+	f_proto_name=prototype.$1
+
+	if [ -f ${f_proto_name} ] ; then
+		rm -f ${f_proto_name}
+	fi
+
+	if [ -f ${f_proto_name}.tmp ] ; then
+		rm -f ${f_proto_name}.tmp
+	fi
+
+    # need to prepend copyright and some basic information
+    cat copyright > ${f_proto_name}.tmp 2>&1
+	cat << _EOF >> ${f_proto_name}.tmp
+
+i pkginfo=pkginfo.${1}
+i copyright
+
+d none SUNWhpc 0755 root bin
+_EOF
+
+    if [ "$1" = "SUNWompimn" ] ; then
+        echo "d none SUNWhpc/\$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
+        pkgproto ${PROTO}/man=SUNWhpc/\$SUNW_PRODVERS/man >> ${f_proto_name}.tmp 2>&1
+    fi
+
+    if [ "$1" = "SUNWomsc" ] ; then
+        echo "d none SUNWhpc/\$SUNW_PRODVERS 0755 root bin" >> ${f_proto_name}.tmp 2>&1
+        pkgproto ${PROTO}/examples=SUNWhpc/\$SUNW_PRODVERS/examples >> ${f_proto_name}.tmp 2>&1
+    fi
+
+    if [ "$1" = "SUNWompi" ] ; then
+        pkgproto ${PROTO}=SUNWhpc/\$SUNW_PRODVERS | egrep -v "man|examples|\.la" >> ${f_proto_name}.tmp 2>&1
+    fi
+
+	sed -f ${SED_PKGINFO_PROTO} ${f_proto_name}.tmp > ${f_proto_name}
+
+	if [ -f ${f_proto_name}.tmp ] ; then
+		rm -f ${f_proto_name}.tmp
+	fi
+}
+
+#
 # build_sed_script: This function creates the temporary sed script that is used
 #   to process the pkginfo and prototype template files.
 #
 function build_sed_script
 {
-	if [ ${ARCH} == sparc ] ; then
-		lib_v9="sparcv9"
-		inc_v9="v9"
-	elif [ ${ARCH} == i386 ] ; then
-		lib_v9="amd64"
-		inc_v9="amd64"
-	else
-		lib_v9="64"
-		inc_v9="64"
-	fi
-
 	if [ -f ${SED_PKGINFO_PROTO} ] ; then
 		rm -f ${SED_PKGINFO_PROTO}
 	fi
 
 	cat << _EOF > ${SED_PKGINFO_PROTO}
-s/\/LIB_ISAV9/\/${lib_v9}/g
-s/\/INC_ISAV9/\/${inc_v9}/g
-s/\/LIB_ISA/\/${ARCH}/g
-s/\/INC_ISA/\/${ARCH}/g
-s/\/ISA/\/${ARCH}/g
 s/\=\"ISA\"/\=\"${ARCH}\"/g
+s/ ${MY_IDNAME} / root /g
+s/ ${MY_IDGRP}/ bin/g
 _EOF
 
 }
@@ -176,22 +207,6 @@ function update_pkginfo
 }
 
 #
-# update_prototype: This function takes a single input of a package name and
-#   creates the needed prototype file from the template and processing it
-#   with the sed_pkginfo_proto script.
-#
-function update_prototype
-{
-	f_proto_name=prototype.$1
-
-	if [ -f ${f_proto_name} ] ; then
-		rm -f ${f_proto_name}
-	fi
-
-	sed -f ${SED_PKGINFO_PROTO} ${f_proto_name}.tmpl > ${f_proto_name}
-}
-
-#
 #
 #
 function usage
@@ -233,13 +248,13 @@ build_sed_script
 
 for pkg in ${PKGNAMES}
 do
-	update_pkginfo ${pkg}
-	update_prototype ${pkg}
+    update_pkginfo ${pkg}
+    build_prototype ${pkg}
 
-	build_package ${pkg}
+    build_package ${pkg}
 
-	cleanup_pkginfo ${pkg}
-	cleanup_prototype ${pkg}
+    cleanup_pkginfo ${pkg}
+    cleanup_prototype ${pkg}
 done
 
 rm ${SED_PKGINFO_PROTO}
