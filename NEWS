@@ -27,11 +27,10 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Added threaded progress for the openib BTL.
+  --> Expected: ?1.3?
 - Massive performance improvements for MPI collectives on high-speed
   networks.
-  --> Expected: 1.2
-- Print better error messages when mpirun's "-nolocal" is used when
-  there is only one node available.
   --> Expected: 1.2
 - Much more scalable MPI process launch.
   --> Expected: 1.2
@@ -46,11 +45,12 @@ Trunk (not on release branches yet)
   --> Expected: ???
 
 
-
 1.2
 ---
 
 - Fixes for MPI_STATUS_SET_ELEMENTS.
+- Print better error messages when mpirun's "-nolocal" is used when
+  there is only one node available.
 - Added man pages for several Open MPI executables and the MPI API
   functions.
 - A number of fixes for Alpha platforms.
