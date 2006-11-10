@@ -1,3 +1,9 @@
+Most files in this release are marked with the copyrights of the
+organizations who have edited them.  The copyrights below generally
+reflect members of the Open MPI core team who have contributed code to
+this release.  The copyrights for code used under license from other
+parties is included in the corresponding files.
+
 Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
                         University Research and Technology
                         Corporation.  All rights reserved.
@@ -8,7 +14,8 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Â© Copyright  2006      Los Alamos National Security, LLC All rights reserved
+© Copyright  2006       Los Alamos National Security, LLC.  All rights
+                        reserved. 
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sandia National Laboratories. All rights reserved.
