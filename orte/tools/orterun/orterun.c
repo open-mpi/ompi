@@ -742,7 +742,7 @@ static void exit_callback(int fd, short event, void *arg)
 static void abort_signal_callback(int fd, short flags, void *arg)
 {
     int ret;
-    struct timeval tv = { 5, 0 };
+    struct timeval tv = { 1, 0 };
     opal_event_t* event;
 
     static int signalled = 0;
@@ -766,10 +766,17 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         }
     }
     
+    /* setup a delay - if the timer fires, then we assume that the orteds
+     * failed to properly kill the job. This can happen for a variety of
+     * reasons - for example, if an application couldn't be found, then
+     * the local orted may not be able to tell us it "terminated" since
+     * it never actually started
+     */
     if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
     }
+    
 }
 
 

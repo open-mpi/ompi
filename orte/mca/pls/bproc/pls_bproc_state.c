@@ -39,10 +39,11 @@
  * as being launched.
  */
 
-int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid)
+int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid, int nodenum)
 {
     orte_gpr_value_t *values[1];
     char *segment;
+    char *nodename;
     int rc;
 
     if(ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, name->jobid))) {
@@ -53,31 +54,38 @@ int orte_pls_bproc_set_proc_pid(const orte_process_name_t *name, pid_t pid)
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&values[0],
                                                     ORTE_GPR_OVERWRITE,
                                                     segment,
-                                                    1, 0))) {
+                                                    2, 0))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         free(segment);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
+    free(segment);
 
     if(ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(values[0]->tokens), &(values[0]->num_tokens), (orte_process_name_t*)name))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
-        free(segment);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_PID_KEY, ORTE_PID, &pid))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_PROC_LOCAL_PID_KEY, ORTE_PID, &pid))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
-        free(segment);
         return rc;
     }
 
+    asprintf(&nodename, "%ld", (long)nodenum);
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[1]), ORTE_NODE_NAME_KEY, ORTE_STRING, nodename))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(values[0]);
+        free(nodename);
+        return rc;
+    }
+    free(nodename);
+    
     rc = orte_gpr.put(1, values);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(values[0]);
-        free(segment);
         return rc;
     }
 
@@ -116,7 +124,7 @@ int orte_pls_bproc_get_proc_pid(const orte_process_name_t* name, pid_t* pid)
         return rc;
     }
 
-    keys[0] = ORTE_PROC_PID_KEY;
+    keys[0] = ORTE_PROC_LOCAL_PID_KEY;
     keys[1] = NULL;
 
     rc = orte_gpr.get(

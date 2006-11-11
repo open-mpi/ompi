@@ -473,6 +473,11 @@ int main(int argc, char *argv[])
         }
         OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
+        /* make sure our local procs are dead - but don't update their state
+         * on the HNP as this may be redundant
+         */
+        orte_odls.kill_local_procs(orted_globals.bootproxy, false);
+
         /* cleanup session directory */
         orte_session_dir_cleanup(orted_globals.bootproxy);
 

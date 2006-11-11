@@ -31,6 +31,9 @@
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/smr/smr.h"
+#include "orte/mca/schema/schema.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/errmgr/base/base.h"
 #include "orte/mca/errmgr/hnp/errmgr_hnp.h"
@@ -48,6 +51,14 @@
 int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
 {
     orte_jobid_t job;
+    orte_vpid_t start, range;
+    orte_std_cntr_t num;
+    char *segment;
+    char *tokens[] = {
+        ORTE_JOB_GLOBALS,
+        NULL
+    };
+    orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
     int rc;
     
     OPAL_TRACE(1);
@@ -70,6 +81,30 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
     
     /* tell the pls to terminate the job */
     if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* orterun will only wakeup when all procs report terminated. The terminate_job
+     * function *should* have done that - however, it is possible during abnormal
+     * startup that it will fail to happen. If we get here, we force the issue by
+     * deliberately causing the TERMINATE trigger to fire
+     */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.get_vpid_range(job, &start, &range))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    num = range;
+    if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)&num, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.put_1(ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                                             segment, tokens, ORTE_PROC_NUM_TERMINATED, &dval))) {
         ORTE_ERROR_LOG(rc);
     }
     
