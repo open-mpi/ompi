@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -23,7 +23,7 @@
 
 AM_TARGET_VERSION=1.9.6
 AC_TARGET_VERSION=2.59
-LT_TARGET_VERSION=1.5.22
+LT_TARGET_VERSION=2.1a
 
 #
 # First things first -- check that the auto versions that we have are
@@ -34,7 +34,7 @@ check_gnu_version() {
     prog="$1"
     target="$2"
 
-    ver="`$prog --version | head -n 1 | cut -d\  -f 4`"
+    ver="`$prog --version | head -n 1 | sed -e's/([^)]*)//g' -e's/[^0-9 .][^ ]* / /g' -e's/ //g'`"
     if test "$ver" != "$target"; then 
         cat <<EOF
 ERROR: Program "$prog" does not have the correct/expected version:
