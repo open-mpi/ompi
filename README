@@ -61,11 +61,6 @@ Release notes for SC 2006 beta:
   - Workaround for Intel C++ compiler bug
   - MPI_SIZEOF fixes for COMPLEX types
 
-- MPI jobs running on OpenIB / OpenFabrics networks that
-  simultaneously post a large number of non-blocking sends of small
-  messages may fail.  This issue is fixed on the Open MPI development
-  head, and will be included in the post-SC beta release.
-
 - Striping MPI messages across multiple TCP interfaces is not working.
 
 - See Open MPI's bug tracking system for a full list of outstanding
