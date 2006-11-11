@@ -1021,7 +1021,7 @@ static int orte_pls_bproc_launch_app(orte_cellid_t cellid, orte_jobid_t jobid,
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
                 }
-                orte_pls_bproc_set_proc_pid(proc_name, pids[j]);
+                orte_pls_bproc_set_proc_pid(proc_name, pids[j], node_list[j]);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;

@@ -29,6 +29,7 @@
 #include "orte/dss/dss.h"
 #include "orte/util/proc_info.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/smr/smr_types.h"
 
 #include "orte/mca/odls/base/base.h"
 #include "orte/mca/odls/base/odls_private.h"
@@ -46,6 +47,24 @@
  * Instantiate globals
  */
 orte_odls_base_module_t orte_odls;
+
+/* instance the child list object */
+static void orte_odls_child_constructor(orte_odls_child_t *ptr)
+{
+    ptr->name = NULL;
+    ptr->pid = 0;
+    ptr->app_idx = -1;
+    ptr->alive = false;
+    ptr->state = ORTE_PROC_STATE_UNDEF;
+}
+static void orte_odls_child_destructor(orte_odls_child_t *ptr)
+{
+    if (NULL != ptr->name) free(ptr->name);
+}
+OBJ_CLASS_INSTANCE(orte_odls_child_t,
+                   opal_list_item_t,
+                   orte_odls_child_constructor,
+                   orte_odls_child_destructor);
 
 /*
  * Framework global variables

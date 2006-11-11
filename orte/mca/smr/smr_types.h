@@ -34,6 +34,7 @@ typedef int orte_exit_code_t;
 typedef uint16_t orte_proc_state_t;
 #define ORTE_PROC_STATE_T   ORTE_UINT16
 
+#define ORTE_PROC_STATE_UNDEF               0x0000  /* undefined process state */
 #define ORTE_PROC_STATE_INIT                0x0001  /* process entry has been created by rmaps */
 #define ORTE_PROC_STATE_LAUNCHED            0x0002  /* process has been launched by pls */
 #define ORTE_PROC_STATE_AT_STG1             0x0004  /* process is at Stage Gate 1 barrier in orte_init */
