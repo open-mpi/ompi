@@ -212,7 +212,7 @@ ompi_convertor_get_unpacked_size( const ompi_convertor_t* pConv,
          * dependencies (and to speed-up this code) we will not test    \
          * the convertor->local_size but we can test the 2 components.  \
          */                                                             \
-        if( 0 == (convertor->count | datatype->size) ) {                \
+        if( (0 == convertor->count) || (0 == datatype->size) ) {        \
             convertor->flags |= CONVERTOR_COMPLETED;                    \
             convertor->remote_size = 0;                                 \
             return OMPI_SUCCESS;                                        \
