@@ -579,7 +579,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                  orte_buffer_t *buffer, orte_rml_tag_t tag,
                  void* cbdata)
 {
-    orte_buffer_t *answer;
     orte_daemon_cmd_flag_t command;
     int ret;
     orte_std_cntr_t n;
@@ -604,22 +603,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
         goto CLEANUP;
     }
     
-    /* setup the answer */
-    answer = OBJ_NEW(orte_buffer_t);
-    if (NULL == answer) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        goto CLEANUP;
-    }
-    
-    /* pack the command to ensure we always have something to send back, and
-     * so that the caller can verify communication
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(answer);
-        goto CLEANUP;
-    }
-    
     switch(command) {
 
         /****    KILL_LOCAL_PROCS   ****/
@@ -635,7 +618,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
 
             if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(job, true))) {
@@ -653,7 +636,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &signal, &n, ORTE_INT32))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
                 
             /* see if they specified a process to signal, or if we
@@ -676,7 +659,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             /* unpack the notify data object */
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
             
             /* launch the processes */
@@ -706,13 +689,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             break;
     }
 
-DONE:
-    /* send the response */
-    if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-    }
-    OBJ_RELEASE(answer);
- 
  CLEANUP:
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
