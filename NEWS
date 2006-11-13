@@ -43,6 +43,9 @@ Trunk (not on release branches yet)
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
+- Fix for a memory leak in the datatpe engine.  Thanks to
+  Andreas Schafer for reporting, diagnosing, and fixing this problem.
+  --> Expected: 1.1.3
 
 
 1.2
