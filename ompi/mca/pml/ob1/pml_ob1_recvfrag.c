@@ -737,6 +737,7 @@ rematch:
 
                 /* if match found, process data */
                 if (match) {
+                    match->req_recv.req_base.req_proc = proc->ompi_proc;
 
                     /*
                      * If this was a probe need to queue fragment on unexpected list
