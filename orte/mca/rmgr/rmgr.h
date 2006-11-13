@@ -65,7 +65,8 @@ extern "C" {
 typedef int (*orte_rmgr_base_module_setup_job_fn_t)(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
-    orte_jobid_t *jobid);
+    orte_jobid_t *jobid,
+    opal_list_t *attributes);
 
 /*
  * Callback function for resource manager

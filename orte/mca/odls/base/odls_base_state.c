@@ -86,19 +86,6 @@ int orte_odls_base_report_spawn(opal_list_t *children)
                 return rc;
             }
             dval.data = NULL;
-            if (ORTE_SUCCESS != (rc = orte_dss.set(&dval, (void*)orte_system_info.nodename, ORTE_STRING))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tokens);
-                free(segment);
-                return rc;
-            }
-            if (ORTE_SUCCESS != (rc = orte_gpr.put_1(mode, segment, tokens, ORTE_NODE_NAME_KEY, &dval))) {
-                ORTE_ERROR_LOG(rc);
-                opal_argv_free(tokens);
-                free(segment);
-                return rc;
-            }
-            dval.data = NULL;
             opal_argv_free(tokens);
             free(segment);
             

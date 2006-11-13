@@ -143,17 +143,27 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
                 return;
             }
                 
-            /* process the request */
-            if (ORTE_SUCCESS != (rc = orte_rmgr.setup_job(context, num_context, &job))) {
+            /* unpack the attributes */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
                 ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
+                goto CLEANUP_SPAWN;
+            }
+                
+            /* process the request */
+            if (ORTE_SUCCESS != (rc = orte_rmgr.setup_job(context, num_context, &job, &attrs))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP_SPAWN;
             }
 
             /* return the new jobid */
             if(ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
+                goto CLEANUP_SPAWN;
             }
+                
+            goto CLEANUP_SPAWN;  /* clean up the attrs and contexts */
             break;
 
         case ORTE_RMGR_SPAWN_JOB_CMD:
