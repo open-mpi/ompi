@@ -694,12 +694,9 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received exit",
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
-            /* send the response before we wakeup because otherwise
-             * we'll depart before it gets out!
+            /* no response to send - the fact that we received the command
+             * is known to the HNP because the send_nb gets a callback
              */
-            if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
-                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            }
             orted_globals.exit_condition = true;
             opal_condition_signal(&orted_globals.condition);
             break;

@@ -28,6 +28,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/class/opal_list.h"
+#include "opal/threads/condition.h"
 
 #include "orte/mca/pls/pls.h"
 
@@ -37,7 +38,7 @@ extern "C" {
 #endif
 
     /**
-     * Struct to hold data globale to the pls framework
+     * Struct to hold data global to the pls framework
      */
     typedef struct orte_pls_base_t {
         /** Verbose/debug output stream */
@@ -48,6 +49,10 @@ extern "C" {
         bool selected;
         /** selected component */
         orte_pls_base_component_t selected_component;
+        /* orted cmd comm lock */
+        opal_mutex_t orted_cmd_lock;
+        /* orted cmd cond */
+        opal_condition_t orted_cmd_cond;
     } orte_pls_base_t;
     
     /**

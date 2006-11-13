@@ -20,6 +20,7 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
+#include "opal/threads/condition.h"
 #include "opal/util/output.h"
 #include "opal/util/argv.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -31,19 +32,36 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
+
+static orte_std_cntr_t orted_cmd_num_active;
+
+static void orte_pls_base_orted_send_cb(int status,
+                                            orte_process_name_t* peer,
+                                            orte_buffer_t* req,
+                                            orte_rml_tag_t tag,
+                                            void* cbdata)
+{
+    OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    orted_cmd_num_active--;
+    if (orted_cmd_num_active == 0) {
+        opal_condition_signal(&orte_pls_base.orted_cmd_cond);
+    }
+    OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+}
 
 
 int orte_pls_base_orted_exit(opal_list_t *daemons)
 {
     int rc;
-    orte_buffer_t cmd, answer;
+    orte_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_EXIT_CMD;
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
 
     OPAL_TRACE(1);
-        
+    
     OBJ_CONSTRUCT(&cmd, orte_buffer_t);
     
     /* pack the command */
@@ -58,19 +76,22 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
 
-        if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
+        if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
+                                        0, orte_pls_base_orted_send_cb, NULL)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);
             return ORTE_ERR_COMM_FAILURE;
         }
-            
-        OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        OBJ_DESTRUCT(&answer);  
+        orted_cmd_num_active++;
     }
-
+    
+    /* wait for all commands to have been received */
+    OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    if (orted_cmd_num_active > 0) {
+        opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
+    }
+    OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+    
 CLEANUP:
     OBJ_DESTRUCT(&cmd);
     
@@ -82,7 +103,7 @@ CLEANUP:
 int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
 {
     int rc;
-    orte_buffer_t cmd, answer;
+    orte_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_KILL_LOCAL_PROCS;
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
@@ -109,18 +130,23 @@ int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
 
-        if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
+        if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
+                                        0, orte_pls_base_orted_send_cb, NULL)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);
             return rc;
         }
             
-        OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        OBJ_DESTRUCT(&answer);  
+        orted_cmd_num_active++;
     }
+
+    /* wait for all commands to have been received */
+    OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    if (orted_cmd_num_active > 0) {
+        opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
+    }
+    OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+    
     
 CLEANUP:
         OBJ_DESTRUCT(&cmd);
@@ -134,7 +160,7 @@ CLEANUP:
 int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal)
 {
     int rc;
-    orte_buffer_t cmd, answer;
+    orte_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_SIGNAL_LOCAL_PROCS;
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
@@ -161,19 +187,23 @@ int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal)
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
         
-        if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
+        if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
+                                        0, orte_pls_base_orted_send_cb, NULL)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);
             return rc;
         }
         
-        OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        OBJ_DESTRUCT(&answer);  
+        orted_cmd_num_active++;
     }
     
+    /* wait for all commands to have been received */
+    OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    if (orted_cmd_num_active > 0) {
+        opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
+    }
+    OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+
 CLEANUP:
     OBJ_DESTRUCT(&cmd);
     
@@ -185,7 +215,7 @@ CLEANUP:
 int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_data_t *ndat)
 {
     int rc;
-    orte_buffer_t cmd, answer;
+    orte_buffer_t cmd;
     orte_daemon_cmd_flag_t command=ORTE_DAEMON_ADD_LOCAL_PROCS;
     opal_list_item_t *item;
     orte_pls_daemon_info_t *dmn;
@@ -212,19 +242,23 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
         
-        if (0 > orte_rml.send_buffer(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED, 0)) {
+        if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
+                                        0, orte_pls_base_orted_send_cb, NULL)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
             OBJ_DESTRUCT(&cmd);
             return rc;
         }
         
-        OBJ_CONSTRUCT(&answer, orte_buffer_t);
-        if (0 > orte_rml.recv_buffer(dmn->name, &answer, ORTE_RML_TAG_PLS_ORTED_ACK)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        OBJ_DESTRUCT(&answer);  
+        orted_cmd_num_active++;
     }
     
+    /* wait for all commands to have been received */
+    OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    if (orted_cmd_num_active > 0) {
+        opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
+    }
+    OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+
 CLEANUP:
     OBJ_DESTRUCT(&cmd);
     
