@@ -219,8 +219,11 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
             return true;
         }
 
-        /* Sleep for a second */
-        sleep(1);
+#if defined(__WINDOWS__)
+        SwitchToThread();
+#elif defined(HAVE_SCHED_YIELD)
+        sched_yield();
+#endif
     } while (time(NULL) < end);
 
     /* The child didn't die, so return false */
