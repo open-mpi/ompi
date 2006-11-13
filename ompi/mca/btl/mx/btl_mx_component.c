@@ -20,6 +20,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
+#include "opal/util/opal_environ.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -35,6 +36,8 @@
 #include "btl_mx_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/mca/btl/base/btl_base_error.h"
+
+extern char** environ;
 
 mca_btl_mx_component_t mca_btl_mx_component = {
     {
@@ -251,6 +254,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     mx_set_error_handler(MX_ERRORS_RETURN);
     /* Until this BTL reach a stable state let MX library generate assert for the errors */
     /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
+    opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
 
     /* First check if MX is available ... */
     if( MX_SUCCESS != (status = mx_init()) ) {
