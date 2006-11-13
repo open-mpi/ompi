@@ -520,7 +520,7 @@ int main(int argc, char *argv[])
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -532,7 +532,7 @@ int main(int argc, char *argv[])
     orte_finalize();
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     exit(0);
@@ -546,6 +546,10 @@ int main(int argc, char *argv[])
 static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag)
 {
     int rc;
+    
+    if (orted_globals.debug_daemons) {
+        opal_output(0, "[%lu,%lu,%lu] orted: received launch callback", ORTE_NAME_ARGS(orte_process_info.my_name));
+    }
     
     /* pass the data to the orted_local_launcher and get a report on
      * success or failure of the launch

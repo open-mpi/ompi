@@ -46,13 +46,15 @@
 #include "orte/mca/smr/smr.h"
 
 #include "orte/mca/rmgr/base/rmgr_private.h"
+#include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/rmgr/urm/rmgr_urm.h"
 
 
 static int orte_rmgr_urm_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
-    orte_jobid_t* jobid);
+    orte_jobid_t* jobid,
+    opal_list_t *attrs);
 
 static int orte_rmgr_urm_spawn_job(
     orte_app_context_t** app_context,
@@ -110,20 +112,31 @@ static int orte_rmgr_urm_module_init(void)
  *  Setup the job
  */
 
-static int orte_rmgr_urm_setup_job(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid)
+static int orte_rmgr_urm_setup_job(orte_app_context_t** app_context,
+                                   orte_std_cntr_t num_context,
+                                   orte_jobid_t* jobid,
+                                   opal_list_t *attrs)
 {
     int rc;
     orte_std_cntr_t i;
+    orte_attribute_t *attr;
+    orte_jobid_t *jptr;
     
     OPAL_TRACE(1);
 
-    /* allocate a jobid  */
-    if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
+    /* check for given jobid */
+    if (NULL != (attr = orte_rmgr.find_attribute(attrs, ORTE_RMGR_USE_GIVEN_JOBID))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        *jobid = *jptr;
+    } else {
+        /* allocate a jobid  */
+        if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }        
     }
 
     /* for each app_context, we need to purge their environment of HNP
@@ -273,6 +286,9 @@ static void orte_rmgr_urm_wireup_callback(orte_gpr_notify_data_t *data, void *cb
         ORTE_ERROR_LOG(rc);
         return;
     }
+    
+    opal_output(orte_rmgr_base.rmgr_output, "rmgr_urm:wireup_callback called for job %ld", (long)jobid);
+    
     orte_rmgr_urm_wireup_stdin(jobid);
 }
 
@@ -340,13 +356,11 @@ static int orte_rmgr_urm_spawn_job(
      * with a valid jobid, so no need to get one
      */
      if (flags & ORTE_RMGR_SETUP) {
-         if (ORTE_JOBID_INVALID == *jobid) { /* setup the job */
              if (ORTE_SUCCESS !=
-                 (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid))) {
+                 (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid,attributes))) {
                  ORTE_ERROR_LOG(rc);
                  return rc;
              }
-         }     
      }
      
      if (flags & ORTE_RMGR_ALLOC) {
@@ -367,85 +381,85 @@ static int orte_rmgr_urm_spawn_job(
          }
      }
 
-     /* if we don't want to launch, then just return here - don't setup the io forwarding
-      * or do any of the remaining pre-launch things
-      */
-     if (!(flags & ORTE_RMGR_LAUNCH)) {
-         return ORTE_SUCCESS;
-     }
-     
-     /*
-     * setup I/O forwarding
-     */
+     if (flags & ORTE_RMGR_SETUP_TRIGS) {
+         /*
+         * setup I/O forwarding
+         */
 
-    if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    free(name); /* done with this */
+        if (ORTE_SUCCESS != (rc = orte_ns.create_process_name(&name, 0, *jobid, 0))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        free(name); /* done with this */
 
-    /* setup the launch system's stage gate counters and subscriptions */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
-    rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-     /*
-      * Define the ERRMGR's callbacks as required
-      */
-     if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
-         ORTE_ERROR_LOG(rc);
-         return rc;
-     }
-     
-    /*
-     * setup caller's callback
-     */
-
-    if(NULL != cbfunc) {
-        union {
-            orte_rmgr_cb_fn_t func;
-            void * ptr;
-        } cbfunc_union;
-        void *cbdata;
-
-        /* ISO C forbids conversion of object pointer to function
-           pointer.  So we do this, which is the same thing, but without
-           the warning from GCC */
-        cbfunc_union.func = cbfunc;
-        cbdata = cbfunc_union.ptr;
-
-        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, cbdata, cb_conditions);
+        /* setup the launch system's stage gate counters and subscriptions */
+        if (ORTE_SUCCESS != (rc = orte_rmgr_base_proc_stage_gate_init(*jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-    }
 
-     /* check for timing request - get stop time and report elapsed time if so */
-     if (mca_rmgr_urm_component.timing) {
-         if (0 != gettimeofday(&urmstop, NULL)) {
-             opal_output(0, "rmgr_urm: could not obtain stop time");
-         } else {
-             opal_output(0, "rmgr_urm: job setup time is %ld usec",
-                         (long int)((urmstop.tv_sec - urmstart.tv_sec)*1000000 +
-                                    (urmstop.tv_usec - urmstart.tv_usec)));
+         /*
+          * Define the ERRMGR's callbacks as required
+          */
+         if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
+             ORTE_ERROR_LOG(rc);
+             return rc;
          }
+         
+        /*
+         * setup caller's callback
+         */
+
+        if(NULL != cbfunc) {
+            union {
+                orte_rmgr_cb_fn_t func;
+                void * ptr;
+            } cbfunc_union;
+            void *cbdata;
+
+            /* ISO C forbids conversion of object pointer to function
+               pointer.  So we do this, which is the same thing, but without
+               the warning from GCC */
+            cbfunc_union.func = cbfunc;
+            cbdata = cbfunc_union.ptr;
+
+            rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_urm_callback, cbdata, cb_conditions);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
+         /* check for timing request - get stop time and report elapsed time if so */
+         if (mca_rmgr_urm_component.timing) {
+             if (0 != gettimeofday(&urmstop, NULL)) {
+                 opal_output(0, "rmgr_urm: could not obtain stop time");
+             } else {
+                 opal_output(0, "rmgr_urm: job setup time is %ld usec",
+                             (long int)((urmstop.tv_sec - urmstart.tv_sec)*1000000 +
+                                        (urmstop.tv_usec - urmstart.tv_usec)));
+             }
+         }
+     }
+     
+     /* if we don't want to launch, then just return here */
+     if (!(flags & ORTE_RMGR_LAUNCH)) {
+         return ORTE_SUCCESS;
      }
      
      /*

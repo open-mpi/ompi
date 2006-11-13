@@ -30,7 +30,9 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -38,7 +40,9 @@
 #ifdef HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
-#include <time.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 #ifdef HAVE_SYS_PARAM_H
 #include <sys/param.h>
 #endif
@@ -48,6 +52,18 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
+
+#if defined(HAVE_SCHED_YIELD)
+/* Only if we have sched_yield() */
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
+#else
+/* Only do these if we don't have <sched.h> */
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#endif /* HAVE_SCHED_YIELD */
 
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
@@ -206,7 +222,11 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 {
     time_t end;
     pid_t ret;
-
+#if !defined(HAVE_SCHED_YIELD)
+    struct timeval t;
+    fd_set bogus;
+#endif
+        
     end = time(NULL) + timeout;
     do {
         ret = waitpid(pid, exit_status, WNOHANG);
@@ -219,11 +239,17 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
             return true;
         }
 
-#if defined(__WINDOWS__)
-        SwitchToThread();
-#elif defined(HAVE_SCHED_YIELD)
+#if defined(HAVE_SCHED_YIELD)
         sched_yield();
+#else
+        /* Bogus delay for 1 usec */
+        t.tv_sec = 0;
+        t.tv_usec = 1;
+        FD_ZERO(&bogus);
+        FD_SET(0, &bogus);
+        select(1, &bogus, NULL, NULL, &t);
 #endif
+        
     } while (time(NULL) < end);
 
     /* The child didn't die, so return false */
@@ -541,7 +567,7 @@ static int odls_default_fork_local_proc(
         } else {
             environ_copy = opal_argv_copy(base_environ);
         }
-        
+
         /* special case handling for --prefix: this is somewhat icky,
            but at least some users do this.  :-\ It is possible that
            when using --prefix, the user will also "-x PATH" and/or
@@ -618,7 +644,7 @@ static int odls_default_fork_local_proc(
         opal_setenv(param, uri, true, &environ_copy);
         free(param);
         free(uri);
-
+        
         /* use same nodename as the starting daemon (us) */
         param = mca_base_param_environ_variable("orte", "base", "nodename");
         opal_setenv(param, orte_system_info.nodename, true, &environ_copy);
@@ -627,6 +653,7 @@ static int odls_default_fork_local_proc(
         /* push name into environment */
         orte_ns_nds_env_put(child->name, vpid_start, vpid_range,
                             &environ_copy);
+
 
         /* close all file descriptors w/ exception of stdin/stdout/stderr */
         for(fd=3; fd<fdmax; fd++)
@@ -745,6 +772,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    
+    opal_output(orte_odls_globals.output, "odls: setting up launch for job %ld", (long)job);
+    
     /* We need to create a list of the app_contexts
      * so we can know what to launch - the process info only gives
      * us an index into the app_context array, not the app_context
@@ -892,6 +922,9 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
             continue;
         }
         
+        opal_output(orte_odls_globals.output, "odls: preparing to launch child [%ld, %ld, %ld]",
+                                              ORTE_NAME_ARGS(child->name));
+
         /* find the indicated app_context in the list */
         for (item2 = opal_list_get_first(&app_context_list);
              item2 != opal_list_get_end(&app_context_list);
