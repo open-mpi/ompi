@@ -430,13 +430,20 @@ GOTCHILD:
             /* the abort file must exist - there is nothing in it we need. It's
              * meer existence indicates that an abnormal termination occurred
              */
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died by abort",
+                        ORTE_NAME_ARGS(child->name));
             aborted = true;
             free(abort_file);
+        } else {
+            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died naturally",
+                        ORTE_NAME_ARGS(child->name));
         }
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition
          */
+        opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died by signal",
+                    ORTE_NAME_ARGS(child->name));
         aborted = true;
     }
 

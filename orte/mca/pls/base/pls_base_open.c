@@ -60,6 +60,10 @@ int orte_pls_base_open(void)
     /* init selected to be false */
     orte_pls_base.selected = false;
 
+    /* initialize the condition variables for orted comm */
+    OBJ_CONSTRUCT(&orte_pls_base.orted_cmd_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_pls_base.orted_cmd_cond, opal_condition_t);
+
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 

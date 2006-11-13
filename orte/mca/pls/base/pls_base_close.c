@@ -62,6 +62,10 @@ int orte_pls_base_close(void)
                                 &orte_pls_base.available_components, NULL);
     OBJ_DESTRUCT(&orte_pls_base.available_components);
 
+    /* clearout the orted cmd locks */
+    OBJ_DESTRUCT(&orte_pls_base.orted_cmd_lock);
+    OBJ_DESTRUCT(&orte_pls_base.orted_cmd_cond);
+    
     return ORTE_SUCCESS;
 }
 
