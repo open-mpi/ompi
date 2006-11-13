@@ -43,8 +43,8 @@ Trunk (not on release branches yet)
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
-- Fix for a memory leak in the datatpe engine.  Thanks to
-  Andreas Schafer for reporting, diagnosing, and fixing this problem.
+- Fix for a memory leak in the derived datatype function ompi_ddt_duplicate().
+  Thanks to Andreas Schafer for reporting, diagnosing, and patching the leak.
   --> Expected: 1.1.3
 
 
