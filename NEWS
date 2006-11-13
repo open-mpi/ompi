@@ -86,8 +86,9 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
-- Fixed a memory leak when copying memory datatypes.  Thanks to
-  Andreas Schafer for the fix.
+- Fix for a memory leak in the derived datatype function
+  ompi_ddt_duplicate().  Thanks to Andreas Schafer for reporting,
+  diagnosing, and patching the leak.
 - Used better performing basic algorithm for MPI_ALLGATHERV.
 - Added a workaround for a bug in the Intel 9.1 C++ compiler (all
   versions up to and including 20060925) in the MPI C++ bindings that
