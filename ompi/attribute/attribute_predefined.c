@@ -340,6 +340,7 @@ void ompi_attr_create_predefined_callback(
                        i < (data->values)->size; i++) {
             if (NULL != value[i]) {
                 k++;
+                rank = ORTE_VPID_INVALID;
                 if (0 < value[i]->cnt) {  /* make sure some data was returned here */
                     keyval = value[i]->keyvals;
                     for (j=0; j < value[i]->cnt; j++) {
