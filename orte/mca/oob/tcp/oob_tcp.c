@@ -690,20 +690,18 @@ static void mca_oob_tcp_recv_connect(int sd, mca_oob_tcp_hdr_t* hdr)
         }
     }
 
-    /* check for wildcard name - if this is true - we allocate a name from the name server
+    /* check for invalid name - if this is true - we allocate a name from the name server
      * and return to the peer
      */
-    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, &hdr->msg_src, MCA_OOB_NAME_ANY);
-    if (cmpval == 0) {
-        if (ORTE_SUCCESS != orte_ns.create_jobid(&hdr->msg_src.jobid)) {
+    cmpval = orte_ns.compare_fields(ORTE_NS_CMP_ALL, &hdr->msg_src, ORTE_NAME_INVALID);
+    if (cmpval == ORTE_EQUAL) {
+        if (ORTE_SUCCESS != orte_ns.create_jobid(&hdr->msg_src.jobid, NULL)) {
            return;
         }
         if (ORTE_SUCCESS != orte_ns.reserve_range(hdr->msg_src.jobid, 1, &hdr->msg_src.vpid)) {
            return;
         }
-        if (ORTE_SUCCESS != orte_ns.assign_cellid_to_process(&hdr->msg_src)) {
-           return;
-        }
+        hdr->msg_src.cellid = ORTE_PROC_MY_NAME->cellid;
     }
 
     /* lookup the corresponding process */
@@ -1049,12 +1047,8 @@ int mca_oob_tcp_init(void)
 #endif
 
     /* get my jobid */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid,
-                                                orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
+    jobid = ORTE_PROC_MY_NAME->jobid;
+    
     /* create a listen socket */
     if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
         if(mca_oob_tcp_create_listen() != ORTE_SUCCESS) {
@@ -1286,12 +1280,17 @@ int mca_oob_tcp_fini(void)
 * Note that the definition of < or > is somewhat arbitrary -
 * just needs to be consistently applied to maintain an ordering
 * when process names are used as indices.
+*
+* Currently, this function is ONLY used in one place - in oob_tcp_send.c to
+* determine if the recipient of the message-to-be-sent is ourselves. Hence,
+* this comparison is okay to be LITERAL and can/should use the ns.compare_fields
+* function
 */
 
 
 int mca_oob_tcp_process_name_compare(const orte_process_name_t* n1, const orte_process_name_t* n2)
 {
-    return orte_ns.compare(ORTE_NS_CMP_ALL, n1, n2);
+    return orte_ns.compare_fields(ORTE_NS_CMP_ALL, n1, n2);
 }
 
 

@@ -832,8 +832,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
              * current nodename, which must be local.  If that doesn't
              * match, check using ifislocal().
              */
-            if (0 == strcmp(rmaps_node->nodename, orte_system_info.nodename) ||
-                opal_ifislocal(rmaps_node->nodename)) {
+            if (!mca_pls_rsh_component.force_rsh &&
+                (0 == strcmp(rmaps_node->nodename, orte_system_info.nodename) ||
+                opal_ifislocal(rmaps_node->nodename))) {
                 if (mca_pls_rsh_component.debug) {
                     opal_output(0, "pls:rsh: %s is a LOCAL node\n",
                                 rmaps_node->nodename);
@@ -1103,7 +1104,7 @@ cleanup:
 /**
  * Terminate all processes for a given job
  */
-int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
+int orte_pls_rsh_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1113,7 +1114,7 @@ int orte_pls_rsh_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -1135,7 +1136,7 @@ CLEANUP:
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid)
+int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1145,7 +1146,7 @@ int orte_pls_rsh_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -1173,7 +1174,7 @@ int orte_pls_rsh_terminate_proc(const orte_process_name_t* proc)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
+int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1183,7 +1184,7 @@ int orte_pls_rsh_signal_job(orte_jobid_t jobid, int32_t signal)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&daemons);
         return rc;

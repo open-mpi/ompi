@@ -88,9 +88,7 @@ int orte_gpr_replica_cleanup_proc_fn(orte_process_name_t *proc)
     }
 
     /* find the job segment */
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&jobid, proc)) {
-        return ORTE_ERR_BAD_PARAM;
-    }
+    jobid = proc->jobid;
     
     if (ORTE_SUCCESS != orte_ns.convert_jobid_to_string(&jobidstring, jobid)) {
         return ORTE_ERR_BAD_PARAM;

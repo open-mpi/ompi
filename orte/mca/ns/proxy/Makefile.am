@@ -16,37 +16,34 @@
 # $HEADER$
 #
 
-# Use the top-level Makefile.options
-
-
-
-sources =
-include src/Makefile.extra
+sources = \
+        ns_proxy.h \
+	ns_proxy_cell_fns.c \
+	ns_proxy_diag_fns.c \
+	ns_proxy_general_fns.c \
+	ns_proxy_job_fns.c \
+        ns_proxy_component.c
 
 # Make the output library in this directory, and name it either
 # mca_<type>_<name>.la (for DSO builds) or libmca_<type>_<name>.la
 # (for static builds).
 
 if OMPI_BUILD_ns_proxy_DSO
-lib =
-lib_sources = 
-component = mca_ns_proxy.la
-component_sources = $(sources)
+component_noinst =
+component_install = mca_ns_proxy.la
 else
-lib = libmca_ns_proxy.la
-lib_sources = $(sources)
-component =
-component_sources =
+component_noinst = libmca_ns_proxy.la
+component_install =
 endif
 
 mcacomponentdir = $(libdir)/openmpi
-mcacomponent_LTLIBRARIES = $(component)
-mca_ns_proxy_la_SOURCES = $(component_sources)
+mcacomponent_LTLIBRARIES = $(component_install)
+mca_ns_proxy_la_SOURCES = $(sources)
 mca_ns_proxy_la_LDFLAGS = -module -avoid-version
 mca_ns_proxy_la_LIBADD = \
     $(top_ompi_builddir)/orte/liborte.la \
     $(top_ompi_builddir)/opal/libopal.la
 
-noinst_LTLIBRARIES = $(lib)
-libmca_ns_proxy_la_SOURCES = $(lib_sources)
+noinst_LTLIBRARIES = $(component_noinst)
+libmca_ns_proxy_la_SOURCES =$(sources)
 libmca_ns_proxy_la_LDFLAGS = -module -avoid-version

@@ -48,9 +48,6 @@ OBJ_CLASS_INSTANCE(
     NULL
 );
 
-orte_process_name_t mca_oob_name_seed  = { 0, 0, 0 };
-orte_process_name_t mca_oob_name_any  = { ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_MAX };
-
 /**
  * Parse contact info string into process name and list of uri strings.
  */

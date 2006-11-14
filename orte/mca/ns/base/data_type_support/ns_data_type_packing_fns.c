@@ -28,7 +28,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 /*
  * NAME
@@ -51,11 +51,7 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
     }
     proc = (orte_process_name_t*)src;
     for (i=0; i < num_vals; i++) {
-        if (ORTE_SUCCESS != (rc = orte_ns.get_cellid(&cellid[i], proc))) {
-            ORTE_ERROR_LOG(rc);
-            free(cellid);
-            return rc;
-        }
+        cellid[i] = proc->cellid;
         proc++;
     }
     /* now pack them in one shot */
@@ -75,11 +71,7 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
     }
     proc = (orte_process_name_t*)src;
     for (i=0; i < num_vals; i++) {
-        if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid[i], proc))) {
-            ORTE_ERROR_LOG(rc);
-            free(jobid);
-            return rc;
-        }
+        jobid[i] = proc->jobid;
         proc++;
     }
     /* now pack them in one shot */
@@ -99,11 +91,7 @@ int orte_ns_base_pack_name(orte_buffer_t *buffer, void *src,
     }
     proc = (orte_process_name_t*)src;
     for (i=0; i < num_vals; i++) {
-        if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid[i], proc))) {
-            ORTE_ERROR_LOG(rc);
-            free(vpid);
-            return rc;
-        }
+        vpid[i] = proc->vpid;
         proc++;
     }
     /* now pack them in one shot */
@@ -128,10 +116,27 @@ int orte_ns_base_pack_cellid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_CELLID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
+    return ret;
+}
+
+/*
+ * NODEID
+ */
+int orte_ns_base_pack_nodeid(orte_buffer_t *buffer, void *src,
+                             orte_std_cntr_t num_vals, orte_data_type_t type)
+{
+    int ret;
+    
+    /* Turn around and pack the real type */
+    if (ORTE_SUCCESS != (
+                         ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_NODEID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
     return ret;
 }
 
@@ -145,7 +150,7 @@ int orte_ns_base_pack_jobid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_JOBID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -162,7 +167,7 @@ int orte_ns_base_pack_vpid(orte_buffer_t *buffer, void *src,
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
-        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_STD_CNTR_T))) {
+        ret = orte_dss_pack_buffer(buffer, src, num_vals, ORTE_VPID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 

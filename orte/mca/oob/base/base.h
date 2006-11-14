@@ -49,13 +49,6 @@ extern "C" {
 ORTE_DECLSPEC extern bool orte_oob_base_timing;
     
 /*
- * Well known address
- */
-
-ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_any;
-ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
-
-/*
  * OOB API
  */
 
@@ -187,7 +180,7 @@ ORTE_DECLSPEC int mca_oob_send_packed(
 /**
 * Similiar to unix readv(2)
 *
-* @param peer (IN/OUT)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive. In the
+* @param peer (IN/OUT)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive. In the
 *                         case of a wildcard receive, will be modified to return the matched peer name.
 * @param msg (IN)         Array of iovecs describing user buffers and lengths.
 * @param count (IN)       Number of elements in iovec array.
@@ -223,7 +216,7 @@ ORTE_DECLSPEC int mca_oob_recv(
 /**
 * Similiar to unix read(2)
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buf (OUT)    Array of iovecs describing user buffers and lengths.
 * @param tag (IN/OUT) User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
@@ -338,7 +331,7 @@ ORTE_DECLSPEC int mca_oob_send_packed_nb(
 /**
 * Non-blocking version of mca_oob_recv().
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.
@@ -363,7 +356,7 @@ ORTE_DECLSPEC int mca_oob_recv_nb(
 /**
 * Routine to cancel pending non-blocking recvs.
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param tag (IN)     User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
@@ -375,7 +368,7 @@ ORTE_DECLSPEC int mca_oob_recv_cancel(
 /**
 * Non-blocking version of mca_oob_recv_packed().
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buffer (IN)  Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.

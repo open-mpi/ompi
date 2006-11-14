@@ -19,5 +19,6 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=src/ns_replica.c
+PARAM_INIT_FILE=ns_replica.c
+PARAM_CONFIG_HEADER_FILE="ns_replica.h"
 PARAM_CONFIG_FILES="Makefile"

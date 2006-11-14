@@ -59,7 +59,7 @@ int orte_iof_base_close(void)
     OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);
 
     if (NULL != orte_iof_base.iof_service) {
-        orte_ns.free_name(&(orte_iof_base.iof_service));
+        free(orte_iof_base.iof_service);
     }
 
     return ORTE_SUCCESS;

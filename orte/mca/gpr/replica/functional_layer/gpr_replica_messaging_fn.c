@@ -387,9 +387,7 @@ int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
          if (((NULL == recipient && NULL == cb->requestor) &&
               (msg_type == cb->message->msg_type)) ||
              (((NULL != recipient && NULL != cb->requestor) &&
-              (0 == orte_ns.compare(ORTE_NS_CMP_ALL,
-                                    recipient,
-                                    cb->requestor))) &&
+              (ORTE_EQUAL == orte_dss.compare(recipient, cb->requestor, ORTE_NAME))) &&
                (msg_type == cb->message->msg_type))) {
              /* okay, a callback has been registered to send data to this
               * recipient - return this location
@@ -421,7 +419,7 @@ int orte_gpr_replica_define_callback(orte_gpr_notify_msg_type_t msg_type,
     if (NULL == recipient) {
         cb->requestor = NULL;
     } else {
-        if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&(cb->requestor), recipient))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(cb->requestor), recipient, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

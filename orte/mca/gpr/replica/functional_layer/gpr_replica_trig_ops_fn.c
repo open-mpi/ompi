@@ -216,8 +216,13 @@ ADDREQ:
                    i < (sub->requestors)->size; i++) {
         if (NULL != reqs[i]) {
             j++;
+            if ((NULL == reqs[i]->requestor && NULL != requestor) ||
+                (NULL != reqs[i]->requestor && NULL == requestor)) {
+                continue;
+            }
             if (reqs[i]->idtag == subscription->id &&
-                0 == orte_ns.compare(ORTE_NS_CMP_ALL, reqs[i]->requestor, requestor)) {
+                ((NULL == reqs[i]->requestor && NULL == requestor) ||
+                 (ORTE_EQUAL == orte_dss.compare(reqs[i]->requestor, requestor, ORTE_NAME)))) {
                 /* found this requestor - do not add it again */
                 goto DONESUB;
             }
@@ -234,8 +239,7 @@ ADDREQ:
     }
 
     if (NULL != requestor) {
-        if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&(req->requestor),
-                                            requestor))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(req->requestor), requestor, ORTE_NAME))) {
               ORTE_ERROR_LOG(rc);
               return rc;
         }
@@ -546,8 +550,14 @@ ADDREQ:
                    i < (trig->attached)->size; i++) {
         if (NULL != reqs[i]) {
             j++;
+            /* if one is NULL and the other isn't, then they can't possibly match */
+            if ((NULL == reqs[i]->requestor && NULL != requestor) ||
+                (NULL != reqs[i]->requestor && NULL == requestor)) {
+                continue;
+            }
             if (reqs[i]->idtag == trigger->id &&
-                0 == orte_ns.compare(ORTE_NS_CMP_ALL, reqs[i]->requestor, requestor)) {
+                ((NULL == reqs[i]->requestor && NULL == requestor) ||
+                 (ORTE_EQUAL == orte_dss.compare(reqs[i]->requestor, requestor, ORTE_NAME)))) {
                 /* found this requestor - do not add it again */
                 goto DONETRIG;
             }
@@ -562,8 +572,7 @@ ADDREQ:
     }
 
     if (NULL != requestor) {
-        if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&(req->requestor),
-                                            requestor))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&(req->requestor), requestor, ORTE_NAME))) {
               ORTE_ERROR_LOG(rc);
               return rc;
         }
@@ -657,8 +666,7 @@ orte_gpr_replica_remove_subscription(orte_process_name_t *requestor,
                     if (id == reqs[k]->idtag &&
                         ((NULL == requestor && NULL == reqs[k]->requestor) ||
                         (NULL != requestor && NULL != reqs[k]->requestor &&
-                        0 == orte_ns.compare(ORTE_NS_CMP_ALL,
-                                reqs[k]->requestor, requestor)))) {
+                        ORTE_EQUAL == orte_dss.compare(reqs[k]->requestor, requestor, ORTE_NAME)))) {
                         /* this is the subscription */
                         sub = subs[i];
                         req = reqs[k];
@@ -763,8 +771,7 @@ orte_gpr_replica_remove_trigger(orte_process_name_t *requestor,
                     if (id == reqs[k]->idtag &&
                         ((NULL == requestor && NULL == reqs[k]->requestor) ||
                         (NULL != requestor && NULL != reqs[k]->requestor &&
-                        0 == orte_ns.compare(ORTE_NS_CMP_ALL,
-                            reqs[k]->requestor, requestor)))) {
+                        ORTE_EQUAL == orte_dss.compare(reqs[k]->requestor, requestor, ORTE_NAME)))) {
                         /* this is the trigger */
                         trig = trigs[i];
                         req = reqs[k];
@@ -1330,7 +1337,7 @@ int orte_gpr_replica_purge_subscriptions(orte_process_name_t *proc)
                 }
                 OBJ_RELEASE(trig);
             } else if (NULL != proc && NULL != trig[i]->requestor &&
-                       0 == orte_ns.compare(ORTE_NS_CMP_ALL, proc, trig[i]->requestor)) {
+                       ORTE_EQUAL == orte_dss.compare(Oproc, trig[i]->requestor, ORTE_NAME)) {
                 if (ORTE_SUCCESS != (rc = orte_pointer_array_set_item(orte_gpr_replica.triggers,
                                                 trig[i]->index, NULL))) {
                     ORTE_ERROR_LOG(rc);

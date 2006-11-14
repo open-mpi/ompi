@@ -44,10 +44,7 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
     orte_exit_code_t exit_code;
     char *segment;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, proc))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = proc->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -61,12 +58,7 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid, proc))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        free(segment);
-        return rc;
-    }
+    vpid = proc->vpid;
 
     if (ORTE_VPID_MAX != vpid) {  /* check for wildcard case - leave tokens alone if so */
         if (ORTE_SUCCESS != (rc = orte_schema.get_proc_tokens(&(value->tokens), &(value->num_tokens), proc))) {

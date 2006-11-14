@@ -233,7 +233,7 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
            ORTE_ERROR_LOG(ret);
            return NULL;
        }
-       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
+       if(ORTE_SUCCESS != (ret = orte_dss.copy((void**)&orte_process_info.gpr_replica, &name, ORTE_NAME))) {
            ORTE_ERROR_LOG(ret);
            return NULL;
         }
@@ -299,7 +299,7 @@ int orte_gpr_proxy_module_init(void)
 {
     /* issue the non-blocking receive */
     int rc;
-    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, ORTE_RML_PERSISTENT, orte_gpr_proxy_notify_recv, NULL);
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_GPR_NOTIFY, ORTE_RML_PERSISTENT, orte_gpr_proxy_notify_recv, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -359,7 +359,7 @@ int orte_gpr_proxy_finalize(void)
     }
 
     /* All done */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_GPR_NOTIFY);
     return ORTE_SUCCESS;
 }
 

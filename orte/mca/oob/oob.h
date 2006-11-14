@@ -110,7 +110,7 @@ typedef int (*mca_oob_base_module_send_fn_t)(
 /**
 *  Implementation of mca_oob_recv().
 *
-*  @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+*  @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 *  @param msg (IN)     Array of iovecs describing user buffers and lengths.
 *  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 *  @param count (IN)   Number of elements in iovec array.
@@ -153,7 +153,7 @@ typedef int (*mca_oob_base_module_send_nb_fn_t)(
 /**
 * Implementation of mca_oob_recv_nb().
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.
@@ -175,7 +175,7 @@ typedef int (*mca_oob_base_module_recv_nb_fn_t)(
 /**
 * Implementation of mca_oob_recv_cancel().
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param tag (IN)     User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */

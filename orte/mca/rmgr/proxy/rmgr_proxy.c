@@ -122,7 +122,7 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
         return rc;
     }
 
-    /* pack any attributes */
+    /* pack the attributes */
     if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, attrs, 1, ORTE_ATTR_LIST))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
@@ -130,7 +130,7 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
     }
     
     /* send the command */
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
+    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -139,7 +139,7 @@ static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -197,7 +197,7 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
     }
 
     /* send the command */
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
+    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -206,7 +206,7 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -398,7 +398,7 @@ static int orte_rmgr_proxy_spawn_job(
      */
     if (flags & ORTE_RMGR_SETUP) {
         if (ORTE_SUCCESS !=
-            (rc = orte_rmgr_proxy_setup_job(app_context,num_context,jobid, attributes))) {
+            (rc = orte_rmgr_proxy_setup_job(app_context, num_context, jobid, attributes))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

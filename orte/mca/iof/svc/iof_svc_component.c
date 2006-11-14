@@ -120,7 +120,7 @@ static int orte_iof_svc_close(void)
             OBJ_RELEASE(item);
         }
         OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
-        orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
+        orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_SVC);
     }
 
     return ORTE_SUCCESS;
@@ -164,7 +164,7 @@ orte_iof_svc_init(int* priority, bool *allow_multi_user_threads, bool *have_hidd
     mca_iof_svc_component.svc_iov[0].iov_len = 0;
 
     rc = orte_rml.recv_nb(
-        ORTE_RML_NAME_ANY,
+        ORTE_NAME_WILDCARD,
         mca_iof_svc_component.svc_iov,
         1,
         ORTE_RML_TAG_IOF_SVC,

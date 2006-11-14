@@ -29,6 +29,7 @@
 #include "orte/dss/dss.h"
 
 #include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 
 /*
@@ -43,7 +44,9 @@
  * globals
  */
 
-orte_process_name_t orte_name_all = {ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_MAX};
+orte_process_name_t orte_ns_name_wildcard = {ORTE_CELLID_WILDCARD, ORTE_JOBID_WILDCARD, ORTE_VPID_WILDCARD};
+orte_process_name_t orte_ns_name_invalid = {ORTE_CELLID_INVALID, ORTE_JOBID_INVALID, ORTE_VPID_INVALID}; 
+orte_process_name_t orte_ns_name_my_hnp = {0, 0, 0}; 
 
 /*
  * Global variables
@@ -54,35 +57,37 @@ mca_ns_base_module_t orte_ns = {
     orte_ns_base_module_init_not_available,
     /* cell functions */
     orte_ns_base_create_cellid_not_available,
-    orte_ns_base_get_cellid,
     orte_ns_base_get_cell_info_not_available,
-    orte_ns_base_assign_cellid_to_process,
     orte_ns_base_get_cellid_string,
     orte_ns_base_convert_cellid_to_string,
     orte_ns_base_convert_string_to_cellid,
+    /* node functions */
+    orte_ns_base_create_nodeids_not_available,
+    orte_ns_base_get_node_info_not_available,
+    orte_ns_base_convert_nodeid_to_string,
+    orte_ns_base_convert_string_to_nodeid,
     /* jobid functions */
     orte_ns_base_create_jobid_not_available,
-    orte_ns_base_get_jobid,
+    orte_ns_base_get_job_descendants_not_available,
+    orte_ns_base_get_job_children_not_available,
+    orte_ns_base_get_root_job_not_available,
+    orte_ns_base_get_parent_job_not_available,
     orte_ns_base_get_jobid_string,
     orte_ns_base_convert_jobid_to_string,
     orte_ns_base_convert_string_to_jobid,
-    /* vpid functions */
     orte_ns_base_get_vpid_range_not_available,
-    orte_ns_base_get_vpid,
+    /* vpid functions */
     orte_ns_base_get_vpid_string,
     orte_ns_base_convert_vpid_to_string,
     orte_ns_base_convert_string_to_vpid,
     /* name functions */
     orte_ns_base_create_process_name,
     orte_ns_base_create_my_name_not_available,
-    orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
-    orte_ns_base_free_name,
     orte_ns_base_get_proc_name_string,
-    orte_ns_base_compare,
+    orte_ns_base_compare_fields,
     /* peer functions */
-    orte_ns_base_get_peers,
-    orte_ns_base_get_job_peers_not_available,
+    orte_ns_base_get_peers_not_available,
     /* tag server functions */
     orte_ns_base_assign_rml_tag_not_available,
     /* data type functions */

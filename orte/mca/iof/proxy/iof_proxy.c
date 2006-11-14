@@ -144,7 +144,7 @@ int orte_iof_proxy_push(
 
     /* send a subscription to server on behalf of the destination */
     rc = orte_iof_proxy_svc_subscribe(
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         dst_tag,
         dst_name,
@@ -156,7 +156,7 @@ int orte_iof_proxy_push(
                                                                                                              
     /* setup a local endpoint to reflect registration */
     rc = orte_iof_base_endpoint_create(
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_IOF_SOURCE,
         dst_tag,
         fd);
@@ -184,7 +184,7 @@ int orte_iof_proxy_pull(
     /* setup a local endpoint */
     int rc;
     rc = orte_iof_base_endpoint_create(
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_IOF_SINK,
         src_tag,
         fd);
@@ -195,7 +195,7 @@ int orte_iof_proxy_pull(
 
     /* publish this endpoint */
     rc = orte_iof_proxy_svc_publish(
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         src_tag);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
@@ -207,7 +207,7 @@ int orte_iof_proxy_pull(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     if(rc != ORTE_SUCCESS) {
@@ -247,7 +247,7 @@ int orte_iof_proxy_subscribe(
     int rc;
 
     /* create a local registration to reflect the callback */
-    rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
+    rc = orte_iof_base_callback_create(ORTE_PROC_MY_NAME,src_tag,cbfunc,cbdata);
     if(rc != ORTE_SUCCESS)
         return rc;
 
@@ -256,7 +256,7 @@ int orte_iof_proxy_subscribe(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     return rc;
@@ -274,13 +274,13 @@ int orte_iof_proxy_unsubscribe(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     if(rc != ORTE_SUCCESS)
         return rc;
   
     /* remove local callback */
-    return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
+    return orte_iof_base_callback_delete(ORTE_PROC_MY_NAME,src_tag);
 }
 

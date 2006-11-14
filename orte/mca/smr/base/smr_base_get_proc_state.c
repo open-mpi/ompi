@@ -47,10 +47,7 @@ int orte_smr_base_get_proc_state(orte_proc_state_t *state,
     orte_jobid_t jobid;
     bool found1=false, found2=false;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, proc))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = proc->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);

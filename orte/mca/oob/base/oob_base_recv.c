@@ -34,7 +34,7 @@
 /*
 * Similiar to unix recv(2)
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 * @param count (IN)   Number of elements in iovec array.
@@ -51,7 +51,7 @@ int mca_oob_recv(orte_process_name_t* peer, struct iovec *msg, int count, int ta
 /*
 * Similiar to unix recv(2)
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buffer (OUT) Buffer that the OOB creates to recv this message...
 * @param tag (IN)     User defined tag for matching send/recv.
 *                     iovec array without removing the message from the queue.

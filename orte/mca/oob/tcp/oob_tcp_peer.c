@@ -503,7 +503,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
     }
 
     /* if we lose the connection to the seed - abort */
-    if(memcmp(&peer->peer_name,&mca_oob_name_seed,sizeof(mca_oob_name_seed)) == 0) {
+    if(memcmp(&peer->peer_name,ORTE_PROC_MY_HNP,sizeof(orte_process_name_t)) == 0) {
         /* If we are not already inside orte_finalize, then call abort */
         if (ORTE_UNIVERSE_STATE_FINALIZE > orte_universe_info.state) {
             /* Should free the peer lock before we abort so we don't 
@@ -554,7 +554,7 @@ static int mca_oob_tcp_peer_send_connect_ack(mca_oob_tcp_peer_t* peer)
     mca_oob_tcp_hdr_t hdr;
     memset(&hdr,0,sizeof(hdr));
     if (NULL == orte_process_info.my_name) {  /* my name isn't defined yet */
-        hdr.msg_src = *MCA_OOB_NAME_ANY;
+        hdr.msg_src = *ORTE_NAME_INVALID;
     } else {
         hdr.msg_src = *(orte_process_info.my_name);
     }
@@ -597,11 +597,13 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
         return ORTE_ERR_UNREACH;
     }
 
-    /* if we have a wildcard name - use the name returned by the peer */
+    /* if we have an invalid name or do not have one assigned at all - use the name returned by the peer.
+     * This needs to be a LITERAL comparison - we do NOT want wildcard values to return EQUAL
+     */
     if(orte_process_info.my_name == NULL) {
         orte_ns.create_process_name(&orte_process_info.my_name, 
             hdr.msg_dst.cellid, hdr.msg_dst.jobid, hdr.msg_dst.vpid);
-    } else if(orte_ns.compare(ORTE_NS_CMP_ALL, orte_process_info.my_name, &mca_oob_name_any) == 0) {
+    } else if (orte_ns.compare_fields(ORTE_NS_CMP_ALL, orte_process_info.my_name, ORTE_NAME_INVALID) == ORTE_EQUAL) {
         *orte_process_info.my_name = hdr.msg_dst;
     }
 
@@ -876,18 +878,24 @@ static void mca_oob_tcp_peer_dump(mca_oob_tcp_peer_t* peer, const char* msg)
 
 
 /*
- *  Accept incoming connection - if not already connected.
+ * Accept incoming connection - if not already connected. We compare the name of the
+ * peer to our own name using the ns.compare_fields function as we want this to be
+ * a LITERAL comparison - i.e., there is no occasion when the peer's name should
+ * be a wildcard value.
+ *
+ * To avoid competing reciprocal connection attempts, we only accept connections from
+ * processes whose names are "greater" than our own.
  */
 
 bool mca_oob_tcp_peer_accept(mca_oob_tcp_peer_t* peer, int sd)
 {
     int cmpval;
     OPAL_THREAD_LOCK(&peer->peer_lock);
-    cmpval = orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, orte_process_info.my_name);
+    cmpval = orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, orte_process_info.my_name);
     if ((peer->peer_state == MCA_OOB_TCP_CLOSED) ||
         (peer->peer_state == MCA_OOB_TCP_RESOLVE) ||
         (peer->peer_state != MCA_OOB_TCP_CONNECTED &&
-         cmpval < 0)) {
+         cmpval == ORTE_VALUE1_GREATER)) {
 
         if(peer->peer_state != MCA_OOB_TCP_CLOSED) {
             mca_oob_tcp_peer_close(peer);

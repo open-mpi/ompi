@@ -42,7 +42,10 @@
 #include <signal.h>
 #endif  /* HAVE_SIGNAL_H */
 #include "opal/util/output.h"
+
+#include "orte/mca/ns/ns.h"
 #include "orte/mca/rml/rml.h"
+
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/iof/base/iof_base_endpoint.h"
 #include "orte/mca/iof/base/iof_base_fragment.h"
@@ -172,7 +175,7 @@ static void orte_iof_base_endpoint_read_handler(int fd, short flags, void *cbdat
     hdr = &frag->frag_hdr;
     hdr->hdr_common.hdr_type = ORTE_IOF_BASE_HDR_MSG;
     hdr->hdr_msg.msg_src = endpoint->ep_name;
-    hdr->hdr_msg.msg_proxy = *ORTE_RML_NAME_SELF;
+    hdr->hdr_msg.msg_proxy = *ORTE_PROC_MY_NAME;
     hdr->hdr_msg.msg_tag = endpoint->ep_tag;
     hdr->hdr_msg.msg_seq = endpoint->ep_seq;
     hdr->hdr_msg.msg_len = frag->frag_len;
@@ -294,7 +297,7 @@ static orte_iof_base_endpoint_t* orte_iof_base_endpoint_lookup(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,proc,&endpoint->ep_name) == 0 &&
            endpoint->ep_tag == tag && endpoint->ep_mode == mode) {
             OBJ_RETAIN(endpoint);
             return endpoint;
@@ -428,7 +431,7 @@ int orte_iof_base_endpoint_delete(
     while(item != opal_list_get_end(&orte_iof_base.iof_endpoints)) {
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare(mask,proc,&endpoint->ep_name) == 0 &&
+        if(orte_ns.compare_fields(mask,proc,&endpoint->ep_name) == 0 &&
            endpoint->ep_tag == tag) {
             OBJ_RELEASE(endpoint);
             opal_list_remove_item(&orte_iof_base.iof_endpoints,&endpoint->super);
@@ -485,7 +488,7 @@ orte_iof_base_endpoint_t* orte_iof_base_endpoint_match(
         item != opal_list_get_end(&orte_iof_base.iof_endpoints);
         item =  opal_list_get_next(item)) {
         orte_iof_base_endpoint_t* endpoint = (orte_iof_base_endpoint_t*)item;
-        if(orte_ns.compare(dst_mask,dst_name,&endpoint->ep_name) == 0) {
+        if(orte_ns.compare_fields(dst_mask,dst_name,&endpoint->ep_name) == 0) {
             if(endpoint->ep_tag == dst_tag || endpoint->ep_tag == ORTE_IOF_ANY || dst_tag == ORTE_IOF_ANY) {
                 OBJ_RETAIN(endpoint);
                 OPAL_THREAD_UNLOCK(&orte_iof_base.iof_lock);

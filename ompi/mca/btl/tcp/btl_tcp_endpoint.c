@@ -307,7 +307,7 @@ bool mca_btl_tcp_endpoint_accept(mca_btl_base_endpoint_t* btl_endpoint, struct s
     if((btl_addr = btl_endpoint->endpoint_addr) != NULL  &&
         btl_addr->addr_inet.s_addr == addr->sin_addr.s_addr) {
         mca_btl_tcp_proc_t *endpoint_proc = btl_endpoint->endpoint_proc;
-        cmpval = orte_ns.compare(mask, 
+        cmpval = orte_ns.compare_fields(mask, 
                                  &endpoint_proc->proc_ompi->proc_name,
                                  &this_proc->proc_ompi->proc_name);
         if((btl_endpoint->endpoint_sd < 0) ||

@@ -47,7 +47,10 @@
 #include <signal.h>
 #endif
 #include "opal/event/event.h"
+
 #include "orte/mca/ns/ns_types.h"
+#include "orte/util/proc_info.h"
+
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
 /*
@@ -148,7 +151,7 @@ int mca_oob_tcp_ping(
     if(orte_process_info.my_name != NULL) {
         hdr.msg_src = *orte_process_info.my_name;
     } else {
-        hdr.msg_src = mca_oob_name_any;
+        hdr.msg_src = *ORTE_NAME_INVALID;
     }
     hdr.msg_dst = *name;
     hdr.msg_type = MCA_OOB_TCP_PROBE;

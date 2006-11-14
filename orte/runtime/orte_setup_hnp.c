@@ -333,7 +333,7 @@ MOVEON:
     OBJ_CONSTRUCT(&orte_setup_hnp_condition, opal_condition_t);
 
     /* get a jobid for the probe */
-    rc = orte_ns.create_jobid(&jobid);
+    rc = orte_ns.create_jobid(&jobid, NULL);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -451,7 +451,7 @@ MOVEON:
     }
 
     /* issue the non-blocking recv to get the probe's findings */
-    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PROBE,
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PROBE,
                                  0, orte_setup_hnp_recv, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);

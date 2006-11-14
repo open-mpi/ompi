@@ -26,7 +26,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss_internal.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 /*
  * NAME
@@ -123,11 +123,26 @@ int orte_ns_base_unpack_cellid(orte_buffer_t *buffer, void *dest,
     int ret;
 
     /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_CELLID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
+    return ret;
+}
+
+/*
+ * NODEID
+ */
+int orte_ns_base_unpack_nodeid(orte_buffer_t *buffer, void *dest,
+                               orte_std_cntr_t *num_vals, orte_data_type_t type)
+{
+    int ret;
+    
+    /* Turn around and unpack the real type */
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_NODEID_T))) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
     return ret;
 }
 
@@ -140,8 +155,7 @@ int orte_ns_base_unpack_jobid(orte_buffer_t *buffer, void *dest,
     int ret;
 
     /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_JOBID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 
@@ -157,8 +171,7 @@ int orte_ns_base_unpack_vpid(orte_buffer_t *buffer, void *dest,
     int ret;
 
     /* Turn around and unpack the real type */
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_VPID_T))) {
         ORTE_ERROR_LOG(ret);
     }
 

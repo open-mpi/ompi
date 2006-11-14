@@ -47,10 +47,20 @@
 extern "C" {
 #endif
 
+/****    NS ATTRIBUTES    ****/
+#define ORTE_NS_USE_PARENT              "orte-ns-use-parent"
+#define ORTE_NS_USE_ROOT                "orte-ns-use-root"
+#define ORTE_NS_USE_CELL                "orte-ns-use-cell"
+#define ORTE_NS_USE_JOBID               "orte-ns-use-job"
+#define ORTE_NS_USE_NODE                "orte-ns-use-node"
+#define ORTE_NS_INCLUDE_DESCENDANTS     "orte-ns-include-desc"
+#define ORTE_NS_INCLUDE_CHILDREN        "orte-ns-include-child"
+    
+
 #define ORTE_NAME_ARGS(n) \
-    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->cellid), \
-    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->jobid), \
-    (unsigned long) ((NULL == n) ? -1 : (int32_t)(n)->vpid)
+    (long) ((NULL == n) ? (long)-1 : (long)(n)->cellid), \
+    (long) ((NULL == n) ? (long)-1 : (long)(n)->jobid), \
+    (long) ((NULL == n) ? (long)-1 : (long)(n)->vpid)
 
 
 /*
@@ -69,18 +79,19 @@ extern "C" {
 /** Set the allowed range for ids in each space
  *
  * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
- * uses of it if these types change to be larger than (unsigned long)!
+ * uses of it if these types change to be larger than (long)!
  */
 typedef orte_std_cntr_t orte_jobid_t;
 typedef orte_std_cntr_t orte_cellid_t;
+typedef orte_std_cntr_t orte_nodeid_t;
 typedef orte_std_cntr_t orte_vpid_t;
+
 typedef uint8_t  orte_ns_cmp_bitmask_t;  /**< Bit mask for comparing process names */
-typedef uint8_t orte_ns_cmd_flag_t;
 
 struct orte_process_name_t {
-    orte_cellid_t cellid;  /**< Cell number */
-    orte_jobid_t jobid; /**< Job number */
-    orte_vpid_t vpid;  /**< Process number */
+    orte_cellid_t cellid;   /**< Cell number */
+    orte_jobid_t jobid;     /**< Job number */
+    orte_vpid_t vpid;       /**< Process number */
 };
 typedef struct orte_process_name_t orte_process_name_t;
 
@@ -90,6 +101,15 @@ typedef struct orte_process_name_t orte_process_name_t;
 #define ORTE_CELLID_MAX     ORTE_STD_CNTR_MAX
 #define ORTE_JOBID_MAX      ORTE_STD_CNTR_MAX
 #define ORTE_VPID_MAX       ORTE_STD_CNTR_MAX
+#define ORTE_NODEID_MAX     ORTE_STD_CNTR_MAX
+
+/*
+ * define minimum value for id's in any field
+ */
+#define ORTE_CELLID_MIN     ORTE_STD_CNTR_MIN
+#define ORTE_JOBID_MIN      ORTE_STD_CNTR_MIN
+#define ORTE_VPID_MIN       ORTE_STD_CNTR_MIN
+#define ORTE_NODEID_MIN     ORTE_STD_CNTR_MIN
 
 /*
  * define invalid values
@@ -97,18 +117,30 @@ typedef struct orte_process_name_t orte_process_name_t;
 #define ORTE_CELLID_INVALID     -999
 #define ORTE_JOBID_INVALID      -999
 #define ORTE_VPID_INVALID       -999
+#define ORTE_NODEID_INVALID     -999
 
 /*
- * define wildcard values
+ * define wildcard values  (should be -1)
  */
 #define ORTE_CELLID_WILDCARD     -1
 #define ORTE_JOBID_WILDCARD      -1
 #define ORTE_VPID_WILDCARD       -1
+#define ORTE_NODEID_WILDCARD     -1
 
-ORTE_DECLSPEC extern orte_process_name_t orte_name_all;
-#define ORTE_NAME_ALL   &orte_name_all
+/*
+ * Shortcut for some commonly used names
+ */
+
+#define ORTE_NAME_WILDCARD      &orte_ns_name_wildcard
+ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_wildcard;  /** instantiated in orte/mca/ns/base/ns_base_open.c */
+
+#define ORTE_NAME_INVALID       &orte_ns_name_invalid
+ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_invalid;  /** instantiated in orte/mca/ns/base/ns_base_open.c */
 
 #define ORTE_PROC_MY_NAME    orte_process_info.my_name
+
+#define ORTE_PROC_MY_HNP     &orte_ns_name_my_hnp
+ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated in orte/mca/ns/base/ns_base_open.c */
 
 /**
  * Convert process name from host to network byte order.

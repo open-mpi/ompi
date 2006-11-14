@@ -307,9 +307,7 @@ void ompi_attr_create_predefined_callback(
 
     /* Set some default values */
 
-    if (ORTE_SUCCESS != orte_ns.get_jobid(&job, orte_process_info.my_name)) {
-        return;
-    }
+    job = ORTE_PROC_MY_NAME->jobid;
 
     /* Query the gpr to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent

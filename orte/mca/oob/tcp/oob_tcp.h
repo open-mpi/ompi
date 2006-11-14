@@ -119,7 +119,7 @@ int mca_oob_tcp_send(
 /**
  * Similiar to unix readv(2)
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User defined tag for matching send/recv.
@@ -166,7 +166,7 @@ int mca_oob_tcp_send_nb(
 /**
  * Non-blocking version of mca_oob_recv().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User defined tag for matching send/recv.
@@ -188,7 +188,7 @@ int mca_oob_tcp_recv_nb(
 /**
  * Cancel non-blocking receive.
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param tag (IN)     User defined tag for matching send/recv.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */

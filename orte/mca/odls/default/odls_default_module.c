@@ -372,6 +372,8 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     struct stat buf;
     int rc;
 
+    opal_output(orte_odls_globals.output, "odls: child process terminated");
+    
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
      * by other threads. This will also be used to protect us
@@ -384,6 +386,8 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
+        opal_output(orte_odls_globals.output, "odls: checking child [%ld,%ld,%ld] alive %s",
+                    ORTE_NAME_ARGS(child->name), (child->alive ? "true" : "dead"));
         if (child->alive && pid == child->pid) { /* found it */
             goto GOTCHILD;
         }
@@ -398,7 +402,13 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     return;
 
 GOTCHILD:
+    opal_output(orte_odls_globals.output, "odls: flushing output for [%ld,%ld,%ld]",
+            ORTE_NAME_ARGS(child->name));
+
     orte_iof.iof_flush();
+
+    opal_output(orte_odls_globals.output, "odls: output for [%ld,%ld,%ld] flushed",
+            ORTE_NAME_ARGS(child->name));
 
     /* determine the state of this process */
     aborted = false;
@@ -426,6 +436,9 @@ GOTCHILD:
                                   job, vpid, "abort", NULL );
         free(job);
         free(vpid);
+        opal_output(orte_odls_globals.output, "odls: stat'ing file %s for [%ld,%ld,%ld]",
+                    abort_file, ORTE_NAME_ARGS(child->name));
+        
         if (0 == stat(abort_file, &buf)) {
             /* the abort file must exist - there is nothing in it we need. It's
              * meer existence indicates that an abnormal termination occurred
@@ -435,14 +448,14 @@ GOTCHILD:
             aborted = true;
             free(abort_file);
         } else {
-            opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died naturally",
+            opal_output(orte_odls_globals.output, "odls: child process [%ld,%ld,%ld] terminated normally",
                         ORTE_NAME_ARGS(child->name));
         }
     } else {
         /* the process was terminated with a signal! That's definitely
          * abnormal, so indicate that condition
          */
-        opal_output(orte_odls_globals.output, "odls: child [%ld,%ld,%ld] died by signal",
+        opal_output(orte_odls_globals.output, "odls: child process [%ld,%ld,%ld] terminated with signal",
                     ORTE_NAME_ARGS(child->name));
         aborted = true;
     }

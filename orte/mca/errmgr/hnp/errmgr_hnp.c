@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <stdarg.h>
 
+#include "opal/class/opal_list.h"
 #include "opal/util/trace.h"
 #include "opal/util/output.h"
 
@@ -59,6 +60,8 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
         NULL
     };
     orte_data_value_t dval = ORTE_DATA_VALUE_EMPTY;
+    opal_list_t attrs;
+    opal_list_item_t *item;
     int rc;
     
     OPAL_TRACE(1);
@@ -79,11 +82,15 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
         return rc;
     }
     
-    /* tell the pls to terminate the job */
-    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job))) {
+    /* tell the pls to terminate the job AND ALL ITS DESCENDANTS */
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &attrs))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
     
     /* orterun will only wakeup when all procs report terminated. The terminate_job
      * function *should* have done that - however, it is possible during abnormal
@@ -142,8 +149,10 @@ int orte_errmgr_hnp_incomplete_start(orte_gpr_notify_message_t *msg)
         return rc;
     }
     
-    /* tell the pls to terminate the job */
-    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job))) {
+    /* tell the pls to terminate the job - just kill this job, not any descendants since
+     * the job is just trying to start
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     

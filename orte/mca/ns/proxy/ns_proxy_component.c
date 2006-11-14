@@ -47,7 +47,7 @@
  */
 mca_ns_base_component_t mca_ns_proxy_component = {
   {
-    MCA_NS_BASE_VERSION_1_0_0,
+    MCA_NS_BASE_VERSION_2_0_0,
 
     "proxy", /* MCA module name */
     ORTE_MAJOR_VERSION,  /* MCA module major version */
@@ -71,35 +71,37 @@ static mca_ns_base_module_t orte_ns_proxy_module = {
     orte_ns_proxy_module_init,
     /* cell functions */
     orte_ns_proxy_create_cellid,
-    orte_ns_base_get_cellid,
     orte_ns_proxy_get_cell_info,
-    orte_ns_base_assign_cellid_to_process,
     orte_ns_base_get_cellid_string,
     orte_ns_base_convert_cellid_to_string,
     orte_ns_base_convert_string_to_cellid,
+    /** node functions */
+    orte_ns_proxy_create_nodeids,
+    orte_ns_proxy_get_node_info,
+    orte_ns_base_convert_nodeid_to_string,
+    orte_ns_base_convert_string_to_nodeid,
     /* jobid functions */
     orte_ns_proxy_create_jobid,
-    orte_ns_base_get_jobid,
+    orte_ns_proxy_get_job_descendants,
+    orte_ns_proxy_get_job_children,
+    orte_ns_proxy_get_root_job,
+    orte_ns_proxy_get_parent_job,
     orte_ns_base_get_jobid_string,
     orte_ns_base_convert_jobid_to_string,
     orte_ns_base_convert_string_to_jobid,
-    /* vpid functions */
     orte_ns_proxy_reserve_range,
-    orte_ns_base_get_vpid,
+    /* vpid functions */
     orte_ns_base_get_vpid_string,
     orte_ns_base_convert_vpid_to_string,
     orte_ns_base_convert_string_to_vpid,
     /* name functions */
     orte_ns_base_create_process_name,
     orte_ns_proxy_create_my_name,
-    orte_ns_base_copy_process_name,
     orte_ns_base_convert_string_to_process_name,
-    orte_ns_base_free_name,
     orte_ns_base_get_proc_name_string,
-    orte_ns_base_compare,
+    orte_ns_base_compare_fields,
     /* peer functions */
-    orte_ns_base_get_peers,
-    orte_ns_proxy_get_job_peers,
+    orte_ns_proxy_get_peers,
     /* tag server functions */
     orte_ns_proxy_assign_rml_tag,
     /* data type functions */
@@ -115,31 +117,6 @@ static mca_ns_base_module_t orte_ns_proxy_module = {
  * Whether or not we allowed this component to be selected
  */
 static bool initialized = false;
-
-/* constructor - used to initialize state of cell info list instance */
-static void orte_ns_proxy_cell_info_construct(orte_ns_proxy_cell_info_t* ptr)
-{
-    ptr->resource = NULL;
-    ptr->site = NULL;
-}
-
-/* destructor - used to free any resources held by instance */
-static void orte_ns_proxy_cell_info_destructor(orte_ns_proxy_cell_info_t* ptr)
-{
-    if (NULL != ptr->resource) {
-       free(ptr->resource);
-    }
-    if (NULL != ptr->site) {
-       free(ptr->site);
-    }
-}
-
-/* define instance of opal_class_t */
-OBJ_CLASS_INSTANCE(
-        orte_ns_proxy_cell_info_t,  /* type name */
-        opal_object_t, /* parent "class" name */
-        orte_ns_proxy_cell_info_construct, /* constructor */
-        orte_ns_proxy_cell_info_destructor); /* destructor */
 
 /* constructor - used to initialize state of taglist instance */
 static void orte_ns_proxy_tagitem_construct(orte_ns_proxy_tagitem_t* tagitem)
@@ -245,14 +222,10 @@ mca_ns_base_module_t* orte_ns_proxy_init(int *priority)
                ORTE_ERROR_LOG(ret);
                return NULL;
            }
-           if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.ns_replica, &name))) {
+           if(ORTE_SUCCESS != (ret = orte_dss.copy((void**)&orte_process_info.ns_replica, &name, ORTE_NAME))) {
                ORTE_ERROR_LOG(ret);
                return NULL;
            }
-            if (ORTE_SUCCESS != orte_ns_base_copy_process_name(&orte_ns_proxy.my_replica,
-                                orte_process_info.ns_replica)) {  /* can't operate */
-                return NULL;
-            }
 
           /* initialize the cell info tracker */
           if (ORTE_SUCCESS != (rc = orte_pointer_array_init(&(orte_ns_proxy.cells),
@@ -315,7 +288,6 @@ int orte_ns_proxy_module_init(void)
  */
 int orte_ns_proxy_finalize(void)
 {
-    orte_ns_proxy_cell_info_t **cptr;
     orte_ns_proxy_tagitem_t **tag;
     orte_ns_proxy_dti_t **dti;
     orte_std_cntr_t i;
@@ -323,14 +295,6 @@ int orte_ns_proxy_finalize(void)
   /* free all tracking storage, but only if this component was initialized */
 
     if (initialized) {
-        cptr = (orte_ns_proxy_cell_info_t**)(orte_ns_proxy.cells)->addr;
-        for (i=0; i < (orte_ns_proxy.cells)->size; i++) {
-            if (NULL != cptr[i]) {
-                OBJ_RELEASE(cptr[i]);
-            }
-        }
-        OBJ_RELEASE(orte_ns_proxy.cells);
-
         tag = (orte_ns_proxy_tagitem_t**)(orte_ns_proxy.tags)->addr;
         for (i=0; i < (orte_ns_proxy.tags)->size; i++) {
             if (NULL != tag[i]) OBJ_RELEASE(tag[i]);

@@ -207,7 +207,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
                 opal_list_get_end(&mca_btl_udapl_component.udapl_procs);
             proc  = (mca_btl_udapl_proc_t*)opal_list_get_next(proc)) {
 
-        if(0 == orte_ns.compare(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
+        if(ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL, &proc->proc_guid, endpoint)) {
             for(i = 0; i < proc->proc_endpoint_count; i++) {
                 ep = proc->proc_endpoints[i];
 
@@ -231,7 +231,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 
 void mca_btl_udapl_endpoint_post_oob_recv(void)
 {
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DYNAMIC-1,
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DYNAMIC-1,
             ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
 }
 
@@ -246,7 +246,7 @@ void mca_btl_udapl_endpoint_connect(mca_btl_udapl_endpoint_t* endpoint)
     /* Nasty test to prevent deadlock and unwanted connection attempts */
     /* This right here is the whole point of using the ORTE/RML handshake */
     if((MCA_BTL_UDAPL_CONN_EAGER == endpoint->endpoint_state &&
-            0 > orte_ns.compare(ORTE_NS_CMP_ALL,
+            0 > orte_ns.compare_fields(ORTE_NS_CMP_ALL,
                     &endpoint->endpoint_proc->proc_guid,
                     &ompi_proc_local()->proc_name)) ||
             (MCA_BTL_UDAPL_CLOSED != endpoint->endpoint_state &&
@@ -370,7 +370,7 @@ static int mca_btl_udapl_endpoint_finish_eager(
     OPAL_THREAD_UNLOCK(&endpoint->endpoint_lock);
 
     /* Only one side does dat_ep_connect() */
-    if(0 < orte_ns.compare(ORTE_NS_CMP_ALL,
+    if(0 < orte_ns.compare_fields(ORTE_NS_CMP_ALL,
                 &endpoint->endpoint_proc->proc_guid,
                 &ompi_proc_local()->proc_name)) {
     

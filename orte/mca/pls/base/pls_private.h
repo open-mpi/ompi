@@ -79,7 +79,7 @@ extern "C" {
     int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal);
     int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_data_t *ndat);
 
-    int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job);
+    int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opal_list_t *attrs);
     int orte_pls_base_store_active_daemons(opal_list_t *daemons);
     int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info);
     
