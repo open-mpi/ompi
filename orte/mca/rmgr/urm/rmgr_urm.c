@@ -133,7 +133,7 @@ static int orte_rmgr_urm_setup_job(orte_app_context_t** app_context,
         *jobid = *jptr;
     } else {
         /* allocate a jobid  */
-        if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid))) {
+        if (ORTE_SUCCESS != (rc = orte_ns.create_jobid(jobid, attrs))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }        
@@ -349,15 +349,12 @@ static int orte_rmgr_urm_spawn_job(
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
      
-    /* Only do this step if we have been asked to do it via the ORTE_RMGR_SPAWN_FLOW
-     * attribute, or if no flow flags were provided
-     * If the jobid = ORTE_JOBID_INVALID, then we need to
-     * get one assigned to us. Otherwise, we are entering
-     * with a valid jobid, so no need to get one
+    /* Only do this step if we have been asked to do it via the
+     * ORTE_RMGR_SPAWN_FLOW attribute
      */
      if (flags & ORTE_RMGR_SETUP) {
              if (ORTE_SUCCESS !=
-                 (rc = orte_rmgr_urm_setup_job(app_context,num_context,jobid,attributes))) {
+                 (rc = orte_rmgr_urm_setup_job(app_context, num_context, jobid, attributes))) {
                  ORTE_ERROR_LOG(rc);
                  return rc;
              }

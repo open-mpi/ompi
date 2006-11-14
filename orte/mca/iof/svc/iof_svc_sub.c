@@ -81,10 +81,10 @@ int orte_iof_svc_sub_create(
         item =  opal_list_get_next(item)) {
         sub = (orte_iof_svc_sub_t*)item;
         if (sub->src_mask == src_mask &&
-            orte_ns.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
+            orte_ns.compare_fields(sub->src_mask,&sub->src_name,src_name) == 0 &&
             sub->src_tag == src_tag &&
             sub->dst_mask == dst_mask &&
-            orte_ns.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
+            orte_ns.compare_fields(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
             sub->dst_tag == dst_tag) {
                 OPAL_THREAD_UNLOCK(&mca_iof_svc_component.svc_lock);
                 return ORTE_SUCCESS;
@@ -134,10 +134,10 @@ int orte_iof_svc_sub_delete(
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
         if (sub->src_mask == src_mask &&
-            orte_ns.compare(sub->src_mask,&sub->src_name,src_name) == 0 &&
+            orte_ns.compare_fields(sub->src_mask,&sub->src_name,src_name) == 0 &&
             sub->src_tag == src_tag &&
             sub->dst_mask == dst_mask &&
-            orte_ns.compare(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
+            orte_ns.compare_fields(sub->dst_mask,&sub->dst_name,dst_name) == 0 &&
             sub->dst_tag == dst_tag) {
             opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
@@ -159,9 +159,9 @@ int orte_iof_svc_sub_delete_all(
         opal_list_item_t* next =  opal_list_get_next(item);
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)item;
         if ((sub->src_mask == ORTE_NS_CMP_ALL &&
-             orte_ns.compare(ORTE_NS_CMP_ALL,&sub->src_name,name) == 0) ||
+             orte_ns.compare_fields(ORTE_NS_CMP_ALL,&sub->src_name,name) == 0) ||
             (sub->dst_mask == ORTE_NS_CMP_ALL &&
-             orte_ns.compare(ORTE_NS_CMP_ALL,&sub->dst_name,name) == 0)) {
+             orte_ns.compare_fields(ORTE_NS_CMP_ALL,&sub->dst_name,name) == 0)) {
             opal_list_remove_item(&mca_iof_svc_component.svc_subscribed, item);
             OBJ_RELEASE(item);
         }
@@ -283,7 +283,7 @@ bool orte_iof_svc_fwd_match(
     orte_iof_svc_sub_t* sub,
     orte_iof_svc_pub_t* pub)
 {
-    if (orte_ns.compare(sub->dst_mask,&sub->dst_name,&pub->pub_name) == 0 &&
+    if (orte_ns.compare_fields(sub->dst_mask,&sub->dst_name,&pub->pub_name) == 0 &&
         sub->src_tag == pub->pub_tag) {
         return true;
     } else {

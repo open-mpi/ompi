@@ -73,10 +73,10 @@
  * Local functions
  */
 static int pls_slurm_launch_job(orte_jobid_t jobid);
-static int pls_slurm_terminate_job(orte_jobid_t jobid);
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid);
+static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
-static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_slurm_finalize(void);
 
@@ -421,7 +421,7 @@ cleanup:
 }
 
 
-static int pls_slurm_terminate_job(orte_jobid_t jobid)
+static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -429,7 +429,7 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -452,7 +452,7 @@ CLEANUP:
 /**
 * Terminate the orteds for a given job
  */
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid)
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -460,7 +460,7 @@ static int pls_slurm_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -493,7 +493,7 @@ static int pls_slurm_terminate_proc(const orte_process_name_t *name)
 /**
  * Signal all the processes in the child srun by sending the signal directly to it
  */
-static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal)
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     if (0 != srun_pid) {
         kill(srun_pid, (int)signal);

@@ -29,8 +29,8 @@ extern "C" {
 #define ORTE_ERR_BASE            OPAL_ERR_MAX
 
 /* define the results values for comparisons so we can change them in only one place */
-#define ORTE_VALUE1_GREATER  -1
-#define ORTE_VALUE2_GREATER  +1
+#define ORTE_VALUE1_GREATER  +1
+#define ORTE_VALUE2_GREATER  -1
 #define ORTE_EQUAL            0
 
 enum {

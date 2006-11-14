@@ -759,7 +759,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
 /**
  * Query the registry for all nodes participating in the job
  */
-int orte_pls_gridengine_terminate_job(orte_jobid_t jobid)
+int orte_pls_gridengine_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -767,7 +767,7 @@ int orte_pls_gridengine_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -794,7 +794,7 @@ int orte_pls_gridengine_terminate_proc(const orte_process_name_t* proc)
 /**
  * Terminate the orteds for a given job
  */
-int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid)
+int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -802,7 +802,7 @@ int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -823,7 +823,7 @@ CLEANUP:
 /**
  * Signal all processes associated with this job
  */
-int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal)
+int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -831,7 +831,7 @@ int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&daemons);
         return rc;

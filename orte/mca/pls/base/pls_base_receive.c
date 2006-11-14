@@ -51,7 +51,7 @@ int orte_pls_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY,
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_PLS,
                                                       ORTE_RML_PERSISTENT,
                                                       orte_pls_base_recv,
@@ -72,7 +72,7 @@ int orte_pls_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS))) {
         ORTE_ERROR_LOG(rc);
     }
     recv_issued = false;
@@ -97,6 +97,8 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
     orte_jobid_t job;
     orte_process_name_t *name;
     int32_t signal;
+    opal_list_t attrs;
+    opal_list_item_t *item;
     int rc;
 
     count = 1;
@@ -130,10 +132,21 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
+            
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
                 
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job))) {
+                
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
+            
+            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attrs);
             break;
             
         case ORTE_PLS_TERMINATE_ORTEDS_CMD:
@@ -143,9 +156,19 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job))) {
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
+                
+            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attrs);
             break;
             
         case ORTE_PLS_SIGNAL_JOB_CMD:
@@ -161,9 +184,19 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
-            if (ORTE_SUCCESS != (rc = orte_pls.signal_job(job, signal))) {
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+                
+            if (ORTE_SUCCESS != (rc = orte_pls.signal_job(job, signal, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
+
+            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attrs);
             break;
             
         case ORTE_PLS_TERMINATE_PROC_CMD:

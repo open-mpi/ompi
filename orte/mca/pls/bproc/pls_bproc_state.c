@@ -173,7 +173,7 @@ cleanup:
 /**
  *  Retrieve all process pids for the specified job.
  */
-int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t **pids, orte_std_cntr_t* num_pids)
+int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t **pids, orte_std_cntr_t* num_pids, opal_list_t *attrs)
 {
     char *segment;
     char *keys[2];
@@ -352,7 +352,7 @@ int orte_pls_bproc_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY,
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_BPROC_ABORT,
                                                       ORTE_RML_PERSISTENT,
                                                       orte_pls_bproc_recv,
@@ -373,7 +373,7 @@ int orte_pls_bproc_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_BPROC_ABORT))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_BPROC_ABORT))) {
         ORTE_ERROR_LOG(rc);
     }
     mca_pls_bproc_component.recv_issued = false;

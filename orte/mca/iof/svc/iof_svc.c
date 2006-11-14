@@ -80,7 +80,7 @@ int orte_iof_svc_publish(
     if(mode == ORTE_IOF_SINK) {
         rc = orte_iof_svc_pub_create(
             name,
-            ORTE_RML_NAME_SELF,
+            ORTE_PROC_MY_NAME,
             ORTE_NS_CMP_ALL,
             tag);
     }
@@ -106,7 +106,7 @@ int orte_iof_svc_unpublish(
     int rc;
     rc = orte_iof_svc_pub_delete(
         name,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         mask,
         tag);
     if(rc != ORTE_SUCCESS)
@@ -142,7 +142,7 @@ int orte_iof_svc_push(
 
     /* setup a subscription */
     rc = orte_iof_svc_sub_create(
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         dst_tag,
         dst_name,
@@ -153,7 +153,7 @@ int orte_iof_svc_push(
 
     /* setup a local endpoint to reflect registration */
     rc = orte_iof_base_endpoint_create(
-        ORTE_RML_NAME_SELF, 
+        ORTE_PROC_MY_NAME, 
         ORTE_IOF_SOURCE, 
         dst_tag,
         fd);
@@ -181,7 +181,7 @@ int orte_iof_svc_pull(
 
     /* setup a local endpoint */
     rc = orte_iof_base_endpoint_create(
-        ORTE_RML_NAME_SELF, 
+        ORTE_PROC_MY_NAME, 
         ORTE_IOF_SINK, 
         src_tag,
         fd);
@@ -193,7 +193,7 @@ int orte_iof_svc_pull(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     return rc;
@@ -230,7 +230,7 @@ int orte_iof_svc_subscribe(
     int rc;
 
     /* create a local registration to reflect the callback */
-    rc = orte_iof_base_callback_create(ORTE_RML_NAME_SELF,src_tag,cbfunc,cbdata);
+    rc = orte_iof_base_callback_create(ORTE_PROC_MY_NAME,src_tag,cbfunc,cbdata);
     if(rc != ORTE_SUCCESS)
         return rc;
 
@@ -239,7 +239,7 @@ int orte_iof_svc_subscribe(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     return rc;
@@ -257,12 +257,12 @@ int orte_iof_svc_unsubscribe(
         src_name,
         src_mask,
         src_tag,
-        ORTE_RML_NAME_SELF,
+        ORTE_PROC_MY_NAME,
         ORTE_NS_CMP_ALL,
         src_tag);
     if(ORTE_SUCCESS != rc)
         return rc;
 
     /* cleanup any locally registered callback */
-    return orte_iof_base_callback_delete(ORTE_RML_NAME_SELF,src_tag);
+    return orte_iof_base_callback_delete(ORTE_PROC_MY_NAME,src_tag);
 }

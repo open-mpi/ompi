@@ -301,6 +301,7 @@ int orterun(int argc, char *argv[])
     orte_proc_state_t cb_states;
     orte_job_state_t exit_state;
     opal_list_t attributes;
+    opal_list_item_t *item;
 
     /* Setup MCA params */
 
@@ -458,6 +459,9 @@ int orterun(int argc, char *argv[])
 
     cb_states = ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
     rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, 0, NULL, job_state_callback, cb_states, &attributes);
+    while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attributes);
+    
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
@@ -505,11 +509,17 @@ int orterun(int argc, char *argv[])
             
             /* the job is complete - now tell the orteds that it is
              * okay to finalize and exit, we are done with them
+             * be sure to include any descendants so nothing is
+             * left hanging
              */
-            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid))) {
+            OBJ_CONSTRUCT(&attributes, opal_list_t);
+            orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &attributes))) {
                 opal_show_help("help-orterun.txt", "orterun:daemon-die", false,
                                orterun_basename, NULL, NULL, ret);
             }
+            while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attributes);
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
         }
@@ -744,6 +754,8 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     int ret;
     struct timeval tv = { 1, 0 };
     opal_event_t* event;
+    opal_list_t attrs;
+    opal_list_item_t *item;
 
     static int signalled = 0;
 
@@ -757,10 +769,15 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     }
 
     /* terminate the job - this will also wakeup orterun so
-     * it can kill all the orteds
+     * it can kill all the orteds. Be sure to kill all the job's
+     * descendants, if any, so nothing is left hanging
      */
     if (jobid != ORTE_JOBID_INVALID) {
-        ret = orte_pls.terminate_job(jobid);
+        OBJ_CONSTRUCT(&attrs, opal_list_t);
+        orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+        ret = orte_pls.terminate_job(jobid, &attrs);
+        while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+        OBJ_DESTRUCT(&attrs);
         if (ORTE_SUCCESS != ret) {
             jobid = ORTE_JOBID_INVALID;
         }
@@ -787,6 +804,8 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 {
     struct opal_event *signal = (struct opal_event*)arg;
     int signum, ret;
+    opal_list_t attrs;
+    opal_list_item_t *item;
 
     OPAL_TRACE(1);
 
@@ -796,11 +815,15 @@ static void  signal_forward_callback(int fd, short event, void *arg)
                 orterun_basename, signum);
     }
 
-    /** send the signal out to the processes */
-    if (ORTE_SUCCESS != (ret = orte_pls.signal_job(jobid, signum))) {
+    /** send the signal out to the processes, including any descendants */
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    if (ORTE_SUCCESS != (ret = orte_pls.signal_job(jobid, signum, &attrs))) {
         fprintf(stderr, "Signal %d could not be sent to the job (returned %d)",
                 signum, ret);
     }
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
 }
 
 

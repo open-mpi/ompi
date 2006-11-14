@@ -134,6 +134,11 @@ int orte_pls_rsh_component_open(void)
     }
     mca_pls_rsh_component.num_concurrent = tmp;
 
+    mca_base_param_reg_int(c, "force_rsh",
+                           "Force the launcher to always use rsh, even for local daemons",
+                           false, false, false, &tmp);
+    mca_pls_rsh_component.force_rsh = OPAL_INT_TO_BOOL(tmp);
+    
     if (mca_pls_rsh_component.debug == 0) {
         mca_base_param_reg_int_name("orte", "debug",
                                     "Whether or not to enable debugging output for all ORTE components (0 or 1)",

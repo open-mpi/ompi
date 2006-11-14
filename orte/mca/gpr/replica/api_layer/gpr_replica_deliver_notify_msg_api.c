@@ -30,6 +30,7 @@
 #include "orte/orte_constants.h"
 #include "opal/util/trace.h"
 
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/gpr/replica/api_layer/gpr_replica_api.h"

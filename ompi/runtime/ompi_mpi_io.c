@@ -17,7 +17,7 @@
  */
 
 #include "ompi_config.h"
-#include "orte/mca/oob/oob.h"
+#include "orte/mca/ns/ns_types.h"
 #include "orte/mca/iof/iof.h"
 #include "ompi/constants.h"
 
@@ -40,7 +40,7 @@ int ompi_mpi_init_io(void)
     close(fds[0]);
 
     rc = mca_iof.iof_publish(
-        MCA_OOB_NAME_SELF,
+        OMPI_PROC_MY_NAME,
         MCA_IOF_SINK,
         MCA_IOF_STDIN,
         fds[1]);
@@ -56,7 +56,7 @@ int ompi_mpi_init_io(void)
     close(fds[1]);
 
     rc = mca_iof.iof_publish(
-        MCA_OOB_NAME_SELF,
+        OMPI_PROC_MY_NAME,
         MCA_IOF_SOURCE,
         MCA_IOF_STDOUT,
         fds[0]);
@@ -72,7 +72,7 @@ int ompi_mpi_init_io(void)
     close(fds[1]);
 
     rc = mca_iof.iof_publish(
-        MCA_OOB_NAME_SELF,
+        OMPI_PROC_MY_NAME,
         MCA_IOF_SOURCE,
         MCA_IOF_STDERR,
         fds[0]);

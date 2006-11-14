@@ -72,10 +72,10 @@ int orte_pls_bproc_finalize(void);
  * Interface
  */
 int orte_pls_bproc_launch(orte_jobid_t);
-int orte_pls_bproc_terminate_job(orte_jobid_t);
+int orte_pls_bproc_terminate_job(orte_jobid_t, opal_list_t*);
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name);
-int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid);
-int orte_pls_bproc_signal_job(orte_jobid_t, int32_t);
+int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, opal_list_t*);
+int orte_pls_bproc_signal_job(orte_jobid_t, int32_t, opal_list_t*);
 int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t);
 
 /* Utility routine to get/set process pid */
@@ -84,7 +84,10 @@ ORTE_DECLSPEC int orte_pls_bproc_get_proc_pid(const orte_process_name_t*, pid_t*
 /**
  * Utility routine to retreive all process pids w/in a specified job.
  */
-ORTE_DECLSPEC int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t** pids, orte_std_cntr_t* num_pids);
+ORTE_DECLSPEC int orte_pls_bproc_get_proc_pids(orte_jobid_t jobid, pid_t** pids,
+                                               orte_std_cntr_t* num_pids,
+                                               opal_list_t *attrs);
+
 /**
  * Utility routine to get/set daemon pid
  */

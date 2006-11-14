@@ -426,10 +426,7 @@ static int mca_pml_base_modex_subscribe(orte_process_name_t* name)
     OPAL_UNLOCK(&mca_pml_base_modex_lock);
 
     /* otherwise - subscribe to get this jobid's contact info */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = name->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
                                 OMPI_MODEX_SUBSCRIPTION, jobid))) {
@@ -520,10 +517,7 @@ int mca_pml_base_modex_send(
     orte_byte_object_t bo;
     orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = ORTE_PROC_MY_NAME->jobid;
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);

@@ -175,7 +175,7 @@ int main(int argc, char *argv[])
      * Attempt to parse the probe's name and save in proc_info
      */
     if (orteprobe_globals.name_string) {
-        ret = orte_ns_base_convert_string_to_process_name(
+        ret = orte_ns.convert_string_to_process_name(
             &orte_process_info.my_name, orteprobe_globals.name_string);
         if(ORTE_SUCCESS != ret) {
             fprintf(stderr, "orteprobe: Couldn't convert environmental string to probe's process name\n");

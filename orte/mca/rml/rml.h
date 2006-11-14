@@ -42,14 +42,6 @@ extern "C" {
 #endif
 
 /*
- * Well known addresses
- */
-
-ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_any;
-ORTE_DECLSPEC extern orte_process_name_t orte_rml_name_seed;
-
-
-/*
  * RML Module function prototypes.
  */
 

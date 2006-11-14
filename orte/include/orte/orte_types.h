@@ -38,6 +38,7 @@ typedef uint8_t orte_data_type_t;  /** data type indicators used in ORTE */
 typedef int32_t orte_std_cntr_t;  /** standard counters used in ORTE */
 #define ORTE_STD_CNTR_T         ORTE_INT32
 #define ORTE_STD_CNTR_MAX       INT32_MAX
+#define ORTE_STD_CNTR_MIN       INT32_MIN
 #define ORTE_STD_CNTR_INVALID   -1
 
 /* define a structure to hold generic byte objects */

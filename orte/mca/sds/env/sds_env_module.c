@@ -28,7 +28,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/ns.h"
 
 
 orte_sds_base_module_t orte_sds_env_module = {
@@ -50,7 +50,7 @@ orte_sds_env_set_name(void)
     mca_base_param_lookup_string(id, &name_string);
 
     if(name_string != NULL) {
-        if (ORTE_SUCCESS != (rc = orte_ns_base_convert_string_to_process_name(
+        if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(
            &(orte_process_info.my_name),
            name_string))) {
            ORTE_ERROR_LOG(rc);

@@ -626,7 +626,7 @@ static int bootstrap_comm(ompi_communicator_t *comm)
         empty_index = -1;
         for (i = 0; i < mca_coll_sm_component.sm_bootstrap_num_segments; ++i) {
             if (comm->c_contextid == bshe->smbhe_keys[i].mcsbck_cid &&
-                0 == orte_ns.compare(ORTE_NS_CMP_ALL,
+                ORTE_EQUAL == orte_ns.compare_fields(ORTE_NS_CMP_ALL,
                                      rank0,
                                      &bshe->smbhe_keys[i].mcsbck_rank0_name)) {
                 found = true;

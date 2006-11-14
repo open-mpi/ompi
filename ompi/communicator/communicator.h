@@ -27,7 +27,7 @@
 #include "mpi.h"
 #include "ompi/group/group.h"
 #include "ompi/mca/coll/coll.h"
-#include "orte/mca/oob/oob_types.h"
+#include "orte/mca/rml/rml_types.h"
 #include "ompi/proc/proc.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)

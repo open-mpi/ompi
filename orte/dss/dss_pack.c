@@ -36,7 +36,7 @@ int orte_dss_pack(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
     int rc;
 
     /* check for error */
-    if (NULL == buffer || NULL == src) {
+    if (NULL == buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }

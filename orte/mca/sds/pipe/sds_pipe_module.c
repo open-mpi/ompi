@@ -29,6 +29,8 @@
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/ns/base/base.h"
@@ -59,7 +61,7 @@ orte_sds_pipe_set_name(void)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
-    if(ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&orte_process_info.my_name, &name))) {
+    if(ORTE_SUCCESS != (rc = orte_dss.copy((void**)&orte_process_info.my_name, &name, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

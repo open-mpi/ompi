@@ -110,7 +110,7 @@ int orte_pls_proxy_launch(orte_jobid_t job)
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_terminate_job(orte_jobid_t job)
+int orte_pls_proxy_terminate_job(orte_jobid_t job, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -140,6 +140,12 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job)
         return rc;
     }
     
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attrs, 1, ORTE_ATTR_LIST))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
     if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
@@ -176,7 +182,7 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job)
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_terminate_orteds(orte_jobid_t job)
+int orte_pls_proxy_terminate_orteds(orte_jobid_t job, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -206,6 +212,12 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job)
         return rc;
     }
     
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attrs, 1, ORTE_ATTR_LIST))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
     if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
@@ -242,7 +254,7 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job)
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal)
+int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -278,6 +290,12 @@ int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal)
         return rc;
     }
 
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attrs, 1, ORTE_ATTR_LIST))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
     if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);

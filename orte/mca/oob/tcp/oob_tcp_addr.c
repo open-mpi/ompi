@@ -32,6 +32,11 @@
 #include <string.h>
 #include "orte/orte_constants.h"
 #include "opal/util/if.h"
+
+#include "orte/mca/ns/ns_types.h"
+#include "orte/util/proc_info.h"
+#include "orte/dss/dss.h"
+
 #include "oob_tcp.h"
 #include "oob_tcp_addr.h"
 
@@ -65,7 +70,7 @@ int mca_oob_tcp_addr_pack(orte_buffer_t* buffer)
     int i;
     int rc;
   
-    rc = orte_dss.pack(buffer, orte_process_info.my_name, 1, ORTE_NAME);
+    rc = orte_dss.pack(buffer, ORTE_PROC_MY_NAME, 1, ORTE_NAME);
     if(rc != ORTE_SUCCESS)
         return rc;
 

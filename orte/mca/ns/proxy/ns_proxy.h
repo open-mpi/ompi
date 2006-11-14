@@ -22,26 +22,19 @@
 
 
 #include "orte_config.h"
-#include "opal/types.h"
 #include "orte/orte_constants.h"
+
+#include "opal/types.h"
 #include "opal/class/opal_list.h"
+
 #include "orte/dss/dss.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
-
-struct orte_ns_proxy_cell_info_t {
-    opal_object_t super;
-    orte_cellid_t cellid;
-    char *site;
-    char *resource;
-};
-typedef struct orte_ns_proxy_cell_info_t orte_ns_proxy_cell_info_t;
-
-OBJ_CLASS_DECLARATION(orte_ns_proxy_cell_info_t);
 
 struct orte_ns_proxy_tagitem_t {
     opal_object_t super;
@@ -81,7 +74,6 @@ int orte_ns_proxy_finalize(void);
  */
 typedef struct {
     size_t max_size, block_size;
-    orte_process_name_t *my_replica;
     int debug;
     orte_cellid_t num_cells;
     orte_pointer_array_t *cells;
@@ -95,19 +87,38 @@ typedef struct {
 extern orte_ns_proxy_globals_t orte_ns_proxy;
 
 /*
+ * simplifying define
+ */
+#define ORTE_NS_MY_REPLICA    orte_process_info.ns_replica
+
+
+/*
  * proxy function prototypes
  */
 int orte_ns_proxy_create_cellid(orte_cellid_t *cellid, char *site, char *resource);
 
 int orte_ns_proxy_get_cell_info(orte_cellid_t cellid, char **site, char **resource);
 
-int orte_ns_proxy_create_jobid(orte_jobid_t *jobid);
+int orte_ns_proxy_create_nodeids(orte_nodeid_t **nodeids, orte_std_cntr_t *nnodes,
+                                 orte_cellid_t cellid, char **nodenames);
+
+int orte_ns_proxy_get_node_info(char ***nodename, orte_cellid_t cellid, orte_std_cntr_t num_nodes, orte_nodeid_t *nodeids);
+
+int orte_ns_proxy_create_jobid(orte_jobid_t *jobid, opal_list_t *attrs);
+
+int orte_ns_proxy_get_job_descendants(orte_jobid_t** descendants, orte_std_cntr_t *ndesc, orte_jobid_t job);
+
+int orte_ns_proxy_get_job_children(orte_jobid_t** descendants, orte_std_cntr_t *ndesc, orte_jobid_t job);
+
+int orte_ns_proxy_get_root_job(orte_jobid_t *root_job, orte_jobid_t job);
+
+int orte_ns_proxy_get_parent_job(orte_jobid_t *parent, orte_jobid_t job);
 
 int orte_ns_proxy_reserve_range(orte_jobid_t job, orte_vpid_t range,
                                 orte_vpid_t *startvpid);
 
-int orte_ns_proxy_get_job_peers(orte_process_name_t **procs, 
-                                  orte_std_cntr_t *num_procs, orte_jobid_t job);
+int orte_ns_proxy_get_peers(orte_process_name_t **procs, 
+                            orte_std_cntr_t *num_procs, opal_list_t *attrs);
 
 int orte_ns_proxy_assign_rml_tag(orte_rml_tag_t *tag, char *name);
 

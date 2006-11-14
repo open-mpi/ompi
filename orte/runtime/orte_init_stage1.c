@@ -371,11 +371,7 @@ int orte_init_stage1(bool infrastructure)
         char *site, *resource;
         orte_app_context_t *app;
         
-        if (ORTE_SUCCESS != (ret = orte_ns.get_jobid(&my_jobid, orte_process_info.my_name))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_jobid for singleton/seed";
-            goto error;
-        }
+        my_jobid = ORTE_PROC_MY_NAME->jobid;
         
         /* If there is no existing cellid, create one */
         my_cellid = 0; /* JJH Assertion/Repair until cellid's are fixed */
@@ -399,11 +395,7 @@ int orte_init_stage1(bool infrastructure)
             goto error;
         }
         
-        if (ORTE_SUCCESS != (ret = orte_ns.get_cellid(&my_cellid, orte_process_info.my_name))) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_ns.get_cellid for singleton/seed";
-            goto error;
-        }
+        my_cellid = ORTE_PROC_MY_NAME->cellid;
         
         /* set the rest of the infrastructure */
         app = OBJ_NEW(orte_app_context_t);

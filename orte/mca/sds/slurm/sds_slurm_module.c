@@ -68,7 +68,7 @@ orte_sds_slurm_set_name(void)
 
     if(name_string != NULL) {
         if (ORTE_SUCCESS != 
-            (rc = orte_ns_base_convert_string_to_process_name(&(orte_process_info.my_name),
+            (rc = orte_ns.convert_string_to_process_name(&(orte_process_info.my_name),
                                                               name_string))) {
             ORTE_ERROR_LOG(rc);
             free(name_string);

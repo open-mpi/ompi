@@ -1040,7 +1040,7 @@ int ompi_comm_determine_first ( ompi_communicator_t *intercomm, int high )
         theirproc = intercomm->c_remote_group->grp_proc_pointers[0];
 
         mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
-        rc = orte_ns.compare (mask, &(ourproc->proc_name), &(theirproc->proc_name));
+        rc = orte_ns.compare_fields(mask, &(ourproc->proc_name), &(theirproc->proc_name));
         if ( 0 > rc ) {
             flag = true;
         }

@@ -17,13 +17,18 @@
 #
 
 headers += \
-        base/base.h
+        base/base.h \
+	base/ns_private.h
 
 libmca_ns_la_SOURCES += \
         base/ns_base_close.c \
         base/ns_base_select.c \
         base/ns_base_open.c \
-        base/ns_base_local_fns.c \
+        base/ns_base_cell_fns.c \
+        base/ns_base_job_fns.c \
+        base/ns_base_vpid_name_fns.c \
+        base/ns_base_general_fns.c \
+        base/ns_base_diag_fns.c \
         base/data_type_support/ns_data_type_compare_fns.c \
         base/data_type_support/ns_data_type_copy_fns.c \
         base/data_type_support/ns_data_type_print_fns.c \

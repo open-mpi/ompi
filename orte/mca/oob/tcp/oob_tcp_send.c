@@ -18,6 +18,7 @@
 #include "orte_config.h"
 
 #include "orte/mca/ns/ns_types.h"
+#include "orte/util/proc_info.h"
 
 #include "orte/mca/oob/tcp/oob_tcp.h"
 
@@ -119,7 +120,7 @@ int mca_oob_tcp_send(
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
     if (NULL == orte_process_info.my_name) {
-        msg->msg_hdr.msg_src = *MCA_OOB_NAME_ANY;
+        msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
     } else {
         msg->msg_hdr.msg_src = *orte_process_info.my_name;
     }
@@ -144,7 +145,7 @@ int mca_oob_tcp_send(
     msg->msg_peer = peer->peer_name;
     
     if (NULL != name && NULL != orte_process_info.my_name &&
-        0 == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
+        ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
         return mca_oob_tcp_send_self(peer,msg,iov,count);
     }
 
@@ -206,7 +207,11 @@ int mca_oob_tcp_send_nb(
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
-    msg->msg_hdr.msg_src = *orte_process_info.my_name;
+    if (NULL == orte_process_info.my_name) {
+        msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
+    } else {
+        msg->msg_hdr.msg_src = *orte_process_info.my_name;
+    }
     msg->msg_hdr.msg_dst = *name;
 
     /* create one additional iovect that will hold the size of the message */
@@ -227,7 +232,7 @@ int mca_oob_tcp_send_nb(
     msg->msg_complete = false;
     msg->msg_peer = peer->peer_name;
     
-    if (0 == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
+    if (ORTE_EQUAL == mca_oob_tcp_process_name_compare(name, orte_process_info.my_name)) {  /* local delivery */
         return mca_oob_tcp_send_self(peer,msg,iov,count);
     }
 

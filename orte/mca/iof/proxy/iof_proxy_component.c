@@ -127,7 +127,7 @@ orte_iof_proxy_init(int* priority, bool *allow_multi_user_threads, bool *have_hi
     mca_iof_proxy_component.proxy_iov[0].iov_len = 0;
 
     rc = orte_rml.recv_nb(
-        ORTE_RML_NAME_ANY,
+        ORTE_NAME_WILDCARD,
         mca_iof_proxy_component.proxy_iov,
         1,
         ORTE_RML_TAG_IOF_SVC,
@@ -152,7 +152,7 @@ static int orte_iof_proxy_close(void)
     int rc = ORTE_SUCCESS;
 
     if (initialized) {
-        rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_IOF_SVC);
+        rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_IOF_SVC);
     }
     return rc;
 }

@@ -149,7 +149,7 @@ int mca_oob_xcast(
         orte_gpr_notify_message_t *msg;
 
         OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-        rc = mca_oob_recv_packed(MCA_OOB_NAME_ANY, &rbuf, tag);
+        rc = mca_oob_recv_packed(ORTE_NAME_WILDCARD, &rbuf, tag);
         if(rc < 0) {
             OBJ_DESTRUCT(&rbuf);
             return rc;

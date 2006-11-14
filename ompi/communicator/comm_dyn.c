@@ -312,7 +312,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == rbuf) {
             return NULL;
         }
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(rbuf);
             return NULL;
@@ -564,6 +564,16 @@ ompi_comm_start_processes(int count, char **array_of_commands,
 
     /* cleanup */
     if (NULL != base_prefix) free(base_prefix);
+
+    /* tell the RTE that we want to be a child of this process' job */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_NS_USE_PARENT,
+                                                      ORTE_JOBID, &(orte_process_info.my_name->jobid),
+                                                      ORTE_RMGR_ATTR_OVERRIDE))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&attributes);
+        opal_progress_event_decrement();
+        return MPI_ERR_SPAWN;
+    }
 
     /* tell the RTE that we want to the children to run inside of our allocation -
      * don't go get one just for them
@@ -857,7 +867,7 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
 #define OMPI_COMM_MAXJOBIDS 64
 void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 {
-    int i, j, numjobids=0, rc;
+    int i, j, numjobids=0;
     int size, rsize;
     int found;
     orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
@@ -875,40 +885,34 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    found = 0;
-    for ( j=0; j<numjobids; j++) {
-        if ( thisjobid == jobids[j]) {
-        found = 1;
-        break;
+        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+        found = 0;
+        for ( j=0; j<numjobids; j++) {
+            if (thisjobid == jobids[j]) {
+                found = 1;
+                break;
+            }
         }
-    }
-    if (!found ) {
-        jobids[numjobids++] = thisjobid;
-    }
+        if (!found ) {
+            jobids[numjobids++] = thisjobid;
+        }
     }
 
     /* if inter-comm, loop over all processes in remote_group
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    found = 0;
-    for ( j=0; j<numjobids; j++) {
-        if ( thisjobid == jobids[j]) {
-        found = 1;
-        break;
+        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+        found = 0;
+        for ( j=0; j<numjobids; j++) {
+            if ( thisjobid == jobids[j]) {
+                found = 1;
+                break;
+            }
         }
-    }
-    if (!found ) {
-        jobids[numjobids++] = thisjobid;
-    }
+        if (!found ) {
+            jobids[numjobids++] = thisjobid;
+        }
     }
 
     /* if number of joibds larger than one, set the disconnect flag*/

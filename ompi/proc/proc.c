@@ -104,7 +104,7 @@ void ompi_proc_destruct(ompi_proc_t* proc)
 int ompi_proc_init(void)
 {
     orte_process_name_t *peers;
-    orte_std_cntr_t i, npeers, self, num_tokens;
+    orte_std_cntr_t i, npeers, num_tokens;
     orte_jobid_t jobid;
     char *segment, **tokens;
     orte_data_value_t value = { {OBJ_CLASS(orte_data_value_t),0}, ORTE_NULL, NULL};
@@ -115,7 +115,7 @@ int ompi_proc_init(void)
     OBJ_CONSTRUCT(&ompi_proc_lock, opal_mutex_t);
 
     /* get all peers in this job */
-    if(ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, &self))) {
+    if(ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &npeers, NULL))) {
         opal_output(0, "ompi_proc_init: get_peers failed with errno=%d", rc);
         return rc;
     }
@@ -124,7 +124,7 @@ int ompi_proc_init(void)
     for( i = 0; i < npeers; i++ ) {
         ompi_proc_t *proc = OBJ_NEW(ompi_proc_t);
         proc->proc_name = peers[i];
-        if( i == self ) {
+        if( i == ORTE_PROC_MY_NAME->vpid ) {
             ompi_proc_local_proc = proc;
             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
         }
@@ -150,10 +150,7 @@ int ompi_proc_init(void)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* find the job segment on the registry */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
@@ -223,7 +220,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (0 == orte_ns.compare(mask, &proc->proc_name, &my_name)) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, &my_name)) {
             ++count;
         }
     }
@@ -239,7 +236,7 @@ ompi_proc_t** ompi_proc_world(size_t *size)
     for (proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
          proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
          proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (0 == orte_ns.compare(mask, &proc->proc_name, &my_name)) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, &my_name)) {
             procs[count++] = proc;
         }
     }
@@ -298,7 +295,7 @@ ompi_proc_t * ompi_proc_find ( const orte_process_name_t * name )
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (0 == orte_ns.compare(mask, &proc->proc_name, name)) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, name)) {
             rproc = proc;
             break;
         }
@@ -319,7 +316,7 @@ ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t * name, bool* i
     for(proc =  (ompi_proc_t*)opal_list_get_first(&ompi_proc_list);
         proc != (ompi_proc_t*)opal_list_get_end(&ompi_proc_list);
         proc =  (ompi_proc_t*)opal_list_get_next(proc)) {
-        if (0 == orte_ns.compare(mask, &proc->proc_name, name)) {
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &proc->proc_name, name)) {
             *isnew = false;
             rproc = proc;
             break;
@@ -395,10 +392,7 @@ static int setup_registry_callback(void)
     orte_gpr_subscription_id_t id;
     orte_jobid_t jobid;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, &local->proc_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    jobid = local->proc_name.jobid;
 
     /* find the job segment on the registry */
     if (ORTE_SUCCESS !=
@@ -534,7 +528,7 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                     /* find the associated proc entry and update its
                        arch flag.  If the nodename of this info is
                        my local host, also set the LOCAL flag. */
-                    if (0 == orte_ns.compare(mask, &name, &proc->proc_name)) {
+                    if (ORTE_EQUAL == orte_ns.compare_fields(mask, &name, &proc->proc_name)) {
                         proc->proc_arch = arch;
                         if (0 == strcmp(str, orte_system_info.nodename)) {
                             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;

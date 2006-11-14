@@ -23,6 +23,16 @@
 #include "orte/mca/ns/ns_types.h"
 #include "opal/util/error.h"
 
+/**
+* Standard characters used in ORTE
+ */
+#define ORTE_SCHEMA_DELIMITER_CHAR      '.'
+#define ORTE_SCHEMA_DELIMITER_STRING    "."
+#define ORTE_SCHEMA_WILDCARD_CHAR       '*'
+#define ORTE_SCHEMA_WILDCARD_STRING     "*"
+#define ORTE_SCHEMA_INVALID_CHAR        '$'
+#define ORTE_SCHEMA_INVALID_STRING      "$"
+
 /*
  * Standard names used across the system
  */

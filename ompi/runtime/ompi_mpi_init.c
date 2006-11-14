@@ -294,7 +294,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
             }
             if (!set) {
                 char *vpid;
-                orte_ns_base_get_vpid_string(&vpid, orte_process_info.my_name);
+                orte_ns.get_vpid_string(&vpid, orte_process_info.my_name);
                 opal_show_help("help-mpi-runtime",
                                "mpi_init:startup:paffinity-unavailable", 
                                true, vpid);

@@ -24,7 +24,7 @@
 /*
  * Similiar to unix readv(2)
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
  * @param count (IN)   Number of elements in iovec array.
@@ -114,7 +114,7 @@ int mca_oob_tcp_recv(
     msg->msg_hdr.msg_type = MCA_OOB_TCP_DATA;
     msg->msg_hdr.msg_src = *peer;
     if (NULL == orte_process_info.my_name) {
-        msg->msg_hdr.msg_dst = *MCA_OOB_NAME_ANY;
+        msg->msg_hdr.msg_dst = *ORTE_NAME_INVALID;
     } else {
         msg->msg_hdr.msg_dst = *orte_process_info.my_name;
     }
@@ -202,7 +202,7 @@ static void mca_oob_tcp_msg_matched(mca_oob_tcp_msg_t* msg, mca_oob_tcp_msg_t* m
 /*
  * Non-blocking version of mca_oob_recv().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param tag (IN)     User supplied tag for matching send/recv.
@@ -242,7 +242,11 @@ int mca_oob_tcp_recv_nb(
     }
 
     /* fill in the header */
-    msg->msg_hdr.msg_src = *orte_process_info.my_name;
+    if (NULL == orte_process_info.my_name) {
+        msg->msg_hdr.msg_src = *ORTE_NAME_INVALID;
+    } else {
+        msg->msg_hdr.msg_src = *orte_process_info.my_name;
+    }
     msg->msg_hdr.msg_dst = *peer;
     msg->msg_hdr.msg_size = size;
     msg->msg_hdr.msg_tag = tag;
@@ -286,7 +290,7 @@ int mca_oob_tcp_recv_nb(
 /*
  * Cancel non-blocking recv.
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param tag (IN)     User supplied tag for matching send/recv.
  * @return             OMPI error code (<0) on error or number of bytes actually received.
  */
@@ -295,7 +299,7 @@ int mca_oob_tcp_recv_cancel(
     orte_process_name_t* name, 
     int tag)
 {
-    int matched = 0, cmpval1, cmpval2;
+    int matched = 0;
     opal_list_item_t *item, *next;
 
     /* wait for any previously matched messages to be processed */
@@ -317,9 +321,7 @@ int mca_oob_tcp_recv_cancel(
         mca_oob_tcp_msg_t* msg = (mca_oob_tcp_msg_t*)item;
         next = opal_list_get_next(item);
 
-        cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, name, MCA_OOB_NAME_ANY);
-        cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, name);
-        if ((0 == cmpval1) || (0 == cmpval2)) {
+        if (ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);
                 MCA_OOB_TCP_MSG_RETURN(msg);

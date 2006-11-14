@@ -33,6 +33,8 @@
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
 #include "opal/mca/base/mca_base_param.h"
+
+#include "orte/dss/dss.h"
 #include "orte/mca/iof/base/base.h"
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/errmgr/base/base.h"
@@ -60,11 +62,11 @@ int orte_restart(orte_process_name_t *name, const char* uri)
     orte_process_name_t* old_name;
     orte_process_name_t* new_name;
 
-    if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&old_name, orte_process_info.my_name))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&old_name, orte_process_info.my_name, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_ns.copy_process_name(&new_name, name))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&new_name, name, ORTE_NAME))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
