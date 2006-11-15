@@ -40,7 +40,6 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t j
     orte_pls_daemon_info_t *dmn, *newdmn;
     orte_mapped_node_t *node;
     opal_list_t used_daemons;
-    orte_gpr_notify_data_t *ndat;
     int rc;
     
     OBJ_CONSTRUCT(&avail_daemons, opal_list_t);

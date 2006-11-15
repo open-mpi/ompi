@@ -105,10 +105,10 @@ ORTE_DECLSPEC int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* 
  * Internal definitions
  */
 
-int orte_rmgr_base_create_not_available(
+int orte_rmgr_base_setup_job_not_available(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
-    orte_jobid_t* jobid);
+    orte_jobid_t* jobid, opal_list_t *attrs);
 
 int orte_rmgr_base_spawn_not_available(
     orte_app_context_t** app_context,

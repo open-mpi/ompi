@@ -136,7 +136,7 @@ int orte_ns_proxy_get_cell_info(orte_cellid_t cellid,
     orte_buffer_t* answer;
     orte_ns_cmd_flag_t command;
     orte_std_cntr_t count;
-    int rc, ret=ORTE_SUCCESS;
+    int rc;
 
     OPAL_TRACE(1);
     

@@ -30,10 +30,10 @@
  * "not available" functions
  */
 int
-orte_rmgr_base_create_not_available(
+orte_rmgr_base_setup_job_not_available(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
-    orte_jobid_t* jobid)
+    orte_jobid_t* jobid, opal_list_t *attrs)
 {
     return ORTE_ERR_UNREACH;
 }
