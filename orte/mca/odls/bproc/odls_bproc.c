@@ -55,6 +55,7 @@
  */
 orte_odls_base_module_t orte_odls_bproc_module = {
     orte_odls_bproc_subscribe_launch_data,
+    orte_odls_bproc_get_add_procs_data,
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
     orte_odls_bproc_signal_local_procs
@@ -70,6 +71,14 @@ static void odls_bproc_send_cb(int status, orte_process_name_t * peer,
 static int odls_bproc_setup_stdio(orte_process_name_t *proc_name, 
                                        int proc_rank, orte_jobid_t jobid,
                                        orte_std_cntr_t app_context, bool connect_stdin);
+
+
+int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data,
+                                       orte_jobid_t job,
+                                       orte_mapped_node_t *node)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 
 
 /**

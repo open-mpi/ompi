@@ -114,6 +114,7 @@ struct globals_t {
     bool debugger;
     bool no_local_schedule;
     bool displaymapatlaunch;
+    bool reuse_daemons;
     int num_procs;
     int exit_status;
     char *hostfile;
@@ -261,6 +262,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
+
+    { NULL, NULL, NULL, '\0', "reuse-daemons", "reuse-daemons", 0,
+        &orterun_globals.reuse_daemons, OPAL_CMD_LINE_TYPE_BOOL,
+        "If set, reuse daemons to launch dynamically spawned processes"},
 
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -413,7 +418,6 @@ int orterun(int argc, char *argv[])
         }
         free(tmp);
     }
-
     
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(apps, num_apps))) {
@@ -1000,6 +1004,18 @@ static int parse_globals(int argc, char* argv[])
         mca_base_param_set_int(id, 1);
     }
 
+    if (orterun_globals.reuse_daemons) {
+        id = mca_base_param_reg_int_name("pls", "base_reuse_daemons",
+                                         "If nonzero, reuse daemons to launch dynamically spawned processes.  If zero, do not reuse daemons (default)",
+                                         false, false, 0, &ret);
+        
+        if (orterun_globals.reuse_daemons) {
+            mca_base_param_set_int(id, (int)true);
+        } else {
+            mca_base_param_set_int(id, (int)false);
+        }
+    }
+    
     /* If we don't want to wait, we don't want to wait */
 
     if (orterun_globals.no_wait_for_job_completion) {

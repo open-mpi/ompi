@@ -175,6 +175,13 @@ static int orte_odls_process_subscribe_launch_data( orte_jobid_t job,
     return rc;
 }
 
+static int orte_odls_process_get_add_procs_data(orte_gpr_notify_data_t **data,
+                                                orte_jobid_t job,
+                                                orte_mapped_node_t *node)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
+
 static bool orte_odls_process_child_died( pid_t pid, unsigned int timeout,
                                           int* exit_status )
 {
@@ -878,6 +885,7 @@ static int orte_odls_process_signal_local_proc(const orte_process_name_t *proc, 
 
 orte_odls_base_module_1_3_0_t orte_odls_process_module = {
     orte_odls_process_subscribe_launch_data,
+    orte_odls_process_get_add_procs_data,    
     orte_odls_process_launch_local_procs,
     orte_odls_process_kill_local_procs,
     orte_odls_process_signal_local_proc

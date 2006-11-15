@@ -38,6 +38,7 @@ static void orte_pls_daemon_info_construct(orte_pls_daemon_info_t* ptr)
     ptr->nodename = NULL;
     ptr->name = NULL;
     ptr->active_job = ORTE_JOBID_INVALID;
+    ptr->ndat = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -45,6 +46,7 @@ static void orte_pls_daemon_info_destructor(orte_pls_daemon_info_t* ptr)
 {
     if (NULL != ptr->nodename) free(ptr->nodename);
     if (NULL != ptr->name) free(ptr->name);
+    if (NULL != ptr->ndat) OBJ_RELEASE(ptr->ndat);
 }
 OBJ_CLASS_INSTANCE(orte_pls_daemon_info_t,  /* type name */
                    opal_list_item_t, /* parent "class" name */
@@ -144,8 +146,9 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
     orte_cellid_t *cell;
     char *nodename;
     orte_process_name_t *name;
-    orte_pls_daemon_info_t *dmn;
+    orte_pls_daemon_info_t *dmn, *dmn2;
     bool found_name, found_node, found_cell;
+    opal_list_item_t *item;
     int rc;
 
     /* setup the key */
@@ -203,10 +206,19 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
                 continue;            
             }
         }
-        /* if we found everything, then this is a valid entry - create
-            * it and add it to the list
-            */
+        /* if we found everything, then this is a valid entry */
         if (found_name && found_node && found_cell) {
+            /* see if this daemon is already on the list - if so, then we don't add it */
+            for (item = opal_list_get_first(daemons);
+                 item != opal_list_get_end(daemons);
+                 item = opal_list_get_next(item)) {
+                dmn2 = (orte_pls_daemon_info_t*)item;
+                
+                if (ORTE_EQUAL == orte_dss.compare(dmn2->name, name, ORTE_NAME)) {
+                    /* already on list - ignore it */
+                    goto MOVEON;
+                }
+            }
             dmn = OBJ_NEW(orte_pls_daemon_info_t);
             if (NULL == dmn) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -226,6 +238,7 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
             /* add this daemon to the list */
             opal_list_append(daemons, &dmn->super);
         }
+MOVEON:
         OBJ_RELEASE(values[i]);
     }
     
@@ -295,3 +308,35 @@ int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info)
 
     return ORTE_SUCCESS;
 }
+
+
+/*
+ * Check for available daemons we can re-use
+ */
+int orte_pls_base_check_avail_daemons(opal_list_t *daemons,
+                                      orte_jobid_t job)
+{
+    orte_jobid_t parent;
+    int rc;
+    
+    /* check for daemons belonging to the parent job */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_parent_job(&parent, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, parent, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* now add in any persistent daemons - they are tagged as bootproxies
+     * for jobid = 0 */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, 0, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+        
+    return ORTE_SUCCESS;
+}
+

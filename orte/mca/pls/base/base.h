@@ -53,6 +53,8 @@ extern "C" {
         opal_mutex_t orted_cmd_lock;
         /* orted cmd cond */
         opal_condition_t orted_cmd_cond;
+        /** reuse daemons flag */
+        bool reuse_daemons;
     } orte_pls_base_t;
     
     /**
