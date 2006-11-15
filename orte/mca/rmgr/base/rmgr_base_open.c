@@ -51,7 +51,7 @@
 orte_rmgr_base_t orte_rmgr_base;
 orte_rmgr_base_module_t orte_rmgr = {
     NULL,
-    orte_rmgr_base_create_not_available,
+    orte_rmgr_base_setup_job_not_available,
     orte_rmgr_base_spawn_not_available,
     orte_rmgr_base_connect,
     orte_rmgr_base_disconnect,
