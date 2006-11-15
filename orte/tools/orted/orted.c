@@ -197,6 +197,7 @@ int main(int argc, char *argv[])
     orte_gpr_value_t *value;
     char *segment;
     int i;
+    orte_buffer_t answer;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
@@ -478,10 +479,20 @@ int main(int argc, char *argv[])
          */
         orte_odls.kill_local_procs(orted_globals.bootproxy, false);
 
-        /* cleanup session directory */
+        /* cleanup their session directory */
         orte_session_dir_cleanup(orted_globals.bootproxy);
 
-        /* Finalize and clean up */
+        /* send an ack - we are as close to done as we can be while
+         * still able to communicate
+         */
+        OBJ_CONSTRUCT(&answer, orte_buffer_t);
+        if (0 > orte_rml.send_buffer(ORTE_PROC_MY_HNP, &answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        }
+        OBJ_DESTRUCT(&answer);
+
+
+        /* Finalize and clean up ourselves */
         if (ORTE_SUCCESS != (ret = orte_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
@@ -580,6 +591,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                  void* cbdata)
 {
     orte_daemon_cmd_flag_t command;
+    orte_buffer_t answer;
     int ret;
     orte_std_cntr_t n;
     int32_t signal;
@@ -677,11 +689,11 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received exit",
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
-            /* no response to send - the fact that we received the command
-             * is known to the HNP because the send_nb gets a callback
-             */
+            /* no response to send here - we'll send it when nearly exit'd */
             orted_globals.exit_condition = true;
             opal_condition_signal(&orted_globals.condition);
+            OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+            return;
             break;
 
         default:
@@ -690,6 +702,13 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
     }
 
  CLEANUP:
+    /* send an ack that command is done */
+    OBJ_CONSTRUCT(&answer, orte_buffer_t);
+    if (0 > orte_rml.send_buffer(sender, &answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+    }
+    OBJ_DESTRUCT(&answer);
+    
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     /* reissue the non-blocking receive */
