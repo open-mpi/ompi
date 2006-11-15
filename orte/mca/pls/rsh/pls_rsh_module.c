@@ -82,6 +82,7 @@
 #include "orte/mca/smr/smr.h"
 
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/rsh/pls_rsh.h"
 
@@ -443,9 +444,9 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
     int node_name_index2;
     int proc_name_index;
     int local_exec_index, local_exec_index_end;
-    char *jobid_string;
+    char *jobid_string = NULL;
     char *uri, *param;
-    char **argv, **tmp;
+    char **argv = NULL, **tmp;
     char *prefix_dir;
     int argc;
     int rc;
@@ -481,7 +482,21 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
         goto cleanup;
     }
 
+    /* if the user requested that we re-use daemons,
+     * launch the procs on any existing, re-usable daemons */
+    if (orte_pls_base.reuse_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map, jobid))) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
+    if (0 >= num_nodes) {
+        /* nothing left to do - just return */
+        rc = ORTE_SUCCESS;
+        goto cleanup;
+    }
 
     if (mca_pls_rsh_component.debug_daemons &&
         mca_pls_rsh_component.num_concurrent < num_nodes) {
@@ -1094,8 +1109,8 @@ cleanup:
         free(bin_base);
     }
 
-    free(jobid_string);  /* done with this variable */
-    opal_argv_free(argv);
+    if (NULL != jobid_string) free(jobid_string);  /* done with this variable */
+    if (NULL != argv) opal_argv_free(argv);
 
     return rc;
 }

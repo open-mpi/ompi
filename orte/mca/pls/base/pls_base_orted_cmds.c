@@ -65,7 +65,7 @@ static void orte_pls_base_cmd_ack(int status, orte_process_name_t* sender,
                                       ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
         if (ret != ORTE_SUCCESS) {
             ORTE_ERROR_LOG(ret);
-            return ret;
+            return;
         }
     }
     
@@ -97,7 +97,7 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
          item != opal_list_get_end(daemons);
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
-
+        
         if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
                                         0, orte_pls_base_orted_send_cb, NULL)) {
             ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
@@ -258,7 +258,7 @@ CLEANUP:
 }
     
     
-int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_data_t *ndat)
+int orte_pls_base_orted_add_local_procs(opal_list_t *daemons)
 {
     int rc;
     orte_buffer_t cmd;
@@ -268,25 +268,28 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
     
     OPAL_TRACE(1);
     
-    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-    
-    /* pack the command */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
-    /* pack the jobid */
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &ndat, 1, ORTE_GPR_NOTIFY_DATA))) {
-        ORTE_ERROR_LOG(rc);
-        goto CLEANUP;
-    }
-    
-    /* send the commands as fast as we can */
+    /* pack and send the commands as fast as we can - we have to
+     * pack each time as the launch data could be different for
+     * the various nodes
+     */
     for (item = opal_list_get_first(daemons);
          item != opal_list_get_end(daemons);
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
+        
+        OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+        
+        /* pack the command */
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+        
+        /* pack the launch data for this daemon */
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &(dmn->ndat), 1, ORTE_GPR_NOTIFY_DATA))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
         
         if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
                                         0, orte_pls_base_orted_send_cb, NULL)) {
@@ -294,6 +297,7 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
             OBJ_DESTRUCT(&cmd);
             return rc;
         }
+        OBJ_DESTRUCT(&cmd);
         
         orted_cmd_num_active++;
     }
@@ -306,17 +310,18 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
         return rc;
     }
     
-    /* wait for all commands to have been received */
+    /* wait for the command to have been received */
     OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
     if (orted_cmd_num_active > 0) {
         opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
     }
     OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+    
+    return ORTE_SUCCESS;
 
 CLEANUP:
     OBJ_DESTRUCT(&cmd);
     
-    /* we're done! */
-    return ORTE_SUCCESS;
+    return rc;
 }
 

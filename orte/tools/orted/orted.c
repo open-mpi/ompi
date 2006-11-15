@@ -669,6 +669,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
             /* unpack the notify data object */
+            n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(ret);
                 goto CLEANUP;

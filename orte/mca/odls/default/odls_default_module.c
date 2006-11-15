@@ -100,6 +100,7 @@ static void set_handler_default(int sig);
 
 orte_odls_base_module_t orte_odls_default_module = {
     orte_odls_default_subscribe_launch_data,
+    orte_odls_default_get_add_procs_data,
     orte_odls_default_launch_local_procs,
     orte_odls_default_kill_local_procs,
     orte_odls_default_signal_local_procs
@@ -217,6 +218,128 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
 
     return rc;
 }
+
+int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
+                                         orte_jobid_t job,
+                                         orte_mapped_node_t *node)
+{
+    orte_gpr_notify_data_t *ndat;
+    orte_gpr_value_t **values, *value;
+    orte_std_cntr_t cnt;
+    char *glob_tokens[] = {
+        ORTE_JOB_GLOBALS,
+        NULL
+    };
+    char *glob_keys[] = {
+        ORTE_JOB_APP_CONTEXT_KEY,
+        ORTE_JOB_VPID_START_KEY,
+        ORTE_JOB_VPID_RANGE_KEY,
+        NULL
+    };
+    opal_list_item_t *item;
+    orte_mapped_proc_t *proc;
+    int rc;
+    char *segment;
+    
+    /* set default answer */
+    *data = NULL;
+    
+    ndat = OBJ_NEW(orte_gpr_notify_data_t);
+    if (NULL == ndat) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    /* construct a fake trigger name so that the we can extract the jobid from it later */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* get the segment name */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* get the info from the job globals container first */
+    if (ORTE_SUCCESS != (rc = orte_gpr.get(ORTE_GPR_TOKENS_AND | ORTE_GPR_KEYS_OR,
+                                           segment, glob_tokens, glob_keys, &cnt, &values))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        return rc;
+    }
+    
+    /* there can only be one value here since we only specified a single container.
+     * Just transfer the returned value to the ndat structure
+     */
+    if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, values[0]))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(ndat);
+        OBJ_RELEASE(values[0]);
+        return rc;
+    }
+    ndat->cnt = 1;
+    
+    /* the remainder of our required info is in the mapped_node object, so all we
+     * have to do is transfer it over
+     */
+    for (item = opal_list_get_first(&node->procs);
+         item != opal_list_get_end(&node->procs);
+         item = opal_list_get_next(item)) {
+        proc = (orte_mapped_proc_t*)item;
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 1))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(ndat);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+        
+        value->tokens[0] = strdup("bogus"); /* must have at least one token */
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                         ORTE_PROC_NAME_KEY,
+                                                         ORTE_NAME, &proc->name))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(ndat);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
+                                                         ORTE_PROC_APP_CONTEXT_KEY,
+                                                         ORTE_STD_CNTR, &proc->app_idx))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(ndat);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+
+        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
+                                                         ORTE_NODE_NAME_KEY,
+                                                         ORTE_STRING, node->nodename))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(ndat);
+            OBJ_RELEASE(value);
+            return rc;
+        }
+        
+        if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(ndat);
+            OBJ_RELEASE(values[0]);
+            return rc;
+        }
+        ndat->cnt += 1;
+    }
+    
+    *data = ndat;
+    return ORTE_SUCCESS;
+}
+
 
 static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_status)
 {
@@ -386,8 +509,6 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
-        opal_output(orte_odls_globals.output, "odls: checking child [%ld,%ld,%ld] alive %s",
-                    ORTE_NAME_ARGS(child->name), (child->alive ? "true" : "dead"));
         if (child->alive && pid == child->pid) { /* found it */
             goto GOTCHILD;
         }
@@ -402,13 +523,7 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     return;
 
 GOTCHILD:
-    opal_output(orte_odls_globals.output, "odls: flushing output for [%ld,%ld,%ld]",
-            ORTE_NAME_ARGS(child->name));
-
     orte_iof.iof_flush();
-
-    opal_output(orte_odls_globals.output, "odls: output for [%ld,%ld,%ld] flushed",
-            ORTE_NAME_ARGS(child->name));
 
     /* determine the state of this process */
     aborted = false;
@@ -435,10 +550,7 @@ GOTCHILD:
         abort_file = opal_os_path(false, orte_process_info.universe_session_dir,
                                   job, vpid, "abort", NULL );
         free(job);
-        free(vpid);
-        opal_output(orte_odls_globals.output, "odls: stat'ing file %s for [%ld,%ld,%ld]",
-                    abort_file, ORTE_NAME_ARGS(child->name));
-        
+        free(vpid);        
         if (0 == stat(abort_file, &buf)) {
             /* the abort file must exist - there is nothing in it we need. It's
              * meer existence indicates that an abnormal termination occurred
@@ -814,7 +926,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
             value = values[j];
             
             if (0 == strcmp(value->tokens[0], ORTE_JOB_GLOBALS)) {
-                /* this came from the globals container, so it must contain
+               /* this came from the globals container, so it must contain
                 * the app_context(s), vpid_start, and vpid_range entries. Only one
                 * value object should ever come from that container
                 */
@@ -868,7 +980,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                         /* Most C-compilers will bark if we try to directly compare the string in the
                          * kval data area against a regular string, so we need to "get" the data
                          * so we can access it */
-                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&node_name, kval->value, ORTE_STRING))) {
+                       if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&node_name, kval->value, ORTE_STRING))) {
                             ORTE_ERROR_LOG(rc);
                             return rc;
                         }

@@ -109,14 +109,6 @@ int orte_odls_base_open(void)
         return rc;
     }
     
-    /* if we are NOT a daemon, then that is ALL we do! We just needed to ensure
-     * that the data type(s) got registered so we can send messages to the daemons
-     */
-    if (!orte_process_info.daemon) {
-        orte_odls_base.components_available = false;
-        return ORTE_SUCCESS;
-    }
-    
     /* Open up all available components */
 
     if (ORTE_SUCCESS != 
