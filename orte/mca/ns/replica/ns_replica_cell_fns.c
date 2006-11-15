@@ -228,7 +228,7 @@ int orte_ns_replica_get_node_info(char ***nodenames, orte_cellid_t cellid,
     orte_ns_replica_cell_tracker_t **cell, *cptr;
     orte_ns_replica_nodeid_tracker_t **nodes;
     orte_std_cntr_t i, j, k, m, n;
-    char *err_name = "NODE_NOT_FOUND"
+    char *err_name = "NODE_NOT_FOUND";
         
         OPAL_THREAD_LOCK(&orte_ns_replica.mutex);
     
