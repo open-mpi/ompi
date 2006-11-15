@@ -62,22 +62,10 @@ int orte_ns_base_get_proc_name_string(char **name_string,
         return ORTE_ERR_BAD_PARAM;
     }
 
-    /* handle the more typical case where none of the fields
-     * contain WILDCARD or INVALID values
+    /* check for wildcard and invalid values - where encountered, insert the
+     * corresponding string so we can correctly parse the name string when
+     * it is passed back to us later
      */
-    if ((ORTE_CELLID_WILDCARD != name->cellid && ORTE_CELLID_INVALID != name->cellid) &&
-        (ORTE_JOBID_WILDCARD != name->jobid && ORTE_JOBID_INVALID != name->jobid) &&
-        (ORTE_VPID_WILDCARD != name->vpid && ORTE_VPID_INVALID != name->vpid)) {
-        if (0 > asprintf(name_string, "%ld%c%ld%c%ld", (long)name->cellid,
-                         ORTE_SCHEMA_DELIMITER_CHAR, (long)name->jobid,
-                         ORTE_SCHEMA_DELIMITER_CHAR, (long)name->vpid)) {
-            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        return ORTE_SUCCESS;
-    }
-
-    /* okay, now handle the corner cases */
     if (ORTE_CELLID_WILDCARD == name->cellid) {
         tmp = strdup(ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_CELLID_INVALID == name->cellid) {
@@ -87,26 +75,20 @@ int orte_ns_base_get_proc_name_string(char **name_string,
     }
 
     if (ORTE_JOBID_WILDCARD == name->jobid) {
-        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR,
-                 ORTE_SCHEMA_WILDCARD_STRING, ORTE_SCHEMA_DELIMITER_CHAR);
+        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_JOBID_INVALID == name->jobid) {
-        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR,
-                 ORTE_SCHEMA_INVALID_STRING, ORTE_SCHEMA_DELIMITER_CHAR);
+        asprintf(&tmp2, "%s%c%s", tmp, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(&tmp2, "%s%c%ld", tmp, ORTE_SCHEMA_DELIMITER_CHAR,
-                 (long)name->jobid, ORTE_SCHEMA_DELIMITER_CHAR);
+        asprintf(&tmp2, "%s%c%ld", tmp, ORTE_SCHEMA_DELIMITER_CHAR, (long)name->jobid);
     }
     free(tmp);
 
     if (ORTE_VPID_WILDCARD == name->vpid) {
-        asprintf(name_string, "%s%c%s", tmp2, ORTE_SCHEMA_DELIMITER_CHAR,
-                 ORTE_SCHEMA_WILDCARD_STRING);
+        asprintf(name_string, "%s%c%s", tmp2, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_WILDCARD_STRING);
     } else if (ORTE_VPID_INVALID == name->vpid) {
-        asprintf(name_string, "%s%c%s", tmp2, ORTE_SCHEMA_DELIMITER_CHAR,
-                 ORTE_SCHEMA_INVALID_STRING);
+        asprintf(name_string, "%s%c%s", tmp2, ORTE_SCHEMA_DELIMITER_CHAR, ORTE_SCHEMA_INVALID_STRING);
     } else {
-        asprintf(name_string, "%s%c%ld", tmp2, ORTE_SCHEMA_DELIMITER_CHAR,
-                 (long)name->vpid);
+        asprintf(name_string, "%s%c%ld", tmp2, ORTE_SCHEMA_DELIMITER_CHAR, (long)name->vpid);
     }
     free(tmp2);
 
