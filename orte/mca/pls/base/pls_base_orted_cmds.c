@@ -38,17 +38,39 @@
 static orte_std_cntr_t orted_cmd_num_active;
 
 static void orte_pls_base_orted_send_cb(int status,
-                                            orte_process_name_t* peer,
-                                            orte_buffer_t* req,
-                                            orte_rml_tag_t tag,
-                                            void* cbdata)
+                                        orte_process_name_t* peer,
+                                        orte_buffer_t* req,
+                                        orte_rml_tag_t tag,
+                                        void* cbdata)
 {
+    /* nothing to do here - this just catches the callback when
+     * the send is received on the far end
+     */
+    return;
+}
+
+static void orte_pls_base_cmd_ack(int status, orte_process_name_t* sender,
+                                  orte_buffer_t* buffer, orte_rml_tag_t tag,
+                                  void* cbdata)
+{
+    int ret;
+    
     OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
+    
     orted_cmd_num_active--;
     if (orted_cmd_num_active == 0) {
         opal_condition_signal(&orte_pls_base.orted_cmd_cond);
+    } else {
+        ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,
+                                      ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
+        if (ret != ORTE_SUCCESS) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
+    
     OPAL_THREAD_UNLOCK(&orte_pls_base.orted_cmd_lock);
+    return;
 }
 
 
@@ -85,7 +107,15 @@ int orte_pls_base_orted_exit(opal_list_t *daemons)
         orted_cmd_num_active++;
     }
     
-    /* wait for all commands to have been received */
+    /* post the receive for the ack's */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,
+                                 ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
+    if (rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* wait for all commands to have been ack'd */
     OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
     if (orted_cmd_num_active > 0) {
         opal_condition_wait(&orte_pls_base.orted_cmd_cond, &orte_pls_base.orted_cmd_lock);
@@ -140,6 +170,14 @@ int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job)
         orted_cmd_num_active++;
     }
 
+    /* post the receive for the ack's */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,
+                                 ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
+    if (rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* wait for all commands to have been received */
     OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
     if (orted_cmd_num_active > 0) {
@@ -197,6 +235,14 @@ int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal)
         orted_cmd_num_active++;
     }
     
+    /* post the receive for the ack's */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,
+                                 ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
+    if (rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* wait for all commands to have been received */
     OPAL_THREAD_LOCK(&orte_pls_base.orted_cmd_lock);
     if (orted_cmd_num_active > 0) {
@@ -250,6 +296,14 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_da
         }
         
         orted_cmd_num_active++;
+    }
+    
+    /* post the receive for the ack's */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,
+                                 ORTE_RML_NON_PERSISTENT, orte_pls_base_cmd_ack, NULL);
+    if (rc != ORTE_SUCCESS) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
     
     /* wait for all commands to have been received */
