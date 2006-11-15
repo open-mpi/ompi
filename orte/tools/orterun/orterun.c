@@ -861,16 +861,16 @@ static int init_globals(void)
     orterun_globals.displaymapatlaunch         = false;
     orterun_globals.num_procs                  = 0;
     orterun_globals.exit_status                = 0;
-    if( NULL == orterun_globals.hostfile )
+    if( NULL != orterun_globals.hostfile )
         free( orterun_globals.hostfile );
     orterun_globals.hostfile =    NULL;
-    if( NULL == orterun_globals.env_val )
+    if( NULL != orterun_globals.env_val )
         free( orterun_globals.env_val );
     orterun_globals.env_val =     NULL;
-    if( NULL == orterun_globals.appfile )
+    if( NULL != orterun_globals.appfile )
         free( orterun_globals.appfile );
     orterun_globals.appfile =     NULL;
-    if( NULL == orterun_globals.wdir )
+    if( NULL != orterun_globals.wdir )
         free( orterun_globals.wdir );
     orterun_globals.wdir =        NULL;
     if( NULL != orterun_globals.path )
