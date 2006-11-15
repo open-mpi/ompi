@@ -59,12 +59,13 @@ void orte_universe_construct(orte_universe_t *obj) {
     obj->console           = false;
     obj->console_connected = false;
 
-    obj->name        = NULL;
-    obj->host        = NULL;
-    obj->uid         = NULL;
-    obj->scope       = NULL;
-    obj->seed_uri    = NULL;
-    obj->scriptfile  = NULL;
+    obj->name           = NULL;
+    obj->default_name   = false;
+    obj->host           = NULL;
+    obj->uid            = NULL;
+    obj->scope          = NULL;
+    obj->seed_uri       = NULL;
+    obj->scriptfile     = NULL;
 }
 
 void orte_universe_destruct( orte_universe_t *obj) {
@@ -146,6 +147,10 @@ int orte_univ_info(void)
 
             /* now copy the universe name into the universe_info structure */
             orte_universe_info.name = strdup(tptr);
+            
+            /* indicate that the universe name was provided */
+            orte_universe_info.default_name = false;
+            
         } else {
             /* if nothing was provided, then initialize the user and nodename
              * to the local values
@@ -154,6 +159,9 @@ int orte_univ_info(void)
             orte_universe_info.host = strdup(orte_system_info.nodename);
             /* and the universe name to default-universe-PID */
             asprintf(&orte_universe_info.name, "%s-%d", ORTE_DEFAULT_UNIVERSE, getpid());
+            
+            /* indicate that the universe name is a default one */
+            orte_universe_info.default_name = true;
         }
 
         id = mca_base_param_register_int("universe", "persistence", NULL, NULL, orte_universe_info.persistence);

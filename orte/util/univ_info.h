@@ -60,6 +60,7 @@ struct orte_universe_t {
     opal_list_item_t super;
     orte_universe_state_t state; /**< Indicates state of the universe */
     char *name;
+    bool default_name;          /**< Indicates that universe name was not provided */
     char *host;
     char *uid;
     bool persistence;
