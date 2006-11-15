@@ -229,7 +229,7 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 
 int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
 {
-    odls_default_child_t *child;
+    orte_odls_child_t *child;
     opal_list_item_t *item;
     int rc, exit_status;
     opal_list_t procs_killed;
@@ -246,7 +246,7 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
     for (item = opal_list_get_first(&orte_odls_default.children);
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
-        child = (odls_default_child_t*)item;
+        child = (orte_odls_child_t*)item;
         
         /* is this process alive? if not, then nothing for us
          * to do to it
@@ -336,7 +336,7 @@ MOVEON:
 
 static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
 {
-    odls_default_child_t *child;
+    orte_odls_child_t *child;
     opal_list_item_t *item;
     bool aborted;
     char *job, *vpid, *abort_file;
@@ -354,7 +354,7 @@ static void odls_default_wait_local_proc(pid_t pid, int status, void* cbdata)
     for (item = opal_list_get_first(&orte_odls_default.children);
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
-        child = (odls_default_child_t*)item;
+        child = (orte_odls_child_t*)item;
         if (child->alive && pid == child->pid) { /* found it */
             goto GOTCHILD;
         }
@@ -421,6 +421,13 @@ MOVEON:
      */
     orte_session_dir_finalize(child->name);
 
+    /* set the proc state in the child structure */
+    if (aborted) {
+        child->state = ORTE_PROC_STATE_ABORTED;
+    } else {
+        child->state = ORTE_PROC_STATE_TERMINATED;
+    }
+
     /* Need to unlock before we call set_proc_state as this is going to generate
      * a trigger that will eventually callback to us
      */
@@ -444,7 +451,7 @@ MOVEON:
 
 static int odls_default_fork_local_proc(
     orte_app_context_t* context,
-    odls_default_child_t *child,
+    orte_odls_child_t *child,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range,
     bool want_processor,
@@ -690,25 +697,12 @@ static int odls_default_fork_local_proc(
             }
         }
 
-        /* set the proc state to LAUNCHED and increment that counter so the trigger can fire
-         */
-        if (ORTE_SUCCESS !=
-            (rc = orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_LAUNCHED, 0))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        
-        /* save the pid and indicate we've been launched */
+        /* set the proc state to LAUNCHED and save the pid */
+        child->state = ORTE_PROC_STATE_LAUNCHED;
         child->pid = pid;
         child->alive = true;
-
-        /* wait for the child process - dont register for wait
-         * callback until after I/O is setup and the pid registered -
-         * otherwise can receive the wait callback before the above is
-         * ever completed
-         */
-        orte_wait_cb(pid, odls_default_wait_local_proc, NULL);
     }
+    
     return ORTE_SUCCESS;
 }
 
@@ -728,7 +722,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     orte_vpid_t *vptr, start, range;
     char *node_name;
     opal_list_t app_context_list;
-    odls_default_child_t *child;
+    orte_odls_child_t *child;
     odls_default_app_context_t *app_item;
     size_t num_processors;
     bool want_processor;
@@ -828,7 +822,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                         /* if this is our node...must also protect against a zero-length string  */
                         if (NULL != node_name && 0 == strcmp(node_name, orte_system_info.nodename)) {
                             /* ...harvest the info into a new child structure */
-                            child = OBJ_NEW(odls_default_child_t);
+                            child = OBJ_NEW(orte_odls_child_t);
                             for (kv2 = 0; kv2 < value->cnt; kv2++) {
                                 kval = value->keyvals[kv2];
                                 if(strcmp(kval->key, ORTE_PROC_NAME_KEY) == 0) {
@@ -877,7 +871,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     for (item = opal_list_get_first(&orte_odls_default.children);
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
-        child = (odls_default_child_t*)item;
+        child = (orte_odls_child_t*)item;
 
         /* is this child already alive? This can happen if
          * we are asked to launch additional processes.
@@ -931,6 +925,24 @@ DOFORK:
         i++;
     }
 
+    /* report the proc info and state in the registry */
+    if (ORTE_SUCCESS != (rc = orte_odls_base_report_spawn(&orte_odls_default.children))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+
+    /* setup the waitpids on the children */
+    for (item = opal_list_get_first(&orte_odls_default.children);
+         item != opal_list_get_end(&orte_odls_default.children);
+         item = opal_list_get_next(item)) {
+        child = (orte_odls_child_t*)item;
+        
+        if (ORTE_PROC_STATE_LAUNCHED == child->state) {
+            orte_wait_cb(child->pid, odls_default_wait_local_proc, NULL);
+            child->state = ORTE_PROC_STATE_RUNNING;
+        }
+    }
+
     /* cleanup */
     while (NULL != (item = opal_list_remove_first(&app_context_list))) {
         OBJ_RELEASE(item);
@@ -939,7 +951,7 @@ DOFORK:
 
     opal_condition_signal(&orte_odls_default.cond);
     OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
-    return ORTE_SUCCESS;
+    return rc;
 }
 
 
@@ -977,7 +989,7 @@ int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_
 {
     int rc;
     opal_list_item_t *item;
-    odls_default_child_t *child;
+    orte_odls_child_t *child;
     
     /* protect operations involving the global list of children */
     OPAL_THREAD_LOCK(&orte_odls_default.mutex);
@@ -990,7 +1002,7 @@ int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_
         for (item = opal_list_get_first(&orte_odls_default.children);
              item != opal_list_get_end(&orte_odls_default.children);
              item = opal_list_get_next(item)) {
-            child = (odls_default_child_t*)item;
+            child = (orte_odls_child_t*)item;
             if (ORTE_SUCCESS != (rc = send_signal(child->pid, (int)signal))) {
                 ORTE_ERROR_LOG(rc);
             }
@@ -1004,7 +1016,7 @@ int orte_odls_default_signal_local_procs(const orte_process_name_t *proc, int32_
     for (item = opal_list_get_first(&orte_odls_default.children);
          item != opal_list_get_end(&orte_odls_default.children);
          item = opal_list_get_next(item)) {
-        child = (odls_default_child_t*)item;
+        child = (orte_odls_child_t*)item;
         if (ORTE_EQUAL == orte_dss.compare(&(child->name), (orte_process_name_t*)proc, ORTE_NAME)) {
             /* unlock before signaling as this may generate a callback */
             opal_condition_signal(&orte_odls_default.cond);

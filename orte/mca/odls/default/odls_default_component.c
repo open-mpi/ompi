@@ -49,23 +49,6 @@
 orte_odls_default_globals_t orte_odls_default;
 
 
-/* instance the child list object */
-static void odls_default_child_constructor(odls_default_child_t *ptr)
-{
-    ptr->name = NULL;
-    ptr->pid = 0;
-    ptr->app_idx = -1;
-    ptr->alive = false;
-}
-static void odls_default_child_destructor(odls_default_child_t *ptr)
-{
-    if (NULL != ptr->name) free(ptr->name);
-}
-OBJ_CLASS_INSTANCE(odls_default_child_t,
-                   opal_list_item_t,
-                   odls_default_child_constructor,
-                   odls_default_child_destructor);
-
 /* instance the app_context list object */
 OBJ_CLASS_INSTANCE(odls_default_app_context_t,
                    opal_list_item_t,

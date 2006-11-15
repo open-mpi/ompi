@@ -236,64 +236,6 @@ int orte_schema_base_extract_jobid_from_segment_name(orte_jobid_t *jobid, char *
 }
 
 
-/**
- * Set the process mapping in the registry.
- */
-
-int orte_schema_base_store_my_info(void)
-{
-    int rc;
-    orte_gpr_value_t *value;
-    orte_jobid_t jobid;
-    char *segment;
-
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&jobid, orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_schema_base_get_job_segment_name(&segment, jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE, segment, 2, 0))) {
-        ORTE_ERROR_LOG(rc);
-        free(segment);
-        return rc;
-    }
-    free(segment);
-
-    if (ORTE_SUCCESS != (rc = orte_schema_base_get_proc_tokens(&(value->tokens),
-                                &(value->num_tokens), orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]), ORTE_PROC_LOCAL_PID_KEY, ORTE_PID, &(orte_process_info.pid)))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]), ORTE_NODE_NAME_KEY, ORTE_STRING, orte_system_info.nodename))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(value);
-        return rc;
-    }
-
-    /* insert values into registry */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(1, &value))) {
-        ORTE_ERROR_LOG(rc);
-    }
-
-    /* cleanup memory */
-    OBJ_RELEASE(value);
-
-    return rc;
-}
-
 int orte_schema_base_get_std_trigger_name(char **name,
                     char *trigger,
                     orte_jobid_t jobid)
