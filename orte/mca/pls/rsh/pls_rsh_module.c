@@ -479,23 +479,29 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
      */
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&active_daemons);
+        return rc;
     }
 
     /* if the user requested that we re-use daemons,
-     * launch the procs on any existing, re-usable daemons */
+     * launch the procs on any existing, re-usable daemons
+     */
     if (orte_pls_base.reuse_daemons) {
         if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map, jobid))) {
             ORTE_ERROR_LOG(rc);
-            goto cleanup;
+            OBJ_RELEASE(map);
+            OBJ_DESTRUCT(&active_daemons);
+            return rc;
         }
     }
     
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
-    if (0 >= num_nodes) {
+    if (0 == num_nodes) {
         /* nothing left to do - just return */
-        rc = ORTE_SUCCESS;
-        goto cleanup;
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&active_daemons);
+        return ORTE_SUCCESS;
     }
 
     if (mca_pls_rsh_component.debug_daemons &&
