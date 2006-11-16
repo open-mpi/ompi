@@ -149,8 +149,19 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
     orte_pls_daemon_info_t *dmn, *dmn2;
     bool found_name, found_node, found_cell;
     opal_list_item_t *item;
+    bool check_dups;
     int rc;
 
+    /* check the list to see if there is anything already on it. If there is, then
+     * we will need to check for duplicate entries before we add something. If not,
+     * then this can go a lot faster
+     */
+    if (0 < opal_list_get_size(daemons)) {
+        check_dups = true;
+    } else {
+        check_dups = false;
+    }
+    
     /* setup the key */
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, job))) {
         ORTE_ERROR_LOG(rc);
@@ -208,15 +219,17 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
         }
         /* if we found everything, then this is a valid entry */
         if (found_name && found_node && found_cell) {
-            /* see if this daemon is already on the list - if so, then we don't add it */
-            for (item = opal_list_get_first(daemons);
-                 item != opal_list_get_end(daemons);
-                 item = opal_list_get_next(item)) {
-                dmn2 = (orte_pls_daemon_info_t*)item;
-                
-                if (ORTE_EQUAL == orte_dss.compare(dmn2->name, name, ORTE_NAME)) {
-                    /* already on list - ignore it */
-                    goto MOVEON;
+            if (check_dups) {
+                /* see if this daemon is already on the list - if so, then we don't add it */
+                for (item = opal_list_get_first(daemons);
+                     item != opal_list_get_end(daemons);
+                     item = opal_list_get_next(item)) {
+                    dmn2 = (orte_pls_daemon_info_t*)item;
+                    
+                    if (ORTE_EQUAL == orte_dss.compare(dmn2->name, name, ORTE_NAME)) {
+                        /* already on list - ignore it */
+                        goto MOVEON;
+                    }
                 }
             }
             dmn = OBJ_NEW(orte_pls_daemon_info_t);
@@ -316,22 +329,40 @@ int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info)
 int orte_pls_base_check_avail_daemons(opal_list_t *daemons,
                                       orte_jobid_t job)
 {
-    orte_jobid_t parent;
+    orte_jobid_t root, *descendants;
+    orte_std_cntr_t i, ndesc;
     int rc;
     
-    /* check for daemons belonging to the parent job */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_parent_job(&parent, job))) {
+    /* check for daemons belonging to any job in this job's family.
+     * Since the jobs in any family must exit together, it is reasonable
+     * for us to reuse any daemons that were spawned by any member
+     * of our extended family. We can find all of our family members
+     * by first finding our root job, and then getting all of its
+     * descendants
+     */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_root_job(&root, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, parent, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_job_descendants(&descendants, &ndesc, root))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    
+    /* loop through the descendants, adding to the daemon list as we go */
+    for (i=0; i < ndesc; i++) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, descendants[i], NULL))) {
+            ORTE_ERROR_LOG(rc);
+            free(descendants);
+            return rc;
+        }
+    }
+    free(descendants);  /* all done with these */
     
     /* now add in any persistent daemons - they are tagged as bootproxies
-     * for jobid = 0 */
+     * for jobid = 0
+     */
     if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, 0, NULL))) {
         ORTE_ERROR_LOG(rc);
         return rc;

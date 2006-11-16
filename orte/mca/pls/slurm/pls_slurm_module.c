@@ -65,6 +65,7 @@
 #include "orte/mca/rmaps/rmaps.h"
 
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_slurm.h"
 
@@ -156,15 +157,34 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
      */
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&daemons);
+        return rc;
     }
 
+    /* if the user requested that we re-use daemons,
+     * launch the procs on any existing, re-usable daemons
+     */
+    if (orte_pls_base.reuse_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map, jobid))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(map);
+            OBJ_DESTRUCT(&daemons);
+            return rc;
+        }
+    }
+    
     /*
      * Allocate a range of vpids for the daemons.
      */
     num_nodes = opal_list_get_size(&map->nodes);
     if (num_nodes == 0) {
-        return ORTE_ERR_BAD_PARAM;
+        /* nothing further to do - job must have been launched
+         * on existing daemons, so we can just return
+         */
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&daemons);
+        return ORTE_SUCCESS;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
