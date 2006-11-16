@@ -389,6 +389,9 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
 
     OBJ_CONSTRUCT(&procs_killed, opal_list_t);
     
+    opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: working on job %ld",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), (long)job);
+
     /* since we are going to be working with the global list of
      * children, we need to protect that list from modification
      * by other threads
@@ -400,10 +403,15 @@ int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state)
          item = opal_list_get_next(item)) {
         child = (orte_odls_child_t*)item;
         
+        opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: checking child process [%ld,%ld,%ld]",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME), ORTE_NAME_ARGS(child->name));
+
         /* is this process alive? if not, then nothing for us
          * to do to it
          */
         if (!child->alive) {
+            opal_output(orte_odls_globals.output, "[%ld,%ld,%ld] odls_kill_local_proc: child is not alive",
+                    ORTE_NAME_ARGS(ORTE_PROC_MY_NAME));
             continue;
         }
         
