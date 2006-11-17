@@ -76,8 +76,7 @@
 /*
  * Globals
  */
-static orte_jobid_t jobid = ORTE_JOBID_INVALID;
-static char *orterun_basename = NULL;
+static char *ortekill_basename = NULL;
 
 /*
  * setup globals for catching orterun command line options
@@ -105,37 +104,36 @@ struct globals_t {
     char *path;
     opal_mutex_t lock;
     opal_condition_t cond;
-} orterun_globals;
-static bool globals_init = false;
+} ortekill_globals;
 
 
 opal_cmd_line_init_t cmd_line_init[] = {
     /* Various "obvious" options */
     { NULL, NULL, NULL, 'h', NULL, "help", 0,
-      &orterun_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.help, OPAL_CMD_LINE_TYPE_BOOL,
       "This help message" },
     { NULL, NULL, NULL, 'V', NULL, "version", 0,
-      &orterun_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.version, OPAL_CMD_LINE_TYPE_BOOL,
       "Print version and exit" },
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
-      &orterun_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
     { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
-      &orterun_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
       "Suppress helpful messages" },
 
     /* Use an appfile */
     { NULL, NULL, NULL, '\0', NULL, "app", 1,
-      &orterun_globals.appfile, OPAL_CMD_LINE_TYPE_STRING,
+      &ortekill_globals.appfile, OPAL_CMD_LINE_TYPE_STRING,
       "Provide an appfile; ignore all other command line options" },
 
     /* Number of processes; -c, -n, --n, -np, and --np are all
        synonyms */
     { NULL, NULL, NULL, 'c', "np", "np", 1,
-      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
+      &ortekill_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     { NULL, NULL, NULL, '\0', "n", "n", 1,
-      &orterun_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
+      &ortekill_globals.num_procs, OPAL_CMD_LINE_TYPE_INT,
       "Number of processes to run" },
     
     /* Set a hostfile */
@@ -148,7 +146,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
 
     /* Don't wait for the process to finish before exiting */
     { NULL, NULL, NULL, '\0', "nw", "nw", 0,
-      &orterun_globals.no_wait_for_job_completion, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.no_wait_for_job_completion, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch the processes and do not wait for their completion (i.e., let orterun complete as soon a successful launch occurs)" },
 
     /* Export environment variables; potentially used multiple times,
@@ -165,27 +163,27 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "Mapping of processes to nodes / CPUs" },
 #endif
     { NULL, NULL, NULL, '\0', "bynode", "bynode", 0,
-      &orterun_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.by_node, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by node" },
     { NULL, NULL, NULL, '\0', "byslot", "byslot", 0,
-      &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
     { NULL, NULL, NULL, '\0', "pernode", "pernode", 0,
-        &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
+        &ortekill_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
         "If no number of process is specified, this will cause one process per available node to be executed" },
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
-      &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
     { NULL, NULL, NULL, '\0', "display-map-at-launch", "display-map-at-launch", 0,
-        &orterun_globals.displaymapatlaunch, OPAL_CMD_LINE_TYPE_BOOL,
+        &ortekill_globals.displaymapatlaunch, OPAL_CMD_LINE_TYPE_BOOL,
         "Display the process map just before launch"},
     
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
-      &orterun_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
+      &ortekill_globals.wdir, OPAL_CMD_LINE_TYPE_STRING,
       "Set the working directory of the started processes" },
     { NULL, NULL, NULL, '\0', "path", "path", 1,
-      &orterun_globals.path, OPAL_CMD_LINE_TYPE_STRING,
+      &ortekill_globals.path, OPAL_CMD_LINE_TYPE_STRING,
       "PATH to be used to look for executables to start processes" },
     /* These arguments can be specified multiple times */
 #if 0
@@ -200,15 +198,15 @@ opal_cmd_line_init_t cmd_line_init[] = {
 
     /* OSC mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "nolocal", "nolocal", 0,
-      &orterun_globals.no_local_schedule, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.no_local_schedule, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
 
     /* User-level debugger arguments */
     { NULL, NULL, NULL, '\0', "tv", "tv", 0,
-      &orterun_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
       "Deprecated backwards compatibility flag; synonym for \"--debug\"" },
     { NULL, NULL, NULL, '\0', "debug", "debug", 0,
-      &orterun_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
+      &ortekill_globals.debugger, OPAL_CMD_LINE_TYPE_BOOL,
       "Invoke the user-level debugger indicated by the orte_base_user_debugger MCA parameter" },
     { "orte", "base", "user_debugger", '\0', "debugger", "debugger", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
@@ -268,7 +266,7 @@ int main(int argc, char *argv[])
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
-    orterun_basename = opal_basename(argv[0]);
+    ortekill_basename = opal_basename(argv[0]);
 
      /* Intialize our Open RTE environment */
     /* Set the flag telling orte_init that I am NOT a
@@ -292,7 +290,7 @@ int main(int argc, char *argv[])
         char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
+                           ortekill_basename, tmp, "1", rc);
             free(tmp);
             return rc;
         }
@@ -305,7 +303,7 @@ int main(int argc, char *argv[])
         char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
+                           ortekill_basename, tmp, "1", rc);
             free(tmp);
             return rc;
         }
@@ -319,7 +317,7 @@ int main(int argc, char *argv[])
                                                     "daemons_file");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
+                           ortekill_basename, tmp, "1", rc);
             free(tmp);
             return rc;
         }
@@ -327,6 +325,6 @@ int main(int argc, char *argv[])
     }
         
     orte_finalize();
-    free(orterun_basename);
+    free(ortekill_basename);
     return rc;
 }

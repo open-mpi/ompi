@@ -71,7 +71,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
 
-static char *orte_basename = NULL;
+static char *ortehalt_basename = NULL;
 
 /*
  * setup globals for catching orterun command line options
@@ -139,7 +139,7 @@ int main(int argc, char *argv[])
 
     /* find our basename (the name of the executable) so that we can
        use it in pretty-print error messages */
-    orte_basename = opal_basename(argv[0]);
+    ortehalt_basename = opal_basename(argv[0]);
 
     /* check for daemon flags and push them into the environment
         * since this isn't being automatically done
@@ -151,7 +151,7 @@ int main(int argc, char *argv[])
         char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
         if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
             opal_show_help("help-ortehalt.txt", "ortehalt:environ", false,
-                           orte_basename, tmp, "1", rc);
+                           ortehalt_basename, tmp, "1", rc);
             free(tmp);
             return rc;
         }
@@ -172,6 +172,6 @@ int main(int argc, char *argv[])
 
     
     orte_finalize();
-    free(orte_basename);
+    free(ortehalt_basename);
     return rc;
 }

@@ -310,7 +310,6 @@ static int orte_rmgr_urm_spawn_job(
     int rc;
     orte_process_name_t* name;
     struct timeval urmstart, urmstop;
-    orte_job_map_t *map;
     orte_attribute_t *flow;
     uint8_t flags, *fptr;
 
