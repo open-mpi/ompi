@@ -367,7 +367,6 @@ static int orte_rmgr_proxy_spawn_job(
 {
     int rc;
     orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
-    orte_job_map_t *map;
     orte_attribute_t *flow;
     uint8_t flags, *fptr;
 
