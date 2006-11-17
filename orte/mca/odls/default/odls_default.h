@@ -30,6 +30,7 @@
 
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 #include "orte/mca/odls/odls.h"
 
@@ -53,9 +54,7 @@ int orte_odls_default_finalize(void);
  * Interface
  */
 int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
-int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                         orte_jobid_t job,
-                                         orte_mapped_node_t *node);
+int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map);
 int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **base_environ);
 int orte_odls_default_kill_local_procs(orte_jobid_t job, bool set_state);
 int orte_odls_default_signal_local_procs(const orte_process_name_t *proc,

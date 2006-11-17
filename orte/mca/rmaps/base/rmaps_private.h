@@ -177,6 +177,8 @@ ORTE_DECLSPEC int orte_rmaps_base_claim_slot(orte_job_map_t *map,
                                              opal_list_t *fully_used_nodes,
                                              bool oversubscribe);
 
+ORTE_DECLSPEC int orte_rmaps_base_proxy_map_job(orte_jobid_t job, opal_list_t *attributes);
+
 /** Local data type functions */
 void orte_rmaps_base_std_obj_release(orte_data_value_t *value);
 

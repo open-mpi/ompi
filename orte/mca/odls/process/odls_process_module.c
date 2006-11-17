@@ -175,9 +175,7 @@ static int orte_odls_process_subscribe_launch_data( orte_jobid_t job,
     return rc;
 }
 
-static int orte_odls_process_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                                orte_jobid_t job,
-                                                orte_mapped_node_t *node)
+static int orte_odls_process_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

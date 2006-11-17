@@ -130,6 +130,16 @@ int orte_rmaps_base_open(void)
         orte_rmaps_base.oversubscribe = false;
     }
     
+    /* should we display the map after determining it? */
+    mca_base_param_reg_int_name("rmaps_base", "display_map",
+                                "Whether to display the process map after it is computed",
+                                false, false, (int)false, &value);
+    if ((int)false == value) {
+        orte_rmaps_base.display_map = false;
+    } else {
+        orte_rmaps_base.display_map = true;
+    }
+    
     /** register the base system types with the DSS */
     tmp = ORTE_JOB_MAP;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_rmaps_base_pack_map,

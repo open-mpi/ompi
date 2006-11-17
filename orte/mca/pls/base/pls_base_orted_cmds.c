@@ -258,7 +258,7 @@ CLEANUP:
 }
     
     
-int orte_pls_base_orted_add_local_procs(opal_list_t *daemons)
+int orte_pls_base_orted_add_local_procs(opal_list_t *daemons, orte_gpr_notify_data_t *ndat)
 {
     int rc;
     orte_buffer_t cmd;
@@ -268,28 +268,23 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons)
     
     OPAL_TRACE(1);
     
-    /* pack and send the commands as fast as we can - we have to
-     * pack each time as the launch data could be different for
-     * the various nodes
-     */
+    /* pack the command */
+    OBJ_CONSTRUCT(&cmd, orte_buffer_t);
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
+    /* pack the launch data for the daemons */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &ndat, 1, ORTE_GPR_NOTIFY_DATA))) {
+        ORTE_ERROR_LOG(rc);
+        goto CLEANUP;
+    }
+    
     for (item = opal_list_get_first(daemons);
          item != opal_list_get_end(daemons);
          item = opal_list_get_next(item)) {
         dmn = (orte_pls_daemon_info_t*)item;
-        
-        OBJ_CONSTRUCT(&cmd, orte_buffer_t);
-        
-        /* pack the command */
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &command, 1, ORTE_DAEMON_CMD))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
-        
-        /* pack the launch data for this daemon */
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, &(dmn->ndat), 1, ORTE_GPR_NOTIFY_DATA))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }
         
         if (0 > orte_rml.send_buffer_nb(dmn->name, &cmd, ORTE_RML_TAG_PLS_ORTED,
                                         0, orte_pls_base_orted_send_cb, NULL)) {
@@ -297,10 +292,11 @@ int orte_pls_base_orted_add_local_procs(opal_list_t *daemons)
             OBJ_DESTRUCT(&cmd);
             return rc;
         }
-        OBJ_DESTRUCT(&cmd);
         
         orted_cmd_num_active++;
     }
+    
+    OBJ_DESTRUCT(&cmd);
     
     /* post the receive for the ack's */
     rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK,

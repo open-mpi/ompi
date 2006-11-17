@@ -38,7 +38,6 @@ static void orte_pls_daemon_info_construct(orte_pls_daemon_info_t* ptr)
     ptr->nodename = NULL;
     ptr->name = NULL;
     ptr->active_job = ORTE_JOBID_INVALID;
-    ptr->ndat = NULL;
 }
 
 /* destructor - used to free any resources held by instance */
@@ -46,7 +45,6 @@ static void orte_pls_daemon_info_destructor(orte_pls_daemon_info_t* ptr)
 {
     if (NULL != ptr->nodename) free(ptr->nodename);
     if (NULL != ptr->name) free(ptr->name);
-    if (NULL != ptr->ndat) OBJ_RELEASE(ptr->ndat);
 }
 OBJ_CLASS_INSTANCE(orte_pls_daemon_info_t,  /* type name */
                    opal_list_item_t, /* parent "class" name */
@@ -219,6 +217,11 @@ static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
         }
         /* if we found everything, then this is a valid entry */
         if (found_name && found_node && found_cell) {
+            /* first check if this name is ourself - if so, ignore it */
+            if (ORTE_EQUAL == orte_dss.compare(name, ORTE_PROC_MY_NAME, ORTE_NAME)) {
+                goto MOVEON;
+            }
+            
             if (check_dups) {
                 /* see if this daemon is already on the list - if so, then we don't add it */
                 for (item = opal_list_get_first(daemons);

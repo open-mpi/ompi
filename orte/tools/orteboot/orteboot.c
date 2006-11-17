@@ -47,6 +47,7 @@
 #include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/cmd_line.h"
+#include "opal/util/daemon_init.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
@@ -69,6 +70,8 @@
 #include "orte/mca/schema/schema.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
+#include "orte/mca/rml/rml.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -78,6 +81,8 @@
  */
 static orte_jobid_t jobid = ORTE_JOBID_INVALID;
 static char *orteboot_basename = NULL;
+static struct opal_event term_handler;
+static struct opal_event int_handler;
 
 /*
  * setup globals for catching orteboot command line options
@@ -88,6 +93,7 @@ struct globals_t {
     bool verbose;
     bool quiet;
     bool exit;
+    bool debug;
     char *hostfile;
     char *wdir;
     opal_mutex_t lock;
@@ -171,6 +177,12 @@ extern char** environ;
 /*
  * Local functions
  */
+static void orte_daemon_recv(int status, orte_process_name_t* sender,
+                             orte_buffer_t *buffer, orte_rml_tag_t tag,
+                             void* cbdata);
+static void abort_signal_callback(int fd, short event, void *arg);
+static void exit_callback(int fd, short event, void *arg);
+
 
 int main(int argc, char *argv[])
 {
@@ -188,6 +200,7 @@ int main(int argc, char *argv[])
     orteboot_globals.version = false;
     orteboot_globals.verbose = false;
     orteboot_globals.exit = false;
+    orteboot_globals.debug = false;
     
     /* Setup MCA params */
     mca_base_param_init();
@@ -275,7 +288,10 @@ int main(int argc, char *argv[])
             return rc;
         }
         free(tmp);
+        /* set the local debug flag too! */
+        orteboot_globals.debug = true;
     }
+    
     id = mca_base_param_reg_int_name("orte_debug", "daemons_file",
                                      "Whether want stdout/stderr of daemons to go to a file or not",
                                      false, false, 0, &iparam);
@@ -304,6 +320,13 @@ int main(int argc, char *argv[])
         free(tmp);
     }
     
+    /* detach from controlling terminal
+     * otherwise, remain attached so output can get to the user
+     */
+    if(orteboot_globals.debug == false) {
+        opal_daemon_init(NULL);
+    }
+    
     /* Intialize our Open RTE environment */
     /* Set the flag telling orte_init that I am NOT a
      * singleton, but am "infrastructure" - prevents setting
@@ -316,6 +339,21 @@ int main(int argc, char *argv[])
         return rc;
     }
 
+    /** setup callbacks for abort signals */
+    opal_signal_set(&term_handler, SIGTERM,
+                    abort_signal_callback, &term_handler);
+    opal_signal_add(&term_handler, NULL);
+    opal_signal_set(&int_handler, SIGINT,
+                    abort_signal_callback, &int_handler);
+    opal_signal_add(&int_handler, NULL);
+
+    /* issue the non-blocking receive */
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (rc != ORTE_SUCCESS && rc != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
     /* Prep to start the virtual machine */
     /* construct the list of attributes */
     OBJ_CONSTRUCT(&attributes, opal_list_t);
@@ -341,8 +379,153 @@ int main(int argc, char *argv[])
     OBJ_DESTRUCT(&attributes);
     
     
+    /* setup and enter the event monitor */
+    OPAL_THREAD_LOCK(&orteboot_globals.lock);
+    
+    while (false == orteboot_globals.exit) {
+        opal_condition_wait(&orteboot_globals.cond, &orteboot_globals.lock);
+    }
+    
+    OPAL_THREAD_UNLOCK(&orteboot_globals.lock);
+    
     orte_finalize();
     free(orteboot_basename);
     return rc;
 }
+
+static void exit_callback(int fd, short event, void *arg)
+{
+    /* Remove the TERM and INT signal handlers */
+    opal_signal_del(&term_handler);
+    opal_signal_del(&int_handler);
+    
+    /* Trigger the normal exit conditions */
+    orteboot_globals.exit = true;
+    opal_condition_signal(&orteboot_globals.cond);
+}
+
+static void abort_signal_callback(int fd, short flags, void *arg)
+{
+    int ret;
+    struct timeval tv = { 1, 0 };
+    opal_event_t* event;
+    opal_list_t attrs;
+    opal_list_item_t *item;
+    
+    static int signalled = 0;
+    
+    OPAL_TRACE(1);
+    
+    if (0 != signalled++) {
+        return;
+    }
+
+    fprintf(stderr, "%s: killing job...\n\n", orteboot_basename);
+    
+    /* terminate the vm - this will also wake us up so we can exit */
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    ret = orte_pls.terminate_orteds(0, &attrs);
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
+    
+    /* setup a delay to give the orteds time to complete their departure */
+    if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
+        opal_evtimer_set(event, exit_callback, NULL);
+        opal_evtimer_add(event, &tv);
+    }
+}
+
+static void orte_daemon_recv(int status, orte_process_name_t* sender,
+                             orte_buffer_t *buffer, orte_rml_tag_t tag,
+                             void* cbdata)
+{
+    orte_buffer_t *answer;
+    orte_daemon_cmd_flag_t command;
+    int ret;
+    orte_std_cntr_t n;
+    char *contact_info;
+    
+    OPAL_TRACE(1);
+    
+    OPAL_THREAD_LOCK(&orteboot_globals.lock);
+    
+    if (orteboot_globals.debug) {
+        opal_output(0, "orteboot: received message from [%ld,%ld,%ld]", ORTE_NAME_ARGS(sender));
+    }
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if (NULL == answer) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        goto DONE;
+    }
+    
+    n = 1;
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        goto CLEANUP;
+    }
+    
+    /****    EXIT COMMAND    ****/
+    if (ORTE_DAEMON_EXIT_CMD == command) {
+        if (orteboot_globals.debug) {
+            opal_output(0, "orteboot: received exit");
+        }
+        
+        orteboot_globals.exit = true;
+        opal_condition_signal(&orteboot_globals.cond);
+        goto CLEANUP;
+        
+        /****     CONTACT QUERY COMMAND    ****/
+    } else if (ORTE_DAEMON_CONTACT_QUERY_CMD == command) {
+        /* send back contact info */
+        contact_info = orte_rml.get_uri();
+        
+        if (NULL == contact_info) {
+            ORTE_ERROR_LOG(ORTE_ERROR);
+            goto CLEANUP;
+        }
+        
+        if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(ret);
+            goto CLEANUP;
+        }
+        
+        if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        }
+        
+        goto CLEANUP;
+        
+        /****     HOSTFILE COMMAND    ****/
+    } else if (ORTE_DAEMON_HOSTFILE_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+        
+        /****     SCRIPTFILE COMMAND    ****/
+    } else if (ORTE_DAEMON_SCRIPTFILE_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+        
+        /****     HEARTBEAT COMMAND    ****/
+    } else if (ORTE_DAEMON_HEARTBEAT_CMD == command) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+        goto CLEANUP;
+    }
+    
+CLEANUP:
+    OBJ_RELEASE(answer);
+    
+DONE:
+    OPAL_THREAD_UNLOCK(&orteboot_globals.lock);
+    
+    /* reissue the non-blocking receive */
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
+        ORTE_ERROR_LOG(ret);
+    }
+    
+    return;
+}
+
 

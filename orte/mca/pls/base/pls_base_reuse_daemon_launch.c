@@ -33,20 +33,22 @@
 
 #include "orte/mca/pls/base/pls_private.h"
 
-int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t job)
+int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map)
 {
     opal_list_t avail_daemons;
     opal_list_item_t *item, *item2, *next;
     orte_pls_daemon_info_t *dmn, *newdmn;
     orte_mapped_node_t *node;
     opal_list_t used_daemons;
+    orte_gpr_notify_data_t *ndat;
+    bool found;
     int rc;
     
     OBJ_CONSTRUCT(&avail_daemons, opal_list_t);
     OBJ_CONSTRUCT(&used_daemons, opal_list_t);
    
     /* check for available daemons we could use */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_check_avail_daemons(&avail_daemons, job))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_check_avail_daemons(&avail_daemons, map->job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -58,6 +60,7 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t j
      * on that node!
      */
     
+    found = false;
     while (NULL != (item = opal_list_remove_first(&avail_daemons))) {
         dmn = (orte_pls_daemon_info_t*)item;
         
@@ -72,14 +75,21 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t j
                 newdmn = OBJ_NEW(orte_pls_daemon_info_t);
                 newdmn->cell = dmn->cell;
                 newdmn->nodename = strdup(dmn->nodename);
-                newdmn->active_job = job;
+                newdmn->active_job = map->job;
                 orte_dss.copy((void**)&(newdmn->name), dmn->name, ORTE_NAME);
-                if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(&(newdmn->ndat), job, node))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
                 opal_list_append(&used_daemons, &newdmn->super);
-                /* procs on this node are taken care of, so remove it from
+                /* get the launch message only once - do it the first time
+                 * through so all the nodes are still on the map!
+                 */
+                if (!found) {
+                    if (ORTE_SUCCESS != (rc = orte_odls.get_add_procs_data(&ndat, map))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(ndat);
+                        return rc;
+                    }                
+                    found = true;
+                }
+                /* procs on this node will be taken care of, so remove it from
                  * the map list so the main launcher won't try to launch them
                  */
                 opal_list_remove_item(&map->nodes, item2);
@@ -91,8 +101,8 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t j
         }
     }
     
-    if (0 >= opal_list_get_size(&used_daemons)) {
-        /* if none were used, then just return */
+    if (!found) {
+        /* if no daemons were reused, then just return */
         OBJ_DESTRUCT(&used_daemons);
         return ORTE_SUCCESS;
     }
@@ -101,10 +111,11 @@ int orte_pls_base_launch_on_existing_daemons(orte_job_map_t *map, orte_jobid_t j
     orte_pls_base_store_active_daemons(&used_daemons);
     
     /* launch any procs that are using existing daemons */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_add_local_procs(&used_daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_add_local_procs(&used_daemons, ndat))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+    OBJ_RELEASE(ndat);
     
     /* cleanup */
     while (NULL != (item = opal_list_remove_first(&used_daemons))) OBJ_RELEASE(item);

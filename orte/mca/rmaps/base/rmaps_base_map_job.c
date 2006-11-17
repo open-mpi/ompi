@@ -55,6 +55,11 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     orte_job_map_t *map;
     int rc;
     
+    /* if we are not on the head node, use the proxy component */
+    if (!orte_process_info.seed) {
+        return orte_rmaps_base_proxy_map_job(job, attributes);
+    }
+    
     /* check the attributes to see if anything in the environment
      * has been overridden. If not, then install the environment
      * values to correctly control the behavior of the RMAPS component.
@@ -202,7 +207,8 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     }
     
     /* if we wanted to display the map, now is the time to do it */
-    if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
+    if (orte_rmaps_base.display_map ||
+        NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
         orte_rmaps.get_job_map(&map, job);
         orte_dss.dump(0, map, ORTE_JOB_MAP);
     }
