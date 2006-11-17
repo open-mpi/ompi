@@ -94,6 +94,10 @@ int orte_odls_base_open(void)
         orte_odls_globals.output = -1;
     }
 
+    mca_base_param_reg_int_name("odls_base", "sigkill_timeout",
+                                "Time to wait for a process to die after issuing a kill signal to it",
+                                false, false, 1, &orte_odls_globals.timeout_before_sigkill);
+    
     /* register the daemon cmd data type */
     tmp = ORTE_DAEMON_CMD;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_odls_pack_daemon_cmd,

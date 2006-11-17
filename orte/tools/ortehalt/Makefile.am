@@ -1,4 +1,3 @@
-# -*- makefile -*-
 #
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
@@ -10,7 +9,6 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -18,28 +16,24 @@
 # $HEADER$
 #
 
-# This makefile.am does not stand on its own - it is included from orte/Makefile.am
+libs = \
+        $(top_builddir)/orte/liborte.la
 
-SUBDIRS += \
-	tools/console \
-	tools/orteboot \
-	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
-	tools/orteprobe \
-	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps \
-	tools/orte-clean
+ortehalt_SOURCES = \
+        ortehalt.c
 
-DIST_SUBDIRS += \
-	tools/console \
-	tools/orteboot \
-	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
-	tools/orteprobe \
-	tools/orterun \
-	tools/wrappers \
-	tools/orte-ps \
-	tools/orte-clean
+ortehalt_LDADD = $(libs) 
+ortehalt_DEPENDENCIES = $(libs)
+
+if OMPI_INSTALL_BINARIES
+
+bin_PROGRAMS = ortehalt
+
+dist_pkgdata_DATA = help-ortehalt.txt
+
+# AM 1.9.6 seems to have a bug in it's dependencies for install-man if
+#dist_ and nodist_ are used, so explicitly add to EXTRA_DIST...
+man_MANS = ortehalt.1
+EXTRA_DIST = ortehalt.1
+
+endif
