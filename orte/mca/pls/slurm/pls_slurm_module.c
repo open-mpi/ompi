@@ -247,7 +247,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     asprintf(&tmp, "--nodelist=%s", nodelist_flat);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
-    free(nodelist_flat);
 
 
     /*
@@ -398,6 +397,9 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
+    var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
+    opal_setenv(var, nodelist_flat, true, &env);
+    free(nodelist_flat);
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
