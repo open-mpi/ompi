@@ -47,8 +47,6 @@ orte_sds_base_module_t orte_sds_slurm_module = {
 };
 
 static char *get_slurm_nodename(int nodeid);
-static int parse_ranges(char *base, char *ranges, char ***nodelist);
-static int parse_range(char *base, char *range, char ***nodelist);
 
 
 int
@@ -167,193 +165,31 @@ static char *
 get_slurm_nodename(int nodeid)
 {
     int i, j, len;
-    char *base, **names = NULL;
+    char *token, **names = NULL;
     char *slurm_nodelist;
     char *ret;
 
-    slurm_nodelist = getenv("SLURM_NODELIST");
+    slurm_nodelist = getenv("OMPI_MCA_orte_slurm_nodelist");
     
     if (NULL == slurm_nodelist) {
         return NULL;
     }
-    base = strdup(slurm_nodelist);
-    if (NULL == base) {
+    
+    /* split the node list into an argv array */
+    names = opal_argv_split(slurm_nodelist, ',');
+    if (NULL == names) {  /* got an error */
         return NULL;
     }
-    
-    /* Find the base */
-    len = strlen(slurm_nodelist);
-    for (i = 0; i < len; ++i) {
-        if (base[i] == '[') {
-            base[i] = '\0';
-            break;
-        }
-    }
-    
-    /* If we didn't find a range, then this is it */
-    if (i >= len) {
-        ret = strdup(base);
-        free(base);
-        if (0 == nodeid) {
-            return ret;
-        } else {
-            return NULL;
-        }
-    } else {
-        /* If we did find a range, find the end of the range */
-        for (j = i; j < len; ++j) {
-            if (base[j] == ']') {
-                base[j] = '\0';
-                break;
-            }
-        }
-        if (j >= len) {
-            free(base);
-            return NULL;
-        }
-        
-        parse_ranges(base, base + i + 1, &names);
+
+    /* check to see if there are enough entries */
+    if (nodeid > opal_argv_count(names)) {
+        return NULL;
     }
 
-    /* find our entry */
     ret = strdup(names[nodeid]);
 
     opal_argv_free(names);
 
     /* All done */
     return ret;
-}
-
-
-/*
- * Parse one or more ranges in a set
- */
-static int parse_ranges(char *base, char *ranges, char ***names)
-{
-    int i, len, ret;
-    char *start, *orig;
-    
-    /* Look for commas, the separator between ranges */
-
-    len = strlen(ranges);
-    for (orig = start = ranges, i = 0; i < len; ++i) {
-        if (',' == ranges[i]) {
-            ranges[i] = '\0';
-            if (ORTE_SUCCESS != (ret = parse_range(base, start, names))) {
-                return ret;
-            }
-            start = ranges + i + 1;
-        }
-    }
-
-    /* Pick up the last range, if it exists */
-
-    if (start < orig + len) {
-        if (ORTE_SUCCESS != (ret = parse_range(base, start, names))) {
-            return ret;
-        }
-    }
-
-    /* All done */
-
-    return ORTE_SUCCESS;
-}
-
-
-/*
- * Parse a single range in a set
- */
-static int parse_range(char *base, char *range, char ***names)
-{
-    char *str, temp1[BUFSIZ], temp2[BUFSIZ];
-    size_t i, j, start, end;
-    size_t base_len, len;
-    size_t str_start, str_end;
-    size_t num_str_len;
-    bool found;
-    
-    len = strlen(range);
-    base_len = strlen(base);
-    /* Silence compiler warnings; start and end are always assigned
-       properly, below */
-    start = end = 0;
-
-    /* Look for the beginning of the first number */
-    
-    for (found = false, i = 0; i < len; ++i) {
-        if (isdigit((int) range[i])) {
-            if (!found) {
-                str_start = i;
-                start = atoi(range + i);
-                found = true;
-                break;
-            }
-        }
-    }
-    if (!found) {
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    /* Look for the end of the first number */
-    
-    for (found = false, num_str_len = 0; i < len; ++i, ++num_str_len) {
-        if (!isdigit((int) range[i])) {
-            break;
-        }
-    }
-    
-    /* Was there no range, just a single number? */
-    
-    if (i >= len) {
-        str_end = len;
-        end = start;
-        found = true;
-    }
-    
-    /* Nope, there was a range.  Look for the beginning of the second
-       number */
-    
-    else {
-        str_end = i - 1;
-        for (; i < len; ++i) {
-            if (isdigit((int) range[i])) {
-                end = atoi(range + i);
-                found = true;
-                break;
-            }
-        }
-    }
-    if (!found) {
-        return ORTE_ERR_NOT_FOUND;
-    }
-    
-    /* Make strings for all values in the range */
-    
-    for (i = start; i <= end; ++i) {
-        len = base_len + 32;
-        str = malloc(len);
-        if (NULL == str) {
-            return ORTE_ERR_OUT_OF_RESOURCE;
-        }
-        
-        str[0] = '\0';
-        snprintf(temp1, BUFSIZ - 1, "%s", base);
-        snprintf(temp2, BUFSIZ - 1, "%lu", (long) i);
-        temp1[BUFSIZ - 1] = temp2[BUFSIZ - 1] = '\0';
-        
-        /* Do we need zero pading? */
-        
-        if (strlen(temp2) < num_str_len) {
-            for (j = 0; j < num_str_len - strlen(temp2); ++j) {
-                strcat(temp1, "0");
-            }
-        }
-        snprintf(str, len - 1, "%s%s", temp1, temp2);
-        str[len - 1] = '\0';
-        opal_argv_append_nosize(names, str);
-    }
-    
-    /* All done */
-    
-    return ORTE_SUCCESS;
 }
