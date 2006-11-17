@@ -372,10 +372,6 @@ static int orte_rmgr_urm_spawn_job(
              ORTE_ERROR_LOG(rc);
              return rc;
          }         
-         if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
-             orte_rmaps.get_job_map(&map, *jobid);
-             orte_dss.dump(0, map, ORTE_JOB_MAP);
-         }
      }
 
      if (flags & ORTE_RMGR_SETUP_TRIGS) {
