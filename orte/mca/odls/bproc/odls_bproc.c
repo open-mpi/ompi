@@ -73,9 +73,7 @@ static int odls_bproc_setup_stdio(orte_process_name_t *proc_name,
                                        orte_std_cntr_t app_context, bool connect_stdin);
 
 
-int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                       orte_jobid_t job,
-                                       orte_mapped_node_t *node)
+int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

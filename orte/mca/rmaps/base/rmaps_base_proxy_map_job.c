@@ -21,19 +21,18 @@
 #include "orte/orte_constants.h"
 
 #include "orte/dss/dss.h"
-#include "orte/runtime/runtime.h"
+#include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/rmaps/base/rmaps_private.h"
-#include "orte/mca/rmaps/proxy/rmaps_proxy.h"
 
 /*
  * Map a job
  */
-int orte_rmaps_proxy_map(orte_jobid_t job, opal_list_t *attributes)
+int orte_rmaps_base_proxy_map_job(orte_jobid_t job, opal_list_t *attributes)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -71,7 +70,7 @@ int orte_rmaps_proxy_map(orte_jobid_t job, opal_list_t *attributes)
     }
     
     /* send the request */
-    if (0 > orte_rml.send_buffer(orte_rmaps_proxy_globals.replica, cmd, ORTE_RML_TAG_RMAPS, 0)) {
+    if (0 > orte_rml.send_buffer(ORTE_PROC_MY_HNP, cmd, ORTE_RML_TAG_RMAPS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
         return ORTE_ERR_COMM_FAILURE;
@@ -86,7 +85,7 @@ int orte_rmaps_proxy_map(orte_jobid_t job, opal_list_t *attributes)
     }
     
     /* enter a blocking receive until we hear back */
-    if (0 > orte_rml.recv_buffer(orte_rmaps_proxy_globals.replica, answer, ORTE_RML_TAG_RMAPS)) {
+    if (0 > orte_rml.recv_buffer(ORTE_PROC_MY_HNP, answer, ORTE_RML_TAG_RMAPS)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(answer);
         return ORTE_ERR_COMM_FAILURE;

@@ -199,7 +199,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
-    { NULL, NULL, NULL, '\0', "display-map-at-launch", "display-map-at-launch", 0,
+    { "rmaps", "base", "display_map", '\0', "display-map-at-launch", "display-map-at-launch", 0,
         NULL, OPAL_CMD_LINE_TYPE_BOOL,
         "Display the process map just before launch"},
     
@@ -792,12 +792,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         }
     }
     
-    /* setup a delay - if the timer fires, then we assume that the orteds
-     * failed to properly kill the job. This can happen for a variety of
-     * reasons - for example, if an application couldn't be found, then
-     * the local orted may not be able to tell us it "terminated" since
-     * it never actually started
-     */
+    /* setup a delay to give the orteds time to complete their departure */
     if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);

@@ -166,7 +166,7 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
      * launch the procs on any existing, re-usable daemons
      */
     if (orte_pls_base.reuse_daemons) {
-        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map, jobid))) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(map);
             OBJ_DESTRUCT(&daemons);

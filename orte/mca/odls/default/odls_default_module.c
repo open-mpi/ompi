@@ -220,8 +220,7 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
 }
 
 int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
-                                         orte_jobid_t job,
-                                         orte_mapped_node_t *node)
+                                         orte_job_map_t *map)
 {
     orte_gpr_notify_data_t *ndat;
     orte_gpr_value_t **values, *value;
@@ -236,7 +235,8 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
         ORTE_JOB_VPID_RANGE_KEY,
         NULL
     };
-    opal_list_item_t *item;
+    opal_list_item_t *item, *m_item;
+    orte_mapped_node_t *node;
     orte_mapped_proc_t *proc;
     int rc;
     char *segment;
@@ -251,14 +251,14 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
     }
     
     /* construct a fake trigger name so that the we can extract the jobid from it later */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", job))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_std_trigger_name(&(ndat->target), "bogus", map->job))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(ndat);
         return rc;
     }
     
     /* get the segment name */
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, job))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, map->job))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(ndat);
         return rc;
@@ -283,57 +283,63 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
     }
     ndat->cnt = 1;
     
-    /* the remainder of our required info is in the mapped_node object, so all we
+    /* the remainder of our required info is in the mapped_node objects, so all we
      * have to do is transfer it over
      */
-    for (item = opal_list_get_first(&node->procs);
-         item != opal_list_get_end(&node->procs);
-         item = opal_list_get_next(item)) {
-        proc = (orte_mapped_proc_t*)item;
+    for (m_item = opal_list_get_first(&map->nodes);
+         m_item != opal_list_get_end(&map->nodes);
+         m_item = opal_list_get_next(m_item)) {
+        node = (orte_mapped_node_t*)m_item;
         
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 1))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
+        for (item = opal_list_get_first(&node->procs);
+             item != opal_list_get_end(&node->procs);
+             item = opal_list_get_next(item)) {
+            proc = (orte_mapped_proc_t*)item;
+            
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 1))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+            
+            value->tokens[0] = strdup("bogus"); /* must have at least one token */
+                                      
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                            ORTE_PROC_NAME_KEY,
+                                                            ORTE_NAME, &proc->name))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
+                                                            ORTE_PROC_APP_CONTEXT_KEY,
+                                                            ORTE_STD_CNTR, &proc->app_idx))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
+                                                            ORTE_NODE_NAME_KEY,
+                                                            ORTE_STRING, node->nodename))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(value);
+                return rc;
+            }
+          
+            if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(ndat);
+                OBJ_RELEASE(values[0]);
+                return rc;
+            }
+            ndat->cnt += 1;
         }
-        
-        value->tokens[0] = strdup("bogus"); /* must have at least one token */
-        
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
-                                                         ORTE_PROC_NAME_KEY,
-                                                         ORTE_NAME, &proc->name))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[1]),
-                                                         ORTE_PROC_APP_CONTEXT_KEY,
-                                                         ORTE_STD_CNTR, &proc->app_idx))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-
-        if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[2]),
-                                                         ORTE_NODE_NAME_KEY,
-                                                         ORTE_STRING, node->nodename))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(value);
-            return rc;
-        }
-        
-        if (ORTE_SUCCESS != (rc = orte_pointer_array_add(&cnt, ndat->values, value))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_RELEASE(ndat);
-            OBJ_RELEASE(values[0]);
-            return rc;
-        }
-        ndat->cnt += 1;
     }
     
     *data = ndat;

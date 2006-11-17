@@ -51,11 +51,12 @@ typedef int (*orte_odls_base_module_subscribe_launch_data_fn_t)(orte_jobid_t job
  * In order to reuse daemons, we need a way for the HNP to construct a notify_data object that
  * contains the data needed by the active ODLS component to launch a local process. Since the
  * only one that knows what a particular ODLS component needs is that component, we require an
- * entry point that the HNP can call to get the required notify_data object
+ * entry point that the HNP can call to get the required notify_data object. This is constructed
+ * for *all* nodes - the individual orteds then parse that data to find the specific launch info
+ * for procs on their node
  */
 typedef int (*orte_odls_base_module_get_add_procs_data_fn_t)(orte_gpr_notify_data_t **data,
-                                                             orte_jobid_t job,
-                                                             orte_mapped_node_t *node);
+                                                             orte_job_map_t *map);
 
 /**
  * Locally launch the provided processes
