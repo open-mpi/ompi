@@ -317,6 +317,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
     int rc;
     bool modify_app_context = false;
+    bool nprocs_not_specified;
     char *sptr;
     orte_attribute_t *attr;
 
@@ -436,6 +437,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
             cur_node_item = opal_list_get_first(working_node_list);
             
             if (0 == app->num_procs) {
+                nprocs_not_specified = true;
                /** set the num_procs to equal the number of slots on these mapped nodes - if
                    user has specified "-pernode", then set it to the number of nodes
                 */
@@ -445,6 +447,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                     app->num_procs = (orte_std_cntr_t)mapped_num_slots;
                 }
                 modify_app_context = true;
+            } else {
+                nprocs_not_specified = false;
             }
         }
         else {
@@ -456,6 +460,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
             working_node_list = &master_node_list;
             
             if (0 == app->num_procs) {
+                nprocs_not_specified = true;
                 /** set the num_procs to equal the number of slots on these mapped nodes - if
                 user has specified "-pernode", then set it to the number of nodes
                 */
@@ -465,6 +470,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                     app->num_procs = total_num_slots;
                 }
                 modify_app_context = true;
+            } else {
+                nprocs_not_specified = false;
             }
         }
 
@@ -484,7 +491,10 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         num_procs += app->num_procs;
 
         /* Make assignments */
-        if (mca_rmaps_round_robin_component.bynode) {
+        /* if the number of procs was not specified, and we want to map pernode,
+         * then we need to do the bynode mapping */
+        if (mca_rmaps_round_robin_component.bynode || 
+            (nprocs_not_specified && mca_rmaps_round_robin_component.per_node)) {
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
