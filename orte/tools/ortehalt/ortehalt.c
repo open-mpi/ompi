@@ -44,29 +44,19 @@
 #include "opal/event/event.h"
 #include "opal/install_dirs.h"
 #include "opal/mca/base/base.h"
-#include "opal/threads/condition.h"
-#include "opal/util/argv.h"
 #include "opal/util/basename.h"
 #include "opal/util/cmd_line.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/output.h"
 #include "opal/util/show_help.h"
-#include "opal/util/trace.h"
 #include "opal/version.h"
+#include "opal/threads/mutex.h"
+#include "opal/threads/condition.h"
 
-#include "orte/class/orte_pointer_array.h"
-#include "orte/util/proc_info.h"
-#include "orte/util/sys_info.h"
-#include "orte/util/universe_setup_file_io.h"
-
-#include "orte/mca/ns/ns.h"
-#include "orte/mca/gpr/gpr.h"
-#include "orte/mca/pls/pls.h"
-#include "orte/mca/rmaps/rmaps_types.h"
-#include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/schema/schema.h"
-#include "orte/mca/smr/smr.h"
+#include "orte/dss/dss.h"
+#include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/odls/odls_types.h"
 
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/orte_wait.h"
@@ -74,7 +64,7 @@
 static char *ortehalt_basename = NULL;
 
 /*
- * setup globals for catching orterun command line options
+ * setup globals for catching ortehalt command line options
  */
 struct globals_t {
     bool help;
@@ -101,9 +91,6 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, 'v', NULL, "verbose", 0,
       &ortehalt_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
       "Be verbose" },
-    { NULL, NULL, NULL, 'q', NULL, "quiet", 0,
-      &ortehalt_globals.quiet, OPAL_CMD_LINE_TYPE_BOOL,
-      "Suppress helpful messages" },
 
     /* OpenRTE arguments */
     { "orte", "debug", NULL, 'd', NULL, "debug-devel", 0,
@@ -116,7 +103,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     
     { NULL, NULL, NULL, '\0', NULL, "tmpdir", 1,
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
-      "Set the root for the session directory tree for orterun ONLY" },
+      "Set the root for the session directory tree for ortehalt ONLY" },
 
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
@@ -129,6 +116,8 @@ extern char** environ;
 
 int main(int argc, char *argv[])
 {
+    orte_buffer_t *cmd;
+    orte_daemon_cmd_flag_t command;
     int rc;
     int id, iparam;
 
@@ -165,13 +154,39 @@ int main(int argc, char *argv[])
      * require
      */
     if (ORTE_SUCCESS != (rc = orte_init(true))) {
-        opal_show_help("help-orterun.txt", "orterun:init-failure", true,
+        opal_show_help("help-ortehalt.txt", "ortehalt:init-failure", true,
                        "orte_init()", rc);
         return rc;
     }
 
     
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (NULL == cmd) {
+        opal_show_help("help-ortehalt.txt", "ortehalt:init-failure", true,
+                       "orte_init()", rc);
+        return ORTE_ERROR;
+    }
+    
+    command = ORTE_DAEMON_HALT_VM_CMD;
+    
+    rc = orte_dss.pack(cmd, &command, 1, ORTE_DAEMON_CMD);
+    if ( ORTE_SUCCESS != rc ) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, cmd, ORTE_RML_TAG_DAEMON, 0);
+    if ( 0 > rc ) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    OBJ_RELEASE(cmd);
+    
     orte_finalize();
     free(ortehalt_basename);
     return rc;
 }
+
