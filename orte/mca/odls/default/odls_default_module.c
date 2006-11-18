@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -30,7 +31,9 @@
 #include <unistd.h>
 #endif
 #include <errno.h>
+#if HAVE_SYS_TYPES_H
 #include <sys/types.h>
+#endif
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
 #endif
@@ -48,6 +51,21 @@
 #ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
 #endif  /* HAVE_SYS_STAT_H */
+
+#if defined(HAVE_SCHED_YIELD)
+/* Only if we have sched_yield() */
+#ifdef HAVE_SCHED_H
+#include <sched.h>
+#endif
+#else
+/* Only do these if we don't have <sched.h> */
+#ifdef HAVE_SYS_SELECT_H
+#include <sys/select.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#endif /* HAVE_SCHED_YIELD */
 
 #include "opal/event/event.h"
 #include "opal/util/argv.h"
@@ -206,6 +224,10 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
 {
     time_t end;
     pid_t ret;
+#if !defined(HAVE_SCHED_YIELD)
+    struct timeval t;
+    fd_set bogus;
+#endif
 
     end = time(NULL) + timeout;
     do {
@@ -219,8 +241,16 @@ static bool odls_default_child_died(pid_t pid, unsigned int timeout, int *exit_s
             return true;
         }
 
-        /* Sleep for a second */
-        sleep(1);
+#if defined(HAVE_SCHED_YIELD)
+        sched_yield();
+#else
+        /* Bogus delay for 1 usec */
+        t.tv_sec = 0;
+        t.tv_usec = 1;
+        FD_ZERO(&bogus);
+        FD_SET(0, &bogus);
+        select(1, &bogus, NULL, NULL, &t);
+#endif
     } while (time(NULL) < end);
 
     /* The child didn't die, so return false */
