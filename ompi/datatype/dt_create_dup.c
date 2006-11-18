@@ -33,6 +33,7 @@ int32_t ompi_ddt_duplicate( const ompi_datatype_t* oldType, ompi_datatype_t** ne
     int32_t old_index = pdt->d_f_to_c_index;
 
     memcpy( pdt, oldType, sizeof(ompi_datatype_t) );
+    pdt->super.obj_reference_count = 1;
     pdt->desc.desc = temp;
     pdt->flags &= (~DT_FLAG_PREDEFINED);
     /* ompi_ddt_create() creates a new f_to_c index that was saved
