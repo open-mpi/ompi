@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -30,7 +31,7 @@ public:
   // copy
   inline Comm_Null(const Comm_Null& data) : pmpi_comm(data.pmpi_comm) { }
   // inter-language operability  
-  inline Comm_Null(const MPI_Comm& data) : pmpi_comm(data) { }
+  inline Comm_Null(MPI_Comm data) : pmpi_comm(data) { }
 
   inline Comm_Null(const PMPI::Comm_Null& data) : pmpi_comm(data) { }
 
@@ -61,7 +62,7 @@ public:
   // copy
   inline Comm_Null(const Comm_Null& data) : mpi_comm(data.mpi_comm) { }
   // inter-language operability  
-  inline Comm_Null(const MPI_Comm& data) : mpi_comm(data) { }
+  inline Comm_Null(MPI_Comm data) : mpi_comm(data) { }
 
   // destruction
   virtual inline ~Comm_Null() { }
@@ -121,7 +122,7 @@ public:
     pmpi_comm((const PMPI::Comm&) data) { }
 
   // inter-language operability
-  Comm(const MPI_Comm& data) : Comm_Null(data), pmpi_comm(data) { }
+  Comm(MPI_Comm data) : Comm_Null(data), pmpi_comm(data) { }
 
   Comm(const PMPI::Comm& data) :
     Comm_Null((const PMPI::Comm_Null&)data),
@@ -151,7 +152,7 @@ public:
 #else
   Comm(const Comm& data) : Comm_Null(data.mpi_comm) { }
   // inter-language operability
-  Comm(const MPI_Comm& data) : Comm_Null(data) { }
+  Comm(MPI_Comm data) : Comm_Null(data) { }
 #endif
 
 

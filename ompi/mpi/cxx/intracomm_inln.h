@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -18,7 +19,7 @@
 //
 
 inline
-MPI::Intracomm::Intracomm(const MPI_Comm& data) {
+MPI::Intracomm::Intracomm(MPI_Comm data) {
   int flag;
   if (MPI::Is_initialized() && (data != MPI_COMM_NULL)) {
     (void)MPI_Comm_test_inter(data, &flag);

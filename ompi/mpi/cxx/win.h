@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -36,7 +37,7 @@ public:
   // copy / assignment
   Win(const Win& data) : pmpi_win(data.pmpi_win) { }
 
-  Win(const MPI_Win &i) : pmpi_win(i) { }
+  Win(MPI_Win i) : pmpi_win(i) { }
 
   Win& operator=(const Win& data) {
     pmpi_win = data.pmpi_win; return *this; }
@@ -56,7 +57,7 @@ public:
   // copy
   Win(const Win& data) : mpi_win(data.mpi_win) { }
 
-  Win(const MPI_Win &i) : mpi_win(i) { }
+  Win(MPI_Win i) : mpi_win(i) { }
 	
   virtual ~Win() { }
 

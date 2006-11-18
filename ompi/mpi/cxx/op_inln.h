@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -26,7 +27,7 @@ inline
 MPI::Op::Op(const MPI::Op& o) : pmpi_op(o.pmpi_op) { }
   
 inline
-MPI::Op::Op(const MPI_Op& o) : pmpi_op(o) { }
+MPI::Op::Op(MPI_Op o) : pmpi_op(o) { }
 
 inline
 MPI::Op::~Op() { }
@@ -65,7 +66,7 @@ inline
 MPI::Op::Op() : mpi_op(MPI_OP_NULL) { }
 
 inline
-MPI::Op::Op(const MPI_Op &i) : mpi_op(i) { }
+MPI::Op::Op(MPI_Op i) : mpi_op(i) { }
 
 inline
 MPI::Op::Op(const MPI::Op& op)
