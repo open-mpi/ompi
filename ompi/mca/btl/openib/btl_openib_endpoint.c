@@ -117,6 +117,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
     int do_rdma = 0, prio;
     struct ibv_send_wr* bad_wr; 
 
+    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
 
     prio = (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ?
@@ -174,8 +175,6 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
         if(mca_btl_openib_component.use_srq) {
             frag->wr_desc.sr_desc.opcode = IBV_WR_SEND_WITH_IMM;
             frag->wr_desc.sr_desc.imm_data = endpoint->rem_info.rem_index;
-        } else {
-            frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
         }
     }
 
@@ -197,14 +196,10 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
                 OPAL_THREAD_ADD32(&endpoint->sd_tokens[prio], 1);
             }
         }
-        frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
         BTL_ERROR(("error posting send request errno says %s\n", 
                     strerror(errno))); 
         return OMPI_ERROR; 
     }
-    /* set opcode back to SEND. When processing pending fragments we check this
-     * value to decide what function to call */
-    frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
 
     if(mca_btl_openib_component.use_srq) { 
         mca_btl_openib_post_srr(openib_btl, 1, BTL_OPENIB_HP_QP);
