@@ -313,23 +313,11 @@ int orte_smr_bproc_module_init(void)
 {
     int rc;
     struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
-    char *cellid_string;
     
     if (mca_smr_bproc_component.debug)
 	    opal_output(0, "init smr_bproc_module\n");
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_cellid_string(&cellid_string, orte_process_info.my_name))) {
-        
-    	ORTE_ERROR_LOG(rc);
-    	return rc;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_cellid(&mca_smr_bproc_component.cellid, cellid_string))) {
-        
-    	ORTE_ERROR_LOG(rc);
-    	return rc;
-    }
-    
+    mca_smr_bproc_component.cellid = ORTE_PROC_MY_NAME->cellid;
 
     mca_smr_bproc_component.node_set.size = 0;
 
