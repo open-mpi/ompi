@@ -164,8 +164,7 @@ orte_sds_slurm_finalize(void)
 static char *
 get_slurm_nodename(int nodeid)
 {
-    int i, j, len;
-    char *token, **names = NULL;
+    char **names = NULL;
     char *slurm_nodelist;
     char *ret;
 
