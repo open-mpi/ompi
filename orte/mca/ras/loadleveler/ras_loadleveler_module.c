@@ -89,8 +89,6 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
     orte_ras_node_t* node;
     char ** hostlist = NULL;
     int num_hosts = 0;
-    orte_jobid_t *jptr;
-    orte_attribute_t *attr;
 
     OBJ_CONSTRUCT(&nodes_list, opal_list_t);
 
