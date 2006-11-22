@@ -704,21 +704,28 @@ static int orte_pls_bproc_launch_daemons(orte_cellid_t cellid, char *** envp,
             opal_list_append(&daemons, &dmn->super);
             
             free(param);
-            
-            rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb,
-                              &daemon_list[i]);
-            if(ORTE_SUCCESS != rc) {
-                ORTE_ERROR_LOG(rc);
-                goto cleanup;
-            }
         }
     }
+    
     /* store the daemon info */
     if (ORTE_SUCCESS != (rc = orte_pls_base_store_active_daemons(&daemons))) {
         ORTE_ERROR_LOG(rc);
     }
     *num_launched = num_daemons;
 
+    /* setup the callbacks - this needs to be done *after* we store the
+     * daemon info so that short-lived apps don't cause mpirun to
+     * try and terminate the orteds before we record them
+     */
+    for (i=0; i < num_daemons; i++) {
+        rc = orte_wait_cb(pids[i], orte_pls_bproc_waitpid_daemon_cb,
+                          &daemon_list[i]);
+        if(ORTE_SUCCESS != rc) {
+            ORTE_ERROR_LOG(rc);
+            goto cleanup;
+        }
+    }
+    
     if (mca_pls_bproc_component.timing) {
         if (0 != gettimeofday(&launchstop, NULL)) {
             opal_output(0, "pls_bproc: could not obtain stop time");
