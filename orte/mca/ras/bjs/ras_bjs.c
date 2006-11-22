@@ -123,7 +123,6 @@ static int orte_ras_bjs_discover(
     opal_list_t new_nodes;
     int rc;
     
-#if 0
     /* query the nodelist from the registry */
     OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
@@ -161,13 +160,10 @@ static int orte_ras_bjs_discover(
 
         /* try and determine the number of available slots */
         if(node->node_slots == 0) {
-            node->node_slots_inuse = 0;
-            node->node_slots_max = 0;
             node->node_slots = orte_ras_bjs_node_slots(node->node_name);
         }
         item = next;
     }
-#endif    
 
     /* parse the node list and check node status/access */
     nodes = getenv("NODES");
@@ -210,9 +206,6 @@ static int orte_ras_bjs_discover(
         node = OBJ_NEW(orte_ras_node_t);
         node->node_name = strdup(ptr);
         node->node_state = node_state;
-        node->node_cellid = 0;
-        node->node_slots_inuse = 0;
-        node->node_slots_max = 0;
         node->node_slots = orte_ras_bjs_node_slots(node->node_name);
         opal_list_append(&new_nodes, &node->super);
     }
