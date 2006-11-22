@@ -37,7 +37,6 @@ extern "C" {
 #define ORTE_SMR_BPROC_NODE_MODE        "orte-node-bproc-mode"
 #define ORTE_SMR_BPROC_NODE_USER        "orte-node-bproc-user"
 #define ORTE_SMR_BPROC_NODE_GROUP       "orte-node-bproc-group"
-#define ORTE_SMR_BPROC_NODE_SEGMENT     "orte-node-bproc-segment"
 
 /**
  * Module init/fini

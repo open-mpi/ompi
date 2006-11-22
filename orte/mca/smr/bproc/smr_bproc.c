@@ -32,6 +32,8 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/gpr/base/base.h"
+#include "orte/mca/schema/schema_types.h"
+
 #include "orte/mca/smr/base/smr_private.h"
 #include "orte/mca/smr/bproc/smr_bproc.h"
 #include "opal/util/output.h"
@@ -152,7 +154,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 	return;
 
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
-	                                                ORTE_SMR_BPROC_NODE_SEGMENT, cnt, 0))) {
+	                                                ORTE_BPROC_NODE_SEGMENT, cnt, 0))) {
     	ORTE_ERROR_LOG(rc);
     	return;
     }

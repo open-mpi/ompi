@@ -121,4 +121,13 @@
 #define ORTED_LAUNCH_STAGE_GATE_CNTR        "orted-num-at-launch-gate"
 #define ORTED_NUM_TO_BE_LAUNCHED            "orted-num-to-be-launched"
 
+/*
+ * BPROC-SPECIFIC SEGMENT FOR STORING CLUSTER-WIDE NODE STATES
+ * This obviously shouldn't be in a general ORTE schema file. However,
+ * it is a temporary requirement until we can install the ORTE 2.0
+ * schema - and the definition needs to be in some central location
+ * where the various bproc components can locate it
+ */
+#define ORTE_BPROC_NODE_SEGMENT     "orte-node-bproc-segment"
+
 #endif
