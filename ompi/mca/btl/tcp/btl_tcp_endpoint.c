@@ -278,7 +278,7 @@ static int mca_btl_tcp_endpoint_send_connect_ack(mca_btl_base_endpoint_t* btl_en
     mca_btl_tcp_proc_t* btl_proc = mca_btl_tcp_proc_local();
     orte_process_name_t guid = btl_proc->proc_name;
 
-    OMPI_PROCESS_NAME_HTON(guid);
+    ORTE_PROCESS_NAME_HTON(guid);
     if(mca_btl_tcp_endpoint_send_blocking(btl_endpoint, &guid, sizeof(guid)) != 
           sizeof(guid)) {
         return OMPI_ERR_UNREACH;
@@ -439,7 +439,7 @@ static int mca_btl_tcp_endpoint_recv_connect_ack(mca_btl_base_endpoint_t* btl_en
     if((mca_btl_tcp_endpoint_recv_blocking(btl_endpoint, &guid, sizeof(orte_process_name_t))) != sizeof(orte_process_name_t)) {
         return OMPI_ERR_UNREACH;
     }
-    OMPI_PROCESS_NAME_NTOH(guid);
+    ORTE_PROCESS_NAME_NTOH(guid);
 
     /* compare this to the expected values */
     if(memcmp(&btl_proc->proc_name, &guid, sizeof(orte_process_name_t)) != 0) {
