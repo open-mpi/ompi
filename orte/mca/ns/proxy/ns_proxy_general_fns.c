@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -52,7 +52,9 @@ int orte_ns_proxy_get_peers(orte_process_name_t **procs,
     int rc;
 
     OPAL_TRACE(1);
-    
+
+    OPAL_THREAD_LOCK(&orte_ns_proxy.mutex);
+
     /* set default value */
     *procs = NULL;
     *num_procs = 0;
