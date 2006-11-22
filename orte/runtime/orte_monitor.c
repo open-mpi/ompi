@@ -99,7 +99,7 @@ int orte_monitor_procs_registered(void)
         opal_condition_timedwait(&ompi_rte_condition, &ompi_rte_mutex, &ts);
         ompi_rte_waiting = false;
         if(ompi_rte_job_started == false) {
-            opal_mutex_unlock(&ompi_rte_mutex);
+            OPAL_THREAD_UNLOCK(&ompi_rte_mutex);
             return ORTE_ERROR;
         }
     }
@@ -113,7 +113,7 @@ int orte_monitor_procs_unregistered(void)
     /* wait for all processes to complete */
     while(ompi_rte_job_finished == false) {
 	ompi_rte_waiting = true;
-	opal_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
+        opal_condition_wait(&ompi_rte_condition, &ompi_rte_mutex);
         ompi_rte_waiting = false;
     }
 
