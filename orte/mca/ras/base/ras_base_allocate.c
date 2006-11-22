@@ -27,7 +27,6 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/rmgr/rmgr.h"
-#include "orte/mca/gpr/gpr.h"
 
 #include "orte/mca/ras/base/proxy/ras_base_proxy.h"
 #include "orte/mca/ras/base/ras_private.h"
@@ -129,11 +128,23 @@ int orte_ras_base_allocate(orte_jobid_t jobid, opal_list_t *attributes)
      * want to allocate new nodes. Otherwise allocate all the existing nodes to
      * our job */
     OBJ_CONSTRUCT(&nodes, opal_list_t);
+    /* See if there are any nodes already on the registry. Most of the time
+     * these would have been put there by the RDS reading the hostfile. */
+    if (ORTE_SUCCESS != (ret = orte_ras_base_node_query(&nodes))) {
+        OBJ_DESTRUCT(&nodes);
+        return ret;
+    }
+    /* If there are any nodes at all, allocate them all to this job */
+    if (!opal_list_is_empty(&nodes)) {
+        opal_output(orte_ras_base.ras_output,
+                    "orte:ras:base:allocate: reallocating nodes that are already on registry");
+        ret = orte_ras_base_allocate_nodes(jobid, &nodes);
+        OBJ_DESTRUCT(&nodes);
+        return ret;
+    }
 
-    /* Run the RAS components from highest to lowest priority (they are already sorted).
-     * Stop when the node segment is no longer empty. This ensures we go through the
-     * allocator components at least once
-     */
+    /* there were no nodes already on the registry, so get them from the
+     * RAS components */
  
     /* If no components are available, then return an error */
     if (opal_list_is_empty(&orte_ras_base.ras_available)) {
