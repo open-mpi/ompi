@@ -10,6 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -115,11 +118,12 @@ int ompi_mpi_finalize(void)
     ompi_mpi_finalized = true;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
-    opal_progress_events(OPAL_EVLOOP_ONELOOP);
+    opal_progress_set_event_flag(OPAL_EVLOOP_ONELOOP);
 #endif
 
-    /* Change progress function priority back to RTE level stuff */
-    opal_progress_mpi_disable();
+    /* Redo ORTE calling opal_progress_event_users_increment() during
+       MPI lifetime, to get better latency when not using TCP */
+    opal_progress_event_users_increment();
 
     /* If maffinity was setup, tear it down */
     if (ompi_mpi_maffinity_setup) {

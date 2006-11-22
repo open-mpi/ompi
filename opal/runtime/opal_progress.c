@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,15 +37,8 @@
  * default parameters 
  */
 static int opal_progress_event_flag = OPAL_EVLOOP_ONELOOP;
-#if OPAL_PROGRESS_USE_TIMERS
-static const opal_timer_t opal_progress_default_tick_rate = 10000; /* 10ms */
-#else
-static const int opal_progress_default_tick_rate = 10000; /* 10k calls to opal_progress */
-#endif
-
 volatile int32_t opal_progress_thread_count = 0;
 int opal_progress_spin_count = 10000;
-                                                                                                          
 
 
 /*
@@ -71,118 +67,33 @@ static int32_t event_progress_delta = 0;
 #endif
 /* users of the event library from MPI cause the tick rate to 
    be every time */
-static int32_t event_num_mpi_users = 0;
+static int32_t num_event_users = 0;
+
+#if OMPI_ENABLE_DEBUG
+static int debug_output = -1;
+#endif
 
 
 /* init the progress engine - called from orte_init */
 int
 opal_progress_init(void)
 {
+    int param, value;
+
     /* reentrant issues */
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_init(&progress_lock, OPAL_ATOMIC_UNLOCKED);
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
 
-    /* always call sched yield when in the rte only... */
-    call_yield = 1;
-
-#if OPAL_PROGRESS_USE_TIMERS
-    event_progress_delta = 0;
-#if OPAL_TIMER_USEC_NATIVE
-    event_progress_last_time = opal_timer_base_get_usec();
-#else
-    event_progress_last_time = opal_timer_base_get_cycles();
-#endif
-#else
-    event_progress_counter = event_progress_delta = 0;
-#endif
-
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_progress_mpi_init(void)
-{
-    event_num_mpi_users = 0;
-
-    return OPAL_SUCCESS;
-}
-
-/* turn on MPI optimizations */
-int
-opal_progress_mpi_enable(void)
-{
-    int param, value;
-
-    /* call sched yield when oversubscribed. */
-    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
-    mca_base_param_lookup_int(param, &value);
-
-    if (value < 0) {
-        /* this should never happen set to 1 if it somehow does */
-        call_yield = 1;
-    } else {
-        call_yield = value;
-    }
-
     /* set the event tick rate */
-    param = mca_base_param_find("mpi", NULL, "event_tick_rate");
+    opal_progress_set_event_poll_rate(10000);
+
+#if OMPI_ENABLE_DEBUG
+    param = mca_base_param_find("opal", NULL, "progress_debug");
     mca_base_param_lookup_int(param, &value);
-
-    if (value < 0) {
-        /* user didn't specify - default tick rate */
-        event_progress_delta = opal_progress_default_tick_rate;
-    } else if (value == 0) {
-#if OPAL_PROGRESS_USE_TIMERS
-        /* user specified as never tick - tick once per minute */
-        event_progress_delta = 60 * 1000000;
-#else
-        /* user specified as never tick - don't count often */
-        event_progress_delta = INT_MAX;
-#endif
-    } else {
-#if OPAL_PROGRESS_USE_TIMERS
-        event_progress_delta = value;
-#else
-        /* subtract one so that we can do post-fix subtraction
-           in the inner loop and go faster */
-        event_progress_delta = value - 1;
-#endif
+    if (value) {
+        debug_output = opal_output_open(NULL);
     }
-#if OPAL_PROGRESS_USE_TIMERS && !OPAL_TIMER_USEC_NATIVE
-    /*  going to use cycles for counter.  Adjust specified usec into cycles */
-    event_progress_delta = event_progress_delta * opal_timer_base_get_freq() / 1000000;
-#endif
-
-#if OPAL_PROGRESS_USE_TIMERS
-#if OPAL_TIMER_USEC_NATIVE
-    event_progress_last_time = opal_timer_base_get_usec();
-#else
-    event_progress_last_time = opal_timer_base_get_cycles();
-#endif
-#else
-    /* it's possible that an init function bumped up our tick rate.
-     * If so, set the event_progress counter to 0.  Otherwise, set it to
-     * the reset value */
-    event_progress_counter = (event_num_mpi_users > 0) ? 
-        0 : event_progress_delta;
-#endif
-
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_progress_mpi_disable(void)
-{
-    /* always call sched yield from here on... */
-    call_yield = 1;
-
-    /* always tick the event library */
-    event_progress_delta = 0;
-#if !OPAL_PROGRESS_USE_TIMERS
-    event_progress_counter = 0;
 #endif
 
     return OPAL_SUCCESS;
@@ -192,33 +103,23 @@ opal_progress_mpi_disable(void)
 int
 opal_progress_finalize(void)
 {
-    /* don't need to free the progess lock */
-
     /* free memory associated with the callbacks */
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_lock(&progress_lock);
 #endif
 
+    callbacks_len = 0;
+    callbacks_size = 0;
     if (NULL != callbacks) {
         free(callbacks);
         callbacks = NULL;
     }
-    callbacks_len = 0;
-    callbacks_size = 0;
 
 #if OMPI_HAVE_THREAD_SUPPORT
     opal_atomic_unlock(&progress_lock);
 #endif
 
     return OPAL_SUCCESS;
-}
-
-
-
-void
-opal_progress_events(int flag)
-{
-    opal_progress_event_flag = flag;
 }
 
 
@@ -253,7 +154,7 @@ opal_progress(void)
 #if OMPI_HAVE_THREAD_SUPPORT
             if (opal_atomic_trylock(&progress_lock)) {
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
-                event_progress_last_time = (event_num_mpi_users > 0) ? 
+                event_progress_last_time = (num_event_users > 0) ? 
                     now - event_progress_delta : now;
 
                 events += opal_event_loop(opal_progress_event_flag);
@@ -271,7 +172,7 @@ opal_progress(void)
             if (opal_atomic_trylock(&progress_lock)) {
 #endif  /* OMPI_HAVE_THREAD_SUPPORT */
                 event_progress_counter = 
-                    (event_num_mpi_users > 0) ? 0 : event_progress_delta;
+                    (num_event_users > 0) ? 0 : event_progress_delta;
                 events += opal_event_loop(opal_progress_event_flag);
 #if OMPI_HAVE_THREAD_SUPPORT
                 opal_atomic_unlock(&progress_lock);
@@ -302,6 +203,103 @@ opal_progress(void)
 #endif  /* defined(__WINDOWS__) */
     }
 #endif  /* defined(__WINDOWS__) || defined(HAVE_SCHED_YIELD) */
+}
+
+
+int
+opal_progress_set_event_flag(int flag)
+{
+    int tmp = opal_progress_event_flag;
+    opal_progress_event_flag = flag;
+    return tmp;
+}
+
+
+void
+opal_progress_event_users_increment(void)
+{
+    int32_t val;
+    val = opal_atomic_add_32(&num_event_users, 1);
+
+    OPAL_OUTPUT((debug_output, "event_users_increment setting count to %d", val));
+
+#if OPAL_PROGRESS_USE_TIMERS
+    /* force an update next round (we'll be past the delta) */
+    event_progress_last_time -= event_progress_delta;
+#else
+    /* always reset the tick rate - can't hurt */
+    event_progress_counter = 0;
+#endif
+}
+
+
+void
+opal_progress_event_users_decrement(void)
+{
+    int32_t val;
+    val = opal_atomic_sub_32(&num_event_users, 1);
+
+    OPAL_OUTPUT((debug_output, "event_users_decrement setting count to %d", val));
+
+#if !OPAL_PROGRESS_USE_TIMERS
+   /* start now in delaying if it's easy */
+   if (val >= 0) {
+       event_progress_counter = event_progress_delta;
+   }
+#endif
+}
+
+
+bool
+opal_progress_set_yield_when_idle(bool yieldopt)
+{
+    bool tmp = (call_yield == 0) ? false : true;
+    call_yield = (yieldopt) ? 1 : 0;
+
+    OPAL_OUTPUT((debug_output, "progress_set_yield_when_idle to %d", call_yield));
+
+    return tmp;
+}
+
+
+void
+opal_progress_set_event_poll_rate(int polltime)
+{
+    OPAL_OUTPUT((debug_output, "progress_set_event_poll_rate(%d)", polltime));
+
+#if OPAL_PROGRESS_USE_TIMERS
+    event_progress_delta = 0;
+#  if OPAL_TIMER_USEC_NATIVE
+    event_progress_last_time = opal_timer_base_get_usec();
+#  else
+    event_progress_last_time = opal_timer_base_get_cycles();
+#  endif
+#else
+    event_progress_counter = event_progress_delta = 0;
+#endif
+
+    if (polltime == 0) {
+#if OPAL_PROGRESS_USE_TIMERS
+        /* user specified as never tick - tick once per minute */
+        event_progress_delta = 60 * 1000000;
+#else
+        /* user specified as never tick - don't count often */
+        event_progress_delta = INT_MAX;
+#endif
+    } else {
+#if OPAL_PROGRESS_USE_TIMERS
+        event_progress_delta = polltime;
+#else
+        /* subtract one so that we can do post-fix subtraction
+           in the inner loop and go faster */
+        event_progress_delta = polltime - 1;
+#endif
+    }
+
+#if OPAL_PROGRESS_USE_TIMERS && !OPAL_TIMER_USEC_NATIVE
+    /*  going to use cycles for counter.  Adjust specified usec into cycles */
+    event_progress_delta = event_progress_delta * opal_timer_base_get_freq() / 1000000;
+#endif
 }
 
 
@@ -377,39 +375,4 @@ opal_progress_unregister(opal_progress_callback_t cb)
 #endif
 
     return ret;
-}
-
-
-int
-opal_progress_event_increment()
-{
-    int32_t val;
-    val = opal_atomic_add_32(&event_num_mpi_users, 1);
-
-#if OPAL_PROGRESS_USE_TIMERS
-    /* force an update next round (we'll be past the delta) */
-    event_progress_last_time -= event_progress_delta;
-#else
-    /* always reset the tick rate - can't hurt */
-    event_progress_counter = 0;
-#endif
-
-    return OPAL_SUCCESS;
-}
-
-
-int
-opal_progress_event_decrement()
-{
-    int32_t val;
-   val = opal_atomic_sub_32(&event_num_mpi_users, 1);
-
-#if !OPAL_PROGRESS_USE_TIMERS
-   /* start now in delaying if it's easy */
-   if (val >= 0) {
-       event_progress_counter = event_progress_delta;
-   }
-#endif
-
-   return OPAL_SUCCESS;
 }

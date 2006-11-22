@@ -10,6 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -542,7 +545,7 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
     /**
      * The connection is correctly setup. Now we can decrease the event trigger.
      */
-    opal_progress_event_decrement();
+    opal_progress_event_users_decrement();
 
     /* While there are frags in the list,
      * process them */
@@ -731,7 +734,7 @@ static void mca_btl_openib_endpoint_recv(
                  * let the event engine pool the OOB events. Note: we increment it once peer active
                  * connection.
                  */
-                opal_progress_event_increment();
+                opal_progress_event_users_increment();
                 break;
                 
             case MCA_BTL_IB_CONNECTING :
@@ -831,7 +834,7 @@ int mca_btl_openib_endpoint_send(
              * let the event engine pool the OOB events. Note: we increment it once peer active
              * connection.
              */
-            opal_progress_event_increment();
+            opal_progress_event_users_increment();
             call_progress = true;
             break;
 

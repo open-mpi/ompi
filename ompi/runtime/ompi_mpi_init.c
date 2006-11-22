@@ -10,6 +10,9 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -281,7 +284,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Setup process affinity */
 
     if (ompi_mpi_paffinity_alone) {
-        int param, value;
         bool set = false;
         param = mca_base_param_find("mpi", NULL, "paffinity_processor");
         if (param >= 0) {
@@ -327,13 +329,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "mca_proc_init() failed";
         goto error;
     }
-
-    /* initialize the progress engine for MPI functionality */
-    if (OMPI_SUCCESS != opal_progress_mpi_init()) {
-        error = "opal_progress_mpi_init() failed";
-        goto error;
-    }
-
 
     /* initialize ops. This has to be done *after* ddt_init, but
        befor mca_coll_base_open, since come collective modules
@@ -678,17 +673,29 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* switch from letting us sit in the event library for a bit each
        time through opal_progress() to completely non-blocking */
-    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
+    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
 #endif
 
-    /* put the event library in "high performance MPI mode" */
-    if (OMPI_SUCCESS != (ret = opal_progress_mpi_enable())) {
-        error = "opal_progress_mpi_enable() failed";
-        /* This will loop back up above, but ret != OMPI_SUCCESS, so
-           we'll end up returning out of this function before getting
-           here (and therefore avoiding an infinite loop) */
-        goto error;
+    /* Undo ORTE calling opal_progress_event_users_increment() during
+       MPI lifetime, to get better latency when not using TCP */
+    opal_progress_event_users_decrement();
+
+    /* override ORTE setting yield_when_idle, if desired */
+    param = mca_base_param_find("mpi", NULL, "yield_when_idle");
+    mca_base_param_lookup_int(param, &value);
+    if (value < 0) {
+        /* if we got a bogus value, do the conservative thing... */
+        opal_progress_set_yield_when_idle(true);
+    } else {
+        opal_progress_set_yield_when_idle(value == 0 ? false : true);
     }
+    param = mca_base_param_find("mpi", NULL, "event_tick_rate");
+    mca_base_param_lookup_int(param, &value);
+    /* negative value means use default - just don't do anything */
+    if (value >= 0) {
+        opal_progress_set_event_poll_rate(value);
+    }
+    
 
     /* If we want the connection warmup, go do it */
    if (ompi_mpi_preconnect_all) { 

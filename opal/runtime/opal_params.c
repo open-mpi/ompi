@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,6 +34,8 @@
 
 int opal_register_params(void)
 {
+    
+
     /*
      * This string is going to be used in opal/util/stacktrace.c
      */
@@ -67,6 +72,12 @@ int opal_register_params(void)
                                        "If a signal is received, display the stack trace frame",
                                        false, false, string, NULL);
     }
+
+#if OMPI_ENABLE_DEBUG
+    mca_base_param_reg_int_name("opal", "progress_debug", 
+                                "Set to non-zero to debug progress engine features",
+                                false, false, 0, NULL);
+#endif
 
     return OPAL_SUCCESS;
 }
