@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -130,7 +133,7 @@ int mca_btl_tcp_add_procs(
         /* we increase the count of MPI users of the event library
            once per peer, so that we are used until we aren't
            connected to a peer */
-        opal_progress_event_increment();
+        opal_progress_event_users_increment();
     }
 
     return OMPI_SUCCESS;
@@ -149,7 +152,7 @@ int mca_btl_tcp_del_procs(struct mca_btl_base_module_t* btl,
             opal_list_remove_item(&tcp_btl->tcp_endpoints, (opal_list_item_t*)tcp_endpoint);
             OBJ_RELEASE(tcp_endpoint);
         }
-        opal_progress_event_decrement();
+        opal_progress_event_users_decrement();
     }
     return OMPI_SUCCESS;
 }
@@ -490,7 +493,7 @@ int mca_btl_tcp_finalize(struct mca_btl_base_module_t* btl)
          item = opal_list_remove_first(&tcp_btl->tcp_endpoints)) {
         mca_btl_tcp_endpoint_t *endpoint = (mca_btl_tcp_endpoint_t*)item;
         OBJ_RELEASE(endpoint);
-        opal_progress_event_decrement();
+        opal_progress_event_users_decrement();
     }
     free(tcp_btl);
     return OMPI_SUCCESS;

@@ -9,6 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,11 +25,13 @@
  * Progress engine for Open MPI
  */
 
-#ifndef _OMPI_PROGRESS_H_
-#define _OMPI_PROGRESS_H_
+#ifndef OPAL_RUNTIME_OPAL_PROGRESS_H
+#define OPAL_RUNTIME_OPAL_PROGRESS_H
+
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
 #include "opal/threads/mutex.h"
 
 /**
@@ -39,35 +44,6 @@ extern "C" {
  */
 OPAL_DECLSPEC int opal_progress_init(void);
 
-/**
- * Configure the progress engine for executing MPI applications
- *
- * Register to receive any needed information from the GPR and 
- * intialize any data structures required for MPI applications.
- *
- * \note opal_progress_init() must be called before calling
- * this function.  Failure to do so is an error.
- */
-OPAL_DECLSPEC int opal_progress_mpi_init(void);
-
-/** 
- * Turn on optimizations for MPI progress
- *
- * Turn on optimizations for MPI applications.  This includes lowering
- * the rate at which the event library is ticked if it is not under
- * active use and possibly disabling the sched_yield call when the
- * progress engine is idle 
- */
-OPAL_DECLSPEC int opal_progress_mpi_enable(void);
-
-/**
- * Turn off all optimizations enabled by opal_progress_mpi_enable().
- *
- * Completely reverses all optimizations enabled by
- * opal_progress_mpi_enable().  The event library resumes constant
- * ticking and the progress engine yields the CPU when idle.
- */
-OPAL_DECLSPEC int opal_progress_mpi_disable(void);
 
 /** 
  * Shut down the progress engine
@@ -78,44 +54,125 @@ OPAL_DECLSPEC int opal_progress_mpi_disable(void);
  */
 OPAL_DECLSPEC int opal_progress_finalize(void);
 
-/**
- * Control how the event library is called
- */
-OPAL_DECLSPEC void opal_progress_events(int);
 
 /**
  * Progress all pending events
+ *
+ * Progress all pending events.  All registered event handlers will be
+ * called every call into opal_progress().  The event library will be
+ * called if opal_progress_event_users is greater than 0 (adjustments
+ * can be made by calling opal_progress_event_users_add() and
+ * opal_progress_event_users_delete()) or the time since the last call
+ * into the event library is greater than the progress tick rate (by
+ * default, 10ms).
  */
 OPAL_DECLSPEC void opal_progress(void);
 
+
+/**
+ * Control how the event library is called
+ *
+ * Adjust the flags argument used to call opal_event_loop() from
+ * opal_progress().  The default argument is OPAL_EVLOOP_ONELOOP,
+ * meaning that the call to opal_event_loop() will block pending
+ * events, but may block for a period of time.
+ *
+ * @param flags     One of the valid vlags argument to 
+ *                  opal_event_loop().
+ * @return          Previous value of flags used to call
+ *                  opal_event_loop().
+ */
+OPAL_DECLSPEC int opal_progress_set_event_flag(int flags);
+
+
+/**
+ * Increase the number of users of the event library
+ *
+ * Increase the number of users of the event library.  This count is
+ * used by opal_progress to determine if opal_event_loop() should be
+ * called every call to opal_progress() or only after a time has
+ * elapsed since the last call (by default, 10ms).  The count defaults
+ * to 0, meaning that opal_progress_event_users_increment() must be
+ * called at least once for the event loop to be called on every entry
+ * to opal_progress().
+ *
+ */
+OPAL_DECLSPEC void opal_progress_event_users_increment(void);
+
+
+/**
+ * Decrease the number of users of the event library
+ *
+ * Decrease the number of users of the event library.  This count is
+ * used by opal_progress to determine if opal_event_loop() should be
+ * called every call to opal_progress() or only after a time has
+ * elapsed since the last call (by default, 10ms).
+ */
+OPAL_DECLSPEC void opal_progress_event_users_decrement(void);
+
+
+/**
+ * Set whether opal_progress() should yield when idle
+ *
+ * Set whether opal_progress() should yield the processor (either by
+ * sched_yield() or SwitchToThread()) if no events were progressed
+ * during the progress loop.  The return value of the callback
+ * functions is used to determine whether or not yielding is required.
+ * By default, the event loop will yield when the progress function is
+ * idle.
+ *
+ * @param   yieldopt  Whether to yield when idle.
+ * @return         Previous value of the yield_when_idle option.
+ */
+OPAL_DECLSPEC bool opal_progress_set_yield_when_idle(bool yieldopt);
+
+
+/**
+ * Set time between calls into the event library
+ *
+ * Set time between calls into the event library when there are no
+ * users of the event library (set by
+ * opal_progress_event_users_increment() and
+ * opal_progress_event_users_decrement()).
+ *
+ * @param   polltime  Time (in microseconds) between calls to the event
+ *                    library
+ */
+OPAL_DECLSPEC void opal_progress_set_event_poll_rate(int microseconds);
+
+
+/**
+ * Progress callback function typedef
+ * 
+ * Prototype for the a progress function callback.  Progress function
+ * callbacks can be registered with opal_progress_register() and
+ * deregistered with opal_progress_deregister().  It should be noted
+ * that either registering or deregistering a function callback is an
+ * extraordinarily expensive operation and should not be used for
+ * potentially short callback lifetimes.
+ *
+ * @return         Number of events progressed during the callback
+ */
 typedef int (*opal_progress_callback_t)(void);
+
 
 /**
  * Register an event to be progressed
+ *
+ * Register an event to be progressed during calls to opal_progress().
+ * Please read the note in opal_progress_callback_t.
  */
 OPAL_DECLSPEC int opal_progress_register(opal_progress_callback_t cb);
 
 
 /**
- * Unregister previously registered event
+ * Deregister previously registered event
+ *
+ * Deregister an event to be progressed during calls to opal_progress().
+ * Please read the note in opal_progress_callback_t.
  */
 OPAL_DECLSPEC int opal_progress_unregister(opal_progress_callback_t cb);
 
-
-/**
- * Increase count of MPI users of the event library
- */   
-OPAL_DECLSPEC int opal_progress_event_increment(void);
-
-/**
- * Decrease count of MPI users of the event library
- */   
-OPAL_DECLSPEC int opal_progress_event_decrement(void);
-
-
-/**
- * Progress until flag is true or poll iterations completed
- */
 
 OPAL_DECLSPEC extern volatile int32_t opal_progress_thread_count;
 OPAL_DECLSPEC extern int opal_progress_spin_count;
@@ -126,6 +183,9 @@ static inline bool opal_progress_threads(void)
 }
 
 
+/**
+ * Progress until flag is true or poll iterations completed
+ */
 static inline bool opal_progress_spin(volatile bool* complete)
 {
     int32_t c;
