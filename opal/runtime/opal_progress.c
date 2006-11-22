@@ -30,6 +30,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/constants.h"
 #include "opal/mca/timer/base/base.h"
+#include "opal/util/output.h"
 
 #define OPAL_PROGRESS_USE_TIMERS (OPAL_TIMER_CYCLE_SUPPORTED || OPAL_TIMER_USEC_SUPPORTED)
 
