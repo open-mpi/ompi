@@ -22,10 +22,7 @@
 
 SUBDIRS += \
 	tools/console \
-	tools/orteboot \
 	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
 	tools/orteprobe \
 	tools/orterun \
 	tools/wrappers \
@@ -34,10 +31,7 @@ SUBDIRS += \
 
 DIST_SUBDIRS += \
 	tools/console \
-	tools/orteboot \
 	tools/orted \
-	tools/ortehalt \
-	tools/ortekill \
 	tools/orteprobe \
 	tools/orterun \
 	tools/wrappers \
