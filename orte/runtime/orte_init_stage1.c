@@ -434,6 +434,7 @@ int orte_init_stage1(bool infrastructure)
             orte_rds_cell_desc_t *rds_item;
             orte_rds_cell_attr_t *new_attr;
             orte_ras_node_t *ras_item;
+            opal_list_t attrs;
             
             OBJ_CONSTRUCT(&single_host, opal_list_t);
             OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
@@ -523,11 +524,21 @@ int orte_init_stage1(bool infrastructure)
                 goto error;;
             }
             
-            if (ORTE_SUCCESS != (ret = orte_ras_base_allocate_nodes(my_jobid, &single_host))) {
+            /* JMS: Same as above -- fix this after 1.0: force a
+                selection so that orte_ras has initialized pointers in
+                case anywhere else tries to use it.  This may end up
+                putting a bunch more nodes on the node segment - e.g.,
+                if you're in a SLURM allocation and you "./a.out",
+                you'll end up with the localhost *and* all the other
+                nodes in your allocation on the node segment -- which
+                is probably fine */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(my_jobid, &attrs))) {
                 ORTE_ERROR_LOG(ret);
                 error = "allocate for a singleton";
                 goto error;
             }
+            OBJ_DESTRUCT(&attrs);
             
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);
