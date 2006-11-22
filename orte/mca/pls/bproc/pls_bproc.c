@@ -69,6 +69,8 @@
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
 
+#include "orte/mca/smr/bproc/smr_bproc.h"
+
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_bproc.h"
 
@@ -862,7 +864,7 @@ orte_pls_bproc_monitor_nodes(void)
                                 ORTE_GPR_NOTIFY_VALUE_CHG,
                                 ORTE_GPR_TOKENS_OR | 
                                 ORTE_GPR_KEYS_OR,
-                                ORTE_NODE_SEGMENT,
+                                ORTE_SMR_BPROC_NODE_SEGMENT,
                                 NULL,
                                 ORTE_NODE_STATE_KEY,
                                 orte_pls_bproc_check_node_state,
