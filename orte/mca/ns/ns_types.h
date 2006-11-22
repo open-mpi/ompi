@@ -79,7 +79,10 @@ extern "C" {
 /** Set the allowed range for ids in each space
  *
  * NOTE: Be sure to update the ORTE_NAME_ARGS #define (above) and all
- * uses of it if these types change to be larger than (long)!
+ * uses of it if these types change to be larger than (long)!  The
+ * HTON and NTOH macros below must be updated, as well as the MIN /
+ * MAX macros below and the datatype packing representations in
+ * ns_private.h
  */
 typedef orte_std_cntr_t orte_jobid_t;
 typedef orte_std_cntr_t orte_cellid_t;
@@ -147,7 +150,7 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  *
  * @param name
  */
-#define OMPI_PROCESS_NAME_HTON(n) \
+#define ORTE_PROCESS_NAME_HTON(n) \
     n.cellid = htonl(n.cellid); \
     n.jobid = htonl(n.jobid); \
     n.vpid = htonl(n.vpid);  
@@ -157,7 +160,7 @@ ORTE_DECLSPEC extern orte_process_name_t orte_ns_name_my_hnp;  /** instantiated 
  *
  * @param name
  */
-#define OMPI_PROCESS_NAME_NTOH(n) \
+#define ORTE_PROCESS_NAME_NTOH(n) \
     n.cellid = ntohl(n.cellid); \
     n.jobid = ntohl(n.jobid); \
     n.vpid = ntohl(n.vpid);  

@@ -25,29 +25,6 @@
 #define ORTE_IOF_BASE_MSG_MAX 2048
 
 /**
- * Convert process name from network to host byte order.
- *
- * @param name
- */
-#define ORTE_PROCESS_NAME_NTOH(n) \
-    n.cellid = ntohl((n).cellid); \
-    n.jobid = ntohl((n).jobid); \
-    n.vpid = ntohl((n).vpid);
-                                                                                                                 
-/**
- * Convert process name from host to network byte order.
- *
- * @param name
- */
-#define ORTE_PROCESS_NAME_HTON(n) \
-    n.cellid = htonl((n).cellid); \
-    n.jobid = htonl((n).jobid); \
-    n.vpid = htonl((n).vpid);
-                                                                                                                 
-#define ORTE_PROCESS_NAME_ARGS(n) \
-    n.cellid,n.jobid,n.vpid
-
-/**
  * Fields common to all headers.
  */
 
