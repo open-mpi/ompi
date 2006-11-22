@@ -88,10 +88,6 @@ static size_t orte_ras_bjs_node_slots(char* node_name)
     return count;
 }
 
-#if 0
-/* hang on to this code - it is used in the discover procedure, but
- * is currently disabled
- */
 /**
  * Resolve the node name to node number.
  */
@@ -103,8 +99,6 @@ static int orte_ras_bjs_node_resolve(char* node_name, int* node_num)
         return ORTE_ERROR;
     return ORTE_SUCCESS;
 }
-#endif
-
 
 /**
  *  Discover the available resources. 
