@@ -118,7 +118,6 @@ static int orte_ras_bjs_discover(
     int rc;
     
     /* query the nodelist from the registry */
-    OBJ_CONSTRUCT(&new_nodes, opal_list_t);
     if(ORTE_SUCCESS != (rc = orte_ras_base_node_query(nodelist))) {
         ORTE_ERROR_LOG(rc); 
         return rc;

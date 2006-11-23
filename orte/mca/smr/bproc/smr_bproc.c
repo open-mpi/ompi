@@ -251,7 +251,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     }
 
     if (mca_smr_bproc_component.debug)
-    	opal_output(0, "updating node %d\n", ni->node);
+    	opal_output(0, "updating node %d to segment %s\n", ni->node, value->segment);
 
     if ((ret = orte_gpr.put(1, &value)) != ORTE_SUCCESS) {
     	ORTE_ERROR_LOG(ret);
