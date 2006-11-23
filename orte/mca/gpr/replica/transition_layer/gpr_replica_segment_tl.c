@@ -34,7 +34,6 @@
 int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
                               bool create, char *segment)
 {
-    orte_std_cntr_t len;
     int rc=ORTE_SUCCESS;
     orte_std_cntr_t i, cntri;
     orte_gpr_replica_segment_t **ptr;
@@ -53,8 +52,6 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
         return ORTE_SUCCESS;
     }
     
-    len = (orte_std_cntr_t)strlen(segment);
-
     /* search the registry segments to find which one is being referenced */
     ptr = (orte_gpr_replica_segment_t**)(orte_gpr_replica.segments->addr);
     cntri = 0;
@@ -62,7 +59,7 @@ int orte_gpr_replica_find_seg(orte_gpr_replica_segment_t **seg,
               i < (orte_gpr_replica.segments)->size; i++) {
         if (NULL != ptr[i]) {
             cntri++;
-            if (0 == strncmp(segment, ptr[i]->name, len)) {
+            if (0 == strcmp(segment, ptr[i]->name)) {
                 *seg = ptr[i];
                 return ORTE_SUCCESS;
             }
