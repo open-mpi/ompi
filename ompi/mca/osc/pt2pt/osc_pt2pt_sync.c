@@ -63,7 +63,7 @@ ompi_osc_pt2pt_progress_long(ompi_osc_pt2pt_module_t *module)
 static inline void
 ompi_osc_pt2pt_flip_sendreqs(ompi_osc_pt2pt_module_t *module)
 {
-    short *tmp;
+    unsigned int *tmp;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
 
@@ -72,7 +72,7 @@ ompi_osc_pt2pt_flip_sendreqs(ompi_osc_pt2pt_module_t *module)
         module->p2p_num_pending_sendreqs;
     module->p2p_num_pending_sendreqs = tmp;
     memset(module->p2p_num_pending_sendreqs, 0,
-           sizeof(short) * ompi_comm_size(module->p2p_comm));
+           sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
 
     /* Copy in all the pending requests */
     opal_list_join(&module->p2p_copy_pending_sendreqs,
@@ -86,7 +86,7 @@ ompi_osc_pt2pt_flip_sendreqs(ompi_osc_pt2pt_module_t *module)
 int
 ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
 {
-    short incoming_reqs;
+    unsigned int incoming_reqs;
     int ret = OMPI_SUCCESS, i;
 
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
@@ -116,7 +116,7 @@ ompi_osc_pt2pt_module_fence(int assert, ompi_win_t *win)
             c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
                                        &incoming_reqs,
                                        P2P_MODULE(win)->p2p_fence_coll_counts,
-                                       MPI_SHORT,
+                                       MPI_UNSIGNED,
                                        MPI_SUM,
                                        P2P_MODULE(win)->p2p_comm);
 
@@ -200,6 +200,9 @@ ompi_osc_pt2pt_module_start(ompi_group_t *group,
     P2P_MODULE(win)->p2p_sc_group = group;    
     OPAL_THREAD_UNLOCK(&(P2P_MODULE(win)->p2p_lock));
 
+    memset(P2P_MODULE(win)->p2p_sc_remote_active_ranks, 0,
+           sizeof(bool) * ompi_comm_size(P2P_MODULE(win)->p2p_comm));
+
     /* for each process in the specified group, find it's rank in our
        communicator, store those indexes, and set the true / false in
        the active ranks table */
@@ -263,11 +266,12 @@ ompi_osc_pt2pt_module_complete(ompi_win_t *win)
 
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
-        ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
-                                    P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
-                                    OMPI_OSC_PT2PT_HDR_COMPLETE,
-                                    P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
-                                    0);
+        ret = ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
+                                          P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
+                                          OMPI_OSC_PT2PT_HDR_COMPLETE,
+                                          P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
+                                          0);
+        assert(ret == OMPI_SUCCESS);
     }
 
     /* try to start all the requests.  We've copied everything we
