@@ -80,7 +80,7 @@ ompi_mtl_mx_component_open(void)
     
     mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "timeout",
                            "Timeout for connections",
-                           false, false, 1000, &ompi_mtl_mx.mx_timeout);
+                           false, false, MX_INFINITE, &ompi_mtl_mx.mx_timeout);
     
     mca_base_param_reg_int(&mca_mtl_mx_component.super.mtl_version, "retries",
                            "Number of retries for each new connection before considering the peer as unreacheable",
