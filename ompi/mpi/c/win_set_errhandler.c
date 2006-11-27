@@ -37,7 +37,7 @@ int MPI_Win_set_errhandler(MPI_Win win, MPI_Errhandler errhandler)
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
-        if (ompi_win_invalid(win)) {
+        if (ompi_win_invalid(win) && win != MPI_WIN_NULL) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         } else if (NULL == errhandler ||
                    MPI_ERRHANDLER_NULL == errhandler ||

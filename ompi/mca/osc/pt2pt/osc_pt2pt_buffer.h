@@ -32,6 +32,7 @@ typedef void (*ompi_osc_pt2pt_buffer_completion_fn_t)(
 struct ompi_osc_pt2pt_buffer_t {
     opal_free_list_item_t super;
     ompi_request_t *request;
+    ompi_status_public_t status;
     ompi_osc_pt2pt_buffer_completion_fn_t cbfunc;
     void *cbdata;
     void *payload;
