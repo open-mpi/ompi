@@ -474,10 +474,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_PUT on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 
@@ -511,10 +507,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_ACCUMULATE on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 
@@ -552,10 +544,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_GET on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 
