@@ -64,7 +64,7 @@ ompi_osc_rdma_progress(ompi_osc_rdma_module_t *module)
 static inline void
 ompi_osc_rdma_flip_sendreqs(ompi_osc_rdma_module_t *module)
 {
-    short *tmp;
+    unsigned int *tmp;
 
     OPAL_THREAD_LOCK(&(module->p2p_lock));
 
@@ -73,7 +73,7 @@ ompi_osc_rdma_flip_sendreqs(ompi_osc_rdma_module_t *module)
         module->p2p_num_pending_sendreqs;
     module->p2p_num_pending_sendreqs = tmp;
     memset(module->p2p_num_pending_sendreqs, 0,
-           sizeof(short) * ompi_comm_size(module->p2p_comm));
+           sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
 
     /* Copy in all the pending requests */
     opal_list_join(&module->p2p_copy_pending_sendreqs,
@@ -87,7 +87,7 @@ ompi_osc_rdma_flip_sendreqs(ompi_osc_rdma_module_t *module)
 int
 ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
 {
-    short incoming_reqs;
+    unsigned int incoming_reqs;
     int ret = OMPI_SUCCESS, i;
 
     if (0 != (assert & MPI_MODE_NOPRECEDE)) {
@@ -120,7 +120,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                 c_coll.coll_reduce_scatter(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
                                            &incoming_reqs,
                                            P2P_MODULE(win)->p2p_fence_coll_counts,
-                                           MPI_SHORT,
+                                           MPI_UNSIGNED,
                                            MPI_SUM,
                                            P2P_MODULE(win)->p2p_comm);
             break;
@@ -130,7 +130,7 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                 c_coll.coll_allreduce(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
                                       P2P_MODULE(win)->p2p_fence_coll_results,
                                       ompi_comm_size(P2P_MODULE(win)->p2p_comm),
-                                      MPI_SHORT,
+                                      MPI_UNSIGNED,
                                       MPI_SUM,
                                       P2P_MODULE(win)->p2p_comm);
             incoming_reqs = P2P_MODULE(win)->
@@ -141,10 +141,10 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
             ret = P2P_MODULE(win)->p2p_comm->
                 c_coll.coll_alltoall(P2P_MODULE(win)->p2p_copy_num_pending_sendreqs,
                                      1,
-                                     MPI_SHORT,
+                                     MPI_UNSIGNED,
                                      P2P_MODULE(win)->p2p_fence_coll_results,
                                      1,
-                                     MPI_SHORT,
+                                     MPI_UNSIGNED,
                                      P2P_MODULE(win)->p2p_comm);
             incoming_reqs = 0;
             for (i = 0 ; i < ompi_comm_size(P2P_MODULE(win)->p2p_comm) ; ++i) {
@@ -198,6 +198,11 @@ ompi_osc_rdma_module_fence(int assert, ompi_win_t *win)
                             "fence: failure in starting sendreq (%d).  Will try later.",
                             ret);
                 opal_list_append(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs), item);
+
+                if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ||
+                    OMPI_ERR_OUT_OF_RESOURCE == ret) {
+                    break;
+                }
             }
         }
 
@@ -301,11 +306,12 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
 
         OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 
                           P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank]);
-        ompi_osc_rdma_control_send(P2P_MODULE(win), 
-                                    P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
-                                    OMPI_OSC_RDMA_HDR_COMPLETE,
-                                    P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
-                                    0);
+        ret = ompi_osc_rdma_control_send(P2P_MODULE(win), 
+                                         P2P_MODULE(win)->p2p_sc_group->grp_proc_pointers[i],
+                                         OMPI_OSC_RDMA_HDR_COMPLETE,
+                                         P2P_MODULE(win)->p2p_copy_num_pending_sendreqs[comm_rank],
+                                         0);
+        assert(ret == OMPI_SUCCESS);
     }
 
     /* try to start all the requests.  We've copied everything we
@@ -327,6 +333,7 @@ ompi_osc_rdma_module_complete(ompi_win_t *win)
     }
 
     /* wait for all the requests */
+    ompi_osc_rdma_progress(P2P_MODULE(win));        
     while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
         ompi_osc_rdma_progress(P2P_MODULE(win));        
     }
@@ -364,7 +371,7 @@ ompi_osc_rdma_module_post(ompi_group_t *group,
 
     /* Set our mode to expose w/ post */
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
-    ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
+    ompi_win_append_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
     OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_complete_msgs),

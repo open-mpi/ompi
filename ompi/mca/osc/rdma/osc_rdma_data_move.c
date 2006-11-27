@@ -92,6 +92,8 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
         (ompi_osc_rdma_sendreq_t*) descriptor->des_cbdata;
     ompi_osc_rdma_send_header_t *header =
         (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
+    opal_list_item_t *item;
+    ompi_osc_rdma_module_t *module = sendreq->req_module;
 
     if (OMPI_SUCCESS != status) {
         /* requeue and return */
@@ -151,7 +153,26 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
     btl->btl_free(btl, descriptor);
 
     /* any other sendreqs to restart? */
-    /* BWB - FIX ME - implement sending the next sendreq here */
+    while (NULL != 
+           (item = opal_list_remove_first(&(module->p2p_copy_pending_sendreqs)))) {
+        ompi_osc_rdma_sendreq_t *req = 
+            (ompi_osc_rdma_sendreq_t*) item;
+        int ret;
+
+        ret = ompi_osc_rdma_sendreq_send(module, req);
+
+        if (OMPI_SUCCESS != ret) {
+            opal_output_verbose(5, ompi_osc_base_output,
+                                "fence: failure in starting sendreq (%d).  Will try later.",
+                                ret);
+            opal_list_append(&(module->p2p_copy_pending_sendreqs), item);
+
+            if (OMPI_ERR_TEMP_OUT_OF_RESOURCE == ret ||
+                OMPI_ERR_OUT_OF_RESOURCE == ret) {
+                break;
+            }
+        }
+    }
 }
 
 
