@@ -29,6 +29,8 @@
 extern "C" {
 #endif
 
+#define CONTROL_MSG_TAG (-200)
+
 struct ompi_osc_pt2pt_component_t {
     /** Extend the basic osc component interface */
     ompi_osc_base_component_t super;
@@ -74,9 +76,6 @@ struct ompi_osc_pt2pt_module_t {
 
     /** communicator created with this window */
     ompi_communicator_t *p2p_comm;
-
-    /** eager message / control message receive buffer */
-    void *p2p_control_buffer;
 
     /** control message receive request */
     struct ompi_request_t *p2p_cb_request;

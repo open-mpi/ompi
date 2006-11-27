@@ -326,7 +326,7 @@ ompi_osc_pt2pt_module_post(ompi_group_t *group,
 
     /* Set our mode to expose w/ post */
     ompi_win_remove_mode(win, OMPI_WIN_FENCE);
-    ompi_win_set_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
+    ompi_win_append_mode(win, OMPI_WIN_EXPOSE_EPOCH | OMPI_WIN_POSTED);
 
     /* list how many complete counters we're still waiting on */
     OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_complete_msgs),

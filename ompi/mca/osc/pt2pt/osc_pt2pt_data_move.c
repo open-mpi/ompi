@@ -811,6 +811,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     /* pack header */
     header = (ompi_osc_pt2pt_control_header_t*) buffer->payload;
     header->hdr_base.hdr_type = type;
+    header->hdr_base.hdr_flags = 0;
     header->hdr_value[0] = value0;
     header->hdr_value[1] = value1;
     header->hdr_windx = module->p2p_comm->c_contextid;

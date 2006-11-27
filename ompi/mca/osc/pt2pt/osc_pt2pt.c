@@ -76,7 +76,6 @@ ompi_osc_pt2pt_module_free(ompi_win_t *win)
 
     OBJ_DESTRUCT(&(module->p2p_pending_sendreqs));
 
-    free(module->p2p_control_buffer);
     OBJ_DESTRUCT(&(module->p2p_pending_control_sends));
 
     ompi_comm_free(&(module->p2p_comm));
