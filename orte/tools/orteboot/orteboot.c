@@ -79,10 +79,7 @@
 /*
  * Globals
  */
-static orte_jobid_t jobid = ORTE_JOBID_INVALID;
 static char *orteboot_basename = NULL;
-static struct opal_event term_handler;
-static struct opal_event int_handler;
 
 /*
  * setup globals for catching orteboot command line options
@@ -177,19 +174,11 @@ extern char** environ;
 /*
  * Local functions
  */
-static void orte_daemon_recv(int status, orte_process_name_t* sender,
-                             orte_buffer_t *buffer, orte_rml_tag_t tag,
-                             void* cbdata);
-static void abort_signal_callback(int fd, short event, void *arg);
-static void exit_callback(int fd, short event, void *arg);
-
 
 int main(int argc, char *argv[])
 {
-    orte_app_context_t *app;
     int rc, ret;
     int id, iparam;
-    opal_list_t attributes;
     opal_cmd_line_t cmd_line;
 
     OBJ_CONSTRUCT(&orteboot_globals.lock, opal_mutex_t);
