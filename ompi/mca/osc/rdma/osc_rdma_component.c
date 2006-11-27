@@ -419,13 +419,12 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
                                    NULL);
     }
 
+    /* need to make create a collective, or lock requests can come in
+       before the window is fully created... */
+    module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
 
-    if (module->p2p_eager_send) {
-        /* need to barrier if eager sending or we can receive before the
-           other side has been fully setup, causing much gnashing of
-           teeth. */
-        module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
-    }
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "created window %d", module->p2p_comm->c_contextid);
 
     return ret;
 }

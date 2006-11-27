@@ -24,6 +24,7 @@
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/mca/osc/base/base.h"
 #include "mpi.h"
 
 
@@ -37,6 +38,9 @@ ompi_osc_rdma_module_free(ompi_win_t *win)
     while (OMPI_WIN_EXPOSE_EPOCH & ompi_win_get_mode(win)) {
         opal_progress();
     }
+
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "Finalizing window %d", module->p2p_comm->c_contextid);
 
     /* finish with a barrier */
     if (ompi_group_size(win->w_group) > 1) {
