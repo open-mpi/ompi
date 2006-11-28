@@ -450,6 +450,18 @@ void orte_iof_base_endpoint_closed(orte_iof_base_endpoint_t* endpoint)
 {
     opal_list_item_t* item;
 
+    /* Special case: if we're a sink and one of the special streams
+       (stdout or stderr), don't close anything because we don't want
+       to *actually* close stdout or stderr just because a remote
+       process closes theirs (but we do if a remote source/stdin
+       closes theirs, for example). */
+
+    if (ORTE_IOF_SINK == endpoint->ep_mode && 
+        (ORTE_IOF_STDOUT == endpoint->ep_tag ||
+         ORTE_IOF_STDERR == endpoint->ep_tag)) {
+        return;
+    }
+
     /* remove any event handlers */
     switch(endpoint->ep_mode) {
     case ORTE_IOF_SOURCE:
