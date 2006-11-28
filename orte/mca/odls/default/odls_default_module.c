@@ -631,6 +631,7 @@ static int odls_default_fork_local_proc(
     orte_vpid_t vpid_range,
     bool want_processor,
     size_t processor,
+    bool oversubscribed,
     char **base_environ)
 {
     pid_t pid;
@@ -758,6 +759,15 @@ static int odls_default_fork_local_proc(
             free(param2);
         }
 
+        /* handle oversubscription - setup yield schedule */
+        if (oversubscribed) {
+            param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+            opal_setenv(param, "1", true, &environ_copy);
+        } else {
+            param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+            opal_setenv(param, "0", true, &environ_copy);
+        }
+        
         /* setup universe info */
         if (NULL != orte_universe_info.name) {
             param = mca_base_param_environ_variable("universe", NULL, NULL);
@@ -901,7 +911,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     orte_odls_child_t *child;
     odls_default_app_context_t *app_item;
     size_t num_processors;
-    bool want_processor;
+    bool want_processor=false, oversubscribed;
     opal_list_item_t *item, *item2;
 
     /* parse the returned data to create the required structures
@@ -1035,11 +1045,11 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     }
 
     /* determine if we are oversubscribed */
-    want_processor = true;  /* default to taking it for ourselves */
+    oversubscribed = false;  /* default to being a hog */
     opal_paffinity_base_get_num_processors(&rc);
     num_processors = (size_t)rc;
     if (opal_list_get_size(&orte_odls_default.children) > num_processors) { /* oversubscribed */
-        want_processor = false;
+        oversubscribed = true;
     }
 
     /* okay, now let's launch our local procs using a fork/exec */
@@ -1096,6 +1106,7 @@ DOFORK:
         
         if (ORTE_SUCCESS != (rc = odls_default_fork_local_proc(app, child, start,
                                                                range, want_processor,
+                                                               oversubscribed,
                                                                i, base_environ))) {
             ORTE_ERROR_LOG(rc);
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
