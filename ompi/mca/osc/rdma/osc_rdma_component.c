@@ -264,7 +264,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     }
 
     OBJ_CONSTRUCT(&module->p2p_pending_sendreqs, opal_list_t);
-    module->p2p_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+    module->p2p_num_pending_sendreqs = (unsigned int*)malloc(sizeof(unsigned int) * 
                                                       ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_pending_sendreqs);
@@ -275,7 +275,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         return ret;
     }
     memset(module->p2p_num_pending_sendreqs, 0, 
-           sizeof(short) * ompi_comm_size(module->p2p_comm));
+           sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
 
     module->p2p_num_pending_out = 0;
     module->p2p_num_pending_in = 0;
@@ -286,7 +286,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
     OBJ_CONSTRUCT(&(module->p2p_long_msgs), opal_list_t);
 
     OBJ_CONSTRUCT(&(module->p2p_copy_pending_sendreqs), opal_list_t);
-    module->p2p_copy_num_pending_sendreqs = (short*)malloc(sizeof(short) * 
+    module->p2p_copy_num_pending_sendreqs = (unsigned int*)malloc(sizeof(unsigned int) * 
                                                            ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_copy_num_pending_sendreqs) {
         OBJ_DESTRUCT(&module->p2p_copy_pending_sendreqs);
@@ -300,7 +300,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         return ret;
     }
     memset(module->p2p_num_pending_sendreqs, 0, 
-           sizeof(short) * ompi_comm_size(module->p2p_comm));
+           sizeof(unsigned int) * ompi_comm_size(module->p2p_comm));
 
     module->p2p_eager_send = check_config_value_bool("eager_send", info);
 
@@ -323,7 +323,7 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
         module->p2p_fence_coll_counts[i] = 1;
     }
 
-    module->p2p_fence_coll_results = (short*)malloc(sizeof(short) * 
+    module->p2p_fence_coll_results = (unsigned int*)malloc(sizeof(unsigned int) * 
                                                     ompi_comm_size(module->p2p_comm));
     if (NULL == module->p2p_fence_coll_results) {
         free(module->p2p_fence_coll_counts);
@@ -419,13 +419,12 @@ ompi_osc_rdma_component_select(ompi_win_t *win,
                                    NULL);
     }
 
+    /* need to make create a collective, or lock requests can come in
+       before the window is fully created... */
+    module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
 
-    if (module->p2p_eager_send) {
-        /* need to barrier if eager sending or we can receive before the
-           other side has been fully setup, causing much gnashing of
-           teeth. */
-        module->p2p_comm->c_coll.coll_barrier(module->p2p_comm);
-    }
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "created window %d", module->p2p_comm->c_contextid);
 
     return ret;
 }
@@ -474,10 +473,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_PUT on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 
@@ -511,10 +506,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_ACCUMULATE on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 
@@ -552,10 +543,6 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
                                       OMPI_WIN_FENCE | 
                                       OMPI_WIN_ACCESS_EPOCH |
                                       OMPI_WIN_EXPOSE_EPOCH);
-                } else {
-                    opal_output(0, "Invalid MPI_GET on Window %s.  Window not in exposure epoch",
-                                module->p2p_win->w_name);
-                    break;
                 }
             }
 

@@ -264,7 +264,7 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
 #endif
 
     /* send fragment */
-    opal_output_verbose(50, ompi_osc_base_output,
+    opal_output_verbose(51, ompi_osc_base_output,
                         "%d sending sendreq to %d",
                         sendreq->req_module->p2p_comm->c_my_rank,
                         sendreq->req_target_rank);
@@ -811,6 +811,7 @@ ompi_osc_pt2pt_control_send(ompi_osc_pt2pt_module_t *module,
     /* pack header */
     header = (ompi_osc_pt2pt_control_header_t*) buffer->payload;
     header->hdr_base.hdr_type = type;
+    header->hdr_base.hdr_flags = 0;
     header->hdr_value[0] = value0;
     header->hdr_value[1] = value1;
     header->hdr_windx = module->p2p_comm->c_contextid;

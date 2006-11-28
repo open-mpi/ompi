@@ -72,10 +72,10 @@ struct ompi_osc_rdma_module_t {
         started.  p2p_lock must be held when modifying this field. */
     opal_list_t p2p_pending_sendreqs;
 
-    /** list of int16_t counters for the number of requests to a
+    /** list of unsigned int counters for the number of requests to a
         particular rank in p2p_comm for this access epoc.  p2p_lock
         must be held when modifying this field */
-    short *p2p_num_pending_sendreqs;
+    unsigned int *p2p_num_pending_sendreqs;
 
     /** For MPI_Fence synchronization, the number of messages to send
         in epoch.  For Start/Complete, the number of updates for this
@@ -109,7 +109,7 @@ struct ompi_osc_rdma_module_t {
     opal_list_t p2p_long_msgs;
 
     opal_list_t p2p_copy_pending_sendreqs;
-    short *p2p_copy_num_pending_sendreqs;
+    unsigned int *p2p_copy_num_pending_sendreqs;
 
     bool p2p_eager_send;
 
@@ -117,9 +117,9 @@ struct ompi_osc_rdma_module_t {
     /* an array of <sizeof(p2p_comm)> ints, each containing the value
        1. */
     int *p2p_fence_coll_counts;
-    /* an array of <sizeof(p2p_comm)> shorts, for use in experimenting
+    /* an array of <sizeof(p2p_comm)> unsigned ints, for use in experimenting
        with different synchronization costs */
-    short *p2p_fence_coll_results;
+    unsigned int *p2p_fence_coll_results;
 
     mca_osc_fence_sync_t p2p_fence_sync_type;
 
