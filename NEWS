@@ -25,6 +25,9 @@ version 1.0.
 1.1.3
 -----
 
+- Fix typos in the code path for when sizeof(int) != sizeof(INTEGER)
+  in the MPI F77 bindings functions.  Thanks to Pierre-Matthieu
+  Anglade for bringing this problem to our attention.
 - Fix for a memory leak in the derived datatype function
   ompi_ddt_duplicate().  Thanks to Andreas Schafer for reporting,
   diagnosing, and patching the leak.

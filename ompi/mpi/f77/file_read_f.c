@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -90,7 +91,7 @@ void mpi_file_read_f(MPI_Fint *fh, char *buf, MPI_Fint *count,
                                          c_type, c_status));
 
 #if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
-   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) &&& 
+   if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr) && 
        MPI_STATUS_IGNORE != c_status) {
       MPI_Status_c2f(c_status, status);
    }
