@@ -326,13 +326,10 @@ typedef int (*orte_rml_module_recv_cancel_fn_t)(orte_process_name_t* peer, orte_
  * xcast function for sending common messages to all processes
  */
 
-typedef int (*orte_rml_module_xcast_fn_t)(
-    orte_process_name_t* root,
-    orte_process_name_t* peers,
-    size_t num_peers,
-    orte_buffer_t* buffer,
-    orte_gpr_trigger_cb_fn_t cbfunc,
-    void *user_tag);
+typedef int (*orte_rml_module_xcast_fn_t)(orte_jobid_t job,
+                                          bool process_first,
+                                          orte_buffer_t* buffer,
+                                          orte_gpr_trigger_cb_fn_t cbfunc);
 
 /*
  * Callback on exception condition.

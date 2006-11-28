@@ -523,9 +523,13 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                                (ompistop.tv_usec - ompistart.tv_usec)));
     }
     
-    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE.
+     * We pass a "process_first" flag of "true" to indicate that we need to
+     * process the STG1 message prior to sending it along the xcast chain
+     * as this message contains all the oob contact info we need!
+     */
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true,
+                                              NULL, orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
@@ -640,8 +644,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Second barrier -- wait for message from
        RMGR_PROC_STAGE_GATE_MGR to arrive */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false,
+                                              NULL, orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
