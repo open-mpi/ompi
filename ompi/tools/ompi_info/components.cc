@@ -76,6 +76,8 @@
 #include "orte/mca/ns/base/base.h"
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
+#include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/ras/ras.h"
 #include "orte/mca/ras/base/base.h"
 #include "orte/mca/rds/rds.h"
@@ -193,6 +195,9 @@ void ompi_info::open_components()
   mca_oob_base_open();
   component_map["oob"] = &mca_oob_base_components;
 
+  orte_odls_base_open();
+  component_map["odls"] = &orte_odls_base.available_components;
+
   orte_errmgr_base_open();
   component_map["errmgr"] = &orte_errmgr_base_components_available;
 
@@ -305,7 +310,8 @@ void ompi_info::close_components()
         orte_errmgr_base_close();
         orte_rml_base_close();
         mca_oob_base_close();
-    
+        orte_odls_base_close();
+        
         opal_backtrace_base_close();
         opal_memory_base_close();
         opal_paffinity_base_close();
