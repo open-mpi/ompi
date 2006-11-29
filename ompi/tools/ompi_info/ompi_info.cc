@@ -202,6 +202,7 @@ int main(int argc, char *argv[])
   ompi_info::mca_types.push_back("iof");
   ompi_info::mca_types.push_back("ns");
   ompi_info::mca_types.push_back("oob");
+  ompi_info::mca_types.push_back("odls");
   ompi_info::mca_types.push_back("ras");
   ompi_info::mca_types.push_back("rds");
   ompi_info::mca_types.push_back("rmaps");
