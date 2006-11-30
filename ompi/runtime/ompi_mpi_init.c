@@ -521,6 +521,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     (long)ORTE_PROC_MY_NAME->vpid,
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&ompistart, NULL);
     }
     
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE.
@@ -537,6 +538,11 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get start time */
     if (timing) {
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "ompi_mpi_init[%ld]: time to execute xcast %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
     }
 
