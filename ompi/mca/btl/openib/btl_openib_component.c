@@ -996,10 +996,8 @@ void* mca_btl_openib_progress_thread(opal_object_t* arg)
     mca_btl_openib_module_t* openib_btl;
     opal_thread_t* thread = (opal_thread_t*)arg;
     mca_btl_openib_hca_t* hca = thread->t_arg;
-    unsigned int ev_lp, ev_hp;
     struct ibv_cq *ev_cq;
     void *ev_ctx;
-    int qp;
 
     /* This thread enter in a cancel enabled state */
     pthread_setcancelstate( PTHREAD_CANCEL_ENABLE, NULL );
