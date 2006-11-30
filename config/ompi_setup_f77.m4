@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+dnl                         reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -77,6 +79,25 @@ fi
 AS_IF([test $OMPI_WANT_F77_BINDINGS -eq 1],
        [OMPI_CHECK_COMPILER_WORKS([Fortran 77], [], [], [], 
            [AC_MSG_ERROR([Could not run a simple Fortran 77 program.  Aborting.])])])
+
+# now make sure we know our linking convention...
+OMPI_F77_FIND_EXT_SYMBOL_CONVENTION
+
+# Make sure we can link with C code...
+AS_IF([test $OMPI_WANT_F77_BINDINGS -eq 1],
+  [OMPI_LANG_LINK_WITH_C([Fortran 77], [],
+    [cat <<EOF
+**********************************************************************
+* It appears that your Fortran 77 compiler is unable to link against
+* object files created by your C compiler.  This generally indicates
+* either a conflict between the options specified in CFLAGS and FFLAGS
+* or a problem with the local compiler installation.  More
+* information (including exactly what command was given to the 
+* compilers and what error resulted when the commands were executed) is
+* available in the config.log file in this directory.
+**********************************************************************
+EOF
+     AC_MSG_ERROR([C and Fortran 77 compilers are not link compatible.  Can not continue.])])])
 
 AC_DEFINE_UNQUOTED(OMPI_WANT_F77_BINDINGS, $OMPI_WANT_F77_BINDINGS,
     [Whether we want the MPI f77 bindings or not])

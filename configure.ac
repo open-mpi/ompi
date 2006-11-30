@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -42,10 +44,13 @@ AC_CONFIG_MACRO_DIR(config)
 OMPI_LOAD_PLATFORM
 
 #
-# Init automake
+# Init automake - if we are using AC.260 or higher, require AM 1.10 or higher
 #
-
-AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])
+# XXX - FIX ME - when we drop support for 2.58 and 2.59, 
+# remove this test and require 1.10 or higher all the time.
+m4_if(m4_version_compare(m4_defn([m4_PACKAGE_VERSION]), [2.60]), -1,
+  [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define])],
+  [AM_INIT_AUTOMAKE([foreign dist-bzip2 subdir-objects no-define 1.10])])
 
 # Make configure depend on the VERSION file, since it's used in AC_INIT
 AC_SUBST([CONFIGURE_DEPENDENCIES], ['$(top_srcdir)/VERSION'])
@@ -391,7 +396,6 @@ OMPI_CONFIG_ASM
 #-----------
 
 OMPI_SETUP_F77
-OMPI_F77_FIND_EXT_SYMBOL_CONVENTION
 
 # This allows us to mark bogus types, but still have them be a valid
 # [sentinel] value
