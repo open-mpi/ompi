@@ -104,7 +104,7 @@ void mpi_waitsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
                 array_of_requests[OMPI_INT_2_FINT(array_of_indices[i])] =
                     c_req[OMPI_INT_2_FINT(array_of_indices[i])]->req_f_to_c_index;
-                ++(OMPI_FINT_2_INT(array_of_indices[i]));
+                ++array_of_indices[i];
             }
         }
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
