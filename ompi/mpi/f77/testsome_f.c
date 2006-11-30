@@ -71,6 +71,9 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
     MPI_Request *c_req;
     MPI_Status *c_status;
     int i;
+#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
+    int int_c;
+#endif
     OMPI_SINGLE_NAME_DECL(outcount);
     OMPI_ARRAY_NAME_DECL(array_of_indices);
 
@@ -94,15 +97,19 @@ void mpi_testsome_f(MPI_Fint *incount, MPI_Fint *array_of_requests,
                                          OMPI_ARRAY_NAME_CONVERT(array_of_indices), 
                                          c_status));
 
+#if OMPI_SIZEOF_FORTRAN_INTEGER != SIZEOF_INT
     OMPI_SINGLE_INT_2_FINT(outcount);
-    OMPI_ARRAY_INT_2_FINT(array_of_indices, OMPI_FINT_2_INT(*incount));
+    int_c = OMPI_FINT_2_INT(*incount);
+    OMPI_ARRAY_INT_2_FINT(array_of_indices, int_c);
+    *incount = OMPI_INT_2_FINT(int_c);
+#endif
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
         if (MPI_UNDEFINED != OMPI_FINT_2_INT(*outcount)) {
             for (i = 0; i < OMPI_FINT_2_INT(*outcount); ++i) {
                 array_of_requests[OMPI_INT_2_FINT(array_of_indices[i])] =
                     c_req[OMPI_INT_2_FINT(array_of_indices[i])]->req_f_to_c_index;
-                ++(OMPI_FINT_2_INT(array_of_indices[i]));
+                ++array_of_indices[i];
             }
         }
         if (!OMPI_IS_FORTRAN_STATUSES_IGNORE(array_of_statuses)) {
