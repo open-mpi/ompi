@@ -26,6 +26,7 @@
 
 #include "opal/types.h"
 #include "opal/util/output.h"
+#include "opal/mca/backtrace/backtrace.h"
 
 #include "orte/mca/errmgr/errmgr.h"
 
@@ -34,7 +35,7 @@
 int orte_dss_unpack(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
                     orte_data_type_t type)
 {
-    int ret=ORTE_SUCCESS, rc=ORTE_SUCCESS;
+    int rc, ret;
     orte_std_cntr_t local_num, n=1;
     orte_data_type_t local_type;
 
@@ -64,7 +65,6 @@ int orte_dss_unpack(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
     if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
         if (ORTE_SUCCESS != (
             rc = orte_dss_get_data_type(buffer, &local_type))) {
-            ORTE_ERROR_LOG(rc);
             *num_vals = 0;
             return rc;
         }
@@ -76,9 +76,7 @@ int orte_dss_unpack(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
     }
 
     n=1;
-    if (ORTE_SUCCESS != (
-        rc = orte_dss_unpack_std_cntr(buffer, &local_num, &n, ORTE_STD_CNTR))) {
-        ORTE_ERROR_LOG(rc);
+    if (ORTE_SUCCESS != (rc = orte_dss_unpack_std_cntr(buffer, &local_num, &n, ORTE_STD_CNTR))) {
         *num_vals = 0;
         return rc;
     }
@@ -92,21 +90,18 @@ int orte_dss_unpack(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
         ORTE_ERROR_LOG(ORTE_ERR_UNPACK_INADEQUATE_SPACE);
         local_num = *num_vals;
         ret = ORTE_ERR_UNPACK_INADEQUATE_SPACE;
-    } else if (local_num < *num_vals) {  /** more than enough storage */
+    } else {  /** enough or more than enough storage */
         *num_vals = local_num;  /** let the user know how many we actually unpacked */
+        ret = ORTE_SUCCESS;
     }
 
     /** Unpack the value(s) */
     if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, dst, &local_num, type))) {
-        ORTE_ERROR_LOG(rc);
         *num_vals = 0;
+        ret = rc;
     }
 
-    if (ORTE_SUCCESS != ret) {
-        return ret;
-    }
-
-    return rc;
+    return ret;
 }
 
 int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *num_vals,
@@ -138,9 +133,7 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
         return ORTE_ERR_UNPACK_FAILURE;
     }
 
-    if (ORTE_SUCCESS != (rc = info->odti_unpack_fn(buffer, dst, num_vals, type))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    rc = info->odti_unpack_fn(buffer, dst, num_vals, type);
 
     return rc;
 }
@@ -184,9 +177,7 @@ int orte_dss_unpack_bool(orte_buffer_t *buffer, void *dest,
     /* if we get here, then this buffer is NOT fully described. just unpack it
      * using the local size - user gets the pain if it's wrong
      */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_BOOL))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_BOOL);
 
     return ret;
 }
@@ -227,9 +218,7 @@ int orte_dss_unpack_int(orte_buffer_t *buffer, void *dest,
     /* if we get here, then this buffer is NOT fully described. just unpack it
      * using the local size - user gets the pain if it's wrong
      */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_INT))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_INT);
     
     return ret;
 }
@@ -270,9 +259,7 @@ int orte_dss_unpack_sizet(orte_buffer_t *buffer, void *dest,
     /* if we get here, then this buffer is NOT fully described. just unpack it
      * using the local size - user gets the pain if it's wrong
      */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_SIZE_T);
     
     return ret;
 }
@@ -313,9 +300,7 @@ int orte_dss_unpack_pid(orte_buffer_t *buffer, void *dest,
     /* if we get here, then this buffer is NOT fully described. just unpack it
      * using the local size - user gets the pain if it's wrong
      */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_PID_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, DSS_TYPE_PID_T);
     
     return ret;
 }
@@ -332,7 +317,6 @@ int orte_dss_unpack_null(orte_buffer_t *buffer, void *dest,
     OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_null * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dss_too_small(buffer, *num_vals)) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
@@ -354,7 +338,6 @@ int orte_dss_unpack_byte(orte_buffer_t *buffer, void *dest,
     OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_byte * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dss_too_small(buffer, *num_vals)) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
@@ -376,7 +359,6 @@ int orte_dss_unpack_int16(orte_buffer_t *buffer, void *dest,
    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_int16 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dss_too_small(buffer, (*num_vals)*sizeof(tmp))) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
@@ -399,7 +381,6 @@ int orte_dss_unpack_int32(orte_buffer_t *buffer, void *dest,
    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_int32 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dss_too_small(buffer, (*num_vals)*sizeof(tmp))) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
@@ -422,7 +403,6 @@ int orte_dss_unpack_int64(orte_buffer_t *buffer, void *dest,
    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_int64 * %d\n", (int)*num_vals ) );
     /* check to see if there's enough data in buffer */
     if (orte_dss_too_small(buffer, (*num_vals)*sizeof(tmp))) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
 
@@ -445,7 +425,6 @@ int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
 
     for (i = 0; i < (*num_vals); ++i) {
         if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &len, &n, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(ret);
             return ret;
         }
         if (0 ==  len) {   /* zero-length string - unpack the NULL */
@@ -457,7 +436,6 @@ int orte_dss_unpack_string(orte_buffer_t *buffer, void *dest,
                 return ORTE_ERR_OUT_OF_RESOURCE;
             }
             if (ORTE_SUCCESS != (ret = orte_dss_unpack_byte(buffer, sdest[i], &len, ORTE_BYTE))) {
-                ORTE_ERROR_LOG(ret);
                 return ret;
             }
         }
@@ -476,38 +454,9 @@ int orte_dss_unpack_std_cntr(orte_buffer_t *buffer, void *dest, orte_std_cntr_t 
                               orte_data_type_t type)
 {
     int ret;
-    orte_data_type_t remote_type;
     
-    /* if the buffer is fully described, then we can do some magic to handle
-     * the heterogeneous case. if not, then we can only shoot blind - it is the
-     * user's responsibility to ensure we are in a homogeneous environment.
-     */
-    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
-        /* see what type was actually packed */
-        if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
-        if (remote_type == ORTE_STD_CNTR_T) {
-            /* fast path it if the sizes are the same */
-            /* Turn around and unpack the real type */
-            if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            /* slow path - types are different sizes */
-            UNPACK_SIZE_MISMATCH(orte_std_cntr_t, remote_type, ret);
-        }
-        return ret;
-    }
-    
-    /* if we get here, then this buffer is NOT fully described. just unpack it
-     * using the local size - user gets the pain if it's wrong
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    /* turn around and unpack the real type */
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_STD_CNTR_T);
     
     return ret;
 }
@@ -519,38 +468,9 @@ int orte_dss_unpack_data_type(orte_buffer_t *buffer, void *dest, orte_std_cntr_t
                              orte_data_type_t type)
 {
     int ret;
-    orte_data_type_t remote_type;
     
-    /* if the buffer is fully described, then we can do some magic to handle
-     * the heterogeneous case. if not, then we can only shoot blind - it is the
-     * user's responsibility to ensure we are in a homogeneous environment.
-     */
-    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
-        /* see what type was actually packed */
-        if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
-        if (remote_type == ORTE_DATA_TYPE_T) {
-            /* fast path it if the sizes are the same */
-            /* Turn around and unpack the real type */
-            if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DATA_TYPE_T))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            /* slow path - types are different sizes */
-            UNPACK_SIZE_MISMATCH(orte_data_type_t, remote_type, ret);
-        }
-        return ret;
-    }
-    
-    /* if we get here, then this buffer is NOT fully described. just unpack it
-     * using the local size - user gets the pain if it's wrong
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DATA_TYPE_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
+     /* turn around and unpack the real type */
+     ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DATA_TYPE_T);
     
     return ret;
 }
@@ -564,24 +484,33 @@ int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest, orte_std_cntr_
     orte_dss_type_info_t *info;
     orte_data_value_t **ddv;
     orte_std_cntr_t i, n;
+    orte_data_type_t dt;
     size_t nsize;
     int ret;
 
     ddv = (orte_data_value_t **) dest;
 
     for (i = 0; i < *num; ++i) {
+        /* see what the data type is */
+        n = 1;
+        if (ORTE_SUCCESS != (ret = orte_dss_get_data_type(buffer, &dt))) {
+            return ret;
+        }
+        
+        /* if it is ORTE_NULL, then do nothing */
+        if (ORTE_NULL == dt) continue;
+        
+        /* otherwise, allocate the new object and set the type */
+        
         ddv[i] = OBJ_NEW(orte_data_value_t);
         if (NULL == ddv[i]) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        ddv[i]->type = dt;
 
-        /* see what the data type is */
-        n = 1;
-        if (ORTE_SUCCESS != (ret = orte_dss_get_data_type(buffer, &(ddv[i]->type)))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
+        /* if it is UNDEF, then nothing more to do */
+        if (ORTE_UNDEF == ddv[i]->type) continue;
 
         /* get enough memory to hold it */
         if (ORTE_SUCCESS != (ret = orte_dss.size(&nsize, NULL, ddv[i]->type))) {
@@ -604,13 +533,11 @@ int orte_dss_unpack_data_value(orte_buffer_t *buffer, void *dest, orte_std_cntr_
         if (info->odti_structured) {
             n=1;
             if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, &(ddv[i]->data), &n, ddv[i]->type))) {
-                ORTE_ERROR_LOG(ret);
                 return ret;
             }
         } else {
             n=1;
             if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, ddv[i]->data, &n, ddv[i]->type))) {
-                ORTE_ERROR_LOG(ret);
                 return ret;
             }
         }
@@ -642,7 +569,6 @@ int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest, orte_std_cntr
 
         /* unpack object size in bytes */
         if (ORTE_SUCCESS != (ret = orte_dss_unpack_std_cntr(buffer, &(dbyteptr[i]->size), &m, ORTE_STD_CNTR))) {
-            ORTE_ERROR_LOG(ret);
             return ret;
         }
         if (0 < dbyteptr[i]->size) {
@@ -653,7 +579,6 @@ int orte_dss_unpack_byte_object(orte_buffer_t *buffer, void *dest, orte_std_cntr
             }
             if (ORTE_SUCCESS != (ret = orte_dss_unpack_byte(buffer, (dbyteptr[i]->bytes),
                                             &(dbyteptr[i]->size), ORTE_BYTE))) {
-                ORTE_ERROR_LOG(ret);
                 return ret;
             }
         }

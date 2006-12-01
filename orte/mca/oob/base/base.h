@@ -47,6 +47,8 @@ extern "C" {
  * global flag for use in timing tests
  */
 ORTE_DECLSPEC extern bool orte_oob_base_timing;
+ORTE_DECLSPEC extern bool orte_oob_xcast_timing;
+ORTE_DECLSPEC extern int orte_oob_xcast_mode;
     
 /*
  * OOB API

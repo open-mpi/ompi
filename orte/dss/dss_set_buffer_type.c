@@ -37,7 +37,7 @@ int orte_dss_set_buffer_type(orte_buffer_t *buffer, orte_dss_buffer_type_t type)
     }
 
     /** see if the buffer is empty - if not, generate error */
-    if (buffer->base_ptr == buffer->pack_ptr) {
+    if (buffer->base_ptr != buffer->pack_ptr) {
         ORTE_ERROR_LOG(ORTE_ERR_BUFFER);
         return ORTE_ERR_BUFFER;
     }

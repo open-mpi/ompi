@@ -156,8 +156,20 @@ int orte_dss_open(void)
         orte_dss_debug = false;
     }
 
-    /** set the default buffer type */
-    default_buf_type = ORTE_DSS_BUFFER_FULLY_DESC;
+    /** set the default buffer type. If we are in debug mode - as given by
+     * the orte_debug param being set - then we use fully described buffers.
+     * Otherwise, we default to non-described for brevity
+     */
+    id = mca_base_param_register_int("dss", "describe", "buffer",
+                                     "Set the default mode for OpenRTE buffers (0=non-described [default], 1=described",
+                                     0);
+    mca_base_param_lookup_int(id, &rc);
+    if (0 == rc) {
+        /* param not set - assume non-described buffers */
+        default_buf_type = ORTE_DSS_BUFFER_NON_DESC;
+    } else {
+        default_buf_type = ORTE_DSS_BUFFER_FULLY_DESC;
+    }
 
     /* setup the page size -this is for use by the BUFFER system, NOT the data type
        manager that keeps track of registered data types!! It must be converted to

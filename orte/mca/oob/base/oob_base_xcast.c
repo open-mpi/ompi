@@ -30,13 +30,14 @@
 
 #include "orte/util/proc_info.h"
 #include "orte/dss/dss.h"
-#include "orte/mca/oob/oob.h"
-#include "orte/mca/oob/base/base.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/ns/ns.h"
+#include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/smr/smr.h"
-#include "orte/runtime/runtime.h"
 
+#include "orte/mca/oob/oob.h"
+#include "orte/mca/oob/base/base.h"
 
 /**
  *  A "broadcast-like" function to a job's processes.
@@ -50,10 +51,55 @@ static opal_mutex_t xcastmutex;
 static int xcast_bitmap, bitmap_save;
 static bool bitmap_init = false;
 
+static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
+                                       bool process_first,
+                                       orte_buffer_t* buffer,
+                                       orte_gpr_trigger_cb_fn_t cbfunc);
+
+static int mca_oob_xcast_linear(orte_jobid_t job,
+                                bool process_first,
+                                orte_buffer_t* buffer,
+                                orte_gpr_trigger_cb_fn_t cbfunc);
+
 int mca_oob_xcast(orte_jobid_t job,
                   bool process_first,
                   orte_buffer_t* buffer,
                   orte_gpr_trigger_cb_fn_t cbfunc)
+{
+    int rc;
+    struct timeval start, stop;
+    
+    if (orte_oob_xcast_timing) {
+        if (NULL != buffer) {
+            opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %lu", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
+                        (unsigned long)buffer->bytes_used);
+        } 
+        gettimeofday(&start, NULL);
+    }
+    switch(orte_oob_xcast_mode) {
+        case 0:  /* binomial tree */
+            rc = mca_oob_xcast_binomial_tree(job, process_first, buffer, cbfunc);
+            break;
+            
+        case 1: /* linear */
+            rc = mca_oob_xcast_linear(job, process_first, buffer, cbfunc);
+            break;
+    }
+    if (orte_oob_xcast_timing) {
+        gettimeofday(&stop, NULL);
+        opal_output(0, "xcast [%ld,%ld,%ld]: mode %s time %ld usec", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
+                    orte_oob_xcast_mode ? "linear" : "binomial",
+                    (long int)((stop.tv_sec - start.tv_sec)*1000000 +
+                               (stop.tv_usec - start.tv_usec)));
+    }
+    
+    return rc;
+}
+
+static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
+                                       bool process_first,
+                                       orte_buffer_t* buffer,
+                                       orte_gpr_trigger_cb_fn_t cbfunc)
 {
     orte_std_cntr_t i;
     int rc;
@@ -173,4 +219,97 @@ int mca_oob_xcast(orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
+static int mca_oob_xcast_linear(orte_jobid_t job,
+                                bool process_first,
+                                orte_buffer_t* buffer,
+                                orte_gpr_trigger_cb_fn_t cbfunc)
+{
+    orte_std_cntr_t i;
+    int rc;
+    int tag = ORTE_RML_TAG_XCAST;
+    int status;
+    orte_process_name_t *peers=NULL;
+    orte_std_cntr_t n=0;
+    orte_proc_state_t state;
+    opal_list_t attrs;
+    opal_list_item_t *item;
+    
+    /* check to see if there is something to send - this is only true on the HNP end.
+     * However, we cannot just test to see if we are the HNP since, if we are a singleton,
+     * we are the HNP *and* we still need to handle both ends of the xcast
+     */
+    if (NULL != buffer) {        
+        OBJ_CONSTRUCT(&xcastmutex, opal_mutex_t);
+        OPAL_THREAD_LOCK(&xcastmutex);
 
+        /* this is the HNP end, so it does all the sends in this algorithm. First, we need
+         * to get the job peers so we know who to send the message to
+        */
+        OBJ_CONSTRUCT(&attrs, opal_list_t);
+        orte_rmgr.add_attribute(&attrs, ORTE_NS_USE_JOBID, ORTE_JOBID, &job, ORTE_RMGR_ATTR_OVERRIDE);
+        if (ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &n, &attrs))) {
+            ORTE_ERROR_LOG(rc);
+            OPAL_THREAD_UNLOCK(&xcastmutex);
+            OBJ_DESTRUCT(&xcastmutex);
+            return rc;
+        }
+        item = opal_list_remove_first(&attrs);
+        OBJ_RELEASE(item);
+        OBJ_DESTRUCT(&attrs);
+        
+        for(i=0; i<n; i++) {
+            /* check status of peer to ensure they are alive */
+            if (ORTE_SUCCESS != (rc = orte_smr.get_proc_state(&state, &status, peers+i))) {
+                ORTE_ERROR_LOG(rc);
+                free(peers);
+                OPAL_THREAD_UNLOCK(&xcastmutex);
+                OBJ_DESTRUCT(&xcastmutex);
+                return rc;
+            }
+            if (state != ORTE_PROC_STATE_TERMINATED && state != ORTE_PROC_STATE_ABORTED) {
+                rc = mca_oob_send_packed(peers+i, buffer, tag, 0);
+                if (rc < 0) {
+                    ORTE_ERROR_LOG(rc);
+                    free(peers);
+                    OPAL_THREAD_UNLOCK(&xcastmutex);
+                    OBJ_DESTRUCT(&xcastmutex);
+                    return rc;
+                }
+            }
+        }
+        free(peers);
+        OPAL_THREAD_UNLOCK(&xcastmutex);
+        OBJ_DESTRUCT(&xcastmutex);
+        return ORTE_SUCCESS;
+        
+    /* if we are not the HNP, then we need to just receive the message and process it */        
+    } else {
+        orte_buffer_t rbuf;
+        orte_gpr_notify_message_t *msg;
+        
+        OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
+        rc = mca_oob_recv_packed(ORTE_NAME_WILDCARD, &rbuf, tag);
+        if(rc < 0) {
+            OBJ_DESTRUCT(&rbuf);
+            return rc;
+        }
+        if (cbfunc != NULL) {
+            msg = OBJ_NEW(orte_gpr_notify_message_t);
+            if (NULL == msg) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            i=1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(&rbuf, &msg, &i, ORTE_GPR_NOTIFY_MSG))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_RELEASE(msg);
+                return rc;
+            }
+            cbfunc(msg);
+            OBJ_RELEASE(msg);
+        }
+        OBJ_DESTRUCT(&rbuf);
+    }
+    return ORTE_SUCCESS;
+    
+}
