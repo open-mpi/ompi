@@ -32,38 +32,9 @@ int orte_odls_unpack_daemon_cmd(orte_buffer_t *buffer, void *dest, orte_std_cntr
                                 orte_data_type_t type)
 {
     int ret;
-    orte_data_type_t remote_type;
     
-    /* if the buffer is fully described, then we can do some magic to handle
-        * the heterogeneous case. if not, then we can only shoot blind - it is the
-    * user's responsibility to ensure we are in a homogeneous environment.
-        */
-    if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
-        /* see what type was actually packed */
-        if (ORTE_SUCCESS != (ret = orte_dss_peek_type(buffer, &remote_type))) {
-            ORTE_ERROR_LOG(ret);
-            return ret;
-        }
-        
-        if (remote_type == ORTE_DAEMON_CMD_T) {
-            /* fast path it if the sizes are the same */
-            /* Turn around and unpack the real type */
-            if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T))) {
-                ORTE_ERROR_LOG(ret);
-            }
-        } else {
-            /* slow path - types are different sizes */
-            UNPACK_SIZE_MISMATCH(orte_daemon_cmd_flag_t, remote_type, ret);
-        }
-        return ret;
-    }
-    
-    /* if we get here, then this buffer is NOT fully described. just unpack it
-        * using the local size - user gets the pain if it's wrong
-        */
-    if (ORTE_SUCCESS != (ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T))) {
-        ORTE_ERROR_LOG(ret);
-    }
+    /* turn around and unpack the real type */
+    ret = orte_dss_unpack_buffer(buffer, dest, num_vals, ORTE_DAEMON_CMD_T);
     
     return ret;
 }

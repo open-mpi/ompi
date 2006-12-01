@@ -40,6 +40,7 @@ int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
     /* Double check and ensure that there is data left in the buffer. */
 
     if (buffer->unpack_ptr >= buffer->base_ptr + buffer->bytes_used) {
+        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         *type = ORTE_NULL;
         *num_vals = 0;
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
@@ -50,6 +51,7 @@ int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
      * in the buffer since that info wasn't stored.
      */
     if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         *type = ORTE_UNDEF;
         *num_vals = 0;
         return ORTE_ERR_UNKNOWN_DATA_TYPE;
@@ -59,8 +61,8 @@ int orte_dss_peek(orte_buffer_t *buffer, orte_data_type_t *type,
        original pointers intact */
     tmp = *buffer;
 
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_get_data_type(&tmp, &local_type))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_get_data_type(&tmp, &local_type))) {
+        ORTE_ERROR_LOG(ret);
         *type = ORTE_NULL;
         *num_vals = 0;
         return ret;
@@ -102,12 +104,14 @@ int orte_dss_peek_type(orte_buffer_t *buffer, orte_data_type_t *type)
      * in the buffer since that info wasn't stored.
      */
     if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
         *type = ORTE_UNDEF;
         return ORTE_ERR_UNKNOWN_DATA_TYPE;
     }
     /* Double check and ensure that there is data left in the buffer. */
 
     if (buffer->unpack_ptr >= buffer->base_ptr + buffer->bytes_used) {
+        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
         *type = ORTE_UNDEF;
         return ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER;
     }
@@ -116,8 +120,8 @@ int orte_dss_peek_type(orte_buffer_t *buffer, orte_data_type_t *type)
     original pointers intact */
     tmp = *buffer;
 
-    if (ORTE_SUCCESS != (
-        ret = orte_dss_get_data_type(&tmp, type))) {
+    if (ORTE_SUCCESS != (ret = orte_dss_get_data_type(&tmp, type))) {
+        ORTE_ERROR_LOG(ret);
         *type = ORTE_UNDEF;
         return ret;
     }

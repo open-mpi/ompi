@@ -225,23 +225,16 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         return rc;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_dss.peek(buffer, &type, &n))) {
+    n = 1;
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
-
-    if (ORTE_STRING != type) {  /* get index of segment names */
-        seg = NULL;
-    } else {
-        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
-            ORTE_ERROR_LOG(ret);
-            goto RETURN_ERROR;
-        }
-        /* locate the segment */
-        if (ORTE_SUCCESS != (ret = orte_gpr_replica_find_seg(&seg, false, segment))) {
-            ORTE_ERROR_LOG(ret);
-            goto RETURN_ERROR;
-        }
+    
+    /* locate the segment */
+    if (ORTE_SUCCESS != (ret = orte_gpr_replica_find_seg(&seg, false, segment))) {
+        ORTE_ERROR_LOG(ret);
+        goto RETURN_ERROR;
     }
 
     if (ORTE_SUCCESS != (ret = orte_gpr_replica_index_fn(seg, &cnt, &index))) {

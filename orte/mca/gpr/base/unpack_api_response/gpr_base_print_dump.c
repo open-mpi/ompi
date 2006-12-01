@@ -39,16 +39,9 @@ int orte_gpr_base_print_dump(orte_buffer_t *buffer)
 {
     char *line;
     orte_std_cntr_t n;
-    orte_data_type_t type;
-    int rc;
 
     n = 1;
-    while (ORTE_SUCCESS == orte_dss.peek(buffer, &type, &n)) {
-       if (ORTE_SUCCESS !=
-           (rc = orte_dss.unpack(buffer, &line, &n, ORTE_STRING))) {
-           ORTE_ERROR_LOG(rc);
-           return rc;
-       }
+    while (ORTE_SUCCESS == orte_dss.unpack(buffer, &line, &n, ORTE_STRING)) {
        opal_output(orte_gpr_base_output, "%s", line);
        free(line);
        n=1;

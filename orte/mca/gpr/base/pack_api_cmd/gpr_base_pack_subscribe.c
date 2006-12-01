@@ -61,30 +61,25 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
         return rc;
     }
 
-    /* see if there are subscriptions - if so, pack them */
-    if (NULL != subscriptions) {
+    /* pack the nummber of subscriptions - if there are any, pack them */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &num_subs, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (0 < num_subs) {
         if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, subscriptions, num_subs, ORTE_GPR_SUBSCRIPTION))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
     }
 
-    /* the API DOES allow there to be no triggers - if that happens, then trigs will be NULL and num_trigs
-     * should be set to zero. we can't send that to the DPS though as it is an error condition over there,
-     * so check for it here and record a "zero" if nothing is there
-     */
-    if (NULL != trigs && 0 < num_trigs) {
+    /* pack the nummber of triggers - if there are any, pack them */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &num_trigs, 1, ORTE_STD_CNTR))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if (0 < num_trigs) {
         if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, trigs, num_trigs, ORTE_GPR_TRIGGER))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &zero, 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

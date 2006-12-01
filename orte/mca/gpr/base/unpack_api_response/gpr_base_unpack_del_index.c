@@ -116,16 +116,6 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, orte_std_cntr_t 
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.peek(buffer, &type, &n))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_STRING != type) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        return ORTE_ERR_COMM_FAILURE;
-    }
-
     if (0 < n) {
         *index = (char **)malloc(n*sizeof(char*));
         if (NULL == *index) {

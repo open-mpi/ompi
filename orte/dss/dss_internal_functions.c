@@ -99,7 +99,9 @@ bool orte_dss_too_small(orte_buffer_t *buffer, size_t bytes_reqd)
     bytes_remaining_packed = buffer->pack_ptr - buffer->unpack_ptr;
     
     if (bytes_remaining_packed < bytes_reqd) {
-        ORTE_ERROR_LOG(ORTE_ERR_UNPACK_READ_PAST_END_OF_BUFFER);
+        /* don't error log this - it could be that someone is trying to
+         * simply read until the buffer is empty
+         */
         return true;
     }
 
@@ -138,9 +140,7 @@ int orte_dss_get_data_type(orte_buffer_t *buffer, orte_data_type_t *type)
         return ORTE_ERR_PACK_FAILURE;
     }
     
-    if (ORTE_SUCCESS != (rc = info->odti_unpack_fn(buffer, type, &n, ORTE_DATA_TYPE_T))) {
-        ORTE_ERROR_LOG(rc);
-    }
+    rc = info->odti_unpack_fn(buffer, type, &n, ORTE_DATA_TYPE_T);
     
     return rc;
 }

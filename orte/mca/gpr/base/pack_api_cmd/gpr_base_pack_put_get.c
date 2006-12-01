@@ -52,9 +52,18 @@ int orte_gpr_base_pack_put(orte_buffer_t *cmd,
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, values, cnt, ORTE_GPR_VALUE))) {
+    /* pack the number of values */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &cnt, 1, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         return rc;
+    }
+    
+    /* pack the values, if any */
+    if (0 < cnt) {
+        if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, values, cnt, ORTE_GPR_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
     }
 
     return ORTE_SUCCESS;
