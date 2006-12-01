@@ -36,11 +36,11 @@ int MPI_Win_get_errhandler(MPI_Win win, MPI_Errhandler *errhandler)
 {
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if (ompi_win_invalid(win)) {
+        if (ompi_win_invalid(win) && win != MPI_WIN_NULL) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
         } else if (NULL == errhandler) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ARG,
                                           FUNC_NAME);
         }
     }

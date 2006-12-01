@@ -41,7 +41,7 @@ int MPI_Win_post(MPI_Group group, int assert, MPI_Win win)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
         } else if (0 != (assert & ~(MPI_MODE_NOCHECK | MPI_MODE_NOSTORE | 
                                     MPI_MODE_NOPUT))) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_ASSERT, FUNC_NAME);
