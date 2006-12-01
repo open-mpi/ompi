@@ -212,7 +212,6 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
                                     orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_INDEX_CMD;
-    orte_data_type_t type;
     orte_std_cntr_t n, cnt;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **index=NULL;

@@ -91,7 +91,6 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, orte_std_cntr_t 
 {
     orte_gpr_cmd_flag_t command;
     orte_std_cntr_t n;
-    orte_data_type_t type;
     int rc;
 
     OPAL_TRACE(3);
