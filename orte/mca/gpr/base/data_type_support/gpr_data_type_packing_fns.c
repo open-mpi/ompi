@@ -159,7 +159,6 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
     int rc;
     orte_gpr_keyval_t **keyval;
     orte_std_cntr_t i;
-    char null=0x00;
 
     OPAL_TRACE(4);
 

@@ -44,7 +44,6 @@ int orte_gpr_base_pack_subscribe(orte_buffer_t *cmd,
 {
     orte_gpr_cmd_flag_t command;
     int rc;
-    orte_std_cntr_t zero=0;
 
     OPAL_TRACE(3);
 
