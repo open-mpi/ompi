@@ -133,11 +133,10 @@ OBJ_CLASS_INSTANCE(
  * Release resources.
  */
 
-static void mca_pml_ob1_recv_ctl_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* des,
-    int status)
+static void mca_pml_ob1_recv_ctl_completion( mca_btl_base_module_t* btl,
+                                             struct mca_btl_base_endpoint_t* ep,
+                                             struct mca_btl_base_descriptor_t* des,
+                                             int status )
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     MCA_BML_BASE_BTL_DES_RETURN(bml_btl, des);
@@ -149,11 +148,10 @@ static void mca_pml_ob1_recv_ctl_completion(
  * Put operation has completed remotely - update request status
  */
 
-static void mca_pml_ob1_put_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* des,
-    int status)
+static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
+                                        struct mca_btl_base_endpoint_t* ep,
+                                        struct mca_btl_base_descriptor_t* des,
+                                        int status )
 {
     mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)des->des_context;
     mca_pml_ob1_recv_request_t* recvreq = (mca_pml_ob1_recv_request_t*)des->des_cbdata;
@@ -237,7 +235,6 @@ static int mca_pml_ob1_recv_request_ack(
 
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
 
-    
     if(hdr->hdr_msg_length > bytes_received) {
         
         /* by default copy */
@@ -263,11 +260,11 @@ static int mca_pml_ob1_recv_request_ack(
                 /* start rdma at current fragment offset - no need to ack */
                 recvreq->req_rdma_offset = bytes_received;
                 return OMPI_SUCCESS;
-                
-                /* are rdma devices available for long rdma protocol */
-            } else if (mca_pml_ob1.leave_pinned_pipeline && 
-                       hdr->hdr_msg_length > bml_endpoint->btl_rdma_size &&
-                       mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma)) {
+            }
+            /* are rdma devices available for long rdma protocol */
+            if( mca_pml_ob1.leave_pinned_pipeline && 
+                hdr->hdr_msg_length > bml_endpoint->btl_rdma_size &&
+                mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma) ) {
                 char* base;
                 char* align;
                 ptrdiff_t lb;
@@ -288,8 +285,7 @@ static int mca_pml_ob1_recv_request_ack(
                     ompi_convertor_set_position( &recvreq->req_recv.req_convertor,
                                                  &recvreq->req_rdma_offset );
                 }
-                
-                
+
                 /* are rdma devices available for long rdma protocol */
             } else if (!mca_pml_ob1.leave_pinned_pipeline && 
                        bml_endpoint->btl_rdma_offset < hdr->hdr_msg_length &&
@@ -520,7 +516,6 @@ void mca_pml_ob1_recv_request_progress(
                     bytes_received,
                     bytes_delivered);
             }
-
             break;
 
         case MCA_PML_OB1_HDR_TYPE_RGET:
@@ -547,7 +542,6 @@ void mca_pml_ob1_recv_request_progress(
         default:
             break;
     }
-
     /* check completion status */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, bytes_received)
         >= recvreq->req_recv.req_bytes_packed ) {
@@ -601,12 +595,10 @@ void mca_pml_ob1_recv_request_matched_probe(
  *
 */
 
-int mca_pml_ob1_recv_request_schedule_exclusive(
-        mca_pml_ob1_recv_request_t* recvreq)
+int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* recvreq )
 {
     ompi_proc_t* proc = recvreq->req_recv.req_base.req_proc;
-    mca_bml_base_endpoint_t* bml_endpoint =
-        (mca_bml_base_endpoint_t*) proc->proc_bml; 
+    mca_bml_base_endpoint_t* bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
     mca_bml_base_btl_t* bml_btl; 
     int num_btl_avail =
         mca_bml_base_btl_array_get_size(&bml_endpoint->btl_rdma);
@@ -621,8 +613,8 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
         size_t prev_bytes_remaining = 0;
         int num_fail = 0;
 
-        while(bytes_remaining > 0 &&
-                recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth) {
+        while( bytes_remaining > 0 &&
+               recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth ) {
             size_t hdr_size;
             size_t size;
             mca_pml_ob1_rdma_hdr_t* hdr;
@@ -676,8 +668,8 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
              * If more than one NIC is available - try to use both for
              * anything larger than the eager limit
              */
-            if(num_btl_avail == 1 ||
-                    bytes_remaining < bml_btl->btl_eager_limit) {
+            if( num_btl_avail == 1 ||
+                bytes_remaining < bml_btl->btl_eager_limit ) {
                 size = bytes_remaining;
             } else {
                 /* 
@@ -691,9 +683,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             }
             /* makes sure that we don't exceed BTL max rdma size
              * if memory is not pinned already */
-            if(0 == recvreq->req_rdma_cnt &&
-                    bml_btl->btl_max_rdma_size != 0 &&
-                    size > bml_btl->btl_max_rdma_size) {
+            if( size > bml_btl->btl_max_rdma_size ) {
                 size = bml_btl->btl_max_rdma_size;
             }
 
@@ -716,7 +706,6 @@ int mca_pml_ob1_recv_request_schedule_exclusive(
             /* prepare a descriptor for RDMA */
             mca_bml_base_prepare_dst(bml_btl, reg,
                     &recvreq->req_recv.req_convertor, 0, &size, &dst);
-
             if(reg && release == true && NULL != bml_btl->btl_mpool) {
                 bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
             }
