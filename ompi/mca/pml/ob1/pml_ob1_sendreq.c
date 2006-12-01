@@ -72,7 +72,7 @@ void mca_pml_ob1_send_request_process_pending(mca_bml_base_btl_t *bml_btl)
                         opal_list_append(&mca_pml_ob1.send_pending,
                                 (opal_list_item_t*)sendreq);
                     } else {
-                        /* prepend to the pending list to minimaze reordering */
+                        /* prepend to the pending list to minimize reordering */
                         opal_list_prepend(&mca_pml_ob1.send_pending,
                                 (opal_list_item_t*)sendreq);
                     }
@@ -221,7 +221,7 @@ static void mca_pml_ob1_rndv_completion(
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)  descriptor->des_context; 
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context; 
 
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
@@ -457,15 +457,14 @@ int mca_pml_ob1_send_request_start_buffered(
 
 
 /**
- *  BTL requires "specially" allocated memory. Request a segment that
- *  is used for initial hdr and any eager data. This is used only from
- *  the _START macro.
+ *  We work on a buffered request with a size smaller than the eager size 
+ *  or the BTL is not able to send the data IN_PLACE. Request a segment
+ *  that is used for initial hdr and any eager data. This is used only
+ *  from the _START macro.
  */
-
-int mca_pml_ob1_send_request_start_copy(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_bml_base_btl_t* bml_btl,
-    size_t size)
+int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
+                                         mca_bml_base_btl_t* bml_btl,
+                                         size_t size )
 {
     mca_btl_base_descriptor_t* descriptor;
     mca_btl_base_segment_t* segment;
@@ -560,10 +559,9 @@ int mca_pml_ob1_send_request_start_copy(
  *  to prepare the segment list. Start sending a small message.
  */
 
-int mca_pml_ob1_send_request_start_prepare(
-    mca_pml_ob1_send_request_t* sendreq,
-    mca_bml_base_btl_t* bml_btl,
-    size_t size)
+int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
+                                            mca_bml_base_btl_t* bml_btl,
+                                            size_t size )
 {
     mca_btl_base_descriptor_t* descriptor;
     mca_btl_base_segment_t* segment;
@@ -917,15 +915,13 @@ int mca_pml_ob1_send_request_schedule_exclusive(
                  * a percentage of the overall message length (regardless of
                  * amount previously assigned)
                  */
-                    size = (size_t)(bml_btl->btl_weight * bytes_remaining);
+                size = (size_t)(bml_btl->btl_weight * bytes_remaining);
             } 
 
             /* makes sure that we don't exceed BTL max send size */
             if (bml_btl->btl_max_send_size != 0 &&
-                    size > (bml_btl->btl_max_send_size -
-                        sizeof(mca_pml_ob1_frag_hdr_t))) {
-                size = bml_btl->btl_max_send_size -
-                    sizeof(mca_pml_ob1_frag_hdr_t);
+                size > (bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t))) {
+                size = bml_btl->btl_max_send_size - sizeof(mca_pml_ob1_frag_hdr_t);
             }
                 
             /* pack into a descriptor */
@@ -935,7 +931,6 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             mca_bml_base_prepare_src(bml_btl, NULL,
                     &sendreq->req_send.req_convertor,
                     sizeof(mca_pml_ob1_frag_hdr_t), &size, &des);
-                
             if(des == NULL) {
                 continue;
             }
@@ -1006,11 +1001,10 @@ int mca_pml_ob1_send_request_schedule_exclusive(
  *  (2) Send FIN control message to the destination 
  */
 
-static void mca_pml_ob1_put_completion(
-    mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* ep,
-    struct mca_btl_base_descriptor_t* des,
-    int status)
+static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
+                                        struct mca_btl_base_endpoint_t* ep,
+                                        struct mca_btl_base_descriptor_t* des,
+                                        int status )
 {
     mca_pml_ob1_rdma_frag_t* frag = (mca_pml_ob1_rdma_frag_t*)des->des_cbdata;
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)frag->rdma_req;
@@ -1022,9 +1016,14 @@ static void mca_pml_ob1_put_completion(
         ORTE_ERROR_LOG(status);
         orte_errmgr.abort();
     }
-
-    mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
-            frag->rdma_hdr.hdr_rdma.hdr_des.pval);
+    /**
+     * The FIN message should be send using the same BML_BTL. Otherwise, when
+     * we have multiple BTL available between 2 peers, the ACK might reach the
+     * destination before the rdma complete (e.g. TCP). In the case there is
+     * only one BTL avaialble this hack does not make any difference.
+     */
+    mca_pml_ob1_send_fin_btl( sendreq->req_send.req_base.req_proc, bml_btl,
+                              frag->rdma_hdr.hdr_rdma.hdr_des.pval );
 
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
@@ -1055,9 +1054,7 @@ static void mca_pml_ob1_put_completion(
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
 
-int mca_pml_ob1_send_request_put_frag(
-        mca_pml_ob1_rdma_frag_t* frag
-        )
+int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)frag->rdma_req;
     mca_mpool_base_registration_t* reg = NULL;
@@ -1069,7 +1066,7 @@ int mca_pml_ob1_send_request_put_frag(
     bool release = false; 
 
     bml_btl = mca_bml_base_btl_array_find(&frag->rdma_ep->btl_rdma,
-            frag->rdma_btl);  
+                                          frag->rdma_btl);
     
     /* lookup the corresponding registration */
     for(i=0; i<sendreq->req_rdma_cnt; i++) {
@@ -1093,14 +1090,12 @@ int mca_pml_ob1_send_request_put_frag(
     }
     
     /* setup descriptor */
-    mca_bml_base_prepare_src(
-        bml_btl, 
-        reg,
-        &sendreq->req_send.req_convertor, 
-        0,
-        &frag->rdma_length, 
-        &des
-        );
+    mca_bml_base_prepare_src( bml_btl, 
+                              reg,
+                              &sendreq->req_send.req_convertor, 
+                              0,
+                              &frag->rdma_length, 
+                              &des );
     
     if(reg && release == true && bml_btl->btl_mpool) {
         bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
