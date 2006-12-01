@@ -707,7 +707,9 @@ ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
                             int *completed,
                             ompi_status_public_t * status )
 {
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
     ompi_request_t *request = *rptr;
+#endif
     int ret = OMPI_SUCCESS;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
