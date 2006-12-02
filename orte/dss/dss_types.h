@@ -61,8 +61,8 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_data_value_t);
  * buffer type
  */
 typedef uint8_t orte_dss_buffer_type_t;
+#define ORTE_DSS_BUFFER_NON_DESC        0x00
 #define ORTE_DSS_BUFFER_FULLY_DESC      0x01
-#define ORTE_DSS_BUFFER_NON_DESC        0x02
 
 /**
      * Structure for holding a buffer to be used with the RML or OOB
