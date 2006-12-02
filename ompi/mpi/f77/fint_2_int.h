@@ -167,16 +167,16 @@
 #    define OMPI_INT_2_LOGICAL(a) ((a)==0? 0 : OMPI_FORTRAN_VALUE_TRUE)
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
 #    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
-       int __n = (n); \
+       int __n = (n) - 1; \
        OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
-       while (__n > 0) { \
+       while (__n >= 0) { \
          OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
          __n--; \
        } \
      } while (0)
 #    define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
-       int __n = (n); \
-       while (__n > 0) { \
+       int __n = (n) - 1; \
+       while (__n >= 0) { \
          in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
          __n--; \
        } \
@@ -209,16 +209,16 @@
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=(OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(a)))
 #  endif
 #  define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
-       int __n = (n); \
+       int __n = (n) - 1; \
        OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
-       while (__n > 0) { \
+       while (__n >= 0) { \
          OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
          __n--; \
        } \
      } while (0)
 #  define OMPI_ARRAY_INT_2_LOGICAL(in, n) do { \
-       int __n = (n); \
-       while (__n > 0) { \
+       int __n = (n) - 1; \
+       while (__n >= 0) { \
          in[__n]=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]); \
          __n--; \
        } \
