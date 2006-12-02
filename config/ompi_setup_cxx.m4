@@ -10,6 +10,8 @@ dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
+dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+dnl                         reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -125,6 +127,23 @@ AC_DEFUN([OMPI_SETUP_CXX],[
     fi
     AC_DEFINE_UNQUOTED(OMPI_HAVE_CXX_EXCEPTION_SUPPORT, $HAVE_CXX_EXCEPTIONS,
         [Whether or not we have compiled with C++ exceptions support])
+
+    # Make sure we can link with the C compiler
+    if[ test "$ompi_cv_cxx_compiler_vendor" != "microsoft" ]; then
+      OMPI_LANG_LINK_WITH_C([C++], [],
+        [cat <<EOF >&2
+**********************************************************************
+* It appears that your C++ compiler is unable to link against object
+* files created by your C compiler.  This generally indicates either
+* a conflict between the options specified in CFLAGS and CXXFLAGS
+* or a problem with the local compiler installation.  More
+* information (including exactly what command was given to the 
+* compilers and what error resulted when the commands were executed) is
+* available in the config.log file in this directory.
+**********************************************************************
+EOF
+         AC_MSG_ERROR([C and C++ compilers are not link compatible.  Can not continue.])])
+    fi
 
     # Find some more characteristics of the C++ compiler
 

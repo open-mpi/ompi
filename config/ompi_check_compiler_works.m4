@@ -3,6 +3,8 @@ dnl
 dnl Copyright (c) 2004-2006 The Trustees of Indiana University and Indiana
 dnl                         University Research and Technology
 dnl                         Corporation.  All rights reserved.
+dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+dnl                         reserved. 
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -31,7 +33,9 @@ AC_DEFUN([OMPI_CHECK_COMPILER_WORKS],
          AC_RUN_IFELSE([AC_LANG_PROGRAM([$2], [$3])],
                        [AS_VAR_SET(lang_var, ["yes"])],
                        [AS_VAR_SET(lang_var, ["no"])],
-                       [AS_VAR_SET(lang_var, ["cross compiling"])])
+                       [AC_LINK_IFELSE([AC_LANG_PROGRAM([$2], [$3])],
+                           [AS_VAR_SET(lang_var, ["links (cross compiling)"])],
+                           [AS_VAR_SET(lang_var, ["no"])])])
          AC_LANG_POP($1)])
     AS_IF([test "AS_VAR_GET(lang_var)" = "no"],
           [cat <<EOF >&2

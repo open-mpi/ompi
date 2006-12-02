@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,44 +23,42 @@
 # OMPI_CHECK_XGRID(prefix, [action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([OMPI_CHECK_XGRID],[
-    AC_REQUIRE([AC_PROG_OBJC])
+  AC_REQUIRE([AC_PROG_OBJC])
 
-    AC_ARG_WITH([xgrid],
-                [AC_HELP_STRING([--with-xgrid],
-                                [Build support for the Apple Xgrid batch system (default: yes)])])
+  AC_ARG_WITH([xgrid],
+    [AC_HELP_STRING([--with-xgrid],
+    [Build support for the Apple Xgrid batch system (default: yes)])])
 
-    AC_CACHE_CHECK([for XGridFoundation Framework],
-                   [ompi_cv_check_xgrid_foundation],
-                   [AS_IF([test "$with_xgrid" != "no"], 
-                          [_OMPI_CHECK_XGRID([ompi_cv_check_xgrid_foundation="yes"],
-                                             [ompi_cv_check_xgrid_foundation="no"])],
-                          [ompi_cv_check_xgrid_foundation="no"])])
+  AS_IF([test "$with_xgrid" != "no"],
+    [OMPI_LANG_LINK_WITH_C([Objective C],
+       [AC_CACHE_CHECK([for XGridFoundation Framework],
+          [ompi_cv_check_xgrid_foundation],
+          [_OMPI_CHECK_XGRID([ompi_cv_check_xgrid_foundation="yes"],
+             [ompi_cv_check_xgrid_foundation="no"])])
+        AS_IF([test "$ompi_cv_check_xgrid_foundation" = "yes"],
+          [ompi_check_xgrid_happy="yes"],
+          [ompi_check_xgrid_happy="no"])],
+       [ompi_check_xgrid_happy="no"])],
+    [ompi_check_xgrid_happy="no"])
 
-    AS_IF([test "$ompi_cv_check_xgrid_foundation" = "yes"], 
-          [$1_OBJCFLAGS="$$1_OBJCFLAGS -F XGridFoundation"
-           $1_LDFLAGS="$$1_LDFLAGS -framework XGridFoundation"
+    AS_IF([test "$ompi_check_xgrid_happy" = "yes"], 
+          [$1_LDFLAGS="$$1_LDFLAGS -framework XGridFoundation -framework Foundation"
            $2], [$3])
 ])
+
 
 # _OMPI_CHECK_XGRID([action-if-found], [action-if-not-found])
 # --------------------------------------------------------
 AC_DEFUN([_OMPI_CHECK_XGRID],[
-    # ok, so in environments where this is going to work, the objc and
-    # c compilers are the same thing.  Because our ompi_prog_objc is
-    # really lame, you can't push/pop languages into and out of
-    # objective-C (as soon as something post Autoconf 2.59 comes out,
-    # it will have Objective C support, and this will all be much
-    # simpler).  We modify CFLAGS because AC_TRY_LINK is going to use
-    # the C compiler.  Automake, however, is smart enough to know what
-    # Objective C is, so in the end, we put things in OBJCFLAGS and
-    # the right things will happen.  *sigh*
-
-    AS_IF([test "$ac_cv_sizeof_long" = "8"],
-          [ # can't compile in 64 bit mode
-            $2],
-          [ompi_check_xgrid_save_CFLAGS="$CFLAGS"
-           CFLAGS="$CFLAGS -framework XGridFoundation"
-           AC_TRY_LINK([],[;],[ompi_check_xgrid_happy="yes"],[ompi_check_xgrid_happy="no"])
-           CFLAGS="$ompi_check_xgrid_save_CFLAGS"
-           AS_IF([test "$ompi_check_xgrid_happy" = "no"], [$2], [$1])])
+  AC_LANG_PUSH(Objective C)
+  ompi_check_xgrid_save_LDFLAGS="$LDFLAGS"
+  LDFLAGS="$LDFLAGS -framework XGridFoundation -framework Foundation"
+  AC_TRY_LINK([#import <Foundation/Foundation.h>
+#import <XgridFoundation/XgridFoundation.h>
+#import <Foundation/NSString.h>
+],
+    [NSLog(@"%@", XGConnectionKeyIsOpened);],
+    [$1], [$2])
+  LDFLAGS="$ompi_check_xgrid_save_LDFLAGS"
+  AC_LANG_POP(Objective C)
 ])
