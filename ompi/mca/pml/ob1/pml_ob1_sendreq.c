@@ -1016,14 +1016,9 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
         ORTE_ERROR_LOG(status);
         orte_errmgr.abort();
     }
-    /**
-     * The FIN message should be send using the same BML_BTL. Otherwise, when
-     * we have multiple BTL available between 2 peers, the ACK might reach the
-     * destination before the rdma complete (e.g. TCP). In the case there is
-     * only one BTL avaialble this hack does not make any difference.
-     */
-    mca_pml_ob1_send_fin_btl( sendreq->req_send.req_base.req_proc, bml_btl,
-                              frag->rdma_hdr.hdr_rdma.hdr_des.pval );
+
+    mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
+            frag->rdma_hdr.hdr_rdma.hdr_des.pval);
 
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
