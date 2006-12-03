@@ -330,7 +330,7 @@ static void mca_pml_ob1_rget_completion(
     }
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
-            frag->rdma_hdr.hdr_rget.hdr_des.pval); 
+            frag->rdma_hdr.hdr_rget.hdr_des.pval, bml_btl); 
 
     /* is receive request complete */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)

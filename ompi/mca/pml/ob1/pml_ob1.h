@@ -237,6 +237,7 @@ struct mca_pml_ob1_pckt_pending_t {
     ompi_free_list_item_t super;
     ompi_proc_t* proc;
     mca_pml_ob1_hdr_t hdr;
+    struct mca_bml_base_btl_t *bml_btl;
 };
 typedef struct mca_pml_ob1_pckt_pending_t mca_pml_ob1_pckt_pending_t;
 OBJ_CLASS_DECLARATION(mca_pml_ob1_pckt_pending_t);
@@ -255,7 +256,7 @@ do {                                                            \
         (ompi_free_list_item_t*)pckt);                          \
 } while(0)
 
-#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D)                        \
+#define MCA_PML_OB1_ADD_FIN_TO_PENDING(P, D, B)                     \
     do {                                                            \
         mca_pml_ob1_pckt_pending_t *_pckt;                          \
         int _rc;                                                    \
@@ -264,6 +265,7 @@ do {                                                            \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
         _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
         _pckt->proc = (P);                                          \
+        _pckt->bml_btl = (B);                                       \
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                        \
         opal_list_append(&mca_pml_ob1.pckt_pending,                 \
                 (opal_list_item_t*)_pckt);                          \
@@ -273,20 +275,37 @@ do {                                                            \
 
 int mca_pml_ob1_send_fin_btl(ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl, 
         void *hdr_des);
-static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc, void *hdr_des)
+static inline int mca_pml_ob1_send_fin(ompi_proc_t* proc, void *hdr_des,
+        mca_bml_base_btl_t* bml_btl)
 {
     size_t i;
-    mca_bml_base_btl_t* bml_btl;
     mca_bml_base_endpoint_t* endpoint =
         (mca_bml_base_endpoint_t*)proc->proc_bml;
 
-    for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager); i++) {
-        bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+    /* Some BTLs (e.g TCP) can report put/get completion before data actually
+     * hits the buffer on the other side. For this kind of BTLs we need to send
+     * FIN through the same BTL PUT was performed with so network will handle
+     * ordering for us. If we will use another BTL, receiver can get FIN before
+     * data will hit the buffer and complete request prematurely. We mark such
+     * problematic BTLs with MCA_BTL_FLAGS_FAKE_RDMA flag (this kind of RDMA
+     * is really fake, because the real one guaranties that sender will see the
+     * completion only after receiver's NIC confirmed that all the data was
+     * received)
+     */
+    if(bml_btl->btl_flags & MCA_BTL_FLAGS_FAKE_RDMA) {
         if(mca_pml_ob1_send_fin_btl(proc, bml_btl, hdr_des) == OMPI_SUCCESS)
             return OMPI_SUCCESS;
+    } else {
+        for(i = 0; i < mca_bml_base_btl_array_get_size(&endpoint->btl_eager);
+                i++) {
+            bml_btl = mca_bml_base_btl_array_get_next(&endpoint->btl_eager);
+            if(mca_pml_ob1_send_fin_btl(proc, bml_btl, hdr_des) == OMPI_SUCCESS)
+                return OMPI_SUCCESS;
+        }
+        bml_btl = NULL;
     }
 
-    MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des);
+    MCA_PML_OB1_ADD_FIN_TO_PENDING(proc, hdr_des, bml_btl);
 
     return OMPI_ERR_OUT_OF_RESOURCE;
 }
