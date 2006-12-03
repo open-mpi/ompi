@@ -488,7 +488,7 @@ MOVEON:
         OPAL_THREAD_UNLOCK(&orte_setup_hnp_mutex);
 
         if (ORTE_SUCCESS == orte_setup_hnp_rc) {
-            /* Remember if we were infrastructre or not */
+            /* Remember if we were infrastructure or not */
             id = mca_base_param_find("orte", NULL, "infrastructure");
             mca_base_param_lookup_int(id, &intparam);
             if ( ((int)true) != intparam) {
