@@ -100,8 +100,14 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     }
 #endif  /* !defined(__WINDOWS__) */
 
-    sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long long unsigned)unique_key[0], 
-            (long long unsigned)unique_key[1]);
+    /*
+     * Regarding compiler warnings, see email thread on ompi devel-core on
+     *  topic "[OMPI svn] svn:open-mpi r12157" on the 2006-10-18.
+     * Check http://svn.open-mpi.org/trac/ompi/ticket/655
+     * Possible solution might be adding PRIx64 into ORTE_TRANSPORT_KEY_FMT
+     */
+    sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long unsigned)unique_key[0], 
+            (long unsigned)unique_key[1]);
     string_key[sizeof string_key - 1] = '\0';
     
     if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
