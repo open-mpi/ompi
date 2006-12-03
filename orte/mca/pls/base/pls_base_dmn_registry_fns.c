@@ -310,7 +310,7 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opa
 CLEANUP:
     if (allocated) free(jobs);
     
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 /*

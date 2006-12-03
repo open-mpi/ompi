@@ -177,7 +177,7 @@ extern char** environ;
 
 int main(int argc, char *argv[])
 {
-    int rc, ret;
+    int rc;
     int id, iparam;
     opal_cmd_line_t cmd_line;
 
@@ -202,14 +202,14 @@ int main(int argc, char *argv[])
     /* Setup and parse the command line */
     opal_cmd_line_create(&cmd_line, cmd_line_init);
     mca_base_cmd_line_setup(&cmd_line);
-    if (ORTE_SUCCESS != (ret = opal_cmd_line_parse(&cmd_line, true,
+    if (ORTE_SUCCESS != (rc = opal_cmd_line_parse(&cmd_line, true,
                                                    argc, argv))) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
         opal_show_help("help-orteboot.txt", "orteboot:usage", false,
                        argv[0], args);
         free(args);
-        return ret;
+        return rc;
     }
     
     /* print version if requested.  Do this before check for help so
@@ -312,7 +312,7 @@ int main(int argc, char *argv[])
     /* just do a fork/exec of orted --seed --persistent and then exit */
     
     
-     free(orteboot_basename);
-    return rc;
+    free(orteboot_basename);
+    return ORTE_SUCCESS;
 }
 
