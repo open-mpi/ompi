@@ -683,7 +683,9 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             }
             /* makes sure that we don't exceed BTL max rdma size
              * if memory is not pinned already */
-            if( size > bml_btl->btl_max_rdma_size ) {
+            if(0 == recvreq->req_rdma_cnt &&
+                    bml_btl->btl_max_rdma_size != 0 &&
+                    size > bml_btl->btl_max_rdma_size) {
                 size = bml_btl->btl_max_rdma_size;
             }
 
