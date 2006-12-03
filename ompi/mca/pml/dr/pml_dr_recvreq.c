@@ -69,7 +69,7 @@ static mca_pml_dr_recv_frag_t* mca_pml_dr_recv_request_match_specific_proc(
     mca_pml_dr_recv_request_t* request, mca_pml_dr_comm_proc_t* proc);
 
 
-static inline int mca_pml_dr_recv_request_free(struct ompi_request_t** request)
+static int mca_pml_dr_recv_request_free(struct ompi_request_t** request)
 {
     mca_pml_dr_recv_request_t* recvreq = *(mca_pml_dr_recv_request_t**)request;
     assert( false == recvreq->req_recv.req_base.req_free_called );

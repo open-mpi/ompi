@@ -40,7 +40,7 @@
  * for others p2p communications. Therefore, in the case of the DR PML it should
  * be added to the free request list.
  */
-static inline int mca_pml_dr_send_request_free(struct ompi_request_t** request)
+static int mca_pml_dr_send_request_free(struct ompi_request_t** request)
 {
     mca_pml_dr_send_request_t* sendreq = *(mca_pml_dr_send_request_t**)request;
 
