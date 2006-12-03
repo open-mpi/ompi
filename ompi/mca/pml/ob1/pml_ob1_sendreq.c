@@ -1018,7 +1018,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     }
 
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
-            frag->rdma_hdr.hdr_rdma.hdr_des.pval);
+            frag->rdma_hdr.hdr_rdma.hdr_des.pval, bml_btl);
 
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)

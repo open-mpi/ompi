@@ -224,7 +224,8 @@ int mca_btl_tcp_component_open(void)
         mca_btl_tcp_param_register_int("flags", MCA_BTL_FLAGS_PUT |
                                        MCA_BTL_FLAGS_SEND_INPLACE |
                                        MCA_BTL_FLAGS_NEED_CSUM | 
-                                       MCA_BTL_FLAGS_NEED_ACK );
+                                       MCA_BTL_FLAGS_NEED_ACK |
+                                       MCA_BTL_FLAGS_FAKE_RDMA);
     return OMPI_SUCCESS;
 }
 

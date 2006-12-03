@@ -281,15 +281,20 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
     int32_t i, rc, s = (int32_t)opal_list_get_size(&mca_pml_ob1.pckt_pending);
 
     for(i = 0; i < s; i++) {
-        mca_bml_base_btl_t *send_dst;
+        mca_bml_base_btl_t *send_dst = NULL;
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
         pckt = (mca_pml_ob1_pckt_pending_t*)
             opal_list_remove_first(&mca_pml_ob1.pckt_pending);
         OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);
         if(NULL == pckt)
             break;
-        send_dst = mca_bml_base_btl_array_find(
-                &pckt->proc->proc_bml->btl_eager, bml_btl->btl);
+        if(pckt->bml_btl != NULL && 
+                pckt->bml_btl->btl == bml_btl->btl) {
+            send_dst = pckt->bml_btl;
+        } else {
+            send_dst = mca_bml_base_btl_array_find(
+                    &pckt->proc->proc_bml->btl_eager, bml_btl->btl);
+        }
         if(NULL == send_dst) {
             OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
             opal_list_append(&mca_pml_ob1.pckt_pending,
@@ -320,7 +325,7 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
                      MCA_PML_OB1_ADD_FIN_TO_PENDING(pckt->proc,
-                             pckt->hdr.hdr_fin.hdr_des.pval);
+                             pckt->hdr.hdr_fin.hdr_des.pval, pckt->bml_btl);
                      return;
                 }
                 break;
