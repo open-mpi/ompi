@@ -166,8 +166,8 @@ opal_init_util(void)
     }
 
     /* pretty-print stack handlers */
-    if (OPAL_SUCCESS != (ret = opal_util_register_stackhandlers ())) {
-        error = "util_register_stackhandlers() failed";
+    if (OPAL_SUCCESS != (ret = opal_util_register_stackhandlers())) {
+        error = "opal_util_register_stackhandlers";
         goto return_error;
     }
 
@@ -222,7 +222,7 @@ opal_init(void)
 
     /* initialize the memory manager / tracker */
     if (OPAL_SUCCESS != opal_mem_hooks_init()) {
-        error = "opal_mem_free_init";
+        error = "opal_mem_hooks_init";
         goto return_error;
     }
 

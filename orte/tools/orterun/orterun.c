@@ -194,14 +194,14 @@ opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
     { NULL, NULL, NULL, '\0', "pernode", "pernode", 0,
-        &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
-        "If no number of process is specified, this will cause one process per available node to be executed" },
+      &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
+      "If no number of process is specified, this will cause one process per available node to be executed" },
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
     { "rmaps", "base", "display_map", '\0', "display-map-at-launch", "display-map-at-launch", 0,
-        NULL, OPAL_CMD_LINE_TYPE_BOOL,
-        "Display the process map just before launch"},
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display the process map just before launch"},
     
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -263,8 +263,8 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "Set the root for the session directory tree for orterun ONLY" },
 
     { NULL, NULL, NULL, '\0', "reuse-daemons", "reuse-daemons", 0,
-        &orterun_globals.reuse_daemons, OPAL_CMD_LINE_TYPE_BOOL,
-        "If set, reuse daemons to launch dynamically spawned processes"},
+      &orterun_globals.reuse_daemons, OPAL_CMD_LINE_TYPE_BOOL,
+      "If set, reuse daemons to launch dynamically spawned processes"},
 
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
