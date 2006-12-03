@@ -125,8 +125,8 @@ int orte_ns_replica_get_peers(orte_process_name_t **procs,
         orte_ns_replica_construct_flattened_tree(&peerlist, job_info);
         
         i = opal_list_get_size(&peerlist);
+        npeers = 0;
         if (0 < i) {
-            npeers = 0;
             for (item = opal_list_get_first(&peerlist);
                  item != opal_list_get_end(&peerlist);
                  item = opal_list_get_next(item)) {

@@ -66,7 +66,7 @@ int mca_oob_xcast(orte_jobid_t job,
                   orte_buffer_t* buffer,
                   orte_gpr_trigger_cb_fn_t cbfunc)
 {
-    int rc;
+    int rc = ORTE_SUCCESS;
     struct timeval start, stop;
     
     if (orte_oob_xcast_timing) {

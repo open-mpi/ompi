@@ -301,7 +301,7 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
     orte_jobid_t job;
-    orte_std_cntr_t *cptr, rank, app_num;
+    orte_std_cntr_t *cptr, rank, app_num = 0;
     unsigned int universe_size = 0;
     int rc;
 
