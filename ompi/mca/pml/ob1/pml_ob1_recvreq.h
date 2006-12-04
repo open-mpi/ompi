@@ -348,7 +348,7 @@ static inline void mca_pml_ob1_recv_request_schedule(
                                                                             \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                          \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;          \
-        _pckt->hdr.hdr_ack.hdr_src_req.pval = (S);                          \
+        _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                          \
         _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                          \
         _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                           \
         _pckt->proc = (P);                                                  \
@@ -359,11 +359,11 @@ static inline void mca_pml_ob1_recv_request_schedule(
     } while(0)
 
 int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
-        mca_bml_base_btl_t* bml_btl, void *hdr_src_req, void *hdr_dst_req,
+        mca_bml_base_btl_t* bml_btl, uint64_t hdr_src_req, void *hdr_dst_req,
         uint64_t hdr_rdma_offset);
 
 static inline int mca_pml_ob1_recv_request_ack_send(ompi_proc_t* proc,
-        void *hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
+        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
 {
     size_t i;
     mca_bml_base_btl_t* bml_btl;

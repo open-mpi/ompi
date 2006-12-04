@@ -182,6 +182,9 @@ typedef void (*mca_btl_base_completion_fn_t)(
 struct mca_btl_base_segment_t {
     ompi_ptr_t seg_addr;
     uint32_t   seg_len;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t    seg_padding[4];
+#endif
     union {
         uint32_t key32[2];
         uint64_t key64;
