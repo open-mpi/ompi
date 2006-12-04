@@ -69,6 +69,9 @@ struct mca_pml_ob1_match_hdr_t {
     int32_t  hdr_src;                      /**< source rank */
     int32_t  hdr_tag;                      /**< user tag */
     uint16_t hdr_seq;                      /**< message sequence number */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t  hdr_padding[2];               /**< explicitly pad to 16 bytes.  Compilers seem to already prefer to do this, but make it explicit just in case */
+#endif
 };
 typedef struct mca_pml_ob1_match_hdr_t mca_pml_ob1_match_hdr_t;
 
@@ -102,6 +105,9 @@ struct mca_pml_ob1_rendezvous_hdr_t {
 };
 typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
 
+/* Note that hdr_src_req is not put in network byte order because it
+   is never processed by the receiver, other than being copied into
+   the ack header */
 #define MCA_PML_OB1_RNDV_HDR_NTOH(h) \
     do { \
     MCA_PML_OB1_MATCH_HDR_NTOH((h).hdr_match); \
@@ -119,8 +125,11 @@ typedef struct mca_pml_ob1_rendezvous_hdr_t mca_pml_ob1_rendezvous_hdr_t;
  */
 struct mca_pml_ob1_rget_hdr_t {
     mca_pml_ob1_rendezvous_hdr_t hdr_rndv;
-    ompi_ptr_t hdr_des;                       /**< source descriptor */
     uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[4];
+#endif
+    ompi_ptr_t hdr_des;                       /**< source descriptor */
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
@@ -130,6 +139,9 @@ typedef struct mca_pml_ob1_rget_hdr_t mca_pml_ob1_rget_hdr_t;
  */
 struct mca_pml_ob1_frag_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;     /**< common attributes */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[6];
+#endif
     uint64_t hdr_frag_offset;                /**< offset into message */
     ompi_ptr_t hdr_src_req;                  /**< pointer to source request */
     ompi_ptr_t hdr_dst_req;                  /**< pointer to matched receive */
@@ -155,12 +167,19 @@ typedef struct mca_pml_ob1_frag_hdr_t mca_pml_ob1_frag_hdr_t;
 
 struct mca_pml_ob1_ack_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[6];
+#endif
     ompi_ptr_t hdr_src_req;                   /**< source request */
     ompi_ptr_t hdr_dst_req;                   /**< matched receive request */
     uint64_t hdr_rdma_offset;                 /**< starting point rdma protocol */
 };
 typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
+/* Note that the request headers are not put in NBO because the
+   src_req is already in receiver's byte order and the dst_req is not
+   used by the receiver for anything other than backpointers in return
+   headers */
 #define MCA_PML_OB1_ACK_HDR_NTOH(h) \
     do { \
     MCA_PML_OB1_COMMON_HDR_NTOH(h.hdr_common); \
@@ -179,10 +198,13 @@ typedef struct mca_pml_ob1_ack_hdr_t mca_pml_ob1_ack_hdr_t;
 
 struct mca_pml_ob1_rdma_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[2];                   /** two to pad out the hdr to a 4 byte alignment.  hdr_req will then be 8 byte aligned after 4 for hdr_seg_cnt */
+#endif
+    uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     ompi_ptr_t hdr_req;                       /**< destination request */
     ompi_ptr_t hdr_des;                       /**< source descriptor */
     uint64_t hdr_rdma_offset;                 /**< current offset into user buffer */ 
-    uint32_t hdr_seg_cnt;                     /**< number of segments for rdma */
     mca_btl_base_segment_t hdr_segs[1];       /**< list of segments for rdma */
 };
 typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
@@ -193,6 +215,9 @@ typedef struct mca_pml_ob1_rdma_hdr_t mca_pml_ob1_rdma_hdr_t;
 
 struct mca_pml_ob1_fin_hdr_t {
     mca_pml_ob1_common_hdr_t hdr_common;      /**< common attributes */
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    uint8_t hdr_padding[6];
+#endif
     ompi_ptr_t hdr_des;                       /**< completed descriptor */
 };
 typedef struct mca_pml_ob1_fin_hdr_t mca_pml_ob1_fin_hdr_t;

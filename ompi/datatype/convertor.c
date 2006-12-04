@@ -166,7 +166,7 @@ ompi_convertor_find_or_create_master( uint32_t remote_arch )
         uint64_t hetero_mask = 0;
 
         for( i = DT_CHAR; i < DT_MAX_PREDEFINED; i++ ) {
-            if( remote_sizes[i] > 2 )
+            if( remote_sizes[i] > 1 )
                 hetero_mask |= (((uint64_t)1) << i);
         }
         hetero_mask &= ~((((uint64_t)1) << DT_LOGIC) | (((uint64_t)1) << DT_CXX_BOOL));

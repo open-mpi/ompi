@@ -179,7 +179,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
 
 int mca_pml_ob1_recv_request_ack_send_btl(
         ompi_proc_t* proc, mca_bml_base_btl_t* bml_btl,
-        void *hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
+        uint64_t hdr_src_req, void *hdr_dst_req, uint64_t hdr_rdma_offset)
 {
     mca_btl_base_descriptor_t* des;
     mca_pml_ob1_ack_hdr_t* ack;
@@ -195,7 +195,7 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = 0;
-    ack->hdr_src_req.pval = hdr_src_req;
+    ack->hdr_src_req.lval = hdr_src_req;
     ack->hdr_dst_req.pval = hdr_dst_req;
     ack->hdr_rdma_offset = hdr_rdma_offset;
 
@@ -303,7 +303,7 @@ static int mca_pml_ob1_recv_request_ack(
     }
     /* let know to shedule function there is no need to put ACK flag */
     recvreq->req_ack_sent = true;
-    return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.pval,
+    return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
             recvreq, recvreq->req_rdma_offset);
 }
 
