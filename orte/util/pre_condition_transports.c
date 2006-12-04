@@ -66,8 +66,7 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     char *cs_env, *string_key = NULL, *format = NULL;
     uint64_t unique_key[2];
     unsigned int *int_ptr;
-    int ret;
-	
+
 #if !defined(__WINDOWS__)
     int fd_rand;
     size_t bytes_read; 
@@ -121,7 +120,7 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
      * number if the system has a different sized long (8 would be for
      * sizeof(int) == 4)).
      */
-    asprintf(&format, "%%0%dx", sizeof(unsigned int) * 2);
+    asprintf(&format, "%%0%dx", (int)(sizeof(unsigned int)) * 2);
 
     /* print the first number */
     int_ptr = (unsigned int*) &unique_key[0];
