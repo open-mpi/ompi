@@ -62,10 +62,11 @@ static inline void orte_pre_condition_transports_use_rand(uint64_t* unique_key) 
 
 int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_context)
 {
-    size_t i;
-    char *cs_env;
+    size_t i, string_key_len, written_len;
+    char *cs_env, *string_key = NULL, *format = NULL;
     uint64_t unique_key[2];
-    char string_key[ORTE_TRANSPORT_KEY_LEN + 1]; /* key + null */
+    unsigned int *int_ptr;
+    int ret;
 	
 #if !defined(__WINDOWS__)
     int fd_rand;
@@ -100,15 +101,49 @@ int orte_pre_condition_transports(orte_app_context_t **app_context, size_t num_c
     }
 #endif  /* !defined(__WINDOWS__) */
 
-    /*
-     * Regarding compiler warnings, see email thread on ompi devel-core on
-     *  topic "[OMPI svn] svn:open-mpi r12157" on the 2006-10-18.
-     * Check http://svn.open-mpi.org/trac/ompi/ticket/655
-     * Possible solution might be adding PRIx64 into ORTE_TRANSPORT_KEY_FMT
+    /* string is two 64 bit numbers printed in hex with a dash between
+     * and zero padding.
      */
-    sprintf(string_key, ORTE_TRANSPORT_KEY_FMT, (long unsigned)unique_key[0], 
-            (long unsigned)unique_key[1]);
-    string_key[sizeof string_key - 1] = '\0';
+    string_key_len = (sizeof(uint64_t) * 2) * 2 + strlen("-") + 1;
+    string_key = (char*) malloc(string_key_len);
+    if (NULL == string_key) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    string_key[0] = '\0';
+    written_len = 0;
+
+    /* get a format string based on the length of an unsigned int.  We
+     * want to have zero padding for sizeof(unsigned int) * 2
+     * characters -- when printing as a hex number, each byte is
+     * represented by 2 hex characters.  Format will contain something
+     * that looks like %08lx, where the number 8 might be a different
+     * number if the system has a different sized long (8 would be for
+     * sizeof(int) == 4)).
+     */
+    asprintf(&format, "%%0%dx", sizeof(unsigned int) * 2);
+
+    /* print the first number */
+    int_ptr = (unsigned int*) &unique_key[0];
+    for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        snprintf(string_key + written_len, 
+                 string_key_len - written_len,
+                 format, int_ptr[i]);
+        written_len = strlen(string_key);
+    }
+
+    /* print the middle dash */
+    snprintf(string_key + written_len, string_key_len - written_len, "-");
+    written_len = strlen(string_key);
+
+    /* print the second number */
+    int_ptr = (unsigned int*) &unique_key[1];
+    for (i = 0 ; i < sizeof(uint64_t) / sizeof(unsigned int) ; ++i) {
+        snprintf(string_key + written_len, 
+                 string_key_len - written_len,
+                 format, int_ptr[i]);
+        written_len = strlen(string_key);
+    }
     
     if (NULL == (cs_env = mca_base_param_environ_variable("orte_precondition_transports",NULL,NULL))) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
