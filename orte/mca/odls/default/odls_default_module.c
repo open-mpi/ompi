@@ -1106,8 +1106,8 @@ DOFORK:
         
         if (ORTE_SUCCESS != (rc = odls_default_fork_local_proc(app, child, start,
                                                                range, want_processor,
-                                                               oversubscribed,
-                                                               i, base_environ))) {
+                                                               i, oversubscribed,
+                                                               base_environ))) {
             ORTE_ERROR_LOG(rc);
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
             opal_condition_signal(&orte_odls_default.cond);
