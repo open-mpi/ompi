@@ -41,7 +41,7 @@ int MPI_Win_lock(int lock_type, int rank, int assert, MPI_Win win)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
         } else if (lock_type != MPI_LOCK_EXCLUSIVE && 
                    lock_type != MPI_LOCK_SHARED) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_LOCKTYPE, FUNC_NAME);

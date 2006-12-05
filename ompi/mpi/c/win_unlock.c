@@ -41,7 +41,7 @@ int MPI_Win_unlock(int rank, MPI_Win win)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
 
         if (ompi_win_invalid(win)) {
-            return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_WIN, FUNC_NAME);
+            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_WIN, FUNC_NAME);
         } else if (ompi_win_peer_invalid(win, rank)) {
             return OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_RANK, FUNC_NAME);
         } else if (0 == (ompi_win_get_mode(win) & OMPI_WIN_LOCK_ACCESS)) {
