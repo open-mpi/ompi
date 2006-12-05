@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,7 +20,7 @@
 #include <stdio.h>
 
 #include "ompi/mpi/c/bindings.h"
-#include "ompi/errhandler/errclass.h"
+#include "ompi/errhandler/errcode.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Add_error_class = PMPI_Add_error_class
@@ -40,7 +41,7 @@ int MPI_Add_error_class(int *errorclass)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
     
-    err_class = ompi_errclass_add();
+    err_class = ompi_mpi_errclass_add();
     if ( 0 > err_class ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);

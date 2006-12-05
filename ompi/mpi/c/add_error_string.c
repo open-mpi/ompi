@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ int MPI_Add_error_string(int errorcode, char *string)
                                           FUNC_NAME);
     }
 
-    rc = ompi_mpi_errcode_add_string (errorcode, string, (int)(strlen(string)+1));
+    rc = ompi_mpi_errnum_add_string (errorcode, string, (int)(strlen(string)+1));
     if ( OMPI_SUCCESS != rc ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);

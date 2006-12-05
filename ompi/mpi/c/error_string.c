@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -45,7 +46,7 @@ int MPI_Error_string(int errorcode, char *string, int *resultlen)
         }
     }
  
-    tmpstring = ompi_mpi_errcode_get_string (errorcode);
+    tmpstring = ompi_mpi_errnum_get_string (errorcode);
     strcpy(string, tmpstring);
     *resultlen = (int)strlen(string);
     
