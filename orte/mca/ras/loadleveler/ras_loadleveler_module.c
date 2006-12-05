@@ -60,7 +60,6 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
 static int orte_ras_loadleveler_deallocate(orte_jobid_t jobid);
 static int orte_ras_loadleveler_finalize(void);
 static int orte_ras_loadleveler_get_hostlist(int * num_hosts, char*** hostlist);
-static char* orte_ras_loadleveler_get_host_arch(char * hostname);
 
 
 /*
@@ -117,7 +116,7 @@ static int orte_ras_loadleveler_allocate(orte_jobid_t jobid, opal_list_t *attrib
                 goto cleanup;
             }
             node->node_name = strdup(hostlist[i]);
-            node->node_arch = orte_ras_loadleveler_get_host_arch(hostlist[i]);
+            node->node_arch = NULL;
             node->node_state = ORTE_NODE_STATE_UP;
             node->node_cellid = 0;
             node->node_slots_inuse = 0;
@@ -444,6 +443,9 @@ static int orte_ras_loadleveler_get_hostlist(int* num_hosts, char*** hostlist)
     return ORTE_SUCCESS;
 }
 
+#if 0
+/* For now, we do not get the node architectures from LoadLeveler. It is slow,
+ * and we don't even use the value. */
 /*
  * get the machine arch from LoadLeveler
  * Will return NULL on error or a arch string that needs to be freed
@@ -490,4 +492,5 @@ static char* orte_ras_loadleveler_get_host_arch(char * hostname) {
     
     return arch;
 }
+#endif
 
