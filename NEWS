@@ -92,6 +92,8 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
+- Remove the "hierarch" coll component; it was not intended to be
+  included in stable releases yet.
 - Fix a race condition with stdout/stderr not appearing properly from
   all processes upon termination of an MPI job.
 - Fix internal accounting errors with the self BTL.
