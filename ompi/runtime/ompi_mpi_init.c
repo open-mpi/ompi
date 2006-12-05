@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -59,7 +60,6 @@
 #include "ompi/group/group.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
-#include "ompi/errhandler/errclass.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
 #include "ompi/file/file.h"
@@ -436,12 +436,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* initialize error codes */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_init())) {
         error = "ompi_mpi_errcode_init() failed";
-        goto error;
-    }
-
-    /* initialize error classes */
-    if (OMPI_SUCCESS != (ret = ompi_errclass_init())) {
-        error = "ompi_errclass_init() failed";
         goto error;
     }
     
