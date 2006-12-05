@@ -25,7 +25,7 @@ headers += \
         class/orte_pointer_array.h \
         class/orte_value_array.h
 
-liborte_la_SOURCES += \
+libopen_rte_la_SOURCES += \
         class/orte_proc_table.c \
         class/orte_bitmap.c \
         class/orte_pointer_array.c \

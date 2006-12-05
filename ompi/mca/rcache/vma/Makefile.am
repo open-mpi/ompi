@@ -52,8 +52,8 @@ mca_rcache_vma_la_LDFLAGS = -module -avoid-version $(rcache_vma_LDFLAGS)
 mca_rcache_vma_la_LIBADD = \
     $(rcache_vma_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_rcache_vma_la_SOURCES = $(lib_sources)

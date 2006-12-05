@@ -51,8 +51,8 @@ mca_mtl_psm_la_SOURCES = $(mtl_psm_sources)
 mca_mtl_psm_la_LIBADD = \
     $(mtl_psm_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_mtl_psm_la_LDFLAGS = -module -avoid-version $(mtl_psm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

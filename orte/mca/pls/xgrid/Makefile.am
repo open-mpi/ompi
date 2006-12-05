@@ -57,8 +57,8 @@ mcacomponentdir = $(libdir)/openmpi
 mcacomponent_LTLIBRARIES = $(component_install)
 mca_pls_xgrid_la_SOURCES = $(xgrid_sources)
 mca_pls_xgrid_la_LIBADD = \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_pls_xgrid_la_LDFLAGS = -module -avoid-version $(pls_xgrid_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

@@ -33,36 +33,36 @@ TESTS = \
 
 smr_dt_buffer_SOURCES = smr_dt_buffer.c
 smr_dt_buffer_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_buffer_DEPENDENCIES = $(smr_dt_buffer_LDADD)
 
 smr_dt_copy_SOURCES = smr_dt_copy.c
 smr_dt_copy_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_copy_DEPENDENCIES = $(smr_dt_copy_LDADD)
 
 smr_dt_compare_SOURCES = smr_dt_compare.c
 smr_dt_compare_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_compare_DEPENDENCIES = $(smr_dt_compare_LDADD)
 
 smr_dt_print_SOURCES = smr_dt_print.c
 smr_dt_print_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_print_DEPENDENCIES = $(smr_dt_print_LDADD)
 
 smr_dt_size_SOURCES = smr_dt_size.c
 smr_dt_size_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_size_DEPENDENCIES = $(smr_dt_size_LDADD)
 
 smr_dt_release_SOURCES = smr_dt_release.c
 smr_dt_release_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 smr_dt_release_DEPENDENCIES = $(smr_dt_release_LDADD)

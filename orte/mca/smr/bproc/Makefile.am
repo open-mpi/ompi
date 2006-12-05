@@ -48,8 +48,8 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_smr_bproc_la_SOURCES = $(smr_SOURCES)
 mca_smr_bproc_la_LIBADD = \
     $(smr_bproc_LIBS) \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_smr_bproc_la_LDFLAGS = -module -avoid-version $(smr_bproc_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

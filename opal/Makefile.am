@@ -44,9 +44,9 @@ DIST_SUBDIRS = \
 
 # Build the main OPAL library
 
-lib_LTLIBRARIES = libopal.la
-libopal_la_SOURCES =
-libopal_la_LIBADD = \
+lib_LTLIBRARIES = libopen-pal.la
+libopen_pal_la_SOURCES =
+libopen_pal_la_LIBADD = \
         $(LIBLTDL_LTLIB) \
         asm/libasm.la \
         event/libevent.la \
@@ -54,14 +54,14 @@ libopal_la_LIBADD = \
         util/libopalutil.la \
 	$(MCA_opal_FRAMEWORK_LIBS)
 
-libopal_la_DEPENDENCIES = $(libopal_la_LIBADD)
+libopen_pal_la_DEPENDENCIES = $(libopen_pal_la_LIBADD)
 
 # included subdirectory Makefile.am's and appended-to variables
 headers =
 noinst_LTLIBRARIES =
 nobase_opal_HEADERS = 
 dist_pkgdata_DATA =
-libopal_la_SOURCES += $(headers)
+libopen_pal_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

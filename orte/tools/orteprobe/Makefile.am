@@ -25,7 +25,7 @@ bin_PROGRAMS = orteprobe
 endif
 
 libs = \
-        $(top_builddir)/orte/liborte.la
+        $(top_builddir)/orte/libopen-rte.la
 
 orteprobe_SOURCES = \
         orteprobe.h \

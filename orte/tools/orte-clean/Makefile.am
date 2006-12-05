@@ -31,7 +31,7 @@ orte_clean_SOURCES = \
 man_MANS = orte-clean.1
 EXTRA_DIST = orte-clean.1
 
-orte_clean_LDADD = $(top_builddir)/orte/liborte.la
-orte_clean_DEPENDENCIES = $(top_builddir)/orte/liborte.la
+orte_clean_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_clean_DEPENDENCIES = $(top_builddir)/orte/libopen-rte.la
 
 endif # OMPI_INSTALL_BINARIES

@@ -51,8 +51,8 @@ mca_btl_gm_la_SOURCES = $(gm_sources)
 mca_btl_gm_la_LIBADD = \
     $(btl_gm_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
         
 mca_btl_gm_la_LDFLAGS = -module -avoid-version $(btl_gm_LDFLAGS)
 
