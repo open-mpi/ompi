@@ -48,6 +48,12 @@ Trunk (not on release branches yet)
 1.2
 ---
 
+- Users who utilize the wrapper compilers (e.g., mpicc and mpif77)
+  will not notice, but the underlying library names for ORTE and OPAL
+  have changed to libopen-rte and libopen-pal, respectively (listed
+  here because there are undoubtedly some users who are not using the
+  wrapper compilers).
+- Many bug fixes to MPI-2 one-sided support.
 - Added support for TotalView message queue debugging.
 - Fixes for MPI_STATUS_SET_ELEMENTS.
 - Print better error messages when mpirun's "-nolocal" is used when
@@ -61,7 +67,7 @@ Trunk (not on release branches yet)
 - Add new --enable-mpirun-prefix-by-default configure option to always
   imply the --prefix option to mpirun, preventing many rsh/ssh-based
   users from needing to modify their shell startup files.
-- Add a number of missing constants in the C++ bindings
+- Add a number of missing constants in the C++ bindings.
 - Added tight integration with Sun N1 Grid Engine (N1GE) 6 and the
   open source Grid Engine.
 - Allow building the F90 MPI bindings as shared libraries for most
