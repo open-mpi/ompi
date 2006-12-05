@@ -45,8 +45,8 @@ mca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)
 mca_btl_self_la_LDFLAGS = -module -avoid-version
 mca_btl_self_la_LIBADD = \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
         
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_btl_self_la_SOURCES = $(libmca_btl_self_la_sources)

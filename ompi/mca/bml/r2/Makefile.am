@@ -39,8 +39,8 @@ mcacomponent_LTLIBRARIES = $(component_install)
 mca_bml_r2_la_SOURCES = $(r2_sources)
 mca_bml_r2_la_LIBADD = \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_bml_r2_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

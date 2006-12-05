@@ -17,7 +17,7 @@
 #
 
 libs = \
-        $(top_builddir)/orte/liborte.la
+        $(top_builddir)/orte/libopen-rte.la
 
 ortehalt_SOURCES = \
         ortehalt.c

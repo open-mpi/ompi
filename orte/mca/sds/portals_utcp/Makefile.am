@@ -45,8 +45,8 @@ mca_sds_portals_utcp_la_SOURCES = $(sources)
 mca_sds_portals_utcp_la_LDFLAGS = -module -avoid-version $(sds_portals_utcp_LDFLAGS)
 mca_sds_portals_utcp_la_LIBADD = \
     $(sds_portals_utcp_LIBS) \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_sds_portals_utcp_la_SOURCES =$(sources)

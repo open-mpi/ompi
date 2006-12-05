@@ -28,7 +28,7 @@ headers += \
         class/opal_atomic_lifo.h \
         class/opal_value_array.h
 
-libopal_la_SOURCES += \
+libopen_pal_la_SOURCES += \
         class/opal_free_list.c \
         class/opal_hash_table.c \
         class/opal_list.c \

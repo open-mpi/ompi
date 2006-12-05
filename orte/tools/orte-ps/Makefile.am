@@ -31,7 +31,7 @@ orte_ps_SOURCES = \
 man_MANS = orte-ps.1
 EXTRA_DIST = orte-ps.1
 
-orte_ps_LDADD = $(top_builddir)/orte/liborte.la
-orte_ps_DEPENDENCIES = $(top_builddir)/orte/liborte.la
+orte_ps_LDADD = $(top_builddir)/orte/libopen-rte.la
+orte_ps_DEPENDENCIES = $(top_builddir)/orte/libopen-rte.la
 
 endif # OMPI_INSTALL_BINARIES

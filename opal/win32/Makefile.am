@@ -35,7 +35,7 @@ OMPI_WIN32_HDR = \
 	win32/win_compat.h
 
 if OMPI_NEED_WINDOWS_REPLACEMENTS
-libopal_la_SOURCES += $(OMPI_WIN32_SRC)
+libopen_pal_la_SOURCES += $(OMPI_WIN32_SRC)
 headers += $(OMPI_WIN32_HDR)
 endif
 

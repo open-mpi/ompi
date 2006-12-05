@@ -23,5 +23,5 @@ headers += \
 	memoryhooks/memory.h \
 	memoryhooks/memory_internal.h
 
-libopal_la_SOURCES += \
+libopen_pal_la_SOURCES += \
 	memoryhooks/memory.c

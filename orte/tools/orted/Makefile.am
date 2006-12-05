@@ -25,7 +25,7 @@ bin_PROGRAMS = orted
 endif
 
 libs = \
-        $(top_builddir)/orte/liborte.la
+        $(top_builddir)/orte/libopen-rte.la
 
 headers = \
 	orted.h

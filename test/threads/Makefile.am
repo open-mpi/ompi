@@ -31,12 +31,12 @@ TESTS = \
 opal_thread_SOURCES = opal_thread.c
 opal_thread_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/opal/libopen-pal.la
 opal_thread_DEPENDENCIES = $(opal_thread_LDADD)
 
 opal_condition_SOURCES = opal_condition.c
 opal_condition_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/opal/libopen-pal.la
 opal_condition_DEPENDENCIES = $(opal_condition_LDADD)
 

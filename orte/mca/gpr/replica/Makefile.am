@@ -41,8 +41,8 @@ mca_gpr_replica_la_LIBADD = \
 	transition_layer/libmca_gpr_replica_tl.la \
 	functional_layer/libmca_gpr_replica_fn.la \
 	communications/libmca_gpr_replica_comm.la \
-        $(top_ompi_builddir)/orte/liborte.la \
-        $(top_ompi_builddir)/opal/libopal.la
+        $(top_ompi_builddir)/orte/libopen-rte.la \
+        $(top_ompi_builddir)/opal/libopen-pal.la
 mca_gpr_replica_la_LDFLAGS = -module -avoid-version
 
 noinst_LTLIBRARIES = $(component_noinst)

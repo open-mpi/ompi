@@ -48,8 +48,8 @@ mca_ras_slurm_la_SOURCES = $(component_sources)
 mca_ras_slurm_la_LDFLAGS = -module -avoid-version $(ras_slurm_LDFLAGS)
 mca_ras_slurm_la_LIBADD = \
     $(ras_slurm_LIBS) \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_ras_slurm_la_SOURCES = $(lib_sources)

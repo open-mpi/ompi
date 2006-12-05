@@ -49,8 +49,8 @@ mca_mtl_portals_la_LIBADD = \
     $(mtl_portals_LIBS) \
     $(top_ompi_builddir)/ompi/mca/common/portals/libmca_common_portals.la \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_mtl_portals_la_LDFLAGS = -module -avoid-version $(mtl_portals_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)

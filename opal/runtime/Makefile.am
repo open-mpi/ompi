@@ -26,7 +26,7 @@ headers += \
         runtime/opal_progress.h \
         runtime/opal.h
 
-libopal_la_SOURCES += \
+libopen_pal_la_SOURCES += \
         runtime/opal_progress.c \
         runtime/opal_finalize.c \
         runtime/opal_init.c \

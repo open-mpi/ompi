@@ -31,24 +31,24 @@ TESTS =
 
 gpr_put_get_SOURCES = gpr_put_get.c
 gpr_put_get_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 gpr_put_get_DEPENDENCIES = $(gpr_put_get_LDADD)
 
 gpr_quick_put_SOURCES = gpr_quick_put.c
 gpr_quick_put_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 gpr_quick_put_DEPENDENCIES = $(gpr_quick_put_LDADD)
 
 gpr_quick_triggers= gpr_quick_triggers.c
 gpr_quick_triggers_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 gpr_quick_triggers_DEPENDENCIES = $(gpr_quick_triggers_LDADD)
 
 gpr_sub_test= gpr_sub_test.c
 gpr_sub_test_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 gpr_sub_test_DEPENDENCIES = $(gpr_sub_test_LDADD)

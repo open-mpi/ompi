@@ -26,7 +26,7 @@ headers += \
         util/universe_setup_file_io.h \
         util/univ_info.h
 
-liborte_la_SOURCES += \
+libopen_rte_la_SOURCES += \
         util/error_strings.c \
 	util/pre_condition_transports.c \
         util/proc_info.c \
