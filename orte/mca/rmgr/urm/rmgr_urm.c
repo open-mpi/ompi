@@ -337,14 +337,6 @@ static int orte_rmgr_urm_spawn_job(
     }
 
     /*
-     * Perform resource discovery.
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds.query())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /*
      * Initialize job segment and allocate resources
      */ /* JJH Insert C/N mapping stuff here */
      
@@ -357,6 +349,13 @@ static int orte_rmgr_urm_spawn_job(
                  ORTE_ERROR_LOG(rc);
                  return rc;
              }
+     }
+     
+     if (flags & ORTE_RMGR_RES_DISC) {
+         if (ORTE_SUCCESS != (rc = orte_rds.query(*jobid))) {
+             ORTE_ERROR_LOG(rc);
+             return rc;
+         }
      }
      
      if (flags & ORTE_RMGR_ALLOC) {

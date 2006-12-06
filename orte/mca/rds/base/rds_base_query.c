@@ -30,7 +30,7 @@
 /**
  * Function for querying all loaded components.
  */
-int orte_rds_base_query(void)
+int orte_rds_base_query(orte_jobid_t job)
 {
     opal_list_item_t* item;
 
@@ -39,7 +39,7 @@ int orte_rds_base_query(void)
         item != opal_list_get_end(&orte_rds_base.rds_selected);
         item =  opal_list_get_next(item)) {
         orte_rds_base_selected_t* selected = (orte_rds_base_selected_t*)item;
-        int rc = selected->module->query();
+        int rc = selected->module->query(job);
         if(rc != ORTE_SUCCESS)
             return rc;
     }

@@ -46,7 +46,7 @@ typedef uint8_t orte_rds_cmd_flag_t;
 /*
  * API function definitions
  */
-ORTE_DECLSPEC int orte_rds_base_query(void);
+ORTE_DECLSPEC int orte_rds_base_query(orte_jobid_t job);
 
 /*
  * oob interface
@@ -65,7 +65,7 @@ ORTE_DECLSPEC int orte_rds_base_store_resource(opal_list_t *resource_list);
 /*
  * the "null" component functions
  */
-int orte_rds_base_no_op_query(void);
+int orte_rds_base_no_op_query(orte_jobid_t job);
 int orte_rds_base_no_op_store_resource(opal_list_t *resource_list);
 
 #if defined(c_plusplus) || defined(__cplusplus)

@@ -47,7 +47,7 @@ int orte_rds_proxy_finalize(void);
 /*
  * proxy function prototypes
  */
-int orte_rds_proxy_query(void);
+int orte_rds_proxy_query(orte_jobid_t job);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

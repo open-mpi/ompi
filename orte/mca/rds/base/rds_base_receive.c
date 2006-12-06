@@ -92,6 +92,7 @@ void orte_rds_base_recv(int status, orte_process_name_t* sender,
 {
     orte_buffer_t answer;
     orte_rds_cmd_flag_t command;
+    orte_jobid_t job;
     orte_std_cntr_t count;
     int rc;
 
@@ -105,11 +106,17 @@ void orte_rds_base_recv(int status, orte_process_name_t* sender,
 
     switch (command) {
         case ORTE_RDS_QUERY_CMD:
-            if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &command, 1, ORTE_RDS_CMD))) {
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
+                ORTE_ERROR_LOG(rc);
+                return;
+            }
+                
+                if (ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &command, 1, ORTE_RDS_CMD))) {
                 ORTE_ERROR_LOG(rc);
             }
 
-            if (ORTE_SUCCESS != (rc = orte_rds_base_query())) {
+            if (ORTE_SUCCESS != (rc = orte_rds_base_query(job))) {
                 ORTE_ERROR_LOG(rc);
             }
 
