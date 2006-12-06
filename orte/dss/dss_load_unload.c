@@ -39,6 +39,9 @@
 int orte_dss_unload(orte_buffer_t *buffer, void **payload,
                     orte_std_cntr_t *bytes_used)
 {
+    char *hdr_dst = NULL;
+    orte_dss_buffer_type_t type;
+
     /* check that buffer is not null */
     if (!buffer) {
         return ORTE_ERR_BAD_PARAM;
@@ -55,6 +58,18 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
         *bytes_used = 0;
         return ORTE_SUCCESS;
     }
+
+    /* add room for our description of the buffer -- currently just the type */
+    if (NULL == (hdr_dst = orte_dss_buffer_extend(buffer, 
+                                                  sizeof(orte_dss_buffer_type_t)))) {
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    /* add the header (at the end, so perhaps it's a footer? */
+    type = buffer->type;
+    ORTE_DSS_BUFFER_TYPE_HTON(type);
+    memcpy(hdr_dst, &type, sizeof(orte_dss_buffer_type_t));
+    buffer->bytes_used += sizeof(orte_dss_buffer_type_t);
     
     /* okay, we have something to provide - pass it back */
     *payload = buffer->base_ptr;
@@ -74,6 +89,9 @@ int orte_dss_unload(orte_buffer_t *buffer, void **payload,
 int orte_dss_load(orte_buffer_t *buffer, void *payload,
                   orte_std_cntr_t bytes_used)
 {
+    char *hdr_ptr;
+    orte_dss_buffer_type_t type;
+
     /* check to see if the buffer has been initialized */
     if (NULL == buffer) {
         return ORTE_ERR_BAD_PARAM;
@@ -88,6 +106,13 @@ int orte_dss_load(orte_buffer_t *buffer, void *payload,
     if (NULL != buffer->base_ptr) {
         free(buffer->base_ptr);
     }
+
+    /* get our header */
+    hdr_ptr = (char*) payload + bytes_used - sizeof(orte_dss_buffer_type_t);
+    memcpy(&type, hdr_ptr, sizeof(orte_dss_buffer_type_t));
+    ORTE_DSS_BUFFER_TYPE_NTOH(type);
+    buffer->type = type;
+    bytes_used -= sizeof(orte_dss_buffer_type_t);
     
     /* populate the buffer */
     buffer->base_ptr = (char*)payload; 
