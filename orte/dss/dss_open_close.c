@@ -164,9 +164,7 @@ int orte_dss_open(void)
 #if OMPI_ENABLE_DEBUG
     def_type = ORTE_DSS_BUFFER_FULLY_DESC;
 #else
-    /* BWB - temporarily disable non-described until we get the kinks worked out... */
-    /* def_type = ORTE_DSS_BUFFER_NON_DESC; */
-    def_type = ORTE_DSS_BUFFER_FULLY_DESC;
+    def_type = ORTE_DSS_BUFFER_NON_DESC;
 #endif
 
     id = mca_base_param_register_int("dss", "buffer", "type",
