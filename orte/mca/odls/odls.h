@@ -40,7 +40,10 @@
 /*
  * odls module functions
  */
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+    
 /**
  * Subscribe to receive the launch data for local processes
  */
@@ -140,5 +143,8 @@ typedef orte_odls_base_component_1_3_0_t orte_odls_base_component_t;
 */
 ORTE_DECLSPEC extern orte_odls_base_module_t orte_odls;  /* holds selected module's function pointers */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* MCA_ODLS_H */
