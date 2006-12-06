@@ -385,19 +385,18 @@ static int orte_rmgr_proxy_spawn_job(
     }
     
     /*
-     * Perform resource discovery.
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds.query())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /*
      * Setup job and allocate resources
      */
     if (flags & ORTE_RMGR_SETUP) {
         if (ORTE_SUCCESS !=
             (rc = orte_rmgr_proxy_setup_job(app_context, num_context, jobid, attributes))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    if (flags & ORTE_RMGR_RES_DISC) {
+        if (ORTE_SUCCESS != (rc = orte_rds.query(*jobid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }

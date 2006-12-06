@@ -119,7 +119,16 @@ static int orte_ras_localhost_allocate(orte_jobid_t jobid, opal_list_t *attribut
         goto cleanup;
     }
     
- cleanup:
+    /* now indicate that there is uncertainty about the number of slots here,
+        * so the launcher should use knowledge of the local number of processors to
+        * override any oversubscription flags
+        */
+    ret = orte_ras_base_set_oversubscribe_override(jobid);
+    if (ORTE_SUCCESS != ret) {
+        goto cleanup;
+    }
+    
+cleanup:
     item = opal_list_remove_first(&nodes);
     OBJ_RELEASE(item);
     OBJ_DESTRUCT(&nodes);

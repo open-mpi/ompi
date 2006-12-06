@@ -36,7 +36,7 @@ extern "C" {
 /*
  * RDS Resource file functions
  */
-int orte_rds_resfile_query(void);
+int orte_rds_resfile_query(orte_jobid_t job);
 
 int orte_rds_resfile_finalize(void);
 

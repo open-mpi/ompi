@@ -28,7 +28,7 @@
 
 #include "orte/mca/rds/base/rds_private.h"
 
-int orte_rds_base_no_op_query(void)
+int orte_rds_base_no_op_query(orte_jobid_t job)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

@@ -372,7 +372,7 @@ unlock:
  * rds_hostfile_path, and add the nodes to the registry.
  */
 
-static int orte_rds_hostfile_query(void)
+static int orte_rds_hostfile_query(orte_jobid_t job)
 {
     opal_list_t existing;
     opal_list_t updates, rds_updates;
@@ -498,6 +498,18 @@ static int orte_rds_hostfile_query(void)
          * already allocated for our use.
          */
         rc = orte_ras_base_node_insert(&updates);
+        if (ORTE_SUCCESS != rc) {
+            goto cleanup;
+        }
+        
+        /* and now, indicate that ORTE should override any oversubscribed conditions
+         * based on local hardware limits since the user (a) might not have
+         * provided us any info on the #slots for a node, and (b) the user
+         * might have been wrong! If we don't check the number of local physical
+         * processors, then we could be too aggressive on our sched_yield setting
+         * and cause performance problems.
+         */
+        rc = orte_ras_base_set_oversubscribe_override(job);
         if (ORTE_SUCCESS != rc) {
             goto cleanup;
         }

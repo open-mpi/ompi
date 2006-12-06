@@ -56,10 +56,11 @@ ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_attribute_t);
  * procedure.
  */
 #define ORTE_RMGR_SETUP            0x01
-#define ORTE_RMGR_ALLOC            0x02
-#define ORTE_RMGR_MAP              0x04
-#define ORTE_RMGR_SETUP_TRIGS      0x08
-#define ORTE_RMGR_LAUNCH           0x10
+#define ORTE_RMGR_RES_DISC         0x02
+#define ORTE_RMGR_ALLOC            0x04
+#define ORTE_RMGR_MAP              0x08
+#define ORTE_RMGR_SETUP_TRIGS      0x10
+#define ORTE_RMGR_LAUNCH           0x20
 
 /* direct the RMGR spawn procedure to use the provided jobid
  * instead of getting a new one
