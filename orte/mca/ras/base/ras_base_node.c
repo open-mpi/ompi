@@ -675,9 +675,9 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     opal_list_item_t* item;
     orte_gpr_value_t **values;
     int rc;
-    orte_std_cntr_t num_values, i, j;
+    orte_std_cntr_t num_values, i, j, total_slots;
     orte_ras_node_t* node;
-    char* jobid_str, *key=NULL;
+    char* jobid_str, *key=NULL, *segment;
 
     num_values = (orte_std_cntr_t)opal_list_get_size(nodes);
     if (0 >= num_values) {
@@ -685,7 +685,10 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    values = (orte_gpr_value_t**)malloc(num_values * sizeof(orte_gpr_value_t*));
+    /* get one value more than needed for these nodes so we can store the total number of
+     * slots being assigned to this jobid in the job segment
+     */
+    values = (orte_gpr_value_t**)malloc((1+num_values) * sizeof(orte_gpr_value_t*));
     if (NULL == values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
@@ -711,6 +714,9 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
     asprintf(&key, "%s-%s", ORTE_NODE_SLOTS_ALLOC_KEY, jobid_str);
     free(jobid_str);
     
+    /* initialize the total slots */
+    total_slots = 0;
+    
     for(i=0, item =  opal_list_get_first(nodes);
         i < num_values && item != opal_list_get_end(nodes);
         i++, item = opal_list_get_next(item)) {
@@ -733,15 +739,42 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
             free(key);
             goto cleanup;
         }
+        
+        /* add the slots to our total */
+        total_slots += node->node_slots_alloc;
     }
     
-    /* try the insert */
-    if (ORTE_SUCCESS != (rc = orte_gpr.put(num_values, values))) {
+    /* setup to store the total number of slots */
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[num_values]), ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                                    segment, 1, 1))) {
+        ORTE_ERROR_LOG(rc);
+        free(segment);
+        goto cleanup;
+    }
+    free(segment);
+    
+    /* enter the value */
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_values]->keyvals[0]),
+                                                     ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY, ORTE_STD_CNTR, &total_slots))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    
+    /* put the value in the JOB_GLOBALS container */
+    values[num_values]->tokens[0] = strdup(ORTE_JOB_GLOBALS);
+    
+    /* do the insert */
+    if (ORTE_SUCCESS != (rc = orte_gpr.put((1+num_values), values))) {
         ORTE_ERROR_LOG(rc);
     }
 
 cleanup:
-    for (j=0; j < num_values; j++) {
+    for (j=0; j < (1+num_values); j++) {
         OBJ_RELEASE(values[j]);
     }
     if (NULL != values) free(values);

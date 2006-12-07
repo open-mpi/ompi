@@ -78,6 +78,7 @@
 #define ORTE_JOB_VPID_START_KEY                 "orte-job-vpid-start"
 #define ORTE_JOB_VPID_RANGE_KEY                 "orte-job-vpid-range"
 #define ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY     "orte-job-override-oversubscribe"
+#define ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY          "orte-job-total-slots"
 #define ORTE_JOB_IOF_KEY                        "orte-job-iof"
 #define ORTE_JOB_STATE_KEY                      "orte-job-state"
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"

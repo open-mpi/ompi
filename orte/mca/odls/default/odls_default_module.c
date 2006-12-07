@@ -814,6 +814,13 @@ static int odls_default_fork_local_proc(
         free(param);
         free(uri);
         
+        /* set the app_context number into the environment */
+        param = mca_base_param_environ_variable("orte","app","num");
+        asprintf(&param2, "%ld", (long)child->app_idx);
+        opal_setenv(param, param2, true, &environ_copy);
+        free(param);
+        free(param2);
+        
         /* use same nodename as the starting daemon (us) */
         param = mca_base_param_environ_variable("orte", "base", "nodename");
         opal_setenv(param, orte_system_info.nodename, true, &environ_copy);

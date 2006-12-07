@@ -73,7 +73,7 @@ int mca_oob_xcast(orte_jobid_t job,
         if (NULL != buffer) {
             opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %lu", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                         (unsigned long)buffer->bytes_used);
-        } 
+        }
         gettimeofday(&start, NULL);
     }
     switch(orte_oob_xcast_mode) {
