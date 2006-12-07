@@ -741,7 +741,7 @@ int orte_ras_base_node_assign(opal_list_t* nodes, orte_jobid_t jobid)
         }
         
         /* add the slots to our total */
-        total_slots += node->node_slots_alloc;
+        total_slots += node->node_slots;
     }
     
     /* setup to store the total number of slots */
