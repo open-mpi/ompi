@@ -51,7 +51,7 @@ int main(int argc, char **argv)
     free(test_name);
     
     /* convert a string to a name */
-    tmp = strdup("1234.5678.0010");
+    tmp = strdup("124.5678.0010");
     if (ORTE_SUCCESS != (rc = orte_ns.convert_string_to_process_name(&test_name, tmp))) {  /* got error */
 	   fprintf(stderr, "convert string to process name failed with error %s\n",
                 ORTE_ERROR_NAME(rc));

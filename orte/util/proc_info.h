@@ -48,6 +48,7 @@ extern "C" {
  */
 struct orte_proc_info_t {
     orte_process_name_t *my_name;   /**< My official process name */
+    orte_std_cntr_t app_num;        /**< our index into the app_context array */
     bool singleton;                 /**< I am a singleton */
     orte_vpid_t vpid_start;         /**< starting vpid for this job */
     orte_std_cntr_t num_procs;               /**< number of processes in this job */

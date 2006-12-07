@@ -113,6 +113,7 @@ int ompi_attr_create_predefined(void)
     int rc, ret;
     orte_gpr_subscription_t *subs, sub = ORTE_GPR_SUBSCRIPTION_EMPTY;
     orte_gpr_trigger_t *trigs, trig = ORTE_GPR_TRIGGER_EMPTY;
+    orte_gpr_value_t *values[1];
     char *jobseg;
 
     /* Create all the keyvals */
@@ -195,52 +196,31 @@ int ompi_attr_create_predefined(void)
         return rc;
     }
     sub.action = ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG;
-    sub.values = (orte_gpr_value_t**)malloc(2 * sizeof(orte_gpr_value_t*));
-    sub.cnt = 2;
+    sub.values = values;
+    sub.cnt = 1;
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(sub.values[0]), ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                                    ORTE_NODE_SEGMENT, 1, 0))) {
+    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&jobseg, ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(rc);
-        free(sub.name);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(sub.values[0]->keyvals[0]), ORTE_NODE_SLOTS_KEY, ORTE_UNDEF, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
         free(sub.name);
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&jobseg, ORTE_PROC_MY_NAME->jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                                    jobseg, 1, 0))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
-        free(sub.name);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(sub.values[1]), ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
-                                                    jobseg, 2, 0))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
-        free(sub.name);
         free(jobseg);
+        free(sub.name);
         return rc;
     }
     free(jobseg);
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(sub.values[1]->keyvals[0]), ORTE_PROC_RANK_KEY, ORTE_UNDEF, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[0]->keyvals[0]), ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY, ORTE_UNDEF, NULL))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
-        OBJ_RELEASE(sub.values[1]);
+        OBJ_RELEASE(values[0]);
         free(sub.name);
         return rc;
     }
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(sub.values[1]->keyvals[1]), ORTE_PROC_APP_CONTEXT_KEY, ORTE_UNDEF, NULL))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
-        OBJ_RELEASE(sub.values[1]);
-        free(sub.name);
-        return rc;
-    }
+
     sub.cbfunc = ompi_attr_create_predefined_callback;
     
     /* attach ourselves to the standard stage-1 trigger */
@@ -249,8 +229,7 @@ int ompi_attr_create_predefined(void)
         (rc = orte_schema.get_std_trigger_name(&trig.name,
                                                ORTE_STG1_TRIGGER, ORTE_PROC_MY_NAME->jobid))) {
         ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(sub.values[0]);
-        OBJ_RELEASE(sub.values[1]);
+        OBJ_RELEASE(values[0]);
         free(sub.name);
         return rc;
     }
@@ -258,8 +237,7 @@ int ompi_attr_create_predefined(void)
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe(1, &subs, 1, &trigs))) {
         ORTE_ERROR_LOG(rc);
     }
-    OBJ_RELEASE(sub.values[0]);
-    OBJ_RELEASE(sub.values[1]);
+    OBJ_RELEASE(values[0]);
     free(sub.name);
     free(trig.name);
 
@@ -299,17 +277,10 @@ void ompi_attr_create_predefined_callback(
     orte_gpr_notify_data_t *data,
     void *cbdata)
 {
-    orte_std_cntr_t i, j, k;
-    orte_gpr_keyval_t **keyval;
     orte_gpr_value_t **value;
-    orte_jobid_t job;
-    orte_std_cntr_t *cptr, rank, app_num = 0;
-    unsigned int universe_size = 0;
+    orte_std_cntr_t *cptr;
+    unsigned int universe_size;
     int rc;
-
-    /* Set some default values */
-
-    job = ORTE_PROC_MY_NAME->jobid;
 
     /* Query the gpr to find out how many CPUs there will be.
        This will only return a non-empty list in a persistent
@@ -332,58 +303,33 @@ void ompi_attr_create_predefined_callback(
      * happens in-between anyway, so this shouldn't cause a problem.
      */
 
-    if (0 == data->cnt) {  /* no data returned */
+    if (1 != data->cnt) {  /* only one data value should be returned, or else something is wrong - use default */
         universe_size = ompi_comm_size(MPI_COMM_WORLD);
     } else {
         value = (orte_gpr_value_t**)(data->values)->addr;
-        for (i=0, k=0; k < data->cnt &&
-                       i < (data->values)->size; i++) {
-            if (NULL != value[i]) {
-                k++;
-                rank = ORTE_VPID_INVALID;
-                if (0 < value[i]->cnt) {  /* make sure some data was returned here */
-                    keyval = value[i]->keyvals;
-                    for (j=0; j < value[i]->cnt; j++) {
-                        if (0 == strcmp(ORTE_NODE_SLOTS_KEY, keyval[j]->key)) {
-                            /* Process slot count */
-                            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval[j]->value, ORTE_STD_CNTR))) {
-                                ORTE_ERROR_LOG(rc);
-                                return;
-                            }
-                            universe_size += (unsigned int)(*cptr);
-                        } else if (0 == strcmp(ORTE_PROC_RANK_KEY, keyval[j]->key)) {
-                            /* Process rank */
-                            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval[j]->value, ORTE_STD_CNTR))) {
-                                ORTE_ERROR_LOG(rc);
-                                return;
-                            }
-                            rank = *cptr;                            
-                        } else if (0 == strcmp(ORTE_PROC_APP_CONTEXT_KEY,  keyval[j]->key)) {
-                            /* App context number */
-                            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, keyval[j]->value, ORTE_STD_CNTR))) {
-                                ORTE_ERROR_LOG(rc);
-                                return;
-                            }
-                            app_num = *cptr;
-                        }
-                   } 
-                   /* see if this value is for this process. We need to
-                    * perform the check since this subscription is associated
-                    * with a trigger - hence, the data from all the procs
-                    * is included in the message
-                    */
-                   if (rank == ORTE_PROC_MY_NAME->vpid) {
-                       set_f(MPI_APPNUM, (MPI_Fint) app_num);
-                   }
-                }
+        if (NULL == value[0]) {
+            /* again, got an error - use default */
+            universe_size = ompi_comm_size(MPI_COMM_WORLD);
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&cptr, value[0]->keyvals[0]->value, ORTE_STD_CNTR))) {
+                ORTE_ERROR_LOG(rc);
+                return;
             }
+            universe_size = (unsigned int)(*cptr);
         }
     }
 
-    /* Same as above -- ignore errors here because there's nothing we
+    /* ignore errors here because there's nothing we
        can do if there's any error anyway */
-
     set_f(MPI_UNIVERSE_SIZE, universe_size);
+        
+        
+    /* the app_context index for this app was passed in via the ODLS framework
+     * and stored in the orte_process_info structure when that struct was initialized - set
+     * the corresponding attribute here
+     */
+    set_f(MPI_APPNUM, (MPI_Fint) orte_process_info.app_num);
+
     return;
 }
 
