@@ -65,6 +65,11 @@
 extern char **environ;
 #endif  /* !defined(__WINDOWS__) */
 
+static int ompi_comm_get_rport (orte_process_name_t *port,
+                                int send_first, struct ompi_proc_t *proc,
+                                orte_rml_tag_t tag, orte_process_name_t *rport);
+
+
 int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
                                orte_process_name_t *port, int send_first,
                                ompi_communicator_t **newcomm, orte_rml_tag_t tag )
@@ -78,7 +83,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
     ompi_communicator_t *newcomp=MPI_COMM_NULL;
     ompi_proc_t **rprocs=NULL;
     ompi_group_t *group=comm->c_local_group;
-    orte_process_name_t *rport=NULL;
+    orte_process_name_t *rport=NULL, tmp_port_name;
     orte_buffer_t *nbuf=NULL, *nrbuf=NULL;
 
     size = ompi_comm_size ( comm );
@@ -94,8 +99,11 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
            exchange that.
         */
         if ( OMPI_COMM_JOIN_TAG != (int)tag ) {
-            rport = ompi_comm_get_rport( port,send_first,
-                                         group->grp_proc_pointers[rank], tag);
+            rc = ompi_comm_get_rport(port,send_first,
+                                     group->grp_proc_pointers[rank], tag,
+                                     &tmp_port_name);
+            if (OMPI_SUCCESS != rc) return rc;
+            rport = &tmp_port_name;
         } else {
             rport = port;
         }
@@ -111,7 +119,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
             ORTE_ERROR_LOG(rc);
             goto exit;
         }
-        ompi_proc_get_namebuf (group->grp_proc_pointers, size, nbuf);
+        ompi_proc_pack(group->grp_proc_pointers, size, nbuf);
 
         nrbuf = OBJ_NEW(orte_buffer_t);
         if (NULL == nrbuf ) {
@@ -182,7 +190,7 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
         goto exit;
     }
 
-    rc = ompi_proc_get_proclist (nrbuf, rsize, &rprocs);
+    rc = ompi_proc_unpack(nrbuf, rsize, &rprocs);
     if ( OMPI_SUCCESS != rc ) {
         goto exit;
     }
@@ -272,70 +280,62 @@ int ompi_comm_connect_accept ( ompi_communicator_t *comm, int root,
  * accept get their own port_name = OOB contact information passed in as
  * an argument. This is however useless.
  *
- * Therefore, the two root processes exchange this information at this point.
+ * Therefore, the two root processes exchange this information at this
+ * point.
  *
  */
-orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_first,
-                                          ompi_proc_t *proc, orte_rml_tag_t tag)
+int ompi_comm_get_rport(orte_process_name_t *port, int send_first,
+                        ompi_proc_t *proc, orte_rml_tag_t tag, 
+                        orte_process_name_t *rport_name)
 {
     int rc;
     orte_std_cntr_t num_vals;
-    orte_process_name_t *rport, tbuf;
-    ompi_proc_t *rproc=NULL;
-    bool isnew = false;
 
     if ( send_first ) {
         orte_buffer_t *sbuf;
 
-        rproc = ompi_proc_find_and_add(port, &isnew);
         sbuf = OBJ_NEW(orte_buffer_t);
         if (NULL == sbuf) {
-            return NULL;
+            return OMPI_ERROR;
         }
         if (ORTE_SUCCESS != (rc = orte_dss.pack(sbuf, &(proc->proc_name), 1, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(sbuf);
-            return NULL;
+            return rc;
         }
 
         rc = orte_rml.send_buffer(port, sbuf, tag, 0);
         OBJ_RELEASE(sbuf);
 	if ( 0 > rc ) {
 	    ORTE_ERROR_LOG(rc);
-	    return NULL;
+	    return rc;
 	}
 	    
-        rport = port;
+        *rport_name = *port;
     }
     else {
         orte_buffer_t *rbuf;
 
         rbuf = OBJ_NEW(orte_buffer_t);
         if (NULL == rbuf) {
-            return NULL;
+            return ORTE_ERROR;
         }
         if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(rbuf);
-            return NULL;
+            return rc;
         }
 
         num_vals = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, &tbuf, &num_vals, ORTE_NAME))) {
+        if (ORTE_SUCCESS != (rc = orte_dss.unpack(rbuf, rport_name, &num_vals, ORTE_NAME))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(rbuf);
-            return NULL;
+            return rc;
         }
         OBJ_RELEASE(rbuf);
-        rproc = ompi_proc_find_and_add(&tbuf, &isnew);
-        rport = &(rproc->proc_name);
-
-    }
-    if (isnew) {
-        MCA_PML_CALL(add_procs(&rproc, 1));
     }
 
-    return rport;
+    return OMPI_SUCCESS;
 }
 
 

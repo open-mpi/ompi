@@ -140,11 +140,45 @@ OBJ_CLASS_INSTANCE(mca_pml_base_modex_subscription_t,
 		   NULL,
 		   NULL);
 
+
+/**
+ * structure for unknown process structures (ones that aren't in our ompi_proc lists yet)
+ */
+struct mca_pml_base_modex_unknown_proc_t {
+    opal_list_item_t item;
+    orte_process_name_t proc_name;
+    opal_mutex_t mutex;
+    opal_object_t* modex_info;
+};
+typedef struct mca_pml_base_modex_unknown_proc_t mca_pml_base_modex_unknown_proc_t;
+
+static void
+mca_pml_base_modex_unknown_proc_construct(mca_pml_base_modex_unknown_proc_t *proc)
+{
+    proc->modex_info = NULL;
+    OBJ_CONSTRUCT(&(proc->mutex), opal_mutex_t);
+}
+
+static void
+mca_pml_base_modex_unknown_proc_destruct(mca_pml_base_modex_unknown_proc_t *proc)
+{
+    OBJ_DESTRUCT(&(proc->mutex));
+    if (NULL != proc->modex_info) {
+        OBJ_RELEASE(proc->modex_info);
+    }
+}
+
+OBJ_CLASS_INSTANCE(mca_pml_base_modex_unknown_proc_t,
+		   opal_list_item_t,
+		   mca_pml_base_modex_unknown_proc_construct,
+		   mca_pml_base_modex_unknown_proc_destruct);
+
+
 /**
  * Globals to track the list of subscriptions.
  */
-
 static opal_list_t mca_pml_base_modex_subscriptions;
+static opal_list_t mca_pml_base_modex_unknown_procs;
 static opal_mutex_t mca_pml_base_modex_lock;
 
 
@@ -154,10 +188,13 @@ static opal_mutex_t mca_pml_base_modex_lock;
 int
 mca_pml_base_modex_init(void)
 {
+    OBJ_CONSTRUCT(&mca_pml_base_modex_unknown_procs, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_base_modex_subscriptions, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_base_modex_lock, opal_mutex_t);
+
     return OMPI_SUCCESS;
 }
+
 
 /**
  * Cleanup global state.
@@ -166,17 +203,46 @@ int
 mca_pml_base_modex_finalize(void)
 {
     opal_list_item_t *item;
+
+    while (NULL != (item = opal_list_remove_first(&mca_pml_base_modex_unknown_procs)))
+	OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&mca_pml_base_modex_unknown_procs);
+
     while (NULL != (item = opal_list_remove_first(&mca_pml_base_modex_subscriptions)))
 	OBJ_RELEASE(item);
     OBJ_DESTRUCT(&mca_pml_base_modex_subscriptions);
+
     return OMPI_SUCCESS;
+}
+
+
+static mca_pml_base_modex_unknown_proc_t *
+modex_unknown_proc_get(orte_process_name_t *proc_name)
+{
+    opal_list_item_t *item;
+    mca_pml_base_modex_unknown_proc_t *unknown_proc = NULL;
+    orte_ns_cmp_bitmask_t mask;
+
+    /* return the proc-struct which matches this jobid+process id */
+    mask = ORTE_NS_CMP_CELLID | ORTE_NS_CMP_JOBID | ORTE_NS_CMP_VPID;
+    OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
+    for(item = opal_list_get_first(&mca_pml_base_modex_unknown_procs);
+        item != opal_list_get_end(&mca_pml_base_modex_unknown_procs);
+        item = opal_list_get_next(item)) {
+        unknown_proc = (mca_pml_base_modex_unknown_proc_t*) item;
+        if (ORTE_EQUAL == orte_ns.compare_fields(mask, &unknown_proc->proc_name, proc_name)) {
+            break;
+        }
+    }
+    OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
+
+    return unknown_proc;
 }
 
 
 /**
  *  Look to see if there is any data associated with a specified module.
  */
-
 static mca_pml_base_modex_module_t *
 mca_pml_base_modex_lookup_module(mca_pml_base_modex_t * modex,
 				 mca_base_component_t * component)
@@ -196,7 +262,6 @@ mca_pml_base_modex_lookup_module(mca_pml_base_modex_t * modex,
 /**
  *  Create a placeholder for data associated with the specified module.
  */
-
 static mca_pml_base_modex_module_t *
 mca_pml_base_modex_create_module(mca_pml_base_modex_t * modex,
 				 mca_base_component_t * component)
@@ -216,7 +281,6 @@ mca_pml_base_modex_create_module(mca_pml_base_modex_t * modex,
 /**
  *  Callback for registry notifications.
  */
-
 static void
 mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
 				     void *cbdata)
@@ -224,24 +288,15 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
     orte_std_cntr_t i, j, k;
     orte_gpr_value_t **values, *value;
     orte_gpr_keyval_t **keyval;
-    ompi_proc_t *proc;
-    ompi_proc_t **new_procs = NULL;
-    size_t new_proc_count = 0;
     char **token;
     orte_process_name_t *proc_name;
     mca_pml_base_modex_t *modex;
+    opal_mutex_t *proc_mutex;
     mca_pml_base_modex_module_t *modex_module;
     mca_base_component_t component;
-    bool isnew = false;
+    bool is_unknown_proc = false;
     int rc;
 
-    if (data->cnt) {
-	new_procs = (ompi_proc_t **) malloc(sizeof(ompi_proc_t *) * data->cnt);
-	if (NULL == new_procs) {
-	    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-	    return;
-	}
-    }
     /* process the callback */
     values = (orte_gpr_value_t **) (data->values)->addr;
     for (i = 0, k = 0; k < data->cnt &&
@@ -255,28 +310,44 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
 	         */
 		token = value->tokens;
 		if (ORTE_SUCCESS == orte_ns.convert_string_to_process_name(&proc_name, token[0])) {
-		    proc = ompi_proc_find_and_add(proc_name, &isnew);
-		    if (NULL == proc)
-			continue;
+                    /*
+                     * Lookup the modex data structure.
+                     */
+		    ompi_proc_t *proc = ompi_proc_find(proc_name);
+		    if (NULL == proc) {
+                        mca_pml_base_modex_unknown_proc_t *unknown_proc = 
+                            modex_unknown_proc_get(proc_name);
+                        if (NULL == unknown_proc) {
+                            unknown_proc = (mca_pml_base_modex_unknown_proc_t*)
+                                OBJ_NEW(mca_pml_base_modex_unknown_proc_t);
+                            if (NULL == unknown_proc) {
+                                opal_output(0, "mca_pml_base_modex_registery_callback: unable to allocate unknown_proc structure");
+                                return;
+                            }
+                        }
+                        is_unknown_proc = true;
+                        proc_mutex = &(unknown_proc->mutex);
+                        OPAL_THREAD_LOCK(proc_mutex);
 
-		    if (isnew) {
-			new_procs[new_proc_count] = proc;
-			new_proc_count++;
-		    }
-		    /*
-	             * Lookup the modex data structure.
-	             */
+                        if (NULL == (modex = (mca_pml_base_modex_t*) unknown_proc->modex_info)) {
+                            modex = OBJ_NEW(mca_pml_base_modex_t);
+                            unknown_proc->modex_info = (opal_object_t*) modex;
+                        }
+                    } else {
+                        proc_mutex = &(proc->proc_lock);
+                        OPAL_THREAD_LOCK(proc_mutex);
 
-		    OPAL_THREAD_LOCK(&proc->proc_lock);
-		    if (NULL == (modex = (mca_pml_base_modex_t *) proc->proc_modex)) {
-			modex = OBJ_NEW(mca_pml_base_modex_t);
-			if (NULL == modex) {
-			    opal_output(0, "mca_pml_base_modex_registry_callback: unable to allocate mca_pml_base_modex_t\n");
-			    OPAL_THREAD_UNLOCK(&proc->proc_lock);
-			    return;
-			}
-			proc->proc_modex = &modex->super;
-		    }
+                        if (NULL == (modex = (mca_pml_base_modex_t *) proc->proc_modex)) {
+                            modex = OBJ_NEW(mca_pml_base_modex_t);
+                            proc->proc_modex = (opal_object_t*) modex;
+                        }
+                    }
+                    if (NULL == modex) {
+                        opal_output(0, "mca_pml_base_modex_registry_callback: unable to allocate mca_pml_base_modex_t\n");
+                        OPAL_THREAD_UNLOCK(proc_mutex);
+                        return;
+                    }
+
 		    /*
 	             * Extract the component name and version from the keyval object's key
 	             * Could be multiple keyvals returned since there is one for each
@@ -359,7 +430,7 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
 			if (NULL == (modex_module = mca_pml_base_modex_create_module(modex, &component))) {
 			    opal_output(0, "mca_pml_base_modex_registry_callback: mca_pml_base_modex_create_module failed\n");
 			    OBJ_RELEASE(data);
-			    OPAL_THREAD_UNLOCK(&proc->proc_lock);
+			    OPAL_THREAD_UNLOCK(proc_mutex);
 			    return;
 			}
 			modex_module->module_data = bytes;
@@ -367,29 +438,23 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
 			modex_module->module_data_avail = true;
 			opal_condition_signal(&modex_module->module_data_cond);
 
-			/*
-		         * call any registered
-		         * callbacks
-		         */
-			for (item = opal_list_get_first(&modex_module->module_cbs);
-			     item != opal_list_get_end(&modex_module->module_cbs);
-			     item = opal_list_get_next(item)) {
-			    mca_pml_base_modex_cb_t *cb = (mca_pml_base_modex_cb_t *) item;
-			    cb->cbfunc(cb->component, proc, bytes, num_bytes, cb->cbdata);
-			}
+                        if (!is_unknown_proc) {
+                            /*
+                             * call any registered
+                             * callbacks
+                             */
+                            for (item = opal_list_get_first(&modex_module->module_cbs);
+                                 item != opal_list_get_end(&modex_module->module_cbs);
+                                 item = opal_list_get_next(item)) {
+                                mca_pml_base_modex_cb_t *cb = (mca_pml_base_modex_cb_t *) item;
+                                cb->cbfunc(cb->component, proc, bytes, num_bytes, cb->cbdata);
+                            }
+                        }
 		    }
-		    OPAL_THREAD_UNLOCK(&proc->proc_lock);
+		    OPAL_THREAD_UNLOCK(proc_mutex);
 		}		       /* convert string to process name */
 	    }			       /* if value[i]->cnt > 0 */
 	}
-    }
-
-    /* pml add procs */
-    if (NULL != new_procs) {
-	if (new_proc_count > 0) {
-	    MCA_PML_CALL(add_procs(new_procs, new_proc_count));
-	}
-	free(new_procs);
     }
 }
 
@@ -610,7 +675,25 @@ mca_pml_base_modex_recv(mca_base_component_t * component,
 	OPAL_THREAD_UNLOCK(&proc->proc_lock);
 	mca_pml_base_modex_subscribe(&proc->proc_name);
 	OPAL_THREAD_LOCK(&proc->proc_lock);
+    } else {
+        mca_pml_base_modex_unknown_proc_t *unknown_proc = 
+            modex_unknown_proc_get(&(proc->proc_name));
+        if (NULL != unknown_proc) {
+            /* copy over the old stuff and clean us out... The real
+               proc was locked while this was happening, so there's no
+               way two threads can both call unknown_proc_get() then
+               remove_item() at the same time and try to remove the
+               list twice... */
+            proc->proc_modex = unknown_proc->modex_info;
+            OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
+            opal_list_remove_item(&mca_pml_base_modex_unknown_procs,
+                                  (opal_list_item_t*) unknown_proc);
+            OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
+        }
+
+        modex = (mca_pml_base_modex_t*) proc->proc_modex;
     }
+
     /* lookup/create the module */
     if (NULL == (modex_module = mca_pml_base_modex_create_module(modex, component))) {
 	OPAL_THREAD_UNLOCK(&proc->proc_lock);
@@ -667,7 +750,25 @@ mca_pml_base_modex_recv_nb(mca_base_component_t * component,
 	OPAL_THREAD_UNLOCK(&proc->proc_lock);
 	mca_pml_base_modex_subscribe(&proc->proc_name);
 	OPAL_THREAD_LOCK(&proc->proc_lock);
+    } else {
+        mca_pml_base_modex_unknown_proc_t *unknown_proc = 
+            modex_unknown_proc_get(&(proc->proc_name));
+        if (NULL != unknown_proc) {
+            /* copy over the old stuff and clean us out... The real
+               proc was locked while this was happening, so there's no
+               way two threads can both call unknown_proc_get() then
+               remove_item() at the same time and try to remove the
+               list twice... */
+            proc->proc_modex = unknown_proc->modex_info;
+            OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
+            opal_list_remove_item(&mca_pml_base_modex_unknown_procs,
+                                  (opal_list_item_t*) unknown_proc);
+            OPAL_THREAD_UNLOCK(&mca_pml_base_modex_lock);
+        }
+
+        modex = (mca_pml_base_modex_t*) proc->proc_modex;
     }
+
     /* lookup/create the module */
     if (NULL == (module = mca_pml_base_modex_create_module(modex, component))) {
 	OPAL_THREAD_UNLOCK(&proc->proc_lock);
