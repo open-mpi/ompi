@@ -641,7 +641,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
     if (!(remote_csh || remote_sh)) {
         int i;
-        tmp = opal_argv_split("( test ! -e ./.profile || . ./.profile;", ' ');
+        tmp = opal_argv_split("( test \! -r ./.profile || . ./.profile;", ' ');
         if (NULL == tmp) {
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
