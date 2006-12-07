@@ -838,7 +838,6 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     int rc;
     int local_rank, local_size;
     ompi_proc_t **rprocs=NULL;
-    char *rnamebuf=NULL;
     orte_std_cntr_t size_len;
     int int_len, rlen;
     orte_buffer_t *sbuf=NULL, *rbuf=NULL;
@@ -896,16 +895,6 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     if ( NULL == recvbuf ) {
 	goto err_exit;
     }
-    
-    rbuf = OBJ_NEW(orte_buffer_t);
-    if (NULL == rbuf) {
-        rc = ORTE_ERROR;
-        goto err_exit;
-    }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.load(rbuf, recvbuf, rlen))) {
-        goto err_exit;
-    }
 
     if ( local_rank == local_leader ) {
         /* local leader exchange name lists */
@@ -933,15 +922,22 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     if ( OMPI_SUCCESS != rc ) {
         goto err_exit;
     }
+
+    rbuf = OBJ_NEW(orte_buffer_t);
+    if (NULL == rbuf) {
+        rc = ORTE_ERROR;
+        goto err_exit;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dss.load(rbuf, recvbuf, rlen))) {
+        goto err_exit;
+    }
     
     /* decode the names into a proc-list */
     rc = ompi_proc_get_proclist (rbuf, rsize, &rprocs );
     OBJ_RELEASE(rbuf);
     
  err_exit:
-    if ( NULL != rnamebuf) {
-        free ( rnamebuf );
-    }
     /* rprocs isn't freed unless we have an error, 
        since it is used in the communicator */
     if ( OMPI_SUCCESS !=rc ) {
