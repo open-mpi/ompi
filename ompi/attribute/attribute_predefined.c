@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -50,7 +51,8 @@
  * MPI_APPNUM is set as the result of a GPR subscription.
  *
  * MPI_LASTUSEDCODE is set to an initial value and is reset every time
- * MPI_ADD_ERROR_CLASS is invoked.  Its copy function is set to
+ * MPI_ADD_ERROR_CLASS or MPI_ADD_ERROR_CODE is invoked.  
+ * Its copy function is set to
  * MPI_COMM_NULL_COPY_FN, meaning that *only* MPI_COMM_WORLD will have
  * this attribute value.  As such, we only have to update
  * MPI_COMM_WORLD when this value changes (i.e., since this is an
@@ -82,7 +84,7 @@
 
 #include "ompi/attribute/attribute.h"
 
-#include "ompi/errhandler/errclass.h"
+#include "ompi/errhandler/errcode.h"
 #include "ompi/communicator/communicator.h"
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/pml.h"
@@ -151,7 +153,7 @@ int ompi_attr_create_predefined(void)
         OMPI_SUCCESS != (ret = set_f(MPI_IO, MPI_ANY_SOURCE)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_WTIME_IS_GLOBAL, 0)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_LASTUSEDCODE,
-                                     ompi_errclass_lastused)) ||
+                                     ompi_mpi_errcode_lastused)) ||
         OMPI_SUCCESS != (ret = set_f(MPI_UNIVERSE_SIZE,
                                     ompi_comm_size(MPI_COMM_WORLD))) ||
 #if 0

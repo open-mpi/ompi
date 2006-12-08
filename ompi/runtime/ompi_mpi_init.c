@@ -10,6 +10,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ * Copyright (c) 2006      University of Houston. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -56,7 +60,6 @@
 #include "ompi/group/group.h"
 #include "ompi/info/info.h"
 #include "ompi/errhandler/errcode.h"
-#include "ompi/errhandler/errclass.h"
 #include "ompi/request/request.h"
 #include "ompi/op/op.h"
 #include "ompi/file/file.h"
@@ -438,12 +441,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         error = "ompi_mpi_errcode_init() failed";
         goto error;
     }
-
-    /* initialize error classes */
-    if (OMPI_SUCCESS != (ret = ompi_errclass_init())) {
-        error = "ompi_errclass_init() failed";
-        goto error;
-    }
     
     /* initialize internal error codes */
     if (OMPI_SUCCESS != (ret = ompi_errcode_intern_init())) {
@@ -529,11 +526,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                         (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                         (ompistop.tv_usec - ompistart.tv_usec)));
         }
+        gettimeofday(&ompistart, NULL);
     }
     
     /* FIRST BARRIER - WAIT FOR MSG FROM RMGR_PROC_STAGE_GATE_MGR TO ARRIVE */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, true, NULL,
+                                 orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;
@@ -541,9 +539,12 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
 
     /* check for timing request - get start time */
     if (timing) {
-        if (0 != gettimeofday(&stg2start, NULL)) {
-            opal_output(0, "ompi_mpi_init: could not obtain stop time after compound_cmd");
-        }
+        gettimeofday(&ompistop, NULL);
+        opal_output(0, "ompi_mpi_init[%ld]: time to execute xcast %ld usec",
+                    (long)ORTE_PROC_MY_NAME->vpid,
+                    (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
+                               (ompistop.tv_usec - ompistart.tv_usec)));
+        gettimeofday(&stg2start, NULL);
     }
     
     /* start PTL's */
@@ -652,8 +653,8 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     /* Second barrier -- wait for message from
        RMGR_PROC_STAGE_GATE_MGR to arrive */
 
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false, NULL,
+                                               orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         error = "ompi_mpi_init: failed to see all procs register\n";
         goto error;

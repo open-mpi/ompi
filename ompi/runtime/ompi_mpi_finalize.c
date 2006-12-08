@@ -10,6 +10,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ * Copyright (c) 2006      University of Houston. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -53,7 +57,6 @@
 #include "ompi/constants.h"
 #include "ompi/group/group.h"
 #include "ompi/errhandler/errcode.h"
-#include "ompi/errhandler/errclass.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/op/op.h"
@@ -146,8 +149,8 @@ int ompi_mpi_finalize(void)
     /*
      * Wait for everyone to get here
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false, NULL,
+                                               orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
@@ -211,11 +214,6 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
      
-    /* free error class resources */
-    if (OMPI_SUCCESS != (ret = ompi_errclass_finalize())) {
-	return ret;
-    }
-
     /* free error code resources */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
 	return ret;
@@ -287,8 +285,8 @@ int ompi_mpi_finalize(void)
      * the RTE while the smr is trying to do the update - which causes
      * an ugly race condition
      */
-    if (ORTE_SUCCESS != (ret = orte_rml.xcast(NULL, NULL, 0, NULL,
-                                 orte_gpr.deliver_notify_msg, NULL))) {
+    if (ORTE_SUCCESS != (ret = orte_rml.xcast(ORTE_PROC_MY_NAME->jobid, false, NULL,
+                                              orte_gpr.deliver_notify_msg))) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }

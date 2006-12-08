@@ -58,10 +58,9 @@ int orte_rmgr_base_proc_stage_gate_init(orte_jobid_t job)
 int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 {
     orte_buffer_t buffer;
-    orte_process_name_t *recipients=NULL;
-    orte_std_cntr_t n=0;
     int rc;
     orte_jobid_t job;
+    bool process_first;
 
     OPAL_TRACE(1);
 
@@ -87,15 +86,8 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
 
     OPAL_TRACE_ARG1(1, job);
     
-    /* need the list of peers for this job so we can send them the xcast.
-     * obtain this list from the name service's get_job_peers function
-     */
-    if (ORTE_SUCCESS != (rc = orte_ns.get_job_peers(&recipients, &n, job))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
     /* set the job state to the appropriate level */
+    process_first = false;
     if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_LAUNCHED_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_LAUNCHED))) {
             ORTE_ERROR_LOG(rc);
@@ -106,6 +98,7 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
+        process_first = true;
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG2))) {
             ORTE_ERROR_LOG(rc);
@@ -138,13 +131,11 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     }
 
     /* send the message */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(orte_process_info.my_name, recipients,
-                                        n, &buffer, NULL, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, process_first, &buffer, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&buffer);
 
 CLEANUP:
-    if (NULL != recipients) free(recipients);
     return rc;
 }

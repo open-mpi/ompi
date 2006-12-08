@@ -20,7 +20,6 @@
 # This makefile.am does not stand on its own - it is included from ompi/Makefile.am
 
 headers += \
-        errhandler/errclass.h \
         errhandler/errcode.h \
         errhandler/errcode-internal.h \
         errhandler/errhandler.h \
@@ -31,5 +30,4 @@ libmpi_la_SOURCES += \
         errhandler/errhandler_invoke.c \
         errhandler/errhandler_predefined.c \
         errhandler/errcode.c \
-        errhandler/errclass.c  \
         errhandler/errcode-internal.c

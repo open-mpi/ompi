@@ -46,9 +46,11 @@ extern "C" {
 /*
  * Well known address
  */
-
 ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_any;
 ORTE_DECLSPEC extern orte_process_name_t mca_oob_name_seed;
+ORTE_DECLSPEC extern bool orte_oob_base_timing;
+ORTE_DECLSPEC extern bool orte_oob_xcast_timing;
+ORTE_DECLSPEC extern int orte_oob_xcast_mode;
 
 /*
  * OOB API
@@ -402,12 +404,10 @@ ORTE_DECLSPEC int mca_oob_recv_packed_nb(
  *  continuing to forward data along the distribution tree.
  */
 
-ORTE_DECLSPEC int mca_oob_xcast(
-    orte_process_name_t* root,
-    orte_process_name_t* peers,
-    orte_std_cntr_t num_peers,
-    orte_buffer_t* buffer,
-    orte_gpr_trigger_cb_fn_t cbfunc);
+ORTE_DECLSPEC int mca_oob_xcast(orte_jobid_t job,
+                                bool process_first,
+                                orte_buffer_t* buffer,
+                                orte_gpr_trigger_cb_fn_t cbfunc);
 
 /*
  * Callback on exception condition.

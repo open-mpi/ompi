@@ -21,6 +21,7 @@
 #include "orte/orte_constants.h"
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/oob/oob.h"
 
@@ -44,6 +45,9 @@ char* mca_oob_base_exclude = NULL;
 opal_list_t mca_oob_base_components;
 opal_list_t mca_oob_base_modules;
 opal_list_t mca_oob_base_exception_handlers;
+bool orte_oob_base_timing;
+bool orte_oob_xcast_timing;
+int orte_oob_xcast_mode;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -51,6 +55,9 @@ opal_list_t mca_oob_base_exception_handlers;
  */
 int mca_oob_base_open(void)
 {
+    int param, value;
+    char *mode;
+    
   /* Open up all available components */
 
   OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
@@ -72,6 +79,27 @@ int mca_oob_base_open(void)
                                  "Components to exclude for oob framework selection",
                                  false, false, NULL, &mca_oob_base_exclude);
 
+  param = mca_base_param_reg_int_name("orte_oob_xcast", "timing",
+                                      "Request that xcast timing loops be measured",
+                                      false, false, 0, &value);
+  if (value != 0) {
+      orte_oob_xcast_timing = true;
+  } else {
+      orte_oob_xcast_timing = false;
+  }
+  
+  param = mca_base_param_reg_string_name("orte_oob_xcast", "mode",
+                                      "Select xcast mode (\"linear\" [default] | \"binomial\")",
+                                      false, false, "linear", &mode);
+  if (0 == strcmp(mode, "linear")) {
+      orte_oob_xcast_mode = 1;
+  } else if (0 != strcmp(mode, "binomial")) {
+      opal_output(0, "oob_xcast_mode: unknown option %s", mode);
+      return ORTE_ERROR;
+  } else {
+      orte_oob_xcast_mode = 0;
+  }
+  
   /* All done */
   return ORTE_SUCCESS;
 }
