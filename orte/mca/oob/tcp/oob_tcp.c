@@ -982,7 +982,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
                                          ORTE_GPR_NOTIFY_ADD_ENTRY |
                                          ORTE_GPR_NOTIFY_VALUE_CHG |
                                          ORTE_GPR_NOTIFY_PRE_EXISTING,
-                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
                                          key,
@@ -1119,7 +1119,7 @@ int mca_oob_tcp_init(void)
                                          ORTE_GPR_NOTIFY_ADD_ENTRY |
                                          ORTE_GPR_NOTIFY_VALUE_CHG |
                                          ORTE_GPR_NOTIFY_STARTS_AFTER_TRIG,
-                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+                                         ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                          segment,
                                          NULL,  /* look at all containers on this segment */
                                          keys[0],

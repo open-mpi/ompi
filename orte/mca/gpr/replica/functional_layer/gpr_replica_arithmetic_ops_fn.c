@@ -53,7 +53,7 @@ int orte_gpr_replica_increment_value_fn(orte_gpr_addr_mode_t addr_mode,
     OPAL_TRACE(2);
     
     /* extract the token address mode */
-    tok_mode = 0x004f & addr_mode;
+    tok_mode = ORTE_GPR_REPLICA_TOKMODE(addr_mode);
     if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */
         tok_mode = ORTE_GPR_REPLICA_AND;
     }
@@ -117,7 +117,7 @@ int orte_gpr_replica_decrement_value_fn(orte_gpr_addr_mode_t addr_mode,
     OPAL_TRACE(2);
     
     /* extract the token address mode */
-    tok_mode = 0x004f & addr_mode;
+    tok_mode = ORTE_GPR_REPLICA_TOKMODE(addr_mode);
     if (0x00 == tok_mode) {  /* default tokens addressing mode to AND */
         tok_mode = ORTE_GPR_REPLICA_AND;
     }

@@ -205,7 +205,7 @@ int ompi_attr_create_predefined(void)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[0]), ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR | ORTE_GPR_STRIPPED,
                                                     jobseg, 1, 0))) {
         ORTE_ERROR_LOG(rc);
         free(jobseg);
