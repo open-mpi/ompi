@@ -32,8 +32,6 @@ extern "C" {
 #endif
 
 /**
- * Back-end type for MPI error codes
-/**
  * Back-end type for MPI error codes. 
  * Please note: 
  *   if code == MPI_UNDEFINED, than the according structure 
