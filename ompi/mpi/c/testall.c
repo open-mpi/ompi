@@ -51,7 +51,7 @@ int MPI_Testall(int count, MPI_Request requests[], int *flag,
         return MPI_SUCCESS;
     }
     if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(count, requests, FUNC_NAME, false)) {
+        ompi_errhandler_request_invoke(count, requests, FUNC_NAME)) {
         return MPI_ERR_IN_STATUS;
     }
     return MPI_SUCCESS;

@@ -55,6 +55,14 @@ static inline int ompi_errcode_get_mpi_code(int errcode)
     int __i;
     ompi_errcode_intern_t *__errc;
 
+    /* If the errcode is >= 0, then it's already an MPI error code, so
+       just return it. */
+    if (errcode >= 0) {
+        return errcode;
+    }
+
+    /* Otherwise, it's an internal OMPI code and we need to translate
+       it */
     for ( __i=0; __i<ompi_errcode_intern_lastused; __i++) {
         __errc = (ompi_errcode_intern_t *)ompi_pointer_array_get_item(&ompi_errcodes_intern, __i);
         if ( __errc->code == errcode ) {

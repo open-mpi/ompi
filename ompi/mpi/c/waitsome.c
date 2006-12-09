@@ -57,7 +57,7 @@ int MPI_Waitsome(int incount, MPI_Request *requests,
         return MPI_SUCCESS;
     }
     if (MPI_SUCCESS !=
-        ompi_errhandler_request_invoke(incount, requests, FUNC_NAME, false)) {
+        ompi_errhandler_request_invoke(incount, requests, FUNC_NAME)) {
         return MPI_ERR_IN_STATUS;
     }
     return MPI_SUCCESS;

@@ -57,5 +57,5 @@ int MPI_Test(MPI_Request *request, int *completed, MPI_Status *status)
     if (OMPI_SUCCESS == rc) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(1, request, FUNC_NAME, true);
+    return ompi_errhandler_request_invoke(1, request, FUNC_NAME);
 }
