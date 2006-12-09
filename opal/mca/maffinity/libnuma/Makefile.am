@@ -41,7 +41,7 @@ mca_maffinity_libnuma_la_SOURCES = $(sources)
 mca_maffinity_libnuma_la_LDFLAGS = -module -avoid-version $(maffinity_libnuma_LDFLAGS)
 mca_maffinity_libnuma_la_LIBADD = \
     $(maffinity_libnuma_LIBS) \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_maffinity_libnuma_la_SOURCES =$(sources)

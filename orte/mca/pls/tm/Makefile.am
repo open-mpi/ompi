@@ -47,8 +47,8 @@ mca_pls_tm_la_SOURCES = $(component_sources)
 mca_pls_tm_la_LDFLAGS = -module -avoid-version $(pls_tm_LDFLAGS)
 mca_pls_tm_la_LIBADD = \
     $(pls_tm_LIBS) \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(lib)
 libmca_pls_tm_la_SOURCES = $(lib_sources)

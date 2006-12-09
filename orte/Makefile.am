@@ -32,13 +32,13 @@ DIST_SUBDIRS = \
 
 # Build the main ORTE library
 
-lib_LTLIBRARIES = liborte.la
-liborte_la_SOURCES =
-liborte_la_LIBADD = \
+lib_LTLIBRARIES = libopen-rte.la
+libopen_rte_la_SOURCES =
+libopen_rte_la_LIBADD = \
 	dss/libdss.la \
 	$(MCA_orte_FRAMEWORK_LIBS) \
-	$(top_ompi_builddir)/opal/libopal.la
-liborte_la_DEPENDENCIES = $(liborte_la_LIBADD)
+	$(top_ompi_builddir)/opal/libopen-pal.la
+libopen_rte_la_DEPENDENCIES = $(libopen_rte_la_LIBADD)
 
 
 # included subdirectory Makefile.am's and appended-to variables
@@ -46,7 +46,7 @@ headers =
 noinst_LTLIBRARIES =
 nobase_orte_HEADERS = 
 dist_pkgdata_DATA =
-liborte_la_SOURCES += $(headers)
+libopen_rte_la_SOURCES += $(headers)
 
 # Conditionally install the header files
 

@@ -60,8 +60,8 @@ mca_btl_mvapi_la_LDFLAGS = -module -avoid-version $(btl_mvapi_LDFLAGS)
 mca_btl_mvapi_la_LIBADD = \
     $(btl_mvapi_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
         
 noinst_LTLIBRARIES = $(lib)
 libmca_btl_mvapi_la_SOURCES = $(lib_sources)

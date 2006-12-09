@@ -27,7 +27,7 @@ headers += \
         threads/mutex_windows.h \
         threads/threads.h
 
-libopal_la_SOURCES += \
+libopen_pal_la_SOURCES += \
         threads/condition.c \
         threads/mutex.c \
         threads/thread.c

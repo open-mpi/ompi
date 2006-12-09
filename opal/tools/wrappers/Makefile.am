@@ -20,8 +20,8 @@
 opal_wrapper_SOURCES = \
 	opal_wrapper.c
 
-opal_wrapper_LDADD = $(top_builddir)/opal/libopal.la
-opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopal.la
+opal_wrapper_LDADD = $(top_builddir)/opal/libopen-pal.la
+opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopen-pal.la
 
 DEFS="-DEXEEXT=\"$(EXEEXT)\""
 

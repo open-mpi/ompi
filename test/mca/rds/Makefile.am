@@ -28,8 +28,8 @@ TESTS = \
 test_rds_SOURCES = test_rds.c
 test_rds_LDADD = \
         $(top_builddir)/test/support/libsupport.a \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la 
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la 
 test_rds_DEPENDENCIES = $(test_rds_LDADD)
 
 # JMS Temporarily commented out -- this test only checks the selection

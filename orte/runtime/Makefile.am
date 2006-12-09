@@ -28,7 +28,7 @@ headers += \
         runtime/runtime_types.h \
 	runtime/orte_setup_hnp.h
 
-liborte_la_SOURCES += \
+libopen_rte_la_SOURCES += \
         runtime/orte_abort.c \
         runtime/orte_finalize.c \
         runtime/orte_init.c \

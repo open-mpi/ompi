@@ -33,36 +33,36 @@ TESTS = \
 
 rmgr_dt_buffer_SOURCES = rmgr_dt_buffer.c
 rmgr_dt_buffer_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_buffer_DEPENDENCIES = $(rmgr_dt_buffer_LDADD)
 
 rmgr_dt_copy_SOURCES = rmgr_dt_copy.c
 rmgr_dt_copy_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_copy_DEPENDENCIES = $(rmgr_dt_copy_LDADD)
 
 rmgr_dt_compare_SOURCES = rmgr_dt_compare.c
 rmgr_dt_compare_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_compare_DEPENDENCIES = $(rmgr_dt_compare_LDADD)
 
 rmgr_dt_print_SOURCES = rmgr_dt_print.c
 rmgr_dt_print_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_print_DEPENDENCIES = $(rmgr_dt_print_LDADD)
 
 rmgr_dt_size_SOURCES = rmgr_dt_size.c
 rmgr_dt_size_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_size_DEPENDENCIES = $(rmgr_dt_size_LDADD)
 
 rmgr_dt_release_SOURCES = rmgr_dt_release.c
 rmgr_dt_release_LDADD = \
-        $(top_builddir)/orte/liborte.la \
-        $(top_builddir)/opal/libopal.la
+        $(top_builddir)/orte/libopen-rte.la \
+        $(top_builddir)/opal/libopen-pal.la
 rmgr_dt_release_DEPENDENCIES = $(rmgr_dt_release_LDADD)

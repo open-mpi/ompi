@@ -49,8 +49,8 @@ mca_mpool_openib_la_LDFLAGS = -module -avoid-version $(mpool_openib_LDFLAGS)
 mca_mpool_openib_la_LIBADD = \
     $(mpool_openib_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 
 noinst_LTLIBRARIES = $(component_noinst)
 libmca_mpool_openib_la_SOURCES = $(sources)

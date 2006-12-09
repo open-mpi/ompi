@@ -47,8 +47,8 @@ mca_mpool_gm_la_SOURCES = $(sources)
 mca_mpool_gm_la_LIBADD = \
     $(mpool_gm_LIBS) \
     $(top_ompi_builddir)/ompi/libmpi.la \
-    $(top_ompi_builddir)/orte/liborte.la \
-    $(top_ompi_builddir)/opal/libopal.la
+    $(top_ompi_builddir)/orte/libopen-rte.la \
+    $(top_ompi_builddir)/opal/libopen-pal.la
 mca_mpool_gm_la_LDFLAGS = -module -avoid-version $(mpool_gm_LDFLAGS)
 
 noinst_LTLIBRARIES = $(component_noinst)
