@@ -59,14 +59,15 @@ int orte_gpr_base_create_value(orte_gpr_value_t **value,
 
     /* get space for the specified number of tokens */
     if (0 < num_tokens) {
-        val->tokens = (char**)malloc(num_tokens * sizeof(char*));
+        val->tokens = (char**)malloc((1+num_tokens) * sizeof(char*));
         if (NULL == val->tokens) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             OBJ_RELEASE(val);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        val->tokens[num_tokens] = NULL; /* NULL-terminate the array */
     }
-
+    
     val->addr_mode = addr_mode;
     if (NULL != segment) {
         val->segment = strdup(segment);

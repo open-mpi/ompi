@@ -57,8 +57,12 @@ typedef uint8_t orte_gpr_replica_addr_mode_t;
 #define ORTE_GPR_REPLICA_OR     (uint8_t)0x02
 #define ORTE_GPR_REPLICA_XAND   (uint8_t)0x04
 #define ORTE_GPR_REPLICA_XOR    (uint8_t)0x08
-#define ORTE_GPR_REPLICA_NOT    (uint8_t)0x40
+#define ORTE_GPR_REPLICA_NOT    (uint8_t)0x10
 
+#define ORTE_GPR_REPLICA_TOKMODE(n) 0x001f & n
+#define ORTE_GPR_REPLICA_KEYMODE(n) ((0x1f00 & n) >> 8) & 0x001f
+#define ORTE_GPR_REPLICA_STRIPPED(n) 0x2000 & n
+#define ORTE_GPR_REPLICA_REMOVE_OVERWRITE(n) 0x7fff & n
 
 /* define a few action flags for trigger evaluation
  */

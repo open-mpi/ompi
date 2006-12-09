@@ -489,7 +489,7 @@ static int setup_registry_callback(void)
 
     if (ORTE_SUCCESS != (rc = orte_gpr.subscribe_N(&id, trig_name, sub_name,
                                 ORTE_GPR_NOTIFY_DELETE_AFTER_TRIG,
-                                ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR,
+                                ORTE_GPR_TOKENS_OR | ORTE_GPR_KEYS_OR | ORTE_GPR_STRIPPED,
                                 segment,
                                 NULL,  /* wildcard - look at all containers */
                                 3, keys,

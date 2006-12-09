@@ -133,15 +133,15 @@ orte_gpr_replica_register_subscription(orte_gpr_replica_subscription_t **subptr,
             OBJ_RELEASE(ival);
             return rc;
         }
-        tok_mode = 0x004f & subscription->values[i]->addr_mode;
+        tok_mode = ORTE_GPR_REPLICA_TOKMODE((subscription->values[i])->addr_mode);
         if (0x00 == tok_mode) {  /* default token address mode to AND */
-            tok_mode = ORTE_GPR_REPLICA_AND;
+            subscription->values[i]->addr_mode = subscription->values[i]->addr_mode | ORTE_GPR_TOKENS_AND;
         }
-        key_mode = ((0x4f00 & subscription->values[i]->addr_mode) >> 8) & 0x004f;
+        key_mode = ORTE_GPR_REPLICA_KEYMODE((subscription->values[i])->addr_mode);
         if (0x00 == key_mode) {  /* default key address mode to OR */
-            key_mode = ORTE_GPR_REPLICA_OR;
+            key_mode = subscription->values[i]->addr_mode = subscription->values[i]->addr_mode | ORTE_GPR_KEYS_OR;
         }
-        ival->addr_mode = ((orte_gpr_addr_mode_t)(key_mode) << 8) | (orte_gpr_addr_mode_t)tok_mode;
+        ival->addr_mode = ORTE_GPR_REPLICA_REMOVE_OVERWRITE(subscription->values[i]->addr_mode);
 
         if (NULL != subscription->values[i]->tokens &&
             0 < subscription->values[i]->num_tokens) {
@@ -366,11 +366,11 @@ orte_gpr_replica_register_trigger(orte_gpr_replica_trigger_t **trigptr,
     /* locate and setup the trigger's counters */
     for (i=0; i < trigger->cnt; i++) {
         /* get this counter's addressing modes */
-        tok_mode = 0x004f & (trigger->values[i])->addr_mode;
+        tok_mode = ORTE_GPR_REPLICA_TOKMODE((trigger->values[i])->addr_mode);
         if (0x00 == tok_mode) {  /* default token address mode to AND */
             tok_mode = ORTE_GPR_REPLICA_AND;
         }
-        key_mode = ((0x4f00 & (trigger->values[i])->addr_mode) >> 8) & 0x004f;
+        key_mode = ORTE_GPR_REPLICA_KEYMODE((trigger->values[i])->addr_mode);
         if (0x00 == key_mode) {  /* default key address mode to OR */
             key_mode = ORTE_GPR_REPLICA_OR;
         }
@@ -1191,42 +1191,31 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                 /* Construct the base structure for returned data so it can be
                  * sent to the user, if required
                  */
-                value = OBJ_NEW(orte_gpr_value_t);
-                if (NULL == value) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                value->addr_mode = addr_mode;
-                value->cnt = 1;
-                value->keyvals = (orte_gpr_keyval_t**)malloc(sizeof(orte_gpr_keyval_t*));
-                if (NULL == value->keyvals) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    OBJ_RELEASE(value);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
-                value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
-                if (NULL == value->keyvals[0]) {
-                    ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-                    OBJ_RELEASE(value);
-                    return ORTE_ERR_OUT_OF_RESOURCE;
-                }
 
-                value->segment = strdup(ptr[i]->seg->name);
-                value->num_tokens = ptr[i]->cptr->num_itags;
-                value->tokens = (char **)malloc(value->num_tokens * sizeof(char*));
-                if (NULL == value->tokens) {
-                    rc = ORTE_ERR_OUT_OF_RESOURCE;
-                    goto CLEANUP;
-                }
-                for (j=0; j < value->num_tokens; j++) {
-                    if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
-                                                &(value->tokens[j]),
-                                                ptr[i]->seg,
-                                                ptr[i]->cptr->itags[j]))) {
+                if (ORTE_GPR_REPLICA_STRIPPED(addr_mode)) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_base_create_value(&value, addr_mode,
+                                                                         NULL, 1, 0))) {
                         ORTE_ERROR_LOG(rc);
-                        goto CLEANUP;
+                        return rc;
+                    }
+                } else {
+                    if (ORTE_SUCCESS != (rc = orte_gpr_base_create_value(&value, addr_mode,
+                                                                         ptr[i]->seg->name,
+                                                                         1, ptr[i]->cptr->num_itags))) {
+                        ORTE_ERROR_LOG(rc);
+                        return rc;
+                    }
+                    for (j=0; j < value->num_tokens; j++) {
+                        if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
+                                                                                       &(value->tokens[j]),
+                                                                                       ptr[i]->seg,
+                                                                                       ptr[i]->cptr->itags[j]))) {
+                            ORTE_ERROR_LOG(rc);
+                            goto CLEANUP;
+                        }
                     }
                 }
+
                 /* send back the recorded data */
                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
                                         &((value->keyvals[0])->key), ptr[i]->seg,
@@ -1286,7 +1275,7 @@ bool orte_gpr_replica_check_notify_matches(orte_gpr_addr_mode_t *addr_mode,
             }
 
             /* next, check to see if the containers match */
-            tokmod = 0x004f & ivals[i]->addr_mode;
+            tokmod = ORTE_GPR_REPLICA_TOKMODE(ivals[i]->addr_mode);
             if (!orte_gpr_replica_check_itag_list(tokmod,
                         orte_value_array_get_size(&(ivals[i]->tokentags)),
                         ORTE_VALUE_ARRAY_GET_BASE(&(ivals[i]->tokentags), orte_gpr_replica_itag_t),

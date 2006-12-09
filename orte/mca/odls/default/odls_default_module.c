@@ -182,7 +182,7 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
         }
     }
     
-    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[1]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR,
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[1]), ORTE_GPR_KEYS_OR | ORTE_GPR_TOKENS_OR | ORTE_GPR_STRIPPED,
                                                      segment, num_keys, 0))) {
         ORTE_ERROR_LOG(rc);
         free(segment);
@@ -950,6 +950,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     }
     
     opal_output(orte_odls_globals.output, "odls: setting up launch for job %ld", (long)job);
+    orte_dss.dump(0, data, ORTE_GPR_NOTIFY_DATA);
     
     /* We need to create a list of the app_contexts
      * so we can know what to launch - the process info only gives
@@ -969,7 +970,7 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
             i++;
             value = values[j];
             
-            if (0 == strcmp(value->tokens[0], ORTE_JOB_GLOBALS)) {
+            if (NULL != value->tokens) {
                /* this came from the globals container, so it must contain
                 * the app_context(s), vpid_start, and vpid_range entries. Only one
                 * value object should ever come from that container
