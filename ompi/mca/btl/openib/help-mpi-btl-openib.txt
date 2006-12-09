@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -113,9 +114,17 @@ Check your cables and SM configuration.
 [error in hca init]
 WARNING: There were errors during IB HCA initialization on host '%s'.
 [default subnet prefix]
-WARNING: There are more than one active ports on host '%s', but non
-default GID prefix is not configured on one or more subnets. This
-configuration may fail. Please assign unique GID prefix to all subnets.
+WARNING: There are more than one active ports on host '%s', but the
+default subnet GID prefix was detected on more than one of these
+ports.  If these ports are connected to different physical IB
+networks, this configuration will fail in Open MPI.  This version of
+Open MPI requires that every physically separate IB subnet that is
+used between connected MPI processes must have different subnet ID
+values.
+
+Please see this FAQ entry for more details:
+
+  http://www.open-mpi.org/faq/?category=openfabrics#ofa-default-subnet-gid
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_default_gid_prefix to 0.
