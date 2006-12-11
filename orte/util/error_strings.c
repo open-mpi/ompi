@@ -109,6 +109,9 @@ orte_err2str(int errnum)
     case ORTE_ERR_INVALID_NUM_PROCS:
         retval = "Multiple applications were specified, but at least one failed to specify the number of processes to run";
         break;
+    case ORTE_ERR_SILENT:
+        retval = NULL;
+        break;
     default:
         retval = NULL;
     }

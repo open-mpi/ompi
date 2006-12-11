@@ -30,3 +30,9 @@ RMAPS found multiple applications to be launched, with
 at least one that failed to specify the number of processes to execute.
 When specifying multiple applications, you must specify how many processes
 of each to launch via the -np argument.
+
+[orte-rmaps-rr:per-node-and-too-many-procs]
+There are not enough nodes in your allocation to satisfy your request to launch
+%d processes on a per-node basis - only %d nodes were available.
+
+Either request fewer processes, or obtain a larger allocation.

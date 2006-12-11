@@ -284,6 +284,8 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
         /* was provided - set boolean accordingly */
          mca_rmaps_round_robin_component.per_node = true;
+        /* indicate that we are going to map this job bynode */
+        mca_rmaps_round_robin_component.bynode = true;
     }
     
     mca_rmaps_round_robin_component.no_use_local = false;
@@ -314,10 +316,9 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     orte_ras_node_t *node, *node2;
     char *save_bookmark;
     orte_vpid_t vpid_start, job_vpid_start=0;
-    orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
+    orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots, num_nodes, num_slots;
     int rc;
     bool modify_app_context = false;
-    bool nprocs_not_specified;
     char *sptr;
     orte_attribute_t *attr;
 
@@ -436,20 +437,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
            /* Set cur_node_item to point to the first node in the specified list to be used */
             cur_node_item = opal_list_get_first(working_node_list);
             
-            if (0 == app->num_procs) {
-                nprocs_not_specified = true;
-               /** set the num_procs to equal the number of slots on these mapped nodes - if
-                   user has specified "-pernode", then set it to the number of nodes
-                */
-                if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
-                } else {
-                    app->num_procs = (orte_std_cntr_t)mapped_num_slots;
-                }
-                modify_app_context = true;
-            } else {
-                nprocs_not_specified = false;
-            }
+            num_nodes = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
+            num_slots = (orte_std_cntr_t)mapped_num_slots;
         }
         else {
             /** no mapping was specified, so we are going to just use everything that was
@@ -459,20 +448,36 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
              */
             working_node_list = &master_node_list;
             
+            num_nodes = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
+            num_slots = total_num_slots;
+        }
+
+        if (mca_rmaps_round_robin_component.per_node) {
+            /* there are three use-cases that we need to deal with:
+            * (a) if -np was not provided, then we just use the number of nodes
+            * (b) if -np was provided AND #procs > #nodes, then error out
+            * (c) if -np was provided AND #procs <= #nodes, then launch
+            *     the specified #procs one/node. In this case, we just
+            *     leave app->num_procs alone
+            */
             if (0 == app->num_procs) {
-                nprocs_not_specified = true;
-                /** set the num_procs to equal the number of slots on these mapped nodes - if
-                user has specified "-pernode", then set it to the number of nodes
-                */
-                if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
-                } else {
-                    app->num_procs = total_num_slots;
-                }
+                app->num_procs = num_nodes;
                 modify_app_context = true;
-            } else {
-                nprocs_not_specified = false;
+            } else if (app->num_procs > num_nodes) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:per-node-and-too-many-procs",
+                               true, app->num_procs, num_nodes, NULL);
+                return ORTE_ERR_SILENT;
             }
+        } else if (0 == app->num_procs) {
+            /** set the num_procs to equal the number of slots on these mapped nodes - if
+            user has specified "-bynode", then set it to the number of nodes
+            */
+            if (mca_rmaps_round_robin_component.bynode) {
+                app->num_procs = num_nodes;
+            } else {
+                app->num_procs = num_slots;
+            }
+            modify_app_context = true;
         }
 
         /* allocate a vpid range for this app within the job */
@@ -491,10 +496,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         num_procs += app->num_procs;
 
         /* Make assignments */
-        /* if the number of procs was not specified, and we want to map pernode,
-         * then we need to do the bynode mapping */
-        if (mca_rmaps_round_robin_component.bynode || 
-            (nprocs_not_specified && mca_rmaps_round_robin_component.per_node)) {
+        if (mca_rmaps_round_robin_component.bynode) {
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
