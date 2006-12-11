@@ -37,6 +37,11 @@ void orte_errmgr_base_log(int error_code, char *filename, int line)
 {
     OPAL_TRACE(1);
     
+    if (ORTE_ERR_SILENT == error_code) {
+        /* if the error is silent, say nothing */
+        return;
+    }
+    
     if (NULL == orte_process_info.my_name) {
         opal_output(0, "[NO-NAME] ORTE_ERROR_LOG: %s in file %s at line %d",
                                 ORTE_ERROR_NAME(error_code), filename, line);
