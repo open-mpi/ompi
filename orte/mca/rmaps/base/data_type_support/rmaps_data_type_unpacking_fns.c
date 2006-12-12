@@ -39,7 +39,7 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
                               orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
-    orte_std_cntr_t i, j, n, num_nodes;
+    orte_std_cntr_t i, j, n;
     orte_job_map_t **maps;
     orte_mapped_node_t *node;
 
@@ -62,6 +62,30 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
             return rc;
         }
 
+        /* unpack the mapping mode */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->mapping_mode), &n, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* unpack the starting vpid */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->vpid_start), &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* unpack the vpid range */
+        n = 1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
+                                                         &(maps[i]->vpid_range), &n, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* unpack the number of app_contexts */
         n = 1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer,
@@ -85,12 +109,12 @@ int orte_rmaps_base_unpack_map(orte_buffer_t *buffer, void *dest,
 
         /* unpack the number of nodes */
         n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &num_nodes, &n, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(maps[i]->num_nodes), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
-        for (j=0; j < num_nodes; j++) {
+        for (j=0; j < maps[i]->num_nodes; j++) {
             n = 1;
             if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &node, &n, ORTE_MAPPED_NODE))) {
                 ORTE_ERROR_LOG(rc);
@@ -167,7 +191,7 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
                                        orte_std_cntr_t *num_vals, orte_data_type_t type)
 {
     int rc;
-    orte_std_cntr_t i, j, n, num_procs;
+    orte_std_cntr_t i, j, n;
     orte_mapped_node_t **nodes;
     orte_mapped_proc_t *srcproc;
     
@@ -224,21 +248,19 @@ int orte_rmaps_base_unpack_mapped_node(orte_buffer_t *buffer, void *dest,
         
         /* unpack the number of procs */
         n = 1;
-        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &num_procs, &n, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(nodes[i]->num_procs), &n, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* if we have some, unpack them */
-        if (0 < num_procs) {
-            for (j=0; j < num_procs; j++) {
-                n = 1;
-                if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &srcproc, &n, ORTE_MAPPED_PROC))) {
-                    ORTE_ERROR_LOG(rc);
-                    return rc;
-                }
-                opal_list_append(&(nodes[i]->procs), &srcproc->super);
+        for (j=0; j < nodes[i]->num_procs; j++) {
+            n = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &srcproc, &n, ORTE_MAPPED_PROC))) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
             }
+            opal_list_append(&(nodes[i]->procs), &srcproc->super);
         }
     }
     
