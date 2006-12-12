@@ -61,6 +61,8 @@ extern "C" {
         bool oversubscribe;
         /** do we want one ppn if num_procs not specified */
         bool per_node;
+        /** number of ppn for n_per_node mode */
+        int n_per_node;
         /* do we not allow use of the localhost */
         bool no_use_local;
         /* display the map after it is computed */

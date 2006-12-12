@@ -99,14 +99,20 @@ int orte_rmaps_base_open(void)
 
     /* Do we want one ppn if num_procs not specified */
     param = mca_base_param_reg_int_name("rmaps", "base_pernode",
-                                        "Request one ppn if num procs not specified",
-                                        false, false, 0, &value);
+                                        "Launch one ppn as directed",
+                                        false, false, (int)false, &value);
 
     if ((int)true == value) {
         orte_rmaps_base.per_node = true;
     } else {
         orte_rmaps_base.per_node = false;
     }
+    
+    /* Do we want n ppn */
+    param = mca_base_param_reg_int_name("rmaps", "base_n_pernode",
+                                        "Launch n procs/node",
+                                        false, false, -1, &value);
+    orte_rmaps_base.n_per_node = value;
     
     /* Should we schedule on the local node or not? */
 

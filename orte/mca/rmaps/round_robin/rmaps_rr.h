@@ -38,6 +38,7 @@ struct orte_rmaps_round_robin_component_t {
     int priority;
     bool bynode;
     bool per_node;
+    bool n_per_node;
     bool no_use_local;
     bool oversubscribe;
 };

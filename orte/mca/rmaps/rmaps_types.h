@@ -36,6 +36,7 @@ extern "C" {
 /****   RMAPS ATTRIBUTES   ***/
 #define ORTE_RMAPS_MAP_POLICY           "orte-map-policy"
 #define ORTE_RMAPS_PERNODE              "orte-map-pernode"
+#define ORTE_RMAPS_N_PERNODE            "orte-map-n-pernode"
 #define ORTE_RMAPS_NO_USE_LOCAL         "orte-map-no-use-local"
 #define ORTE_RMAPS_NO_OVERSUB           "orte-map-no-oversubscribe"
 #define ORTE_RMAPS_DESIRED_MAPPER       "orte-map-desired"
