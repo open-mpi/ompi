@@ -51,6 +51,7 @@
  */
 static opal_list_item_t *cur_node_item = NULL;
 static opal_list_t fully_used_nodes;
+static orte_std_cntr_t num_per_node;
 
 
 /*
@@ -267,6 +268,7 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     int rc;
     char *policy;
     orte_attribute_t *attr;
+    orte_std_cntr_t *scptr;
     
     mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy */
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
@@ -284,6 +286,20 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
         /* was provided - set boolean accordingly */
          mca_rmaps_round_robin_component.per_node = true;
+        /* indicate that we are going to map this job bynode */
+        mca_rmaps_round_robin_component.bynode = true;
+    }
+    
+    mca_rmaps_round_robin_component.n_per_node = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_N_PERNODE))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.n_per_node = true;
+        /* get the number of procs per node to launch */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&scptr, attr->value, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        num_per_node = *scptr;
         /* indicate that we are going to map this job bynode */
         mca_rmaps_round_robin_component.bynode = true;
     }
@@ -468,6 +484,10 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                                true, app->num_procs, num_nodes, NULL);
                 return ORTE_ERR_SILENT;
             }
+        } else if (mca_rmaps_round_robin_component.n_per_node) {
+            /* set the num_procs to equal the specified num/node * the number of nodes */
+            app->num_procs = num_per_node * num_nodes;
+            modify_app_context = true;
         } else if (0 == app->num_procs) {
             /** set the num_procs to equal the number of slots on these mapped nodes - if
             user has specified "-bynode", then set it to the number of nodes

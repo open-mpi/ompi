@@ -115,6 +115,7 @@ struct globals_t {
     bool no_local_schedule;
     bool reuse_daemons;
     int num_procs;
+    int n_per_node;
     int exit_status;
     char *hostfile;
     char *env_val;
@@ -195,7 +196,10 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "Whether to allocate/map processes round-robin by slot (the default)" },
     { NULL, NULL, NULL, '\0', "pernode", "pernode", 0,
       &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
-      "If no number of process is specified, this will cause one process per available node to be executed" },
+      "Launch one process per available node on the specified number of nodes [no -np => use all allocated nodes]" },
+    { NULL, NULL, NULL, '\0', "npernode", "npernode", 1,
+        &orterun_globals.n_per_node, OPAL_CMD_LINE_TYPE_INT,
+        "Launch n processes per node on all allocated nodes" },
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
@@ -858,8 +862,9 @@ static int init_globals(void)
     orterun_globals.no_oversubscribe           = false;
     orterun_globals.debugger                   = false;
     orterun_globals.no_local_schedule          = false;
-    orterun_globals.num_procs                  = 0;
-    orterun_globals.exit_status                = 0;
+    orterun_globals.num_procs                  =  0;
+    orterun_globals.n_per_node                 = -1;
+    orterun_globals.exit_status                =  0;
     if( NULL != orterun_globals.hostfile )
         free( orterun_globals.hostfile );
     orterun_globals.hostfile =    NULL;
@@ -972,8 +977,8 @@ static int parse_globals(int argc, char* argv[])
      */
     if (orterun_globals.per_node) {
         id = mca_base_param_reg_int_name("rmaps", "base_pernode",
-                                            "Request one ppn if num procs not specified",
-                                            false, false, 0, &ret);
+                                            "Launch one ppn as directed",
+                                            false, false, (int)false, &ret);
 
         if (orterun_globals.per_node) {
             mca_base_param_set_int(id, (int)true);
@@ -982,6 +987,13 @@ static int parse_globals(int argc, char* argv[])
         }
     }
 
+    /* did the user request "npernode", indicating we are to spawn N ppn */
+    id = mca_base_param_reg_int_name("rmaps", "base_n_pernode",
+                                     "Launch n procs/node",
+                                     false, false, -1, &ret);
+        
+    mca_base_param_set_int(id, orterun_globals.n_per_node);
+    
     /** Do we want to disallow oversubscription of nodes? */
     id = mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
                                      "If nonzero, do not allow oversubscription of processes on nodes. If zero (default), oversubscription is allowed.",
