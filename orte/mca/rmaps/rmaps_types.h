@@ -69,7 +69,10 @@ struct orte_mapped_node_t {
     orte_process_name_t *daemon;	/* name of the daemon on this node
                                      * NULL => daemon not assigned yet
                                      */
-    bool oversubscribed;            /* whether or not the #procs > #processors */
+    bool oversubscribed;            /* whether or not the #procs > #process slots on this node */
+    orte_std_cntr_t num_procs;      /* #procs on this node - just the length of the procs list, but
+                                     * stored here so we don't have to keep recomputing it elsewhere
+                                     */
     opal_list_t procs;   			/* list of mapped_proc objects on this node */
 };
 typedef struct orte_mapped_node_t orte_mapped_node_t;
@@ -82,8 +85,14 @@ OBJ_CLASS_DECLARATION(orte_mapped_node_t);
 struct orte_job_map_t {
     opal_object_t super;
     orte_jobid_t job;
+    char *mapping_mode;
+    orte_vpid_t vpid_start;
+    orte_vpid_t vpid_range;
     orte_std_cntr_t num_apps;	/* number of app_contexts */
     orte_app_context_t **apps;	/* the array of app_contexts for this job */
+    orte_std_cntr_t num_nodes;  /* #nodes in this map - just the length of the nodes list, but
+                                 * stored here so we don't have to keep recomputing it elsewhere
+                                 */
     opal_list_t nodes;			/* list of mapped_node_t */
 };
 typedef struct orte_job_map_t orte_job_map_t;

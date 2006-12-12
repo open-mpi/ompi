@@ -55,6 +55,11 @@ int orte_rmaps_base_copy_map(orte_job_map_t **dest, orte_job_map_t *src, orte_da
 
     /* copy data into it */
     (*dest)->job = src->job;
+    if (NULL != src->mapping_mode) {
+        (*dest)->mapping_mode = strdup(src->mapping_mode);
+    }
+    (*dest)->vpid_start = src->vpid_start;
+    (*dest)->vpid_range = src->vpid_range;
     (*dest)->num_apps = src->num_apps;
     
     (*dest)->apps = (orte_app_context_t**)malloc(src->num_apps * sizeof(orte_app_context_t*));
@@ -71,6 +76,7 @@ int orte_rmaps_base_copy_map(orte_job_map_t **dest, orte_job_map_t *src, orte_da
         }
     }
     
+    (*dest)->num_nodes = src->num_nodes;
     for (item = opal_list_get_first(&(src->nodes));
          item != opal_list_get_end(&(src->nodes));
          item = opal_list_get_next(item)) {
@@ -157,6 +163,7 @@ int orte_rmaps_base_copy_mapped_node(orte_mapped_node_t **dest, orte_mapped_node
     
     (*dest)->oversubscribed = src->oversubscribed;
     
+    (*dest)->num_procs = src->num_procs;
     for (item = opal_list_get_first(&(src->procs));
          item != opal_list_get_end(&(src->procs));
          item = opal_list_get_next(item)) {

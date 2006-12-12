@@ -66,6 +66,7 @@ static void orte_rmaps_mapped_node_construct(orte_mapped_node_t* node)
     node->username = NULL;
     node->daemon = NULL;
     node->oversubscribed = false;
+    node->num_procs = 0;
     OBJ_CONSTRUCT(&node->procs, opal_list_t);
 }
 
@@ -103,8 +104,12 @@ OBJ_CLASS_INSTANCE(orte_mapped_node_t,
 static void orte_rmaps_job_map_construct(orte_job_map_t* map)
 {
     map->job = ORTE_JOBID_INVALID;
+    map->mapping_mode = NULL;
+    map->vpid_start = ORTE_VPID_INVALID;
+    map->vpid_range = 0;
     map->num_apps = 0;
     map->apps = NULL;
+    map->num_nodes = 0;
     OBJ_CONSTRUCT(&map->nodes, opal_list_t);
 }
 
@@ -112,6 +117,8 @@ static void orte_rmaps_job_map_destruct(orte_job_map_t* map)
 {
     orte_std_cntr_t i=0;
     opal_list_item_t* item;
+    
+    if (NULL != map->mapping_mode) free(map->mapping_mode);
     
     for(i=0; i < map->num_apps; i++) {
         if (NULL != map->apps[i]) OBJ_RELEASE(map->apps[i]);
