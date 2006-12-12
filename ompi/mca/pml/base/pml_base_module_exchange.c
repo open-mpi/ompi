@@ -388,7 +388,7 @@ GOTNAME:
                     if (NULL == (modex_module = mca_pml_base_modex_create_module(modex, &component))) {
                         opal_output(0, "mca_pml_base_modex_registry_callback: mca_pml_base_modex_create_module failed\n");
                         OBJ_RELEASE(data);
-                        OPAL_THREAD_UNLOCK(modex->modex_mutex);
+                        OPAL_THREAD_UNLOCK(&modex->modex_lock);
                         OBJ_RELEASE(modex);
                         return;
                     }
@@ -415,7 +415,7 @@ GOTNAME:
                         }
                     }
                 }
-                OPAL_THREAD_UNLOCK(modex->modex_lock);
+                OPAL_THREAD_UNLOCK(&modex->modex_lock);
             } /* if value[i]->cnt > 0 */
         }  /* if value[i] != NULL */
     }
