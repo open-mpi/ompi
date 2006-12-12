@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -77,6 +78,8 @@ int ompi_comm_init(void)
     ompi_group_increment_proc_count (group);
 
     ompi_mpi_comm_world.c_contextid    = 0;
+    ompi_mpi_comm_world.c_id_start_index = 4;
+    ompi_mpi_comm_world.c_id_available = 4;
     ompi_mpi_comm_world.c_f_to_c_index = 0;
     ompi_mpi_comm_world.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_world.c_local_group  = group;
@@ -108,6 +111,8 @@ int ompi_comm_init(void)
 
     ompi_mpi_comm_self.c_contextid    = 1;
     ompi_mpi_comm_self.c_f_to_c_index = 1;
+    ompi_mpi_comm_self.c_id_start_index = 20;
+    ompi_mpi_comm_self.c_id_available = 20;
     ompi_mpi_comm_self.c_my_rank      = group->grp_my_rank;
     ompi_mpi_comm_self.c_local_group  = group;
     ompi_mpi_comm_self.c_remote_group = group;
@@ -257,6 +262,8 @@ static void ompi_comm_construct(ompi_communicator_t* comm)
     comm->c_f_to_c_index = MPI_UNDEFINED;
     comm->c_name[0]      = '\0';
     comm->c_contextid    = MPI_UNDEFINED;
+    comm->c_id_available = MPI_UNDEFINED;
+    comm->c_id_start_index = MPI_UNDEFINED;
     comm->c_flags        = 0;
     comm->c_my_rank      = 0;
     comm->c_cube_dim     = 0;
