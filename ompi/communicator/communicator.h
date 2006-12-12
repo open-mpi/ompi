@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -83,6 +84,13 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(ompi_communicator_t);
 #define OMPI_COMM_CID_INTRA_BRIDGE 0x00000080
 #define OMPI_COMM_CID_INTRA_OOB    0x00000100
 
+/**
+ * The block of CIDs allocated for MPI_COMM_WORLD
+ * and other communicators
+ */
+#define OMPI_COMM_BLOCK_WORLD      16
+#define OMPI_COMM_BLOCK_OTHERS     8
+
 OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_communicators;
 
 struct ompi_communicator_t {
@@ -94,6 +102,11 @@ struct ompi_communicator_t {
     int                     c_my_rank;
     uint32_t                  c_flags; /* flags, e.g. intercomm,
                                           topology, etc. */
+
+    int c_id_available; /* the currently available Cid for allocation 
+			   to a child*/
+    int c_id_start_index; /* the starting index of the block of cids 
+			     allocated to tthis communicator*/
 
     ompi_group_t        *c_local_group;
     ompi_group_t       *c_remote_group;
@@ -343,7 +356,6 @@ struct ompi_communicator_t {
                             void* remote_leader,
                             int mode,
                             int send_first);
-
 
     /**
      * shut down the communicator infrastructure.
