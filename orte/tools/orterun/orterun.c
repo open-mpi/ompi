@@ -199,7 +199,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
-    { "rmaps", "base", "display_map", '\0', "display-map-at-launch", "display-map-at-launch", 0,
+    { "rmaps", "base", "display_map", '\0', "display-map", "display-map", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Display the process map just before launch"},
     
