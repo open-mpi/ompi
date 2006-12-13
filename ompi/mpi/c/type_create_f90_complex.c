@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -37,9 +38,13 @@ int MPI_Type_create_f90_complex(int p, int r, MPI_Datatype *newtype)
 {
     if (MPI_PARAM_CHECK) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
-        if ((MPI_UNDEFINED == p && MPI_UNDEFINED == r) ||
-            (p < 0 && MPI_UNDEFINED != p) ||
-            (r < 0 && MPI_UNDEFINED != r)) {
+
+        /* Note: These functions accept negative integers for the p and r
+         * arguments.  This is because for the SELECTED_COMPLEX_KIND,
+         * negative numbers are equivalent to zero values.  See section
+         * 13.14.95 of the Fortran 95 standard. */
+
+        if ((MPI_UNDEFINED == p && MPI_UNDEFINED == r)) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
         }
     }
