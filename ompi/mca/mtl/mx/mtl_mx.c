@@ -157,7 +157,7 @@ ompi_mtl_mx_add_procs(struct mca_mtl_base_module_t *mtl,
 #if OMPI_ENABLE_PROGRESS_THREADS == 0
     /* switch from letting us sit in the event library for a bit each
        time through opal_progress() to completely non-blocking */
-    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
+    opal_progress_events(OPAL_EVLOOP_NONBLOCK);
 #endif
     
     return OMPI_SUCCESS;
