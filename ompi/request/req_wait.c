@@ -27,7 +27,6 @@ int ompi_request_wait(
     ompi_status_public_t * status)
 {
     ompi_request_t *req = *req_ptr;
-    int rc;
 
     if(req->req_complete == false) {
 
@@ -72,12 +71,15 @@ finished:
         return req->req_status.MPI_ERROR;
     }
 
-    /* return request to pool */
-    rc = req->req_status.MPI_ERROR;
-    if (OMPI_SUCCESS != ompi_request_free(req_ptr)) {
-        return OMPI_ERROR;
+    /* If there was an error, don't free the request -- just return
+       the single error. */
+    if (MPI_SUCCESS != req->req_status.MPI_ERROR) {
+        return req->req_status.MPI_ERROR;
     }
-    return rc;
+    /* If there's an error while freeing the request, assume that the
+       request is still there.  Otherwise, Bad Things will happen
+       later! */
+    return ompi_request_free(req_ptr);
 }
 
 
@@ -179,16 +181,15 @@ finished:
             *status = request->req_status;
             status->MPI_ERROR = old_error;
         }
+        rc = request->req_status.MPI_ERROR;
         if( request->req_persistent ) {
             request->req_state = OMPI_REQUEST_INACTIVE;
-            rc = request->req_status.MPI_ERROR;
-        } else {
-            int tmp;
-
-            /* return request to pool */
-            rc = request->req_status.MPI_ERROR;
-            tmp = ompi_request_free(rptr);
-            if (OMPI_SUCCESS != tmp) rc = tmp;
+        } else if (MPI_SUCCESS == rc) {
+            /* Only free the request if there is no error on it */
+            /* If there's an error while freeing the request,
+               assume that the request is still there.  Otherwise,
+               Bad Things will happen later! */
+            rc = ompi_request_free(rptr);
         }
         *index = completed;
     }
@@ -282,7 +283,16 @@ int ompi_request_wait_all(
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
             } else {
-	        (void)ompi_request_free(rptr);
+                /* Only free the request if there is no error on it */
+                if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+                    /* If there's an error while freeing the request,
+                       assume that the request is still there.
+                       Otherwise, Bad Things will happen later! */
+                    int tmp = ompi_request_free(rptr);
+                    if (OMPI_SUCCESS != tmp) {
+                        mpi_error = tmp;
+                    }
+                }
             }
             if( statuses[i].MPI_ERROR != OMPI_SUCCESS) {
                 mpi_error = MPI_ERR_IN_STATUS;
@@ -307,8 +317,12 @@ int ompi_request_wait_all(
             }
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
-            } else {
-	        (void)ompi_request_free(rptr);
+            } else if (MPI_SUCCESS == rc) {
+                /* Only free the request if there is no error on it */
+	        int tmp = ompi_request_free(rptr);
+                if (OMPI_SUCCESS != tmp) {
+                    mpi_error = tmp;
+                }
             }
             if( rc != OMPI_SUCCESS) {
 	        mpi_error = rc;
@@ -330,7 +344,7 @@ int ompi_request_wait_some(
     int c;
 #endif
     size_t i, num_requests_null_inactive=0, num_requests_done=0;
-    int rc = OMPI_SUCCESS;
+    int rc = MPI_SUCCESS;
     ompi_request_t **rptr=NULL;
     ompi_request_t *request=NULL;
 
@@ -435,26 +449,22 @@ finished:
                 statuses[i] = request->req_status;
             }
 
-            rc += request->req_status.MPI_ERROR;
+            if (MPI_SUCCESS != request->req_status.MPI_ERROR) {
+                rc = MPI_ERR_IN_STATUS;
+            }
 
             if( request->req_persistent ) {
                 request->req_state = OMPI_REQUEST_INACTIVE;
             } else {
-                int tmp;
-                /* return request to pool */
-                tmp = ompi_request_free(&(requests[indices[i]]));
-                /*
-                 * If it fails, we are screwed. We cannot put the
-                 * request_free return code into the status, possibly
-                 * overwriting some other important error; therefore just quit.
-                 */
-                if (OMPI_SUCCESS != tmp) {
-                    return tmp;
+                /* Only free the request if there was no error */
+                if (MPI_SUCCESS == request->req_status.MPI_ERROR) {
+                    int tmp;
+                    tmp = ompi_request_free(&(requests[indices[i]]));
+                    if (OMPI_SUCCESS != tmp) {
+                        return tmp;
+                    }
                 }
             }
-        }
-        if (OMPI_SUCCESS != rc) {
-            rc = MPI_ERR_IN_STATUS;
         }
     }
     return rc;

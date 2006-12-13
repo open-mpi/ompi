@@ -82,16 +82,16 @@ int ompi_errhandler_invoke(ompi_errhandler_t *errhandler, void *mpi_object,
 
 int ompi_errhandler_request_invoke(int count, 
                                    struct ompi_request_t **requests,
-                                   const char *message,
-                                   bool use_actual_err_code)
+                                   const char *message)
 {
-    int i, ec;
+    int i, ec, type;
     ompi_mpi_object_t mpi_object;
 
-    /* Find the first request that has an error.  In an error
-       condition, the request will not have been reset back to
-       MPI_REQUEST_NULL, so there's no need to cache values from
-       before we call ompi_request_test(). */
+    /* Find the *first* request that has an error -- that's the one
+       that we'll invoke the exception on.  In an error condition, the
+       request will not have been reset back to MPI_REQUEST_NULL, so
+       there's no need to cache values from before we call
+       ompi_request_test(). */
     for (i = 0; i < count; ++i) {
         if (MPI_REQUEST_NULL != requests[i] &&
             MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
@@ -103,13 +103,25 @@ int ompi_errhandler_request_invoke(int count,
         return MPI_SUCCESS;
     }
 
-    if (use_actual_err_code) {
-        ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
-    } else {
-        ec = MPI_ERR_IN_STATUS;
-    }
+    ec = ompi_errcode_get_mpi_code(requests[i]->req_status.MPI_ERROR);
     mpi_object = requests[i]->req_mpi_object;
-    switch (requests[i]->req_type) {
+    type = requests[i]->req_type;
+
+    /* Since errors on requests cause them to not be freed (until we
+       can examine them here), go through and free all requests with
+       errors.  We only invoke the exception on the *first* request
+       that had an error. */
+    for (; i < count; ++i) {
+        if (MPI_REQUEST_NULL != requests[i] &&
+            MPI_SUCCESS != requests[i]->req_status.MPI_ERROR) {
+            /* Ignore the error -- what are we going to do?  We're
+               already going to invoke an exception */
+            ompi_request_free(&(requests[i])); 
+        } 
+    }
+
+    /* Invoke the exception */
+    switch (type) {
     case OMPI_REQUEST_PML:
         return ompi_errhandler_invoke(mpi_object.comm->error_handler,
                                       mpi_object.comm,

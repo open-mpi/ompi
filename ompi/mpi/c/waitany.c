@@ -54,5 +54,5 @@ int MPI_Waitany(int count, MPI_Request *requests, int *index, MPI_Status *status
     if (OMPI_SUCCESS == ompi_request_wait_any(count, requests, index, status)) {
         return MPI_SUCCESS;
     }
-    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME, true);
+    return ompi_errhandler_request_invoke(count, requests, FUNC_NAME);
 }
