@@ -376,7 +376,8 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status )
             return OMPI_ERROR;
-        mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint );
+        if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
+            return OMPI_ERROR;
     }
 
     frag->endpoint = endpoint;
