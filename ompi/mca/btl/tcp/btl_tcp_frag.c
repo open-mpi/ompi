@@ -115,7 +115,9 @@ bool mca_btl_tcp_frag_send(mca_btl_tcp_frag_t* frag, int sd)
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             default:
-                BTL_ERROR(("mca_btl_tcp_frag_send: writev failed with errno=%d", opal_socket_errno));
+                BTL_ERROR(("mca_btl_tcp_frag_send: writev failed: %s (%d)", 
+                           strerror(opal_socket_errno),
+                           opal_socket_errno));
                 mca_btl_tcp_endpoint_close(frag->endpoint);
                 return false;
             }
@@ -199,7 +201,9 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	default:
-            BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed with errno=%d", opal_socket_errno));
+            BTL_ERROR(("mca_btl_tcp_frag_recv: readv failed: %s (%d)", 
+                       strerror(opal_socket_errno),
+                       opal_socket_errno));
 	    mca_btl_tcp_endpoint_close(btl_endpoint);
 	    return false;
 	}
