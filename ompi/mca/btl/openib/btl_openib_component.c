@@ -387,6 +387,11 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->mtu = mca_btl_openib_component.ib_mtu;
     }
 
+    /* If "use eager rdma" was set, then enable it on this HCA */
+    if (values.use_eager_rdma_set) {
+        hca->use_eager_rdma = values.use_eager_rdma;
+    }
+
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
     if(NULL == hca->ib_pd){
         BTL_ERROR(("error allocating pd for %s errno says %s\n",
@@ -489,7 +494,6 @@ btl_openib_component_init(int *num_btl_modules,
     struct ibv_device* ib_dev; 
 #endif
     unsigned short seedv[3];
-    
 
     /* initialization */
     *num_btl_modules = 0;
@@ -596,6 +600,13 @@ btl_openib_component_init(int *num_btl_modules,
                 sizeof(mca_btl_openib_module_t)); 
         free(openib_btl); 
         OBJ_RELEASE(ib_selected); 
+
+        /* Setup the "use eager rdma" flag -- look at the "use eager
+           rdma" flag on all the hcas, and if they're *all* true, then
+           set the component-wide flag to be true.  If not, set the
+           component-wide flag to be false. */
+        mca_btl_openib_component.use_eager_rdma &= 
+            openib_btl->hca->use_eager_rdma;
 
         openib_btl = &mca_btl_openib_component.openib_btls[i];
         openib_btl->rd_num = mca_btl_openib_component.rd_num +
@@ -730,6 +741,11 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
     if (!target->mtu_set && src->mtu_set) {
         target->mtu = src->mtu;
         target->mtu_set = true;
+    }
+
+    if (!target->use_eager_rdma_set && src->use_eager_rdma_set) {
+        target->use_eager_rdma = src->use_eager_rdma;
+        target->use_eager_rdma_set = true;
     }
 }
 

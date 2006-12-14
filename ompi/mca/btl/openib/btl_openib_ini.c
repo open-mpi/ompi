@@ -380,6 +380,12 @@ static int parse_line(parsed_section_values_t *sv)
         sv->values.mtu_set = true;
     }
 
+    else if (0 == strcasecmp(key_buffer, "use_eager_rdma")) {
+        /* Single value */
+        sv->values.use_eager_rdma = (uint32_t) intify(value);
+        sv->values.use_eager_rdma_set = true;
+    }
+
     else {
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
@@ -391,8 +397,9 @@ static int parse_line(parsed_section_values_t *sv)
 
     /* All done */
 
-    if(NULL != value)
+    if (NULL != value) {
         free(value);
+    }
     return ret;
 }
 
@@ -454,6 +461,9 @@ static void reset_values(ompi_btl_openib_ini_values_t *v)
 {
     v->mtu = 0;
     v->mtu_set = false;
+
+    v->use_eager_rdma = 0;
+    v->use_eager_rdma_set = false;
 }
 
 
@@ -493,9 +503,15 @@ static int save_section(parsed_section_values_t *s)
                     if (s->values.mtu_set) {
                         h->values.mtu = s->values.mtu;
                         h->values.mtu_set = true;
-                        found = true;
-                        break;
                     }
+
+                    if (s->values.use_eager_rdma_set) {
+                        h->values.use_eager_rdma = s->values.use_eager_rdma;
+                        h->values.use_eager_rdma_set = true;
+                    }
+                    
+                    found = true;
+                    break;
                 }
             }
 
