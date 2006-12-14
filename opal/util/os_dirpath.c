@@ -158,6 +158,14 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
     return OPAL_SUCCESS;
 }
 
+/** 
+ * This function attempts to remove a directory along with all the
+ * files in it.  If the recursive variable is non-zero, then it will
+ * try to recursively remove all directories.  If provided, the
+ * callback function is executed prior to the directory or file being
+ * removed.  If the callback returns non-zero, then no removal is
+ * done.  
+ */
 int opal_os_dirpath_destroy(const char *path,
                             bool recursive,
                             opal_os_dirpath_destroy_callback_fn_t cbfunc)
@@ -170,7 +178,6 @@ int opal_os_dirpath_destroy(const char *path,
     struct dirent *ep;
     char *filenm;
 #ifndef HAVE_STRUCT_DIRENT_D_TYPE 
-    int ret;
     struct stat buf;
 #endif
 
@@ -205,6 +212,12 @@ int opal_os_dirpath_destroy(const char *path,
         
         /* Check to see if it is a directory */
         is_dir = false;
+
+	/* Create a pathname.  This is not always needed, but it makes
+	 * for cleaner code just to create it here.  Note that we are
+	 * allocating memory here, so we need to free it later on. 
+	 */
+        filenm = opal_os_path(false, path, ep->d_name, NULL);
 #ifdef HAVE_STRUCT_DIRENT_D_TYPE
         if (DT_DIR == ep->d_type) {
             is_dir = true;
@@ -225,6 +238,7 @@ int opal_os_dirpath_destroy(const char *path,
              * but continue removing files
              */
             exit_status = OPAL_ERROR;
+            free(filenm);
             continue;
         }
 
@@ -235,15 +249,15 @@ int opal_os_dirpath_destroy(const char *path,
              * continue with the rest of the entries
              */
             if( ! (cbfunc(path, ep->d_name)) ) {
+                free(filenm);
                 continue;
             }
         }
         /* Directories are recursively destroyed */
-        filenm = opal_os_path(false, path, ep->d_name, NULL);
         if(is_dir) {
-            if( OPAL_SUCCESS != (rc = opal_os_dirpath_destroy(filenm,
-                                                              recursive,
-                                                              cbfunc) ) ) {
+            rc = opal_os_dirpath_destroy(filenm, recursive, cbfunc);
+            free(filenm);
+            if (OPAL_SUCCESS != rc) {
                 exit_status = rc;
                 goto cleanup;
             }
