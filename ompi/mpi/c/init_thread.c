@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -18,6 +18,7 @@
 
 #include "ompi_config.h"
 
+#include "opal/util/show_help.h"
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/constants.h"
 
@@ -52,11 +53,17 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     /* Ensure that we were not already initialized or finalized */
 
     if (ompi_mpi_finalized) {
-        /* JMS show_help */
+        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
+            opal_show_help("help-mpi-api.txt", "mpi-function-after-finalize",
+                           true, FUNC_NAME);
+        }
         return ompi_errhandler_invoke(NULL, NULL, OMPI_ERRHANDLER_TYPE_COMM, 
                                       MPI_ERR_OTHER, FUNC_NAME);
     } else if (ompi_mpi_initialized) {
-        /* JMS show_help */
+        if (0 == ompi_comm_rank(MPI_COMM_WORLD)) {
+            opal_show_help("help-mpi-api.txt", "mpi-initialize-twice",
+                           true, FUNC_NAME);
+        }
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_OTHER, FUNC_NAME);
     }
 

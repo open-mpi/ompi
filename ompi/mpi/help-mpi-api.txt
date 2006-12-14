@@ -1,5 +1,7 @@
 # -*- text -*-
 #
+# Copyright (c) 2006      High Performance Computing Center Stuttgart, 
+#                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
@@ -9,6 +11,13 @@
 #
 # This is the US/English general help file for Open MPI.
 #
+[mpi-function-after-finalize]
+Calling any MPI-function after calling MPI_Finalize is erroneous.
+The only exceptions are MPI_Initialized, MPI_Finalized and MPI_Get_version.
+
+[mpi-initialize-twice]
+Calling MPI_Init or MPI_Init_thread twice is erroneous.
+
 [spawn-from-singleton]
 This version of Open MPI does not support %s from a 
 "singleton" application.  Specifically, you cannot invoke an MPI
