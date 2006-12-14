@@ -95,25 +95,28 @@ int mca_oob_tcp_ping(
     sd = socket(AF_INET, SOCK_STREAM, 0);
     if (sd < 0) {
        opal_output(0,
-            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed with errno=%d\n",
+            "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: socket() failed: %s (%d)\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(name),
+            strerror(opal_socket_errno),
             opal_socket_errno);
         return ORTE_ERR_UNREACH;
     }
 
     /* setup the socket as non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_GETFL) failed with errno=%d\n", 
+        opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_GETFL) failed: %s (%d)\n", 
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(name),
+            strerror(opal_socket_errno),
             opal_socket_errno);
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
+            opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
                 ORTE_NAME_ARGS(orte_process_info.my_name),
                 ORTE_NAME_ARGS(name),
+                strerror(opal_socket_errno),
                 opal_socket_errno);
         }
     }
@@ -140,9 +143,10 @@ int mca_oob_tcp_ping(
     /* set socket back to blocking */
     flags &= ~O_NONBLOCK;
     if(fcntl(sd, F_SETFL, flags) < 0) {
-         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed with errno=%d\n",
+         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_ping: fcntl(F_SETFL) failed: %s (%d)\n",
              ORTE_NAME_ARGS(orte_process_info.my_name),
              ORTE_NAME_ARGS(name),
+             strerror(opal_socket_errno),
              opal_socket_errno);
     }
 

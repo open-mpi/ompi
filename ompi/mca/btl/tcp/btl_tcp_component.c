@@ -408,7 +408,9 @@ static int mca_btl_tcp_component_create_listen(void)
     /* create a listen socket for incoming connections */
     mca_btl_tcp_component.tcp_listen_sd = socket(AF_INET, SOCK_STREAM, 0);
     if(mca_btl_tcp_component.tcp_listen_sd < 0) {
-        BTL_ERROR(("socket() failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("socket() failed: %s (%d)", 
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         return OMPI_ERROR;
     }
     mca_btl_tcp_set_socket_options(mca_btl_tcp_component.tcp_listen_sd);
@@ -420,32 +422,42 @@ static int mca_btl_tcp_component_create_listen(void)
     inaddr.sin_port = 0;
                                                                                                       
     if(bind(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, sizeof(inaddr)) < 0) {
-        BTL_ERROR(("bind() failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("bind() failed: %s (%d)", 
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         return OMPI_ERROR;
     }
                                                                                                       
     /* resolve system assignend port */
     addrlen = sizeof(struct sockaddr_in);
     if(getsockname(mca_btl_tcp_component.tcp_listen_sd, (struct sockaddr*)&inaddr, &addrlen) < 0) {
-        BTL_ERROR(("getsockname() failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("getsockname() failed: %s (%d)",
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         return OMPI_ERROR;
     }
     mca_btl_tcp_component.tcp_listen_port = inaddr.sin_port;
 
     /* setup listen backlog to maximum allowed by kernel */
     if(listen(mca_btl_tcp_component.tcp_listen_sd, SOMAXCONN) < 0) {
-        BTL_ERROR(("listen() failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("listen() failed: %s (%d)", 
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         return OMPI_ERROR;
     }
 
     /* set socket up to be non-blocking, otherwise accept could block */
     if((flags = fcntl(mca_btl_tcp_component.tcp_listen_sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         return OMPI_ERROR;
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(mca_btl_tcp_component.tcp_listen_sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed with errno=%d", opal_socket_errno));
+            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
+                       strerror(opal_socket_errno),
+                       opal_socket_errno));
             return OMPI_ERROR;
         }
     }
@@ -576,7 +588,9 @@ static void mca_btl_tcp_component_accept(void)
             if(opal_socket_errno == EINTR)
                 continue;
             if(opal_socket_errno != EAGAIN && opal_socket_errno != EWOULDBLOCK)
-                BTL_ERROR(("accept() failed with errno %d.", opal_socket_errno));
+                BTL_ERROR(("accept() failed: %s (%d).", 
+                           strerror(opal_socket_errno),
+                           opal_socket_errno));
             return;
         }
         mca_btl_tcp_set_socket_options(sd);
@@ -620,11 +634,15 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* now set socket up to be non-blocking */
     if((flags = fcntl(sd, F_GETFL, 0)) < 0) {
-        BTL_ERROR(("fcntl(F_GETFL) failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("fcntl(F_GETFL) failed: %s (%d)",
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
     } else {
         flags |= O_NONBLOCK;
         if(fcntl(sd, F_SETFL, flags) < 0) {
-            BTL_ERROR(("fcntl(F_SETFL) failed with errno=%d", opal_socket_errno));
+            BTL_ERROR(("fcntl(F_SETFL) failed: %s (%d)",
+                       strerror(opal_socket_errno),
+                       opal_socket_errno));
         }
     }
    
@@ -638,7 +656,9 @@ static void mca_btl_tcp_component_recv_handler(int sd, short flags, void* user)
 
     /* lookup peer address */
     if(getpeername(sd, (struct sockaddr*)&addr, &addr_len) != 0) {
-        BTL_ERROR(("getpeername() failed with errno=%d", opal_socket_errno));
+        BTL_ERROR(("getpeername() failed: %s (%d)", 
+                   strerror(opal_socket_errno),
+                   opal_socket_errno));
         CLOSE_THE_SOCKET(sd);
         return;
     }
