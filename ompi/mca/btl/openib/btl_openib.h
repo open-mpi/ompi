@@ -166,6 +166,8 @@ struct mca_btl_openib_hca_t {
     mca_mpool_base_module_t *mpool;
     /* MTU for this HCA */
     uint32_t mtu;
+    /* Whether this HCA supports eager RDMA */
+    uint8_t use_eager_rdma;
     uint8_t btls;              /** < number of btls using this HCA */
 };
 typedef struct mca_btl_openib_hca_t mca_btl_openib_hca_t;
