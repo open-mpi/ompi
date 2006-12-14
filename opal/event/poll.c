@@ -26,29 +26,28 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+
 #include "opal_config.h"
 
-#ifdef HAVE_SYS_TYPES_H
+
 #include <sys/types.h>
-#endif
 #ifdef HAVE_SYS_TIME_H
 #include <sys/time.h>
 #else
 #include <sys/_time.h>
 #endif
 #include <sys/queue.h>
-#ifdef HAVE_POLL_H
+#include <sys/tree.h>
 #include <poll.h>
-#endif
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <errno.h>
-#include <err.h>
+
+#include "event.h"
+#include "evsignal.h"
 
 #ifdef USE_LOG
 #include "log.h"
@@ -56,56 +55,65 @@
 #define LOG_DBG(x)
 #define log_error(x)	perror(x)
 #endif
+#define event_debug(x) 
 
 #include "event.h"
-#include "opal/util/output.h"
 #if OPAL_EVENT_USE_SIGNALS
 #include "evsignal.h"
 #endif
 #include "opal/threads/mutex.h"
 
-
 extern struct opal_event_list opal_eventqueue;
-extern volatile sig_atomic_t opal_evsignal_caught;
 extern opal_mutex_t opal_event_lock;
 
-/* Open MPI: make this struct instance be static */
-static struct pollop {
-	int event_count;		/* Highest number alloc */
-	struct pollfd *event_set;
-	struct opal_event **event_back;
 #if OPAL_EVENT_USE_SIGNALS
-	sigset_t evsigmask;
+extern volatile sig_atomic_t opal_evsignal_caught;
 #endif
-} pollop;
 
-static void *poll_init	(void);
-static int poll_add		(void *, struct opal_event *);
-static int poll_del		(void *, struct opal_event *);
-static int poll_recalc	(void *, int);
-static int poll_dispatch	(void *, struct timeval *);
+struct pollop {
+	int event_count;		/* Highest number alloc */
+	int fd_count;                   /* Size of idxplus1_by_fd */
+	struct pollfd *event_set;
+	struct opal_event **event_r_back;
+	struct opal_event **event_w_back;
+	int *idxplus1_by_fd; /* Index into event_set by fd; we add 1 so
+			      * that 0 (which is easy to memset) can mean
+			      * "no entry." */
+	sigset_t evsigmask;
+};
 
-const struct opal_eventop opal_pollops = {
+void *poll_init	(void);
+int poll_add		(void *, struct opal_event *);
+int poll_del		(void *, struct opal_event *);
+int poll_recalc		(void *, int);
+int poll_dispatch	(void *, struct timeval *);
+
+struct opal_eventop opal_pollops = {
 	"poll",
 	poll_init,
 	poll_add,
 	poll_del,
-        poll_recalc,
+	poll_recalc,
 	poll_dispatch
 };
 
-static void *
+void *
 poll_init(void)
 {
-	/* Disable poll when this environment variable is set */
+	struct pollop *pollop;
+
+	/* Disable kqueue when this environment variable is set */
 	if (getenv("EVENT_NOPOLL"))
 		return (NULL);
 
-	memset(&pollop, 0, sizeof(pollop));
+        if (!(pollop = calloc(1, sizeof(struct pollop))))
+		return (NULL);
+
 #if OPAL_EVENT_USE_SIGNALS
-	opal_evsignal_init(&pollop.evsigmask);
+	opal_evsignal_init(&pollop->evsigmask);
 #endif
-	return (&pollop);
+
+	return (pollop);
 }
 
 /*
@@ -113,68 +121,102 @@ poll_init(void)
  * recalculate everything.
  */
 
-static int
+int
 poll_recalc(void *arg, int max)
 {
-#if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
+
+#if OPAL_EVENT_USE_SIGNALS
 	return (opal_evsignal_recalc(&pop->evsigmask));
 #else
-	return (0);
+	return (0)
 #endif
 }
 
-static int
+int
 poll_dispatch(void *arg, struct timeval *tv)
 {
-	int res, i, offset, count, sec, nfds;
+	int res, i, count, fd_count, sec, nfds;
 	struct opal_event *ev;
 	struct pollop *pop = arg;
+	int *idxplus1_by_fd;
 
 	count = pop->event_count;
+	fd_count = pop->fd_count;
+	idxplus1_by_fd = pop->idxplus1_by_fd;
+	memset(idxplus1_by_fd, 0, sizeof(int)*fd_count);
 	nfds = 0;
+
 	TAILQ_FOREACH(ev, &opal_eventqueue, ev_next) {
+		struct pollfd *pfd = NULL;
 		if (nfds + 1 >= count) {
-			if (count < 256)
-				count = 256;
+			if (count < 32)
+				count = 32;
 			else
-				count <<= 1;
+				count *= 2;
 
 			/* We need more file descriptors */
 			pop->event_set = realloc(pop->event_set,
 			    count * sizeof(struct pollfd));
 			if (pop->event_set == NULL) {
-				log_error("realloc");
+                                log_error("realloc");
 				return (-1);
 			}
-			pop->event_back = realloc(pop->event_back,
-			    count * sizeof(struct opal_event *));
-			if (pop->event_back == NULL) {
+			pop->event_r_back = realloc(pop->event_r_back,
+			    count * sizeof(struct event *));
+			pop->event_w_back = realloc(pop->event_w_back,
+			    count * sizeof(struct event *));
+			if (pop->event_r_back == NULL ||
+			    pop->event_w_back == NULL) {
 				log_error("realloc");
 				return (-1);
 			}
 			pop->event_count = count;
 		}
+		if (!(ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE)))
+			continue;
+		if (ev->ev_fd >= fd_count) {
+			int new_count;
+			if (fd_count < 32)
+				new_count = 32;
+			else
+				new_count = fd_count * 2;
+			while (new_count <= ev->ev_fd)
+				new_count *= 2;
+			idxplus1_by_fd = pop->idxplus1_by_fd =
+			  realloc(pop->idxplus1_by_fd, new_count*sizeof(int));
+			if (idxplus1_by_fd == NULL) {
+				log_error("realloc");
+				return (-1);
+			}
+			memset(pop->idxplus1_by_fd + fd_count,
+			       0, sizeof(int)*(new_count-fd_count));
+			fd_count = pop->fd_count = new_count;
+		}
+		i = idxplus1_by_fd[ev->ev_fd] - 1;
+		if (i >= 0) {
+			pfd = &pop->event_set[i];
+		} else {
+			i = nfds++;
+			pfd = &pop->event_set[i];
+			pop->event_w_back[i] = pop->event_r_back[i] = NULL;
+			pfd->events = 0;
+			idxplus1_by_fd[ev->ev_fd] = i + 1;
+		}
+
 		if (ev->ev_events & OPAL_EV_WRITE) {
-			struct pollfd *pfd = &pop->event_set[nfds];
 			pfd->fd = ev->ev_fd;
-			pfd->events = POLLOUT;
+			pfd->events |= POLLOUT;
 			pfd->revents = 0;
 
-			pop->event_back[nfds] = ev;
-
-			nfds++;
+			pop->event_w_back[i] = ev;
 		}
 		if (ev->ev_events & OPAL_EV_READ) {
-			struct pollfd *pfd = &pop->event_set[nfds];
-
 			pfd->fd = ev->ev_fd;
-			pfd->events = POLLIN;
+			pfd->events |= POLLIN;
 			pfd->revents = 0;
 
-			pop->event_back[nfds] = ev;
-
-			nfds++;
+			pop->event_r_back[i] = ev;
 		}
 	}
 
@@ -183,27 +225,10 @@ poll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 #endif
 
+	sec = tv->tv_sec * 1000 + (tv->tv_usec + 999) / 1000;
+        /* release lock while waiting in kernel */
         opal_mutex_unlock(&opal_event_lock);
-        offset = 0;
-        res = 0;
-        count = nfds;
-        while(count > 0) {
-           int num = (count > FD_SETSIZE) ? FD_SETSIZE : count;
-           int ret;
-	       sec = tv->tv_sec * 1000 + tv->tv_usec / 1000;
-	       ret = poll(pop->event_set + offset, num, sec);
-	       if (ret == -1) {
-		       if (errno != EINTR) {
-			       opal_output(0, "poll failed with errno=%d\n", errno);
-                   opal_mutex_lock(&opal_event_lock);
-			       return (-1);
-		       }
-           } else {
-               res += ret;
-           }
-           offset += num;
-           count -= num;
-        }
+	res = poll(pop->event_set, nfds, sec);
         opal_mutex_lock(&opal_event_lock);
 
 #if OPAL_EVENT_USE_SIGNALS
@@ -211,52 +236,74 @@ poll_dispatch(void *arg, struct timeval *tv)
 		return (-1);
 #endif
 
+	if (res == -1) {
+		if (errno != EINTR) {
+                        log_error("poll");
+			return (-1);
+		}
+
 #if OPAL_EVENT_USE_SIGNALS
-	else if (opal_evsignal_caught)
 		opal_evsignal_process();
 #endif
+		return (0);
+#if OPAL_EVENT_USE_SIGNALS
+	} else if (opal_evsignal_caught) {
+		opal_evsignal_process();
+#endif
+	}
 
-	LOG_DBG((LOG_MISC, 80, "%s: poll reports %d", __func__, res));
+	event_debug(("%s: poll reports %d", __func__, res));
 
 	if (res == 0)
 		return (0);
 
 	for (i = 0; i < nfds; i++) {
                 int what = pop->event_set[i].revents;
+		struct opal_event *r_ev = NULL, *w_ev = NULL;
 		
 		res = 0;
 
-		/* If the file gets closed notify or any badness happend */
-		if (what & (POLLHUP | POLLERR | POLLNVAL))
+		/* If the file gets closed notify */
+		if (what & POLLHUP)
 			what |= POLLIN|POLLOUT;
-		if (what & POLLIN)
+                if (what & POLLERR) 
+                        what |= POLLIN|POLLOUT;
+		if (what & POLLIN) {
 			res |= OPAL_EV_READ;
-		if (what & POLLOUT)
+			r_ev = pop->event_r_back[i];
+		}
+		if (what & POLLOUT) {
 			res |= OPAL_EV_WRITE;
+			w_ev = pop->event_w_back[i];
+		}
 		if (res == 0)
 			continue;
 
-		ev = pop->event_back[i];
-		res &= ev->ev_events;
-
-		if (res) {
-			if (!(ev->ev_events & OPAL_EV_PERSIST))
-				opal_event_del_i(ev);
-			opal_event_active_i(ev, res, 1);
-		}	
+		if (r_ev && (res & r_ev->ev_events)) {
+			if (!(r_ev->ev_events & OPAL_EV_PERSIST))
+				opal_event_del(r_ev);
+			opal_event_active(r_ev, res & r_ev->ev_events, 1);
+		}
+		if (w_ev && w_ev != r_ev && (res & w_ev->ev_events)) {
+			if (!(w_ev->ev_events & OPAL_EV_PERSIST))
+				opal_event_del(w_ev);
+			opal_event_active(w_ev, res & w_ev->ev_events, 1);
+		}
 	}
 
 	return (0);
 }
 
-static int
+int
 poll_add(void *arg, struct opal_event *ev)
 {
-#if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
+
+#if OPAL_EVENT_USE_SIGNALS
 	if (ev->ev_events & OPAL_EV_SIGNAL)
 		return (opal_evsignal_add(&pop->evsigmask, ev));
 #endif
+
 	return (0);
 }
 
@@ -264,18 +311,17 @@ poll_add(void *arg, struct opal_event *ev)
  * Nothing to be done here.
  */
 
-static int
+int
 poll_del(void *arg, struct opal_event *ev)
 {
 #if OPAL_EVENT_USE_SIGNALS
 	struct pollop *pop = arg;
-#endif
+
 	if (!(ev->ev_events & OPAL_EV_SIGNAL))
 		return (0);
-#if OPAL_EVENT_USE_SIGNALS
+
 	return (opal_evsignal_del(&pop->evsigmask, ev));
 #else
-	return (0);
+	return 0;
 #endif
 }
-
