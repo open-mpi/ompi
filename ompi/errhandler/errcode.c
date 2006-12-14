@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -517,14 +518,26 @@ int ompi_mpi_errcode_add(int errclass )
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->code, newerrcode);
     
     ompi_mpi_errcode_lastused++;
-    return OMPI_SUCCESS;
+    return newerrcode->code;
 }
 
-int ompi_mpi_errcode_add_string(int errcode, char *errstring, int len)
+int ompi_mpi_errclass_add(void)
+{
+    ompi_mpi_errcode_t *newerrcode;
+
+    newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
+    newerrcode->cls = ompi_mpi_errcode_lastused;
+    ompi_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->cls, newerrcode);
+    
+    ompi_mpi_errcode_lastused++;
+    return newerrcode->cls;
+}
+
+int ompi_mpi_errnum_add_string(int errnum, char *errstring, int len)
 {
     ompi_mpi_errcode_t *errcodep;
 
-    errcodep = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errcode);
+    errcodep = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
     if ( NULL == errcodep ) { 
         return OMPI_ERROR;
     }

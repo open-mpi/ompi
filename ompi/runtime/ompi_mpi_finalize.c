@@ -10,6 +10,10 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
+ * Copyright (c) 2006      University of Houston. All rights reserved.
+ *
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -54,7 +58,6 @@
 #include "ompi/constants.h"
 #include "ompi/group/group.h"
 #include "ompi/errhandler/errcode.h"
-#include "ompi/errhandler/errclass.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/op/op.h"
@@ -210,11 +213,6 @@ int ompi_mpi_finalize(void)
 	return ret;
     }
      
-    /* free error class resources */
-    if (OMPI_SUCCESS != (ret = ompi_errclass_finalize())) {
-	return ret;
-    }
-
     /* free error code resources */
     if (OMPI_SUCCESS != (ret = ompi_mpi_errcode_finalize())) {
 	return ret;

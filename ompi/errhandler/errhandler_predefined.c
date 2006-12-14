@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      University of Houston. All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -182,7 +183,7 @@ static void backend_fatal(char *type, struct ompi_communicator_t *comm,
     }
 
     if (NULL != error_code) {
-        char *tmp = ompi_mpi_errcode_get_string(*error_code);
+        char *tmp = ompi_mpi_errnum_get_string(*error_code);
         if (NULL != tmp) {
             out("*** %s\n", tmp);
         } else {
