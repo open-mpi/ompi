@@ -105,9 +105,11 @@ orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
         return NULL;
 
     /* okay, we are in an HNP - now check to see if BProc is running here */
-    ret =  bproc_version(&version);
-    if (ret != 0) {
-        return NULL;
+    if (!mca_pls_bproc_component.do_not_launch) {
+        ret =  bproc_version(&version);
+        if (ret != 0) {
+            return NULL;
+        }
     }
     
     /* only launch from the master node */
