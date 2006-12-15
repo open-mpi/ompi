@@ -28,6 +28,8 @@ libmca_smr_la_SOURCES += \
         base/smr_base_set_proc_state.c \
         base/smr_base_get_job_state.c \
         base/smr_base_set_job_state.c \
+        base/smr_base_get_node_state.c \
+        base/smr_base_set_node_state.c \
         base/smr_base_trig_init_fns.c \
         base/smr_base_open.c \
         base/data_type_support/smr_data_type_compare_fns.c \

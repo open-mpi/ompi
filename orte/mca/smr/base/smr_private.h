@@ -43,6 +43,17 @@
 extern "C" {
 #endif
 
+/*
+ * Define an object for internally tracking node states
+ */
+typedef struct {
+    opal_list_item_t super;
+    orte_cellid_t cell;
+    char *nodename;
+    orte_node_state_t state;
+} orte_smr_node_state_tracker_t;
+OBJ_CLASS_DECLARATION(orte_smr_node_state_tracker_t);
+    
 int orte_smr_base_get_proc_state(orte_proc_state_t *state,
                                int *status,
                                orte_process_name_t *proc);
@@ -51,13 +62,13 @@ int orte_smr_base_set_proc_state(orte_process_name_t *proc,
                                orte_proc_state_t state,
                                int status);
 
-int orte_smr_base_get_node_state_not_available(orte_node_state_t *state,
-                                             orte_cellid_t cell,
-                                             char *nodename);
+int orte_smr_base_get_node_state(orte_node_state_t *state,
+                                 orte_cellid_t cell,
+                                 char *nodename);
 
-int orte_smr_base_set_node_state_not_available(orte_cellid_t cell,
-                                             char *nodename,
-                                             orte_node_state_t state);
+int orte_smr_base_set_node_state(orte_cellid_t cell,
+                                 char *nodename,
+                                 orte_node_state_t state);
 
 int orte_smr_base_get_job_state(orte_job_state_t *state,
                               orte_jobid_t jobid);
@@ -87,7 +98,9 @@ int orte_smr_base_job_stage_gate_subscribe(orte_jobid_t job,
                                            orte_gpr_notify_cb_fn_t cbfunc, void* cbdata,
                                            orte_proc_state_t cb_conditions);
 
-int orte_smr_base_begin_monitoring_not_available(orte_jobid_t job);
+int orte_smr_base_begin_monitoring_not_available(orte_job_map_t *map,
+                                                 orte_gpr_trigger_cb_fn_t cbfunc,
+                                                 void *user_tag);
 
 
 int orte_smr_base_module_finalize_not_available (void);

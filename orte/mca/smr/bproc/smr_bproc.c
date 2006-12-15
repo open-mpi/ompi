@@ -28,6 +28,9 @@
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
+#include "opal/util/output.h"
+#include "opal/class/opal_list.h"
+
 #include "orte/util/proc_info.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -36,7 +39,6 @@
 
 #include "orte/mca/smr/base/smr_private.h"
 #include "orte/mca/smr/bproc/smr_bproc.h"
-#include "opal/util/output.h"
 
 #define BIT_MASK(bit)		(bit_set)(1 << (bit))
 #define EMPTY_SET		(bit_set)0
@@ -53,7 +55,9 @@
 				| BIT_MASK(BIT_NODE_BPROC_USER) \
 				| BIT_MASK(BIT_NODE_BPROC_GROUP))
 
+/* define some local variables/types */
 typedef unsigned int bit_set;
+static opal_list_t active_node_list;
 
 static inline void set_bit(bit_set *set, int bit)
 {
@@ -82,8 +86,6 @@ static inline int empty_set(bit_set set)
 	return set == EMPTY_SET;
 }
 
-static int orte_smr_bproc_get_proc_state(orte_proc_state_t *, int *, orte_process_name_t *);
-static int orte_smr_bproc_set_proc_state(orte_process_name_t *, orte_proc_state_t, int);
 static int orte_smr_bproc_finalize(void);
 
 /** 
@@ -144,7 +146,9 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     struct group *grp;
     orte_gpr_value_t *value;
     int rc;
-
+    orte_smr_node_state_tracker_t *node;
+    opal_list_item_t *item;
+    
     cnt = num_bits(changes);
 
     /*
@@ -153,6 +157,9 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     if (cnt == 0)
 	return;
 
+    /* check and update the general cluster status segment - this segment has entries
+     * for every node in the cluster, not just the ones we want to monitor
+     */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
 	                                                ORTE_BPROC_NODE_SEGMENT, cnt, 0))) {
     	ORTE_ERROR_LOG(rc);
@@ -233,7 +240,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
 
     if (idx != cnt) {
     	opal_output(0, "smr_bproc: internal error %d != %d\n", idx, cnt);
-	free(node_name);
+        free(node_name);
     	OBJ_RELEASE(value);
     	opal_event_del(&mca_smr_bproc_component.notify_event);
     	return;
@@ -257,10 +264,60 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     	ORTE_ERROR_LOG(ret);
     	opal_event_del(&mca_smr_bproc_component.notify_event);
     }
-
-    free(node_name);
     OBJ_RELEASE(value);
+
+    /* now let's see if this is one of the nodes we are monitoring and
+     * update it IFF it the state changed to specified conditions. This
+     * action will trigger a callback to the right place to decide what
+     * to do about it
+     */
+    if (mca_smr_bproc_component.monitoring &&
+        is_set(changes, BIT_NODE_STATE)) {
+        /* see if this is a node we are monitoring */
+        for (item = opal_list_get_first(&active_node_list);
+             item != opal_list_get_end(&active_node_list);
+             item = opal_list_get_next(item)) {
+            node = (orte_smr_node_state_tracker_t*)item;
+            if (0 == strcmp(node->nodename, node_name)) {
+                /* This is a node we are monitoring. If this is a state we care about,
+                 * and the state has changed (so we only do this once) - trip the alert monitor
+                 */
+                if (state != node->state &&
+                    (state == ORTE_NODE_STATE_DOWN || state == ORTE_NODE_STATE_REBOOT)) {
+                    if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, ORTE_GPR_OVERWRITE | ORTE_GPR_TOKENS_AND,
+                                                                    ORTE_BPROC_NODE_SEGMENT, 1, 0))) {
+                        ORTE_ERROR_LOG(rc);
+                        return;
+                    }
+                    value->tokens[0] = strdup(ORTE_BPROC_NODE_GLOBALS);
+                    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(value->keyvals[0]),
+                                                                     ORTE_BPROC_NODE_ALERT_CNTR,
+                                                                     ORTE_UNDEF, NULL))) {
+                        ORTE_ERROR_LOG(rc);
+                        OBJ_RELEASE(value);
+                        return;
+                    }
+                    if ((rc = orte_gpr.increment_value(value)) != ORTE_SUCCESS) {
+                        ORTE_ERROR_LOG(rc);
+                        opal_event_del(&mca_smr_bproc_component.notify_event);
+                    }
+                    OBJ_RELEASE(value);
+                }
+                /* update our local records */
+                node->state = state;
+                /* cleanup and return - no need to keep searching */
+                free(node_name);
+                return;
+            }
+        }
+    }
+    
+    /* if this isn't someone we are monitoring, or it doesn't meet specified conditions,
+     * then just cleanup and leave
+     */
+    free(node_name);
 }
+
 
 static int do_update(struct bproc_node_set_t *ns)
 {
@@ -311,10 +368,9 @@ static void orte_smr_bproc_notify_handler(int fd, short flags, void *user)
 /**
  * Register a callback to receive BProc update notifications
  */
-int orte_smr_bproc_module_init(void)
+static int orte_smr_bproc_module_init(void)
 {
     int rc;
-    struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
     
     if (mca_smr_bproc_component.debug)
 	    opal_output(0, "init smr_bproc_module\n");
@@ -323,63 +379,77 @@ int orte_smr_bproc_module_init(void)
 
     mca_smr_bproc_component.node_set.size = 0;
 
-    /*
-     * Set initial node status
-     */
-
-    if (bproc_nodelist(&ns) < 0)
-    	return ORTE_ERROR;
-
-    if (!do_update(&ns))
-	    bproc_nodeset_free(&ns);
-
-    /*
-     * Now regiser notify event
-     */
-
-    mca_smr_bproc_component.notify_fd = bproc_notifier();
-    if (mca_smr_bproc_component.notify_fd < 0)
-	    return ORTE_ERROR;
-
-    memset(&mca_smr_bproc_component.notify_event, 0, sizeof(opal_event_t));
-
-    opal_event_set(
-    	&mca_smr_bproc_component.notify_event,
-    	mca_smr_bproc_component.notify_fd,
-    	OPAL_EV_READ|OPAL_EV_PERSIST,
-    	orte_smr_bproc_notify_handler,
-    	0);
-
-    opal_event_add(&mca_smr_bproc_component.notify_event, 0);
-
+    /* construct the monitored node list so we can track who is being monitored */
+    OBJ_CONSTRUCT(&active_node_list, opal_list_t);
+    
     return ORTE_SUCCESS;
 }
 
-orte_smr_base_module_t orte_smr_bproc_module = {
-    orte_smr_bproc_get_proc_state,
-    orte_smr_bproc_set_proc_state,
-    orte_smr_base_get_node_state_not_available,
-    orte_smr_base_set_node_state_not_available,
-    orte_smr_base_get_job_state,
-    orte_smr_base_set_job_state,
-    orte_smr_base_begin_monitoring_not_available,
-    orte_smr_base_init_job_stage_gates,
-    orte_smr_base_init_orted_stage_gates,
-    orte_smr_base_define_alert_monitor,
-    orte_smr_base_job_stage_gate_subscribe,    
-    orte_smr_bproc_finalize
-};
-
-static int orte_smr_bproc_get_proc_state(orte_proc_state_t *state, int *status, orte_process_name_t *proc)
+/*
+ * Setup to begin monitoring a job
+ */
+int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_t cbfunc, void *user_tag)
 {
-    return orte_smr_base_get_proc_state(state, status, proc);
-}
+    struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
 
-static int orte_smr_bproc_set_proc_state(orte_process_name_t *proc, orte_proc_state_t state, int status)
-{
-    return orte_smr_base_set_proc_state(proc, state, status);
+    /* if our internal structures haven't been initialized, then
+     * set them up
+     */
+    if (!initialized) {
+        orte_smr_bproc_module_init();
+        initialized = true;
+    }
+    
+    /* setup the local monitoring list */
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        node = (orte_mapped_node_t*)item;
+        
+        newnode = OBJ_NEW(orte_smr_node_state_tracker_t);
+        newnode->cell = node->cell;
+        newnode->nodename = strdup(node->nodename);
+        opal_list_append(&active_node_list, &newnode->super);
+    }
+    
+    /* define the alert monitor to call the cbfunc if we trigger the alert */
+    orte_smr.define_alert_monitor(map->job, ORTE_BPROC_NODE_ALERT_TRIG,
+                                  ORTE_BPROC_NODE_ALERT_CNTR,
+                                  0, 1, true, cbfunc, user_tag);
+    
+    /*
+     * Set initial node status for all nodes in the local cell. We will
+     * receive reports from them all, but we will only provide alerts
+     * on those we are actively monitoring
+     */
+    
+    if (bproc_nodelist(&ns) < 0)
+    	return ORTE_ERROR;
+    
+    if (!do_update(&ns))
+	    bproc_nodeset_free(&ns);
+    
+    /*
+     * Now register notify event
+     */
+    
+    mca_smr_bproc_component.notify_fd = bproc_notifier();
+    if (mca_smr_bproc_component.notify_fd < 0)
+	    return ORTE_ERROR;
+    
+    memset(&mca_smr_bproc_component.notify_event, 0, sizeof(opal_event_t));
+    
+    opal_event_set(
+                   &mca_smr_bproc_component.notify_event,
+                   mca_smr_bproc_component.notify_fd,
+                   OPAL_EV_READ|OPAL_EV_PERSIST,
+                   orte_smr_bproc_notify_handler,
+                   0);
+    
+    opal_event_add(&mca_smr_bproc_component.notify_event, 0);
+    
+    
 }
-
 /**
  *  Cleanup
  */

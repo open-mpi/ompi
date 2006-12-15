@@ -38,11 +38,18 @@ extern "C" {
 #define ORTE_SMR_BPROC_NODE_USER        "orte-node-bproc-user"
 #define ORTE_SMR_BPROC_NODE_GROUP       "orte-node-bproc-group"
 
+#define ORTE_BPROC_NODE_ALERT_TRIG      "orte-bproc-node-alert-trig"
+#define ORTE_BPROC_NODE_ALERT_CNTR      "orte-bproc-node-alert-cntr"
+#define ORTE_BPROC_NODE_GLOBALS         "orte-node-bproc-globals"
+
 /**
  * Module init/fini
  */
-int orte_smr_bproc_module_init(void);
-int orte_smr_bproc_module_finalize(void);
+int orte_smr_bproc_init(void);
+int orte_smr_bproc_finalize(void);
+int orte_smr_bproc_begin_monitoring(orte_job_map_t *map,
+                                    orte_gpr_trigger_cb_fn_t cbfunc,
+                                    void *user_tag);
 
 struct orte_smr_bproc_component_t {
     orte_smr_base_component_t super;
@@ -50,8 +57,8 @@ struct orte_smr_bproc_component_t {
     int priority;
     opal_event_t notify_event;
     int notify_fd;
-    orte_cellid_t cellid;
     struct bproc_node_set_t node_set;
+    bool monitoring;
 };
 typedef struct orte_smr_bproc_component_t orte_smr_bproc_component_t;
 

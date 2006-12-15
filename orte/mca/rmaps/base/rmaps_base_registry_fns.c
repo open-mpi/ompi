@@ -87,6 +87,13 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     /* set the jobid */
     mapping->job = jobid;
     
+    /* get the vpid start/range info */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.get_vpid_range(jobid, &mapping->vpid_start, &mapping->vpid_range))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(mapping);
+        return rc;
+    }
+    
     /* get the job segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
         ORTE_ERROR_LOG(rc);
@@ -325,6 +332,12 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         return ORTE_ERR_BAD_PARAM;
     }
 
+    /* store the vpid start/range info */
+    if (ORTE_SUCCESS != (rc = orte_rmgr.set_vpid_range(map->job, map->vpid_start, map->vpid_range))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+        
     /**
      * allocate value array. We need to reserve one extra spot so we can set the counter
      * for the process INIT state to indicate that all procs are at that state. This will

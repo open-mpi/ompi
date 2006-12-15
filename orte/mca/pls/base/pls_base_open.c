@@ -76,6 +76,16 @@ int orte_pls_base_open(void)
         orte_pls_base.reuse_daemons = true;
     }
     
+    /* check for timing requests */
+    mca_base_param_reg_int_name("orte", "timing",
+                                "Request that critical timing loops be measured",
+                                false, false, 0, &value);
+    if (value != 0) {
+        orte_pls_base.timing = true;
+    } else {
+        orte_pls_base.timing = false;
+    }
+    
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 

@@ -34,8 +34,8 @@
 #include "orte/mca/errmgr/base/base.h"
 
 int orte_ns_nds_env_put(const orte_process_name_t* name, 
-                        orte_vpid_t vpid_start, size_t num_procs,
-                        char ***env)
+                     orte_vpid_t vpid_start, size_t num_procs,
+                     char ***env)
 {
     char* param;
     char* cellid;

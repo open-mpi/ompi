@@ -54,8 +54,7 @@ orte_pls_bproc_component_t mca_pls_bproc_component = {
  * finishes setting up the component struct.
  */
 int orte_pls_bproc_component_open(void) {
-    int rc, tmp, value;
-    char *policy;
+    int rc;
     
     /* init parameters */
     mca_base_component_t *c = &mca_pls_bproc_component.super.pls_version;
@@ -69,43 +68,19 @@ int orte_pls_bproc_component_open(void) {
                            false, 9, &mca_pls_bproc_component.terminate_sig);
     mca_base_param_reg_string(c, "orted", "Path to where orted is installed",
                            false, false, "orted", &mca_pls_bproc_component.orted);
-    mca_pls_bproc_component.num_procs = 0;
-    mca_pls_bproc_component.num_daemons = 0;
-    mca_pls_bproc_component.done_launching = false;
+    mca_base_param_reg_int(c, "nolaunch", NULL, false, false, (int)false,
+                           &rc);
+    if ((int)false == rc) {
+        mca_pls_bproc_component.do_not_launch = false;
+    } else {
+        mca_pls_bproc_component.do_not_launch = true;
+    }
+
     mca_pls_bproc_component.recv_issued = false;
     OBJ_CONSTRUCT(&mca_pls_bproc_component.lock, opal_mutex_t);
     OBJ_CONSTRUCT(&mca_pls_bproc_component.condition, opal_condition_t);
-
-    /* we need to know the intended method for mapping processes
-     * so we can properly direct the bproc processes on how to compute
-     * their name
-     */
-    mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
-                                   "Scheduling Policy for RMAPS. [slot | node]",
-                                   false, false, "slot", &policy);
-    if (0 == strcmp(policy, "node")) {
-        mca_pls_bproc_component.bynode = true;
-    } else {
-        mca_pls_bproc_component.bynode = false;
-    }
     
-    tmp = mca_base_param_reg_int_name("orte", "timing",
-                                      "Request that critical timing loops be measured",
-                                      false, false, 0, &value);
-    if (value != 0) {
-        mca_pls_bproc_component.timing = true;
-    } else {
-        mca_pls_bproc_component.timing = false;
-    }
-    
-    /* init the list to hold the daemon names */
-    rc = orte_pointer_array_init(&mca_pls_bproc_component.daemon_names, 8, 200000, 8);
-    /* init the list to hold the daemon names */
-    rc = orte_pointer_array_init(&mca_pls_bproc_component.active_node_names, 8, 200000, 8);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-    }
-    return rc;
+    return ORTE_SUCCESS;
 }
 
 /**
@@ -114,7 +89,6 @@ int orte_pls_bproc_component_open(void) {
 int orte_pls_bproc_component_close(void) {
     OBJ_DESTRUCT(&mca_pls_bproc_component.lock);
     OBJ_DESTRUCT(&mca_pls_bproc_component.condition);
-    OBJ_RELEASE(mca_pls_bproc_component.daemon_names);
     return ORTE_SUCCESS;
 }
 
@@ -131,7 +105,7 @@ orte_pls_base_module_t* orte_pls_bproc_init(int *priority) {
         return NULL;
 
     /* okay, we are in an HNP - now check to see if BProc is running here */
-    ret = bproc_version(&version);
+    ret =  bproc_version(&version);
     if (ret != 0) {
         return NULL;
     }
