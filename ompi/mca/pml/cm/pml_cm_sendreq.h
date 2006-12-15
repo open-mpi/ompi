@@ -35,7 +35,6 @@ OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_send_request_t);
 
 struct mca_pml_cm_thin_send_request_t { 
     mca_pml_cm_send_request_t req_send;
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_thin_send_request_t mca_pml_cm_thin_send_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_send_request_t);
@@ -49,7 +48,6 @@ struct mca_pml_cm_hvy_send_request_t {
     int32_t req_tag;                      /**< user defined tag */
     void *req_buff;                  /**< pointer to send buffer - may not be application buffer */
     bool req_blocking;
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_hvy_send_request_t mca_pml_cm_hvy_send_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_hvy_send_request_t);
@@ -205,7 +203,7 @@ do {                                                                    \
                               &sendreq->req_send.req_base.req_convertor, \
                               sendmode,                                 \
                               blocking,                                 \
-                              &sendreq->req_mtl));                      \
+                              &sendreq->req_send.req_base.req_mtl));    \
  } while (0)
 
 #define MCA_PML_CM_HVY_SEND_REQUEST_BSEND_ALLOC(sendreq, ret)           \
@@ -249,7 +247,7 @@ do {                                                                     \
                                   &sendreq->req_send.req_base.req_convertor, \
                                   sendreq->req_send.req_send_mode,       \
                                   sendreq->req_blocking,                 \
-                                  &sendreq->req_mtl));                   \
+                                  &sendreq->req_send.req_base.req_mtl)); \
         if(OMPI_SUCCESS == ret &&                                        \
            sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
             MCA_PML_BASE_REQUEST_MPI_COMPLETE(&(sendreq)->req_send.req_base.req_ompi); \
