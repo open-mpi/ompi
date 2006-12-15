@@ -22,6 +22,8 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
+
+#include "orte/mca/smr/base/smr_private.h"
 #include "orte/mca/smr/bproc/smr_bproc.h"
 
 /*
@@ -30,7 +32,7 @@
 
 static int orte_smr_bproc_open(void);
 static int orte_smr_bproc_close(void);
-static orte_smr_base_module_t* orte_smr_bproc_init(int*);
+static orte_smr_base_module_t* orte_smr_bproc_init(int *priority);
 
 orte_smr_bproc_component_t mca_smr_bproc_component = {
     {
@@ -65,8 +67,8 @@ orte_smr_bproc_component_t mca_smr_bproc_component = {
 orte_smr_base_module_t orte_smr_bproc_module = {
     orte_smr_base_get_proc_state,
     orte_smr_base_set_proc_state,
-    orte_smr_base_get_node_state_not_available,
-    orte_smr_base_set_node_state_not_available,
+    orte_smr_base_get_node_state,
+    orte_smr_base_set_node_state,
     orte_smr_base_get_job_state,
     orte_smr_base_set_job_state,
     orte_smr_bproc_begin_monitoring,

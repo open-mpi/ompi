@@ -743,7 +743,7 @@ cleanup:
 
 
 static int
-orte_pls_bproc_node_failed(orte_gpr_notify_msg_t *msg) 
+orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg) 
 {
     orte_jobid_t job;
     
@@ -764,7 +764,7 @@ orte_pls_bproc_node_failed(orte_gpr_notify_msg_t *msg)
     printf("mpirun has detected a dead node within the job and is terminating\n");
     
     /* extract the jobid from the returned data */
-    orte_schema.extract_jobid_from_std_trigger_name(&job, msg->trigger);
+    orte_schema.extract_jobid_from_std_trigger_name(&job, msg->target);
     
     /* terminate all jobs in the in the job family */
     orte_pls_bproc_terminate_job(job, NULL);

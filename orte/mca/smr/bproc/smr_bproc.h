@@ -45,7 +45,6 @@ extern "C" {
 /**
  * Module init/fini
  */
-int orte_smr_bproc_init(void);
 int orte_smr_bproc_finalize(void);
 int orte_smr_bproc_begin_monitoring(orte_job_map_t *map,
                                     orte_gpr_trigger_cb_fn_t cbfunc,

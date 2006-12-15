@@ -182,7 +182,7 @@ struct orte_smr_base_module_1_3_0_t {
     orte_smr_base_module_set_node_state_fn_t            set_node_state;
     orte_smr_base_module_get_job_state_fn_t             get_job_state;
     orte_smr_base_module_set_job_state_fn_t             set_job_state;
-    orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring_job;
+    orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring;
     /* TRIGGER INIT FUNCTIONS */
     orte_smr_base_module_job_stage_gate_init_fn_t       init_job_stage_gates;
     orte_smr_base_module_orted_stage_gate_init_fn_t     init_orted_stage_gates;
