@@ -816,6 +816,13 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
     free(param);
     free(var);
     
+    /* set the app_context number into the environment for the attributes */
+    var = mca_base_param_environ_variable("orte","app","num");
+    asprintf(&param, "%ld", (long)app_context);
+    opal_setenv(var, param, true, &env);
+    free(param);
+    free(var);
+ 
     /* set the vpid-to-vpid stride based on the mapping mode */
     if (bynode) {
         /* we are mapping by node, so we want to set the stride
