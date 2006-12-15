@@ -1143,8 +1143,8 @@ cleanup:
     OBJ_RELEASE(map);
 
     if (mca_pls_bproc_component.do_not_launch) {
-        /* abort the job */
-        exit(-1);
+        /* indicate that we failed to launch, but do so silently */
+        return ORTE_ERR_SILENT;
     }
     
     return rc;
