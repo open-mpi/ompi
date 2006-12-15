@@ -31,7 +31,7 @@ mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
         {
             mca_pml_cm_hvy_send_request_t *request =
                 (mca_pml_cm_hvy_send_request_t*) base_request;
-            mtl_req = &request->req_send.req_base.req_mtl;
+            mtl_req = &request->req_mtl;
         }
         break;
 
@@ -39,7 +39,7 @@ mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
         {
             mca_pml_cm_thin_send_request_t *request =
                 (mca_pml_cm_thin_send_request_t*) base_request;
-            mtl_req = &request->req_send.req_base.req_mtl;
+            mtl_req = &request->req_mtl;
         }
         break;
 
@@ -47,7 +47,7 @@ mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
         {
             mca_pml_cm_hvy_recv_request_t *request =
                 (mca_pml_cm_hvy_recv_request_t*) base_request;
-            mtl_req = &request->req_base.req_mtl;
+            mtl_req = &request->req_mtl;
         }
         break;
 
@@ -55,7 +55,7 @@ mca_pml_cm_cancel(struct ompi_request_t *ompi_req, int flag)
         {
             mca_pml_cm_thin_recv_request_t *request =
                 (mca_pml_cm_thin_recv_request_t*) base_request;
-            mtl_req = &request->req_base.req_mtl;
+            mtl_req = &request->req_mtl;
         }
         break;
 
