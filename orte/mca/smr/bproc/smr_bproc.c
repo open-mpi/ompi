@@ -58,6 +58,7 @@
 /* define some local variables/types */
 typedef unsigned int bit_set;
 static opal_list_t active_node_list;
+static bool initialized=false;
 
 static inline void set_bit(bit_set *set, int bit)
 {
@@ -86,7 +87,6 @@ static inline int empty_set(bit_set set)
 	return set == EMPTY_SET;
 }
 
-static int orte_smr_bproc_finalize(void);
 
 /** 
  * Query the bproc node status
@@ -247,7 +247,7 @@ static void update_registry(bit_set changes, struct bproc_node_info_t *ni)
     }
 
     ret = orte_schema.get_node_tokens(&(value->tokens), &(value->num_tokens), 
-	    mca_smr_bproc_component.cellid, node_name);
+	    ORTE_PROC_MY_NAME->cellid, node_name);
 
     if (ret != ORTE_SUCCESS) {
     	ORTE_ERROR_LOG(ret);
@@ -370,12 +370,8 @@ static void orte_smr_bproc_notify_handler(int fd, short flags, void *user)
  */
 static int orte_smr_bproc_module_init(void)
 {
-    int rc;
-    
     if (mca_smr_bproc_component.debug)
 	    opal_output(0, "init smr_bproc_module\n");
-
-    mca_smr_bproc_component.cellid = ORTE_PROC_MY_NAME->cellid;
 
     mca_smr_bproc_component.node_set.size = 0;
 
@@ -391,6 +387,9 @@ static int orte_smr_bproc_module_init(void)
 int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_t cbfunc, void *user_tag)
 {
     struct bproc_node_set_t ns = BPROC_EMPTY_NODESET;
+    opal_list_item_t *item;
+    orte_mapped_node_t *node;
+    orte_smr_node_state_tracker_t *newnode;
 
     /* if our internal structures haven't been initialized, then
      * set them up
@@ -448,7 +447,7 @@ int orte_smr_bproc_begin_monitoring(orte_job_map_t *map, orte_gpr_trigger_cb_fn_
     
     opal_event_add(&mca_smr_bproc_component.notify_event, 0);
     
-    
+    return ORTE_SUCCESS;
 }
 /**
  *  Cleanup
