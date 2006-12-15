@@ -107,43 +107,29 @@ void orte_pls_bproc_recv(int status, orte_process_name_t* sender,
 struct orte_pls_bproc_component_t {
     orte_pls_base_component_t super;
     /**< The base class */
-    bool done_launching;
-    /**< Is true if we are done launching the user's app. */
     char * orted;
-    /**< The orted executeable. This can be an absolute path, or if not found
+    /**< The orted executable. This can be an absolute path, or if not found
      * we will look for it in the user's path */
     int debug;
     /**< If greater than 0 print debugging information */
-    bool timing;
-    /**< If true, report launch timing info */
-    int num_procs;
-    /**< The number of processes that are running */
     int priority;
     /**< The priority of this component. This will be returned if we determine
      * that bproc is available and running on this node, */
     int terminate_sig;
     /**< The signal that gets sent to a process to kill it. */
-    size_t num_daemons;
-    /**< The number of daemons that are currently running. */
     opal_mutex_t lock;
     /**< Lock used to prevent some race conditions */
     opal_condition_t condition;
     /**< Condition that is signaled when all the daemons have died */
-    orte_pointer_array_t * daemon_names;
-    /**< Array of the process names of all the daemons. This is used to send
-     * the daemons a termonation signal when all the user processes are done */
-    orte_pointer_array_t* active_node_names;
-    /**< Array of the bproc node  names of all the daemons. This is used to 
-     * track which bproc nodes belong to us*/
-    bool bynode;
-    /**< Indicates whether or not this application is to be mapped by node
-     * (if set to true) or by slot (default)
-     */
     bool recv_issued;
     /**< Indicates that the comm recv for reporting abnormal proc termination
      * has been issued
      */
-    
+    bool do_not_launch;
+    /**< for test purposes, do everything but the actual launch */
+    orte_std_cntr_t num_daemons;
+    /**< track the number of daemons being launched so we can tell when
+     * all have reported in */
 };
 /**
  * Convenience typedef

@@ -55,6 +55,8 @@ extern "C" {
         opal_condition_t orted_cmd_cond;
         /** reuse daemons flag */
         bool reuse_daemons;
+        /** request for timing measurement reports */
+        bool timing;
     } orte_pls_base_t;
     
     /**

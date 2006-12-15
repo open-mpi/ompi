@@ -518,8 +518,10 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
 
         /* Make assignments */
         if (mca_rmaps_round_robin_component.bynode) {
+            map->mapping_mode = strdup("bynode");
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
+            map->mapping_mode = strdup("byslot");
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         }
 
