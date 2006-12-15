@@ -25,7 +25,6 @@
 
 struct mca_pml_cm_thin_recv_request_t {
     mca_pml_cm_request_t req_base;
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 };
 typedef struct mca_pml_cm_thin_recv_request_t mca_pml_cm_thin_recv_request_t;
 OMPI_DECLSPEC OBJ_CLASS_DECLARATION(mca_pml_cm_thin_recv_request_t);
@@ -39,7 +38,6 @@ struct mca_pml_cm_hvy_recv_request_t {
     void *req_buff;                       /**< pointer to send buffer - may not be application buffer */
     size_t req_bytes_packed;              /**< packed size of a message given the datatype and count */
     bool req_blocking;
-    mca_mtl_request_t req_mtl;            /**< the mtl specific memory. This field should be the last in the struct */
 }; 
 typedef struct mca_pml_cm_hvy_recv_request_t mca_pml_cm_hvy_recv_request_t;
 
@@ -173,7 +171,7 @@ do {                                                                    \
                               src,                                      \
                               tag,                                      \
                               &recvreq->req_base.req_convertor,         \
-                              &recvreq->req_mtl));                      \
+                              &recvreq->req_base.req_mtl));             \
 } while (0)
 
 
@@ -197,7 +195,7 @@ do {                                                                    \
                               request->req_peer,                        \
                               request->req_tag,                         \
                               &recvreq->req_base.req_convertor,         \
-                              &recvreq->req_mtl));                      \
+                              &recvreq->req_base.req_mtl));             \
 } while (0)
 
 
