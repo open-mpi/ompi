@@ -34,9 +34,12 @@
 #include "ompi/datatype/convertor.h" 
 #include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/udapl/mpool_udapl.h"
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/proc/proc.h"
 
+static int udapl_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg);
+static int udapl_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 
 mca_btl_udapl_module_t mca_btl_udapl_module = {
     {
@@ -67,6 +70,49 @@ mca_btl_udapl_module_t mca_btl_udapl_module = {
     }
 };
 
+static int udapl_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg)
+{
+    mca_btl_udapl_module_t *btl = (mca_btl_udapl_module_t*)reg_data;
+    mca_btl_udapl_reg_t *udapl_reg = (mca_btl_udapl_reg_t*)reg;
+    DAT_REGION_DESCRIPTION region;
+    DAT_VLEN dat_size;
+    DAT_VADDR dat_addr;
+    int rc;
+
+    region.for_va = base;
+    udapl_reg->lmr_triplet.virtual_address = (DAT_VADDR)base;
+    udapl_reg->lmr_triplet.segment_length = size;
+    udapl_reg->lmr = NULL;
+
+    rc = dat_lmr_create(btl->udapl_ia, DAT_MEM_TYPE_VIRTUAL, region, size,
+            btl->udapl_pz, DAT_MEM_PRIV_ALL_FLAG, &udapl_reg->lmr,
+            &udapl_reg->lmr_triplet.lmr_context, &udapl_reg->rmr_context,
+            &dat_size, &dat_addr);
+
+    if(rc != DAT_SUCCESS) {
+        return OMPI_ERR_OUT_OF_RESOURCE;
+    }
+
+    return OMPI_SUCCESS;
+}
+
+static int udapl_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
+{
+    mca_btl_udapl_reg_t *udapl_reg = (mca_btl_udapl_reg_t*)reg;
+    int rc;
+
+    if(udapl_reg->lmr != NULL) {
+        rc = dat_lmr_free(udapl_reg->lmr);
+        if(rc != DAT_SUCCESS) {
+            opal_output(0, "%s: error unpinning dapl memory errno says %s\n",
+                __func__, strerror(errno));
+            return OMPI_ERROR;
+        }
+    }
+
+    return OMPI_SUCCESS;
+}
 
 /**
  * Initialize module module resources.
@@ -153,9 +199,10 @@ mca_btl_udapl_init(DAT_NAME_PTR ia_name, mca_btl_udapl_module_t* btl)
     ((struct sockaddr_in*)&btl->udapl_addr.addr)->sin_port = htons(port);
 
     /* initialize the memory pool */
-    res.udapl_ia = btl->udapl_ia;
-    res.udapl_pz = btl->udapl_pz;
-
+    res.reg_data = btl;
+    res.sizeof_reg = sizeof(mca_btl_udapl_reg_t);
+    res.register_mem = udapl_reg_mr;
+    res.deregister_mem = udapl_dereg_mr;
     btl->super.btl_mpool = mca_mpool_base_module_create(
             mca_btl_udapl_component.udapl_mpool_name, &btl->super, &res);
 
@@ -199,7 +246,6 @@ failure:
     dat_ia_close(btl->udapl_ia, DAT_CLOSE_ABRUPT_FLAG);
     return OMPI_ERROR;
 }
-
 
 /*
  * Cleanup/release module resources.
@@ -352,8 +398,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
 	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
     frag->triplet.segment_length =
         frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
-    assert(frag->triplet.lmr_context ==
-            ((mca_mpool_udapl_registration_t*)frag->registration)->lmr_triplet.lmr_context);
+    assert(frag->triplet.lmr_context == frag->registration->lmr_triplet.lmr_context);
     
     frag->btl = udapl_btl;
     frag->base.des_src = &frag->segment;
@@ -376,8 +421,8 @@ int mca_btl_udapl_free(
 {
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
 
-    if(frag->size == 0) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, frag->registration);
+    if(frag->size == 0 && frag->registration != NULL) {
+        btl->btl_mpool->mpool_deregister(btl->btl_mpool, frag->registration);
         MCA_BTL_UDAPL_FRAG_RETURN_USER(btl, frag); 
     } else if(frag->size == mca_btl_udapl_component.udapl_eager_frag_size) {
         MCA_BTL_UDAPL_FRAG_RETURN_EAGER(btl, frag); 

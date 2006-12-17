@@ -245,7 +245,8 @@ int mca_btl_gm_free( struct mca_btl_base_module_t* btl,
     mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)des;
 
     if( NULL != frag->registration ) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->registration);
+        btl->btl_mpool->mpool_deregister(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->registration);
+        frag->registration = NULL;
     }
 
     MCA_BTL_GM_FRAG_RETURN(btl, frag); 
@@ -268,142 +269,95 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     size_t* size
 )
 {
-    mca_btl_gm_frag_t* frag;
+    mca_btl_gm_frag_t *frag = NULL;
     struct iovec iov;
     uint32_t iov_count = 1;
     size_t max_data = *size;
     int rc;
 
 #if (OMPI_MCA_BTL_GM_HAVE_RDMA_GET || OMPI_MCA_BTL_GM_HAVE_RDMA_PUT)
-    /*
-     * If the data has already been pinned and is contigous than we can
-     * use it in place.
-    */
-    if (NULL != registration && 0 == ompi_convertor_need_buffers(convertor)) {
-        size_t reg_len;
-        MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
-        if(NULL == frag){
-            return NULL;
+    if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
+        if(registration != NULL || max_data > btl->btl_max_send_size) {
+            MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
+            if(NULL == frag) {
+                return NULL;
+            }
+
+            /*
+             * just assign it something..
+             * we will assign the real value in put/get
+             */
+            frag->type = MCA_BTL_GM_PUT;
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
+
+
+            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+
+            *size = max_data;
+
+            if(NULL == registration) {
+                rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+                        iov.iov_base, max_data, 0, &registration);
+                if(OMPI_SUCCESS != rc || NULL == registration) {
+                    MCA_BTL_GM_FRAG_RETURN(btl, frag);
+                    return NULL;
+                }
+                /* keep track of the registration we did */
+                frag->registration = registration;
+            }
+
+            frag->segment.seg_len = max_data;
+            frag->segment.seg_addr.pval = iov.iov_base;
+
+            frag->base.des_src = &frag->segment;
+            frag->base.des_src_cnt = 1;
+            frag->base.des_dst = NULL;
+            frag->base.des_dst_cnt = 0;
+            frag->base.des_flags = 0;
+
+            return &frag->base;
         }
-        /*
-         * just assign it something.. 
-         *  we will assign the real value in put/get 
-        */
-        frag->type = MCA_BTL_GM_PUT; 
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-                                                                                                    
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        reg_len = (unsigned char*)registration->bound - (unsigned char*)iov.iov_base + 1;
-        
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
-                                     (mca_mpool_base_registration_t*) registration);
-        
-        frag->registration = registration;
-
-    /*
-     * if the data is not already pinned - but the leave pinned option is set,
-     * then go ahead and pin contigous data. however, if a reserve is required 
-     * then we must allocated a fragment w/ buffer space
-    */
-    } else if (max_data > btl->btl_max_send_size && 
-               ompi_convertor_need_buffers(convertor) == 0 &&
-               reserve == 0) {
-
-        mca_mpool_base_module_t* mpool = btl->btl_mpool;
-        MCA_BTL_GM_FRAG_ALLOC_USER(btl, frag, rc);
-        if(NULL == frag){
-            return NULL;
-        }
-        /*
-         * just assign it something.. 
-         *  we will assign the real value in put/get 
-        */
-        frag->type = MCA_BTL_GM_PUT;
-        iov.iov_len = max_data;
-        iov.iov_base = NULL;
-
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-                                                                                                
-        frag->segment.seg_len = max_data;
-        frag->segment.seg_addr.pval = iov.iov_base;
-
-        rc = mpool->mpool_register( mpool, iov.iov_base, max_data, 0, &registration );
-
-        if(rc != OMPI_SUCCESS) {
-            MCA_BTL_GM_FRAG_RETURN(btl,frag);
-            return NULL;
-        }
-
-        frag->registration = registration;
-    } 
-
-    /*
-     * if we aren't pinning the data and the requested size is less
-     * than the eager limit pack into a fragment from the eager pool
-    */
-    else 
+    }
 #endif
 
-    if (max_data+reserve <= btl->btl_eager_limit) {
-                                                                                                    
+    if (max_data + reserve <= btl->btl_eager_limit) {
+        /* the data is small enough to fit in the eager frag and
+         * memory is not prepinned */
         MCA_BTL_GM_FRAG_ALLOC_EAGER(btl, frag, rc);
-        if(NULL == frag) {
-            return NULL;
+        if(frag != NULL) {
+            frag->type = MCA_BTL_GM_EAGER;
         }
-        frag->type = MCA_BTL_GM_EAGER;
-
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        *size  = max_data;
-        if( rc < 0 ) {
-            MCA_BTL_GM_FRAG_RETURN(btl, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
     }
 
-    /* 
-     * otherwise pack as much data as we can into a fragment
-     * that is the max send size.
-     */
-    else {
-                                                                                                    
+    if(NULL == frag) {
+        /* the data doesn't fit into eager frag or eger frag is
+         * not available */
         MCA_BTL_GM_FRAG_ALLOC_MAX(btl, frag, rc);
         if(NULL == frag) {
             return NULL;
         }
         frag->type = MCA_BTL_GM_SEND;
-        if(max_data + reserve > btl->btl_max_send_size){
+        if(max_data + reserve > btl->btl_max_send_size) {
             max_data = btl->btl_max_send_size - reserve;
         }
-        iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
-                                                                                                    
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-        *size  = max_data;
-                                                                                                    
-        if( rc < 0 ) {
-            MCA_BTL_GM_FRAG_RETURN(btl, frag);
-            return NULL;
-        }
-        frag->segment.seg_len = max_data + reserve;
     }
 
+    iov.iov_len = max_data;
+    iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    if(rc < 0) {
+        MCA_BTL_GM_FRAG_RETURN(btl, frag);
+        return NULL;
+    }
+    *size  = max_data;
+    frag->segment.seg_len = max_data + reserve;
     frag->base.des_src = &frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
+
     return &frag->base;
 }
 
@@ -462,18 +416,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->base.des_dst = &frag->segment;
     frag->base.des_dst_cnt = 1;
     frag->base.des_flags = 0;
-    if(NULL != registration) {
-        /* bump reference count as so that the registration
-         * doesn't go away when the operation completes
-         */
-        
-        mpool->mpool_retain(mpool, 
-                           (mca_mpool_base_registration_t*) registration); 
-                
-        frag->registration = registration;
-
-    }  else {
-
+    if(NULL == registration) {
         rc = mpool->mpool_register( mpool,
 				    frag->segment.seg_addr.pval,
 				    frag->segment.seg_len,
@@ -483,7 +426,6 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
             MCA_BTL_GM_FRAG_RETURN(btl,frag);
             return NULL;
         }
-        
         frag->registration = registration;
     }
     return &frag->base;

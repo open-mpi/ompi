@@ -220,8 +220,14 @@ struct mca_btl_openib_module_t {
    
     orte_pointer_array_t *endpoints;
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
-    
+
 extern mca_btl_openib_module_t mca_btl_openib_module;
+
+struct mca_btl_openib_reg_t {
+    mca_mpool_base_registration_t base;
+    struct ibv_mr *mr;
+};
+typedef struct mca_btl_openib_reg_t mca_btl_openib_reg_t;
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
 extern void* mca_btl_openib_progress_thread(opal_object_t*);
@@ -417,10 +423,8 @@ extern mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
  * @param frag (IN)  IB send fragment
  *
  */
-extern void mca_btl_openib_send_frag_return(
-                                            struct mca_btl_base_module_t* btl,
-                                            struct mca_btl_openib_frag_t*
-                                            );
+extern void mca_btl_openib_send_frag_return(mca_btl_base_module_t* btl,
+        mca_btl_openib_frag_t*);
 
 
 int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t* openib_btl); 

@@ -44,22 +44,6 @@ mca_rcache_vma_component_t mca_rcache_vma_component = {
 
 static int mca_rcache_vma_component_open(void)
 {
-    mca_base_param_reg_int(&mca_rcache_vma_component.super.rcache_version, 
-                           "mru_len", 
-                           "The maximum size IN ENTRIES of the MRU (most recently used) rcache list", 
-                           false, 
-                           false, 
-                           256, 
-                           (int*)&(mca_rcache_vma_component.reg_mru_len)); 
-    
-    mca_base_param_reg_int(&mca_rcache_vma_component.super.rcache_version, 
-                           "mru_size", 
-                           "The maximum size IN BYTES of the MRU (most recently used) rcache list", 
-                           false, 
-                           false, 
-                           1*1024*1024*1024, /* default to 1GB? */  
-                           (int*)&(mca_rcache_vma_component.reg_max_mru_size)); 
-    
     return OMPI_SUCCESS; 
 }
 
@@ -68,8 +52,6 @@ mca_rcache_base_module_t* mca_rcache_vma_component_init(void) {
     
     rcache = (mca_rcache_vma_module_t*) malloc(sizeof(mca_rcache_vma_module_t));
     mca_rcache_vma_module_init(rcache);
-    rcache->reg_mru_len = mca_rcache_vma_component.reg_mru_len;
-    rcache->reg_max_mru_size = mca_rcache_vma_component.reg_max_mru_size;
 
     return &rcache->base; 
 }

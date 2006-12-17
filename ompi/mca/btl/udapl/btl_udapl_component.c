@@ -33,7 +33,7 @@
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "ompi/mca/mpool/base/base.h" 
-#include "ompi/mca/mpool/udapl/mpool_udapl.h"
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h"
 #include "btl_udapl_endpoint.h" 
@@ -149,7 +149,7 @@ int mca_btl_udapl_component_open(void)
     mca_btl_udapl_component.udapl_free_list_inc =
         mca_btl_udapl_param_register_int("free_list_inc", 8);
     mca_btl_udapl_component.udapl_mpool_name =
-        mca_btl_udapl_param_register_string("mpool", "udapl");
+        mca_btl_udapl_param_register_string("mpool", "rdma");
     mca_btl_udapl_component.udapl_max_btls = 
         mca_btl_udapl_param_register_int("max_modules", 8);
     mca_btl_udapl_component.udapl_evd_qlen =

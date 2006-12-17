@@ -18,25 +18,22 @@
 
 
 #include "btl_mvapi_frag.h" 
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
-
-
 
 static void mca_btl_mvapi_frag_common_constructor( mca_btl_mvapi_frag_t* frag) 
 {
-    mca_mpool_mvapi_registration_t* mem_hndl = (mca_mpool_mvapi_registration_t*) frag->base.super.user_data; 
+    mca_btl_mvapi_reg_t* mem_hndl =
+        (mca_btl_mvapi_reg_t*)frag->base.super.user_data;
     frag->hdr = (mca_btl_mvapi_header_t*) (frag+1);  /* initialize btl header to start at end of frag */ 
     frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_mvapi_header_t);  
     /* init the segment address to start after the btl header */ 
     
     frag->segment.seg_len = frag->size;
-    frag->segment.seg_key.key32[0] = (uint32_t) mem_hndl->l_key; 
-    frag->sg_entry.lkey = mem_hndl->l_key; 
+    frag->sg_entry.lkey = mem_hndl->l_key;
+    frag->segment.seg_key.key32[0] = frag->sg_entry.lkey;
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
     frag->base.des_flags = 0; 
 }
 
- 
 static void mca_btl_mvapi_send_frag_common_constructor(mca_btl_mvapi_frag_t* frag) 
 { 
     

@@ -652,7 +652,7 @@ int mca_pml_ob1_send_request_start_rdma(
        bml_btl->btl_flags & MCA_BTL_FLAGS_GET) {
         size_t old_position = sendreq->req_send.req_convertor.bConverted;
 
-         /* prepare source descriptor/segment(s) */
+        /* prepare source descriptor/segment(s) */
         mca_bml_base_prepare_src(
              bml_btl, 
              reg,
@@ -846,6 +846,7 @@ int mca_pml_ob1_send_request_start_rndv(
     des->des_cbdata = sendreq;
     des->des_cbfunc = mca_pml_ob1_rndv_completion;
     sendreq->req_send_offset = size;
+    sendreq->req_rdma_offset = size;
 
     /* send */
     rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
@@ -1023,15 +1024,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)
         >= sendreq->req_send.req_bytes_packed) {
-        /* bump up the req_state after the last fin was sent.. 
-           if rndv completion occurs after this (can happen!) then 
-           the rndv completion will properly clean up after the request 
-           we can't just do this on the first RDMA PUT + ACK ctl message in 
-           mca_pml_ob1_send_request_put because then we might fall into sender 
-           side scheduleing (pml pipeline protocol) */ 
-        if(true == sendreq->req_got_put_ack) { 
-            MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
-        }
+
         /* if we've got completion on rndv packet */
         if (sendreq->req_state == 2) {
             MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
@@ -1058,7 +1051,6 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
     size_t offset = (size_t)frag->rdma_hdr.hdr_rdma.hdr_rdma_offset;
     size_t i, save_size = frag->rdma_length;
     int rc;
-    bool release = false; 
 
     bml_btl = mca_bml_base_btl_array_find(&frag->rdma_ep->btl_rdma,
                                           frag->rdma_btl);
@@ -1074,16 +1066,6 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
     /* set convertor at current offset */
     ompi_convertor_set_position(&sendreq->req_send.req_convertor, &offset);
 
-    /* if registration doesnt exist - create one */
-    if (mca_pml_ob1.leave_pinned_pipeline && reg == NULL) {
-        unsigned char* base;
-        ptrdiff_t lb;
-        ompi_ddt_type_lb(sendreq->req_send.req_convertor.pDesc, &lb);
-        base = (unsigned char*)sendreq->req_send.req_convertor.pBaseBuf + lb + offset;
-        reg = mca_pml_ob1_rdma_register(bml_btl, base, frag->rdma_length);
-        release = true;
-    }
-    
     /* setup descriptor */
     mca_bml_base_prepare_src( bml_btl, 
                               reg,
@@ -1092,10 +1074,6 @@ int mca_pml_ob1_send_request_put_frag( mca_pml_ob1_rdma_frag_t* frag )
                               &frag->rdma_length, 
                               &des );
     
-    if(reg && release == true && bml_btl->btl_mpool) {
-        bml_btl->btl_mpool->mpool_release(bml_btl->btl_mpool, reg);
-    }
-
     if(NULL == des) {
         frag->rdma_length = save_size; 
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);
@@ -1148,7 +1126,7 @@ void mca_pml_ob1_send_request_put(
     size_t i, size = 0;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) { 
-        sendreq->req_got_put_ack = true;
+        MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
     }
 
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 

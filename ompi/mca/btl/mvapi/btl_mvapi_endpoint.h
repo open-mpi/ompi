@@ -26,7 +26,7 @@
 #include "btl_mvapi_frag.h"
 #include "btl_mvapi.h"
 #include "btl_mvapi_eager_rdma.h"
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h"
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 
 #include <vapi.h>
 #include <mtl_common.h>

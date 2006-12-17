@@ -30,7 +30,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/dss/dss.h"
-#include "ompi/mca/mpool/udapl/mpool_udapl.h"
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "btl_udapl.h"
 #include "btl_udapl_endpoint.h" 
 #include "btl_udapl_proc.h"

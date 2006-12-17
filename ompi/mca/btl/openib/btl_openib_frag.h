@@ -22,12 +22,13 @@
 #include "ompi_config.h"
 
 #include <infiniband/verbs.h> 
-#include "ompi/mca/mpool/openib/mpool_openib.h" 
 #include "ompi/mca/btl/btl.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif
+
+struct mca_btl_openib_reg_t;
 
 struct mca_btl_openib_header_t {
     mca_btl_base_tag_t tag;
@@ -173,8 +174,7 @@ struct mca_btl_openib_frag_t {
         struct ibv_send_wr sr_desc; 
     } wr_desc;  
     struct ibv_sge sg_entry;  
-    struct ibv_mr *mr; 
-    mca_mpool_openib_registration_t * openib_reg; 
+    struct mca_btl_openib_reg_t *registration;
 }; 
 typedef struct mca_btl_openib_frag_t mca_btl_openib_frag_t; 
 OBJ_CLASS_DECLARATION(mca_btl_openib_frag_t);

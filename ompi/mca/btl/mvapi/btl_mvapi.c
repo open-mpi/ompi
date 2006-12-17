@@ -31,7 +31,7 @@
 #include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
-#include "ompi/mca/mpool/mvapi/mpool_mvapi.h" 
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/btl_base_error.h" 
 #include <vapi_types.h> 
 #include <math.h> /* for log2 */ 
@@ -225,8 +225,9 @@ int mca_btl_mvapi_free(
                     mca_btl_base_descriptor_t* des) 
 {
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)des; 
-    if (MCA_BTL_MVAPI_FRAG_FRAG == frag->type) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->vapi_reg); 
+    if (MCA_BTL_MVAPI_FRAG_FRAG == frag->type && frag->registration != NULL) {
+        btl->btl_mpool->mpool_deregister(btl->btl_mpool, (mca_mpool_base_registration_t*) frag->registration);
+        frag->registration = NULL;
     }
 
     MCA_BTL_IB_FRAG_RETURN(btl, frag); 
@@ -267,164 +268,99 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_src(
 )
 {
     mca_btl_mvapi_module_t* mvapi_btl; 
-    mca_btl_mvapi_frag_t* frag; 
-    mca_mpool_mvapi_registration_t * vapi_reg; 
+    mca_btl_mvapi_frag_t* frag = NULL;
+    mca_btl_mvapi_reg_t *mvapi_reg;
     struct iovec iov; 
     uint32_t iov_count = 1; 
     size_t max_data = *size; 
     int rc; 
     
     
-    mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
-    vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
-    
-    if(NULL != vapi_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        size_t reg_len; 
-        /* the memory is already pinned and we have contiguous user data */ 
-        MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
-        if(NULL == frag){
-            return NULL; 
-        } 
-        
-        iov.iov_len = max_data; 
-        iov.iov_base = NULL; 
-        
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size = max_data;
-        
-        frag->segment.seg_len = max_data; 
-        frag->segment.seg_addr.pval = iov.iov_base; 
-        reg_len = (unsigned char*)vapi_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
+    mvapi_btl = (mca_btl_mvapi_module_t*)btl;
 
-        frag->sg_entry.len = max_data; 
-        frag->sg_entry.lkey = vapi_reg->l_key; 
-        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
-        
-        frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
-        
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags = 0; 
-        frag->vapi_reg = vapi_reg; 
-        
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
-        if(vapi_reg->base_reg.flags & MCA_MPOOL_FLAGS_CACHE) { 
-            assert(vapi_reg->base_reg.ref_count >= 4); 
-        } else { 
-            assert(vapi_reg->base_reg.ref_count >= 2); 
+    if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
+        if(registration != NULL || max_data > btl->btl_max_send_size) {
+            MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
+            if(NULL == frag) {
+                return NULL;
+            }
+
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
+
+            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+
+            *size = max_data;
+
+            if(NULL == registration) {
+                rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+                        iov.iov_base, max_data, 0, &registration);
+                if(OMPI_SUCCESS != rc || NULL == registration) {
+                     MCA_BTL_IB_FRAG_RETURN(mvapi_btl, frag);
+                     return NULL;
+                }
+                frag->registration = (mca_btl_mvapi_reg_t*)registration;
+            }
+            mvapi_reg = (mca_btl_mvapi_reg_t*)registration;
+
+            frag->base.des_flags = 0;
+            frag->base.des_src = &frag->segment;
+            frag->base.des_src_cnt = 1;
+            frag->base.des_dst = NULL;
+            frag->base.des_dst_cnt = 0;
+            frag->base.des_flags = 0;
+
+            frag->sg_entry.len = max_data;
+            frag->sg_entry.lkey = mvapi_reg->l_key;
+            frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t)iov.iov_base;
+
+            frag->segment.seg_len = max_data;
+            frag->segment.seg_addr.pval = iov.iov_base;
+            frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+
+            BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
+                        "frag->segment.seg_key.key32[0] = %lu",
+                        frag->sg_entry.lkey, frag->sg_entry.addr,
+                        frag->segment.seg_key.key32[0]));
+            return &frag->base;
         }
-
-        return &frag->base;
-        
-    } else if( max_data > btl->btl_max_send_size && 
-               ompi_convertor_need_buffers(convertor) == 0 && 
-               reserve == 0)
-    {
-        /* The user buffer is contigous and we are asked to send more than the max send size.  */            
-
-        MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
-        if(NULL == frag){
-            return NULL; 
-        } 
-       
-        iov.iov_len = max_data; 
-        iov.iov_base = NULL; 
-        
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size = max_data;
-        
-        frag->segment.seg_len = max_data; 
-        frag->segment.seg_addr.pval = iov.iov_base; 
-        frag->base.des_flags = 0; 
-
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-            iov.iov_base, 
-            max_data, 
-            0,
-            (mca_mpool_base_registration_t**) &vapi_reg); 
-        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
-            BTL_ERROR(("mpool_register(%p,%lu) failed", iov.iov_base, max_data));
-            MCA_BTL_IB_FRAG_RETURN(btl, frag);
-            return NULL;
-        }
-        
-        frag->sg_entry.len = max_data; 
-        frag->sg_entry.lkey = vapi_reg->l_key; 
-        frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) iov.iov_base; 
-        
-        frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->l_key; 
-            
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->vapi_reg = vapi_reg; 
-        
-        return &frag->base;
-
-    } else if (max_data+reserve <=  btl->btl_eager_limit) { 
-        /* the data is small enough to fit in the eager frag and 
-           either we received no prepinned memory or leave pinned is 
-           not set
-        */
-        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
-        if(NULL == frag) { 
-            return NULL; 
-        } 
-        
-        iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
-        
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size  = max_data; 
-        if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN(btl, frag); 
-            return NULL; 
-        } 
-        
-        frag->segment.seg_len = max_data + reserve; 
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags = 0; 
-        
-        return &frag->base; 
-        
-    } else { 
-       
-        MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
-        if(NULL == frag) { 
-            return NULL; 
-        } 
-        if(max_data + reserve > btl->btl_max_send_size){ 
-            max_data = btl->btl_max_send_size - reserve; 
-        }
-        iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
-        
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size  = max_data; 
-
-        if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN(btl, frag); 
-            return NULL; 
-        } 
-        
-        frag->segment.seg_len = max_data + reserve; 
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags=0; 
-        
-        return &frag->base; 
     }
-    return NULL; 
+
+    if(max_data + reserve <= btl->btl_eager_limit) {
+        /* the data is small enough to fit in the eager frag and
+         * memory is not prepinned */
+        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
+    }
+
+    if(NULL == frag) {
+        /* the data doesn't fit into eager frag or eger frag is
+         * not available */
+         MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
+         if(NULL == frag) {
+             return NULL;
+         }
+         if(max_data + reserve > btl->btl_max_send_size) {
+             max_data = btl->btl_max_send_size - reserve;
+         }
+    }
+
+    iov.iov_len = max_data;
+    iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    if( rc < 0 ) {
+        MCA_BTL_IB_FRAG_RETURN(mvapi_btl, frag);
+        return NULL;
+    }
+    *size  = max_data;
+    frag->segment.seg_len = max_data + reserve;
+    frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
+
+    return &frag->base;
 }
 
 
@@ -453,12 +389,11 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
 {
     mca_btl_mvapi_module_t* mvapi_btl; 
     mca_btl_mvapi_frag_t* frag; 
-    mca_mpool_mvapi_registration_t * vapi_reg; 
+    mca_btl_mvapi_reg_t *mvapi_reg;
     ptrdiff_t lb;
     int rc; 
     
     mvapi_btl = (mca_btl_mvapi_module_t*) btl; 
-    vapi_reg = (mca_mpool_mvapi_registration_t*) registration; 
     
     MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
 
@@ -471,42 +406,32 @@ mca_btl_base_descriptor_t* mca_btl_mvapi_prepare_dst(
     frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->base.des_flags = 0; 
 
-    if(NULL!= vapi_reg){ 
-        /* the memory is already pinned- use it*/ 
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) vapi_reg); 
-        if(vapi_reg->base_reg.flags & MCA_MPOOL_FLAGS_CACHE) { 
-            assert(vapi_reg->base_reg.ref_count >= 4); 
-        } else { 
-            assert(vapi_reg->base_reg.ref_count >= 2); 
-        }
-    }  else { 
+    if(NULL == registration) {
         /* we didn't get a memory registration passed in, so we have to register the region
          * ourselves 
          */ 
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-            frag->segment.seg_addr.pval,
-            *size, 
-            0,
-            (mca_mpool_base_registration_t**) &vapi_reg);
-        if(OMPI_SUCCESS != rc || NULL == vapi_reg) {
+            frag->segment.seg_addr.pval, *size, 0, &registration);
+        if(OMPI_SUCCESS != rc || NULL == registration) {
             BTL_ERROR(("mpool_register(%p,%lu) failed: base %p lb %lu offset %lu",
                 frag->segment.seg_addr.pval, *size, convertor->pBaseBuf, lb, convertor->bConverted));
             MCA_BTL_IB_FRAG_RETURN(btl, frag);
             return NULL;
         }
+        frag->registration = (mca_btl_mvapi_reg_t*)registration;
     }
+    mvapi_reg = (mca_btl_mvapi_reg_t*)registration;
     
-    frag->sg_entry.len = *size; 
-    frag->sg_entry.lkey = vapi_reg->l_key; 
+    frag->sg_entry.len = *size;
+    frag->sg_entry.lkey = mvapi_reg->l_key;
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->segment.seg_addr.pval; 
     
-    frag->segment.seg_key.key32[0] = (uint32_t) vapi_reg->r_key; 
-    
+    frag->segment.seg_key.key32[0] =mvapi_reg->r_key;
+
     frag->base.des_dst = &frag->segment; 
     frag->base.des_dst_cnt = 1; 
     frag->base.des_src = NULL; 
     frag->base.des_src_cnt = 0; 
-    frag->vapi_reg = vapi_reg; 
     
     return &frag->base; 
     

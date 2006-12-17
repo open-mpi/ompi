@@ -34,57 +34,41 @@ struct mca_rcache_vma_module_t {
     mca_rcache_base_module_t base;
     ompi_rb_tree_t rb_tree;
     opal_list_t vma_list;
-    opal_list_t mru_list;
-    size_t reg_mru_len;
-    size_t reg_max_mru_size;
-    size_t reg_cur_mru_size;
-
+    size_t reg_cur_cache_size;
 };
 typedef struct mca_rcache_vma_module_t mca_rcache_vma_module_t; 
 
 
 struct mca_rcache_vma_component_t { 
     mca_rcache_base_component_t super; 
-    size_t reg_mru_len;
-    size_t reg_max_mru_size;
 }; typedef struct mca_rcache_vma_component_t mca_rcache_vma_component_t; 
 
 OMPI_DECLSPEC extern mca_rcache_vma_component_t mca_rcache_vma_component;
 
 
 
-void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache );
+void mca_rcache_vma_module_init(mca_rcache_vma_module_t* rcache);
 
-int mca_rcache_vma_find (
-                        mca_rcache_base_module_t* rcache, 
-                        void* addr, 
-                        size_t size, 
-                        ompi_pointer_array_t* regs, 
-                        uint32_t *cnt
-                        );
+int mca_rcache_vma_find(mca_rcache_base_module_t* rcache, void* addr,
+        size_t size, mca_mpool_base_registration_t **reg);
 
-int mca_rcache_vma_insert ( 
-                          struct mca_rcache_base_module_t* rcache, 
-                          mca_mpool_base_registration_t* registration, 
-                          uint32_t flags
-                          ); 
+int mca_rcache_vma_find_all(mca_rcache_base_module_t* rcache, void* addr,
+         size_t size, ompi_pointer_array_t *regs);
 
-int mca_rcache_vma_delete (
-                          struct mca_rcache_base_module_t* rcache, 
-                          mca_mpool_base_registration_t* registration, 
-                          uint32_t flags
-                          ); 
+int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,
+        mca_mpool_base_registration_t* registration, size_t limit);
+
+int mca_rcache_vma_delete(struct mca_rcache_base_module_t* rcache,
+        mca_mpool_base_registration_t* registration);
 
 
 /**
   * init/finalize
   */
 
-void mca_rcache_vma_module_init( mca_rcache_vma_module_t* rcache );
+void mca_rcache_vma_module_init(mca_rcache_vma_module_t *rcache);
 
-void mca_rcache_vma_finalize(
-                            struct mca_rcache_base_module_t*
-                            );
+void mca_rcache_vma_finalize(struct mca_rcache_base_module_t*);
 
 #endif /* MCA_RCACHE_VMA_H */
 

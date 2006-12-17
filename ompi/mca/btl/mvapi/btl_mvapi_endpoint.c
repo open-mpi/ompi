@@ -1230,7 +1230,8 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
 
     buf = mvapi_btl->super.btl_mpool->mpool_alloc(mvapi_btl->super.btl_mpool,
             mvapi_btl->eager_rdma_frag_size * 
-            mca_btl_mvapi_component.eager_rdma_num, 0, 0,
+            mca_btl_mvapi_component.eager_rdma_num, 0,
+            MCA_MPOOL_FLAGS_CACHE_BYPASS,
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)
@@ -1239,7 +1240,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
     for(i = 0; i < mca_btl_mvapi_component.eager_rdma_num; i++) {
         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
                 i*mvapi_btl->eager_rdma_frag_size);
-        item->user_data = endpoint->eager_rdma_local.reg;
+        item->user_data = (void*)endpoint->eager_rdma_local.reg;
         OBJ_CONSTRUCT(item, mca_btl_mvapi_recv_frag_eager_t);
         ((mca_btl_mvapi_frag_t*)item)->endpoint = endpoint;
         ((mca_btl_mvapi_frag_t*)item)->type = MCA_BTL_MVAPI_FRAG_EAGER_RDMA;
