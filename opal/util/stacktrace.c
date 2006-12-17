@@ -43,6 +43,8 @@
 
 #define HOSTFORMAT "[%s:%05d] "
 
+static char stacktrace_hostname[64];
+
 /**
  * This function is being called as a signal-handler in response
  * to a user-specified signal (e.g. SIGFPE or SIGSEGV).
@@ -66,12 +68,8 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
     int ret, traces_size;
-    char *si_code_str = "", *hostname = NULL;
+    char *si_code_str = "";
     char **traces;
-
-    if (NULL == (hostname = getenv("HOST"))) {
-        hostname = "localhost";
-    }
 
     /* write out the footer information */
     memset (print_buffer, 0, sizeof (print_buffer));
@@ -95,10 +93,10 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 
 #ifdef HAVE_STRSIGNAL
     ret = snprintf (tmp, size, HOSTFORMAT "Signal: %s (%d)\n", 
-                    hostname, getpid(), strsignal(signo), signo);
+                    stacktrace_hostname, getpid(), strsignal(signo), signo);
 #else
     ret = snprintf (tmp, size, HOSTFORMAT "Signal: %d\n", 
-                    hostname, getpid(), signo);
+                    stacktrace_hostname, getpid(), signo);
 #endif
     size -= ret;
     tmp += ret;
@@ -267,13 +265,15 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     /* print signal errno information */
     if (0 != info->si_errno) {
         ret = snprintf(tmp, size, HOSTFORMAT "Associated errno: %s (%d)\n",
-                       hostname, getpid(), strerror (info->si_errno), info->si_errno);
+                       stacktrace_hostname, getpid(), 
+                       strerror (info->si_errno), info->si_errno);
         size -= ret;
         tmp += ret;
     }
 
     ret = snprintf(tmp, size, HOSTFORMAT "Signal code: %s (%d)\n",
-                   hostname, getpid(), si_code_str, info->si_code);
+                   stacktrace_hostname, getpid(), 
+                   si_code_str, info->si_code);
     size -= ret;
     tmp += ret;
 
@@ -285,14 +285,15 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     case SIGBUS:
         {
             ret = snprintf(tmp, size, HOSTFORMAT "Failing at address: %p\n",
-                           hostname, getpid(), info->si_addr);
+                           stacktrace_hostname, getpid(), info->si_addr);
             size -= ret;
             tmp += ret;
             break;
         }
     case SIGCHLD: {
         ret = snprintf(tmp, size, HOSTFORMAT "Sending PID: %d, Sending UID: %d, Status: %d\n",
-                       hostname, getpid(), info->si_pid, info->si_uid, info->si_status);
+                       stacktrace_hostname, getpid(), 
+                       info->si_pid, info->si_uid, info->si_status);
         size -= ret;
         tmp += ret;
         break;
@@ -301,10 +302,10 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     case SIGPOLL: {
 #ifdef HAVE_SIGINFO_T_SI_FD
         ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld, File Descriptor : %d\n",
-                       hostname, getpid(), info->si_band, info->si_fd);
+                       stacktrace_hostname, getpid(), info->si_band, info->si_fd);
 #elif HAVE_SIGINFO_T_SI_BAND
         ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld\n",
-                       hostname, getpid(), info->si_band);
+                       stacktrace_hostname, getpid(), info->si_band);
 #else
         ret = 0;
 #endif
@@ -329,7 +330,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         for (i = 2 ; i < traces_size ; ++i) {
             ret = snprintf(print_buffer, sizeof(print_buffer),
                            HOSTFORMAT "[%2d] %s\n",
-                           hostname, getpid(), i - 2, traces[i]);
+                           stacktrace_hostname, getpid(), i - 2, traces[i]);
             write(fileno(stderr), print_buffer, ret);
         }
     } else {
@@ -340,7 +341,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     memset (print_buffer, 0, sizeof (print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer), 
                    HOSTFORMAT "*** End of error message ***\n", 
-                   hostname, getpid());
+                   stacktrace_hostname, getpid());
     write(fileno(stderr), print_buffer, ret);
     fflush(stderr);
 }
@@ -365,7 +366,17 @@ int opal_util_register_stackhandlers (void)
     char * string_value;
     char * tmp;
     char * next;
-    int param;
+    int param, i;
+
+    gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
+    stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
+    /* to keep these somewhat readable, only print the machine name */
+    for (i = 0 ; i < sizeof(stacktrace_hostname) ; ++i) {
+        if (stacktrace_hostname[i] == '.') {
+            stacktrace_hostname[i] = '\0';
+            break;
+        }
+    }
 
     param = mca_base_param_find ("opal", NULL, "signal");
     mca_base_param_lookup_string (param, &string_value);
