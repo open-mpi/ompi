@@ -87,6 +87,8 @@ Returned value %d instead of ORTE_SUCCESS.
 Returned value %d instead of ORTE_SUCCESS.
 [orterun:proc-aborted]
 %s noticed that job rank %lu with PID %lu on node %s exited on signal %d.
+[orterun:proc-aborted-strsignal]
+%s noticed that job rank %lu with PID %lu on node %s exited on signal %d (%s). 
 [orterun:abnormal-exit]
 WARNING: %s encountered an abnormal exit.
 

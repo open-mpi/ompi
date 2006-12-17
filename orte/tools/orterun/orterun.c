@@ -592,9 +592,16 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                     ++num_killed;
                 } else {
                     if (num_aborted < max_display_aborted) {
+#ifdef HAVE_STRSIGNAL
+                        opal_show_help("help-orterun.txt", "orterun:proc-aborted-strsignal", false,
+                                       orterun_basename, (unsigned long)rank, (unsigned long)pid,
+                                       node_name, WTERMSIG(exit_status), 
+                                       strsignal(WTERMSIG(exit_status)));
+#else
                         opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
                                        orterun_basename, (unsigned long)rank, (unsigned long)pid,
                                        node_name, WTERMSIG(exit_status));
+#endif
                     }
                     ++num_aborted;
                 }
