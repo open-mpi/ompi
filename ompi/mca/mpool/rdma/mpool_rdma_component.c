@@ -26,7 +26,9 @@
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
 #include <unistd.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
 
 /*
  * Local functions

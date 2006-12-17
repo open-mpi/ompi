@@ -25,7 +25,9 @@
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include <errno.h>
 #include <string.h>
+#ifdef HAVE_MALLOC_H
 #include <malloc.h>
+#endif
 #include "ompi/mca/rcache/rcache.h"
 #include "ompi/mca/rcache/base/base.h"
 #include "ompi/mca/mpool/base/base.h"
@@ -82,8 +84,14 @@ void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
 {
     void *addr;
 
+#ifdef HAVE_POSIX_MEMALIGN
     if(posix_memalign(&addr, mca_mpool_base_page_size, size) != 0)
         return NULL;
+#else
+    if (NULL == (addr = malloc(size))) {
+        return NULL;
+    }
+#endif
 
     if(OMPI_SUCCESS != mca_mpool_rdma_register(mpool, addr, size, flags, reg)) {
         free(addr);
