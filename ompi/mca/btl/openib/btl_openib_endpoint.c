@@ -1206,7 +1206,8 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
             openib_btl->eager_rdma_frag_size * 
             mca_btl_openib_component.eager_rdma_num +
             mca_btl_openib_component.buffer_alignment +
-            sizeof(mca_btl_openib_recv_frag_eager_t), 0, 0,
+            sizeof(mca_btl_openib_recv_frag_eager_t), 0,
+            MCA_MPOOL_FLAGS_CACHE_BYPASS,
             (mca_mpool_base_registration_t**)&endpoint->eager_rdma_local.reg);
 
     if(!buf)
@@ -1221,7 +1222,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
     for(i = 0; i < mca_btl_openib_component.eager_rdma_num; i++) {
         ompi_free_list_item_t *item = (ompi_free_list_item_t *)(buf +
                 i*openib_btl->eager_rdma_frag_size);
-        item->user_data = endpoint->eager_rdma_local.reg;
+        item->user_data = (void*)endpoint->eager_rdma_local.reg;
         OBJ_CONSTRUCT(item, mca_btl_openib_recv_frag_eager_t);
         ((mca_btl_openib_frag_t*)item)->endpoint = endpoint;
         ((mca_btl_openib_frag_t*)item)->type = MCA_BTL_OPENIB_FRAG_EAGER_RDMA;

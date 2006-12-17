@@ -35,34 +35,26 @@ typedef struct mca_rcache_base_module_t* (*mca_rcache_base_component_init_fn_t)(
                                                                
 
 typedef int (*mca_rcache_base_module_find_fn_t) (
-                                            struct mca_rcache_base_module_t* rcache, 
-                                            void* addr, 
-                                            size_t size, 
-                                            ompi_pointer_array_t *regs,
-                                            uint32_t *cnt
-                                            );
+        struct mca_rcache_base_module_t* rcache, void* addr, size_t size,
+        mca_mpool_base_registration_t **reg);
 
-typedef int (*mca_rcache_base_module_insert_fn_t)( 
-                                                  struct mca_rcache_base_module_t* rcache, 
-                                                  mca_mpool_base_registration_t* registration, 
-                                                  uint32_t flags
-                                                  ); 
+typedef int (*mca_rcache_base_module_find_all_fn_t)(
+        struct mca_rcache_base_module_t* rcache, void* addr, size_t size,
+        ompi_pointer_array_t *regs);
 
-typedef int (*mca_rcache_base_module_delete_fn_t) (
-                                                   struct mca_rcache_base_module_t* rcache, 
-                                                   mca_mpool_base_registration_t* registration, 
-                                                   uint32_t flags
-                                                   ); 
+typedef int (*mca_rcache_base_module_insert_fn_t)(
+        struct mca_rcache_base_module_t* rcache,
+        mca_mpool_base_registration_t* registration, size_t limit);
 
+typedef int (*mca_rcache_base_module_delete_fn_t)(
+        struct mca_rcache_base_module_t* rcache,
+        mca_mpool_base_registration_t* registration);
 
 /**
   * finalize
   */
 typedef void (*mca_rcache_base_module_finalize_fn_t)(
-                                                    struct mca_rcache_base_module_t*
-                                                    );
-
-
+        struct mca_rcache_base_module_t*);
 
 /** 
  * rcache component descriptor. Contains component version information and 
@@ -83,19 +75,16 @@ typedef struct mca_rcache_base_component_1_0_0_t mca_rcache_base_component_t;
 /**
  * rcache module descriptor
  */ 
-struct mca_rcache_base_module_t { 
-    mca_rcache_base_component_t *rcache_component; /**< component struct */ 
-    mca_rcache_base_module_find_fn_t rcache_find; 
-    mca_rcache_base_module_insert_fn_t rcache_insert; 
-    mca_rcache_base_module_delete_fn_t rcache_delete; 
-    mca_rcache_base_module_finalize_fn_t rcache_finalize; 
+struct mca_rcache_base_module_t {
+    mca_rcache_base_component_t *rcache_component; /**< component struct */
+    mca_rcache_base_module_find_fn_t rcache_find;
+    mca_rcache_base_module_find_all_fn_t rcache_find_all;
+    mca_rcache_base_module_insert_fn_t rcache_insert;
+    mca_rcache_base_module_delete_fn_t rcache_delete;
+    mca_rcache_base_module_finalize_fn_t rcache_finalize;
     opal_mutex_t lock;
-}; 
-typedef struct mca_rcache_base_module_t mca_rcache_base_module_t; 
- 
-
-
-
+};
+typedef struct mca_rcache_base_module_t mca_rcache_base_module_t;
 
 /**
  * Macro for use in components that are of type rcache v1.0.0

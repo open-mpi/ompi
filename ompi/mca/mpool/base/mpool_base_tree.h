@@ -38,7 +38,8 @@ struct mca_mpool_base_tree_item_t
     ompi_free_list_item_t super;   /**< the parent class */
     void* key; /* the address this was alloc'd on */
     mca_mpool_base_module_t* mpools[MCA_MPOOL_BASE_TREE_MAX]; /**< the mpools */
-    mca_mpool_base_registration_t* regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */  
+    mca_mpool_base_registration_t* regs[MCA_MPOOL_BASE_TREE_MAX]; /**< the registrations */
+    uint8_t count;
 };
 typedef struct mca_mpool_base_tree_item_t mca_mpool_base_tree_item_t;
 

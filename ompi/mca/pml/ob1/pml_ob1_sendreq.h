@@ -55,7 +55,6 @@ struct mca_pml_ob1_send_request_t {
     size_t req_bytes_delivered;
     size_t req_send_offset;
     size_t req_rdma_offset;
-    bool req_got_put_ack;
     mca_pml_ob1_rdma_btl_t req_rdma[MCA_PML_OB1_MAX_RDMA_PER_REQUEST]; 
     uint32_t req_rdma_cnt; 
     mca_pml_ob1_send_pending_t req_pending;
@@ -116,7 +115,7 @@ static inline void mca_pml_ob1_free_rdma_resources(mca_pml_ob1_send_request_t* s
     for(r = 0; r < sendreq->req_rdma_cnt; r++) {
         mca_mpool_base_registration_t* reg = sendreq->req_rdma[r].btl_reg;
         if( NULL != reg ) {
-            reg->mpool->mpool_release(reg->mpool, reg);
+            reg->mpool->mpool_deregister(reg->mpool, reg);
         }
     }
     sendreq->req_rdma_cnt = 0;
@@ -359,7 +358,6 @@ static inline int mca_pml_ob1_send_request_start(
     sendreq->req_pipeline_depth = 0;
     sendreq->req_bytes_delivered = 0;
     sendreq->req_send_offset = 0;
-    sendreq->req_got_put_ack = false;
     sendreq->req_pending = MCA_PML_OB1_SEND_PENDING_NONE;
     sendreq->req_send.req_base.req_sequence = OPAL_THREAD_ADD32(
         &comm->procs[sendreq->req_send.req_base.req_peer].send_sequence,1);

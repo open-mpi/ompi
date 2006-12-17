@@ -43,31 +43,8 @@ typedef struct mca_pml_ob1_rdma_btl_t mca_pml_ob1_rdma_btl_t;
  * find those that already have registrations - or
  * register if required (for leave_pinned option)
  */
-
-size_t mca_pml_ob1_rdma_btls(
-    struct mca_bml_base_endpoint_t* endpoint,
-    unsigned char* base,
-    size_t size,
-    struct mca_pml_ob1_rdma_btl_t* btls);
-
-/*
- * For a given rdma capable btl - find the best fit
- * registration or create one for leave pinned.
- */
-
-mca_mpool_base_registration_t* mca_pml_ob1_rdma_registration(
-    struct mca_bml_base_btl_t* bml_btl,
-    unsigned char* base,
-    size_t size);
-
-/*
- * Create a registration 
- */
-
-mca_mpool_base_registration_t* mca_pml_ob1_rdma_register(
-    struct mca_bml_base_btl_t* bml_btl,
-    unsigned char* base,
-    size_t size);
+size_t mca_pml_ob1_rdma_btls(struct mca_bml_base_endpoint_t* endpoint,
+    unsigned char* base, size_t size, struct mca_pml_ob1_rdma_btl_t* btls);
 
 #endif
 

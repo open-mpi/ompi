@@ -35,6 +35,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/util/sys_info.h"
 #include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include "ompi/mca/btl/base/base.h"
 #include "btl_openib.h"
 #include "btl_openib_frag.h"
@@ -81,6 +82,9 @@ static int btl_openib_module_progress(mca_btl_openib_module_t *openib_btl);
 static void btl_openib_frag_progress_pending(
          mca_btl_openib_module_t* openib_btl, mca_btl_base_endpoint_t *endpoint,
          const int prio);
+static int openib_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg);
+static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg);
 
 
 mca_btl_openib_component_t mca_btl_openib_component = {
@@ -233,6 +237,36 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
        BTL_ERROR(("Unknown message type received by BTL"));
        break;
     }
+}
+
+static int openib_reg_mr(void *reg_data, void *base, size_t size,
+        mca_mpool_base_registration_t *reg)
+{
+    mca_btl_openib_hca_t *hca = (mca_btl_openib_hca_t*)reg_data;
+    mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+
+    openib_reg->mr = ibv_reg_mr(hca->ib_pd, base, size, IBV_ACCESS_LOCAL_WRITE |
+            IBV_ACCESS_REMOTE_WRITE | IBV_ACCESS_REMOTE_READ);
+
+    if(NULL == openib_reg->mr)
+        return OMPI_ERR_OUT_OF_RESOURCE;
+
+    return OMPI_SUCCESS;
+}
+
+static int openib_dereg_mr(void *reg_data, mca_mpool_base_registration_t *reg)
+{
+    mca_btl_openib_reg_t *openib_reg = (mca_btl_openib_reg_t*)reg;
+
+    if(openib_reg->mr != NULL) {
+        if(ibv_dereg_mr(openib_reg->mr)) {
+            opal_output(0, "%s: error unpinning openib memory errno says %s\n",
+                    __func__, strerror(errno));
+            return OMPI_ERROR;
+        }
+    }
+    openib_reg->mr = NULL;
+    return OMPI_SUCCESS;
 }
 
 static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
@@ -399,7 +433,10 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         goto close_hca;
     }
 
-    mpool_resources.ib_pd = hca->ib_pd;
+    mpool_resources.reg_data = (void*)hca;
+    mpool_resources.sizeof_reg = sizeof(mca_btl_openib_reg_t);
+    mpool_resources.register_mem = openib_reg_mr;
+    mpool_resources.deregister_mem = openib_dereg_mr;
     hca->mpool =
         mca_mpool_base_module_create(mca_btl_openib_component.ib_mpool_name,
                 hca, &mpool_resources);
@@ -469,6 +506,7 @@ free_hca:
     free(hca);
     return ret;
 }
+
 /*
  *  IB component initialization:
  *  (1) read interface list from kernel and compare against component parameters

@@ -21,12 +21,12 @@
 
 #include "btl_udapl.h"
 #include "btl_udapl_frag.h" 
-#include "ompi/mca/mpool/udapl/mpool_udapl.h"
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 
 
 static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag) 
 {
-    mca_mpool_udapl_registration_t* reg = frag->base.super.user_data;
+    mca_btl_udapl_reg_t* reg = (mca_btl_udapl_reg_t*)frag->base.super.user_data;
 
 #if OMPI_ENABLE_DEBUG
     frag->base.des_src = NULL;

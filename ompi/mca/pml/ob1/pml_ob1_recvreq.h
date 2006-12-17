@@ -135,7 +135,7 @@ do {                                                                            
     for( r = 0; r < recvreq->req_rdma_cnt; r++ ) {                              \
         mca_mpool_base_registration_t* btl_reg = recvreq->req_rdma[r].btl_reg;  \
         if( NULL != btl_reg ) {                                                 \
-            btl_reg->mpool->mpool_release( btl_reg->mpool, btl_reg );           \
+            btl_reg->mpool->mpool_deregister( btl_reg->mpool, btl_reg );           \
         }                                                                       \
     }                                                                           \
     recvreq->req_rdma_cnt = 0;                                                  \

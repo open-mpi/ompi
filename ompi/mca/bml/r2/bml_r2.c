@@ -265,7 +265,6 @@ int mca_bml_r2_add_procs(
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_send,  mca_bml_r2.num_btl_modules);
                     mca_bml_base_btl_array_reserve(&bml_endpoint->btl_rdma,  mca_bml_r2.num_btl_modules);
                     bml_endpoint->btl_max_send_size = -1;
-                    bml_endpoint->btl_rdma_size = -1;
                     bml_endpoint->btl_proc = proc;
                     proc->proc_bml = bml_endpoint; 
                  
@@ -425,10 +424,6 @@ int mca_bml_r2_add_procs(
                 *bml_btl_rdma = *bml_btl;
                 if(bml_endpoint->btl_rdma_offset < bml_btl_rdma->btl_min_rdma_size) {
                     bml_endpoint->btl_rdma_offset = bml_btl_rdma->btl_min_rdma_size;
-                }
-                if(bml_endpoint->btl_rdma_size > btl->btl_max_rdma_size) {
-                   bml_endpoint->btl_rdma_size = btl->btl_max_rdma_size;
-                   bml_endpoint->btl_rdma_align = bml_base_log2(bml_endpoint->btl_rdma_size);
                 }
             }
         }
@@ -677,10 +672,6 @@ int mca_bml_r2_del_proc_btl(ompi_proc_t* proc, mca_btl_base_module_t* btl)
             if (ep->btl_rdma_offset < bml_btl->btl_min_rdma_size) {
                 ep->btl_rdma_offset = bml_btl->btl_min_rdma_size;
             } 
-            if (ep->btl_rdma_size > bml_btl->btl_max_rdma_size) {
-                ep->btl_rdma_size = bml_btl->btl_max_rdma_size;
-                ep->btl_rdma_align = bml_base_log2(ep->btl_rdma_size);
-            }
         }
         
         /* compute weighting factor for this btl */

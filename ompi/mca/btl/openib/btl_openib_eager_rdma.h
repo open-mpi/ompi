@@ -12,7 +12,6 @@
 
 #include "ompi_config.h"
 #include "btl_openib.h"
-#include "ompi/mca/mpool/openib/mpool_openib.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -20,7 +19,7 @@ extern "C" {
 
 struct mca_btl_openib_eager_rdma_local_t {
 	ompi_ptr_t base; /**< buffer for RDMAing eager messages */
-	mca_mpool_openib_registration_t *reg;
+	mca_btl_openib_reg_t *reg;
 	uint16_t head; /**< RDMA buffer to poll */
     uint16_t tail; /**< Needed for credit managment */
 	int32_t credits; /**< number of RDMA credits */

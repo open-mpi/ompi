@@ -32,7 +32,7 @@
 #include "ompi/datatype/datatype.h" 
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
-#include "ompi/mca/mpool/openib/mpool_openib.h" 
+#include "ompi/mca/mpool/rdma/mpool_rdma.h"
 #include <errno.h> 
 #include <string.h> 
 #include <math.h>
@@ -292,10 +292,11 @@ int mca_btl_openib_free(
 {
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)des; 
 
-    if(frag->size == 0) {
-        btl->btl_mpool->mpool_release(btl->btl_mpool, 
-                                      (mca_mpool_base_registration_t*) 
-                                      frag->openib_reg); 
+    if(MCA_BTL_OPENIB_FRAG_FRAG == frag->type && frag->registration != NULL) {
+        btl->btl_mpool->mpool_deregister(btl->btl_mpool,
+                                      (mca_mpool_base_registration_t*)
+                                      frag->registration);
+        frag->registration = NULL;
     }
     MCA_BTL_IB_FRAG_RETURN(((mca_btl_openib_module_t*) btl), frag);
         
@@ -335,165 +336,101 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     size_t* size
 )
 {
-    mca_btl_openib_module_t* openib_btl; 
-    mca_btl_openib_frag_t* frag; 
-    mca_mpool_openib_registration_t * openib_reg; 
-    struct iovec iov; 
-    uint32_t iov_count = 1; 
-    size_t max_data = *size; 
-    int rc; 
-    
-    openib_btl = (mca_btl_openib_module_t*) btl; 
-    openib_reg = (mca_mpool_openib_registration_t*) registration; 
+    mca_btl_openib_module_t *openib_btl;
+    mca_btl_openib_frag_t *frag = NULL;
+    mca_btl_openib_reg_t *openib_reg;
+    struct iovec iov;
+    uint32_t iov_count = 1;
+    size_t max_data = *size;
+    int rc;
 
-    
-    if(NULL != openib_reg &&  0 == ompi_convertor_need_buffers(convertor)){ 
-        size_t reg_len; 
+    openib_btl = (mca_btl_openib_module_t*)btl;
 
-       /* the memory is already pinned and we have contiguous user data */ 
+    if(ompi_convertor_need_buffers(convertor) == false && 0 == reserve) {
+        if(registration != NULL || max_data > btl->btl_max_send_size) {
+            MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
+            if(NULL == frag) {
+                return NULL;
+            }
 
-        MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
-        if(NULL == frag){
-            return NULL; 
-        } 
+            iov.iov_len = max_data;
+            iov.iov_base = NULL;
         
-        iov.iov_len = max_data; 
-        iov.iov_base = NULL; 
-        
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
+            ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
                 
-        frag->segment.seg_len = max_data; 
-        frag->segment.seg_addr.pval = iov.iov_base; 
-        
-        
-        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)iov.iov_base + 1; 
-               
-        frag->mr = openib_reg->mr; 
-        frag->sg_entry.length = max_data; 
-        frag->sg_entry.lkey = frag->mr->lkey; 
-        
-        frag->sg_entry.addr = (unsigned long) iov.iov_base;
-        
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
-        
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags = 0; 
-        frag->openib_reg= openib_reg; 
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, (mca_mpool_base_registration_t*) openib_reg); 
-        return &frag->base;
-        
-    } else if( max_data > btl->btl_max_send_size && 
-               ompi_convertor_need_buffers(convertor) == 0 && 
-               reserve == 0) {
-        /* The user buffer is contigous and we are asked to send more than the max send size.  */            
-        
-        MCA_BTL_IB_FRAG_ALLOC_FRAG(openib_btl, frag, rc); 
-        if(NULL == frag){
-            return NULL; 
-        } 
-       
-        iov.iov_len = max_data; 
-        iov.iov_base = NULL; 
-        
-        ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        
-        frag->segment.seg_len = max_data; 
-        frag->segment.seg_addr.pval = iov.iov_base; 
-        frag->base.des_flags = 0; 
+            *size = max_data;
 
-        
-        rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                            iov.iov_base, 
-                                            max_data, 
-                                            0,
-                                            (mca_mpool_base_registration_t**) &openib_reg); 
-        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
-            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
+            if(NULL == registration) {
+                rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
+                        iov.iov_base, max_data, 0, &registration);
+                if(OMPI_SUCCESS != rc || NULL == registration) {
+                    MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
+                    return NULL;
+                }
+                /* keep track of the registration we did */
+                frag->registration = (mca_btl_openib_reg_t*)registration;
+            }
+            openib_reg = (mca_btl_openib_reg_t*)registration;
+
+            frag->base.des_flags = 0;
+            frag->base.des_src = &frag->segment;
+            frag->base.des_src_cnt = 1;
+            frag->base.des_dst = NULL;
+            frag->base.des_dst_cnt = 0;
+            frag->base.des_flags = 0;
+
+            frag->sg_entry.length = max_data;
+            frag->sg_entry.lkey = openib_reg->mr->lkey;
+            frag->sg_entry.addr = (unsigned long)iov.iov_base;
+
+            frag->segment.seg_len = max_data;
+            frag->segment.seg_addr.pval = iov.iov_base;
+            frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+
+            BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
+                        "frag->segment.seg_key.key32[0] = %lu",
+                        frag->sg_entry.lkey, frag->sg_entry.addr,
+                        frag->segment.seg_key.key32[0]));
+
+            return &frag->base;
+        }
+    }
+
+    if(max_data + reserve <= btl->btl_eager_limit) {
+        /* the data is small enough to fit in the eager frag and
+         * memory is not prepinned */
+        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc);
+    }
+
+    if(NULL == frag) {
+        /* the data doesn't fit into eager frag or eger frag is
+         * not available */
+        MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc);
+        if(NULL == frag) {
             return NULL;
         }
-        
-        
-        frag->mr = openib_reg->mr; 
-        frag->sg_entry.length = max_data; 
-        frag->sg_entry.lkey = openib_reg->mr->lkey;
-        
-        frag->sg_entry.addr = (unsigned long) iov.iov_base;
-        
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->mr->rkey; 
-            
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->openib_reg = openib_reg; 
-        BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu", frag->sg_entry.lkey, frag->sg_entry.addr)); 
-
-        return &frag->base;
-
-    } else if (max_data+reserve <=  btl->btl_eager_limit) { 
-        /* the data is small enough to fit in the eager frag and 
-           either we received no prepinned memory or leave pinned is 
-           not set
-        */    
-        MCA_BTL_IB_FRAG_ALLOC_EAGER(btl, frag, rc); 
-        if(NULL == frag) { 
-            return NULL; 
-        } 
-        
-        iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
-        
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size  = max_data; 
-        if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
-            return NULL; 
-        } 
-        
-        frag->segment.seg_len = max_data + reserve; 
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags = 0; 
-        
-        return &frag->base; 
-        
-    } else {
-           
-        MCA_BTL_IB_FRAG_ALLOC_MAX(btl, frag, rc); 
-        if(NULL == frag) { 
-            return NULL; 
-        } 
-        if(max_data + reserve > btl->btl_max_send_size){ 
-            max_data = btl->btl_max_send_size - reserve; 
+        if(max_data + reserve > btl->btl_max_send_size) {
+            max_data = btl->btl_max_send_size - reserve;
         }
-        iov.iov_len = max_data; 
-        iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve; 
-        
-        rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data ); 
-        *size  = max_data; 
-
-        if( rc < 0 ) { 
-            MCA_BTL_IB_FRAG_RETURN(openib_btl, frag); 
-            return NULL; 
-        } 
-        
-        frag->segment.seg_len = max_data + reserve; 
-        frag->segment.seg_key.key32[0] = (uint32_t) frag->sg_entry.lkey; 
-        frag->base.des_src = &frag->segment;
-        frag->base.des_src_cnt = 1;
-        frag->base.des_dst = NULL;
-        frag->base.des_dst_cnt = 0;
-        frag->base.des_flags=0; 
-        
-        return &frag->base; 
     }
-    return NULL; 
+
+    iov.iov_len = max_data;
+    iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
+    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
+    if(rc < 0) {
+        MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
+        return NULL;
+    }
+    *size  = max_data;
+    frag->segment.seg_len = max_data + reserve;
+    frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
+    frag->base.des_src = &frag->segment;
+    frag->base.des_src_cnt = 1;
+    frag->base.des_dst = NULL;
+    frag->base.des_dst_cnt = 0;
+    frag->base.des_flags = 0;
+
+    return &frag->base;
 }
 
 /**
@@ -513,69 +450,62 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
 mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     struct mca_btl_base_module_t* btl,
     struct mca_btl_base_endpoint_t* endpoint,
-    mca_mpool_base_registration_t* registration, 
+    mca_mpool_base_registration_t* registration,
     struct ompi_convertor_t* convertor,
     size_t reserve,
     size_t* size)
 {
-    mca_btl_openib_module_t* openib_btl; 
-    mca_btl_openib_frag_t* frag; 
-    mca_mpool_openib_registration_t * openib_reg; 
-    int rc; 
+    mca_btl_openib_module_t *openib_btl;
+    mca_btl_openib_frag_t *frag;
+    mca_btl_openib_reg_t *openib_reg;
+    int rc;
     ptrdiff_t lb;
-    size_t reg_len; 
 
-    openib_btl = (mca_btl_openib_module_t*) btl; 
-    openib_reg = (mca_mpool_openib_registration_t*) registration; 
+    openib_btl = (mca_btl_openib_module_t*)btl;
     
-    MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc); 
-    if(NULL == frag){
-        return NULL; 
+    MCA_BTL_IB_FRAG_ALLOC_FRAG(btl, frag, rc);
+    if(NULL == frag) {
+        return NULL;
     }
     
     ompi_ddt_type_lb(convertor->pDesc, &lb);
-    frag->segment.seg_len = *size; 
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted; 
-    frag->base.des_flags = 0; 
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb +
+        convertor->bConverted;
 
-    if(NULL!= openib_reg){ 
-        /* the memory is already pinned try to use it if the pinned region is large enough*/ 
-        reg_len = (unsigned char*)openib_reg->base_reg.bound - (unsigned char*)frag->segment.seg_addr.pval + 1; 
-        btl->btl_mpool->mpool_retain(btl->btl_mpool, 
-                                     (mca_mpool_base_registration_t*) openib_reg); 
-    }  else { 
-        /* we didn't get a memory registration passed in, so we have to register the region
-         * ourselves 
+    if(NULL == registration){
+        /* we didn't get a memory registration passed in, so we have to
+         * register the region ourselves
          */ 
-        
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                                       frag->segment.seg_addr.pval,
-                                       *size, 
-                                       0,
-                                       (mca_mpool_base_registration_t**) &openib_reg);
-        if(OMPI_SUCCESS != rc || NULL == openib_reg) {
+                frag->segment.seg_addr.pval, *size, 0, &registration);
+        if(OMPI_SUCCESS != rc || NULL == registration) {
             MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
             return NULL;
         }
+        /* keep track of the registration we did */
+        frag->registration = (mca_btl_openib_reg_t*)registration;
     }
+    openib_reg = (mca_btl_openib_reg_t*)registration;
 
-    
-    frag->mr = openib_reg->mr; 
-    frag->sg_entry.length = *size; 
-    frag->sg_entry.lkey = openib_reg->mr->lkey; 
-    frag->sg_entry.addr = (unsigned long) frag->segment.seg_addr.pval; 
-    
-    frag->segment.seg_key.key32[0] = frag->mr->rkey; 
-    
-    frag->base.des_dst = &frag->segment; 
-    frag->base.des_dst_cnt = 1; 
-    frag->base.des_src = NULL; 
-    frag->base.des_src_cnt = 0; 
-    frag->openib_reg = openib_reg; 
-    BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu frag->segment.seg_key.key32[0] = %lu" , frag->sg_entry.lkey, frag->sg_entry.addr, frag->segment.seg_key.key32[0])); 
+    frag->sg_entry.length = *size;
+    frag->sg_entry.lkey = openib_reg->mr->lkey;
+    frag->sg_entry.addr = (unsigned long) frag->segment.seg_addr.pval;
 
-    return &frag->base; 
-    
+    frag->segment.seg_len = *size;
+    frag->segment.seg_key.key32[0] = openib_reg->mr->rkey;
+
+    frag->base.des_dst = &frag->segment;
+    frag->base.des_dst_cnt = 1;
+    frag->base.des_src = NULL;
+    frag->base.des_src_cnt = 0;
+    frag->base.des_flags = 0;
+
+    BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
+                "frag->segment.seg_key.key32[0] = %lu",
+                frag->sg_entry.lkey, frag->sg_entry.addr,
+                frag->segment.seg_key.key32[0]));
+
+    return &frag->base;
 }
 
 int mca_btl_openib_finalize(struct mca_btl_base_module_t* btl)
