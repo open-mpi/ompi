@@ -101,5 +101,8 @@ opal_backtrace_print(FILE *file)
 int
 opal_backtrace_buffer(char ***message_out, int *len_out) 
 {
-    return OPAL_SUCCESS;
+    *message_out = NULL;
+    *len_out = 0;
+
+    return OPAL_ERR_NOT_IMPLEMENTED;
 }

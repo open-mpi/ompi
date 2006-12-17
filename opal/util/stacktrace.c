@@ -41,6 +41,8 @@
 #define _NSIG 32
 #endif
 
+#define HOSTFORMAT "[%s:%05d] "
+
 /**
  * This function is being called as a signal-handler in response
  * to a user-specified signal (e.g. SIGFPE or SIGSEGV).
@@ -63,9 +65,13 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     char print_buffer[1024];
     char * tmp = print_buffer;
     int size = sizeof (print_buffer);
-    int ret;
-    char * str = "";
-    char eof_msg[] = "*** End of error message ***\n";
+    int ret, traces_size;
+    char *si_code_str = "", *hostname = NULL;
+    char **traces;
+
+    if (NULL == (hostname = getenv("HOST"))) {
+        hostname = "localhost";
+    }
 
     /*
      * Yes, we are doing printf inside a signal-handler.
@@ -78,34 +84,44 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
      */
     memset (print_buffer, 0, sizeof (print_buffer));
 
+#ifdef HAVE_STRSIGNAL
+    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %s (%d)\n", 
+                    hostname, getpid(), strsignal(signo), signo);
+#else
+    ret = snprintf (tmp, size, HOSTFORMAT "Signal: %d\n", 
+                    hostname, getpid(), signo);
+#endif
+    size -= ret;
+    tmp += ret;
+
     switch (signo)
     {
       case SIGILL:
         switch (info->si_code)
           {
 #ifdef ILL_ILLOPC
-            case ILL_ILLOPC: str = "ILL_ILLOPC"; break;
+            case ILL_ILLOPC: si_code_str = "Illegal opcode"; break;
 #endif
 #ifdef ILL_ILLOPN
-            case ILL_ILLOPN: str = "ILL_ILLOPN"; break;
+            case ILL_ILLOPN: si_code_str = "Illegal operand"; break;
 #endif
 #ifdef ILL_ILLADR
-            case ILL_ILLADR: str = "ILL_ILLADR"; break;
+            case ILL_ILLADR: si_code_str = "Illegal addressing mode"; break;
 #endif
 #ifdef ILL_ILLTRP
-            case ILL_ILLTRP: str = "ILL_ILLTRP"; break;
+            case ILL_ILLTRP: si_code_str = "Illegal trap"; break;
 #endif
 #ifdef ILL_PRVOPC
-            case ILL_PRVOPC: str = "ILL_PRVOPC"; break;
+            case ILL_PRVOPC: si_code_str = "Privileged opcode"; break;
 #endif
 #ifdef ILL_PRVREG
-            case ILL_PRVREG: str = "ILL_PRVREG"; break;
+            case ILL_PRVREG: si_code_str = "Privileged register"; break;
 #endif
 #ifdef ILL_COPROC
-            case ILL_COPROC: str = "ILL_COPROC"; break;
+            case ILL_COPROC: si_code_str = "Coprocessor error"; break;
 #endif
 #ifdef ILL_BADSTK
-            case ILL_BADSTK: str = "ILL_BADSTK"; break;
+            case ILL_BADSTK: si_code_str = "Internal stack error"; break;
 #endif
           }
         break;
@@ -113,18 +129,18 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef FPE_INTDIV
-            case FPE_INTDIV: str = "FPE_INTDIV"; break;
+            case FPE_INTDIV: si_code_str = "Integer divide-by-zero"; break;
 #endif
 #ifdef FPE_INTOVF
-            case FPE_INTOVF: str = "FPE_INTOVF"; break;
+            case FPE_INTOVF: si_code_str = "Integer overflow"; break;
 #endif
-            case FPE_FLTDIV: str = "FPE_FLTDIV"; break;
-            case FPE_FLTOVF: str = "FPE_FLTOVF"; break;
-            case FPE_FLTUND: str = "FPE_FLTUND"; break;
-            case FPE_FLTRES: str = "FPE_FLTRES"; break;
-            case FPE_FLTINV: str = "FPE_FLTINV"; break;
+            case FPE_FLTDIV: si_code_str = "Floating point divide-by-zero"; break;
+            case FPE_FLTOVF: si_code_str = "Floating point overflow"; break;
+            case FPE_FLTUND: si_code_str = "Floating point underflow"; break;
+            case FPE_FLTRES: si_code_str = "Floating point inexact result"; break;
+            case FPE_FLTINV: si_code_str = "Invalid floating point operation"; break;
 #ifdef FPE_FLTSUB
-            case FPE_FLTSUB: str = "FPE_FLTSUB"; break;
+            case FPE_FLTSUB: si_code_str = "Subscript out of range"; break;
 #endif
           }
         break;
@@ -132,10 +148,10 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef SEGV_MAPERR
-            case SEGV_MAPERR: str = "SEGV_MAPERR"; break;
+            case SEGV_MAPERR: si_code_str = "Address not mapped"; break;
 #endif
 #ifdef SEGV_ACCERR
-            case SEGV_ACCERR: str = "SEGV_ACCERR"; break;
+            case SEGV_ACCERR: si_code_str = "Invalid permissions"; break;
 #endif
           }
         break;
@@ -143,13 +159,13 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef BUS_ADRALN
-            case BUS_ADRALN: str = "BUS_ADRALN"; break;
+            case BUS_ADRALN: si_code_str = "Invalid address alignment"; break;
 #endif
 #ifdef BUSADRERR
-            case BUS_ADRERR: str = "BUS_ADRERR"; break;
+            case BUS_ADRERR: si_code_str = "Non-existent physical address"; break;
 #endif
 #ifdef BUS_OBJERR
-            case BUS_OBJERR: str = "BUS_OBJERR"; break;
+            case BUS_OBJERR: si_code_str = "Objet-specific hardware error"; break;
 #endif
           }
         break;
@@ -157,10 +173,10 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef TRAP_BRKPT
-            case TRAP_BRKPT: str = "TRAP_BRKPT"; break;
+            case TRAP_BRKPT: si_code_str = "Process breakpoint"; break;
 #endif
 #ifdef TRAP_TRACE
-            case TRAP_TRACE: str = "TRAP_TRACE"; break;
+            case TRAP_TRACE: si_code_str = "Process trace trap"; break;
 #endif
           }
         break;
@@ -168,22 +184,22 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef CLD_EXITED
-            case CLD_EXITED: str = "CLD_EXITED"; break;
+            case CLD_EXITED: si_code_str = "Child has exited"; break;
 #endif
 #ifdef CLD_KILLED
-            case CLD_KILLED: str = "CLD_KILLED"; break;
+            case CLD_KILLED: si_code_str = "Child has terminated abnormally and did not create a core file"; break;
 #endif
 #ifdef CLD_DUMPED
-            case CLD_DUMPED: str = "CLD_DUMPED"; break;
+            case CLD_DUMPED: si_code_str = "Child has terminated abnormally and created a core file"; break;
 #endif
 #ifdef CLD_WTRAPPED
-            case CLD_TRAPPED: str = "CLD_TRAPPED"; break;
+            case CLD_TRAPPED: si_code_str = "Traced child has trapped"; break;
 #endif
 #ifdef CLD_STOPPED
-            case CLD_STOPPED: str = "CLD_STOPPED"; break;
+            case CLD_STOPPED: si_code_str = "Child has stopped"; break;
 #endif
 #ifdef CLD_CONTINUED
-            case CLD_CONTINUED: str = "CLD_CONTINUED"; break;
+            case CLD_CONTINUED: si_code_str = "Stopped child has continued"; break;
 #endif
           }
         break;
@@ -192,22 +208,22 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
           {
 #ifdef POLL_IN
-             case POLL_IN: str = "POLL_IN"; break;
+             case POLL_IN: si_code_str = "Data input available"; break;
 #endif
 #ifdef POLL_OUT
-             case POLL_OUT: str = "POLL_OUT"; break;
+             case POLL_OUT: si_code_str = "Output buffers available"; break;
 #endif
 #ifdef POLL_MSG
-             case POLL_MSG: str = "POLL_MSG"; break;
+             case POLL_MSG: si_code_str = "Input message available"; break;
 #endif
 #ifdef POLL_ERR
-             case POLL_ERR: str = "POLL_ERR"; break;
+             case POLL_ERR: si_code_str = "I/O error"; break;
 #endif
 #ifdef POLL_PRI
-             case POLL_PRI: str = "POLL_PRI"; break;
+             case POLL_PRI: si_code_str = "High priority input available"; break;
 #endif
 #ifdef POLL_HUP
-             case POLL_HUP: str = "POLL_HUP"; break;
+             case POLL_HUP: si_code_str = "Device disconnected"; break;
 #endif
           }
         break;
@@ -216,32 +232,39 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         switch (info->si_code)
          {
 #ifdef SI_ASYNCNL
-            case SI_ASYNCNL: str = "SI_ASYNCNL"; break;
+            case SI_ASYNCNL: si_code_str = "SI_ASYNCNL"; break;
 #endif
 #ifdef SI_SIGIO
-            case SI_SIGIO: str = "SI_SIGIO"; break;
+            case SI_SIGIO: si_code_str = "Queued SIGIO"; break;
 #endif
 #ifdef SI_ASYNCIO
-            case SI_ASYNCIO: str = "SI_ASYNCIO"; break;
+            case SI_ASYNCIO: si_code_str = "Asynchronous I/O request completed"; break;
 #endif
 #ifdef SI_MESGQ
-            case SI_MESGQ: str = "SI_MESGQ"; break;
+            case SI_MESGQ: si_code_str = "Message queue state changed"; break;
 #endif
-            case SI_TIMER: str = "SI_TIMER"; break;
-            case SI_QUEUE: str = "SI_QUEUE"; break;
-            case SI_USER: str = "SI_USER"; break;
+            case SI_TIMER: si_code_str = "Timer expiration"; break;
+            case SI_QUEUE: si_code_str = "Sigqueue() signal"; break;
+            case SI_USER: si_code_str = "User function (kill, sigsend, abort, etc.)"; break;
 #ifdef SI_KERNEL
-            case SI_KERNEL: str = "SI_KERNEL"; break;
+            case SI_KERNEL: si_code_str = "Kernel signal"; break;
 #endif
 #ifdef SI_UNDEFINED
-            case SI_UNDEFINED: str = "SI_UNDEFINED"; break;
+            case SI_UNDEFINED: si_code_str = "Undefined code"; break;
 #endif
           }
     }
 
-    ret = snprintf (tmp, size, "Signal:%d info.si_errno:%d(%s) si_code:%d(%s)\n",
-	            signo, info->si_errno, strerror (info->si_errno),
-	            info->si_code, str);
+    /* print signal errno information */
+    if (0 != info->si_errno) {
+        ret = snprintf(tmp, size, HOSTFORMAT "Associated errno: %s (%d)\n",
+                       hostname, getpid(), strerror (info->si_errno), info->si_errno);
+        size -= ret;
+        tmp += ret;
+    }
+
+    ret = snprintf(tmp, size, HOSTFORMAT "Signal code: %s (%d)\n",
+                   hostname, getpid(), si_code_str, info->si_code);
     size -= ret;
     tmp += ret;
 
@@ -252,15 +275,15 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     case SIGSEGV: 
     case SIGBUS:
         {
-            ret = snprintf (tmp, size, "Failing at addr:%p\n",
-                            info->si_addr);
+            ret = snprintf(tmp, size, HOSTFORMAT "Failing at address: %p\n",
+                           hostname, getpid(), info->si_addr);
             size -= ret;
             tmp += ret;
             break;
         }
     case SIGCHLD: {
-        ret = snprintf (tmp, size, "si_pid:%d si_uid:%d si_status:%d\n",
-                        info->si_pid, info->si_uid, info->si_status);
+        ret = snprintf(tmp, size, HOSTFORMAT "Sending PID: %d, Sending UID: %d, Status: %d\n",
+                       hostname, getpid(), info->si_pid, info->si_uid, info->si_status);
         size -= ret;
         tmp += ret;
         break;
@@ -268,13 +291,13 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #ifdef SIGPOLL
     case SIGPOLL: {
 #ifdef HAVE_SIGINFO_T_SI_FD
-        ret = snprintf (tmp, size, "si_band:%ld si_fd:%d\n",
-                        info->si_band, info->si_fd);
+        ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld, File Descriptor : %d\n",
+                       hostname, getpid(), info->si_band, info->si_fd);
 #elif HAVE_SIGINFO_T_SI_BAND
-        ret = snprintf (tmp, size, "si_band:%ld\n",
-                        info->si_band);
+        ret = snprintf(tmp, size, HOSTFORMAT "Band event: %ld\n",
+                       hostname, getpid(), info->si_band);
 #else
-        size = 0;
+        ret = 0;
 #endif
         size -= ret;
         tmp += ret;
@@ -283,12 +306,33 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
 #endif
     }
 
+    /* write out the signal information generated above */
     write(fileno(stderr), print_buffer, sizeof(print_buffer)-size);
     fflush(stderr);
 
-    opal_backtrace_print(stderr);
+    /* print out the stack trace */
+    ret = opal_backtrace_buffer(&traces, &traces_size);
+    if (OPAL_SUCCESS == ret) {
+        int i;
+        /* since we have the opportunity, strip off the bottom two
+           function calls, which will be this function and
+           opa_backtrace_buffer(). */
+        for (i = 2 ; i < traces_size ; ++i) {
+            ret = snprintf(print_buffer, sizeof(print_buffer),
+                           HOSTFORMAT "%s\n",
+                           hostname, getpid(), traces[i]);
+            write(fileno(stderr), print_buffer, ret);
+        }
+    } else {
+        opal_backtrace_print(stderr);
+    }
 
-    write(fileno(stderr), eof_msg, sizeof(eof_msg));
+    /* write out the footer information */
+    memset (print_buffer, 0, sizeof (print_buffer));
+    ret = snprintf(print_buffer, sizeof(print_buffer), 
+                   HOSTFORMAT "*** End of error message ***\n", 
+                   hostname, getpid());
+    write(fileno(stderr), print_buffer, ret);
     fflush(stderr);
 }
 
