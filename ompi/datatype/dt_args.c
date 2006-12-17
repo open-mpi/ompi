@@ -22,6 +22,7 @@
 #include "mpi.h"
 #include "ompi/datatype/datatype.h"
 #include "ompi/datatype/datatype_internal.h"
+#include "ompi/datatype/dt_arch.h"
 #include "ompi/proc/proc.h"
 
 static inline int
@@ -457,19 +458,43 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     int number_of_length, number_of_disp, number_of_datatype;
     int create_type, i;
     char* next_buffer = (char*)*packed_buffer;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    bool need_swap = false;
 
-    create_type = position[0];
+    if ((remote_processor->proc_arch & OMPI_ARCH_ISBIGENDIAN) != 
+        (ompi_proc_local()->proc_arch & OMPI_ARCH_ISBIGENDIAN)) {
+         need_swap = true;
+    }
+#endif
+
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+        create_type = opal_swap_bytes4(position[0]);
+    } else {
+        create_type = position[0];
+    }
     if( MPI_COMBINER_DUP == create_type ) {
         /* there we have a simple predefined datatype */
+        if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+            position[1] = opal_swap_bytes4(position[1]);
+        }
         assert( position[1] < DT_MAX_PREDEFINED );
         *packed_buffer = position + 2;
         return (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[1]];
     }
-    number_of_length   = position[1];
-    number_of_disp     = position[2];
-    number_of_datatype = position[3];
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+        number_of_length   = opal_swap_bytes4(position[1]);
+        number_of_disp     = opal_swap_bytes4(position[2]);
+        number_of_datatype = opal_swap_bytes4(position[3]);
+    } else {
+        number_of_length   = position[1];
+        number_of_disp     = position[2];
+        number_of_datatype = position[3];
+    }
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
+    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+        position[4] = opal_swap_bytes4(position[4]);
+    }
     array_of_length    = &(position[4]);
     next_buffer += (4 + number_of_length) * sizeof(int);
     array_of_disp      = (MPI_Aint*)next_buffer;
@@ -477,6 +502,9 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     position = (int*)next_buffer;
     next_buffer += number_of_datatype * sizeof(int);
     for( i = 0; i < number_of_datatype; i++ ) {
+        if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+            position[i] = opal_swap_bytes4(position[i]);
+        }
         if( position[i] < DT_MAX_PREDEFINED ) {
             assert( position[i] < DT_MAX_PREDEFINED );
             array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
@@ -488,6 +516,22 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
                 goto cleanup_and_exit;
         }
     }
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (need_swap) {
+        for (i = 0 ; i < number_of_length ; ++i) {
+            array_of_length[i] = opal_swap_bytes4(array_of_length[i]); 
+        }
+        for (i = 0 ; i < number_of_disp ; ++i) {
+#if SIZEOF_PTRDIFF_T == 4
+            array_of_disp[i] = opal_swap_bytes4(array_of_disp[i]);
+#elif SIZEOF_PTRDIFF_T == 8
+            array_of_disp[i] = opal_swap_bytes8(array_of_disp[i]);
+#else
+#error "Unknown size of ptrdiff_t"
+#endif
+        }
+    }
+#endif
     datatype = __ompi_ddt_create_from_args( array_of_length, array_of_disp,
                                             array_of_datatype, create_type );
     *packed_buffer = next_buffer;
