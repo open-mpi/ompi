@@ -75,7 +75,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
     memset (print_buffer, 0, sizeof (print_buffer));
     ret = snprintf(print_buffer, sizeof(print_buffer),
                    HOSTFORMAT "*** Process received signal ***\n",
-                   hostname, getpid());
+                   stacktrace_hostname, getpid());
     write(fileno(stderr), print_buffer, ret);
     fflush(stderr);
 
