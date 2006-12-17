@@ -73,6 +73,15 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         hostname = "localhost";
     }
 
+    /* write out the footer information */
+    memset (print_buffer, 0, sizeof (print_buffer));
+    ret = snprintf(print_buffer, sizeof(print_buffer),
+                   HOSTFORMAT "*** Process received signal ***\n",
+                   hostname, getpid());
+    write(fileno(stderr), print_buffer, ret);
+    fflush(stderr);
+
+
     /*
      * Yes, we are doing printf inside a signal-handler.
      * However, backtrace itself calls malloc (which may not be signal-safe,
@@ -319,8 +328,8 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
            opa_backtrace_buffer(). */
         for (i = 2 ; i < traces_size ; ++i) {
             ret = snprintf(print_buffer, sizeof(print_buffer),
-                           HOSTFORMAT "%s\n",
-                           hostname, getpid(), traces[i]);
+                           HOSTFORMAT "[%2d] %s\n",
+                           hostname, getpid(), i, traces[i]);
             write(fileno(stderr), print_buffer, ret);
         }
     } else {
