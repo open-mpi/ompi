@@ -81,6 +81,14 @@ int mca_btl_template_add_procs(
         mca_btl_template_proc_t* template_proc;
         mca_btl_base_endpoint_t* template_endpoint;
 
+#if 0
+        /* If the BTL doesn't support heterogeneous operations, be
+           sure to say we can't reach that proc */
+        if (ompi_proc_local()->proc_arch != ompi_proc->proc_arch) {
+            continue;
+        }
+#endif
+
         if(NULL == (template_proc = mca_btl_template_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }

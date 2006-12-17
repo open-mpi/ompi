@@ -87,6 +87,11 @@ int mca_btl_mvapi_add_procs(
         mca_btl_mvapi_proc_t* ib_proc;
         mca_btl_base_endpoint_t* ib_peer;
 
+        /* mvapi doesn't support heterogeneous yet... */
+        if (ompi_proc_local()->proc_arch != ompi_proc->proc_arch) {
+            continue;
+        }
+
         if(NULL == (ib_proc = mca_btl_mvapi_proc_create(ompi_proc))) {
             continue;
         }
