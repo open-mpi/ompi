@@ -329,7 +329,7 @@ static void opal_show_stackframe (int signo, siginfo_t * info, void * p)
         for (i = 2 ; i < traces_size ; ++i) {
             ret = snprintf(print_buffer, sizeof(print_buffer),
                            HOSTFORMAT "[%2d] %s\n",
-                           hostname, getpid(), i, traces[i]);
+                           hostname, getpid(), i - 2, traces[i]);
             write(fileno(stderr), print_buffer, ret);
         }
     } else {
