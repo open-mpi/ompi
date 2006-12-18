@@ -20,6 +20,7 @@
  */
 
 #include "ompi_config.h"
+#include "opal/include/opal/align.h"
 #include "orte/util/proc_info.h"
 #include "opal/util/output.h"
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
@@ -82,22 +83,29 @@ static inline int dereg_mem(mca_mpool_base_module_t *mpool,
 void* mca_mpool_rdma_alloc(mca_mpool_base_module_t *mpool, size_t size,
         size_t align, uint32_t flags, mca_mpool_base_registration_t **reg)
 {
-    void *addr;
+    void *base_addr, *addr;
+
+    if(0 == align)
+        align = mca_mpool_base_page_size;
 
 #ifdef HAVE_POSIX_MEMALIGN
-    if(posix_memalign(&addr, mca_mpool_base_page_size, size) != 0)
+    if((errno = posix_memalign(&base_addr, align, size)) != 0)
         return NULL;
+
+    addr = base_addr;
 #else
-    if (NULL == (addr = malloc(size))) {
+    base_addr = malloc(size + align);
+    if(NULL == base_addr)
         return NULL;
-    }
+
+    addr = (void*)OPAL_ALIGN((uintptr_t)base_addr, align, uintptr_t);
 #endif
 
     if(OMPI_SUCCESS != mca_mpool_rdma_register(mpool, addr, size, flags, reg)) {
-        free(addr);
+        free(base_addr);
         return NULL;
     }
-    (*reg)->alloc_base = addr;
+    (*reg)->alloc_base = base_addr;
 
     return addr;
 }
