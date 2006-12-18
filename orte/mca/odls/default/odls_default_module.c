@@ -701,12 +701,12 @@ static int odls_default_fork_local_proc(
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_cwd(context, true))) {
            /* Tell the parent that Badness happened */
             write(p[1], &i, sizeof(int));
-            exit(-1);
+            exit(1);
         }
         if (ORTE_SUCCESS != (i = orte_rmgr.check_context_app(context))) {
             /* Tell the parent that Badness happened */
             write(p[1], &i, sizeof(int));
-            exit(-1);
+            exit(1);
         }
 
         /* setup base environment: copy the current environ and merge
@@ -866,7 +866,7 @@ static int odls_default_fork_local_proc(
         execve(context->app, context->argv, environ_copy);
         opal_show_help("help-odls-default.txt", "orte-odls-default:execv-error",
                        true, context->app, strerror(errno));
-        exit(-1);
+        exit(1);
     } else {
 
         /* connect endpoints IOF */
@@ -892,12 +892,18 @@ static int odls_default_fork_local_proc(
                 /* Child was successful in exec'ing! */
                 break;
             } else {
+                int exit_code;
                 /* Doh -- child failed.
                    Report the failure to launch this process through
                    the SOH or else everyone else will hang. Don't bother
                    checking whether or not this worked - just fire and forget
                 */
-                orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, rc);
+#ifdef W_EXITCODE
+                exit_code = W_EXITCODE((0xFF & i), 0);
+#else
+                exit_code = (0xFF & i);
+#endif
+                orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, exit_code);
                 return ORTE_ERR_FATAL;
                 break;
             }
