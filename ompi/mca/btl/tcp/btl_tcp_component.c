@@ -64,7 +64,7 @@
 #include "btl_tcp_endpoint.h" 
 #include "ompi/mca/btl/base/base.h" 
 #include "ompi/datatype/convertor.h" 
-#include "btl_tcp_hdr.h"
+
 
 mca_btl_tcp_component_t mca_btl_tcp_component = {
     {
@@ -226,17 +226,6 @@ int mca_btl_tcp_component_open(void)
                                        MCA_BTL_FLAGS_NEED_CSUM | 
                                        MCA_BTL_FLAGS_NEED_ACK |
                                        MCA_BTL_FLAGS_FAKE_RDMA);
-#if 0
-    {
-        mca_btl_tcp_hdr_t header;
-        opal_output(0, "mca_btl_tcp_hdr_t:");
-        opal_output(0, "\tsizeof() = %ld", sizeof(mca_btl_tcp_hdr_t));
-        opal_output(0, "\t.base = %ld", (char*) &header.base - (char*) &header);
-        opal_output(0, "\t.type = %ld", (char*) &header.type - (char*) &header);
-        opal_output(0, "\t.count = %ld", (char*) &header.count - (char*) &header);
-        opal_output(0, "\t.size = %ld", (char*) &header.size - (char*) &header);
-    }
-#endif
     return OMPI_SUCCESS;
 }
 
