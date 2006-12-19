@@ -21,6 +21,7 @@
 #include "ompi_config.h"
 #include "ompi/constants.h"
 #include "opal/event/event.h"
+#include "opal/include/opal/align.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
 #include "opal/util/output.h"
@@ -676,8 +677,9 @@ btl_openib_component_init(int *num_btl_modules,
             sizeof(mca_btl_openib_header_t) + 
             sizeof(mca_btl_openib_footer_t) + 
             openib_btl->super.btl_eager_limit;
-	
-        openib_btl->eager_rdma_frag_size = (length + mca_btl_openib_component.buffer_alignment) & ~(mca_btl_openib_component.buffer_alignment-1);
+
+        openib_btl->eager_rdma_frag_size = OPAL_ALIGN(length,
+                mca_btl_openib_component.buffer_alignment, int);
  
         ompi_free_list_init_ex(&openib_btl->send_free_eager,
                             length,
