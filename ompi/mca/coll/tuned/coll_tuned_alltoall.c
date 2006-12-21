@@ -213,11 +213,6 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
         }
     }
 
- 
-    if (err<0) {
-        line = __LINE__; err = -1; goto err_hndl;
-    }
-
     /* Step 4 - clean up */
     if (tmpbuf != NULL) free(tmpbuf);
     if (packbuf != NULL) free(packbuf);
@@ -225,7 +220,6 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
         if (displs != NULL) free(displs);
         if (blen != NULL) free(blen);
     }
-
     return OMPI_SUCCESS;
 
  err_hndl:
@@ -237,7 +231,6 @@ int ompi_coll_tuned_alltoall_intra_bruck(void *sbuf, int scount,
         if (blen != NULL) free(blen);
     }
     return err;
-
 }
 
 

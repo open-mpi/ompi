@@ -89,7 +89,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
    int rank, size;
    int sendto, recvfrom, distance, blockcount;
    int err = 0;
-   ptrdiff_t slb, rlb, true_extent, sext, rext;
+   ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
    ompi_request_t *reqs[2] = {NULL, NULL};
 
@@ -385,7 +385,7 @@ int ompi_coll_tuned_allgather_intra_ring(void *sbuf, int scount,
    int rank, size;
    int sendto, recvfrom, i, recvdatafrom, senddatafrom;
    int err = 0;
-   ptrdiff_t slb, rlb, true_extent, sext, rext;
+   ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
    ompi_request_t *reqs[2] = {NULL, NULL};
 
@@ -523,7 +523,7 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
    int neighbor[2], offset_at_step[2], recv_data_from[2], send_data_from;
    int i, even_rank;
    int err = 0;
-   ptrdiff_t slb, rlb, true_extent, sext, rext;
+   ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
    ompi_request_t *reqs[2] = {NULL, NULL};
 
@@ -648,6 +648,7 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
    int remote;
    char *tmpsend = NULL, *tmprecv = NULL;
    ptrdiff_t sext, rext, lb;
+   ompi_request_t *reqs[2] = {NULL, NULL};
 
    rank = ompi_comm_rank(comm);
 
@@ -671,8 +672,6 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
       tmpsend = (char*)rbuf + rank * rcount * rext;
    }
    tmprecv = (char*)rbuf + remote * rcount * rext;
-   ompi_request_t *reqs[2] = {NULL, NULL};
-
 
    err = MCA_PML_CALL(irecv(tmprecv, rcount, rdtype, remote, 
                             MCA_COLL_BASE_TAG_ALLGATHER, comm, &reqs[0]));

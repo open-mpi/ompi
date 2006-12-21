@@ -392,7 +392,7 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
       }
    }
    
-#if USE_MPICH2_DECISION      
+#if defined(USE_MPICH2_DECISION)
    /* Decision as in MPICH-2 
       presented in Thakur et.al. "Optimization of Collective Communication 
       Operations in MPICH", International Journal of High Performance Computing 
@@ -412,5 +412,5 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    } 
    return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
                                                rbuf, rcount, rdtype, comm);
-#endif
+#endif  /* defined(USE_MPICH2_DECISION) */
 }
