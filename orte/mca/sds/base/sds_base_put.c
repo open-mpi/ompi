@@ -243,6 +243,93 @@ int orte_ns_nds_bproc_put(orte_cellid_t cell, orte_jobid_t job,
     return ORTE_SUCCESS;
 }
 
+/**
+ * sets up the environment so that a process launched with the xcpu launcher can
+ * figure out its name
+ * @param cell the cell that the process belongs to.
+ * @param job  the job the process belongs to
+ * @param vpid_start the starting vpid for the current parallel launch
+ * @param global_vpid_start the starting vpid for the job
+ * @param num_procs the number of user processes in the job
+ * @param env a pointer to the environment to setup
+ * @retval ORTE_SUCCESS
+ * @retval error
+ */
+int orte_ns_nds_xcpu_put(orte_cellid_t cell, orte_jobid_t job, 
+			 orte_vpid_t vpid_start, int num_procs,
+			 char ***env)
+{
+    char* param;
+    char* value;
+    int rc;
+
+    /* set the mode to xcpu */
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds",NULL))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, "xcpu", true, env);
+    free(param);
+
+    /* since we want to pass the name as separate components, make sure
+     * that the "name" environmental variable is cleared!
+     */
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","name"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_unsetenv(param, env);
+    free(param);
+
+    /* setup the name */
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_cellid_to_string(&value, cell))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","cellid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    if(ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&value, job))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","jobid"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    rc = orte_ns.convert_vpid_to_string(&value, vpid_start);
+    if (ORTE_SUCCESS != rc) {
+        ORTE_ERROR_LOG(rc);
+        return(rc);
+    }
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","vpid_start"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    asprintf(&value, "%d", num_procs);
+    if(NULL == (param = mca_base_param_environ_variable("ns","nds","num_procs"))) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    opal_setenv(param, value, true, env);
+    free(param);
+    free(value);
+
+    return ORTE_SUCCESS;
+}
 
 int orte_ns_nds_pipe_put(const orte_process_name_t* name, orte_vpid_t vpid_start, size_t num_procs, int fd)
 {
