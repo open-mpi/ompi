@@ -36,10 +36,8 @@ extern "C" {
  * Please note: 
  *   if code == MPI_UNDEFINED, than the according structure 
  *                             represents an error class.
- *   if cls == MPI_UNDEFINED, than the according structure 
- *                            represents an error code.
- *  For the predefined error codes and classes, code and
- *  cls are both set to the according value.
+ *   For the predefined error codes and classes, code and
+ *   cls are both set to the according value.
  */
 struct ompi_mpi_errcode_t {
     opal_object_t                      super;
@@ -51,6 +49,7 @@ typedef struct ompi_mpi_errcode_t ompi_mpi_errcode_t;
 
 OMPI_DECLSPEC extern ompi_pointer_array_t ompi_mpi_errcodes;
 OMPI_DECLSPEC extern int ompi_mpi_errcode_lastused;
+OMPI_DECLSPEC extern int ompi_mpi_errcode_lastpredefined;
 
 OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
 
@@ -59,7 +58,7 @@ OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
  */
 static inline bool ompi_mpi_errcode_is_invalid(int errcode)
 {
-    if ( errcode >= 0 && errcode < ompi_mpi_errcode_lastused )
+    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastused )
         return 0;
     else
         return 1;
@@ -81,6 +80,38 @@ static inline int ompi_mpi_errcode_get_class (int errcode)
     }
     return ompi_err_unknown.cls;
 }
+
+static inline int ompi_mpi_errcode_is_predefined ( int errcode ) 
+{
+    if ( errcode >= 0 && errcode <= ompi_mpi_errcode_lastpredefined ) 
+	return true;
+    
+    return false;
+}
+
+static inline int ompi_mpi_errnum_is_class ( int errnum ) 
+{
+    ompi_mpi_errcode_t *err;
+
+    if ( errnum <= ompi_mpi_errcode_lastpredefined ) {
+	/* Predefined error values represent an error code and 
+	   an error class at the same time */
+	return true;
+    }
+
+    err = (ompi_mpi_errcode_t *)ompi_pointer_array_get_item(&ompi_mpi_errcodes, errnum);
+    if (NULL != err) {
+	if ( MPI_UNDEFINED == err->code) { 
+	    /* Distinction between error class and error code is that for the 
+	       first one the code section is set to MPI_UNDEFINED  */
+	    return true;
+	}
+    }
+
+    return false;
+}
+    
+    
 /** 
  * Return the error string 
  */
