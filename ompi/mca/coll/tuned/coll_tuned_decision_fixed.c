@@ -325,3 +325,92 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
     return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
 #endif  /* 0 */
 }
+
+/*
+ *	allgather_intra_dec 
+ *
+ *	Function:	- seletects allgather algorithm to use
+ *	Accepts:	- same arguments as MPI_Allgather()
+ *	Returns:	- MPI_SUCCESS or error code, passed from corresponding
+ *                        internal allgather function.
+ */
+
+int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount, 
+                                              struct ompi_datatype_t *sdtype,
+                                              void* rbuf, int rcount, 
+                                              struct ompi_datatype_t *rdtype, 
+                                              struct ompi_communicator_t *comm)
+{
+   int communicator_size, rank, pow2_size;
+   size_t dsize, total_dsize;
+
+   communicator_size = ompi_comm_size(comm);
+   rank = ompi_comm_rank(comm);
+
+   /* Special case for 2 processes */
+   if (communicator_size == 2) {
+      return ompi_coll_tuned_allgather_intra_two_procs (sbuf, scount, sdtype, 
+                                                        rbuf, rcount, rdtype, 
+                                                        comm);
+    }
+
+   /* Determine complete data size */
+   ompi_ddt_type_size(sdtype, &dsize);
+   total_dsize = dsize * scount * communicator_size;   
+   
+   OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allgather_intra_dec_fixed rank %d com_size %d msg_length %ld", rank, communicator_size, total_dsize));
+
+   for (pow2_size  = 1; pow2_size <= communicator_size; pow2_size <<=1); 
+   pow2_size >>=1;
+
+   /* Decision based on MX 2Gb results from Grig cluster at 
+      The University of Tennesse, Knoxville 
+      - if total message size is less than 50KB use either bruck or 
+        recursive doubling for non-power of two and  power of two nodes, respectively.
+      - else use ring and neighbor exchange algorithms for odd and even number of 
+        nodes, respectively.
+   */
+   if (total_dsize < 50000) {
+      if (pow2_size == communicator_size) {
+         return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, 
+                                                                  sdtype, 
+                                                                  rbuf, rcount, 
+                                                                  rdtype, comm);
+      } else {
+         return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
+                                                      rbuf, rcount, rdtype, comm);
+      }
+   } else {
+      if (communicator_size % 2) {
+         return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
+                                                     rbuf, rcount, rdtype, comm);
+      } else {
+         return  ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, 
+                                                                  sdtype,
+                                                                  rbuf, rcount,
+                                                                  rdtype, comm);
+      }
+   }
+   
+#if USE_MPICH2_DECISION      
+   /* Decision as in MPICH-2 
+      presented in Thakur et.al. "Optimization of Collective Communication 
+      Operations in MPICH", International Journal of High Performance Computing 
+      Applications, Vol. 19, No. 1, 49-66 (2005)
+      - for power-of-two processes and small and medium size messages 
+        (up to 512KB) use recursive doubling
+      - for non-power-of-two processes and small messages (80KB) use bruck,
+      - for everything else use ring.
+    */
+   if ((pow2_size == communicator_size) && (total_dsize < 524288)) {
+      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, sdtype, 
+                                                               rbuf, rcount, rdtype, 
+                                                               comm);
+   } else if (total_dsize <= 81920) { 
+      return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
+                                                   rbuf, rcount, rdtype, comm);
+   } 
+   return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
+                                               rbuf, rcount, rdtype, comm);
+#endif
+}

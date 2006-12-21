@@ -87,11 +87,11 @@ ompi_coll_tuned_allreduce_intra_dec_dynamic (void *sbuf, void *rbuf, int count,
 }
 
 /*
- *	alltoall_intra_dec 
+ *    alltoall_intra_dec 
  *
- *	Function:	- seletects alltoall algorithm to use
- *	Accepts:	- same arguments as MPI_Alltoall()
- *	Returns:	- MPI_SUCCESS or error code (passed from the bcast implementation)
+ *    Function:    - seletects alltoall algorithm to use
+ *    Accepts:    - same arguments as MPI_Alltoall()
+ *    Returns:    - MPI_SUCCESS or error code (passed from the bcast implementation)
  */
 
 int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount, 
@@ -132,11 +132,11 @@ int ompi_coll_tuned_alltoall_intra_dec_dynamic(void *sbuf, int scount,
 }
 
 /*
- *	barrier_intra_dec 
+ *    barrier_intra_dec 
  *
- *	Function:	- seletects barrier algorithm to use
- *	Accepts:	- same arguments as MPI_Barrier()
- *	Returns:	- MPI_SUCCESS or error code (passed from the barrier implementation)
+ *    Function:    - seletects barrier algorithm to use
+ *    Accepts:    - same arguments as MPI_Barrier()
+ *    Returns:    - MPI_SUCCESS or error code (passed from the barrier implementation)
  */
 int ompi_coll_tuned_barrier_intra_dec_dynamic(struct ompi_communicator_t *comm)
 {
@@ -205,11 +205,11 @@ int ompi_coll_tuned_bcast_intra_dec_dynamic(void *buff, int count,
 }
 
 /*
- *	reduce_intra_dec 
+ *    reduce_intra_dec 
  *
- *	Function:	- seletects reduce algorithm to use
- *	Accepts:	- same arguments as MPI_reduce()
- *	Returns:	- MPI_SUCCESS or error code (passed from the reduce implementation)
+ *    Function:    - seletects reduce algorithm to use
+ *    Accepts:    - same arguments as MPI_reduce()
+ *    Returns:    - MPI_SUCCESS or error code (passed from the reduce implementation)
  *                                        
  */
 int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
@@ -243,5 +243,60 @@ int ompi_coll_tuned_reduce_intra_dec_dynamic( void *sendbuf, void *recvbuf,
         return ompi_coll_tuned_reduce_intra_do_forced (sendbuf, recvbuf, count, datatype, op, root, comm);
     }
     return ompi_coll_tuned_reduce_intra_dec_fixed (sendbuf, recvbuf, count, datatype, op, root, comm);
+}
+
+/*
+ *    allgather_intra_dec 
+ *
+ *    Function:    - seletects allgather algorithm to use
+ *    Accepts:    - same arguments as MPI_Allgather()
+ *    Returns:    - MPI_SUCCESS or error code (passed from the selected
+ *                        allgather function).
+ */
+
+int ompi_coll_tuned_allgather_intra_dec_dynamic(void *sbuf, int scount, 
+                                                struct ompi_datatype_t *sdtype,
+                                                void* rbuf, int rcount, 
+                                                struct ompi_datatype_t *rdtype, 
+                                                struct ompi_communicator_t *comm)
+{
+   
+   OPAL_OUTPUT((ompi_coll_tuned_stream, 
+                "ompi_coll_tuned_allgather_intra_dec_dynamic"));
+   
+   if (comm->c_coll_selected_data->com_rules[ALLGATHER]) {
+      /* We have file based rules:
+         - calculate message size and other necessary information */
+      int comsize;
+      int alg, faninout, segsize;
+      size_t dsize;
+      
+      ompi_ddt_type_size (sdtype, &dsize);
+      comsize = ompi_comm_size(comm);
+      dsize *= comsize * scount;
+      
+      alg = ompi_coll_tuned_get_target_method_params (comm->c_coll_selected_data->com_rules[ALLGATHER], dsize, &faninout, &segsize);
+      if (alg) { 
+         /* we have found a valid choice from the file based rules for 
+            this message size */
+         return ompi_coll_tuned_allgather_intra_do_this (sbuf, scount, sdtype,
+                                                         rbuf, rcount, rdtype,
+                                                         comm, alg, faninout, 
+                                                         segsize);
+      }
+   } 
+
+   /* We do not have file based rules */
+   if (comm->c_coll_selected_data->user_forced[ALLGATHER].algorithm) {
+      /* User-forced algorithm */
+      return ompi_coll_tuned_allgather_intra_do_forced (sbuf, scount, sdtype, 
+                                                        rbuf, rcount, rdtype, 
+                                                        comm);
+   }
+
+   /* Use default decision */
+   return ompi_coll_tuned_allgather_intra_dec_fixed (sbuf, scount, sdtype, 
+                                                     rbuf, rcount, rdtype, 
+                                                     comm);
 }
 
