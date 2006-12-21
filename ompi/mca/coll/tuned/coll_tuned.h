@@ -85,11 +85,11 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   /* API functions */
 
   int ompi_coll_tuned_init_query(bool enable_progress_threads,
-                                bool enable_mpi_threads);
+                                 bool enable_mpi_threads);
 
   const struct mca_coll_base_module_1_0_0_t *
     ompi_coll_tuned_comm_query(struct ompi_communicator_t *comm, int *priority,
-                              struct mca_coll_base_comm_t **data);
+                               struct mca_coll_base_comm_t **data);
 
   const struct mca_coll_base_module_1_0_0_t *
     ompi_coll_tuned_module_init(struct ompi_communicator_t *comm);
@@ -108,6 +108,15 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   /* All Gather */
   int ompi_coll_tuned_allgather_intra_dec_fixed(ALLGATHER_ARGS);
   int ompi_coll_tuned_allgather_intra_dec_dynamic(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_do_forced(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_do_this(ALLGATHER_ARGS, int algorithm, int faninout, int segsize);
+  int ompi_coll_tuned_allgather_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
+  int ompi_coll_tuned_allgather_intra_bruck(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_recursivedoubling(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_ring(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_neighborexchange(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_basic_linear(ALLGATHER_ARGS);
+  int ompi_coll_tuned_allgather_intra_two_procs(ALLGATHER_ARGS);
   int ompi_coll_tuned_allgather_inter_dec_fixed(ALLGATHER_ARGS);
   int ompi_coll_tuned_allgather_inter_dec_dynamic(ALLGATHER_ARGS);
 
