@@ -62,15 +62,43 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
                                              struct ompi_communicator_t *comm)
 {
     int communicator_size, rank;
-    size_t dsize, total_dsize;
+    size_t dsize, block_dsize;
+#if 0
+    size_t total_dsize;
+#endif
 
     communicator_size = ompi_comm_size(comm);
     rank = ompi_comm_rank(comm);
 
     /* special case */
     if (communicator_size==2) {
-        return ompi_coll_tuned_alltoall_intra_two_procs (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+        return ompi_coll_tuned_alltoall_intra_two_procs(sbuf, scount, sdtype, 
+                                                         rbuf, rcount, rdtype, 
+                                                         comm);
     }
+
+    /* Decision function based on measurement on Grig cluster at 
+       the University of Tennessee (2GB MX) up to 64 nodes.
+       Has better performance for messages of intermediate sizes than the old one */
+    /* determine block size */
+    ompi_ddt_type_size(sdtype, &dsize);
+    block_dsize = dsize * scount;
+
+    if ((block_dsize < 200) && (communicator_size > 12)) {
+       return ompi_coll_tuned_alltoall_intra_bruck(sbuf, scount, sdtype, 
+                                                   rbuf, rcount, rdtype, comm);
+
+    } else if (block_dsize < 3000) {
+       return ompi_coll_tuned_alltoall_intra_basic_linear(sbuf, scount, sdtype, 
+                                                          rbuf, rcount, rdtype, 
+                                                          comm);
+    }
+
+    return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, 
+                                                    rbuf, rcount, rdtype, comm);
+
+#if 0
+    /* previous decision */
 
     /* else we need data size for decision function */
     ompi_ddt_type_size(sdtype, &dsize);
@@ -86,6 +114,7 @@ int ompi_coll_tuned_alltoall_intra_dec_fixed(void *sbuf, int scount,
         return ompi_coll_tuned_alltoall_intra_basic_linear (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
     }
     return ompi_coll_tuned_alltoall_intra_pairwise (sbuf, scount, sdtype, rbuf, rcount, rdtype, comm);
+#endif
 }
 
 
