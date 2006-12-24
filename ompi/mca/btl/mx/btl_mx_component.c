@@ -447,7 +447,7 @@ int mca_btl_mx_component_progress()
             mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
             mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
             mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)frag->tag, 
-                                  (uint64_t)0xffffffffffffffffULL,
+                                  BTL_MX_RECV_MASK,
                                   frag, &(frag->mx_request) );
             if( MX_SUCCESS != mx_return ) {
                 opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );

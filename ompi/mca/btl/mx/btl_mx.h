@@ -44,6 +44,12 @@ extern "C" {
 #endif
 
 /**
+ * The mask used for receive and for the PUT protocol
+ */
+#define BTL_MX_RECV_MASK 0xffffffffffffffffULL
+#define BTL_MX_PUT_MASK  0xffffffffffffffffULL
+
+/**
  * MX BTL component.
  */
 

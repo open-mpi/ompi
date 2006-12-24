@@ -142,7 +142,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
         mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
         mx_segment.segment_length = frag->base.des_dst->seg_len;
         mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag,
-                              0xffffffffffffffffULL,
+                              BTL_MX_RECV_MASK,
                               frag, &(frag->mx_request) );
         if( MX_SUCCESS != mx_return ) {
             return OMPI_ERROR;
@@ -284,6 +284,44 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_src( struct mca_btl_base_module_t*
     return &frag->base;
 }
 
+/**
+ * Initiate an asynchronous put. 
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
+ */
+static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
+                           struct mca_btl_base_endpoint_t* endpoint,
+                           struct mca_btl_base_descriptor_t* descriptor )
+{
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
+    mx_segment_t mx_segment;
+    mx_return_t mx_return;
+
+    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
+        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
+            return OMPI_ERROR;
+        if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
+            return OMPI_ERROR;
+    }
+
+    frag->endpoint  = endpoint;
+    frag->tag       = 0xff;
+
+    mx_segment.segment_ptr    = descriptor->des_src[1].seg_addr.pval;
+    mx_segment.segment_length = descriptor->des_src[1].seg_len;
+
+    mx_return = mx_isend( mx_btl->mx_endpoint, &mx_segment, 1/*descriptor->des_src_cnt*/,
+                          endpoint->mx_peer_addr,
+                          descriptor->des_dst[0].seg_key.key64, frag, &frag->mx_request );
+    if( MX_SUCCESS != mx_return ) {
+        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
 
 /**
  * Prepare a descriptor for send/rdma using the supplied
@@ -306,7 +344,10 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
                                                    size_t reserve,
                                                    size_t* size)
 {
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag;
+    mx_return_t mx_return;
+    mx_segment_t mx_segment;
     int rc;
 
     MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
@@ -314,8 +355,19 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
         return NULL;
     }
 
-    frag->segment[0].seg_len = *size;
+    frag->segment[0].seg_len       = *size;
     frag->segment[0].seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    frag->segment[0].seg_key.key64 = (uint64_t)(intptr_t)frag;
+
+    mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
+    mx_segment.segment_length = frag->segment[0].seg_len;
+    mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, frag->segment[0].seg_key.key64, 
+                          BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
+    if( MX_SUCCESS != mx_return ) {
+        opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
+        MCA_BTL_MX_FRAG_RETURN( btl, frag );
+        return NULL;
+    }
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -342,7 +394,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
                      mca_btl_base_tag_t tag )
    
 {
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl;
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
@@ -424,7 +476,7 @@ mca_btl_mx_module_t mca_btl_mx_module = {
         mca_btl_mx_prepare_src,
         mca_btl_mx_prepare_dst,
         mca_btl_mx_send,
-        NULL, /* put */
+        mca_btl_mx_put, /* put */
         NULL, /* get */
         mca_btl_base_dump,
         NULL, /* mpool */
