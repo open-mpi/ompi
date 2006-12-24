@@ -98,9 +98,12 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "filter",
                             "Unique ID for the application (used to connect to the peers)",
                             false, false, 0xdeadbeef, &mca_btl_mx_component.mx_filter );
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "self",
+                            "Enable the MX support for self communications",
+                            false, false, 0, &mca_btl_mx_component.mx_support_self );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
                             "Enable the MX support for shared memory",
-                            false, true, 0, &mca_btl_mx_component.mx_support_sharedmem );
+                            false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
 
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
                             "Number of allocated default request",
@@ -150,7 +153,8 @@ int mca_btl_mx_component_open(void)
     mca_btl_mx_module.super.btl_max_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
                             "Flags to activate/deactivate the RDMA",
-                            true, false, MCA_BTL_FLAGS_PUT, (int*)&mca_btl_mx_module.super.btl_flags );
+                            true, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT,
+                            (int*)&mca_btl_mx_module.super.btl_flags );
 
     return OMPI_SUCCESS;
 }
@@ -197,7 +201,6 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 
     /* copy over default settings */
     memcpy( mx_btl, &mca_btl_mx_module, sizeof(mca_btl_mx_module_t) );
-    mx_btl->super.btl_flags = MCA_BTL_FLAGS_SEND_INPLACE; /* | MCA_BTL_FLAGS_PUT;*/
     OBJ_CONSTRUCT( &mx_btl->mx_peers, opal_list_t );
     OBJ_CONSTRUCT( &mx_btl->mx_lock, opal_mutex_t );
     /* open local endpoint */
@@ -252,9 +255,10 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
      * up and running the MX library does not exit the application.
      */
     mx_set_error_handler(MX_ERRORS_RETURN);
-    /* Until this BTL reach a stable state let MX library generate assert for the errors */
-    /*mx_set_error_handler(MX_ERRORS_ARE_FATAL);*/
-    opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
+    if( 0 == mca_btl_mx_component.mx_support_sharedmem )
+        opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
+    if( 0 == mca_btl_mx_component.mx_support_self )
+        opal_setenv( "MX_DISABLE_SELF", "1", true, &environ );
 
     /* First check if MX is available ... */
     if( MX_SUCCESS != (status = mx_init()) ) {

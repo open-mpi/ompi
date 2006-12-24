@@ -20,10 +20,9 @@
 
 static void mca_btl_mx_frag_common_constructor(mca_btl_mx_frag_t* frag) 
 { 
-    mca_btl_mx_frag_common_constructor(frag); 
-    frag->base.des_src = NULL;
+    frag->base.des_src     = NULL;
     frag->base.des_src_cnt = 0;
-    frag->base.des_dst = NULL;
+    frag->base.des_dst     = NULL;
     frag->base.des_dst_cnt = 0;
 }
 

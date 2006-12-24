@@ -120,7 +120,7 @@ mca_btl_mx_proc_t* mca_btl_mx_proc_create(ompi_proc_t* ompi_proc)
 
     module_proc = OBJ_NEW(mca_btl_mx_proc_t);
 
-    module_proc->proc_ompi      = ompi_proc;
+    module_proc->proc_ompi = ompi_proc;
 
     return module_proc;
 }
