@@ -153,9 +153,8 @@ int mca_btl_mx_component_open(void)
     mca_btl_mx_module.super.btl_max_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
                             "Flags to activate/deactivate the RDMA",
-                            true, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT,
+                            false, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT,
                             (int*)&mca_btl_mx_module.super.btl_flags );
-
     return OMPI_SUCCESS;
 }
 
