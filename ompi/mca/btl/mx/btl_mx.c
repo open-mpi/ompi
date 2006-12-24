@@ -79,15 +79,20 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
         mca_btl_mx_proc_t* mx_proc;
         mca_btl_base_endpoint_t* mx_endpoint;
 
-        /* We have special BTLs for processes on the same node as well as for all communications
-         * inside the same process. Therefore, MX will not be used for any of them.
-         */
-        if( (ompi_procs[i] == ompi_proc_local_proc) ||
-            ( (0 == mca_btl_mx_component.mx_support_sharedmem) &&
-              (ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) ) ) {
-            continue;
+        /**
+         * By default don't allow communications with itself nor
+         * with any other processes on the same node.
+         * BTL self and sm are supposed to take care of such communications.
+          */
+        if( ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL ) {
+            if( ompi_procs[i] == ompi_proc_local_proc ) {
+                if( 0 == mca_btl_mx_component.mx_support_self )
+                    continue;
+            } else {
+                if( 0 == mca_btl_mx_component.mx_support_sharedmem )
+                    continue;
+            }
         }
-
         if( NULL == (mx_proc = mca_btl_mx_proc_create(ompi_proc)) ) {
             continue;
         }
