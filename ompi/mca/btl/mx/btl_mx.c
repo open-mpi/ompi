@@ -31,36 +31,6 @@
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 
-
-mca_btl_mx_module_t mca_btl_mx_module = {
-    {
-        &mca_btl_mx_component.super,
-        0, /* max size of first fragment */
-        0, /* min send fragment size */
-        0, /* max send fragment size */
-        0, /* min rdma fragment size */
-        0, /* max rdma fragment size */
-        0, /* exclusivity */
-        0, /* latency */
-        0, /* bandwidth */
-        MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT, /* flags */
-        mca_btl_mx_add_procs,
-        mca_btl_mx_del_procs,
-        mca_btl_mx_register, 
-        mca_btl_mx_finalize,
-        mca_btl_mx_alloc, 
-        mca_btl_mx_free, 
-        mca_btl_mx_prepare_src,
-        mca_btl_mx_prepare_dst,
-        mca_btl_mx_send,
-        NULL, /* put */
-        NULL, /* get */
-        mca_btl_base_dump,
-        NULL, /* mpool */
-        NULL /* register error */
-    }
-};
-
 /**
  *
  */
@@ -378,8 +348,8 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     mx_return_t mx_return;
     uint64_t total_length;
 
-    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status ) {
-        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->endpoint_proc->status )
+    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
+        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
             return OMPI_ERROR;
         if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
             return OMPI_ERROR;
@@ -432,4 +402,33 @@ int mca_btl_mx_finalize( struct mca_btl_base_module_t* btl )
     free(mx_btl);
     return OMPI_SUCCESS;
 }
+
+mca_btl_mx_module_t mca_btl_mx_module = {
+    {
+        &mca_btl_mx_component.super,
+        0, /* max size of first fragment */
+        0, /* min send fragment size */
+        0, /* max send fragment size */
+        0, /* min rdma fragment size */
+        0, /* max rdma fragment size */
+        0, /* exclusivity */
+        0, /* latency */
+        0, /* bandwidth */
+        MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT, /* flags */
+        mca_btl_mx_add_procs,
+        mca_btl_mx_del_procs,
+        mca_btl_mx_register, 
+        mca_btl_mx_finalize,
+        mca_btl_mx_alloc, 
+        mca_btl_mx_free, 
+        mca_btl_mx_prepare_src,
+        mca_btl_mx_prepare_dst,
+        mca_btl_mx_send,
+        NULL, /* put */
+        NULL, /* get */
+        mca_btl_base_dump,
+        NULL, /* mpool */
+        NULL /* register error */
+    }
+};
 

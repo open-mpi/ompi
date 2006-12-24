@@ -35,18 +35,17 @@
  * Initialize state of the endpoint instance.
  *
  */
-
 static void mca_btl_mx_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
 {
-    endpoint->endpoint_btl = NULL;
+    endpoint->endpoint_btl  = NULL;
     endpoint->endpoint_proc = NULL;
+    endpoint->status        = MCA_BTL_MX_NOT_CONNECTED;
 }
 
 /*
  * Destroy a endpoint
  *
  */
-
 static void mca_btl_mx_endpoint_destruct(mca_btl_base_endpoint_t* endpoint)
 {
 }
