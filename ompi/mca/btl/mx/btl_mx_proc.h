@@ -29,10 +29,6 @@
 extern "C" {
 #endif
 
-#define MCA_BTL_MX_NOT_CONNECTED   0x0000
-#define MCA_BTL_MX_NOT_REACHEABLE  0x0001
-#define MCA_BTL_MX_CONNECTED       0x0002
-
     /**
      * Represents the state of a remote process and the set of addresses
      * that it exports. Also cache an instance of mca_btl_base_endpoint_t for
@@ -45,8 +41,6 @@ extern "C" {
 
         ompi_proc_t *proc_ompi;                  
         /**< pointer to corresponding ompi_proc_t */
-
-        int status;  /**< status of the connection */
 
         mca_btl_mx_addr_t  *mx_peers;  /**< peers addresses */
         int mx_peers_count;

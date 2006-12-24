@@ -159,7 +159,6 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
         return OMPI_ERROR;
     }
 
-    module_proc->status = MCA_BTL_MX_NOT_CONNECTED;
     module_proc->mx_peers = mx_peers;
 
     if( NULL == module_proc->proc_endpoints ) {
@@ -169,7 +168,6 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
     }
-    /* insert into endpoint array */
     module_endpoint->endpoint_proc = module_proc;
 
     return OMPI_SUCCESS;
@@ -206,13 +204,12 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
         module_endpoint->mx_peer.nic_id      = module_proc->mx_peers[i].nic_id;
         module_endpoint->mx_peer.endpoint_id = module_proc->mx_peers[i].endpoint_id;
         module_endpoint->mx_peer_addr        = mx_remote_addr;
+        module_endpoint->status              = MCA_BTL_MX_CONNECTED;
         module_proc->proc_addr_index         = i;
-        module_proc->status                  = MCA_BTL_MX_CONNECTED;
         break;
     }
 
     if( i == module_proc->mx_peers_count ) {  /* no available connection */
-        module_proc->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
     }
 

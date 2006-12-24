@@ -336,6 +336,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         return NULL;
     if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
                                nic_addrs, size)) != MX_SUCCESS) {
+        opal_output(0, "MX BTL error (mx_get_info failed) size = %ld [%s] #cards %d\n",
+                    size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
         free(nic_addrs);
         return NULL;
     }
