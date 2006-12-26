@@ -3,7 +3,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -46,7 +46,7 @@ extern "C" {
 /**
  * The mask used for receive and for the PUT protocol
  */
-#define BTL_MX_RECV_MASK 0xffffffffffffffffULL
+#define BTL_MX_RECV_MASK 0x0000ffffffffffffULL
 #define BTL_MX_PUT_MASK  0xffffffffffffffffULL
 
 /**
@@ -241,9 +241,8 @@ extern int mca_btl_mx_register(
  * @param size (IN)     Request segment size.
  */
 
-extern mca_btl_base_descriptor_t* mca_btl_mx_alloc(
-    struct mca_btl_base_module_t* btl, 
-    size_t size); 
+mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl, 
+                                             size_t size );
 
 
 /**
@@ -253,9 +252,8 @@ extern mca_btl_base_descriptor_t* mca_btl_mx_alloc(
  * @param descriptor (IN)  Allocated descriptor.
  */
 
-extern int mca_btl_mx_free(
-    struct mca_btl_base_module_t* btl, 
-    mca_btl_base_descriptor_t* des); 
+int mca_btl_mx_free( struct mca_btl_base_module_t* btl, 
+                     mca_btl_base_descriptor_t* des );
     
 
 /**
@@ -270,25 +268,57 @@ extern int mca_btl_mx_free(
  * @param convertor (IN)    Data type convertor
  * @param reserve (IN)      Additional bytes requested by upper layer to precede user data
  * @param size (IN/OUT)     Number of bytes to prepare (IN), number of bytes actually prepared (OUT) 
-*/
+ */
+mca_btl_base_descriptor_t*
+mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
+                        struct mca_btl_base_endpoint_t* peer,
+                        struct mca_mpool_base_registration_t*,
+                        struct ompi_convertor_t* convertor,
+                        size_t reserve,
+                        size_t* size );
 
-mca_btl_base_descriptor_t* mca_btl_mx_prepare_src(
-    struct mca_btl_base_module_t* btl,
-    struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size
-);
+mca_btl_base_descriptor_t*
+mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl, 
+                        struct mca_btl_base_endpoint_t* peer,
+                        struct mca_mpool_base_registration_t*,
+                        struct ompi_convertor_t* convertor,
+                        size_t reserve,
+                        size_t* size );
 
-extern mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( 
-    struct mca_btl_base_module_t* btl, 
-    struct mca_btl_base_endpoint_t* peer,
-    struct mca_mpool_base_registration_t*,
-    struct ompi_convertor_t* convertor,
-    size_t reserve,
-    size_t* size); 
-
+#define MCA_BTL_MX_PROGRESS(mx_btl, mx_status)                          \
+    do {                                                                \
+        mca_btl_mx_frag_t* __frag = mx_status.context;                  \
+        mx_segment_t __mx_segment;                                      \
+        mx_return_t __mx_return;                                        \
+                                                                        \
+        if( NULL != __frag ) {                                          \
+            if( 0xff == __frag->tag ) {  /* it's a send */              \
+                /* call the completion callback */                      \
+                __frag->base.des_cbfunc( &(mx_btl->super), __frag->endpoint, \
+                                         &(__frag->base), OMPI_SUCCESS ); \
+            } else { /* and this one is a receive */                    \
+                mca_btl_base_recv_reg_t* __reg;                         \
+                                                                        \
+                __reg = &(mx_btl->mx_reg[__frag->tag]);                 \
+                __frag->base.des_dst->seg_len = mx_status.msg_length;   \
+                __reg->cbfunc( &(mx_btl->super), __frag->tag, &(__frag->base), \
+                               __reg->cbdata );                         \
+                /**                                                     \
+                 * The upper level extract the data from the fragment.  \
+                 * Now we can register the fragment                     \
+                 * again with the MX BTL.                               \
+                 */                                                     \
+                __mx_segment.segment_ptr = __frag->base.des_dst->seg_addr.pval; \
+                __mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit; \
+                __mx_return = mx_irecv( mx_btl->mx_endpoint, &__mx_segment, 1, \
+                                        (uint64_t)__frag->tag, BTL_MX_RECV_MASK, \
+                                        __frag, &(__frag->mx_request) ); \
+                if( MX_SUCCESS != __mx_return ) {                       \
+                    opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" ); \
+                }                                                       \
+            }                                                           \
+        }                                                               \
+    } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
