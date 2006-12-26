@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,7 +17,6 @@
  */
 
 #include "ompi_config.h"
-#include <string.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
 #include "ompi/mca/pml/pml.h"
@@ -50,10 +49,10 @@ int mca_btl_mx_add_procs( struct mca_btl_base_module_t* btl,
         mca_btl_base_endpoint_t* mx_endpoint;
 
         /**
-         * By default don't allow communications with itself nor
-         * with any other processes on the same node.
-         * BTL self and sm are supposed to take care of such communications.
-          */
+         * By default don't allow communications with self nor with any
+         * other processes on the same node. The BTL self and sm are
+         * supposed to take care of such communications.
+         */
         if( ompi_procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL ) {
             if( ompi_procs[i] == ompi_proc_local_proc ) {
                 if( 0 == mca_btl_mx_component.mx_support_self )
@@ -139,8 +138,8 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
         frag->mx_frag_list     = NULL;
         frag->tag              = tag;
 
-        mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
-        mx_segment.segment_length = frag->base.des_dst->seg_len;
+        mx_segment.segment_ptr    = (void*)(frag+1);
+        mx_segment.segment_length = mx_btl->super.btl_eager_limit;
         mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)tag,
                               BTL_MX_RECV_MASK,
                               frag, &(frag->mx_request) );
@@ -183,7 +182,8 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     MCA_BTL_MX_FRAG_ALLOC_EAGER(mx_btl, frag, rc);
     frag->segment[0].seg_len = 
         size <= mx_btl->super.btl_eager_limit ? 
-        size : mx_btl->super.btl_eager_limit ; 
+        size : mx_btl->super.btl_eager_limit ;
+    frag->segment[0].seg_addr.pval = (void*)(frag+1);
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_dst = NULL;
@@ -202,11 +202,9 @@ int mca_btl_mx_free( struct mca_btl_base_module_t* btl,
 {
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)des; 
 
-    if( 0 == frag->base.des_dst_cnt ) {  /* send fragment */
-        MCA_BTL_MX_FRAG_RETURN(btl, frag);
-    } else {  /* receive fragment */
-        opal_output( 0, "BARFFFFFFF   return send frag\n" );
-    }
+    assert( 0xff == frag->tag );
+    MCA_BTL_MX_FRAG_RETURN(btl, frag);
+
     return OMPI_SUCCESS; 
 }
 
@@ -217,110 +215,74 @@ int mca_btl_mx_free( struct mca_btl_base_module_t* btl,
  * @param btl (IN)      BTL module
  * @param peer (IN)     BTL peer addressing
  */
-mca_btl_base_descriptor_t* mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
-                                                   struct mca_btl_base_endpoint_t* endpoint,
-                                                   struct mca_mpool_base_registration_t* registration,
-                                                   struct ompi_convertor_t* convertor,
-                                                   size_t reserve,
-                                                   size_t* size )
+mca_btl_base_descriptor_t*
+mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
+                        struct mca_btl_base_endpoint_t* endpoint,
+                        struct mca_mpool_base_registration_t* registration,
+                        struct ompi_convertor_t* convertor,
+                        size_t reserve,
+                        size_t* size )
 {
     mca_btl_mx_frag_t* frag;
     struct iovec iov;
     uint32_t iov_count = 1;
-    size_t max_data = *size;
+    size_t max_data;
     int rc;
 
-
+    max_data = btl->btl_eager_limit - reserve;
+    if( (*size) < max_data ) {
+        max_data = *size;
+    }
     /* If the data is contiguous we can use directly the pointer
      * to the user memory.
      */
     if( 0 == ompi_convertor_need_buffers(convertor) ) {
-        MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
-        if( NULL == frag ) {
-            return NULL;
+        if( 0 == reserve ) {
+            MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
+            if( NULL == frag ) {
+                return NULL;
+            }
+            max_data = *size;
+            frag->base.des_src_cnt = 1;
+        } else {
+            MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
+            if( NULL == frag ) {
+                return NULL;
+            }
+            frag->base.des_src_cnt = 2;
         }
-            
-        if( (max_data + reserve) > btl->btl_eager_limit ) {
-            max_data = btl->btl_eager_limit - reserve;
-        }
-        /* let the convertor figure out the correct pointer depending on the data layout */
+        /**
+         * let the convertor figure out the correct pointer depending
+         * on the data layout
+         */
         iov.iov_base = NULL;
-        iov.iov_len  = max_data;
-        frag->base.des_src_cnt = 2;
-        frag->segment[0].seg_len = reserve;
     } else {
         MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
         if( NULL == frag ) {
             return NULL;
         }
-                
-        if( (max_data + reserve) <= btl->btl_eager_limit ) {
-            iov.iov_len = max_data;
-        } else {
-            iov.iov_len = mca_btl_mx_module.super.btl_eager_limit - reserve;
-            max_data = iov.iov_len;  /* let the PML establish the pipeline */
-        }
-        iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
-        frag->segment[0].seg_len = reserve;
         frag->base.des_src_cnt = 1;
+        iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
     }
+    frag->segment[0].seg_len = reserve;
 
-    rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
-    *size  = max_data;
-    if( rc < 0 ) {
-        MCA_BTL_MX_FRAG_RETURN( mx_btl, frag );
-        return NULL;
-    }
+    iov.iov_len = max_data;
+    (void)ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
+    *size = max_data;
+
     if( 1 == frag->base.des_src_cnt ) {
         frag->segment[0].seg_len += max_data;
+        if( 0 == reserve )
+            frag->segment[0].seg_addr.pval = iov.iov_base;
     } else {
-        frag->segment[1].seg_addr.pval = iov.iov_base;
         frag->segment[1].seg_len       = max_data;
+        frag->segment[1].seg_addr.pval = iov.iov_base;
     }
     frag->base.des_src = frag->segment;
     frag->base.des_dst = NULL;
     frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
     return &frag->base;
-}
-
-/**
- * Initiate an asynchronous put. 
- *
- * @param btl (IN)         BTL module
- * @param endpoint (IN)    BTL addressing information
- * @param descriptor (IN)  Description of the data to be transferred
- */
-static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
-                           struct mca_btl_base_endpoint_t* endpoint,
-                           struct mca_btl_base_descriptor_t* descriptor )
-{
-    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
-    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
-    mx_segment_t mx_segment;
-    mx_return_t mx_return;
-
-    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
-        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
-            return OMPI_ERROR;
-        if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
-            return OMPI_ERROR;
-    }
-
-    frag->endpoint  = endpoint;
-    frag->tag       = 0xff;
-
-    mx_segment.segment_ptr    = descriptor->des_src[1].seg_addr.pval;
-    mx_segment.segment_length = descriptor->des_src[1].seg_len;
-
-    mx_return = mx_isend( mx_btl->mx_endpoint, &mx_segment, 1/*descriptor->des_src_cnt*/,
-                          endpoint->mx_peer_addr,
-                          descriptor->des_dst[0].seg_key.key64, frag, &frag->mx_request );
-    if( MX_SUCCESS != mx_return ) {
-        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
-        return OMPI_ERROR;
-    }
-    return OMPI_SUCCESS;
 }
 
 /**
@@ -380,6 +342,50 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
 
 
 /**
+ * Initiate an asynchronous put. 
+ *
+ * @param btl (IN)         BTL module
+ * @param endpoint (IN)    BTL addressing information
+ * @param descriptor (IN)  Description of the data to be transferred
+ */
+static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
+                           struct mca_btl_base_endpoint_t* endpoint,
+                           struct mca_btl_base_descriptor_t* descriptor )
+{
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)btl;
+    mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
+    mx_segment_t mx_segment[2];
+    mx_return_t mx_return;
+
+    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
+        if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
+            return OMPI_ERROR;
+        if( OMPI_SUCCESS != mca_btl_mx_proc_connect( (mca_btl_mx_endpoint_t*)endpoint ) )
+            return OMPI_ERROR;
+    }
+
+    frag->endpoint  = endpoint;
+    frag->tag       = 0xff;
+
+    mx_segment[0].segment_ptr    = descriptor->des_src[0].seg_addr.pval;
+    mx_segment[0].segment_length = descriptor->des_src[0].seg_len;
+    if( 1 < descriptor->des_src_cnt ) {
+        mx_segment[1].segment_ptr    = descriptor->des_src[1].seg_addr.pval;
+        mx_segment[1].segment_length = descriptor->des_src[1].seg_len;
+    }
+
+    mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
+                          endpoint->mx_peer_addr,
+                          descriptor->des_dst[0].seg_key.key64, frag, &frag->mx_request );
+    if( MX_SUCCESS != mx_return ) {
+        opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
+        return OMPI_ERROR;
+    }
+    return OMPI_SUCCESS;
+}
+
+
+/**
  * Initiate an asynchronous send.
  *
  * @param btl (IN)         BTL module
@@ -407,12 +413,13 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
             return OMPI_ERROR;
     }
 
-    frag->endpoint = endpoint;
-    frag->tag      = tag;
+    frag->endpoint  = endpoint;
+    frag->tag       = 0xff;
+
     mx_segment[0].segment_ptr    = descriptor->des_src[0].seg_addr.pval;
     mx_segment[0].segment_length = descriptor->des_src[0].seg_len;
     total_length = mx_segment[0].segment_length;
-    if( 2 == descriptor->des_src_cnt ) {
+    if( 1 < descriptor->des_src_cnt ) {
         mx_segment[1].segment_ptr    = descriptor->des_src[1].seg_addr.pval;
         mx_segment[1].segment_length = descriptor->des_src[1].seg_len;
         total_length += mx_segment[1].segment_length;

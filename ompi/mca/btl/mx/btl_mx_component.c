@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2005 The University of Tennessee and The University
+ * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -318,17 +318,19 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
                                 NULL, 0);
         return NULL;
     }
-
+#if 0
     /* check for limit on number of btls */
     if(mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls)
         mca_btl_mx_component.mx_num_btls = mca_btl_mx_component.mx_max_btls;
-
+#endif
     /* Now we know how many NIC are available on the system. We will create a BTL for each one
      * and then give a pointer to the BTL to the upper level.
      */
     mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
-    if( NULL == mca_btl_mx_component.mx_btls )
+    if( NULL == mca_btl_mx_component.mx_btls ) {
+	    opal_output( 0, "MX BTL no memory\n" );
         return NULL;
+    }
 
     /* determine the NIC ids */
     size = sizeof(uint64_t) * (mca_btl_mx_component.mx_num_btls + 1);
@@ -396,9 +398,7 @@ int mca_btl_mx_component_progress()
     int32_t num_progressed = 0, i;
     mx_status_t mx_status;
     mx_return_t mx_return;
-    mx_segment_t mx_segment;
     mx_request_t mx_request;
-    mca_btl_mx_frag_t* frag;
 
     for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
         mca_btl_mx_module_t* mx_btl = mca_btl_mx_component.mx_btls[i];
@@ -429,37 +429,12 @@ int mca_btl_mx_component_progress()
                         mx_return);
             continue;
         }
-
-        frag = mx_status.context;
-        if( 0 == frag->base.des_dst_cnt ) {  /* it's a send */
-            /* call the completion callback */
-            frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
-        } else { /* and this one is a receive */
-            mca_btl_base_recv_reg_t* reg;
-
-            reg = &(mx_btl->mx_reg[frag->tag]);
-            frag->base.des_dst->seg_len = mx_status.msg_length;
-            reg->cbfunc( &(mx_btl->super), frag->tag, &(frag->base), reg->cbdata );
-            /*
-             * The upper level extract the data from the fragment. Now we can register the fragment
-             * again with the MX BTL.
-             */
-            mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
-            mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
-            mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, (uint64_t)frag->tag, 
-                                  BTL_MX_RECV_MASK,
-                                  frag, &(frag->mx_request) );
-            if( MX_SUCCESS != mx_return ) {
-                opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
-            }
-        }
-
-        /*MCA_BTL_MX_PROGRESS(mx_btl, mx_status);*/
-        /*
-         * on the mx_status we have now the pointer attached to the request. This pointer indicate
-         * which fragment we are working on. On the status we have the status of the operation, so
-         * we know what we are supposed to do next.
+        /* on the mx_status we have now the pointer attached to the request.
+	 * This pointer indicate which fragment we are working on. On the
+	 * status we have the status of the operation, so we know what we
+	 * are supposed to do next.
          */
+        MCA_BTL_MX_PROGRESS(mx_btl, mx_status);
         num_progressed++;
     }
     return num_progressed;

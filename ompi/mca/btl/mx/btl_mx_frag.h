@@ -68,25 +68,17 @@ extern "C" {
     ompi_free_list_item_t *item;                                                \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_eager_frags, item, rc);  \
     frag = (mca_btl_mx_frag_t*) item;                                           \
-    frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_eager_frags);  \
+    frag->mx_frag_list = &(mca_btl_mx_component.mx_send_eager_frags);           \
     frag->segment[0].seg_addr.pval = (void*)(frag+1);                           \
-    frag->segment[0].seg_len = mca_btl_mx_module.super.btl_eager_limit;         \
 }
 
-#if 0
 #define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                             \
 {                                                                             \
     ompi_free_list_item_t *item;                                              \
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_user_frags, item, rc); \
     frag = (mca_btl_mx_frag_t*) item;                                         \
-    frag->mx_frag_list = (ompi_free_list_t*)&(mca_btl_mx_component.mx_send_user_frags);  \
-    frag->segment[0].seg_addr.pval = (void*)(frag+1);                         \
-    frag->segment[0].seg_len = mca_btl_mx_module.super.btl_eager_limit;       \
+    frag->mx_frag_list = &(mca_btl_mx_component.mx_send_user_frags);          \
 }
-#else
-#define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                             \
-    MCA_BTL_MX_FRAG_ALLOC_EAGER( btl, frag, rc )
-#endif
 
 #define MCA_BTL_MX_FRAG_RETURN(btl, frag)                                   \
 {                                                                           \
