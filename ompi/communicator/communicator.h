@@ -435,22 +435,6 @@ struct ompi_communicator_t {
                                    orte_process_name_t *port, int send_first,
                                    ompi_communicator_t **newcomm, orte_rml_tag_t tag);
 
-    /* A helper routine for ompi_comm_connect_accept.
-     * This routine is necessary, since in the connect/accept case, the processes
-     * executing the connect operation have the OOB contact information of the
-     * leader of the remote group, however, the processes executing the
-     * accept get their own port_name = OOB contact information passed in as
-     * an argument. This is however useless.
-     *
-     * Therefore, the two root processes exchange this information at this point.
-     *
-     */
-    orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port,
-                                              int send_first, struct ompi_proc_t *proc,
-                                              orte_rml_tag_t tag);
-
-
-
     /*
      * these are the init and finalize functions for the comm_reg
      * stuff. These routines are necessary for handling multi-threading

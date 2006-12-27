@@ -110,30 +110,26 @@ static inline ompi_proc_t* ompi_proc_local(void)
 ompi_proc_t * ompi_proc_find ( const orte_process_name_t* name );
 
 
-/**
- * Returns the proc instance for a given name. If process is not known,
- * we add it to the process list.
-*/
-ompi_proc_t * ompi_proc_find_and_add ( const orte_process_name_t* name, bool* isnew );
 
 /**
  * INPUT: ompi_proc_t **proclist : list of process pointers
  * INPUT: int proclistsize       : lenght of the proclist array
  * IN/OUT: orte_buffer_t *buf    : an orte_buffer containing the packed names
  * 
- * The function takes a list of ompi_proc_t pointers (e.g. as given in groups) 
- * and returns a buffer, which contains a list of 'packed' ompi_process_name_t 
- * objects, in the same order as provided in proclist.
- * By 'packed' we mean, that the buffer should be able to be sent across
- * heterogeneous environments (e.g. it has to be big endian, ilp32 ).
- * This buffer could be sent using MPI_Send using MPI_BYTE or OOB_send_packed.
+ * This function takes a list of ompi_proc_t pointers (e.g. as given
+ * in groups) and returns a orte buffer containing all information
+ * needed to add the proc to a remote list.  This includes the ORTE
+ * process name, the architecture, and the hostname.  Ordering is
+ * maintained.  The buffer is packed to be sent to a remote node with
+ * different architecture (endian or word size).  The buffer can be
+ * dss unloaded to be sent using MPI or send using rml_send_packed.
  *
  * Return values:
  *  OMPI_SUCCESS               on success
  *  OMPI_ERROR:                other errors
  */
-int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize,
-			    orte_buffer_t *buf);
+int ompi_proc_pack(ompi_proc_t **proclist, int proclistsize,
+                   orte_buffer_t *buf);
 
 
 
@@ -142,19 +138,22 @@ int ompi_proc_get_namebuf ( ompi_proc_t **proclist, int proclistsize,
  * INPUT: int proclistsize         : number of expected proc-pointres
  * OUTPUT: ompi_proc_t ***proclist : list of process pointers
  *
- * This function 'unpacks' the ompi_process_name_t structures and looks
- * the according ompi_proc_t structure up. If the 'environment' does not
- * find a proc-structure, it tries to look it up from the name_service or 
- * any other service involved in such an operation (this is required for 
- * the dynamic MPI-2 scenarios). The buffer allocated by 
- * ompi_proc_get_proclist will not be returned to the 'environment'.
+ * This function unpacks a packed list of ompi_proc_t structures and
+ * returns the ordered list of proc structures.  If the given proc is
+ * already "known", the architecture and hostname information in the
+ * buffer is ignored.  If the proc is "new" to this process, it will
+ * be added to the global list of known procs, with information
+ * provided in the buffer.  The lookup actions are always entirely
+ * local.  The proclist returned is a list of pointers to all procs in
+ * the buffer, whether they were previously known or are new to this
+ * process.  PML_ADD_PROCS will be called on the list of new processes
+ * discovered during this operation.
  *
  * Return value:
  *   OMPI_SUCCESS               on success
  *   OMPI_ERROR                 else
  */
-
-int ompi_proc_get_proclist (orte_buffer_t *buf, int proclistsize, ompi_proc_t ***proclist);
+int ompi_proc_unpack(orte_buffer_t *buf, int proclistsize, ompi_proc_t ***proclist);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
