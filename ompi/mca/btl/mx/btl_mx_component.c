@@ -132,23 +132,23 @@ int mca_btl_mx_component_open(void)
                             false, false, 50, (int*) &mca_btl_mx_module.super.btl_exclusivity );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
                             "Size of the first fragment for the rendez-vous protocol over MX",
-                            false, false, 16*1024 - 20, &tmp);
+                            false, false, 4096, &tmp);
     mca_btl_mx_module.super.btl_eager_limit = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_send_size",
                             "Minimum send fragment size ...",
-                            false, false, 32*1024 - 40, &tmp);
+                            false, false, 4096, &tmp);
     mca_btl_mx_module.super.btl_min_send_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_send_size",
                             "Maximum send fragment size withour RDMA ...",
-                            false, false, 128*1024, &tmp);
+                            false, false, 64*1024, &tmp);
     mca_btl_mx_module.super.btl_max_send_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_rdma_size",
                             "Minimum size of fragment for the RDMA protocol",
-                            false, false, 1024*1024, &tmp);
+                            false, false, 256*1024, &tmp);
     mca_btl_mx_module.super.btl_min_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_rdma_size",
                             "Maximum size of fragment for the RDMA protocol",
-                            false, false, 1024*1024, &tmp);
+                            false, false, 8*1024*1024, &tmp);
     mca_btl_mx_module.super.btl_max_rdma_size = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
                             "Flags to activate/deactivate the RDMA",
@@ -251,7 +251,57 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
+#if 0
+    {
+        int counters, board, i, value, *counters_value;
+        char text[MX_MAX_STR_LEN];
+        char *counters_name;
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PIO_SEND_MAX, NULL, 0,
+                                   &value, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_PIO_SEND_MAX) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "MX_PIO_SEND_MAX = %d\n", value );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COPY_SEND_MAX, NULL, 0,
+                                   &value, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COPY_SEND_MAX) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "MX_COPY_SEND_MAX = %d\n", value );
 
+        board = 0;
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_PRODUCT_CODE, &board, sizeof(int),
+                                   text, MX_MAX_STR_LEN)) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_PRODUCT_CODE) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "product code %s\n", text );
+
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_COUNT, &board, sizeof(int),
+                                   &counters, sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_COUNT) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        printf( "counters = %d\n", counters );
+        counters_name = (char*)malloc( counters * MX_MAX_STR_LEN );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_LABELS, &board, sizeof(int),
+                                   counters_name, counters * MX_MAX_STR_LEN)) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_LABELS) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        counters_value = (int*)malloc( counters * sizeof(int) );
+        if( (status = mx_get_info( mx_btl->mx_endpoint, MX_COUNTERS_VALUES, &board, sizeof(int),
+                                   counters_value, counters * sizeof(int))) != MX_SUCCESS ) {
+            opal_output( 0, "mx_get_info(MX_COUNTERS_VALUES) failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+        }
+        for( i = 0; i < counters; i++ )
+            printf( "%d -> %s = %d\n", i, counters_name + i * MX_MAX_STR_LEN,
+                    counters_value[i] );
+        free( counters_name );
+        free( counters_value );
+    }
+#endif
     /* query the endpoint address */
     if((status = mx_get_endpoint_addr( mx_btl->mx_endpoint,
                                        &mx_btl->mx_endpoint_addr)) != MX_SUCCESS) {
@@ -371,6 +421,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
                                 NULL, 0);
         return NULL;
     }
+
 #if 0
     /* check for limit on number of btls */
     if(mca_btl_mx_component.mx_num_btls > mca_btl_mx_component.mx_max_btls)
