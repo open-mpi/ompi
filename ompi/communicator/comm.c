@@ -855,8 +855,8 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
             goto err_exit;
         }
 
-        rc = ompi_proc_pack(local_comm->c_local_group->grp_proc_pointers, 
-                            local_size, sbuf);
+        rc = ompi_proc_get_namebuf (local_comm->c_local_group->grp_proc_pointers, 
+				    local_size, sbuf);
         if ( OMPI_SUCCESS != rc ) {
             goto err_exit;
         }
@@ -935,7 +935,7 @@ ompi_proc_t **ompi_comm_get_rprocs ( ompi_communicator_t *local_comm,
     }
     
     /* decode the names into a proc-list */
-    rc = ompi_proc_unpack(rbuf, rsize, &rprocs );
+    rc = ompi_proc_get_proclist (rbuf, rsize, &rprocs );
     OBJ_RELEASE(rbuf);
     
  err_exit:
