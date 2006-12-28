@@ -26,6 +26,8 @@
 #include "ompi/datatype/convertor.h" 
 #include "opal/prefetch.h"
 
+#include "mx_extensions.h"
+
 /**
  *
  */
@@ -247,12 +249,7 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
             if( OPAL_UNLIKELY(NULL == frag) ) {
                 return NULL;
             }
-#if 1
             frag->base.des_src_cnt = 2;
-#else
-            frag->base.des_src_cnt = 1;
-            iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
-#endif
         }
     } else {
         MCA_BTL_MX_FRAG_ALLOC_EAGER( mx_btl, frag, rc );
@@ -262,17 +259,17 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
         frag->base.des_src_cnt = 1;
         iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
     }
-    frag->segment[0].seg_len = reserve;
 
     iov.iov_len = max_data;
     (void)ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
     *size = max_data;
 
     if( 1 == frag->base.des_src_cnt ) {
-        frag->segment[0].seg_len += max_data;
+        frag->segment[0].seg_len = reserve + max_data;
         if( 0 == reserve )
             frag->segment[0].seg_addr.pval = iov.iov_base;
     } else {
+        frag->segment[0].seg_len       = reserve;
         frag->segment[1].seg_len       = max_data;
         frag->segment[1].seg_addr.pval = iov.iov_base;
     }
@@ -308,7 +305,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     int rc;
 
     MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc);
-    if(NULL == frag) {
+    if( OPAL_UNLIKELY(NULL == frag) ) {
         return NULL;
     }
 
@@ -320,7 +317,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     mx_segment.segment_length = frag->segment[0].seg_len;
     mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, frag->segment[0].seg_key.key64, 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
-    if( MX_SUCCESS != mx_return ) {
+    if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" );
         MCA_BTL_MX_FRAG_RETURN( btl, frag );
         return NULL;
@@ -352,7 +349,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
 
-    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
+    if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
             return OMPI_ERROR;
         if( MCA_BTL_MX_CONNECTION_PENDING == ((mca_btl_mx_endpoint_t*)endpoint)->status )
@@ -374,7 +371,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
                           endpoint->mx_peer_addr,
                           descriptor->des_dst[0].seg_key.key64, frag, &frag->mx_request );
-    if( MX_SUCCESS != mx_return ) {
+    if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
@@ -403,7 +400,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     mx_return_t mx_return;
     uint64_t total_length;
 
-    if( MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status ) {
+    if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
             return OMPI_ERROR;
         if( MCA_BTL_MX_CONNECTION_PENDING == ((mca_btl_mx_endpoint_t*)endpoint)->status )
@@ -429,18 +426,41 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
+
+#if MX_HAVE_FORGET
+    {
+        uint32_t mx_result;
+        mx_return = mx_ibuffered( mx_btl->mx_endpoint, &(frag->mx_request), &mx_result );
+        if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+            opal_output( 0, "mx_ibuffered failed with error %d (%s)\n",
+                         mx_return, mx_strerror(mx_return) );
+            return OMPI_ERROR;
+        }
+        if( mx_result ) {
+            mx_return = mx_forget( mx_btl->mx_endpoint, &(frag->mx_request) );
+            frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+            if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
+                opal_output( 0, "mx_forget failed with error %d (%s)\n",
+                             mx_return, mx_strerror(mx_return) );
+                return OMPI_ERROR;
+            }
+            return OMPI_SUCCESS;
+        }
+    }
+#endif
     if( 4096 > total_length ) {
         mx_status_t mx_status;
         uint32_t mx_result;
 
         /* let's check for completness */
         mx_return = mx_test( mx_btl->mx_endpoint, &(frag->mx_request), &mx_status, &mx_result );
-        if( MX_SUCCESS != mx_return ) 
+        if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) 
             return OMPI_SUCCESS;
         /* call the completion callback */
         if( mx_result )
             frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
     }
+
     return OMPI_SUCCESS;
 }
 
