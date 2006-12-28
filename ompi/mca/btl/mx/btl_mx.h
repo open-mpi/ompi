@@ -29,13 +29,12 @@
 /* Open MPI includes */
 #include "ompi/class/ompi_free_list.h"
 #include "ompi/class/ompi_bitmap.h"
+#include "opal/util/output.h"
 #include "opal/event/event.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-#include "opal/util/output.h"
 #include "ompi/mca/mpool/mpool.h" 
-#include "ompi/mca/btl/btl.h"
 
 #include "myriexpress.h"
 
@@ -284,41 +283,6 @@ mca_btl_mx_prepare_dst( struct mca_btl_base_module_t* btl,
                         struct ompi_convertor_t* convertor,
                         size_t reserve,
                         size_t* size );
-
-#define MCA_BTL_MX_PROGRESS(mx_btl, mx_status)                          \
-    do {                                                                \
-        mca_btl_mx_frag_t* __frag = mx_status.context;                  \
-        mx_segment_t __mx_segment;                                      \
-        mx_return_t __mx_return;                                        \
-                                                                        \
-        if( NULL != __frag ) {                                          \
-            if( 0xff == __frag->tag ) {  /* it's a send */              \
-                /* call the completion callback */                      \
-                __frag->base.des_cbfunc( &(mx_btl->super), __frag->endpoint, \
-                                         &(__frag->base), OMPI_SUCCESS ); \
-            } else { /* and this one is a receive */                    \
-                mca_btl_base_recv_reg_t* __reg;                         \
-                                                                        \
-                __reg = &(mx_btl->mx_reg[__frag->tag]);                 \
-                __frag->base.des_dst->seg_len = mx_status.msg_length;   \
-                __reg->cbfunc( &(mx_btl->super), __frag->tag, &(__frag->base), \
-                               __reg->cbdata );                         \
-                /**                                                     \
-                 * The upper level extract the data from the fragment.  \
-                 * Now we can register the fragment                     \
-                 * again with the MX BTL.                               \
-                 */                                                     \
-                __mx_segment.segment_ptr = __frag->base.des_dst->seg_addr.pval; \
-                __mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit; \
-                __mx_return = mx_irecv( mx_btl->mx_endpoint, &__mx_segment, 1, \
-                                        (uint64_t)__frag->tag, BTL_MX_RECV_MASK, \
-                                        __frag, &(__frag->mx_request) ); \
-                if( MX_SUCCESS != __mx_return ) {                       \
-                    opal_output( 0, "Fail to re-register a fragment with the MX NIC ...\n" ); \
-                }                                                       \
-            }                                                           \
-        }                                                               \
-    } while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

@@ -18,24 +18,23 @@
 
 
 #include "ompi_config.h"
-#include "ompi/constants.h"
-#include "opal/event/event.h"
+#include "opal/prefetch.h"
 #include "opal/util/opal_environ.h"
 #include "opal/util/if.h"
 #include "opal/util/argv.h"
-#include "opal/util/output.h"
-#include "ompi/mca/pml/pml.h"
-#include "ompi/mca/btl/btl.h"
+#include "ompi/constants.h"
 
 #include "opal/mca/base/mca_base_param.h"
-#include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "orte/mca/errmgr/errmgr.h"
-#include "ompi/mca/mpool/base/base.h" 
+#include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/mca/btl/base/btl_base_error.h"
 #include "btl_mx.h"
 #include "btl_mx_frag.h"
 #include "btl_mx_endpoint.h" 
-#include "ompi/mca/btl/base/base.h" 
-#include "ompi/mca/btl/base/btl_base_error.h"
+
+#if MX_HAVE_UNEXPECTED_HANDLER
+#include "mx_extensions.h"
+#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
 
 extern char** environ;
 
@@ -133,7 +132,7 @@ int mca_btl_mx_component_open(void)
                             false, false, 50, (int*) &mca_btl_mx_module.super.btl_exclusivity );
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "first_frag_size",
                             "Size of the first fragment for the rendez-vous protocol over MX",
-                            true, true, 16*1024 - 20, &tmp);
+                            false, false, 16*1024 - 20, &tmp);
     mca_btl_mx_module.super.btl_eager_limit = tmp;
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "min_send_size",
                             "Minimum send fragment size ...",
@@ -179,11 +178,51 @@ int mca_btl_mx_component_close(void)
     return OMPI_SUCCESS;
 }
 
+#if MX_HAVE_UNEXPECTED_HANDLER
+/**
+ * In order to avoid useless memcpy, the unexpected handler will be called
+ * by the MX library before doing any match in the MX internal queues. Here
+ * we have a chance to match the message using our own matching logic from
+ * the PML. If the match is realized, we will return MX_RECV_FINISHED (the
+ * MX request will vanish in the MX library). If the match do not succeed
+ * MX_RECV_CONTINUE have to be returned and the MX library will do the
+ * match itself.
+ */
+static mx_unexp_handler_action_t
+mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
+                               uint64_t match_value, uint32_t length,
+                               void * data_if_available )
+{
+    mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*)context;
+    mca_btl_base_recv_reg_t* reg;
+    mca_btl_base_tag_t tag;
+    mca_btl_base_descriptor_t descriptor;
+    mca_btl_base_segment_t segment;
+
+    /*opal_output( 0, "Get unexpected handler context %p source %lld match_value %lld\n"
+      "\tlength %d data %p\n", context, source.stuff[0], match_value, length,
+      data_if_available );*/
+    if( match_value > 16 )
+        return MX_RECV_CONTINUE;
+
+    tag = match_value & 0xff;
+    assert( tag < 16 );
+    reg = &(mx_btl->mx_reg[tag]);
+
+    segment.seg_addr.pval = data_if_available;
+    segment.seg_len = length;
+    descriptor.des_dst = &segment;
+    descriptor.des_dst_cnt = 1;
+    reg->cbfunc( &(mx_btl->super), tag, &descriptor, reg->cbdata );
+
+    return MX_RECV_FINISHED;
+}
+#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
+
 /*
  * Create and intialize an MX PTL module, where each module
  * represents a specific NIC.
  */
-
 static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
 {
     mca_btl_mx_module_t* mx_btl;
@@ -207,7 +246,8 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
                                mca_btl_mx_component.mx_filter,
                                NULL, 0, &mx_btl->mx_endpoint);
     if(status != MX_SUCCESS) {
-        opal_output(0, "mca_btl_mx_init: mx_open_endpoint() failed with status=%d\n", status);
+        opal_output( 0, "mca_btl_mx_init: mx_open_endpoint() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
@@ -215,11 +255,21 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
     /* query the endpoint address */
     if((status = mx_get_endpoint_addr( mx_btl->mx_endpoint,
                                        &mx_btl->mx_endpoint_addr)) != MX_SUCCESS) {
-        opal_output(0, "mca_btl_mx_init: mx_get_endpoint_addr() failed with status=%d\n", status);
+        opal_output( 0, "mca_btl_mx_init: mx_get_endpoint_addr() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }
-
+#if MX_HAVE_UNEXPECTED_HANDLER
+    status = mx_register_unexp_handler( mx_btl->mx_endpoint, mca_btl_mx_unexpected_handler,
+                                        (void*)mx_btl );
+    if( MX_SUCCESS != status ) {
+        opal_output( 0, "mca_btl_mx_init: mx_register_unexp_handler() failed with status %d (%s)\n",
+                     status, mx_strerror(status) );
+        mca_btl_mx_finalize( &mx_btl->super );
+        return NULL;
+    }
+#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
     return mx_btl;
 }
 
@@ -258,6 +308,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
         opal_setenv( "MX_DISABLE_SHMEM", "1", true, &environ );
     if( 0 == mca_btl_mx_component.mx_support_self )
         opal_setenv( "MX_DISABLE_SELF", "1", true, &environ );
+    /* Force the long pipeline (up to 4Kb fragments) */
+    opal_setenv( "MX_PIPELINE_LOG", "0", true, &environ );
 
     /* First check if MX is available ... */
     if( MX_SUCCESS != (status = mx_init()) ) {
@@ -306,7 +358,8 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     /* get the number of card available on the system */
     if( (status = mx_get_info( NULL, MX_NIC_COUNT, NULL, 0,
                                &mca_btl_mx_component.mx_num_btls, sizeof(uint32_t))) != MX_SUCCESS ) {
-        opal_output(0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status=%d\n", status);
+        opal_output( 0, "mca_btl_mx_component_init: mx_get_info(MX_NIC_COUNT) failed with status %d(%s)\n",
+                     status, mx_strerror(status) );
         mca_pml_base_modex_send(&mca_btl_mx_component.super.btl_version, 
                                 NULL, 0);
         return NULL;
@@ -328,7 +381,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
      */
     mca_btl_mx_component.mx_btls = malloc( mca_btl_mx_component.mx_num_btls * sizeof(mca_btl_base_module_t*) );
     if( NULL == mca_btl_mx_component.mx_btls ) {
-	    opal_output( 0, "MX BTL no memory\n" );
+        opal_output( 0, "MX BTL no memory\n" );
         return NULL;
     }
 
@@ -393,40 +446,32 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
 /*
  *  MX component progress.
  */
-int mca_btl_mx_component_progress()
+int mca_btl_mx_component_progress(void)
 {
     int32_t num_progressed = 0, i;
     mx_status_t mx_status;
     mx_return_t mx_return;
     mx_request_t mx_request;
+    mca_btl_mx_frag_t* frag;
 
     for( i = 0; i < mca_btl_mx_component.mx_num_btls; i++ ) {
         mca_btl_mx_module_t* mx_btl = mca_btl_mx_component.mx_btls[i];
         uint32_t mx_result = 0;
-        
-        /* pre-post receive */
-#if 0
-        if( mx_btl->mx_recvs_posted == 0 ) {
-            OPAL_THREAD_ADD32( &mx_btl->mx_recvs_posted, 1 );
-            MCA_BTL_MX_POST( mx_btl, frag );
-        }
-#endif
 
-        /*if( mx_btl->mx_posted_request ) { */
         mx_return = mx_ipeek( mx_btl->mx_endpoint, &mx_request, &mx_result );
-        if( mx_return != MX_SUCCESS ) {
-            opal_output(0, "mca_btl_mx_component_progress: mx_ipeek() failed with status %d\n",
-                        mx_return);
+        if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) {
+            opal_output( 0, "mca_btl_mx_component_progress: mx_ipeek() failed with status %d (%s)\n",
+                         mx_return, mx_strerror(mx_return) );
             continue;
         }
-        if( mx_result == 0 ) {
+        if( OPAL_LIKELY(mx_result == 0) ) {
             continue;
         }
         
         mx_return = mx_test( mx_btl->mx_endpoint, &mx_request, &mx_status, &mx_result);
-        if( mx_return != MX_SUCCESS ) {
-            opal_output(0, "mca_btl_mx_progress: mx_test() failed with status=%dn",
-                        mx_return);
+        if( OPAL_UNLIKELY(mx_return != MX_SUCCESS) ) {
+            opal_output(0, "mca_btl_mx_progress: mx_test() failed with status %d (%s)\n",
+                        mx_return, mx_strerror(mx_return));
             continue;
         }
         /* on the mx_status we have now the pointer attached to the request.
@@ -434,7 +479,38 @@ int mca_btl_mx_component_progress()
 	 * status we have the status of the operation, so we know what we
 	 * are supposed to do next.
          */
-        MCA_BTL_MX_PROGRESS(mx_btl, mx_status);
+        frag = mx_status.context;
+        if( NULL != frag ) {
+            if( 0xff == frag->tag ) {  /* it's a send */
+                /* call the completion callback */
+                frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
+                                       &(frag->base), OMPI_SUCCESS );
+#if !MX_HAVE_UNEXPECTED_HANDLER
+            } else { /* and this one is a receive */
+                mca_btl_base_recv_reg_t* reg;
+                mx_segment_t mx_segment;
+
+                reg = &(mx_btl->mx_reg[frag->tag]);
+                frag->base.des_dst->seg_len = mx_status.msg_length;
+                reg->cbfunc( &(mx_btl->super), frag->tag, &(frag->base),
+                             reg->cbdata );
+                /**
+                 * The upper level extract the data from the fragment.
+                 * Now we can register the fragment
+                 * again with the MX BTL.
+                 */
+                mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
+                mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
+                mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
+                                      (uint64_t)frag->tag, BTL_MX_RECV_MASK,
+                                      frag, &(frag->mx_request) );
+                if( MX_SUCCESS != mx_return ) {
+                    opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",
+                                 mx_strerror(mx_return) );
+                }
+#endif  /* !MX_HAVE_UNEXPECTED_HANDLER */
+            }
+        }
         num_progressed++;
     }
     return num_progressed;

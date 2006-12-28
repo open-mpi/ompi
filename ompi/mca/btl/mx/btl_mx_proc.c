@@ -180,6 +180,8 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
     mx_endpoint_addr_t mx_remote_addr;
     mca_btl_mx_proc_t* module_proc = module_endpoint->endpoint_proc;
 
+    module_endpoint->status = MCA_BTL_MX_CONNECTION_PENDING;
+
     for( i = module_proc->proc_addr_index; i < module_proc->mx_peers_count; i++ ) {
         
     retry_connect:
@@ -210,6 +212,7 @@ int mca_btl_mx_proc_connect( mca_btl_mx_endpoint_t* module_endpoint )
     }
 
     if( i == module_proc->mx_peers_count ) {  /* no available connection */
+        module_endpoint->status = MCA_BTL_MX_NOT_REACHEABLE;
         return OMPI_ERROR;
     }
 
