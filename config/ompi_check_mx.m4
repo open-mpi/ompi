@@ -41,6 +41,26 @@ AC_DEFUN([_OMPI_CHECK_MX_UNEXP_HANDLER],[
     unset mx_provide_unexp_handler
 ])
 
+AC_DEFUN([_OMPI_CHECK_MX_FORGET],[
+    #
+    # Check if the MX library provide the mx_forget function.
+    #
+    AC_MSG_CHECKING([for a MX version with mx_forget])
+    AC_TRY_LINK([#include <mx_extensions.h>],
+             [mx_forget(0, 0);],
+             [mx_provide_forget="yes"],
+             [mx_provide_forget="no"])
+    AC_MSG_RESULT([$mx_provide_forget])
+    AS_IF([test x"$mx_provide_forget" = "xyes"],
+          [mx_provide_forget=1
+           $2],
+          [mx_provide_forget=0
+           $3])
+    AC_DEFINE_UNQUOTED([MX_HAVE_FORGET], [$mx_provide_forget],
+                       [MX allow to forget the completion event for mx_requests])
+    unset mx_provide_forget
+])
+
 AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
     #
     # See if we have MX_API. OpenMPI require a MX version bigger than
@@ -110,6 +130,9 @@ AC_DEFUN([OMPI_CHECK_MX],[
                                  [ompi_check_mx_happy="no"])])
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
           [_OMPI_CHECK_MX_UNEXP_HANDLER($1, [ompi_check_mx_register="yes"],
+                                        [ompi_check_mx_register="no"])])
+    AS_IF([test "$ompi_check_mx_happy" = "yes"],
+          [_OMPI_CHECK_MX_FORGET($1, [ompi_check_mx_register="yes"],
                                  [ompi_check_mx_register="no"])])
 
     CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"
