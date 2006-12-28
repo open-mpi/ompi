@@ -3,7 +3,7 @@
 # Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
-# Copyright (c) 2004-2005 The University of Tennessee and The University
+# Copyright (c) 2004-2006 The University of Tennessee and The University
 #                         of Tennessee Research Foundation.  All rights
 #                         reserved.
 # Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
@@ -17,25 +17,28 @@
 # $HEADER$
 #
 
-AC_DEFUN([_OMPI_CHECK_MX_REGISTER_CALLBACK],[
+AC_DEFUN([_OMPI_CHECK_MX_UNEXP_HANDLER],[
     #
-    # Check if the MX library provide the mx_register_unexp_callback function.
+    # Check if the MX library provide the mx_register_unexp_handler function.
     # With this function, OMPI can avoid having a double matching logic
     # (one on the MX library and one on OMPI) by registering our own matching
-    # function.
+    # function. Moreover, we can handle all eager messages with just one
+    # memcpy.
 
-    AC_MSG_CHECKING([for a MX version with mx_register_match_callback])
-    AC_TRY_LINK([#include <myriexpress.h>],
-             [mx_register_unexp_callback(0, 0, 0);],
-             [mx_provide_match_callback="yes"],
-             [mx_provide_match_callback="no"])
-    AC_MSG_RESULT([$mx_provide_match_callback])
-    AS_IF([test x"$mx_provide_match_callback" = "xyes"],
-          [AC_DEFINE_UNQUOTED([OMPI_MCA_MX_HAVE_MATCH_CALLBACK], [1],
-                              [MX define a match callback])
+    AC_MSG_CHECKING([for a MX version with mx_register_unexp_handler])
+    AC_TRY_LINK([#include <mx_extensions.h>],
+             [mx_register_unexp_handler(0, 0, 0);],
+             [mx_provide_unexp_handler="yes"],
+             [mx_provide_unexp_handler="no"])
+    AC_MSG_RESULT([$mx_provide_unexp_handler])
+    AS_IF([test x"$mx_provide_unexp_handler" = "xyes"],
+          [mx_provide_unexp_handler=1
            $2],
-          [$3])
-    unset mx_provide_match_callback
+          [mx_provide_unexp_handler=0
+           $3])
+    AC_DEFINE_UNQUOTED([MX_HAVE_UNEXPECTED_HANDLER], [$mx_provide_unexp_handler],
+                       [MX allow registration of an unexpected handler])
+    unset mx_provide_unexp_handler
 ])
 
 AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
@@ -106,7 +109,7 @@ AC_DEFUN([OMPI_CHECK_MX],[
           [_OMPI_CHECK_MX_CONFIG($1, [ompi_check_mx_happy="yes"],
                                  [ompi_check_mx_happy="no"])])
     AS_IF([test "$ompi_check_mx_happy" = "yes"],
-          [_OMPI_CHECK_MX_REGISTER_CALLBACK($1, [ompi_check_mx_register="yes"],
+          [_OMPI_CHECK_MX_UNEXP_HANDLER($1, [ompi_check_mx_register="yes"],
                                  [ompi_check_mx_register="no"])])
 
     CPPFLAGS="$ompi_check_mx_$1_save_CPPFLAGS"

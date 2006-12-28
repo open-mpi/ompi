@@ -32,9 +32,10 @@
 extern "C" {
 #endif
 
-#define MCA_BTL_MX_NOT_CONNECTED   0x0000
-#define MCA_BTL_MX_NOT_REACHEABLE  0x0001
-#define MCA_BTL_MX_CONNECTED       0x0002
+#define MCA_BTL_MX_NOT_CONNECTED       0x0000
+#define MCA_BTL_MX_NOT_REACHEABLE      0x0001
+#define MCA_BTL_MX_CONNECTION_PENDING  0x0002
+#define MCA_BTL_MX_CONNECTED           0x0004
 
 /**
  * Structure used to publish MX information to peers
