@@ -202,7 +202,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
     /*opal_output( 0, "Get unexpected handler context %p source %lld match_value %lld\n"
       "\tlength %d data %p\n", context, source.stuff[0], match_value, length,
       data_if_available );*/
-    if( match_value > 16 )
+    if( match_value > MCA_BTL_TAG_MAX )
         return MX_RECV_CONTINUE;
 
     tag = match_value & 0xff;
