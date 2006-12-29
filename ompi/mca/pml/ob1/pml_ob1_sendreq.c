@@ -495,14 +495,8 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
         iov.iov_len = size;
         iov_count = 1;
-        rc = ompi_convertor_pack( &sendreq->req_send.req_convertor,
-                                  &iov,
-                                  &iov_count,
-                                  &max_data );
-        if( OPAL_UNLIKELY(rc < 0) ) {
-            mca_bml_base_free(bml_btl, descriptor);
-            return rc;
-        }
+        (void)ompi_convertor_pack( &sendreq->req_send.req_convertor,
+                                   &iov, &iov_count, &max_data );
         descriptor->des_cbfunc = mca_pml_ob1_match_completion_free;
     }
     
@@ -569,14 +563,13 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     int rc;
 
     /* prepare descriptor */
-    mca_bml_base_prepare_src(
-            bml_btl,
-            NULL,
-            &sendreq->req_send.req_convertor,
-            sizeof(mca_pml_ob1_match_hdr_t),
-            &size,
-            &descriptor);
-    if(NULL == descriptor) {
+    mca_bml_base_prepare_src( bml_btl,
+                              NULL,
+                              &sendreq->req_send.req_convertor,
+                              sizeof(mca_pml_ob1_match_hdr_t),
+                              &size,
+                              &descriptor);
+    if( OPAL_UNLIKELY(NULL == descriptor) ) {
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
     segment = descriptor->des_src;
@@ -616,7 +609,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
 
     /* send */
     rc = mca_bml_base_send(bml_btl, descriptor, MCA_BTL_TAG_PML); 
-    if(OMPI_SUCCESS != rc) {
+    if( OPAL_UNLIKELY(OMPI_SUCCESS != rc) ) {
         mca_bml_base_free(bml_btl, descriptor );
     }
     return rc;
