@@ -89,6 +89,23 @@ AC_DEFUN([_OMPI_CHECK_MX_CONFIG],[
            $2],
           [$3])
     AC_MSG_RESULT([$mx_api_ver])
+    # Check for the mx_extensions.h
+    AC_MSG_CHECKING([for mx_extensions.h header])
+    AC_TRY_COMPILE([#include <mx_extensions.h>],
+         [return 0;],
+         [have_mx_extensions="yes"],
+         [have_mx_extensions="no"])
+    AS_IF([test x"$have_mx_extensions" = "xyes"],
+          [have_mx_extensions=1],
+          [have_mx_extensions=0
+           AC_MSG_WARN([The MX support for Open MPI will be compiled without the
+                        MX extensions. This will result on lower performances.
+                        Please install the MX library > 1.2.0 to increase the
+                        performance of your cluster])
+          ])
+    AC_DEFINE_UNQUOTED([MX_HAVE_EXTENSIONS_H], [$have_mx_extensions],
+                       [The MX library have support for the mx_extensions.h])
+    unset have_recent_api have_mx_extensions
 ])dnl
 
 # OMPI_CHECK_MX(prefix, [action-if-found], [action-if-not-found])

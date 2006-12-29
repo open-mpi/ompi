@@ -32,10 +32,6 @@
 #include "btl_mx_frag.h"
 #include "btl_mx_endpoint.h" 
 
-#if MX_HAVE_UNEXPECTED_HANDLER
-#include "mx_extensions.h"
-#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
-
 extern char** environ;
 
 mca_btl_mx_component_t mca_btl_mx_component = {

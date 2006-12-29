@@ -26,8 +26,6 @@
 #include "ompi/datatype/convertor.h" 
 #include "opal/prefetch.h"
 
-#include "mx_extensions.h"
-
 /**
  *
  */
