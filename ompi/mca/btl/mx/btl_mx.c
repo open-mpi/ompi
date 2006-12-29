@@ -180,8 +180,6 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     frag->segment[0].seg_addr.pval = (void*)(frag+1);
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
-    frag->base.des_dst = NULL;
-    frag->base.des_dst_cnt = 0;
     frag->base.des_flags = 0;
     return (mca_btl_base_descriptor_t*)frag;
 }
@@ -321,11 +319,8 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
         return NULL;
     }
 
-    frag->base.des_src = NULL;
-    frag->base.des_src_cnt = 0;
     frag->base.des_dst = frag->segment;
     frag->base.des_dst_cnt = 1;
-    frag->base.des_flags = 0;
 
     return &frag->base;
 }
@@ -346,6 +341,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
+    uint32_t i = 0;
 
     if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
@@ -359,12 +355,10 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     frag->endpoint  = endpoint;
     frag->tag       = 0xff;
 
-    mx_segment[0].segment_ptr    = descriptor->des_src[0].seg_addr.pval;
-    mx_segment[0].segment_length = descriptor->des_src[0].seg_len;
-    if( 1 < descriptor->des_src_cnt ) {
-        mx_segment[1].segment_ptr    = descriptor->des_src[1].seg_addr.pval;
-        mx_segment[1].segment_length = descriptor->des_src[1].seg_len;
-    }
+    do {
+        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
+        mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
+    } while (++i < descriptor->des_src_cnt);
 
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt,
                           endpoint->mx_peer_addr,
@@ -396,7 +390,8 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     mca_btl_mx_frag_t* frag = (mca_btl_mx_frag_t*)descriptor;
     mx_segment_t mx_segment[2];
     mx_return_t mx_return;
-    uint64_t total_length;
+    uint64_t total_length = 0;
+    uint32_t i = 0;
 
     if( OPAL_UNLIKELY(MCA_BTL_MX_CONNECTED != ((mca_btl_mx_endpoint_t*)endpoint)->status) ) {
         if( MCA_BTL_MX_NOT_REACHEABLE == ((mca_btl_mx_endpoint_t*)endpoint)->status )
@@ -410,17 +405,15 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     frag->endpoint  = endpoint;
     frag->tag       = 0xff;
 
-    mx_segment[0].segment_ptr    = descriptor->des_src[0].seg_addr.pval;
-    mx_segment[0].segment_length = descriptor->des_src[0].seg_len;
-    total_length = mx_segment[0].segment_length;
-    if( 1 < descriptor->des_src_cnt ) {
-        mx_segment[1].segment_ptr    = descriptor->des_src[1].seg_addr.pval;
-        mx_segment[1].segment_length = descriptor->des_src[1].seg_len;
-        total_length += mx_segment[1].segment_length;
-    }
+    do {
+        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
+        mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
+        total_length += descriptor->des_src[i].seg_len;
+    } while (++i < descriptor->des_src_cnt);
+
     mx_return = mx_isend( mx_btl->mx_endpoint, mx_segment, descriptor->des_src_cnt, endpoint->mx_peer_addr,
                           (uint64_t)tag, frag, &frag->mx_request );
-    if( MX_SUCCESS != mx_return ) {
+    if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) {
         opal_output( 0, "mx_isend fails with error %s\n", mx_strerror(mx_return) );
         return OMPI_ERROR;
     }
@@ -455,8 +448,10 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
         if( OPAL_UNLIKELY(MX_SUCCESS != mx_return) ) 
             return OMPI_SUCCESS;
         /* call the completion callback */
-        if( mx_result )
+        if( mx_result ) {
             frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint, &(frag->base), OMPI_SUCCESS);
+            return OMPI_SUCCESS;
+        }
     }
 
     return OMPI_SUCCESS;
