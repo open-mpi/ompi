@@ -341,21 +341,22 @@ static inline void mca_pml_ob1_recv_request_schedule(
         mca_pml_ob1_recv_request_schedule_exclusive(req);
 }
 
-#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                          \
-    do {                                                                    \
-        mca_pml_ob1_pckt_pending_t *_pckt;                                  \
-        int _rc;                                                            \
-                                                                            \
-        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                          \
-        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;          \
-        _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                          \
-        _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                          \
-        _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                           \
-        _pckt->proc = (P);                                                  \
-        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                                \
-        opal_list_append(&mca_pml_ob1.pckt_pending,                         \
-                (opal_list_item_t*)_pckt);                                  \
-        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                              \
+#define MCA_PML_OB1_ADD_ACK_TO_PENDING(P, S, D, O)                      \
+    do {                                                                \
+        mca_pml_ob1_pckt_pending_t *_pckt;                              \
+        int _rc;                                                        \
+                                                                        \
+        MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                      \
+        _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
+        _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
+        _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \
+        _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                       \
+        _pckt->proc = (P);                                              \
+        _pckt->bml_btl = NULL;                                          \
+        OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                            \
+        opal_list_append(&mca_pml_ob1.pckt_pending,                     \
+                         (opal_list_item_t*)_pckt);                     \
+        OPAL_THREAD_UNLOCK(&mca_pml_ob1.lock);                          \
     } while(0)
 
 int mca_pml_ob1_recv_request_ack_send_btl(ompi_proc_t* proc,
