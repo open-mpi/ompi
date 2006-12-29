@@ -284,6 +284,7 @@ int mca_bml_r2_add_procs(
                         if(btl_endpoints[p] != NULL) {
                             btl->btl_del_procs(btl, 1, &proc, &btl_endpoints[p]);
                         }
+                        btl_inuse--;
                         continue;
                     }
                 }
