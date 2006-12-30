@@ -108,6 +108,12 @@ OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_are_fatal;
 OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_return;
 
 /**
+ * Global variable for MPI::ERRORS_THROW_EXCEPTIONS.  Will abort if
+ * MPI_INIT wasn't called as MPI::INIT
+ */
+OMPI_DECLSPEC extern ompi_errhandler_t ompi_mpi_errors_throw_exceptions;
+
+/**
  * Table for Fortran <-> C errhandler handle conversion
  */
 OMPI_DECLSPEC extern ompi_pointer_array_t *ompi_errhandler_f_to_c_table;

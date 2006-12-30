@@ -138,12 +138,6 @@ MPI::Datatype::Commit()
 }
 
 inline void
-MPI::Datatype::Free()
-{
-  (void)MPI_Type_free(&mpi_datatype);
-}
-
-inline void
 MPI::Datatype::Pack(const void* inbuf, int incount,
 			   void *outbuf, int outsize,
 			   int& position, const MPI::Comm &comm) const
@@ -203,33 +197,12 @@ MPI::Datatype::Dup() const
 }
 
 
-inline int
-MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function*
-                               type_copy_attr_fn,
-                               MPI::Datatype::Delete_attr_function*
-                               type_delete_attr_fn, void* extra_state)
-{
-  int key;
-  (void) MPI_Type_create_keyval((MPI_Type_copy_attr_function *)
-				type_copy_attr_fn,
-				(MPI_Type_delete_attr_function *)
-				type_delete_attr_fn, &key, extra_state);
-  return key;
-}
-
-
 inline void
 MPI::Datatype::Delete_attr(int type_keyval)
 {
   (void) MPI_Type_delete_attr(mpi_datatype, type_keyval);
 }
 
-
-inline void
-MPI::Datatype::Free_keyval(int& type_keyval)
-{
-  (void) MPI_Type_free_keyval(&type_keyval);
-}
 
 
 inline bool
@@ -269,12 +242,6 @@ MPI::Datatype::Get_name(char* type_name, int& resultlen) const
   (void) MPI_Type_get_name(mpi_datatype, type_name, &resultlen);
 }
 
-
-inline void
-MPI::Datatype::Set_attr(int type_keyval, const void* attribute_val)
-{
-  (void) MPI_Type_set_attr(mpi_datatype, type_keyval, const_cast<void *>(attribute_val));
-}
 
 
 inline void

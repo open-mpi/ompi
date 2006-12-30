@@ -158,6 +158,15 @@ public:
   virtual void Set_attr(int win_keyval, const void* attribute_val);
   
   virtual void Set_name(const char* win_name);
+
+  Errhandler* my_errhandler;
+
+  typedef ::std::map<MPI_Win, Win*> mpi_win_map_t;
+  static mpi_win_map_t mpi_win_map;
+  
+  typedef ::std::pair<Win::Copy_attr_function*, Win::Delete_attr_function*> key_pair_t;
+  typedef ::std::map<int, key_pair_t*> mpi_win_key_fn_map_t;
+  static mpi_win_key_fn_map_t mpi_win_key_fn_map;
   
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

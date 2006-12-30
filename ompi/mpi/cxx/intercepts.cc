@@ -22,14 +22,27 @@
 #include "mpicxx.h"
 #include <stdio.h>
 
-extern "C" 
-void ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
+#include "ompi_config.h"
+#include "ompi/errhandler/errhandler.h"
+#include "opal/threads/mutex.h"
+
+MPI::Comm::mpi_comm_map_t MPI::Comm::mpi_comm_map;
+MPI::Comm::mpi_comm_err_map_t MPI::Comm::mpi_comm_err_map;
+MPI::Comm::mpi_comm_key_fn_map_t MPI::Comm::mpi_comm_key_fn_map;
+
+MPI::Win::mpi_win_map_t MPI::Win::mpi_win_map;
+MPI::Win::mpi_win_key_fn_map_t MPI::Win::mpi_win_key_fn_map;
+
+MPI::Datatype::mpi_type_map_t MPI::Datatype::mpi_type_map;
+MPI::Datatype::mpi_type_key_fn_map_t MPI::Datatype::mpi_type_key_fn_map;
+
+MPI::File::mpi_file_map_t MPI::File::mpi_file_map;
+
+opal_mutex_t *MPI::mpi_map_mutex;
+
+extern "C"
+void ompi_mpi_cxx_throw_exception(int *errcode)
 {
-    /* Portland compiler raises a warning if va_start is not used in a
-     * variable argument function */
-    va_list ap;
-    va_start(ap, errcode);
-    va_end(ap);
 #if OMPI_HAVE_CXX_EXCEPTION_SUPPORT
     throw(MPI::Exception(*errcode));
 #else
@@ -42,22 +55,103 @@ void ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
 #endif  
 }
 
-MPI::Comm::mpi_comm_map_t MPI::Comm::mpi_comm_map;
-MPI::Comm::mpi_err_map_t MPI::Comm::mpi_err_map;
-MPI::Comm::key_fn_map_t MPI::Comm::key_fn_map;
+extern "C" 
+void ompi_mpi_cxx_comm_throw_excptn_fctn(MPI_Comm *, int *errcode, ...)
+{
+    /* Portland compiler raises a warning if va_start is not used in a
+     * variable argument function */
+    va_list ap;
+    va_start(ap, errcode);
+    ompi_mpi_cxx_throw_exception(errcode);
+    va_end(ap);
+}
 
-opal_mutex_t *MPI::Comm::mpi_comm_map_mutex = NULL;
-opal_mutex_t *MPI::Comm::mpi_err_map_mutex = NULL;
-opal_mutex_t *MPI::Comm::key_fn_map_mutex = NULL;
+extern "C" 
+void ompi_mpi_cxx_file_throw_excptn_fctn(MPI_File *, int *errcode, ...)
+{
+    va_list ap;
+    va_start(ap, errcode);
+    ompi_mpi_cxx_throw_exception(errcode);
+    va_end(ap);
+}
+
+extern "C" 
+void ompi_mpi_cxx_win_throw_excptn_fctn(MPI_Win *, int *errcode, ...)
+{
+    va_list ap;
+    va_start(ap, errcode);
+    ompi_mpi_cxx_throw_exception(errcode);
+    va_end(ap);
+}
+
+
+void
+MPI::InitializeIntercepts()
+{
+    ompi_mpi_errors_throw_exceptions.eh_comm_fn = 
+        ompi_mpi_cxx_comm_throw_excptn_fctn;
+    ompi_mpi_errors_throw_exceptions.eh_file_fn = 
+        ompi_mpi_cxx_file_throw_excptn_fctn;
+    ompi_mpi_errors_throw_exceptions.eh_win_fn = 
+        ompi_mpi_cxx_win_throw_excptn_fctn;
+
+    MPI::mpi_map_mutex = OBJ_NEW(opal_mutex_t);
+}
+
+void
+MPI::FinalizeIntercepts()
+{
+    OBJ_RELEASE(MPI::mpi_map_mutex);
+}
+
 
 extern "C"
-void ompi_mpi_cxx_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
+void ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm *mpi_comm, int *err, ...)
 {
-  MPI::Comm* comm = MPI::Comm::mpi_err_map[*mpi_comm];
+  MPI::Comm* comm;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  comm = MPI::Comm::mpi_comm_err_map[*mpi_comm];
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
   if (comm && comm->my_errhandler) {
     va_list ap;
     va_start(ap, err);
-    comm->my_errhandler->handler_fn(*comm, err, ap);
+    comm->my_errhandler->comm_handler_fn(*comm, err, ap);
+    va_end(ap);
+  }
+}
+
+extern "C"
+void ompi_mpi_cxx_file_errhandler_intercept(MPI_File *mpi_file, int *err, ...)
+{
+  MPI::File* file;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  file = MPI::File::mpi_file_map[*mpi_file];
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  if (file && file->my_errhandler) {
+    va_list ap;
+    va_start(ap, err);
+    file->my_errhandler->file_handler_fn(*file, err, ap);
+    va_end(ap);
+  }
+}
+
+extern "C"
+void ompi_mpi_cxx_win_errhandler_intercept(MPI_Win *mpi_win, int *err, ...)
+{
+  MPI::Win* win;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  win = MPI::Win::mpi_win_map[*mpi_win];
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  if (win && win->my_errhandler) {
+    va_list ap;
+    va_start(ap, err);
+    win->my_errhandler->win_handler_fn(*win, err, ap);
     va_end(ap);
   }
 }
@@ -181,19 +275,24 @@ ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len,
     cxx_callback(invec, outvec, *len, cxx_datatype);
 }
 
+//
+// Attribute copy functions -- comm, type, and win
+//
 extern "C" int
-ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
-                                 void *extra_state, void *attribute_val_in, 
-                                 void *attribute_val_out, int *flag)
+ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag)
 {
   int ret = 0;
-  MPI::Comm::key_pair_t* copy_and_delete = 
-    MPI::Comm::key_fn_map[keyval];
+  MPI::Comm::key_pair_t* copy_and_delete; 
   MPI::Comm::Copy_attr_function* copy_fn;
-  copy_fn = copy_and_delete->first;
+  MPI::Comm::comm_pair_t *comm_type;
 
-  MPI::Comm::comm_pair_t *comm_type = 
-    MPI::Comm::mpi_comm_map[oldcomm];
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  copy_and_delete = MPI::Comm::mpi_comm_key_fn_map[keyval];
+  copy_fn = copy_and_delete->first;
+  comm_type = MPI::Comm::mpi_comm_map[oldcomm];
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
   
   // Just in case...
 
@@ -236,19 +335,20 @@ ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval,
 }
 
 extern "C" int
-ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
-                                   void *attribute_val, void *extra_state)
+ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval, 
+                                        void *attribute_val, void *extra_state)
 {
   int ret = 0;
 
-  MPI::Comm::key_pair_t *copy_and_delete = 
-    MPI::Comm::key_fn_map[keyval];
-
+  MPI::Comm::key_pair_t * copy_and_delete;
   MPI::Comm::Delete_attr_function* delete_fn;  
-  delete_fn = copy_and_delete->second;
+  MPI::Comm::comm_pair_t *comm_type;
 
-  MPI::Comm::comm_pair_t *comm_type = 
-    MPI::Comm::mpi_comm_map[comm];
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  copy_and_delete = MPI::Comm::mpi_comm_key_fn_map[keyval];
+  delete_fn = copy_and_delete->second;
+  comm_type = MPI::Comm::mpi_comm_map[comm];
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
 
   // Just in case...
 
@@ -285,6 +385,100 @@ ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval,
     ret = MPI::ERR_OTHER;
   return ret; 
 }
+
+
+extern "C" int
+ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag)
+{
+  int ret = 0;
+
+  MPI::Datatype::key_pair_t* copy_and_delete;
+  MPI::Datatype::Copy_attr_function* copy_fn;
+  MPI::Datatype *cxx_oldtype;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  cxx_oldtype = MPI::Datatype::mpi_type_map[oldtype];
+  copy_and_delete = MPI::Datatype::mpi_type_key_fn_map[keyval];
+  copy_fn = copy_and_delete->first;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  bool bflag = OPAL_INT_TO_BOOL(*flag); 
+
+  ret = copy_fn(*cxx_oldtype, keyval, extra_state, attribute_val_in, 
+                attribute_val_out, bflag);
+
+  *flag = (int)bflag;
+  return ret;
+}
+
+extern "C" int
+ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval, 
+                                        void *attribute_val, void *extra_state)
+{
+  int ret = 0;
+
+  MPI::Datatype::key_pair_t* copy_and_delete;
+  MPI::Datatype::Delete_attr_function* delete_fn;
+  MPI::Datatype *cxx_type;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  cxx_type = MPI::Datatype::mpi_type_map[type];
+  copy_and_delete = MPI::Datatype::mpi_type_key_fn_map[keyval];
+  delete_fn = copy_and_delete->second;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  ret = delete_fn(*cxx_type, keyval, attribute_val, extra_state); 
+  return ret;
+}
+
+extern "C" int
+ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag)
+{
+  int ret = 0;
+
+  MPI::Win::key_pair_t* copy_and_delete;
+  MPI::Win::Copy_attr_function* copy_fn;
+  MPI::Win *cxx_oldwin;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  cxx_oldwin = MPI::Win::mpi_win_map[oldwin];
+  copy_and_delete = MPI::Win::mpi_win_key_fn_map[keyval];
+  copy_fn = copy_and_delete->first;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  bool bflag = OPAL_INT_TO_BOOL(*flag); 
+
+  ret = copy_fn(*cxx_oldwin, keyval, extra_state, attribute_val_in, 
+                attribute_val_out, bflag);
+
+  *flag = (int)bflag;
+  return ret;
+}
+
+extern "C" int
+ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval, 
+                                        void *attribute_val, void *extra_state)
+{
+  int ret = 0;
+
+  MPI::Win::key_pair_t* copy_and_delete;
+  MPI::Win::Delete_attr_function* delete_fn;
+  MPI::Win *cxx_win;
+
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  cxx_win = MPI::Win::mpi_win_map[win];
+  copy_and_delete = MPI::Win::mpi_win_key_fn_map[keyval];
+  delete_fn = copy_and_delete->second;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+
+  ret = delete_fn(*cxx_win, keyval, attribute_val, extra_state); 
+  return ret;
+}
+
 
 // For similar reasons as above, we need to intercept calls for the 3
 // generalized request callbacks (convert arguments to C++ types and

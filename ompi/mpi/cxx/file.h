@@ -255,11 +255,15 @@ public:
   void Write_shared(const void* buf, int count,
 		     const MPI::Datatype& datatype, MPI::Status& status);
   
+  void Call_errhandler(int errorcode) const;
+
+  typedef void Errhandler_fn(MPI::File &, int *, ... );
+
+  static MPI::Errhandler Create_errhandler(Errhandler_fn* function); 
+
   MPI::Errhandler Get_errhandler() const;
   
   void Set_errhandler(const MPI::Errhandler& errhandler);
-
-  typedef void Errhandler_fn(MPI::File &, int *, ... );
     
 protected:
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */
@@ -269,5 +273,11 @@ protected:
   MPI_File mpi_file;
 
 #endif
+
+public:
+  Errhandler* my_errhandler;
+
+  typedef ::std::map<MPI_File, File*> mpi_file_map_t;
+  static mpi_file_map_t mpi_file_map;
 };
 

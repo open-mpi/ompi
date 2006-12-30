@@ -70,26 +70,42 @@ extern "C" void
 ompi_mpi_cxx_op_intercept(void *invec, void *outvec, int *len, 
                           MPI_Datatype *datatype, MPI_User_function *fn);
 
-//JGS: this is used as the MPI_Handler_function for
-// the mpi_errhandler in ERRORS_THROW_EXCEPTIONS
 extern "C" void
-ompi_mpi_cxx_throw_excptn_fctn(MPI_Comm* comm, int* errcode, ...);
-
+ompi_mpi_cxx_comm_errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
 extern "C" void
-ompi_mpi_cxx_errhandler_intercept(MPI_Comm * mpi_comm, int * err, ...);
+ompi_mpi_cxx_win_errhandler_intercept(MPI_Win * mpi_comm, int * err, ...);
+extern "C" void
+ompi_mpi_cxx_file_errhandler_intercept(MPI_File * mpi_comm, int * err, ...);
 
 
 //used for attr intercept functions
 enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
 
 extern "C" int
-ompi_mpi_cxx_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
-                                 void *extra_state, void *attribute_val_in, 
-                                 void *attribute_val_out, int *flag);
+ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag);
+extern "C" int
+ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval, 
+                                        void *attribute_val, void *extra_state);
 
 extern "C" int
-ompi_mpi_cxx_delete_attr_intercept(MPI_Comm comm, int keyval, 
-                                   void *attribute_val, void *extra_state);
+ompi_mpi_cxx_type_copy_attr_intercept(MPI_Datatype oldtype, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag);
+extern "C" int
+ompi_mpi_cxx_type_delete_attr_intercept(MPI_Datatype type, int keyval, 
+                                        void *attribute_val, void *extra_state);
+
+extern "C" int
+ompi_mpi_cxx_win_copy_attr_intercept(MPI_Win oldwin, int keyval, 
+                                      void *extra_state, void *attribute_val_in, 
+                                      void *attribute_val_out, int *flag);
+extern "C" int
+ompi_mpi_cxx_win_delete_attr_intercept(MPI_Win win, int keyval, 
+                                        void *attribute_val, void *extra_state);
+
+
 
 //
 // MPI generalized request intercepts
@@ -155,14 +171,15 @@ namespace MPI {
 #include "ompi/mpi/cxx/request.h"   //includes class Prequest
 #include "ompi/mpi/cxx/group.h" 
 #include "ompi/mpi/cxx/comm.h"
+#include "ompi/mpi/cxx/win.h"
+#include "ompi/mpi/cxx/file.h"
 #include "ompi/mpi/cxx/errhandler.h"
 #include "ompi/mpi/cxx/intracomm.h"
 #include "ompi/mpi/cxx/topology.h"  //includes Cartcomm and Graphcomm
 #include "ompi/mpi/cxx/intercomm.h"
 #include "ompi/mpi/cxx/info.h"
-#include "ompi/mpi/cxx/win.h"
-#include "ompi/mpi/cxx/file.h"
 
+    extern opal_mutex_t *mpi_map_mutex;
 }
 
 #if 0 /* OMPI_ENABLE_MPI_PROFILING */

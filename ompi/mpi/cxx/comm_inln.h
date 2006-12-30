@@ -539,10 +539,10 @@ MPI::Comm::Create_errhandler(MPI::Comm::_MPI2CPP_ERRHANDLERFN_* function)
 {
   MPI_Errhandler errhandler;
   // $%%@#%# AIX/POE 2.3.0.0 makes us put in this cast here
-  (void)MPI_Errhandler_create((MPI_Handler_function*) ompi_mpi_cxx_errhandler_intercept, 
+  (void)MPI_Comm_create_errhandler((MPI_Handler_function*) ompi_mpi_cxx_comm_errhandler_intercept, 
 			      &errhandler);
   MPI::Errhandler temp(errhandler);
-  temp.handler_fn = (void(*)(MPI::Comm&, int*, ...))function;
+  temp.comm_handler_fn = (void(*)(MPI::Comm&, int*, ...))function;
   return temp;
 }
 

@@ -196,7 +196,13 @@ protected:
   MPI_Datatype mpi_datatype;
 #endif
 
+public:
+  typedef ::std::map<MPI_Datatype, Datatype*> mpi_type_map_t;
+  static mpi_type_map_t mpi_type_map;
 
+  typedef ::std::pair<Datatype::Copy_attr_function*, Datatype::Delete_attr_function*> key_pair_t;
+  typedef ::std::map<int, key_pair_t*> mpi_type_key_fn_map_t;
+  static mpi_type_key_fn_map_t mpi_type_key_fn_map;
 };
 
 

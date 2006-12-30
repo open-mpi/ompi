@@ -87,9 +87,7 @@ MPI::Wtick()
 inline void
 MPI::Real_init()
 {
-  // This is here even though ERRORS_THROW_EXCEPTIONS is a const
-  // function; there's no way around this.  :-(
-  MPI::ERRORS_THROW_EXCEPTIONS.init();
+    MPI::InitializeIntercepts();
 }
 
 
@@ -110,9 +108,7 @@ MPI::Init()
 inline void
 MPI::Finalize()
 {
-  // Prevent a memory leak by calling this hidden "free" function here
-  // (even though ERRORS_THROW_EXCEPTIONS is a const object)
-  MPI::ERRORS_THROW_EXCEPTIONS.free();
+  FinalizeIntercepts();
   (void)MPI_Finalize();
 }
 
