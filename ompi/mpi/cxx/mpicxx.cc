@@ -25,6 +25,11 @@ static const int ompi_stdio_seek_end = SEEK_END;
 
 #include "mpicxx.h"
 
+/* Need to include ompi_config.h after mpicxx.h... */
+#include "ompi_config.h"
+
+#include "ompi/errhandler/errhandler.h"
+
 #if OMPI_WANT_MPI_CXX_SEEK
 
 const int SEEK_SET = ompi_stdio_seek_set;
@@ -93,11 +98,9 @@ const int DISTRIBUTE_NONE = MPI_DISTRIBUTE_NONE;
 const int DISTRIBUTE_DFLT_DARG = MPI_DISTRIBUTE_DFLT_DARG;
 
 // error-handling specifiers
-const Errhandler  ERRORS_ARE_FATAL(MPI_ERRORS_ARE_FATAL);
-const Errhandler  ERRORS_RETURN(MPI_ERRORS_RETURN);
-const Errhandler  ERRORS_THROW_EXCEPTIONS(MPI_ERRORS_RETURN);
-//JGS: the MPI_ERRORS_RETURN function in ERRORS_THROW_EXCEPTIONS gets replaced
-//by the throw_exptn_fctn in Init)
+const Errhandler  ERRORS_ARE_FATAL(&ompi_mpi_errors_are_fatal);
+const Errhandler  ERRORS_RETURN(&ompi_mpi_errors_return);
+const Errhandler  ERRORS_THROW_EXCEPTIONS(&ompi_mpi_errors_throw_exceptions);
 
 // typeclass definitions for MPI_Type_match_size
 const int TYPECLASS_INTEGER = MPI_TYPECLASS_INTEGER;

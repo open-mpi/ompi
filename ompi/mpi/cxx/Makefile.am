@@ -27,7 +27,10 @@ lib_LTLIBRARIES = libmpi_cxx.la
 libmpi_cxx_la_SOURCES = \
 	mpicxx.cc \
 	intercepts.cc \
-	comm.cc
+	comm.cc \
+	datatype.cc \
+	file.cc \
+	win.cc
 
 headers = \
 	mpicxx.h \
