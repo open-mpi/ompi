@@ -78,7 +78,8 @@ int mca_btl_mx_component_open(void)
     /* initialize state */
     mca_btl_mx_component.mx_num_btls = 0;
     mca_btl_mx_component.mx_btls = NULL;
-    
+    mca_btl_mx_component.mx_use_unexpected = 0;
+
     /* initialize objects */ 
     OBJ_CONSTRUCT(&mca_btl_mx_component.mx_procs, opal_list_t);
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "max_btls",
@@ -99,7 +100,11 @@ int mca_btl_mx_component_open(void)
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "shared_mem",
                             "Enable the MX support for shared memory",
                             false, false, 0, &mca_btl_mx_component.mx_support_sharedmem );
-
+#if MX_HAVE_UNEXPECTED_HANDLER
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "register_unexp",
+                            "Enable the MX support for the unexpected request handler (Open MPI matching)",
+			    false, false, 0, &mca_btl_mx_component.mx_use_unexpected );
+#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "free_list_num",
                             "Number of allocated default request",
                             false, false, 8, &mca_btl_mx_component.mx_free_list_num );
@@ -307,13 +312,15 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
         return NULL;
     }
 #if MX_HAVE_UNEXPECTED_HANDLER
-    status = mx_register_unexp_handler( mx_btl->mx_endpoint, mca_btl_mx_unexpected_handler,
-                                        (void*)mx_btl );
-    if( MX_SUCCESS != status ) {
-        opal_output( 0, "mca_btl_mx_init: mx_register_unexp_handler() failed with status %d (%s)\n",
-                     status, mx_strerror(status) );
-        mca_btl_mx_finalize( &mx_btl->super );
-        return NULL;
+    if( mca_btl_mx_component.mx_use_unexpected ) {
+        status = mx_register_unexp_handler( mx_btl->mx_endpoint, mca_btl_mx_unexpected_handler,
+                                            (void*)mx_btl );
+        if( MX_SUCCESS != status ) {
+            opal_output( 0, "mca_btl_mx_init: mx_register_unexp_handler() failed with status %d (%s)\n",
+                         status, mx_strerror(status) );
+            mca_btl_mx_finalize( &mx_btl->super );
+            return NULL;
+        }
     }
 #endif  /* MX_HAVE_UNEXPECTED_HANDLER */
     return mx_btl;
@@ -532,8 +539,7 @@ int mca_btl_mx_component_progress(void)
                 /* call the completion callback */
                 frag->base.des_cbfunc( &(mx_btl->super), frag->endpoint,
                                        &(frag->base), OMPI_SUCCESS );
-#if !MX_HAVE_UNEXPECTED_HANDLER
-            } else { /* and this one is a receive */
+            } else if( !mca_btl_mx_component.mx_use_unexpected ) { /* and this one is a receive */
                 mca_btl_base_recv_reg_t* reg;
                 mx_segment_t mx_segment;
 
@@ -555,7 +561,6 @@ int mca_btl_mx_component_progress(void)
                     opal_output( 0, "Fail to re-register a fragment with the MX NIC ... (%s)\n",
                                  mx_strerror(mx_return) );
                 }
-#endif  /* !MX_HAVE_UNEXPECTED_HANDLER */
             }
         }
         num_progressed++;
