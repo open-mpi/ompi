@@ -108,9 +108,18 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     struct mca_bml_base_endpoint_t **bml_endpoints = NULL;
     int rc;
     int32_t i;
+    size_t j;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    for (j = 0 ; j < nprocs ; ++j) {
+        if (procs[j]->proc_arch != ompi_proc_local()->proc_arch) {
+            return OMPI_ERR_NOT_SUPPORTED;
+        }
+    }
+#endif
 
     OBJ_CONSTRUCT(&reachable, ompi_bitmap_t);
     rc = ompi_bitmap_init(&reachable, (int)nprocs);
