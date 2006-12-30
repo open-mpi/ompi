@@ -48,4 +48,10 @@ process on host %s, PID %d.
 
 This indicates an erroneous MPI program; MPI_FINALIZE is only allowed
 to be invoked exactly once in a process.
-
+[proc:heterogeneous-support-unavailable]
+The build of Open MPI running on host %s was not 
+compiled with heterogeneous support.  A process running on host 
+%s appears to have a different architecture,
+which will not work.  Please recompile Open MPI with the
+configure option --enable-heterogeneous or use a homogeneous
+environment.
