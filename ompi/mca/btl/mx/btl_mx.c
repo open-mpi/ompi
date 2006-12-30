@@ -114,8 +114,7 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
     mx_btl->mx_reg[tag].cbfunc = cbfunc; 
     mx_btl->mx_reg[tag].cbdata = cbdata; 
 
-#if !MX_HAVE_UNEXPECTED_HANDLER
-    if( NULL != cbfunc ) {
+    if( (NULL != cbfunc) && ( 0 == mca_btl_mx_component.mx_use_unexpected) ) {
         mca_btl_mx_frag_t* frag;
         mx_return_t mx_return;
         mx_segment_t mx_segment;
@@ -150,7 +149,6 @@ int mca_btl_mx_register( struct mca_btl_base_module_t* btl,
             }
         }
     }
-#endif  /* MX_HAVE_UNEXPECTED_HANDLER */
 
     return OMPI_SUCCESS;
 }

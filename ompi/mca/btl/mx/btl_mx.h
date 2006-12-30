@@ -82,6 +82,8 @@ struct mca_btl_mx_component_t {
     /**< true if we want to activate the MX support for shared memory */
     int32_t                                 mx_support_self;
     /**< true if we want to activate the MX support for self communications */
+    int32_t                                 mx_use_unexpected;
+    /**< true if Open MPI is allowed to register an unexpected handler with the MX library */
 
     opal_list_t mx_procs;  /**< list of mx proc structures */
 
