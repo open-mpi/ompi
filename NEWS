@@ -92,6 +92,9 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
+- Fix type casting issue with MPI_ERRCODES_IGNORE that would cause
+  errors when using a C++ compiler.  Thanks to Barry Smith for
+  bringing this to our attention.
 - Fix possible segmentation fault during shutdown when using the
   MX BTL.
 - Remove the "hierarch" coll component; it was not intended to be
