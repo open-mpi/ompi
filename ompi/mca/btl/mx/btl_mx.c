@@ -317,6 +317,9 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
         return NULL;
     }
 
+    /* Allow the fragment to be recycled using the mca_btl_mx_free function */
+    frag->tag = 0xff;
+
     frag->base.des_dst = frag->segment;
     frag->base.des_dst_cnt = 1;
 
