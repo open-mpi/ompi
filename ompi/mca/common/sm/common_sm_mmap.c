@@ -41,12 +41,14 @@
 #endif
 
 #include "ompi/constants.h"
+#include "ompi/proc/proc.h"
 #include "common_sm_mmap.h"
 #include "opal/util/basename.h"
 #include "opal/util/output.h"
 #include "orte/util/sys_info.h"
 #include "orte/util/proc_info.h"
-
+#include "orte/mca/rml/rml_types.h"
+#include "orte/mca/rml/base/base.h"
 
 OBJ_CLASS_INSTANCE(
     mca_common_sm_mmap_t,
@@ -60,75 +62,57 @@ OBJ_CLASS_INSTANCE(
  */
 mca_common_sm_mmap_t *mca_common_sm_mmap = NULL;
 
-#if !defined(__WINDOWS__)
-static int mca_common_sm_mmap_open(char* path)
-{
-    int fd = -1;
-    struct timespec ts;
-
-    /* loop until file can be opened, or until an error, other than
-     * access error, occurs */
-    while (fd < 0) {
-        fd = open(path, O_CREAT|O_RDWR, 0000); 
-        if (fd < 0 && errno != EACCES) {
-            opal_output(0, 
-                        "mca_common_sm_mmap_open: open %s failed with errno=%d\n",
-                        path, errno);
-            return -1;
-        }
-        ts.tv_sec = 0; 
-        ts.tv_nsec = 500000;
-        nanosleep(&ts, NULL);
-    }
-
-    return fd;
-}
-#endif  /* !defined(__WINDOWS__) */
-
 mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name, 
         size_t size_ctl_structure, size_t data_seg_alignment)
 {
-    int fd = -1, return_code = OMPI_SUCCESS;
-    bool file_previously_opened = false;
+#if !defined(__WINDOWS__)
+    int fd = -1;
     mca_common_sm_file_header_t* seg = NULL;
     mca_common_sm_mmap_t* map = NULL;
     unsigned char *addr = NULL;
     size_t tmp,mem_offset;
 
-#if !defined(__WINDOWS__)
-    struct stat s_stat;
+    bool i_create_shared_file=false;
+    ompi_proc_t **procs;
+    size_t n_local_procs=0, n_total_procs=0,n,p;
+    ompi_proc_t *my_proc;
+    int rc=0;
+    struct iovec iov; 
+    int sm_file_created;
 
-    /* input parameter error checks */
-    if( (size < sizeof(mca_common_sm_file_header_t) ) ||
-                ( file_name == NULL ) || 
-                ( size_ctl_structure <
-                  sizeof(mca_common_sm_file_header_t ) )) {
-        return NULL;
+    /* figure out how many local procs are on this host */
+    procs=ompi_proc_world(&n_total_procs);
+    for(p=0 ; p < n_total_procs ; p++ ) {
+        if( procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL)
+            n_local_procs++;
     }
 
-    /* open the backing file.  The first process to succeed here will
-       effectively block the others until most of the rest of the
-       setup in this function is complete because the initial perms
-       are 000 (an fchmod() is executed below, enabling the other
-       processes to get in) */
-    fd = mca_common_sm_mmap_open(file_name);
-    if( -1 == fd ) {
-        opal_output(0, "mca_common_sm_mmap_init: mca_common_sm_mmap_open failed \n");
-        return NULL;
+    /* create list of local proc_t pointers - compress the original
+       list */
+    n=0;
+    for(p=0; p < n_total_procs ; p++ ) {
+        if( procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
+            procs[n]=procs[p];
+            n++;
+        }
     }
+    
+    /* figure out if I am the lowest rank on host, who will create
+       the shared file */
+    my_proc=ompi_proc_local();
+    if( my_proc == procs[0] )
+        i_create_shared_file=true;
 
-    /* figure out if I am first to attach to file */
-    file_previously_opened=false;
-    return_code=fstat(fd,&s_stat);
-    if( 0 > return_code ) {
-        opal_output(0, "mca_common_sm_mmap_init: fstat failed with errno=%d\n", errno);
-        goto return_error;
-    }
-    if( s_stat.st_size > 0 )
-        file_previously_opened=true;
+    /* open the backing file. */
+    if( i_create_shared_file ) {
+        /* process initializing the file */
+        fd = open(file_name, O_CREAT|O_RDWR, 0600);
+            if (fd < 0) {
+            opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
+                        file_name, errno);
+            return NULL;
+        }
 
-    /* first process to open the file, so needs to initialize it */
-    if( !file_previously_opened ) {
         /* truncate the file to the requested size */
         if(ftruncate(fd, size) != 0) {
             opal_output(0, 
@@ -136,17 +120,153 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                     errno);
             goto return_error;
         }
+        /* map the file and initialize segment state */
+        seg = (mca_common_sm_file_header_t*)
+            mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        if( (void*)-1 == seg ) {
+            opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
+                    errno);
+            goto return_error;
+        }
+        /* set up the map object */
+        map = OBJ_NEW(mca_common_sm_mmap_t);
+        strncpy(map->map_path, file_name, OMPI_PATH_MAX);
+        /* the first entry in the file is the control structure. The first
+           entry in the control structure is an mca_common_sm_file_header_t
+           element */
+        map->map_seg = seg;
+    
+        /* If we have a data segment (i.e., if 0 != data_seg_alignment),
+           then make it the first aligned address after the control
+           structure. */
+        if (0 != data_seg_alignment) {
+            addr = ((unsigned char *) seg) + size_ctl_structure;
+            /* calculate how far off alignment we are */
+            tmp = ((size_t) addr) % data_seg_alignment;
+            /* if we're off alignment, then move up to the next alignment */
+            if( tmp > 0 )
+                addr += (data_seg_alignment - tmp);
+    
+            /* is addr past end of file ? */
+            if( (unsigned char*)seg+size < addr ) {
+                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+                            size,addr);
+                goto return_error;
+            }
+            map->data_addr = addr;
+        } else {
+            map->data_addr = NULL;
+        }
+        mem_offset = addr-(unsigned char *)seg;
+        map->map_addr = (unsigned char *)seg;
+        map->map_size = size;
+    
+        /* initialize the segment - only the first process to open the file */
+        seg->seg_offset = mem_offset;
+        seg->seg_size = size;
+        opal_atomic_unlock(&seg->seg_lock);
+        seg->seg_inited = false;
+
+        /* signal the rest of the local procs that the backing file
+           has been created */
+        for(p=1 ; p < n_local_procs ; p++ ) {
+            sm_file_created=ORTE_RML_TAG_SM_BACK_FILE_CREATED;
+            iov.iov_base=&sm_file_created;
+            iov.iov_len=sizeof(sm_file_created);
+            rc=orte_rml.send(&(procs[p]->proc_name),&iov,1,
+                ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
+            if( rc < 0 ) {
+                opal_output(0,
+                    "mca_common_sm_mmap_init: orte_rml.send failed to %l with errno=%d\n",
+                    p,errno);
+                goto return_error;
+            }
+        }
+    } else {
+        /* all other procs wait for the file to be initialized
+           before using the backing file */
+        iov.iov_base=&sm_file_created;
+        iov.iov_len=sizeof(sm_file_created);
+        rc=orte_rml.recv(&(procs[0]->proc_name),&iov,1,
+              ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
+        if( rc < 0 ) {
+            opal_output(0,                "mca_common_sm_mmap_init: orte_rml.recv failed from %l with errno=%d\n",            
+                0,errno);
+            goto return_error;
+        }
+        /* open backing file */
+        fd = open(file_name, O_RDWR, 0600);
+            if (fd < 0) {
+            opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
+                        file_name, errno);
+            return NULL;
+        }
+
+        /* map the file and initialize segment state */
+        seg = (mca_common_sm_file_header_t*)
+            mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
+        if( (void*)-1 == seg ) {
+            opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
+                    errno);
+            goto return_error;
+        }
+        /* set up the map object */
+        map = OBJ_NEW(mca_common_sm_mmap_t);
+        strncpy(map->map_path, file_name, OMPI_PATH_MAX);
+        /* the first entry in the file is the control structure. The first
+           entry in the control structure is an mca_common_sm_file_header_t
+           element */
+        map->map_seg = seg;
+    
+        /* If we have a data segment (i.e., if 0 != data_seg_alignment),
+           then make it the first aligned address after the control
+           structure. */
+        if (0 != data_seg_alignment) {
+            addr = ((unsigned char *) seg) + size_ctl_structure;
+            /* calculate how far off alignment we are */
+            tmp = ((size_t) addr) % data_seg_alignment;
+            /* if we're off alignment, then move up to the next alignment */
+            if( tmp > 0 )
+                addr += (data_seg_alignment - tmp);
+    
+            /* is addr past end of file ? */
+            if( (unsigned char*)seg+size < addr ) {
+                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
+                            size,addr);
+                goto return_error;
+            }
+            map->data_addr = addr;
+        } else {
+            map->data_addr = NULL;
+        }
+        mem_offset = addr-(unsigned char *)seg;
+        map->map_addr = (unsigned char *)seg;
+        map->map_size = size;
+    
+    } 
+
+    /* enable access by other processes on this host */
+    close(fd);
+
+    return map;
+
+  return_error:
+    if( -1 != fd ) {
+        close(fd);
     }
 
-    /* map the file and initialize segment state */
-    seg = (mca_common_sm_file_header_t*)
-        mmap(NULL, size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0);
-    if( (void*)-1 == seg ) {
-        opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
-                errno);
-        goto return_error;
-    }
+    if( NULL != seg ) munmap((void*) seg,size);
+
+    return NULL;
+
 #else
+    int fd = -1, return_code = OMPI_SUCCESS;
+    bool file_previously_opened = false;
+    mca_common_sm_file_header_t* seg = NULL;
+    mca_common_sm_mmap_t* map = NULL;
+    unsigned char *addr = NULL;
+    size_t tmp,mem_offset;
+
     HANDLE hMapObject = INVALID_HANDLE_VALUE;
     LPVOID lpvMem = NULL;
     char *temp1, *temp2;
@@ -191,7 +311,6 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         goto return_error;
     }
     seg = (mca_common_sm_file_header_t*)lpvMem;
-#endif  /* !defined(__WINDOWS__) */
 
     /* set up the map object */
     map = OBJ_NEW(mca_common_sm_mmap_t);
@@ -234,29 +353,11 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         seg->seg_size = size;
     }
 
-#if !defined(__WINDOWS__)
-    /* enable access by other processes on this host */
-    if(fchmod(fd, 0600) != 0) {
-        opal_output(0, "mca_common_sm_mmap_init: fchmod failed with errno=%d :: fd %d\n",
-                errno,fd);
-        OBJ_RELEASE(map);
-        goto return_error;
-    }
-    close(fd);
-#else
     map->hMappedObject = hMapObject;
-#endif  /* !defined(__WINDOWS__) */
 
     return map;
 
   return_error:
-#if !defined(__WINDOWS__)
-    if( -1 != fd ) {
-        fchmod(fd, 0600);
-        close(fd);
-    }
-    if( NULL != seg ) munmap((void*) seg,size);
-#else
     {
         char* localbuf = NULL;
         FormatMessage( FORMAT_MESSAGE_ALLOCATE_BUFFER | FORMAT_MESSAGE_FROM_SYSTEM,
@@ -266,9 +367,9 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     }
     if( NULL != lpvMem ) UnmapViewOfFile( lpvMem );
     if( NULL != hMapObject ) CloseHandle(hMapObject);
-#endif  /* !defined(__WINDOWS__) */
 
     return NULL;
+#endif
 }
 
 int mca_common_sm_mmap_fini( mca_common_sm_mmap_t* sm_mmap )
