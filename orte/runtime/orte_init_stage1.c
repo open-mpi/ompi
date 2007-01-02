@@ -435,6 +435,7 @@ int orte_init_stage1(bool infrastructure)
             orte_rds_cell_attr_t *new_attr;
             orte_ras_node_t *ras_item;
             opal_list_t attrs;
+            opal_list_item_t *item;
             
             OBJ_CONSTRUCT(&single_host, opal_list_t);
             OBJ_CONSTRUCT(&rds_single_host, opal_list_t);
@@ -532,14 +533,32 @@ int orte_init_stage1(bool infrastructure)
                 you'll end up with the localhost *and* all the other
                 nodes in your allocation on the node segment -- which
                 is probably fine */
-            OBJ_CONSTRUCT(&attrs, opal_list_t);
-            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(my_jobid, &attrs))) {
+            if (ORTE_SUCCESS != (ret = orte_ras.allocate_job(my_jobid, NULL))) {
                 ORTE_ERROR_LOG(ret);
                 error = "allocate for a singleton";
                 goto error;
             }
+            
+            /* even though the map in this case is trivial, we still
+             * need to call the RMAPS framework so the proper data
+             * structures get set into the registry
+             */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            if (ORTE_SUCCESS != (ret = orte_rmgr.add_attribute(&attrs, ORTE_RMAPS_NO_ALLOC_RANGE,
+                                                               ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
+                ORTE_ERROR_LOG(ret);
+                error = "could not create attribute for map";
+                goto error;
+            }
+            if (ORTE_SUCCESS != (ret = orte_rmaps.map_job(my_jobid, &attrs))) {
+                ORTE_ERROR_LOG(ret);
+                error = "map for a singleton";
+                goto error;
+            }
+            while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
             OBJ_DESTRUCT(&attrs);
             
+            /* cleanup data structs */
             OBJ_DESTRUCT(&single_host);
             OBJ_DESTRUCT(&rds_single_host);
         }
