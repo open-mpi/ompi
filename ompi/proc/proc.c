@@ -23,6 +23,7 @@
 
 #include "opal/threads/mutex.h"
 #include "opal/util/output.h"
+#include "opal/util/show_help.h"
 #include "orte/util/sys_info.h"
 #include "orte/dss/dss.h"
 #include "orte/mca/oob/oob.h"
@@ -35,6 +36,7 @@
 #include "ompi/datatype/dt_arch.h"
 #include "ompi/datatype/convertor.h"
 #include "ompi/runtime/params.h"
+#include "ompi/runtime/mpiruntime.h"
 
 static opal_list_t  ompi_proc_list;
 static opal_mutex_t ompi_proc_lock;
