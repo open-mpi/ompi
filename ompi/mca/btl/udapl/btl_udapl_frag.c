@@ -36,7 +36,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
     frag->base.des_flags = 0;
 #endif
 
-    frag->registration = (mca_mpool_base_registration_t*)reg; 
+    frag->registration = reg; 
     frag->segment.seg_addr.pval = (unsigned char*)(frag + 1); 
     frag->ftr = NULL;
 
