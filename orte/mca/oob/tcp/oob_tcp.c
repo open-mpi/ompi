@@ -46,7 +46,6 @@
 #include "orte/mca/errmgr/errmgr.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
-#include "ompi/constants.h"
 
 /*
  * Data structure for accepting connections.
@@ -961,7 +960,7 @@ int mca_oob_tcp_resolve(mca_oob_tcp_peer_t* peer)
     }
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
-                                OMPI_OOB_SUBSCRIPTION, peer->peer_name.jobid))) {
+                                ORTE_OOB_SUBSCRIPTION, peer->peer_name.jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
@@ -1109,7 +1108,7 @@ int mca_oob_tcp_init(void)
     }
 
     if (ORTE_SUCCESS != (rc = orte_schema.get_std_subscription_name(&sub_name,
-                                OMPI_OOB_SUBSCRIPTION, jobid))) {
+                                ORTE_OOB_SUBSCRIPTION, jobid))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }

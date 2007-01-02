@@ -26,4 +26,6 @@
 #include "orte_config.h"
 #include "orte/orte_constants.h"
 
+#define ORTE_OOB_SUBSCRIPTION   "orte-oob-sub"
+
 #endif  /* MCA_OOB_TYPES_H */
