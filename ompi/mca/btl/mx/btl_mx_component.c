@@ -249,6 +249,7 @@ static mca_btl_mx_module_t* mca_btl_mx_create(uint64_t addr)
     if(status != MX_SUCCESS) {
         opal_output( 0, "mca_btl_mx_init: mx_open_endpoint() failed with status %d (%s)\n",
                      status, mx_strerror(status) );
+        mx_btl->mx_endpoint = NULL;
         mca_btl_mx_finalize( &mx_btl->super );
         return NULL;
     }

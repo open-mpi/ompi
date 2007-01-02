@@ -95,6 +95,7 @@ int mca_btl_mx_del_procs( struct mca_btl_base_module_t* btl,
                           struct ompi_proc_t** procs, 
                           struct mca_btl_base_endpoint_t** peers )
 {
+    opal_output( 0, "MX BTL delete procs\n" );
     /* TODO */
     return OMPI_SUCCESS;
 }
@@ -467,7 +468,8 @@ int mca_btl_mx_finalize( struct mca_btl_base_module_t* btl )
 {
     mca_btl_mx_module_t* mx_btl = (mca_btl_mx_module_t*) btl; 
 
-    mx_close_endpoint(mx_btl->mx_endpoint);
+    if( NULL != mx_btl->mx_endpoint )
+        mx_close_endpoint(mx_btl->mx_endpoint);
     
     OBJ_DESTRUCT( &mx_btl->mx_lock );
     OBJ_DESTRUCT( &mx_btl->mx_peers );
