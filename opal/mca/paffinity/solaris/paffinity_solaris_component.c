@@ -32,7 +32,7 @@
  * Public string showing the paffinity ompi_solaris component version number
  */
 const char *opal_paffinity_solaris_component_version_string =
-    "OPAL solaris paffinity MCA component version " OMPI_VERSION;
+    "OPAL solaris paffinity MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -58,9 +58,9 @@ const opal_paffinity_base_component_1_0_0_t mca_paffinity_solaris_component = {
         /* Component name and version */
 
         "solaris",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
 

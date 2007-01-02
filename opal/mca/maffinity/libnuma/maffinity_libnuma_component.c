@@ -26,7 +26,7 @@
  * Public string showing the maffinity ompi_libnuma component version number
  */
 const char *opal_maffinity_libnuma_component_version_string =
-    "OPAL libnuma maffinity MCA component version " OMPI_VERSION;
+    "OPAL libnuma maffinity MCA component version " OPAL_VERSION;
 
 /*
  * Local function

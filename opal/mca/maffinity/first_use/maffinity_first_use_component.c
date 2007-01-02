@@ -26,7 +26,7 @@
  * Public string showing the maffinity ompi_first_use component version number
  */
 const char *opal_maffinity_first_use_component_version_string =
-    "OPAL first_use maffinity MCA component version " OMPI_VERSION;
+    "OPAL first_use maffinity MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -52,9 +52,9 @@ const opal_maffinity_base_component_1_0_0_t mca_maffinity_first_use_component = 
         /* Component name and version */
 
         "first_use",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
 
