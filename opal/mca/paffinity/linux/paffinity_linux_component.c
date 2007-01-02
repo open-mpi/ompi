@@ -32,7 +32,7 @@
  * Public string showing the paffinity ompi_linux component version number
  */
 const char *opal_paffinity_linux_component_version_string =
-    "OPAL linux paffinity MCA component version " OMPI_VERSION;
+    "OPAL linux paffinity MCA component version " OPAL_VERSION;
 
 /*
  * Local function
@@ -58,9 +58,9 @@ const opal_paffinity_base_component_1_0_0_t mca_paffinity_linux_component = {
         /* Component name and version */
 
         "linux",
-        OMPI_MAJOR_VERSION,
-        OMPI_MINOR_VERSION,
-        OMPI_RELEASE_VERSION,
+        OPAL_MAJOR_VERSION,
+        OPAL_MINOR_VERSION,
+        OPAL_RELEASE_VERSION,
 
         /* Component open and close functions */
 
