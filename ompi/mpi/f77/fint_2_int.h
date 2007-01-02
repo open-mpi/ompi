@@ -168,7 +168,7 @@
 #    define OMPI_SINGLE_INT_2_LOGICAL(a) *a=OMPI_INT_2_LOGICAL(OMPI_LOGICAL_NAME_CONVERT(*a))
 #    define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
        int __n = (n) - 1; \
-       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n + 1); \
        while (__n >= 0) { \
          OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
          __n--; \
@@ -210,7 +210,7 @@
 #  endif
 #  define OMPI_ARRAY_LOGICAL_2_INT(in, n) do { \
        int __n = (n) - 1; \
-       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n); \
+       OMPI_ARRAY_LOGICAL_2_INT_ALLOC(in, __n + 1); \
        while (__n >= 0) { \
          OMPI_LOGICAL_ARRAY_NAME_CONVERT(in)[__n]=OMPI_LOGICAL_2_INT(in[__n]); \
          __n--; \
