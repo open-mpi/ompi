@@ -235,10 +235,10 @@ static int mca_pml_ob1_recv_request_ack(
 
     bml_endpoint = (mca_bml_base_endpoint_t*) proc->proc_bml; 
 
+    /* by default copy */
+    recvreq->req_rdma_offset = hdr->hdr_msg_length;
     if(hdr->hdr_msg_length > bytes_received) {
         
-        /* by default copy */
-        recvreq->req_rdma_offset = hdr->hdr_msg_length;
 
         /*
          * lookup request buffer to determine if memory is already

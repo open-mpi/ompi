@@ -248,8 +248,11 @@ static void mca_pml_ob1_rndv_completion(
     mca_bml_base_free(bml_btl, descriptor); 
 
     /* advance the request */
-    MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
-
+    if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
+            sendreq->req_bytes_delivered >=
+            sendreq->req_send.req_bytes_packed) {
+        MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+    }
     /* check for pending requests */
     MCA_PML_OB1_PROGRESS_PENDING(bml_btl);
 }
@@ -871,6 +874,10 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             sendreq->req_send_offset;
         size_t prev_bytes_remaining = 0, num_fail = 0;
 
+        if(bytes_remaining == 0) {
+            OPAL_THREAD_ADD32(&sendreq->req_lock, -sendreq->req_lock);
+            return OMPI_SUCCESS;
+        }
         while((int32_t)bytes_remaining > 0 &&
                 (sendreq->req_pipeline_depth < mca_pml_ob1.send_pipeline_depth
                  ||
@@ -1119,7 +1126,7 @@ void mca_pml_ob1_send_request_put(
     size_t i, size = 0;
 
     if(hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_TYPE_ACK) { 
-        MCA_PML_OB1_SEND_REQUEST_ADVANCE_NO_SCHEDULE(sendreq);
+        OPAL_THREAD_ADD32(&sendreq->req_state, 1);
     }
 
     MCA_PML_OB1_RDMA_FRAG_ALLOC(frag, rc); 
