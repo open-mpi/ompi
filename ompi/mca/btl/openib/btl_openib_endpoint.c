@@ -572,7 +572,7 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
 
 static void mca_btl_openib_endpoint_recv(
     int status,
-    orte_process_name_t* endpoint, 
+    orte_process_name_t* process_name, 
     orte_buffer_t* buffer,
     orte_rml_tag_t tag, 
     void* cbdata)
@@ -628,31 +628,6 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-#if 0
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-#endif
 
     BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
                  rem_info.rem_qp_num_hp,
@@ -665,7 +640,7 @@ static void mca_btl_openib_endpoint_recv(
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
 
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, endpoint) == ORTE_EQUAL) {
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, process_name) == ORTE_EQUAL) {
             bool found = false;
             
             /* Try to get the endpoint instance of this proc */
@@ -695,19 +670,7 @@ static void mca_btl_openib_endpoint_recv(
                     break;
                 }
             }
-            /* try finding an open port, even if subnets  
-               don't match
-            */ 
-            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) { 
-                mca_btl_openib_port_info_t port_info; 
-                port_info = ib_proc->proc_ports[i]; 
-                ib_endpoint = ib_proc->proc_endpoints[i]; 
-                if(!ib_endpoint->rem_info.rem_lid) { 
-                    /* found an unused end-point */ 
-                    found = true; 
-                    break;
-                }
-            }
+            
             
             if(!found) { 
                 BTL_ERROR(("can't find suitable endpoint for this peer\n")); 
