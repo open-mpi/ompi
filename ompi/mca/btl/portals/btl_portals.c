@@ -108,6 +108,11 @@ mca_btl_portals_add_procs(struct mca_btl_base_module_t* btl_base,
     for (i= 0; i < nprocs ; ++i) {
         curr_proc = procs[i];
 
+        /* portals doesn't support heterogeneous yet... */
+        if (ompi_proc_local()->proc_arch != curr_proc->proc_arch) {
+            continue;
+        }
+
         peers[i] = malloc(sizeof(mca_btl_base_endpoint_t));
         if (NULL == peers[i]) return OMPI_ERROR;
         *((mca_btl_base_endpoint_t*) peers[i]) = portals_procs[i];
