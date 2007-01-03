@@ -64,6 +64,7 @@ static inline bool ompi_mpi_errcode_is_invalid(int errcode)
         return 1;
 }
 
+OMPI_DECLSPEC extern ompi_mpi_errcode_t ompi_err_unknown;
 /**
  * Return the error class
  */
