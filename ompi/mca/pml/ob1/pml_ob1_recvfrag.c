@@ -129,7 +129,14 @@ void mca_pml_ob1_recv_frag_callback(
             sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = (size_t)hdr->hdr_ack.hdr_rdma_offset;
-            MCA_PML_OB1_SEND_REQUEST_ADVANCE(sendreq);
+            if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
+                    sendreq->req_bytes_delivered >=
+                    sendreq->req_send.req_bytes_packed) {
+                MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
+            } else {
+                mca_pml_ob1_send_request_schedule(sendreq);
+            }
+                
             break;
         }
     case MCA_PML_OB1_HDR_TYPE_FRAG:
