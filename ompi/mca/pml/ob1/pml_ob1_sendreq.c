@@ -221,7 +221,8 @@ static void mca_pml_ob1_rndv_completion(
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context; 
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*)descriptor->des_context;
+    size_t req_bytes_delivered = 0;
 
     if( sendreq->req_send.req_bytes_packed > 0 ) {
         PERUSE_TRACE_COMM_EVENT( PERUSE_COMM_REQ_XFER_BEGIN,
@@ -242,15 +243,15 @@ static void mca_pml_ob1_rndv_completion(
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( descriptor->des_src,
                                         descriptor->des_src_cnt,
                                         sizeof(mca_pml_ob1_rendezvous_hdr_t),
-                                        sendreq->req_bytes_delivered );
+                                        req_bytes_delivered );
 
     /* return the descriptor */
     mca_bml_base_free(bml_btl, descriptor); 
 
     /* advance the request */
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
-            sendreq->req_bytes_delivered >=
-            sendreq->req_send.req_bytes_packed) {
+            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered,
+                req_bytes_delivered) >= sendreq->req_send.req_bytes_packed) {
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     }
     /* check for pending requests */
