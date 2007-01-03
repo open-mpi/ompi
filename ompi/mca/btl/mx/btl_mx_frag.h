@@ -69,7 +69,7 @@ extern "C" {
     OMPI_FREE_LIST_WAIT( &mca_btl_mx_component.mx_send_eager_frags, item, rc);  \
     frag = (mca_btl_mx_frag_t*) item;                                           \
     frag->mx_frag_list = &(mca_btl_mx_component.mx_send_eager_frags);           \
-    frag->segment[0].seg_addr.pval = (void*)(frag+1);                           \
+    OMPI_PTR_SET_PVAL(frag->segment[0].seg_addr, (void*)(frag+1));              \
 }
 
 #define MCA_BTL_MX_FRAG_ALLOC_USER(btl, frag, rc)                             \

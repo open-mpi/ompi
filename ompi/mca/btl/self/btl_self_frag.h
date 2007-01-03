@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +57,7 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 {                                                                            \
     OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_eager,          \
                           (ompi_free_list_item_t*)(frag));                   \
-    frag->segment.seg_addr.pval = frag+1;                                    \
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);                       \
 }
 
 #define MCA_BTL_SELF_FRAG_ALLOC_SEND(frag, rc)                               \
@@ -69,7 +71,7 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 {                                                                            \
     OMPI_FREE_LIST_RETURN( &mca_btl_self_component.self_frags_send,          \
                            (ompi_free_list_item_t*)(frag));                  \
-    frag->segment.seg_addr.pval = frag+1;                                    \
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);                       \
 }
 
 #define MCA_BTL_SELF_FRAG_ALLOC_RDMA(frag, rc)                               \
@@ -83,7 +85,7 @@ OBJ_CLASS_DECLARATION(mca_btl_self_frag_rdma_t);
 {                                                                            \
     OMPI_FREE_LIST_RETURN(&mca_btl_self_component.self_frags_rdma,           \
                           (ompi_free_list_item_t*)(frag));                   \
-    frag->segment.seg_addr.pval = frag+1;                                    \
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);                       \
 }
 
 #endif

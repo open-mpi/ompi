@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -384,7 +386,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
             frag->sg_entry.addr = (unsigned long)iov.iov_base;
 
             frag->segment.seg_len = max_data;
-            frag->segment.seg_addr.pval = iov.iov_base;
+            OMPI_PTR_SET_PVAL(frag->segment.seg_addr, iov.iov_base);
             frag->segment.seg_key.key32[0] = (uint32_t)frag->sg_entry.lkey;
 
             BTL_VERBOSE(("frag->sg_entry.lkey = %lu .addr = %llu "
@@ -415,7 +417,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_src(
     }
 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*)frag->segment.seg_addr.pval + reserve;
+    iov.iov_base = (unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + reserve;
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
     if(rc < 0) {
         MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
@@ -469,15 +471,15 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
     }
     
     ompi_ddt_type_lb(convertor->pDesc, &lb);
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb +
-        convertor->bConverted;
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr,
+                      convertor->pBaseBuf + lb + convertor->bConverted);
 
     if(NULL == registration){
         /* we didn't get a memory registration passed in, so we have to
          * register the region ourselves
          */ 
         rc = btl->btl_mpool->mpool_register(btl->btl_mpool,
-                frag->segment.seg_addr.pval, *size, 0, &registration);
+                OMPI_PTR_GET_PVAL(frag->segment.seg_addr), *size, 0, &registration);
         if(OMPI_SUCCESS != rc || NULL == registration) {
             MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
             return NULL;
@@ -489,7 +491,7 @@ mca_btl_base_descriptor_t* mca_btl_openib_prepare_dst(
 
     frag->sg_entry.length = *size;
     frag->sg_entry.lkey = openib_reg->mr->lkey;
-    frag->sg_entry.addr = (unsigned long) frag->segment.seg_addr.pval;
+    frag->sg_entry.addr = (unsigned long) OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
 
     frag->segment.seg_len = *size;
     frag->segment.seg_key.key32[0] = openib_reg->mr->rkey;
@@ -608,9 +610,9 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     } else {
         
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) OMPI_PTR_GET_PVAL(frag->base.des_dst->seg_addr); 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
-        frag->sg_entry.addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
+        frag->sg_entry.addr = (unsigned long) OMPI_PTR_GET_PVAL(frag->base.des_src->seg_addr); 
         frag->sg_entry.length  = frag->base.des_src->seg_len; 
         
         if(ibv_post_send(endpoint->lcl_qp[BTL_OPENIB_LP_QP], 
@@ -670,9 +672,9 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     } else { 
     
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) OMPI_PTR_GET_PVAL(frag->base.des_src->seg_addr); 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
-        frag->sg_entry.addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
+        frag->sg_entry.addr = (unsigned long) OMPI_PTR_GET_PVAL(frag->base.des_dst->seg_addr); 
         frag->sg_entry.length  = frag->base.des_dst->seg_len; 
         
         if(ibv_post_send(endpoint->lcl_qp[BTL_OPENIB_LP_QP], 

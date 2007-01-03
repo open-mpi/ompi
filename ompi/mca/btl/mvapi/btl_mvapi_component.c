@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -307,7 +309,7 @@ static void mca_btl_mvapi_control(
     /* dont return credits used for control messages */
     mca_btl_mvapi_frag_t* frag = (mca_btl_mvapi_frag_t*)descriptor; 
     mca_btl_mvapi_endpoint_t* endpoint = frag->endpoint;
-    mca_btl_mvapi_control_header_t *ctl_hdr = frag->segment.seg_addr.pval;
+    mca_btl_mvapi_control_header_t *ctl_hdr = OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
     mca_btl_mvapi_eager_rdma_header_t *rdma_hdr;
 
     if(frag->size == mca_btl_mvapi_component.eager_limit) {
@@ -325,12 +327,13 @@ static void mca_btl_mvapi_control(
         break;
     case MCA_BTL_MVAPI_CONTROL_RDMA:
         rdma_hdr = (mca_btl_mvapi_eager_rdma_header_t*)ctl_hdr;
-        if (endpoint->eager_rdma_remote.base.pval) {
+        if (OMPI_PTR_GET_PVAL(endpoint->eager_rdma_remote.base)) {
            BTL_ERROR(("Got RDMA connect twise!\n"));
            return;
         }
         endpoint->eager_rdma_remote.rkey = rdma_hdr->rkey;
-        endpoint->eager_rdma_remote.base.pval = rdma_hdr->rdma_start.pval;
+        OMPI_PTR_SET_PVAL(endpoint->eager_rdma_remote.base,
+                          OMPI_PTR_GET_PVAL(rdma_hdr->rdma_start));
         endpoint->eager_rdma_remote.tokens =
             mca_btl_mvapi_component.eager_rdma_num - 1;
         break;
@@ -679,7 +682,7 @@ int mca_btl_mvapi_handle_incoming_hp(
 {
     /* advance the segment address past the header and subtract from the length..*/ 
     frag->segment.seg_len =  byte_len-
-        ((unsigned char*) frag->segment.seg_addr.pval -
+        ((unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) -
          (unsigned char*) frag->hdr); 
 
     /* call registered callback */
@@ -712,7 +715,7 @@ int mca_btl_mvapi_handle_incoming_hp(
     }
     
     if (mca_btl_mvapi_component.use_eager_rdma &&
-            !endpoint->eager_rdma_local.base.pval &&
+            !OMPI_PTR_GET_PVAL(endpoint->eager_rdma_local.base) &&
             mvapi_btl->eager_rdma_buffers_count <
             mca_btl_mvapi_component.max_eager_rdma &&
             OPAL_THREAD_ADD32(&endpoint->eager_recv_count, 1) ==
@@ -813,7 +816,7 @@ int mca_btl_mvapi_component_progress( void )
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
                 frag->hdr = (mca_btl_mvapi_header_t*)(((char*)frag->ftr) - 
                         size + sizeof(mca_btl_mvapi_footer_t));
-                frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + 
+                OMPI_PTR_GET_PVAL(frag->segment.seg_addr) = ((unsigned char* )frag->hdr) + 
                     sizeof(mca_btl_mvapi_header_t);
                 
                 hret = mca_btl_mvapi_handle_incoming_hp(mvapi_btl,
@@ -1039,7 +1042,7 @@ int mca_btl_mvapi_component_progress( void )
                                                                                                                          
                 /* advance the segment address past the header and subtract from the length..*/
                 frag->segment.seg_len =  comp.byte_len-
-                    ((unsigned char*) frag->segment.seg_addr.pval  - (unsigned char*) frag->hdr);
+                    ((unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr)  - (unsigned char*) frag->hdr);
                                                                                                                          
                 /* call registered callback */
                 mvapi_btl->ib_reg[frag->hdr->tag].cbfunc(&mvapi_btl->super,

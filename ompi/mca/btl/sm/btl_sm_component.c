@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -475,9 +477,9 @@ int mca_btl_sm_component_progress(void)
                 /* completion callback */
                 frag->base.des_src = 
                     ( mca_btl_base_segment_t* )((ptrdiff_t)frag->base.des_dst + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_src->seg_addr.pval = (void*)
-                    ((ptrdiff_t)frag->base.des_src->seg_addr.pval +
-                     mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                OMPI_PTR_SET_PVAL(frag->base.des_src->seg_addr,
+                                  (void*) ((ptrdiff_t) OMPI_PTR_GET_PVAL(frag->base.des_src->seg_addr) +
+                     mca_btl_sm_component.sm_offset[peer_smp_rank]));
                 frag->base.des_dst = frag->base.des_src;
                 frag->base.des_cbfunc(&mca_btl_sm[1].super, frag->endpoint, &frag->base, frag->rc);
                 break;
@@ -488,9 +490,9 @@ int mca_btl_sm_component_progress(void)
                 mca_btl_sm_recv_reg_t* reg = mca_btl_sm[1].sm_reg + frag->tag;
                 frag->base.des_dst = (mca_btl_base_segment_t*)
                     ((ptrdiff_t)frag->base.des_src + mca_btl_sm_component.sm_offset[peer_smp_rank]);
-                frag->base.des_dst->seg_addr.pval = (void*)
-                    ((ptrdiff_t)frag->base.des_dst->seg_addr.pval +
-                    mca_btl_sm_component.sm_offset[peer_smp_rank]);
+                OMPI_PTR_SET_PVAL(frag->base.des_dst->seg_addr, 
+                                  (void*) ((ptrdiff_t) OMPI_PTR_GET_PVAL(frag->base.des_dst->seg_addr) +
+                    mca_btl_sm_component.sm_offset[peer_smp_rank]));
                 frag->base.des_src = frag->base.des_dst;
                 reg->cbfunc(&mca_btl_sm[1].super,frag->tag,&frag->base,reg->cbdata);
                 frag->type = MCA_BTL_SM_FRAG_ACK;

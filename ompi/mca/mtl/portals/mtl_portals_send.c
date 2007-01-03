@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -191,11 +193,11 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        ptr.pval = ptl_request;
+        OMPI_PTR_SET_PVAL(ptr, ptl_request);
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_READ_TABLE_ID,
                           endpoint->ptl_proc,
-                          (ptl_match_bits_t) ptr.lval,
+                          (ptl_match_bits_t) OMPI_PTR_GET_LVAL(ptr),
                           0,
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -223,7 +225,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                      0,
                      match_bits,
                      0,
-                     (ptl_hdr_data_t) ptr.lval);
+                     (ptl_hdr_data_t) OMPI_PTR_GET_LVAL(ptr));
         if (OMPI_SUCCESS != ret) {
             PtlMDUnlink(md_h);
             if (ptl_request->free_after) free(md.start);
@@ -245,11 +247,11 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        ptr.pval = ptl_request;
+        OMPI_PTR_SET_PVAL(ptr, ptl_request);
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_ACK_TABLE_ID,
                           endpoint->ptl_proc,
-                          (ptl_match_bits_t) ptr.lval,
+                          (ptl_match_bits_t) OMPI_PTR_GET_LVAL(ptr),
                           0,
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -277,7 +279,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                      0,
                      match_bits,
                      0,
-                     (ptl_hdr_data_t) ptr.lval);
+                     (ptl_hdr_data_t) OMPI_PTR_GET_LVAL(ptr));
         if (OMPI_SUCCESS != ret) {
             PtlMDUnlink(md_h);
             if (ptl_request->free_after) free(md.start);

@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -287,7 +289,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - offset;               \
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*) OMPI_PTR_GET_PVAL(segment->seg_addr) + offset); \
                 offset = 0;                                                       \
                 iov_count++;                                                      \
             }                                                                     \

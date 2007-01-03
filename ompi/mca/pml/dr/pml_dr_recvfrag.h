@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,25 +87,25 @@ do {                                                                    \
         OMPI_FREE_LIST_WAIT(&mca_pml_dr.buffers, item, rc);             \
         buff = (mca_pml_dr_buffer_t*)item;                              \
         buffers[i] = buff;                                              \
-        frag->segments[i].seg_addr.pval = buff->addr;                   \
+        OMPI_PTR_SET_PVAL(frag->segments[i].seg_addr, buff->addr);      \
         frag->segments[i].seg_len = segs[i].seg_len;                    \
         if( do_csum ) {                                                 \
             size_t hdr_len = 0;                                         \
             if( 0 == i ) {                                              \
                 hdr_len = mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type);\
                 memcpy( buff->addr,                                     \
-                        segs[i].seg_addr.pval,                          \
+                        OMPI_PTR_GET_PVAL(segs[i].seg_addr),            \
                         hdr_len );                                      \
             }                                                           \
             csum = OPAL_CSUM_BCOPY_PARTIAL(                             \
-                     ((unsigned char*)segs[i].seg_addr.pval)+hdr_len,   \
+                     ((unsigned char*) OMPI_PTR_GET_PVAL(segs[i].seg_addr))+hdr_len,   \
                      ((unsigned char*)buff->addr)+hdr_len,              \
                      segs[i].seg_len-hdr_len, segs[i].seg_len-hdr_len,  \
                      &ui1, &ui2);                                       \
             length += segs[i].seg_len - hdr_len;                        \
         } else {                                                        \
             memcpy( buff->addr,                                         \
-                    segs[i].seg_addr.pval,                              \
+                    OMPI_PTR_GET_PVAL(segs[i].seg_addr),                \
                     segs[i].seg_len );                                  \
         }                                                               \
     }                                                                   \

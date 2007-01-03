@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -21,7 +23,7 @@
 
 static inline void mca_btl_self_frag_constructor(mca_btl_self_frag_t* frag)
 {
-    frag->segment.seg_addr.pval = frag+1;
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);
     frag->segment.seg_len       = (uint32_t)frag->size;
     frag->base.des_src          = &frag->segment;
     frag->base.des_src_cnt      = 1;
@@ -45,7 +47,7 @@ static void mca_btl_self_frag_send_constructor(mca_btl_self_frag_t* frag)
 static void mca_btl_self_frag_rdma_constructor(mca_btl_self_frag_t* frag)
 {
     frag->size = 0;
-    frag->segment.seg_addr.pval = frag+1;
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);
     frag->segment.seg_len = (uint32_t)frag->size;
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Myricom, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -308,7 +310,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
             }
 
             frag->segment.seg_len = max_data;
-            frag->segment.seg_addr.pval = iov.iov_base;
+            OMPI_PTR_SET_PVAL(frag->segment.seg_addr, iov.iov_base);
 
             frag->base.des_src = &frag->segment;
             frag->base.des_src_cnt = 1;
@@ -344,7 +346,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_src(
     }
 
     iov.iov_len = max_data;
-    iov.iov_base = (unsigned char*) frag->segment.seg_addr.pval + reserve;
+    iov.iov_base = (unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + reserve;
     rc = ompi_convertor_pack(convertor, &iov, &iov_count, &max_data);
     if(rc < 0) {
         MCA_BTL_GM_FRAG_RETURN(btl, frag);
@@ -409,7 +411,8 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->type = MCA_BTL_GM_PUT; 
     
     frag->segment.seg_len = *size;
-    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
+    OMPI_PTR_SET_PVAL(frag->segment.seg_addr,
+                      convertor->pBaseBuf + lb + convertor->bConverted);
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -418,7 +421,7 @@ mca_btl_base_descriptor_t* mca_btl_gm_prepare_dst(
     frag->base.des_flags = 0;
     if(NULL == registration) {
         rc = mpool->mpool_register( mpool,
-				    frag->segment.seg_addr.pval,
+				    OMPI_PTR_GET_PVAL(frag->segment.seg_addr),
 				    frag->segment.seg_len,
 				    0,
 				    &registration );
@@ -720,12 +723,8 @@ static int mca_btl_gm_put_nl(
 
     /* post the put descriptor */
     gm_put(gm_btl->port,
-        des->des_src->seg_addr.pval,
-#if GM_SIZEOF_VOID_P == 4
-        des->des_dst->seg_addr.ival,
-#else
-        des->des_dst->seg_addr.lval,
-#endif
+        OMPI_PTR_GET_PVAL(des->des_src->seg_addr),
+        OMPI_PTR_GET_LVAL(des->des_dst->seg_addr),
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
@@ -766,12 +765,8 @@ int mca_btl_gm_put(
 
     /* post the put descriptor */
     gm_put(gm_btl->port,
-        des->des_src->seg_addr.pval,
-#if GM_SIZEOF_VOID_P == 4
-        des->des_dst->seg_addr.ival,
-#else
-        des->des_dst->seg_addr.lval,
-#endif
+        OMPI_PTR_GET_PVAL(des->des_src->seg_addr),
+        OMPI_PTR_GET_LVAL(des->des_dst->seg_addr),
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
@@ -876,12 +871,8 @@ static int mca_btl_gm_get_nl(
 
     /* post get put descriptor */
     gm_get(gm_btl->port,
-#if GM_SIZEOF_VOID_P == 4
-        des->des_dst->seg_addr.ival,
-#else
-        des->des_dst->seg_addr.lval,
-#endif
-        des->des_src->seg_addr.pval,
+        OMPI_PTR_GET_LVAL(des->des_dst->seg_addr),
+        OMPI_PTR_GET_PVAL(des->des_src->seg_addr),
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,
@@ -923,12 +914,8 @@ int mca_btl_gm_get(
 
     /* post get put descriptor */
     gm_get(gm_btl->port,
-#if GM_SIZEOF_VOID_P == 4
-        des->des_dst->seg_addr.ival,
-#else
-        des->des_dst->seg_addr.lval,
-#endif
-        des->des_src->seg_addr.pval,
+        OMPI_PTR_GET_LVAL(des->des_dst->seg_addr),
+        OMPI_PTR_GET_PVAL(des->des_src->seg_addr),
         des->des_src->seg_len,
         GM_LOW_PRIORITY,
         endpoint->endpoint_addr.node_id,

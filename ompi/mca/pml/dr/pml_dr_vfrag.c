@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -27,8 +29,8 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* vfrag);
 
 static void mca_pml_dr_vfrag_construct(mca_pml_dr_vfrag_t* vfrag)
 {
-    vfrag->vf_send.pval = NULL;
-    vfrag->vf_recv.pval = NULL;
+    OMPI_PTR_SET_PVAL(vfrag->vf_send, NULL);
+    OMPI_PTR_SET_PVAL(vfrag->vf_recv, NULL);
     vfrag->vf_id = 0;
     vfrag->vf_idx = 0;
     vfrag->vf_len = 0; 
@@ -67,7 +69,8 @@ OBJ_CLASS_INSTANCE(
 static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)
+        OMPI_PTR_GET_PVAL(vfrag->vf_send);
 
     MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x vid: %d",
                         __FILE__, __LINE__, __func__, vfrag, vfrag->vf_id));
@@ -155,7 +158,8 @@ static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data)
 
 void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)
+        OMPI_PTR_GET_PVAL(vfrag->vf_send);
 
     /* update counters - give new BTL a fair chance :-) */
     vfrag->vf_ack_cnt = 0;
@@ -186,7 +190,8 @@ void mca_pml_dr_vfrag_reset(mca_pml_dr_vfrag_t* vfrag)
 
 void mca_pml_dr_vfrag_reschedule(mca_pml_dr_vfrag_t* vfrag)
 {
-    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
+    mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)
+        OMPI_PTR_GET_PVAL(vfrag->vf_send);
 
     /* start wdog timer */
     MCA_PML_DR_VFRAG_WDOG_START(vfrag);
