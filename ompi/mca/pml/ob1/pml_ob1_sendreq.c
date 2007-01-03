@@ -316,7 +316,7 @@ static void mca_pml_ob1_frag_completion(
     int status)
 {
     mca_pml_ob1_send_request_t* sendreq = (mca_pml_ob1_send_request_t*)descriptor->des_cbdata;
-    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context; 
+    mca_bml_base_btl_t* bml_btl = (mca_bml_base_btl_t*) descriptor->des_context;
     size_t req_bytes_delivered = 0;
 
     /* check completion status */
@@ -332,13 +332,13 @@ static void mca_pml_ob1_frag_completion(
                                         sizeof(mca_pml_ob1_frag_hdr_t),
                                         req_bytes_delivered );
 
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, -1);
+
     /* return the descriptor */
     mca_bml_base_free(bml_btl, descriptor);
 
-    req_bytes_delivered = OPAL_THREAD_ADD_SIZE_T( &sendreq->req_bytes_delivered,
-                                                  req_bytes_delivered );
-    if (OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1) == 0 &&
-        req_bytes_delivered == sendreq->req_send.req_bytes_packed) {
+    if(OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered,
+                req_bytes_delivered) == sendreq->req_send.req_bytes_packed) {
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     } else {
         mca_pml_ob1_send_request_schedule(sendreq);
@@ -976,15 +976,14 @@ int mca_pml_ob1_send_request_schedule_exclusive(
 #endif  /* OMPI_WANT_PERUSE */
 
             /* initiate send - note that this may complete before the call returns */
-            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,1);
             rc = mca_bml_base_send(bml_btl, des, MCA_BTL_TAG_PML);
                 
             if(rc == OMPI_SUCCESS) {
                 bytes_remaining -= size;
                 /* update state */
                 sendreq->req_send_offset += size;
+                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth, 1);
             } else { 
-                OPAL_THREAD_ADD_SIZE_T(&sendreq->req_pipeline_depth,-1);
                 mca_bml_base_free(bml_btl,des);
                 continue;
             }
