@@ -76,7 +76,7 @@ typedef struct mca_btl_mvapi_eager_rdma_remote_t mca_btl_mvapi_eager_rdma_remote
 
 #define MCA_BTL_MVAPI_GET_LOCAL_RDMA_FRAG(E, I)                         \
             (mca_btl_mvapi_frag_t*)                                     \
-            ((char*)OMPI_PTR_GET_VAL((E)->eager_rdma_local.base) +      \
+            ((char*)OMPI_PTR_GET_PVAL((E)->eager_rdma_local.base) +     \
             (I) * (E)->endpoint_btl->eager_rdma_frag_size)
 
 #define MCA_BTL_MVAPI_RDMA_NEXT_INDEX(I) do {                       \

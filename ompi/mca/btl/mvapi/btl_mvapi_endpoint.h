@@ -234,7 +234,7 @@ do { \
         frag = (mca_btl_mvapi_frag_t*) item; \
         frag->endpoint = my_endpoint; \
         frag->sg_entry.len = frag->size + \
-            ((unsigned char*) OMPI_PTR_GET_VAL(frag->segment.seg_addr) -  \
+            ((unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) -  \
              (unsigned char*) frag->hdr);  \
        desc_post[i] = frag->rr_desc; \
     }\
