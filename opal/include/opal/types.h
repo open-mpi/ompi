@@ -144,4 +144,58 @@ static inline uint64_t ntoh64(uint64_t val)
     return r.ll;
 }
 
+#ifdef WORDS_BIGENDIAN
+static inline uint16_t opal_swap_bytes2(uint16_t val) 
+{
+    union { uint16_t bigval;
+            uint8_t  arrayval[2];
+    } w, r;
+
+    w.bigval = val;
+    r.arrayval[0] = w.arrayval[1];
+    r.arrayval[1] = w.arrayval[0];
+
+    return r.bigval;
+}
+
+static inline uint32_t opal_swap_bytes4(uint32_t val) 
+{
+    union { uint32_t bigval;
+            uint8_t  arrayval[4];
+    } w, r;
+
+    w.bigval = val;
+    r.arrayval[0] = w.arrayval[3];
+    r.arrayval[1] = w.arrayval[2];
+    r.arrayval[2] = w.arrayval[1];
+    r.arrayval[3] = w.arrayval[0];
+
+    return r.bigval;
+}
+
+static inline uint64_t opal_swap_bytes8(uint64_t val)
+{
+    union { uint64_t bigval;
+            uint8_t  arrayval[8];
+    } w, r;
+
+    w.bigval = val;
+    r.arrayval[0] = w.arrayval[7];
+    r.arrayval[1] = w.arrayval[6];
+    r.arrayval[2] = w.arrayval[5];
+    r.arrayval[3] = w.arrayval[4];
+    r.arrayval[4] = w.arrayval[3];
+    r.arrayval[5] = w.arrayval[2];
+    r.arrayval[6] = w.arrayval[1];
+    r.arrayval[7] = w.arrayval[0];
+    
+    return r.bigval;
+}
+
+#else
+#define opal_swap_bytes2 htons
+#define opal_swap_bytes4 htonl
+#define opal_swap_bytes8 hton64
+#endif
+
 #endif
