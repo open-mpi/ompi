@@ -17,8 +17,9 @@
 # $HEADER$
 #
 
-# Use the Open MPI-provided wrapper compilers. Note that gmake
-# uses the CXX macro and make uses the CCC macro.
+# Use the Open MPI-provided wrapper compilers.  Note that gmake
+# requires the CXX macro, while other versions of make (such as Sun's
+# make) require the CCC macro.
 
 CC = mpicc
 CXX = mpic++
@@ -27,8 +28,9 @@ F77 = mpif77
 FC = mpif90
 
 # Using -g is not necessary, but it is helpful for example programs,
-# especially if users want to examine them with debuggers.  Note
-# that gmake uses the CXXFLAGS and make uses the CCFLAGS.
+# especially if users want to examine them with debuggers.  Note that
+# gmake requires the CXXFLAGS macro, while other versions of make
+# (such as Sun's make) require the CCFLAGS macro.
 
 CFLAGS = -g
 CXXFLAGS = -g
