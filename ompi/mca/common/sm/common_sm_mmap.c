@@ -76,15 +76,16 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     ompi_proc_t **procs;
     size_t n_local_procs=0, n_total_procs=0,n,p;
     ompi_proc_t *my_proc;
-    int rc=0;
-    struct iovec iov; 
+    int rc=0, sm_file_inited=0;
+    struct iovec iov[2]; 
     int sm_file_created;
 
     /* figure out how many local procs are on this host */
     procs=ompi_proc_world(&n_total_procs);
     for(p=0 ; p < n_total_procs ; p++ ) {
-        if( procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL)
+        if( procs[p]->proc_flags & OMPI_PROC_FLAG_LOCAL){
             n_local_procs++;
+        }
     }
 
     /* create list of local proc_t pointers - compress the original
@@ -100,8 +101,9 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     /* figure out if I am the lowest rank on host, who will create
        the shared file */
     my_proc=ompi_proc_local();
-    if( my_proc == procs[0] )
+    if( my_proc == procs[0] ) {
         i_create_shared_file=true;
+    }
 
     /* open the backing file. */
     if( i_create_shared_file ) {
@@ -110,7 +112,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
             if (fd < 0) {
             opal_output(0,"mca_common_sm_mmap_init: open %s failed with errno=%d\n",                      
                         file_name, errno);
-            return NULL;
+            goto file_opened;
         }
 
         /* truncate the file to the requested size */
@@ -118,7 +120,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
             opal_output(0, 
                     "mca_common_sm_mmap_init: ftruncate failed with errno=%d\n",
                     errno);
-            goto return_error;
+            goto file_opened;
         }
         /* map the file and initialize segment state */
         seg = (mca_common_sm_file_header_t*)
@@ -126,7 +128,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         if( (void*)-1 == seg ) {
             opal_output(0, "mca_common_sm_mmap_init: mmap failed with errno=%d\n",
                     errno);
-            goto return_error;
+            goto file_opened;
         }
         /* set up the map object */
         map = OBJ_NEW(mca_common_sm_mmap_t);
@@ -151,7 +153,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
             if( (unsigned char*)seg+size < addr ) {
                 opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
                             size,addr);
-                goto return_error;
+                goto file_opened;
             }
             map->data_addr = addr;
         } else {
@@ -167,13 +169,20 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
         opal_atomic_unlock(&seg->seg_lock);
         seg->seg_inited = false;
 
+        /* if we got this far, the file has been initialized correctly */
+        sm_file_inited=1;
+
+        file_opened:
+
         /* signal the rest of the local procs that the backing file
            has been created */
         for(p=1 ; p < n_local_procs ; p++ ) {
             sm_file_created=ORTE_RML_TAG_SM_BACK_FILE_CREATED;
-            iov.iov_base=&sm_file_created;
-            iov.iov_len=sizeof(sm_file_created);
-            rc=orte_rml.send(&(procs[p]->proc_name),&iov,1,
+            iov[0].iov_base=&sm_file_created;
+            iov[0].iov_len=sizeof(sm_file_created);
+            iov[1].iov_base=&sm_file_inited;
+            iov[1].iov_len=sizeof(sm_file_inited);
+            rc=orte_rml.send(&(procs[p]->proc_name),iov,2,
                 ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
             if( rc < 0 ) {
                 opal_output(0,
@@ -182,18 +191,29 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                 goto return_error;
             }
         }
+        if ( 0 == sm_file_inited ) {
+            /* error - the sm backing file did not get opened correctly */
+            goto return_error;
+        }
     } else {
         /* all other procs wait for the file to be initialized
            before using the backing file */
-        iov.iov_base=&sm_file_created;
-        iov.iov_len=sizeof(sm_file_created);
-        rc=orte_rml.recv(&(procs[0]->proc_name),&iov,1,
+        iov[0].iov_base=&sm_file_created;
+        iov[0].iov_len=sizeof(sm_file_created);
+        iov[1].iov_base=&sm_file_inited;
+        iov[1].iov_len=sizeof(sm_file_inited);
+        rc=orte_rml.recv(&(procs[0]->proc_name),iov,2,
               ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
             opal_output(0,                "mca_common_sm_mmap_init: orte_rml.recv failed from %l with errno=%d\n",            
                 0,errno);
             goto return_error;
         }
+        /* check to see if file inited correctly */
+        if( 0 == sm_file_inited ) {
+            goto return_error;
+        }
+
         /* open backing file */
         fd = open(file_name, O_RDWR, 0600);
             if (fd < 0) {
