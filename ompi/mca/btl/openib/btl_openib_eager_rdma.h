@@ -1,5 +1,7 @@
 /*
  * Copyright (c) 2006 Voltaire All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -73,7 +75,7 @@ typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remo
 
 #define MCA_BTL_OPENIB_GET_LOCAL_RDMA_FRAG(E, I)                         \
             (mca_btl_openib_frag_t*)                                     \
-            ((char*)(E)->eager_rdma_local.base.pval +                    \
+            ((char*)OMPI_PTR_GET_PVAL((E)->eager_rdma_local.base) +      \
             (I) * (E)->endpoint_btl->eager_rdma_frag_size)
 
 #define MCA_BTL_OPENIB_RDMA_NEXT_INDEX(I) do {                              \

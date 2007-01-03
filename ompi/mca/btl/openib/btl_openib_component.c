@@ -10,6 +10,8 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -202,7 +204,7 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     /* dont return credits used for control messages */
     mca_btl_openib_frag_t* frag = (mca_btl_openib_frag_t*)descriptor;
     mca_btl_openib_endpoint_t* endpoint = frag->endpoint;
-    mca_btl_openib_control_header_t *ctl_hdr = frag->segment.seg_addr.pval;
+    mca_btl_openib_control_header_t *ctl_hdr = OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
 
@@ -225,12 +227,13 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
        break;
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
-       if (endpoint->eager_rdma_remote.base.pval) {
+       if (OMPI_PTR_GET_PVAL(endpoint->eager_rdma_remote.base)) {
 	       BTL_ERROR(("Got RDMA connect twise!"));
 	       return;
        }
        endpoint->eager_rdma_remote.rkey =  rdma_hdr->rkey;
-       endpoint->eager_rdma_remote.base.pval = rdma_hdr->rdma_start.pval;
+       OMPI_PTR_SET_PVAL(endpoint->eager_rdma_remote.base,
+                         OMPI_PTR_GET_PVAL(rdma_hdr->rdma_start));
        endpoint->eager_rdma_remote.tokens =
            mca_btl_openib_component.eager_rdma_num - 1;
        break;
@@ -838,7 +841,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
         OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
     }
    
-    if (!endpoint->eager_rdma_local.base.pval &&
+    if (!OMPI_PTR_GET_PVAL(endpoint->eager_rdma_local.base) &&
             mca_btl_openib_component.use_eager_rdma &&
             BTL_OPENIB_HP_QP == prio &&
             openib_btl->eager_rdma_buffers_count <
@@ -1132,8 +1135,8 @@ static int btl_openib_component_progress(void)
                 OPAL_THREAD_UNLOCK(&endpoint->eager_rdma_local.lock);
                 frag->hdr = (mca_btl_openib_header_t*)(((char*)frag->ftr) - 
                         size + sizeof(mca_btl_openib_footer_t));
-                frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + 
-                    sizeof(mca_btl_openib_header_t);
+                OMPI_PTR_SET_PVAL(frag->segment.seg_addr, ((unsigned char* )frag->hdr) + 
+                    sizeof(mca_btl_openib_header_t));
 
                 ret = btl_openib_handle_incoming(openib_btl,
                         frag->endpoint, frag, 

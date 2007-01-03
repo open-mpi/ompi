@@ -7,7 +7,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * $COPYRIGHT$
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved.  
+* $COPYRIGHT$
  * 
  * Additional copyrights may follow
  * 
@@ -446,14 +448,14 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
            sizeof(ompi_osc_rdma_base_header_t));
 
     /* handle message */
-    switch (((ompi_osc_rdma_base_header_t*) descriptor->des_dst[0].seg_addr.pval)->hdr_type) {
+    switch (((ompi_osc_rdma_base_header_t*) OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr))->hdr_type) {
     case OMPI_OSC_RDMA_HDR_PUT:
         {
             ompi_osc_rdma_send_header_t *header;
 
             /* get our header and payload */
             header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -486,7 +488,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -523,7 +525,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_rdma_send_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -574,7 +576,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 
             /* get our header and payload */
             header = (ompi_osc_rdma_reply_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
             payload = (void*) (header + 1);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -584,7 +586,8 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
 #endif
 
             /* get original sendreq pointer */
-            sendreq = (ompi_osc_rdma_sendreq_t*) header->hdr_origin_sendreq.pval;
+            sendreq = (ompi_osc_rdma_sendreq_t*) 
+                OMPI_PTR_GET_PVAL(header->hdr_origin_sendreq);
             module = sendreq->req_module;
 
             /* receive data */
@@ -595,7 +598,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
@@ -614,7 +617,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
@@ -637,7 +640,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {
@@ -662,7 +665,7 @@ ompi_osc_rdma_component_fragment_cb(struct mca_btl_base_module_t *btl,
         {
             ompi_osc_rdma_control_header_t *header = 
                 (ompi_osc_rdma_control_header_t*) 
-                descriptor->des_dst[0].seg_addr.pval;
+                OMPI_PTR_GET_PVAL(descriptor->des_dst[0].seg_addr);
 
 #if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
             if (header->hdr_base.hdr_flags & OMPI_OSC_RDMA_HDR_FLAG_NBO) {

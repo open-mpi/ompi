@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -58,7 +60,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
 
     if (frag->md_h == PTL_INVALID_HANDLE) {
         /* setup the send - always describe entire fragment */
-        mca_btl_portals_module.md_send.start = frag->segments[0].seg_addr.pval;
+        mca_btl_portals_module.md_send.start = OMPI_PTR_GET_PVAL(frag->segments[0].seg_addr);
         mca_btl_portals_module.md_send.length = 
             0 == frag->size ? frag->segments[0].seg_len : frag->size;
         mca_btl_portals_module.md_send.options = 
@@ -81,7 +83,7 @@ mca_btl_portals_send(struct mca_btl_base_module_t* btl_base,
                          "fragment info:\n"
                          "\tstart: 0x%x\n"
                          "\tlen: %d",
-                         frag->segments[0].seg_addr.pval,
+                         OMPI_PTR_GET_PVAL(frag->segments[0].seg_addr),
                          frag->segments[0].seg_len)); 
 
     ret = PtlPutRegion(frag->md_h,                /* memory descriptor */

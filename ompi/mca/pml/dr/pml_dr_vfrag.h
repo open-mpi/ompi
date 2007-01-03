@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -86,7 +88,7 @@ do {                                                                       \
     (vfrag)->vf_ack = 0;                                                   \
     (vfrag)->vf_wdog_cnt = 0;                                              \
     (vfrag)->vf_ack_cnt = 0;                                               \
-    (vfrag)->vf_recv.pval = NULL;                                          \
+    OMPI_PTR_SET_PVAL((vfrag)->vf_recv, NULL);                             \
     (vfrag)->vf_state = 0;                                                 \
     (vfrag)->vf_pending = 0;                                               \
     (vfrag)->vf_wdog_tv = mca_pml_dr.wdog_timer;                           \

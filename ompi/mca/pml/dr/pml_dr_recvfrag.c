@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -103,7 +105,7 @@ void mca_pml_dr_recv_frag_callback(
                                     void* cbdata)
 {
     mca_btl_base_segment_t* segments = des->des_dst;
-    mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
+    mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*) OMPI_PTR_GET_PVAL(segments->seg_addr);
     mca_pml_dr_comm_t *comm;
     mca_pml_dr_comm_proc_t *proc;
     mca_pml_dr_endpoint_t *ep;
@@ -147,7 +149,7 @@ void mca_pml_dr_recv_frag_callback(
                 mca_pml_dr_recv_frag_ack(btl, 
                                          ep->bml_endpoint,                                                    
                                          &hdr->hdr_common,                                             
-                                         hdr->hdr_match.hdr_src_ptr.pval,                              
+                                         OMPI_PTR_GET_PVAL(hdr->hdr_match.hdr_src_ptr),
                                          1, 0);                                                        
                 return;                                                                                
             } 
@@ -202,7 +204,7 @@ void mca_pml_dr_recv_frag_callback(
                         mca_pml_dr_recv_frag_ack(btl,
                                                  ep->bml_endpoint, 
                                                  &hdr->hdr_common, 
-                                                 hdr->hdr_match.hdr_src_ptr.pval, 
+                                                 OMPI_PTR_GET_PVAL(hdr->hdr_match.hdr_src_ptr),
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
                         return;
                     } else { 
@@ -230,7 +232,7 @@ void mca_pml_dr_recv_frag_callback(
                         mca_pml_dr_recv_frag_ack(btl, 
                                                  ep->bml_endpoint, 
                                                  &hdr->hdr_common, 
-                                                 hdr->hdr_match.hdr_src_ptr.pval, 
+                                                 OMPI_PTR_GET_PVAL(hdr->hdr_match.hdr_src_ptr), 
                                                  ~(uint64_t) 0, hdr->hdr_rndv.hdr_msg_length);
                     } else { 
                         MCA_PML_DR_DEBUG(0,(0, "%s:%d: droping duplicate unmatched rendezvous\n", __FILE__, __LINE__));
@@ -283,7 +285,7 @@ void mca_pml_dr_recv_frag_callback(
                 mca_pml_dr_recv_frag_ack(btl,
                                          ep->bml_endpoint,
                                          &hdr->hdr_common,
-                                         hdr->hdr_frag.hdr_src_ptr.pval,
+                                         OMPI_PTR_GET_PVAL(hdr->hdr_frag.hdr_src_ptr),
                                          ~(uint64_t) 0, 0);
             } else {
                 ompi_comm = ompi_comm_lookup(hdr->hdr_common.hdr_ctx);                                     
@@ -297,7 +299,7 @@ void mca_pml_dr_recv_frag_callback(
                 assert(proc != NULL);                                                                      
                 assert(ep == proc->pml_endpoint); 
                 
-                recvreq = (mca_pml_dr_recv_request_t*)hdr->hdr_frag.hdr_dst_ptr.pval;
+                recvreq = (mca_pml_dr_recv_request_t*) OMPI_PTR_GET_PVAL(hdr->hdr_frag.hdr_dst_ptr);
                 mca_pml_dr_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             }
             break;
@@ -700,7 +702,7 @@ rematch:
             if(do_csum && csum != hdr->hdr_csum) { 
                 mca_pml_dr_recv_frag_ack(btl, 
                                          (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
-                    &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
+                    &hdr->hdr_common, OMPI_PTR_GET_PVAL(hdr->hdr_src_ptr), 0, 0);
                 MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %d length %d)\n", 
                              __FILE__, __LINE__, csum, hdr->hdr_csum, num_segments,
                              segments[0].seg_len - mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type)));
@@ -737,7 +739,7 @@ rematch:
         if(do_csum && csum != hdr->hdr_csum) { 
             mca_pml_dr_recv_frag_ack(btl, 
                                      (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
-                                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
+                                     &hdr->hdr_common, OMPI_PTR_GET_PVAL(hdr->hdr_src_ptr), 0, 0);
             MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x\n", 
                          __FILE__, __LINE__, csum, hdr->hdr_csum));
             MCA_PML_DR_RECV_FRAG_RETURN(frag);
@@ -763,7 +765,7 @@ rematch:
             
         mca_pml_dr_recv_frag_ack(btl,
                                  (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
-                                 &hdr->hdr_common, hdr->hdr_src_ptr.pval, 1, 0);
+                                 &hdr->hdr_common, OMPI_PTR_GET_PVAL(hdr->hdr_src_ptr), 1, 0);
     }
 
     if(additional_match) {
@@ -808,7 +810,7 @@ void mca_pml_dr_recv_frag_ack(
     }
 
     /* fill out header */
-    ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
+    ack = (mca_pml_dr_ack_hdr_t*) OMPI_PTR_GET_PVAL(des->des_src->seg_addr);
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK | hdr->hdr_type;
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_common.hdr_src = hdr->hdr_dst;
@@ -817,9 +819,9 @@ void mca_pml_dr_recv_frag_ack(
     ack->hdr_common.hdr_ctx = hdr->hdr_ctx;
     ack->hdr_vlen = len;
     ack->hdr_vmask = mask;
-    ack->hdr_src_ptr.pval = src_ptr;
-    assert(ack->hdr_src_ptr.pval);
-    ack->hdr_dst_ptr.pval = NULL;
+    OMPI_PTR_SET_PVAL(ack->hdr_src_ptr, src_ptr);
+    assert(OMPI_PTR_GET_PVAL(ack->hdr_src_ptr));
+    OMPI_PTR_SET_PVAL(ack->hdr_dst_ptr, NULL);
     ack->hdr_common.hdr_csum = (uint16_t)(do_csum ? 
                                 opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
                                 OPAL_CSUM_ZERO);

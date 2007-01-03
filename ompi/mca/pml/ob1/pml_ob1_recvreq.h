@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -290,7 +292,7 @@ do {                                                                            
                 offset -= segment->seg_len;                                       \
             } else {                                                              \
                 iov[iov_count].iov_len = segment->seg_len - seg_offset;           \
-                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + seg_offset); \
+                iov[iov_count].iov_base = (IOVBASE_TYPE*)((unsigned char*)OMPI_PTR_GET_PVAL(segment->seg_addr) + seg_offset); \
                 iov_count++;                                                      \
             }                                                                     \
         }                                                                         \
@@ -348,8 +350,8 @@ static inline void mca_pml_ob1_recv_request_schedule(
                                                                         \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                      \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;      \
-        _pckt->hdr.hdr_ack.hdr_src_req.lval = (S);                      \
-        _pckt->hdr.hdr_ack.hdr_dst_req.pval = (D);                      \
+        OMPI_PTR_SET_LVAL(_pckt->hdr.hdr_ack.hdr_src_req, (S));         \
+        OMPI_PTR_SET_PVAL(_pckt->hdr.hdr_ack.hdr_dst_req, (D));         \
         _pckt->hdr.hdr_ack.hdr_rdma_offset = (O);                       \
         _pckt->proc = (P);                                              \
         _pckt->bml_btl = NULL;                                          \

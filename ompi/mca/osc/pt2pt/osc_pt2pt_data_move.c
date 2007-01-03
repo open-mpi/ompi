@@ -7,6 +7,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -189,7 +191,8 @@ ompi_osc_pt2pt_sendreq_send(ompi_osc_pt2pt_module_t *module,
     header->hdr_base.hdr_flags = 0;
     header->hdr_windx = sendreq->req_module->p2p_comm->c_contextid;
     header->hdr_origin = sendreq->req_module->p2p_comm->c_my_rank;
-    header->hdr_origin_sendreq.pval = (void*) sendreq;
+    OMPI_PTR_SET_PVAL(header->hdr_origin_sendreq,
+                      (void*) sendreq);
     header->hdr_origin_tag = 0;
     header->hdr_target_disp = sendreq->req_target_disp;
     header->hdr_target_count = sendreq->req_target_count;

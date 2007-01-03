@@ -176,7 +176,7 @@ mca_btl_base_descriptor_t* mca_btl_mx_alloc( struct mca_btl_base_module_t* btl,
     frag->segment[0].seg_len = 
         size <= mx_btl->super.btl_eager_limit ? 
         size : mx_btl->super.btl_eager_limit ;
-    frag->segment[0].seg_addr.pval = (void*)(frag+1);
+    OMPI_PTR_SET_PVAL(frag->segment[0].seg_addr, (void*)(frag+1));
     frag->base.des_src = frag->segment;
     frag->base.des_src_cnt = 1;
     frag->base.des_flags = 0;
@@ -252,7 +252,8 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
             return NULL;
         }
         frag->base.des_src_cnt = 1;
-        iov.iov_base = (void*)((unsigned char*)frag->segment[0].seg_addr.pval + reserve);
+        iov.iov_base = (void*)((unsigned char*)OMPI_PTR_GET_PVAL(frag->segment[0].seg_addr)
+                               + reserve);
     }
 
     iov.iov_len = max_data;
@@ -262,11 +263,11 @@ mca_btl_mx_prepare_src( struct mca_btl_base_module_t* btl,
     if( 1 == frag->base.des_src_cnt ) {
         frag->segment[0].seg_len = reserve + max_data;
         if( 0 == reserve )
-            frag->segment[0].seg_addr.pval = iov.iov_base;
+            OMPI_PTR_SET_PVAL(frag->segment[0].seg_addr, iov.iov_base);
     } else {
         frag->segment[0].seg_len       = reserve;
         frag->segment[1].seg_len       = max_data;
-        frag->segment[1].seg_addr.pval = iov.iov_base;
+        OMPI_PTR_SET_PVAL(frag->segment[1].seg_addr, iov.iov_base);
     }
     frag->base.des_src = frag->segment;
     return &frag->base;
@@ -305,10 +306,10 @@ mca_btl_base_descriptor_t* mca_btl_mx_prepare_dst( struct mca_btl_base_module_t*
     }
 
     frag->segment[0].seg_len       = *size;
-    frag->segment[0].seg_addr.pval = convertor->pBaseBuf + convertor->bConverted;
+    OMPI_PTR_SET_PVAL(frag->segment[0].seg_addr, convertor->pBaseBuf + convertor->bConverted);
     frag->segment[0].seg_key.key64 = (uint64_t)(intptr_t)frag;
 
-    mx_segment.segment_ptr    = frag->segment[0].seg_addr.pval;
+    mx_segment.segment_ptr    = OMPI_PTR_GET_PVAL(frag->segment[0].seg_addr);
     mx_segment.segment_length = frag->segment[0].seg_len;
     mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1, frag->segment[0].seg_key.key64, 
                           BTL_MX_PUT_MASK, NULL, &(frag->mx_request) );
@@ -358,7 +359,7 @@ static int mca_btl_mx_put( struct mca_btl_base_module_t* btl,
     frag->tag       = 0xff;
 
     do {
-        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
+        mx_segment[i].segment_ptr    = OMPI_PTR_GET_PVAL(descriptor->des_src[i].seg_addr);
         mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
     } while (++i < descriptor->des_src_cnt);
 
@@ -408,7 +409,7 @@ int mca_btl_mx_send( struct mca_btl_base_module_t* btl,
     frag->tag       = 0xff;
 
     do {
-        mx_segment[i].segment_ptr    = descriptor->des_src[i].seg_addr.pval;
+        mx_segment[i].segment_ptr    = OMPI_PTR_GET_PVAL(descriptor->des_src[i].seg_addr);
         mx_segment[i].segment_length = descriptor->des_src[i].seg_len;
         total_length += descriptor->des_src[i].seg_len;
     } while (++i < descriptor->des_src_cnt);

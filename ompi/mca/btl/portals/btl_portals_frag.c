@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,7 +32,7 @@ mca_btl_portals_frag_common_send_constructor(mca_btl_portals_frag_t* frag)
     frag->base.des_src = frag->segments;
     frag->base.des_src_cnt = 2;
 
-    frag->segments[0].seg_addr.pval = frag + 1;
+    OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, frag + 1);
     frag->segments[0].seg_len = frag->size;
     frag->segments[0].seg_key.key64 = 0;
 
