@@ -38,6 +38,8 @@
 #include <errno.h> 
 #include <string.h> 
 #include <math.h>
+#include <inttypes.h>
+
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
         &mca_btl_openib_component.super,
@@ -84,55 +86,91 @@ int mca_btl_openib_add_procs(
     ompi_bitmap_t* reachable)
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
-    int i, rc;
-
+    int i,j, rc;
+    int remote_subnets;
+    int local_subnets;
+    int btl_rank;
     for(i = 0; i < (int) nprocs; i++) {
         
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
         mca_btl_openib_proc_t* ib_proc;
-        mca_btl_base_endpoint_t* ib_peer;
-
+        mca_btl_base_endpoint_t* endpoint;
+        
+        
         if(NULL == (ib_proc = mca_btl_openib_proc_create(ompi_proc))) {
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        /*
-         * Check to make sure that the peer has at least as many interface 
-         * addresses exported as we are trying to use. If not, then 
-         * don't bind this PTL instance to the proc.
-         */
-
+        remote_subnets = 0;
+        /* check if the remote proc has a reachable subnet first */
+        BTL_VERBOSE(("got %d port_infos \n", ib_proc->proc_port_count));
+        for(j = 0; j < (int) ib_proc->proc_port_count; j++){
+            BTL_VERBOSE(("got a subnet %016x\n",
+                       ib_proc->proc_ports[j].subnet));
+            if(ib_proc->proc_ports[j].subnet ==
+               openib_btl->port_info.subnet) {
+                BTL_VERBOSE(("Got a matching subnet!\n"));
+                remote_subnets++;
+            }
+        }
+        if(!remote_subnets) {
+            /* no use trying to communicate with this endpointlater */
+            BTL_VERBOSE(("No matching subnet was found, moving on.. \n"));
+            continue;
+        }
+        
+        local_subnets = 0;
+        for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
+            if(mca_btl_openib_component.openib_btls[j].port_info.subnet
+               == openib_btl->port_info.subnet) { 
+                local_subnets++;
+            }
+            if(openib_btl == &(mca_btl_openib_component.openib_btls[j])) { 
+                btl_rank = j;
+            }
+        }
+#if 0
+        num_endpoints = remote_subnets / local_subnets + 
+            (btl_rank < (remote_subnets / local_subnets)) ? 1:0;
+        
+#endif 
+        if(remote_subnets < local_subnets && 
+           btl_rank >= remote_subnets) { 
+            BTL_VERBOSE(("Not enough remote subnets, moving on.. \n"));
+            continue;
+            
+        }
         OPAL_THREAD_LOCK(&ib_proc->proc_lock);
 
         /* The btl_proc datastructure is shared by all IB PTL
          * instances that are trying to reach this destination. 
          * Cache the peer instance on the btl_proc.
          */
-        ib_peer = OBJ_NEW(mca_btl_openib_endpoint_t);
-        if(NULL == ib_peer) {
+        endpoint = OBJ_NEW(mca_btl_openib_endpoint_t);
+        if(NULL == endpoint) {
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
-
-        ib_peer->endpoint_btl = openib_btl;
-        ib_peer->subnet = openib_btl->port_info.subnet; 
-        rc = mca_btl_openib_proc_insert(ib_proc, ib_peer);
+            
+        endpoint->endpoint_btl = openib_btl;
+        endpoint->subnet = openib_btl->port_info.subnet; 
+        rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
         if(rc != OMPI_SUCCESS) {
-            OBJ_RELEASE(ib_peer);
+            OBJ_RELEASE(endpoint);
             OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
             continue;
         }
-
-        orte_pointer_array_add((orte_std_cntr_t*)&ib_peer->index,
-                openib_btl->endpoints, (void*)ib_peer);
-
+        
+        orte_pointer_array_add((orte_std_cntr_t*)&endpoint->index,
+                               openib_btl->endpoints, (void*)endpoint);
         ompi_bitmap_set_bit(reachable, i);
         OPAL_THREAD_UNLOCK(&ib_proc->proc_lock);
-        peers[i] = ib_peer;
+        
+        peers[i] = endpoint;
     }
     
     return mca_btl_openib_size_queues(openib_btl, nprocs);
-    
+
 }
 
 int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs) 

@@ -284,7 +284,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
     subnet = ntoh64(gid.global.subnet_prefix);
-
+    BTL_VERBOSE((0, "my subnet is %016x\n", subnet));
+    
     if(mca_btl_openib_component.ib_num_btls > 0 &&
             IB_DEFAULT_GID_PREFIX == subnet &&
             mca_btl_openib_component.warn_default_gid_prefix) {
