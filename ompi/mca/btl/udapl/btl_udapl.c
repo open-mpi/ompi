@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -396,9 +394,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_alloc(
 
     /* Set up the LMR triplet from the frag segment */
     /* Note that this triplet defines a sub-region of a registered LMR */
-    frag->triplet.virtual_address = (DAT_VADDR)OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
+    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
     frag->ftr = (mca_btl_udapl_footer_t *)
-	((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + frag->segment.seg_len);
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
     frag->triplet.segment_length =
         frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t);
     assert(frag->triplet.lmr_context == frag->registration->lmr_triplet.lmr_context);
@@ -482,7 +480,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
                 &iov_count, &max_data );
 
         frag->segment.seg_len = max_data;
-        OMPI_PTR_SET_PVAL(frag->segment.seg_addr, iov.iov_base);
+        frag->segment.seg_addr.pval = iov.iov_base;
         frag->triplet.segment_length = max_data;
         frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
 
@@ -538,7 +536,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
             ((mca_mpool_udapl_registration_t*)registration)->lmr_triplet.lmr_context;
         /* TODO - should our base addr be frag->ftr? */
         frag->segment.seg_len = max_data;
-        OMPI_PTR_SET_PVAL(frag->segment.seg_addr, iov.iov_base);
+        frag->segment.seg_addr.pval = iov.iov_base;
         frag->triplet.segment_length = max_data;
         frag->triplet.virtual_address = (DAT_VADDR)iov.iov_base;
     } 
@@ -556,7 +554,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
 
         iov.iov_len = max_data;
-        iov.iov_base = (char *) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + reserve;
+        iov.iov_base = (char *) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data );
@@ -582,7 +580,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
         }
 
         iov.iov_len = max_data;
-        iov.iov_base = (char *) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + reserve;
+        iov.iov_base = (char *) frag->segment.seg_addr.pval + reserve;
         
         rc = ompi_convertor_pack(convertor,
                 &iov, &iov_count, &max_data );
@@ -598,9 +596,9 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_src(
     frag->segment.seg_len = max_data + reserve;
     frag->triplet.segment_length =
 	max_data + reserve + sizeof(mca_btl_udapl_footer_t);
-    frag->triplet.virtual_address = (DAT_VADDR)OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
+    frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
     frag->ftr = (mca_btl_udapl_footer_t *)
-	((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + frag->segment.seg_len);
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
 
     /* initialize base descriptor */
     frag->base.des_src = &frag->segment;
@@ -648,7 +646,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
 
     ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segment.seg_len = *size;
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, convertor->pBaseBuf + lb + convertor->bConverted);
+    frag->segment.seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -669,7 +667,7 @@ mca_btl_base_descriptor_t* mca_btl_udapl_prepare_dst(
 
         rc = mpool->mpool_register(
                                    mpool,
-                                   OMPI_PTR_GET_PVAL(frag->segment.seg_addr),
+                                   frag->segment.seg_addr.pval,
                                    frag->segment.seg_len,
                                    0,
                                    &registration);
@@ -705,7 +703,7 @@ int mca_btl_udapl_send(
     frag->btl = (mca_btl_udapl_module_t*)btl;
     frag->endpoint = endpoint;
     frag->ftr = (mca_btl_udapl_footer_t *)
-	((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + frag->segment.seg_len);
+	((char *)frag->segment.seg_addr.pval + frag->segment.seg_len);
     frag->ftr->tag = tag;
     frag->type = MCA_BTL_UDAPL_SEND;
 

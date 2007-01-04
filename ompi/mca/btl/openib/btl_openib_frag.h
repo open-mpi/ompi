@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -121,14 +119,14 @@ typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_head
 do {                                               \
     BTL_OPENIB_CONTROL_HEADER_HTON(h.control);     \
     h.rkey = htonl(h.rkey);                        \
-    OMPI_PTR_T_HTON(h.rdma_start);                 \
+    h.rdma_start.lval = hton64(h.rdma_start.lval); \
 } while (0)
 
 #define BTL_OPENIB_EAGER_RDMA_HEADER_NTOH(h)       \
 do {                                               \
     BTL_OPENIB_CONTROL_HEADER_NTOH(h.control);     \
     h.rkey = ntohl(h.rkey);                        \
-    OMPI_PTR_T_NTOH(h.rdma_start);                 \
+    h.rdma_start.lval = ntoh64(h.rdma_start.lval); \
 } while (0)
 
 

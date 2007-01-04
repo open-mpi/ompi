@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -593,7 +591,7 @@ int mca_btl_gm_component_progress()
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 mca_btl_base_recv_reg_t* reg;
-                OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (hdr+1));
+                frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
 
@@ -620,7 +618,7 @@ int mca_btl_gm_component_progress()
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
                 mca_btl_base_recv_reg_t* reg;
-                OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (hdr+1));
+                frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
                 if(reg->cbfunc) { 
@@ -686,7 +684,7 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t *)gm_ntohp(event->recv.message);
                 mca_btl_base_recv_reg_t* reg;
-                OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (hdr+1));
+                frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
 
@@ -706,7 +704,7 @@ static void* mca_btl_gm_progress_thread( opal_object_t* arg )
                 mca_btl_gm_frag_t* frag = (mca_btl_gm_frag_t*)(buffer - sizeof(mca_btl_gm_frag_t));
                 mca_btl_base_header_t* hdr = (mca_btl_base_header_t*)buffer;
                 mca_btl_base_recv_reg_t* reg;
-                OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (hdr+1));
+                frag->segment.seg_addr.pval = (hdr+1);
                 frag->segment.seg_len = gm_ntohl(event->recv.length) - sizeof(mca_btl_base_header_t);
                 reg = &btl->gm_reg[hdr->tag];
 

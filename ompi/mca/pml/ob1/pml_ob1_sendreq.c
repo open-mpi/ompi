@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -379,7 +377,7 @@ int mca_pml_ob1_send_request_start_buffered(
     segment = descriptor->des_src;
 
     /* pack the data into the BTL supplied buffer */
-    iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)OMPI_PTR_GET_PVAL(segment->seg_addr) + 
+    iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + 
                                     sizeof(mca_pml_ob1_rendezvous_hdr_t));
     iov.iov_len = size;
     iov_count = 1;
@@ -394,7 +392,7 @@ int mca_pml_ob1_send_request_start_buffered(
     }
 
     /* build rendezvous header */
-    hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+    hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -402,7 +400,7 @@ int mca_pml_ob1_send_request_start_buffered(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    OMPI_PTR_SET_PVAL(hdr->hdr_rndv.hdr_src_req, sendreq);
+    hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -499,7 +497,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
         segment = descriptor->des_src;
 
         /* pack the data into the supplied buffer */
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)OMPI_PTR_GET_PVAL(segment->seg_addr) + sizeof(mca_pml_ob1_match_hdr_t));
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*)segment->seg_addr.pval + sizeof(mca_pml_ob1_match_hdr_t));
         iov.iov_len = size;
         iov_count = 1;
         (void)ompi_convertor_pack( &sendreq->req_send.req_convertor,
@@ -508,7 +506,7 @@ int mca_pml_ob1_send_request_start_copy( mca_pml_ob1_send_request_t* sendreq,
     }
     
     /* build match header */
-    hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+    hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -582,7 +580,7 @@ int mca_pml_ob1_send_request_start_prepare( mca_pml_ob1_send_request_t* sendreq,
     segment = descriptor->des_src;
 
     /* build match header */
-    hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+    hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_MATCH;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -679,7 +677,7 @@ int mca_pml_ob1_send_request_start_rdma(
          segment = des->des_src;
 
          /* build match header */
-         hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
          hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
          hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RGET;
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -687,8 +685,8 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
          hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
          hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-         OMPI_PTR_SET_PVAL(hdr->hdr_rndv.hdr_src_req, sendreq);
-         OMPI_PTR_SET_PVAL(hdr->hdr_rget.hdr_des, src);
+         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
+         hdr->hdr_rget.hdr_des.pval = src;
          hdr->hdr_rget.hdr_seg_cnt = src->des_src_cnt;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -734,7 +732,7 @@ int mca_pml_ob1_send_request_start_rdma(
          segment = des->des_src;
             
          /* build hdr */
-         hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+         hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
          hdr->hdr_common.hdr_flags = MCA_PML_OB1_HDR_FLAGS_CONTIG|MCA_PML_OB1_HDR_FLAGS_PIN;
          hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
          hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -742,7 +740,7 @@ int mca_pml_ob1_send_request_start_rdma(
          hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
          hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
          hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-         OMPI_PTR_SET_PVAL(hdr->hdr_rndv.hdr_src_req, sendreq);
+         hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -817,7 +815,7 @@ int mca_pml_ob1_send_request_start_rndv(
     segment = des->des_src;
 
     /* build hdr */
-    hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segment->seg_addr);
+    hdr = (mca_pml_ob1_hdr_t*)segment->seg_addr.pval;
     hdr->hdr_common.hdr_flags = flags;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_RNDV;
     hdr->hdr_match.hdr_ctx = sendreq->req_send.req_base.req_comm->c_contextid;
@@ -825,7 +823,7 @@ int mca_pml_ob1_send_request_start_rndv(
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;
     hdr->hdr_match.hdr_seq = (uint16_t)sendreq->req_send.req_base.req_sequence;
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;
-    OMPI_PTR_SET_PVAL(hdr->hdr_rndv.hdr_src_req, sendreq);
+    hdr->hdr_rndv.hdr_src_req.pval = sendreq;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -943,11 +941,11 @@ int mca_pml_ob1_send_request_schedule_exclusive(
             des->des_cbdata = sendreq;
 
             /* setup header */
-            hdr = (mca_pml_ob1_frag_hdr_t*)OMPI_PTR_GET_PVAL(des->des_src->seg_addr);
+            hdr = (mca_pml_ob1_frag_hdr_t*)des->des_src->seg_addr.pval;
             hdr->hdr_common.hdr_flags = 0;
             hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FRAG;
             hdr->hdr_frag_offset = sendreq->req_send_offset;
-            OMPI_PTR_SET_PVAL(hdr->hdr_src_req, sendreq);
+            hdr->hdr_src_req.pval = sendreq;
             hdr->hdr_dst_req = sendreq->req_recv;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -1022,7 +1020,7 @@ static void mca_pml_ob1_put_completion( mca_btl_base_module_t* btl,
     }
 
     mca_pml_ob1_send_fin(sendreq->req_send.req_base.req_proc, 
-            OMPI_PTR_GET_PVAL(frag->rdma_hdr.hdr_rdma.hdr_des), bml_btl);
+            frag->rdma_hdr.hdr_rdma.hdr_des.pval, bml_btl);
 
     /* check for request completion */
     if( OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered, frag->rdma_length)

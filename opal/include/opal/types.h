@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -75,90 +73,18 @@ typedef fd_set ompi_fd_set_t;
     
 
 /*
- * Convert a 64 bit value to network byte order.
+ * portable assignment of pointer to int
  */
-static inline uint64_t hton64(uint64_t val)
-{
-#ifdef WORDS_BIGENDIAN
-    return val;
-#else
-    union { uint64_t ll;
-            uint32_t l[2];
-    } w, r;
 
-    w.ll = val;
-    r.l[0] = htonl(w.l[1]);
-    r.l[1] = htonl(w.l[0]);
-    return r.ll;
-#endif
-}
-
-/*
- * Convert a 64 bit value from network to host byte order.
- */
-static inline uint64_t ntoh64(uint64_t val)
-{
-#ifdef WORDS_BIGENDIAN
-    return val;
-#else
-    union { uint64_t ll;
-            uint32_t l[2];
-    } w, r;
-
-    w.ll = val;
-    r.l[0] = ntohl(w.l[1]);
-    r.l[1] = ntohl(w.l[0]);
-    return r.ll;
-#endif
-}
-
-
-/*
- * Portable structure for transporting pointers
- */
 typedef union {
-    uint64_t internal_lval;
-#if SIZEOF_VOID_P == 4
-    void *internal_pvals[2];
-#else /* SIZEOF_VOID_P */
-    void *internal_pval;
-#endif /* SIZEOF_VOID_P */
+   uint64_t lval;
+   uint32_t ival;
+   void*    pval;
+   struct {
+       uint32_t uval;
+       uint32_t lval;
+   } sval;
 } ompi_ptr_t;
-
-#define OMPI_PTR_GET_LVAL(ptr) ptr.internal_lval
-#define OMPI_PTR_SET_LVAL(ptr, lval) ptr.internal_lval = lval
-
-#if SIZEOF_VOID_P == 4
-#ifdef WORDS_BIGENDIAN
-#define OMPI_PTR_SET_PVAL(ptr, pval)                    \
-    do {                                                \
-        ptr.internal_pvals[0] = 0x0;                    \
-        ptr.internal_pvals[1] = pval;                   \
-    } while (0)
-#define OMPI_PTR_GET_PVAL(ptr) ptr.internal_pvals[1]
-#else /* WORDS_BIGENDIAN */
-#define OMPI_PTR_SET_PVAL(ptr, pval)                    \
-    do {                                                \
-        ptr.internal_pvals[0] = pval;                   \
-        ptr.internal_pvals[1] = 0x0;                    \
-    } while (0)
-#define OMPI_PTR_GET_PVAL(ptr) ptr.internal_pvals[0]
-#endif /* WORDS_BIGENDIAN */
-#else /* SIZEOF_VOID_P */
-#define OMPI_PTR_SET_PVAL(ptr, pval) ptr.internal_pval = pval;
-#define OMPI_PTR_GET_PVAL(ptr) ptr.internal_pval
-#endif /* SIZEOF_VOID_P */
-
-#define OMPI_PTR_T_HTON(ptr)                            \
-do {                                                    \
-    ptr.internal_lval = hton64(ptr.internal_lval);      \
-} while (0)
-
-#define OMPI_PTR_T_NTOH(ptr)                            \
-do {                                                    \
-    ptr.internal_lval = ntoh64(ptr.internal_lval);      \
-} while (0)
-
 
 /*
  * handle differences in iovec
@@ -180,6 +106,43 @@ typedef socklen_t opal_socklen_t;
 typedef int opal_socklen_t;
 #endif
 
+
+/*
+ * Convert a 64 bit value to network byte order.
+ */
+static inline uint64_t hton64(uint64_t val)
+{
+    union { uint64_t ll;
+            uint32_t l[2];
+    } w, r;
+
+    /* platform already in network byte order? */
+    if(htonl(1) == 1L)
+        return val;
+    w.ll = val;
+    r.l[0] = htonl(w.l[1]);
+    r.l[1] = htonl(w.l[0]);
+    return r.ll;
+}
+
+/*
+ * Convert a 64 bit value from network to host byte order.
+ */
+
+static inline uint64_t ntoh64(uint64_t val)
+{
+    union { uint64_t ll;
+            uint32_t l[2];
+    } w, r;
+
+    /* platform already in network byte order? */
+    if(htonl(1) == 1L)
+        return val;
+    w.ll = val;
+    r.l[0] = ntohl(w.l[1]);
+    r.l[1] = ntohl(w.l[0]);
+    return r.ll;
+}
 
 #ifdef WORDS_BIGENDIAN
 static inline uint16_t opal_swap_bytes2(uint16_t val) 

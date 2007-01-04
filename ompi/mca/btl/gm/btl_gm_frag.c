@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -32,7 +30,7 @@ do {                                             \
 static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag) 
 { 
     frag->hdr = (mca_btl_base_header_t*)(frag + 1);
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (unsigned char*)(frag->hdr + 1)); 
+    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_eager_limit - sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_gm_component.gm_eager_frag_size;
     MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);
@@ -41,7 +39,7 @@ static void mca_btl_gm_frag_eager_constructor(mca_btl_gm_frag_t* frag)
 static void mca_btl_gm_frag_max_constructor(mca_btl_gm_frag_t* frag) 
 { 
     frag->hdr = (mca_btl_base_header_t*)(frag + 1);
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (unsigned char*)(frag->hdr + 1)); 
+    frag->segment.seg_addr.pval = (unsigned char*)(frag->hdr + 1); 
     frag->segment.seg_len = mca_btl_gm_module.super.btl_max_send_size - sizeof(mca_btl_base_header_t);
     frag->size = mca_btl_gm_component.gm_max_frag_size;
     MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);

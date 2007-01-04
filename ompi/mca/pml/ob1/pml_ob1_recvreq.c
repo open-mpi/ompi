@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -194,11 +192,11 @@ int mca_pml_ob1_recv_request_ack_send_btl(
     }
 
     /* fill out header */
-    ack = (mca_pml_ob1_ack_hdr_t*) OMPI_PTR_GET_PVAL(des->des_src->seg_addr);
+    ack = (mca_pml_ob1_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_ACK;
     ack->hdr_common.hdr_flags = 0;
-    OMPI_PTR_SET_LVAL(ack->hdr_src_req, hdr_src_req);
-    OMPI_PTR_SET_PVAL(ack->hdr_dst_req, hdr_dst_req);
+    ack->hdr_src_req.lval = hdr_src_req;
+    ack->hdr_dst_req.pval = hdr_dst_req;
     ack->hdr_rdma_offset = hdr_rdma_offset;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
@@ -279,7 +277,7 @@ static int mca_pml_ob1_recv_request_ack(
     }
     /* let know to shedule function there is no need to put ACK flag */
     recvreq->req_ack_sent = true;
-    return mca_pml_ob1_recv_request_ack_send(proc, OMPI_PTR_GET_LVAL(hdr->hdr_src_req),
+    return mca_pml_ob1_recv_request_ack_send(proc, hdr->hdr_src_req.lval,
             recvreq, recvreq->req_rdma_offset);
 }
 
@@ -306,8 +304,7 @@ static void mca_pml_ob1_rget_completion(
     }
 
     mca_pml_ob1_send_fin(recvreq->req_recv.req_base.req_proc,
-                         OMPI_PTR_GET_PVAL(frag->rdma_hdr.hdr_rget.hdr_des),
-                         bml_btl); 
+            frag->rdma_hdr.hdr_rget.hdr_des.pval, bml_btl); 
 
     /* is receive request complete */
     if( OPAL_THREAD_ADD_SIZE_T(&recvreq->req_bytes_received, frag->rdma_length)
@@ -439,7 +436,7 @@ void mca_pml_ob1_recv_request_progress(
     size_t bytes_received = 0;
     size_t bytes_delivered = 0;
     size_t data_offset = 0;
-    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segments->seg_addr);
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     MCA_PML_OB1_COMPUTE_SEGMENT_LENGTH( segments, num_segments,
                                         0, bytes_received );
@@ -529,7 +526,7 @@ void mca_pml_ob1_recv_request_matched_probe(
     size_t num_segments)
 {
     size_t bytes_packed = 0;
-    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)OMPI_PTR_GET_PVAL(segments->seg_addr);
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
 
     switch(hdr->hdr_common.hdr_type) {
         case MCA_PML_OB1_HDR_TYPE_MATCH:
@@ -679,12 +676,12 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             ctl->des_cbfunc = mca_pml_ob1_recv_ctl_completion;
             
             /* fill in rdma header */
-            hdr = (mca_pml_ob1_rdma_hdr_t*) OMPI_PTR_GET_PVAL(ctl->des_src->seg_addr);
+            hdr = (mca_pml_ob1_rdma_hdr_t*)ctl->des_src->seg_addr.pval;
             hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_PUT;
             hdr->hdr_common.hdr_flags =
                 (!recvreq->req_ack_sent) ? MCA_PML_OB1_HDR_TYPE_ACK : 0;
             hdr->hdr_req = recvreq->req_send;
-            OMPI_PTR_SET_PVAL(hdr->hdr_des, dst);
+            hdr->hdr_des.pval = dst;
             hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
             hdr->hdr_seg_cnt = dst->des_dst_cnt;
             memcpy(hdr->hdr_segs, dst->des_dst,

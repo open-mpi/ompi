@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -243,10 +241,10 @@ int mca_pml_ob1_send_fin_btl(
     fin->des_cbdata = NULL;
 
     /* fill in header */
-    hdr = (mca_pml_ob1_fin_hdr_t*) OMPI_PTR_GET_PVAL(fin->des_src->seg_addr);
+    hdr = (mca_pml_ob1_fin_hdr_t*)fin->des_src->seg_addr.pval;
     hdr->hdr_common.hdr_flags = 0;
     hdr->hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;
-    OMPI_PTR_SET_PVAL(hdr->hdr_des, hdr_des);
+    hdr->hdr_des.pval = hdr_des;
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
 #ifdef WORDS_BIGENDIAN
@@ -309,25 +307,25 @@ void mca_pml_ob1_process_pending_packets(mca_bml_base_btl_t* bml_btl)
             case MCA_PML_OB1_HDR_TYPE_ACK:
                 rc = mca_pml_ob1_recv_request_ack_send_btl(pckt->proc,
                         send_dst,
-                        OMPI_PTR_GET_LVAL(pckt->hdr.hdr_ack.hdr_src_req),
-                        OMPI_PTR_GET_PVAL(pckt->hdr.hdr_ack.hdr_dst_req),
+                        pckt->hdr.hdr_ack.hdr_src_req.lval,
+                        pckt->hdr.hdr_ack.hdr_dst_req.pval,
                         pckt->hdr.hdr_ack.hdr_rdma_offset);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
                     MCA_PML_OB1_ADD_ACK_TO_PENDING(pckt->proc,
-                            OMPI_PTR_GET_LVAL(pckt->hdr.hdr_ack.hdr_src_req),
-                            OMPI_PTR_GET_PVAL(pckt->hdr.hdr_ack.hdr_dst_req),
+                            pckt->hdr.hdr_ack.hdr_src_req.lval,
+                            pckt->hdr.hdr_ack.hdr_dst_req.pval,
                             pckt->hdr.hdr_ack.hdr_rdma_offset);
                     return;
                 }
                 break;
             case MCA_PML_OB1_HDR_TYPE_FIN:
                 rc = mca_pml_ob1_send_fin_btl(pckt->proc, send_dst,
-                        OMPI_PTR_GET_PVAL(pckt->hdr.hdr_fin.hdr_des));
+                        pckt->hdr.hdr_fin.hdr_des.pval);
                 MCA_PML_OB1_PCKT_PENDING_RETURN(pckt);
                 if(OMPI_ERR_OUT_OF_RESOURCE == rc) {
                      MCA_PML_OB1_ADD_FIN_TO_PENDING(pckt->proc,
-                             OMPI_PTR_GET_PVAL(pckt->hdr.hdr_fin.hdr_des), pckt->bml_btl);
+                             pckt->hdr.hdr_fin.hdr_des.pval, pckt->bml_btl);
                      return;
                 }
                 break;

@@ -7,8 +7,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -92,8 +90,8 @@ ompi_osc_rdma_sendreq_send_cb(struct mca_btl_base_module_t* btl,
 {
     ompi_osc_rdma_sendreq_t *sendreq = 
         (ompi_osc_rdma_sendreq_t*) descriptor->des_cbdata;
-    ompi_osc_rdma_send_header_t *header = (ompi_osc_rdma_send_header_t*) 
-        OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr);
+    ompi_osc_rdma_send_header_t *header =
+        (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
     opal_list_item_t *item;
     ompi_osc_rdma_module_t *module = sendreq->req_module;
 
@@ -223,13 +221,12 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
 
     /* pack header */
-    header = (ompi_osc_rdma_send_header_t*) 
-        OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr);
+    header = (ompi_osc_rdma_send_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_rdma_send_header_t);
     header->hdr_base.hdr_flags = 0;
     header->hdr_windx = sendreq->req_module->p2p_comm->c_contextid;
     header->hdr_origin = sendreq->req_module->p2p_comm->c_my_rank;
-    OMPI_PTR_SET_PVAL(header->hdr_origin_sendreq, (void*) sendreq);
+    header->hdr_origin_sendreq.pval = (void*) sendreq;
     header->hdr_origin_tag = 0;
     header->hdr_target_disp = sendreq->req_target_disp;
     header->hdr_target_count = sendreq->req_target_count;
@@ -258,7 +255,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
     /* Set datatype id and / or pack datatype */
     ret = ompi_ddt_get_pack_description(sendreq->req_target_datatype, &packed_ddt);
     if (OMPI_SUCCESS != ret) goto cleanup;
-    memcpy((unsigned char*) OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr) + written_data,
+    memcpy((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data,
            packed_ddt, packed_ddt_len);
     written_data += packed_ddt_len;
 
@@ -271,7 +268,7 @@ ompi_osc_rdma_sendreq_send(ompi_osc_rdma_module_t *module,
             size_t max_data = sendreq->req_origin_bytes_packed;
 
             iov.iov_len = max_data;
-            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr) + written_data);
+            iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
             ret = ompi_convertor_pack(&sendreq->req_origin_convertor, &iov, &iov_count,
                                       &max_data );
@@ -351,8 +348,8 @@ ompi_osc_rdma_replyreq_send_cb(struct mca_btl_base_module_t* btl,
 {
     ompi_osc_rdma_replyreq_t *replyreq = 
         (ompi_osc_rdma_replyreq_t*) descriptor->des_cbdata;
-    ompi_osc_rdma_reply_header_t *header = (ompi_osc_rdma_reply_header_t*)
-        OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr);
+    ompi_osc_rdma_reply_header_t *header =
+        (ompi_osc_rdma_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
 
     if (OMPI_SUCCESS != status) {
         /* requeue and return */
@@ -435,8 +432,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
     descriptor->des_flags = MCA_BTL_DES_FLAGS_PRIORITY;
 
     /* pack header */
-    header = (ompi_osc_rdma_reply_header_t*) 
-        OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr);
+    header = (ompi_osc_rdma_reply_header_t*) descriptor->des_src[0].seg_addr.pval;
     written_data += sizeof(ompi_osc_rdma_reply_header_t);
     header->hdr_base.hdr_type = OMPI_OSC_RDMA_HDR_REPLY;
     header->hdr_base.hdr_flags = 0;
@@ -451,7 +447,7 @@ ompi_osc_rdma_replyreq_send(ompi_osc_rdma_module_t *module,
         size_t max_data = replyreq->rep_target_bytes_packed;
 
         iov.iov_len = max_data;
-        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr) + written_data);
+        iov.iov_base = (IOVBASE_TYPE*)((unsigned char*) descriptor->des_src[0].seg_addr.pval + written_data);
 
         ret = ompi_convertor_pack(&replyreq->rep_target_convertor, &iov, &iov_count,
                                   &max_data );
@@ -839,8 +835,7 @@ ompi_osc_rdma_control_send(ompi_osc_rdma_module_t *module,
     descriptor->des_src[0].seg_len = sizeof(ompi_osc_rdma_control_header_t);
 
     /* pack header */
-    header = (ompi_osc_rdma_control_header_t*) 
-        OMPI_PTR_GET_PVAL(descriptor->des_src[0].seg_addr);
+    header = (ompi_osc_rdma_control_header_t*) descriptor->des_src[0].seg_addr.pval;
     header->hdr_base.hdr_type = type;
     header->hdr_value[0] = value0;
     header->hdr_value[1] = value1;

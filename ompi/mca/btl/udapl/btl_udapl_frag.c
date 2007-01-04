@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -39,7 +37,7 @@ static void mca_btl_udapl_frag_common_constructor(mca_btl_udapl_frag_t* frag)
 #endif
 
     frag->registration = reg; 
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, (unsigned char*)(frag + 1)); 
+    frag->segment.seg_addr.pval = (unsigned char*)(frag + 1); 
     frag->ftr = NULL;
 
     /* Don't understand why yet, but there are cases where reg is NULL -
@@ -69,7 +67,7 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
 { 
     mca_btl_udapl_frag_common_constructor(frag); 
     frag->segment.seg_len = 0;
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, NULL);
+    frag->segment.seg_addr.pval = NULL;
     frag->ftr = NULL;
     frag->size = 0; 
 }
@@ -81,7 +79,7 @@ static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
     frag->size = 0; 
     frag->registration = NULL; 
     frag->segment.seg_len = 0;
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr,  NULL); 
+    frag->segment.seg_addr.pval = NULL; 
     
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;

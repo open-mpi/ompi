@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -424,7 +422,7 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t* endpoint)
         cookie.as_ptr = frag;
             
         assert(frag->triplet.virtual_address == 
-	       (DAT_VADDR)OMPI_PTR_GET_PVAL(frag->segment.seg_addr));
+	       (DAT_VADDR)frag->segment.seg_addr.pval);
         assert(frag->triplet.segment_length ==
                 frag->segment.seg_len + sizeof(mca_btl_udapl_footer_t));
         assert(frag->size ==
@@ -500,7 +498,7 @@ static int mca_btl_udapl_endpoint_post_recv(mca_btl_udapl_endpoint_t* endpoint,
         assert(size == frag->size);
         /* Set up the LMR triplet from the frag segment */
         /* Note that this triplet defines a sub-region of a registered LMR */
-        frag->triplet.virtual_address = (DAT_VADDR)OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
+        frag->triplet.virtual_address = (DAT_VADDR)frag->segment.seg_addr.pval;
         frag->triplet.segment_length = frag->size;
     
         frag->btl = endpoint->endpoint_btl;

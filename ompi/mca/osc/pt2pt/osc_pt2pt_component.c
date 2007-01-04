@@ -7,8 +7,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -605,7 +603,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
 #endif
 
             /* get original sendreq pointer */
-            sendreq = (ompi_osc_pt2pt_sendreq_t*) OMPI_PTR_GET_PVAL(header->hdr_origin_sendreq);
+            sendreq = (ompi_osc_pt2pt_sendreq_t*) header->hdr_origin_sendreq.pval;
             module = sendreq->req_module;
 
             /* receive data */

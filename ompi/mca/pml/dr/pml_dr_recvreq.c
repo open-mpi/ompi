@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,7 +49,7 @@ if(do_csum && csum != hdr->hdr_match.hdr_csum) {                     \
     mca_pml_dr_recv_frag_ack(btl,                                    \
                              recvreq->req_endpoint->bml_endpoint,    \
                              &hdr->hdr_common,                       \
-                             OMPI_PTR_GET_PVAL(hdr->hdr_match.hdr_src_ptr), \
+                             hdr->hdr_match.hdr_src_ptr.pval,        \
                              0, 0);                                  \
     MCA_PML_DR_DEBUG(0,(0, "%s:%d: [rank %d -> rank %d] "            \
                         "data checksum failed 0x%08x != 0x%08x\n",   \
@@ -126,7 +124,7 @@ static void mca_pml_dr_recv_request_construct(mca_pml_dr_recv_request_t* request
 
     request->req_vfrag0.vf_len = 1;
     request->req_vfrag0.vf_mask = 1;
-    OMPI_PTR_SET_PVAL(request->req_vfrag0.vf_recv, request);
+    request->req_vfrag0.vf_recv.pval = request;
     request->req_recv.req_base.req_type = MCA_PML_REQUEST_RECV;
     request->req_recv.req_base.req_ompi.req_free = mca_pml_dr_recv_request_free;
     request->req_recv.req_base.req_ompi.req_cancel = mca_pml_dr_recv_request_cancel;
@@ -191,7 +189,7 @@ void mca_pml_dr_recv_request_ack(
     }
 
     /* fill out header */
-    ack = (mca_pml_dr_ack_hdr_t*) OMPI_PTR_GET_PVAL(des->des_src->seg_addr);
+    ack = (mca_pml_dr_ack_hdr_t*)des->des_src->seg_addr.pval;
     ack->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_ACK | hdr->hdr_type;
     ack->hdr_common.hdr_flags = 0;
     ack->hdr_common.hdr_dst = recvreq->req_endpoint->dst;
@@ -201,7 +199,7 @@ void mca_pml_dr_recv_request_ack(
     ack->hdr_vlen = vlen;
     ack->hdr_vmask = mask;
     ack->hdr_src_ptr = src_ptr;
-    OMPI_PTR_SET_PVAL(ack->hdr_dst_ptr, recvreq);
+    ack->hdr_dst_ptr.pval = recvreq;
     ack->hdr_common.hdr_csum = (uint16_t)(do_csum? 
                                 opal_csum(ack, sizeof(mca_pml_dr_ack_hdr_t)) :
                                 OPAL_CSUM_ZERO);
@@ -233,7 +231,7 @@ void mca_pml_dr_recv_request_progress(
      size_t bytes_received = 0;
      size_t bytes_delivered = 0;
      size_t data_offset = 0;
-     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*) OMPI_PTR_GET_PVAL(segments->seg_addr);
+     mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
      size_t i;
      uint32_t csum = OPAL_CSUM_ZERO;
      uint64_t bit;
@@ -363,7 +361,7 @@ void mca_pml_dr_recv_request_matched_probe(
     size_t num_segments)
 {
     size_t bytes_packed = 0;
-    mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*) OMPI_PTR_GET_PVAL(segments->seg_addr);
+    mca_pml_dr_hdr_t* hdr = (mca_pml_dr_hdr_t*)segments->seg_addr.pval;
     size_t i;
 
     switch(hdr->hdr_common.hdr_type) {

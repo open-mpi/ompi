@@ -12,8 +12,6 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  *
  * $COPYRIGHT$
  * 
@@ -415,9 +413,9 @@ static inline int mca_btl_udapl_sendrecv(mca_btl_udapl_module_t* btl,
             sizeof(int32_t));
     cookie.as_ptr = frag;
 
-    memcpy(OMPI_PTR_GET_PVAL(frag->segment.seg_addr),
+    memcpy(frag->segment.seg_addr.pval,
             &btl->udapl_addr, sizeof(mca_btl_udapl_addr_t));
-    memcpy((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + sizeof(mca_btl_udapl_addr_t),
+    memcpy((char *)frag->segment.seg_addr.pval + sizeof(mca_btl_udapl_addr_t),
             &connection_seq, sizeof(int32_t));
     connection_seq++;
 
@@ -554,7 +552,7 @@ int mca_btl_udapl_component_progress()
                         assert(frag->base.des_src_cnt == 0);
                         assert(frag->type == MCA_BTL_UDAPL_RECV);
                         assert(frag->triplet.virtual_address ==
-                                (DAT_VADDR)OMPI_PTR_GET_PVAL(frag->segment.seg_addr));
+                                (DAT_VADDR)frag->segment.seg_addr.pval);
                         assert(frag->triplet.segment_length == frag->size);
                         assert(frag->btl == btl);
 
@@ -562,7 +560,7 @@ int mca_btl_udapl_component_progress()
                         frag->segment.seg_len = dto->transfered_length -
                             sizeof(mca_btl_udapl_footer_t);
 			frag->ftr = (mca_btl_udapl_footer_t *)
-			    ((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr) + 
+			    ((char *)frag->segment.seg_addr.pval + 
 			     frag->segment.seg_len);
 			reg = &btl->udapl_reg[frag->ftr->tag];
                         OPAL_THREAD_UNLOCK(&mca_btl_udapl_component.udapl_lock);
@@ -571,7 +569,7 @@ int mca_btl_udapl_component_progress()
                         OPAL_THREAD_LOCK(&mca_btl_udapl_component.udapl_lock);
 
                         /* Repost the frag */
-                        frag->ftr = OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
+                        frag->ftr = frag->segment.seg_addr.pval;
                         frag->segment.seg_len =
                             frag->size - sizeof(mca_btl_udapl_footer_t);
                         frag->base.des_flags = 0;
@@ -593,8 +591,8 @@ int mca_btl_udapl_component_progress()
                     }
                     case MCA_BTL_UDAPL_CONN_RECV:
                         mca_btl_udapl_endpoint_finish_connect(btl,
-                                OMPI_PTR_GET_PVAL(frag->segment.seg_addr),
-                                (int32_t *)((char *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr)  +
+                                frag->segment.seg_addr.pval,
+                                (int32_t *)((char *)frag->segment.seg_addr.pval  +
                                     sizeof(mca_btl_udapl_addr_t)),
                                 event.event_data.connect_event_data.ep_handle);
                         /* No break - fall through to free */

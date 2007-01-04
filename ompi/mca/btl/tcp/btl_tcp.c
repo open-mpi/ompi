@@ -199,7 +199,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_alloc(
         return NULL;
     }
     
-    OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, frag+1);
+    frag->segments[0].seg_addr.pval = frag+1;
 
     frag->base.des_src = frag->segments;
     frag->base.des_src_cnt = 1;
@@ -267,7 +267,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
 
     if(max_data == 0) {
 
-        OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, (frag + 1));
+        frag->segments[0].seg_addr.pval = (frag + 1);
         frag->segments[0].seg_len = reserve;
         frag->base.des_src_cnt = 1;
 
@@ -285,7 +285,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             return NULL;
         }
 
-        OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, (frag + 1));
+        frag->segments[0].seg_addr.pval = (frag + 1);
         frag->segments[0].seg_len = max_data + reserve;
         frag->base.des_src_cnt = 1;
 
@@ -300,9 +300,9 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_src(
             return NULL;
         }
 
-        OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, frag+1);
+        frag->segments[0].seg_addr.pval = frag+1;
         frag->segments[0].seg_len = reserve;
-        OMPI_PTR_SET_PVAL(frag->segments[1].seg_addr, iov.iov_base);
+        frag->segments[1].seg_addr.pval = iov.iov_base;
         frag->segments[1].seg_len = max_data;
         frag->base.des_src_cnt = 2;
     }
@@ -349,8 +349,7 @@ mca_btl_base_descriptor_t* mca_btl_tcp_prepare_dst(
 
     ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments->seg_len = *size;
-    OMPI_PTR_SET_PVAL(frag->segments->seg_addr,
-                      convertor->pBaseBuf + lb + convertor->bConverted);
+    frag->segments->seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
 
     frag->base.des_src = NULL;
     frag->base.des_src_cnt = 0;
@@ -392,7 +391,7 @@ int mca_btl_tcp_send(
     for(i=0; i<frag->base.des_src_cnt; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+1].iov_len = frag->segments[i].seg_len;
-        frag->iov[i+1].iov_base = (IOVBASE_TYPE*) OMPI_PTR_GET_PVAL(frag->segments[i].seg_addr);
+        frag->iov[i+1].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
         frag->iov_cnt++;
     }
     frag->hdr.base.tag = tag;
@@ -434,7 +433,7 @@ int mca_btl_tcp_put(
     for(i=0; i<frag->base.des_src_cnt; i++) {
         frag->hdr.size += frag->segments[i].seg_len;
         frag->iov[i+2].iov_len = frag->segments[i].seg_len;
-        frag->iov[i+2].iov_base = (IOVBASE_TYPE*) OMPI_PTR_GET_PVAL(frag->segments[i].seg_addr);
+        frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
         frag->iov_cnt++;
     }
     frag->hdr.base.tag = MCA_BTL_TAG_BTL;

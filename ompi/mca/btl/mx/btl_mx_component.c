@@ -210,7 +210,7 @@ mca_btl_mx_unexpected_handler( void *context, mx_endpoint_addr_t source,
     assert( tag < 16 );
     reg = &(mx_btl->mx_reg[tag]);
 
-    OMPI_PTR_SET_PVAL(segment.seg_addr, data_if_available);
+    segment.seg_addr.pval = data_if_available;
     segment.seg_len = length;
     descriptor.des_dst = &segment;
     descriptor.des_dst_cnt = 1;
@@ -553,7 +553,7 @@ int mca_btl_mx_component_progress(void)
                  * Now we can register the fragment
                  * again with the MX BTL.
                  */
-                mx_segment.segment_ptr = OMPI_PTR_GET_PVAL(frag->base.des_dst->seg_addr);
+                mx_segment.segment_ptr = frag->base.des_dst->seg_addr.pval;
                 mx_segment.segment_length = mca_btl_mx_module.super.btl_eager_limit;
                 mx_return = mx_irecv( mx_btl->mx_endpoint, &mx_segment, 1,
                                       (uint64_t)frag->tag, BTL_MX_RECV_MASK,
