@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -55,7 +56,7 @@
 
 static struct timeval ompi_rte_ping_wait = {2, 0};
 
-int orte_universe_search(opal_list_t *universe_list, bool report_broken_files)
+int orte_universe_search(opal_list_t *universe_list, bool report_broken_files, bool remove_broken_files)
 {
     int ret, exit_status = ORTE_SUCCESS;
 #ifndef __WINDOWS__
@@ -132,6 +133,21 @@ int orte_universe_search(opal_list_t *universe_list, bool report_broken_files)
                 printf("universe_search: Unable to read the file (%s)\n", univ_setup_filename);
                 exit_status = ret;
             }
+
+            /*
+             * See if we want to remove any cases with broken
+             * universe-setup.txt files.  If so, print out a message and
+             * remove the directory.  This is used by the orte-clean
+             * routine.  
+             */
+            if (remove_broken_files) {
+                char *univ_directory;
+                univ_directory = opal_os_path(false, frontend_abs,
+                                              dir_entry->d_name, NULL);
+                printf("universe_search: Removing defunct directory (%s)\n", univ_directory);
+                opal_os_dirpath_destroy(univ_directory, true, NULL);
+                free(univ_directory);
+            }
             OBJ_RELEASE(univ);
         } else {
             OBJ_RETAIN(univ);
@@ -176,8 +192,23 @@ int orte_universe_search(opal_list_t *universe_list, bool report_broken_files)
         univ = OBJ_NEW(orte_universe_t);
         if(ORTE_SUCCESS != (ret = orte_read_universe_setup_file(univ_setup_filename, univ) ) ){
             if (report_broken_files) {
-                printf("orte_ps: Unable to read the file (%s)\n", univ_setup_filename);
+                printf("universe_search: Unable to read the file (%s)\n", univ_setup_filename);
                 exit_status = ret;
+            }
+
+            /*
+             * See if we want to remove any cases with broken
+             * universe-setup.txt files.  If so, print out a message and
+             * remove the directory.  This is used by the orte-clean
+             * routine.  
+             */
+            if (remove_broken_files) {
+                char *univ_directory;
+                univ_directory = opal_os_path(false, frontend_abs,
+                                              dir_entry->d_name, NULL);
+                printf("universe_search: Removing defunct directory (%s)\n", univ_directory);
+                opal_os_dirpath_destroy(univ_directory, true, NULL);
+                free(univ_directory);
             }
             OBJ_RELEASE(univ);
         } else {
@@ -261,7 +292,7 @@ int orte_universe_exists(orte_universe_t *univ)
          * for universes - we have no better discovery mechanism at this time
          */
         OBJ_CONSTRUCT(&universes, opal_list_t);
-        if (ORTE_SUCCESS != (ret = orte_universe_search(&universes, false))) {
+        if (ORTE_SUCCESS != (ret = orte_universe_search(&universes, false, false))) {
             /* if nothing was found, that's okay - report anything else */
             if (ORTE_ERR_NOT_FOUND != ret) {
                 ORTE_ERROR_LOG(ret);

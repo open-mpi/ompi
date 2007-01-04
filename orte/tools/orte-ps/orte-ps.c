@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved. 
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -278,7 +279,7 @@ main(int argc, char *argv[])
     if( orte_ps_globals.verbose ) {
         printf("orte_ps: Acquiring universe list...\n");
     }
-    if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result, true) ) ) {
+    if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result, true, false) ) ) {
         exit_status = ret;
         goto cleanup;
     }
