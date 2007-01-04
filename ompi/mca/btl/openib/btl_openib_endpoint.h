@@ -146,7 +146,7 @@ struct mca_btl_base_endpoint_t {
     int32_t sd_credits[2];  /**< number of send wqe entries being used to return credits */
     int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
-    uint16_t subnet; /**< subnet of this endpoint*/
+    uint64_t subnet; /**< subnet of this endpoint*/
 
     int32_t eager_recv_count; /**< number of eager received */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;
