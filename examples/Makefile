@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -16,18 +17,24 @@
 # $HEADER$
 #
 
-# Use the Open MPI-provided wrapper compilers
+# Use the Open MPI-provided wrapper compilers.  Note that gmake
+# requires the CXX macro, while other versions of make (such as Sun's
+# make) require the CCC macro.
 
 CC = mpicc
 CXX = mpic++
+CCC = mpic++
 F77 = mpif77
 FC = mpif90
 
 # Using -g is not necessary, but it is helpful for example programs,
-# especially if users want to examine them with debuggers.
+# especially if users want to examine them with debuggers.  Note that
+# gmake requires the CXXFLAGS macro, while other versions of make
+# (such as Sun's make) require the CCFLAGS macro.
 
 CFLAGS = -g
 CXXFLAGS = -g
+CCFLAGS = -g
 F77FLAGS = -g
 FCFLAGS = -g
 
@@ -59,12 +66,12 @@ clean:
 # Don't rely on default rules for the fortran examples
 
 hello_f77: hello_f77.f
-	$(F77) $(F77FLAGS) $< -o $@
+	$(F77) $(F77FLAGS) $^ -o $@
 ring_f77: ring_f77.f
-	$(F77) $(F77FLAGS) $< -o $@
+	$(F77) $(F77FLAGS) $^ -o $@
 
 hello_f90: hello_f90.f90
-	$(FC) $(FCFLAGS) $< -o $@
+	$(FC) $(FCFLAGS) $^ -o $@
 ring_f90: ring_f90.f90
-	$(FC) $(FCFLAGS) $< -o $@
+	$(FC) $(FCFLAGS) $^ -o $@
 
