@@ -39,10 +39,10 @@
 #include "rmgr_cnos.h"
 
 
-static int orte_rmgr_cnos_setup_job(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid);
+static int orte_rmgr_cnos_setup_job(orte_app_context_t** app_context,
+                                    orte_std_cntr_t num_context,
+                                    orte_jobid_t* jobid,
+                                    opal_list_t *attrs);
 
 static int orte_rmgr_cnos_spawn_job(
     orte_app_context_t** app_context,
@@ -119,7 +119,7 @@ orte_rmgr_base_module_t orte_rmgr_cnos_module = {
 static int orte_rmgr_cnos_setup_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
-    orte_jobid_t* jobid)
+    orte_jobid_t* jobid, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

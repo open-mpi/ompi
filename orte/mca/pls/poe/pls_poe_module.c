@@ -60,10 +60,10 @@ extern char **environ;
  * Local functions
  */
 static int pls_poe_launch_job(orte_jobid_t jobid);
-static int pls_poe_terminate_job(orte_jobid_t jobid);
-static int pls_poe_terminate_orteds(orte_jobid_t jobid);
+static int pls_poe_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_poe_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
-static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_poe_finalize(void);
 
@@ -601,7 +601,7 @@ static int pls_poe_launch_job(orte_jobid_t jobid)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_terminate_job(orte_jobid_t jobid)
+static int pls_poe_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -612,12 +612,12 @@ static int pls_poe_terminate_proc(const orte_process_name_t *name)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_terminate_orteds(orte_jobid_t jobid)
+static int pls_poe_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal)
+static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

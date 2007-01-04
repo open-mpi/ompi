@@ -57,8 +57,8 @@ orte_smr_base_module_t orte_smr = {
 
     orte_smr_base_get_proc_state,
     orte_smr_base_set_proc_state,
-    orte_smr_base_get_node_state_not_available,
-    orte_smr_base_set_node_state_not_available,
+    orte_smr_base_get_node_state,
+    orte_smr_base_set_node_state,
     orte_smr_base_get_job_state,
     orte_smr_base_set_job_state,
     orte_smr_base_begin_monitoring_not_available,
@@ -69,6 +69,26 @@ orte_smr_base_module_t orte_smr = {
     orte_smr_base_module_finalize_not_available
 };
 
+/*
+ * OBJ constructors/desctructors for SMR types
+ */
+static void orte_smr_node_tracker_construct(orte_smr_node_state_tracker_t* node)
+{
+    node->cell = ORTE_CELLID_INVALID;
+    node->nodename = NULL;
+    node->state = ORTE_NODE_STATE_UNKNOWN;
+}
+
+static void orte_smr_node_tracker_destruct(orte_smr_node_state_tracker_t* node)
+{
+    if (NULL != node->nodename) free(node->nodename);
+}
+
+OBJ_CLASS_INSTANCE(orte_smr_node_state_tracker_t,
+                   opal_list_item_t,
+                   orte_smr_node_tracker_construct,
+                   orte_smr_node_tracker_destruct);
+
 /**
  * Function for finding and opening either all MCA components, or the one
  * that was specifically requested via a MCA parameter.
@@ -78,8 +98,6 @@ int orte_smr_base_open(void)
 
     int param, value, rc;
     orte_data_type_t tmp;
-
-/* fprintf(stderr,"orte_smr_base_open:enter\n"); */
 
   /* setup output for debug messages */
 

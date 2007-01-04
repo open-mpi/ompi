@@ -166,6 +166,15 @@ static int orte_ras_dash_host_allocate(orte_jobid_t jobid, opal_list_t *attribut
             (rc = orte_ras_base_allocate_nodes(jobid, &nodes))) {
             goto cleanup;
         }
+        
+        /* now indicate that there is uncertainty about the number of slots here,
+         * so the launcher should use knowledge of the local number of processors to
+         * override any oversubscription flags
+         */
+        rc = orte_ras_base_set_oversubscribe_override(jobid);
+        if (ORTE_SUCCESS != rc) {
+            goto cleanup;
+        }        
     }
 
 cleanup:

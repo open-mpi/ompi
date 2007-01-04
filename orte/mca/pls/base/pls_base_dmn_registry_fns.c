@@ -28,6 +28,7 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/mca/rmgr/rmgr.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 
@@ -128,10 +129,7 @@ CLEANUP:
     return rc;
 }
 
-/*
- * Retrieve a list of the active daemons for a job
- */
-int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
+static int get_daemons(opal_list_t *daemons, orte_jobid_t job)
 {
     orte_gpr_value_t **values;
     orte_gpr_keyval_t *kv;
@@ -146,9 +144,21 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
     orte_cellid_t *cell;
     char *nodename;
     orte_process_name_t *name;
-    orte_pls_daemon_info_t *dmn;
+    orte_pls_daemon_info_t *dmn, *dmn2;
     bool found_name, found_node, found_cell;
+    opal_list_item_t *item;
+    bool check_dups;
     int rc;
+
+    /* check the list to see if there is anything already on it. If there is, then
+     * we will need to check for duplicate entries before we add something. If not,
+     * then this can go a lot faster
+     */
+    if (0 < opal_list_get_size(daemons)) {
+        check_dups = true;
+    } else {
+        check_dups = false;
+    }
     
     /* setup the key */
     if (ORTE_SUCCESS != (rc = orte_ns.convert_jobid_to_string(&jobid_string, job))) {
@@ -172,11 +182,11 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
     /* loop through the answers and construct the list */
     for (i=0; i < cnt; i++) {
         /* for systems such as bproc, the node segment holds containers
-         * for nodes that we may not have launched upon. Each container
-         * will send us back a value object, so we have to ensure here
-         * that we only create daemon objects on the list for those nodes
-         * that DO provide a valid object
-         */
+        * for nodes that we may not have launched upon. Each container
+        * will send us back a value object, so we have to ensure here
+        * that we only create daemon objects on the list for those nodes
+        * that DO provide a valid object
+        */
         found_name = found_node = found_cell = false;
         for (j=0; j < values[i]->cnt; j++) {
             kv = values[i]->keyvals[j];
@@ -204,11 +214,27 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
                 found_cell = true;
                 continue;            
             }
-         }
-        /* if we found everything, then this is a valid entry - create
-         * it and add it to the list
-         */
+        }
+        /* if we found everything, then this is a valid entry */
         if (found_name && found_node && found_cell) {
+            /* first check if this name is ourself - if so, ignore it */
+            if (ORTE_EQUAL == orte_dss.compare(name, ORTE_PROC_MY_NAME, ORTE_NAME)) {
+                goto MOVEON;
+            }
+            
+            if (check_dups) {
+                /* see if this daemon is already on the list - if so, then we don't add it */
+                for (item = opal_list_get_first(daemons);
+                     item != opal_list_get_end(daemons);
+                     item = opal_list_get_next(item)) {
+                    dmn2 = (orte_pls_daemon_info_t*)item;
+                    
+                    if (ORTE_EQUAL == orte_dss.compare(dmn2->name, name, ORTE_NAME)) {
+                        /* already on list - ignore it */
+                        goto MOVEON;
+                    }
+                }
+            }
             dmn = OBJ_NEW(orte_pls_daemon_info_t);
             if (NULL == dmn) {
                 ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
@@ -228,17 +254,63 @@ int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job)
             /* add this daemon to the list */
             opal_list_append(daemons, &dmn->super);
         }
+MOVEON:
         OBJ_RELEASE(values[i]);
     }
-
+    
 CLEANUP:
     for (i=0; i < cnt; i++) {
         if (NULL != values[i]) OBJ_RELEASE(values[i]);
     }
     if (NULL != values) free(values);
     free(keys[0]);
-
+    
     return rc;
+}
+
+/*
+ * Retrieve a list of the active daemons for a job
+ */
+int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opal_list_t *attrs)
+{
+    orte_jobid_t *jobs;
+    orte_std_cntr_t njobs, i;
+    bool allocated;
+    int rc;
+    
+    if (NULL != orte_rmgr.find_attribute(attrs, ORTE_NS_INCLUDE_DESCENDANTS)) {
+        /* need to include all descendants in list */
+        if (ORTE_SUCCESS != (rc = orte_ns.get_job_descendants(&jobs, &njobs, job))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        allocated = true;
+    } else if (NULL != orte_rmgr.find_attribute(attrs, ORTE_NS_INCLUDE_CHILDREN)) {
+        /* just include the direct children of the job */
+        if (ORTE_SUCCESS != (rc = orte_ns.get_job_children(&jobs, &njobs, job))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        allocated = true;
+    } else {
+        /* just want daemons for this one job */
+        jobs = &job;
+        njobs = 1;
+        allocated = false;
+    }
+    
+    /* loop through all the jobs and get their info */
+    for (i=0; i < njobs; i++) {
+        if (ORTE_SUCCESS != (rc = get_daemons(daemons, jobs[i]))) {
+            ORTE_ERROR_LOG(rc);
+            goto CLEANUP;
+        }
+    }
+    
+CLEANUP:
+    if (allocated) free(jobs);
+    
+    return ORTE_SUCCESS;
 }
 
 /*
@@ -246,19 +318,59 @@ CLEANUP:
  */
 int orte_pls_base_remove_daemon(orte_pls_daemon_info_t *info)
 {
-    opal_list_t daemons;
+    /* We need to do a registry
+     * delete function call targeting the entry
+     */
+
+    return ORTE_SUCCESS;
+}
+
+
+/*
+ * Check for available daemons we can re-use
+ */
+int orte_pls_base_check_avail_daemons(opal_list_t *daemons,
+                                      orte_jobid_t job)
+{
+    orte_jobid_t root, *descendants;
+    orte_std_cntr_t i, ndesc;
     int rc;
     
-    OBJ_CONSTRUCT(&daemons, opal_list_t);
-    
-    /* We actually don't want to do this - instead, we need to do a registry
-     * delete function call targeting this entry
+    /* check for daemons belonging to any job in this job's family.
+     * Since the jobs in any family must exit together, it is reasonable
+     * for us to reuse any daemons that were spawned by any member
+     * of our extended family. We can find all of our family members
+     * by first finding our root job, and then getting all of its
+     * descendants
      */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, info->active_job))) {
+    if (ORTE_SUCCESS != (rc = orte_ns.get_root_job(&root, job))) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
     
-    /* find this item in the list */
+    if (ORTE_SUCCESS != (rc = orte_ns.get_job_descendants(&descendants, &ndesc, root))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+    
+    /* loop through the descendants, adding to the daemon list as we go */
+    for (i=0; i < ndesc; i++) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, descendants[i], NULL))) {
+            ORTE_ERROR_LOG(rc);
+            free(descendants);
+            return rc;
+        }
+    }
+    free(descendants);  /* all done with these */
+    
+    /* now add in any persistent daemons - they are tagged as bootproxies
+     * for jobid = 0
+     */
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(daemons, 0, NULL))) {
+        ORTE_ERROR_LOG(rc);
+        return rc;
+    }
+        
     return ORTE_SUCCESS;
 }
+

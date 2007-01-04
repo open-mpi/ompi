@@ -37,7 +37,7 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
                              orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
-    orte_std_cntr_t i, num_nodes;
+    orte_std_cntr_t i;
     orte_job_map_t **maps;
     opal_list_item_t *item;
     orte_mapped_node_t *srcnode;
@@ -52,6 +52,24 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
             return rc;
         }
 
+        /* pack the mapping mode used to generate it */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->mapping_mode), 1, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the starting vpid */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->vpid_start), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /* pack the range */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->vpid_range), 1, ORTE_VPID))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
         /* pack the number of app_contexts */
         if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->num_apps), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
@@ -65,14 +83,13 @@ int orte_rmaps_base_pack_map(orte_buffer_t *buffer, void *src,
         }
 
         /* pack the number of nodes */
-        num_nodes = (orte_std_cntr_t)opal_list_get_size(&(maps[i]->nodes));
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &num_nodes, 1, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(maps[i]->num_nodes), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the nodes list */
-        if (0 < num_nodes) {
+        if (0 < maps[i]->num_nodes) {
             for (item = opal_list_get_first(&(maps[i]->nodes));
                  item != opal_list_get_end(&(maps[i]->nodes));
                  item = opal_list_get_next(item)) {
@@ -141,7 +158,7 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
                                      orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int rc;
-    orte_std_cntr_t i, num_procs;
+    orte_std_cntr_t i;
     orte_mapped_node_t **nodes;
     opal_list_item_t *item;
     orte_mapped_proc_t *srcproc;
@@ -181,14 +198,13 @@ int orte_rmaps_base_pack_mapped_node(orte_buffer_t *buffer, void *src,
         }
                 
         /* pack the number of procs */
-        num_procs = (orte_std_cntr_t)opal_list_get_size(&(nodes[i]->procs));
-        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &num_procs, 1, ORTE_STD_CNTR))) {
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(nodes[i]->num_procs), 1, ORTE_STD_CNTR))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
         
         /* pack the procs list */
-        if (0 < num_procs) {
+        if (0 < nodes[i]->num_procs) {
             for (item = opal_list_get_first(&(nodes[i]->procs));
                  item != opal_list_get_end(&(nodes[i]->procs));
                  item = opal_list_get_next(item)) {

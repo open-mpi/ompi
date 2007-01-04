@@ -82,9 +82,9 @@ int orte_smr_base_select(void)
 
     /* If it's not the best one, finalize it */
 
-/*     else { */
-/*         component->smr_finalize(); */
-/*     }  */
+     else {
+         component->smr_finalize();
+     }
 
   } /* for each possible component */
 

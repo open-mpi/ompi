@@ -159,7 +159,6 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
     int rc;
     orte_gpr_keyval_t **keyval;
     orte_std_cntr_t i;
-    char null=0x00;
 
     OPAL_TRACE(4);
 
@@ -175,17 +174,10 @@ int orte_gpr_base_pack_keyval(orte_buffer_t *buffer, void *src,
             return rc;
         }
 
-        /* if there is a data value, then pack it */
-        if (NULL != keyval[i]->value) {
-            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(keyval[i]->value), 1, ORTE_DATA_VALUE))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {  /* otherwise, pack a NULL so we know not to unpack one */
-            if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &null, 1, ORTE_NULL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
+        /* pack the data value */
+        if (ORTE_SUCCESS != (rc = orte_dss_pack_buffer(buffer, &(keyval[i]->value), 1, ORTE_DATA_VALUE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
     }
 

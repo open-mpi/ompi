@@ -80,6 +80,8 @@ ORTE_DECLSPEC int orte_ras_base_allocate_nodes(orte_jobid_t jobid,
 ORTE_DECLSPEC int orte_ras_base_reallocate(orte_jobid_t parent_jobid,
                                            orte_jobid_t child_jobid);
 
+ORTE_DECLSPEC int orte_ras_base_set_oversubscribe_override(orte_jobid_t job);
+
 /*
  * Query the registry for all available nodes 
  */

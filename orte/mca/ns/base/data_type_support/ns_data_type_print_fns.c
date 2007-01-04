@@ -24,7 +24,7 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 static void orte_ns_base_quick_print(char **output, char *type_name, char *pfx, void *src, size_t src_size);
 
@@ -49,6 +49,10 @@ int orte_ns_base_std_print(char **output, char *prefix, void *src, orte_data_typ
             orte_ns_base_quick_print(output, "ORTE_CELLID", prefix, src, sizeof(orte_cellid_t));
             break;
 
+        case ORTE_NODEID:
+            orte_ns_base_quick_print(output, "ORTE_NODEID", prefix, src, sizeof(orte_nodeid_t));
+            break;
+            
         default:
             ORTE_ERROR_LOG(ORTE_ERR_UNKNOWN_DATA_TYPE);
             return ORTE_ERR_UNKNOWN_DATA_TYPE;
@@ -69,9 +73,9 @@ int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *na
         asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: NULL",
                  (NULL == prefix ? " " : prefix));
     } else {
-        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%lu,%lu,%lu]",
-             (NULL == prefix ? " " : prefix), (unsigned long)name->cellid,
-             (unsigned long)name->jobid, (unsigned long)name->vpid);
+        asprintf(output, "%sData type: ORTE_PROCESS_NAME\tData Value: [%ld,%ld,%ld]",
+             (NULL == prefix ? " " : prefix), (long)name->cellid,
+             (long)name->jobid, (long)name->vpid);
     }
 
     return ORTE_SUCCESS;
@@ -80,10 +84,10 @@ int orte_ns_base_print_name(char **output, char *prefix, orte_process_name_t *na
 
 static void orte_ns_base_quick_print(char **output, char *type_name, char *prefix, void *src, size_t src_size)
 {
-    uint8_t *ui8;
-    uint16_t *ui16;
-    uint32_t *ui32;
-    uint64_t *ui64;
+    int8_t *i8;
+    int16_t *i16;
+    int32_t *i32;
+    int64_t *i64;
     char *pfx;
 
     /* set default result */
@@ -99,23 +103,23 @@ static void orte_ns_base_quick_print(char **output, char *type_name, char *prefi
 
     switch(src_size) {
         case 1:
-            ui8 = (uint8_t*)src;
-            asprintf(output, "%sData type: %s\tValue: %d", pfx, type_name, (int) *ui8);
+            i8 = (int8_t*)src;
+            asprintf(output, "%sData type: %s\tValue: %d", pfx, type_name, (int) *i8);
             break;
 
         case 2:
-            ui16 = (uint16_t*)src;
-            asprintf(output, "%sData type: %s\tValue: %d", pfx, type_name, (int) *ui16);
+            i16 = (int16_t*)src;
+            asprintf(output, "%sData type: %s\tValue: %d", pfx, type_name, (int) *i16);
             break;
 
         case 4:
-            ui32 = (uint32_t*)src;
-            asprintf(output, "%sData type: %s\tValue: %lu", pfx, type_name, (unsigned long) *ui32);
+            i32 = (int32_t*)src;
+            asprintf(output, "%sData type: %s\tValue: %ld", pfx, type_name, (long) *i32);
             break;
 
         case 8:
-            ui64 = (uint64_t*)src;
-            asprintf(output, "%sData type: %s\tValue: %lu", pfx, type_name, (unsigned long) *ui64);
+            i64 = (int64_t*)src;
+            asprintf(output, "%sData type: %s\tValue: %ld", pfx, type_name, (long) *i64);
             break;
 
         default:

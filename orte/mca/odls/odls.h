@@ -33,17 +33,33 @@
 
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/ns/ns_types.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 #include "orte/mca/odls/odls_types.h"
 
 /*
  * odls module functions
  */
-
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+    
 /**
  * Subscribe to receive the launch data for local processes
  */
 typedef int (*orte_odls_base_module_subscribe_launch_data_fn_t)(orte_jobid_t job, orte_gpr_notify_cb_fn_t cbfunc);
+
+/*
+ * Construct a notify data object for use in adding local processes
+ * In order to reuse daemons, we need a way for the HNP to construct a notify_data object that
+ * contains the data needed by the active ODLS component to launch a local process. Since the
+ * only one that knows what a particular ODLS component needs is that component, we require an
+ * entry point that the HNP can call to get the required notify_data object. This is constructed
+ * for *all* nodes - the individual orteds then parse that data to find the specific launch info
+ * for procs on their node
+ */
+typedef int (*orte_odls_base_module_get_add_procs_data_fn_t)(orte_gpr_notify_data_t **data,
+                                                             orte_job_map_t *map);
 
 /**
  * Locally launch the provided processes
@@ -66,6 +82,7 @@ typedef int (*orte_odls_base_module_signal_local_process_fn_t)(const orte_proces
  */
 struct orte_odls_base_module_1_3_0_t {
     orte_odls_base_module_subscribe_launch_data_fn_t        subscribe_launch_data;
+    orte_odls_base_module_get_add_procs_data_fn_t           get_add_procs_data;
     orte_odls_base_module_launch_local_processes_fn_t       launch_local_procs;
     orte_odls_base_module_kill_local_processes_fn_t         kill_local_procs;
     orte_odls_base_module_signal_local_process_fn_t   		signal_local_procs;
@@ -126,5 +143,8 @@ typedef orte_odls_base_component_1_3_0_t orte_odls_base_component_t;
 */
 ORTE_DECLSPEC extern orte_odls_base_module_t orte_odls;  /* holds selected module's function pointers */
 
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
 
 #endif /* MCA_ODLS_H */

@@ -147,7 +147,7 @@ extern "C" {
  * return_value = orte_rmgr.query();
  * @endcode
  */
-typedef int (*orte_rds_base_module_query_fn_t)(void);
+typedef int (*orte_rds_base_module_query_fn_t)(orte_jobid_t job);
 
 /**
  * Add a list of resources to the Resource Segment

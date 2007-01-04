@@ -157,9 +157,7 @@ int orte_gpr_base_unpack_keyval(orte_buffer_t *buffer, void *dest,
 {
     int rc;
     orte_gpr_keyval_t **keyval;
-    orte_std_cntr_t i, max_n=1;
-    orte_data_type_t dt;
-    char null;
+    orte_std_cntr_t i, max_n;
 
     OPAL_TRACE(4);
 
@@ -174,29 +172,19 @@ int orte_gpr_base_unpack_keyval(orte_buffer_t *buffer, void *dest,
         }
 
         /* unpack the key */
+        max_n=1;
         if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(keyval[i]->key),
                     &max_n, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
 
-        /* check to see if a NULL is the next item - if so, then there is no data value */
-        if (ORTE_SUCCESS != (rc = orte_dss_peek_type(buffer, &dt))) {
+        /* unpack the data value */
+        max_n=1;
+        if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(keyval[i]->value),
+                                                         &max_n, ORTE_DATA_VALUE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
-        }
-        if (ORTE_NULL == dt) { /* NULL is stored - unpack it and move on */
-            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &null, &max_n, ORTE_NULL))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
-        } else {/* unpack the data value */
-            max_n = 1;
-            if (ORTE_SUCCESS != (rc = orte_dss_unpack_buffer(buffer, &(keyval[i]->value),
-                        &max_n, ORTE_DATA_VALUE))) {
-                ORTE_ERROR_LOG(rc);
-                return rc;
-            }
         }
     }
 

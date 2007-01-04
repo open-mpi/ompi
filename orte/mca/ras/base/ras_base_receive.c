@@ -50,7 +50,7 @@ int orte_ras_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY,
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_RAS,
                                                       ORTE_RML_PERSISTENT,
                                                       orte_ras_base_recv,
@@ -71,7 +71,7 @@ int orte_ras_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RAS))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RAS))) {
         ORTE_ERROR_LOG(rc);
     }
     recv_issued = false;

@@ -223,7 +223,7 @@ static int orte_rds_resfile_parse_site(char *site, FILE *fp)
 }
 
 
-int orte_rds_resfile_query(void)
+int orte_rds_resfile_query(orte_jobid_t job)
 {
     int fileid, rc;
     FILE *fp;

@@ -29,8 +29,8 @@ extern "C" {
 #define ORTE_ERR_BASE            OPAL_ERR_MAX
 
 /* define the results values for comparisons so we can change them in only one place */
-#define ORTE_VALUE1_GREATER  -1
-#define ORTE_VALUE2_GREATER  +1
+#define ORTE_VALUE1_GREATER  +1
+#define ORTE_VALUE2_GREATER  -1
 #define ORTE_EQUAL            0
 
 enum {
@@ -92,7 +92,8 @@ enum {
     ORTE_ERR_PROC_EXIT_STATUS_MISSING       = (ORTE_ERR_BASE - 24),
     ORTE_ERR_INDETERMINATE_STATE_INFO       = (ORTE_ERR_BASE - 25),
     ORTE_ERR_NODE_FULLY_USED				= (ORTE_ERR_BASE - 26),
-    ORTE_ERR_INVALID_NUM_PROCS              = (ORTE_ERR_BASE - 27)
+    ORTE_ERR_INVALID_NUM_PROCS              = (ORTE_ERR_BASE - 27),
+    ORTE_ERR_SILENT                         = (ORTE_ERR_BASE - 28)
 };
 
 #define ORTE_ERR_MAX                      (ORTE_ERR_BASE - 100)

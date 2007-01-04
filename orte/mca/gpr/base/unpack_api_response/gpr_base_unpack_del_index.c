@@ -91,7 +91,6 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, orte_std_cntr_t 
 {
     orte_gpr_cmd_flag_t command;
     orte_std_cntr_t n;
-    orte_data_type_t type;
     int rc;
 
     OPAL_TRACE(3);
@@ -114,16 +113,6 @@ int orte_gpr_base_unpack_index(orte_buffer_t *buffer, int *ret, orte_std_cntr_t 
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, ret, &n, ORTE_INT))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }
-
-    if (ORTE_SUCCESS != (rc = orte_dss.peek(buffer, &type, &n))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    if (ORTE_STRING != type) {
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        return ORTE_ERR_COMM_FAILURE;
     }
 
     if (0 < n) {

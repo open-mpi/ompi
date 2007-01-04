@@ -40,9 +40,8 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     orte_gpr_value_t **values = NULL, *val;
     orte_gpr_replica_segment_t *seg=NULL;
     orte_gpr_replica_itag_t *itags=NULL;
-    orte_data_type_t type;
     int rc, ret;
-    orte_std_cntr_t i=0, cnt;
+    orte_std_cntr_t i=0, cnt, num_values;
 
     OPAL_TRACE(3);
 
@@ -52,25 +51,21 @@ int orte_gpr_replica_recv_put_cmd(orte_buffer_t *buffer, orte_buffer_t *answer)
     }
 
     cnt = 1;
-    if (ORTE_SUCCESS != (rc = orte_dss.peek(buffer, &type, &cnt))) {
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &num_values, &cnt, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
+        free(values);
         ret = rc;
         goto RETURN_ERROR;
     }
-
-    if (ORTE_GPR_VALUE != type || 0 >= cnt) {
-        ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
-        ret = ORTE_ERR_BAD_PARAM;
-        goto RETURN_ERROR;
-    }
-
-    values = (orte_gpr_value_t**)malloc(cnt * sizeof(orte_gpr_value_t*));
+    
+    values = (orte_gpr_value_t**)malloc(num_values * sizeof(orte_gpr_value_t*));
     if (NULL == values) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         ret = ORTE_ERR_OUT_OF_RESOURCE;
         goto RETURN_ERROR;
     }
 
+    cnt = num_values;
     if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, values, &cnt, ORTE_GPR_VALUE))) {
         ORTE_ERROR_LOG(rc);
         free(values);

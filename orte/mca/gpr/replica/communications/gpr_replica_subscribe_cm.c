@@ -40,7 +40,6 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
                                         orte_buffer_t *output_buffer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_SUBSCRIBE_CMD;
-    orte_data_type_t type;
     int rc, ret;
     orte_std_cntr_t n, num_subs, num_trigs;
     orte_gpr_trigger_t **trigs=NULL;
@@ -53,104 +52,51 @@ int orte_gpr_replica_recv_subscribe_cmd(orte_process_name_t* sender,
         return rc;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_dss.peek(input_buffer, &type, &n))) {
+    /* get the number of subscriptions */
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &num_subs, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
     
-    /* if the original command did not provide any subscriptions, then we put a orte_std_cntr_t value in the buffer of "zero"
-     * to avoid causing buffer problems. thus, we need to check to see if the type is orte_std_cntr_t vs subscription vs
-     * something else. if it is trigger, then we need the number to be greater than 0, which should always
-     * be true (we check it just to be safe). if it is orte_std_cntr_t, then the value should be zero - anything else
-     * generates an error.
-     */
-    if (ORTE_STD_CNTR == type) {
-        /* this case means that there were no subscriptions, so we need to clear the value from the buffer
-         * and continue on
-         */
-        n=1;
-        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_subs, &n, ORTE_STD_CNTR)) {
-            ORTE_ERROR_LOG(rc);
-            goto RETURN_ERROR;
-        }
-        /* if the returned number of subscriptions isn't zero, then we have a problem */
-        if (0 != num_subs) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            rc = ORTE_ERR_COMM_FAILURE;
-            goto RETURN_ERROR;
-        }
-    } else if (ORTE_GPR_SUBSCRIPTION == type && 0 < n) {
-        /* create the space for the subscriptions */
-        subscriptions = (orte_gpr_subscription_t**)malloc(n * sizeof(orte_gpr_subscription_t*));
+    /* create the space for the subscriptions, if any are there - and unpack them */
+    if (0 < num_subs) {
+        subscriptions = (orte_gpr_subscription_t**)malloc(num_subs * sizeof(orte_gpr_subscription_t*));
         if (NULL == subscriptions) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-        
+        n = num_subs;
         if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, subscriptions, &n, ORTE_GPR_SUBSCRIPTION))) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
         num_subs = n;
-    } else {
-        /* we must have an error condition - it either wasn't the right type, or we had the type okay
-         * but don't have a good number of elements. report the error and move on
-         */
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        rc = ORTE_ERR_COMM_FAILURE;
-        goto RETURN_ERROR;
     }
-    
-    if (ORTE_SUCCESS != (rc = orte_dss.peek(input_buffer, &type, &n))) {
+
+    /* get the number of triggers */
+    n=1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(input_buffer, &num_trigs, &n, ORTE_STD_CNTR))) {
         ORTE_ERROR_LOG(rc);
         goto RETURN_ERROR;
     }
     
-    /* if the original command did not provide any triggers, then we put a orte_std_cntr_t value in the buffer of "zero"
-     * to avoid causing buffer problems. thus, we need to check to see if the type is orte_std_cntr_t vs trigger vs
-     * something else. if it is trigger, then we need the number to be greater than 0, which should always
-     * be true (we check it just to be safe). if it is orte_std_cntr_t, then the value should be zero - anything else
-     * generates an error.
-     */
-    if (ORTE_STD_CNTR == type) {
-        /* this case means that there were no triggers, so we need to clear the value from the buffer
-         * and continue on
-         */
-        n=1;
-        if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, &num_trigs, &n, ORTE_STD_CNTR)) {
-            ORTE_ERROR_LOG(rc);
-            goto RETURN_ERROR;
-        }
-        /* if the returned number of triggers isn't zero, then we have a problem */
-        if (0 != num_trigs) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            rc = ORTE_ERR_COMM_FAILURE;
-            goto RETURN_ERROR;
-        }
-    } else if (ORTE_GPR_TRIGGER == type && 0 < n) {
-        /* create the space for the triggers */
-        trigs = (orte_gpr_trigger_t**)malloc(n * sizeof(orte_gpr_trigger_t*));
+    /* create the space for the triggers, if any are there - and unpack them */
+    if (0 < num_trigs) {
+        trigs = (orte_gpr_trigger_t**)malloc(num_trigs * sizeof(orte_gpr_trigger_t*));
         if (NULL == trigs) {
             ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto RETURN_ERROR;
         }
-    
+        n = num_trigs;
         if (ORTE_SUCCESS != orte_dss.unpack(input_buffer, trigs, &n, ORTE_GPR_TRIGGER)) {
             ORTE_ERROR_LOG(rc);
             goto RETURN_ERROR;
         }
         num_trigs = n;
-    } else {
-        /* we must have an error condition - it either wasn't the right type, or we had the type okay
-         * but don't have a good number of elements. report the error and move on
-         */
-        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        rc = ORTE_ERR_COMM_FAILURE;
-        goto RETURN_ERROR;
     }
-
 
     /* register subscriptions */
     if (ORTE_SUCCESS != (rc = orte_gpr_replica_subscribe_fn(sender,

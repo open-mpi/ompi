@@ -172,9 +172,9 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
            processes, but will work for initial job start */
         idx = ompi_pointer_array_add(&mca_pml_dr.endpoints,
                                      (void*) endpoint);
-        if(orte_ns.compare(ORTE_NS_CMP_ALL,
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,
                            orte_process_info.my_name,
-                           &(endpoint->proc_ompi->proc_name)) == 0) {
+                           &(endpoint->proc_ompi->proc_name)) == ORTE_EQUAL) {
             mca_pml_dr.my_rank = idx;
         }
         endpoint->local = endpoint->dst = idx;

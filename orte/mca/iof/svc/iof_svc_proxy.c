@@ -151,7 +151,7 @@ static void orte_iof_svc_proxy_msg(
             continue;
 
         /* source match */
-        if(orte_ns.compare(sub->src_mask,&sub->src_name,&hdr->msg_src) == 0) {
+        if(orte_ns.compare_fields(sub->src_mask,&sub->src_name,&hdr->msg_src) == 0) {
             if(mca_iof_svc_component.svc_debug > 1) {
                 opal_output(0, "[%lu,%lu,%lu] orte_iof_svc_proxy_msg: tag %d sequence %d\n",
                     ORTE_NAME_ARGS(&sub->src_name),hdr->msg_tag,hdr->msg_seq);
@@ -227,7 +227,7 @@ static void orte_iof_svc_proxy_ack(
         orte_iof_svc_sub_t* sub = (orte_iof_svc_sub_t*)s_item;
         opal_list_item_t *f_item;
 
-        if (orte_ns.compare(sub->src_mask,&sub->src_name,&hdr->msg_src) != 0 ||
+        if (orte_ns.compare_fields(sub->src_mask,&sub->src_name,&hdr->msg_src) != 0 ||
             sub->src_tag != hdr->msg_tag) {
             continue;
         }
@@ -238,8 +238,8 @@ static void orte_iof_svc_proxy_ack(
             f_item =  opal_list_get_next(f_item)) {
             orte_iof_svc_fwd_t* fwd = (orte_iof_svc_fwd_t*)f_item;
             orte_iof_svc_pub_t* pub = fwd->fwd_pub;
-            if (orte_ns.compare(pub->pub_mask,&pub->pub_name,src) == 0 ||
-                orte_ns.compare(ORTE_NS_CMP_ALL,&pub->pub_proxy,src) == 0) {
+            if (orte_ns.compare_fields(pub->pub_mask,&pub->pub_name,src) == 0 ||
+                orte_ns.compare_fields(ORTE_NS_CMP_ALL,&pub->pub_proxy,src) == 0) {
                 value.uval = hdr->msg_seq + hdr->msg_len;
                 orte_hash_table_set_proc(&fwd->fwd_seq,
                                          &hdr->msg_src, &value.vval);
@@ -259,7 +259,7 @@ static void orte_iof_svc_proxy_ack(
     */
     if(seq_min == hdr->msg_seq+hdr->msg_len) {
  
-        if(orte_ns.compare(ORTE_NS_CMP_ALL,orte_process_info.my_name,&hdr->msg_src) == 0) {
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL,orte_process_info.my_name,&hdr->msg_src) == 0) {
             orte_iof_base_endpoint_t* endpoint;
             /*
              * Local delivery

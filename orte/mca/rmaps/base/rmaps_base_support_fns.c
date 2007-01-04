@@ -343,7 +343,7 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
     current_node->node_slots_inuse++;
     
     /* see if this node is oversubscribed now */
-    if (current_node->node_slots_inuse >= current_node->node_slots) {
+    if (current_node->node_slots_inuse > current_node->node_slots) {
         oversub = true;
     } else {
         oversub = false;
@@ -364,7 +364,7 @@ int orte_rmaps_base_claim_slot(orte_job_map_t *map,
      */
     if ((0 != current_node->node_slots_max  &&
         current_node->node_slots_inuse >= current_node->node_slots_max) ||
-        (!oversubscribe && oversub)) {
+        (!oversubscribe && current_node->node_slots_inuse >= current_node->node_slots)) {
         opal_list_remove_item(nodes, (opal_list_item_t*)current_node);
         /* add it to the list of fully used nodes */
         opal_list_append(fully_used_nodes, &current_node->super);

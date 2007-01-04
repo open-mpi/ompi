@@ -202,12 +202,12 @@ typedef int (*orte_pls_base_module_launch_job_fn_t)(orte_jobid_t);
  * Terminate any processes launched for the respective jobid by
  * this component.
  */
-typedef int (*orte_pls_base_module_terminate_job_fn_t)(orte_jobid_t);
+typedef int (*orte_pls_base_module_terminate_job_fn_t)(orte_jobid_t, opal_list_t *attrs);
 
 /**
  * Terminate the daemons associated with this jobid
  */
-typedef int (*orte_pls_base_module_terminate_orteds_fn_t)(orte_jobid_t);
+typedef int (*orte_pls_base_module_terminate_orteds_fn_t)(orte_jobid_t, opal_list_t *attrs);
 
 /**
  * Terminate a specific process.
@@ -218,7 +218,7 @@ typedef int (*orte_pls_base_module_terminate_proc_fn_t)(const orte_process_name_
  * Signal any processes launched for the respective jobid by
  * this component.
  */
-typedef int (*orte_pls_base_module_signal_job_fn_t)(orte_jobid_t, int32_t);
+typedef int (*orte_pls_base_module_signal_job_fn_t)(orte_jobid_t, int32_t, opal_list_t *attrs);
 
 /**
  * Signal a specific process.

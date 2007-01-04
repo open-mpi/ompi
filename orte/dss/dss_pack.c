@@ -36,7 +36,7 @@ int orte_dss_pack(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_vals,
     int rc;
 
     /* check for error */
-    if (NULL == buffer || NULL == src) {
+    if (NULL == buffer) {
         ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
         return ORTE_ERR_BAD_PARAM;
     }
@@ -102,6 +102,16 @@ int orte_dss_pack_bool(orte_buffer_t *buffer, void *src,
 {
     int ret;
 
+    /* System types need to always be described so we can properly
+       unpack them.  If we aren't fully described, then add the
+       description for this type... */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, DSS_TYPE_BOOL))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
+
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
         ret = orte_dss_pack_buffer(buffer, src, num_vals, DSS_TYPE_BOOL))) {
@@ -118,6 +128,16 @@ int orte_dss_pack_int(orte_buffer_t *buffer, void *src,
                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
+
+    /* System types need to always be described so we can properly
+       unpack them.  If we aren't fully described, then add the
+       description for this type... */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, DSS_TYPE_INT))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
@@ -136,6 +156,16 @@ int orte_dss_pack_sizet(orte_buffer_t *buffer, void *src,
 {
     int ret;
 
+    /* System types need to always be described so we can properly
+       unpack them.  If we aren't fully described, then add the
+       description for this type... */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, DSS_TYPE_SIZE_T))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
+
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
         ret = orte_dss_pack_buffer(buffer, src, num_vals, DSS_TYPE_SIZE_T))) {
@@ -152,6 +182,16 @@ int orte_dss_pack_pid(orte_buffer_t *buffer, void *src,
                       orte_std_cntr_t num_vals, orte_data_type_t type)
 {
     int ret;
+
+    /* System types need to always be described so we can properly
+       unpack them.  If we aren't fully described, then add the
+       description for this type... */
+    if (ORTE_DSS_BUFFER_FULLY_DESC != buffer->type) {
+        if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, DSS_TYPE_PID_T))) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
+    }
 
     /* Turn around and pack the real type */
     if (ORTE_SUCCESS != (
@@ -388,12 +428,26 @@ int orte_dss_pack_data_value(orte_buffer_t *buffer, void *src, orte_std_cntr_t n
     sdv = (orte_data_value_t **) src;
 
     for (i = 0; i < num; ++i) {
+        /* if the src data value is NULL, then we will pack it as ORTE_NULL to indicate
+         * that the unpack should leave a NULL data value
+         */
+        if (NULL == sdv[i]) {
+            if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, ORTE_NULL))) {
+                ORTE_ERROR_LOG(ret);
+                return ret;
+            }
+            continue;
+        }
+        
         /* pack the data type - we'll need it on the other end */
         if (ORTE_SUCCESS != (ret = orte_dss_store_data_type(buffer, sdv[i]->type))) {
             ORTE_ERROR_LOG(ret);
             return ret;
         }
 
+        /* if the data type is UNDEF, then nothing more to do */
+        if (ORTE_UNDEF == sdv[i]->type) continue;
+        
         /* Lookup the pack function for this type and call it */
 
         if (NULL == (info = (orte_dss_type_info_t*)orte_pointer_array_get_item(orte_dss_types, sdv[i]->type))) {

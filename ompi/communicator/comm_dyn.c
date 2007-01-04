@@ -312,7 +312,7 @@ orte_process_name_t *ompi_comm_get_rport (orte_process_name_t *port, int send_fi
         if (NULL == rbuf) {
             return NULL;
         }
-        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_RML_NAME_ANY, rbuf, tag))) {
+        if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer(ORTE_NAME_WILDCARD, rbuf, tag))) {
             ORTE_ERROR_LOG(rc);
             OBJ_RELEASE(rbuf);
             return NULL;
@@ -875,40 +875,34 @@ void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
        of different jobids.  */
     grp = comm->c_local_group;
     for (i=0; i< size; i++) {
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    found = 0;
-    for ( j=0; j<numjobids; j++) {
-        if ( thisjobid == jobids[j]) {
-        found = 1;
-        break;
+        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+        found = 0;
+        for ( j=0; j<numjobids; j++) {
+            if ( thisjobid == jobids[j]) {
+                found = 1;
+                break;
+            }
         }
-    }
-    if (!found ) {
-        jobids[numjobids++] = thisjobid;
-    }
+        if (!found ) {
+            jobids[numjobids++] = thisjobid;
+        }
     }
 
     /* if inter-comm, loop over all processes in remote_group
        and count number of different jobids */
     grp = comm->c_remote_group;
     for (i=0; i< rsize; i++) {
-    if (ORTE_SUCCESS != (rc = orte_ns.get_jobid(&thisjobid, &(grp->grp_proc_pointers[i]->proc_name)))) {
-        ORTE_ERROR_LOG(rc);
-        return;
-    }
-    found = 0;
-    for ( j=0; j<numjobids; j++) {
-        if ( thisjobid == jobids[j]) {
-        found = 1;
-        break;
+        thisjobid = grp->grp_proc_pointers[i]->proc_name.jobid;
+        found = 0;
+        for ( j=0; j<numjobids; j++) {
+            if ( thisjobid == jobids[j]) {
+                found = 1;
+                break;
+            }
         }
-    }
-    if (!found ) {
-        jobids[numjobids++] = thisjobid;
-    }
+        if (!found ) {
+            jobids[numjobids++] = thisjobid;
+        }
     }
 
     /* if number of joibds larger than one, set the disconnect flag*/

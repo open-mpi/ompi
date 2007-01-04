@@ -109,11 +109,8 @@ struct globals_t {
     bool no_wait_for_job_completion;
     bool by_node;
     bool by_slot;
-    bool per_node;
-    bool no_oversubscribe;
+    bool do_not_launch;
     bool debugger;
-    bool no_local_schedule;
-    bool displaymapatlaunch;
     int num_procs;
     int exit_status;
     char *hostfile;
@@ -194,14 +191,17 @@ opal_cmd_line_init_t cmd_line_init[] = {
       &orterun_globals.by_slot, OPAL_CMD_LINE_TYPE_BOOL,
       "Whether to allocate/map processes round-robin by slot (the default)" },
     { NULL, NULL, NULL, '\0', "pernode", "pernode", 0,
-        &orterun_globals.per_node, OPAL_CMD_LINE_TYPE_BOOL,
-        "If no number of process is specified, this will cause one process per available node to be executed" },
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Launch one process per available node on the specified number of nodes [no -np => use all allocated nodes]" },
+    { NULL, NULL, NULL, '\0', "npernode", "npernode", 1,
+        NULL, OPAL_CMD_LINE_TYPE_INT,
+        "Launch n processes per node on all allocated nodes" },
     { NULL, NULL, NULL, '\0', "nooversubscribe", "nooversubscribe", 0,
-      &orterun_globals.no_oversubscribe, OPAL_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Nodes are not to be oversubscribed, even if the system supports such operation"},
-    { NULL, NULL, NULL, '\0', "display-map-at-launch", "display-map-at-launch", 0,
-        &orterun_globals.displaymapatlaunch, OPAL_CMD_LINE_TYPE_BOOL,
-        "Display the process map just before launch"},
+    { "rmaps", "base", "display_map", '\0', "display-map", "display-map", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "Display the process map just before launch"},
     
     /* mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "wdir", "wdir", 1,
@@ -223,7 +223,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
 
     /* OSC mpiexec-like arguments */
     { NULL, NULL, NULL, '\0', "nolocal", "nolocal", 0,
-      &orterun_globals.no_local_schedule, OPAL_CMD_LINE_TYPE_BOOL,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "Do not run any MPI applications on the local node" },
 
     /* User-level debugger arguments */
@@ -262,6 +262,14 @@ opal_cmd_line_init_t cmd_line_init[] = {
       &orte_process_info.tmpdir_base, OPAL_CMD_LINE_TYPE_STRING,
       "Set the root for the session directory tree for orterun ONLY" },
 
+    { NULL, NULL, NULL, '\0', NULL, "do-not-launch", 0,
+        &orterun_globals.do_not_launch, OPAL_CMD_LINE_TYPE_BOOL,
+        "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
+    
+    { NULL, NULL, NULL, '\0', "reuse-daemons", "reuse-daemons", 0,
+      NULL, OPAL_CMD_LINE_TYPE_BOOL,
+      "If set, reuse daemons to launch dynamically spawned processes"},
+
     { NULL, NULL, NULL, '\0', NULL, "prefix", 1,
       NULL, OPAL_CMD_LINE_TYPE_STRING,
       "Prefix where Open MPI is installed on remote nodes" },
@@ -297,10 +305,11 @@ int orterun(int argc, char *argv[])
 {
     orte_app_context_t **apps;
     int rc, ret, i, num_apps, array_size;
-    int id, iparam;
     orte_proc_state_t cb_states;
     orte_job_state_t exit_state;
     opal_list_t attributes;
+    opal_list_item_t *item;
+    uint8_t flow;
 
     /* Setup MCA params */
 
@@ -356,64 +365,6 @@ int orterun(int argc, char *argv[])
         return rc;
     }
 
-    /* check for daemon flags and push them into the environment
-     * since this isn't being automatically done
-     */
-    id = mca_base_param_reg_int_name("orte_debug", "daemons",
-                                     "Whether to debug the ORTE daemons or not",
-                                     false, false, (int)false, &iparam);
-    if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", "debug", "daemons");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
-            opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
-            free(tmp);
-            return rc;
-        }
-        free(tmp);
-    }
-    id = mca_base_param_reg_int_name("orte", "debug",
-                                     "Top-level ORTE debug switch",
-                                     false, false, 0, &iparam);
-    if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", NULL, "debug");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
-            opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
-            free(tmp);
-            return rc;
-        }
-        free(tmp);
-    }
-    id = mca_base_param_reg_int_name("orte_debug", "daemons_file",
-                                     "Whether want stdout/stderr of daemons to go to a file or not",
-                                     false, false, 0, &iparam);
-    if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", "debug",
-                                                    "daemons_file");
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
-            opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
-            free(tmp);
-            return rc;
-        }
-        free(tmp);
-    }
-    id = mca_base_param_reg_int_name("orte", "no_daemonize",
-                                     "Whether to properly daemonize the ORTE daemons or not",
-                                     false, false, 0, &iparam);
-    if (iparam) {
-        char *tmp = mca_base_param_environ_variable("orte", "no_daemonize", NULL);
-        if (ORTE_SUCCESS != (rc = opal_setenv(tmp, "1", true, &environ))) {
-            opal_show_help("help-orterun.txt", "orterun:environ", false,
-                           orterun_basename, tmp, "1", rc);
-            free(tmp);
-            return rc;
-        }
-        free(tmp);
-    }
-
-    
     /* pre-condition any network transports that require it */
     if (ORTE_SUCCESS != (rc = orte_pre_condition_transports(apps, num_apps))) {
         ORTE_ERROR_LOG(rc);
@@ -426,15 +377,12 @@ int orterun(int argc, char *argv[])
     /* Prep to start the application */
     /* construct the list of attributes */
     OBJ_CONSTRUCT(&attributes, opal_list_t);
-
-    if (orterun_globals.displaymapatlaunch) {
-        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(&attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP,
-                                                          ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE))) {
-            opal_show_help("help-orterun.txt", "orterun:attr-failed", false,
-                           orterun_basename, NULL, NULL, rc);
-        }
-    }
     
+    if (orterun_globals.do_not_launch) {
+        flow = ORTE_RMGR_SETUP | ORTE_RMGR_RES_DISC | ORTE_RMGR_ALLOC | ORTE_RMGR_MAP | ORTE_RMGR_SETUP_TRIGS;
+        orte_rmgr.add_attribute(&attributes, ORTE_RMGR_SPAWN_FLOW, ORTE_UINT8, &flow, ORTE_RMGR_ATTR_OVERRIDE);
+    }
+
     /** setup callbacks for abort signals */
     opal_signal_set(&term_handler, SIGTERM,
                     abort_signal_callback, &term_handler);
@@ -458,11 +406,19 @@ int orterun(int argc, char *argv[])
 
     cb_states = ORTE_PROC_STATE_TERMINATED | ORTE_PROC_STATE_AT_STG1;
     rc = orte_rmgr.spawn_job(apps, num_apps, &jobid, 0, NULL, job_state_callback, cb_states, &attributes);
+    while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attributes);
+    
     if (ORTE_SUCCESS != rc) {
         /* JMS show_help */
         opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
     } else {
 
+        if (orterun_globals.do_not_launch) {
+            /* we are done! */
+            goto DONE;
+        }
+        
         /* Wait for the app to complete */
 
         if (wait_for_job_completion) {
@@ -505,19 +461,23 @@ int orterun(int argc, char *argv[])
             
             /* the job is complete - now tell the orteds that it is
              * okay to finalize and exit, we are done with them
+             * be sure to include any descendants so nothing is
+             * left hanging
              */
-            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid))) {
+            OBJ_CONSTRUCT(&attributes, opal_list_t);
+            orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &attributes))) {
                 opal_show_help("help-orterun.txt", "orterun:daemon-die", false,
                                orterun_basename, NULL, NULL, ret);
             }
+            while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
+            OBJ_DESTRUCT(&attributes);
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
         }
     }
 
-    /* All done */
-    OBJ_DESTRUCT(&attributes);
-    
+DONE:
     for (i = 0; i < num_apps; ++i) {
         OBJ_RELEASE(apps[i]);
     }
@@ -632,9 +592,16 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                     ++num_killed;
                 } else {
                     if (num_aborted < max_display_aborted) {
+#ifdef HAVE_STRSIGNAL
+                        opal_show_help("help-orterun.txt", "orterun:proc-aborted-strsignal", false,
+                                       orterun_basename, (unsigned long)rank, (unsigned long)pid,
+                                       node_name, WTERMSIG(exit_status), 
+                                       strsignal(WTERMSIG(exit_status)));
+#else
                         opal_show_help("help-orterun.txt", "orterun:proc-aborted", false,
                                        orterun_basename, (unsigned long)rank, (unsigned long)pid,
                                        node_name, WTERMSIG(exit_status));
+#endif
                     }
                     ++num_aborted;
                 }
@@ -744,6 +711,8 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     int ret;
     struct timeval tv = { 1, 0 };
     opal_event_t* event;
+    opal_list_t attrs;
+    opal_list_item_t *item;
 
     static int signalled = 0;
 
@@ -757,21 +726,21 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     }
 
     /* terminate the job - this will also wakeup orterun so
-     * it can kill all the orteds
+     * it can kill all the orteds. Be sure to kill all the job's
+     * descendants, if any, so nothing is left hanging
      */
     if (jobid != ORTE_JOBID_INVALID) {
-        ret = orte_pls.terminate_job(jobid);
+        OBJ_CONSTRUCT(&attrs, opal_list_t);
+        orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+        ret = orte_pls.terminate_job(jobid, &attrs);
+        while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+        OBJ_DESTRUCT(&attrs);
         if (ORTE_SUCCESS != ret) {
             jobid = ORTE_JOBID_INVALID;
         }
     }
     
-    /* setup a delay - if the timer fires, then we assume that the orteds
-     * failed to properly kill the job. This can happen for a variety of
-     * reasons - for example, if an application couldn't be found, then
-     * the local orted may not be able to tell us it "terminated" since
-     * it never actually started
-     */
+    /* setup a delay to give the orteds time to complete their departure */
     if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
         opal_evtimer_set(event, exit_callback, NULL);
         opal_evtimer_add(event, &tv);
@@ -787,6 +756,8 @@ static void  signal_forward_callback(int fd, short event, void *arg)
 {
     struct opal_event *signal = (struct opal_event*)arg;
     int signum, ret;
+    opal_list_t attrs;
+    opal_list_item_t *item;
 
     OPAL_TRACE(1);
 
@@ -796,11 +767,15 @@ static void  signal_forward_callback(int fd, short event, void *arg)
                 orterun_basename, signum);
     }
 
-    /** send the signal out to the processes */
-    if (ORTE_SUCCESS != (ret = orte_pls.signal_job(jobid, signum))) {
+    /** send the signal out to the processes, including any descendants */
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    if (ORTE_SUCCESS != (ret = orte_pls.signal_job(jobid, signum, &attrs))) {
         fprintf(stderr, "Signal %d could not be sent to the job (returned %d)",
                 signum, ret);
     }
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
 }
 
 
@@ -827,23 +802,20 @@ static int init_globals(void)
     orterun_globals.no_wait_for_job_completion = false;
     orterun_globals.by_node                    = false;
     orterun_globals.by_slot                    = false;
-    orterun_globals.per_node                   = false;
-    orterun_globals.no_oversubscribe           = false;
     orterun_globals.debugger                   = false;
-    orterun_globals.no_local_schedule          = false;
-    orterun_globals.displaymapatlaunch         = false;
-    orterun_globals.num_procs                  = 0;
-    orterun_globals.exit_status                = 0;
-    if( NULL == orterun_globals.hostfile )
+    orterun_globals.do_not_launch              = false;
+    orterun_globals.num_procs                  =  0;
+    orterun_globals.exit_status                =  0;
+    if( NULL != orterun_globals.hostfile )
         free( orterun_globals.hostfile );
     orterun_globals.hostfile =    NULL;
-    if( NULL == orterun_globals.env_val )
+    if( NULL != orterun_globals.env_val )
         free( orterun_globals.env_val );
     orterun_globals.env_val =     NULL;
-    if( NULL == orterun_globals.appfile )
+    if( NULL != orterun_globals.appfile )
         free( orterun_globals.appfile );
     orterun_globals.appfile =     NULL;
-    if( NULL == orterun_globals.wdir )
+    if( NULL != orterun_globals.wdir )
         free( orterun_globals.wdir );
     orterun_globals.wdir =        NULL;
     if( NULL != orterun_globals.path )
@@ -941,43 +913,7 @@ static int parse_globals(int argc, char* argv[])
         orterun_globals.by_slot = true;
     }
 
-    /* did the user request "pernode", indicating we are to spawn one ppn
-     * if no np is provided
-     */
-    if (orterun_globals.per_node) {
-        id = mca_base_param_reg_int_name("rmaps", "base_pernode",
-                                            "Request one ppn if num procs not specified",
-                                            false, false, 0, &ret);
-
-        if (orterun_globals.per_node) {
-            mca_base_param_set_int(id, (int)true);
-        } else {
-            mca_base_param_set_int(id, (int)false);
-        }
-    }
-
-    /** Do we want to disallow oversubscription of nodes? */
-    id = mca_base_param_reg_int_name("rmaps", "base_no_oversubscribe",
-                                     "If nonzero, do not allow oversubscription of processes on nodes. If zero (default), oversubscription is allowed.",
-                                     false, false, 0, &ret);
-    if (orterun_globals.no_oversubscribe) {
-        mca_base_param_set_int(id, (int)true);
-    } else {
-        mca_base_param_set_int(id, (int)false);
-    }
-
-    /* Do we want to allow MPI applications on the same node as
-       mpirun? */
-    id = mca_base_param_reg_int_name("rmaps", "base_schedule_local",
-                                     "If nonzero, allow scheduling MPI applications on the same node as mpirun (default).  If zero, do not schedule any MPI applications on the same node as mpirun",
-                                     false, false, 1, &ret);
-    if (orterun_globals.no_local_schedule) {
-        mca_base_param_set_int(id, 0);
-    } else {
-        mca_base_param_set_int(id, 1);
-    }
-
-    /* If we don't want to wait, we don't want to wait */
+   /* If we don't want to wait, we don't want to wait */
 
     if (orterun_globals.no_wait_for_job_completion) {
         wait_for_job_completion = false;

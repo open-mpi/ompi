@@ -43,8 +43,6 @@
 
 orte_rml_base_t orte_rml_base;
 orte_rml_module_t orte_rml;
-orte_process_name_t orte_rml_name_any = { ORTE_CELLID_MAX, ORTE_JOBID_MAX, ORTE_VPID_MAX };
-orte_process_name_t orte_rml_name_seed = { 0, 0, 0 };
 
 /**
  * Function for finding and opening either all MCA components, or the one

@@ -45,10 +45,10 @@
 #import "pls_xgrid.h"
 
 int orte_pls_xgrid_launch(orte_jobid_t jobid);
-int orte_pls_xgrid_terminate_job(orte_jobid_t jobid);
-int orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid);
+int orte_pls_xgrid_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+int orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 int orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc);
-int orte_pls_xgrid_signal_job(orte_jobid_t job, int32_t signal);
+int orte_pls_xgrid_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 int orte_pls_xgrid_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
 int orte_pls_xgrid_finalize(void);
 
@@ -81,7 +81,7 @@ orte_pls_xgrid_launch(orte_jobid_t jobid)
  * Terminate all processes for a given job
  */
 int
-orte_pls_xgrid_terminate_job(orte_jobid_t jobid)
+orte_pls_xgrid_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -118,7 +118,7 @@ CLEANUP:
 * Terminate the orteds for a given job
  */
 int
-orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid)
+orte_pls_xgrid_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -161,7 +161,7 @@ orte_pls_xgrid_terminate_proc(const orte_process_name_t* proc)
 
 
 int
-orte_pls_xgrid_signal_job(orte_jobid_t jobid, int32_t signal)
+orte_pls_xgrid_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;

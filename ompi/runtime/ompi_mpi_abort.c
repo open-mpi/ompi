@@ -133,7 +133,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     /* put all the local procs in the abort list */
     for (i = 0 ; i < ompi_comm_size(comm) ; ++i) {
-        if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, 
+        if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
                                  &comm->c_local_group->grp_proc_pointers[i]->proc_name,
                                  orte_process_info.my_name)) {
             assert(count <= nabort_procs);
@@ -147,7 +147,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     /* if requested, kill off remote procs too */
     if (kill_remote_of_intercomm) {
         for (i = 0 ; i < ompi_comm_remote_size(comm) ; ++i) {
-            if (0 != orte_ns.compare(ORTE_NS_CMP_ALL, 
+            if (ORTE_EQUAL != orte_ns.compare_fields(ORTE_NS_CMP_ALL, 
                                      &comm->c_remote_group->grp_proc_pointers[i]->proc_name,
                                      orte_process_info.my_name)) {
                 assert(count <= nabort_procs);

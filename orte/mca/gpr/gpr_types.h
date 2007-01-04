@@ -96,7 +96,7 @@ typedef int32_t orte_gpr_trigger_id_t;
 #define ORTE_GPR_TOKENS_OR      (uint16_t)0x0002    /**< OR tokens for search results */
 #define ORTE_GPR_TOKENS_XAND    (uint16_t)0x0004    /**< All tokens required, nothing else allowed */
 #define ORTE_GPR_TOKENS_XOR     (uint16_t)0x0008    /**< Any one of the tokens required, nothing else allowed */
-#define ORTE_GPR_TOKENS_NOT     (uint16_t)0x0040    /**< Everything except those that meet specs */
+#define ORTE_GPR_TOKENS_NOT     (uint16_t)0x0010    /**< Everything except those that meet specs */
 /*
  * Key modes
  */
@@ -104,10 +104,11 @@ typedef int32_t orte_gpr_trigger_id_t;
 #define ORTE_GPR_KEYS_OR        (uint16_t)0x0200    /**< OR keys together */
 #define ORTE_GPR_KEYS_XAND      (uint16_t)0x0400    /**< All keys required, nothing else allowed */
 #define ORTE_GPR_KEYS_XOR       (uint16_t)0x0800    /**< Any one of the keys required, nothing else allowed */
-#define ORTE_GPR_KEYS_NOT       (uint16_t)0x4000    /**< Everything except those that meet specs */
+#define ORTE_GPR_KEYS_NOT       (uint16_t)0x1000    /**< Everything except those that meet specs */
 /*
  * General modes
  */
+#define ORTE_GPR_STRIPPED       (uint16_t)0x2000    /**< Return values should contain no descriptive info */
 #define ORTE_GPR_OVERWRITE      (uint16_t)0x8000    /**< Allow overwrite of existing info */
 #define ORTE_GPR_NO_OVERWRITE   (uint16_t)0x0000    /**< Do not allow overwrite of existing info */
 

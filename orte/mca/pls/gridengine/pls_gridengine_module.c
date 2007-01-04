@@ -85,6 +85,7 @@
 #include "orte/mca/smr/smr.h"
 
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/gridengine/pls_gridengine.h"
 
@@ -226,19 +227,33 @@ int orte_pls_gridengine_launch_job(orte_jobid_t jobid)
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
-        goto cleanup;
+        OBJ_DESTRUCT(&daemons);
+        return rc;
     }
 
+    /* if the user requested that we re-use daemons,
+     * launch the procs on any existing, re-usable daemons
+     */
+    if (orte_pls_base.reuse_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(map);
+            OBJ_DESTRUCT(&daemons);
+            return rc;
+        }
+    }
+    
     num_nodes = (orte_std_cntr_t)opal_list_get_size(&map->nodes);
-
+    if (num_nodes == 0) {
+        /* job must have been launched on existing daemons - just return */
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&daemons);
+        return ORTE_SUCCESS;
+    }
+    
     /*
      * Allocate a range of vpids for the daemons.
      */
-    if (num_nodes == 0) {
-        rc = ORTE_ERR_BAD_PARAM;
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
@@ -759,7 +774,7 @@ static int update_slot_keyval(orte_ras_node_t* ras_node, int* slot_cnt)
 /**
  * Query the registry for all nodes participating in the job
  */
-int orte_pls_gridengine_terminate_job(orte_jobid_t jobid)
+int orte_pls_gridengine_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -767,7 +782,7 @@ int orte_pls_gridengine_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -794,7 +809,7 @@ int orte_pls_gridengine_terminate_proc(const orte_process_name_t* proc)
 /**
  * Terminate the orteds for a given job
  */
-int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid)
+int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -802,7 +817,7 @@ int orte_pls_gridengine_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -823,7 +838,7 @@ CLEANUP:
 /**
  * Signal all processes associated with this job
  */
-int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal)
+int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -831,7 +846,7 @@ int orte_pls_gridengine_signal_job(orte_jobid_t jobid, int32_t signal)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&daemons);
         return rc;

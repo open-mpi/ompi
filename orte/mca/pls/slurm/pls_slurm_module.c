@@ -65,6 +65,7 @@
 #include "orte/mca/rmaps/rmaps.h"
 
 #include "orte/mca/pls/pls.h"
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_slurm.h"
 
@@ -73,10 +74,10 @@
  * Local functions
  */
 static int pls_slurm_launch_job(orte_jobid_t jobid);
-static int pls_slurm_terminate_job(orte_jobid_t jobid);
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid);
+static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
-static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_slurm_finalize(void);
 
@@ -156,15 +157,34 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
      */
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&daemons);
+        return rc;
     }
 
+    /* if the user requested that we re-use daemons,
+     * launch the procs on any existing, re-usable daemons
+     */
+    if (orte_pls_base.reuse_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(map);
+            OBJ_DESTRUCT(&daemons);
+            return rc;
+        }
+    }
+    
     /*
      * Allocate a range of vpids for the daemons.
      */
     num_nodes = opal_list_get_size(&map->nodes);
     if (num_nodes == 0) {
-        return ORTE_ERR_BAD_PARAM;
+        /* nothing further to do - job must have been launched
+         * on existing daemons, so we can just return
+         */
+        OBJ_RELEASE(map);
+        OBJ_DESTRUCT(&daemons);
+        return ORTE_SUCCESS;
     }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
@@ -227,7 +247,6 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     asprintf(&tmp, "--nodelist=%s", nodelist_flat);
     opal_argv_append(&argc, &argv, tmp);
     free(tmp);
-    free(nodelist_flat);
 
 
     /*
@@ -378,6 +397,9 @@ static int pls_slurm_launch_job(orte_jobid_t jobid)
     env = opal_argv_copy(environ);
     var = mca_base_param_environ_variable("seed", NULL, NULL);
     opal_setenv(var, "0", true, &env);
+    var = mca_base_param_environ_variable("orte", "slurm", "nodelist");
+    opal_setenv(var, nodelist_flat, true, &env);
+    free(nodelist_flat);
 
     if (mca_pls_slurm_component.timing) {
         if (0 != gettimeofday(&launchstart, NULL)) {
@@ -421,7 +443,7 @@ cleanup:
 }
 
 
-static int pls_slurm_terminate_job(orte_jobid_t jobid)
+static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -429,7 +451,7 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -452,7 +474,7 @@ CLEANUP:
 /**
 * Terminate the orteds for a given job
  */
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid)
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -460,7 +482,7 @@ static int pls_slurm_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -493,7 +515,7 @@ static int pls_slurm_terminate_proc(const orte_process_name_t *name)
 /**
  * Signal all the processes in the child srun by sending the signal directly to it
  */
-static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal)
+static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     if (0 != srun_pid) {
         kill(srun_pid, (int)signal);

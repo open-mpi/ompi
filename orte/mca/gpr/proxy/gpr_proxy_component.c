@@ -213,7 +213,7 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
                             int *priority)
 {
     orte_process_name_t name;
-    int ret;
+    int ret, value;
 
     if (orte_gpr_proxy_globals.debug) {
         opal_output(0, "gpr_proxy_init called");
@@ -233,7 +233,7 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
            ORTE_ERROR_LOG(ret);
            return NULL;
        }
-       if(ORTE_SUCCESS != (ret = orte_ns.copy_process_name(&orte_process_info.gpr_replica, &name))) {
+       if(ORTE_SUCCESS != (ret = orte_dss.copy((void**)&orte_process_info.gpr_replica, &name, ORTE_NAME))) {
            ORTE_ERROR_LOG(ret);
            return NULL;
         }
@@ -280,6 +280,14 @@ orte_gpr_proxy_component_init(bool *allow_multi_user_threads, bool *have_hidden_
         }
         orte_gpr_proxy_globals.num_trigs = 0;
 
+        /* check to see if we want timing information */
+        mca_base_param_reg_int_name("orte", "timing",
+                                    "Request that critical timing loops be measured",
+                                    false, false, 0, &value);
+        if (value != 0) {
+            orte_gpr_proxy_globals.timing = true;
+        }
+
         initialized = true;
         return &orte_gpr_proxy;
     } else {
@@ -291,7 +299,7 @@ int orte_gpr_proxy_module_init(void)
 {
     /* issue the non-blocking receive */
     int rc;
-    rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY, ORTE_RML_PERSISTENT, orte_gpr_proxy_notify_recv, NULL);
+    rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_GPR_NOTIFY, ORTE_RML_PERSISTENT, orte_gpr_proxy_notify_recv, NULL);
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -351,7 +359,7 @@ int orte_gpr_proxy_finalize(void)
     }
 
     /* All done */
-    orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_GPR_NOTIFY);
+    orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_GPR_NOTIFY);
     return ORTE_SUCCESS;
 }
 

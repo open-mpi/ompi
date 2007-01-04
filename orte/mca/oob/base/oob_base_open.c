@@ -79,7 +79,16 @@ int mca_oob_base_open(void)
                                  "Components to exclude for oob framework selection",
                                  false, false, NULL, &mca_oob_base_exclude);
 
-  param = mca_base_param_reg_int_name("orte_oob_xcast", "timing",
+  param = mca_base_param_reg_int_name("orte", "timing",
+                                      "Request that critical timing loops be measured",
+                                      false, false, 0, &value);
+  if (value != 0) {
+      orte_oob_base_timing = true;
+  } else {
+      orte_oob_base_timing = false;
+  }
+  
+  param = mca_base_param_reg_int_name("oob_xcast", "timing",
                                       "Request that xcast timing loops be measured",
                                       false, false, 0, &value);
   if (value != 0) {
@@ -88,7 +97,7 @@ int mca_oob_base_open(void)
       orte_oob_xcast_timing = false;
   }
   
-  param = mca_base_param_reg_string_name("orte_oob_xcast", "mode",
+  param = mca_base_param_reg_string_name("oob_xcast", "mode",
                                       "Select xcast mode (\"linear\" [default] | \"binomial\")",
                                       false, false, "linear", &mode);
   if (0 == strcmp(mode, "linear")) {

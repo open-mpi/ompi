@@ -69,7 +69,7 @@
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 
-
+#include "orte/mca/pls/base/base.h"
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_tm.h"
 
@@ -79,10 +79,10 @@
  * Local functions
  */
 static int pls_tm_launch_job(orte_jobid_t jobid);
-static int pls_tm_terminate_job(orte_jobid_t jobid);
-static int pls_tm_terminate_orteds(orte_jobid_t jobid);
+static int pls_tm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_tm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 static int pls_tm_terminate_proc(const orte_process_name_t *name);
-static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal);
+static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_tm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_tm_finalize(void);
 
@@ -164,17 +164,31 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
      */
     rc = orte_rmaps.get_job_map(&map, jobid);
     if (ORTE_SUCCESS != rc) {
-        goto cleanup;
+        ORTE_ERROR_LOG(rc);
+        return rc;
     }
 
+    /* if the user requested that we re-use daemons,
+     * launch the procs on any existing, re-usable daemons
+     */
+    if (orte_pls_base.reuse_daemons) {
+        if (ORTE_SUCCESS != (rc = orte_pls_base_launch_on_existing_daemons(map))) {
+            ORTE_ERROR_LOG(rc);
+            OBJ_RELEASE(map);
+            return rc;
+        }
+    }
+    
     num_nodes = opal_list_get_size(&map->nodes);
-
+    if (0 == num_nodes) {
+        /* must have been launched on existing daemons - just return */
+        OBJ_RELEASE(map);
+        return ORTE_SUCCESS;
+    }
+    
     /*
      * Allocate a range of vpids for the daemons.
      */
-    if (0 == num_nodes) {
-        return ORTE_ERR_BAD_PARAM;
-    }
     rc = orte_ns.reserve_range(0, num_nodes, &vpid);
     if (ORTE_SUCCESS != rc) {
         goto cleanup;
@@ -545,7 +559,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
 }
 
 
-static int pls_tm_terminate_job(orte_jobid_t jobid)
+static int pls_tm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -553,7 +567,7 @@ static int pls_tm_terminate_job(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -576,7 +590,7 @@ CLEANUP:
 /**
  * Terminate the orteds for a given job
  */
-int pls_tm_terminate_orteds(orte_jobid_t jobid)
+int pls_tm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -584,7 +598,7 @@ int pls_tm_terminate_orteds(orte_jobid_t jobid)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -614,7 +628,7 @@ static int pls_tm_terminate_proc(const orte_process_name_t *name)
 }
 
 
-static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal)
+static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -622,7 +636,7 @@ static int pls_tm_signal_job(orte_jobid_t jobid, int32_t signal)
     
     /* construct the list of active daemons on this job */
     OBJ_CONSTRUCT(&daemons, opal_list_t);
-    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_get_active_daemons(&daemons, jobid, attrs))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&daemons);
         return rc;

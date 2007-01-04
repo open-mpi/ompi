@@ -41,7 +41,7 @@
  * functions
  */
 
-int orte_rds_proxy_query(void)
+int orte_rds_proxy_query(orte_jobid_t job)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
@@ -63,6 +63,12 @@ int orte_rds_proxy_query(void)
         return rc;
     }
 
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &job, 1, ORTE_JOBID))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
     if (0 > orte_rml.send_buffer(orte_rds_proxy_replica, cmd, ORTE_RML_TAG_RDS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);

@@ -55,6 +55,7 @@
  */
 orte_odls_base_module_t orte_odls_bproc_module = {
     orte_odls_bproc_subscribe_launch_data,
+    orte_odls_bproc_get_add_procs_data,
     orte_odls_bproc_launch_local_procs,
     orte_odls_bproc_kill_local_procs,
     orte_odls_bproc_signal_local_procs
@@ -70,6 +71,12 @@ static void odls_bproc_send_cb(int status, orte_process_name_t * peer,
 static int odls_bproc_setup_stdio(orte_process_name_t *proc_name, 
                                        int proc_rank, orte_jobid_t jobid,
                                        orte_std_cntr_t app_context, bool connect_stdin);
+
+
+int orte_odls_bproc_get_add_procs_data(orte_gpr_notify_data_t **data, orte_job_map_t *map)
+{
+    return ORTE_ERR_NOT_IMPLEMENTED;
+}
 
 
 /**
@@ -119,7 +126,7 @@ static char *
         return NULL;
     }
 
-    rc = orte_ns_base_convert_jobid_to_string(&job, jobid);
+    rc = orte_ns.convert_jobid_to_string(&job, jobid);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return NULL;
@@ -634,7 +641,7 @@ orte_odls_bproc_launch_local_procs(orte_gpr_notify_data_t *data, char **base_env
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
     }
-    rc = mca_oob_send_packed_nb(ORTE_RML_NAME_SEED, ack, ORTE_RML_TAG_BPROC, 0,
+    rc = mca_oob_send_packed_nb(ORTE_PROC_MY_HNP, ack, ORTE_RML_TAG_BPROC, 0,
         odls_bproc_send_cb, NULL);
     if (0 > rc) {
         ORTE_ERROR_LOG(rc);
@@ -666,7 +673,7 @@ int orte_odls_bproc_kill_local_procs(orte_jobid_t job, bool set_state)
  * @param signal The signal to send
  * @retval ORTE_SUCCESS
  */
-int orte_odls_bproc_signal_local_procs(orte_process_name_t* proc, int32_t signal)
+int orte_odls_bproc_signal_local_procs(const orte_process_name_t* proc, int32_t signal)
 {
     orte_iof.iof_flush();
     return ORTE_SUCCESS;

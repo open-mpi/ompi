@@ -80,6 +80,7 @@ typedef struct orte_ras_base_t {
     opal_list_t ras_available;
     bool ras_available_valid;
     orte_std_cntr_t ras_num_nodes;
+    bool timing;
 } orte_ras_base_t;
  
 ORTE_DECLSPEC extern orte_ras_base_t orte_ras_base;

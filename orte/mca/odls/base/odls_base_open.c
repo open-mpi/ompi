@@ -94,6 +94,10 @@ int orte_odls_base_open(void)
         orte_odls_globals.output = -1;
     }
 
+    mca_base_param_reg_int_name("odls_base", "sigkill_timeout",
+                                "Time to wait for a process to die after issuing a kill signal to it",
+                                false, false, 1, &orte_odls_globals.timeout_before_sigkill);
+    
     /* register the daemon cmd data type */
     tmp = ORTE_DAEMON_CMD;
     if (ORTE_SUCCESS != (rc = orte_dss.register_type(orte_odls_pack_daemon_cmd,
@@ -107,14 +111,6 @@ int orte_odls_base_open(void)
                                                      "ORTE_DAEMON_CMD", &tmp))) {
         ORTE_ERROR_LOG(rc);
         return rc;
-    }
-    
-    /* if we are NOT a daemon, then that is ALL we do! We just needed to ensure
-     * that the data type(s) got registered so we can send messages to the daemons
-     */
-    if (!orte_process_info.daemon) {
-        orte_odls_base.components_available = false;
-        return ORTE_SUCCESS;
     }
     
     /* Open up all available components */

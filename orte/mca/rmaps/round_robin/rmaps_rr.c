@@ -51,6 +51,7 @@
  */
 static opal_list_item_t *cur_node_item = NULL;
 static opal_list_t fully_used_nodes;
+static orte_std_cntr_t num_per_node;
 
 
 /*
@@ -267,6 +268,7 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     int rc;
     char *policy;
     orte_attribute_t *attr;
+    orte_std_cntr_t *scptr;
     
     mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy */
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
@@ -284,6 +286,22 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
         /* was provided - set boolean accordingly */
          mca_rmaps_round_robin_component.per_node = true;
+        /* indicate that we are going to map this job bynode */
+        mca_rmaps_round_robin_component.bynode = true;
+    }
+    
+    mca_rmaps_round_robin_component.n_per_node = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_N_PERNODE))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.n_per_node = true;
+        /* get the number of procs per node to launch */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&scptr, attr->value, ORTE_STD_CNTR))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        num_per_node = *scptr;
+        /* indicate that we are going to map this job bynode */
+        mca_rmaps_round_robin_component.bynode = true;
     }
     
     mca_rmaps_round_robin_component.no_use_local = false;
@@ -312,12 +330,12 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     opal_list_t master_node_list, mapped_node_list, max_used_nodes, *working_node_list;
     opal_list_item_t *item, *item2;
     orte_ras_node_t *node, *node2;
+    orte_mapped_node_t *mnode;
     char *save_bookmark;
-    orte_vpid_t vpid_start, job_vpid_start=0;
-    orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots;
+    orte_vpid_t vpid_start;
+    orte_std_cntr_t num_procs = 0, total_num_slots, mapped_num_slots, num_nodes, num_slots;
     int rc;
     bool modify_app_context = false;
-    bool nprocs_not_specified;
     char *sptr;
     orte_attribute_t *attr;
 
@@ -436,20 +454,8 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
            /* Set cur_node_item to point to the first node in the specified list to be used */
             cur_node_item = opal_list_get_first(working_node_list);
             
-            if (0 == app->num_procs) {
-                nprocs_not_specified = true;
-               /** set the num_procs to equal the number of slots on these mapped nodes - if
-                   user has specified "-pernode", then set it to the number of nodes
-                */
-                if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
-                } else {
-                    app->num_procs = (orte_std_cntr_t)mapped_num_slots;
-                }
-                modify_app_context = true;
-            } else {
-                nprocs_not_specified = false;
-            }
+            num_nodes = (orte_std_cntr_t)opal_list_get_size(&mapped_node_list);
+            num_slots = (orte_std_cntr_t)mapped_num_slots;
         }
         else {
             /** no mapping was specified, so we are going to just use everything that was
@@ -459,20 +465,40 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
              */
             working_node_list = &master_node_list;
             
+            num_nodes = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
+            num_slots = total_num_slots;
+        }
+
+        if (mca_rmaps_round_robin_component.per_node) {
+            /* there are three use-cases that we need to deal with:
+            * (a) if -np was not provided, then we just use the number of nodes
+            * (b) if -np was provided AND #procs > #nodes, then error out
+            * (c) if -np was provided AND #procs <= #nodes, then launch
+            *     the specified #procs one/node. In this case, we just
+            *     leave app->num_procs alone
+            */
             if (0 == app->num_procs) {
-                nprocs_not_specified = true;
-                /** set the num_procs to equal the number of slots on these mapped nodes - if
-                user has specified "-pernode", then set it to the number of nodes
-                */
-                if (mca_rmaps_round_robin_component.per_node) {
-                    app->num_procs = (orte_std_cntr_t)opal_list_get_size(&master_node_list);
-                } else {
-                    app->num_procs = total_num_slots;
-                }
+                app->num_procs = num_nodes;
                 modify_app_context = true;
-            } else {
-                nprocs_not_specified = false;
+            } else if (app->num_procs > num_nodes) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:per-node-and-too-many-procs",
+                               true, app->num_procs, num_nodes, NULL);
+                return ORTE_ERR_SILENT;
             }
+        } else if (mca_rmaps_round_robin_component.n_per_node) {
+            /* set the num_procs to equal the specified num/node * the number of nodes */
+            app->num_procs = num_per_node * num_nodes;
+            modify_app_context = true;
+        } else if (0 == app->num_procs) {
+            /** set the num_procs to equal the number of slots on these mapped nodes - if
+            user has specified "-bynode", then set it to the number of nodes
+            */
+            if (mca_rmaps_round_robin_component.bynode) {
+                app->num_procs = num_nodes;
+            } else {
+                app->num_procs = num_slots;
+            }
+            modify_app_context = true;
         }
 
         /* allocate a vpid range for this app within the job */
@@ -484,19 +510,18 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         
         /** save the initial starting vpid for later */
         if (0 == i) {
-            job_vpid_start = vpid_start;
+            map->vpid_start = vpid_start;
         }
         
         /** track the total number of processes we mapped */
         num_procs += app->num_procs;
 
         /* Make assignments */
-        /* if the number of procs was not specified, and we want to map pernode,
-         * then we need to do the bynode mapping */
-        if (mca_rmaps_round_robin_component.bynode || 
-            (nprocs_not_specified && mca_rmaps_round_robin_component.per_node)) {
+        if (mca_rmaps_round_robin_component.bynode) {
+            map->mapping_mode = strdup("bynode");
             rc = map_app_by_node(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         } else {
+            map->mapping_mode = strdup("byslot");
             rc = map_app_by_slot(app, map, jobid, vpid_start, working_node_list, &max_used_nodes);
         }
 
@@ -624,17 +649,21 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
         
     }
 
+    /* compute and save convenience values */
+    map->vpid_range = num_procs;
+    map->num_nodes = opal_list_get_size(&map->nodes);
+    for (item = opal_list_get_first(&map->nodes);
+         item != opal_list_get_end(&map->nodes);
+         item = opal_list_get_next(item)) {
+        mnode = (orte_mapped_node_t*)item;
+        mnode->num_procs = opal_list_get_size(&mnode->procs);
+    }
+    
     /* save mapping to the registry */
     if(ORTE_SUCCESS != (rc = orte_rmaps_base_put_job_map(map))) {
         goto cleanup;
     }
     
-    /* save vpid start/range on the job segment */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.set_vpid_range(jobid, job_vpid_start, num_procs))) {
-        ORTE_ERROR_LOG(rc);
-        goto cleanup;
-    }
-
     /** join the master_node_list and fully_used_list so that all info gets updated */
     opal_list_join(&master_node_list, opal_list_get_end(&master_node_list), &fully_used_nodes);
 

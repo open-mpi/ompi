@@ -52,7 +52,14 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     opal_list_t working_attrs;
     opal_list_item_t *item;
     orte_jobid_t *jptr, parent_job=ORTE_JOBID_INVALID;
+    orte_job_map_t *map;
+    orte_std_cntr_t scntr;
     int rc;
+    
+    /* if we are not on the head node, use the proxy component */
+    if (!orte_process_info.seed) {
+        return orte_rmaps_base_proxy_map_job(job, attributes);
+    }
     
     /* check the attributes to see if anything in the environment
      * has been overridden. If not, then install the environment
@@ -120,6 +127,19 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     if (orte_rmaps_base.per_node) {
         if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_PERNODE,
                                                           ORTE_UNDEF, NULL,
+                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    /* check n_pernode - add it if it was set by the environment. Note that this
+     * attribute does convey a value as well
+     */
+    if (0 < orte_rmaps_base.n_per_node) {
+        scntr = (orte_std_cntr_t)orte_rmaps_base.n_per_node;
+        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_N_PERNODE,
+                                                          ORTE_STD_CNTR, &scntr,
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
             return rc;
@@ -199,6 +219,14 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
             return rc;
         }
     }
+    
+    /* if we wanted to display the map, now is the time to do it */
+    if (orte_rmaps_base.display_map ||
+        NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
+        orte_rmaps.get_job_map(&map, job);
+        orte_dss.dump(0, map, ORTE_JOB_MAP);
+    }
+    
     
     return ORTE_SUCCESS;
 }

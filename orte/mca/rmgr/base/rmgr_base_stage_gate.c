@@ -60,7 +60,6 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     orte_buffer_t buffer;
     int rc;
     orte_jobid_t job;
-    bool process_first;
 
     OPAL_TRACE(1);
 
@@ -85,9 +84,8 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
      }
 
     OPAL_TRACE_ARG1(1, job);
-    
+            
     /* set the job state to the appropriate level */
-    process_first = false;
     if (orte_schema.check_std_trigger_name(msg->target, ORTE_ALL_LAUNCHED_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_LAUNCHED))) {
             ORTE_ERROR_LOG(rc);
@@ -98,7 +96,6 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
             ORTE_ERROR_LOG(rc);
             goto CLEANUP;
         }
-        process_first = true;
     } else if (orte_schema.check_std_trigger_name(msg->target, ORTE_STG2_TRIGGER)) {
         if (ORTE_SUCCESS != (rc = orte_smr.set_job_state(job, ORTE_JOB_STATE_AT_STG2))) {
             ORTE_ERROR_LOG(rc);
@@ -131,11 +128,12 @@ int orte_rmgr_base_proc_stage_gate_mgr(orte_gpr_notify_message_t *msg)
     }
 
     /* send the message */
-    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, process_first, &buffer, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.xcast(job, false, &buffer, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     OBJ_DESTRUCT(&buffer);
 
 CLEANUP:
+    
     return rc;
 }

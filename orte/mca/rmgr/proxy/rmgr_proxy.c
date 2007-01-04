@@ -41,10 +41,10 @@
 #include "orte/mca/rmgr/proxy/rmgr_proxy.h"
 
 
-static int orte_rmgr_proxy_setup_job(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid);
+static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
+                                     orte_std_cntr_t num_context,
+                                     orte_jobid_t* jobid,
+                                     opal_list_t *attributes);
 
 static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid);
 
@@ -85,10 +85,10 @@ orte_rmgr_base_module_t orte_rmgr_proxy_module = {
  *  and name service actions to the HNP for efficiency.
  */
 
-static int orte_rmgr_proxy_setup_job(
-    orte_app_context_t** app_context,
-    orte_std_cntr_t num_context,
-    orte_jobid_t* jobid)
+static int orte_rmgr_proxy_setup_job(orte_app_context_t** app_context,
+                                     orte_std_cntr_t num_context,
+                                     orte_jobid_t* jobid,
+                                     opal_list_t *attrs)
 {
     orte_buffer_t cmd;
     orte_buffer_t rsp;
@@ -122,8 +122,15 @@ static int orte_rmgr_proxy_setup_job(
         return rc;
     }
 
+    /* pack the attributes */
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(&cmd, attrs, 1, ORTE_ATTR_LIST))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_DESTRUCT(&cmd);
+        return rc;
+    }
+    
     /* send the command */
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
+    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -132,7 +139,7 @@ static int orte_rmgr_proxy_setup_job(
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -190,7 +197,7 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
     }
 
     /* send the command */
-    if(0 > (rc = orte_rml.send_buffer(ORTE_RML_NAME_SEED, &cmd, ORTE_RML_TAG_RMGR, 0))) {
+    if(0 > (rc = orte_rml.send_buffer(ORTE_PROC_MY_HNP, &cmd, ORTE_RML_TAG_RMGR, 0))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&cmd);
         return rc;
@@ -199,7 +206,7 @@ static int orte_rmgr_proxy_setup_stage_gates(orte_jobid_t jobid)
 
     /* wait for response */
     OBJ_CONSTRUCT(&rsp, orte_buffer_t);
-    if(0 > (rc = orte_rml.recv_buffer(ORTE_RML_NAME_SEED, &rsp, ORTE_RML_TAG_RMGR))) {
+    if(0 > (rc = orte_rml.recv_buffer(ORTE_PROC_MY_HNP, &rsp, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rsp);
         return rc;
@@ -360,7 +367,6 @@ static int orte_rmgr_proxy_spawn_job(
 {
     int rc;
     orte_process_name_t name = {0, ORTE_JOBID_INVALID, 0};
-    orte_job_map_t *map;
     orte_attribute_t *flow;
     uint8_t flags, *fptr;
 
@@ -379,19 +385,18 @@ static int orte_rmgr_proxy_spawn_job(
     }
     
     /*
-     * Perform resource discovery.
-     */
-    if (ORTE_SUCCESS != (rc = orte_rds.query())) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /*
      * Setup job and allocate resources
      */
     if (flags & ORTE_RMGR_SETUP) {
         if (ORTE_SUCCESS !=
-            (rc = orte_rmgr_proxy_setup_job(app_context,num_context,jobid))) {
+            (rc = orte_rmgr_proxy_setup_job(app_context, num_context, jobid, attributes))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+    }
+    
+    if (flags & ORTE_RMGR_RES_DISC) {
+        if (ORTE_SUCCESS != (rc = orte_rds.query(*jobid))) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
@@ -409,79 +414,76 @@ static int orte_rmgr_proxy_spawn_job(
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-        if (NULL != orte_rmgr.find_attribute(attributes, ORTE_RMAPS_DISPLAY_AFTER_MAP)) {
-            orte_rmaps.get_job_map(&map, *jobid);
-            orte_dss.dump(0, map, ORTE_JOB_MAP);
+    }
+    
+    if (flags & ORTE_RMGR_SETUP_TRIGS) {
+        /*
+         * setup I/O forwarding
+         */
+        
+        name.jobid = *jobid;
+        
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
         }
-    }
-    
-    /* if we don't want to launch, then just return here - don't setup the io forwarding
-        * or do any of the remaining pre-launch things
-        */
-    if (!(flags & ORTE_RMGR_LAUNCH)) {
-        return ORTE_SUCCESS;
-    }
-    
-    /*
-     * setup I/O forwarding
-     */
-    
-    name.jobid = *jobid;
-    
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDOUT, 1))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+        if (ORTE_SUCCESS != (rc = orte_iof.iof_pull(&name, ORTE_NS_CMP_JOBID, ORTE_IOF_STDERR, 2))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
 
-    /* setup the launch system's stage gate counters and subscriptions */
-    if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_setup_stage_gates(*jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
-    rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
-    if(ORTE_SUCCESS != rc) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-
-    /*
-     * Define the ERRMGR's callbacks as required
-     */
-    if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-    
-    /*
-     * setup callback
-     */
-
-    if(NULL != cbfunc) {
-        union {
-            orte_rmgr_cb_fn_t func;
-            void * ptr;
-        } cbfunc_union;
-        void *cbdata;
-
-        /* ISO C forbids conversion of object pointer to function
-           pointer.  So we do this, which is the same thing, but without
-           the warning from GCC */
-        cbfunc_union.func = cbfunc;
-        cbdata = cbfunc_union.ptr;
-
-        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, cbdata, cb_conditions);
+        /* setup the launch system's stage gate counters and subscriptions */
+        if (ORTE_SUCCESS != (rc = orte_rmgr_proxy_setup_stage_gates(*jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /** setup the subscription so we can complete the wireup when all processes reach LAUNCHED */
+        rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_wireup_callback, NULL, ORTE_PROC_STATE_LAUNCHED);
         if(ORTE_SUCCESS != rc) {
             ORTE_ERROR_LOG(rc);
             return rc;
         }
-    }
 
+        /*
+         * Define the ERRMGR's callbacks as required
+         */
+        if (ORTE_SUCCESS != (rc = orte_errmgr.register_job(*jobid))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        
+        /*
+         * setup callback
+         */
+
+        if(NULL != cbfunc) {
+            union {
+                orte_rmgr_cb_fn_t func;
+                void * ptr;
+            } cbfunc_union;
+            void *cbdata;
+
+            /* ISO C forbids conversion of object pointer to function
+               pointer.  So we do this, which is the same thing, but without
+               the warning from GCC */
+            cbfunc_union.func = cbfunc;
+            cbdata = cbfunc_union.ptr;
+
+            rc = orte_smr.job_stage_gate_subscribe(*jobid, orte_rmgr_proxy_callback, cbdata, cb_conditions);
+            if(ORTE_SUCCESS != rc) {
+                ORTE_ERROR_LOG(rc);
+                return rc;
+            }
+        }
+
+    }
+    
+    /* if we don't want to launch, then just return here */
+    if (!(flags & ORTE_RMGR_LAUNCH)) {
+        return ORTE_SUCCESS;
+    }
+        
     /*
      * launch the job
      */

@@ -21,6 +21,12 @@
 
 #include "orte_config.h"
 
+#include "opal/class/opal_list.h"
+
+#if defined(c_plusplus) || defined(__cplusplus)
+extern "C" {
+#endif
+
 /*
  * Process exit codes
  */
@@ -92,4 +98,9 @@ typedef int8_t orte_node_state_t;
 /** Node is rebooting (only some systems will support this; see
     orte_node_state_t) */
 #define ORTE_NODE_STATE_REBOOT   0x03
+
+#if defined(c_plusplus) || defined(__cplusplus)
+}
+#endif
+
 #endif

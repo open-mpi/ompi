@@ -242,9 +242,10 @@ bool mca_oob_tcp_msg_send_handler(mca_oob_tcp_msg_t* msg, struct mca_oob_tcp_pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_send_handler: writev failed with errno=%d", 
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_send_handler: writev failed: %s (%d)", 
                     ORTE_NAME_ARGS(orte_process_info.my_name), 
                     ORTE_NAME_ARGS(&(peer->peer_name)), 
+                    strerror(opal_socket_errno),
                     opal_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 msg->msg_rc = ORTE_ERR_CONNECTION_FAILED;
@@ -341,9 +342,10 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             else if (opal_socket_errno == EAGAIN || opal_socket_errno == EWOULDBLOCK)
                 return false;
             else {
-                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed with errno=%d", 
+                opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: readv failed: %s (%d)", 
                     ORTE_NAME_ARGS(orte_process_info.my_name),
                     ORTE_NAME_ARGS(&(peer->peer_name)),
+                    strerror(opal_socket_errno),
                     opal_socket_errno);
                 mca_oob_tcp_peer_close(peer);
                 mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
@@ -353,8 +355,7 @@ static bool mca_oob_tcp_msg_recv(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pee
             if(mca_oob_tcp_component.tcp_debug > 3) {
                 opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_msg_recv: peer closed connection", 
                    ORTE_NAME_ARGS(orte_process_info.my_name),
-                   ORTE_NAME_ARGS(&(peer->peer_name)),
-                   opal_socket_errno);
+                   ORTE_NAME_ARGS(&(peer->peer_name)));
             }
             mca_oob_tcp_peer_close(peer);
             mca_oob_call_exception_handlers(&peer->peer_name, MCA_OOB_PEER_DISCONNECTED);
@@ -404,7 +405,9 @@ void mca_oob_tcp_msg_recv_complete(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* p
 }
 
 /**
- * Process an ident message.
+ * Process an ident message. In this case, we insist that the two process names
+ * exactly match - hence, we use the orte_ns.compare_fields function, which
+ * checks each field in a literal manner (i.e., no wildcards).
  */
 
 static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* peer)
@@ -412,7 +415,7 @@ static void mca_oob_tcp_msg_ident(mca_oob_tcp_msg_t* msg, mca_oob_tcp_peer_t* pe
     orte_process_name_t src = msg->msg_hdr.msg_src;
     
     OPAL_THREAD_LOCK(&mca_oob_tcp_component.tcp_lock);
-    if (orte_ns.compare(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != 0) {
+    if (orte_ns.compare_fields(ORTE_NS_CMP_ALL, &peer->peer_name, &src) != ORTE_EQUAL) {
         orte_hash_table_remove_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name);
         peer->peer_name = src;
         orte_hash_table_set_proc(&mca_oob_tcp_component.tcp_peers, &peer->peer_name, peer);
@@ -558,9 +561,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_recv(orte_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_recv);
         msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
-        int cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, name, MCA_OOB_NAME_ANY);
-        int cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, name, &msg->msg_peer);
-        if((0 == cmpval1) || (0 == cmpval2)) {
+        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (tag == msg->msg_hdr.msg_tag) {
                 return msg;
             }
@@ -585,10 +586,7 @@ mca_oob_tcp_msg_t* mca_oob_tcp_msg_match_post(orte_process_name_t* name, int tag
         msg != (mca_oob_tcp_msg_t*) opal_list_get_end(&mca_oob_tcp_component.tcp_msg_post);
         msg =  (mca_oob_tcp_msg_t*) opal_list_get_next(msg)) {
 
-        int cmpval1 = orte_ns.compare(ORTE_NS_CMP_ALL, &msg->msg_peer, MCA_OOB_NAME_ANY);
-        int cmpval2 = orte_ns.compare(ORTE_NS_CMP_ALL, name, &msg->msg_peer);
-
-        if((0 == cmpval1) || (0 == cmpval2)) {
+        if(ORTE_EQUAL == orte_dss.compare(name, &msg->msg_peer, ORTE_NAME)) {
             if (msg->msg_hdr.msg_tag == tag) {
                 if((msg->msg_flags & MCA_OOB_PERSISTENT) == 0) {
                     opal_list_remove_item(&mca_oob_tcp_component.tcp_msg_post, &msg->super.super);

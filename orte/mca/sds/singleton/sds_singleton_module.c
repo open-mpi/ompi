@@ -48,10 +48,7 @@ orte_sds_singleton_set_name(void)
         return rc;
     }
 
-    if (ORTE_SUCCESS != (rc = orte_ns.get_vpid(&vpid, orte_process_info.my_name))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
+    vpid = ORTE_PROC_MY_NAME->vpid;
     
     orte_process_info.num_procs = 1;
     orte_process_info.vpid_start = vpid;

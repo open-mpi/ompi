@@ -51,7 +51,7 @@ int orte_rmgr_base_comm_start(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY,
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD,
                                                       ORTE_RML_TAG_RMGR,
                                                       ORTE_RML_PERSISTENT,
                                                       orte_rmgr_base_recv,
@@ -71,7 +71,7 @@ int orte_rmgr_base_comm_stop(void)
         return ORTE_SUCCESS;
     }
     
-    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_RML_NAME_ANY, ORTE_RML_TAG_RMGR))) {
+    if (ORTE_SUCCESS != (rc = orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_RMGR))) {
         ORTE_ERROR_LOG(rc);
     }
     recv_issued = false;
@@ -143,17 +143,31 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
                 return;
             }
                 
-            /* process the request */
-            if (ORTE_SUCCESS != (rc = orte_rmgr.setup_job(context, num_context, &job))) {
+            /* unpack the attributes */
+            OBJ_CONSTRUCT(&attrs, opal_list_t);
+            count = 1;
+            if(ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
-
+                
+            /* process the request */
+            if (ORTE_SUCCESS != (rc = orte_rmgr.setup_job(context, num_context, &job, &attrs))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP_SPAWN;
+            }
+            while (NULL != (item = opal_list_remove_first(&attrs))) {
+                OBJ_RELEASE(item);
+            }
+            OBJ_DESTRUCT(&attrs);
+            
             /* return the new jobid */
             if(ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
-                goto SEND_ANSWER;
+                goto CLEANUP_SPAWN;
             }
+                
+            goto CLEANUP_SPAWN;  /* clean up the attrs and contexts */
             break;
 
         case ORTE_RMGR_SPAWN_JOB_CMD:

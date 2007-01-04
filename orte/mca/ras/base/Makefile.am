@@ -30,6 +30,7 @@ libmca_ras_la_SOURCES += \
         base/ras_base_no_ops.c \
         base/ras_base_open.c \
         base/ras_base_receive.c \
+	base/ras_base_support_fns.c \
 	base/data_type_support/ras_data_type_compare_fns.c \
 	base/data_type_support/ras_data_type_copy_fns.c \
 	base/data_type_support/ras_data_type_packing_fns.c \

@@ -58,7 +58,7 @@ int orte_iof_proxy_svc_publish(
     hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_PUB;
     hdr.hdr_common.hdr_status = 0;
     hdr.hdr_pub.pub_name = *name;
-    hdr.hdr_pub.pub_proxy = *ORTE_RML_NAME_SELF;
+    hdr.hdr_pub.pub_proxy = *ORTE_PROC_MY_NAME;
     hdr.hdr_pub.pub_mask = ORTE_NS_CMP_ALL;
     hdr.hdr_pub.pub_tag = tag;
     ORTE_IOF_BASE_HDR_PUB_NTOH(hdr.hdr_pub);
@@ -96,7 +96,7 @@ int orte_iof_proxy_svc_unpublish(
     hdr.hdr_common.hdr_type = ORTE_IOF_BASE_HDR_PUB;
     hdr.hdr_common.hdr_status = 0;
     hdr.hdr_pub.pub_name = *name;
-    hdr.hdr_pub.pub_proxy = *ORTE_RML_NAME_SELF;
+    hdr.hdr_pub.pub_proxy = *ORTE_PROC_MY_NAME;
     hdr.hdr_pub.pub_mask = mask;
     hdr.hdr_pub.pub_tag = tag;
     ORTE_IOF_BASE_HDR_PUB_NTOH(hdr.hdr_pub);
@@ -257,7 +257,7 @@ static void orte_iof_proxy_svc_msg(
     unsigned char* data)
 {
     orte_iof_base_endpoint_t* endpoint;
-    endpoint = orte_iof_base_endpoint_match(ORTE_RML_NAME_ANY, ORTE_NS_CMP_NONE, msg->msg_tag);
+    endpoint = orte_iof_base_endpoint_match(ORTE_NAME_WILDCARD, ORTE_NS_CMP_NONE, msg->msg_tag);
     if(endpoint != NULL) {
         orte_iof_base_endpoint_forward(endpoint,src,msg,data);
         OBJ_RELEASE(endpoint);

@@ -43,6 +43,11 @@ orte_attribute_t* orte_rmgr_base_find_attribute(opal_list_t* attr_list, char* ke
     opal_list_item_t *item;
     orte_attribute_t *kval;
 
+    if (NULL == attr_list) {
+        /* if the list is NULL, then by definition we couldn't find it! */
+        return NULL;
+    }
+    
     for (item = opal_list_get_first(attr_list);
          item != opal_list_get_end(attr_list);
          item = opal_list_get_next(item)) {
@@ -68,6 +73,11 @@ int orte_rmgr_base_add_attribute(opal_list_t* attr_list, char* key,
     int rc;
     orte_gpr_keyval_t *kval;
     orte_attribute_t *attr;
+    
+    /* protect against NULL case */
+    if (NULL == attr_list) {
+        return ORTE_ERR_BAD_PARAM;
+    }
     
     /* see if this attribute is already present */
     if (NULL != (attr = orte_rmgr_base_find_attribute(attr_list, key))) {
@@ -108,6 +118,11 @@ int orte_rmgr_base_merge_attributes(opal_list_t* target, opal_list_t* source, bo
     opal_list_item_t *item;
     orte_attribute_t *attr;
     
+    /* protect against NULL cases */
+    if (NULL == target || NULL == source) {
+        return ORTE_ERR_BAD_PARAM;
+    }
+    
     /* Since the add_attribute function takes care of the override issue, we just
      * need to cycle through the source list and "add" everything to the target
      */
@@ -135,6 +150,11 @@ int orte_rmgr_base_delete_attribute(opal_list_t* attr_list, char* key)
 {
     opal_list_item_t *item;
     orte_attribute_t *kval;
+    
+    /* protect against the NULL case */
+    if (NULL == attr_list) {
+        return ORTE_SUCCESS;
+    }
     
     for (item = opal_list_get_first(attr_list);
          item != opal_list_get_end(attr_list);

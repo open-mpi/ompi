@@ -36,21 +36,9 @@
  * as some systems can call this without that support
  */
 
-int orte_smr_base_get_node_state_not_available(orte_node_state_t *state,
-                                                      orte_cellid_t cell,
-                                                      char *nodename)
-{
-    return ORTE_SUCCESS;
-}
-
-int orte_smr_base_set_node_state_not_available(orte_cellid_t cell,
-                                             char *nodename,
-                                             orte_node_state_t state)
-{
-    return ORTE_SUCCESS;
-}
-
-int orte_smr_base_begin_monitoring_not_available(orte_jobid_t job)
+int orte_smr_base_begin_monitoring_not_available(orte_job_map_t *map,
+                                                 orte_gpr_trigger_cb_fn_t cbfunc,
+                                                 void *user_tag)
 {
     return ORTE_SUCCESS;
 }

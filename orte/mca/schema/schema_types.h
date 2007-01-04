@@ -23,6 +23,16 @@
 #include "orte/mca/ns/ns_types.h"
 #include "opal/util/error.h"
 
+/**
+* Standard characters used in ORTE
+ */
+#define ORTE_SCHEMA_DELIMITER_CHAR      '.'
+#define ORTE_SCHEMA_DELIMITER_STRING    "."
+#define ORTE_SCHEMA_WILDCARD_CHAR       '*'
+#define ORTE_SCHEMA_WILDCARD_STRING     "*"
+#define ORTE_SCHEMA_INVALID_CHAR        '$'
+#define ORTE_SCHEMA_INVALID_STRING      "$"
+
 /*
  * Standard names used across the system
  */
@@ -48,46 +58,48 @@
  * ORTE-wide key names for storing/retrieving data from the registry.
  * Subsystem-specific keys will be defined in each=/ subsystem's xxx_types.h file.
  */
-#define ORTE_CELLID_KEY                 "orte-cellid"
-#define ORTE_JOBGRP_KEY                 "orte-jobgrp"
-#define ORTE_JOBID_KEY                  "orte-jobid"
-#define ORTE_VPID_KEY                   "orte-vpid"
-#define ORTE_NODE_NAME_KEY              "orte-node-name"
-#define ORTE_NODE_ARCH_KEY              "orte-node-arch"
-#define ORTE_NODE_STATE_KEY             "orte-node-state"
-#define ORTE_NODE_SLOTS_KEY             "orte-node-slots"
-#define ORTE_NODE_SLOTS_ALLOC_KEY       "orte-node-slots-alloc"
-#define ORTE_NODE_SLOTS_IN_USE_KEY      "orte-node-slots-in-use"
-#define ORTE_NODE_SLOTS_MAX_KEY         "orte-node-slots-max"
-#define ORTE_NODE_ALLOC_KEY             "orte-node-alloc"
-#define ORTE_NODE_BOOTPROXY_KEY         "orte-node-bootproxy"
-#define ORTE_NODE_USERNAME_KEY          "orte-node-username"
-#define ORTE_NODE_OVERSUBSCRIBED_KEY    "orte-node-oversubscribed"
-#define ORTE_JOB_APP_CONTEXT_KEY        "orte-job-app-context"
-#define ORTE_JOB_SLOTS_KEY              "orte-job-slots"                /**< number of procs in job */
-#define ORTE_JOB_VPID_START_KEY         "orte-job-vpid-start"
-#define ORTE_JOB_VPID_RANGE_KEY         "orte-job-vpid-range"
-#define ORTE_JOB_IOF_KEY                "orte-job-iof"
-#define ORTE_JOB_STATE_KEY              "orte-job-state"
-#define ORTE_PROC_NAME_KEY              "orte-proc-name"
-#define ORTE_PROC_RANK_KEY              "orte-proc-rank"
-#define ORTE_PROC_PID_KEY               "orte-proc-pid"
-#define ORTE_PROC_LOCAL_PID_KEY         "orte-proc-local-pid"
-#define ORTE_PROC_STATE_KEY             "orte-proc-state"
-#define ORTE_PROC_APP_CONTEXT_KEY       "orte-proc-app-context"
-#define ORTE_PROC_EXIT_CODE_KEY         "orte-proc-exit-code"
-#define ORTE_PROC_NUM_ALIVE             "orte-proc-num-alive"
-#define ORTE_PROC_NUM_ABORTED           "orte-proc-num-aborted"
-#define ORTE_PROC_NUM_FAILED_START      "orte-proc-num-failed-start"
-#define ORTE_PROC_NUM_AT_INIT           "orte-proc-num-init"
-#define ORTE_PROC_NUM_LAUNCHED          "orte-proc-num-launched"
-#define ORTE_PROC_NUM_RUNNING           "orte-proc-num-running"
-#define ORTE_PROC_NUM_AT_STG1           "orte-proc-num-stg1"
-#define ORTE_PROC_NUM_AT_STG2           "orte-proc-num-stg2"
-#define ORTE_PROC_NUM_AT_STG3           "orte-proc-num-stg3"
-#define ORTE_PROC_NUM_FINALIZED         "orte-proc-num-finalized"
-#define ORTE_PROC_NUM_TERMINATED        "orte-proc-num-terminated"
-#define ORTE_PROC_RML_IP_ADDRESS_KEY    "orte-proc-rml-ip-addr"
+#define ORTE_CELLID_KEY                         "orte-cellid"
+#define ORTE_JOBGRP_KEY                         "orte-jobgrp"
+#define ORTE_JOBID_KEY                          "orte-jobid"
+#define ORTE_VPID_KEY                           "orte-vpid"
+#define ORTE_NODE_NAME_KEY                      "orte-node-name"
+#define ORTE_NODE_ARCH_KEY                      "orte-node-arch"
+#define ORTE_NODE_STATE_KEY                     "orte-node-state"
+#define ORTE_NODE_SLOTS_KEY                     "orte-node-slots"
+#define ORTE_NODE_SLOTS_ALLOC_KEY               "orte-node-slots-alloc"
+#define ORTE_NODE_SLOTS_IN_USE_KEY              "orte-node-slots-in-use"
+#define ORTE_NODE_SLOTS_MAX_KEY                 "orte-node-slots-max"
+#define ORTE_NODE_ALLOC_KEY                     "orte-node-alloc"
+#define ORTE_NODE_BOOTPROXY_KEY                 "orte-node-bootproxy"
+#define ORTE_NODE_USERNAME_KEY                  "orte-node-username"
+#define ORTE_NODE_OVERSUBSCRIBED_KEY            "orte-node-oversubscribed"
+#define ORTE_JOB_APP_CONTEXT_KEY                "orte-job-app-context"
+#define ORTE_JOB_SLOTS_KEY                      "orte-job-slots"                /**< number of procs in job */
+#define ORTE_JOB_VPID_START_KEY                 "orte-job-vpid-start"
+#define ORTE_JOB_VPID_RANGE_KEY                 "orte-job-vpid-range"
+#define ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY     "orte-job-override-oversubscribe"
+#define ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY          "orte-job-total-slots"
+#define ORTE_JOB_IOF_KEY                        "orte-job-iof"
+#define ORTE_JOB_STATE_KEY                      "orte-job-state"
+#define ORTE_PROC_NAME_KEY                      "orte-proc-name"
+#define ORTE_PROC_RANK_KEY                      "orte-proc-rank"
+#define ORTE_PROC_PID_KEY                       "orte-proc-pid"
+#define ORTE_PROC_LOCAL_PID_KEY                 "orte-proc-local-pid"
+#define ORTE_PROC_STATE_KEY                     "orte-proc-state"
+#define ORTE_PROC_APP_CONTEXT_KEY               "orte-proc-app-context"
+#define ORTE_PROC_EXIT_CODE_KEY                 "orte-proc-exit-code"
+#define ORTE_PROC_NUM_ALIVE                     "orte-proc-num-alive"
+#define ORTE_PROC_NUM_ABORTED                   "orte-proc-num-aborted"
+#define ORTE_PROC_NUM_FAILED_START              "orte-proc-num-failed-start"
+#define ORTE_PROC_NUM_AT_INIT                   "orte-proc-num-init"
+#define ORTE_PROC_NUM_LAUNCHED                  "orte-proc-num-launched"
+#define ORTE_PROC_NUM_RUNNING                   "orte-proc-num-running"
+#define ORTE_PROC_NUM_AT_STG1                   "orte-proc-num-stg1"
+#define ORTE_PROC_NUM_AT_STG2                   "orte-proc-num-stg2"
+#define ORTE_PROC_NUM_AT_STG3                   "orte-proc-num-stg3"
+#define ORTE_PROC_NUM_FINALIZED                 "orte-proc-num-finalized"
+#define ORTE_PROC_NUM_TERMINATED                "orte-proc-num-terminated"
+#define ORTE_PROC_RML_IP_ADDRESS_KEY            "orte-proc-rml-ip-addr"
 
 /*
  * ORTE-wide names for specific system triggers and subscriptions
@@ -110,5 +122,14 @@
 #define ORTED_LAUNCH_STG_SUB                "orted-launch-sub"
 #define ORTED_LAUNCH_STAGE_GATE_CNTR        "orted-num-at-launch-gate"
 #define ORTED_NUM_TO_BE_LAUNCHED            "orted-num-to-be-launched"
+
+/*
+ * BPROC-SPECIFIC SEGMENT FOR STORING CLUSTER-WIDE NODE STATES
+ * This obviously shouldn't be in a general ORTE schema file. However,
+ * it is a temporary requirement until we can install the ORTE 2.0
+ * schema - and the definition needs to be in some central location
+ * where the various bproc components can locate it
+ */
+#define ORTE_BPROC_NODE_SEGMENT     "orte-node-bproc-segment"
 
 #endif

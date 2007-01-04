@@ -53,7 +53,7 @@ static void mca_oob_recv_callback(
 /*
  * Non-blocking version of mca_oob_recv_nb().
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param msg (IN)     Array of iovecs describing user buffers and lengths.
  * @param count (IN)   Number of elements in iovec array.
  * @param flags (IN)   May be MCA_OOB_PEEK to return up to size bytes of msg w/out removing it from the queue,
@@ -71,7 +71,7 @@ int mca_oob_recv_nb(orte_process_name_t* peer, struct iovec* msg, int count, int
 /*
  * Cancel non-blocking recv.j
  *
- * @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+ * @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
  * @param tag (IN)     User defined tag for message matching.
  * @return             OMPI success or error code (<0) on error.
  */
@@ -84,7 +84,7 @@ int mca_oob_recv_cancel(orte_process_name_t* peer, int tag)
 /**
 * Non-blocking version of mca_oob_recv_packed().
 *
-* @param peer (IN)    Opaque name of peer process or MCA_OOB_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buffer (IN)  Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.

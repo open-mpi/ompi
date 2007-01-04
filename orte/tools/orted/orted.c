@@ -66,6 +66,7 @@
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/rmgr/base/base.h"
 #include "orte/mca/odls/odls.h"
+#include "orte/mca/pls/pls.h"
 
 #include "orte/runtime/runtime.h"
 
@@ -197,6 +198,7 @@ int main(int argc, char *argv[])
     orte_gpr_value_t *value;
     char *segment;
     int i;
+    orte_buffer_t answer;
 
     /* initialize the globals */
     memset(&orted_globals, 0, sizeof(orted_globals_t));
@@ -379,12 +381,12 @@ int main(int argc, char *argv[])
     OBJ_CONSTRUCT(&orted_globals.condition, opal_condition_t);
 
     /* register the daemon main receive functions */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
     }
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
         return ret;
@@ -476,12 +478,22 @@ int main(int argc, char *argv[])
         /* make sure our local procs are dead - but don't update their state
          * on the HNP as this may be redundant
          */
-        orte_odls.kill_local_procs(orted_globals.bootproxy, false);
+        orte_odls.kill_local_procs(ORTE_JOBID_WILDCARD, false);
 
-        /* cleanup session directory */
+        /* cleanup their session directory */
         orte_session_dir_cleanup(orted_globals.bootproxy);
 
-        /* Finalize and clean up */
+        /* send an ack - we are as close to done as we can be while
+         * still able to communicate
+         */
+        OBJ_CONSTRUCT(&answer, orte_buffer_t);
+        if (0 > orte_rml.send_buffer(ORTE_PROC_MY_HNP, &answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
+            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        }
+        OBJ_DESTRUCT(&answer);
+
+
+        /* Finalize and clean up ourselves */
         if (ORTE_SUCCESS != (ret = orte_finalize())) {
             ORTE_ERROR_LOG(ret);
         }
@@ -520,7 +532,7 @@ int main(int argc, char *argv[])
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] ompid: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted: mutex cleared - finalizing", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     /* cleanup */
@@ -532,7 +544,7 @@ int main(int argc, char *argv[])
     orte_finalize();
 
     if (orted_globals.debug_daemons) {
-       opal_output(0, "[%lu,%lu,%lu] ompid: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
+       opal_output(0, "[%lu,%lu,%lu] orted: done - exiting", ORTE_NAME_ARGS(orte_process_info.my_name));
     }
 
     exit(0);
@@ -546,6 +558,10 @@ int main(int argc, char *argv[])
 static void orted_local_cb_launcher(orte_gpr_notify_data_t *data, void *user_tag)
 {
     int rc;
+    
+    if (orted_globals.debug_daemons) {
+        opal_output(0, "[%lu,%lu,%lu] orted: received launch callback", ORTE_NAME_ARGS(orte_process_info.my_name));
+    }
     
     /* pass the data to the orted_local_launcher and get a report on
      * success or failure of the launch
@@ -575,8 +591,8 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                  orte_buffer_t *buffer, orte_rml_tag_t tag,
                  void* cbdata)
 {
-    orte_buffer_t *answer;
     orte_daemon_cmd_flag_t command;
+    orte_buffer_t answer;
     int ret;
     orte_std_cntr_t n;
     int32_t signal;
@@ -600,22 +616,6 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
         goto CLEANUP;
     }
     
-    /* setup the answer */
-    answer = OBJ_NEW(orte_buffer_t);
-    if (NULL == answer) {
-        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
-        goto CLEANUP;
-    }
-    
-    /* pack the command to ensure we always have something to send back, and
-     * so that the caller can verify communication
-     */
-    if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &command, 1, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(ret);
-        OBJ_RELEASE(answer);
-        goto CLEANUP;
-    }
-    
     switch(command) {
 
         /****    KILL_LOCAL_PROCS   ****/
@@ -631,7 +631,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &job, &n, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
 
             if (ORTE_SUCCESS != (ret = orte_odls.kill_local_procs(job, true))) {
@@ -649,7 +649,7 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &signal, &n, ORTE_INT32))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
                 
             /* see if they specified a process to signal, or if we
@@ -670,9 +670,10 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
             /* unpack the notify data object */
+            n = 1;
             if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &ndat, &n, ORTE_GPR_NOTIFY_DATA))) {
                 ORTE_ERROR_LOG(ret);
-                goto DONE;
+                goto CLEANUP;
             }
             
             /* launch the processes */
@@ -690,14 +691,11 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
                 opal_output(0, "[%lu,%lu,%lu] orted_recv_pls: received exit",
                             ORTE_NAME_ARGS(orte_process_info.my_name));
             }
-            /* send the response before we wakeup because otherwise
-             * we'll depart before it gets out!
-             */
-            if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
-                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-            }
+            /* no response to send here - we'll send it when nearly exit'd */
             orted_globals.exit_condition = true;
             opal_condition_signal(&orted_globals.condition);
+            OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+            return;
             break;
 
         default:
@@ -705,23 +703,53 @@ static void orte_daemon_recv_pls(int status, orte_process_name_t* sender,
             break;
     }
 
-DONE:
-    /* send the response */
-    if (0 > orte_rml.send_buffer(sender, answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
+ CLEANUP:
+    /* send an ack that command is done */
+    OBJ_CONSTRUCT(&answer, orte_buffer_t);
+    if (0 > orte_rml.send_buffer(sender, &answer, ORTE_RML_TAG_PLS_ORTED_ACK, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
     }
-    OBJ_RELEASE(answer);
- 
- CLEANUP:
+    OBJ_DESTRUCT(&answer);
+    
     OPAL_THREAD_UNLOCK(&orted_globals.mutex);
 
     /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED, ORTE_RML_NON_PERSISTENT, orte_daemon_recv_pls, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
 
     return;
+}
+
+static void exit_callback(int fd, short event, void *arg)
+{
+    /* Trigger the normal exit conditions */
+    orted_globals.exit_condition = true;
+    opal_condition_signal(&orted_globals.condition);
+    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+}
+
+static void halt_vm(void)
+{
+    int ret;
+    struct timeval tv = { 1, 0 };
+    opal_event_t* event;
+    opal_list_t attrs;
+    opal_list_item_t *item;
+    
+    /* terminate the vm - this will also wake us up so we can exit */
+    OBJ_CONSTRUCT(&attrs, opal_list_t);
+    orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+    ret = orte_pls.terminate_orteds(0, &attrs);
+    while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+    OBJ_DESTRUCT(&attrs);
+    
+    /* setup a delay to give the orteds time to complete their departure */
+    if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
+        opal_evtimer_set(event, exit_callback, NULL);
+        opal_evtimer_add(event, &tv);
+    }
 }
 
 static void orte_daemon_recv(int status, orte_process_name_t* sender,
@@ -744,79 +772,90 @@ static void orte_daemon_recv(int status, orte_process_name_t* sender,
                     ORTE_NAME_ARGS(sender));
     }
     
+    n = 1;
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
+        ORTE_ERROR_LOG(ret);
+        OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+        return;
+    }
+    
     answer = OBJ_NEW(orte_buffer_t);
     if (NULL == answer) {
         ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         goto DONE;
     }
     
-    n = 1;
-    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &command, &n, ORTE_DAEMON_CMD))) {
-        ORTE_ERROR_LOG(ret);
-        goto CLEANUP;
-    }
-    
-    /****    EXIT COMMAND    ****/
-    if (ORTE_DAEMON_EXIT_CMD == command) {
-        if (orted_globals.debug_daemons) {
-            opal_output(0, "[%lu,%lu,%lu] orted_recv: received exit",
-                        ORTE_NAME_ARGS(orte_process_info.my_name));
-        }
-        
-        orted_globals.exit_condition = true;
-        opal_condition_signal(&orted_globals.condition);
-        
-        goto CLEANUP;
-        
+    switch(command) {
+        /****    EXIT COMMAND    ****/
+        case ORTE_DAEMON_EXIT_CMD:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv: received exit",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
+            
+            orted_globals.exit_condition = true;
+            opal_condition_signal(&orted_globals.condition);
+            break;
+
+        /****    HALT VM COMMAND    ****/
+        case ORTE_DAEMON_HALT_VM_CMD:
+            if (orted_globals.debug_daemons) {
+                opal_output(0, "[%lu,%lu,%lu] orted_recv: received halt vm",
+                            ORTE_NAME_ARGS(orte_process_info.my_name));
+            }
+            halt_vm();
+            break;
+            
         /****     CONTACT QUERY COMMAND    ****/
-    } else if (ORTE_DAEMON_CONTACT_QUERY_CMD == command) {
-        /* send back contact info */
-        contact_info = orte_rml.get_uri();
-        
-        if (NULL == contact_info) {
-            ORTE_ERROR_LOG(ORTE_ERROR);
-            goto CLEANUP;
-        }
-        
-        if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
-            ORTE_ERROR_LOG(ret);
-            goto CLEANUP;
-        }
-        
-        if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
-            ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
-        }
-        
-        goto CLEANUP;
+        case ORTE_DAEMON_CONTACT_QUERY_CMD:
+            /* send back contact info */
+            contact_info = orte_rml.get_uri();
+            
+            if (NULL == contact_info) {
+                ORTE_ERROR_LOG(ORTE_ERROR);
+                goto CLEANUP;
+            }
+            
+            if (ORTE_SUCCESS != (ret = orte_dss.pack(answer, &contact_info, 1, ORTE_STRING))) {
+                ORTE_ERROR_LOG(ret);
+                goto CLEANUP;
+            }
+            
+            if (0 > orte_rml.send_buffer(sender, answer, tag, 0)) {
+                ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+            }
+            break;
         
         /****     HOSTFILE COMMAND    ****/
-    } else if (ORTE_DAEMON_HOSTFILE_CMD == command) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-        goto CLEANUP;
+        case ORTE_DAEMON_HOSTFILE_CMD:
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+            break;
         
         /****     SCRIPTFILE COMMAND    ****/
-    } else if (ORTE_DAEMON_SCRIPTFILE_CMD == command) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-        goto CLEANUP;
+        case ORTE_DAEMON_SCRIPTFILE_CMD:
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+            break;
         
         /****     HEARTBEAT COMMAND    ****/
-    } else if (ORTE_DAEMON_HEARTBEAT_CMD == command) {
-        ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
-        goto CLEANUP;
+        case ORTE_DAEMON_HEARTBEAT_CMD:
+            ORTE_ERROR_LOG(ORTE_ERR_NOT_IMPLEMENTED);
+            break;
+            
+        default:
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
     }
     
 CLEANUP:
-        OBJ_RELEASE(answer);
+    OBJ_RELEASE(answer);
     
 DONE:
-        OPAL_THREAD_UNLOCK(&orted_globals.mutex);
+    OPAL_THREAD_UNLOCK(&orted_globals.mutex);
     
     /* reissue the non-blocking receive */
-    ret = orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
+    ret = orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DAEMON, ORTE_RML_NON_PERSISTENT, orte_daemon_recv, NULL);
     if (ret != ORTE_SUCCESS && ret != ORTE_ERR_NOT_IMPLEMENTED) {
         ORTE_ERROR_LOG(ret);
     }
     
     return;
 }
-

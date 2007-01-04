@@ -37,6 +37,7 @@
 #include "orte/mca/gpr/gpr_types.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/smr/smr_types.h"
+#include "orte/mca/rmaps/rmaps_types.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
@@ -145,12 +146,14 @@ typedef int (*orte_smr_base_module_define_alert_monitor_fn_t)(orte_jobid_t job,
 /*
  * Initiate monitoring of a job
  * This function notifies the smr that it should initiate monitoring of the specified
- * jobid. It is called by the resource manager once a job has been launched. Calling
- * the function, allows smr components (e.g., the BProc component that monitors daemons
+ * jobid. It is called by a PLS component at an appropriate point in the launch procedure. Calling
+ * the function allows smr components (e.g., the BProc component that monitors daemons
  * via the BProc-provided centralized alerting system) to make the necessary connections
  * for monitoring the job.
  */
-typedef int (*orte_smr_base_module_begin_monitoring_fn_t)(orte_jobid_t job);
+typedef int (*orte_smr_base_module_begin_monitoring_fn_t)(orte_job_map_t *map,
+                                                          orte_gpr_trigger_cb_fn_t cbfunc,
+                                                          void *user_tag);
 
 /*
  * Subscribe to a job stage gate
@@ -179,7 +182,7 @@ struct orte_smr_base_module_1_3_0_t {
     orte_smr_base_module_set_node_state_fn_t            set_node_state;
     orte_smr_base_module_get_job_state_fn_t             get_job_state;
     orte_smr_base_module_set_job_state_fn_t             set_job_state;
-    orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring_job;
+    orte_smr_base_module_begin_monitoring_fn_t          begin_monitoring;
     /* TRIGGER INIT FUNCTIONS */
     orte_smr_base_module_job_stage_gate_init_fn_t       init_job_stage_gates;
     orte_smr_base_module_orted_stage_gate_init_fn_t     init_orted_stage_gates;

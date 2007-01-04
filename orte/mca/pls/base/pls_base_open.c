@@ -53,6 +53,8 @@ orte_pls_base_module_t orte_pls;
  */
 int orte_pls_base_open(void)
 {
+    int value;
+    
     /* Debugging / verbose output.  Always have stream open, with
        verbose set by the mca open system... */
     orte_pls_base.pls_output = opal_output_open(NULL);
@@ -60,6 +62,30 @@ int orte_pls_base_open(void)
     /* init selected to be false */
     orte_pls_base.selected = false;
 
+    /* initialize the condition variables for orted comm */
+    OBJ_CONSTRUCT(&orte_pls_base.orted_cmd_lock, opal_mutex_t);
+    OBJ_CONSTRUCT(&orte_pls_base.orted_cmd_cond, opal_condition_t);
+
+    /* check for reuse of daemons */
+    mca_base_param_reg_int_name("pls", "base_reuse_daemons",
+                                "If nonzero, reuse daemons to launch dynamically spawned processes.  If zero, do not reuse daemons (default)",
+                                false, false, (int)false, &value);
+    if (false == value) {
+        orte_pls_base.reuse_daemons = false;
+    } else {
+        orte_pls_base.reuse_daemons = true;
+    }
+    
+    /* check for timing requests */
+    mca_base_param_reg_int_name("orte", "timing",
+                                "Request that critical timing loops be measured",
+                                false, false, 0, &value);
+    if (value != 0) {
+        orte_pls_base.timing = true;
+    } else {
+        orte_pls_base.timing = false;
+    }
+    
     /* Open up all the components that we can find */
 
     if (ORTE_SUCCESS != 

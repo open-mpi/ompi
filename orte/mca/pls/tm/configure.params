@@ -17,5 +17,5 @@
 # $HEADER$
 #
 
-PARAM_INIT_FILE=src/pls_tm_component.c
+PARAM_INIT_FILE=pls_tm_component.c
 PARAM_CONFIG_FILES="Makefile"

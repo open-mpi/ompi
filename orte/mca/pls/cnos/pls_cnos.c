@@ -38,10 +38,10 @@
 
 
 static int orte_pls_cnos_launch_job(orte_jobid_t jobid);
-static int orte_pls_cnos_terminate_job(orte_jobid_t jobid);
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid);
+static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
+static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
 static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name);
-static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal);
+static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
 static int orte_pls_cnos_finalize(void);
 
@@ -68,12 +68,12 @@ static int orte_pls_cnos_launch_job(orte_jobid_t jobid)
 extern int killrank(rank_t RANK, int SIG);
 #endif
 
-static int orte_pls_cnos_terminate_job(orte_jobid_t jobid)
+static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
 #ifdef HAVE_KILLRANK
     orte_jobid_t my_jobid;
 
-    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+    my_jobid = orte_process_info.my_name->jobid;
 
     /* make sure it's my job */
     if (jobid == my_jobid) {
@@ -89,12 +89,12 @@ static int orte_pls_cnos_terminate_job(orte_jobid_t jobid)
 }
 
 
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid)
+static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
 #ifdef HAVE_KILLRANK
     orte_jobid_t my_jobid;
     
-    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
+    my_jobid = orte_process_info.my_name->jobid;
     
     /* make sure it's my job */
     if (jobid == my_jobid) {
@@ -136,7 +136,7 @@ static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name)
 }
 
 
-static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal)
+static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

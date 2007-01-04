@@ -27,6 +27,7 @@ libmca_rmaps_la_SOURCES += \
         base/rmaps_base_close.c \
         base/rmaps_base_registry_fns.c \
         base/rmaps_base_map_job.c \
+        base/rmaps_base_proxy_map_job.c \
         base/rmaps_base_support_fns.c \
         base/rmaps_base_open.c \
         base/rmaps_base_receive.c \

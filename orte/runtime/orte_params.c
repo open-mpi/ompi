@@ -25,6 +25,22 @@
 
 int orte_register_params(bool infrastructure)
 {
+    mca_base_param_reg_int_name("orte", "debug",
+                                "Top-level ORTE debug switch",
+                                false, false, (int)false, NULL);
+    
+    mca_base_param_reg_int_name("orte_debug", "daemons_file",
+                                "Whether want stdout/stderr of daemons to go to a file or not",
+                                false, false, (int)false, NULL);
+
+    mca_base_param_reg_int_name("orte", "no_daemonize",
+                                "Whether to properly daemonize the ORTE daemons or not",
+                                false, false, (int)false, NULL);
+
+    mca_base_param_reg_int_name("orte_debug", "daemons",
+                                "Whether to debug the ORTE daemons or not",
+                                false, false, (int)false, NULL);
+
     mca_base_param_reg_int_name("orte", "infrastructure",
                                 "Whether we are ORTE infrastructure or an ORTE application",
                                 true, true, (int)infrastructure, NULL);

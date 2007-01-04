@@ -140,7 +140,7 @@ int orte_gpr_base_pack_index(orte_buffer_t *cmd, char *segment)
 
     /* it's okay to pack a NULL string, so pack the segment regardless */
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &segment, 1, ORTE_STRING))) {
-    ORTE_ERROR_LOG(rc);
+        ORTE_ERROR_LOG(rc);
         return rc;
     }
 

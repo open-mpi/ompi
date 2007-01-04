@@ -25,24 +25,7 @@
 
 #include "orte_config.h"
 #include "orte/orte_constants.h"
-#include <limits.h>
 
-#include "orte/mca/rml/rml_types.h"
-/*
- * Other constants
- */
-
-/**
- * The wildcard for receives from any peer.
- */
-#define MCA_OOB_NAME_ANY  &mca_oob_name_any
-/**
- * Process name of self
- */
-#define MCA_OOB_NAME_SELF orte_process_info.my_name
-/**
- * Process name of seed
- */
-#define MCA_OOB_NAME_SEED &mca_oob_name_seed
+#define ORTE_OOB_SUBSCRIPTION   "orte-oob-sub"
 
 #endif  /* MCA_OOB_TYPES_H */

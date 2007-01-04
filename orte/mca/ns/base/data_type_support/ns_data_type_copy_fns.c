@@ -23,7 +23,7 @@
 
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 /*
  * VPID
@@ -60,6 +60,25 @@ int orte_ns_base_copy_cellid(orte_cellid_t **dest, orte_cellid_t *src, orte_data
     *val = *src;
     *dest = val;
 
+    return ORTE_SUCCESS;
+}
+
+/*
+ * NODEID
+ */
+int orte_ns_base_copy_nodeid(orte_nodeid_t **dest, orte_nodeid_t *src, orte_data_type_t type)
+{
+    orte_nodeid_t *val;
+    
+    val = (orte_nodeid_t*)malloc(sizeof(orte_nodeid_t));
+    if (NULL == val) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    *val = *src;
+    *dest = val;
+    
     return ORTE_SUCCESS;
 }
 

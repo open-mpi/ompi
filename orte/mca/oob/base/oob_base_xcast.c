@@ -35,7 +35,6 @@
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/rmgr/rmgr.h"
 #include "orte/mca/smr/smr.h"
-#include "orte/mca/rml/rml.h"
 
 #include "orte/mca/oob/oob.h"
 #include "orte/mca/oob/base/base.h"
@@ -74,7 +73,7 @@ int mca_oob_xcast(orte_jobid_t job,
         if (NULL != buffer) {
             opal_output(0, "xcast [%ld,%ld,%ld]: buffer size %lu", ORTE_NAME_ARGS(ORTE_PROC_MY_NAME),
                         (unsigned long)buffer->bytes_used);
-        } 
+        }
         gettimeofday(&start, NULL);
     }
     switch(orte_oob_xcast_mode) {
@@ -159,7 +158,7 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
     
     /* regardless of who we are, we first have to receive the message */
     OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-    if (0 > (rc = mca_oob_recv_packed(ORTE_RML_NAME_ANY, &rbuf, tag))) {
+    if (0 > (rc = mca_oob_recv_packed(ORTE_NAME_WILDCARD, &rbuf, tag))) {
         ORTE_ERROR_LOG(rc);
         OBJ_DESTRUCT(&rbuf);
         return rc;
@@ -232,7 +231,9 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
     orte_process_name_t *peers=NULL;
     orte_std_cntr_t n=0;
     orte_proc_state_t state;
-
+    opal_list_t attrs;
+    opal_list_item_t *item;
+    
     /* check to see if there is something to send - this is only true on the HNP end.
      * However, we cannot just test to see if we are the HNP since, if we are a singleton,
      * we are the HNP *and* we still need to handle both ends of the xcast
@@ -244,12 +245,17 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
         /* this is the HNP end, so it does all the sends in this algorithm. First, we need
          * to get the job peers so we know who to send the message to
         */
-        if (ORTE_SUCCESS != (rc = orte_ns.get_job_peers(&peers, &n, job))) {
+        OBJ_CONSTRUCT(&attrs, opal_list_t);
+        orte_rmgr.add_attribute(&attrs, ORTE_NS_USE_JOBID, ORTE_JOBID, &job, ORTE_RMGR_ATTR_OVERRIDE);
+        if (ORTE_SUCCESS != (rc = orte_ns.get_peers(&peers, &n, &attrs))) {
             ORTE_ERROR_LOG(rc);
             OPAL_THREAD_UNLOCK(&xcastmutex);
             OBJ_DESTRUCT(&xcastmutex);
             return rc;
         }
+        item = opal_list_remove_first(&attrs);
+        OBJ_RELEASE(item);
+        OBJ_DESTRUCT(&attrs);
         
         for(i=0; i<n; i++) {
             /* check status of peer to ensure they are alive */
@@ -282,7 +288,7 @@ static int mca_oob_xcast_linear(orte_jobid_t job,
         orte_gpr_notify_message_t *msg;
         
         OBJ_CONSTRUCT(&rbuf, orte_buffer_t);
-        rc = mca_oob_recv_packed(ORTE_RML_NAME_ANY, &rbuf, tag);
+        rc = mca_oob_recv_packed(ORTE_NAME_WILDCARD, &rbuf, tag);
         if(rc < 0) {
             OBJ_DESTRUCT(&rbuf);
             return rc;

@@ -662,7 +662,7 @@ static void mca_btl_openib_endpoint_recv(
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
 
-        if(orte_ns.compare(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, endpoint) == 0) {
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, endpoint) == ORTE_EQUAL) {
             bool found = false;
             
             /* Try to get the endpoint instance of this proc */

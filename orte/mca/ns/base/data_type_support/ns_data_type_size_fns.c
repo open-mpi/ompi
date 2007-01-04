@@ -24,7 +24,7 @@
 #include "orte/dss/dss.h"
 #include "orte/mca/errmgr/errmgr.h"
 
-#include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 
 /*
  * STANDARD SIZE FUNCTION - WORKS FOR EVERYTHING NON-STRUCTURED
@@ -44,6 +44,10 @@ int orte_ns_base_std_size(size_t *size, void *src, orte_data_type_t type)
             *size = sizeof(orte_cellid_t);
             break;
 
+        case ORTE_NODEID:
+            *size = sizeof(orte_nodeid_t);
+            break;
+            
         case ORTE_NAME:
             *size = sizeof(orte_process_name_t);
             break;

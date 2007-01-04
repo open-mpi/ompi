@@ -212,7 +212,6 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
                                     orte_buffer_t *answer)
 {
     orte_gpr_cmd_flag_t command=ORTE_GPR_INDEX_CMD;
-    orte_data_type_t type;
     orte_std_cntr_t n, cnt;
     orte_gpr_replica_segment_t *seg=NULL;
     char *segment=NULL, **index=NULL;
@@ -225,23 +224,16 @@ int orte_gpr_replica_recv_index_cmd(orte_buffer_t *buffer,
         return rc;
     }
     
-    if (ORTE_SUCCESS != (ret = orte_dss.peek(buffer, &type, &n))) {
+    n = 1;
+    if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
         ORTE_ERROR_LOG(ret);
         goto RETURN_ERROR;
     }
-
-    if (ORTE_STRING != type) {  /* get index of segment names */
-        seg = NULL;
-    } else {
-        if (ORTE_SUCCESS != (ret = orte_dss.unpack(buffer, &segment, &n, ORTE_STRING))) {
-            ORTE_ERROR_LOG(ret);
-            goto RETURN_ERROR;
-        }
-        /* locate the segment */
-        if (ORTE_SUCCESS != (ret = orte_gpr_replica_find_seg(&seg, false, segment))) {
-            ORTE_ERROR_LOG(ret);
-            goto RETURN_ERROR;
-        }
+    
+    /* locate the segment */
+    if (ORTE_SUCCESS != (ret = orte_gpr_replica_find_seg(&seg, false, segment))) {
+        ORTE_ERROR_LOG(ret);
+        goto RETURN_ERROR;
     }
 
     if (ORTE_SUCCESS != (ret = orte_gpr_replica_index_fn(seg, &cnt, &index))) {

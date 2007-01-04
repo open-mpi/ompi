@@ -95,6 +95,7 @@ typedef struct {
     opal_mutex_t wait_for_compound_mutex;
     opal_condition_t compound_cmd_condition;
     int compound_cmd_waiting;
+    bool timing;
 } orte_gpr_proxy_globals_t;
 
 extern orte_gpr_proxy_globals_t orte_gpr_proxy_globals;
