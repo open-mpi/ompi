@@ -106,7 +106,7 @@ int mca_btl_openib_add_procs(
         BTL_VERBOSE(("got %d port_infos \n", ib_proc->proc_port_count));
         for(j = 0; j < (int) ib_proc->proc_port_count; j++){
             BTL_VERBOSE(("got a subnet %016x\n",
-                       ib_proc->proc_ports[j].subnet));
+                         ib_proc->proc_ports[j].subnet));
             if(ib_proc->proc_ports[j].subnet ==
                openib_btl->port_info.subnet) {
                 BTL_VERBOSE(("Got a matching subnet!\n"));

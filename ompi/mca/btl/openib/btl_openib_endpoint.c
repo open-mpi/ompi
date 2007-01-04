@@ -311,6 +311,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
     int rc;
+    
     if(NULL == buffer) {
          ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
          return ORTE_ERR_OUT_OF_RESOURCE;
@@ -348,12 +349,12 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         return rc;
     }
 
-    
     rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT64);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
 
     rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
@@ -371,11 +372,14 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
          mca_btl_openib_endpoint_send_cb, NULL);
     
     
-    BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
-              endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
-              endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
-              endpoint->endpoint_btl->lid));
+    BTL_VERBOSE(("Sent High Priority QP num = %d, Low Priority QP num = %d, LID = %d, SUBNET = %016x\n",
+                 endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
+                 endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
+                 endpoint->endpoint_btl->lid, 
+                 endpoint->subnet));
     
+    
+
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -629,11 +633,12 @@ static void mca_btl_openib_endpoint_recv(
         return;
     }
 
-    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d, SUBNET = %016x\n",
                  rem_info.rem_qp_num_hp,
                  rem_info.rem_qp_num_lp, 
-                 rem_info.rem_lid));
-
+                 rem_info.rem_lid, 
+                 rem_info.rem_subnet));
+    
     for(ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
             ib_proc != (mca_btl_openib_proc_t*)
