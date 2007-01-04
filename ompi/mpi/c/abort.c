@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -17,8 +18,16 @@
  */
 #include "ompi_config.h"
 
+#ifdef HAVE_UNISTD_H
+#include <unistd.h>
+#endif
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
+#include "ompi/communicator/communicator.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Abort = PMPI_Abort
@@ -40,5 +49,7 @@ int MPI_Abort(MPI_Comm comm, int errorcode)
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
     }
 
+    opal_output(0, "MPI_ABORT invoked on rank %d in communicator %s with errorcode %d\n", 
+                ompi_comm_rank(comm), comm->c_name, errorcode);
     return ompi_mpi_abort(comm, errorcode, true);
 }

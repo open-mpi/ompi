@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -87,9 +87,10 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
             }
             free(messages);
         } else {
-            fprintf(stderr, "[%s:%d] Abort is unable to print a stack trace\n",
-                    hostname, (int) pid);
-            fflush(stderr);
+            /* This will print an message if it's unable to print the
+               backtrace, so we don't need an additional "else" clause
+               if opal_backtrace_print() is not supported. */
+            opal_backtrace_print(stderr);
         }
     }
 
@@ -97,14 +98,14 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
     if (0 != ompi_mpi_abort_delay) {
         if (ompi_mpi_abort_delay < 0) {
-            fprintf(stderr ,"[%s:%d] Looping forever in MPI abort\n",
+            fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
                     hostname, (int) pid);
             fflush(stderr);
             while (1) { 
                 sleep(5); 
             }
         } else {
-            fprintf(stderr, "[%s:%d] Delaying for %d seconds in MPI_abort\n",
+            fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
                     hostname, (int) pid, ompi_mpi_abort_delay);
             do {
                 sleep(1);
