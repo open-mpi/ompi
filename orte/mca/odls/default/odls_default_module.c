@@ -956,7 +956,6 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     }
     
     opal_output(orte_odls_globals.output, "odls: setting up launch for job %ld", (long)job);
-    orte_dss.dump(0, data, ORTE_GPR_NOTIFY_DATA);
     
     /* We need to create a list of the app_contexts
      * so we can know what to launch - the process info only gives
