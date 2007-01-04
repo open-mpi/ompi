@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -85,7 +83,7 @@ static void mca_bml_base_completion(
 {
     mca_bml_base_context_t* ctx = (mca_bml_base_context_t*) des->des_cbdata;
     /* restore original state */
-    ((unsigned char*)OMPI_PTR_GET_PVAL(des->des_src[0].seg_addr))[ctx->index] ^= ~0;
+    ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
     des->des_cbdata = ctx->cbdata;
     des->des_cbfunc = ctx->cbfunc;
     free(ctx);
@@ -123,7 +121,7 @@ int mca_bml_base_send(
                 ctx->index = (size_t) ((des->des_src[0].seg_len * rand() * 1.0) / (RAND_MAX + 1.0));
                 ctx->cbfunc = des->des_cbfunc;
                 ctx->cbdata = des->des_cbdata;
-                ((unsigned char*)OMPI_PTR_GET_PVAL(des->des_src[0].seg_addr))[ctx->index] ^= ~0;
+                ((unsigned char*)des->des_src[0].seg_addr.pval)[ctx->index] ^= ~0;
                 des->des_cbdata = ctx;
                 des->des_cbfunc = mca_bml_base_completion;
             }

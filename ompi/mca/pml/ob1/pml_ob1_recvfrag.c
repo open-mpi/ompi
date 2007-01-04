@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -82,7 +80,7 @@ void mca_pml_ob1_recv_frag_callback(
                                     void* cbdata)
 {
     mca_btl_base_segment_t* segments = des->des_dst;
-    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*) OMPI_PTR_GET_PVAL(segments->seg_addr);
+    mca_pml_ob1_hdr_t* hdr = (mca_pml_ob1_hdr_t*)segments->seg_addr.pval;
     if(segments->seg_len < sizeof(mca_pml_ob1_common_hdr_t)) {
         return;
     }
@@ -128,7 +126,7 @@ void mca_pml_ob1_recv_frag_callback(
                 MCA_PML_OB1_ACK_HDR_NTOH(hdr->hdr_ack);
             }
 #endif
-            sendreq = (mca_pml_ob1_send_request_t*) OMPI_PTR_GET_PVAL(hdr->hdr_ack.hdr_src_req);
+            sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_ack.hdr_src_req.pval;
             sendreq->req_recv = hdr->hdr_ack.hdr_dst_req;
             sendreq->req_rdma_offset = (size_t)hdr->hdr_ack.hdr_rdma_offset;
             if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
@@ -149,7 +147,7 @@ void mca_pml_ob1_recv_frag_callback(
                 MCA_PML_OB1_FRAG_HDR_NTOH(hdr->hdr_frag);
             }
 #endif
-            recvreq = (mca_pml_ob1_recv_request_t*) OMPI_PTR_GET_PVAL(hdr->hdr_frag.hdr_dst_req);
+            recvreq = (mca_pml_ob1_recv_request_t*)hdr->hdr_frag.hdr_dst_req.pval;
             mca_pml_ob1_recv_request_progress(recvreq,btl,segments,des->des_dst_cnt);
             break;
         }
@@ -162,7 +160,7 @@ void mca_pml_ob1_recv_frag_callback(
                we remember if we ever change the bml. */
             assert(0 == (hdr->hdr_common.hdr_flags & MCA_PML_OB1_HDR_FLAGS_NBO));
 #endif
-            sendreq = (mca_pml_ob1_send_request_t*) OMPI_PTR_GET_PVAL(hdr->hdr_rdma.hdr_req);
+            sendreq = (mca_pml_ob1_send_request_t*)hdr->hdr_rdma.hdr_req.pval;
             mca_pml_ob1_send_request_put(sendreq,btl,&hdr->hdr_rdma);
             break;
         }
@@ -174,7 +172,7 @@ void mca_pml_ob1_recv_frag_callback(
                 MCA_PML_OB1_FIN_HDR_NTOH(hdr->hdr_fin);
             }
 #endif
-            rdma = (mca_btl_base_descriptor_t*) OMPI_PTR_GET_PVAL(hdr->hdr_fin.hdr_des);
+            rdma = (mca_btl_base_descriptor_t*)hdr->hdr_fin.hdr_des.pval;
             rdma->des_cbfunc(btl, NULL, rdma, OMPI_SUCCESS);
             break;
         }

@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -237,7 +235,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
             return NULL;
         }
         frag->base.des_flags = 0;
-        OMPI_PTR_SET_PVAL(frag->segment.seg_addr, frag+1);
+        frag->segment.seg_addr.pval = frag+1;
         frag->segment.seg_len = reserve + max_data;
         *size = max_data;
     } else {
@@ -254,7 +252,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_src(
             MCA_BTL_SELF_FRAG_RETURN_RDMA(frag);
             return NULL;
         }
-        OMPI_PTR_SET_PVAL(frag->segment.seg_addr, iov.iov_base);
+        frag->segment.seg_addr.pval = iov.iov_base;
         frag->segment.seg_len = max_data;
         frag->base.des_flags = 0;
         *size = max_data;
@@ -288,8 +286,7 @@ struct mca_btl_base_descriptor_t* mca_btl_self_prepare_dst(
 
     /* setup descriptor to point directly to user buffer */
     ompi_ddt_type_lb( convertor->pDesc, &lb );
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr,
-                      (unsigned char*)convertor->pBaseBuf + lb + convertor->bConverted);
+    frag->segment.seg_addr.pval = (unsigned char*)convertor->pBaseBuf + lb + convertor->bConverted; 
     frag->segment.seg_len = reserve + max_data;
     frag->segment.seg_key.key64 = (uint64_t)(intptr_t)convertor;
     frag->base.des_dst = &frag->segment;
@@ -340,9 +337,9 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
     mca_btl_base_segment_t* dst = des->des_dst;
     size_t src_cnt = des->des_src_cnt;
     size_t dst_cnt = des->des_dst_cnt;
-    unsigned char* src_addr = (unsigned char*) OMPI_PTR_GET_PVAL(src->seg_addr);
+    unsigned char* src_addr = (unsigned char*)src->seg_addr.pval;
     size_t src_len = src->seg_len;
-    unsigned char* dst_addr = (unsigned char*) OMPI_PTR_GET_PVAL(dst->seg_addr);
+    unsigned char* dst_addr = (unsigned char*)dst->seg_addr.pval;
     size_t dst_len = dst->seg_len;
 
     while(src_len && dst_len) {
@@ -353,7 +350,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
             /* advance src */
             if(--src_cnt != 0) {
                 src++;
-                src_addr = (unsigned char*) OMPI_PTR_GET_PVAL(src->seg_addr);
+                src_addr = (unsigned char*)src->seg_addr.pval;
                 src_len = src->seg_len;
             } else {
                 src_len = 0;
@@ -362,7 +359,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
             /* advance dst */
             if(--dst_cnt != 0) {
                 dst++;
-                dst_addr = (unsigned char*) OMPI_PTR_GET_PVAL(dst->seg_addr);
+                dst_addr = (unsigned char*)dst->seg_addr.pval;
                 dst_len = dst->seg_len;
             } else {
                 dst_len = 0;
@@ -377,7 +374,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
             if(src_len == 0) {
                 if(--src_cnt != 0) {
                     src++;
-                    src_addr = (unsigned char*) OMPI_PTR_GET_PVAL(src->seg_addr);
+                    src_addr = (unsigned char*)src->seg_addr.pval;
                     src_len = src->seg_len;
                 }
             } else {
@@ -389,7 +386,7 @@ int mca_btl_self_rdma( struct mca_btl_base_module_t* btl,
             if(dst_len == 0) {
                 if(--dst_cnt != 0) {
                     dst++;
-                    dst_addr = (unsigned char*) OMPI_PTR_GET_PVAL(src->seg_addr);
+                    dst_addr = (unsigned char*)src->seg_addr.pval;
                     dst_len = src->seg_len;
                 }
             } else {

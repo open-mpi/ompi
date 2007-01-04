@@ -154,7 +154,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
 
     if(do_rdma) {
         mca_btl_mvapi_footer_t* ftr =
-            (mca_btl_mvapi_footer_t*)(((char*)OMPI_PTR_GET_PVAL(frag->segment.seg_addr)) +
+            (mca_btl_mvapi_footer_t*)(((char*)frag->segment.seg_addr.pval) +
                                        frag->segment.seg_len);
         frag->sr_desc.opcode = VAPI_RDMA_WRITE;
         MCA_BTL_MVAPI_RDMA_FRAG_SET_SIZE(ftr, frag->sg_entry.len);
@@ -164,7 +164,7 @@ static inline int mca_btl_mvapi_endpoint_post_send(
 #endif
         frag->sr_desc.r_key = (VAPI_rkey_t)endpoint->eager_rdma_remote.rkey;
         frag->sr_desc.remote_addr = (VAPI_virt_addr_t)
-            OMPI_PTR_GET_LVAL(endpoint->eager_rdma_remote.base) +
+            endpoint->eager_rdma_remote.base.lval +
             endpoint->eager_rdma_remote.head *
             mvapi_btl->eager_rdma_frag_size +
             sizeof(mca_btl_mvapi_frag_t) +
@@ -1073,7 +1073,7 @@ void mca_btl_mvapi_endpoint_send_credits_lp(
     frag->hdr->tag = MCA_BTL_TAG_BTL;
     frag->hdr->credits = endpoint->rd_credits_lp;
     OPAL_THREAD_ADD32(&endpoint->rd_credits_lp, -frag->hdr->credits);
-    ((mca_btl_mvapi_control_header_t *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr))->type = MCA_BTL_MVAPI_CONTROL_NOOP;
+    ((mca_btl_mvapi_control_header_t *)frag->segment.seg_addr.pval)->type = MCA_BTL_MVAPI_CONTROL_NOOP;
 
     frag->sr_desc.opcode = VAPI_SEND; 
     frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->hdr; 
@@ -1151,7 +1151,7 @@ void mca_btl_mvapi_endpoint_send_credits_hp(
     frag->hdr->rdma_credits = endpoint->eager_rdma_local.credits;
     OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
             -frag->hdr->rdma_credits);
-    ((mca_btl_mvapi_control_header_t *)OMPI_PTR_GET_PVAL(frag->segment.seg_addr))->type = MCA_BTL_MVAPI_CONTROL_NOOP;
+    ((mca_btl_mvapi_control_header_t *)frag->segment.seg_addr.pval)->type = MCA_BTL_MVAPI_CONTROL_NOOP;
 
 
     frag->sr_desc.opcode = VAPI_SEND; 
@@ -1203,10 +1203,10 @@ static int mca_btl_mvapi_endpoint_send_eager_rdma(
     frag->base.des_flags |= MCA_BTL_DES_FLAGS_PRIORITY;
 
     frag->hdr->tag = MCA_BTL_TAG_BTL;
-    rdma_hdr = (mca_btl_mvapi_eager_rdma_header_t*)OMPI_PTR_GET_PVAL(frag->segment.seg_addr);
+    rdma_hdr = (mca_btl_mvapi_eager_rdma_header_t*)frag->segment.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_MVAPI_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->r_key;
-    OMPI_PTR_SET_PVAL(rdma_hdr->rdma_start, OMPI_PTR_GET_PVAL(endpoint->eager_rdma_local.base));
+    rdma_hdr->rdma_start.pval = endpoint->eager_rdma_local.base.pval;
     frag->segment.seg_len = sizeof(mca_btl_mvapi_eager_rdma_header_t);
     if (mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag) !=
             OMPI_SUCCESS) {
@@ -1225,7 +1225,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
     unsigned int i;
 
     OPAL_THREAD_LOCK(&endpoint->eager_rdma_local.lock);
-    if (OMPI_PTR_GET_PVAL(endpoint->eager_rdma_local.base))
+    if (endpoint->eager_rdma_local.base.pval)
         goto unlock_rdma_local;
 
     buf = mvapi_btl->super.btl_mpool->mpool_alloc(mvapi_btl->super.btl_mpool,
@@ -1251,7 +1251,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
                 mvapi_btl->eager_rdma_buffers, endpoint) < 0)
       goto cleanup;
 
-    OMPI_PTR_SET_PVAL(endpoint->eager_rdma_local.base, buf);
+    endpoint->eager_rdma_local.base.pval = buf;
     mvapi_btl->eager_rdma_buffers_count++;
     if (mca_btl_mvapi_endpoint_send_eager_rdma(endpoint) == 0) {
         OPAL_THREAD_UNLOCK(&mvapi_btl->eager_rdma_lock);
@@ -1260,7 +1260,7 @@ void mca_btl_mvapi_endpoint_connect_eager_rdma(
     }
 
     mvapi_btl->eager_rdma_buffers_count--;
-    OMPI_PTR_SET_PVAL(endpoint->eager_rdma_local.base, NULL);
+    endpoint->eager_rdma_local.base.pval = NULL;
     orte_pointer_array_set_item(mvapi_btl->eager_rdma_buffers,
             endpoint->eager_rdma_index, NULL);
 

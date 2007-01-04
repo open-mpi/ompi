@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -239,7 +237,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
             if(frag->iov_idx == 1 && frag->hdr.size) {
                 frag->iov[1].iov_base = (IOVBASE_TYPE*)(frag+1);
                 frag->iov[1].iov_len = frag->hdr.size;
-                OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, frag+1);
+                frag->segments[0].seg_addr.pval = frag+1;
                 frag->segments[0].seg_len = frag->hdr.size;
                 frag->iov_cnt++;
                 goto repeat;
@@ -253,7 +251,7 @@ bool mca_btl_tcp_frag_recv(mca_btl_tcp_frag_t* frag, int sd)
                 goto repeat;
             } else if (frag->iov_idx == 2) {
                 for(i=0; i<frag->hdr.count; i++) {
-                    frag->iov[i+2].iov_base = (IOVBASE_TYPE*) OMPI_PTR_GET_PVAL(frag->segments[i].seg_addr);
+                    frag->iov[i+2].iov_base = (IOVBASE_TYPE*)frag->segments[i].seg_addr.pval;
                     frag->iov[i+2].iov_len = frag->segments[i].seg_len;
                     frag->iov_cnt++;
                 }

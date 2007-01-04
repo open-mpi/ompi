@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -265,7 +263,7 @@ do {                                                            \
                                                                     \
         MCA_PML_OB1_PCKT_PENDING_ALLOC(_pckt,_rc);                  \
         _pckt->hdr.hdr_common.hdr_type = MCA_PML_OB1_HDR_TYPE_FIN;  \
-        OMPI_PTR_SET_PVAL(_pckt->hdr.hdr_fin.hdr_des, (D));         \
+        _pckt->hdr.hdr_fin.hdr_des.pval = (D);                      \
         _pckt->proc = (P);                                          \
         _pckt->bml_btl = (B);                                       \
         OPAL_THREAD_LOCK(&mca_pml_ob1.lock);                        \

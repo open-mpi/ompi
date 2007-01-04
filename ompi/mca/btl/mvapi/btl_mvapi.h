@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -260,7 +258,7 @@ typedef struct mca_btl_mvapi_reg_t mca_btl_mvapi_reg_t;
         OMPI_FREE_LIST_WAIT(frag_list, item, rc); \
         frag = (mca_btl_mvapi_frag_t*) item; \
         frag->sg_entry.len = frag->size + \
-            ((unsigned char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) -  \
+            ((unsigned char*) frag->segment.seg_addr.pval-  \
              (unsigned char*) frag->hdr);  \
        desc_post[i] = frag->rr_desc; \
     }\

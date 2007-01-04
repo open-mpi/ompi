@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -436,8 +434,7 @@ mca_btl_portals_component_progress(void)
                     /* if we ever make this thread hot, need to do
                        something with the receive fragments */
                     frag = &mca_btl_portals_module.portals_recv_frag;
-                    OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr,
-                                      (((char*) ev.md.start) + ev.offset));
+                    frag->segments[0].seg_addr.pval = (((char*) ev.md.start) + ev.offset);
                     frag->segments[0].seg_len = ev.mlength;
 
                     OPAL_OUTPUT_VERBOSE((90, mca_btl_portals_component.portals_output,

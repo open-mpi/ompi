@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -28,7 +26,7 @@ static void mca_btl_openib_frag_common_constructor( mca_btl_openib_frag_t* frag)
         (mca_btl_openib_reg_t*)frag->base.super.user_data;
     
     frag->hdr = (mca_btl_openib_header_t*) (frag+1);    /* initialize the btl header to start at end of frag */ 
-    OMPI_PTR_SET_PVAL(frag->segment.seg_addr, ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t));  
+    frag->segment.seg_addr.pval = ((unsigned char* )frag->hdr) + sizeof(mca_btl_openib_header_t);  
     /* init the segment address to start after the btl header */ 
 
     if(registration) {    
@@ -103,7 +101,7 @@ static void mca_btl_openib_recv_frag_eager_constructor(mca_btl_openib_frag_t* fr
     frag->size = mca_btl_openib_component.eager_limit; 
     frag->type = MCA_BTL_OPENIB_FRAG_EAGER;
     mca_btl_openib_recv_frag_common_constructor(frag); 
-    frag->ftr = (mca_btl_openib_footer_t*)((char*) OMPI_PTR_GET_PVAL(frag->segment.seg_addr) 
+    frag->ftr = (mca_btl_openib_footer_t*)((char*)frag->segment.seg_addr.pval 
 		    + frag->size);
     MCA_BTL_OPENIB_RDMA_MAKE_REMOTE(frag->ftr);
 }

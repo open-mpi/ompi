@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -309,7 +307,7 @@ do {                                                                            
     vfrag->vf_id = OPAL_THREAD_ADD32(&pml_endpoint->vfrag_seq,1);                       \
     vfrag->vf_offset = sendreq->req_send_offset;                                        \
     vfrag->vf_max_send_size = max_send_size;                                            \
-    OMPI_PTR_SET_PVAL(vfrag->vf_send, sendreq);                                         \
+    vfrag->vf_send.pval = sendreq;                                                      \
     sendreq->req_vfrag = vfrag;                                         \
 } while(0)
 
@@ -378,8 +376,8 @@ do {                                                                  \
         mca_bml_base_alloc(vfrag->bml_btl, &des_new,                    \
                            des_old->des_src->seg_len);                  \
         sendreq->req_descriptor = des_new;                              \
-        memcpy(OMPI_PTR_GET_PVAL(des_new->des_src->seg_addr),           \
-               OMPI_PTR_GET_PVAL(des_old->des_src->seg_addr),           \
+        memcpy(des_new->des_src->seg_addr.pval,                         \
+               des_old->des_src->seg_addr.pval,                         \
                des_old->des_src->seg_len);                              \
         des_new->des_flags = des_old->des_flags;                        \
         des_new->des_cbdata = des_old->des_cbdata;                      \
@@ -411,7 +409,7 @@ do {                                                                 \
                        sizeof(mca_pml_dr_rendezvous_hdr_t));         \
     des_old = sendreq->req_descriptor;                               \
     /* build hdr */                                                  \
-    hdr = (mca_pml_dr_hdr_t*) OMPI_PTR_GET_PVAL(des_new->des_src->seg_addr); \
+    hdr = (mca_pml_dr_hdr_t*)des_new->des_src->seg_addr.pval;        \
     hdr->hdr_common.hdr_flags = 0;                                   \
     hdr->hdr_common.hdr_type = MCA_PML_DR_HDR_TYPE_RNDV;             \
     hdr->hdr_common.hdr_dst = endpoint->dst;                         \
@@ -419,7 +417,7 @@ do {                                                                 \
     hdr->hdr_common.hdr_src = endpoint->src;                                    \
     hdr->hdr_match.hdr_tag = sendreq->req_send.req_base.req_tag;                \
     hdr->hdr_match.hdr_seq = sendreq->req_send.req_base.req_sequence;           \
-    OMPI_PTR_SET_PVAL(hdr->hdr_match.hdr_src_ptr, &sendreq->req_vfrag0);        \
+    hdr->hdr_match.hdr_src_ptr.pval = &sendreq->req_vfrag0;                     \
     hdr->hdr_match.hdr_csum = OPAL_CSUM_ZERO;                                   \
     hdr->hdr_common.hdr_vid =  sendreq->req_vfrag0.vf_id;                       \
     hdr->hdr_rndv.hdr_msg_length = sendreq->req_send.req_bytes_packed;          \

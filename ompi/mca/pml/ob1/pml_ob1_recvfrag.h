@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -81,10 +79,10 @@ do {                                                            \
         OMPI_FREE_LIST_WAIT(&mca_pml_ob1.buffers, item, rc);    \
         buff = (mca_pml_ob1_buffer_t*)item;                     \
         buffers[i] = buff;                                      \
-        OMPI_PTR_SET_PVAL(macro_segments[i].seg_addr, buff->addr); \
+        macro_segments[i].seg_addr.pval = buff->addr;           \
         macro_segments[i].seg_len = segs[i].seg_len;            \
         memcpy(buff->addr,                                      \
-               OMPI_PTR_GET_PVAL(segs[i].seg_addr),             \
+               segs[i].seg_addr.pval,                           \
                segs[i].seg_len);                                \
     }                                                           \
                                                                 \

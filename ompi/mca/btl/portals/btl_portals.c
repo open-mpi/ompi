@@ -9,8 +9,6 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
- *                         reserved. 
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -327,7 +325,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         }
         
         iov.iov_len = max_data;
-        iov.iov_base = (unsigned char*) OMPI_PTR_GET_PVAL(frag->segments[0].seg_addr) + reserve;
+        iov.iov_base = (unsigned char*) frag->segments[0].seg_addr.pval + reserve;
         ret = ompi_convertor_pack(convertor, &iov, &iov_count, 
                                   &max_data );
         *size  = max_data;
@@ -361,7 +359,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         ompi_convertor_pack(convertor, &iov, &iov_count, &max_data );
 
         frag->segments[0].seg_len = max_data;
-        OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, iov.iov_base);
+        frag->segments[0].seg_addr.pval = iov.iov_base;
         frag->segments[0].seg_key.key64 = 
             OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
         frag->base.des_src_cnt = 1;
@@ -389,7 +387,7 @@ mca_btl_portals_prepare_src(struct mca_btl_base_module_t* btl_base,
         }
 
         /* setup the memory descriptor */
-        md.start = OMPI_PTR_GET_PVAL(frag->segments[0].seg_addr);
+        md.start = frag->segments[0].seg_addr.pval;
         md.length = frag->segments[0].seg_len;
         md.threshold = PTL_MD_THRESH_INF;
         md.max_size = 0;
@@ -451,7 +449,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
 
     ompi_ddt_type_lb(convertor->pDesc, &lb);
     frag->segments[0].seg_len = *size;
-    OMPI_PTR_SET_PVAL(frag->segments[0].seg_addr, convertor->pBaseBuf + lb + convertor->bConverted);
+    frag->segments[0].seg_addr.pval = convertor->pBaseBuf + lb + convertor->bConverted;
     frag->segments[0].seg_key.key64 = 
         OPAL_THREAD_ADD64(&(mca_btl_portals_module.portals_rdma_key), 1);
     frag->base.des_src = NULL;
@@ -482,7 +480,7 @@ mca_btl_portals_prepare_dst(struct mca_btl_base_module_t* btl_base,
     }
 
     /* setup the memory descriptor. */
-    md.start = OMPI_PTR_GET_PVAL(frag->segments[0].seg_addr);
+    md.start = frag->segments[0].seg_addr.pval;
     md.length = frag->segments[0].seg_len;
     md.threshold = PTL_MD_THRESH_INF;
     md.max_size = 0;
