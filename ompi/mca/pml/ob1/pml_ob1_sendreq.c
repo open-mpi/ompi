@@ -247,13 +247,14 @@ static void mca_pml_ob1_rndv_completion(
                                         sizeof(mca_pml_ob1_rendezvous_hdr_t),
                                         req_bytes_delivered );
 
+    OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered,
+                           req_bytes_delivered);
     /* return the descriptor */
     mca_bml_base_free(bml_btl, descriptor); 
 
     /* advance the request */
     if(OPAL_THREAD_ADD32(&sendreq->req_state, 1) == 2 &&
-            OPAL_THREAD_ADD_SIZE_T(&sendreq->req_bytes_delivered,
-                req_bytes_delivered) >= sendreq->req_send.req_bytes_packed) {
+       sendreq->req_bytes_delivered >= sendreq->req_send.req_bytes_packed) {
         MCA_PML_OB1_SEND_REQUEST_PML_COMPLETE(sendreq);
     }
     /* check for pending requests */
