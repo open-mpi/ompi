@@ -131,7 +131,7 @@ typedef int (*orte_rml_module_send_buffer_fn_t)(
 /**
 *  orte_rml.rml_recv().
 *
-*  @param peer (IN)    Opaque name of peer process or ORTE_RML_NAME_ANY for wildcard receive.
+*  @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 *  @param msg (IN)     Array of iovecs describing user buffers and lengths.
 *  @param types (IN)   Parallel array to iovecs describing data type of each iovec element.
 *  @param count (IN)   Number of elements in iovec array.
@@ -151,7 +151,7 @@ typedef int (*orte_rml_module_recv_fn_t)(
 /**
 * orte_rml.rml_recv_buffer()
 *
-* @param peer (IN)    Opaque name of peer process or ORTE_RML_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buf (OUT)    Buffer to receive into.
 * @param tag (IN      User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
@@ -263,7 +263,7 @@ typedef int (*orte_rml_module_send_buffer_nb_fn_t)(
 /**
 * orte_rml.rml_recv_nb()
 *
-* @param peer (IN)    Opaque name of peer process or ORTE_RML_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param msg (IN)     Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.
@@ -287,7 +287,7 @@ typedef int (*orte_rml_module_recv_nb_fn_t)(
 *
 * Non-blocking version of orte_rml.rml_recv_buffer().
 *
-* @param peer (IN)    Opaque name of peer process or ORTE_RML_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param buffer (IN)  Array of iovecs describing user buffers and lengths.
 * @param count (IN)   Number of elements in iovec array.
 * @param tag (IN)     User defined tag for matching send/recv.
@@ -311,7 +311,7 @@ typedef int (*orte_rml_module_recv_buffer_nb_fn_t)(
 /**
 * orte_rml.rml_recv_cancel()
 *
-* @param peer (IN)    Opaque name of peer process or ORTE_RML_NAME_ANY for wildcard receive.
+* @param peer (IN)    Opaque name of peer process or ORTE_NAME_WILDCARD for wildcard receive.
 * @param tag (IN)     User defined tag for matching send/recv.
 * @return             OMPI error code (<0) on error or number of bytes actually received.
 */
