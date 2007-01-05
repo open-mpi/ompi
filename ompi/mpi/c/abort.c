@@ -18,13 +18,6 @@
  */
 #include "ompi_config.h"
 
-#ifdef HAVE_UNISTD_H
-#include <unistd.h>
-#endif
-#ifdef HAVE_SYS_PARAM_H
-#include <sys/param.h>
-#endif
-
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/communicator/communicator.h"
