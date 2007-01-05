@@ -231,7 +231,7 @@ void mca_btl_udapl_endpoint_recv(int status, orte_process_name_t* endpoint,
 
 void mca_btl_udapl_endpoint_post_oob_recv(void)
 {
-    orte_rml.recv_buffer_nb(ORTE_RML_NAME_ANY, ORTE_RML_TAG_DYNAMIC-1,
+    orte_rml.recv_buffer_nb(ORTE_NAME_WILDCARD, ORTE_RML_TAG_DYNAMIC-1,
             ORTE_RML_PERSISTENT, mca_btl_udapl_endpoint_recv, NULL);
 }
 

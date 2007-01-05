@@ -690,7 +690,7 @@ static void mca_btl_mvapi_endpoint_recv(
 void mca_btl_mvapi_post_recv()
 {
     orte_rml.recv_buffer_nb(
-        ORTE_RML_NAME_ANY, 
+        ORTE_NAME_WILDCARD, 
         ORTE_RML_TAG_DYNAMIC-1, 
         ORTE_RML_PERSISTENT,
         mca_btl_mvapi_endpoint_recv,
