@@ -166,12 +166,17 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
                                           struct ompi_datatype_t *datatype, int root,
                                           struct ompi_communicator_t *comm)
 {
-    const double a0 = -7.8710;
-    const double b0 = 41.1613;
-    const double a1 = 0.0150;
-    const double b1 = 11.2445;
-    const double a2 = 0.0023;
-    const double b2 = 3.8074;
+    /* Decision function based on MX results for 
+    messages up to 36MB and communicator sizes up to 64 nodes */
+    const double small_message_size = 2048;
+    const double intermediate_message_size = 370728;
+    const double a_p16  = 3.2118e-6; /* [1 / byte] */
+    const double b_p16  = 8.7936;   
+    const double a_p64  = 2.3679e-6; /* [1 / byte] */
+    const double b_p64  = 1.1787;     
+    const double a_p128 = 1.6134e-6; /* [1 / byte] */
+    const double b_p128 = 2.1102;
+
     int communicator_size, rank;
     int segsize = 0;
     size_t message_size, dsize;
@@ -183,47 +188,54 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
     ompi_ddt_type_size(datatype, &dsize);
     message_size = dsize * (unsigned long)count;   /* needed for decision */
 
-    OPAL_OUTPUT((ompi_coll_tuned_stream,"ompi_coll_tuned_bcast_intra_dec_fixed "
-                 "root %d rank %d com_size %d msg_length %ld",
+    OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_bcast_intra_dec_fixed root %d rank %d com_size %d msg_length %ld",
                  root, rank, communicator_size, message_size));
 
-    if ((message_size <= 1024) && (communicator_size < 12)) {
-        /* Linear_0K */
-        return ompi_coll_tuned_bcast_intra_basic_linear (buff, count, datatype, root, comm);
-    } else if (message_size < 8192) {
-        if ((communicator_size < 12) || 
-            (communicator_size < (a0 * (message_size / 1024.0) + b0))) {
-            /* Binary_0K */
-            segsize = 0;
-        } else {
-            /* Binary_1K */
-            segsize = 1024;
-        }
-        return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
-    } else if (message_size <= 35000) {
-        if (communicator_size <= 12) {
-            /* Binary_8K */
-            segsize = 1024 << 3;
-            return  ompi_coll_tuned_bcast_intra_bintree (buff, count, datatype, root, comm, segsize);
-        } else {
-            /* SplittedBinary_1K */
-            segsize = 1024;
-            return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, root, comm, segsize);
-        }
+    /* Handle messages of small and intermediate size */
+    if (message_size < small_message_size) {
+       /* Binomial without segmentation */
+       segsize = 0;
+       return  ompi_coll_tuned_bcast_intra_binomial (buff, count, datatype, 
+						     root, comm, segsize);
 
-    } else if (communicator_size > (a1 * (message_size / 1024.0) + b1)) {
-        /* SplittedBinary_8K */
-        segsize = 1024 << 3;
-        return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, root, comm, segsize);
+    } else if (message_size < intermediate_message_size) {
+       /* SplittedBinary with 1KB segments */
+       segsize = 1024;
+       return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, 
+							root, comm, segsize);
+
+    } 
+    /* Handle large message sizes */
+    else if (communicator_size < (a_p128 * message_size + b_p128)) {
+       /* Pipeline with 128KB segments */
+       segsize = 1024  << 7;
+       return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
+						    root, comm, segsize);
+
+    } else if (communicator_size < 13) {
+       /* Split Binary with 8KB segments */
+       segsize = 1024 << 3;
+       return ompi_coll_tuned_bcast_intra_split_bintree(buff, count, datatype, 
+							root, comm, segsize);
+       
+    } else if (communicator_size < (a_p64 * message_size + b_p64)) {
+       /* Pipeline with 64KB segments */
+       segsize = 1024 << 6;
+       return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
+						    root, comm, segsize);
+
+    } else if (communicator_size < (a_p16 * message_size + b_p16)) {
+       /* Pipeline with 16KB segments */
+       segsize = 1024 << 4;
+       return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
+						    root, comm, segsize);
+
     }
-    if (communicator_size > (a2 * (message_size / 1024.0) + b2)) {
-        /* Pipeline_8K */
-        segsize = 1024 << 3;
-    } else {
-        /* Pipeline_64K */
-        segsize = 1024 << 6;
-    }
-    return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, root, comm, segsize);
+
+    /* Pipeline with 8KB segments */
+    segsize = 1024 << 3;
+    return ompi_coll_tuned_bcast_intra_pipeline (buff, count, datatype, 
+						 root, comm, segsize);
 #if 0
     /* this is based on gige measurements */
 
