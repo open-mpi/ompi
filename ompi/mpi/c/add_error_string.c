@@ -44,6 +44,14 @@ int MPI_Add_error_string(int errorcode, char *string)
         if ( ompi_mpi_errcode_is_invalid(errorcode) )
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
                                           FUNC_NAME);
+
+	if ( ompi_mpi_errcode_is_predefined(errorcode) )
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+					  FUNC_NAME);
+
+	if ( MPI_MAX_ERROR_STRING < (strlen(string)+1) ) 
+	    return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG,
+					  FUNC_NAME);
     }
 
     rc = ompi_mpi_errnum_add_string (errorcode, string, (int)(strlen(string)+1));

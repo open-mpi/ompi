@@ -21,6 +21,7 @@
 
 #include "ompi/mpi/c/bindings.h"
 #include "ompi/errhandler/errcode.h"
+#include "ompi/attribute/attribute.h"
 
 #if OMPI_HAVE_WEAK_SYMBOLS && OMPI_PROFILING_DEFINES
 #pragma weak MPI_Add_error_class = PMPI_Add_error_class
@@ -36,6 +37,7 @@ static const char FUNC_NAME[] = "MPI_Add_error_class";
 int MPI_Add_error_class(int *errorclass) 
 {
     int err_class;
+    int rc;
 
     if ( MPI_PARAM_CHECK ) {
         OMPI_ERR_INIT_FINALIZE(FUNC_NAME);
@@ -45,6 +47,22 @@ int MPI_Add_error_class(int *errorclass)
     if ( 0 > err_class ) {
         return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_INTERN,
                                       FUNC_NAME);
+    }
+
+    
+    /* 
+    ** Update the attribute value. See the comments
+    ** in attribute/attribute.c and attribute/attribute_predefined.c
+    ** why we have to call the fortran attr_set function 
+    */
+    rc  = ompi_attr_set_fortran_mpi1 (COMM_ATTR, 
+				      MPI_COMM_WORLD,
+				      &MPI_COMM_WORLD->c_keyhash,
+				      MPI_LASTUSEDCODE, 
+				      ompi_mpi_errcode_lastused,
+				      true, true);
+    if ( MPI_SUCCESS != rc ) {
+	return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, rc, FUNC_NAME);
     }
 
     *errorclass = err_class;

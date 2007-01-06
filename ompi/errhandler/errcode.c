@@ -430,8 +430,8 @@ int ompi_mpi_errcode_init (void)
     strcpy(ompi_err_win.errstring, "MPI_ERR_WIN:invalid window");
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, MPI_ERR_WIN, &ompi_err_win);
 
-    ompi_mpi_errcode_lastused=MPI_ERR_WIN+1;
-    ompi_mpi_errcode_lastpredefined=MPI_ERR_WIN+1;
+    ompi_mpi_errcode_lastused=MPI_ERR_WIN;
+    ompi_mpi_errcode_lastpredefined=MPI_ERR_WIN;
     return OMPI_SUCCESS;
 }
 
@@ -440,7 +440,7 @@ int ompi_mpi_errcode_finalize(void)
     int i;
     ompi_mpi_errcode_t *errc;
     
-    for (i=ompi_mpi_errcode_lastpredefined; i<ompi_mpi_errcode_lastused; i++) {
+    for (i=ompi_mpi_errcode_lastpredefined+1; i<=ompi_mpi_errcode_lastused; i++) {
         /* 
          * there are some user defined error-codes, which
          * we have to free.
@@ -513,7 +513,7 @@ int ompi_mpi_errcode_add(int errclass )
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
-    newerrcode->code = ompi_mpi_errcode_lastused;
+    newerrcode->code = (ompi_mpi_errcode_lastused+1);
     newerrcode->cls = errclass;
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->code, newerrcode);
     
@@ -526,7 +526,7 @@ int ompi_mpi_errclass_add(void)
     ompi_mpi_errcode_t *newerrcode;
 
     newerrcode = OBJ_NEW(ompi_mpi_errcode_t);
-    newerrcode->cls = ompi_mpi_errcode_lastused;
+    newerrcode->cls = ( ompi_mpi_errcode_lastused+1);
     ompi_pointer_array_set_item(&ompi_mpi_errcodes, newerrcode->cls, newerrcode);
     
     ompi_mpi_errcode_lastused++;
