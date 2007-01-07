@@ -34,6 +34,10 @@
 #include <arpa/inet.h>
 #endif
 
+#if OMPI_ENABLE_DEBUG
+#include "opal/util/output.h"
+#endif
+
 #ifndef __WINDOWS__
 /*
  *  Increase FD_SETSIZE
@@ -142,6 +146,25 @@ static inline uint64_t ntoh64(uint64_t val)
     r.l[0] = ntohl(w.l[1]);
     r.l[1] = ntohl(w.l[0]);
     return r.ll;
+}
+
+
+/**
+ * Convert between a local representation of pointer and a 64 bits value.
+ */
+static inline uint64_t ompi_ptr_ptol( void* ptr )
+{
+    return (uint64_t)(uintptr_t) ptr;
+}
+
+static inline void* ompi_ptr_ltop( uint64_t value )
+{
+#if SIZEOF_VOID_P == 4 && OMPI_ENABLE_DEBUG
+    if (value > ((1ULL << 32) - 1ULL)) {
+        opal_output(0, "Warning: truncating value in ompi_ptr_ltop");
+    }
+#endif
+    return (void*)(uintptr_t) value;
 }
 
 #ifdef WORDS_BIGENDIAN

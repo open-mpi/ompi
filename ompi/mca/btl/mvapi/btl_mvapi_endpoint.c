@@ -1206,7 +1206,7 @@ static int mca_btl_mvapi_endpoint_send_eager_rdma(
     rdma_hdr = (mca_btl_mvapi_eager_rdma_header_t*)frag->segment.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_MVAPI_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->r_key;
-    rdma_hdr->rdma_start.pval = endpoint->eager_rdma_local.base.pval;
+    rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
     frag->segment.seg_len = sizeof(mca_btl_mvapi_eager_rdma_header_t);
     if (mca_btl_mvapi_endpoint_post_send(mvapi_btl, endpoint, frag) !=
             OMPI_SUCCESS) {

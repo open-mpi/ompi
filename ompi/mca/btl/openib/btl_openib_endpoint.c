@@ -165,7 +165,7 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 #endif
         frag->wr_desc.sr_desc.wr.rdma.rkey = endpoint->eager_rdma_remote.rkey;
         frag->wr_desc.sr_desc.wr.rdma.remote_addr =
-            (uintptr_t)endpoint->eager_rdma_remote.base.pval +
+            endpoint->eager_rdma_remote.base.lval +
             endpoint->eager_rdma_remote.head *
             openib_btl->eager_rdma_frag_size +
             sizeof(mca_btl_openib_frag_t) +
@@ -1146,7 +1146,7 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)frag->segment.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
-    rdma_hdr->rdma_start.pval = endpoint->eager_rdma_local.base.pval;
+    rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
     frag->segment.seg_len = sizeof(mca_btl_openib_eager_rdma_header_t);
     if (mca_btl_openib_endpoint_send(endpoint, frag) != OMPI_SUCCESS) {
         MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);

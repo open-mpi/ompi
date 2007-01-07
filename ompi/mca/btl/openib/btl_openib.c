@@ -646,7 +646,7 @@ int mca_btl_openib_put( mca_btl_base_module_t* btl,
     } else {
         
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_dst->seg_addr.lval; 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_dst->seg_key.key32[0]; 
         frag->sg_entry.addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_src->seg_len; 
@@ -708,7 +708,7 @@ int mca_btl_openib_get( mca_btl_base_module_t* btl,
     } else { 
     
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
-        frag->wr_desc.sr_desc.wr.rdma.remote_addr = (unsigned long) frag->base.des_src->seg_addr.pval; 
+        frag->wr_desc.sr_desc.wr.rdma.remote_addr = frag->base.des_src->seg_addr.lval; 
         frag->wr_desc.sr_desc.wr.rdma.rkey = frag->base.des_src->seg_key.key32[0]; 
         frag->sg_entry.addr = (unsigned long) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.length  = frag->base.des_dst->seg_len; 
