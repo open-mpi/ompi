@@ -495,7 +495,7 @@ int mca_btl_mvapi_put( mca_btl_base_module_t* btl,
     } else {
         
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
-        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
+        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_dst->seg_addr.lval; 
         frag->sr_desc.r_key = frag->base.des_dst->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_src->seg_len; 
@@ -556,7 +556,7 @@ int mca_btl_mvapi_get( mca_btl_base_module_t* btl,
     } else {
         
         frag->sr_desc.remote_qp = endpoint->rem_info.rem_qp_num_lp; 
-        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_src->seg_addr.pval; 
+        frag->sr_desc.remote_addr = (VAPI_virt_addr_t) frag->base.des_src->seg_addr.lval; 
         frag->sr_desc.r_key = frag->base.des_src->seg_key.key32[0]; 
         frag->sg_entry.addr = (VAPI_virt_addr_t) (MT_virt_addr_t) frag->base.des_dst->seg_addr.pval; 
         frag->sg_entry.len  = frag->base.des_dst->seg_len; 

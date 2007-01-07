@@ -578,7 +578,7 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
         while( bytes_remaining > 0 &&
                recvreq->req_pipeline_depth < mca_pml_ob1.recv_pipeline_depth ) {
             size_t hdr_size;
-            size_t size;
+            size_t size, i;
             mca_pml_ob1_rdma_hdr_t* hdr;
             mca_btl_base_descriptor_t* dst;
             mca_btl_base_descriptor_t* ctl;
@@ -684,8 +684,13 @@ int mca_pml_ob1_recv_request_schedule_exclusive( mca_pml_ob1_recv_request_t* rec
             hdr->hdr_des.pval = dst;
             hdr->hdr_rdma_offset = recvreq->req_rdma_offset;
             hdr->hdr_seg_cnt = dst->des_dst_cnt;
-            memcpy(hdr->hdr_segs, dst->des_dst,
-                    dst->des_dst_cnt * sizeof(mca_btl_base_segment_t));
+
+            for( i = 0; i < dst->des_dst_cnt; i++ ) {
+                hdr->hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(dst->des_dst[i].seg_addr.pval);
+                hdr->hdr_segs[i].seg_len       = dst->des_dst[i].seg_len;
+                hdr->hdr_segs[i].seg_key.key64 = dst->des_dst[i].seg_key.key64;
+            }
+
             if(!recvreq->req_ack_sent)
                 recvreq->req_ack_sent = true;
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT

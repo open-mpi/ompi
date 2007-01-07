@@ -704,8 +704,11 @@ int mca_pml_ob1_send_request_start_rdma(
 #endif
 #endif
 
-         for(i=0; i<src->des_src_cnt; i++)
-             hdr->hdr_rget.hdr_segs[i] = src->des_src[i];
+         for( i = 0; i < src->des_src_cnt; i++ ) {
+             hdr->hdr_rget.hdr_segs[i].seg_addr.lval = ompi_ptr_ptol(src->des_src[i].seg_addr.pval);
+             hdr->hdr_rget.hdr_segs[i].seg_len       = src->des_src[i].seg_len;
+             hdr->hdr_rget.hdr_segs[i].seg_key.key64 = src->des_src[i].seg_key.key64;
+         }
 
          des->des_cbfunc = mca_pml_ob1_send_ctl_completion;
 
@@ -1139,9 +1142,11 @@ void mca_pml_ob1_send_request_put(
     }
 
     /* setup fragment */
-    for(i=0; i<hdr->hdr_seg_cnt; i++) {
-        size += hdr->hdr_segs[i].seg_len;
-        frag->rdma_segs[i] = hdr->hdr_segs[i];
+    for( i = 0; i < hdr->hdr_seg_cnt; i++ ) {
+        frag->rdma_segs[i].seg_addr.lval = hdr->hdr_segs[i].seg_addr.lval;
+        frag->rdma_segs[i].seg_len       = hdr->hdr_segs[i].seg_len;
+        frag->rdma_segs[i].seg_key.key64 = hdr->hdr_segs[i].seg_key.key64;
+        size += frag->rdma_segs[i].seg_len;
     }
 
     frag->rdma_hdr.hdr_rdma = *hdr;
