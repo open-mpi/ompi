@@ -123,7 +123,6 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
     ompi_mtl_portals_request_t *ptl_request = 
         (ompi_mtl_portals_request_t*) mtl_request;
     size_t buflen;
-    ompi_ptr_t ptr;
 
     assert(mtl == &ompi_mtl_portals.base);
 
@@ -191,11 +190,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        ptr.pval = ptl_request;
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_READ_TABLE_ID,
                           endpoint->ptl_proc,
-                          (ptl_match_bits_t) ptr.lval,
+                          (ptl_match_bits_t)(uintptr_t) ptl_request,
                           0,
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -223,7 +221,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                      0,
                      match_bits,
                      0,
-                     (ptl_hdr_data_t) ptr.lval);
+                     (ptl_hdr_data_t)(uintptr_t) ptl_request);
         if (OMPI_SUCCESS != ret) {
             PtlMDUnlink(md_h);
             if (ptl_request->free_after) free(md.start);
@@ -245,11 +243,10 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
         md.user_ptr = ptl_request;
         md.eq_handle = ompi_mtl_portals.ptl_eq_h;
 
-        ptr.pval = ptl_request;
         ret = PtlMEAttach(ompi_mtl_portals.ptl_ni_h,
                           OMPI_MTL_PORTALS_ACK_TABLE_ID,
                           endpoint->ptl_proc,
-                          (ptl_match_bits_t) ptr.lval,
+                          (ptl_match_bits_t)(uintptr_t) ptl_request,
                           0,
                           PTL_UNLINK,
                           PTL_INS_AFTER,
@@ -277,7 +274,7 @@ ompi_mtl_portals_isend(struct mca_mtl_base_module_t* mtl,
                      0,
                      match_bits,
                      0,
-                     (ptl_hdr_data_t) ptr.lval);
+                     (ptl_hdr_data_t)(uintptr_t) ptl_request);
         if (OMPI_SUCCESS != ret) {
             PtlMDUnlink(md_h);
             if (ptl_request->free_after) free(md.start);
