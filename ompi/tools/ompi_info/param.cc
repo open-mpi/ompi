@@ -333,6 +333,7 @@ void ompi_info::do_config(bool want_all)
                        "double underscore")))) + string(")"): "no");
   const string f90(OMPI_WANT_F90_BINDINGS ? "yes" : "no");
   const string f90_size(OMPI_F90_BUILD_SIZE);
+  const string heterogeneous(OMPI_ENABLE_HETEROGENEOUS_SUPPORT ? "yes" : "no");
   const string memprofile(OMPI_ENABLE_MEM_PROFILE ? "yes" : "no");
   const string memdebug(OMPI_ENABLE_MEM_DEBUG ? "yes" : "no");
   const string debug(OMPI_ENABLE_DEBUG ? "yes" : "no");
@@ -581,6 +582,7 @@ void ompi_info::do_config(bool want_all)
   out("Memory profiling support", "option:mem-profile", memprofile);
   out("Memory debugging support", "option:mem-debug", memdebug);
   out("libltdl support", "option:dlopen", want_libltdl);
+  out("Heterogeneous support", "options:heterogeneous", heterogeneous);
   out("mpirun default --prefix", "mpirun:prefix_by_default", 
       mpirun_prefix_by_default);
 }

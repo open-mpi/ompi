@@ -416,8 +416,17 @@ ompi_proc_unpack(orte_buffer_t* buf, int proclistsize, ompi_proc_t ***proclist)
 
             /* if arch is different than mine, create a new convertor for this proc */
             if (plist[i]->proc_arch != ompi_mpi_local_arch) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
                 OBJ_RELEASE(plist[i]->proc_convertor);
                 plist[i]->proc_convertor = ompi_convertor_create(plist[i]->proc_arch, 0);
+#else
+                opal_show_help("help-mpi-runtime",
+                               "heterogeneous-support-unavailable",
+                               true, orte_system_info.nodename, 
+                               new_hostname == NULL ? "<hostname unavailable>" :
+                                   new_hostname);
+                return OMPI_ERR_NOT_SUPPORTED;
+#endif
             }
 
             /* Save the hostname */
@@ -589,14 +598,26 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                         if (0 == strcmp(str, orte_system_info.nodename)) {
                             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
                         }
-                        /* if arch is different than mine, create a new convertor for this proc */
+
+                        /* if arch is different than mine, create a
+                           new convertor for this proc in
+                           heterogeneous mode or abort in
+                           non-heterogeneous mode. */
                         if (proc->proc_arch != ompi_mpi_local_arch) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
                             OBJ_RELEASE(proc->proc_convertor);
                             proc->proc_convertor = ompi_convertor_create(proc->proc_arch, 0);
+#else
+                            opal_show_help("help-mpi-runtime",
+                                           "proc:heterogeneous-support-unavailable",
+                                           true, orte_system_info.nodename, str);
+                            /* we can't return an error, so abort. */
+                            ompi_mpi_abort(MPI_COMM_WORLD, OMPI_ERR_NOT_SUPPORTED, false);
+#endif
                         }
 
                         /* Save the hostname */
-                        if (ompi_mpi_keep_peer_hostnames) {
+                        if (ompi_mpi_keep_peer_hostnames && NULL == proc->proc_hostname) {
                             proc->proc_hostname = str;
                             str = NULL;
                         }
