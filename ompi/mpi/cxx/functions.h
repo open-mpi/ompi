@@ -60,6 +60,12 @@ void
 Init();
 
 void
+InitializeIntercepts();
+
+void
+FinalizeIntercepts();
+
+void
 Real_init();
 
 void

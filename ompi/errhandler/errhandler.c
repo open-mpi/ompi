@@ -49,7 +49,7 @@ OBJ_CLASS_INSTANCE(ompi_errhandler_t, opal_object_t, ompi_errhandler_construct,
 ompi_errhandler_t ompi_mpi_errhandler_null;
 ompi_errhandler_t ompi_mpi_errors_are_fatal;
 ompi_errhandler_t ompi_mpi_errors_return;
-
+ompi_errhandler_t ompi_mpi_errors_throw_exceptions;
 
 /*
  * Local state to know when the three intrinsics have been freed; see
@@ -58,6 +58,7 @@ ompi_errhandler_t ompi_mpi_errors_return;
 static bool null_freed = false;
 static bool fatal_freed = false;
 static bool return_freed = false;
+static bool throw_freed = false;
 
 
 /*
@@ -110,6 +111,17 @@ int ompi_errhandler_init(void)
   strncpy (ompi_mpi_errors_return.eh_name, "MPI_ERRORS_RETURN", 
 	   strlen("MPI_ERRORS_RETURN")+1 );
 
+  /* If we're going to use C++, functions will be fixed up during MPI::Init */
+  OBJ_CONSTRUCT( &ompi_mpi_errors_throw_exceptions, ompi_errhandler_t );
+  ompi_mpi_errors_are_fatal.eh_mpi_object_type = OMPI_ERRHANDLER_TYPE_PREDEFINED;
+  ompi_mpi_errors_are_fatal.eh_fortran_function = false;
+  ompi_mpi_errors_are_fatal.eh_comm_fn = ompi_mpi_errors_are_fatal_comm_handler;
+  ompi_mpi_errors_are_fatal.eh_file_fn = ompi_mpi_errors_are_fatal_file_handler;
+  ompi_mpi_errors_are_fatal.eh_win_fn  = ompi_mpi_errors_are_fatal_win_handler ;
+  ompi_mpi_errors_are_fatal.eh_fort_fn = NULL;
+  strncpy (ompi_mpi_errors_are_fatal.eh_name, "MPI_ERRORS_THROW_EXCEPTIONS", 
+	   strlen("MPI_ERRORS_THROW_EXCEPTIONS")+1 );
+
   /* All done */
 
   return OMPI_SUCCESS;
@@ -137,6 +149,9 @@ int ompi_errhandler_finalize(void)
     }
     while (!return_freed) {
         OBJ_DESTRUCT(&ompi_mpi_errors_return);
+    }
+    while (!throw_freed) {
+        OBJ_DESTRUCT(&ompi_mpi_errors_throw_exceptions);
     }
   
     /* JMS Add stuff here checking for unreleased errorhandlers,
@@ -260,5 +275,7 @@ static void ompi_errhandler_destruct(ompi_errhandler_t *errhandler)
       fatal_freed = true;
   } else if (&ompi_mpi_errors_return == errhandler) {
       return_freed = true;
+  } else if (&ompi_mpi_errors_throw_exceptions == errhandler) {
+      throw_freed = true;
   }
 }

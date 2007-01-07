@@ -17,12 +17,6 @@
 // $HEADER$
 //
 
-inline void 
-MPI::File::Close() 
-{
-  (void) MPI_File_close(&mpi_file);
-}
-
 
 inline void 
 MPI::File::Delete(const char* filename, const MPI::Info& info) 
@@ -638,16 +632,26 @@ MPI::File::Write_shared(const void* buf, int count,
 }
 
 
+inline MPI::Errhandler 
+MPI::File::Create_errhandler(MPI::File::Errhandler_fn* function)
+{
+  MPI_Errhandler errhandler;
+  (void) MPI_File_create_errhandler((MPI_File_errhandler_fn *) ompi_mpi_cxx_file_errhandler_intercept, 
+				   &errhandler);
+  MPI::Errhandler temp(errhandler);
+  temp.file_handler_fn = (void(*)(MPI::File&, int* , ...)) function;
+  return temp;
+}
+
+
 inline MPI::Errhandler
 MPI::File::Get_errhandler() const
 {
-  MPI_Errhandler err;
-  (void) MPI_File_get_errhandler(mpi_file, &err);
-  return err;
+    return *my_errhandler;
 }
-  
-inline void
-MPI::File::Set_errhandler(const MPI::Errhandler& errhandler)
+
+inline void 
+MPI::File::Call_errhandler(int errorcode) const
 {
-  (void) MPI_File_set_errhandler(mpi_file, errhandler);
+  (void) MPI_File_call_errhandler(mpi_file, errorcode);
 }

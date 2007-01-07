@@ -28,25 +28,18 @@ inline MPI::Errhandler
 MPI::Win::Create_errhandler(MPI::Win::Errhandler_fn* function)
 {
   MPI_Errhandler errhandler;
-  (void) MPI_Win_create_errhandler((MPI_Win_errhandler_fn *)function, 
+  (void) MPI_Win_create_errhandler((MPI_Win_errhandler_fn *) ompi_mpi_cxx_win_errhandler_intercept, 
 				   &errhandler);
-  return errhandler;
+  MPI::Errhandler temp(errhandler);
+  temp.win_handler_fn = (void(*)(MPI::Win&, int* , ...)) function;
+  return temp;
 }
 
        
 inline MPI::Errhandler 
 MPI::Win:: Get_errhandler() const 
 {
-   MPI_Errhandler errhandler;
-   (void) MPI_Win_get_errhandler(mpi_win, &errhandler);
-   return errhandler;
-}
-
- 
-inline void 
-MPI::Win::Set_errhandler(const MPI::Errhandler& errhandler)
-{
-  (void) MPI_Win_set_errhandler(mpi_win, errhandler);
+    return *my_errhandler;
 }
 
 
@@ -91,13 +84,6 @@ inline void
 MPI::Win::Fence(int assert) const 
 {
   (void) MPI_Win_fence(assert, mpi_win);
-}
-
-
-inline void 
-MPI::Win::Free()
-{
-  (void) MPI_Win_free(&mpi_win);
 }
 
 
@@ -194,31 +180,11 @@ MPI::Win::Call_errhandler(int errorcode) const
 }
 
 
-inline int
-MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* 
-			       win_copy_attr_fn, 
-			       MPI::Win::Delete_attr_function* 
-			       win_delete_attr_fn, void* extra_state)
-{
-  int val;
-  (void) MPI_Win_create_keyval((MPI_Win_copy_attr_function *)win_copy_attr_fn,
-			       (MPI_Win_delete_attr_function *)
-			       win_delete_attr_fn, &val,extra_state);
-  return val;
-}
-
 
 inline void 
 MPI::Win::Delete_attr(int win_keyval) 
 {
   (void) MPI_Win_delete_attr(mpi_win, win_keyval);
-}
-
-
-inline void 
-MPI::Win::Free_keyval(int& win_keyval)
-{
-  (void) MPI_Win_free_keyval(&win_keyval);
 }
 
 
@@ -239,37 +205,10 @@ MPI::Win::Get_name(char* win_name, int& resultlen) const
 }
 
 
-inline void 
-MPI::Win::Set_attr(int win_keyval, const void* attribute_val) 
-{
-  (void) MPI_Win_set_attr(mpi_win, win_keyval, const_cast<void *>(attribute_val));
-}
-
 
 inline void 
 MPI::Win::Set_name(const char* win_name) 
 {
   (void) MPI_Win_set_name(mpi_win, const_cast<char *>(win_name));
 }
-
-
-#if 0
-//
-// User defined functions
-//
-
-typedef int MPI::Win::Copy_attr_function(const Win& oldwin, 
-						int win_keyval, 
-						void* extra_state, 
-						void* attribute_val_in, 
-						void* attribute_val_out, 
-						bool& flag); 
-
-typedef int MPI::Win::Delete_attr_function(&win, int win_keyval, 
-						  void* attribute_val, 
-						  void* extra_state); 
-
-typedef void MPI::Win::Errhandler_fn(Win &, int *, ... );
-
-#endif
 
