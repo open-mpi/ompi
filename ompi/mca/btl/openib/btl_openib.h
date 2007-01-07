@@ -145,6 +145,9 @@ typedef mca_btl_base_recv_reg_t mca_btl_openib_recv_reg_t;
     
 struct mca_btl_openib_port_info_t {
     uint32_t mtu;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT 
+    uint8_t padding[4]; 
+#endif
     uint64_t subnet;
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;

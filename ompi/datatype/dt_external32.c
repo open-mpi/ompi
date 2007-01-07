@@ -70,19 +70,21 @@
 
 uint32_t ompi_ddt_external32_arch_id = OMPI_ARCH_LDEXPSIZEIS15 | OMPI_ARCH_LDMANTDIGIS113 |
                                        OMPI_ARCH_LONGDOUBLEIS128 | OMPI_ARCH_ISBIGENDIAN |
-                                       OMPI_ARCH_HEADERMASK | OMPI_ARCH_HEADERMASK2;
+                                       OMPI_ARCH_HEADERMASK | OMPI_ARCH_HEADERMASK2 |
+                                       OMPI_ARCH_BOOLIS8 | OMPI_ARCH_LOGICALIS8;
 
 ompi_convertor_t* ompi_mpi_external32_convertor = NULL;
 ompi_convertor_t* ompi_mpi_local_convertor = NULL;
 uint32_t          ompi_mpi_local_arch = 0xFFFFFFFF;
 
 int32_t ompi_ddt_default_convertors_init( void )
-{
-    /* create the extern32 convertor */
+{ 
+    ompi_arch_compute_local_id( &ompi_mpi_local_arch );
+
+   /* create the extern32 convertor */
     ompi_mpi_external32_convertor = ompi_convertor_create( ompi_ddt_external32_arch_id, 0 );
 
     /* create the local convertor */
-    ompi_arch_compute_local_id( &ompi_mpi_local_arch );
     ompi_mpi_local_convertor = ompi_convertor_create( ompi_mpi_local_arch, 0 );
 
     return OMPI_SUCCESS;

@@ -42,6 +42,10 @@ struct mca_btl_tcp_hdr_t {
     mca_btl_base_header_t base;
     uint8_t  type;
     uint16_t count;
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    /* uint64_t may be required to be 8 byte aligned. */
+    uint8_t padding[4];
+#endif
     uint64_t size; 
 }; 
 typedef struct mca_btl_tcp_hdr_t mca_btl_tcp_hdr_t; 
