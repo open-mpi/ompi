@@ -166,6 +166,7 @@ int orte_universe_search(opal_list_t *universe_list, bool report_broken_files, b
     hFind = FindFirstFile( frontend_abs, &file_data );
     if( INVALID_HANDLE_VALUE == hFind ) {
         exit_status = GetLastError();
+        exit_status = ORTE_ERR_NOT_FOUND;
         goto cleanup;
     }
 
@@ -205,7 +206,7 @@ int orte_universe_search(opal_list_t *universe_list, bool report_broken_files, b
             if (remove_broken_files) {
                 char *univ_directory;
                 univ_directory = opal_os_path(false, frontend_abs,
-                                              dir_entry->d_name, NULL);
+                                              file_data.cFileName, NULL);
                 printf("universe_search: Removing defunct directory (%s)\n", univ_directory);
                 opal_os_dirpath_destroy(univ_directory, true, NULL);
                 free(univ_directory);
