@@ -444,7 +444,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
 
     buffer = pt2pt_buffer->payload;
     buffer_len = pt2pt_buffer->status._count;
-    module = pt2pt_buffer->cbdata;
+    module = (ompi_osc_pt2pt_module_t*)pt2pt_buffer->cbdata;
 
     /* post a new receive message */
 
