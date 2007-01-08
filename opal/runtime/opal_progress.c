@@ -79,7 +79,9 @@ static int debug_output = -1;
 int
 opal_progress_init(void)
 {
+#if OMPI_ENABLE_DEBUG
     int param, value;
+#endif
 
     /* reentrant issues */
 #if OMPI_HAVE_THREAD_SUPPORT

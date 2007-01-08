@@ -87,7 +87,7 @@ int mca_btl_openib_add_procs(
     int i,j, rc;
     int remote_subnets;
     int local_subnets;
-    int btl_rank;
+    int btl_rank = 0;
     for(i = 0; i < (int) nprocs; i++) {
         
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
