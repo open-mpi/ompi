@@ -274,7 +274,7 @@ win32_insert(struct win32op *win32op, opal_event_t *ev)
 		if (ev->ev_events & (OPAL_EV_READ|OPAL_EV_WRITE))
 			event_errx(1, "%s: EV_SIGNAL incompatible use",
 			           __func__);
-		if((int)signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == -1)
+		if( signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == SIG_ERR)
 			return (-1);
 
 		return (0);
@@ -346,7 +346,7 @@ win32_del(struct win32op *win32op, opal_event_t *ev)
     opal_event_t *master = NULL, *temp;
 
 	if (ev->ev_events & OPAL_EV_SIGNAL)
-		return ((int)signal(OPAL_EVENT_SIGNAL(ev), SIG_IGN));
+		return (signal(OPAL_EVENT_SIGNAL(ev), SIG_IGN) != SIG_ERR);
 
 	for( i = 0; i < win32op->n_events; ++i ) {
 		if( win32op->events[i]->ev_fd != ev->ev_fd ) continue;
@@ -431,21 +431,19 @@ win32_dispatch( struct event_base *base, struct win32op *win32op,
 }
 
 
-static void
-signal_handler(int sig)
+static void signal_handler(int sig)
 {
 	evsigcaught[sig]++;
 	signal_caught = 1;
 }
 
-int
-signal_recalc(void)
+int signal_recalc(void)
 {
 	opal_event_t *ev;
 
 	/* Reinstall our signal handler. */
 	TAILQ_FOREACH(ev, &opal_signalqueue, ev_signal_next) {
-		if((int)signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == -1)
+		if( signal(OPAL_EVENT_SIGNAL(ev), signal_handler) == SIG_ERR)
 			return (-1);
 	}
 	return (0);
