@@ -10,6 +10,8 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -19,8 +21,4 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=coll_hierarch.c
-PARAM_CONFIG_HEADER_FILE=coll_hierarch_config.h
 PARAM_CONFIG_FILES="Makefile"
-PARAM_CONFIG_AUX_DIR=config
-PARAM_WANT_COMPILE_EXTERNAL=1

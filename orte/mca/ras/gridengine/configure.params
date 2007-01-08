@@ -12,6 +12,8 @@
 #                         All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 #                         Use is subject to license terms.
+# Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+#                         reserved. 
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -21,6 +23,4 @@
 
 # Specific to this module
 
-PARAM_INIT_FILE=ras_gridengine.c
-PARAM_CONFIG_HEADER_FILE="ras_gridengine.h"
 PARAM_CONFIG_FILES="Makefile"
