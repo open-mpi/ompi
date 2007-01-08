@@ -8,6 +8,8 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_vma.h"

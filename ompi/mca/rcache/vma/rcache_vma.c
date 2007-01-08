@@ -19,6 +19,8 @@
  * $HEADER$
  */
 
+#include "ompi_config.h"
+
 #include "ompi/mca/rcache/rcache.h"
 #include "rcache_vma.h"
 #include "rcache_vma_tree.h"
