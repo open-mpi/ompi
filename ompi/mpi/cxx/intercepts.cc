@@ -512,5 +512,6 @@ ompi_mpi_cxx_grequest_cancel_fn_intercept(void *state, int cancelled)
 {
     struct MPI::Grequest_intercept_t *data = 
         (struct MPI::Grequest_intercept_t *) state;
-    return data->git_cxx_cancel_fn(data->git_extra, (bool) cancelled);
+    return data->git_cxx_cancel_fn(data->git_extra, 
+                                   (0 != cancelled ? true : false));
 }
