@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -62,7 +64,7 @@ int opal_timer_darwin_open(void)
 
     mach_timebase_info(&sTBI);
 
-    opal_timer_darwin_freq = sTBI.denom;
+    opal_timer_darwin_freq = sTBI.denom * (1000000000 / sTBI.numer);
 
     return OPAL_SUCCESS;
 }
