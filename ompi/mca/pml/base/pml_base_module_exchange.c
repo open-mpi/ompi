@@ -291,7 +291,7 @@ mca_pml_base_modex_registry_callback(orte_gpr_notify_data_t * data,
 GOTNAME:
                 /* look up the modex data structure */
                 OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
-                modex = orte_hash_table_get_proc(&mca_pml_base_modex_data, proc_name);
+                modex = (mca_pml_base_modex_t*)orte_hash_table_get_proc(&mca_pml_base_modex_data, proc_name);
                 if (modex == NULL) {
                     /* create a modex data structure for this proc */
                     modex = OBJ_NEW(mca_pml_base_modex_t);
@@ -633,7 +633,7 @@ mca_pml_base_modex_recv(mca_base_component_t * component,
     if (NULL == (modex = (mca_pml_base_modex_t *) proc->proc_modex)) {
         /* see if we already have data for this proc... */
         OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
-        modex = orte_hash_table_get_proc(&mca_pml_base_modex_data, &proc->proc_name);
+        modex = (mca_pml_base_modex_t*)orte_hash_table_get_proc(&mca_pml_base_modex_data, &proc->proc_name);
         if (NULL == modex) {
             /* create an empty modex data... */
             modex = OBJ_NEW(mca_pml_base_modex_t);
@@ -703,7 +703,7 @@ mca_pml_base_modex_recv_nb(mca_base_component_t * component,
     if (NULL == (modex = (mca_pml_base_modex_t *) proc->proc_modex)) {
         /* see if we already have data for this proc... */
         OPAL_THREAD_LOCK(&mca_pml_base_modex_lock);
-        modex = orte_hash_table_get_proc(&mca_pml_base_modex_data, &proc->proc_name);
+        modex = (mca_pml_base_modex_t*)orte_hash_table_get_proc(&mca_pml_base_modex_data, &proc->proc_name);
         if (NULL == modex) {
             /* create an empty modex data... */
             modex = OBJ_NEW(mca_pml_base_modex_t);
