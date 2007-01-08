@@ -130,8 +130,12 @@ typedef unsigned int uint;
 #define strcasecmp                _stricmp
 
 #define UINT32_MAX _UI32_MAX
+#define UINT32_MIN _UI32_MIN
 #define INT32_MAX  _I32_MAX
+#define INT32_MIN  _I32_MIN
 #define UINT8_MAX  _UI8_MAX
+#define UINT8_MIN  _UI8_MIN
+
 
 /* If we now support __func__ set the HAVE_DECL___FUNC__ */
 #define __func__ __FUNCTION__
