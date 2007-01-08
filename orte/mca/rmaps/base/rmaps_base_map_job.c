@@ -44,17 +44,27 @@ static orte_rmaps_base_module_t *select_any(void);
  * Function for selecting one component from all those that are
  * available.
  */
-int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
+int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *incoming_attributes)
 {
     orte_rmaps_base_module_t *module=NULL;
     orte_attribute_t *attr;
     char *desired_mapper;
     opal_list_t working_attrs;
+    opal_list_t *attributes;
     opal_list_item_t *item;
     orte_jobid_t *jptr, parent_job=ORTE_JOBID_INVALID;
     orte_job_map_t *map;
     orte_std_cntr_t scntr;
     int rc;
+    bool using_local_attr=false;
+    
+    /* check for NULL attributes - we need this list locally */
+    if (NULL == incoming_attributes) {
+        attributes = OBJ_NEW(opal_list_t);
+        using_local_attr = true;
+    } else {
+        attributes = incoming_attributes;
+    }
     
     /* if we are not on the head node, use the proxy component */
     if (!orte_process_info.seed) {
@@ -74,7 +84,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
          */
         if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&jptr, attr->value, ORTE_JOBID))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
         parent_job = *jptr;
         /* lookup that job's mapping policy */
@@ -82,7 +92,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_get_mapping_plan(parent_job, &working_attrs))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&working_attrs);
-            return rc;                
+            goto CLEANUP;
         }
         /* go through the parent policy and "fill" anything that was missing in the
          * list of attributes provided. We specifically don't overwrite anything provided
@@ -93,7 +103,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                              ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
             OBJ_DESTRUCT(&working_attrs);
-            return rc;
+            goto CLEANUP;
         }
         /* clean up */
         while (NULL != (item = opal_list_remove_first(&working_attrs))) {
@@ -109,14 +119,14 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                           ORTE_STRING, "bynode",
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     } else {
         if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
                                                           ORTE_STRING, "byslot",
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }            
     }
        
@@ -129,7 +139,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                           ORTE_UNDEF, NULL,
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     }
     
@@ -142,7 +152,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                           ORTE_STD_CNTR, &scntr,
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     }
     
@@ -155,7 +165,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                           ORTE_UNDEF, NULL,
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     }
     
@@ -168,7 +178,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
                                                           ORTE_UNDEF, NULL,
                                                           ORTE_RMGR_ATTR_NO_OVERRIDE))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     }
     
@@ -177,7 +187,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
         /* they did - extract its name */
         if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&desired_mapper, attr->value, ORTE_STRING))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
         module = select_preferred(desired_mapper);
     } else {
@@ -189,13 +199,14 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
         ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         opal_output(orte_rmaps_base.rmaps_output,
                     "orte:rmaps:base:map: could not find desired mapper component %s", desired_mapper);
-        return ORTE_ERR_NOT_FOUND;
+        rc = ORTE_ERR_NOT_FOUND;
+        goto CLEANUP;
     }
     
     /* go ahead and map the job */
     if (ORTE_SUCCESS != (rc = module->map_job(job, attributes))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto CLEANUP;
     }
     
     /* store the mapping plan in case we need it later. We need to do this AFTER
@@ -206,7 +217,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
      */
     if (ORTE_SUCCESS != (rc = orte_rmaps_base_store_mapping_plan(job, attributes))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
+        goto CLEANUP;
     }
     
     /* if we were using a parent policy, then we need to update that job's info
@@ -216,7 +227,7 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     if (ORTE_JOBID_INVALID != parent_job) {
         if (ORTE_SUCCESS != (rc = orte_rmaps_base_update_mapping_state(parent_job, attributes))) {
             ORTE_ERROR_LOG(rc);
-            return rc;
+            goto CLEANUP;
         }
     }
     
@@ -228,7 +239,13 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *attributes)
     }
     
     
-    return ORTE_SUCCESS;
+CLEANUP:
+    /* if we setup our own local attribute list, then get rid of it */
+    if (using_local_attr) {
+        OBJ_RELEASE(attributes);
+    }
+    
+    return rc;
 }
 
 

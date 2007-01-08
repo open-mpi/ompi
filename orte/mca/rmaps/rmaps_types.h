@@ -43,6 +43,7 @@ extern "C" {
 #define ORTE_RMAPS_USE_PARENT_PLAN      "orte-map-use-parent-plan"
 #define ORTE_RMAPS_BOOKMARK             "orte-map-bookmark"
 #define ORTE_RMAPS_DISPLAY_AFTER_MAP    "orte-map-display"
+#define ORTE_RMAPS_NO_ALLOC_RANGE       "orte-map-no-alloc-range"
     
 /****   JOB_MAP OBJECTS   ***/
 /*

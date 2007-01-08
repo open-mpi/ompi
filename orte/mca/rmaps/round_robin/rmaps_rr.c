@@ -316,6 +316,12 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
         mca_rmaps_round_robin_component.oversubscribe = false;
     }
     
+    mca_rmaps_round_robin_component.no_allocate_range = false;
+    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_NO_ALLOC_RANGE))) {
+        /* was provided - set boolean accordingly */
+        mca_rmaps_round_robin_component.no_allocate_range = true;
+    }
+    
     return ORTE_SUCCESS;
 }
 /*
@@ -501,11 +507,15 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
             modify_app_context = true;
         }
 
-        /* allocate a vpid range for this app within the job */
-        if(ORTE_SUCCESS != (rc = orte_ns.reserve_range(jobid, app->num_procs, &vpid_start))) {
-            ORTE_ERROR_LOG(rc);
-            OBJ_DESTRUCT(&master_node_list);
-            return rc;
+        /* allocate a vpid range for this app within the job, unless told not to do so */
+        if (mca_rmaps_round_robin_component.no_allocate_range) {
+            vpid_start = 0;
+        } else {
+            if(ORTE_SUCCESS != (rc = orte_ns.reserve_range(jobid, app->num_procs, &vpid_start))) {
+                ORTE_ERROR_LOG(rc);
+                OBJ_DESTRUCT(&master_node_list);
+                return rc;
+            }
         }
         
         /** save the initial starting vpid for later */
