@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc. All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -95,6 +96,13 @@ WARNING: %s encountered an abnormal exit.
 This means that %s exited before it received notification that all
 started processes had terminated.  You should double check and ensure
 that there are no runaway processes still executing.
+[orterun:sigint-while-processing]
+WARNING: %s is in the process of killing a job, but has detected an
+interruption (probably control-C).
+
+It is dangerous to interrupt %s while it is killing a job (proper
+termination may not be guaranteed).  Hit control-C again within 1
+second if you really want to kill %s immediately.
 [orterun:empty-prefix]
 A prefix was supplied to %s that only contained slashes.  
 

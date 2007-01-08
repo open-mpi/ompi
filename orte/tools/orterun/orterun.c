@@ -10,7 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -706,6 +706,13 @@ static void exit_callback(int fd, short event, void *arg)
  * the job has been aborted.
  */
 
+typedef enum {
+    ABORT_SIGNAL_FIRST,
+    ABORT_SIGNAL_PROCESSING,
+    ABORT_SIGNAL_WARNED,
+    ABORT_SIGNAL_DONE
+} abort_signal_state_t;
+
 static void abort_signal_callback(int fd, short flags, void *arg)
 {
     int ret;
@@ -713,14 +720,54 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     opal_event_t* event;
     opal_list_t attrs;
     opal_list_item_t *item;
-
-    static int signalled = 0;
+    static abort_signal_state_t state;
+    static struct timeval invoked, now;
+    double a, b;
 
     OPAL_TRACE(1);
 
-    if (0 != signalled++) {
-         return;
+    /* If this whole process has already completed, then bail */
+    switch (state) {
+    case ABORT_SIGNAL_FIRST:
+        /* This is the first time through */
+        state = ABORT_SIGNAL_PROCESSING;
+        break;
+
+    case ABORT_SIGNAL_WARNED:
+        gettimeofday(&now, NULL);
+        a = invoked.tv_sec * 1000000 + invoked.tv_usec;
+        b = now.tv_sec * 1000000 + invoked.tv_usec;
+        if (b - a <= 1000000) {
+            /* We are in an event handler; exit_callback() will delete
+               the handler that is currently running (which is a Bad
+               Thing), so we can't call it directly.  Instead, we have
+               to exit this handler and setup to call exit_handler()
+               after this. */
+            if (NULL != (event = (opal_event_t*)
+                         malloc(sizeof(opal_event_t)))) {
+                opal_evtimer_set(event, exit_callback, NULL);
+                now.tv_sec = 0;
+                now.tv_usec = 0;
+                opal_evtimer_add(event, &now);
+                state = ABORT_SIGNAL_DONE;
+            }
+            return;
+        } 
+        /* Otherwise fall through to PROCESSING and warn again */
+
+    case ABORT_SIGNAL_PROCESSING:
+        opal_show_help("help-orterun.txt", "orterun:sigint-while-processing",
+                       true, orterun_basename, orterun_basename, 
+                       orterun_basename);
+        gettimeofday(&invoked, NULL);
+        state = ABORT_SIGNAL_WARNED;
+        return;
+
+    case ABORT_SIGNAL_DONE:
+        /* Nothing to do -- return */
+        return;
     }
+
     if (!orterun_globals.quiet){
         fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     }
@@ -746,6 +793,7 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         opal_evtimer_add(event, &tv);
     }
     
+    state = ABORT_SIGNAL_DONE;
 }
 
 
