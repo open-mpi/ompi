@@ -23,6 +23,8 @@
   * Description of the Registration Cache framework
   */
 
+#include "ompi_config.h"
+
 #include "opal/mca/mca.h"
 #include "rcache_vma_tree.h"
 
