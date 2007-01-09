@@ -640,6 +640,7 @@ btl_openib_component_init(int *num_btl_modules,
                 sizeof(mca_btl_openib_module_t)); 
         free(openib_btl); 
         OBJ_RELEASE(ib_selected); 
+        openib_btl = &mca_btl_openib_component.openib_btls[i];
 
         /* Setup the "use eager rdma" flag -- look at the "use eager
            rdma" flag on all the hcas, and if they're *all* true, then
@@ -648,7 +649,6 @@ btl_openib_component_init(int *num_btl_modules,
         mca_btl_openib_component.use_eager_rdma &= 
             openib_btl->hca->use_eager_rdma;
 
-        openib_btl = &mca_btl_openib_component.openib_btls[i];
         openib_btl->rd_num = mca_btl_openib_component.rd_num +
             mca_btl_openib_component.rd_rsv;
         openib_btl->rd_low = mca_btl_openib_component.rd_low;
