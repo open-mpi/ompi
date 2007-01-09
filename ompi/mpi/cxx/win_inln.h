@@ -10,6 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -189,11 +190,10 @@ MPI::Win::Delete_attr(int win_keyval)
 
 
 inline bool 
-MPI::Win::Get_attr(const Win& win, int win_keyval, 
-			  void* attribute_val) const
+MPI::Win::Get_attr(int win_keyval, void* attribute_val) const
 {
   int ret;
-  (void) MPI_Win_get_attr(win, win_keyval, attribute_val, &ret);
+  (void) MPI_Win_get_attr(mpi_win, win_keyval, attribute_val, &ret);
   return OPAL_INT_TO_BOOL(ret);
 }
 
