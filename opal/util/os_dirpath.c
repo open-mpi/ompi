@@ -164,7 +164,7 @@ int opal_os_dirpath_create(const char *path, const mode_t mode)
  * try to recursively remove all directories.  If provided, the
  * callback function is executed prior to the directory or file being
  * removed.  If the callback returns non-zero, then no removal is
- * done.  
+ * done.
  */
 int opal_os_dirpath_destroy(const char *path,
                             bool recursive,
@@ -295,10 +295,7 @@ int opal_os_dirpath_destroy(const char *path,
     } 
     
     do {
-        /*
-         * Skip
-         * - . and ..
-         */
+        /* Skip . and .. */
         if ((0 == strcmp(file_data.cFileName, ".")) ||
             (0 == strcmp(file_data.cFileName, "..")) ) {
             continue;
@@ -322,6 +319,10 @@ int opal_os_dirpath_destroy(const char *path,
         
         /* Will the caller allow us to remove this file/directory */
         if( NULL != cbfunc) {
+            /*
+             * Caller does not wish to remove this file/directory,
+             * continue with the rest of the entries
+             */
             if( !cbfunc(path, file_data.cFileName) ) {
                 continue;
             }
@@ -333,12 +334,14 @@ int opal_os_dirpath_destroy(const char *path,
                                                               recursive,
                                                               cbfunc) ) ) {
                 exit_status = rc;
+                free(file_name);
                 goto cleanup;
             }
         }
         else {
             DeleteFile(file_name);
         }
+        free(file_name);
     } while( 0 != FindNextFile(file, &file_data) );
     
     FindClose(file);
