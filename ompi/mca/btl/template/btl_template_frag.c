@@ -28,6 +28,7 @@ static void mca_btl_template_frag_max_constructor(mca_btl_template_frag_t* frag)
 static void mca_btl_template_frag_user_constructor(mca_btl_template_frag_t* frag) 
 { 
     frag->size = 0; 
+    frag->registration = NULL;
     mca_btl_template_frag_common_constructor(frag); 
 }
 

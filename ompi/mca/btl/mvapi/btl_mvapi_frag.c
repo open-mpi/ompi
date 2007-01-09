@@ -113,6 +113,7 @@ static void mca_btl_mvapi_send_frag_frag_constructor(mca_btl_mvapi_frag_t* frag)
     
     frag->size = 0; 
     frag->type = MCA_BTL_MVAPI_FRAG_FRAG;
+    frag->registration = NULL;
     mca_btl_mvapi_send_frag_common_constructor(frag); 
 }
 

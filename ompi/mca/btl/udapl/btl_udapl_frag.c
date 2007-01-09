@@ -69,7 +69,8 @@ static void mca_btl_udapl_frag_user_constructor(mca_btl_udapl_frag_t* frag)
     frag->segment.seg_len = 0;
     frag->segment.seg_addr.pval = NULL;
     frag->ftr = NULL;
-    frag->size = 0; 
+    frag->size = 0;
+    frag->registration = NULL;
 }
 
 static void mca_btl_udapl_frag_common_destructor(mca_btl_udapl_frag_t* frag)
