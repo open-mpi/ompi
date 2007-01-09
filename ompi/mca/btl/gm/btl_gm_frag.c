@@ -48,7 +48,8 @@ static void mca_btl_gm_frag_max_constructor(mca_btl_gm_frag_t* frag)
 static void mca_btl_gm_frag_user_constructor(mca_btl_gm_frag_t* frag) 
 { 
     frag->hdr = NULL;
-    frag->size = 0; 
+    frag->size = 0;
+    frag->registration = NULL;
     MCA_BTL_GM_FRAG_COMMON_CONSTRUCTOR(frag);
 }
 
