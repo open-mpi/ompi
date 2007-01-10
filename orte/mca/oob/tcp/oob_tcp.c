@@ -229,7 +229,7 @@ int mca_oob_tcp_component_open(void)
                            "connect() timeout in seconds, before trying next interface",
                            false,
                            false,
-                           10,
+                           600,
                            &mca_oob_tcp_component.tcp_timeout);
 
     
