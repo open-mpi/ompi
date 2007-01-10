@@ -93,6 +93,13 @@ int mca_btl_base_open(void)
                                 0, 
                                 &mca_btl_base_debug);
 
+    if( mca_btl_base_debug > 0 ) {
+        mca_btl_base_output = opal_output_open(NULL);
+        opal_output_set_verbosity(mca_btl_base_output, mca_btl_base_debug);
+    } else {
+        mca_btl_base_output = -1;
+    }
+
   /* Open up all available components */
     
   if (OMPI_SUCCESS != 
