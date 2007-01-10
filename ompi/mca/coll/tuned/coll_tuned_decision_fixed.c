@@ -407,9 +407,10 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
    /* Decision based on MX 2Gb results from Grig cluster at 
       The University of Tennesse, Knoxville 
       - if total message size is less than 50KB use either bruck or 
-        recursive doubling for non-power of two and  power of two nodes, respectively.
-      - else use ring and neighbor exchange algorithms for odd and even number of 
-        nodes, respectively.
+        recursive doubling for non-power of two and power of two nodes, 
+        respectively.
+      - else use ring and neighbor exchange algorithms for odd and even 
+        number of nodes, respectively.
    */
    if (total_dsize < 50000) {
       if (pow2_size == communicator_size) {
@@ -419,12 +420,14 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
                                                                   rdtype, comm);
       } else {
          return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 
-                                                      rbuf, rcount, rdtype, comm);
+                                                      rbuf, rcount, rdtype, 
+                                                      comm);
       }
    } else {
       if (communicator_size % 2) {
          return ompi_coll_tuned_allgather_intra_ring(sbuf, scount, sdtype, 
-                                                     rbuf, rcount, rdtype, comm);
+                                                     rbuf, rcount, rdtype, 
+                                                     comm);
       } else {
          return  ompi_coll_tuned_allgather_intra_neighborexchange(sbuf, scount, 
                                                                   sdtype,
@@ -444,8 +447,10 @@ int ompi_coll_tuned_allgather_intra_dec_fixed(void *sbuf, int scount,
       - for everything else use ring.
     */
    if ((pow2_size == communicator_size) && (total_dsize < 524288)) {
-      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, sdtype, 
-                                                               rbuf, rcount, rdtype, 
+      return ompi_coll_tuned_allgather_intra_recursivedoubling(sbuf, scount, 
+                                                               sdtype, 
+                                                               rbuf, rcount, 
+                                                               rdtype, 
                                                                comm);
    } else if (total_dsize <= 81920) { 
       return ompi_coll_tuned_allgather_intra_bruck(sbuf, scount, sdtype, 

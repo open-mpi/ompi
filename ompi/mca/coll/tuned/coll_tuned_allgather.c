@@ -91,7 +91,6 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
    int err = 0;
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
-   ompi_request_t *reqs[2] = {NULL, NULL};
 
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
@@ -148,17 +147,11 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
       }
 
       /* Sendreceive */
-      err = MCA_PML_CALL(irecv(tmprecv, blockcount * rcount, rdtype,
-                               recvfrom, MCA_COLL_BASE_TAG_ALLGATHER,
-                               comm, &reqs[0]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-      err = MCA_PML_CALL(isend(tmpsend, blockcount * rcount, rdtype,
-                               sendto, MCA_COLL_BASE_TAG_ALLGATHER,
-                               MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      
-      err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_coll_tuned_sendrecv(tmpsend, blockcount * rcount, rdtype, 
+                                     sendto, MCA_COLL_BASE_TAG_ALLGATHER,
+                                     tmprecv, blockcount * rcount, rdtype, 
+                                     recvfrom, MCA_COLL_BASE_TAG_ALLGATHER,
+                                     comm, MPI_STATUS_IGNORE, rank);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    }
@@ -273,7 +266,6 @@ ompi_coll_tuned_allgather_intra_recursivedoubling(void *sbuf, int scount,
    int err = 0;
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
-   ompi_request_t *reqs[2] = {NULL, NULL};
 
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
@@ -335,17 +327,11 @@ ompi_coll_tuned_allgather_intra_recursivedoubling(void *sbuf, int scount,
       }
 
       /* Sendreceive */
-      err = MCA_PML_CALL(irecv(tmprecv, distance * rcount, rdtype,
-                               remote, MCA_COLL_BASE_TAG_ALLGATHER,
-                               comm, &reqs[0]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-      err = MCA_PML_CALL(isend(tmpsend, distance * rcount, rdtype,
-                               remote, MCA_COLL_BASE_TAG_ALLGATHER,
-                               MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      
-      err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_coll_tuned_sendrecv(tmpsend, distance * rcount, rdtype,
+                                     remote, MCA_COLL_BASE_TAG_ALLGATHER,
+                                     tmprecv, distance * rcount, rdtype,
+                                     remote, MCA_COLL_BASE_TAG_ALLGATHER,
+                                     comm, MPI_STATUS_IGNORE, rank);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    }
@@ -387,7 +373,6 @@ int ompi_coll_tuned_allgather_intra_ring(void *sbuf, int scount,
    int err = 0;
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
-   ompi_request_t *reqs[2] = {NULL, NULL};
 
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
@@ -431,17 +416,11 @@ int ompi_coll_tuned_allgather_intra_ring(void *sbuf, int scount,
       tmpsend = (char*)rbuf + senddatafrom * rcount * rext;
 
       /* Sendreceive */
-      err = MCA_PML_CALL(irecv(tmprecv, rcount, rdtype,
-                               recvfrom, MCA_COLL_BASE_TAG_ALLGATHER,
-                               comm, &reqs[0]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-
-      err = MCA_PML_CALL(isend(tmpsend, rcount, rdtype,
-                               sendto, MCA_COLL_BASE_TAG_ALLGATHER,
-                               MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      
-      err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_coll_tuned_sendrecv(tmpsend, rcount, rdtype, sendto,
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     tmprecv, rcount, rdtype, recvfrom,
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     comm, MPI_STATUS_IGNORE, rank);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    }
@@ -525,7 +504,6 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
    int err = 0;
    ptrdiff_t slb, rlb, sext, rext;
    char *tmpsend = NULL, *tmprecv = NULL;
-   ompi_request_t *reqs[2] = {NULL, NULL};
 
    size = ompi_comm_size(comm);
    rank = ompi_comm_rank(comm);
@@ -587,15 +565,11 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
    tmprecv = (char*)rbuf + neighbor[0] * rcount * rext;
    tmpsend = (char*)rbuf + rank * rcount * rext;
    /* Sendreceive */
-   err = MCA_PML_CALL(irecv(tmprecv, rcount, rdtype,
-                            neighbor[0], MCA_COLL_BASE_TAG_ALLGATHER,
-                            comm, &reqs[0]));
-   if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-   err = MCA_PML_CALL(isend(tmpsend, rcount, rdtype,
-                            neighbor[0], MCA_COLL_BASE_TAG_ALLGATHER,
-                            MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-   if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-   err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+   err = ompi_coll_tuned_sendrecv(tmpsend, rcount, rdtype, neighbor[0],
+                                  MCA_COLL_BASE_TAG_ALLGATHER,
+                                  tmprecv, rcount, rdtype, neighbor[0],
+                                  MCA_COLL_BASE_TAG_ALLGATHER,
+                                  comm, MPI_STATUS_IGNORE, rank);
    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    /* Determine initial sending location */
@@ -614,15 +588,13 @@ ompi_coll_tuned_allgather_intra_neighborexchange(void *sbuf, int scount,
       tmpsend = (char*)rbuf + send_data_from * rcount * rext;
       
       /* Sendreceive */
-      err = MCA_PML_CALL(irecv(tmprecv, 2 * rcount, rdtype,
-                               neighbor[i_parity], MCA_COLL_BASE_TAG_ALLGATHER,
-                               comm, &reqs[0]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      err = MCA_PML_CALL(isend(tmpsend, 2 * rcount, rdtype,
-                               neighbor[i_parity], MCA_COLL_BASE_TAG_ALLGATHER,
-                               MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-      if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-      err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+      err = ompi_coll_tuned_sendrecv(tmpsend, 2 * rcount, rdtype, 
+                                     neighbor[i_parity], 
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     tmprecv, 2 * rcount, rdtype,
+                                     neighbor[i_parity],
+                                     MCA_COLL_BASE_TAG_ALLGATHER,
+                                     comm, MPI_STATUS_IGNORE, rank);
       if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
       send_data_from = recv_data_from[i_parity];
@@ -648,7 +620,6 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
    int remote;
    char *tmpsend = NULL, *tmprecv = NULL;
    ptrdiff_t sext, rext, lb;
-   ompi_request_t *reqs[2] = {NULL, NULL};
 
    rank = ompi_comm_rank(comm);
 
@@ -673,16 +644,11 @@ int ompi_coll_tuned_allgather_intra_two_procs(void *sbuf, int scount,
    }
    tmprecv = (char*)rbuf + remote * rcount * rext;
 
-   err = MCA_PML_CALL(irecv(tmprecv, rcount, rdtype, remote, 
-                            MCA_COLL_BASE_TAG_ALLGATHER, comm, &reqs[0]));
-   if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-   
-   err = MCA_PML_CALL(isend(tmpsend, scount, sdtype, remote,
-                            MCA_COLL_BASE_TAG_ALLGATHER, 
-                            MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
-   if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
-   
-   err = ompi_request_wait_all(2, reqs, MPI_STATUSES_IGNORE);
+   err = ompi_coll_tuned_sendrecv(tmpsend, scount, sdtype, remote,
+                                  MCA_COLL_BASE_TAG_ALLGATHER,
+                                  tmprecv, rcount, rdtype, remote,
+                                  MCA_COLL_BASE_TAG_ALLGATHER,
+                                  comm, MPI_STATUS_IGNORE, rank);
    if (MPI_SUCCESS != err) { line = __LINE__; goto err_hndl; }
 
    /* Place your data in correct location if necessary */

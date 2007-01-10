@@ -33,9 +33,11 @@ extern "C" {
 #endif
 
 /* prototypes */
-int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, 
+                                     ompi_datatype_t* sdatatype,
                                      int dest, int stag,
-                                     void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
+                                     void* recvbuf, int rcount, 
+                                     ompi_datatype_t* rdatatype,
                                      int source, int rtag,
                                      struct ompi_communicator_t* comm,
                                      ompi_status_public_t* status );
@@ -43,42 +45,58 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t*
 
 /* inline functions */
 
-static inline int ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
-                                            int dest, int stag,
-                                            void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
-                                            int source, int rtag,
-                                            struct ompi_communicator_t* comm,
-                                            ompi_status_public_t* status, int myid )
+static inline int 
+ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+                          int dest, int stag,
+                          void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
+                          int source, int rtag, 
+                          struct ompi_communicator_t* comm,
+                          ompi_status_public_t* status, int myid )
 {
-    if ((dest==myid)&&(source==myid)) {
-        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, recvbuf, (int32_t) rcount, rdatatype);
+    if ((dest == myid) && (source == myid)) {
+        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
+                                     recvbuf, (int32_t) rcount, rdatatype);
     }
-    return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, dest, stag, recvbuf, rcount, rdatatype,
+    return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, 
+                                            dest, stag, 
+                                            recvbuf, rcount, rdatatype,
                                             source, rtag, comm, status);
 }
 
-int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
-                                                    int dest, int stag,
-                                                    void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
-                                                    int source, int rtag,
-                                                    struct ompi_communicator_t* comm,
-                                                    ompi_status_public_t* status );
+int 
+ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, 
+                                                ompi_datatype_t* sdatatype,
+                                                int dest, int stag,
+                                                void* recvbuf, int rcount, 
+                                                ompi_datatype_t* rdatatype,
+                                                int source, int rtag,
+                                                struct ompi_communicator_t* comm,
+                                                ompi_status_public_t* status );
 
 
 /* inline functions */
 
-static inline int ompi_coll_tuned_sendrecv_localcompleted( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
-                                                           int dest, int stag,
-                                                           void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
-                                                           int source, int rtag,
-                                                           struct ompi_communicator_t* comm,
-                                                           ompi_status_public_t* status, int myid )
+static inline int 
+ompi_coll_tuned_sendrecv_localcompleted( void* sendbuf, int scount, 
+                                         ompi_datatype_t* sdatatype,
+                                         int dest, int stag,
+                                         void* recvbuf, int rcount, 
+                                         ompi_datatype_t* rdatatype,
+                                         int source, int rtag,
+                                         struct ompi_communicator_t* comm,
+                                         ompi_status_public_t* status, int myid )
 {
-    if ((dest==myid)&&(source==myid)) {
-        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, recvbuf, (int32_t) rcount, rdatatype);
+    if ((dest == myid) && (source == myid)) {
+        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
+                                     recvbuf, (int32_t) rcount, rdatatype);
     }
-    return ompi_coll_tuned_sendrecv_actual_localcompleted (sendbuf, scount, sdatatype, dest, stag, recvbuf, rcount, rdatatype,
-                                                           source, rtag, comm, status);
+    return ompi_coll_tuned_sendrecv_actual_localcompleted (sendbuf, scount, 
+                                                           sdatatype, dest, 
+                                                           stag,
+                                                           recvbuf, rcount, 
+                                                           rdatatype,
+                                                           source, rtag, comm, 
+                                                           status);
 }
 
 #if defined(c_plusplus) || defined(__cplusplus)
