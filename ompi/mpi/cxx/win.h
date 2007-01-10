@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -150,8 +151,12 @@ public:
   
   static void Free_keyval(int& win_keyval); 
   
+  // version 1: pre-errata Get_attr (not correct, but probably nice to support
   bool Get_attr(const Win& win, int win_keyval,
-		void* attribute_val) const;
+               void* attribute_val) const;
+
+  // version 2: post-errata Get_attr (correct, but no one seems to know about it)
+  bool Get_attr(int win_keyval, void* attribute_val) const;
   
   virtual void Get_name(char* win_name, int& resultlen) const;
   

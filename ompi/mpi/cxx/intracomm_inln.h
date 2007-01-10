@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -20,7 +21,7 @@
 
 inline
 MPI::Intracomm::Intracomm(MPI_Comm data) {
-  int flag;
+  int flag = 0;
   if (MPI::Is_initialized() && (data != MPI_COMM_NULL)) {
     (void)MPI_Comm_test_inter(data, &flag);
     if (flag) {
