@@ -151,6 +151,11 @@ public:
   
   static void Free_keyval(int& win_keyval); 
   
+  // version 1: pre-errata Get_attr (not correct, but probably nice to support
+  bool Get_attr(const Win& win, int win_keyval,
+               void* attribute_val) const;
+
+  // version 2: post-errata Get_attr (correct, but no one seems to know about it)
   bool Get_attr(int win_keyval, void* attribute_val) const;
   
   virtual void Get_name(char* win_name, int& resultlen) const;

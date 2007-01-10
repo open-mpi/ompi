@@ -181,7 +181,6 @@ MPI::Win::Call_errhandler(int errorcode) const
 }
 
 
-
 inline void 
 MPI::Win::Delete_attr(int win_keyval) 
 {
@@ -189,6 +188,18 @@ MPI::Win::Delete_attr(int win_keyval)
 }
 
 
+// version 1: pre-errata Get_attr (not correct, but probably nice to support
+inline bool
+MPI::Win::Get_attr(const Win& win, int win_keyval,
+                         void* attribute_val) const
+{
+  int ret;
+  (void) MPI_Win_get_attr(win, win_keyval, attribute_val, &ret);
+  return OPAL_INT_TO_BOOL(ret);
+}
+
+
+// version 2: post-errata Get_attr (correct, but no one seems to know about it)
 inline bool 
 MPI::Win::Get_attr(int win_keyval, void* attribute_val) const
 {
