@@ -28,9 +28,11 @@
 #include "ompi/mca/pml/pml.h"
 #include "coll_tuned_util.h"
 
-int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
+int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, 
+                                     ompi_datatype_t* sdatatype,
                                      int dest, int stag,
-                                     void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
+                                     void* recvbuf, int rcount, 
+                                     ompi_datatype_t* rdatatype,
                                      int source, int rtag,
                                      struct ompi_communicator_t* comm,
                                      ompi_status_public_t* status )
@@ -41,11 +43,13 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t*
     ompi_status_public_t statuses[2];
 
     /* post new irecv */
-    err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, comm, &reqs[0]));
+    err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, 
+                              comm, &reqs[0]));
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     /* send data to children */
-    err = MCA_PML_CALL(isend( sendbuf, scount, sdatatype, dest, stag, MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
+    err = MCA_PML_CALL(isend( sendbuf, scount, sdatatype, dest, stag, 
+                              MCA_PML_BASE_SEND_STANDARD, comm, &reqs[1]));
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     err = ompi_request_wait_all( 2, reqs, statuses );
@@ -58,18 +62,25 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount, ompi_datatype_t*
     return (MPI_SUCCESS);
 
  error_handler:
-    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
+    OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",
+                  __FILE__,line,err));
     return (err);
 }
 
 /*
  * localcompleted version that makes sure the send has completed locally 
- * Currently this is a sync call, but will change to locally completed version when available
+ * Currently this is a sync call, but will change to locally completed
+ * version when available
  */
 
-int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, ompi_datatype_t* sdatatype, int dest, int stag,
-                                                    void* recvbuf, int rcount, ompi_datatype_t* rdatatype, int source, int rtag, 
-                                                    struct ompi_communicator_t* comm, ompi_status_public_t* status )
+int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, 
+                                                    ompi_datatype_t* sdatatype, 
+                                                    int dest, int stag,
+                                                    void* recvbuf, int rcount, 
+                                                    ompi_datatype_t* rdatatype, 
+                                                    int source, int rtag, 
+                                                    struct ompi_communicator_t* comm, 
+                                                    ompi_status_public_t* status )
 
 { /* post receive first, then [local] sync send, then wait... should be fast (I hope) */
     int err, line = 0;
@@ -77,7 +88,8 @@ int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, o
     ompi_status_public_t tmpstatus[2];
 
     /* post new irecv */
-    err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, comm, &(req[0])));
+    err = MCA_PML_CALL(irecv( recvbuf, rcount, rdatatype, source, rtag, 
+                              comm, &(req[0])));
     if (err != MPI_SUCCESS) { line = __LINE__; goto error_handler; }
 
     /* send data to children */
@@ -98,4 +110,3 @@ int ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, o
     OPAL_OUTPUT ((ompi_coll_tuned_stream, "%s:%d: Error %d occurred\n",__FILE__,line,err));
     return (err);
 }
-
