@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -44,12 +45,14 @@ int MPI_Status_set_elements(MPI_Status *status, MPI_Datatype datatype,
             rc = MPI_ERR_TYPE;
         } else if (count < 0) {
             rc = MPI_ERR_COUNT;
-        } else if (NULL == status ||
-                   MPI_STATUS_IGNORE == status || 
-                   MPI_STATUSES_IGNORE == status) {
-            rc = MPI_ERR_ARG;
         }
         OMPI_ERRHANDLER_CHECK(rc, MPI_COMM_WORLD, rc, FUNC_NAME);
+    }
+
+    /* ROMIO calls MPI_STATUS_SET_ELEMENTS with IGNORE values, so we
+       need to allow it.  Blah! */
+    if (MPI_STATUS_IGNORE == status || MPI_STATUSES_IGNORE == status) {
+        return MPI_SUCCESS;
     }
 
     if( ompi_ddt_is_predefined(datatype) ) {
