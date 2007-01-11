@@ -75,10 +75,13 @@ void mpi_startall_f(MPI_Fint *count, MPI_Fint *array_of_requests,
         return;
     }
 
-    for (i = 0; i < *count; i++) {
+    for(i = 0; i < *count; i++ ) {
         c_req[i] = MPI_Request_f2c(array_of_requests[i]);
     }
 
     *ierr = OMPI_INT_2_FINT(MPI_Startall(OMPI_FINT_2_INT(*count), c_req));
+    for( i = 0; i < *count; i++ ) {
+        array_of_requests[i] = MPI_Request_c2f(c_req[i]);
+    }
     free(c_req);
 }
