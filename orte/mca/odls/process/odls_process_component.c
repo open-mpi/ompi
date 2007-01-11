@@ -92,13 +92,21 @@ orte_odls_base_component_t mca_odls_process_component = {
     orte_odls_process_component_finalize
 };
 
+bool orte_odls_process_debug = false;
+
 int orte_odls_process_component_open(void)
 {
+    int tmp;
     /* initialize globals */
     OBJ_CONSTRUCT(&orte_odls_process.mutex, opal_mutex_t);
     OBJ_CONSTRUCT(&orte_odls_process.cond, opal_condition_t);
     OBJ_CONSTRUCT(&orte_odls_process.children, opal_list_t);
 
+    /* lookup parameters */
+    mca_base_param_reg_int( &mca_odls_process_component.version, "debug",
+                           "Whether or not to enable debugging output for the process odls component (0 or 1)",
+                           false, false, false, &tmp);
+    orte_odls_process_debug = OPAL_INT_TO_BOOL(tmp);
     return ORTE_SUCCESS;
 }
 
