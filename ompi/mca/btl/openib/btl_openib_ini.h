@@ -21,7 +21,7 @@
  */
 /* PGI 6.2.x has a bug where it will fail to compile structs that are
    copied by value that contain bool members. */
-#if OMPI_BOOL_STRUCT_COPY
+#if OPAL_BOOL_STRUCT_COPY
 typedef bool boi_bool_t;
 #else
 typedef int boi_bool_t;
