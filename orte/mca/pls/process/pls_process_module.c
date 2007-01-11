@@ -93,12 +93,11 @@
 #include "orte/mca/pls/base/pls_private.h"
 #include "orte/mca/pls/process/pls_process.h"
 
-_CRTIMP extern char **environ;  //daniel
+//_CRTIMP extern char **environ;  //daniel
 //extern char **environ; 
 
 
-#define rindex(a,b) strrchr((a),(b))
-//daniel
+#define rindex(a,b) strrchr((a),(b)) //daniel
 
 #if OMPI_HAVE_POSIX_THREADS && OMPI_THREADS_HAVE_DIFFERENT_PIDS && OMPI_ENABLE_PROGRESS_THREADS
 static int orte_pls_process_launch_threaded(orte_jobid_t jobid);
@@ -139,7 +138,8 @@ static const char * orte_pls_process_shell_name[] = {
     "ksh",
     "sh",
     "unknown"
-};
+}; 
+
 
 /* local global storage of timing variables */
 static unsigned long  mintime=999999999, miniter, maxtime=0, maxiter;
@@ -158,9 +158,8 @@ static opal_list_t active_daemons;
 static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_shell * shell)
 {
     char ** argv;
-    int argc, rc, nfds, i;
+    int rc, nfds;
     int fd[2];
-    pid_t pid; //daniel
 
     HANDLE myPipeFd[2]; 
     SECURITY_ATTRIBUTES securityAttr;
@@ -179,24 +178,13 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_pls_process_component.agent_argv);
-    argc = mca_pls_process_component.agent_argc;
-    opal_argv_append(&argc, &argv, node->nodename);
-    opal_argv_append(&argc, &argv, "echo $SHELL");
-    
-    /* daniel *******************
-     */
-        
-    /*
-    if (pipe(fd)) {
-        opal_output(0, "pls:process: pipe failed with errno=%d\n", errno);
-        return ORTE_ERR_IN_ERRNO;
-    }
-    */
-        
+     
+     
+     
     securityAttr.nLength = sizeof(SECURITY_ATTRIBUTES);     // Size of struct
     securityAttr.lpSecurityDescriptor = NULL;               // Default descriptor
     securityAttr.bInheritHandle = TRUE;                     // Inheritable
+    
     // Create the pipe
     if (CreatePipe(&myPipeFd[0], &myPipeFd[1], &securityAttr, 0)) {
 
@@ -230,7 +218,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
 
         // Start the child process. 
         if( !CreateProcess( argv[0],    //module name   NULL,
-            (LPSTR) _tcsdup(TEXT((const char *)argv)),            // Command line             szCmdline,
+            NULL, //(LPSTR)(const char *) argv,
             NULL,           // Process handle not inheritable
             NULL,           // Thread handle not inheritable
             TRUE,           // Set handle inheritance to TRUE; 
@@ -324,7 +312,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
     }
 
     /* Search for the substring of known shell-names */
-    for (i = 0; i < (int)(sizeof (orte_pls_process_shell_name)/
+/*    for (i = 0; i < (int)(sizeof (orte_pls_process_shell_name)/
                           sizeof(orte_pls_process_shell_name[0])); i++) {
         char *sh_name = NULL;
 
@@ -334,7 +322,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
             
             /* We cannot use "echo -n $SHELL" because -n is not portable. Therefore
              * we have to remove the "\n" */
-            if ( sh_name[strlen(sh_name)-1] == '\n' ) {
+/*            if ( sh_name[strlen(sh_name)-1] == '\n' ) {
                 sh_name[strlen(sh_name)-1] = '\0';
             }
             if ( 0 == strcmp(sh_name, orte_pls_process_shell_name[i]) ) {
@@ -343,6 +331,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
             }
         }
     }
+*/
     if (mca_pls_process_component.debug) {
         opal_output(0, "pls:process: node:%s has SHELL: %s\n",
                     node->nodename, orte_pls_process_shell_name[*shell]);
@@ -523,7 +512,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     orte_mapped_node_t *rmaps_node;
     orte_std_cntr_t num_nodes;
     orte_vpid_t vpid;
-    int node_name_index1;
     int node_name_index2;
     int proc_name_index;
     int local_exec_index, local_exec_index_end;
@@ -531,7 +519,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     char *uri, *param;
     char **argv = NULL;
     char *prefix_dir;
-    int argc;
+    int argc = 0;
     int rc;
     char *lib_base = NULL, *bin_base = NULL;
     orte_pls_daemon_info_t *dmn;
@@ -640,9 +628,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     /*
      * Build argv array
      */
-    argv = opal_argv_copy(mca_pls_process_component.agent_argv);
-    argc = mca_pls_process_component.agent_argc;
-    node_name_index1 = argc;
     opal_argv_append(&argc, &argv, "<template>");
 
     /* add the daemon command (as specified by user) */
@@ -775,15 +760,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         opal_list_append(&active_daemons, &dmn->super);
         
         /* setup node name */
-        free(argv[node_name_index1]);
-        if (NULL != rmaps_node->username &&
-            0 != strlen (rmaps_node->username)) {
-            asprintf (&argv[node_name_index1], "%s@%s",
-                      rmaps_node->username, rmaps_node->nodename);
-        } else {
-            argv[node_name_index1] = strdup(rmaps_node->nodename);
-        }
-
         free(argv[node_name_index2]);
         argv[node_name_index2] = strdup(rmaps_node->nodename);
         
@@ -812,18 +788,18 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             goto cleanup;
         }
 
-        pid = fork();
+/*        pid = fork();
         if (pid < 0) {
             rc = ORTE_ERR_OUT_OF_RESOURCE;
             goto cleanup;
         }
-
+*/
         /* child */
-        if (pid == 0) {
+        /*if (pid == 0)*/ {
             char* name_string;
             char** env;
             char* var;
-            long fd, fdmax = sysconf(_SC_OPEN_MAX);
+            int fdmax = sysconf(_SC_OPEN_MAX);
 
             if (mca_pls_process_component.debug) {
                 opal_output(0, "pls:process: launching on node %s\n",
@@ -902,7 +878,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                         opal_output(0, "pls:process: reset PATH: %s", newenv);
                     }
                     free(newenv);
-
+#if 0
                     /* Reset LD_LIBRARY_PATH */
                     newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
                     oldenv = getenv("LD_LIBRARY_PATH");
@@ -918,6 +894,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                                     newenv);
                     }
                     free(newenv);
+#endif
                 }
 
                 /* Since this is a local execution, we need to
@@ -958,7 +935,8 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                                 rmaps_node->nodename);
                 }
                 exec_argv = argv;
-                exec_path = strdup(mca_pls_process_component.agent_path);
+                //exec_path = strdup(mca_pls_process_component.agent_path);
+                
             }
 
             /* setup process name */
@@ -969,17 +947,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             }
             free(argv[proc_name_index]);
             argv[proc_name_index] = strdup(name_string);
-
-            if (!mca_pls_process_component.debug) {
-                 /* setup stdin */
-                int fd = open("/dev/null", O_RDWR);
-                dup2(fd, 0);
-                close(fd);
-            }
-
-            /* close all file descriptors w/ exception of stdin/stdout/stderr */
-            for(fd=3; fd<fdmax; fd++)
-                close(fd);
 
             /* Set signal handlers back to the default.  Do this close
                 to the execve() because the event library may (and likely
@@ -1017,11 +984,12 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     free(param);
                 }
             }
-            execve(exec_path, exec_argv, env);
-            opal_output(0, "pls:process: execv failed with errno=%d\n", errno);
-            exit(-1);
-
-        } else { /* father */
+            //execve(exec_path, exec_argv, env);
+            pid = _spawnve( _P_DETACH, exec_path, exec_argv, env); //daniel
+            
+            opal_output(0, "pls:process: execv hopefully started (pid %llx)\n", pid);
+#if 0
+        } /*else*/ { /* father */
             OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
             /* JJH Bug:
              * If we are in '--debug-daemons' we keep the ssh connection 
@@ -1039,7 +1007,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 opal_condition_wait(&mca_pls_process_component.cond, &mca_pls_process_component.lock);
             }
             OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
-            
+#endif
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
