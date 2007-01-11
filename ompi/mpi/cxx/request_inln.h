@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -313,7 +314,7 @@ MPI::Prequest::Startall(int count, MPI:: Prequest array_of_requests[])
 
 inline bool MPI::Request::Get_status(MPI::Status& status) const
 {
-    int flag;
+    int flag = 0;
     MPI_Status c_status;
 
     // Call the underlying MPI function rather than simply returning
