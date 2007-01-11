@@ -176,7 +176,10 @@ int ompi_btl_openib_ini_query(uint32_t vendor_id, uint32_t vendor_part_id,
         if (vendor_id == h->vendor_id &&
             vendor_part_id == h->vendor_part_id) {
             /* Found it! */
-            *values = h->values;
+            /* NOTE: There is a bug in the PGI 6.2 series that causes
+               the compiler to choke when copying structs containing
+               bool members by value.  So do a memcpy here instead. */
+            memcpy(values, &h->values, sizeof(h->values));
             if (mca_btl_openib_component.verbose) {
                 BTL_OUTPUT(("Found corresponding INI values: %s",
                             h->section_name));
@@ -522,7 +525,11 @@ static int save_section(parsed_section_values_t *s)
                 h->section_name = strdup(s->name);
                 h->vendor_id = s->vendor_ids[i];
                 h->vendor_part_id = s->vendor_part_ids[j];
-                h->values = s->values;
+                /* NOTE: There is a bug in the PGI 6.2 series that
+                   causes the compiler to choke when copying structs
+                   containing bool members by value.  So do a memcpy
+                   here instead. */
+                memcpy(&h->values, &s->values, sizeof(s->values));
                 opal_list_append(&hcas, &h->super);
             }
         }
