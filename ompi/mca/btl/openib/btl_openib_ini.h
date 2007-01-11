@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -19,12 +19,19 @@
  * Struct to hold the settable values that may be specified in the INI
  * file
  */
+/* PGI 6.2.x has a bug where it will fail to compile structs that are
+   copied by value that contain bool members. */
+#if OMPI_BOOL_STRUCT_COPY
+typedef bool boi_bool_t;
+#else
+typedef int boi_bool_t;
+#endif
 typedef struct ompi_btl_openib_ini_values_t {
     uint32_t mtu;
-    bool mtu_set;
+    boi_bool_t mtu_set;
 
     uint32_t use_eager_rdma;
-    bool use_eager_rdma_set;
+    boi_bool_t use_eager_rdma_set;
 } ompi_btl_openib_ini_values_t;
 
 
