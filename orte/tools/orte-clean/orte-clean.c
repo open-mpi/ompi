@@ -81,7 +81,7 @@ static int orte_clean_universe(orte_universe_t *universe);
  *****************************************/
 /* PGI 6.2.x has a bug where it will fail to compile structs that are
    copied by value that contain bool members. */
-#if OMPI_BOOL_STRUCT_COPY
+#if OPAL_BOOL_STRUCT_COPY
 typedef bool oc_bool_t;
 #else
 typedef int oc_bool_t;
