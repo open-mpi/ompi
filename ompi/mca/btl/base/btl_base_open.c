@@ -23,11 +23,11 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "opal/util/output.h"
 #include "opal/mca/base/mca_base_param.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
-
 
 /*
  *  mca_btl_base_descriptor_t
