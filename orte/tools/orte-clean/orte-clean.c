@@ -10,7 +10,6 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
- * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -79,16 +78,9 @@ static int orte_clean_universe(orte_universe_t *universe);
 /*****************************************
  * Global Vars for Command line Arguments
  *****************************************/
-/* PGI 6.2.x has a bug where it will fail to compile structs that are
-   copied by value that contain bool members. */
-#if OPAL_BOOL_STRUCT_COPY
-typedef bool oc_bool_t;
-#else
-typedef int oc_bool_t;
-#endif
 typedef struct {
-    oc_bool_t help;
-    oc_bool_t verbose;
+    bool help;
+    bool verbose;
 } orte_clean_globals_t;
 
 orte_clean_globals_t orte_clean_globals;

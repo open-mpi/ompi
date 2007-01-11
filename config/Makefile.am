@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -39,7 +39,6 @@ EXTRA_DIST = \
         mca_make_configure.pl \
         mca_no_configure_components.m4 \
         ompi_case_sensitive_fs_setup.m4 \
-        ompi_check_bool_struct_copy.m4 \
         ompi_check_optflags.m4 \
         ompi_check_pthread_pids.m4 \
         ompi_config_subdir.m4 \
