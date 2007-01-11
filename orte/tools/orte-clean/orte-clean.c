@@ -201,8 +201,11 @@ static int parse_args(int argc, char *argv[]) {
     orte_clean_globals_t tmp = { false, false };
 
     /* Parse the command line options */
-    
-    orte_clean_globals = tmp;
+
+    /* NOTE: There is a bug in the PGI 6.2 series that causes the
+       compiler to choke when copying structs containing bool members
+       by value.  So do a memcpy here instead. */
+    memcpy(&orte_clean_globals, &tmp, sizeof(tmp));
     
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     
