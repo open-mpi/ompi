@@ -77,8 +77,8 @@ typedef enum {
 struct mca_btl_udapl_sr_credit_t {
         mca_btl_udapl_control_header_t control;
         uint32_t credits;
-        uint32_t connection; /* 0 == BTL_UDAPL_EAGER_CONNECTION;
-                                1 == BTL_UDAPL_MAX_CONNECTION */
+        int connection; /* 0 == BTL_UDAPL_EAGER_CONNECTION;
+                           1 == BTL_UDAPL_MAX_CONNECTION */
 };
 typedef struct mca_btl_udapl_sr_credit_t mca_btl_udapl_sr_credit_t;
 
@@ -185,7 +185,7 @@ int mca_btl_udapl_endpoint_create(struct mca_btl_udapl_module_t* btl,
  * Send number of send recv credits
  */
 int mca_btl_udapl_endpoint_send_sr_credits(mca_btl_base_endpoint_t* endpoint,
-                                           uint32_t connection);
+                                           const int connection);
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

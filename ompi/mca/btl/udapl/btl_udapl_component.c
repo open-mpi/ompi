@@ -45,6 +45,15 @@
 #include "orte/util/proc_info.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 
+/*
+ * Local Functions
+ */
+static inline int mca_btl_udapl_frag_progress_one(mca_btl_udapl_module_t* udapl_btl,
+                                                  mca_btl_udapl_frag_t* frag);
+void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
+                                        mca_btl_base_endpoint_t* endpoint,
+                                        const int connection);
+
 
 mca_btl_udapl_component_t mca_btl_udapl_component = {
     {
@@ -573,7 +582,7 @@ static inline int mca_btl_udapl_frag_progress_one(
 
 void mca_btl_udapl_frag_progress_pending(mca_btl_udapl_module_t* udapl_btl,
                                         mca_btl_base_endpoint_t* endpoint,
-                                        uint32_t connection)
+                                        const int connection)
 {
     int len;
     int i;
@@ -639,7 +648,8 @@ int mca_btl_udapl_component_progress()
 #if defined(__SVR4) && defined(__sun)
     DAT_COUNT nmore;  /* used by dat_evd_wait, see comment below */
 #endif
-    int i, j, rdma_ep_count;
+    size_t i;
+    int32_t j, rdma_ep_count;
     int count = 0;
 
     /* prevent deadlock - only one thread should be 'progressing' at a time */
@@ -682,8 +692,6 @@ int mca_btl_udapl_component_progress()
                 switch(frag->type) {
                 case MCA_BTL_UDAPL_RDMA_WRITE:
                 {
-                    mca_btl_udapl_endpoint_t* endpoint = frag->endpoint;
-                    
                     assert(frag->base.des_src == &frag->segment);
                     assert(frag->base.des_src_cnt == 1);
                     assert(frag->base.des_dst == NULL);
@@ -701,8 +709,6 @@ int mca_btl_udapl_component_progress()
                 }
                 case MCA_BTL_UDAPL_SEND:
                 {
-                    mca_btl_udapl_endpoint_t* endpoint = frag->endpoint;
-
                     assert(frag->base.des_src == &frag->segment);
                     assert(frag->base.des_src_cnt == 1);
                     assert(frag->base.des_dst == NULL);
@@ -814,8 +820,6 @@ int mca_btl_udapl_component_progress()
                 }
                 case MCA_BTL_UDAPL_PUT:
                 {
-                    mca_btl_udapl_endpoint_t* endpoint = frag->endpoint;
-                    
                     assert(frag->base.des_src == &frag->segment);
                     assert(frag->base.des_src_cnt == 1);
                     assert(frag->base.des_dst_cnt == 1);

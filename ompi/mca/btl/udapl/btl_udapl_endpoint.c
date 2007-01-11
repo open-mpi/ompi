@@ -55,7 +55,6 @@ static int mca_btl_udapl_endpoint_finish_max(mca_btl_udapl_endpoint_t*);
 static void mca_btl_udapl_endpoint_connect_eager_rdma(mca_btl_udapl_endpoint_t* endpoint);
 static int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
                                               mca_btl_udapl_frag_t* frag);
-static int mca_btl_udapl_endpoint_eager_rdma_set_remote(void);
 static void mca_btl_udapl_endpoint_control_send_cb(mca_btl_base_module_t* btl,
                                                    mca_btl_base_endpoint_t* endpoint,
                                                    mca_btl_base_descriptor_t* descriptor,
@@ -196,7 +195,7 @@ int mca_btl_udapl_endpoint_write_eager(mca_btl_base_endpoint_t* endpoint,
         /* perform zero byte read of the remote memory region */
         remote_buffer.target_address = (DAT_VADDR)remote_buf;
         remote_buffer.segment_length = frag->triplet.segment_length;
-        local_iov.virtual_address = NULL;
+        local_iov.virtual_address = (DAT_VADDR)NULL;
         local_iov.segment_length = 0;
         
         cookie.as_ptr = NULL;
@@ -463,7 +462,6 @@ int mca_btl_udapl_endpoint_create(mca_btl_udapl_module_t* btl,
     DAT_EP_HANDLE* udapl_endpoint)
 {
     int rc = OMPI_SUCCESS;
-    DAT_EP_PARAM ep_param;
 
     /* Create a new uDAPL endpoint and start the connection process */
     rc = dat_ep_create(btl->udapl_ia, btl->udapl_pz,
@@ -1258,7 +1256,7 @@ int mca_btl_udapl_endpoint_send_eager_rdma_credits(
  * @return                 OMPI_SUCCESS or error status on failure
  */
 int mca_btl_udapl_endpoint_send_sr_credits(
-    mca_btl_base_endpoint_t* endpoint, uint32_t connection)
+    mca_btl_base_endpoint_t* endpoint, const int connection)
 {
     mca_btl_udapl_sr_credit_t *sr_credit;
     mca_btl_base_descriptor_t* des;
