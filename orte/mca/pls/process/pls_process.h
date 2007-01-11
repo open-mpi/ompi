@@ -69,10 +69,6 @@ struct orte_pls_process_component_t {
     bool force_process;
     int delay;
     int priority;
-    char *agent_param;
-    char** agent_argv;
-    int agent_argc;
-    char* agent_path;
     char* orted;
     orte_std_cntr_t num_children;
     orte_std_cntr_t num_concurrent;
