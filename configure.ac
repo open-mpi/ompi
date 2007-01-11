@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 # Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
@@ -687,12 +687,6 @@ AC_CHECK_MEMBERS([struct dirent.d_type], [], [], [
 AC_CHECK_MEMBERS([siginfo_t.si_fd],,,[#include <signal.h>])
 AC_CHECK_MEMBERS([siginfo_t.si_band],,,[#include <signal.h>])
 
-# Portland PGI 6.2.x has a bug that it will choke when compiling .c
-# files that have structs copied by value that contain bool members.
-# PGI fixed this problem in the 7.0 series.  This is a characteristic
-# of the C compiler, but we can't do it until after we check for
-# <stdbool.h>.
-OMPI_CHECK_BOOL_STRUCT_COPY
 
 # checkpoint results
 AC_CACHE_SAVE
