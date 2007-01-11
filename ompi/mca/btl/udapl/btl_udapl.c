@@ -327,14 +327,15 @@ failure:
 int mca_btl_udapl_finalize(struct mca_btl_base_module_t* base_btl)
 {
     mca_btl_udapl_module_t* udapl_btl = (mca_btl_udapl_module_t*) base_btl; 
-
+    int32_t i;
+    
     /*
      * Cleaning up the endpoints here because mca_btl_udapl_del_procs
      * is never called by upper layers.
      * Note: this is only looking at those endpoints which are available
      * off of the btl module rdma list. 
      */
-    for (int i=0; i < udapl_btl->udapl_eager_rdma_endpoint_count; i++) {
+    for (i=0; i < udapl_btl->udapl_eager_rdma_endpoint_count; i++) {
         mca_btl_udapl_endpoint_t* endpoint =
             orte_pointer_array_get_item(udapl_btl->udapl_eager_rdma_endpoints,
                 i);
@@ -760,7 +761,6 @@ int mca_btl_udapl_put(
     int rc = OMPI_SUCCESS;
     
     mca_btl_udapl_frag_t* frag = (mca_btl_udapl_frag_t*)des;
-    mca_btl_base_segment_t *src_segment = des->des_src;
     mca_btl_base_segment_t *dst_segment = des->des_dst;
 
     frag->btl = (mca_btl_udapl_module_t *)btl;

@@ -135,7 +135,7 @@ struct mca_btl_udapl_module_t {
     opal_mutex_t udapl_lock;    /* lock for accessing module state */
 
     opal_mutex_t udapl_eager_rdma_lock;         /* eager rdma lock  */
-    uint32_t udapl_eager_rdma_endpoint_count;   /* count of the number of
+    int32_t udapl_eager_rdma_endpoint_count;   /* count of the number of
                                                  * endpoints in
                                                  * udapl_eager_rdma_endpoints
                                                  */
