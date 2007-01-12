@@ -141,13 +141,11 @@ typedef struct mca_btl_openib_rdma_credits_header_t mca_btl_openib_rdma_credits_
 
 #define BTL_OPENIB_RDMA_CREDITS_HEADER_HTON(h)     \
 do {                                               \
-    /* BTL_OPENIB_CONTROL_HEADER_HTON(h.control);  */    \
     h.rdma_credits = htons(h.rdma_credits);        \
 } while (0)
 
 #define BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(h)     \
 do {                                               \
-    /* BTL_OPENIB_CONTROL_HEADER_NTOH(h.control); */     \
     h.rdma_credits = ntohs(h.rdma_credits);        \
 } while (0)
 
