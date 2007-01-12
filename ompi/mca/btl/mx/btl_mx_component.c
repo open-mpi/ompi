@@ -471,6 +471,10 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
             OBJ_RELEASE( btl );
             continue;
         }
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        BTL_MX_ADDR_HTON(mx_addrs[i]);
+#endif
         mca_btl_mx_component.mx_btls[count++] = btl;
     }
     size = sizeof(mca_btl_mx_addr_t) * count;

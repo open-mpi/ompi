@@ -136,7 +136,7 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
 {
     mca_btl_mx_addr_t  *mx_peers;
     int rc;
-    size_t size;
+    size_t size, i;
 
     /* query for the peer address info */
     rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
@@ -158,6 +158,12 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
     if( 0 == module_proc->mx_peers_count ) {  /* no available connection */
         return OMPI_ERROR;
     }
+
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
+        BTL_MX_ADDR_NTOH(mx_peers[i]);
+    }
+#endif
 
     module_proc->mx_peers = mx_peers;
 
