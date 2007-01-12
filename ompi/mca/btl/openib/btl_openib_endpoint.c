@@ -278,7 +278,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->rem_info.rem_lid = 0; 
     endpoint->rem_info.rem_psn_hp = 0;
     endpoint->rem_info.rem_psn_lp = 0; 
-    endpoint->rem_info.rem_subnet = 0; 
+    endpoint->rem_info.rem_subnet_id = 0; 
     endpoint->rem_info.rem_mtu = 0;
 }
 
@@ -349,7 +349,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         return rc;
     }
 
-    rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT64);
+    rc = orte_dss.pack(buffer, &endpoint->subnet_id, 1, ORTE_UINT64);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -376,7 +376,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
                  endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
                  endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
                  endpoint->endpoint_btl->lid, 
-                 endpoint->subnet));
+                 endpoint->subnet_id));
     
     
 
@@ -617,7 +617,7 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT64);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, ORTE_UINT64);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -637,7 +637,7 @@ static void mca_btl_openib_endpoint_recv(
                  rem_info.rem_qp_num_hp,
                  rem_info.rem_qp_num_lp, 
                  rem_info.rem_lid, 
-                 rem_info.rem_subnet));
+                 rem_info.rem_subnet_id));
     
     for(ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
@@ -669,7 +669,7 @@ static void mca_btl_openib_endpoint_recv(
                 port_info = ib_proc->proc_ports[i]; 
                 ib_endpoint = ib_proc->proc_endpoints[i]; 
                 if(!ib_endpoint->rem_info.rem_lid && 
-                   ib_endpoint->subnet  == rem_info.rem_subnet) { 
+                   ib_endpoint->subnet_id  == rem_info.rem_subnet_id) { 
                     /* found a match based on subnet! */ 
                     found = true; 
                     break;

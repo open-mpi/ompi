@@ -148,7 +148,7 @@ struct mca_btl_openib_port_info_t {
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT 
     uint8_t padding[4]; 
 #endif
-    uint64_t subnet;
+    uint64_t subnet_id;
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
 
@@ -178,7 +178,7 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_t  super;  /**< base PTL interface */
     bool btl_inited; 
     mca_btl_openib_recv_reg_t ib_reg[256]; 
-    mca_btl_openib_port_info_t port_info;  /* contains only the subnet right now */ 
+    mca_btl_openib_port_info_t port_info;  /* contains only the subnet id right now */ 
     mca_btl_openib_hca_t *hca;
     uint8_t port_num;           /**< ID of the PORT */ 
     struct ibv_cq *ib_cq[2];
