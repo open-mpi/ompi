@@ -85,9 +85,19 @@ int mca_btl_openib_add_procs(
 {
     mca_btl_openib_module_t* openib_btl = (mca_btl_openib_module_t*)btl;
     int i,j, rc;
-    int remote_subnets;
-    int local_subnets;
+    int rem_subnet_id_port_cnt;
+    int lcl_subnet_id_port_cnt = 0;
     int btl_rank = 0;
+
+    for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
+        if(mca_btl_openib_component.openib_btls[j].port_info.subnet_id
+           == openib_btl->port_info.subnet_id) { 
+            lcl_subnet_id_port_cnt++;
+            }
+        if(openib_btl == &(mca_btl_openib_component.openib_btls[j])) { 
+            btl_rank = j;
+        }
+    }
     for(i = 0; i < (int) nprocs; i++) {
         
         struct ompi_proc_t* ompi_proc = ompi_procs[i];
@@ -99,42 +109,33 @@ int mca_btl_openib_add_procs(
             return OMPI_ERR_OUT_OF_RESOURCE;
         }
 
-        remote_subnets = 0;
+        rem_subnet_id_port_cnt  = 0;
         /* check if the remote proc has a reachable subnet first */
         BTL_VERBOSE(("got %d port_infos \n", ib_proc->proc_port_count));
         for(j = 0; j < (int) ib_proc->proc_port_count; j++){
             BTL_VERBOSE(("got a subnet %016x\n",
-                         ib_proc->proc_ports[j].subnet));
-            if(ib_proc->proc_ports[j].subnet ==
-               openib_btl->port_info.subnet) {
+                         ib_proc->proc_ports[j].subnet_id));
+            if(ib_proc->proc_ports[j].subnet_id ==
+               openib_btl->port_info.subnet_id) {
                 BTL_VERBOSE(("Got a matching subnet!\n"));
-                remote_subnets++;
+                rem_subnet_id_port_cnt ++;
             }
         }
-        if(!remote_subnets) {
+        if(!rem_subnet_id_port_cnt ) {
             /* no use trying to communicate with this endpointlater */
-            BTL_VERBOSE(("No matching subnet was found, moving on.. \n"));
+            BTL_VERBOSE(("No matching subnet id was found, moving on.. \n"));
             continue;
         }
         
-        local_subnets = 0;
-        for(j=0; j < mca_btl_openib_component.ib_num_btls; j++){ 
-            if(mca_btl_openib_component.openib_btls[j].port_info.subnet
-               == openib_btl->port_info.subnet) { 
-                local_subnets++;
-            }
-            if(openib_btl == &(mca_btl_openib_component.openib_btls[j])) { 
-                btl_rank = j;
-            }
-        }
+        
 #if 0
-        num_endpoints = remote_subnets / local_subnets + 
-            (btl_rank < (remote_subnets / local_subnets)) ? 1:0;
+        num_endpoints = rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt + 
+            (btl_rank < (rem_subnet_id_port_cnt  / lcl_subnet_id_port_cnt)) ? 1:0;
         
 #endif 
-        if(remote_subnets < local_subnets && 
-           btl_rank >= remote_subnets) { 
-            BTL_VERBOSE(("Not enough remote subnets, moving on.. \n"));
+        if(rem_subnet_id_port_cnt  < lcl_subnet_id_port_cnt && 
+           btl_rank >= rem_subnet_id_port_cnt ) { 
+            BTL_VERBOSE(("Not enough remote ports on this subnet id, moving on.. \n"));
             continue;
             
         }
@@ -151,7 +152,7 @@ int mca_btl_openib_add_procs(
         }
             
         endpoint->endpoint_btl = openib_btl;
-        endpoint->subnet = openib_btl->port_info.subnet; 
+        endpoint->subnet_id = openib_btl->port_info.subnet_id; 
         rc = mca_btl_openib_proc_insert(ib_proc, endpoint);
         if(rc != OMPI_SUCCESS) {
             OBJ_RELEASE(endpoint);

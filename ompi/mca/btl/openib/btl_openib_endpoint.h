@@ -78,8 +78,8 @@ struct mca_btl_openib_rem_info_t {
     uint32_t                    rem_psn_lp; 
     /* Remote processes port sequence number (Low and High) */ 
    
-    uint64_t                    rem_subnet; 
-    /* subnet of remote process */     
+    uint64_t                    rem_subnet_id; 
+    /* subnet id of remote process */     
 
     /* MTU of remote process */
     uint32_t                    rem_mtu;
@@ -146,7 +146,7 @@ struct mca_btl_base_endpoint_t {
     int32_t sd_credits[2];  /**< number of send wqe entries being used to return credits */
     int32_t sd_wqe[2];      /**< number of available send wqe entries */
 
-    uint64_t subnet; /**< subnet of this endpoint*/
+    uint64_t subnet_id; /**< subnet id of this endpoint*/
 
     int32_t eager_recv_count; /**< number of eager received */
     mca_btl_openib_eager_rdma_remote_t eager_rdma_remote;

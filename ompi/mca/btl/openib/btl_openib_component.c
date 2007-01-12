@@ -277,14 +277,14 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
     mca_btl_openib_module_t *openib_btl;
     mca_btl_base_selected_module_t *ib_selected;
     union ibv_gid gid;
-    uint64_t subnet;
+    uint64_t subnet_id;
     
     ibv_query_gid(hca->ib_dev_context, port_num, 0, &gid);
-    subnet = ntoh64(gid.global.subnet_prefix);
-    BTL_VERBOSE(("my subnet is %016x\n", subnet));
+    subnet_id = ntoh64(gid.global.subnet_prefix);
+    BTL_VERBOSE(("my subnet_id is %016x\n", subnet_id));
     
     if(mca_btl_openib_component.ib_num_btls > 0 &&
-            IB_DEFAULT_GID_PREFIX == subnet &&
+            IB_DEFAULT_GID_PREFIX == subnet_id &&
             mca_btl_openib_component.warn_default_gid_prefix) {
         opal_show_help("help-mpi-btl-openib.txt", "default subnet prefix",
                 true, orte_system_info.nodename);
@@ -315,8 +315,8 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            /* store the subnet for multi-nic support */
-            openib_btl->port_info.subnet = subnet;
+            /* store the subnet_id for multi-nic support */
+            openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbdata = NULL;
