@@ -64,28 +64,39 @@ struct mca_btl_openib_footer_t {
 };
 typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 
+#ifdef WORDS_BIGENDIAN
+#define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)
+#else 
+#define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)    \
+    do {                                        \
+        uint8_t tmp = (ftr).u.buf[0];           \
+        (ftr).u.buf[0]=(ftr).u.buf[2];          \
+        (ftr).u.buf[2]=tmp;                     \
+    } while (0)
+#endif
+
 #if OMPI_ENABLE_DEBUG
-#define BTL_OPENIB_FOOTER_HTON(h) \
-do {                              \
-    h.seq = htonl(h.seq);         \
-    h.u.size = htonl(h.u.size);   \
-} while (0)
-
-#define BTL_OPENIB_FOOTER_NTOH(h) \
-do {                              \
-    h.seq = ntohs(h.seq);         \
-    h.u.size = ntohl(h.u.size);   \
-} while (0)
+#define BTL_OPENIB_FOOTER_HTON(h)               \
+    do {                                        \
+        h.seq = htonl(h.seq);                   \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+    
+#define BTL_OPENIB_FOOTER_NTOH(h)               \
+    do {                                        \
+        h.seq = ntohl(h.seq);                   \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
 #else
-#define BTL_OPENIB_FOOTER_HTON(h) \
-do {                              \
-    h.u.size = htonl(h.u.size);   \
-} while (0)
-
-#define BTL_OPENIB_FOOTER_NTOH(h) \
-do {                              \
-    h.u.size = ntohl(h.u.size);   \
-} while (0)
+#define BTL_OPENIB_FOOTER_HTON(h)               \
+    do {                                        \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+    
+#define BTL_OPENIB_FOOTER_NTOH(h)               \
+    do {                                        \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
 #endif
 
 
@@ -93,58 +104,50 @@ do {                              \
 #define  MCA_BTL_OPENIB_CONTROL_RDMA   1
 
 struct mca_btl_openib_control_header_t {
-    uint32_t type;
+    uint8_t type;
 };
 typedef struct mca_btl_openib_control_header_t mca_btl_openib_control_header_t;
 
-#define BTL_OPENIB_CONTROL_HEADER_HTON(h) \
-do {                              \
-    h.type = htonl(h.type);   \
-} while (0)
-
-#define BTL_OPENIB_CONTROL_HEADER_NTOH(h) \
-do {                              \
-    h.type = ntohl(h.type);   \
-} while (0)
-
-
 struct mca_btl_openib_eager_rdma_header_t {
-	mca_btl_openib_control_header_t control;
-	uint32_t rkey;
-	ompi_ptr_t rdma_start;
+    mca_btl_openib_control_header_t control;
+    uint8_t padding[3]; 
+    uint32_t rkey;
+    ompi_ptr_t rdma_start;
+    uint64_t frag_t_len;
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
-#define BTL_OPENIB_EAGER_RDMA_HEADER_HTON(h)       \
-do {                                               \
-    BTL_OPENIB_CONTROL_HEADER_HTON(h.control);     \
-    h.rkey = htonl(h.rkey);                        \
-    h.rdma_start.lval = hton64(h.rdma_start.lval); \
-} while (0)
-
-#define BTL_OPENIB_EAGER_RDMA_HEADER_NTOH(h)       \
-do {                                               \
-    BTL_OPENIB_CONTROL_HEADER_NTOH(h.control);     \
-    h.rkey = ntohl(h.rkey);                        \
-    h.rdma_start.lval = ntoh64(h.rdma_start.lval); \
-} while (0)
-
-
+#define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_HTON(h)       \
+    do {                                                   \
+        h.rkey = htonl(h.rkey);                                  \
+        h.rdma_start.lval = hton64(h.rdma_start.lval);           \
+        h.frag_t_len = hton64(h.frag_t_len);                     \
+    } while (0)
+    
+#define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(h)     \
+    do {                                                 \
+        h.rkey = ntohl(h.rkey);                          \
+        h.rdma_start.lval = ntoh64(h.rdma_start.lval);   \
+        h.frag_t_len = ntoh64(h.frag_t_len);             \
+    } while (0)
+    
+    
 struct mca_btl_openib_rdma_credits_header_t {
     mca_btl_openib_control_header_t control;
+    uint8_t padding[1];
     uint16_t rdma_credits;
 };
 typedef struct mca_btl_openib_rdma_credits_header_t mca_btl_openib_rdma_credits_header_t;
 
 #define BTL_OPENIB_RDMA_CREDITS_HEADER_HTON(h)     \
 do {                                               \
-    BTL_OPENIB_CONTROL_HEADER_HTON(h.control);     \
+    /* BTL_OPENIB_CONTROL_HEADER_HTON(h.control);  */    \
     h.rdma_credits = htons(h.rdma_credits);        \
 } while (0)
 
 #define BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(h)     \
 do {                                               \
-    BTL_OPENIB_CONTROL_HEADER_NTOH(h.control);     \
+    /* BTL_OPENIB_CONTROL_HEADER_NTOH(h.control); */     \
     h.rdma_credits = ntohs(h.rdma_credits);        \
 } while (0)
 

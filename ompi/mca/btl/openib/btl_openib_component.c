@@ -181,6 +181,9 @@ static int btl_openib_modex_send(void)
         for (i = 0; i < mca_btl_openib_component.ib_num_btls; i++) {
             mca_btl_openib_module_t *btl = &mca_btl_openib_component.openib_btls[i];
             ports[i] = btl->port_info;
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            MCA_BTL_OPENIB_PORT_INFO_HTON(ports[i]);
+#endif
         }
     }
     rc = mca_pml_base_modex_send (&mca_btl_openib_component.super.btl_version, ports, size);
@@ -206,6 +209,7 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     mca_btl_openib_eager_rdma_header_t *rdma_hdr;
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
 
+       
     if(frag->size == mca_btl_openib_component.eager_limit) {
 	    /* if not sent via rdma */
         if(!MCA_BTL_OPENIB_RDMA_FRAG(frag) &&
@@ -215,27 +219,53 @@ static void btl_openib_control(struct mca_btl_base_module_t* btl,
     } else {
         OPAL_THREAD_ADD32(&endpoint->rd_credits[BTL_OPENIB_LP_QP], -1);
     }
-
+    
     switch (ctl_hdr->type) {
     case MCA_BTL_OPENIB_CONTROL_CREDITS:
         credits_hdr = (mca_btl_openib_rdma_credits_header_t*)ctl_hdr;
+        if(endpoint->nbo) {
+            BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
+        }
         if(credits_hdr->rdma_credits)
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_remote.tokens,
                     credits_hdr->rdma_credits);
-       break;
+        break;
     case MCA_BTL_OPENIB_CONTROL_RDMA:
        rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)ctl_hdr;
+       
+       BTL_VERBOSE(("prior to NTOH received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u, frag_t_len %llu\n", 
+                  rdma_hdr->rkey, 
+                  (unsigned long) rdma_hdr->rdma_start.lval,
+                  rdma_hdr->rdma_start.pval,
+                  rdma_hdr->rdma_start.ival,
+                  (unsigned long) rdma_hdr->frag_t_len
+                  ));
+       
+       if(endpoint->nbo) {
+           BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH((*rdma_hdr));
+           
+           BTL_VERBOSE(("received  rkey %lu, rdma_start.lval %llu, pval %p, ival %u, frag_t_len %llu\n", 
+                      rdma_hdr->rkey, 
+                      (unsigned long) rdma_hdr->rdma_start.lval,
+                      rdma_hdr->rdma_start.pval,
+                      rdma_hdr->rdma_start.ival,
+                      (unsigned long) rdma_hdr->frag_t_len
+                      ));
+           
+       } 
+       
        if (endpoint->eager_rdma_remote.base.pval) {
-	       BTL_ERROR(("Got RDMA connect twise!"));
+	       BTL_ERROR(("Got RDMA connect twice!"));
 	       return;
        }
        endpoint->eager_rdma_remote.rkey =  rdma_hdr->rkey;
-       endpoint->eager_rdma_remote.base.pval = rdma_hdr->rdma_start.pval;
+       endpoint->eager_rdma_remote.base.lval = rdma_hdr->rdma_start.lval;
+       endpoint->eager_rdma_remote.frag_t_len = rdma_hdr->frag_t_len;
        endpoint->eager_rdma_remote.tokens =
            mca_btl_openib_component.eager_rdma_num - 1;
        break;
     default:
-       BTL_ERROR(("Unknown message type received by BTL"));
+        BTL_ERROR(("Unknown message type received by BTL"));
        break;
     }
 }
@@ -797,7 +827,9 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
                                          size_t byte_len, const int prio)
 {
     ompi_free_list_t *free_list;
-
+    if(endpoint->nbo) {
+        BTL_OPENIB_HEADER_NTOH((*(frag->hdr)));
+    }
     if(BTL_OPENIB_HP_QP == prio)
         free_list = &openib_btl->recv_free_eager;
     else
@@ -841,6 +873,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
    
     if (!endpoint->eager_rdma_local.base.pval &&
             mca_btl_openib_component.use_eager_rdma &&
+            endpoint->use_eager_rdma &&
             BTL_OPENIB_HP_QP == prio &&
             openib_btl->eager_rdma_buffers_count <
             mca_btl_openib_component.max_eager_rdma &&
@@ -1120,12 +1153,15 @@ static int btl_openib_component_progress(void)
             if(MCA_BTL_OPENIB_RDMA_FRAG_LOCAL(frag)) {
                 uint32_t size;
                 opal_atomic_rmb();
+                if(endpoint->nbo) {
+                    BTL_OPENIB_FOOTER_NTOH((*frag->ftr));
+                }
                 size = MCA_BTL_OPENIB_RDMA_FRAG_GET_SIZE(frag->ftr);
 #if OMPI_ENABLE_DEBUG
                 if (frag->ftr->seq != endpoint->eager_rdma_local.seq)
                     BTL_ERROR(("Eager RDMA wrong SEQ: received %d expected %d",
-                                frag->ftr->seq, 
-                                endpoint->eager_rdma_local.seq));
+                               frag->ftr->seq, 
+                               endpoint->eager_rdma_local.seq));
                 endpoint->eager_rdma_local.seq++;
 #endif
                 MCA_BTL_OPENIB_RDMA_NEXT_INDEX(endpoint->eager_rdma_local.head);
@@ -1176,7 +1212,7 @@ static int btl_openib_module_progress(mca_btl_openib_module_t* openib_btl)
 
         if(ne < 0 || wc.status != IBV_WC_SUCCESS)
             goto error;
-
+            
         frag = (mca_btl_openib_frag_t*) (unsigned long) wc.wr_id; 
         endpoint = frag->endpoint;
         /* Handle work completions */

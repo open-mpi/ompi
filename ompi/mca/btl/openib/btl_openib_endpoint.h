@@ -155,6 +155,8 @@ struct mca_btl_base_endpoint_t {
     /**< info about local RDMA buffer */
     uint32_t index;           /**< index of the endpoint in endpoints array */
     struct mca_btl_openib_frag_t *credit_frag[2]; /**< frags for sending explicit high priority credits */
+    bool nbo;       /**< does the endpoint require network byte ordering? */
+    bool use_eager_rdma; /**< use eager rdma for this peer? */
 };
 
 typedef struct mca_btl_base_endpoint_t mca_btl_base_endpoint_t;

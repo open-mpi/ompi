@@ -152,6 +152,17 @@ struct mca_btl_openib_port_info_t {
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
 
+#define MCA_BTL_OPENIB_PORT_INFO_NTOH(hdr)     \
+    do {                              \
+        (hdr).mtu = ntohl((hdr).mtu); \
+        (hdr).subnet = ntoh64((hdr).subnet); \
+    } while (0)
+#define MCA_BTL_OPENIB_PORT_INFO_HTON(hdr)     \
+    do {                              \
+        (hdr).mtu = htonl((hdr).mtu); \
+        (hdr).subnet = hton64((hdr).subnet); \
+    } while (0)
+
 struct mca_btl_openib_hca_t {
     struct ibv_device *ib_dev;  /* the ib device */
 #if OMPI_ENABLE_PROGRESS_THREADS == 1

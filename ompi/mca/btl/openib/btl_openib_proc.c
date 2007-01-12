@@ -20,6 +20,7 @@
 
 #include "opal/class/opal_hash_table.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
+#include "ompi/datatype/dt_arch.h"
 
 #include "btl_openib.h"
 #include "btl_openib_proc.h"
@@ -98,7 +99,7 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_openib_proc_t* module_proc = NULL;
     size_t size; 
-    int rc;
+    int rc,i;
     
     /* Check if we have already created a IB proc
      * structure for this ompi process */
@@ -145,8 +146,6 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-    /* TODO - Endian Ordering fixups for the subnet and such.. just call hton, ntoh
-      always use NBO */ 
     module_proc->proc_port_count = size/sizeof(mca_btl_openib_port_info_t);
 
     if (0 == module_proc->proc_port_count) {
@@ -155,7 +154,12 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         module_proc->proc_endpoints = (mca_btl_base_endpoint_t**)
             malloc(module_proc->proc_port_count * sizeof(mca_btl_base_endpoint_t*));
     }
-    
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    for(i=0; i < module_proc->proc_port_count; ++i) {
+        MCA_BTL_OPENIB_PORT_INFO_NTOH(module_proc->proc_ports[i]);
+    }
+#endif
+
     if(NULL == module_proc->proc_endpoints) {
         OBJ_RELEASE(module_proc);
         return NULL;
@@ -173,6 +177,25 @@ int mca_btl_openib_proc_insert(mca_btl_openib_proc_t* module_proc,
         mca_btl_base_endpoint_t* module_endpoint)
 {
     /* insert into endpoint array */
+    
+    
+#ifndef WORDS_BIGENDIAN
+    /* if we are little endian and our peer is not so lucky, then we
+       need to put all information sent to him in big endian (aka
+       Network Byte Order) and expect all information received to
+       be in NBO.  Since big endian machines always send and receive
+       in NBO, we don't care so much about that case. */
+    if (module_proc->proc_ompi->proc_arch & OMPI_ARCH_ISBIGENDIAN) {
+        module_endpoint->nbo = true;
+    }
+#endif
+    
+    /* only allow eager rdma if the peers agree on the size of a long */
+    if((module_proc->proc_ompi->proc_arch & OMPI_ARCH_LONGISxx) !=
+       (ompi_proc_local()->proc_arch & OMPI_ARCH_LONGISxx)) { 
+        module_endpoint->use_eager_rdma = false;
+    }
+
     module_endpoint->endpoint_proc = module_proc;
     module_proc->proc_endpoints[module_proc->proc_endpoint_count++] = module_endpoint;
     return OMPI_SUCCESS;

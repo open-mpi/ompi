@@ -119,9 +119,9 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
 { 
     int do_rdma = 0, prio;
     struct ibv_send_wr* bad_wr; 
-
+    
     frag->wr_desc.sr_desc.opcode = IBV_WR_SEND;
-    frag->sg_entry.addr = (unsigned long) frag->hdr; 
+    frag->sg_entry.addr = (unsigned long) frag->hdr;
 
     prio = (frag->base.des_flags & MCA_BTL_DES_FLAGS_PRIORITY) ?
         BTL_OPENIB_HP_QP : BTL_OPENIB_LP_QP;
@@ -163,12 +163,17 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
                                     frag->segment.seg_len))->seq = 
             endpoint->eager_rdma_remote.seq++;
 #endif
+        if(endpoint->nbo) { 
+            BTL_OPENIB_HEADER_HTON((*(frag->hdr)));
+            BTL_OPENIB_FOOTER_HTON((*ftr));
+        }
+
         frag->wr_desc.sr_desc.wr.rdma.rkey = endpoint->eager_rdma_remote.rkey;
         frag->wr_desc.sr_desc.wr.rdma.remote_addr =
             endpoint->eager_rdma_remote.base.lval +
             endpoint->eager_rdma_remote.head *
             openib_btl->eager_rdma_frag_size +
-            sizeof(mca_btl_openib_frag_t) +
+            endpoint->eager_rdma_remote.frag_t_len + 
             sizeof(mca_btl_openib_header_t) +
             mca_btl_openib_component.eager_limit +
             sizeof(mca_btl_openib_footer_t);
@@ -179,10 +184,16 @@ static inline int mca_btl_openib_endpoint_post_send(mca_btl_openib_module_t* ope
             frag->wr_desc.sr_desc.opcode = IBV_WR_SEND_WITH_IMM;
             frag->wr_desc.sr_desc.imm_data = endpoint->rem_info.rem_index;
         }
+        if(endpoint->nbo) {
+            BTL_OPENIB_HEADER_HTON((*(frag->hdr)));
+        }
     }
-
+            
     if(ibv_post_send(endpoint->lcl_qp[prio], &frag->wr_desc.sr_desc,
                 &bad_wr)) {
+        if(endpoint->nbo) { 
+            BTL_OPENIB_HEADER_NTOH((*(frag->hdr)));
+        }
         if(BTL_OPENIB_IS_RDMA_CREDITS(frag->hdr->credits)) {
             OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
                     BTL_OPENIB_CREDITS(frag->hdr->credits));
@@ -280,6 +291,8 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->rem_info.rem_psn_lp = 0; 
     endpoint->rem_info.rem_subnet_id = 0; 
     endpoint->rem_info.rem_mtu = 0;
+    endpoint->nbo = false;
+    endpoint->use_eager_rdma = true;
 }
 
 /*
@@ -1061,7 +1074,6 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     mca_btl_openib_frag_t* frag;
     struct ibv_send_wr* bad_wr; 
     mca_btl_openib_rdma_credits_header_t *credits_hdr;
-
     frag = endpoint->credit_frag[prio];
     credits_hdr =
         (mca_btl_openib_rdma_credits_header_t*)frag->segment.seg_addr.pval;
@@ -1075,6 +1087,7 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     if(endpoint->rd_credits[prio] > 0) {
         frag->hdr->credits = endpoint->rd_credits[prio];
         OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], -frag->hdr->credits);
+        
     } else {
         frag->hdr->credits = 0;
     }
@@ -1097,18 +1110,27 @@ void mca_btl_openib_endpoint_send_credits(mca_btl_openib_endpoint_t* endpoint,
     frag->sg_entry.length = sizeof(mca_btl_openib_header_t) +
                             sizeof(mca_btl_openib_rdma_credits_header_t);
     frag->sg_entry.addr = (unsigned long) frag->hdr; 
-    
     if(frag->sg_entry.length <= openib_btl->ib_inline_max) { 
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_INLINE | IBV_SEND_SIGNALED; 
     } else {
         frag->wr_desc.sr_desc.send_flags = IBV_SEND_SIGNALED; 
     }
-
+    
+    /* just do it all, regardless of eager rdma or not.. */
+    if(endpoint->nbo) {
+        BTL_OPENIB_HEADER_HTON((*frag->hdr));
+        BTL_OPENIB_RDMA_CREDITS_HEADER_HTON((*credits_hdr));
+    }
+    
+    
     if(ibv_post_send(endpoint->lcl_qp[prio], &frag->wr_desc.sr_desc, &bad_wr)) {
+        if(endpoint->nbo) {
+            BTL_OPENIB_HEADER_NTOH((*frag->hdr));
+            BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH((*credits_hdr));
+        }
         OPAL_THREAD_ADD32(&endpoint->sd_credits[prio], -1);
         OPAL_THREAD_ADD32(&endpoint->rd_credits[prio], frag->hdr->credits);
-        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits,
-                credits_hdr->rdma_credits);
+        OPAL_THREAD_ADD32(&endpoint->eager_rdma_local.credits, credits_hdr->rdma_credits);
         BTL_ERROR(("error posting send request errno %d says %s",
                     strerror(errno)));
     }
@@ -1146,8 +1168,28 @@ static int mca_btl_openib_endpoint_send_eager_rdma(
     rdma_hdr = (mca_btl_openib_eager_rdma_header_t*)frag->segment.seg_addr.pval;
     rdma_hdr->control.type = MCA_BTL_OPENIB_CONTROL_RDMA;
     rdma_hdr->rkey = endpoint->eager_rdma_local.reg->mr->rkey;
+    rdma_hdr->frag_t_len = sizeof(mca_btl_openib_frag_t);
     rdma_hdr->rdma_start.lval = ompi_ptr_ptol(endpoint->eager_rdma_local.base.pval);
+    BTL_VERBOSE(("sending rkey %lu, rdma_start.lval %llu, pval %p, ival %u type %d and sizeof(rdma_hdr) %d\n", 
+               rdma_hdr->rkey, 
+               rdma_hdr->rdma_start.lval, 
+               rdma_hdr->rdma_start.pval,
+               rdma_hdr->rdma_start.ival,
+               rdma_hdr->control.type, 
+               sizeof(mca_btl_openib_eager_rdma_header_t)
+               ));
     frag->segment.seg_len = sizeof(mca_btl_openib_eager_rdma_header_t);
+    
+    if(endpoint->nbo) {
+        BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_HTON((*rdma_hdr));
+        
+        BTL_VERBOSE(("after HTON: sending rkey %lu, rdma_start.lval %llu, pval %p, ival %u\n", 
+                   rdma_hdr->rkey, 
+                   rdma_hdr->rdma_start.lval,
+                   rdma_hdr->rdma_start.pval,
+                   rdma_hdr->rdma_start.ival
+                   ));
+    }
     if (mca_btl_openib_endpoint_send(endpoint, frag) != OMPI_SUCCESS) {
         MCA_BTL_IB_FRAG_RETURN(openib_btl, frag);
         BTL_ERROR(("Error sending RDMA buffer", strerror(errno)));
@@ -1194,7 +1236,7 @@ void mca_btl_openib_endpoint_connect_eager_rdma(
         ((mca_btl_openib_frag_t*)item)->endpoint = endpoint;
         ((mca_btl_openib_frag_t*)item)->type = MCA_BTL_OPENIB_FRAG_EAGER_RDMA;
     }
-
+    
     /* set local rdma pointer to real value */
     opal_atomic_cmpset_ptr(&endpoint->eager_rdma_local.base.pval, (void*)1,
             buf);
