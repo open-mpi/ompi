@@ -467,34 +467,44 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     }
 #endif
 
-    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (need_swap) {
         create_type = opal_swap_bytes4(position[0]);
-    } else {
+    } else 
+#endif
+    {
         create_type = position[0];
     }
     if( MPI_COMBINER_DUP == create_type ) {
         /* there we have a simple predefined datatype */
-        if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (need_swap) {
             position[1] = opal_swap_bytes4(position[1]);
         }
+#endif
         assert( position[1] < DT_MAX_PREDEFINED );
         *packed_buffer = position + 2;
         return (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[1]];
     }
-    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (need_swap) {
         number_of_length   = opal_swap_bytes4(position[1]);
         number_of_disp     = opal_swap_bytes4(position[2]);
         number_of_datatype = opal_swap_bytes4(position[3]);
-    } else {
+    } else
+#endif
+    {
         number_of_length   = position[1];
         number_of_disp     = position[2];
         number_of_datatype = position[3];
     }
     array_of_datatype = (ompi_datatype_t**)malloc( sizeof(ompi_datatype_t*) *
                                                    number_of_datatype );
-    if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+    if (need_swap) {
         position[4] = opal_swap_bytes4(position[4]);
     }
+#endif
     array_of_length    = &(position[4]);
     next_buffer += (4 + number_of_length) * sizeof(int);
     array_of_disp      = (MPI_Aint*)next_buffer;
@@ -502,9 +512,11 @@ __ompi_ddt_create_from_packed_description( void** packed_buffer,
     position = (int*)next_buffer;
     next_buffer += number_of_datatype * sizeof(int);
     for( i = 0; i < number_of_datatype; i++ ) {
-        if (OMPI_ENABLE_HETEROGENEOUS_SUPPORT && need_swap) {
+#if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+        if (need_swap) {
             position[i] = opal_swap_bytes4(position[i]);
         }
+#endif
         if( position[i] < DT_MAX_PREDEFINED ) {
             assert( position[i] < DT_MAX_PREDEFINED );
             array_of_datatype[i] = (ompi_datatype_t*)ompi_ddt_basicDatatypes[position[i]];
