@@ -275,7 +275,7 @@ static void mca_btl_openib_endpoint_construct(mca_btl_base_endpoint_t* endpoint)
     endpoint->rem_info.rem_lid = 0; 
     endpoint->rem_info.rem_psn_hp = 0;
     endpoint->rem_info.rem_psn_lp = 0; 
-    endpoint->rem_info.rem_subnet = 0; 
+    endpoint->rem_info.rem_subnet_id = 0; 
     endpoint->rem_info.rem_mtu = 0;
 }
 
@@ -308,6 +308,7 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
 {
     orte_buffer_t* buffer = OBJ_NEW(orte_buffer_t);
     int rc;
+    
     if(NULL == buffer) {
          ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
          return ORTE_ERR_OUT_OF_RESOURCE;
@@ -345,12 +346,12 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
         return rc;
     }
 
-    
-    rc = orte_dss.pack(buffer, &endpoint->subnet, 1, ORTE_UINT64);
+    rc = orte_dss.pack(buffer, &endpoint->subnet_id, 1, ORTE_UINT64);
     if(rc != ORTE_SUCCESS) {
         ORTE_ERROR_LOG(rc);
         return rc;
     }
+
 
     rc = orte_dss.pack(buffer, &endpoint->endpoint_btl->hca->mtu, 1, ORTE_UINT32);
     if(rc != ORTE_SUCCESS) {
@@ -368,11 +369,14 @@ static int mca_btl_openib_endpoint_send_connect_data(mca_btl_base_endpoint_t* en
          mca_btl_openib_endpoint_send_cb, NULL);
     
     
-    BTL_VERBOSE(("Sending High Priority QP num = %d, Low Priority QP num = %d, LID = %d",
-              endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
-              endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
-              endpoint->endpoint_btl->lid));
+    BTL_VERBOSE(("Sent High Priority QP num = %d, Low Priority QP num = %d, LID = %d, SUBNET = %016x\n",
+                 endpoint->lcl_qp[BTL_OPENIB_HP_QP]->qp_num,
+                 endpoint->lcl_qp[BTL_OPENIB_LP_QP]->qp_num,
+                 endpoint->endpoint_btl->lid, 
+                 endpoint->subnet_id));
     
+    
+
     if(rc < 0) {
         ORTE_ERROR_LOG(rc);
         return rc;
@@ -569,7 +573,7 @@ static void mca_btl_openib_endpoint_connected(mca_btl_openib_endpoint_t *endpoin
 
 static void mca_btl_openib_endpoint_recv(
     int status,
-    orte_process_name_t* endpoint, 
+    orte_process_name_t* process_name, 
     orte_buffer_t* buffer,
     orte_rml_tag_t tag, 
     void* cbdata)
@@ -610,7 +614,7 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet, &cnt, ORTE_UINT64);
+    rc = orte_dss.unpack(buffer, &rem_info.rem_subnet_id, &cnt, ORTE_UINT64);
     if(ORTE_SUCCESS != rc) {
         ORTE_ERROR_LOG(rc);
         return;
@@ -625,44 +629,20 @@ static void mca_btl_openib_endpoint_recv(
         ORTE_ERROR_LOG(rc);
         return;
     }
-#if 0
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->r_key, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_base, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-    
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_size, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
 
-    rc = orte_dss.unpack(buffer, &ib_endpoint->rdma_buf->rem_cnt, &cnt, ORTE_UINT32); 
-    if(rc != ORTE_SUCCESS) { 
-        ORTE_ERROR_LOG(rc); 
-        return rc; 
-    }
-#endif
-
-    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d",
+    BTL_VERBOSE(("Received High Priority QP num = %d, Low Priority QP num %d,  LID = %d, SUBNET = %016x\n",
                  rem_info.rem_qp_num_hp,
                  rem_info.rem_qp_num_lp, 
-                 rem_info.rem_lid));
-
+                 rem_info.rem_lid, 
+                 rem_info.rem_subnet_id));
+    
     for(ib_proc = (mca_btl_openib_proc_t*)
             opal_list_get_first(&mca_btl_openib_component.ib_procs);
             ib_proc != (mca_btl_openib_proc_t*)
             opal_list_get_end(&mca_btl_openib_component.ib_procs);
             ib_proc  = (mca_btl_openib_proc_t*)opal_list_get_next(ib_proc)) {
 
-        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, endpoint) == ORTE_EQUAL) {
+        if(orte_ns.compare_fields(ORTE_NS_CMP_ALL, &ib_proc->proc_guid, process_name) == ORTE_EQUAL) {
             bool found = false;
             
             /* Try to get the endpoint instance of this proc */
@@ -686,25 +666,13 @@ static void mca_btl_openib_endpoint_recv(
                 port_info = ib_proc->proc_ports[i]; 
                 ib_endpoint = ib_proc->proc_endpoints[i]; 
                 if(!ib_endpoint->rem_info.rem_lid && 
-                   ib_endpoint->subnet  == rem_info.rem_subnet) { 
+                   ib_endpoint->subnet_id  == rem_info.rem_subnet_id) { 
                     /* found a match based on subnet! */ 
                     found = true; 
                     break;
                 }
             }
-            /* try finding an open port, even if subnets  
-               don't match
-            */ 
-            for(i = 0; !found && i < ib_proc->proc_endpoint_count; i++) { 
-                mca_btl_openib_port_info_t port_info; 
-                port_info = ib_proc->proc_ports[i]; 
-                ib_endpoint = ib_proc->proc_endpoints[i]; 
-                if(!ib_endpoint->rem_info.rem_lid) { 
-                    /* found an unused end-point */ 
-                    found = true; 
-                    break;
-                }
-            }
+            
             
             if(!found) { 
                 BTL_ERROR(("can't find suitable endpoint for this peer\n")); 

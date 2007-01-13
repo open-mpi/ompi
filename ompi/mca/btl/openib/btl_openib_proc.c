@@ -145,10 +145,10 @@ mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
         return NULL;
     }
 
-
+    /* TODO - Endian Ordering fixups for the subnet and such.. just call hton, ntoh
+      always use NBO */ 
     module_proc->proc_port_count = size/sizeof(mca_btl_openib_port_info_t);
-    
-    
+
     if (0 == module_proc->proc_port_count) {
         module_proc->proc_endpoints = NULL;
     } else {
