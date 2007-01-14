@@ -497,6 +497,12 @@ ompi_osc_pt2pt_module_unlock(int target,
                                 P2P_MODULE(win)->p2p_comm->c_my_rank,
                                 out_count);
 
+    /* wait for ack */
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), 1);
+    while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
+        ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
+    }
+
     /* set our mode on the window */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
 
@@ -569,6 +575,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
                               int32_t count)
 {
     ompi_osc_pt2pt_pending_lock_t *new_pending = NULL;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin );
 
     assert(module->p2p_lock_status != 0);
 
@@ -589,6 +596,10 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
             module->p2p_lock_status = 0;
         }
     }
+
+    ompi_osc_pt2pt_control_send(module, proc,
+                                OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY,
+                                OMPI_SUCCESS, OMPI_SUCCESS);
 
     /* if we were really unlocked, see if we have more to process */
     new_pending = (ompi_osc_pt2pt_pending_lock_t*) 
