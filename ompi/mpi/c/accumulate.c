@@ -70,6 +70,92 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             if (OMPI_SUCCESS == rc) {
                 OMPI_CHECK_DATATYPE_FOR_ONE_SIDED(rc, target_datatype, target_count);
             }
+            if (OMPI_SUCCESS == rc) {
+                /* While technically the standard probably requires that the
+                   datatypes used with MPI_REPLACE conform to all the rules
+                   for other reduction operators, we don't require such
+                   behaivor, as checking for it is expensive here and we don't
+                   care in implementation.. */
+                if (op != &ompi_mpi_op_replace) {
+                    ompi_datatype_t *op_check_dt, *origin_check_dt;
+                    char *msg;
+
+                    if (ompi_ddt_is_predefined(origin_datatype)) {
+                        origin_check_dt = origin_datatype;
+                    } else {
+                        int i, index = -1, num_found = 0;
+                        uint64_t mask = 1;
+
+                        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
+                            if (origin_datatype->bdt_used & mask) {
+                                num_found++;
+                                index = i;
+                            }
+                            mask *= 2;
+                        }
+                        if (index < 0 || num_found > 1) {
+                            /* this is an erroneous datatype.  Let
+                               ompi_op_is_valid tell the user that */
+                            OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
+                        } else {
+                            origin_check_dt = (ompi_datatype_t*)
+                                ompi_ddt_basicDatatypes[index];
+                        }
+                    }
+
+                    /* ACCUMULATE, unlike REDUCE, can use with derived
+                       datatypes with predefinied operations, with some
+                       restrictions outlined in MPI-2:6.3.4.  The derived
+                       datatype must be composed entirley from one predefined
+                       datatype (so you can do all the construction you want,
+                       but at the bottom, you can only use one datatype, say,
+                       MPI_INT).  If the datatype at the target isn't
+                       predefined, then make sure it's composed of only one
+                       datatype, and check that datatype against
+                       ompi_op_is_valid(). */
+                    if (ompi_ddt_is_predefined(target_datatype)) {
+                        op_check_dt = target_datatype;
+                    } else {
+                        int i, index = -1, num_found = 0;
+                        uint64_t mask = 1;
+
+                        for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
+                            if (target_datatype->bdt_used & mask) {
+                                num_found++;
+                                index = i;
+                            }
+                            mask *= 2;
+                        }
+                        if (index < 0 || num_found > 1) {
+                            /* this is an erroneous datatype.  Let
+                               ompi_op_is_valid tell the user that */
+                            OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
+                        } else {
+                            /* datatype passes muster as far as restrictions
+                               in MPI-2:6.3.4.  Is the primitive ok with the
+                               op?  Unfortunately have to cast away
+                               constness... */
+                            op_check_dt = (ompi_datatype_t*)
+                                ompi_ddt_basicDatatypes[index];
+                        }
+                    }
+
+                    /* check to make sure same primitive type */
+                    if (op_check_dt != origin_check_dt) {
+                        OMPI_ERRHANDLER_RETURN(MPI_ERR_ARG, win, MPI_ERR_ARG, FUNC_NAME);
+                    }
+
+                    /* check to make sure primitive type is valid for
+                       reduction.  Should do this on the target, but
+                       then can't get the errcode back for this
+                       call */
+                    if (!ompi_op_is_valid(op, op_check_dt, &msg, FUNC_NAME)) {
+                        int ret = OMPI_ERRHANDLER_INVOKE(win, MPI_ERR_OP, msg);
+                        free(msg);
+                        return ret;
+                    }
+                }
+            }
         }
         OMPI_ERRHANDLER_CHECK(rc, win, rc, FUNC_NAME);
 
