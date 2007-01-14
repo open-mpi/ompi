@@ -194,7 +194,6 @@ static void* opal_event_run(opal_object_t* arg)
 	assert(rc >= 0);
 #endif
 
-#if OMPI_ENABLE_PROGRESS_THREADS
 	opal_mutex_lock(&opal_event_lock);
 	opal_event_del_i(&opal_event_pipe_event);
 	close(opal_event_pipe[0]);
@@ -202,10 +201,11 @@ static void* opal_event_run(opal_object_t* arg)
 	opal_event_pipe[0] = -1;
 	opal_event_pipe[1] = -1;
 	opal_mutex_unlock(&opal_event_lock);
-#endif
+
 	return NULL;
 }
-#endif  /* OMPI_ENABLE_PROGRESS_THREADS */
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
+
 
 #if OMPI_ENABLE_PROGRESS_THREADS
 static void opal_event_pipe_handler(int sd, short flags, void* user)
@@ -216,7 +216,7 @@ static void opal_event_pipe_handler(int sd, short flags, void* user)
 		opal_event_del(&opal_event_pipe_event);
 	}
 }
-#endif
+#endif /* OMPI_ENABLE_PROGRESS_THREADS */
 
 int
 opal_event_init(void)
