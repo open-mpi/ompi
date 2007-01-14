@@ -366,7 +366,8 @@ int opal_util_register_stackhandlers (void)
     char * string_value;
     char * tmp;
     char * next;
-    int param, i;
+    int param;
+    size_t i;
 
     gethostname(stacktrace_hostname, sizeof(stacktrace_hostname));
     stacktrace_hostname[sizeof(stacktrace_hostname) - 1] = '\0';
