@@ -689,7 +689,22 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
                                           header->hdr_value[1]);
         }
         break;
+    case OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                buffer;
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
+
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+        }
+        break;
     default:
         opal_output_verbose(5, ompi_osc_base_output,
                             "received packet for Window with unknown type");
