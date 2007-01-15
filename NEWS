@@ -8,7 +8,7 @@ Copyright (c) 2004-2006 High Performance Computing Center Stuttgart,
                         University of Stuttgart.  All rights reserved.
 Copyright (c) 2004-2006 The Regents of the University of California.
                         All rights reserved.
-Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
                         Use is subject to license terms.
@@ -29,19 +29,10 @@ version 1.0.
 Trunk (not on release branches yet)
 -----------------------------------
 
+- Addition of "dr" (data reliability) PML.
+  --> Expected: ?1.2?
 - Added threaded progress for the openib BTL.
   --> Expected: ?1.3?
-- Massive performance improvements for MPI collectives on high-speed
-  networks.
-  --> Expected: 1.2
-- Much more scalable MPI process launch.
-  --> Expected: 1.2
-- Fixes for endian handling in MPI process startup.
-  --> Expected: 1.2
-- Much more reliable runtime support, particularly with regards to
-  cleanup in failure scenarios (e.g., MPI_ABORT, MPI processes
-  abnormally terminating, etc.).
-  --> Expected: 1.2
 - Added Microsoft Windows support.  See README.WINDOWS file for
   details.
   --> Expected: ???
@@ -50,6 +41,26 @@ Trunk (not on release branches yet)
 1.2
 ---
 
+- Fixes for endian handling in MPI process startup.
+- Openib BTL initialization fixes for cases where MPI processes in the
+  same job has different numbers of active ports on the same physical
+  fabric.
+- Print more descriptive information when displaying backtraces on
+  OS's that support this functionality, such as the hostname and PID
+  of the process in question.
+- Fixes to properly handle MPI exceptions in C++ on communicators,
+  windows, and files.
+- Much more reliable runtime support, particularly with regards to MPI
+  job startup scalability, BProc support, and cleanup in failure
+  scenarios (e.g., MPI_ABORT, MPI processes abnormally terminating,
+  etc.).
+- Significant performance improvements for MPI collectives on
+  high-speed networks.
+- Various fixes in both the MX BTL and MTL components.
+- Fix C++ typecast problems with MPI_ERRCODES_IGNORE.  Thanks to
+  Satish Balay for bringing this to our attention.
+- Allow run-time specification of the maximum amount of registered
+  memory for OpenFabrics and GM.
 - Users who utilize the wrapper compilers (e.g., mpicc and mpif77)
   will not notice, but the underlying library names for ORTE and OPAL
   have changed to libopen-rte and libopen-pal, respectively (listed
@@ -77,13 +88,13 @@ Trunk (not on release branches yet)
   bindings as shared libraries on OS X because of complicated
   situations with Fortran common blocks and lack of support for
   unresolved common symbols in shared libraries.
-- Addition of "dr" (data reliability) PML.
 - Added stacktrace support for Solaris and Mac OS X.
 - Update event library to libevent-1.1b.
 - Fixed standards conformance issues with MPI_ERR_TRUNCATED and
   setting MPI_ERROR during MPI_TEST/MPI_WAIT.
 - Addition of "cm" PML to better support library-level matching
-  interconnects, with initial support for Myrinet/MX and Portals.
+  interconnects, with support for Myrinet/MX, Portals, and QLogic
+  PSM-based networks.
 - Addition of "udapl" BTL for transport across uDAPL interconnects.
 - Really check that the $CXX given to configure is a C++ compiler
   (not a C compiler that "sorta works" as a C++ compiler).
@@ -94,6 +105,11 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
+- Fixes for fortran MPI_STARTALL, which could sometimes return
+  incorrect request values.  Thanks to Tim Campbell for pointing out
+  the problem.
+- Include both pre- and post-MPI-2 errata bindings for
+  MPI::Win::Get_attr.
 - Fix math error on Intel OS X platforms that would greatly increase
   shared memory latency.
 - Fix type casting issue with MPI_ERRCODES_IGNORE that would cause
