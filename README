@@ -11,7 +11,6 @@ Copyright (c) 2004-2006 The Regents of the University of California.
 Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 Copyright (c) 2006      Voltaire, Inc. All rights reserved.
 Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
-                        Use is subject to license terms.
 $COPYRIGHT$
 
 Additional copyrights may follow
@@ -38,39 +37,6 @@ lists:
      http://www.open-mpi.org/mailman/listinfo.cgi/devel
 
 Thanks for your time.
-
-===========================================================================
-
-Release notes for SC 2006 beta release:
-
-- This tarball has had some level of testing within the Open MPI
-  developers, but has not been widely tested with real world
-  applications.  It should be stressed that this release is a *beta*
-  of the v1.2 series -- it is *not* a final release, and there are
-  therefore known problems with it that are still being worked on.
-  Some known issues are listed below.  We'd appreciate your feedback.
-
-- Running heterogenious MPI jobs (e.g., different endian between
-  multiple hosts) is not fully working yet.
-
-- Some MPI jobs may not clean up properly if errors occur:
-  - mpirun may "hang" and have to be killed from another session
-  - ORTE daemons may be left orphaned on some nodes and need to be
-    manually killed
-
-- Striping MPI messages across multiple TCP interfaces is not yet
-  working.
-
-- Not all items marked as resolved in the v1.1.3 section of the NEWS
-  file have been migrated to this 1.2 release yet.  A new beta release
-  is expected shortly after SC 2006 that contains these and other
-  fixes, to include:
-  - Workaround for Intel C++ compiler bug
-  - MPI_SIZEOF fixes for COMPLEX types in the MPI F90 bindings
-  - Race condition for IB resource exhaustion for large messages
-
-- See Open MPI's bug tracking system for a full list of outstanding
-  issues: https://svn.open-mpi.org/trac/ompi/report
 
 ===========================================================================
 
