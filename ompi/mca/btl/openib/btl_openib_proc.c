@@ -98,8 +98,8 @@ static mca_btl_openib_proc_t* mca_btl_openib_proc_lookup_ompi(ompi_proc_t* ompi_
 mca_btl_openib_proc_t* mca_btl_openib_proc_create(ompi_proc_t* ompi_proc)
 {
     mca_btl_openib_proc_t* module_proc = NULL;
-    size_t size; 
-    int rc,i;
+    size_t size, i;
+    int rc;
     
     /* Check if we have already created a IB proc
      * structure for this ompi process */
