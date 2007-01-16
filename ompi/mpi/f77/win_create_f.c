@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.   All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE,
                            pmpi_win_create_,
                            pmpi_win_create__,
                            pmpi_win_create_f,
-                           (char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
+                           (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
 #endif
 
@@ -48,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
                            mpi_win_create_,
                            mpi_win_create__,
                            mpi_win_create_f,
-                           (char *base, MPI_Fint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
+                           (char *base, MPI_Aint *size, MPI_Fint *disp_unit, MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win, MPI_Fint *ierr),
                            (base, size, disp_unit, info, comm, win, ierr) )
 #endif
 
@@ -57,7 +58,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_win_create_f(char *base, MPI_Fint *size, MPI_Fint *disp_unit,
+void mpi_win_create_f(char *base, MPI_Aint *size, MPI_Fint *disp_unit,
 		      MPI_Fint *info, MPI_Fint *comm, MPI_Fint *win,
 		      MPI_Fint *ierr)
 {
