@@ -238,14 +238,6 @@ run_and_check() {
 -------------------------------------------------------------------------
 It seems that the execution of "$rac_progs" has failed.  See above for
 the specific error message that caused it to abort.
-
-This *MAY* be caused by an older version of one of the required
-packages.  Please make sure you are using at least the following
-versions:
-
-GNU Autoconf $ompi_autoconf_version
-GNU Automake $ompi_automake_version
-GNU Libtool  $ompi_libtool_version
 -------------------------------------------------------------------------
 
 EOF
