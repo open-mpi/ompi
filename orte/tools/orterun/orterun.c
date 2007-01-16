@@ -162,10 +162,12 @@ opal_cmd_line_init_t cmd_line_init[] = {
       "Provide a hostfile" },
 
     /* Don't wait for the process to finish before exiting */
+#if 0
     { NULL, NULL, NULL, '\0', "nw", "nw", 0,
       &orterun_globals.no_wait_for_job_completion, OPAL_CMD_LINE_TYPE_BOOL,
       "Launch the processes and do not wait for their completion (i.e., let orterun complete as soon a successful launch occurs)" },
-
+#endif
+    
     /* Set the max number of aborted processes to show */
     { NULL, NULL, NULL, '\0', "aborted", "aborted", 1,
       &max_display_aborted, OPAL_CMD_LINE_TYPE_INT,
