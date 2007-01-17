@@ -35,8 +35,9 @@
 #include "opal/constants.h"
 
 
+#if OMPI_WANT_LIBLTDL
 /*
- * Private types
+ * Private types; only necessary when we're dlopening components.
  */
 typedef enum component_status {
   UNVISITED,
@@ -74,6 +75,7 @@ struct ltfn_data_holder_t {
   char name[MCA_BASE_MAX_COMPONENT_NAME_LEN];
 };
 typedef struct ltfn_data_holder_t ltfn_data_holder_t;
+#endif /* OMPI_WANT_LIBLTDL */
 
 
 #if OMPI_WANT_LIBLTDL
