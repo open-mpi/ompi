@@ -156,10 +156,6 @@ void orte_rmgr_base_recv(int status, orte_process_name_t* sender,
                 ORTE_ERROR_LOG(rc);
                 goto CLEANUP_SPAWN;
             }
-            while (NULL != (item = opal_list_remove_first(&attrs))) {
-                OBJ_RELEASE(item);
-            }
-            OBJ_DESTRUCT(&attrs);
             
             /* return the new jobid */
             if(ORTE_SUCCESS != (rc = orte_dss.pack(&answer, &job, 1, ORTE_JOBID))) {
