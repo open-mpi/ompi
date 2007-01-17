@@ -107,7 +107,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
     ompi_bitmap_t reachable;
     struct mca_bml_base_endpoint_t **bml_endpoints = NULL;
     int rc;
-    int32_t i;
+    size_t i;
 
     if(nprocs == 0)
         return OMPI_SUCCESS;
