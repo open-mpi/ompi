@@ -1,4 +1,4 @@
-PROGS = no_op sigusr_trap spin orte_nodename orte_spawn
+PROGS = no_op sigusr_trap spin orte_nodename orte_proc_subscribe orte_stage_gate orte_spawn
 
 all: $(PROGS)
 
