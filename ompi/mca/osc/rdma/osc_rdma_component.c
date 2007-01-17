@@ -228,7 +228,9 @@ ompi_osc_rdma_component_query(ompi_win_t *win,
        each peer.  Return slightly higher priority than the
        point-to-point code */
     
-    return 10;
+    /* lower priority below that of the pt2pt component until the btl
+       redesign */
+    return 0;
 }
 
 
