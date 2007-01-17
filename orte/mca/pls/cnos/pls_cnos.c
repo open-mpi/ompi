@@ -70,69 +70,54 @@ extern int killrank(rank_t RANK, int SIG);
 
 static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 {
-#ifdef HAVE_KILLRANK
-    orte_jobid_t my_jobid;
-
-    my_jobid = orte_process_info.my_name->jobid;
+    orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
 
     /* make sure it's my job */
     if (jobid == my_jobid) {
+#ifdef HAVE_KILLRANK
         killrank(-1, SIGKILL);
-    } else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
 #else
-    exit(0);
+        exit(0);
 #endif
+    }
 
-    return ORTE_SUCCESS;
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
 static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
 {
-#ifdef HAVE_KILLRANK
-    orte_jobid_t my_jobid;
-    
-    my_jobid = orte_process_info.my_name->jobid;
+    orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
     
     /* make sure it's my job */
     if (jobid == my_jobid) {
+#ifdef HAVE_KILLRANK
         killrank(-1, SIGKILL);
-    } else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
 #else
-    exit(0);
+        exit(0);
 #endif
-    
-    return ORTE_SUCCESS;
+    }
+
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name)
 {
-#ifdef HAVE_KILLRANK
-    orte_jobid_t my_jobid;
-    orte_jobid_t his_jobid;
-    orte_vpid_t his_vpid;
-
-    orte_ns.get_jobid(&my_jobid, orte_process_info.my_name);
-    orte_ns.get_jobid(&his_jobid, proc_name);
-
-    orte_ns.get_vpid(&his_vpid, proc_name);
+    orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
+    orte_jobid_t his_jobid = proc_name->jobid;
+    orte_vpid_t his_vpid = proc_name->vpid;
 
     /* make sure it's my job.  This may end up killing me, but what
        the heck. */
     if (his_jobid == my_jobid) {
+#ifdef HAVE_KILLRANK
         killrank((int) his_vpid, SIGKILL);
-    } else {
-        return ORTE_ERR_NOT_SUPPORTED;
-    }
 #else
-    exit(0);
+        exit(0);
 #endif
+    }
 
-    return ORTE_SUCCESS;
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 
