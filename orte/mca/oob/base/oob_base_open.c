@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -57,6 +58,15 @@ int mca_oob_base_open(void)
 {
     int param, value;
     char *mode;
+    static bool already_opened = false;
+
+    /* Sanity check.  This may be able to be removed when the rml/oob
+       interface is re-worked (the current infrastructure may invoke
+       this function twice: once as a standalone, and once via the rml
+       oob component). */
+    if (already_opened) {
+        return ORTE_SUCCESS;
+    }
     
   /* Open up all available components */
 
@@ -110,6 +120,7 @@ int mca_oob_base_open(void)
   }
   
   /* All done */
+  already_opened = true;
   return ORTE_SUCCESS;
 }
 
