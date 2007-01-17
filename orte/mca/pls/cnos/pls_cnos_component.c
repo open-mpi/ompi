@@ -77,7 +77,7 @@ static int orte_pls_cnos_open(void)
 }
 
 
-static orte_rmgr_base_module_t *orte_pls_cnos_init(int* priority)
+static orte_pls_base_module_t *orte_pls_cnos_init(int* priority)
 {
     /* if we can build, then we need to be selected, so
      * set a priority higher than the proxy component
