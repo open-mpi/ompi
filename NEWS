@@ -30,7 +30,7 @@ Trunk (not on release branches yet)
 -----------------------------------
 
 - Addition of "dr" (data reliability) PML.
-  --> Expected: ?1.2?
+  --> Expected: 1.3
 - Added threaded progress for the openib BTL.
   --> Expected: ?1.3?
 - Added Microsoft Windows support.  See README.WINDOWS file for
@@ -41,6 +41,8 @@ Trunk (not on release branches yet)
 1.2
 ---
 
+- Fix a bunch of places in the Fortran MPI bindings where MPI_Fint was
+  mistakenly being used instead of MPI_Aint.
 - Fixes for endian handling in MPI process startup.
 - Openib BTL initialization fixes for cases where MPI processes in the
   same job has different numbers of active ports on the same physical

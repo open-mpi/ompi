@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -63,11 +64,10 @@ void mpi_type_create_hvector_f(MPI_Fint *count, MPI_Fint *blocklength,
 {
     MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
-    MPI_Aint c_stride = (MPI_Aint)*stride;
 
     *ierr = OMPI_INT_2_FINT(MPI_Type_hvector(OMPI_FINT_2_INT(*count),
 					     OMPI_FINT_2_INT(*blocklength),
-					     c_stride,
+					     *stride,
 					     c_old, &c_new));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {

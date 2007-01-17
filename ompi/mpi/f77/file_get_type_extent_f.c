@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_FILE_GET_TYPE_EXTENT,
                            pmpi_file_get_type_extent_,
                            pmpi_file_get_type_extent__,
                            pmpi_file_get_type_extent_f,
-                           (MPI_Fint *fh, MPI_Fint *datatype, MPI_Fint *extent, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Fint *datatype, MPI_Aint *extent, MPI_Fint *ierr),
                            (fh, datatype, extent, ierr) )
 #endif
 
@@ -48,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_TYPE_EXTENT,
                            mpi_file_get_type_extent_,
                            mpi_file_get_type_extent__,
                            mpi_file_get_type_extent_f,
-                           (MPI_Fint *fh, MPI_Fint *datatype, MPI_Fint *extent, MPI_Fint *ierr),
+                           (MPI_Fint *fh, MPI_Fint *datatype, MPI_Aint *extent, MPI_Fint *ierr),
                            (fh, datatype, extent, ierr) )
 #endif
 
@@ -58,16 +59,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_FILE_GET_TYPE_EXTENT,
 #endif
 
 void mpi_file_get_type_extent_f(MPI_Fint *fh, MPI_Fint *datatype,
-				MPI_Fint *extent, MPI_Fint *ierr)
+				MPI_Aint *extent, MPI_Fint *ierr)
 {
     MPI_File c_fh = MPI_File_f2c(*fh);
-    MPI_Aint c_extent;
     MPI_Datatype c_type;
 
     c_type = MPI_Type_f2c(*datatype);
 
-    *ierr = OMPI_INT_2_FINT(MPI_File_get_type_extent(c_fh, c_type, &c_extent));
-    if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
-        *extent = (MPI_Fint) c_extent;
-    }
+    *ierr = OMPI_INT_2_FINT(MPI_File_get_type_extent(c_fh, c_type, extent));
 }

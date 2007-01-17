@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,7 +34,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_REGISTER_DATAREP,
                            pmpi_register_datarep_,
                            pmpi_register_datarep__,
                            pmpi_register_datarep_f,
-                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Fint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
 
@@ -50,7 +51,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_REGISTER_DATAREP,
                            mpi_register_datarep_,
                            mpi_register_datarep__,
                            mpi_register_datarep_f,
-                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Fint *extra_state, MPI_Fint *ierr, int datarep_len),
+                           (char *datarep, void *read_conversion_fn, void *write_conversion_fn, void *dtype_file_extent_fn, MPI_Aint *extra_state, MPI_Fint *ierr, int datarep_len),
                            (datarep, read_conversion_fn, write_conversion_fn, dtype_file_extent_fn, extra_state, ierr, datarep_len) )
 #endif
 
@@ -67,7 +68,7 @@ union local_type_convert {
 
 void mpi_register_datarep_f(char *datarep, void *read_conversion_fn,
 			    void *write_conversion_fn,
-			    void *dtype_file_extent_fn, MPI_Fint *extra_state,
+			    void *dtype_file_extent_fn, MPI_Aint *extra_state,
 			    MPI_Fint *ierr, int datarep_len)
 {
    char *c_datarep;
