@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +51,6 @@ MPI_Datatype MPI_Type_f2c(MPI_Fint datatype)
         return NULL;
     }
 
-    return (MPI_Datatype)ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype);
+    return (MPI_Datatype)ompi_pointer_array_get_item(ompi_datatype_f_to_c_table, datatype_index);
 }
 
