@@ -36,6 +36,9 @@ opal_wrapper_DEPENDENCIES = $(top_builddir)/opal/libopen-pal.la
 
 bin_PROGRAMS = opal_wrapper
 
+dist_pkgdata_DATA = \
+        help-opal-wrapper.txt
+
 endif # OMPI_INSTALL_BINARIES
 
 if WANT_INSTALL_HEADERS
@@ -49,9 +52,6 @@ nodist_pkgdata_DATA = \
 # install the applications / man pages
 
 if OMPI_INSTALL_BINARIES
-
-dist_pkgdata_DATA = \
-	help-opal-wrapper.txt
 
 # List all man pages that will be installed
 

@@ -490,6 +490,7 @@ main(int argc, char *argv[])
         if (0 == strcmp(options_data[user_data_idx].req_file, "not supported")) {
             opal_show_help("help-opal-wrapper.txt", "no-language-support", true,
                            options_data[user_data_idx].language, base_argv0, NULL);
+            exit_status = 1;
             goto cleanup;
         }
 
