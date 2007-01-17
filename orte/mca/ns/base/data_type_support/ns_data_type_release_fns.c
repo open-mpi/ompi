@@ -31,6 +31,8 @@
  */
 void orte_ns_base_std_release(orte_data_value_t *value)
 {
+    if (NULL == value) return;
+    
     free(value->data);
     value->data = NULL;
 }
