@@ -769,6 +769,13 @@ ompi_osc_pt2pt_progress(void)
                 item = opal_list_remove_item(&module->p2p_pending_control_sends, 
                                              item);
                 buffer->cbfunc(buffer);
+                /* it's possible that cbfunc is going to do something
+                   that calls progress, which means our loop is
+                   probably hosed up because it's possible that the
+                   list changed under us.  It's either exit the loop
+                   through the list or start all over again.  I'm
+                   going with exit. */
+                break;
             }
         }
     } while (OMPI_SUCCESS ==
