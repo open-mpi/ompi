@@ -717,7 +717,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
 
 
 
-static int
+int
 ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
                             int *completed,
                             ompi_status_public_t * status )
