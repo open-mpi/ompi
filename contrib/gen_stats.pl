@@ -25,6 +25,7 @@
 
 use strict;
 use Switch;
+use File::Basename;
 
 #global variables
 my $index = 0;
@@ -35,8 +36,8 @@ my $ret2 = 0;
 my $dir_list_given = 0;
 my $req_list_given = 0;
 
-$ret1 = open(DIR_FILE, "> dir_list.txt");
-$ret2 = open(REQ_FILE, "> req_list.txt");
+$ret1 = open(DIR_FILE, "dir_list.txt");
+$ret2 = open(REQ_FILE, "req_list.txt");
 
 if ($ret1 < 0 || $ret2 < 0) {
     print "ERROR: opening dir_list.txt or req_list.txt\n";
@@ -117,20 +118,22 @@ sub get_file_list {
         print "ERROR: could not open directory listing\n";
         exit(3);
     }
-
+ 
     while(<DIRFILES>) {
         chomp();
         my $c_files = `find $_ -name \"*.c\"`;
         my $cc_files = `find $_ -name \"*.cc\"`;
+
         $cc_files =~ s/\.cc//g;
         $c_files =~ s/\.c//g;
         $c_files = $c_files . $cc_files;
         my @C_FILES = split(/\n/, $c_files);
         
-        my $da_files = `find $_ -name \"*.da\"`;
+        my $da_files = `find $_ -name \"*.da\" -o -name \"*.gcda\"`;
+        $da_files =~ s/\.gcda//g;
         $da_files =~ s/\.da//g;
         my @DA_FILES = split(/\n/, $da_files);
- 
+
         open (TEMP1, "> temp1");
         open (TEMP2, "> temp2");
         print TEMP1 $c_files;
@@ -146,9 +149,18 @@ sub get_file_list {
         while(<TEMP1>) {
             my $c_file = $_;
             my $found = 0;
+            my $file_name;
+            my $dir_name;
+            my $file_ext;
+            my $search_file;
+            ($file_name, $dir_name, $file_ext) = fileparse($c_file, ('\.c') );
+
+            # For our libtool build, every .gcda and .gcno file lands in the .libs dir.
+            $search_file = $dir_name . ".libs/" . $file_name;
+
             open(TEMP2, "< temp2");
             while(<TEMP2>) {
-                if ($c_file eq $_) {
+                if ($search_file eq $_) {
                     $found = 1;
                 }
             }
@@ -186,16 +198,18 @@ sub generate_stats {
         open (PERCENT, "> percent_coverage.txt");
     }
 
-    print COVERAGE "#Index                             Filename                          Directory                 Usage(%)\n";
+    print COVERAGE "#Index                             Directory                          Filename                 Usage(%)\n";
     print COVERAGE "#======================================================================================================\n";
     
     if ($calculate == 1) {
-        print PERCENT "#Index                             Filename                          Directory                 Usage(%)\n";
+        print PERCENT "#Index                             Directory                          Filename                 Usage(%)\n";
         print PERCENT "#======================================================================================================\n";
     }
 
     my $average = 0.0;
     my $num_files = `wc -l touched_files.txt`;
+
+    print "num_files:", $num_files;
 
     while (<INPUT>) {
         #generate the gcov file for this particular file
@@ -205,30 +219,44 @@ sub generate_stats {
     
         chomp();
         my $full_name = $_;
-        my $file_name = `basename $full_name`;
-        my $dir_name = `dirname $full_name`;
-        chomp($dir_name);
-        chomp($file_name);
+        my $dir_name;
+        my $file_name;
+        my $file_ext;
+        my $file_gcda;
+        my $found_file;
+        ($file_name, $dir_name, $file_ext) = fileparse($full_name, ('\.c') );
+        $file_gcda = $file_name . ".gcda";
 
-        open(RESULT, "cd $dir_name; gcov $file_name 2> /dev/null |");
+        open(RESULT, "cd $dir_name; gcov $file_gcda -o .libs 2> /dev/null | ");
         while (<RESULT>) {
-            if (/Creating/) {} 
+            if (/Creating/) { $found_file = 0; } 
             else  {
+                # print "check: ", $_;
+                # Do not check including the file_extension; might be .c or .cc or .C
+                if (/^File '$file_name/) {
+                    # print "Found File:\n", $_;
+                    $found_file = 1;
+                }
+
                 #Now we are doing the right line. Search for this file
-                if (/$file_name/) {
-                    s/^([\s,0-9]*\.[0-9]+\%)\.*/$1/;
+                if (/^Lines/ && $found_file == 1) {
+                    # print "Found Lines:\n", $_;
+                    s/([\s,0-9]*\.[0-9]+\%)\.*/$1/;
                     my $val = $1; 
                     $average += $val;
                     $k++;
-                    my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $file_name, $dir_name, $val);
+                    my $print_string = sprintf("%4d   %40s %40s       %3.2f\n", $k, $dir_name, $file_name, $val);
                     if ($calculate == 1) {
                         if ($val <= $percentage) { 
                             $l++;
-                            my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $file_name, $dir_name, $val);
+                            my $zero_string = sprintf("%4d   %40s %40s       %3.2f\n", $l, $dir_name, $file_name, $val);
                             print PERCENT $zero_string;
                         }
                     }
                     print COVERAGE $print_string;
+
+                    # Need to detect the next round
+                    $found_file = 0;
                 }
             } 
         }
