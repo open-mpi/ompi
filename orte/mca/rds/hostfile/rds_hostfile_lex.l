@@ -28,7 +28,6 @@
 /*
  * local functions
  */
-#ifndef YY_SKIP_YYWRAP
 #if defined(c_plusplus) || defined(__cplusplus)
 extern "C" {
 #endif  /* defined(c_plusplus) || defined(__cplusplus) */
@@ -38,7 +37,6 @@ int orte_rds_hostfile_wrap(void);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif  /* defined(c_plusplus) || defined(__cplusplus) */
-#endif  /* !defined(YY_SKIP_YYWRAP) */
 
 int orte_rds_hostfile_wrap(void)
 {
