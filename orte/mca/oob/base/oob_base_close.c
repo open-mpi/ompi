@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -30,6 +31,16 @@
 int mca_oob_base_close(void)
 {
   opal_list_item_t* item;
+  static bool already_closed = false;
+
+  /* Sanity check.  This may be able to be removed when the rml/oob
+     interface is re-worked (the current infrastructure may invoke
+     this function twice: once as a standalone, and once via the rml
+     oob component). */
+  if (already_closed) {
+      return ORTE_SUCCESS;
+  }
+    
 
   /* Finalize all the oob modules and free their list items */
   for (item =  opal_list_remove_first(&mca_oob_base_modules);
@@ -55,6 +66,7 @@ int mca_oob_base_close(void)
     free(mca_oob_base_exclude);
 
   /* All done */
+  already_closed = true;
   return ORTE_SUCCESS;
 }
 
