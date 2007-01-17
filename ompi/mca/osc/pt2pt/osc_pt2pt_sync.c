@@ -48,7 +48,7 @@ ompi_osc_pt2pt_progress_long(ompi_osc_pt2pt_module_t *module)
             int ret, completed;
             next = opal_list_get_next(item);
 
-            ret = ompi_request_test(&(longreq->req_pml_req), &completed, NULL);
+            ret = ompi_osc_pt2pt_request_test(&(longreq->req_pml_req), &completed, NULL);
             /* BWB - FIX ME - error handling */
             if (completed > 0) {
                 longreq->req_comp_cb(longreq);
