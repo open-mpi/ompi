@@ -613,7 +613,7 @@ internal_waitpid_callback(int fd, short event, void *arg)
 }
 #endif
 
-#else /* HAVE_WAITPID */
+#elif __WINDOWS__
 
 typedef struct {
     opal_list_item_t super;
@@ -893,6 +893,55 @@ orte_wait_kill(int sig)
 
     OPAL_THREAD_UNLOCK(&mutex);
     return ORTE_SUCCESS;
+}
+
+#else /* no waitpid and not windows */
+
+int
+orte_wait_init(void) {
+    return ORTE_SUCCESS;
+}
+
+int
+orte_wait_finalize(void)
+{
+    return ORTE_SUCCESS;
+}
+
+pid_t
+orte_waitpid(pid_t wpid, int *status, int options)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_cancel(pid_t wpid)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_disable(void)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_cb_enable(void)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int
+orte_wait_kill(int sig)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
 }
 
 #endif
