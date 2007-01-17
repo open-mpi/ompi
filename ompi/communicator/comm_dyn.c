@@ -857,7 +857,7 @@ void ompi_comm_disconnect_waitall (int count, ompi_comm_disconnect_obj **objs)
 #define OMPI_COMM_MAXJOBIDS 64
 void ompi_comm_mark_dyncomm (ompi_communicator_t *comm)
 {
-    int i, j, numjobids=0, rc;
+    int i, j, numjobids=0;
     int size, rsize;
     int found;
     orte_jobid_t jobids[OMPI_COMM_MAXJOBIDS], thisjobid;
