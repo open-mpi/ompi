@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -33,9 +34,11 @@ static opal_mutex_t     mca_pml_bsend_mutex;      /* lock for thread safety */
 static opal_condition_t mca_pml_bsend_condition;  /* condition variable to block on detach */
 static mca_allocator_base_component_t* mca_pml_bsend_allocator_component;  
 static mca_allocator_base_module_t* mca_pml_bsend_allocator;  /* sub-allocator to manage users buffer */
-static unsigned char   *mca_pml_bsend_base;       /* base address of users buffer */
-static unsigned char   *mca_pml_bsend_addr;       /* current offset into users buffer */
-static size_t           mca_pml_bsend_size;       /* size of users buffer */
+static size_t           mca_pml_bsend_usersize;   /* user provided buffer size */
+static unsigned char   *mca_pml_bsend_userbase;   /* user provided buffer base */
+static unsigned char   *mca_pml_bsend_base;       /* adjusted base of user buffer */
+static unsigned char   *mca_pml_bsend_addr;       /* current offset into user buffer */
+static size_t           mca_pml_bsend_size;       /* adjusted size of user buffer */
 static size_t           mca_pml_bsend_count;      /* number of outstanding requests */
 static size_t           mca_pml_bsend_pagesz;     /* mmap page size */
 static int              mca_pml_bsend_pagebits;   /* number of bits in pagesz */
@@ -124,6 +127,8 @@ int mca_pml_base_bsend_fini()
  */
 int mca_pml_base_bsend_attach(void* addr, int size)
 {
+    int align;
+
     bool thread_safe = ompi_mpi_thread_multiple;
     if(NULL == addr || size <= 0) {
         return OMPI_ERR_BUFFER;
@@ -143,10 +148,22 @@ int mca_pml_base_bsend_attach(void* addr, int size)
         return OMPI_ERR_BUFFER;
     }
 
+    /*
+     * Save away what the user handed in.  This is done in case the
+     * base and size are modified for alignment issues.
+     */
+    mca_pml_bsend_userbase = addr;
+    mca_pml_bsend_usersize = size;
+    /* 
+     * Align to pointer boundaries. The bsend overhead is large enough
+     * to account for this.  Compute any alignment that needs to be done.
+     */
+    align = sizeof(void *) - ((size_t)addr & (sizeof(void *) - 1));
+
     /* setup local variables */
-    mca_pml_bsend_base = (unsigned char*)addr;
-    mca_pml_bsend_addr = (unsigned char*)addr;
-    mca_pml_bsend_size = size;
+    mca_pml_bsend_base = (unsigned char *)addr + align;
+    mca_pml_bsend_addr = (unsigned char *)addr + align;
+    mca_pml_bsend_size = size - align;
     mca_pml_bsend_count = 0;
     OPAL_THREAD_UNLOCK(&mca_pml_bsend_mutex);
     return OMPI_SUCCESS;
@@ -175,11 +192,13 @@ int mca_pml_base_bsend_detach(void* addr, int* size)
 
     /* return current settings */
     if(NULL != addr)
-        *((void**)addr) = mca_pml_bsend_base;
+        *((void**)addr) = mca_pml_bsend_userbase;
     if(NULL != size)
-        *size = (int)mca_pml_bsend_size;
+        *size = (int)mca_pml_bsend_usersize;
 
     /* reset local variables */
+    mca_pml_bsend_userbase = NULL;
+    mca_pml_bsend_usersize = 0;
     mca_pml_bsend_base = NULL;
     mca_pml_bsend_addr = NULL;
     mca_pml_bsend_size = 0;
