@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK_EXTERNAL,
                            pmpi_pack_external_,
                            pmpi_pack_external__,
                            pmpi_pack_external_f,
-                           (char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr),
+                           (char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Aint *outsize, MPI_Aint *position, MPI_Fint *ierr),
                            (datarep, inbuf, incount, datatype, outbuf, outsize, position, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
                            mpi_pack_external_,
                            mpi_pack_external__,
                            mpi_pack_external_f,
-                           (char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Fint *outsize, MPI_Fint *position, MPI_Fint *ierr),
+                           (char *datarep, char *inbuf, MPI_Fint *incount, MPI_Fint *datatype, char *outbuf, MPI_Aint *outsize, MPI_Aint *position, MPI_Fint *ierr),
                            (datarep, inbuf, incount, datatype, outbuf, outsize, position, ierr) )
 #endif
 
@@ -60,7 +60,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL,
 
 void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
 			 MPI_Fint *datatype, char *outbuf, 
-			 MPI_Fint *outsize, MPI_Fint *position,
+			 MPI_Aint *outsize, MPI_Aint *position,
 			 MPI_Fint *ierr)
 {
    MPI_Datatype type = MPI_Type_f2c(*datatype);
@@ -68,6 +68,6 @@ void mpi_pack_external_f(char *datarep, char *inbuf, MPI_Fint *incount,
    *ierr = OMPI_INT_2_FINT(MPI_Pack_external(datarep, OMPI_ADDR(inbuf),
                                              OMPI_FINT_2_INT(*incount),
                                              type, outbuf,
-                                             (MPI_Aint) *outsize,
-                                             (MPI_Aint *)position));
+                                             *outsize,
+                                             position));
 }

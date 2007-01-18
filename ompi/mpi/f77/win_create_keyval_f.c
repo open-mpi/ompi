@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -32,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_WIN_CREATE_KEYVAL,
                            pmpi_win_create_keyval_,
                            pmpi_win_create_keyval__,
                            pmpi_win_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
 #endif
 
@@ -49,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_WIN_CREATE_KEYVAL,
                            mpi_win_create_keyval_,
                            mpi_win_create_keyval__,
                            mpi_win_create_keyval_f,
-                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr),
+                           (ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn, ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn, MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr),
                            (win_copy_attr_fn, win_delete_attr_fn, win_keyval, extra_state, ierr) )
 #endif
 
@@ -62,7 +63,7 @@ static char FUNC_NAME[] = "MPI_Win_create_keyval";
 
 void mpi_win_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* win_copy_attr_fn,
                              ompi_mpi2_fortran_delete_attr_function* win_delete_attr_fn,
-                             MPI_Fint *win_keyval, MPI_Fint *extra_state, MPI_Fint *ierr)
+                             MPI_Fint *win_keyval, MPI_Aint *extra_state, MPI_Fint *ierr)
 {
     int ret, c_err;
     ompi_attribute_fn_ptr_union_t copy_fn;

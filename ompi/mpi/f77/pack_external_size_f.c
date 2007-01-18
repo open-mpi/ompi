@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -31,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_PACK_EXTERNAL_SIZE,
                            pmpi_pack_external_size_,
                            pmpi_pack_external_size__,
                            pmpi_pack_external_size_f,
-                           (char *datarep, MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *size, MPI_Fint *ierr),
+                           (char *datarep, MPI_Fint *incount, MPI_Fint *datatype, MPI_Aint *size, MPI_Fint *ierr),
                            (datarep, incount, datatype, size, ierr) )
 #endif
 
@@ -48,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL_SIZE,
                            mpi_pack_external_size_,
                            mpi_pack_external_size__,
                            mpi_pack_external_size_f,
-                           (char *datarep, MPI_Fint *incount, MPI_Fint *datatype, MPI_Fint *size, MPI_Fint *ierr),
+                           (char *datarep, MPI_Fint *incount, MPI_Fint *datatype, MPI_Aint *size, MPI_Fint *ierr),
                            (datarep, incount, datatype, size, ierr) )
 #endif
 
@@ -58,12 +59,12 @@ OMPI_GENERATE_F77_BINDINGS (MPI_PACK_EXTERNAL_SIZE,
 #endif
 
 void mpi_pack_external_size_f(char *datarep, MPI_Fint *incount,
-			      MPI_Fint *datatype, MPI_Fint *size,
+			      MPI_Fint *datatype, MPI_Aint *size,
 			      MPI_Fint *ierr)
 {
    MPI_Datatype type = MPI_Type_f2c(*datatype);
 
    *ierr = OMPI_INT_2_FINT(MPI_Pack_external_size(datarep, 
                                                   OMPI_FINT_2_INT(*incount),
-                                                  type, (MPI_Aint *)size));
+                                                  type, size));
 }

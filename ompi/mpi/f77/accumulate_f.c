@@ -33,7 +33,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_ACCUMULATE,
                            pmpi_accumulate_,
                            pmpi_accumulate__,
                            pmpi_accumulate_f,
-                           (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr),
+                           (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr),
                            (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, ierr) )
 #endif
 
@@ -50,7 +50,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ACCUMULATE,
                            mpi_accumulate_,
                            mpi_accumulate__,
                            mpi_accumulate_f,
-                           (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Fint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr),
+                           (char *origin_addr, MPI_Fint *origin_count, MPI_Fint *origin_datatype, MPI_Fint *target_rank, MPI_Aint *target_disp, MPI_Fint *target_count, MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win, MPI_Fint *ierr),
                            (origin_addr, origin_count, origin_datatype, target_rank, target_disp, target_count, target_datatype, op, win, ierr) )
 #endif
 
@@ -61,7 +61,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_ACCUMULATE,
 
 void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
 		      MPI_Fint *origin_datatype, MPI_Fint *target_rank,
-		      MPI_Fint *target_disp, MPI_Fint *target_count,
+		      MPI_Aint *target_disp, MPI_Fint *target_count,
 		      MPI_Fint *target_datatype, MPI_Fint *op, MPI_Fint *win,
 		      MPI_Fint *ierr)
 {
@@ -74,7 +74,7 @@ void mpi_accumulate_f(char *origin_addr, MPI_Fint *origin_count,
 					   OMPI_FINT_2_INT(*origin_count),
 					   c_origin_datatype, 
 					   OMPI_FINT_2_INT(*target_rank),
-					   (MPI_Aint) *target_disp,
+					   *target_disp,
 					   OMPI_FINT_2_INT(*target_count),
 					   c_target_datatype, c_op, c_win));
 }
