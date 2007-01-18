@@ -412,8 +412,10 @@ int orterun(int argc, char *argv[])
     OBJ_DESTRUCT(&attributes);
     
     if (ORTE_SUCCESS != rc) {
-        /* JMS show_help */
-        opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
+        /* JMS show_help unless it is ERR_SILENT */
+        if (ORTE_ERR_SILENT != rc) {
+            opal_output(0, "%s: spawn failed with errno=%d\n", orterun_basename, rc);
+        }
     } else {
 
         if (orterun_globals.do_not_launch) {
