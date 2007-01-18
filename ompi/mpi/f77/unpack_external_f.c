@@ -32,7 +32,7 @@ OMPI_GENERATE_F77_BINDINGS (PMPI_UNPACK_EXTERNAL,
                            pmpi_unpack_external_,
                            pmpi_unpack_external__,
                            pmpi_unpack_external_f,
-                           (char *datarep, char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr),
+                           (char *datarep, char *inbuf, MPI_Aint *insize, MPI_Aint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr),
                            (datarep, inbuf, insize, position, outbuf, outcount, datatype, ierr) )
 #endif
 
@@ -49,7 +49,7 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK_EXTERNAL,
                            mpi_unpack_external_,
                            mpi_unpack_external__,
                            mpi_unpack_external_f,
-                           (char *datarep, char *inbuf, MPI_Fint *insize, MPI_Fint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr),
+                           (char *datarep, char *inbuf, MPI_Aint *insize, MPI_Aint *position, char *outbuf, MPI_Fint *outcount, MPI_Fint *datatype, MPI_Fint *ierr),
                            (datarep, inbuf, insize, position, outbuf, outcount, datatype, ierr) )
 #endif
 
@@ -58,8 +58,8 @@ OMPI_GENERATE_F77_BINDINGS (MPI_UNPACK_EXTERNAL,
 #include "ompi/mpi/f77/profile/defines.h"
 #endif
 
-void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Fint *insize,
-			    MPI_Fint *position, char *outbuf, 
+void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Aint *insize,
+			    MPI_Aint *position, char *outbuf, 
 			    MPI_Fint *outcount, MPI_Fint *datatype,
 			    MPI_Fint *ierr)
 {
@@ -67,8 +67,8 @@ void mpi_unpack_external_f (char *datarep, char *inbuf, MPI_Fint *insize,
    c_type = MPI_Type_f2c(*datatype);
 
    *ierr = OMPI_INT_2_FINT(MPI_Unpack_external(datarep, inbuf, 
-                                               (MPI_Aint)*insize, 
-                                               (MPI_Aint *)position,
+                                               *insize, 
+                                               position,
                                                OMPI_ADDR(outbuf),
                                                OMPI_FINT_2_INT(*outcount),
                                                c_type));
