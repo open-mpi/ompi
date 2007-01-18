@@ -53,6 +53,7 @@ typedef uint32_t orte_rml_tag_t;
 #define ORTE_RML_TAG_ERRMGR         16
 #define ORTE_RML_TAG_BPROC          17
 #define ORTE_RML_TAG_BPROC_ABORT    18
+#define ORTE_RML_TAG_SM_BACK_FILE_CREATED    19
 
 #define ORTE_RML_TAG_DYNAMIC     2000
 
