@@ -81,6 +81,7 @@
 #define ORTE_JOB_TOTAL_SLOTS_ALLOC_KEY          "orte-job-total-slots"
 #define ORTE_JOB_IOF_KEY                        "orte-job-iof"
 #define ORTE_JOB_STATE_KEY                      "orte-job-state"
+#define ORTE_JOB_MAPPING_MODE_KEY               "orte-job-mapping-mode"
 #define ORTE_PROC_NAME_KEY                      "orte-proc-name"
 #define ORTE_PROC_RANK_KEY                      "orte-proc-rank"
 #define ORTE_PROC_PID_KEY                       "orte-proc-pid"
