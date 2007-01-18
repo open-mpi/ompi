@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -64,8 +65,8 @@ void mpi_type_create_resized_f(MPI_Fint *oldtype, MPI_Aint *lb,
     MPI_Datatype c_old = MPI_Type_f2c(*oldtype);
     MPI_Datatype c_new;
 
-    *ierr = OMPI_INT_2_FINT(MPI_Type_create_resized(c_old, (MPI_Aint)(*lb),
-						    (MPI_Aint)(*extent), 
+    *ierr = OMPI_INT_2_FINT(MPI_Type_create_resized(c_old, *lb,
+						    *extent, 
 						    &c_new));
 
     if (MPI_SUCCESS == OMPI_FINT_2_INT(*ierr)) {
