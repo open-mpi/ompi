@@ -219,6 +219,13 @@ static int map_app_by_slot(
             num_slots_to_take = node->node_slots - node->node_slots_inuse;
         }
         
+        /* check if we are in npernode mode - if so, then set the num_slots_to_take
+         * to the num_per_node
+         */
+        if (mca_rmaps_round_robin_component.n_per_node) {
+            num_slots_to_take = num_per_node;
+        }
+        
         for( i = 0; i < num_slots_to_take; ++i) {
             if (ORTE_SUCCESS != (rc = orte_rmaps_base_claim_slot(map, node, jobid, vpid_start + num_alloc, app->idx,
                                                  nodes, max_used_nodes,
@@ -269,25 +276,19 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
     char *policy;
     orte_attribute_t *attr;
     orte_std_cntr_t *scptr;
+    bool policy_override;
     
-    mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy */
-    if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
-        /* they specified a mapping policy - extract its name */
-        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&policy, attr->value, ORTE_STRING))) {
-            ORTE_ERROR_LOG(rc);
-            return rc;
-        }
-        if (0 == strcmp(policy, "bynode")) {
-            mca_rmaps_round_robin_component.bynode = true;
-        }
-    }
-    
+    mca_rmaps_round_robin_component.bynode = false;  /* set default mapping policy to byslot*/
+    policy_override = false;
+
     mca_rmaps_round_robin_component.per_node = false;
     if (NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_PERNODE))) {
         /* was provided - set boolean accordingly */
          mca_rmaps_round_robin_component.per_node = true;
         /* indicate that we are going to map this job bynode */
         mca_rmaps_round_robin_component.bynode = true;
+        /* indicate that this is to *be* the policy no matter what */
+        policy_override = true;
     }
     
     mca_rmaps_round_robin_component.n_per_node = false;
@@ -300,8 +301,28 @@ static int orte_rmaps_rr_process_attrs(opal_list_t *attributes)
             return rc;
         }
         num_per_node = *scptr;
-        /* indicate that we are going to map this job bynode */
-        mca_rmaps_round_robin_component.bynode = true;
+        /* default to byslot mapping */
+        mca_rmaps_round_robin_component.bynode = false;
+    }
+    
+    /* define the mapping policy. This *must* come after we process the pernode
+     * options since those set a default mapping policy - we want to be able
+     * to override that setting if requested
+     *
+     * NOTE: we don't do this step if the policy_override has been set!
+     */
+    if (!policy_override &&
+        NULL != (attr = orte_rmgr.find_attribute(attributes, ORTE_RMAPS_MAP_POLICY))) {
+        /* they specified a mapping policy - extract its name */
+        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&policy, attr->value, ORTE_STRING))) {
+            ORTE_ERROR_LOG(rc);
+            return rc;
+        }
+        if (0 == strcmp(policy, "bynode")) {
+            mca_rmaps_round_robin_component.bynode = true;
+        } else {
+            mca_rmaps_round_robin_component.bynode = false;
+        }
     }
     
     mca_rmaps_round_robin_component.no_use_local = false;
@@ -344,6 +365,7 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
     bool modify_app_context = false;
     char *sptr;
     orte_attribute_t *attr;
+    orte_std_cntr_t slots_per_node;
 
     OPAL_TRACE(1);
     
@@ -492,9 +514,31 @@ static int orte_rmaps_rr_map(orte_jobid_t jobid, opal_list_t *attributes)
                 return ORTE_ERR_SILENT;
             }
         } else if (mca_rmaps_round_robin_component.n_per_node) {
-            /* set the num_procs to equal the specified num/node * the number of nodes */
-            app->num_procs = num_per_node * num_nodes;
-            modify_app_context = true;
+            /* first, let's check to see if there are enough slots/node to
+             * meet the request - error out if not
+             */
+            slots_per_node = num_slots / num_nodes;
+            if (num_per_node > slots_per_node) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-not-enough-slots",
+                               true, num_per_node, slots_per_node, NULL);
+                return ORTE_ERR_SILENT;
+            }
+            /* there are three use-cases that we need to deal with:
+            * (a) if -np was not provided, then we just use the n/node * #nodes
+            * (b) if -np was provided AND #procs > (n/node * #nodes), then error out
+            * (c) if -np was provided AND #procs <= (n/node * #nodes), then launch
+            *     the specified #procs n/node. In this case, we just
+            *     leave app->num_procs alone
+            */
+            if (0 == app->num_procs) {
+                /* set the num_procs to equal the specified num/node * the number of nodes */
+                app->num_procs = num_per_node * num_nodes;
+                modify_app_context = true;
+            } else if (app->num_procs > (num_per_node * num_nodes)) {
+                opal_show_help("help-orte-rmaps-rr.txt", "orte-rmaps-rr:n-per-node-and-too-many-procs",
+                               true, app->num_procs, num_per_node, num_nodes, num_slots, NULL);
+                return ORTE_ERR_SILENT;
+            }
         } else if (0 == app->num_procs) {
             /** set the num_procs to equal the number of slots on these mapped nodes - if
             user has specified "-bynode", then set it to the number of nodes

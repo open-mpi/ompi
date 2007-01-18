@@ -113,24 +113,26 @@ int orte_rmaps_base_map_job(orte_jobid_t job, opal_list_t *incoming_attributes)
     }
 
 
-    /* check the mapping policy */
-    if (orte_rmaps_base.bynode) {
-        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
-                                                          ORTE_STRING, "bynode",
-                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
+    /* check the mapping policy - set it IFF the user specified it in the environment */
+    if (orte_rmaps_base.user_specified_policy) {
+        if (orte_rmaps_base.bynode) {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                              ORTE_STRING, "bynode",
+                                                              ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }
+        } else {
+            if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
+                                                              ORTE_STRING, "byslot",
+                                                              ORTE_RMGR_ATTR_NO_OVERRIDE))) {
+                ORTE_ERROR_LOG(rc);
+                goto CLEANUP;
+            }            
         }
-    } else {
-        if (ORTE_SUCCESS != (rc = orte_rmgr.add_attribute(attributes, ORTE_RMAPS_MAP_POLICY,
-                                                          ORTE_STRING, "byslot",
-                                                          ORTE_RMGR_ATTR_NO_OVERRIDE))) {
-            ORTE_ERROR_LOG(rc);
-            goto CLEANUP;
-        }            
     }
        
-     /* check pernode - add it if it was set by the environment. Note that this
+    /* check pernode - add it if it was set by the environment. Note that this
      * attribute only cares if it exists - its value is irrelevant and hence
      * not provided
      */

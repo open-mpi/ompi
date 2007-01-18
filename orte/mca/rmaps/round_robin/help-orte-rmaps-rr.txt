@@ -36,3 +36,12 @@ There are not enough nodes in your allocation to satisfy your request to launch
 %d processes on a per-node basis - only %d nodes were available.
 
 Either request fewer processes, or obtain a larger allocation.
+[orte-rmaps-rr:n-per-node-and-too-many-procs]
+There are not enough nodes in your allocation to satisfy your request to launch
+%d processes on a %d per-node basis - only %d nodes with a total of %d slots were available.
+
+Either request fewer processes, or obtain a larger allocation.
+[orte-rmaps-rr:n-per-node-and-not-enough-slots]
+There are not enough slots on the nodes in your allocation to satisfy your request to launch on a %d process-per-node basis - only %d slots/node were available.
+
+Either request fewer processes/node, or obtain a larger allocation.

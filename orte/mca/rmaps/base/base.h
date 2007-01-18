@@ -55,6 +55,8 @@ extern "C" {
         opal_list_t rmaps_opened;
         /** Sorted list of available components (highest priority first) */
         opal_list_t rmaps_available;
+        /* user specified mapping policy? */
+        bool user_specified_policy;
         /* map by node or not */
         bool bynode;
         /** whether or not we allow oversubscription of nodes */

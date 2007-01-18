@@ -87,13 +87,18 @@ int orte_rmaps_base_open(void)
 
     param = mca_base_param_reg_string_name("rmaps", "base_schedule_policy",
                                            "Scheduling Policy for RMAPS. [slot | node]",
-                                           false, false, "slot", &policy);
+                                           false, false, "unspec", &policy);
     
     opal_output(orte_rmaps_base.rmaps_output, "Scheduling policy: %s", policy);
     
-    if (0 == strcmp(policy, "node")) {
-        orte_rmaps_base.bynode = true;
+    if (0 == strcmp(policy, "unspec")) {
+        orte_rmaps_base.user_specified_policy = false;
+        orte_rmaps_base.bynode = false;  /* default to byslot */
+    } else if (0 == strcmp(policy, "node")) {
+        orte_rmaps_base.user_specified_policy = true;
+       orte_rmaps_base.bynode = true;
     } else {
+        orte_rmaps_base.user_specified_policy = true;
         orte_rmaps_base.bynode = false;
     }
 
