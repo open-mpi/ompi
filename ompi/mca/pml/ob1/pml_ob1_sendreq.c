@@ -632,8 +632,10 @@ int mca_pml_ob1_send_request_start_rdma(
     size_t size)
 {
     /*
-     * FIX - to get the basics working - schedule on the
-     * first BTL only
+     * When req_rdma array is constructed the firs element of the array always
+     * assigned different btl in round robin fashion (if there are more than
+     * one RDMA capable BTLs). This way round robin distribution of RDMA
+     * operation is achieved.
      */
 
     mca_mpool_base_registration_t* reg = sendreq->req_rdma[0].btl_reg;

@@ -54,10 +54,11 @@ size_t mca_pml_ob1_rdma_btls(
     for(n = 0; n < num_btls && num_btls_used < MCA_PML_OB1_MAX_RDMA_PER_REQUEST;
             n++) {
         mca_bml_base_btl_t* bml_btl =
-            mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n); 
+            mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma,
+                    (bml_endpoint->btl_rdma_index + n) % num_btls); 
         mca_mpool_base_registration_t* reg = NULL;
         mca_mpool_base_module_t *btl_mpool = bml_btl->btl_mpool;
- 
+
         /* btl is rdma capable and registration is not required */
         if(NULL == btl_mpool) {
             reg = NULL;
@@ -80,5 +81,6 @@ size_t mca_pml_ob1_rdma_btls(
             num_btls_used++;
         }
     }
+    bml_endpoint->btl_rdma_index = (bml_endpoint->btl_rdma_index + 1) % num_btls;
     return num_btls_used;
 }
