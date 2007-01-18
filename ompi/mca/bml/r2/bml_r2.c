@@ -378,6 +378,7 @@ int mca_bml_r2_add_procs(
         n_size = mca_bml_base_btl_array_get_size(&bml_endpoint->btl_send); 
         bml_endpoint->bml_max_send_length = 0;
         bml_endpoint->bml_max_rdma_length = 0;
+        bml_endpoint->btl_rdma_index = 0;
         for(n_index = 0; n_index < n_size; n_index++) {
             mca_bml_base_btl_t* bml_btl = 
                 mca_bml_base_btl_array_get_index(&bml_endpoint->btl_send, n_index);

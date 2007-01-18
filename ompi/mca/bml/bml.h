@@ -244,6 +244,7 @@ struct mca_bml_base_endpoint_t {
     size_t                   bml_max_send_length;
     size_t                   bml_max_rdma_length;
     mca_bml_base_btl_array_t btl_rdma;          /**< array of btls that support (prefer) rdma */
+    size_t btl_rdma_index;                      /**< index of last used BTL for RDMA */
     uint32_t btl_flags_or;                      /**< the bitwise OR of the btl flags */
     uint32_t btl_flags_and;                     /**< the bitwise AND of the btl flags */
 };
