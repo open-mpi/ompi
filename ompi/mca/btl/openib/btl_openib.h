@@ -9,7 +9,9 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -151,6 +153,17 @@ struct mca_btl_openib_port_info_t {
     uint64_t subnet_id;
 };
 typedef struct mca_btl_openib_port_info_t mca_btl_openib_port_info_t;
+
+#define MCA_BTL_OPENIB_PORT_INFO_NTOH(hdr)     \
+    do {                              \
+        (hdr).mtu = ntohl((hdr).mtu); \
+        (hdr).subnet_id = ntoh64((hdr).subnet_id); \
+    } while (0)
+#define MCA_BTL_OPENIB_PORT_INFO_HTON(hdr)     \
+    do {                              \
+        (hdr).mtu = htonl((hdr).mtu); \
+        (hdr).subnet_id = hton64((hdr).subnet_id); \
+    } while (0)
 
 struct mca_btl_openib_hca_t {
     struct ibv_device *ib_dev;  /* the ib device */

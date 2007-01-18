@@ -9,6 +9,8 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -38,6 +40,17 @@ typedef struct mca_btl_openib_header_t mca_btl_openib_header_t;
 #define BTL_OPENIB_IS_RDMA_CREDITS(I) ((I)&BTL_OPENIB_RDMA_CREDITS_FLAG)
 #define BTL_OPENIB_CREDITS(I) ((I)&~BTL_OPENIB_RDMA_CREDITS_FLAG)
 
+#define BTL_OPENIB_HEADER_HTON(h) \
+do {                              \
+    h.credits = htons(h.credits); \
+} while (0)
+
+#define BTL_OPENIB_HEADER_NTOH(h) \
+do {                              \
+    h.credits = ntohs(h.credits); \
+} while (0)
+
+
 struct mca_btl_openib_footer_t {
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
@@ -49,28 +62,90 @@ struct mca_btl_openib_footer_t {
 };
 typedef struct mca_btl_openib_footer_t mca_btl_openib_footer_t;
 
-typedef enum {
-    MCA_BTL_OPENIB_CONTROL_CREDITS,
-    MCA_BTL_OPENIB_CONTROL_RDMA
-} mca_btl_openib_control_t;
+#ifdef WORDS_BIGENDIAN
+#define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)
+#else 
+#define MCA_BTL_OPENIB_FTR_SIZE_REVERSE(ftr)    \
+    do {                                        \
+        uint8_t tmp = (ftr).u.buf[0];           \
+        (ftr).u.buf[0]=(ftr).u.buf[2];          \
+        (ftr).u.buf[2]=tmp;                     \
+    } while (0)
+#endif
+
+#if OMPI_ENABLE_DEBUG
+#define BTL_OPENIB_FOOTER_HTON(h)               \
+    do {                                        \
+        h.seq = htonl(h.seq);                   \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+    
+#define BTL_OPENIB_FOOTER_NTOH(h)               \
+    do {                                        \
+        h.seq = ntohl(h.seq);                   \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+#else
+#define BTL_OPENIB_FOOTER_HTON(h)               \
+    do {                                        \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+    
+#define BTL_OPENIB_FOOTER_NTOH(h)               \
+    do {                                        \
+        MCA_BTL_OPENIB_FTR_SIZE_REVERSE(h);     \
+    } while (0)
+#endif
+
+
+#define MCA_BTL_OPENIB_CONTROL_CREDITS 0
+#define  MCA_BTL_OPENIB_CONTROL_RDMA   1
 
 struct mca_btl_openib_control_header_t {
-    mca_btl_openib_control_t type;
+    uint8_t type;
 };
 typedef struct mca_btl_openib_control_header_t mca_btl_openib_control_header_t;
 
 struct mca_btl_openib_eager_rdma_header_t {
-	mca_btl_openib_control_header_t control;
-	ompi_ptr_t rdma_start;
-	uint32_t rkey;
+    mca_btl_openib_control_header_t control;
+    uint8_t padding[3]; 
+    uint32_t rkey;
+    ompi_ptr_t rdma_start;
+    uint64_t frag_t_len;
 };
 typedef struct mca_btl_openib_eager_rdma_header_t mca_btl_openib_eager_rdma_header_t;
 
+#define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_HTON(h)       \
+    do {                                                   \
+        h.rkey = htonl(h.rkey);                                  \
+        h.rdma_start.lval = hton64(h.rdma_start.lval);           \
+        h.frag_t_len = hton64(h.frag_t_len);                     \
+    } while (0)
+    
+#define BTL_OPENIB_EAGER_RDMA_CONTROL_HEADER_NTOH(h)     \
+    do {                                                 \
+        h.rkey = ntohl(h.rkey);                          \
+        h.rdma_start.lval = ntoh64(h.rdma_start.lval);   \
+        h.frag_t_len = ntoh64(h.frag_t_len);             \
+    } while (0)
+    
+    
 struct mca_btl_openib_rdma_credits_header_t {
     mca_btl_openib_control_header_t control;
+    uint8_t padding[1];
     uint16_t rdma_credits;
 };
 typedef struct mca_btl_openib_rdma_credits_header_t mca_btl_openib_rdma_credits_header_t;
+
+#define BTL_OPENIB_RDMA_CREDITS_HEADER_HTON(h)     \
+do {                                               \
+    h.rdma_credits = htons(h.rdma_credits);        \
+} while (0)
+
+#define BTL_OPENIB_RDMA_CREDITS_HEADER_NTOH(h)     \
+do {                                               \
+    h.rdma_credits = ntohs(h.rdma_credits);        \
+} while (0)
 
 enum mca_btl_openib_frag_type_t {
     MCA_BTL_OPENIB_FRAG_EAGER,

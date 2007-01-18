@@ -1,5 +1,7 @@
 /*
- * Copyright (c) 2006 Voltaire All rights reserved.
+ * Copyright (c) 2006      Voltaire All rights reserved.
+ * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
+ *                         reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -39,6 +41,7 @@ struct mca_btl_openib_eager_rdma_remote_t {
 #if OMPI_ENABLE_DEBUG
     uint32_t seq;
 #endif
+    uint64_t frag_t_len; /**< remote's sizeof(mca_btl_openib_frag_t) */ 
 };
 typedef struct mca_btl_openib_eager_rdma_remote_t mca_btl_openib_eager_rdma_remote_t;
 
