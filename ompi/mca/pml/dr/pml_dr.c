@@ -165,7 +165,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
                         NULL);
 
     /* initialize pml endpoint data */
-    for (i = 0 ; i < (int32_t)nprocs ; ++i) {
+    for (i = 0 ; i < nprocs ; ++i) {
         int idx;
         mca_pml_dr_endpoint_t *endpoint;
 
@@ -192,7 +192,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         endpoint->bml_endpoint = bml_endpoints[i];
     }
     
-    for(i = 0; i < (int32_t)nprocs; i++) { 
+    for(i = 0; i < nprocs; i++) { 
         mca_pml_dr_endpoint_t* ep =  (mca_pml_dr_endpoint_t*) 
             ompi_pointer_array_get_item(&mca_pml_dr.endpoints, i);
             ep->src = mca_pml_dr.my_rank;
