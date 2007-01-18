@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -51,6 +52,16 @@ opal_list_t mca_oob_base_exception_handlers;
  */
 int mca_oob_base_open(void)
 {
+    static bool already_opened = false;
+
+    /* Sanity check.  This may be able to be removed when the rml/oob
+       interface is re-worked (the current infrastructure may invoke
+       this function twice: once as a standalone, and once via the rml
+       oob component). */
+    if (already_opened) {
+        return ORTE_SUCCESS;
+    }
+    
   /* Open up all available components */
 
   OBJ_CONSTRUCT(&mca_oob_base_components, opal_list_t);
@@ -73,6 +84,7 @@ int mca_oob_base_open(void)
                                  false, false, NULL, &mca_oob_base_exclude);
 
   /* All done */
+  already_opened = true;
   return ORTE_SUCCESS;
 }
 
