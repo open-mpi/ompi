@@ -689,7 +689,22 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
                                           header->hdr_value[1]);
         }
         break;
+    case OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY:
+        {
+            ompi_osc_pt2pt_control_header_t *header = 
+                (ompi_osc_pt2pt_control_header_t*) 
+                buffer;
 
+#if !defined(WORDS_BIGENDIAN) && OMPI_ENABLE_HETEROGENEOUS_SUPPORT
+            if (header->hdr_base.hdr_flags & OMPI_OSC_PT2PT_HDR_FLAG_NBO) {
+                OMPI_OSC_PT2PT_CONTROL_HDR_NTOH(*header);
+            }
+#endif
+
+            assert(module == ompi_osc_pt2pt_windx_to_module(header->hdr_windx));
+            OPAL_THREAD_ADD32(&(module->p2p_num_pending_out), -1);
+        }
+        break;
     default:
         opal_output_verbose(5, ompi_osc_base_output,
                             "received packet for Window with unknown type");
@@ -702,7 +717,7 @@ ompi_osc_pt2pt_component_fragment_cb(struct ompi_osc_pt2pt_buffer_t *pt2pt_buffe
 
 
 
-static int
+int
 ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
                             int *completed,
                             ompi_status_public_t * status )
@@ -752,6 +767,13 @@ ompi_osc_pt2pt_progress(void)
                 item = opal_list_remove_item(&module->p2p_pending_control_sends, 
                                              item);
                 buffer->cbfunc(buffer);
+                /* it's possible that cbfunc is going to do something
+                   that calls progress, which means our loop is
+                   probably hosed up because it's possible that the
+                   list changed under us.  It's either exit the loop
+                   through the list or start all over again.  I'm
+                   going with exit. */
+                break;
             }
         }
     } while (OMPI_SUCCESS ==

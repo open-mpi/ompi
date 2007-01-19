@@ -24,6 +24,7 @@
 #include "ompi/mca/osc/osc.h"
 #include "ompi/win/win.h"
 #include "ompi/communicator/communicator.h"
+#include "ompi/request/request.h"
 
 #if defined(__cplusplus) || defined(c_plusplus)
 extern "C" {
@@ -188,6 +189,10 @@ int ompi_osc_pt2pt_component_select(struct ompi_win_t *win,
                                    struct ompi_communicator_t *comm);
 
 int ompi_osc_pt2pt_progress(void);
+
+int ompi_osc_pt2pt_request_test(ompi_request_t ** rptr,
+                                int *completed,
+                                ompi_status_public_t * status );
 
 /*
  * Module interface function types 

@@ -48,7 +48,7 @@ ompi_osc_pt2pt_progress_long(ompi_osc_pt2pt_module_t *module)
             int ret, completed;
             next = opal_list_get_next(item);
 
-            ret = ompi_request_test(&(longreq->req_pml_req), &completed, NULL);
+            ret = ompi_osc_pt2pt_request_test(&(longreq->req_pml_req), &completed, NULL);
             /* BWB - FIX ME - error handling */
             if (completed > 0) {
                 longreq->req_comp_cb(longreq);
@@ -465,7 +465,20 @@ ompi_osc_pt2pt_module_unlock(int target,
        out of pending_sendreqs, so don't need the lock here */
     out_count = opal_list_get_size(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs));
 
-    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), out_count);
+    /* we want to send all the requests, plus we wait for one more
+       completion event for the control message ack from the unlocker
+       saying we're done */
+    OPAL_THREAD_ADD32(&(P2P_MODULE(win)->p2p_num_pending_out), out_count + 1);
+
+    /* send the unlock request */
+    opal_output_verbose(50, ompi_osc_base_output,
+                        "%d sending unlock request to %d", 
+                        P2P_MODULE(win)->p2p_comm->c_my_rank, target);
+    ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
+                                proc,
+                                OMPI_OSC_PT2PT_HDR_UNLOCK_REQ,
+                                P2P_MODULE(win)->p2p_comm->c_my_rank,
+                                out_count);
 
     while (NULL != 
            (item = opal_list_remove_first(&(P2P_MODULE(win)->p2p_copy_pending_sendreqs)))) {
@@ -486,16 +499,6 @@ ompi_osc_pt2pt_module_unlock(int target,
     while (0 != P2P_MODULE(win)->p2p_num_pending_out) {
         ompi_osc_pt2pt_progress_long(P2P_MODULE(win));        
     }
-
-    /* send the unlock request */
-    opal_output_verbose(50, ompi_osc_base_output,
-                        "%d sending unlock request to %d", 
-                        P2P_MODULE(win)->p2p_comm->c_my_rank, target);
-    ompi_osc_pt2pt_control_send(P2P_MODULE(win), 
-                                proc,
-                                OMPI_OSC_PT2PT_HDR_UNLOCK_REQ,
-                                P2P_MODULE(win)->p2p_comm->c_my_rank,
-                                out_count);
 
     /* set our mode on the window */
     ompi_win_remove_mode(win, OMPI_WIN_ACCESS_EPOCH | OMPI_WIN_LOCK_ACCESS);
@@ -569,6 +572,7 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
                               int32_t count)
 {
     ompi_osc_pt2pt_pending_lock_t *new_pending = NULL;
+    ompi_proc_t *proc = ompi_comm_peer_lookup( module->p2p_comm, origin );
 
     assert(module->p2p_lock_status != 0);
 
@@ -589,6 +593,10 @@ ompi_osc_pt2pt_passive_unlock(ompi_osc_pt2pt_module_t *module,
             module->p2p_lock_status = 0;
         }
     }
+
+    ompi_osc_pt2pt_control_send(module, proc,
+                                OMPI_OSC_PT2PT_HDR_UNLOCK_REPLY,
+                                OMPI_SUCCESS, OMPI_SUCCESS);
 
     /* if we were really unlocked, see if we have more to process */
     new_pending = (ompi_osc_pt2pt_pending_lock_t*) 
