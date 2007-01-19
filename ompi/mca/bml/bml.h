@@ -170,25 +170,26 @@ static inline bool mca_bml_base_btl_array_remove( mca_bml_base_btl_array_t* arra
  * Return an array item at the specified index.
  * 
  * @param array (IN)
- * @param index (IN)
+ * @param item_index (IN)
  */
-static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_btl_array_t* array, size_t index)
+static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_index(mca_bml_base_btl_array_t* array, size_t item_index)
 {
 #if OMPI_ENABLE_DEBUG
-    if(index >= array->arr_size) {
+    if(item_index >= array->arr_size) {
         opal_output(0, "mca_bml_base_btl_array_get_index: invalid array index %d >= %d",
-            index, array->arr_size);
+            item_index, array->arr_size);
         return 0;
     }
 #endif
-    return &array->bml_btls[index];
+    return &array->bml_btls[item_index];
 }
 
 /**
  * Return the next LRU index in the array.
  * 
  * @param array (IN)
- * @param index (IN)
+ *
+ * @param index (OUT)
  */
 static inline mca_bml_base_btl_t* mca_bml_base_btl_array_get_next(mca_bml_base_btl_array_t* array)
 {

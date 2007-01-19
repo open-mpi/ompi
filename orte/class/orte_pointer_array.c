@@ -117,7 +117,7 @@ int orte_pointer_array_init(orte_pointer_array_t **array,
  */
 int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *table, void *ptr)
 {
-    orte_std_cntr_t i, index;
+    orte_std_cntr_t i, element_index;
 
     if (0) {
         opal_output(0,"orte_pointer_array_add:  IN:  "
@@ -151,9 +151,9 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
      * add pointer to table, and return the index
      */
 
-    index = table->lowest_free;
-    assert(table->addr[index] == NULL);
-    table->addr[index] = ptr;
+    element_index = table->lowest_free;
+    assert(table->addr[element_index] == NULL);
+    table->addr[element_index] = ptr;
     table->number_free--;
     if (table->number_free > 0) {
         for (i = table->lowest_free + 1; i < table->size; i++) {
@@ -172,11 +172,11 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
-                index, ptr);
+                element_index, ptr);
     }
 
     OPAL_THREAD_UNLOCK(&(table->lock));
-    *location = index;
+    *location = element_index;
     return ORTE_SUCCESS;
 }
 
@@ -191,7 +191,7 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
  *
  * Assumption: NULL element is free element.
  */
-int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t index,
+int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t element_index,
                                 void * value)
 {
     assert(table != NULL);
@@ -201,13 +201,13 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
-                index, table->addr[index]);
+                element_index, table->addr[element_index]);
 #endif
 
     /* expand table if required to set a specific index */
 
     OPAL_THREAD_LOCK(&(table->lock));
-    if (table->size <= index) {
+    if (table->size <= element_index) {
         if (!grow_table(table)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
 	        return ORTE_ERROR;
@@ -218,22 +218,22 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
      * allow a specific index to be changed.
      */
     
-    if ( NULL == table->addr[index] ) {
-         table->addr[index] = value;
+    if ( NULL == table->addr[element_index] ) {
+         table->addr[element_index] = value;
         	/* mark element as free, if NULL element */
         	if( NULL == value ) {
-        	    if (index < table->lowest_free) {
-        		table->lowest_free = index;
+        	    if (element_index < table->lowest_free) {
+        		table->lowest_free = element_index;
         	    }
         	}
         	else {
         	    table->number_free--;
         	    /* Reset lowest_free if required */
-        	    if ( index == table->lowest_free ) {
+        	    if ( element_index == table->lowest_free ) {
         		     orte_std_cntr_t i;
                     
         		     table->lowest_free=table->size;
-        		     for ( i=index; i<table->size; i++) {
+        		     for ( i=element_index; i<table->size; i++) {
         		          if ( NULL == table->addr[i] ){
         			          table->lowest_free = i;
         			          break;
@@ -243,21 +243,21 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
         	}
     }
     else {
-        table->addr[index] = value;
+        table->addr[element_index] = value;
         	/* mark element as free, if NULL element */
         	if( NULL == value ) {
-        	    if (index < table->lowest_free) {
-        		table->lowest_free = index;
+        	    if (element_index < table->lowest_free) {
+        		table->lowest_free = element_index;
         	    }
         	    table->number_free++;
         	}
         	else {
         	    /* Reset lowest_free if required */
-        	    if ( index == table->lowest_free ) {
+        	    if ( element_index == table->lowest_free ) {
             		orte_std_cntr_t i;
                         
             		table->lowest_free=table->size;
-            		for ( i=index; i<table->size; i++) {
+            		for ( i=element_index; i<table->size; i++) {
             		    if ( NULL == table->addr[i] ){
             			     table->lowest_free = i;
             			     break;
@@ -273,7 +273,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
                 " table %p (size %ld, lowest free %ld, number free %ld)"
                 " addr[%d] = %p\n",
                 table, table->size, table->lowest_free, table->number_free,
-                index, table->addr[index]);
+                element_index, table->addr[element_index]);
 #endif
 
     OPAL_THREAD_UNLOCK(&(table->lock));
@@ -284,9 +284,9 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
  * Test whether a certain element is already in use. If not yet
  * in use, reserve it.
  *
- * @param array Pointer to array (IN)
- * @param index Index of element to be tested (IN)
- * @param value New value to be set at element index (IN)
+ * @param array         Pointer to array (IN)
+ * @param element_index Index of element to be tested (IN)
+ * @param value         New value to be set at element index (IN)
  *
  * @return true/false True if element could be reserved
  *                    False if element could not be reserved (e.g.in use).
@@ -295,7 +295,7 @@ int orte_pointer_array_set_item(orte_pointer_array_t *table, orte_std_cntr_t ind
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
 bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
-                                           orte_std_cntr_t index, void *value)
+                                           orte_std_cntr_t element_index, void *value)
 {
     assert(table != NULL);
 
@@ -304,12 +304,12 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
-               index, table->addr[index]);
+               element_index, table->addr[element_index]);
 #endif
 
     /* expand table if required to set a specific index */
     OPAL_THREAD_LOCK(&(table->lock));
-    if ( index < table->size && table->addr[index] != NULL ) {
+    if ( element_index < table->size && table->addr[element_index] != NULL ) {
         /* This element is already in use */
         OPAL_THREAD_UNLOCK(&(table->lock));
         return false;
@@ -317,7 +317,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
 
     /* Do we need to grow the table? */
 
-    if (table->size <= index) {
+    if (table->size <= element_index) {
         if (!grow_table(table)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return false;
@@ -327,14 +327,14 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
     /* 
      * allow a specific index to be changed.
      */
-    table->addr[index] = value;
+    table->addr[element_index] = value;
     table->number_free--;
     /* Reset lowest_free if required */
-    if ( index == table->lowest_free ) {
+    if ( element_index == table->lowest_free ) {
         orte_std_cntr_t i;
 
 	    table->lowest_free = table->size;
-        for ( i=index; i<table->size; i++) {
+        for ( i=element_index; i<table->size; i++) {
             if ( NULL == table->addr[i] ){
                 table->lowest_free = i;
                 break;
@@ -347,7 +347,7 @@ bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table,
                " table %p (size %ld, lowest free %ld, number free %ld)"
                " addr[%d] = %p\n",
                table, table->size, table->lowest_free, table->number_free,
-               index, table->addr[index]);
+               element_index, table->addr[element_index]);
 #endif
 
     OPAL_THREAD_UNLOCK(&(table->lock));

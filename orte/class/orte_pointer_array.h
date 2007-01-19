@@ -97,36 +97,36 @@ ORTE_DECLSPEC int orte_pointer_array_init(orte_pointer_array_t **array,
  * @param (OUT) Index of inserted array element.
  * @return Return value less than zero indicates an error.
  */
-ORTE_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *index, orte_pointer_array_t *array, void *ptr);
+ORTE_DECLSPEC int orte_pointer_array_add(orte_std_cntr_t *element_index, orte_pointer_array_t *array, void *ptr);
 
 /**
  * Set the value of an element in array
  * Automatically extend array if required.
  * 
- * @param array Pointer to array (IN)
- * @param index Index of element to be reset (IN)
- * @param value New value to be set at element index (IN)
+ * @param array          Pointer to array (IN)
+ * @param element_index  Index of element to be reset (IN)
+ * @param value          New value to be set at element index (IN)
  *
  * @return Error code.  (-1) indicates an error.
  */
 ORTE_DECLSPEC int orte_pointer_array_set_item(orte_pointer_array_t *array, 
-                                orte_std_cntr_t index, void *value);
+                                orte_std_cntr_t element_index, void *value);
 
 /**
  * Get the value of an element in array
  *
- * @param array Pointer to array (IN)
- * @param index Index of element to be returned (IN)
+ * @param array         Pointer to array (IN)
+ * @param element_index Index of element to be returned (IN)
  *
  * @return Error code.  NULL indicates an error.
  */
 
 static inline void *orte_pointer_array_get_item(orte_pointer_array_t *table, 
-                                                orte_std_cntr_t index)
+                                                orte_std_cntr_t element_index)
 {
     void *p;
     OPAL_THREAD_LOCK(&(table->lock));
-    p = table->addr[index];
+    p = table->addr[element_index];
     OPAL_THREAD_UNLOCK(&(table->lock));
     return p;
 }
@@ -210,9 +210,9 @@ static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
  * Test whether a certain element is already in use. If not yet
  * in use, reserve it.
  *
- * @param array Pointer to array (IN)
- * @param index Index of element to be tested (IN)
- * @param value New value to be set at element index (IN)
+ * @param array         Pointer to array (IN)
+ * @param element_index Index of element to be tested (IN)
+ * @param value         New value to be set at element index (IN)
  *
  * @return true/false True if element could be reserved
  *                    False if element could not be reserved (e.g., in use).
@@ -221,7 +221,7 @@ static inline void orte_pointer_array_free_clear(orte_pointer_array_t *array)
  * a value, unless the previous value is NULL ( equiv. to free ).
  */
 ORTE_DECLSPEC bool orte_pointer_array_test_and_set_item (orte_pointer_array_t *table, 
-                                          orte_std_cntr_t index,
+                                          orte_std_cntr_t element_index,
                                           void *value);
 #if defined(c_plusplus) || defined(__cplusplus)
 }
