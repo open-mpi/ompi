@@ -114,7 +114,7 @@ typedef struct ompi_cb_fifo_t ompi_cb_fifo_t;
 static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
         bool flush_entries_read, bool *queue_empty, ptrdiff_t offset) 
 {
-    int index = 0,clearIndex, i;
+    int old_fifo_index, clearIndex, i;
     void **q_ptr;
     ompi_cb_fifo_ctl_t *h_ptr, *t_ptr;
     void *read_from_tail = (void *)OMPI_CB_ERROR;
@@ -133,8 +133,8 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     }
 
     /* set return data */
-    index = t_ptr->fifo_index;
-    read_from_tail = (void *)q_ptr[index];
+    old_fifo_index = t_ptr->fifo_index;
+    read_from_tail = (void *)q_ptr[old_fifo_index];
     opal_atomic_rmb();
     t_ptr->num_to_clear++;
 
@@ -145,7 +145,7 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     /* check to see if time to do a lazy free of queue slots */
     if ( (t_ptr->num_to_clear == fifo->lazy_free_frequency) ||
             flush_entries_read ) {
-        clearIndex = index - t_ptr->num_to_clear + 1;
+        clearIndex = old_fifo_index - t_ptr->num_to_clear + 1;
         clearIndex &= fifo->mask;
         
         for (i = 0; i < t_ptr->num_to_clear; i++) {
@@ -213,7 +213,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
     int errorCode = OMPI_SUCCESS,i;
     size_t len_to_allocate;
 
-    /* verify that size is power of 2, and greatter that 0 - if not, 
+    /* verify that size is power of 2, and greater than 0 - if not, 
      * round up */
     if ( 0 >= size_of_fifo) {
         return OMPI_ERROR;
@@ -365,14 +365,20 @@ static inline int ompi_cb_fifo_write_to_head_same_base_addr(void *data, ompi_cb_
 {
     volatile void **ptr;
     ompi_cb_fifo_ctl_t *h_ptr;
-    int slot = OMPI_CB_ERROR, index;
+    int slot = OMPI_CB_ERROR;
+    int old_fifo_index;
 
     h_ptr=fifo->head;
-    index = h_ptr->fifo_index;
-    /* make sure the head is pointing at a free element */
     ptr=fifo->queue;
-    if (ptr[index] == OMPI_CB_FREE) {
-        slot = index;
+    old_fifo_index = h_ptr->fifo_index;
+
+    /*
+     * What about turning around the logic?
+     * This is called for every sm fragment and twice when the circular buffer is full...
+     */
+    /* make sure the head is pointing at a free element */
+    if (ptr[old_fifo_index] == OMPI_CB_FREE) {
+        slot = old_fifo_index;
         opal_atomic_wmb(); 
         ptr[slot] = data;
         (h_ptr->fifo_index)++;
@@ -399,21 +405,22 @@ static inline int ompi_cb_fifo_get_slot_same_base_addr(ompi_cb_fifo_t *fifo)
 {
     volatile void **ptr;
     ompi_cb_fifo_ctl_t *h_ptr;
-    int return_value = OMPI_CB_ERROR,index;
+    int slot = OMPI_CB_ERROR;
+    int old_fifo_index;
 
     h_ptr=fifo->head;
     ptr=fifo->queue;
-    index = h_ptr->fifo_index;
+    old_fifo_index = h_ptr->fifo_index;
     /* try and reserve slot */
-    if ( OMPI_CB_FREE == ptr[index] ) {
-        ptr[index] = OMPI_CB_RESERVED;
-        return_value = index;
+    if ( OMPI_CB_FREE == ptr[old_fifo_index] ) {
+        slot = old_fifo_index;
+        ptr[old_fifo_index] = OMPI_CB_RESERVED;
         (h_ptr->fifo_index)++;
         (h_ptr->fifo_index) &= fifo->mask;
     }
 
     /* return */
-    return return_value;
+    return slot;
 }
 
 /**
@@ -435,7 +442,7 @@ static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
         ompi_cb_fifo_t *fifo,
         bool flush_entries_read, bool *queue_empty)
 {
-    int index = 0,clearIndex, i;
+    int old_fifo_index, clearIndex, i;
     volatile void **q_ptr;
     ompi_cb_fifo_ctl_t *h_ptr, *t_ptr;
     void *read_from_tail = (void *)OMPI_CB_ERROR;
@@ -454,8 +461,8 @@ static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
     }
 
     /* set return data */
-    index = t_ptr->fifo_index;
-    read_from_tail = (void *)q_ptr[index];
+    old_fifo_index = t_ptr->fifo_index;
+    read_from_tail = (void *)q_ptr[old_fifo_index];
     opal_atomic_rmb();
     t_ptr->num_to_clear++;
 
@@ -466,7 +473,7 @@ static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
     /* check to see if time to do a lazy free of queue slots */
     if ( (t_ptr->num_to_clear == fifo->lazy_free_frequency) ||
             flush_entries_read ) {
-        clearIndex = index - t_ptr->num_to_clear + 1;
+        clearIndex = old_fifo_index - t_ptr->num_to_clear + 1;
         clearIndex &= fifo->mask;
 
         for (i = 0; i < t_ptr->num_to_clear; i++) {

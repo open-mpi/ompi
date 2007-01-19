@@ -741,7 +741,8 @@ static int rebuild_communicator_list (mqs_process *proc)
     mqs_image * image          = mqs_get_image (proc);
     mpi_image_info *i_info   = (mpi_image_info *)mqs_get_image_info (image);
     communicator_t **commp, *old;
-    int commcount = 0, i;
+    int commcount = 0;
+    int i;
     mqs_tword_t comm_size;
     mqs_taddr_t comm_addr_base = p_info->commlist_base + i_info->ompi_pointer_array_t.offset.addr;
     mqs_taddr_t comm_ptr;
@@ -826,7 +827,7 @@ static int rebuild_communicator_list (mqs_process *proc)
         communicator_t ** comm_array =
             (communicator_t **) mqs_malloc(commcount * sizeof (communicator_t *));
         communicator_t *comm = p_info->communicator_list;
-        int i;
+
         for (i=0; i<commcount; i++, comm=comm->next)
             comm_array [i] = comm;
 

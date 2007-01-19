@@ -91,7 +91,7 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
                                            const struct timespec *abstime)
 {
     struct timeval tv;
-    struct timeval abs;
+    struct timeval absolute;
     int rc = 0;
 
     c->c_waiting++;
@@ -99,12 +99,12 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
         rc = pthread_cond_timedwait(&c->c_cond, &m->m_lock_pthread, abstime);
 #else
-        abs.tv_sec = abstime->tv_sec;
-        abs.tv_usec = abstime->tv_nsec * 1000;
+        absolute.tv_sec = abstime->tv_sec;
+        absolute.tv_usec = abstime->tv_nsec * 1000;
         gettimeofday(&tv,NULL);
         while (c->c_signaled == 0 &&  
-               (tv.tv_sec <= abs.tv_sec ||
-               (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
+               (tv.tv_sec <= absolute.tv_sec ||
+               (tv.tv_sec == absolute.tv_sec && tv.tv_usec < absolute.tv_usec))) {
             opal_mutex_unlock(m);
             opal_progress();
             gettimeofday(&tv,NULL);
@@ -112,12 +112,12 @@ static inline int opal_condition_timedwait(opal_condition_t *c,
         }
 #endif
     } else {
-        abs.tv_sec = abstime->tv_sec;
-        abs.tv_usec = abstime->tv_nsec * 1000;
+        absolute.tv_sec = abstime->tv_sec;
+        absolute.tv_usec = abstime->tv_nsec * 1000;
         gettimeofday(&tv,NULL);
         while (c->c_signaled == 0 &&  
-               (tv.tv_sec <= abs.tv_sec ||
-               (tv.tv_sec == abs.tv_sec && tv.tv_usec < abs.tv_usec))) {
+               (tv.tv_sec <= absolute.tv_sec ||
+               (tv.tv_sec == absolute.tv_sec && tv.tv_usec < absolute.tv_usec))) {
             opal_progress();
             gettimeofday(&tv,NULL);
         }
@@ -143,6 +143,8 @@ static inline int opal_condition_signal(opal_condition_t *c)
 static inline int opal_condition_broadcast(opal_condition_t *c)
 {
     c->c_signaled = c->c_waiting;
+    /* Should be amended for the case, when we do not have Posix-Threads
+       but do have a progress Thread */
 #if OMPI_HAVE_POSIX_THREADS && OMPI_ENABLE_PROGRESS_THREADS
     if(opal_using_threads()) {
         if( 1 == c->c_waiting ) {

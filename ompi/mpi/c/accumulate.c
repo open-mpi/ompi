@@ -83,23 +83,23 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                     if (ompi_ddt_is_predefined(origin_datatype)) {
                         origin_check_dt = origin_datatype;
                     } else {
-                        int i, index = -1, num_found = 0;
+                        int i, found_index = -1, num_found = 0;
                         uint64_t mask = 1;
 
                         for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
                             if (origin_datatype->bdt_used & mask) {
                                 num_found++;
-                                index = i;
+                                found_index = i;
                             }
                             mask *= 2;
                         }
-                        if (index < 0 || num_found > 1) {
+                        if (found_index < 0 || num_found > 1) {
                             /* this is an erroneous datatype.  Let
                                ompi_op_is_valid tell the user that */
                             OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
                         } else {
                             origin_check_dt = (ompi_datatype_t*)
-                                ompi_ddt_basicDatatypes[index];
+                                ompi_ddt_basicDatatypes[found_index];
                         }
                     }
 
@@ -116,17 +116,17 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                     if (ompi_ddt_is_predefined(target_datatype)) {
                         op_check_dt = target_datatype;
                     } else {
-                        int i, index = -1, num_found = 0;
+                        int i, found_index = -1, num_found = 0;
                         uint64_t mask = 1;
 
                         for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
                             if (target_datatype->bdt_used & mask) {
                                 num_found++;
-                                index = i;
+                                found_index = i;
                             }
                             mask *= 2;
                         }
-                        if (index < 0 || num_found > 1) {
+                        if (found_index < 0 || num_found > 1) {
                             /* this is an erroneous datatype.  Let
                                ompi_op_is_valid tell the user that */
                             OMPI_ERRHANDLER_RETURN(MPI_ERR_TYPE, win, MPI_ERR_TYPE, FUNC_NAME);
@@ -136,7 +136,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                                op?  Unfortunately have to cast away
                                constness... */
                             op_check_dt = (ompi_datatype_t*)
-                                ompi_ddt_basicDatatypes[index];
+                                ompi_ddt_basicDatatypes[found_index];
                         }
                     }
 
@@ -181,17 +181,17 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
             if (ompi_ddt_is_predefined(target_datatype)) {
                 op_check_dt = target_datatype;
             } else {
-                int i, index = -1, num_found = 0;
+                int i, found_index = -1, num_found = 0;
                 uint64_t mask = 1;
 
                 for (i = 0 ; i < DT_MAX_PREDEFINED ; ++i) {
                     if (target_datatype->bdt_used & mask) {
                         num_found++;
-                        index = i;
+                        found_index = i;
                     }
                     mask *= 2;
                 }
-                if (index < 0 || num_found > 1) {
+                if (found_index < 0 || num_found > 1) {
                     /* this is an erroneous datatype.  Let
                        ompi_op_is_valid tell the user that */
                     op_check_dt = target_datatype;
@@ -201,7 +201,7 @@ int MPI_Accumulate(void *origin_addr, int origin_count, MPI_Datatype origin_data
                        op?  Unfortunately have to cast away
                        constness... */
                     op_check_dt = (ompi_datatype_t*)
-                        ompi_ddt_basicDatatypes[index];
+                        ompi_ddt_basicDatatypes[found_index];
                 }
             }
             if (!ompi_op_is_valid(op, op_check_dt, &msg, FUNC_NAME)) {

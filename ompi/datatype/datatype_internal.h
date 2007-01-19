@@ -277,15 +277,15 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
 
 static inline int GET_FIRST_NON_LOOP( const dt_elem_desc_t* _pElem )
 {
-    int index = 0;
+    int element_index = 0;
 
     /* We dont have to check for the end as we always put an END_LOOP
      * at the end of all datatype descriptions.
      */
     while( _pElem->elem.common.type == DT_LOOP ) {
-        ++_pElem; index++;
+        ++_pElem; element_index++;
     }
-    return index;
+    return element_index;
 }
 
 #define UPDATE_INTERNAL_COUNTERS( DESCRIPTION, POSITION, ELEMENT, COUNTER ) \

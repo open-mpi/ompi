@@ -149,8 +149,8 @@ ORTE_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, orte_std_
 /**
  *  Retrieve an item from the array by reference.
  *
- *  @param  array     The input array (IN).
- *  @param  index     The array index (IN).
+ *  @param  array          The input array (IN).
+ *  @param  item_index     The array index (IN).
  *
  *  @return ptr Pointer to the requested item.
  *
@@ -158,11 +158,11 @@ ORTE_DECLSPEC int orte_value_array_set_size(orte_value_array_t* array, orte_std_
  *  array size, the array is grown to satisfy the request.
  */
 
-static inline void* orte_value_array_get_item(orte_value_array_t *array, orte_std_cntr_t index)
+static inline void* orte_value_array_get_item(orte_value_array_t *array, orte_std_cntr_t item_index)
 {
-    if(index >= array->array_size && orte_value_array_set_size(array, index+1) != ORTE_SUCCESS)
+    if(item_index >= array->array_size && orte_value_array_set_size(array, item_index+1) != ORTE_SUCCESS)
         return NULL;
-    return array->array_items + (index * array->array_item_sizeof);
+    return array->array_items + (item_index * array->array_item_sizeof);
 }
 
 /** 
@@ -198,13 +198,13 @@ static inline void* orte_value_array_get_item(orte_value_array_t *array, orte_st
  * copied into the array by value.
  */
 
-static inline int orte_value_array_set_item(orte_value_array_t *array, orte_std_cntr_t index, const void* item)
+static inline int orte_value_array_set_item(orte_value_array_t *array, orte_std_cntr_t item_index, const void* item)
 {
     int rc;
-    if(index >= array->array_size && 
-       (rc = orte_value_array_set_size(array, index+1)) != ORTE_SUCCESS)
+    if(item_index >= array->array_size && 
+       (rc = orte_value_array_set_size(array, item_index+1)) != ORTE_SUCCESS)
         return rc;
-    memcpy(array->array_items + (index * array->array_item_sizeof), item, array->array_item_sizeof);
+    memcpy(array->array_items + (item_index * array->array_item_sizeof), item, array->array_item_sizeof);
     return ORTE_SUCCESS;
 }
 
@@ -232,26 +232,26 @@ static inline int orte_value_array_append_item(orte_value_array_t *array, const 
 /**
  *  Remove a specific item from the array. 
  *
- *  @param   array  The input array (IN).
- *  @param   index  The index to remove, which must be less than
- *                  the current array size (IN).
+ *  @param   array       The input array (IN).
+ *  @param   item_index  The index to remove, which must be less than
+ *                       the current array size (IN).
  *
  *  @return  ORTE error code.
  *
  * All elements following this index are shifted down.
  */
 
-static inline int orte_value_array_remove_item(orte_value_array_t *array, orte_std_cntr_t index)
+static inline int orte_value_array_remove_item(orte_value_array_t *array, orte_std_cntr_t item_index)
 {
 #if OMPI_ENABLE_DEBUG
-    if (index >= array->array_size) {
-        opal_output(0, "orte_value_array_remove_item: invalid index %d\n", index);
+    if (item_index >= array->array_size) {
+        opal_output(0, "orte_value_array_remove_item: invalid index %d\n", item_index);
         return ORTE_ERR_BAD_PARAM;
     }
 #endif   
-    memmove(array->array_items+(array->array_item_sizeof * index), 
-            array->array_items+(array->array_item_sizeof * (index+1)),
-            array->array_item_sizeof * (array->array_size - index - 1));
+    memmove(array->array_items+(array->array_item_sizeof * item_index), 
+            array->array_items+(array->array_item_sizeof * (item_index+1)),
+            array->array_item_sizeof * (array->array_size - item_index - 1));
     array->array_size--;
     return ORTE_SUCCESS;
 }

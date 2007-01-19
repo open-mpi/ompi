@@ -95,22 +95,22 @@ OMPI_DECLSPEC int ompi_pointer_array_set_item(ompi_pointer_array_t *array,
 /**
  * Get the value of an element in array
  *
- * @param array Pointer to array (IN)
- * @param index Index of element to be returned (IN)
+ * @param array          Pointer to array (IN)
+ * @param element_index  Index of element to be returned (IN)
  *
  * @return Error code.  NULL indicates an error.
  */
 
 static inline void *ompi_pointer_array_get_item(ompi_pointer_array_t *table, 
-                                                int index)
+                                                int element_index)
 {
     void *p;
 
-	if( table->size <= index ) {
+	if( table->size <= element_index ) {
 		return NULL;
 	}
     OPAL_THREAD_LOCK(&(table->lock));
-    p = table->addr[index];
+    p = table->addr[element_index];
     OPAL_THREAD_UNLOCK(&(table->lock));
     return p;
 }
