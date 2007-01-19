@@ -238,7 +238,7 @@ typedef struct cb_slot_t cb_slot_t;
  *                                   the fifo array.  Not currently
  *                                   in use (IN)
  *
- * @param tail_memory_locality_index Locality index to apply to the
+ * @param head_memory_locality_index Locality index to apply to the
  *                                   head control structure.  Not
  *                                   currently in use (IN)
  *
@@ -304,7 +304,7 @@ static inline int ompi_fifo_init_same_base_addr(int size_of_cb_fifo,
 static inline int ompi_fifo_write_to_head_same_base_addr(void *data, 
         ompi_fifo_t *fifo, mca_mpool_base_module_t *fifo_allocator)
 {
-    int error_code=OMPI_SUCCESS;
+    int error_code;
     size_t len_to_allocate;
     ompi_cb_fifo_wrapper_t *next_ff;
 

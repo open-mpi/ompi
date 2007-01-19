@@ -125,15 +125,16 @@ static inline void *ompi_cb_fifo_read_from_tail(ompi_cb_fifo_t *fifo,
     t_ptr=(ompi_cb_fifo_ctl_t *)( (char *)(fifo->tail) + offset);
     q_ptr=(void **)( (char *)(fifo->queue) + offset);
 
+    old_fifo_index = t_ptr->fifo_index;
+
     /* check to see that the data is valid */
-    if ((q_ptr[t_ptr->fifo_index] == OMPI_CB_FREE) ||
-            (q_ptr[t_ptr->fifo_index] == OMPI_CB_RESERVED)) 
+    if ((q_ptr[old_fifo_index] == OMPI_CB_FREE) ||
+            (q_ptr[old_fifo_index] == OMPI_CB_RESERVED)) 
     {
         return (void *)OMPI_CB_FREE;
     }
 
     /* set return data */
-    old_fifo_index = t_ptr->fifo_index;
     read_from_tail = (void *)q_ptr[old_fifo_index];
     opal_atomic_rmb();
     t_ptr->num_to_clear++;
@@ -210,7 +211,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
         ompi_cb_fifo_t *fifo, mca_mpool_base_module_t *memory_allocator) 
 {
 
-    int errorCode = OMPI_SUCCESS,i;
+    int i;
     size_t len_to_allocate;
 
     /* verify that size is power of 2, and greater than 0 - if not, 
@@ -275,7 +276,7 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
     fifo->tail_memory_locality_index=tail_memory_locality_index;
 
     /* return */
-    return errorCode;
+    return OMPI_SUCCESS;
 }
 
 /**
@@ -290,8 +291,6 @@ static inline int ompi_cb_fifo_init_same_base_addr(int size_of_fifo,
 static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo, 
         mca_mpool_base_module_t *memory_allocator) 
 {
-
-    int errorCode = OMPI_SUCCESS;
     char *ptr;
 
     /* make sure null fifo is not passed in */
@@ -321,7 +320,7 @@ static inline int ompi_cb_fifo_free_same_base_addr( ompi_cb_fifo_t *fifo,
     }
 
     /* return */
-    return errorCode;
+    return OMPI_SUCCESS;
 }
 /**
  * Write pointer to the specified slot
@@ -339,16 +338,16 @@ static inline int ompi_cb_fifo_write_to_slot_same_base_addr(int slot, void* data
         ompi_cb_fifo_t *fifo)
 {
     volatile void **ptr;
-    int wrote_to_slot = OMPI_CB_ERROR;
+
     /* make sure that this slot is already reserved */
     ptr=fifo->queue;
     if (ptr[slot] == OMPI_CB_RESERVED ) {
         opal_atomic_wmb();
         ptr[slot] = data;
         return slot;
-    } else {
-        return wrote_to_slot;
     }
+
+    return OMPI_CB_ERROR;
 }
 
 /**
@@ -372,10 +371,6 @@ static inline int ompi_cb_fifo_write_to_head_same_base_addr(void *data, ompi_cb_
     ptr=fifo->queue;
     old_fifo_index = h_ptr->fifo_index;
 
-    /*
-     * What about turning around the logic?
-     * This is called for every sm fragment and twice when the circular buffer is full...
-     */
     /* make sure the head is pointing at a free element */
     if (ptr[old_fifo_index] == OMPI_CB_FREE) {
         slot = old_fifo_index;
@@ -411,6 +406,7 @@ static inline int ompi_cb_fifo_get_slot_same_base_addr(ompi_cb_fifo_t *fifo)
     h_ptr=fifo->head;
     ptr=fifo->queue;
     old_fifo_index = h_ptr->fifo_index;
+
     /* try and reserve slot */
     if ( OMPI_CB_FREE == ptr[old_fifo_index] ) {
         slot = old_fifo_index;
@@ -452,16 +448,16 @@ static inline void *ompi_cb_fifo_read_from_tail_same_base_addr(
     h_ptr=fifo->head;
     t_ptr=fifo->tail;
     q_ptr=fifo->queue;
+    old_fifo_index = t_ptr->fifo_index;
 
     /* check to see that the data is valid */
-    if ((q_ptr[t_ptr->fifo_index] == OMPI_CB_FREE) ||
-            (q_ptr[t_ptr->fifo_index] == OMPI_CB_RESERVED)) {
+    if ((q_ptr[old_fifo_index] == OMPI_CB_FREE) ||
+            (q_ptr[old_fifo_index] == OMPI_CB_RESERVED)) {
          read_from_tail=(void *)OMPI_CB_FREE;
          goto CLEANUP;
     }
 
     /* set return data */
-    old_fifo_index = t_ptr->fifo_index;
     read_from_tail = (void *)q_ptr[old_fifo_index];
     opal_atomic_rmb();
     t_ptr->num_to_clear++;
