@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -45,7 +45,7 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
 
 /* inline functions */
 
-inline int 
+int 
 ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                           int dest, int stag,
                           void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
