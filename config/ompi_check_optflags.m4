@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2005 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2005 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -33,38 +33,13 @@ co_arg="$1"
 co_found=0
 for co_word in $co_arg; do
     case $co_word in
-    -g)    co_found=1 ;;
-    -g1)   co_found=1 ;;
-    -g2)   co_found=1 ;;
-    -g3)   co_found=1 ;;
-    +K0)   co_found=1 ;;
-    +K1)   co_found=1 ;;
-    +K2)   co_found=1 ;;
-    +K3)   co_found=1 ;;
-    +K4)   co_found=1 ;;
-    +K5)   co_found=1 ;;
-    -O)    co_found=1 ;;
-    -O0)   co_found=1 ;;
-    -O1)   co_found=1 ;;
-    -O2)   co_found=1 ;;
-    -O3)   co_found=1 ;;
-    -O4)   co_found=1 ;;
-    -O5)   co_found=1 ;; 
-    -O6)   co_found=1 ;;
-    -O7)   co_found=1 ;;
-    -O8)   co_found=1 ;;
-    -O9)   co_found=1 ;;
-    -xO)   co_found=1 ;;
-    -xO0)  co_found=1 ;;
-    -xO1)  co_found=1 ;;
-    -xO2)  co_found=1 ;;
-    -xO3)  co_found=1 ;;
-    -xO4)  co_found=1 ;;
-    -xO5)  co_found=1 ;; 
-    -xO6)  co_found=1 ;;
-    -xO7)  co_found=1 ;;
-    -xO8)  co_found=1 ;;
-    -xO9)  co_found=1 ;;
+    -g)        co_found=1 ;;
+    -g[1-3])   co_found=1 ;;
+    +K[0-5])   co_found=1 ;;
+    -O)        co_found=1 ;;
+    -O[0-9])   co_found=1 ;;
+    -xO)       co_found=1 ;;
+    -xO[0-9])  co_found=1 ;;
     -fast) co_found=1 ;;
     esac
 done
