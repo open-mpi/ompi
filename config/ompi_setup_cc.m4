@@ -6,7 +6,7 @@ dnl                         Corporation.  All rights reserved.
 dnl Copyright (c) 2004-2006 The University of Tennessee and The University
 dnl                         of Tennessee Research Foundation.  All rights
 dnl                         reserved.
-dnl Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
+dnl Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
 dnl                         University of Stuttgart.  All rights reserved.
 dnl Copyright (c) 2004-2006 The Regents of the University of California.
 dnl                         All rights reserved.
@@ -73,10 +73,12 @@ AC_DEFUN([OMPI_SETUP_CC],[
 
             if test "$ompi_cv_cc_coverage" = "yes" ; then
                 OMPI_COVERAGE_FLAGS="--coverage"
-                CLEANFILES="*.gcda *.gcno *.gcov ${CLEANFILES}"
+                CLEANFILES="*.gcno ${CLEANFILES}"
+                CONFIG_CLEAN_FILES="*.gcda *.gcov ${CONFIG_CLEAN_FILES}"
             else
                 OMPI_COVERAGE_FLAGS="-ftest-coverage -fprofile-arcs"
-                CLEANFILES="*.bb *.bbg *.da *.*.gcov ${CLEANFILES}"
+                CLEANFILES="*.bb *.bbg ${CLEANFILES}"
+                CONFIG_CLEAN_FILES="*.da *.*.gcov ${CONFIG_CLEAN_FILES}"
             fi
             CFLAGS="$CFLAGS_orig $OMPI_COVERAGE_FLAGS"
             LDFLAGS="$LDFLAGS_orig $OMPI_COVERAGE_FLAGS"
@@ -193,7 +195,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
                                    [ompi_cv_cc_restrict_cflags="yes"],
                                    [ompi_cv_cc_restrict_cflags="no"])])
         if test "$ompi_cv_cc_restrict_cflags" = "yes" ; then
-            add=" $RESTRICT_CFLAGS"
+            add="$RESTRICT_CFLAGS"
         fi
 
         CFLAGS="${CFLAGS_orig}${add}"
@@ -261,6 +263,26 @@ AC_DEFUN([OMPI_SETUP_CC],[
     OMPI_CHECK_OPTFLAGS(["$CFLAGS"])
     AC_MSG_RESULT([$co_result])
     CFLAGS="$co_result"
+
+    CFLAGS_WITHOUT_OPTFLAGS=""
+    for co_word in $CFLAGS ; do
+      co_found=0
+      case $co_word in
+        +K[0-5])   co_found=1 ;;
+        -O)        co_found=1 ;;
+        -O[0-9])   co_found=1 ;;
+        -xO)       co_found=1 ;;
+        -xO[0-9])  co_found=1 ;;
+        -fast) co_found=1 ;;
+      esac
+      if test "$co_found" = "0" ; then
+        CFLAGS_WITHOUT_OPTFLAGS="$CFLAGS_WITHOUT_OPTFLAGS $co_word"
+      fi 
+    done
+
+    unset co_found co_word
+
+    AC_SUBST([CFLAGS_WITHOUT_OPTFLAGS])
 ])
 
 

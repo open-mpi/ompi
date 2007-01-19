@@ -24,7 +24,7 @@ ompi_show_subtitle "Configuration options"
 #
 # Code coverage options
 #
-AC_MSG_CHECKING([Whether to run code coverage])
+AC_MSG_CHECKING([whether to run code coverage])
 AC_ARG_ENABLE(coverage,
               AC_HELP_STRING([--enable-coverage],
                              [enable code coverage files to be generated]))
@@ -42,6 +42,22 @@ mpi libraries])
 else 
     AC_MSG_RESULT([no])
     WANT_COVERAGE=0
+fi
+
+
+#
+# Branch Probabilities options
+#
+AC_MSG_CHECKING([whether to compile with branch probabilities])
+AC_ARG_ENABLE(branch-probabilities,
+              AC_HELP_STRING([--enable-branch-probabilities],
+                             [enable profile arcs and branch probability optimization]))
+if test "$enable_branch_probabilities" = "yes"; then
+    AC_MSG_RESULT([yes])
+    WANT_BRANCH_PROBABILITIES=1
+else 
+    AC_MSG_RESULT([no])
+    WANT_BRANCH_PROBABILITIES=0
 fi
 
 
