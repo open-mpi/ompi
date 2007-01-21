@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -68,7 +68,7 @@ int ompi_mpi_register_params(void)
             value = 1;
         }
         if (0 == value) {
-            opal_show_help("help-ompi-runtime.txt", 
+            opal_show_help("help-mpi-runtime.txt", 
                            "mpi-param-check-enabled-but-compiled-out",
                            true);
             ompi_mpi_param_check = false;
