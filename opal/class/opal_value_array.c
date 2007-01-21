@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -35,12 +35,12 @@ static void opal_value_array_destruct(opal_value_array_t* array)
         free(array->array_items);
 }
 
-opal_class_t opal_value_array_t_class = {
-    "opal_value_array_t",
-     OBJ_CLASS(opal_object_t),
-     (opal_construct_t)opal_value_array_construct,
-     (opal_destruct_t)opal_value_array_destruct
-};
+OBJ_CLASS_INSTANCE(
+    opal_value_array_t,
+    opal_object_t,
+    opal_value_array_construct,
+    opal_value_array_destruct
+);
 
 
 int opal_value_array_set_size(opal_value_array_t* array, size_t size)

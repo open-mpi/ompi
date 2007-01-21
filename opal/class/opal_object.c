@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -36,14 +36,15 @@
  * and no constructor or destructor.
  */
 opal_class_t opal_object_t_class = {
-    "opal_object_t", /* name */
-    NULL,           /* parent class */
-    NULL,           /* constructor */
-    NULL,           /* destructor */
-    1,              /* initialized  -- this class is preinitialized */
-    0,              /* class hierarchy depth */
-    NULL,           /* array of constructors */
-    NULL            /* array of destructors */
+    "opal_object_t",      /* name */
+    NULL,                 /* parent class */
+    NULL,                 /* constructor */
+    NULL,                 /* destructor */
+    1,                    /* initialized  -- this class is preinitialized */
+    0,                    /* class hierarchy depth */
+    NULL,                 /* array of constructors */
+    NULL,                 /* array of destructors */
+    sizeof(opal_object_t) /* size of the opal object */
 };
 
 /*
