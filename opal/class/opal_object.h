@@ -227,6 +227,18 @@ struct opal_object_t {
 
 
 /**
+ * Referring to the OBJ_CLASS, when initializing
+ *
+ * @param NAME          Name of class
+ */
+#ifdef OMPI_ENABLE_DEBUG
+#  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0, __FILE__, __LINE__}
+#else
+#  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0}
+#endif
+
+
+/**
  * Create an object: dynamically allocate storage and run the class
  * constructor.
  *

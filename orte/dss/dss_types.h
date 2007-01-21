@@ -51,7 +51,7 @@ typedef struct {
 } orte_data_value_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_data_value_t);
 
-#define ORTE_DATA_VALUE_EMPTY {{OBJ_CLASS(orte_data_value_t),0}, ORTE_UNDEF, NULL}
+#define ORTE_DATA_VALUE_EMPTY {OBJ_CLASS_EMPTY(orte_data_value_t), ORTE_UNDEF, NULL}
 
 /* structured-unstructured data flags */
 #define ORTE_DSS_STRUCTURED     true

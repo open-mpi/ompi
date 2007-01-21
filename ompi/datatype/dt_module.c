@@ -40,7 +40,12 @@ int ompi_ddt_dfd = -1;
             0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0,             \
             0, 0, 0, 0, 0, 0, 0, 0, 0 }
 #define EMPTY_DATA(NAME) NULL, 0, "MPI_" # NAME, {0, 0, NULL}, {0, 0, NULL}, NULL, NULL, ZERO_DDT_ARRAY
-#define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
+
+#ifdef OMPI_ENABLE_DEBUG
+#  define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1, __FILE__, __LINE__ }
+#else
+#  define BASEOBJ_DATA { OBJ_CLASS(ompi_datatype_t), 1 }
+#endif
 
 /* Using this macro implies that at this point not all informations needed
  * to fill up the datatype are known. We fill them with zeros and then later
