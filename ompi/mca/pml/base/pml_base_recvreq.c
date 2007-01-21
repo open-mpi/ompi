@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -27,12 +27,12 @@ static void mca_pml_base_recv_request_construct(mca_pml_base_recv_request_t*);
 static void mca_pml_base_recv_request_destruct(mca_pml_base_recv_request_t*);
 
 
-opal_class_t mca_pml_base_recv_request_t_class = { 
-    "mca_pml_base_recv_request_t", 
-    OBJ_CLASS(mca_pml_base_request_t),
-    (opal_construct_t) mca_pml_base_recv_request_construct, 
-    (opal_destruct_t) mca_pml_base_recv_request_destruct 
-};
+OBJ_CLASS_INSTANCE(
+    mca_pml_base_recv_request_t,
+    mca_pml_base_request_t,
+    mca_pml_base_recv_request_construct,
+    mca_pml_base_recv_request_destruct
+);
                                                                                                  
 
 static void mca_pml_base_recv_request_construct(mca_pml_base_recv_request_t* request)

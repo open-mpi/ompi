@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -36,12 +36,12 @@ static void orte_value_array_destruct(orte_value_array_t* array)
         free(array->array_items);
 }
 
-opal_class_t orte_value_array_t_class = {
-    "orte_value_array_t",
-     OBJ_CLASS(opal_object_t),
-     (opal_construct_t)orte_value_array_construct,
-     (opal_destruct_t)orte_value_array_destruct
-};
+OBJ_CLASS_INSTANCE(
+    orte_value_array_t,
+    opal_object_t,
+    orte_value_array_construct,
+    orte_value_array_destruct
+);
 
 
 int orte_value_array_set_size(orte_value_array_t* array, orte_std_cntr_t size)

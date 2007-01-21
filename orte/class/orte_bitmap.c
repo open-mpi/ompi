@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart,
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart,
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -32,8 +32,12 @@
 static void orte_bitmap_construct(orte_bitmap_t *bm);
 static void orte_bitmap_destruct(orte_bitmap_t *bm);
 
-OBJ_CLASS_INSTANCE(orte_bitmap_t, opal_object_t,
-                   orte_bitmap_construct, orte_bitmap_destruct);
+OBJ_CLASS_INSTANCE(
+    orte_bitmap_t,
+    opal_object_t,
+    orte_bitmap_construct,
+    orte_bitmap_destruct
+);
 
 
 static void

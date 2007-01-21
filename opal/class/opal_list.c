@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -28,12 +28,12 @@
 static void opal_list_item_construct(opal_list_item_t*);
 static void opal_list_item_destruct(opal_list_item_t*);
 
-opal_class_t  opal_list_item_t_class = {
-    "opal_list_item_t",
-    OBJ_CLASS(opal_object_t), 
-    (opal_construct_t) opal_list_item_construct,
-    (opal_destruct_t) opal_list_item_destruct
-};
+OBJ_CLASS_INSTANCE(
+    opal_list_item_t,
+    opal_object_t,
+    opal_list_item_construct,
+    opal_list_item_destruct
+);
 
 static void opal_list_construct(opal_list_t*);
 static void opal_list_destruct(opal_list_t*);
