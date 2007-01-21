@@ -2,7 +2,7 @@
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
- * Copyright (c) 2004-2006 The University of Tennessee and The University
+ * Copyright (c) 2004-2007 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
  * Copyright (c) 2004-2006 High Performance Computing Center Stuttgart, 
@@ -231,11 +231,11 @@ struct opal_object_t {
  *
  * @param NAME          Name of class
  */
-#ifdef OMPI_ENABLE_DEBUG
+#if OMPI_ENABLE_DEBUG
 #  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0, __FILE__, __LINE__}
 #else
 #  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0}
-#endif
+#endif  /* OMPI_ENABLE_DEBUG */
 
 
 /**
