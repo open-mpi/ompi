@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 
 #include "opal/mca/mca.h"
 #include "opal/mca/base/base.h"
+#include "ompi/runtime/params.h"
 #include "ompi/mca/mpool/mpool.h"
 #include "ompi/mca/mpool/base/base.h"
 #include "ompi/constants.h"
@@ -128,20 +130,10 @@ int mca_mpool_base_open(void)
 #else 
     if(0 == mca_mpool_base_use_mem_hooks ) {
 #endif
-         int param;
-         mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0);
-         param = mca_base_param_find("mpi", NULL, "leave_pinned");
-         mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks);
-         
-         if(0 == mca_mpool_base_use_mem_hooks) { 
-             /* and now check leave_pinned_pipeline if necessary */
-             mca_base_param_register_int("mpi", NULL, 
-                                         "leave_pinned_pipeline", 
-                                         "leave_pinned_pipeline", 0); 
-             param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
-             mca_base_param_lookup_int(param, &mca_mpool_base_use_mem_hooks);
-         }
-    }  
+        if (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline) {
+            mca_mpool_base_use_mem_hooks = 1;
+        }
+    }
     
     /* get the page size for this architecture*/ 
     mca_mpool_base_page_size = sysconf(_SC_PAGESIZE); 

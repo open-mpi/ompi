@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Voltaire. All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -25,6 +26,7 @@
 #include "mpool_rdma.h"
 #include "orte/util/proc_info.h"
 #include "orte/util/sys_info.h"
+#include "ompi/runtime/params.h"
 #include <unistd.h>
 #ifdef HAVE_MALLOC_H
 #include <malloc.h>
@@ -72,7 +74,7 @@ mca_mpool_rdma_component_t mca_mpool_rdma_component = {
   */
 static int mca_mpool_rdma_open(void)
 {
-    int param, val;
+    int val;
 
     mca_base_param_reg_string(&mca_mpool_rdma_component.super.mpool_version,
             "rcache_name",
@@ -93,17 +95,8 @@ static int mca_mpool_rdma_open(void)
 
     mca_mpool_rdma_component.print_stats = val?true:false;
 
-    mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0);
-    param = mca_base_param_find("mpi", NULL, "leave_pinned");
-    mca_base_param_lookup_int(param, (int*)&mca_mpool_rdma_component.leave_pinned);
-
-    if(0 == mca_mpool_rdma_component.leave_pinned) {
-        /* and now check leave_pinned_pipeline if necessary */
-        mca_base_param_register_int("mpi", NULL, "leave_pinned_pipeline",
-                "leave_pinned_pipeline", 0);
-        param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline");
-        mca_base_param_lookup_int(param, (int*)&mca_mpool_rdma_component.leave_pinned);
-    }
+    mca_mpool_rdma_component.leave_pinned = (int) 
+        (ompi_mpi_leave_pinned || ompi_mpi_leave_pinned_pipeline);
 
     return OMPI_SUCCESS;
 }
