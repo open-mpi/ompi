@@ -160,12 +160,13 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
     char ** argv;
     int rc, nfds;
     int fd[2];
+    pid_t pid;
 
-    HANDLE myPipeFd[2]; 
+/*    HANDLE myPipeFd[2]; 
     SECURITY_ATTRIBUTES securityAttr;
     STARTUPINFO startupInfo;
     PROCESS_INFORMATION processInfo;
-    
+*/    
     fd_set readset;
     fd_set errset;
     char outbuf[4096];
@@ -179,12 +180,13 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
      * Build argv array
      */
      
+    pid = _spawnve( _P_DETACH, argv[0], argv, NULL); //daniel     
      
-     
+#if 0
     securityAttr.nLength = sizeof(SECURITY_ATTRIBUTES);     // Size of struct
     securityAttr.lpSecurityDescriptor = NULL;               // Default descriptor
     securityAttr.bInheritHandle = TRUE;                     // Inheritable
-    
+
     // Create the pipe
     if (CreatePipe(&myPipeFd[0], &myPipeFd[1], &securityAttr, 0)) {
 
@@ -235,6 +237,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
             return ORTE_ERR_IN_ERRNO;
         }
     }
+#endif    
     /*
     if ((pid = fork()) < 0) {
         opal_output(0, "pls:process: fork failed with errno=%d\n", errno);
@@ -846,6 +849,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     }
                 } else {
                     if (NULL != prefix_dir) {
+                        strcpy(prefix_dir,"c:");
                         exec_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
                     }
                     /* If we yet did not fill up the execpath, do so now */
@@ -869,7 +873,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     oldenv = getenv("PATH");
                     if (NULL != oldenv) {
                         char *temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv );
+                        asprintf(&temp, "%s;%s", newenv, oldenv ); //daniel asprintf(&temp, "%s:%s", newenv, oldenv );
                         free( newenv );
                         newenv = temp;
                     }
@@ -907,7 +911,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     free(argv[local_exec_index_end]);
                     argv[local_exec_index_end] = NULL;
                 }
-
+#if 0
                 /* Finally, chdir($HOME) because we're making the
                    assumption that this is what will happen on
                    remote nodes (via process/ssh).  This allows a user
@@ -929,6 +933,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                        in the fork pls, so this is consistent) */
                     chdir(var);
                 }
+#endif                
             } else {
                 if (mca_pls_process_component.debug) {
                     opal_output(0, "pls:process: %s is a REMOTE node\n",
@@ -985,9 +990,9 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 }
             }
             //execve(exec_path, exec_argv, env);
-            pid = _spawnve( _P_DETACH, exec_path, exec_argv, env); //daniel
-            
-            opal_output(0, "pls:process: execv hopefully started (pid %llx)\n", pid);
+            pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env); //,NULL); daniel
+            if (pid == -1) opal_output(0, "pls:process: execv failed spawning new process; errno=%d\n", errno);
+            else opal_output(0, "pls:process: execv hopefully started (pid %d)\n", pid);
 #if 0
         } /*else*/ { /* father */
             OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
