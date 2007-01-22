@@ -347,9 +347,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
             openib_btl->use_eager_rdma = 
                 hca->use_eager_rdma & mca_btl_openib_component.use_eager_rdma;
-            printf("Using eagr rmda: %d (%d and %d)\n", openib_btl->use_eager_rdma,
-                   hca->use_eager_rdma,
-                   mca_btl_openib_component.use_eager_rdma);
             /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
