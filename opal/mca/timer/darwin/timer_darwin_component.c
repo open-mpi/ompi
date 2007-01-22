@@ -64,6 +64,47 @@ int opal_timer_darwin_open(void)
 
     mach_timebase_info(&sTBI);
 
+    /* mach_timebase_info() returns a fraction that can be multiplied
+       by the difference between two calls to mach_absolute_time() to
+       get the number of nanoseconds that passed between the two
+       calls.  
+
+       On PPC, mach_timebase_info returns numer = 1000000000 and denom
+       = 33333335 (or possibly 25000000, depending on the machine).
+       mach_absolute_time() returns a cycle count from the global
+       clock, which runs at 25 - 33MHz, so dividing the cycle count by
+       the frequency gives you seconds between the interval, then
+       multiplying by 1000000000 gives you nanoseconds.  Of course,
+       you should do the multiply first, then the divide to reduce
+       arithmetic errors due to integer math.  But since we want the
+       least amount of math in the critical path as possible and
+       mach_absolute_time is already a cycle counter, we claim we have
+       native cycle count support and set the frequencey to be the
+       frequencey of the global clock, which is sTBI.denom *
+       (1000000000 / sTBI.numer), which is sTBI.denom * (1 / 1), or
+       sTBI.denom.
+
+       On Intel, mach_timebase_info returns numer = 1 nd denom = 1,
+       meaning that mach_absolute_time() returns some global clock
+       time in nanoseconds.  Because PPC returns a frequency and
+       returning a time in microseconds would still require math in
+       the critical path (a divide, at that), we pretend that the
+       nanosecond timer is instead a cycle counter for a 1GHz clock
+       and that we're returning a cycle count natively.  so sTBI.denom
+       * (1000000000 / sTBI.numer) gives us 1 * (1000000000 / 1), or
+       1000000000, meaning we have a 1GHz clock.
+
+       More generally, since mach_timebase_info() gives the "keys" to
+       transition the return from mach_absolute_time() into
+       nanoseconds, taking the reverse of that and multipling by
+       1000000000 will give you a frequency in cycles / second if you
+       think of mach_absolute_time() always returning a cycle count.
+
+       By the way, it's interesting to note that because these are
+       library functions and because of how rosetta works, a PPC
+       binary running under rosetta on an Intel Mac will behave
+       exactly like an Intel binary running on an Intel Mac.
+    */
     opal_timer_darwin_freq = sTBI.denom * (1000000000 / sTBI.numer);
 
     return OPAL_SUCCESS;
