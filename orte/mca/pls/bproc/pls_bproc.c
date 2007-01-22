@@ -944,7 +944,7 @@ static int orte_pls_bproc_launch_app(orte_job_map_t* map, int num_slots,
                 goto cleanup;
             } else {
                 rc = orte_ns.create_process_name(&proc_name, ORTE_PROC_MY_NAME->cellid, map->job,
-                                                 vpid_start + j);
+                                                 vpid_start + j*stride);
                 if(ORTE_SUCCESS != rc) {
                     ORTE_ERROR_LOG(rc);
                     goto cleanup;
