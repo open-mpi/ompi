@@ -345,7 +345,12 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            /* store the subnet_id for multi-nic support */
+            openib_btl->use_eager_rdma = 
+                hca->use_eager_rdma & mca_btl_openib_component.use_eager_rdma;
+            printf("Using eagr rmda: %d (%d and %d)\n", openib_btl->use_eager_rdma,
+                   hca->use_eager_rdma,
+                   mca_btl_openib_component.use_eager_rdma);
+            /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
@@ -672,13 +677,6 @@ btl_openib_component_init(int *num_btl_modules,
         OBJ_RELEASE(ib_selected); 
         openib_btl = &mca_btl_openib_component.openib_btls[i];
 
-        /* Setup the "use eager rdma" flag -- look at the "use eager
-           rdma" flag on all the hcas, and if they're *all* true, then
-           set the component-wide flag to be true.  If not, set the
-           component-wide flag to be false. */
-        mca_btl_openib_component.use_eager_rdma &= 
-            openib_btl->hca->use_eager_rdma;
-
         openib_btl->rd_num = mca_btl_openib_component.rd_num +
             mca_btl_openib_component.rd_rsv;
         openib_btl->rd_low = mca_btl_openib_component.rd_low;
@@ -872,7 +870,7 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     }
    
     if (!endpoint->eager_rdma_local.base.pval &&
-            mca_btl_openib_component.use_eager_rdma &&
+        endpoint->endpoint_btl->use_eager_rdma &&
             endpoint->use_eager_rdma &&
             BTL_OPENIB_HP_QP == prio &&
             openib_btl->eager_rdma_buffers_count <
