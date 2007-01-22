@@ -102,6 +102,7 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     char **argv, *param, *uri, *uid, *hn=NULL;
     char *path, *name_string, *orteprobe;
     int argc, rc=ORTE_SUCCESS, id, intparam;
+    pid_t pid;
     bool can_launch=false, on_gpr=false;
     orte_cellid_t cellid=ORTE_CELLID_MAX, *cptr;
     orte_jobid_t jobid;
@@ -110,6 +111,8 @@ int orte_setup_hnp(char *target_cluster, char *headnode, char *username)
     orte_gpr_value_t **values=NULL, *value;
     orte_gpr_keyval_t **keyvals;
     char *keys[4], *tokens[3], *cellname;
+    struct timeval tv;
+    struct timespec ts;
     bool infrastructure = true, *bptr, tf_flag;
 
     /* get the nodename for the headnode of the target cluster */
