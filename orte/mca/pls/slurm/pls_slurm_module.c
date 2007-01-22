@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -573,8 +573,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
         bin_base = opal_basename(OPAL_BINDIR);
 
         /* If we have a prefix, then modify the PATH and
-           LD_LIBRARY_PATH environment variables.  We're already in
-           the child process, so it's ok to modify environ. */
+           LD_LIBRARY_PATH environment variables.  */
         if (NULL != prefix) {
             char *oldenv, *newenv;
 
@@ -585,7 +584,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             } else {
                 asprintf(&newenv, "%s/%s", prefix, bin_base);
             }
-            opal_setenv("PATH", newenv, true, &environ);
+            opal_setenv("PATH", newenv, true, &env);
             if (mca_pls_slurm_component.debug) {
                 opal_output(0, "pls:slurm: reset PATH: %s", newenv);
             }
@@ -598,7 +597,7 @@ static int pls_slurm_start_proc(int argc, char **argv, char **env,
             } else {
                 asprintf(&newenv, "%s/%s", prefix, lib_base);
             }
-            opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+            opal_setenv("LD_LIBRARY_PATH", newenv, true, &env);
             if (mca_pls_slurm_component.debug) {
                 opal_output(0, "pls:slurm: reset LD_LIBRARY_PATH: %s",
                             newenv);
