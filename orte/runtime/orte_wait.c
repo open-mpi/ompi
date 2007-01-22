@@ -613,7 +613,7 @@ internal_waitpid_callback(int fd, short event, void *arg)
 }
 #endif
 
-#elif __WINDOWS__
+#elif defined(__WINDOWS__)
 
 typedef struct {
     opal_list_item_t super;
