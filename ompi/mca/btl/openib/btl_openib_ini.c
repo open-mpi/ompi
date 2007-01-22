@@ -393,7 +393,10 @@ static int parse_line(parsed_section_values_t *sv)
         /* Have no idea what this parameter is.  Not an error -- just
            ignore it */
         if (!showed_unknown_field_warning) {
-            show_help("ini file:unknown field");
+            opal_show_help("help-mpi-btl-openib.txt", 
+                           "ini file:unknown field", true,
+                           ini_filename, btl_openib_ini_yynewlines,
+                           key_buffer);
             showed_unknown_field_warning = true;
         }
     }
@@ -611,7 +614,12 @@ static int intify_list(char *value, uint32_t **values, int *len)
  */
 static inline void show_help(const char *topic)
 {
+    char *save = btl_openib_ini_yytext;
+    if (0 == strcmp("\n", btl_openib_ini_yytext)) {
+        btl_openib_ini_yytext = "<end of line>";
+    }
     opal_show_help("help-mpi-btl-openib.txt", topic, true,
                    ini_filename, btl_openib_ini_yynewlines,
                    btl_openib_ini_yytext);
+    btl_openib_ini_yytext = save;
 }
