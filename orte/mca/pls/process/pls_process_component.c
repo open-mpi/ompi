@@ -189,10 +189,6 @@ extern char **environ;
 orte_pls_base_module_t *orte_pls_process_component_init(int *priority)
 {
     /* if we are not an HNP, then don't select us */
-    if (!orte_process_info.seed) {
-        return NULL;
-    }
-    
     *priority = mca_pls_process_component.priority;
     
     return &orte_pls_process_module;
