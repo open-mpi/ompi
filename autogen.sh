@@ -433,6 +433,13 @@ EOF
             echo "     ==> your libtool doesn't need this! yay!"
         fi
 	cd ../..
+        echo "  -- patching 64-bit OS X bug in ltmain.sh"
+        if test ! -z "`grep otool config/ltmain.sh`" -a \
+              -z "`grep otool64 config/ltmain.sh`"; then
+            patch -N -p0 < config/ltmain_otool.diff
+        else
+            echo "     ==> your libtool doesn't need this! yay!"
+        fi
 	echo "  -- patching configure for broken -c/-o compiler test"
 	sed -e 's/chmod -w \./#OMPI\/MPI FIX: chmod -w ./' \
 	    configure > configure.new
