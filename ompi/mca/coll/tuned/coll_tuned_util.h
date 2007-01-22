@@ -45,13 +45,23 @@ int ompi_coll_tuned_sendrecv_actual( void* sendbuf, int scount,
 
 /* inline functions */
 
-int 
+static inline int
 ompi_coll_tuned_sendrecv( void* sendbuf, int scount, ompi_datatype_t* sdatatype,
                           int dest, int stag,
                           void* recvbuf, int rcount, ompi_datatype_t* rdatatype,
                           int source, int rtag, 
                           struct ompi_communicator_t* comm,
-                          ompi_status_public_t* status, int myid );
+                          ompi_status_public_t* status, int myid )
+{
+    if ((dest == myid) && (source == myid)) {
+        return (int) ompi_ddt_sndrcv(sendbuf, (int32_t) scount, sdatatype, 
+                                     recvbuf, (int32_t) rcount, rdatatype);
+    }
+    return ompi_coll_tuned_sendrecv_actual (sendbuf, scount, sdatatype, 
+                                            dest, stag, 
+                                            recvbuf, rcount, rdatatype,
+                                            source, rtag, comm, status);
+}
 
 int 
 ompi_coll_tuned_sendrecv_actual_localcompleted( void* sendbuf, int scount, 
