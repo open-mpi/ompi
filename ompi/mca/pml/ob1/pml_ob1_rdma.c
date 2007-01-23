@@ -56,7 +56,9 @@ size_t mca_pml_ob1_rdma_btls(
     OBJ_CONSTRUCT(&regs, ompi_pointer_array_t);
     for(n = 0; n < num_btls && num_btls_used < MCA_PML_OB1_MAX_RDMA_PER_REQUEST; n++) {
 
-        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(&bml_endpoint->btl_rdma, n); 
+        mca_bml_base_btl_t* bml_btl = mca_bml_base_btl_array_get_index(
+                &bml_endpoint->btl_rdma,
+                (bml_endpoint->btl_rdma_index + n) % num_btls); 
         mca_mpool_base_registration_t* fit = NULL;
         mca_mpool_base_module_t* btl_mpool = bml_btl->btl_mpool;
         uint32_t reg_cnt;
@@ -124,6 +126,7 @@ size_t mca_pml_ob1_rdma_btls(
             num_btls_used++;
         }
     }
+    bml_endpoint->btl_rdma_index = (bml_endpoint->btl_rdma_index + 1) % num_btls;
     return num_btls_used;
 }
 
