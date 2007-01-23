@@ -234,7 +234,7 @@ static int orte_ras_gridengine_discover(opal_list_t* nodelist,
         item != opal_list_get_end(nodelist);
         item =  opal_list_get_next(item)) {
         orte_ras_node_t *node = (orte_ras_node_t*)item;
-        int remain_slot_cnt;
+        int remain_slot_cnt = 0;
 
         opal_output(mca_ras_gridengine_component.verbose,
             "ras:gridengine: %s: checking gpr key", node->node_name);

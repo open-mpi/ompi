@@ -486,19 +486,20 @@ static inline int poe_launch_interactive_job(orte_jobid_t jobid)
 
     if(!strncmp(mca_pls_poe_component.resource_allocation,"hostfile",8)) {
 
-    /* Create a temporary hostlist file if user specify */
+        /* Create a temporary hostlist file if user specify */
 
-    if( (NULL==(mca_pls_poe_component.hostfile=tempnam(NULL,NULL))) ||
-        (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
-        return ORTE_ERR_OUT_OF_RESOURCE;
+        if( (NULL==(mca_pls_poe_component.hostfile=tempnam(NULL,NULL))) ||
+            (NULL==(hfp=fopen(mca_pls_poe_component.hostfile,"w"))) ) {
+            return ORTE_ERR_OUT_OF_RESOURCE;
+        }
+        for(item =  opal_list_get_first(&map->nodes);
+            item != opal_list_get_end(&map->nodes);
+            item =  opal_list_get_next(item)) {
+            orte_mapped_node_t* node = (orte_mapped_node_t*)item;
+            fprintf(hfp,"%s\n",node->nodename);
+        }
+        fclose(hfp);
     }
-    for(item =  opal_list_get_first(&map->nodes);
-        item != opal_list_get_end(&map->nodes);
-        item =  opal_list_get_next(item)) {
-        orte_mapped_node_t* node = (orte_mapped_node_t*)item;
-        fprintf(hfp,"%s\n",node->nodename);
-    }
-    fclose(hfp);
 
     rc = orte_rmgr.get_vpid_range(jobid, &vpid_start, &vpid_range);
     if (ORTE_SUCCESS != rc) { ORTE_ERROR_LOG(rc); goto cleanup; }

@@ -129,8 +129,11 @@ static int orte_rmgr_cnos_spawn_job(
     orte_app_context_t** app_context,
     orte_std_cntr_t num_context,
     orte_jobid_t* jobid,
-    orte_rmgr_cb_fn_t cbfunc,
-    orte_proc_state_t cb_conditions)
+    orte_std_cntr_t num_connect,
+    orte_process_name_t *connect,
+    orte_rmgr_cb_fn_t cbfn,
+    orte_proc_state_t cb_conditions,
+    opal_list_t *attributes)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
@@ -201,11 +204,12 @@ static int orte_rmgr_cnos_get_vpid_range(orte_jobid_t jobid,
 
 static orte_gpr_keyval_t* orte_rmgr_cnos_find_attribute(opal_list_t* attr_list, char* key)
 {
-    return ORTE_ERR_NOT_SUPPORTED;
+    return NULL;
 }
 
 static int orte_rmgr_cnos_add_attribute(opal_list_t* attr_list, char* key,
-                                        orte_data_type_t type, void *data)
+                                        orte_data_type_t type, void *data,
+                                        bool overwrite)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

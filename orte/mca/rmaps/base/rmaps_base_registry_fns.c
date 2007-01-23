@@ -69,6 +69,7 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
         ORTE_NODE_OVERSUBSCRIBED_KEY,
         ORTE_JOB_VPID_START_KEY,
         ORTE_JOB_VPID_RANGE_KEY,
+        ORTE_JOB_MAPPING_MODE_KEY,
         NULL
     };
 
@@ -86,13 +87,6 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
     
     /* set the jobid */
     mapping->job = jobid;
-    
-    /* get the vpid start/range info */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.get_vpid_range(jobid, &mapping->vpid_start, &mapping->vpid_range))) {
-        ORTE_ERROR_LOG(rc);
-        OBJ_RELEASE(mapping);
-        return rc;
-    }
     
     /* get the job segment name */
     if (ORTE_SUCCESS != (rc = orte_schema.get_job_segment_name(&segment, jobid))) {
@@ -148,6 +142,14 @@ int orte_rmaps_base_get_job_map(orte_job_map_t **map, orte_jobid_t jobid)
                         goto cleanup;
                     }
                     mapping->vpid_range = *vptr;
+                    continue;
+                }                
+                if(strcmp(value->keyvals[kv]->key, ORTE_JOB_MAPPING_MODE_KEY) == 0) {
+                    /* use the dss.copy function here to protect us against zero-length strings */
+                    if (ORTE_SUCCESS != (rc = orte_dss.copy((void**)&mapping->mapping_mode, value->keyvals[kv]->value->data, ORTE_STRING))) {
+                        ORTE_ERROR_LOG(rc);
+                        goto cleanup;
+                    }
                     continue;
                 }                
             }
@@ -332,12 +334,6 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         return ORTE_ERR_BAD_PARAM;
     }
 
-    /* store the vpid start/range info */
-    if (ORTE_SUCCESS != (rc = orte_rmgr.set_vpid_range(map->job, map->vpid_start, map->vpid_range))) {
-        ORTE_ERROR_LOG(rc);
-        return rc;
-    }
-        
     /**
      * allocate value array. We need to reserve one extra spot so we can set the counter
      * for the process INIT state to indicate that all procs are at that state. This will
@@ -358,7 +354,7 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
     /** setup the last value in the array to store the vpid start/range and update the INIT counter */
     if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&(values[num_procs]),
                                             ORTE_GPR_OVERWRITE|ORTE_GPR_TOKENS_AND,
-                                            segment, 3, 1))) {
+                                            segment, 4, 1))) {
         ORTE_ERROR_LOG(rc);
         free(values);
         free(segment);
@@ -373,6 +369,10 @@ int orte_rmaps_base_put_job_map(orte_job_map_t *map)
         goto cleanup;
     }
     if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[2]), ORTE_JOB_VPID_RANGE_KEY, ORTE_VPID, &map->vpid_range))) {
+        ORTE_ERROR_LOG(rc);
+        goto cleanup;
+    }
+    if (ORTE_SUCCESS != (rc = orte_gpr.create_keyval(&(values[num_procs]->keyvals[3]), ORTE_JOB_MAPPING_MODE_KEY, ORTE_STRING, map->mapping_mode))) {
         ORTE_ERROR_LOG(rc);
         goto cleanup;
     }

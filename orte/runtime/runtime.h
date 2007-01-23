@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -148,7 +149,8 @@ ORTE_DECLSPEC    int orte_monitor_procs_unregistered(void);
      * @retval ORTE_SUCCESS Upon successful search.
      * @retval ORTE_ERROR Upon unsuccessful search.
      */
-    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list, bool report_broken_files);
+    ORTE_DECLSPEC int orte_universe_search(opal_list_t *universe_list, bool report_broken_files,
+                                           bool remove_broken_files);
 
     /**
      * Check for universe existence

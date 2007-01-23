@@ -388,7 +388,9 @@ stdout_fifo_setup:
     orte_iof.iof_publish(proc_name, ORTE_IOF_SOURCE,
                          ORTE_IOF_STDOUT, fd);
 
+#if defined(HAVE_OPENPTY) && (OMPI_ENABLE_PTY_SUPPORT != 0)
 stderr_fifo_setup:
+#endif
 
     free(fd_link_path);
     fd_link_path = NULL;

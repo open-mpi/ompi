@@ -31,6 +31,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/mca/ns/base/base.h"
+#include "orte/mca/ns/base/ns_private.h"
 #include "ns_replica.h"
 
 /**
