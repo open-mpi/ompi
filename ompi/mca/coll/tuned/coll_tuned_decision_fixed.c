@@ -43,7 +43,7 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                            struct ompi_communicator_t *comm)
 {
     size_t dsize, block_dsize;
-    const int intermediate_message = 10000;
+    const size_t intermediate_message = 10000;
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
     /**
@@ -192,8 +192,8 @@ int ompi_coll_tuned_bcast_intra_dec_fixed(void *buff, int count,
 {
     /* Decision function based on MX results for 
     messages up to 36MB and communicator sizes up to 64 nodes */
-    const double small_message_size = 2048;
-    const double intermediate_message_size = 370728;
+    const size_t small_message_size = 2048;
+    const size_t intermediate_message_size = 370728;
     const double a_p16  = 3.2118e-6; /* [1 / byte] */
     const double b_p16  = 8.7936;   
     const double a_p64  = 2.3679e-6; /* [1 / byte] */
