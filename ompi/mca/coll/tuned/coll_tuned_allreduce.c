@@ -125,7 +125,6 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    int ret, line;
    int rank, size, adjsize, remote, distance;
    int newrank, newremote, extra_ranks;
-   int tag;
    char *tmpsend = NULL, *tmprecv = NULL, *tmpswap = NULL, *inplacebuf = NULL;
    ptrdiff_t true_lb, true_extent, lb, extent;
    ompi_request_t *reqs[2] = {NULL, NULL};
