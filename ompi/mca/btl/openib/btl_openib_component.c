@@ -345,8 +345,6 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            openib_btl->use_eager_rdma = 
-                hca->use_eager_rdma & mca_btl_openib_component.use_eager_rdma;
             /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
@@ -867,7 +865,6 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     }
    
     if (!endpoint->eager_rdma_local.base.pval &&
-        endpoint->endpoint_btl->use_eager_rdma &&
             endpoint->use_eager_rdma &&
             BTL_OPENIB_HP_QP == prio &&
             openib_btl->eager_rdma_buffers_count <

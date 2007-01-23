@@ -230,8 +230,6 @@ struct mca_btl_openib_module_t {
     mca_btl_base_module_error_cb_fn_t error_cb; /**< error handler */
    
     orte_pointer_array_t *endpoints;
-    /** Whether to use eager RDMA for this module or not */
-    uint8_t use_eager_rdma;
 }; typedef struct mca_btl_openib_module_t mca_btl_openib_module_t;
 
 extern mca_btl_openib_module_t mca_btl_openib_module;
