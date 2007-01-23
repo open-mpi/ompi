@@ -133,6 +133,8 @@ extern int ompi_coll_tuned_forced_max_algorithms[COLLCOUNT];
   int ompi_coll_tuned_allreduce_intra_do_this(ALLREDUCE_ARGS, int algorithm, int faninout, int segsize);
   int ompi_coll_tuned_allreduce_intra_check_forced_init (coll_tuned_force_algorithm_mca_param_indices_t *mca_param_indices);
   int ompi_coll_tuned_allreduce_intra_nonoverlapping(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_recursivedoubling(ALLREDUCE_ARGS);
+  int ompi_coll_tuned_allreduce_intra_ring(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_intra_basic_linear(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_inter_dec_fixed(ALLREDUCE_ARGS);
   int ompi_coll_tuned_allreduce_inter_dec_dynamic(ALLREDUCE_ARGS);
