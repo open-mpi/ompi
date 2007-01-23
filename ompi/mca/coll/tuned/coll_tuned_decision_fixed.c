@@ -42,9 +42,33 @@ ompi_coll_tuned_allreduce_intra_dec_fixed (void *sbuf, void *rbuf, int count,
                                            struct ompi_op_t *op,
                                            struct ompi_communicator_t *comm)
 {
+    size_t dsize, block_dsize;
+    const int intermediate_message = 10000;
     OPAL_OUTPUT((ompi_coll_tuned_stream, "ompi_coll_tuned_allreduce_intra_dec_fixed"));
 
-    return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, dtype, op, comm));
+    /**
+     * Decision function based on MX results from the Grig cluster at UTK.
+     * 
+     * Currently, linear, recursive doubling, and nonoverlapping algorithms 
+     * can handle both commutative and non-commutative operations.
+     * Ring algorithm does not support non-commutative operations.
+     */
+    ompi_ddt_type_size(dtype, &dsize);
+    block_dsize = dsize * count;
+
+    if (block_dsize < intermediate_message) {
+       return (ompi_coll_tuned_allreduce_intra_recursivedoubling (sbuf, rbuf, 
+                                                                  count, dtype,
+                                                                  op, comm));
+    } 
+
+    if( ompi_op_is_commute(op) ) {
+       return (ompi_coll_tuned_allreduce_intra_ring (sbuf, rbuf, count, dtype, 
+                                                     op, comm));
+    }
+
+    return (ompi_coll_tuned_allreduce_intra_nonoverlapping (sbuf, rbuf, count, 
+                                                            dtype, op, comm));
 }
 
 /*
@@ -340,6 +364,7 @@ int ompi_coll_tuned_reduce_intra_dec_fixed( void *sendbuf, void *recvbuf,
         segsize = 64*1024;
     }
     return ompi_coll_tuned_reduce_intra_pipeline (sendbuf, recvbuf, count, datatype, op, root, comm, segsize);
+
 #if 0
     /* for small messages use linear algorithm */
     if (message_size <= 4096) {
