@@ -340,10 +340,8 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
 {
    int ret, line;
    int rank, size, k, recvfrom, sendto;
-   int newrank, newremote, extra_ranks;
    int segcount, lastsegcount, maxsegcount, realsegsize, maxrealsegsize;
    int blockcount, inbi;
-   int tag;
    size_t typelng;
    char *tmpsend = NULL, *tmprecv = NULL;
    char *inbuf[2] = {NULL, NULL};
