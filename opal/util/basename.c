@@ -121,12 +121,21 @@ char *opal_basename(const char *filename)
     /* Look for the final sep */
 
     ret = strrchr(tmp, sep);
+#ifdef __WINDOWS__
+    /**
+	 * As on Windows we support both separators (/ and \) we should double
+	 * check or both of them.
+	 */
+	if( NULL == ret ) {
+	    ret = strrchr(tmp, '/');
+	}
+#endif  /* __WINDOWS__ */
     if (NULL == ret) {
         return tmp;
     }
     ret = strdup(ret + 1);
     free(tmp);
-    return opal_make_filename_os_friendly(ret);
+    return ret;
 }
 
 char* opal_dirname(const char* filename)
