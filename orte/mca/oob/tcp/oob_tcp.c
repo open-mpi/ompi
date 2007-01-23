@@ -487,7 +487,7 @@ static void* mca_oob_tcp_listen_thread(opal_object_t *obj)
                 if(opal_socket_errno != EAGAIN || opal_socket_errno != EWOULDBLOCK) {
                     opal_output(0, "mca_oob_tcp_accept: accept() failed: %s (%d).",
                                 strerror(opal_socket_errno), opal_socket_errno);
-                    close(item->fd);
+                    CLOSE_THE_SOCKET(item->fd);
                     return NULL;
                 }
 
@@ -1250,11 +1250,11 @@ int mca_oob_tcp_fini(void)
     if (mca_oob_tcp_component.tcp_listen_sd >= 0) {
         if (OOB_TCP_EVENT == mca_oob_tcp_component.tcp_listen_type) {
             opal_event_del(&mca_oob_tcp_component.tcp_recv_event);
-            close(mca_oob_tcp_component.tcp_listen_sd);
+            CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
         } else if (OOB_TCP_LISTEN_THREAD == mca_oob_tcp_component.tcp_listen_type) {
             void *data;
             mca_oob_tcp_component.tcp_shutdown = true;
-            close(mca_oob_tcp_component.tcp_listen_sd);
+            CLOSE_THE_SOCKET(mca_oob_tcp_component.tcp_listen_sd);
             opal_thread_join(&mca_oob_tcp_component.tcp_listen_thread, &data);
             opal_progress_unregister(mca_oob_tcp_listen_progress);
         }
