@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include <inttypes.h>
 #include "opal/util/output.h"
 #include "opal/util/if.h"
+#include "opal/util/show_help.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/btl_base_error.h"
@@ -33,6 +35,7 @@
 #include "ompi/mca/mpool/base/base.h" 
 #include "ompi/mca/mpool/mpool.h" 
 #include "ompi/mca/mpool/rdma/mpool_rdma.h"
+#include "orte/util/sys_info.h"
 #include <errno.h> 
 #include <string.h> 
 #include <math.h>
@@ -69,6 +72,21 @@ mca_btl_openib_module_t mca_btl_openib_module = {
 };
 
 int mca_btl_openib_size_queues( struct mca_btl_openib_module_t* openib_btl, size_t nprocs);
+
+
+static void show_init_error(const char *file, int line, 
+                            const char *func, const char *dev) 
+{
+    if (ENOMEM == errno) {
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
+                       true, orte_system_info.nodename, 
+                       file, line, func, dev);
+    } else {
+        opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
+                       true, orte_system_info.nodename, 
+                       file, line, func, strerror(errno), errno, dev);
+    }
+}
 
 
 /* 
@@ -745,7 +763,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
     /* Allocate Protection Domain */ 
     openib_btl->poll_cq = false; 
     
-    if(mca_btl_openib_component.use_srq) { 
+    if (mca_btl_openib_component.use_srq) { 
         
         struct ibv_srq_init_attr attr; 
         attr.attr.max_wr = mca_btl_openib_component.srq_rd_max;
@@ -756,15 +774,17 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
         
         openib_btl->srq[BTL_OPENIB_HP_QP] =
             ibv_create_srq(openib_btl->hca->ib_pd, &attr); 
-        if(NULL == openib_btl->srq[BTL_OPENIB_HP_QP]) { 
-            BTL_ERROR(("error in ibv_create_srq\n")); 
+        if (NULL == openib_btl->srq[BTL_OPENIB_HP_QP]) { 
+            show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+                            ibv_get_device_name(openib_btl->hca->ib_dev));
             return OMPI_ERROR; 
         }
         
         openib_btl->srq[BTL_OPENIB_LP_QP] =
             ibv_create_srq(openib_btl->hca->ib_pd, &attr); 
-        if(NULL == openib_btl->srq[BTL_OPENIB_LP_QP]) { 
-            BTL_ERROR(("error in ibv_create_srq\n")); 
+        if (NULL == openib_btl->srq[BTL_OPENIB_LP_QP]) { 
+            show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+                            ibv_get_device_name(openib_btl->hca->ib_dev));
             return OMPI_ERROR; 
         }
         
@@ -797,19 +817,16 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 #endif
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */
     
-    if(NULL == openib_btl->ib_cq[BTL_OPENIB_LP_QP]) {
-        BTL_ERROR(("error creating low priority cq for %s errno says %s\n",
-                  ibv_get_device_name(openib_btl->hca->ib_dev), 
-                  strerror(errno))); 
+    if (NULL == openib_btl->ib_cq[BTL_OPENIB_LP_QP]) {
+        show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERROR;
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     if(ibv_req_notify_cq(openib_btl->ib_cq[BTL_OPENIB_LP_QP], 0)) {
-        BTL_ERROR(("error requesting low priority cq notification for %s"
-                    " errno says %s\n",
-                    ibv_get_device_name(openib_btl->hca->ib_dev),
-                    strerror(errno)));
+        show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERROR;
     }
 
@@ -835,18 +852,15 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */   
 
     if(NULL == openib_btl->ib_cq[BTL_OPENIB_HP_QP]) {
-        BTL_ERROR(("error creating high priority cq for %s errno says %s\n", 
-                  ibv_get_device_name(openib_btl->hca->ib_dev), 
-                  strerror(errno))); 
+        show_init_error(__FILE__, __LINE__, "ibv_create_cq",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERROR;
     }
 
 #if OMPI_ENABLE_PROGRESS_THREADS == 1
     if(ibv_req_notify_cq(openib_btl->ib_cq[BTL_OPENIB_HP_QP], 0)) {
-        BTL_ERROR(("error requesting high priority cq notification for %s"
-                    " errno says %s\n",
-                    ibv_get_device_name(openib_btl->hca->ib_dev),
-                    strerror(errno)));
+        show_init_error(__FILE__, __LINE__, "ibv_req_notify_cq",
+                        ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERROR;
     }
     OPAL_THREAD_LOCK(&openib_btl->hca->hca_lock);
