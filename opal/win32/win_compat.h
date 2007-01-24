@@ -90,9 +90,9 @@ typedef unsigned int uint;
 
 /* Defines for the access functions */
 #define F_OK  0x00
-#define R_OK  0x02
-#define W_OK  0x04
-#define X_OK  0x06
+#define R_OK  0x04
+#define W_OK  0x02
+#define X_OK  R_OK  /* no execution right on Windows */
 #define WTERMSIG(EXIT_CODE)    (1)
 #define WIFEXITED(EXIT_CODE)   (1)
 #define WEXITSTATUS(EXIT_CODE) (EXIT_CODE)
