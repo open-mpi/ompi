@@ -92,6 +92,35 @@ btl_openib_hca_param_files MCA parameter to set values for your HCA.
 
 NOTE: You can turn off this warning by setting the MCA parameter
       btl_openib_warn_no_hca_params_found to 0.
+[init-fail-no-mem]
+The OpenIB BTL failed to initialize while trying to allocate some
+locked memory.  This typically can indicate that the memlock limits
+are set too low.  For most HPC installations, the memlock limits
+should be set to "unlimited".  The failure occured here:
+
+    Host:        %s
+    OMPI source: %s:%d
+    Function:    %s()
+    Device:      %s
+
+You may need to consult with your system administrator to get this
+problem fixed.  This FAQ entry on the Open MPI web site may also be
+helpful:
+
+    http://www.open-mpi.org/faq/?category=openfabrics#ib-locked-pages
+[init-fail-create-q]
+The OpenIB BTL failed to initialize while trying to create an internal
+queue.  This typically indicates a failed OpenFabrics installation or
+faulty hardware.  The failure occured here:
+
+    Host:        %s
+    OMPI source: %s:%d
+    Function:    %s()
+    Error:       %s (errno=%d)
+    Device:      %s
+
+You may need to consult with your system administrator to get this
+problem fixed.
 [btl_openib:retry-exceeded]
 The InfiniBand retry count between two MPI processes has been
 exceeded.  "Retry count" is defined in the InfiniBand spec 1.2
