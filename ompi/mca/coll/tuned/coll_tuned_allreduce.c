@@ -138,7 +138,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    /* Special case for size == 1 */
    if (1 == size) {
       if (MPI_IN_PLACE != sbuf) {
-         ret = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+         ret = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
          if (ret < 0) { line = __LINE__; goto error_hndl; }
       }
       return MPI_SUCCESS;
@@ -154,10 +154,10 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
    if (NULL == inplacebuf) { ret = -1; line = __LINE__; goto error_hndl; }
 
    if (MPI_IN_PLACE == sbuf) {
-      ret = ompi_ddt_copy_content_same_ddt(dtype, count, inplacebuf, rbuf);
+      ret = ompi_ddt_copy_content_same_ddt(dtype, count, inplacebuf, (char*)rbuf);
       if (ret < 0) { line = __LINE__; goto error_hndl; }
    } else {
-      ret = ompi_ddt_copy_content_same_ddt(dtype, count, inplacebuf, sbuf);
+      ret = ompi_ddt_copy_content_same_ddt(dtype, count, inplacebuf, (char*)sbuf);
       if (ret < 0) { line = __LINE__; goto error_hndl; }
    }
 
@@ -242,7 +242,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
                                  MCA_COLL_BASE_TAG_ALLREDUCE, comm, 
                                  MPI_STATUS_IGNORE));
          if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-         tmpsend = rbuf;
+         tmpsend = (char*)rbuf;
       } else {
          ret = MCA_PML_CALL(send(tmpsend, count, dtype, (rank - 1),
                                  MCA_COLL_BASE_TAG_ALLREDUCE,
@@ -253,7 +253,7 @@ ompi_coll_tuned_allreduce_intra_recursivedoubling(void *sbuf, void *rbuf,
 
    /* Ensure that the final result is in rbuf */
    if (tmpsend != rbuf) {
-      ret = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, tmpsend);
+      ret = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, tmpsend);
       if (ret < 0) { line = __LINE__; goto error_hndl; }
    }
 
@@ -339,12 +339,12 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
 {
    int ret, line;
    int rank, size, k, recvfrom, sendto;
-   int segcount, lastsegcount, maxsegcount, realsegsize, maxrealsegsize;
+   int segcount, lastsegcount, maxsegcount;
    int blockcount, inbi;
    size_t typelng;
    char *tmpsend = NULL, *tmprecv = NULL;
    char *inbuf[2] = {NULL, NULL};
-   ptrdiff_t true_lb, true_extent, lb, extent;
+   ptrdiff_t true_lb, true_extent, lb, extent, realsegsize, maxrealsegsize;
    ompi_request_t *reqs[2] = {NULL, NULL};
 
    size = ompi_comm_size(comm);
@@ -356,7 +356,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
    /* Special case for size == 1 */
    if (1 == size) {
       if (MPI_IN_PLACE != sbuf) {
-         ret = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+         ret = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
          if (ret < 0) { line = __LINE__; goto error_hndl; }
       }
       return MPI_SUCCESS;
@@ -404,7 +404,7 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
 
    /* Handle MPI_IN_PLACE */
    if (MPI_IN_PLACE != sbuf) {
-      ret = ompi_ddt_copy_content_same_ddt(dtype, count, rbuf, sbuf);
+      ret = ompi_ddt_copy_content_same_ddt(dtype, count, (char*)rbuf, (char*)sbuf);
       if (ret < 0) { line = __LINE__; goto error_hndl; }
    }
 
