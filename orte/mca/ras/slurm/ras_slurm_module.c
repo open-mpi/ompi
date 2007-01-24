@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+ * Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
  *                         Corporation.  All rights reserved.
  * Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -41,7 +41,8 @@ static int orte_ras_slurm_allocate(orte_jobid_t jobid, opal_list_t *attributes);
 static int orte_ras_slurm_deallocate(orte_jobid_t jobid);
 static int orte_ras_slurm_finalize(void);
 
-static int orte_ras_slurm_discover(char *regexp, opal_list_t *nodelist);
+static int orte_ras_slurm_discover(char *regexp, char* tasks_per_node,
+                                   opal_list_t *nodelist);
 static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***nodelist);
 static int orte_ras_slurm_parse_range(char *base, char *range, char ***nodelist);
 
@@ -68,20 +69,38 @@ orte_ras_base_module_t orte_ras_slurm_module = {
 static int orte_ras_slurm_allocate(orte_jobid_t jobid, opal_list_t *attributes)
 {
     int ret;
-    char *slurm_node_str;
+    char *slurm_node_str, *regexp;
+    char *tasks_per_node, *node_tasks;
     opal_list_t nodes;
     opal_list_item_t* item;
-
-    OBJ_CONSTRUCT(&nodes, opal_list_t);
   
     slurm_node_str = getenv("SLURM_NODELIST");
     if (NULL == slurm_node_str) {
-        opal_show_help("help-ras-slurm.txt", "env-var-not-found", 1,
+        opal_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
                        "SLURM_NODELIST");
         return ORTE_ERR_NOT_FOUND;
     }
+    regexp = strdup(slurm_node_str);
+    
+    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
+    if (NULL == tasks_per_node) {
+        opal_show_help("help-ras-slurm.txt", "slurm-env-var-not-found", 1,
+                       "SLURM_TASKS_PER_NODE");
+        return ORTE_ERR_NOT_FOUND;
+    }
+    node_tasks = strdup(tasks_per_node);
 
-    if (ORTE_SUCCESS != (ret = orte_ras_slurm_discover(slurm_node_str, &nodes))) {
+    if(NULL == regexp || NULL == node_tasks) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+
+    OBJ_CONSTRUCT(&nodes, opal_list_t);
+ 
+    ret = orte_ras_slurm_discover(regexp, node_tasks, &nodes);
+    free(regexp);
+    free(node_tasks);
+    if (ORTE_SUCCESS != ret) {
         opal_output(orte_ras_base.ras_output,
                     "ras:slurm:allocate: discover failed!");
         return ret;
@@ -129,87 +148,141 @@ static int orte_ras_slurm_finalize(void)
 
 
 /**
- * Discover the available resources.  Obtain directly from SLURM (and
- * therefore have no need to validate) -- ignore hostfile or any other
- * user-specified parameters.
+ * Discover the available resources.
+ * 
+ * In order to fully support slurm, we need to be able to handle 
+ * node regexp/task_per_node strings such as:
+ * foo,bar    5,3
+ * foo        5
+ * foo[2-10,12,99-105],bar,foobar[3-11] 2(x10),5,100(x16)
  *
- *  - validate any nodes specified via hostfile/commandline
- *  - check for additional nodes that have already been allocated
+ * @param *regexp A node regular expression from SLURM (i.e. SLURM_NODELIST)
+ * @param *tasks_per_node A tasks per node expression from SLURM
+ *                        (i.e. SLURM_TASKS_PER_NODE)
+ * @param *nodelist A list which has already been constucted to return
+ *                  the found nodes in
  */
-
-static int orte_ras_slurm_discover(char *regexp, opal_list_t* nodelist)
+static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
+                                   opal_list_t* nodelist)
 {
-    int i, j, len, ret, count, reps;
-    char *base, **names = NULL;
-    char *begptr, *endptr, *tasks_per_node;
+    int i, j, len, ret, count, reps, num_nodes;
+    char *base, **names = NULL, *temp;
+    char *begptr, *endptr, *orig;
     int *slots;
+    bool found_range = false;
+    bool more_to_come;
     
-    if (NULL == regexp) {
-        return ORTE_SUCCESS;
-    }
-    base = strdup(regexp);
+    orig = base = strdup(regexp);
     if (NULL == base) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
     opal_output(orte_ras_base.ras_output, 
                 "ras:slurm:allocate:discover: checking nodelist: %s", regexp);
     
-    /* Find the base */
-    
-    len = strlen(regexp);
-    for (i = 0; i < len; ++i) {
-        if (base[i] == '[') {
-            base[i] = '\0';
-            break;
-        }
-    }
-    
-    /* If we didn't find a range, then this is it */
-    
-    if (i >= len) {
-        orte_ras_node_t *node;
-        opal_output(orte_ras_base.ras_output, 
-                    "ras:slurm:allocate:discover: found single node");
-        node = OBJ_NEW(orte_ras_node_t);
-        if (NULL == node) {
-            ret = ORTE_ERR_OUT_OF_RESOURCE;
-        } else {
-            opal_argv_append_nosize(&names, base);
-            ret = ORTE_SUCCESS;
-        }
-        free(base);
-    } else {
-        
-        /* If we did find a range, find the end of the range */
-        
-        for (j = i; j < len; ++j) {
-            if (base[j] == ']') {
-                base[j] = '\0';
+    do {
+        /* Find the base */
+        len = strlen(base);
+        for (i = 0; i <= len; ++i) {
+            if (base[i] == '[') {
+                /* we found a range. this gets dealt with below */
+                base[i] = '\0';
+                found_range = true;
+                break;
+            }
+            if (base[i] == ',') {
+                /* we found a singleton node, and there are more to come */
+                base[i] = '\0';
+                found_range = false;
+                more_to_come = true;
+                break;
+            }
+            if (base[i] == '\0') {
+                /* we found a singleton node */
+                found_range = false;
+                more_to_come = false;
                 break;
             }
         }
-        if (j >= len) {
-            free(base);
-            return ORTE_ERR_NOT_FOUND;
+        if(i == 0) {
+            /* we found a special character at the beginning of the string */
+            opal_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value",
+                           1, regexp, tasks_per_node, "SLURM_NODELIST");
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            free(orig);
+            return ORTE_ERR_BAD_PARAM;
         }
         
-        ret = orte_ras_slurm_parse_ranges(base, base + i + 1, &names);
-    }
+        if (found_range) {
+            /* If we found a range, now find the end of the range */
+            for (j = i; j < len; ++j) {
+                if (base[j] == ']') {
+                    base[j] = '\0';
+                    break;
+                }
+            }
+            if (j >= len) {
+                /* we didn't find the end of the range */
+                opal_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value",
+                               1, regexp, tasks_per_node, "SLURM_NODELIST");
+                ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+                free(orig);
+                return ORTE_ERR_BAD_PARAM;
+            }
+            
+            ret = orte_ras_slurm_parse_ranges(base, base + i + 1, &names);
+            if(ORTE_SUCCESS != ret) {
+                opal_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value",
+                               1, regexp, tasks_per_node, "SLURM_NODELIST");
+                ORTE_ERROR_LOG(ret);
+                free(orig);
+                return ret;
+            }    
+            if(base[j + 1] == ',') {
+                more_to_come = true;
+                base = &base[j + 2];
+            } else {
+                more_to_come = false;
+            }
+        } else {
+            /* If we didn't find a range, just add the node */
+            opal_output(orte_ras_base.ras_output, 
+                        "ras:slurm:allocate:discover: found node %s", base);
+            if(NULL == (temp = strdup(base))) {
+                ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+                free(orig);
+                return ORTE_ERR_OUT_OF_RESOURCE;
+            }
+            if(ORTE_SUCCESS != (ret = opal_argv_append_nosize(&names, temp))) {
+                ORTE_ERROR_LOG(ret);
+                free(orig);
+                return ret;
+            }
+            /* set base equal to the (possible) next base to look at */
+            base = &base[i + 1];
+        }
+    } while(more_to_come);
+   
+    free(orig);
+    
+    num_nodes = opal_argv_count(names);
 
     /* Find the number of slots per node */
 
-    slots = malloc(sizeof(int) * opal_argv_count(names));
+    slots = malloc(sizeof(int) * num_nodes);
     if (NULL == slots) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
         return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    memset(slots, 0, sizeof(int) * opal_argv_count(names));
-    tasks_per_node = getenv("SLURM_TASKS_PER_NODE");
-    if (NULL == tasks_per_node) {
-        opal_show_help("help-ras-slurm.txt", "env-var-not-found", 1,
-                       "SLURM_TASKS_PER_NODE");
-        return ORTE_ERR_NOT_FOUND;
+    memset(slots, 0, sizeof(int) * num_nodes);
+    
+    orig = begptr = strdup(tasks_per_node);
+    if (NULL == begptr) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        free(slots);
+        return ORTE_ERR_OUT_OF_RESOURCE;
     }
-    begptr = tasks_per_node;
+    
     j = 0;
     while (begptr) {
         count = strtol(begptr, &endptr, 10);
@@ -221,61 +294,86 @@ static int orte_ras_slurm_discover(char *regexp, opal_list_t* nodelist)
         } else {
             reps = 1;
         }
-        for (i = 0; i < reps; i++) {
+
+        /**
+         * TBP: it seems like it would be an error to have more slot 
+         * descriptions than nodes. Turns out that this valid, and SLURM will
+         * return such a thing. For instance, if I did:
+         * srun -A -N 30 -w odin001
+         * I would get SLURM_NODELIST=odin001 SLURM_TASKS_PER_NODE=4(x30)
+         * That is, I am allocated 30 nodes, but since I only requested
+         * one specific node, that's what is in the nodelist.
+         * I'm not sure this is what users would expect, but I think it is
+         * more of a SLURM issue than a orte issue, since SLURM is OK with it,
+         * I'm ok with it
+         */
+        for (i = 0; i < reps && j < num_nodes; i++) {
             slots[j++] = count;
         }
-        
+            
         if (*endptr == ',') {
             begptr = endptr + 1;
-        } else if (*endptr == '\0') {
+        } else if (*endptr == '\0' || j >= num_nodes) {
             break;
         } else {
-            opal_show_help("help-ras-slurm.txt", "env-var-bad-value", 1,
-                           "SLURM_TASKS_PER_NODE", tasks_per_node);
-            return ORTE_ERR_NOT_FOUND;
+            opal_show_help("help-ras-slurm.txt", "slurm-env-var-bad-value", 1,
+                           regexp, tasks_per_node, "SLURM_TASKS_PER_NODE");
+            ORTE_ERROR_LOG(ORTE_ERR_BAD_PARAM);
+            free(slots);
+            free(orig);
+            return ORTE_ERR_BAD_PARAM;
         }
     }
+
+    free(orig);
 
     /* Convert the argv of node names to a list of ras_base_node_t's */
 
-    if (ORTE_SUCCESS == ret) {
-        for (i = 0; NULL != names && NULL != names[i]; ++i) {
-            orte_ras_node_t *node;
-            
-            opal_output(orte_ras_base.ras_output, 
-                        "ras:slurm:allocate:discover: adding node %s (%d slot%s)",
-                        names[i], slots[i], (1 == slots[i]) ? "" : "s");
-            node = OBJ_NEW(orte_ras_node_t);
-            if (NULL == node) {
-                return ORTE_ERR_OUT_OF_RESOURCE;
-            }
-            node->node_name = strdup(names[i]);
-            node->node_arch = NULL;
-            node->node_state = ORTE_NODE_STATE_UP;
-            /* JMS: this should not be hard-wired to 0, but there's no
-               other value to put it to [yet]... */
-            node->node_cellid = 0;
-            node->node_slots_inuse = 0;
-            node->node_slots_max = 0;
-            node->node_slots = slots[i];
-            opal_list_append(nodelist, &node->super);
+    for (i = 0; NULL != names && NULL != names[i]; ++i) {
+        orte_ras_node_t *node;
+        
+        opal_output(orte_ras_base.ras_output, 
+                    "ras:slurm:allocate:discover: adding node %s (%d slot%s)",
+                    names[i], slots[i], (1 == slots[i]) ? "" : "s");
+        node = OBJ_NEW(orte_ras_node_t);
+        if (NULL == node) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+            free(slots);
+            return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        free(slots);
-        opal_argv_free(names);
+        node->node_name = strdup(names[i]);
+        node->node_arch = NULL;
+        node->node_state = ORTE_NODE_STATE_UP;
+        /* JMS: this should not be hard-wired to 0, but there's no
+           other value to put it to [yet]... */
+        node->node_cellid = 0;
+        node->node_slots_inuse = 0;
+        node->node_slots_max = 0;
+        node->node_slots = slots[i];
+        opal_list_append(nodelist, &node->super);
+    }
+    free(slots);
+    opal_argv_free(names);
 
-        /* Now add the nodes to the registry */
+    /* Now add the nodes to the registry */
 
-        ret = orte_ras_base_node_insert(nodelist);
+    ret = orte_ras_base_node_insert(nodelist);
+    if(ORTE_SUCCESS != ret) {
+        ORTE_ERROR_LOG(ret);
     }
 
     /* All done */
-
     return ret;
 }
 
 
 /*
  * Parse one or more ranges in a set
+ *
+ * @param base     The base text of the node name
+ * @param *ranges  A pointer to a range. This can contain multiple ranges
+ *                 (i.e. "1-3,10" or "5" or "9,0100-0130,250") 
+ * @param ***names An argv array to add the newly discovered nodes to
  */
 static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
 {
@@ -288,7 +386,9 @@ static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
     for (orig = start = ranges, i = 0; i < len; ++i) {
         if (',' == ranges[i]) {
             ranges[i] = '\0';
-            if (ORTE_SUCCESS != (ret = orte_ras_slurm_parse_range(base, start, names))) {
+            ret = orte_ras_slurm_parse_range(base, start, names);
+            if (ORTE_SUCCESS != ret) {
+                ORTE_ERROR_LOG(ret);
                 return ret;
             }
             start = ranges + i + 1;
@@ -301,19 +401,25 @@ static int orte_ras_slurm_parse_ranges(char *base, char *ranges, char ***names)
         opal_output(orte_ras_base.ras_output, 
                     "ras:slurm:allocate:discover: parse range %s (2)",
                     start);
-        if (ORTE_SUCCESS != (ret = orte_ras_slurm_parse_range(base, start, names))) {
+        ret = orte_ras_slurm_parse_range(base, start, names);
+        if (ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
             return ret;
         }
     }
 
     /* All done */
-
     return ORTE_SUCCESS;
 }
 
 
 /*
- * Parse a single range in a set
+ * Parse a single range in a set and add the full names of the nodes
+ * found to the names argv
+ *
+ * @param base     The base text of the node name
+ * @param *ranges  A pointer to a single range. (i.e. "1-3" or "5") 
+ * @param ***names An argv array to add the newly discovered nodes to
  */
 static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
 {
@@ -323,6 +429,7 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
     size_t str_start, str_end;
     size_t num_str_len;
     bool found;
+    int ret;
     
     len = strlen(range);
     base_len = strlen(base);
@@ -343,6 +450,7 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
         }
     }
     if (!found) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     
@@ -376,6 +484,7 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
         }
     }
     if (!found) {
+        ORTE_ERROR_LOG(ORTE_ERR_NOT_FOUND);
         return ORTE_ERR_NOT_FOUND;
     }
     
@@ -385,6 +494,7 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
         len = base_len + 32;
         str = malloc(len);
         if (NULL == str) {
+            ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
         
@@ -402,10 +512,14 @@ static int orte_ras_slurm_parse_range(char *base, char *range, char ***names)
         }
         snprintf(str, len - 1, "%s%s", temp1, temp2);
         str[len - 1] = '\0';
-        opal_argv_append_nosize(names, str);
+        ret = opal_argv_append_nosize(names, str);
+        if(ORTE_SUCCESS != ret) {
+            ORTE_ERROR_LOG(ret);
+            return ret;
+        }
     }
     
     /* All done */
-    
     return ORTE_SUCCESS;
 }
+
