@@ -311,7 +311,7 @@ static int init_one_port(opal_list_t *btl_list, mca_btl_openib_hca_t *hca,
             openib_btl->port_num = (uint8_t) port_num;
             openib_btl->lid = lid;
             openib_btl->src_path_bits = lid - ib_port_attr->lid;
-            /* store the subnet_id for multi-nic support */
+            /* store the subnet for multi-nic support */
             openib_btl->port_info.subnet_id = subnet_id;
             openib_btl->port_info.mtu = hca->mtu;
             openib_btl->ib_reg[MCA_BTL_TAG_BTL].cbfunc = btl_openib_control;
@@ -418,6 +418,11 @@ static int init_one_hca(opal_list_t *btl_list, struct ibv_device* ib_dev)
         hca->mtu = mca_btl_openib_component.ib_mtu;
     }
 
+    /* If "use eager rdma" was set, then enable it on this HCA */
+    if (values.use_eager_rdma_set) {
+        hca->use_eager_rdma = values.use_eager_rdma;
+    }
+
     hca->ib_pd = ibv_alloc_pd(hca->ib_dev_context);
     if(NULL == hca->ib_pd){
         BTL_ERROR(("error allocating pd for %s errno says %s\n",
@@ -497,7 +502,6 @@ btl_openib_component_init(int *num_btl_modules,
     struct ibv_device* ib_dev; 
 #endif
     unsigned short seedv[3];
-    
 
     /* initialization */
     *num_btl_modules = 0;
@@ -748,6 +752,11 @@ static void merge_values(ompi_btl_openib_ini_values_t *target,
         target->mtu = src->mtu;
         target->mtu_set = true;
     }
+
+    if (!target->use_eager_rdma_set && src->use_eager_rdma_set) {
+        target->use_eager_rdma = src->use_eager_rdma;
+        target->use_eager_rdma_set = true;
+    }
 }
 
 
@@ -802,7 +811,6 @@ static int btl_openib_handle_incoming(mca_btl_openib_module_t *openib_btl,
     }
    
     if (!endpoint->eager_rdma_local.base.pval &&
-            mca_btl_openib_component.use_eager_rdma &&
             endpoint->use_eager_rdma &&
             BTL_OPENIB_HP_QP == prio &&
             openib_btl->eager_rdma_buffers_count <

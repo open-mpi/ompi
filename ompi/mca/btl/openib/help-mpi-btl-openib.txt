@@ -10,7 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2006 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -27,7 +27,7 @@ btl_openib_hca_param_files MCA parameter:
 
     %s
 [ini file:not in a section]
-In parsing Open IB BTL parameter file, values were found that were not
+In parsing OpenIB BTL parameter file, values were found that were not
 in a valid INI section.  These values will be ignored.  Please
 re-check this file:
 
@@ -37,7 +37,7 @@ At line %d, near the following text:
 
     %s
 [ini file:unexpected token]
-In parsing Open IB BTL parameter file, unexpected tokens were found
+In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
 Please re-check this file:
 
@@ -47,7 +47,7 @@ At line %d, near the following text:
 
     %s
 [ini file:expected equals]
-In parsing Open IB BTL parameter file, unexpected tokens were found
+In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
 An equals sign ("=") was expected but was not found.  Please re-check
 this file:
@@ -58,7 +58,7 @@ At line %d, near the following text:
 
     %s
 [ini file:expected newline]
-In parsing Open IB BTL parameter file, unexpected tokens were found
+In parsing OpenIB BTL parameter file, unexpected tokens were found
 (this may cause significant portions of the INI file to be ignored).
 A newline was expected but was not found.  Please re-check this file:
 
@@ -67,6 +67,17 @@ A newline was expected but was not found.  Please re-check this file:
 At line %d, near the following text:
 
     %s
+[ini file:unknown field]
+In parsing OpenIB BTL parameter file, an unrecognized field name was
+found.  Please re-check this file:
+
+    %s
+
+At line %d, the field named:
+
+    %s
+
+This field, and any other unrecognized fields, will be skipped.
 [no hca params found]
 WARNING: No HCA parameters were found for the HCA that Open MPI
 detected:
