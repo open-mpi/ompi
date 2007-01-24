@@ -105,6 +105,10 @@ Trunk (not on release branches yet)
 1.1.3
 -----
 
+- Fixed 64-bit alignment issues with TCP interface detection on
+  intel-based OS X machines.
+- Adjusted TCP interface selection to automatically ignore Linux
+  channel-bonded slave interfaces.
 - Fixed the type of the first parameter to the MPI F90 binding for
   MPI_INITIALIZED.  Thanks to Tim Campbell for pointing out the
   problem.
