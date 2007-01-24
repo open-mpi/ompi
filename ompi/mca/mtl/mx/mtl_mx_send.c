@@ -91,6 +91,11 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
         }
         opal_output(ompi_mtl_base_output, "Error in %s (error %s) sending to %s\n",
                     where, mx_strerror(mx_return), peer_name);
+
+        /* Free buffer if needed */
+        if(mtl_mx_request->free_after) { 
+            free(mtl_mx_request.mx_segment[0].segment_ptr);
+        }
         return OMPI_ERROR;
     }
     
@@ -109,6 +114,11 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
             abort();
         }
     } while(!result);
+
+    /* Free buffer if needed */
+    if(mtl_mx_request->free_after) { 
+        free(mtl_mx_request.mx_segment[0].segment_ptr);
+    }
     
     return OMPI_SUCCESS;
 }
