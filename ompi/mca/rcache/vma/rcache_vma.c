@@ -57,8 +57,8 @@ int mca_rcache_vma_find(struct mca_rcache_base_module_t* rcache,
     base_addr = down_align_addr(addr, mca_mpool_base_page_size_log);
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
         
-    *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, base_addr,
-            bound_addr); 
+    *reg = mca_rcache_vma_tree_find((mca_rcache_vma_module_t*)rcache, (unsigned char*)base_addr,
+            (unsigned char*)bound_addr); 
 
     return OMPI_SUCCESS;
 }
@@ -76,7 +76,7 @@ int mca_rcache_vma_find_all(struct mca_rcache_base_module_t* rcache,
     bound_addr = up_align_addr((void*) ((unsigned long) addr + size - 1), mca_mpool_base_page_size_log);
 
     return mca_rcache_vma_tree_find_all((mca_rcache_vma_module_t*)rcache,
-            base_addr, bound_addr, regs);
+            (unsigned char*)base_addr, (unsigned char*)bound_addr, regs);
 }
 
 int mca_rcache_vma_insert(struct mca_rcache_base_module_t* rcache,

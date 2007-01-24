@@ -266,7 +266,7 @@ mca_mpool_base_registration_t *mca_rcache_vma_tree_find(
     mca_rcache_vma_t *vma;
     mca_rcache_vma_reg_list_item_t *item;
 
-    vma = ompi_rb_tree_find_with(&vma_rcache->rb_tree, base, 
+    vma = (mca_rcache_vma_t*)ompi_rb_tree_find_with(&vma_rcache->rb_tree, base, 
             mca_rcache_vma_tree_node_compare_search);
 
     if(!vma)
@@ -310,7 +310,7 @@ int mca_rcache_vma_tree_find_all(
     do {
         mca_rcache_vma_t *vma;
         opal_list_item_t *item;
-        vma = ompi_rb_tree_find_with(&vma_rcache->rb_tree, base,
+        vma = (mca_rcache_vma_t*)ompi_rb_tree_find_with(&vma_rcache->rb_tree, base,
                 mca_rcache_vma_tree_node_compare_closest);
 
         if(NULL == vma) {
@@ -464,7 +464,7 @@ int mca_rcache_vma_tree_delete(mca_rcache_vma_module_t* vma_rcache,
 {
     mca_rcache_vma_t *vma;
 
-    vma = ompi_rb_tree_find_with(&vma_rcache->rb_tree, reg->base, 
+    vma = (mca_rcache_vma_t*)ompi_rb_tree_find_with(&vma_rcache->rb_tree, reg->base, 
             mca_rcache_vma_tree_node_compare_search);
 
     if(!vma)
