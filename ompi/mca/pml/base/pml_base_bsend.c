@@ -152,7 +152,7 @@ int mca_pml_base_bsend_attach(void* addr, int size)
      * Save away what the user handed in.  This is done in case the
      * base and size are modified for alignment issues.
      */
-    mca_pml_bsend_userbase = addr;
+    mca_pml_bsend_userbase = (unsigned char*)addr;
     mca_pml_bsend_usersize = size;
     /* 
      * Align to pointer boundaries. The bsend overhead is large enough
