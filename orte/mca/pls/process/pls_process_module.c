@@ -802,7 +802,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             char* name_string;
             char** env;
             char* var;
-            int fdmax = sysconf(_SC_OPEN_MAX);
 
             if (mca_pls_process_component.debug) {
                 opal_output(0, "pls:process: launching on node %s\n",

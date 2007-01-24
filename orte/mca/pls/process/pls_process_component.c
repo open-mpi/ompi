@@ -227,7 +227,7 @@ static char **search(const char* agent_list)
         for (j = 0; '\0' != line[j] && isspace(line[j]); ++line) {
             continue;
         }
-        for (j = strlen(line) - 2; j > 0 && isspace(line[j]); ++j) {
+        for (j = (int)strlen(line) - 2; j > 0 && isspace(line[j]); ++j) {
             line[j] = '\0';
         }
         if (strlen(line) <= 0) {
