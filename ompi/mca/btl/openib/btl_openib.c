@@ -818,7 +818,7 @@ int mca_btl_openib_create_cq_srq(mca_btl_openib_module_t *openib_btl)
 #endif /* OMPI_ENABLE_PROGRESS_THREADS */
     
     if (NULL == openib_btl->ib_cq[BTL_OPENIB_LP_QP]) {
-        show_init_error(__FILE__, __LINE__, "ibv_create_srq",
+        show_init_error(__FILE__, __LINE__, "ibv_create_cq",
                         ibv_get_device_name(openib_btl->hca->ib_dev));
         return OMPI_ERROR;
     }
