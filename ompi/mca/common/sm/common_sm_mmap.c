@@ -310,7 +310,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                                     NULL,                 /* no security attributes */
                                     PAGE_READWRITE,       /* read/write access */
                                     0,                    /* size: high 32-bits */
-                                    size,                 /* size: low 32-bits */
+                                    (DWORD)size,          /* size: low 32-bits */
                                     temp1);               /* name of map object */
     if( NULL == hMapObject ) {
         rc = GetLastError();
