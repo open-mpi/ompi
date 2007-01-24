@@ -241,6 +241,12 @@ static int opal_ifinit(void)
         }
         if ((ifr->ifr_flags & IFF_UP) == 0) 
             continue;
+#ifdef IFF_SlAVE
+        /* Is this a slave to a load balancer or bonded channel?
+           If so, don't use it -- pick up the master instead */
+        if ((ifr->ifr_flags & IFF_SLAVE) != 0)
+           continue;
+#endif
 #if 0
         if ((ifr->ifr_flags & IFF_LOOPBACK) != 0)
             continue;
