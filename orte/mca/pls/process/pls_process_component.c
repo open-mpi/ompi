@@ -158,7 +158,7 @@ int orte_pls_process_component_open(void)
 
     mca_base_param_reg_string(c, "orted",
                               "The command name that the process pls component will invoke for the ORTE daemon",
-                              false, false, "orted", 
+                              false, false, "orted.exe", 
                               &mca_pls_process_component.orted);
     
     mca_base_param_reg_int(c, "priority",
@@ -189,6 +189,9 @@ extern char **environ;
 orte_pls_base_module_t *orte_pls_process_component_init(int *priority)
 {
     /* if we are not an HNP, then don't select us */
+    if (!orte_process_info.seed) {
+        return NULL;
+    }
     *priority = mca_pls_process_component.priority;
     
     return &orte_pls_process_module;

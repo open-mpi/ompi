@@ -346,7 +346,7 @@ static int orte_pls_process_probe(orte_mapped_node_t * node, orte_pls_process_sh
  * Fill the exec_path variable with the directory to the orted
  */
 
-static int orte_pls_process_fill_exec_path ( char ** exec_path)
+static int orte_pls_process_fill_exec_path( char ** exec_path )
 {
     struct stat buf;
 
@@ -354,7 +354,7 @@ static int orte_pls_process_fill_exec_path ( char ** exec_path)
     if (0 != stat(*exec_path, &buf)) {
         char *path = getenv("PATH");
         if (NULL == path) {
-            path = ("PATH is empty!");
+            path = "PATH is empty!";
         }
         opal_show_help("help-pls-process.txt", "no-local-orted",
                         true, path, OPAL_BINDIR);
@@ -746,7 +746,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         n_item =  opal_list_get_next(n_item)) {
         orte_process_name_t* name;
         pid_t pid;
-        char *exec_path;
+        char *exec_path = NULL;
         char **exec_argv;
         
         rmaps_node = (orte_mapped_node_t*)n_item;
@@ -783,22 +783,13 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             goto cleanup;
         }
 
-        /* fork a child to exec the process/ssh session */
-        
         /* set the process state to "launched" */
         if (ORTE_SUCCESS != (rc = orte_smr.set_proc_state(name, ORTE_PROC_STATE_LAUNCHED, 0))) {
             ORTE_ERROR_LOG(rc);
             goto cleanup;
         }
 
-/*        pid = fork();
-        if (pid < 0) {
-            rc = ORTE_ERR_OUT_OF_RESOURCE;
-            goto cleanup;
-        }
-*/
-        /* child */
-        /*if (pid == 0)*/ {
+        {
             char* name_string;
             char** env;
             char* var;
@@ -839,23 +830,32 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                 }
                 
                 exec_argv = &argv[local_exec_index];
-                exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
+                /* If the user provide a prefix then first try to find the application there */
+                if( NULL != prefix_dir ) {
+                    char* full_path[3];
 
-                if (NULL == exec_path && NULL == prefix_dir) {
-                    rc = orte_pls_process_fill_exec_path (&exec_path);
-                    if (ORTE_SUCCESS != rc) {
-                        return rc;
-                    }
-                } else {
-                    if (NULL != prefix_dir) {
-                        strcpy(prefix_dir,"c:");
-                        exec_path = opal_os_path( false, prefix_dir, bin_base, "orted", NULL );
-                    }
-                    /* If we yet did not fill up the execpath, do so now */
-                    if (NULL == exec_path) {
-                        rc = orte_pls_process_fill_exec_path (&exec_path);
-                        if (ORTE_SUCCESS != rc) {
-                            return rc;
+                    full_path[0] = opal_os_path( false, prefix_dir, NULL );
+                    full_path[1] = opal_os_path( false, prefix_dir, bin_base, NULL );
+                    full_path[2] = NULL;
+                    exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
+                    free(full_path[0]); free(full_path[1]);
+                }
+                if( NULL == exec_path ) {
+    			    /* find the application in the default PATH */
+                    exec_path = opal_path_findv(exec_argv[0], F_OK, environ, NULL);
+                    if( NULL == exec_path ) {
+                        char* full_path[2];
+
+                        full_path[0] = opal_os_path( false, OPAL_BINDIR, NULL );
+                        full_path[1] = NULL;
+                        exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
+                        free(full_path[0]);
+
+                        if( NULL == exec_path ) {
+                            rc = orte_pls_process_fill_exec_path (&exec_path);
+                            if (ORTE_SUCCESS != rc) {
+                                return rc;
+                            }
                         }
                     }
                 }
@@ -872,7 +872,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     oldenv = getenv("PATH");
                     if (NULL != oldenv) {
                         char *temp;
-                        asprintf(&temp, "%s;%s", newenv, oldenv ); //daniel asprintf(&temp, "%s:%s", newenv, oldenv );
+						asprintf(&temp, "%s;%s", newenv, oldenv );
                         free( newenv );
                         newenv = temp;
                     }
@@ -881,13 +881,13 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                         opal_output(0, "pls:process: reset PATH: %s", newenv);
                     }
                     free(newenv);
-#if 0
+
                     /* Reset LD_LIBRARY_PATH */
                     newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
                     oldenv = getenv("LD_LIBRARY_PATH");
                     if (NULL != oldenv) {
                         char* temp;
-                        asprintf(&temp, "%s:%s", newenv, oldenv);
+						asprintf(&temp, "%s;%s", newenv, oldenv);
                         free(newenv);
                         newenv = temp;
                     }
@@ -897,7 +897,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                                     newenv);
                     }
                     free(newenv);
-#endif
                 }
 
                 /* Since this is a local execution, we need to
@@ -916,7 +915,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                    remote nodes (via process/ssh).  This allows a user
                    to specify a path that is relative to $HOME for
                    both the cwd and argv[0] and it will work on
-                   all nodes -- including the local nost.
+                   all nodes -- including the local host.
                    Otherwise, it would work on remote nodes and
                    not the local node.  If the user does not start
                    in $HOME on the remote nodes... well... let's
@@ -965,16 +964,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             //set_handler_default(SIGPIPE);
             set_handler_default(SIGCHLD);
             
-            /* Unblock all signals, for many of the same reasons that
-                we set the default handlers, above.  This is noticable
-                on Linux where the event library blocks SIGTERM, but we
-                don't want that blocked by the orted (or, more
-                specifically, we don't want it to be blocked by the
-                orted and then inherited by the ORTE processes that it
-                forks, making them unkillable by SIGTERM). */
-            //sigprocmask(0, 0, &sigs);
-            //sigprocmask(SIG_UNBLOCK, &sigs, 0);
-            
             /* setup environment */
             env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
@@ -988,30 +977,10 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     free(param);
                 }
             }
-            //execve(exec_path, exec_argv, env);
             pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env); //,NULL); daniel
-            if (pid == -1) opal_output(0, "pls:process: execv failed spawning new process; errno=%d\n", errno);
-            else opal_output(0, "pls:process: execv hopefully started (pid %d)\n", pid);
-#if 0
-        } /*else*/ { /* father */
-            OPAL_THREAD_LOCK(&mca_pls_process_component.lock);
-            /* JJH Bug:
-             * If we are in '--debug-daemons' we keep the ssh connection 
-             * alive for the span of the run. If we use this option 
-             * AND we launch on more than "num_concurrent" machines
-             * then we will deadlock. No connections are terminated 
-             * until the job is complete, no job is started
-             * since all the orteds are waiting for all the others
-             * to come online, and the others ore not launched because
-             * we are waiting on those that have started to terminate
-             * their ssh tunnels. :(
-             */
-            if (mca_pls_process_component.num_children++ >=
-                mca_pls_process_component.num_concurrent) {
-                opal_condition_wait(&mca_pls_process_component.cond, &mca_pls_process_component.lock);
-            }
-            OPAL_THREAD_UNLOCK(&mca_pls_process_component.lock);
-#endif
+            if (pid == -1) opal_output(0, "pls:process: execv failed spawning process %s; errno=%d\n", exec_path, errno);
+            else opal_output(0, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
+
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
