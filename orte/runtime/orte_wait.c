@@ -773,11 +773,19 @@ static void CALLBACK trigger_process_detection( void* lpParameter, BOOLEAN Timer
      * registered handle.
      */
     if( 0 == UnregisterWait( handle->registered_handle ) ) {
+		/**
+		 * If any callback functions associated with the timer have not completed when
+		 * UnregisterWait is called, UnregisterWait unregisters the wait on the callback
+		 * functions and fails with the ERROR_IO_PENDING error code. The error code does
+		 * not indicate that the function has failed, and the function does not need to
+		 * be called again. If your code requires an error code to set only when the
+		 * unregister operation has failed, call UnregisterWaitEx instead.
+		 */
         int error = GetLastError();
     }
-    if( 0 == CloseHandle( handle->registered_handle ) ) {
+    /*if( 0 == CloseHandle( handle->registered_handle ) ) {
         int error = GetLastError();
-    }
+    }*/
     handle->registered_handle = INVALID_HANDLE_VALUE;
     /**
      * Get the exit code of the process.
@@ -811,7 +819,7 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
     handle->data = data;
 
     RegisterWaitForSingleObject( &handle->registered_handle, (HANDLE)handle->pid, 
-                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINWAITTHREAD);
+                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINIOTHREAD);
 
     OPAL_THREAD_UNLOCK(&mutex);
 

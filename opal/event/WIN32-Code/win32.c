@@ -178,9 +178,9 @@ void CALLBACK win32_socket_event_callback( void* lpParameter, BOOLEAN TimerOrWai
 	    }
         if( master->ev_events & OPAL_EV_WRITE ) {
             got |= OPAL_EV_WRITE;
-            if( 0 == WSASetEvent(master->base_handle) ) {
+            /*if( 0 == WSASetEvent(master->base_handle) ) {
                 int error = WSAGetLastError();
-            }
+            }*/
 	    }
 
         if( got ) {
@@ -221,7 +221,7 @@ void CALLBACK win32_file_event_callback( void* lpParameter, BOOLEAN TimerOrWaitF
 
 static int win32_recompute_event( opal_event_t* master )
 {
-    long flags = FD_CLOSE | FD_ACCEPT | FD_CONNECT;
+    long flags = FD_CLOSE;
     opal_event_t* temp;
     int error;
 
@@ -235,8 +235,8 @@ static int win32_recompute_event( opal_event_t* master )
     /* Compute the flags we're looking at */
     temp = master;
     do {
-        if( temp->ev_events & OPAL_EV_READ )  flags |= FD_READ;
-        if( temp->ev_events & OPAL_EV_WRITE ) flags |= FD_WRITE;
+        if( temp->ev_events & OPAL_EV_READ )  flags |= FD_READ | FD_ACCEPT;
+        if( temp->ev_events & OPAL_EV_WRITE ) flags |= FD_WRITE | FD_CONNECT;
         temp = temp->ev_similar;
     } while( temp != master );
 
@@ -248,7 +248,7 @@ static int win32_recompute_event( opal_event_t* master )
     }
     if( INVALID_HANDLE_VALUE == master->registered_handle ) {
         if( 0 == RegisterWaitForSingleObject( &master->registered_handle, master->base_handle, win32_socket_event_callback,
-                                              (void*)master, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
+                                              (void*)master, INFINITE, WT_EXECUTEINIOTHREAD ) ) {
             error = GetLastError();
             WSACloseEvent( master->base_handle );
             master->base_handle = INVALID_HANDLE_VALUE;
@@ -331,7 +331,7 @@ win32_insert(struct win32op *win32op, opal_event_t *ev)
             int error = errno;
         }
         if( 0 == RegisterWaitForSingleObject( &ev->registered_handle, ev->base_handle, win32_file_event_callback,
-                                              (void*)ev, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
+                                              (void*)ev, INFINITE, WT_EXECUTEINIOTHREAD ) ) {
             error = GetLastError();
         }*/
     }
@@ -361,18 +361,19 @@ win32_del(struct win32op *win32op, opal_event_t *ev)
 	event_debug(("%s: Removing event for %d", __func__, ev->ev_fd));
 
     /**
-     * Remove the current event and recomputer the registered event
-     * based on the opal event pending on the same request.
+     * Remove the current event and recompute the registered event
+     * based on the opal events pending on the same master.
      */
     if( master == ev ) {
+        /* Disable all pending events */
+        if( INVALID_HANDLE_VALUE != ev->registered_handle ) {
+            if( 0 == UnregisterWait(ev->registered_handle) ) {
+                error = GetLastError();
+            }
+            ev->registered_handle = INVALID_HANDLE_VALUE;
+        }
         if( ev->ev_similar == ev ) {
             /* Only one event in the queue. Remove everything. */
-            if( INVALID_HANDLE_VALUE != ev->registered_handle ) {
-                if( 0 == UnregisterWait(ev->registered_handle) ) {
-                    error = GetLastError();
-                }
-                ev->registered_handle = INVALID_HANDLE_VALUE;
-            }
             if( INVALID_HANDLE_VALUE != ev->base_handle ) { /* socket */
                 /* Now detach the base event from the socket. */
                 if( SOCKET_ERROR == WSAEventSelect( ev->ev_fd, ev->base_handle, 0) ) {
@@ -418,10 +419,11 @@ win32_dispatch( struct event_base *base, struct win32op *win32op,
 {
     DWORD milisec;
 
-    milisec = tv->tv_sec * 1000;
+    /*milisec = tv->tv_sec * 1000;
     if( tv->tv_usec > 1000 ) {
         milisec += tv->tv_usec / 1000;
-    }
+    }*/
+    milisec = tv->tv_sec;  /* BLAH BLAH REMOVE ME */
     SleepEx( milisec, TRUE );
     if( 0 != signal_caught ) {
         signal_process();
