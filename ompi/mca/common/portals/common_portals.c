@@ -107,9 +107,11 @@ ompi_common_portals_error_ptl_to_ompi(int ptl_error)
     case PTL_SR_INDEX_INVALID:
         ret = OMPI_ERR_BAD_PARAM;
         break;
+#if !OMPI_PORTALS_CRAYXT3
     case PTL_UNKNOWN_ERROR:
         ret = OMPI_ERROR;
         break;
+#endif
     default:
         ret = OMPI_ERROR;
     }

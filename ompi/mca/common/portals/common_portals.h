@@ -38,6 +38,8 @@
 
 #include <portals/portals3.h>
 #define PTL_EQ_HANDLER_NONE NULL
+/* Cray's definition, differs from the spec */
+#define PTL_NO_ACK_REQ PTL_NOACK_REQ
 
 #define OMPI_BTL_PORTALS_SEND_TABLE_ID 30
 #define OMPI_BTL_PORTALS_RDMA_TABLE_ID 31
