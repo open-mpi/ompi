@@ -170,7 +170,7 @@ static int orte_ras_slurm_discover(char *regexp, char *tasks_per_node,
     char *begptr, *endptr, *orig;
     int *slots;
     bool found_range = false;
-    bool more_to_come;
+    bool more_to_come = false;
     
     orig = base = strdup(regexp);
     if (NULL == base) {
