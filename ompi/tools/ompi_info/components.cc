@@ -90,6 +90,8 @@
 #include "orte/mca/rml/base/base.h"
 #include "orte/mca/pls/pls.h"
 #include "orte/mca/pls/base/base.h"
+#include "orte/mca/odls/odls.h"
+#include "orte/mca/odls/base/base.h"
 #include "orte/mca/smr/smr.h"
 #include "orte/mca/smr/base/base.h"
 #include "orte/mca/sds/sds.h"
@@ -228,6 +230,9 @@ void ompi_info::open_components()
   orte_pls_base_open();
   component_map["pls"] = &orte_pls_base.available_components;
 
+  orte_odls_base_open();
+  component_map["odls"] = &orte_odls_base.available_components;
+
   orte_sds_base_open();
   component_map["sds"] = &orte_sds_base_components_available;
 
@@ -301,6 +306,7 @@ void ompi_info::close_components()
         orte_sds_base_close();
         orte_smr_base_close();
         orte_pls_base_close();
+        orte_odls_base_close();
         orte_rmgr_base_close();
         orte_rmaps_base_close();
         orte_rds_base_close();
