@@ -789,6 +789,14 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             goto cleanup;
         }
 
+        if (mca_pls_process_component.debug) {
+            param = opal_argv_join(argv, ' ');
+            if (NULL != param) {
+                opal_output(0, "pls:process: start daemon as:");
+                opal_output(0, "pls:process:     %s", param);
+                free(param);
+            }
+        }
         {
             char* name_string;
             char** env;
@@ -868,7 +876,8 @@ int orte_pls_process_launch(orte_jobid_t jobid)
                     char *oldenv, *newenv;
 
                     /* Reset PATH */
-                    newenv = opal_os_path( false, prefix_dir, bin_base, NULL );
+                    newenv = opal_dirname(exec_path);
+                    /*newenv = opal_os_path( false, prefix_dir, bin_base, NULL );*/
                     oldenv = getenv("PATH");
                     if (NULL != oldenv) {
                         char *temp;
