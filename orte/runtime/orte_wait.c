@@ -819,7 +819,7 @@ orte_wait_cb(pid_t wpid, orte_wait_fn_t callback, void *data)
     handle->data = data;
 
     RegisterWaitForSingleObject( &handle->registered_handle, (HANDLE)handle->pid, 
-                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINIOTHREAD);
+                                 trigger_process_detection, (void*)handle, INFINITE, WT_EXECUTEINWAITTHREAD);
 
     OPAL_THREAD_UNLOCK(&mutex);
 

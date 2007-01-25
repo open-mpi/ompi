@@ -178,9 +178,9 @@ void CALLBACK win32_socket_event_callback( void* lpParameter, BOOLEAN TimerOrWai
 	    }
         if( master->ev_events & OPAL_EV_WRITE ) {
             got |= OPAL_EV_WRITE;
-            /*if( 0 == WSASetEvent(master->base_handle) ) {
+            if( 0 == WSASetEvent(master->base_handle) ) {
                 int error = WSAGetLastError();
-            }*/
+            }
 	    }
 
         if( got ) {
@@ -248,7 +248,7 @@ static int win32_recompute_event( opal_event_t* master )
     }
     if( INVALID_HANDLE_VALUE == master->registered_handle ) {
         if( 0 == RegisterWaitForSingleObject( &master->registered_handle, master->base_handle, win32_socket_event_callback,
-                                              (void*)master, INFINITE, WT_EXECUTEINIOTHREAD ) ) {
+                                              (void*)master, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
             error = GetLastError();
             WSACloseEvent( master->base_handle );
             master->base_handle = INVALID_HANDLE_VALUE;
@@ -331,7 +331,7 @@ win32_insert(struct win32op *win32op, opal_event_t *ev)
             int error = errno;
         }
         if( 0 == RegisterWaitForSingleObject( &ev->registered_handle, ev->base_handle, win32_file_event_callback,
-                                              (void*)ev, INFINITE, WT_EXECUTEINIOTHREAD ) ) {
+                                              (void*)ev, INFINITE, WT_EXECUTEINWAITTHREAD ) ) {
             error = GetLastError();
         }*/
     }
