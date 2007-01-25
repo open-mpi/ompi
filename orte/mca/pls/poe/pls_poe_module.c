@@ -30,6 +30,9 @@
 #ifdef HAVE_UNISTD_H
 #include <unistd.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/mca/base/mca_base_param.h"
 #include "opal/util/argv.h"
@@ -60,12 +63,13 @@ extern char **environ;
  * Local functions
  */
 static int pls_poe_launch_job(orte_jobid_t jobid);
-static int pls_poe_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
-static int pls_poe_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_poe_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int pls_poe_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
 static int pls_poe_terminate_proc(const orte_process_name_t *name);
 static int pls_poe_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_poe_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_poe_finalize(void);
+static int pls_poe_cancel_operation(void);
 
 orte_pls_base_module_t orte_pls_poe_module = {
     pls_poe_launch_job,
@@ -74,6 +78,7 @@ orte_pls_base_module_t orte_pls_poe_module = {
     pls_poe_terminate_proc,
     pls_poe_signal_job,
     pls_poe_signal_proc,
+    pls_poe_cancel_operation,
     pls_poe_finalize
 };
 
@@ -602,7 +607,7 @@ static int pls_poe_launch_job(orte_jobid_t jobid)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
+static int pls_poe_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
@@ -613,7 +618,7 @@ static int pls_poe_terminate_proc(const orte_process_name_t *name)
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
 
-static int pls_poe_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
+static int pls_poe_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     return ORTE_ERR_NOT_IMPLEMENTED;
 }

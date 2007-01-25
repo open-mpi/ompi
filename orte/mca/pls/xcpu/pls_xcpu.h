@@ -32,6 +32,11 @@
 #define orte_pls_xcpu_H_
 
 #include "orte_config.h"
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "orte/class/orte_pointer_array.h"
 #include "orte/orte_constants.h"
 #include "orte/mca/pls/base/base.h"
@@ -57,11 +62,12 @@ orte_pls_base_module_t* orte_pls_xcpu_init(int *priority); /* in component file 
  * Interface
  */
 int orte_pls_xcpu_launch_job(orte_jobid_t);
-int orte_pls_xcpu_terminate_job(orte_jobid_t, opal_list_t *);
-    int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, opal_list_t * attrs);
+int orte_pls_xcpu_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t *);
+int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t * attrs);
 int orte_pls_xcpu_terminate_proc(const orte_process_name_t* proc_name);
 int orte_pls_xcpu_signal_job(orte_jobid_t jobid, int32_t sig, opal_list_t*);
 int orte_pls_xcpu_signal_proc(const orte_process_name_t* proc_name, int32_t sig);
+int orte_pls_xcpu_cancel_operation(void);
 int orte_pls_xcpu_finalize(void);
 
 void orte_pls_xcpu_close_sessions(void);

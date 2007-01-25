@@ -90,6 +90,11 @@
 #define ORTE_PLS_GRIDENGINE_EXPORT_H
 
 #include "orte_config.h"
+
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "orte/mca/pls/pls.h"
 #include "opal/mca/mca.h"
 
@@ -113,11 +118,12 @@ int orte_pls_gridengine_finalize(void);
  * Interface
  */
 int orte_pls_gridengine_launch_job(orte_jobid_t);
-int orte_pls_gridengine_terminate_job(orte_jobid_t, opal_list_t *attrs);
-int orte_pls_gridengine_terminate_orteds(orte_jobid_t, opal_list_t *attrs);
+int orte_pls_gridengine_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t *attrs);
+int orte_pls_gridengine_terminate_orteds(orte_jobid_t, struct timeval *timeout, opal_list_t *attrs);
 int orte_pls_gridengine_terminate_proc(const orte_process_name_t*);
 int orte_pls_gridengine_signal_job(orte_jobid_t, int32_t, opal_list_t *attrs);
 int orte_pls_gridengine_signal_proc(const orte_process_name_t*, int32_t);
+int orte_pls_gridengine_cancel_operation(void);
 
 /**
  * PLS Component

@@ -133,18 +133,6 @@ int orte_init_stage1(bool infrastructure)
 
     /*****   ERROR LOGGING NOW AVAILABLE *****/
 
-    /* check for debug flag */
-    if (0 > (ret =  mca_base_param_register_int("orte", "debug", NULL, NULL, 0))) {
-        ORTE_ERROR_LOG(ret);
-        error = "mca_base_param_register_int";
-        goto error;
-    }
-    if (ORTE_SUCCESS != (ret = mca_base_param_lookup_int(ret, &orte_debug_flag))) {
-        ORTE_ERROR_LOG(ret);
-        error = "mca_base_param_lookup_int";
-        goto error;
-    }
-
     /*
      * Initialize the event library
     */

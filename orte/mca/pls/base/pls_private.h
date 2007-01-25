@@ -26,6 +26,10 @@
  */
 #include "orte_config.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/class/opal_list.h"
 
 #include "orte/dss/dss_types.h"
@@ -41,18 +45,19 @@
 extern "C" {
 #endif
 
-    /*
-     * pls proxy commands
-     */
-    typedef uint8_t orte_pls_cmd_flag_t;
-    #define ORTE_PLS_CMD    ORTE_UINT8
-    #define ORTE_PLS_LAUNCH_JOB_CMD         1
-    #define ORTE_PLS_TERMINATE_JOB_CMD      2
-    #define ORTE_PLS_TERMINATE_PROC_CMD     3
-    #define ORTE_PLS_SIGNAL_JOB_CMD         4
-    #define ORTE_PLS_SIGNAL_PROC_CMD        5
-    #define ORTE_PLS_TERMINATE_ORTEDS_CMD   6
-    
+/*
+ * pls proxy commands
+ */
+typedef uint8_t orte_pls_cmd_flag_t;
+#define ORTE_PLS_CMD    ORTE_UINT8
+#define ORTE_PLS_LAUNCH_JOB_CMD         1
+#define ORTE_PLS_TERMINATE_JOB_CMD      2
+#define ORTE_PLS_TERMINATE_PROC_CMD     3
+#define ORTE_PLS_SIGNAL_JOB_CMD         4
+#define ORTE_PLS_SIGNAL_PROC_CMD        5
+#define ORTE_PLS_TERMINATE_ORTEDS_CMD   6
+#define ORTE_PLS_CANCEL_OPERATION_CMD   7
+
     /*
      * object for daemon information
      */
@@ -75,9 +80,10 @@ extern "C" {
     /**
      * Utilities for pls components that use proxy daemons
      */
-    ORTE_DECLSPEC int orte_pls_base_orted_exit(opal_list_t *daemons);
-    ORTE_DECLSPEC int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job);
-    ORTE_DECLSPEC int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal);
+    int orte_pls_base_orted_cancel_operation(void);
+    int orte_pls_base_orted_exit(opal_list_t *daemons, struct timeval *timeout);
+    int orte_pls_base_orted_kill_local_procs(opal_list_t *daemons, orte_jobid_t job, struct timeval *timeout);
+    int orte_pls_base_orted_signal_local_procs(opal_list_t *daemons, int32_t signal);
     int orte_pls_base_orted_add_local_procs(opal_list_t *dmnlist, orte_gpr_notify_data_t *ndat);
 
     ORTE_DECLSPEC int orte_pls_base_get_active_daemons(opal_list_t *daemons, orte_jobid_t job, opal_list_t *attrs);

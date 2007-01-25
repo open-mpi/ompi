@@ -68,10 +68,12 @@
 #include "orte/mca/schema/base/base.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orte/tools/orteprobe/orteprobe.h"
 
+#if 0
 orteprobe_globals_t orteprobe_globals;
 
 /*
@@ -127,6 +129,7 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
 };
+#endif
 
 #if !defined(__WINDOWS__)
 extern char **environ;
@@ -134,6 +137,7 @@ extern char **environ;
 
 int main(int argc, char *argv[])
 {
+#if 0
     int ret = 0, ortedargc;
     opal_cmd_line_t *cmd_line = NULL;
     char *contact_path = NULL, *orted=NULL;
@@ -150,6 +154,10 @@ int main(int argc, char *argv[])
     if (ORTE_SUCCESS != (ret = opal_init())) {
         return ret;
     }
+    
+    /* Setup MCA params */
+    mca_base_param_init();
+    orte_register_params(false);
     
     /* setup to check common command line options that just report and die */
     memset(&orteprobe_globals, 0, sizeof(orteprobe_globals));
@@ -464,4 +472,6 @@ int main(int argc, char *argv[])
     fprintf(stderr, "orteprobe: system appears to not support remote probes\n");
     exit(1);
 #endif
+#endif
+    exit(1);
 }

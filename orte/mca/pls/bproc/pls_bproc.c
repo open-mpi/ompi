@@ -40,6 +40,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/install_dirs.h"
 #include "opal/class/opal_list.h"
@@ -69,6 +72,7 @@
 #include "orte/mca/smr/smr.h"
 #include "orte/runtime/orte_wait.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 
 #include "orte/mca/pls/base/pls_private.h"
 #include "pls_bproc.h"
@@ -513,6 +517,14 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
     /* setup the daemon environment */
     orte_pls_bproc_setup_env(envp);
 
+    /* direct the daemons to drop contact files so the local procs
+     * can learn how to contact them - this is used for routing
+     * OOB messaging
+     */
+    var = mca_base_param_environ_variable("odls","base","drop_contact_file");
+    opal_setenv(var,"1", true, envp);
+    free(var);
+
     /* daemons calculate their process name using a "stride" of one, so
      * push that value into their environment */
     stride = 1;
@@ -704,7 +716,7 @@ static int orte_pls_bproc_launch_daemons(orte_job_map_t *map, char ***envp) {
                 }
                 rc = ORTE_ERROR;
                 ORTE_ERROR_LOG(rc);
-                orte_pls_bproc_terminate_job(map->job, NULL);
+                orte_pls_bproc_terminate_job(map->job, &orte_abort_timeout, NULL);
                 goto cleanup;
             }
         }
@@ -767,10 +779,10 @@ orte_pls_bproc_node_failed(orte_gpr_notify_message_t *msg)
     orte_schema.extract_jobid_from_std_trigger_name(&job, msg->target);
     
     /* terminate all jobs in the in the job family */
-    orte_pls_bproc_terminate_job(job, NULL);
+    orte_pls_bproc_terminate_job(job, &orte_abort_timeout, NULL);
     
     /* kill the daemons */
-    orte_pls_bproc_terminate_job(0, NULL);
+    orte_pls_bproc_terminate_job(0, &orte_abort_timeout, NULL);
     
     /* shouldn't ever get here.. */
     exit(1);
@@ -1159,7 +1171,7 @@ cleanup:
 
 /**
  * Terminate all processes associated with this job */
-int orte_pls_bproc_terminate_job(orte_jobid_t jobid, opal_list_t *attrs) {
+int orte_pls_bproc_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs) {
     pid_t* pids;
     orte_std_cntr_t i, num_pids;
     int rc;
@@ -1189,7 +1201,7 @@ int orte_pls_bproc_terminate_job(orte_jobid_t jobid, opal_list_t *attrs) {
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
+int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1205,7 +1217,7 @@ int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
     }
 
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
         ORTE_ERROR_LOG(rc);
     }
 
@@ -1294,6 +1306,23 @@ int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t sig
     }
     return ORTE_SUCCESS;
 }
+
+/**
+ * Cancel an operation involving comm to an orted
+ */
+int orte_pls_bproc_cancel_operation(void)
+{
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
 
 /**
  * Module cleanup

@@ -20,14 +20,27 @@
 
 #include "orte/orte_constants.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/mca/base/mca_base_param.h"
+
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
+
+/* globals used by RTE */
+int orte_debug_flag;
+struct timeval orte_abort_timeout;
 
 int orte_register_params(bool infrastructure)
 {
+    int value;
+    
     mca_base_param_reg_int_name("orte", "debug",
                                 "Top-level ORTE debug switch",
-                                false, false, (int)false, NULL);
+                                false, false, (int)false, &value);
+    orte_debug_flag = OPAL_INT_TO_BOOL(value);
     
     mca_base_param_reg_int_name("orte_debug", "daemons_file",
                                 "Whether want stdout/stderr of daemons to go to a file or not",
@@ -51,8 +64,14 @@ int orte_register_params(bool infrastructure)
                                    "Sequence of user-level debuggers to search for in orterun",
                                    false, false, "totalview @mpirun@ -a @mpirun_args@ : fxp @mpirun@ -a @mpirun_args@", NULL);
 
+
+    mca_base_param_reg_int_name("orte", "abort_timeout",
+                                "Time to wait [in seconds] before giving up on aborting an ORTE operation",
+                                false, false, 10, &value);
+    orte_abort_timeout.tv_sec = value;
+    orte_abort_timeout.tv_usec = 0;
+
     /* All done */
-    
     return ORTE_SUCCESS;
 }
 

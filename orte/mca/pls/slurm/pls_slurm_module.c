@@ -74,12 +74,13 @@
  * Local functions
  */
 static int pls_slurm_launch_job(orte_jobid_t jobid);
-static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
+static int pls_slurm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
 static int pls_slurm_terminate_proc(const orte_process_name_t *name);
 static int pls_slurm_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal);
 static int pls_slurm_finalize(void);
+static int pls_slurm_cancel_operation(void);
 
 static int pls_slurm_start_proc(int argc, char **argv, char **env,
                                 char *prefix);
@@ -95,6 +96,7 @@ orte_pls_base_module_1_3_0_t orte_pls_slurm_module = {
     pls_slurm_terminate_proc,
     pls_slurm_signal_job,
     pls_slurm_signal_proc,
+    pls_slurm_cancel_operation,
     pls_slurm_finalize
 };
 
@@ -443,7 +445,7 @@ cleanup:
 }
 
 
-static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
+static int pls_slurm_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -457,7 +459,7 @@ static int pls_slurm_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
     }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -474,7 +476,7 @@ CLEANUP:
 /**
 * Terminate the orteds for a given job
  */
-static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
+static int pls_slurm_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -488,7 +490,7 @@ static int pls_slurm_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
     }
     
     /* order them to go away */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -531,6 +533,21 @@ static int pls_slurm_signal_proc(const orte_process_name_t *name, int32_t signal
 {
     opal_output(0, "pls:slurm:signal_proc: not supported");
     return ORTE_ERR_NOT_SUPPORTED;
+}
+
+
+/**
+ * Cancel an operation involving comm to an orted
+ */
+int pls_slurm_cancel_operation(void)
+{
+    int rc;
+
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
 }
 
 
