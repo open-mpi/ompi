@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -117,6 +117,16 @@ OMPI_DECLSPEC extern bool ompi_mpi_paffinity_alone;
      * positive value = print the message and delay for that many seconds
      */
     OMPI_DECLSPEC extern int ompi_mpi_abort_delay;
+
+    /**
+     * Whether to use the "leave pinned" protocol or not.
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned;
+
+    /**
+     * Whether to use the "leave pinned pipeline" protocol or not.
+     */
+    OMPI_DECLSPEC extern bool ompi_mpi_leave_pinned_pipeline;
 
    /**
      * Register MCA parameters used by the MPI layer.

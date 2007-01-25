@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -20,6 +21,7 @@
 #include "opal/sys/cache.h"
 #include "opal/event/event.h"
 #include "mpi.h"
+#include "ompi/runtime/params.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/mca/btl/base/base.h"
@@ -86,8 +88,6 @@ static inline int mca_pml_ob1_param_register_int(
 
 int mca_pml_ob1_component_open(void)
 {
-    int param, value; 
-
     mca_pml_ob1.free_list_num =
         mca_pml_ob1_param_register_int("free_list_num", 4);
     mca_pml_ob1.free_list_max =
@@ -166,21 +166,10 @@ int mca_pml_ob1_component_open(void)
     OBJ_CONSTRUCT(&mca_pml_ob1.recv_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.pckt_pending, opal_list_t);
     OBJ_CONSTRUCT(&mca_pml_ob1.rdma_pending, opal_list_t);
-    
-    mca_base_param_register_int("mpi", NULL, "leave_pinned", "leave_pinned", 0); 
-    param = mca_base_param_find("mpi", NULL, "leave_pinned"); 
-    mca_base_param_lookup_int(param, &value); 
-    mca_pml_ob1.leave_pinned = OPAL_INT_TO_BOOL(value); 
-    
-    mca_base_param_register_int("mpi", NULL, "leave_pinned_pipeline", "leave_pinned_pipeline", 0); 
-    param = mca_base_param_find("mpi", NULL, "leave_pinned_pipeline"); 
-    mca_base_param_lookup_int(param, &value); 
-    mca_pml_ob1.leave_pinned_pipeline = value; 
 
-    if(mca_pml_ob1.leave_pinned_pipeline && mca_pml_ob1.leave_pinned) { 
-        mca_pml_ob1.leave_pinned_pipeline = 0;
-        opal_output(0, "WARNING: Cannot set both mpi_leave_pinned and mpi_leave_pinned_pipeline, defaulting to mpi_leave_pinned ONLY\n");
-    }
+    mca_pml_ob1.leave_pinned = ompi_mpi_leave_pinned;
+    mca_pml_ob1.leave_pinned_pipeline = (int) ompi_mpi_leave_pinned_pipeline;
+
     mca_pml_ob1.enabled = false; 
     return mca_bml_base_open(); 
     
