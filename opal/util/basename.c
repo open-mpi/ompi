@@ -70,32 +70,9 @@ char *opal_basename(const char *filename)
     const char sep = OPAL_PATH_SEP[0];
 
     /* Check for the bozo case */
-
     if (NULL == filename) {
         return NULL;
     }
-
-    /* On Windows, automatically exclude a drive designator */
-
-#ifdef __WINDOWS__
-    if (strlen(filename) == 2 &&
-        isalpha(filename[0]) && ':' == filename[1]) {
-        return strdup(filename);
-    } else if (strlen(filename) == 3 &&
-        isalpha(filename[0]) && ':' == filename[1] && sep == filename[2]) {
-        return strdup(filename);
-    }
-
-    if (':' == filename[1] && isalpha(filename[0])) {
-        filename += 2;
-        if (sep == filename[0]) {
-            ++filename;
-        }
-    }
-#endif
-
-    /* Check for the bozo cases */
-
     if (0 == strlen(filename)) {
         return strdup("");
     }
@@ -103,8 +80,23 @@ char *opal_basename(const char *filename)
         return strdup(filename);
     }
 
-    /* Remove trailing sep's (note that we already know that strlen > 0) */
+    /* On Windows, automatically exclude the drive designator */
 
+#ifdef __WINDOWS__
+    if( isalpha(filename[0]) && (':' == filename[1]) ) {
+        if( strlen(filename) == 2 ) {
+            return strdup(filename);
+        } else if( strlen(filename) == 3 && (sep == filename[2]) ) {
+            return strdup(filename);
+        }
+        filename += 2;
+        if( sep == filename[0] ) {
+            ++filename;
+        }
+    }
+#endif
+
+    /* Remove trailing sep's (note that we already know that strlen > 0) */
     tmp = strdup(filename);
     for (i = strlen(tmp) - 1; i > 0; --i) {
         if (sep == tmp[i]) {
@@ -119,17 +111,7 @@ char *opal_basename(const char *filename)
     }
 
     /* Look for the final sep */
-
-    ret = strrchr(tmp, sep);
-#ifdef __WINDOWS__
-    /**
-	 * As on Windows we support both separators (/ and \) we should double
-	 * check or both of them.
-	 */
-	if( NULL == ret ) {
-	    ret = strrchr(tmp, '/');
-	}
-#endif  /* __WINDOWS__ */
+    ret = opal_find_last_path_separator( tmp, strlen(tmp) );
     if (NULL == ret) {
         return tmp;
     }
