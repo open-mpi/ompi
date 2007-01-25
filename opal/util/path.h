@@ -69,6 +69,19 @@ extern "C" {
      */
     OPAL_DECLSPEC char *opal_path_findv(char *fname, int mode, 
                                         char **envv, char *wrkdir);
+    /**
+     *  Detect if the requested path is absolute or relative.
+     *
+     *  @param path  File name
+     *
+     *  @retval true if the path is absolute
+     *  @retval false otherwise
+     *
+     *  Detect if a path is absolute or relative. Handle Windows
+     *  with special care as an absolute path on Windows starts
+     *  with [A-Za-z]: instead of the usual / on UNIX.
+     */
+    OPAL_DECLSPEC bool opal_path_is_absolute( const char *path );
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }

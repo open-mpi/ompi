@@ -32,6 +32,21 @@ static void path_env_load(char *path, int *pargc, char ***pargv);
 static char *path_access(char *fname, char *path, int mode);
 static char *list_env_get(char *var, char **list);
 
+bool opal_path_is_absolute( const char *path )
+{
+#if defined(__WINDOWS__)
+	/* On Windows an absolute path always start with [a-z]:\ */
+	if( ':' == path[1] ) {
+		return true;
+	}
+#else
+    if( OPAL_PATH_SEP[0] == *path ) {
+        return true;
+    }
+#endif  /* defined(__WINDOWS__) */
+	return false;
+}
+
 /**
  *  Locates a file with certain permissions
  */
@@ -44,8 +59,7 @@ char *opal_path_find(char *fname, char **pathv, int mode, char **envv)
     int i;
 
     /* If absolute path is given, return it without searching. */
-
-    if (OPAL_PATH_SEP[0] == *fname) {
+    if( opal_path_is_absolute(fname) ) {
         return path_access(fname, "", mode);
     }
 
