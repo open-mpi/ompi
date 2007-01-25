@@ -148,7 +148,7 @@ static int pls_tm_launch_job(orte_jobid_t jobid)
     orte_pls_daemon_info_t *dmn;
     struct timeval launchstart, launchstop, completionstart, completionstop;
     struct timeval jobstart, jobstop;
-    int maxtime=0, mintime=99999999, maxiter, miniter, deltat;
+    int maxtime=0, mintime=99999999, maxiter = 0, miniter = 0, deltat;
     float avgtime=0.0;
     
     /* check for timing request - get start time if so */
