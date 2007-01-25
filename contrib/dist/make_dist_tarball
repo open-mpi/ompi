@@ -78,22 +78,6 @@ make_tarball() {
     fi
 
     #
-    # Sanity check
-    #
-    echo "*** Sanity check..."
-    file="ompi/mca/btl/gm/btl_gm_component.c"
-    if test ! -f "$file"; then
-        echo "Configure failed - no file: $file"
-        exit 1
-    fi
-
-    #
-    # Remove autogen.sh (just to ensure users don't try to run it)
-    #
-    echo "*** Removing autogen.sh from the tarball before make dist"
-    rm -rf autogen.sh
-
-    #
     # make tarball
     #
     echo "*** Running make distcheck..."
@@ -113,11 +97,6 @@ make_tarball() {
     mv openmpi-* ..
 
     echo "*** All done"
-
-    #
-    # bring back autogen.sh
-    #
-    svn up autogen.sh
 }
 
 #########################################################################
