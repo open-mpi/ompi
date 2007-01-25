@@ -1217,6 +1217,7 @@ int orte_gpr_replica_check_subscription(orte_gpr_replica_subscription_t *sub)
                 }
 
                 /* send back the recorded data */
+                value->keyvals[0] = OBJ_NEW(orte_gpr_keyval_t);
                 if (ORTE_SUCCESS != (rc = orte_gpr_replica_dict_reverse_lookup(
                                         &((value->keyvals[0])->key), ptr[i]->seg,
                                         ptr[i]->iptr->itag))) {
