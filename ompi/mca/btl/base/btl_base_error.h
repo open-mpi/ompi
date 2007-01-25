@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -34,7 +35,8 @@ extern int mca_btl_base_out(const char*, ...);
 
 #define BTL_OUTPUT(args)                                     \
 do {                                                         \
-    mca_btl_base_out("[%lu,%lu,%lu][%s:%d:%s] ",             \
+    mca_btl_base_out("[%s][%lu,%lu,%lu][%s:%d:%s] ",         \
+            orte_system_info.nodename,                       \
             ORTE_NAME_ARGS(orte_process_info.my_name),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_out args;                                   \
@@ -44,7 +46,8 @@ do {                                                         \
 
 #define BTL_ERROR(args)                                      \
 do {                                                         \
-    mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",             \
+    mca_btl_base_err("[%s][%lu,%lu,%lu][%s:%d:%s] ",         \
+            orte_system_info.nodename,                       \
             ORTE_NAME_ARGS(orte_process_info.my_name),       \
             __FILE__, __LINE__, __func__);                   \
     mca_btl_base_err args;                                   \
@@ -69,7 +72,8 @@ do {                                                             \
 #define BTL_DEBUG(args)                                      \
 do {                                                         \
    if(mca_btl_base_debug) {                                  \
-        mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",         \
+        mca_btl_base_err("[%s][%lu,%lu,%lu][%s:%d:%s] ",     \
+                orte_system_info.nodename,                   \
                 ORTE_NAME_ARGS(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
@@ -79,7 +83,8 @@ do {                                                         \
 #define BTL_VERBOSE(args)                                    \
 do {                                                         \
    if(mca_btl_base_debug > 1) {                              \
-        mca_btl_base_err("[%lu,%lu,%lu][%s:%d:%s] ",         \
+        mca_btl_base_err("[%s][%lu,%lu,%lu][%s:%d:%s] ",     \
+                orte_system_info.nodename,                   \
                 ORTE_NAME_ARGS(orte_process_info.my_name),   \
                 __FILE__, __LINE__, __func__);               \
         mca_btl_base_err args;                               \
