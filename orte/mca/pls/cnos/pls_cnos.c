@@ -137,7 +137,7 @@ static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32
     return ORTE_ERR_NOT_SUPPORTED;
 }
 
-int orte_pls_rsh_cancel_operation(void)
+int orte_pls_cnos_cancel_operation(void)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }
