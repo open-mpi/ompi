@@ -41,6 +41,10 @@ Trunk (not on release branches yet)
 1.2
 ---
 
+- Always ensure to create $(includedir)/openmpi, even if the C++
+  bindings are disabled so that the wrapper compilers don't point to
+  a directory that doesn't exist.  Thanks to Martin Audet for
+  identifying the problem.
 - Fixes for endian handling in MPI process startup.
 - Openib BTL initialization fixes for cases where MPI processes in the
   same job has different numbers of active ports on the same physical

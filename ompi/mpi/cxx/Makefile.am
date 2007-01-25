@@ -10,6 +10,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -69,5 +70,9 @@ ompidir = $(includedir)/openmpi/ompi/mpi/cxx
 ompi_HEADERS = \
         $(headers)
 else
-ompidir = $(includedir)
+# If the C++ bindings were disabled, still ensure that this directory
+# is created so that the default -I flags in the wrapper compilers
+# point to a directory that exists.
+ompidir = $(includedir)/openmpi
+ompi_DATA = README.txt
 endif
