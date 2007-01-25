@@ -28,6 +28,7 @@
 #include "opal/util/output.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 #include "orte/mca/ns/ns_types.h"
 #include "orte/mca/gpr/gpr.h"
 #include "orte/mca/pls/pls.h"
@@ -85,9 +86,8 @@ int orte_errmgr_hnp_proc_aborted(orte_gpr_notify_message_t *msg)
     /* tell the pls to terminate the job AND ALL ITS DESCENDANTS */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
     orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &attrs))) {
+    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &orte_abort_timeout, &attrs))) {
         ORTE_ERROR_LOG(rc);
-        return rc;
     }
     while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attrs);
@@ -152,7 +152,7 @@ int orte_errmgr_hnp_incomplete_start(orte_gpr_notify_message_t *msg)
     /* tell the pls to terminate the job - just kill this job, not any descendants since
      * the job is just trying to start
      */
-    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, NULL))) {
+    if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &orte_abort_timeout, NULL))) {
         ORTE_ERROR_LOG(rc);
     }
     

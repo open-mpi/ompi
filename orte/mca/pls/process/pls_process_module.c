@@ -115,6 +115,7 @@ orte_pls_base_module_t orte_pls_process_module = {
     orte_pls_process_terminate_proc,
     orte_pls_process_signal_job,
     orte_pls_process_signal_proc,
+    orte_pls_process_cancel_operation,
     orte_pls_process_finalize
 };
 
@@ -1029,7 +1030,7 @@ cleanup:
 /**
  * Terminate all processes for a given job
  */
-int orte_pls_process_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
+int orte_pls_process_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1045,7 +1046,7 @@ int orte_pls_process_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
     }
     
     /* order them to kill their local procs for this job */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_kill_local_procs(&daemons, jobid, timeout))) {
         ORTE_ERROR_LOG(rc);
         goto CLEANUP;
     }
@@ -1061,7 +1062,7 @@ CLEANUP:
 /**
 * Terminate the orteds for a given job
  */
-int orte_pls_process_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
+int orte_pls_process_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     int rc;
     opal_list_t daemons;
@@ -1077,7 +1078,7 @@ int orte_pls_process_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
     }
     
     /* now tell them to die! */
-    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons))) {
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_exit(&daemons, timeout))) {
         ORTE_ERROR_LOG(rc);
     }
     
@@ -1133,6 +1134,23 @@ int orte_pls_process_signal_proc(const orte_process_name_t* proc, int32_t signal
     
     return ORTE_ERR_NOT_IMPLEMENTED;
 }
+
+/**
+ * Cancel an operation involving comm to an orted
+ */
+int orte_pls_process_cancel_operation(void)
+{
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    if (ORTE_SUCCESS != (rc = orte_pls_base_orted_cancel_operation())) {
+        ORTE_ERROR_LOG(rc);
+    }
+    
+    return rc;
+}
+
 
 int orte_pls_process_finalize(void)
 {

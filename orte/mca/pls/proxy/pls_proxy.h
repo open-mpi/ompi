@@ -22,6 +22,10 @@
 
 #include "orte_config.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "orte/mca/pls/pls.h"
 
 #if defined(c_plusplus) || defined(__cplusplus)
@@ -48,11 +52,12 @@ int orte_pls_proxy_finalize(void);
  * proxy function prototypes
  */
 int orte_pls_proxy_launch(orte_jobid_t job);
-int orte_pls_proxy_terminate_job(orte_jobid_t job, opal_list_t *attrs);
-int orte_pls_proxy_terminate_orteds(orte_jobid_t job, opal_list_t *attrs);
+int orte_pls_proxy_terminate_job(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs);
+int orte_pls_proxy_terminate_orteds(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs);
 int orte_pls_proxy_terminate_proc(const orte_process_name_t* name);
 int orte_pls_proxy_signal_job(orte_jobid_t job, int32_t signal, opal_list_t *attrs);
 int orte_pls_proxy_signal_proc(const orte_process_name_t* name, int32_t signal);
+int orte_pls_proxy_cancel_operation(void);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)

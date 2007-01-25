@@ -33,9 +33,6 @@
  * @retval ORTE_ERROR Upon failure.
  */
 
-/* globals used by RTE */
-int orte_debug_flag=(int)false;
-
 int orte_init(bool infrastructure)
 {
     int rc;

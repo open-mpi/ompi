@@ -35,6 +35,7 @@ typedef struct {
     bool debug;
     bool debug_daemons;
     bool debug_daemons_file;
+    bool set_sid;
     char* ns_nds;
     char* name;
     char* vpid_start;

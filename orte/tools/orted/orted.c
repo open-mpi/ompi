@@ -69,6 +69,7 @@
 #include "orte/mca/pls/pls.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 
 #include "orte/tools/orted/orted.h"
 
@@ -126,6 +127,10 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.bootproxy, OPAL_CMD_LINE_TYPE_INT,
       "Run as boot proxy for <job-id>" },
 
+    { NULL, NULL, NULL, '\0', NULL, "set-sid", 0,
+      &orted_globals.set_sid, OPAL_CMD_LINE_TYPE_BOOL,
+      "Direct the orted to separate from the current session"},
+    
     { NULL, NULL, NULL, '\0', NULL, "name", 1,
       &orted_globals.name, OPAL_CMD_LINE_TYPE_STRING,
       "Set the orte process name"},
@@ -206,6 +211,9 @@ int main(int argc, char *argv[])
     /* save the environment for use when launching application processes */
     orted_globals.saved_environ = opal_argv_copy(environ);
 
+    /* setup mca param system */
+    mca_base_param_init();
+    
     /* setup to check common command line options that just report and die */
     cmd_line = OBJ_NEW(opal_cmd_line_t);
     opal_cmd_line_create(cmd_line, orte_cmd_line_opts);
@@ -229,6 +237,11 @@ int main(int argc, char *argv[])
         return 1;
     }
 
+    /* see if we were directed to separate from current session */
+    if (orted_globals.set_sid) {
+        setsid();
+    }
+    
     /* see if they want us to spin until they can connect a debugger to us */
     i=0;
     while (orted_globals.spin) {
@@ -741,7 +754,7 @@ static void halt_vm(void)
     /* terminate the vm - this will also wake us up so we can exit */
     OBJ_CONSTRUCT(&attrs, opal_list_t);
     orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-    ret = orte_pls.terminate_orteds(0, &attrs);
+    ret = orte_pls.terminate_orteds(0, &orte_abort_timeout, &attrs);
     while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
     OBJ_DESTRUCT(&attrs);
     

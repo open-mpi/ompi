@@ -26,6 +26,10 @@
 #include "orte/orte_constants.h"
 #include "orte/orte_types.h"
 
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #include "opal/util/output.h"
 #include "opal/util/trace.h"
 
@@ -110,13 +114,14 @@ int orte_pls_proxy_launch(orte_jobid_t job)
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_terminate_job(orte_jobid_t job, opal_list_t *attrs)
+int orte_pls_proxy_terminate_job(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    int32_t timefield;
     
     OPAL_TRACE(1);
     
@@ -146,6 +151,20 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job, opal_list_t *attrs)
         return rc;
     }
     
+    timefield = timeout->tv_sec;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &timefield, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    timefield = timeout->tv_usec;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &timefield, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+
     if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
         ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
         OBJ_RELEASE(cmd);
@@ -182,13 +201,14 @@ int orte_pls_proxy_terminate_job(orte_jobid_t job, opal_list_t *attrs)
     return ORTE_SUCCESS;
 }
 
-int orte_pls_proxy_terminate_orteds(orte_jobid_t job, opal_list_t *attrs)
+int orte_pls_proxy_terminate_orteds(orte_jobid_t job, struct timeval *timeout, opal_list_t *attrs)
 {
     orte_buffer_t* cmd;
     orte_buffer_t* answer;
     orte_pls_cmd_flag_t command, ret_cmd;
     orte_std_cntr_t count;
     int rc;
+    int32_t timefield;
     
     OPAL_TRACE(1);
     
@@ -213,6 +233,20 @@ int orte_pls_proxy_terminate_orteds(orte_jobid_t job, opal_list_t *attrs)
     }
     
     if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, attrs, 1, ORTE_ATTR_LIST))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    timefield = timeout->tv_sec;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &timefield, 1, ORTE_INT32))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    timefield = timeout->tv_usec;
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &timefield, 1, ORTE_INT32))) {
         ORTE_ERROR_LOG(rc);
         OBJ_RELEASE(cmd);
         return rc;
@@ -471,5 +505,63 @@ int orte_pls_proxy_signal_proc(const orte_process_name_t* name, int32_t signal)
     return ORTE_SUCCESS;
 }
 
-
+int orte_pls_proxy_cancel_operation(void)
+{
+    orte_buffer_t* cmd;
+    orte_buffer_t* answer;
+    orte_pls_cmd_flag_t command, ret_cmd;
+    orte_std_cntr_t count;
+    int rc;
+    
+    OPAL_TRACE(1);
+    
+    command = ORTE_PLS_CANCEL_OPERATION_CMD;
+    
+    cmd = OBJ_NEW(orte_buffer_t);
+    if (cmd == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (ORTE_SUCCESS != (rc = orte_dss.pack(cmd, &command, 1, ORTE_PLS_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(cmd);
+        return rc;
+    }
+    
+    if (0 > orte_rml.send_buffer(orte_pls_proxy_replica, cmd, ORTE_RML_TAG_PLS, 0)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(cmd);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    OBJ_RELEASE(cmd);
+    
+    answer = OBJ_NEW(orte_buffer_t);
+    if(answer == NULL) {
+        ORTE_ERROR_LOG(ORTE_ERR_OUT_OF_RESOURCE);
+        return ORTE_ERR_OUT_OF_RESOURCE;
+    }
+    
+    if (0 > orte_rml.recv_buffer(orte_pls_proxy_replica, answer, ORTE_RML_TAG_PLS)) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    count = 1;
+    if (ORTE_SUCCESS != (rc = orte_dss.unpack(answer, &ret_cmd, &count, ORTE_PLS_CMD))) {
+        ORTE_ERROR_LOG(rc);
+        OBJ_RELEASE(answer);
+        return rc;
+    }
+    
+    if (ret_cmd != command) {
+        ORTE_ERROR_LOG(ORTE_ERR_COMM_FAILURE);
+        OBJ_RELEASE(answer);
+        return ORTE_ERR_COMM_FAILURE;
+    }
+    
+    OBJ_RELEASE(answer);
+    return ORTE_SUCCESS;
+}
 

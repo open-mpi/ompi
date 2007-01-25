@@ -40,6 +40,9 @@
 #ifdef HAVE_STRING_H
 #include <string.h>
 #endif  /* HAVE_STRING_H */
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/event/event.h"
 #include "opal/mca/base/mca_base_param.h"
@@ -86,6 +89,7 @@ orte_pls_base_module_t orte_pls_xcpu_module = {
 	orte_pls_xcpu_terminate_proc,
 	orte_pls_xcpu_signal_job,
 	orte_pls_xcpu_signal_proc,
+    orte_pls_xcpu_cancel_operation,
 	orte_pls_xcpu_finalize
 };
 
@@ -357,7 +361,7 @@ error:
 	return rc;
 }
 
-int orte_pls_xcpu_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
+int orte_pls_xcpu_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
 	int i, rc;
 	orte_job_map_t *map;
@@ -378,7 +382,7 @@ int orte_pls_xcpu_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 	return ORTE_SUCCESS;
 }
 
-int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, opal_list_t * attrs)
+int orte_pls_xcpu_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t * attrs)
 {
 	return ORTE_SUCCESS;
 }
@@ -422,6 +426,14 @@ int orte_pls_xcpu_signal_proc(const orte_process_name_t* proc_name, int32_t sig)
 	 * Xpcommand/Xpsessionset, only to the whole session set */
 
 	return ORTE_SUCCESS;
+}
+
+/**
+ * Cancel an operation involving comm to an orted
+ */
+int orte_pls_xcpu_cancel_operation(void)
+{
+    return ORTE_SUCCESS;
 }
 
 int orte_pls_xcpu_finalize(void)

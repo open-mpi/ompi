@@ -39,6 +39,9 @@
 #ifdef HAVE_LIBGEN_H
 #include <libgen.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/event/event.h"
 #include "opal/install_dirs.h"
@@ -71,6 +74,7 @@
 #include "orte/mca/errmgr/errmgr.h"
 
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 #include "orte/runtime/orte_wait.h"
 
 #include "orterun.h"
@@ -268,7 +272,7 @@ opal_cmd_line_init_t cmd_line_init[] = {
         &orterun_globals.do_not_launch, OPAL_CMD_LINE_TYPE_BOOL,
         "Perform all necessary operations to prepare to launch the application, but do not actually launch it" },
     
-    { NULL, NULL, NULL, '\0', "reuse-daemons", "reuse-daemons", 0,
+    { "pls", "base", "reuse_daemons", '\0', "reuse-daemons", "reuse-daemons", 0,
       NULL, OPAL_CMD_LINE_TYPE_BOOL,
       "If set, reuse daemons to launch dynamically spawned processes"},
 
@@ -470,9 +474,9 @@ int orterun(int argc, char *argv[])
              */
             OBJ_CONSTRUCT(&attributes, opal_list_t);
             orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &attributes))) {
-                opal_show_help("help-orterun.txt", "orterun:daemon-die", false,
-                               orterun_basename, NULL, NULL, ret);
+            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &orte_abort_timeout, &attributes))) {
+                opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
+                               orterun_basename, ORTE_ERROR_NAME(ret));
             }
             while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
             OBJ_DESTRUCT(&attributes);
@@ -686,9 +690,6 @@ static void exit_callback(int fd, short event, void *arg)
 {
     OPAL_TRACE(1);
 
-    opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
-                   true, orterun_basename, orterun_basename);
-
     /* Remove the TERM and INT signal handlers */
     opal_signal_del(&term_handler);
     opal_signal_del(&int_handler);
@@ -720,62 +721,71 @@ typedef enum {
 static void abort_signal_callback(int fd, short flags, void *arg)
 {
     int ret;
-    struct timeval tv = { 1, 0 };
     opal_event_t* event;
     opal_list_t attrs;
     opal_list_item_t *item;
-    static abort_signal_state_t state;
+    static abort_signal_state_t state=ABORT_SIGNAL_FIRST;
     static struct timeval invoked, now;
     double a, b;
-
+    
     OPAL_TRACE(1);
-
+    
     /* If this whole process has already completed, then bail */
     switch (state) {
-    case ABORT_SIGNAL_FIRST:
-        /* This is the first time through */
-        state = ABORT_SIGNAL_PROCESSING;
-        break;
-
-    case ABORT_SIGNAL_WARNED:
-        gettimeofday(&now, NULL);
-        a = invoked.tv_sec * 1000000 + invoked.tv_usec;
-        b = now.tv_sec * 1000000 + invoked.tv_usec;
-        if (b - a <= 1000000) {
-            /* We are in an event handler; exit_callback() will delete
-               the handler that is currently running (which is a Bad
-               Thing), so we can't call it directly.  Instead, we have
-               to exit this handler and setup to call exit_handler()
-               after this. */
-            if (NULL != (event = (opal_event_t*)
-                         malloc(sizeof(opal_event_t)))) {
-                opal_evtimer_set(event, exit_callback, NULL);
-                now.tv_sec = 0;
-                now.tv_usec = 0;
-                opal_evtimer_add(event, &now);
-                state = ABORT_SIGNAL_DONE;
-            }
-            return;
-        } 
-        /* Otherwise fall through to PROCESSING and warn again */
-
-    case ABORT_SIGNAL_PROCESSING:
-        opal_show_help("help-orterun.txt", "orterun:sigint-while-processing",
-                       true, orterun_basename, orterun_basename, 
-                       orterun_basename);
-        gettimeofday(&invoked, NULL);
-        state = ABORT_SIGNAL_WARNED;
-        return;
-
-    case ABORT_SIGNAL_DONE:
-        /* Nothing to do -- return */
-        return;
+        case ABORT_SIGNAL_FIRST:
+            /* This is the first time through */
+            state = ABORT_SIGNAL_PROCESSING;
+            break;
+            
+        case ABORT_SIGNAL_WARNED:
+            gettimeofday(&now, NULL);
+            a = invoked.tv_sec * 1000000 + invoked.tv_usec;
+            b = now.tv_sec * 1000000 + invoked.tv_usec;
+            if (b - a <= 1000000) {
+                /* tell the pls to cancel the terminate request -
+                * obviously, something is wrong at this point
+                */
+                if (ORTE_SUCCESS != (ret = orte_pls.cancel_operation())) {
+                    ORTE_ERROR_LOG(ret);
+                }
+                /* give the user the warning about manual cleanup */
+                opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
+                               true, orterun_basename, orterun_basename);
+                
+                /* We are in an event handler; exit_callback() will delete
+                the handler that is currently running (which is a Bad
+                                                       Thing), so we can't call it directly.  Instead, we have
+                to exit this handler and setup to call exit_handler()
+                after this. */
+                if (NULL != (event = (opal_event_t*)
+                             malloc(sizeof(opal_event_t)))) {
+                    opal_evtimer_set(event, exit_callback, NULL);
+                    now.tv_sec = 0;
+                    now.tv_usec = 0;
+                    opal_evtimer_add(event, &now);
+                    state = ABORT_SIGNAL_DONE;
+                }
+                return;
+            } 
+                /* Otherwise fall through to PROCESSING and warn again */
+                
+            case ABORT_SIGNAL_PROCESSING:
+                opal_show_help("help-orterun.txt", "orterun:sigint-while-processing",
+                               true, orterun_basename, orterun_basename, 
+                               orterun_basename);
+                gettimeofday(&invoked, NULL);
+                state = ABORT_SIGNAL_WARNED;
+                return;
+                
+            case ABORT_SIGNAL_DONE:
+                /* Nothing to do -- return */
+                return;
     }
 
     if (!orterun_globals.quiet){
         fprintf(stderr, "%s: killing job...\n\n", orterun_basename);
     }
-
+    
     /* terminate the job - this will also wakeup orterun so
      * it can kill all the orteds. Be sure to kill all the job's
      * descendants, if any, so nothing is left hanging
@@ -783,23 +793,19 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     if (jobid != ORTE_JOBID_INVALID) {
         OBJ_CONSTRUCT(&attrs, opal_list_t);
         orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-        ret = orte_pls.terminate_job(jobid, &attrs);
+        ret = orte_pls.terminate_job(jobid, &orte_abort_timeout, &attrs);
         while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
         OBJ_DESTRUCT(&attrs);
         if (ORTE_SUCCESS != ret) {
+            opal_show_help("help-orterun.txt", "orterun:forced-end-failed",
+                           true, orterun_basename, ORTE_ERROR_NAME(ret));
             jobid = ORTE_JOBID_INVALID;
         }
     }
     
-    /* setup a delay to give the orteds time to complete their departure */
-    if (NULL != (event = (opal_event_t*)malloc(sizeof(opal_event_t)))) {
-        opal_evtimer_set(event, exit_callback, NULL);
-        opal_evtimer_add(event, &tv);
-    }
-    
+    state = ABORT_SIGNAL_DONE;
     state = ABORT_SIGNAL_DONE;
 }
-
 
 /**
  * Pass user signals to the remote application processes
@@ -965,7 +971,7 @@ static int parse_globals(int argc, char* argv[])
         orterun_globals.by_slot = true;
     }
 
-   /* If we don't want to wait, we don't want to wait */
+    /* If we don't want to wait, we don't want to wait */
 
     if (orterun_globals.no_wait_for_job_completion) {
         wait_for_job_completion = false;
