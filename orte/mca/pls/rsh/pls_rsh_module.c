@@ -873,8 +873,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
                     launchstart[vpid].tv_usec = 0;
                 }
                 
-                exec_argv = &argv[local_exec_index];
-                exec_path = opal_path_findv(exec_argv[0], 0, environ, NULL);
+                exec_path = opal_path_findv(argv[local_exec_index], 0, environ, NULL);
 
                 if (NULL == exec_path && NULL == prefix_dir) {
                     rc = orte_pls_rsh_fill_exec_path (&exec_path);
@@ -946,6 +945,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
 
                 /* tell the daemon to setup its own process session/group */
                 opal_argv_append(&argc, &argv, "--set-sid");
+                exec_argv = &argv[local_exec_index];
                 
                 /* Finally, chdir($HOME) because we're making the
                    assumption that this is what will happen on
@@ -1061,17 +1061,20 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             env = opal_argv_copy(environ);
             var = mca_base_param_environ_variable("seed",NULL,NULL);
             opal_setenv(var, "0", true, &env);
-            
+
             /* exec the daemon */
             if (mca_pls_rsh_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
                 if (NULL != param) {
-                    opal_output(0, "pls:rsh: executing: %s", param);
-                    free(param);
+                    char* env_array = opal_argv_join( env, " " );
+                    opal_output(0, "pls:rsh: executing: (%s) %s [%s]",
+                                exec_path, param, env_array);
+                    free(param); free(env_array);
                 }
             }
             execve(exec_path, exec_argv, env);
-            opal_output(0, "pls:rsh: execv failed with errno=%d\n", errno);
+            opal_output(0, "pls:rsh: execv of %s failed with errno=%s(%d)\n",
+                        exec_path, strerror(errno), errno);
             exit(-1);
 
         } else { /* father */
