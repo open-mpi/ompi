@@ -370,7 +370,8 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
 
     /* Post all receives first -- a simple optimization */
 
-    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++rreq, ++nreqs) {
+    for (nreqs = 0, i = (rank + 1) % size; i != rank; 
+         i = (i + 1) % size, ++rreq, ++nreqs) {
         err =
             MCA_PML_CALL(irecv_init
                          (prcv + (i * rcvinc), rcount, rdtype, i,
@@ -381,9 +382,12 @@ int ompi_coll_tuned_alltoall_intra_basic_linear(void *sbuf, int scount,
         }
     }
 
-    /* Now post all sends */
-
-    for (nreqs = 0, i = (rank + 1) % size; i != rank; i = (i + 1) % size, ++sreq, ++nreqs) {
+    /* Now post all sends in reverse order 
+       - We would like to minimize the search time through message queue
+         when messages actually arrive in the order in which they were posted.
+     */
+    for (nreqs = 0, i = (rank + size - 1) % size; i != rank; 
+         i = (i + size - 1) % size, ++sreq, ++nreqs) {
         err =
             MCA_PML_CALL(isend_init
                          (psnd + (i * sndinc), scount, sdtype, i,
