@@ -310,14 +310,12 @@ int orte_init_stage1(bool infrastructure)
         goto error;
     }
     
-    /* only daemon procs will execute this code */
     if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_odls_base_open";
         goto error;
     }
     
-    /* only daemon procs will execute this code */
     if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
         ORTE_ERROR_LOG(ret);
         error = "orte_odls_base_select";
