@@ -26,6 +26,7 @@ headers += \
         runtime/runtime.h \
         runtime/runtime_internal.h \
         runtime/runtime_types.h \
+        runtime/params.h \
 	runtime/orte_setup_hnp.h
 
 libopen_rte_la_SOURCES += \
