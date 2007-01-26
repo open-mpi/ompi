@@ -518,7 +518,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     orte_vpid_t vpid;
     int node_name_index2;
     int proc_name_index;
-    int local_exec_index, local_exec_index_end;
+    int local_exec_index;
     char *jobid_string = NULL;
     char *uri, *param;
     char **argv = NULL;
@@ -663,7 +663,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     /* pass along the universe name and location info */
     opal_argv_append(&argc, &argv, "--universe");
     asprintf(&param, "%s@%s:%s", orte_universe_info.uid,
-                orte_universe_info.host, orte_universe_info.name);
+             orte_universe_info.host, orte_universe_info.name);
     opal_argv_append(&argc, &argv, param);
     free(param);
 
@@ -691,7 +691,6 @@ int orte_pls_process_launch(orte_jobid_t jobid)
     free(uri);
     free(param);
 
-    local_exec_index_end = argc;
     if (mca_pls_process_component.debug) {
         param = opal_argv_join(argv, ' ');
         if (NULL != param) {
@@ -705,26 +704,26 @@ int orte_pls_process_launch(orte_jobid_t jobid)
        requires some explanation:
 
        - Use OPAL_LIBDIR and OPAL_BINDIR instead of -D'ing some macros
-         in this directory's Makefile.am because it makes all the
-         dependencies work out correctly.  These are defined in
-         opal/install_dirs.h.
+       in this directory's Makefile.am because it makes all the
+       dependencies work out correctly.  These are defined in
+       opal/install_dirs.h.
 
        - After a discussion on the devel-core mailing list, the
-         developers decided that we should use the local directory
-         basenames as the basis for the prefix on the remote note.
-         This does not handle a few notable cases (e.g., f the
-         libdir/bindir is not simply a subdir under the prefix, if the
-         libdir/bindir basename is not the same on the remote node as
-         it is here in the local node, etc.), but we decided that
-         --prefix was meant to handle "the common case".  If you need
-         something more complex than this, a) edit your shell startup
-         files to set PATH/LD_LIBRARY_PATH properly on the remove
-         node, or b) use some new/to-be-defined options that
-         explicitly allow setting the bindir/libdir on the remote
-         node.  We decided to implement these options (e.g.,
-         --remote-bindir and --remote-libdir) to orterun when it
-         actually becomes a problem for someone (vs. a hypothetical
-         situation).
+       developers decided that we should use the local directory
+       basenames as the basis for the prefix on the remote note.
+       This does not handle a few notable cases (e.g., f the
+       libdir/bindir is not simply a subdir under the prefix, if the
+       libdir/bindir basename is not the same on the remote node as
+       it is here in the local node, etc.), but we decided that
+       --prefix was meant to handle "the common case".  If you need
+       something more complex than this, a) edit your shell startup
+       files to set PATH/LD_LIBRARY_PATH properly on the remove
+       node, or b) use some new/to-be-defined options that
+       explicitly allow setting the bindir/libdir on the remote
+       node.  We decided to implement these options (e.g.,
+       --remote-bindir and --remote-libdir) to orterun when it
+       actually becomes a problem for someone (vs. a hypothetical
+       situation).
 
        Hence, for now, we simply take the basename of this install's
        libdir and bindir and use it to append this install's prefix
@@ -814,144 +813,119 @@ int orte_pls_process_launch(orte_jobid_t jobid)
              * they launch the local procs.
              */
 
-            /* Is this a local launch?
-             *
-             * Not all node names may be resolvable (if we found
-             * localhost in the hostfile, for example).  So first
-             * check trivial case of node_name being same as the
-             * current nodename, which must be local.  If that doesn't
-             * match, check using ifislocal().
-             */
-            if (!mca_pls_process_component.force_process &&
-                (0 == strcmp(rmaps_node->nodename, orte_system_info.nodename) ||
-                opal_ifislocal(rmaps_node->nodename))) {
-                if (mca_pls_process_component.debug) {
-                    opal_output(0, "pls:process: %s is a LOCAL node\n",
-                                rmaps_node->nodename);
-                }
-                if (mca_pls_process_component.timing) {
-                    /* since this is a local launch, the daemon will never reach
-                     * the waitpid callback - so set the start value to
-                     * something nonsensical
-                     */
-                    launchstart[vpid].tv_sec = 0;
-                    launchstart[vpid].tv_usec = 0;
-                }
+            /* We're always starting local jobs ... */
+            if (mca_pls_process_component.debug) {
+                opal_output(0, "pls:process: %s is a LOCAL node\n",
+                            rmaps_node->nodename);
+            }
+            if (mca_pls_process_component.timing) {
+                /* since this is a local launch, the daemon will never reach
+                 * the waitpid callback - so set the start value to
+                 * something nonsensical
+                 */
+                launchstart[vpid].tv_sec = 0;
+                launchstart[vpid].tv_usec = 0;
+            }
                 
-                exec_argv = &argv[local_exec_index];
-                /* If the user provide a prefix then first try to find the application there */
-                if( NULL != prefix_dir ) {
-                    char* full_path[3];
-
-                    full_path[0] = opal_os_path( false, prefix_dir, NULL );
-                    full_path[1] = opal_os_path( false, prefix_dir, bin_base, NULL );
-                    full_path[2] = NULL;
-                    exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
-                    free(full_path[0]); free(full_path[1]);
-                }
+            exec_argv = &argv[local_exec_index];
+            /* If the user provide a prefix then first try to find the application there */
+            if( NULL != prefix_dir ) {
+                char* full_path[3];
+                
+                full_path[0] = opal_os_path( false, prefix_dir, NULL );
+                full_path[1] = opal_os_path( false, prefix_dir, bin_base, NULL );
+                full_path[2] = NULL;
+                exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
+                free(full_path[0]); free(full_path[1]);
+            }
+            if( NULL == exec_path ) {
+                /* find the application in the default PATH */
+                exec_path = opal_path_findv(exec_argv[0], F_OK, environ, NULL);
                 if( NULL == exec_path ) {
-    			    /* find the application in the default PATH */
-                    exec_path = opal_path_findv(exec_argv[0], F_OK, environ, NULL);
+                    char* full_path[2];
+                    
+                    full_path[0] = opal_os_path( false, OPAL_BINDIR, NULL );
+                    full_path[1] = NULL;
+                    exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
+                    free(full_path[0]);
+                    
                     if( NULL == exec_path ) {
-                        char* full_path[2];
-
-                        full_path[0] = opal_os_path( false, OPAL_BINDIR, NULL );
-                        full_path[1] = NULL;
-                        exec_path = opal_path_find(exec_argv[0], full_path, F_OK, NULL);
-                        free(full_path[0]);
-
-                        if( NULL == exec_path ) {
-                            rc = orte_pls_process_fill_exec_path (&exec_path);
-                            if (ORTE_SUCCESS != rc) {
-                                return rc;
-                            }
+                        rc = orte_pls_process_fill_exec_path (&exec_path);
+                        if (ORTE_SUCCESS != rc) {
+                            return rc;
                         }
                     }
                 }
-
-                /* If we have a prefix, then modify the PATH and
-                   LD_LIBRARY_PATH environment variables.  We're
-                   already in the child process, so it's ok to modify
-                   environ. */
-                if (NULL != prefix_dir) {
-                    char *oldenv, *newenv;
-
-                    /* Reset PATH */
-                    newenv = opal_dirname(exec_path);
-                    /*newenv = opal_os_path( false, prefix_dir, bin_base, NULL );*/
-                    oldenv = getenv("PATH");
-                    if (NULL != oldenv) {
-                        char *temp;
-						asprintf(&temp, "%s;%s", newenv, oldenv );
-                        free( newenv );
-                        newenv = temp;
-                    }
-                    opal_setenv("PATH", newenv, true, &environ);
-                    if (mca_pls_process_component.debug) {
-                        opal_output(0, "pls:process: reset PATH: %s", newenv);
-                    }
-                    free(newenv);
-
-                    /* Reset LD_LIBRARY_PATH */
-                    newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
-                    oldenv = getenv("LD_LIBRARY_PATH");
-                    if (NULL != oldenv) {
-                        char* temp;
-						asprintf(&temp, "%s;%s", newenv, oldenv);
-                        free(newenv);
-                        newenv = temp;
-                    }
-                    opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
-                    if (mca_pls_process_component.debug) {
-                        opal_output(0, "pls:process: reset LD_LIBRARY_PATH: %s",
-                                    newenv);
-                    }
-                    free(newenv);
-                }
-
-                /* Since this is a local execution, we need to
-                   potentially whack the final ")" in the argv (if
-                   sh/csh conditionals, from above).  Note that we're
-                   modifying the argv[] in the child process, so
-                   there's no need to save this and restore it
-                   afterward -- the parent's argv[] is unmodified. */
-                if (NULL != argv[local_exec_index_end]) {
-                    free(argv[local_exec_index_end]);
-                    argv[local_exec_index_end] = NULL;
-                }
-#if 0
-                /* Finally, chdir($HOME) because we're making the
-                   assumption that this is what will happen on
-                   remote nodes (via process/ssh).  This allows a user
-                   to specify a path that is relative to $HOME for
-                   both the cwd and argv[0] and it will work on
-                   all nodes -- including the local host.
-                   Otherwise, it would work on remote nodes and
-                   not the local node.  If the user does not start
-                   in $HOME on the remote nodes... well... let's
-                   hope they start in $HOME.  :-) */
-                var = getenv("HOME");
-                if (NULL != var) {
-                    if (mca_pls_process_component.debug) {
-                        opal_output(0, "pls:process: changing to directory %s",
-                                    var);
-                    }
-                    /* Ignore errors -- what are we going to do?
-                       (and we ignore errors on the remote nodes
-                       in the fork pls, so this is consistent) */
-                    chdir(var);
-                }
-#endif                
-            } else {
-                if (mca_pls_process_component.debug) {
-                    opal_output(0, "pls:process: %s is a REMOTE node\n",
-                                rmaps_node->nodename);
-                }
-                exec_argv = argv;
-                //exec_path = strdup(mca_pls_process_component.agent_path);
-                
             }
+            
+            /* If we have a prefix, then modify the PATH and
+               LD_LIBRARY_PATH environment variables.  We're
+               already in the child process, so it's ok to modify
+               environ. */
+            if (NULL != prefix_dir) {
+                char *oldenv, *newenv;
+                
+                /* Reset PATH */
+                newenv = opal_dirname(exec_path);
+                /*newenv = opal_os_path( false, prefix_dir, bin_base, NULL );*/
+                oldenv = getenv("PATH");
+                if (NULL != oldenv) {
+                    char *temp;
+                    asprintf(&temp, "%s;%s", newenv, oldenv );
+                    free( newenv );
+                    newenv = temp;
+                }
+                opal_setenv("PATH", newenv, true, &environ);
+                if (mca_pls_process_component.debug) {
+                    opal_output(0, "pls:process: reset PATH: %s", newenv);
+                }
+                free(newenv);
+                
+                /* Reset LD_LIBRARY_PATH */
+                newenv = opal_os_path( false, prefix_dir, lib_base, NULL );
+                oldenv = getenv("LD_LIBRARY_PATH");
+                if (NULL != oldenv) {
+                    char* temp;
+                    asprintf(&temp, "%s;%s", newenv, oldenv);
+                    free(newenv);
+                    newenv = temp;
+                }
+                opal_setenv("LD_LIBRARY_PATH", newenv, true, &environ);
+                if (mca_pls_process_component.debug) {
+                    opal_output(0, "pls:process: reset LD_LIBRARY_PATH: %s",
+                                newenv);
+                }
+                free(newenv);
+            }
+            
+            /* tell the daemon to setup its own process session/group */
+            opal_argv_append(&argc, &argv, "--set-sid");
+            exec_argv = &argv[local_exec_index];
 
+#if 0
+            /* Finally, chdir($HOME) because we're making the
+               assumption that this is what will happen on
+               remote nodes (via submit).  This allows a user
+               to specify a path that is relative to $HOME for
+               both the cwd and argv[0] and it will work on
+               all nodes -- including the local host.
+               Otherwise, it would work on remote nodes and
+               not the local node.  If the user does not start
+               in $HOME on the remote nodes... well... let's
+               hope they start in $HOME.  :-) */
+            var = getenv("HOME");
+            if (NULL != var) {
+                if (mca_pls_process_component.debug) {
+                    opal_output(0, "pls:process: changing to directory %s",
+                                var);
+                }
+                /* Ignore errors -- what are we going to do?
+                   (and we ignore errors on the remote nodes
+                   in the fork pls, so this is consistent) */
+                chdir(var);
+            }
+#endif                
+        
             /* setup process name */
             rc = orte_ns.get_proc_name_string(&name_string, name);
             if (ORTE_SUCCESS != rc) {
@@ -960,14 +934,14 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             }
             free(argv[proc_name_index]);
             argv[proc_name_index] = strdup(name_string);
-
+            
             /* Set signal handlers back to the default.  Do this close
-                to the execve() because the event library may (and likely
-                will) reset them.  If we don't do this, the event
-                library may have left some set that, at least on some
-                OS's, don't get reset via fork() or exec().  Hence, the
-                orted could be unkillable (for example). */
-
+               to the execve() because the event library may (and likely
+               will) reset them.  If we don't do this, the event
+               library may have left some set that, at least on some
+               OS's, don't get reset via fork() or exec().  Hence, the
+               orted could be unkillable (for example). */
+            
             set_handler_default(SIGTERM);
             set_handler_default(SIGINT);
             //set_handler_default(SIGHUP);
@@ -990,12 +964,12 @@ int orte_pls_process_launch(orte_jobid_t jobid)
             pid = _spawnve( _P_NOWAIT, exec_path, exec_argv, env); //,NULL); daniel
             if (pid == -1) opal_output(0, "pls:process: execv failed spawning process %s; errno=%d\n", exec_path, errno);
             else opal_output(0, "pls:process: execv %s hopefully started (pid %d)\n", exec_path, pid);
-
+            
             /* setup callback on sigchild - wait until setup above is complete
              * as the callback can occur in the call to orte_wait_cb
              */
             orte_wait_cb(pid, orte_pls_process_wait_daemon, dmn);
-
+            
             /* if required - add delay to avoid problems w/ X11 authentication */
             if (mca_pls_process_component.debug && mca_pls_process_component.delay) {
                 sleep(mca_pls_process_component.delay);
@@ -1010,7 +984,7 @@ int orte_pls_process_launch(orte_jobid_t jobid)
         ORTE_ERROR_LOG(rc);
     }
 
-cleanup:
+ cleanup:
     OBJ_RELEASE(map);
 
     if (NULL != lib_base) {
