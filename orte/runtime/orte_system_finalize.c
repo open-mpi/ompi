@@ -69,9 +69,7 @@ int orte_system_finalize(void)
     /* rmgr and odls close depend on wait/iof */
     orte_rmgr_base_close();
     /* only daemon procs will execute this code */
-    if(orte_process_info.daemon){
-        orte_odls_base_close();
-    }
+    orte_odls_base_close();
     orte_wait_finalize();
     orte_iof_base_close();
 

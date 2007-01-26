@@ -311,21 +311,17 @@ int orte_init_stage1(bool infrastructure)
     }
     
     /* only daemon procs will execute this code */
-    if(orte_process_info.daemon){
-        if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_odls_base_open";
-            goto error;
-        }
+    if (ORTE_SUCCESS != (ret = orte_odls_base_open())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_open";
+        goto error;
     }
     
     /* only daemon procs will execute this code */
-    if(orte_process_info.daemon){
-        if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
-            ORTE_ERROR_LOG(ret);
-            error = "orte_odls_base_select";
-            goto error;
-        }
+    if (ORTE_SUCCESS != (ret = orte_odls_base_select())) {
+        ORTE_ERROR_LOG(ret);
+        error = "orte_odls_base_select";
+        goto error;
     }
     
     if (ORTE_SUCCESS != (ret = orte_rmgr_base_open())) {
