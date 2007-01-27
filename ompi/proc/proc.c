@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2006 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -109,7 +109,7 @@ int ompi_proc_init(void)
     orte_std_cntr_t i, npeers, num_tokens;
     orte_jobid_t jobid;
     char *segment, **tokens;
-    orte_data_value_t value = { {OBJ_CLASS(orte_data_value_t),0}, ORTE_NULL, NULL};
+    orte_data_value_t value = ORTE_DATA_VALUE_EMPTY;
     uint32_t ui32;
     int rc;
 

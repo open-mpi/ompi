@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -151,7 +152,7 @@ typedef struct {
 } orte_gpr_value_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_value_t);
-#define ORTE_GPR_VALUE_EMPTY {OBJ_CLASS_EMPTY(orte_gpr_value_t), 0, NULL, 0, NULL, 0, NULL}
+#define ORTE_GPR_VALUE_EMPTY { OPAL_OBJ_STATIC_INIT(orte_gpr_value_t), 0, NULL, 0, NULL, 0, NULL}
 
 /** Return structure for notification messages
  * A notification message contains data from each registered subscription structure.
@@ -227,7 +228,7 @@ typedef struct {
 } orte_gpr_subscription_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_subscription_t);
-#define ORTE_GPR_SUBSCRIPTION_EMPTY {OBJ_CLASS_EMPTY(orte_gpr_subscription_t), NULL, ORTE_GPR_SUBSCRIPTION_ID_MAX, 0, 0, NULL, 0, NULL}
+#define ORTE_GPR_SUBSCRIPTION_EMPTY { OPAL_OBJ_STATIC_INIT(orte_gpr_subscription_t), NULL, ORTE_GPR_SUBSCRIPTION_ID_MAX, 0, 0, NULL, 0, NULL}
 
 /** Structure for registering triggers
  * A trigger causes the associated subscriptions to be executed at a specified event,
@@ -248,7 +249,7 @@ typedef struct {
 } orte_gpr_trigger_t;
 
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_gpr_trigger_t);
-#define ORTE_GPR_TRIGGER_EMPTY {OBJ_CLASS_EMPTY(orte_gpr_trigger_t), NULL, ORTE_GPR_TRIGGER_ID_MAX, 0, 0, NULL, 0, NULL}
+#define ORTE_GPR_TRIGGER_EMPTY { OPAL_OBJ_STATIC_INIT(orte_gpr_trigger_t), NULL, ORTE_GPR_TRIGGER_ID_MAX, 0, 0, NULL, 0, NULL}
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
