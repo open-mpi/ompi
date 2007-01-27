@@ -121,7 +121,14 @@ int orte_odls_base_open(void)
                                     &orte_odls_base.available_components, true)) {
         return ORTE_ERROR;
     }
-    orte_odls_base.components_available = true;
+
+    /* are there components available for use ?  - 
+     * orte_odls_base.available_components is always initialized */
+    if(0 < opal_list_get_size(&(orte_odls_base.available_components))) {
+        orte_odls_base.components_available = true;
+    } else {
+        orte_odls_base.components_available = false;
+    }
     
     /* All done */
     
