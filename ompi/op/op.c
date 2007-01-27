@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -318,7 +319,7 @@ OBJ_CLASS_INSTANCE(ompi_op_t, opal_object_t,
      OMPI_OP_FLAGS_FLOAT_ASSOC | OMPI_OP_FLAGS_COMMUTE)
 
 ompi_op_t ompi_mpi_op_null = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_OP_NULL",
     FLAGS,
@@ -337,7 +338,7 @@ ompi_op_t ompi_mpi_op_null = {
  * C integer, Fortran integer, Floating point
  */
 ompi_op_t ompi_mpi_op_max = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MAX",
     FLAGS,
@@ -355,7 +356,7 @@ ompi_op_t ompi_mpi_op_max = {
  * MPI_OP_MIN
  */
 ompi_op_t ompi_mpi_op_min = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MIN",
     FLAGS,
@@ -373,7 +374,7 @@ ompi_op_t ompi_mpi_op_min = {
  * MPI_OP_SUM
  */
 ompi_op_t ompi_mpi_op_sum = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_SUM",
     FLAGS_NO_FLOAT,
@@ -391,7 +392,7 @@ ompi_op_t ompi_mpi_op_sum = {
  * MPI_OP_PROD
  */
 ompi_op_t ompi_mpi_op_prod = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_PROD",
     FLAGS_NO_FLOAT,
@@ -409,7 +410,7 @@ ompi_op_t ompi_mpi_op_prod = {
  * MPI_OP_LAND
  */
 ompi_op_t ompi_mpi_op_land = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LAND",
     FLAGS,
@@ -427,7 +428,7 @@ ompi_op_t ompi_mpi_op_land = {
  * MPI_OP_BAND
  */
 ompi_op_t ompi_mpi_op_band = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BAND",
     FLAGS,
@@ -445,7 +446,7 @@ ompi_op_t ompi_mpi_op_band = {
  * MPI_OP_LOR
  */
 ompi_op_t ompi_mpi_op_lor = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LOR",
     FLAGS,
@@ -463,7 +464,7 @@ ompi_op_t ompi_mpi_op_lor = {
  * MPI_OP_BOR
  */
 ompi_op_t ompi_mpi_op_bor = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BOR",
     FLAGS,
@@ -481,7 +482,7 @@ ompi_op_t ompi_mpi_op_bor = {
  * MPI_OP_LXOR
  */
 ompi_op_t ompi_mpi_op_lxor = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_LXOR",
     FLAGS,
@@ -499,7 +500,7 @@ ompi_op_t ompi_mpi_op_lxor = {
  * MPI_OP_BXOR
  */
 ompi_op_t ompi_mpi_op_bxor = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_BXOR",
     FLAGS,
@@ -517,7 +518,7 @@ ompi_op_t ompi_mpi_op_bxor = {
  * MPI_OP_MAXLOC
  */
 ompi_op_t ompi_mpi_op_maxloc = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MAXLOC",
     (OMPI_OP_FLAGS_INTRINSIC | OMPI_OP_FLAGS_ASSOC | OMPI_OP_FLAGS_COMMUTE),
@@ -535,7 +536,7 @@ ompi_op_t ompi_mpi_op_maxloc = {
  * MPI_OP_MINLOC
  */
 ompi_op_t ompi_mpi_op_minloc = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_MINLOC",
     FLAGS,
@@ -556,7 +557,7 @@ ompi_op_t ompi_mpi_op_minloc = {
  * than ACCUMULATE)
  */
 ompi_op_t ompi_mpi_op_replace = {
-    { NULL, 0 },
+    OPAL_OBJ_STATIC_INIT(opal_object_t),
 
     "MPI_REPLACE",
     FLAGS,

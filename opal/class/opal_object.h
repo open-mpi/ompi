@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -138,6 +139,11 @@
 #define END_C_DECLS            /* empty */
 #endif
 
+#if OMPI_ENABLE_DEBUG
+/* Not quite 0xdeadbeef, in case someone else is using that... */
+#define OPAL_OBJ_MAGIC_ID ((0xdeafbeed << 8) + 0xdeadbeef)
+#endif
+
 /* typedefs ***********************************************************/
 
 typedef struct opal_object_t opal_object_t;
@@ -169,11 +175,27 @@ struct opal_class_t {
 };
 
 /**
+ * For static initializations of OBJects.
+ *
+ * @param NAME   Name of the class to initialize
+ */
+#if OMPI_ENABLE_DEBUG
+#define OPAL_OBJ_STATIC_INIT(BASE_CLASS) { OPAL_OBJ_MAGIC_ID, OBJ_CLASS(BASE_CLASS), 1, __FILE__, __LINE__ }
+#else
+#define OPAL_OBJ_STATIC_INIT(BASE_CLASS) { OBJ_CLASS(BASE_CLASS), 1 }
+#endif
+
+/**
  * Base object.
  *
  * This is special and does not follow the pattern for other classes.
  */
 struct opal_object_t {
+#if OMPI_ENABLE_DEBUG
+    /** Magic ID -- want this to be the very first item in the
+        struct's memory */
+    uint64_t obj_magic_id;
+#endif
     opal_class_t *obj_class;            /**< class descriptor */
     volatile int32_t obj_reference_count;   /**< reference count */
 #if OMPI_ENABLE_DEBUG
@@ -227,18 +249,6 @@ struct opal_object_t {
 
 
 /**
- * Referring to the OBJ_CLASS, when initializing
- *
- * @param NAME          Name of class
- */
-#if OMPI_ENABLE_DEBUG
-#  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0, __FILE__, __LINE__}
-#else
-#  define OBJ_CLASS_EMPTY(NAME)    {OBJ_CLASS(NAME), 0}
-#endif  /* OMPI_ENABLE_DEBUG */
-
-
-/**
  * Create an object: dynamically allocate storage and run the class
  * constructor.
  *
@@ -250,6 +260,7 @@ static inline opal_object_t *opal_obj_new(opal_class_t * cls);
 static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* file, int line)
 {
     opal_object_t* object = opal_obj_new(type);
+    object->obj_magic_id = OPAL_OBJ_MAGIC_ID;
     object->cls_init_file_name = file;
     object->cls_init_lineno = line;
     return object;
@@ -270,6 +281,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #define OBJ_RETAIN(object)                                              \
     do {                                                                \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         opal_obj_update((opal_object_t *) (object), 1);                 \
         assert(((opal_object_t *) (object))->obj_reference_count >= 0); \
     } while (0)
@@ -287,8 +299,13 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
         ((opal_object_t*)(OBJECT))->cls_init_file_name = FILE;  \
         ((opal_object_t*)(OBJECT))->cls_init_lineno = LINENO;   \
     } while(0)
+#define OBJ_SET_MAGIC_ID( OBJECT, VALUE )                       \
+    do {                                                        \
+        ((opal_object_t*)(OBJECT))->obj_magic_id = (VALUE);     \
+    } while(0)
 #else
 #define OBJ_REMEMBER_FILE_AND_LINENO( OBJECT, FILE, LINENO )
+#define OBJ_SET_MAGIC_ID( OBJECT, VALUE )
 #endif  /* OMPI_ENABLE_DEBUG */
 
 /**
@@ -305,7 +322,9 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 #define OBJ_RELEASE(object)                                             \
     do {                                                                \
         assert(NULL != ((opal_object_t *) (object))->obj_class);        \
+        assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
         if (0 == opal_obj_update((opal_object_t *) (object), -1)) {     \
+            OBJ_SET_MAGIC_ID((object), 0);                              \
             opal_obj_run_destructors((opal_object_t *) (object));       \
             OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
             free(object);                                               \
@@ -333,6 +352,7 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 
 #define OBJ_CONSTRUCT(object, type)                             \
 do {                                                            \
+    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);              \
     OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
     OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
@@ -353,11 +373,21 @@ do {                                                                \
  *
  * @param object        Pointer to the object
  */
+#if OMPI_ENABLE_DEBUG
+#define OBJ_DESTRUCT(object)                                    \
+do {                                                            \
+    assert(OPAL_OBJ_MAGIC_ID == ((opal_object_t *) (object))->obj_magic_id); \
+    OBJ_SET_MAGIC_ID((object), 0);                              \
+    opal_obj_run_destructors((opal_object_t *) (object));       \
+    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
+} while (0)
+#else
 #define OBJ_DESTRUCT(object)                                    \
 do {                                                            \
     opal_obj_run_destructors((opal_object_t *) (object));       \
     OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
+#endif
 
 BEGIN_C_DECLS
 

@@ -10,6 +10,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -51,7 +52,7 @@ typedef struct {
 } orte_data_value_t;
 ORTE_DECLSPEC OBJ_CLASS_DECLARATION(orte_data_value_t);
 
-#define ORTE_DATA_VALUE_EMPTY {OBJ_CLASS_EMPTY(orte_data_value_t), ORTE_UNDEF, NULL}
+#define ORTE_DATA_VALUE_EMPTY { OPAL_OBJ_STATIC_INIT(orte_data_value_t), ORTE_UNDEF, NULL}
 
 /* structured-unstructured data flags */
 #define ORTE_DSS_STRUCTURED     true
