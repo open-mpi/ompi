@@ -197,7 +197,7 @@ do {                                                                            
 int mca_pml_ob1_send_request_schedule_exclusive(
     mca_pml_ob1_send_request_t* sendreq);
 
-static void inline mca_pml_ob1_send_request_schedule(
+static inline void mca_pml_ob1_send_request_schedule(
         mca_pml_ob1_send_request_t* sendreq)
 {
     /*

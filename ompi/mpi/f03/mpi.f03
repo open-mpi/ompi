@@ -62,7 +62,7 @@ integer(C_INT) function &
 MPI_Add_error_class(errorclass, ierr) &
   BIND(C, name="MPI_Add_error_class")
   use MPI_C_BINDING
-  integer(INT_C), value, intent(in) :: errorclass
+  integer(INT_C), value, intent(out) :: errorclass
 end function MPI_Add_error_class
 
 end interface MPI_Add_error_class
