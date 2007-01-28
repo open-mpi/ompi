@@ -470,6 +470,7 @@ typedef int (*mca_pml_base_module_null_fn_t)(
  * Diagnostics function.
  *
  * @param request (IN)    Communicator
+ * @param verbose (IN)    Verbosity level (passed to BTL)
  * @return                OMPI_SUCCESS or failure status.
  *
  */

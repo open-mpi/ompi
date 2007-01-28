@@ -160,7 +160,7 @@ AC_DEFUN([OMPI_F90_CHECK], [
 
     AC_DEFINE_UNQUOTED([OMPI_HAVE_F90_]m4_translit(m4_bpatsubst(m4_bpatsubst([$1], [*], []), [[^a-zA-Z0-9_]], [_]), [a-z], [A-Z]),
                        [$ofc_have_type], 
-                       [Whether we have Fortran 90 $ofc_type_name or not])
+                       [Whether we have Fortran 90 $ofc_fortran_type or not])
 
     # Save some in shell variables for later use.  Have to use m4
     # functions here (vs. $ompi_upper_var_name, defined above) because
