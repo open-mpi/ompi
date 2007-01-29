@@ -79,6 +79,12 @@ void ompi_proc_construct(ompi_proc_t* proc)
     OPAL_THREAD_LOCK(&ompi_proc_lock);
     opal_list_append(&ompi_proc_list, (opal_list_item_t*)proc);
     OPAL_THREAD_UNLOCK(&ompi_proc_lock);
+    
+    /* init the number of local procs */
+    proc->num_local_procs = 0;
+    
+    /* init my local rank */
+    proc->local_rank = 0;
 }
 
 
@@ -599,6 +605,12 @@ static void callback(orte_gpr_notify_data_t *data, void *cbdata)
                         proc->proc_arch = arch;
                         if (0 == strcmp(str, orte_system_info.nodename)) {
                             proc->proc_flags |= OMPI_PROC_FLAG_LOCAL;
+                            /* increment the number of procs on my node */
+                            ompi_proc_local_proc->num_local_procs++;
+                            /* is this vpid < mine? if so, bump my local rank */
+                            if (name.vpid < ORTE_PROC_MY_NAME->vpid) {
+                                ompi_proc_local_proc->local_rank++;
+                            }
                         }
 
                         /* if arch is different than mine, create a

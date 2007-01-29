@@ -53,6 +53,10 @@ struct ompi_proc_t {
     char *proc_hostname;
     /** flags for this proc */
     uint8_t                   proc_flags;
+    /** number of local procs sharing this node */
+    uint8_t                   num_local_procs;
+    /** my local rank */
+    orte_vpid_t               local_rank;
 };
 /**
  * Convenience typedef
