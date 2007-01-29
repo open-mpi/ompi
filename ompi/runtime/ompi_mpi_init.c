@@ -9,7 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
- * Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+ * Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
  * Copyright (c) 2006      University of Houston. All rights reserved.
@@ -281,40 +281,6 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         goto error;
     }
 
-    /* Setup process affinity */
-
-    if (ompi_mpi_paffinity_alone) {
-        bool set = false;
-        param = mca_base_param_find("mpi", NULL, "paffinity_processor");
-        if (param >= 0) {
-            if (OMPI_SUCCESS == mca_base_param_lookup_int(param, &value)) {
-                if (value >= 0) {
-                    if (OPAL_SUCCESS == opal_paffinity_base_set(value)) {
-                        set = true;
-                    }
-                }
-            }
-            if (!set) {
-                char *vpid;
-                orte_ns.get_vpid_string(&vpid, orte_process_info.my_name);
-                opal_show_help("help-mpi-runtime",
-                               "mpi_init:startup:paffinity-unavailable", 
-                               true, vpid);
-                free(vpid);
-            }
-
-            /* If we were able to set processor affinity, try setting
-               up memory affinity */
-
-            else {
-                if (OPAL_SUCCESS == opal_maffinity_base_open() &&
-                    OPAL_SUCCESS == opal_maffinity_base_select()) {
-                    ompi_mpi_maffinity_setup = true;
-                }
-            }
-        }
-    }
-
     /* initialize datatypes. This step should be done early as it will
      * create the local convertor and local arch used in the proc
      * init.
@@ -538,6 +504,29 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
                     (long int)((ompistop.tv_sec - ompistart.tv_sec)*1000000 +
                                (ompistop.tv_usec - ompistart.tv_usec)));
         gettimeofday(&ompistart, NULL);
+    }
+
+    /* Setup process affinity */
+
+    if (ompi_mpi_paffinity_alone) {
+        if (OPAL_SUCCESS ==
+            opal_paffinity_base_set(ompi_proc_local_proc->local_rank)) {
+            /* If we were able to set processor affinity, also try to
+               setup memory affinity */
+            if (OPAL_SUCCESS == opal_maffinity_base_open() &&
+                OPAL_SUCCESS == opal_maffinity_base_select()) {
+                ompi_mpi_maffinity_setup = true;
+            }
+        } else {
+            /* If we failed to setup paffinity, then print a warning
+               because the user did specifically ask for it */
+            char *vpid;
+            orte_ns.get_vpid_string(&vpid, orte_process_info.my_name);
+            opal_show_help("help-mpi-runtime",
+                           "mpi_init:startup:paffinity-unavailable", 
+                           true, vpid);
+            free(vpid);
+        }
     }
 
     /* start PTL's */
