@@ -12,6 +12,7 @@
  * Copyright (c) 2006      Sandia National Laboratories. All rights
  *                         reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -29,6 +30,7 @@
 #include "opal/util/output.h"
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
+#include "ompi/runtime/params.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -140,8 +142,6 @@ static inline int mca_btl_udapl_param_register_int(
 
 int mca_btl_udapl_component_open(void)
 {  
-    int param, value;
-
     /* initialize state */
     mca_btl_udapl_component.udapl_num_btls=0;
     mca_btl_udapl_component.udapl_btls=NULL;
@@ -220,10 +220,7 @@ int mca_btl_udapl_component_open(void)
         mca_btl_udapl_component.udapl_eager_frag_size;
 
     /* leave pinned option */
-    value = 0;
-    param = mca_base_param_find("mpi", NULL, "leave_pinned");
-    mca_base_param_lookup_int(param, &value);
-    mca_btl_udapl_component.leave_pinned = value;
+    mca_btl_udapl_component.leave_pinned = (int) ompi_mpi_leave_pinned;
     return OMPI_SUCCESS;
 }
 
