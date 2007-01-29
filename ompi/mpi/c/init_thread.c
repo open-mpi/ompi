@@ -39,6 +39,12 @@ int MPI_Init_thread(int *argc, char ***argv, int required,
     int err;
     MPI_Comm null = NULL;
 
+    if ( MPI_PARAM_CHECK ) {
+        if (required < MPI_THREAD_SINGLE || required > MPI_THREAD_MULTIPLE) {
+            ompi_mpi_errors_are_fatal_comm_handler(NULL, NULL, FUNC_NAME);
+        }
+    }
+
     /*
      *   A thread compliant MPI implementation will be able to return provided
      *   = MPI_THREAD_MULTIPLE. Such an implementation may always return provided
