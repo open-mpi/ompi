@@ -222,17 +222,19 @@ MPI::Datatype::Get_contents(int max_integers, int max_addresses,
                             MPI::Datatype array_of_datatypes[]) const
 {
     int i;
-    MPI_Datatype *d = new MPI_Datatype[max_datatypes];
+    MPI_Datatype *c_datatypes = new MPI_Datatype[max_datatypes];
     
     (void) MPI_Type_get_contents(mpi_datatype, max_integers, max_addresses,
                                  max_datatypes, 
                                  const_cast<int *>(array_of_integers), 
-                                 const_cast<MPI_Aint*>(array_of_addresses), d);
+                                 const_cast<MPI_Aint*>(array_of_addresses), 
+                                 c_datatypes);
     // Convert the C MPI_Datatypes to the user's OUT MPI::Datatype
     // array parameter
     for (i = 0; i < max_datatypes; ++i) {
-        array_of_datatypes[i] = d[i];
+        array_of_datatypes[i] = c_datatypes[i];
     }
+    delete[] c_datatypes;
 }
 
 inline void
