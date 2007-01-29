@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -21,6 +22,7 @@
 #include "orte_config.h"
 
 #include "orte/orte_constants.h"
+#include "orte/runtime/params.h"
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
 
@@ -34,6 +36,9 @@
  */
 int orte_finalize(void)
 {
+    if (!orte_initialized) {
+        return ORTE_SUCCESS;
+    }
 
     /* We have now entered the finalization stage */
     orte_universe_info.state = ORTE_UNIVERSE_STATE_FINALIZE;
@@ -43,7 +48,8 @@ int orte_finalize(void)
     
     /* finalize the opal utilities */
     opal_finalize();
-    
+
+    orte_initialized = false;
     return ORTE_SUCCESS;
 }
 

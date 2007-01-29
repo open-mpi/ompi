@@ -32,6 +32,10 @@
 /* globals used by RTE */
 int orte_debug_flag;
 struct timeval orte_abort_timeout;
+/*
+ * Whether we have completed orte_init or not
+ */
+bool orte_initialized = false;
 
 int orte_register_params(bool infrastructure)
 {

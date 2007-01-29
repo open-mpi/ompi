@@ -35,13 +35,16 @@
 #include "opal/mca/backtrace/backtrace.h"
 #include "orte/util/proc_info.h"
 #include "orte/runtime/runtime.h"
+#include "orte/runtime/params.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/util/sys_info.h"
 #include "ompi/communicator/communicator.h"
 #include "ompi/proc/proc.h"
 #include "ompi/runtime/mpiruntime.h"
 #include "ompi/runtime/params.h"
 
+static bool have_been_invoked = false;
 
 int
 ompi_mpi_abort(struct ompi_communicator_t* comm,
@@ -49,28 +52,37 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
                bool kill_remote_of_intercomm)
 {
     int count = 0, i, ret = OMPI_SUCCESS;
-    char hostname[MAXHOSTNAMELEN];
+    char *host, hostname[MAXHOSTNAMELEN];
     pid_t pid = 0;
     orte_process_name_t *abort_procs;
     orte_std_cntr_t nabort_procs;
- 
-    
+
+    /* Protection for recursive invocation */
+    if (have_been_invoked) {
+        return OMPI_SUCCESS;
+    }
+    have_been_invoked = true;
+
+    /* If ORTE is initialized, use its nodename.  Otherwise, call
+       gethostname. */
+
+    if (orte_initialized) {
+        host = orte_system_info.nodename;
+    } else {
+        gethostname(hostname, sizeof(hostname));
+        host = hostname;
+    }
+    pid = getpid();
+
     /* Corner case: if we're being called as a result of the
        OMPI_ERR_INIT_FINALIZE macro (meaning that this is before
        MPI_INIT or after MPI_FINALIZE), then just abort nothing MPI or
        ORTE has been setup yet. */
 
     if (!ompi_mpi_initialized || ompi_mpi_finalized) {
-        orte_errmgr.error_detected(errcode, NULL);
-    }
-
-    /* If we're going to print anything, get the hostname and PID of
-       this process */
-
-    if (ompi_mpi_abort_print_stack ||
-        0 != ompi_mpi_abort_delay) {
-        gethostname(hostname, sizeof(hostname));
-        pid = getpid();
+        if (orte_initialized) {
+            orte_errmgr.error_detected(errcode, NULL);
+        }
     }
 
     /* Should we print a stack trace? */
@@ -81,7 +93,7 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
 
         if (OMPI_SUCCESS == opal_backtrace_buffer(&messages, &len)) {
             for (i = 0; i < len; ++i) {
-                fprintf(stderr, "[%s:%d] [%d] func:%s\n", hostname, (int) pid, 
+                fprintf(stderr, "[%s:%d] [%d] func:%s\n", host, (int) pid, 
                         i, messages[i]);
                 fflush(stderr);
             }
@@ -99,18 +111,27 @@ ompi_mpi_abort(struct ompi_communicator_t* comm,
     if (0 != ompi_mpi_abort_delay) {
         if (ompi_mpi_abort_delay < 0) {
             fprintf(stderr ,"[%s:%d] Looping forever (MCA parameter mpi_abort_delay is < 0)\n",
-                    hostname, (int) pid);
+                    host, (int) pid);
             fflush(stderr);
             while (1) { 
                 sleep(5); 
             }
         } else {
             fprintf(stderr, "[%s:%d] Delaying for %d seconds before aborting\n",
-                    hostname, (int) pid, ompi_mpi_abort_delay);
+                    host, (int) pid, ompi_mpi_abort_delay);
             do {
                 sleep(1);
             } while (--ompi_mpi_abort_delay > 0);
         }
+    }
+
+    /* If ORTE isn't setup yet, then don't even try killing everyone.
+       Sorry, Charlie... */
+
+    if (!orte_initialized) {
+        fprintf(stderr, "[%s:%d] Abort before MPI_INIT completed successfully; not able to guarantee that all other processes were killed!\n",
+                host, (int) pid);
+        exit(errcode);
     }
 
     /* abort local procs in the communicator.  If the communicator is

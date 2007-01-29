@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -41,6 +42,11 @@ extern "C" {
 ORTE_DECLSPEC extern int orte_debug_flag;
 
 ORTE_DECLSPEC extern struct timeval orte_abort_timeout;
+
+/**
+ * Whether ORTE is initialized or not
+ */
+ORTE_DECLSPEC extern bool orte_initialized;
 
 #if defined(c_plusplus) || defined(__cplusplus)
 }
