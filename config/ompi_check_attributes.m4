@@ -42,6 +42,7 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
 #
   if test "$ac_cv___attribute__msg" = "no"; then
     ac_cv___attribute__aligned=0
+    ac_cv___attribute__always_inline=0
     ac_cv___attribute__const=0
     ac_cv___attribute__deprecated=0
     ac_cv___attribute__format=0
@@ -51,6 +52,7 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
     ac_cv___attribute__pure=0
     ac_cv___attribute__packed=0
     ac_cv___attribute__unused=0
+    ac_cv___attribute__sentinel=0
     ac_cv___attribute__visibility=0
     ac_cv___attribute__warn_unused_result=0
     ac_cv___attribute__weak_alias=0
@@ -66,6 +68,18 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [ac_cv___attribute__aligned=0 ac_cv___attribute__aligned_msg=no]
       )])
     AC_MSG_RESULT($ac_cv___attribute__aligned_msg)
+
+
+    AC_MSG_CHECKING([for __attribute__ ((always_inline))])
+    AC_CACHE_VAL(ac_cv___attribute__always_inline, [
+      AC_TRY_COMPILE(
+        [#include <stdlib.h>
+          int foo (int arg) __attribute__ ((always_inline));],
+        [],
+        [ac_cv___attribute__always_inline=1 ac_cv___attribute__always_inline_msg=yes],
+        [ac_cv___attribute__always_inline=0 ac_cv___attribute__always_inline_msg=no]
+      )])
+    AC_MSG_RESULT($ac_cv___attribute__always_inline_msg)
 
 
     AC_MSG_CHECKING([for __attribute__ ((const))])
@@ -188,6 +202,18 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
     AC_MSG_RESULT($ac_cv___attribute__pure_msg)
 
 
+    AC_MSG_CHECKING([for __attribute__ ((sentinel))])
+    AC_CACHE_VAL(ac_cv___attribute__sentinel, [
+      AC_TRY_COMPILE(
+        [#include <stdlib.h>
+         int my_execlp(const char * file, const char *arg, ...) __attribute__ ((sentinel));],
+        [],
+        [ac_cv___attribute__sentinel=1 ac_cv___attribute__sentinel_msg=yes],
+        [ac_cv___attribute__sentinel=0 ac_cv___attribute__sentinel_msg=no]
+      )])
+    AC_MSG_RESULT($ac_cv___attribute__sentinel_msg)
+
+
     AC_MSG_CHECKING([for __attribute__ ((unused))])
     AC_CACHE_VAL(ac_cv___attribute__unused, [
       AC_TRY_COMPILE(
@@ -245,6 +271,8 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
 
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALIGNED, [$ac_cv___attribute__aligned],
                      [Whether your compiler has __attribute__ aligned or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE, [$ac_cv___attribute__always_inline],
+                     [Whether your compiler has __attribute__ always_inline or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_CONST, [$ac_cv___attribute__const],
                      [Whether your compiler has __attribute__ const or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_DEPRECATED, [$ac_cv___attribute__deprecated],
@@ -263,6 +291,8 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
                      [Whether your compiler has __attribute__ packed or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_PURE, [$ac_cv___attribute__pure],
                      [Whether your compiler has __attribute__ pure or not])
+  AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_SENTINEL, [$ac_cv___attribute__sentinel],
+                     [Whether your compiler has __attribute__ sentinel or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_UNUSED, [$ac_cv___attribute__unused],
                      [Whether your compiler has __attribute__ unused or not])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE_VISIBILITY, [$ac_cv___attribute__visibility],
