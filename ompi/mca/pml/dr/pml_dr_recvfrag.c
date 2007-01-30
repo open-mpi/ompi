@@ -113,8 +113,8 @@ void mca_pml_dr_recv_frag_callback(
         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
-        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? %d\n", 
-                            __FILE__, __LINE__));
+        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? segments->seg_len:%d < sizeof(mca_pml_dr_common_hdr_t):%d\n", 
+                            __FILE__, __LINE__, segments->seg_len, sizeof(mca_pml_dr_common_hdr_t)));
     
         return;
     }
@@ -969,7 +969,7 @@ rematch:
                         frag->request=match;
                         match->req_proc = proc;
                         match->req_endpoint = (mca_pml_dr_endpoint_t*)proc->ompi_proc->proc_pml;
-                        MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint 0x%08x match 0x%08x\n", 
+                        MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint %p match %p\n", 
                               __FILE__, __LINE__, proc->ompi_proc->proc_pml, match->req_endpoint));
         
                         /* add this fragment descriptor to the list of
