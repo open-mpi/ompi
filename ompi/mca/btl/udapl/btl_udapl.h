@@ -10,6 +10,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  * 
@@ -99,7 +100,6 @@ struct mca_btl_udapl_component_t {
     opal_list_t udapl_procs;   /**< list of udapl proc structures */
     opal_mutex_t udapl_lock;   /**< lock for accessing module state */
     char* udapl_mpool_name;    /**< name of memory pool */ 
-    bool leave_pinned;      /**< pin memory on first use and leave pinned */
 }; 
 typedef struct mca_btl_udapl_component_t mca_btl_udapl_component_t;
 
