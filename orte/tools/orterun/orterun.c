@@ -436,8 +436,11 @@ int orterun(int argc, char *argv[])
                                     &orterun_globals.lock);
             }
             /* check to see if the job was aborted */
-            if (ORTE_SUCCESS != (rc = orte_smr.get_job_state(&exit_state, jobid))) {
-                ORTE_ERROR_LOG(rc);
+            if (ORTE_JOBID_INVALID != jobid &&
+                ORTE_SUCCESS != (rc = orte_smr.get_job_state(&exit_state, jobid))) {
+                if (ORTE_SUCCESS != rc) {
+                    ORTE_ERROR_LOG(rc);
+                }
                 /* define the exit state as abnormal by default */
                 exit_state = ORTE_JOB_STATE_ABORTED;
             }
@@ -472,16 +475,26 @@ int orterun(int argc, char *argv[])
              * be sure to include any descendants so nothing is
              * left hanging
              */
-            OBJ_CONSTRUCT(&attributes, opal_list_t);
-            orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
-            if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &orte_abort_timeout, &attributes))) {
-                opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
-                               orterun_basename, ORTE_ERROR_NAME(ret));
+            if (ORTE_JOBID_INVALID != jobid) {
+                OBJ_CONSTRUCT(&attributes, opal_list_t);
+                orte_rmgr.add_attribute(&attributes, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
+                if (ORTE_SUCCESS != (ret = orte_pls.terminate_orteds(jobid, &orte_abort_timeout, &attributes))) {
+                    opal_show_help("help-orterun.txt", "orterun:daemon-die", true,
+                                   orterun_basename, ORTE_ERROR_NAME(ret));
+                }
+                while (NULL != (item = opal_list_remove_first(&attributes))) {
+                    OBJ_RELEASE(item);
+                }
+                OBJ_DESTRUCT(&attributes);
             }
-            while (NULL != (item = opal_list_remove_first(&attributes))) OBJ_RELEASE(item);
-            OBJ_DESTRUCT(&attributes);
             OPAL_THREAD_UNLOCK(&orterun_globals.lock);
 
+            /* If we were forcibly killed, print a warning that the
+               user may still have some manual cleanup to do. */
+            if (ORTE_JOBID_INVALID == jobid) {
+                opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
+                               true, orterun_basename, orterun_basename);
+            }
         }
     }
 
@@ -732,54 +745,56 @@ static void abort_signal_callback(int fd, short flags, void *arg)
     
     /* If this whole process has already completed, then bail */
     switch (state) {
-        case ABORT_SIGNAL_FIRST:
-            /* This is the first time through */
-            state = ABORT_SIGNAL_PROCESSING;
-            break;
+    case ABORT_SIGNAL_FIRST:
+        /* This is the first time through */
+        state = ABORT_SIGNAL_PROCESSING;
+        break;
             
-        case ABORT_SIGNAL_WARNED:
-            gettimeofday(&now, NULL);
-            a = invoked.tv_sec * 1000000 + invoked.tv_usec;
-            b = now.tv_sec * 1000000 + invoked.tv_usec;
-            if (b - a <= 1000000) {
-                /* tell the pls to cancel the terminate request -
-                * obviously, something is wrong at this point
-                */
-                if (ORTE_SUCCESS != (ret = orte_pls.cancel_operation())) {
-                    ORTE_ERROR_LOG(ret);
-                }
-                /* give the user the warning about manual cleanup */
-                opal_show_help("help-orterun.txt", "orterun:abnormal-exit",
-                               true, orterun_basename, orterun_basename);
+    case ABORT_SIGNAL_WARNED:
+        gettimeofday(&now, NULL);
+        a = invoked.tv_sec * 1000000 + invoked.tv_usec;
+        b = now.tv_sec * 1000000 + invoked.tv_usec;
+        if (b - a <= 1000000) {
+            if (!orterun_globals.quiet){
+                fprintf(stderr, "%s: forcibly killing job...\n", 
+                        orterun_basename);
+            }
+
+            /* tell the pls to cancel the terminate request -
+             * obviously, something is wrong at this point
+             */
+            if (ORTE_SUCCESS != (ret = orte_pls.cancel_operation())) {
+                ORTE_ERROR_LOG(ret);
+            }
+            
+            /* We are in an event handler; exit_callback() will delete
+               the handler that is currently running (which is a Bad
+               Thing), so we can't call it directly.  Instead, we have
+               to exit this handler and setup to call exit_handler()
+               after this. */
+            if (NULL != (event = (opal_event_t*)
+                         malloc(sizeof(opal_event_t)))) {
+                opal_evtimer_set(event, exit_callback, NULL);
+                now.tv_sec = 0;
+                now.tv_usec = 0;
+                opal_evtimer_add(event, &now);
+                state = ABORT_SIGNAL_DONE;
+            }
+            return;
+        } 
+        /* Otherwise fall through to PROCESSING and warn again */
                 
-                /* We are in an event handler; exit_callback() will delete
-                the handler that is currently running (which is a Bad
-                                                       Thing), so we can't call it directly.  Instead, we have
-                to exit this handler and setup to call exit_handler()
-                after this. */
-                if (NULL != (event = (opal_event_t*)
-                             malloc(sizeof(opal_event_t)))) {
-                    opal_evtimer_set(event, exit_callback, NULL);
-                    now.tv_sec = 0;
-                    now.tv_usec = 0;
-                    opal_evtimer_add(event, &now);
-                    state = ABORT_SIGNAL_DONE;
-                }
-                return;
-            } 
-                /* Otherwise fall through to PROCESSING and warn again */
-                
-            case ABORT_SIGNAL_PROCESSING:
-                opal_show_help("help-orterun.txt", "orterun:sigint-while-processing",
-                               true, orterun_basename, orterun_basename, 
-                               orterun_basename);
-                gettimeofday(&invoked, NULL);
-                state = ABORT_SIGNAL_WARNED;
-                return;
-                
-            case ABORT_SIGNAL_DONE:
-                /* Nothing to do -- return */
-                return;
+    case ABORT_SIGNAL_PROCESSING:
+        opal_show_help("help-orterun.txt", "orterun:sigint-while-processing",
+                       true, orterun_basename, orterun_basename, 
+                       orterun_basename);
+        gettimeofday(&invoked, NULL);
+        state = ABORT_SIGNAL_WARNED;
+        return;
+        
+    case ABORT_SIGNAL_DONE:
+        /* Nothing to do -- return */
+        return;
     }
 
     if (!orterun_globals.quiet){
@@ -794,16 +809,32 @@ static void abort_signal_callback(int fd, short flags, void *arg)
         OBJ_CONSTRUCT(&attrs, opal_list_t);
         orte_rmgr.add_attribute(&attrs, ORTE_NS_INCLUDE_DESCENDANTS, ORTE_UNDEF, NULL, ORTE_RMGR_ATTR_OVERRIDE);
         ret = orte_pls.terminate_job(jobid, &orte_abort_timeout, &attrs);
-        while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
+        while (NULL != (item = opal_list_remove_first(&attrs))) {
+            OBJ_RELEASE(item);
+        }
         OBJ_DESTRUCT(&attrs);
         if (ORTE_SUCCESS != ret) {
-            opal_show_help("help-orterun.txt", "orterun:forced-end-failed",
-                           true, orterun_basename, ORTE_ERROR_NAME(ret));
+            /* If we failed the terminate_job() above, then the
+               condition variable in the main loop in orterun won't
+               wake up.  So signal it. */
+            if (NULL != (event = (opal_event_t*)
+                         malloc(sizeof(opal_event_t)))) {
+                opal_evtimer_set(event, exit_callback, NULL);
+                now.tv_sec = 0;
+                now.tv_usec = 0;
+                opal_evtimer_add(event, &now);
+            } else {
+                /* We really don't want to do this, but everything
+                   else has failed... */
+                orterun_globals.exit = true;
+                orterun_globals.exit_status = 1;
+                opal_condition_signal(&orterun_globals.cond);
+            }
+
             jobid = ORTE_JOBID_INVALID;
         }
     }
-    
-    state = ABORT_SIGNAL_DONE;
+
     state = ABORT_SIGNAL_DONE;
 }
 

@@ -91,9 +91,7 @@ Returned value %d instead of ORTE_SUCCESS.
 [orterun:proc-aborted-strsignal]
 %s noticed that job rank %lu with PID %lu on node %s exited on signal %d (%s). 
 [orterun:abnormal-exit]
-WARNING: %s encountered an abnormal exit.
-
-This means that %s exited before it received notification that all
+WARNING: %s has exited before it received notification that all
 started processes had terminated.  You should double check and ensure
 that there are no runaway processes still executing.
 #
@@ -104,12 +102,6 @@ interruption (probably control-C).
 It is dangerous to interrupt %s while it is killing a job (proper
 termination may not be guaranteed).  Hit control-C again within 1
 second if you really want to kill %s immediately.
-#
-[orterun:forced-end-failed]
-WARNING: %s was ordered to kill a job (probably with control-C), but
-was unable to successfully complete that order (returned error %s).
-You should double check and ensure that there are no runaway processes
-still executing.
 #
 [orterun:empty-prefix]
 A prefix was supplied to %s that only contained slashes.  

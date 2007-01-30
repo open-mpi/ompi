@@ -106,8 +106,9 @@ int orte_pls_base_orted_cancel_operation(void)
     /* cancel any waiting receive - we don't want to hear it */
     orte_rml.recv_cancel(ORTE_NAME_WILDCARD, ORTE_RML_TAG_PLS_ORTED_ACK);
     
-    /* set the completion status to reflect cancellation */
-    completion_status = ORTE_ERR_INTERUPTED;
+    /* set the completion status to reflect cancellation -- no need to
+       print anything */
+    completion_status = ORTE_ERR_SILENT;
     
     /* declare us "done" so we can exit cleanly */
     opal_condition_signal(&orte_pls_base.orted_cmd_cond);
