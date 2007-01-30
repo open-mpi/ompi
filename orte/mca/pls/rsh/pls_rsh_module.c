@@ -1066,7 +1066,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
                 if (NULL != param) {
-                    opal_output(0, "pls:rsh: executing: (%s) %s [%s]", exec_path, param);
+                    opal_output(0, "pls:rsh: executing: (%s) [%s]", exec_path, param);
                     free(param);
                 }
             }
