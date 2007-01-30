@@ -11,6 +11,7 @@
  *                         All rights reserved.
  * Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
  *                         reserved. 
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  *
  * $COPYRIGHT$
  *
@@ -71,6 +72,7 @@
 #include "orte/runtime/runtime.h"
 #include "orte/runtime/runtime_internal.h"
 #include "orte/runtime/orte_wait.h"
+#include "orte/runtime/params.h"
 
 int orte_init_stage1(bool infrastructure)
 {
@@ -81,6 +83,10 @@ int orte_init_stage1(bool infrastructure)
     char *contact_path = NULL;
     orte_jobid_t my_jobid;
     orte_cellid_t my_cellid;
+
+    if (orte_initialized) {
+        return ORTE_SUCCESS;
+    }
 
     /* register handler for errnum -> string conversion */
     opal_error_register("ORTE", ORTE_ERR_BASE, ORTE_ERR_MAX, orte_err2str);

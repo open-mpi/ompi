@@ -53,9 +53,5 @@ int orte_init(bool infrastructure)
         return rc;
     }
 
-    /* Since we are now finished with init, change the state to running */
-    orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
-    orte_initialized = true;
-
     return ORTE_SUCCESS;
 }
