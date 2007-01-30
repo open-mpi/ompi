@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -354,6 +354,83 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define OPAL_WANT_IPV6 1
 #else
 #define OPAL_WANT_IPV6 0
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE
+
+#  if OMPI_HAVE_ATTRIBUTE_ALIGNED
+#      define __opal_attribute_aligned__(a)    __attribute__((__aligned__(a)))
+#      define __opal_attribute_aligned_max__   __attribute__((__aligned__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_CONST
+#      define __opal_attribute_const__         __attribute__((__const__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_DEPRECATED
+#      define __opal_attribute_deprecated__    __attribute__((__deprecated__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_FORMAT
+#      define __opal_attribute_format__(a,b,c) __attribute__((__format__(a, b, c)))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_MALLOC
+#      define __opal_attribute_malloc__        __attribute__((__malloc__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_MAY_ALIAS
+#      define __opal_attribute_may_alias__     __attribute__((__may_alias__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_NONNULL
+#      define __opal_attribute_nonnull__       __attribute__((__nonnull__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_NORETURN
+#      define __opal_attribute_noreturn__      __attribute__((__noreturn__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_PACKED
+#      define __opal_attribute_packed__        __attribute__((__packed__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_PURE
+#      define __opal_attribute_pure__          __attribute__((__pure__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_UNUSED
+#      define __opal_attribute_unused__        __attribute__((__unused__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_VISIBILITY
+#      define __opal_attribute_visibility__(a) __attribute__((__visibility__(a)))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
+#      define __opal_attribute_warn_unused_result__ __attribute__((__warn_unused_result__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS
+#      define __opal_attribute_weak_alias__(a) __attribute__((__weak__, __alias__(a)))
+#  endif
+
+#else
+#define __opal_attribute_aligned__(a)
+#define __opal_attribute_aligned_max__
+#define __opal_attribute_const__
+#define __opal_attribute_deprecated__
+#define __opal_attribute_format__(a,b,c)
+#define __opal_attribute_malloc__
+#define __opal_attribute_may_alias__
+#define __opal_attribute_nonnull__
+#define __opal_attribute_noreturn__
+#define __opal_attribute_packed__
+#define __opal_attribute_pure__
+#define __opal_attribute_unused__
+#define __opal_attribute_visibility__(a)
+#define __opal_attribute_warn_unused_result__
+#define __opal_attribute_weak_alias__(a)
 #endif
 
 #endif /* OMPI_BUILDING */
