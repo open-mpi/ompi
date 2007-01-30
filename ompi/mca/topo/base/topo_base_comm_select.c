@@ -261,7 +261,7 @@ int mca_topo_base_comm_select (struct ompi_communicator_t *comm,
                                   "select: query returned failure");
            } else {
                opal_output_verbose(10, mca_topo_base_output,
-                                  "select: query returned priority &d",
+                                  "select: query returned priority %d",
                                   priority);
                /* 
                 * is this the best component we have found till now?

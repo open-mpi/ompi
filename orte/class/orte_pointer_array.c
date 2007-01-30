@@ -124,9 +124,9 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
 
     if (0) {
         opal_output(0,"orte_pointer_array_add:  IN:  "
-                " table %p (size %ld, lowest free %ld, number free %ld)"
+                " table %p (size %d, lowest free %d, number free %d)"
                 " ptr = %p\n",
-                table, table->size, table->lowest_free, table->number_free,
+                (void*)table, table->size, table->lowest_free, table->number_free,
                 ptr);
     }
 
@@ -172,9 +172,9 @@ int orte_pointer_array_add(orte_std_cntr_t *location, orte_pointer_array_t *tabl
 
     if (0) {
         opal_output(0,"orte_pointer_array_add:  OUT: "
-                " table %p (size %ld, lowest free %ld, number free %ld)"
+                " table %p (size %d, lowest free %d, number free %d)"
                 " addr[%d] = %p\n",
-                table, table->size, table->lowest_free, table->number_free,
+                (void*)table, table->size, table->lowest_free, table->number_free,
                 element_index, ptr);
     }
 

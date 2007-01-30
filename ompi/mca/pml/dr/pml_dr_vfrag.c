@@ -69,7 +69,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
     mca_pml_dr_send_request_t* sendreq = (mca_pml_dr_send_request_t*)vfrag->vf_send.pval;
 
-    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: 0x%08x vid: %d",
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: wdog timeout: %p vid: %d",
                         __FILE__, __LINE__, __func__, vfrag, vfrag->vf_id));
 
     /* update pending counts */
@@ -113,7 +113,7 @@ static void mca_pml_dr_vfrag_wdog_timeout(int fd, short event, void* data)
 static void mca_pml_dr_vfrag_ack_timeout(int fd, short event, void* data) 
 {
     mca_pml_dr_vfrag_t* vfrag = (mca_pml_dr_vfrag_t*) data;
-    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: ack timeout: %0x08x", 
+    MCA_PML_DR_DEBUG(0,(0, "%s:%d:%s: ack timeout: %p", 
                         __FILE__, __LINE__, __func__, vfrag));
 
     /* stop ack timer */

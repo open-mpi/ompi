@@ -578,7 +578,7 @@ ompi_osc_rdma_passive_lock(ompi_osc_rdma_module_t *module,
             send_ack = true;
         } else {
             opal_output_verbose(50, ompi_osc_base_output,
-                                "queuing lock request from %d (%d)", 
+                                "queuing lock request from %d (%d) lock_type:%d", 
                                 module->p2p_comm->c_my_rank, origin, lock_type);
             new_pending = OBJ_NEW(ompi_osc_rdma_pending_lock_t);
             new_pending->proc = proc;

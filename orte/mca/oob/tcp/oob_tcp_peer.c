@@ -335,6 +335,7 @@ static int mca_oob_tcp_peer_try_connect(mca_oob_tcp_peer_t* peer)
                         ORTE_NAME_ARGS(&(peer->peer_name)),
                         inet_ntoa(inaddr.sin_addr),
                         ntohs(inaddr.sin_port),
+                        opal_strerror(rc),
                         rc);
         }
     } while(peer->peer_addr->addr_next != 0);
@@ -593,7 +594,7 @@ static int mca_oob_tcp_peer_recv_connect_ack(mca_oob_tcp_peer_t* peer)
     /* compare the peers name to the expected value */
     if(memcmp(&peer->peer_name, &hdr.msg_src, sizeof(orte_process_name_t)) != 0) {
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_recv_connect_ack: "
-            "received unexpected process identifier [%d,%d,%d]\n",
+            "received unexpected process identifier [%ld,%ld,%ld]\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
             ORTE_NAME_ARGS(&(hdr.msg_src)));
