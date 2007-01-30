@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2006 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -49,7 +49,7 @@ int mca_pml_base_output = 0;
 mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_add_procs */
     NULL,                    /* pml_del_procs */
-    NULL,                    /* pml_control */
+    NULL,                    /* pml_enable */
     mca_pml_base_progress,   /* pml_progress */
     NULL,                    /* pml_add_comm */
     NULL,                    /* pml_del_comm */
@@ -61,7 +61,10 @@ mca_pml_base_module_t mca_pml = {
     NULL,                    /* pml_send */
     NULL,                    /* pml_iprobe */
     NULL,                    /* pml_probe */
-    NULL                     /* pml_start */
+    NULL,                    /* pml_start */
+    NULL,                    /* pml_dump */
+    0,                       /* pml_max_contextid */
+    0                        /* pml_max_tag */
 };
 
 opal_list_t mca_pml_base_components_available;

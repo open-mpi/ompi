@@ -411,7 +411,7 @@ _opal_list_append(l,i)
 
 static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
 #if OMPI_ENABLE_DEBUG
-                                     , char* FILE, int LINENO
+                                     , char* FILE_NAME, int LINENO
 #endif  /* OMPI_ENABLE_DEBUG */
                                      )
 {
@@ -421,7 +421,7 @@ static inline void _opal_list_append(opal_list_t *list, opal_list_item_t *item
 
   assert(0 == item->opal_list_item_refcount);
   assert( NULL == item->opal_list_item_belong_to );
-  item->super.cls_init_file_name = FILE;
+  item->super.cls_init_file_name = FILE_NAME;
   item->super.cls_init_lineno    = LINENO;
 #endif
 
