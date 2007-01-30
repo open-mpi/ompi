@@ -363,6 +363,10 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #      define __opal_attribute_aligned_max__   __attribute__((__aligned__))
 #  endif
 
+#  if OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE
+#      define __opal_attribute_always_inline__ __attribute__((__always_inline__))
+#  endif
+
 #  if OMPI_HAVE_ATTRIBUTE_CONST
 #      define __opal_attribute_const__         __attribute__((__const__))
 #  endif
@@ -397,6 +401,10 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 
 #  if OMPI_HAVE_ATTRIBUTE_PURE
 #      define __opal_attribute_pure__          __attribute__((__pure__))
+#  endif
+
+#  if OMPI_HAVE_ATTRIBUTE_SENTINEL
+#      define __opal_attribute_sentinel__      __attribute__((__sentinel__))
 #  endif
 
 #  if OMPI_HAVE_ATTRIBUTE_UNUSED
