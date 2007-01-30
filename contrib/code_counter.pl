@@ -22,6 +22,7 @@
 
 use strict;
 use File::Find;
+use File::stat;
 
 use Cwd;
 
@@ -43,6 +44,8 @@ my @skip_files = ( "Makefile.in", "Makefile", ".ompi_built" , "config.cache",
 my @skip_patterns = ( ".o\$", ".lo\$", ".out\$", "autom4te", ".in\$",
                       ".bak\$", "~\$", ".gz\$", "^stamp-", "^.#", "^#.+#\$",
 	              "dynamic-mca" );
+
+my $loc = 0;
 
 
 # Primitive check to find the top OMPI dir
@@ -127,13 +130,32 @@ sub wanted {
         $files_found{$File::Find::name} = 1;
         print ("Found file: $File::Find::name\n")
             if ($verbose);
+
+        # Count the \n's
+
+        my $sb = stat($file) || die "Can't stat $File::Find::name -- $!";
+
+        open FILE, $file || die "Can't open $File::Find::name";
+        my $data;
+        my $size = $sb->size;
+        sysread(FILE, $data, $size);
+        close FILE;
+
+        # Cool.  :-)
+        my $local_loc = 0;
+        $data =~ s/(\n)/$local_loc++;$1/eg;
+        $loc += $local_loc;
+        print "Loc: $File::Find::name / $size / $local_loc / $loc\n"
+            if ($verbose);
     }
+
     $dirs_found{$File::Find::dir} = 1;
     1;
 }
 
 # Look for code
 
+$loc = 0;
 %files_found = ();
 %dirs_found = ();
 @skip_dirs = @meta_dirs;
@@ -149,12 +171,14 @@ if ($#doc_dirs >= 0) {
     my @dirs = keys(%dirs_found);
     print ("Found files $#files\n");
     print ("Found dirs $#dirs\n");
+    print ("Lines of code: $loc\n");
 }
 
 # Total files
 
 %files_found = ();
 %dirs_found = ();
+$loc = 0;
 @skip_dirs = @meta_dirs;
 print("Searching for all files...\n");
 find(\&wanted, ".");
@@ -163,3 +187,4 @@ my @files = keys(%files_found);
 my @dirs = keys(%dirs_found);
 print ("Found files $#files\n");
 print ("Found dirs $#dirs\n");
+print ("Lines of code: $loc\n");
