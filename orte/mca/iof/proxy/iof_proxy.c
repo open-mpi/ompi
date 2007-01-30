@@ -44,7 +44,8 @@ orte_iof_base_module_t orte_iof_proxy_module = {
     orte_iof_proxy_pull,
     orte_iof_proxy_subscribe,
     orte_iof_proxy_unsubscribe,
-    orte_iof_base_flush
+    orte_iof_base_flush,
+    NULL
 };
 
 

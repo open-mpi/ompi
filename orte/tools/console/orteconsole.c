@@ -253,6 +253,7 @@ orte_console_command_t console_commands[] = {
     /* End of list */
     { NULL, NULL, 0, ORTE_CONSOLE_TYPE_NULL,
       NULL,
+      NULL,
       NULL }
 };
 
