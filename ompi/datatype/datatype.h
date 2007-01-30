@@ -136,7 +136,7 @@ static inline int32_t ompi_ddt_is_committed( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_COMMITED) == DT_FLAG_COMMITED); }
 static inline int32_t ompi_ddt_is_overlapped( const ompi_datatype_t* type )
 { return ((type->flags & DT_FLAG_OVERLAP) == DT_FLAG_OVERLAP); }
-static inline int32_t ompi_ddt_is_acceptable_for_one_sided( const ompi_datatype_t* type )
+static inline int32_t ompi_ddt_is_acceptable_for_one_sided( const ompi_datatype_t* type __opal_attribute_unused__ )
 { return true; }
 static inline int32_t ompi_ddt_is_valid( const ompi_datatype_t* type )
 { return !((type->flags & DT_FLAG_UNAVAILABLE) == DT_FLAG_UNAVAILABLE); }

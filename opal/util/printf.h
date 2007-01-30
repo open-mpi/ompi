@@ -5,7 +5,7 @@
  * Copyright (c) 2004-2005 The University of Tennessee and The University
  *                         of Tennessee Research Foundation.  All rights
  *                         reserved.
- * Copyright (c) 2004-2005 High Performance Computing Center Stuttgart, 
+ * Copyright (c) 2004-2007 High Performance Computing Center Stuttgart, 
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
@@ -54,7 +54,7 @@ extern "C" {
  *
  * THIS IS A PORTABILITY FEATURE: USE snprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...);
+OPAL_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...) __opal_attribute_format__(__printf__, 3, 4);
 
 
 /**
@@ -79,7 +79,7 @@ OPAL_DECLSPEC int  opal_snprintf(char *str, size_t size, const char *fmt, ...);
  *
  * THIS IS A PORTABILITY FEATURE: USE vsnprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap);
+OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_list ap) __opal_attribute_format__(__printf__, 3, 0);
 
 /**
  * Allocates and writes to a string under the control of a format
@@ -100,7 +100,7 @@ OPAL_DECLSPEC int  opal_vsnprintf(char *str, size_t size, const char *fmt, va_li
  *
  * THIS IS A PORTABILITY FEATURE: USE asprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...);
+OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...) __opal_attribute_format__(__printf__, 2, 3);
 
 
 /**
@@ -124,7 +124,7 @@ OPAL_DECLSPEC int  opal_asprintf(char **ptr, const char *fmt, ...);
  *
  * THIS IS A PORTABILITY FEATURE: USE vasprintf() in CODE.
  */
-OPAL_DECLSPEC int  opal_vasprintf(char **ptr, const char *fmt, va_list ap);
+OPAL_DECLSPEC int  opal_vasprintf(char **ptr, const char *fmt, va_list ap) __opal_attribute_format__(__printf__, 2, 0);
 
 
 #if defined(c_plusplus) || defined(__cplusplus)
