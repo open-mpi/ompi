@@ -283,6 +283,11 @@ AC_DEFUN([OMPI_SETUP_CC],[
     unset co_found co_word
 
     AC_SUBST([CFLAGS_WITHOUT_OPTFLAGS])
+
+    #
+    # Finally get the supported attributes of the selected compiler
+    #
+    OMPI_CHECK____ATTRIBUTE__
 ])
 
 
