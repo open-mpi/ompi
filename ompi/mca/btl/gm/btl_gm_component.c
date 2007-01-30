@@ -27,7 +27,6 @@
 #include "ompi/mca/pml/pml.h"
 #include "ompi/mca/btl/btl.h"
 #include "ompi/request/request.h"
-#include "ompi/runtime/params.h"
 
 #include "opal/mca/base/mca_base_param.h"
 #include "orte/mca/errmgr/errmgr.h"
@@ -186,8 +185,6 @@ int mca_btl_gm_component_open(void)
         gm_max_length_for_size(mca_btl_gm_component.gm_max_frag_size) -
         sizeof(mca_btl_base_header_t);
 
-    /* leave pinned option */
-    mca_btl_gm_component.leave_pinned = (int) ompi_mpi_leave_pinned;
     return OMPI_SUCCESS;
 }
 

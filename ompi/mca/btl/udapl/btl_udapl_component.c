@@ -219,8 +219,6 @@ int mca_btl_udapl_component_open(void)
         sizeof(mca_btl_udapl_frag_eager_rdma_t) +
         mca_btl_udapl_component.udapl_eager_frag_size;
 
-    /* leave pinned option */
-    mca_btl_udapl_component.leave_pinned = (int) ompi_mpi_leave_pinned;
     return OMPI_SUCCESS;
 }
 

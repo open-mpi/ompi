@@ -1,4 +1,3 @@
-
 /*
  * Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
  *                         University Research and Technology
@@ -10,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -71,7 +71,6 @@ struct mca_btl_gm_component_t {
     opal_list_t gm_procs;   /**< list of gm proc structures */
     opal_mutex_t gm_lock;   /**< lock for accessing module state */
     char* gm_mpool_name;    /**< name of memory pool */ 
-    bool leave_pinned;      /**< pin memory on first use and leave pinned */
 }; 
 typedef struct mca_btl_gm_component_t mca_btl_gm_component_t;
 
