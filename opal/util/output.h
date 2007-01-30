@@ -341,7 +341,7 @@ struct opal_output_stream_t {
      * created, opal_output() will automatically create the file and
      * writing to it.
      */
-    OPAL_DECLSPEC void opal_output(int output_id, const char *format, ...);
+    OPAL_DECLSPEC void opal_output(int output_id, const char *format, ...) __opal_attribute_format__(__printf__, 2, 3);
     
     /**
      * Send output to a stream only if the passed verbosity level is
@@ -372,7 +372,7 @@ struct opal_output_stream_t {
      * @see opal_output_set_verbosity()
      */
     OPAL_DECLSPEC void opal_output_verbose(int verbose_level, int output_id, 
-                                           const char *format, ...);
+                                           const char *format, ...) __opal_attribute_format__(__printf__, 3, 4);
     
     /**
      * Set the verbosity level for a stream.
