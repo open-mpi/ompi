@@ -55,6 +55,8 @@ int orte_gpr_base_create_value(orte_gpr_value_t **value,
             OBJ_RELEASE(val);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
+        /* initialize it to NULL */
+        memset(val->keyvals, 0, cnt * sizeof(orte_gpr_keyval_t*));
     }
 
     /* get space for the specified number of tokens */
@@ -65,7 +67,8 @@ int orte_gpr_base_create_value(orte_gpr_value_t **value,
             OBJ_RELEASE(val);
             return ORTE_ERR_OUT_OF_RESOURCE;
         }
-        val->tokens[num_tokens] = NULL; /* NULL-terminate the array */
+        /* initialize it to NULL and ensure that the array is NULL terminated */
+        memset(val->tokens, 0, (1+num_tokens) * sizeof(char*));
     }
     
     val->addr_mode = addr_mode;
