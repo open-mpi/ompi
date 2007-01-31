@@ -375,6 +375,7 @@ size_t ompi_ddt_pack_description_length( const ompi_datatype_t* datatype )
     if( datatype->flags & DT_FLAG_PREDEFINED ) {
         return sizeof(int) * 2;
     }
+    assert( NULL != (ompi_ddt_args_t*)datatype->args );
     return ((ompi_ddt_args_t*)datatype->args)->total_pack_size;
 }
 
