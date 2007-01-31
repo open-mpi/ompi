@@ -62,7 +62,7 @@ ompi_mtl_mx_irecv(struct mca_mtl_base_module_t* mtl,
                      tag);
     
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "recv bits:   0x%016llx 0x%016llx\n", 
+                         "recv bits:   0x%016" PRIu64 " 0x%016" PRIu64 "\n", 
                          match_bits, mask_bits));
 
     mx_return = mx_irecv( ompi_mtl_mx.mx_endpoint, 

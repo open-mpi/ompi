@@ -61,7 +61,8 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
     mtl_mx_request.type = OMPI_MTL_MX_ISEND;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "issend bits: 0x%016llx\n", match_bits));
+                         "issend bits: 0x%016" PRIu64 "\n", 
+                         match_bits));
 
     if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
         mx_return = mx_issend( ompi_mtl_mx.mx_endpoint, 
@@ -109,8 +110,9 @@ ompi_mtl_mx_send(struct mca_mtl_base_module_t* mtl,
             abort();
         }
         if( OPAL_UNLIKELY(result && mx_status.code != MX_STATUS_SUCCESS) ) { 
-            opal_output(ompi_mtl_base_output, "Error in ompi_mtl_mx_send, mx_wait returned something other than MX_STATUS_SUCCESS: mx_status(%d).\n", 
-                        mx_status);
+            opal_output(ompi_mtl_base_output, 
+                        "Error in ompi_mtl_mx_send, mx_wait returned something other than MX_STATUS_SUCCESS: mx_status.code = %d.\n", 
+                        mx_status.code);
             abort();
         }
     } while(!result);
@@ -154,7 +156,7 @@ ompi_mtl_mx_isend(struct mca_mtl_base_module_t* mtl,
     mtl_mx_request->type = OMPI_MTL_MX_ISEND;
 
     OPAL_OUTPUT_VERBOSE((50, ompi_mtl_base_output,
-                         "issend bits: 0x%016llx\n", match_bits));
+                         "issend bits: 0x%016" PRIu64 "\n", match_bits));
 
     if(mode == MCA_PML_BASE_SEND_SYNCHRONOUS) { 
         mx_return = mx_issend( ompi_mtl_mx.mx_endpoint, 

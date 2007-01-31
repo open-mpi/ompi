@@ -204,7 +204,7 @@ ompi_osc_rdma_component_finalize(void)
         (num_modules = opal_hash_table_get_size(&mca_osc_rdma_component.p2p_c_modules))) {
         opal_output(ompi_osc_base_output,
                     "WARNING: There were %d Windows created but not freed.",
-                    num_modules);
+                    (int) num_modules);
     }
 
     mca_bml.bml_register(MCA_BTL_TAG_OSC_RDMA, NULL, NULL);
