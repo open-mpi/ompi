@@ -352,19 +352,19 @@ static inline opal_object_t *opal_obj_new_debug(opal_class_t* type, const char* 
 
 #define OBJ_CONSTRUCT(object, type)                             \
 do {                                                            \
-    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);              \
     OBJ_CONSTRUCT_INTERNAL((object), OBJ_CLASS(type));          \
-    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
 
 #define OBJ_CONSTRUCT_INTERNAL(object, type)                        \
 do {                                                                \
+    OBJ_SET_MAGIC_ID((object), OPAL_OBJ_MAGIC_ID);              \
     if (0 == (type)->cls_initialized) {                             \
         opal_class_initialize((type));                              \
     }                                                               \
     ((opal_object_t *) (object))->obj_class = (type);               \
     ((opal_object_t *) (object))->obj_reference_count = 1;          \
     opal_obj_run_constructors((opal_object_t *) (object));          \
+    OBJ_REMEMBER_FILE_AND_LINENO( object, __FILE__, __LINE__ ); \
 } while (0)
 
 
