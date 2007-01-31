@@ -195,7 +195,7 @@ ompi_osc_pt2pt_component_finalize(void)
         (num_modules = opal_hash_table_get_size(&mca_osc_pt2pt_component.p2p_c_modules))) {
         opal_output(ompi_osc_base_output,
                     "WARNING: There were %d Windows created but not freed.",
-                    num_modules);
+                    (int) num_modules);
         opal_progress_unregister(ompi_osc_pt2pt_progress);
     }
 
