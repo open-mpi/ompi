@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 // Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
@@ -163,6 +163,15 @@ public:
   virtual Datatype Dup() const;
   
   static int Create_keyval(Copy_attr_function* type_copy_attr_fn,
+                           Delete_attr_function* type_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
+                           MPI_Type_delete_attr_function* type_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(Copy_attr_function* type_copy_attr_fn,
+                           MPI_Type_delete_attr_function* type_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
                            Delete_attr_function* type_delete_attr_fn,
                            void* extra_state);
 

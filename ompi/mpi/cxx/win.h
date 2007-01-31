@@ -146,6 +146,15 @@ public:
   static int Create_keyval(Copy_attr_function* win_copy_attr_fn, 
 			   Delete_attr_function* win_delete_attr_fn, 
 			   void* extra_state);
+  static int Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn, 
+			   MPI_Win_delete_attr_function* win_delete_attr_fn, 
+			   void* extra_state);
+  static int Create_keyval(Copy_attr_function* win_copy_attr_fn, 
+			   MPI_Win_delete_attr_function* win_delete_attr_fn, 
+			   void* extra_state);
+  static int Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn, 
+			   Delete_attr_function* win_delete_attr_fn, 
+			   void* extra_state);
   
   virtual void Delete_attr(int win_keyval);
   
