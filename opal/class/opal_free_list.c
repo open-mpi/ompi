@@ -107,13 +107,19 @@ int opal_free_list_grow(opal_free_list_t* flist, size_t num_elements)
         ptr += (CACHE_LINE_SIZE - mod);
     }
 
-    for(i=0; i<num_elements; i++) {
-        opal_free_list_item_t* item = (opal_free_list_item_t*)ptr;
-        if (NULL != flist->fl_elem_class) {
+    if (NULL != flist->fl_elem_class) {
+        for(i=0; i<num_elements; i++) {
+            opal_free_list_item_t* item = (opal_free_list_item_t*)ptr;
             OBJ_CONSTRUCT_INTERNAL(item, flist->fl_elem_class);
+            opal_list_append(&(flist->super), &(item->super));
+            ptr += flist->fl_elem_size;
         }
-        opal_list_append(&(flist->super), &(item->super));
-        ptr += flist->fl_elem_size;
+    } else {
+        for(i=0; i<num_elements; i++) {
+            opal_free_list_item_t* item = (opal_free_list_item_t*)ptr;
+            opal_list_append(&(flist->super), &(item->super));
+            ptr += flist->fl_elem_size;
+        }
     }
     flist->fl_num_allocated += num_elements;
     return OPAL_SUCCESS;
