@@ -402,9 +402,11 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #endif
 
 #if OMPI_HAVE_ATTRIBUTE_NONNULL
-#    define __opal_attribute_nonnull__       __attribute__((__nonnull__))
+#      define __opal_attribute_nonnull__(a)    __attribute__((__nonnull__(a)))
+#      define __opal_attribute_nonnull_all__   __attribute__((__nonnull__))
 #else
-#    define __opal_attribute_nonnull__
+#    define __opal_attribute_nonnull__(a)
+#    define __opal_attribute_nonnull_all__
 #endif
 
 #if OMPI_HAVE_ATTRIBUTE_NORETURN
