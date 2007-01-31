@@ -426,6 +426,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #else
 #define __opal_attribute_aligned__(a)
 #define __opal_attribute_aligned_max__
+#define __opal_attribute_always_inline__
 #define __opal_attribute_const__
 #define __opal_attribute_deprecated__
 #define __opal_attribute_format__(a,b,c)
@@ -435,6 +436,7 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define __opal_attribute_noreturn__
 #define __opal_attribute_packed__
 #define __opal_attribute_pure__
+#define __opal_attribute_sentinel__
 #define __opal_attribute_unused__
 #define __opal_attribute_visibility__(a)
 #define __opal_attribute_warn_unused_result__
