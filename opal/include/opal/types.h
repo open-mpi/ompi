@@ -181,7 +181,8 @@ static inline uint16_t opal_swap_bytes2(uint16_t val)
     return r.bigval;
 }
 
-static inline uint32_t opal_swap_bytes4(uint32_t val) __opal_attribute_const__
+static inline uint32_t opal_swap_bytes4(uint32_t val) __opal_attribute_const__;
+static inline uint32_t opal_swap_bytes4(uint32_t val)
 {
     union { uint32_t bigval;
             uint8_t  arrayval[4];
@@ -196,7 +197,8 @@ static inline uint32_t opal_swap_bytes4(uint32_t val) __opal_attribute_const__
     return r.bigval;
 }
 
-static inline uint64_t opal_swap_bytes8(uint64_t val) __opal_attribute_const__
+static inline uint64_t opal_swap_bytes8(uint64_t val) __opal_attribute_const__;
+static inline uint64_t opal_swap_bytes8(uint64_t val)
 {
     union { uint64_t bigval;
             uint8_t  arrayval[8];
