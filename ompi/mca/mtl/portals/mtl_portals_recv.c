@@ -70,7 +70,8 @@ ompi_mtl_portals_recv_progress(ptl_event_t *ev,
 
         PtlMDUnlink(ev->md_handle);
 
-        /* set the status */
+        /* set the status - most of this filled in right after issuing
+           the PtlGet*/
         ptl_request->super.ompi_req->req_status._count = 
             ev->mlength;
 
