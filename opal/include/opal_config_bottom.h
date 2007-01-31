@@ -356,91 +356,104 @@ static inline uint16_t ntohs(uint16_t netvar) { return netvar; }
 #define OPAL_WANT_IPV6 0
 #endif
 
-#if OMPI_HAVE_ATTRIBUTE
 
-#  if OMPI_HAVE_ATTRIBUTE_ALIGNED
-#      define __opal_attribute_aligned__(a)    __attribute__((__aligned__(a)))
-#      define __opal_attribute_aligned_max__   __attribute__((__aligned__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE
-#      define __opal_attribute_always_inline__ __attribute__((__always_inline__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_CONST
-#      define __opal_attribute_const__         __attribute__((__const__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_DEPRECATED
-#      define __opal_attribute_deprecated__    __attribute__((__deprecated__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_FORMAT
-#      define __opal_attribute_format__(a,b,c) __attribute__((__format__(a, b, c)))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_MALLOC
-#      define __opal_attribute_malloc__        __attribute__((__malloc__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_MAY_ALIAS
-#      define __opal_attribute_may_alias__     __attribute__((__may_alias__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_NONNULL
-#      define __opal_attribute_nonnull__       __attribute__((__nonnull__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_NORETURN
-#      define __opal_attribute_noreturn__      __attribute__((__noreturn__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_PACKED
-#      define __opal_attribute_packed__        __attribute__((__packed__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_PURE
-#      define __opal_attribute_pure__          __attribute__((__pure__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_SENTINEL
-#      define __opal_attribute_sentinel__      __attribute__((__sentinel__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_UNUSED
-#      define __opal_attribute_unused__        __attribute__((__unused__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_VISIBILITY
-#      define __opal_attribute_visibility__(a) __attribute__((__visibility__(a)))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
-#      define __opal_attribute_warn_unused_result__ __attribute__((__warn_unused_result__))
-#  endif
-
-#  if OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS
-#      define __opal_attribute_weak_alias__(a) __attribute__((__weak__, __alias__(a)))
-#  endif
-
+#if OMPI_HAVE_ATTRIBUTE_ALIGNED
+#    define __opal_attribute_aligned__(a)    __attribute__((__aligned__(a)))
+#    define __opal_attribute_aligned_max__   __attribute__((__aligned__))
 #else
-#define __opal_attribute_aligned__(a)
-#define __opal_attribute_aligned_max__
-#define __opal_attribute_always_inline__
-#define __opal_attribute_const__
-#define __opal_attribute_deprecated__
-#define __opal_attribute_format__(a,b,c)
-#define __opal_attribute_malloc__
-#define __opal_attribute_may_alias__
-#define __opal_attribute_nonnull__
-#define __opal_attribute_noreturn__
-#define __opal_attribute_packed__
-#define __opal_attribute_pure__
-#define __opal_attribute_sentinel__
-#define __opal_attribute_unused__
-#define __opal_attribute_visibility__(a)
-#define __opal_attribute_warn_unused_result__
-#define __opal_attribute_weak_alias__(a)
+#    define __opal_attribute_aligned__(a)
+#    define __opal_attribute_aligned_max__
 #endif
+
+#if OMPI_HAVE_ATTRIBUTE_ALWAYS_INLINE
+#    define __opal_attribute_always_inline__ __attribute__((__always_inline__))
+#else
+#    define __opal_attribute_always_inline__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_CONST
+#    define __opal_attribute_const__         __attribute__((__const__))
+#else
+#    define __opal_attribute_const__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_DEPRECATED
+#    define __opal_attribute_deprecated__    __attribute__((__deprecated__))
+#else
+#    define __opal_attribute_deprecated__ 
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_FORMAT
+#    define __opal_attribute_format__(a,b,c) __attribute__((__format__(a, b, c)))
+#else
+#    define __opal_attribute_format__(a,b,c)
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_MALLOC
+#    define __opal_attribute_malloc__        __attribute__((__malloc__))
+#else
+#    define __opal_attribute_malloc__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_MAY_ALIAS
+#    define __opal_attribute_may_alias__     __attribute__((__may_alias__))
+#else
+#    define __opal_attribute_may_alias__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_NONNULL
+#    define __opal_attribute_nonnull__       __attribute__((__nonnull__))
+#else
+#    define __opal_attribute_nonnull__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_NORETURN
+#    define __opal_attribute_noreturn__      __attribute__((__noreturn__))
+#else
+#    define __opal_attribute_noreturn__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_PACKED
+#    define __opal_attribute_packed__        __attribute__((__packed__))
+#else
+#    define __opal_attribute_packed__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_PURE
+#    define __opal_attribute_pure__          __attribute__((__pure__))
+#else
+#    define __opal_attribute_pure__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_SENTINEL
+#    define __opal_attribute_sentinel__      __attribute__((__sentinel__))
+#else
+#    define __opal_attribute_sentinel__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_UNUSED
+#    define __opal_attribute_unused__        __attribute__((__unused__))
+#else
+#    define __opal_attribute_unused__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_VISIBILITY
+#    define __opal_attribute_visibility__(a) __attribute__((__visibility__(a)))
+#else
+#    define __opal_attribute_visibility__(a)
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_WARN_UNUSED_RESULT
+#    define __opal_attribute_warn_unused_result__ __attribute__((__warn_unused_result__))
+#else
+#    define __opal_attribute_warn_unused_result__
+#endif
+
+#if OMPI_HAVE_ATTRIBUTE_WEAK_ALIAS
+#    define __opal_attribute_weak_alias__(a) __attribute__((__weak__, __alias__(a)))
+#else
+#    define __opal_attribute_weak_alias__(a)
+#endif
+
 
 #endif /* OMPI_BUILDING */
