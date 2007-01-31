@@ -104,7 +104,6 @@ ompi_proc_t** ompi_proc_self(size_t* size);
  */
 static inline ompi_proc_t* ompi_proc_local(void) 
 {   
-    extern ompi_proc_t* ompi_proc_local_proc;
     return ompi_proc_local_proc;
 }
 
