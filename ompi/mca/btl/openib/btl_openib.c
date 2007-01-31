@@ -40,6 +40,16 @@
 #include <string.h> 
 #include <math.h>
 #include <inttypes.h>
+#ifdef HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+#ifdef HAVE_SYS_RESOURCE_H
+#include <sys/resource.h>
+#endif
+
 
 mca_btl_openib_module_t mca_btl_openib_module = {
     {
@@ -78,9 +88,24 @@ static void show_init_error(const char *file, int line,
                             const char *func, const char *dev) 
 {
     if (ENOMEM == errno) {
+        int ret;
+        struct rlimit limit;
+        char *str_limit = NULL;
+
+        ret = getrlimit(RLIMIT_MEMLOCK, &limit);
+        if (0 != ret) {
+            asprintf(&str_limit, "Unknown");
+        } else if (limit.rlim_cur == RLIM_INFINITY) {
+            asprintf(&str_limit, "unlimited");
+        } else {
+            asprintf(&str_limit, "%d", limit.rlim_cur);
+        }
+
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
                        true, orte_system_info.nodename, 
-                       file, line, func, dev);
+                       file, line, func, dev, str_limit);
+
+        if (NULL != str_limit) free(str_limit);
     } else {
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-create-q",
                        true, orte_system_info.nodename, 
