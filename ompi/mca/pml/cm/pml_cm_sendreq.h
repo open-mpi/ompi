@@ -252,6 +252,7 @@ do {                                                                     \
                                   &sendreq->req_mtl));                   \
         if(OMPI_SUCCESS == ret &&                                        \
            sendreq->req_send.req_send_mode == MCA_PML_BASE_SEND_BUFFERED) { \
+            sendreq->req_send.req_base.req_ompi.req_status.MPI_ERROR = 0; \
             MCA_PML_BASE_REQUEST_MPI_COMPLETE(&(sendreq)->req_send.req_base.req_ompi); \
         }                                                                \
     }                                                                    \
