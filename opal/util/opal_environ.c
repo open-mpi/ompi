@@ -199,17 +199,17 @@ int opal_unsetenv(const char *name, char ***env)
 
     found = false;
     for (i = 0; (*env)[i] != NULL; ++i) {
-        if (found) {
-            (*env)[i] = (*env)[i + 1];
-        } else if (0 == strncmp((*env)[i], compare, len)) {
+        if (0 != strncmp((*env)[i], compare, len))
+            continue;
 #if !defined(__WINDOWS__)
-            if (environ != *env) {
-                free((*env)[i]);
-            }
-#endif
-            (*env)[i] = (*env)[i + 1];
-            found = true;
+        if (environ != *env) {
+            free((*env)[i]);
         }
+#endif
+        for (; (*env)[i] != NULL; ++i)
+            (*env)[i] = (*env)[i + 1];
+        found = true;
+        break;
     }
     free(compare);
 
@@ -217,3 +217,4 @@ int opal_unsetenv(const char *name, char ***env)
 
     return (found) ? OPAL_SUCCESS : OPAL_ERR_NOT_FOUND;
 }
+
