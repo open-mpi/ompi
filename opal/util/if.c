@@ -296,7 +296,7 @@ static int opal_ifinit(void)
         intf_ptr = (opal_if_t*) malloc(sizeof(opal_if_t));
         OMPI_DEBUG_ZERO(*intf_ptr);
         if(intf_ptr == 0) {
-            opal_output(0, "opal_ifinit: unable to allocated %d bytes\n", sizeof(opal_if_t));
+            opal_output(0, "opal_ifinit: unable to allocated %lu bytes\n", (unsigned long)sizeof(opal_if_t));
             return OPAL_ERR_OUT_OF_RESOURCE;
         }
         memcpy(intf_ptr, &intf, sizeof(intf));

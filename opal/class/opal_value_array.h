@@ -245,7 +245,7 @@ static inline int opal_value_array_remove_item(opal_value_array_t *array, size_t
 {
 #if OMPI_ENABLE_DEBUG
     if (item_index >= array->array_size) {
-        opal_output(0, "opal_value_array_remove_item: invalid index %d\n", item_index);
+        opal_output(0, "opal_value_array_remove_item: invalid index %lu\n", (unsigned long)item_index);
         return OPAL_ERR_BAD_PARAM;
     }
 #endif   
