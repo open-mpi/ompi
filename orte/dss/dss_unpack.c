@@ -111,7 +111,8 @@ int orte_dss_unpack_buffer(orte_buffer_t *buffer, void *dst, orte_std_cntr_t *nu
     orte_data_type_t local_type;
     orte_dss_type_info_t *info;
 
-    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_buffer( %p, %p, %lu, %d )\n", buffer, dst, *num_vals, (int)type ) );
+    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_unpack_buffer( %p, %p, %lu, %d )\n",
+                   (void*)buffer, dst, (long unsigned int)*num_vals, (int)type ) );
 
     /** Unpack the declared data type */
     if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {
