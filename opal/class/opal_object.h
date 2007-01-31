@@ -140,8 +140,8 @@
 #endif
 
 #if OMPI_ENABLE_DEBUG
-/* Not quite 0xdeadbeef, in case someone else is using that... */
-#define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 8) + 0xdeadbeefULL)
+/* Any kind of unique ID should do the job */
+#define OPAL_OBJ_MAGIC_ID ((0xdeafbeedULL << 32) + 0xdeafbeedULL)
 #endif
 
 /* typedefs ***********************************************************/
