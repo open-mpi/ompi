@@ -688,7 +688,8 @@ static void job_state_callback(orte_jobid_t jobid, orte_proc_state_t state)
             break;
 
         default:
-            opal_output(0, "orterun: job state callback in unexpected state - jobid %lu, state 0x%04x\n", jobid, state);
+            opal_output(0, "orterun: job state callback in unexpected state - jobid %lu, state 0x%04x\n",
+                        (long unsigned int)jobid, state);
             break;
     }
     OPAL_THREAD_UNLOCK(&orterun_globals.lock);

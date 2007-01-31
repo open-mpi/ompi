@@ -134,7 +134,6 @@ static int mca_oob_xcast_binomial_tree(orte_jobid_t job,
         OBJ_DESTRUCT(&xcastmutex);
 
         return ORTE_SUCCESS;
-        
     } 
     
     

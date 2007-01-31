@@ -502,7 +502,7 @@ void mca_oob_tcp_peer_close(mca_oob_tcp_peer_t* peer)
         opal_output(0, "[%lu,%lu,%lu]-[%lu,%lu,%lu] mca_oob_tcp_peer_close(%p) sd %d state %d\n",
             ORTE_NAME_ARGS(orte_process_info.my_name),
             ORTE_NAME_ARGS(&(peer->peer_name)),
-            peer,
+            (void*)peer,
             peer->peer_sd,
             peer->peer_state);
     }

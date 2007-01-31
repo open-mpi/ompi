@@ -67,7 +67,8 @@ int orte_dss_pack_buffer(orte_buffer_t *buffer, void *src, orte_std_cntr_t num_v
     int rc;
     orte_dss_type_info_t *info;
 
-    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_pack_buffer( %p, %p, %lu, %d )\n", buffer, src, num_vals, (int)type ) );
+    OPAL_OUTPUT( ( orte_dss_verbose, "orte_dss_pack_buffer( %p, %p, %lu, %d )\n",
+                   (void*)buffer, src, (long unsigned int)num_vals, (int)type ) );
 
     /* Pack the declared data type */
     if (ORTE_DSS_BUFFER_FULLY_DESC == buffer->type) {

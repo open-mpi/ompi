@@ -58,7 +58,7 @@ int orte_gpr_replica_dump_local_triggers(void)
             if (NULL == trigs[j]->callback) {
                 opal_output(orte_gpr_base_output, "\tNULL callback");
             } else {
-                opal_output(orte_gpr_base_output, "\tCallback %0x", trigs[j]->callback);
+                opal_output(orte_gpr_base_output, "\tCallback %llx", (unsigned long long)(intptr_t)trigs[j]->callback);
             }
         }
     }
@@ -88,8 +88,9 @@ int orte_gpr_replica_dump_local_subscriptions(void)
             if (NULL == subs[j]->callback) {
                 opal_output(orte_gpr_base_output, "\tNULL callback");
             } else {
-                opal_output(orte_gpr_base_output, "\tCallback %0x", subs[j]->callback);
-            }        }
+                opal_output(orte_gpr_base_output, "\tCallback %llx", (unsigned long long)(intptr_t)subs[j]->callback);
+            }
+        }
     }
     return ORTE_SUCCESS;    
 }
