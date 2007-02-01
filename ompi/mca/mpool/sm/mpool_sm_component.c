@@ -136,7 +136,9 @@ static mca_mpool_base_module_t* mca_mpool_sm_init(
     mca_base_param_lookup_int(min_size_param, &min_size);
     mca_base_param_lookup_int(peer_size_param, &peer_size);
 
-    procs = ompi_proc_all(&num_all_procs);
+    /* README: this needs to change if procs in different jobs (even
+       spawned ones) are to talk using shared memory */
+    procs = ompi_proc_world(&num_all_procs);
     for (i = 0 ; i < num_all_procs ; ++i) {
         if (procs[i]->proc_flags & OMPI_PROC_FLAG_LOCAL) {
             num_local_procs++;
