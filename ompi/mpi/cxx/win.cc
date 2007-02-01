@@ -2,6 +2,7 @@
 // 
 // Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 //                         reserved. 
+// Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -36,6 +37,7 @@ MPI::Win::Set_errhandler(const MPI::Errhandler& errhandler)
     (void)MPI_Win_set_errhandler(mpi_win, errhandler);
 }
 
+// 1) original Create_keyval that takes the first 2 arguments as C++ macros
 int
 MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn, 
                         MPI::Win::Delete_attr_function* win_delete_attr_fn, 
@@ -52,7 +54,56 @@ MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
   OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
   return keyval;
 }
-
+// 2) overload Create_keyval to take the first 2 arguments as C macros
+int
+MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn, 
+                        MPI_Win_delete_attr_function* win_delete_attr_fn, 
+                        void* extra_state)
+{
+  int keyval;
+  (void) MPI_Win_create_keyval(win_copy_attr_fn,
+                               win_delete_attr_fn,
+                               &keyval, extra_state);
+  return keyval;
+}
+// 3) overload Create_keyval to take the first 2 arguments as C++ & C macros
+int
+MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn, 
+                        MPI_Win_delete_attr_function* win_delete_attr_fn, 
+                        void* extra_state)
+{
+  int keyval;
+  // use a dummy attr_fn to create the c++ key pair
+  MPI::Win::Delete_attr_function* dummy_win_delete_attr_fn;
+  (void) MPI_Win_create_keyval(ompi_mpi_cxx_win_copy_attr_intercept,
+                               win_delete_attr_fn,
+                               &keyval, extra_state);
+  key_pair_t* copy_and_delete = 
+      new key_pair_t(win_copy_attr_fn, dummy_win_delete_attr_fn); 
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  MPI::Win::mpi_win_key_fn_map[keyval] = copy_and_delete;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+  return keyval;
+}
+// 4) overload Create_keyval to take the first 2 arguments as C & C++ macros
+int
+MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn, 
+                        MPI::Win::Delete_attr_function* win_delete_attr_fn, 
+                        void* extra_state)
+{
+  int keyval;
+  // use a dummy attr_fn to create the c++ key pair
+  MPI::Win::Copy_attr_function* dummy_win_copy_attr_fn;
+  (void) MPI_Win_create_keyval(win_copy_attr_fn,
+                               ompi_mpi_cxx_win_delete_attr_intercept,
+                               &keyval, extra_state);
+  key_pair_t* copy_and_delete = 
+      new key_pair_t(dummy_win_copy_attr_fn, win_delete_attr_fn); 
+  OPAL_THREAD_LOCK(MPI::mpi_map_mutex);
+  MPI::Win::mpi_win_key_fn_map[keyval] = copy_and_delete;
+  OPAL_THREAD_UNLOCK(MPI::mpi_map_mutex);
+  return keyval;
+}
 
 void 
 MPI::Win::Free_keyval(int& win_keyval)
