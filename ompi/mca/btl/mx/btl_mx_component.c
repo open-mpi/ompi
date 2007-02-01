@@ -151,8 +151,18 @@ int mca_btl_mx_component_open(void)
                             "Maximum size of fragment for the RDMA protocol",
                             false, false, 8*1024*1024, &tmp);
     mca_btl_mx_module.super.btl_max_rdma_size = tmp;
+
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "bandwidth",
+                            "Maximum bandwidth for the device",
+                            false, false, 2000, &tmp);
+    mca_btl_mx_module.super.btl_bandwidth = tmp;
+    mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "latency",
+                            "The expected latency for the device",
+                            false, false, 5, &tmp);
+    mca_btl_mx_module.super.btl_latency = tmp;
+
     mca_base_param_reg_int( (mca_base_component_t*)&mca_btl_mx_component, "flags",
-                            "Flags to activate/deactivate the RDMA",
+                            "Flags to activate/deactivate the RDMA: SEND=1, PUT=2, GET=4",
                             false, false, MCA_BTL_FLAGS_SEND_INPLACE | MCA_BTL_FLAGS_PUT,
                             (int*)&mca_btl_mx_module.super.btl_flags );
     return OMPI_SUCCESS;
@@ -447,7 +457,7 @@ mca_btl_base_module_t** mca_btl_mx_component_init(int *num_btl_modules,
     if( (status = mx_get_info( NULL, MX_NIC_IDS, NULL, 0,
                                nic_addrs, size)) != MX_SUCCESS) {
         opal_output(0, "MX BTL error (mx_get_info failed) size = %ld [%s] #cards %d\n",
-                    size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
+                    (unsigned long)size, mx_strerror(status), mca_btl_mx_component.mx_num_btls );
         free(nic_addrs);
         return NULL;
     }
