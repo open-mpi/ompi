@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Wait 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Wait 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
 \fBMPI_Wait\fP \- Waits for an MPI send or receive to complete.
 
@@ -42,7 +42,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-A call to MPI_Wait returns when the operation identified by request is complete. If the communication object associated with this request was created by a nonblocking send or receive call, then the object is deallocated by the call to MPI_Wait and the request handle is set to MPI_REQUEST_NULL. MPI_Wait is a nonlocal operation.
+A call to MPI_Wait returns when the operation identified by request is complete. If the communication object associated with this request was created by a nonblocking send or receive call, then the object is deallocated by the call to MPI_Wait and the request handle is set to MPI_REQUEST_NULL. 
 .sp
 The call returns, in status, information on the completed operation. The content of the status object for a receive operation can be accessed as described in Section 3.2.5 of the MPI-1 Standard, "Return Status." The status object for a send operation may be queried by a call to MPI_Test_cancelled (see Section 3.8 of the MPI-1 Standard, "Probe and Cancel").
 .sp
