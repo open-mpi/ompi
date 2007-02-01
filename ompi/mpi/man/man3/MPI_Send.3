@@ -1,8 +1,8 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Send 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Send 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
-\fBMPI_Send\fP \- Performs a standard send.
+\fBMPI_Send\fP \- Performs a standard-mode blocking send.
 
 .SH SYNTAX
 .ft R
@@ -71,5 +71,6 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 .nf
 MPI_Isend
 MPI_Bsend
+MPI_Recv
 
 ' @(#)MPI_Send.3 1.20 06/03/09   
