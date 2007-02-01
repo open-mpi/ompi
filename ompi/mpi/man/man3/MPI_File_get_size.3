@@ -1,4 +1,4 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2006, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_get_size 3OpenMPI "September 2006" "Open MPI 1.2" " "
 .SH NAME
@@ -42,12 +42,12 @@ Fortran only: Error status (integer).
 MPI_File_get_size returns, in 
 .I size
 , the current size in bytes of the file associated with the file handle 
-\fIfh\fP. Note that the file size returned may not represent the number of bytes physically allocated for the file in those cases where all bytes in this file have not been written at least once. 
+\fIfh\fP. Note that the file size returned by Solaris may not represent the number of bytes physically allocated for the file in those cases where all bytes in this file have not been written at least once. 
 
 .SH FORTRAN 77 NOTES
 .ft R
 The MPI standard prescribes portable Fortran syntax for
-the \fISIZE\fP argument only for Fortran 90. FORTRAN 77
+the \fISIZE\fP argument only for Fortran 90. Sun FORTRAN 77
 users may use the non-portable syntax
 .sp
 .nf
