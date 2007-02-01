@@ -120,9 +120,9 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
     if( iov_len_local > pConvertor->pDesc->size ) {
         pStack = pConvertor->pStack;  /* we're working with the full stack */
         count_desc = (uint32_t)(iov_len_local / pConvertor->pDesc->size);
-        DO_DEBUG( opal_output( 0, "position before %ld asked %ld data size %lu"
+        DO_DEBUG( opal_output( 0, "position before %lu asked %lu data size %lu"
                                " iov_len_local %lu count_desc %d\n",
-                               pConvertor->bConverted, *position, (unsigned long)pConvertor->pDesc->size,
+                               (unsigned long)pConvertor->bConverted, (unsigned long)*position, (unsigned long)pConvertor->pDesc->size,
                                (unsigned long)iov_len_local, count_desc ); );
         /**
          * Update all the stack except the last one which is supposed to be for
@@ -133,8 +133,8 @@ int ompi_convertor_generic_simple_position( ompi_convertor_t* pConvertor,
         pConvertor->bConverted += count_desc * pConvertor->pDesc->size;
         iov_len_local = *position - pConvertor->bConverted;
         pStack[0].count -= count_desc;
-        DO_DEBUG( opal_output( 0, "after bConverted %ld remaining count %lu iov_len_local %lu\n",
-                               pConvertor->bConverted, (unsigned long)pStack[0].count, (unsigned long)iov_len_local ); );
+        DO_DEBUG( opal_output( 0, "after bConverted %lu remaining count %lu iov_len_local %lu\n",
+                               (unsigned long)pConvertor->bConverted, (unsigned long)pStack[0].count, (unsigned long)iov_len_local ); );
     }
 
     pStack = pConvertor->pStack + pConvertor->stack_pos;
