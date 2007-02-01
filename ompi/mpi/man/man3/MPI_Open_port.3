@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Open_port 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Open_port 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
 \fBMPI_Open_port\fP \- Establishes a network address for a server to accept connections from clients.
 
@@ -27,7 +27,7 @@ void MPI::Open_port(const MPI::Info& \fIinfo\fP, char* \fIport_name\fP)
 .ft R
 .TP 1i
 info
-Implementation-specific information about how to establish an address (handle).
+Options on how to establish an address (handle). No options currently supported.
 
 .SH OUTPUT PARAMETERS
 .ft R
@@ -53,3 +53,9 @@ Almost all MPI routines return an error value; C routines as the value of the fu
 Before the error value is returned, the current MPI error handler is
 called. By default, this error handler aborts the MPI job, except for I/O function errors. The error handler may be changed with MPI_Comm_set_errhandler; the predefined error handler MPI_ERRORS_RETURN may be used to cause error values to be returned. Note that MPI does not guarantee that an MPI program can continue past an error.  
 
+.SH SEE ALSO
+MPI_Comm_accept
+MPI_Comm_connect
+.br
+
+' @(#)MPI_Open_port.3 1.20 06/03/09
