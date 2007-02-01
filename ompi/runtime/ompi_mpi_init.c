@@ -644,36 +644,35 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     if (timing) {
         gettimeofday(&ompistart, NULL);
     }
-    
-    /* new very last step: check whether we have been spawned or not.
-       We introduce that at the very end, since we need collectives,
-       datatypes, ptls etc. up and running here.... */
 
+#if OMPI_ENABLE_PROGRESS_THREADS == 0
+    /* Start setting up the event engine for MPI operations.  Don't
+       block in the event library, so that communications don't take
+       forever between procs in the dynamic code.  This will increase
+       CPU utilization for the remainder of MPI_INIT when we are
+       blocking on ORTE-level events, but may greatly reduce non-TCP
+       latency. */
+    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
+#endif
+
+    /* Check whether we have been spawned or not.  We introduce that
+       at the very end, since we need collectives, datatypes, ptls
+       etc. up and running here.... */
     if (OMPI_SUCCESS != (ret = ompi_comm_dyn_init())) {
         error = "ompi_comm_dyn_init() failed";
         goto error;
     }
 
- error:
-    if (ret != OMPI_SUCCESS) {
-        const char *err_msg = opal_strerror(ret);
-        opal_show_help("help-mpi-runtime",
-                       "mpi_init:startup:internal-failure", true,
-                       "MPI_INIT", "MPI_INIT", error, err_msg, ret);
-        return ret;
-    }
-
-#if OMPI_ENABLE_PROGRESS_THREADS == 0
-    /* switch from letting us sit in the event library for a bit each
-       time through opal_progress() to completely non-blocking */
-    opal_progress_set_event_flag(OPAL_EVLOOP_NONBLOCK);
-#endif
-
     /* Undo ORTE calling opal_progress_event_users_increment() during
-       MPI lifetime, to get better latency when not using TCP */
+       MPI lifetime, to get better latency when not using TCP.  Do
+       this *after* dyn_init, as dyn init uses lots of ORTE
+       communication and we don't want to hinder the performance of
+       that code. */
     opal_progress_event_users_decrement();
 
-    /* override ORTE setting yield_when_idle, if desired */
+    /* Finish tuning the progress engine to run the way the user would
+       like us to run.  At this point,just adjust whether yield is
+       called when no events were processed in the progress engin. */
     param = mca_base_param_find("mpi", NULL, "yield_when_idle");
     mca_base_param_lookup_int(param, &value);
     if (value < 0) {
@@ -689,8 +688,10 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
         opal_progress_set_event_poll_rate(value);
     }
     
-
-    /* If we want the connection warmup, go do it */
+    /* At this point, we are fully configured and in MPI mode.  Any
+       communication calls here will work exactly like they would in
+       the user's code.  Setup the connections between procs and warm
+       them up with simple sends, if requested*/
    if (ompi_mpi_preconnect_all) { 
        if (OMPI_SUCCESS != (ret = ompi_init_do_preconnect())) {
            error = "ompi_mpi_do_preconnect_all() failed";
@@ -700,6 +701,15 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
               loop) */
            goto error;
        }
+    }
+
+ error:
+    if (ret != OMPI_SUCCESS) {
+        const char *err_msg = opal_strerror(ret);
+        opal_show_help("help-mpi-runtime",
+                       "mpi_init:startup:internal-failure", true,
+                       "MPI_INIT", "MPI_INIT", error, err_msg, ret);
+        return ret;
     }
 
     /* All done.  Wasn't that simple? */
