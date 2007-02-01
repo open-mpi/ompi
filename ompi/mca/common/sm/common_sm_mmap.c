@@ -186,8 +186,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
                 ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
             if( rc < 0 ) {
                 opal_output(0,
-                    "mca_common_sm_mmap_init: orte_rml.send failed to %ld with errno=%d\n",
-                    p, errno);
+                    "mca_common_sm_mmap_init: orte_rml.send failed to %lu with errno=%d\n",
+                    (unsigned long)p, errno);
                 goto return_error;
             }
         }
