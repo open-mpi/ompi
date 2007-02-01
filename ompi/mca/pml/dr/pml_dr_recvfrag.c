@@ -113,8 +113,8 @@ void mca_pml_dr_recv_frag_callback(
         (btl->btl_flags & MCA_BTL_FLAGS_NEED_CSUM); 
     
     if(segments->seg_len < sizeof(mca_pml_dr_common_hdr_t)) {
-        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? segments->seg_len:%d < sizeof(mca_pml_dr_common_hdr_t):%d\n", 
-                            __FILE__, __LINE__, segments->seg_len, sizeof(mca_pml_dr_common_hdr_t)));
+        MCA_PML_DR_DEBUG(0,(0, "%s:%d: wtf? segments->seg_len:%d < sizeof(mca_pml_dr_common_hdr_t):%lu\n", 
+                            __FILE__, __LINE__, segments->seg_len, (unsigned long)sizeof(mca_pml_dr_common_hdr_t)));
     
         return;
     }
@@ -701,9 +701,9 @@ rematch:
                 mca_pml_dr_recv_frag_ack(btl, 
                                          (mca_bml_base_endpoint_t*)ompi_proc->proc_bml, 
                     &hdr->hdr_common, hdr->hdr_src_ptr.pval, 0, 0);
-                MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %d length %d)\n", 
-                             __FILE__, __LINE__, csum, hdr->hdr_csum, num_segments,
-                             segments[0].seg_len - mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type)));
+                MCA_PML_DR_DEBUG(0,(0, "%s:%d: received corrupted data 0x%08x != 0x%08x (segments %lu length %lu)\n", 
+                             __FILE__, __LINE__, csum, hdr->hdr_csum, (unsigned long)num_segments,
+                             (unsigned long)(segments[0].seg_len - mca_pml_dr_hdr_size(hdr->hdr_common.hdr_type))));
                 MCA_PML_DR_RECV_FRAG_RETURN(frag);
                 OPAL_THREAD_UNLOCK(&comm->matching_lock);
                 return false;
@@ -970,7 +970,7 @@ rematch:
                         match->req_proc = proc;
                         match->req_endpoint = (mca_pml_dr_endpoint_t*)proc->ompi_proc->proc_pml;
                         MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint %p match %p\n", 
-                              __FILE__, __LINE__, proc->ompi_proc->proc_pml, match->req_endpoint));
+                              __FILE__, __LINE__, (void*)proc->ompi_proc->proc_pml, (void*)match->req_endpoint));
         
                         /* add this fragment descriptor to the list of
                          * descriptors to be processed later

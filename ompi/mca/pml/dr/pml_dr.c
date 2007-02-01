@@ -174,7 +174,7 @@ int mca_pml_dr_add_procs(ompi_proc_t** procs, size_t nprocs)
         endpoint->proc_ompi = procs[i];
         procs[i]->proc_pml = (struct mca_pml_base_endpoint_t*) endpoint;
         MCA_PML_DR_DEBUG(10, (0, "%s:%d: adding endpoint %p to proc_pml %p\n", 
-                              __FILE__, __LINE__, endpoint, procs[i]));
+                              __FILE__, __LINE__, (void*)endpoint, (void*)procs[i]));
         
         /* this won't work for comm spawn and other dynamic
            processes, but will work for initial job start */
