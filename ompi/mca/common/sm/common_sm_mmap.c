@@ -151,8 +151,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     
             /* is addr past end of file ? */
             if( (unsigned char*)seg+size < addr ) {
-                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
-                            size,addr);
+                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %lu  addr %p\n",
+                            (unsigned long)size, addr);
                 goto file_opened;
             }
             map->data_addr = addr;
@@ -206,7 +206,7 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
               ORTE_RML_TAG_SM_BACK_FILE_CREATED,0);
         if( rc < 0 ) {
             opal_output(0, "mca_common_sm_mmap_init: orte_rml.recv failed from %ld with errno=%d\n",            
-                        0, errno);
+                        0L, errno);
             goto return_error;
         }
         /* check to see if file inited correctly */
@@ -251,8 +251,8 @@ mca_common_sm_mmap_t* mca_common_sm_mmap_init(size_t size, char *file_name,
     
             /* is addr past end of file ? */
             if( (unsigned char*)seg+size < addr ) {
-                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %d  addr %p\n",
-                            size,addr);
+                opal_output(0, "mca_common_sm_mmap_init: memory region too small len %lu  addr %p\n",
+                            (unsigned long)size,addr);
                 goto return_error;
             }
             map->data_addr = addr;

@@ -195,7 +195,7 @@ int ompi_file_finalize(void)
            we're destroying everything, it isn't worth it */
     }
     if (num_unnamed > 0) {
-        opal_output(0, "WARNING: %d unnamed MPI_File handles still allocated at MPI_FINALIZE", num_unnamed);
+        opal_output(0, "WARNING: %lu unnamed MPI_File handles still allocated at MPI_FINALIZE", (unsigned long)num_unnamed);
     }
     OBJ_DESTRUCT(&ompi_file_f_to_c_table);
   

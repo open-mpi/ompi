@@ -1111,7 +1111,7 @@ void mca_pml_dr_send_request_frag_ack(
 
     /* need to retransmit? */
     if(vfrag->vf_ack != vfrag->vf_mask) {
-        MCA_PML_DR_DEBUG(0,(0, "got a vfrag NACK, retransmitting %x\n", ~vfrag->vf_ack));
+        MCA_PML_DR_DEBUG(0,(0, "got a vfrag NACK, retransmitting %llx\n", ~vfrag->vf_ack));
         MCA_PML_DR_SEND_REQUEST_VFRAG_RETRANS(sendreq,vfrag);
         schedule = true;
 
