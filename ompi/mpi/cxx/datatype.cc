@@ -67,7 +67,7 @@ MPI::Datatype::Create_keyval(MPI::Datatype::Copy_attr_function* type_copy_attr_f
 {
   int keyval;
   // use a dummy attr_fn to create the c++ key pair
-  MPI::Datatype::Delete_attr_function* dummy_type_delete_attr_fn;
+  MPI::Datatype::Delete_attr_function* dummy_type_delete_attr_fn = NULL;
   (void) MPI_Type_create_keyval(ompi_mpi_cxx_type_copy_attr_intercept,
                                 type_delete_attr_fn,
                                 &keyval, extra_state);
@@ -87,7 +87,7 @@ MPI::Datatype::Create_keyval(MPI_Type_copy_attr_function* type_copy_attr_fn,
 {
   int keyval;
   // use a dummy attr_fn to create the c++ key pair
-  MPI::Datatype::Copy_attr_function* dummy_type_copy_attr_fn;
+  MPI::Datatype::Copy_attr_function* dummy_type_copy_attr_fn = NULL;
   (void) MPI_Type_create_keyval(type_copy_attr_fn,
                                 ompi_mpi_cxx_type_delete_attr_intercept,
                                 &keyval, extra_state);
