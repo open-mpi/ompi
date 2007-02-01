@@ -135,21 +135,21 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
                             mca_btl_mx_endpoint_t* module_endpoint )
 {
     mca_btl_mx_addr_t  *mx_peers;
-    int rc;
-    size_t size, i;
+    int rc, i;
+    size_t size;
 
     /* query for the peer address info */
     rc = mca_pml_base_modex_recv( &mca_btl_mx_component.super.btl_version,
                                   module_proc->proc_ompi, (void*)&mx_peers, &size );
     if( OMPI_SUCCESS != rc ) {
-        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%d,%d,%d]",
+        opal_output( 0, "mca_pml_base_modex_recv failed for peer [%ld,%ld,%ld]",
                      ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
         OBJ_RELEASE(module_proc);
         return OMPI_ERR_OUT_OF_RESOURCE;
     }
 
     if( (size % sizeof(mca_btl_mx_addr_t)) != 0 ) {
-        opal_output( 0, "invalid mx address for peer [%d,%d,%d]",
+        opal_output( 0, "invalid mx address for peer [%ld,%ld,%ld]",
                      ORTE_NAME_ARGS(&module_proc->proc_ompi->proc_name) );
         OBJ_RELEASE(module_proc);
         return OMPI_ERROR;
