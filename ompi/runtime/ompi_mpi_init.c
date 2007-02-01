@@ -212,6 +212,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
     bool timing = false;
     int param, value;
     struct timeval ompistart, ompistop;
+    int num_processors;
 
     /* Join the run-time environment - do the things that don't hit
        the registry */
@@ -670,15 +671,31 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
        that code. */
     opal_progress_event_users_decrement();
 
-    /* Finish tuning the progress engine to run the way the user would
-       like us to run.  At this point,just adjust whether yield is
-       called when no events were processed in the progress engin. */
+    /* see if the user specified yield_when_idle - if so, use it */
     param = mca_base_param_find("mpi", NULL, "yield_when_idle");
     mca_base_param_lookup_int(param, &value);
     if (value < 0) {
-        /* if we got a bogus value, do the conservative thing... */
-        opal_progress_set_yield_when_idle(true);
+        /* nope - so let's figure out what we can/should do...
+         * first, get the number of processors - if we can't then
+         * we can't do anything but set conservative values
+         */
+        if (OPAL_SUCCESS == opal_paffinity_base_get_num_processors(&num_processors)) {
+            /* got the num_processors - compare that to the number of
+             * local procs in this job to decide if we are oversubscribed
+             */
+            if (ompi_proc_local_proc->num_local_procs > num_processors) {
+                /* oversubscribed - better yield */
+                opal_progress_set_yield_when_idle(true);
+            } else {
+                /* not oversubscribed - go ahead and be a hog! */
+                opal_progress_set_yield_when_idle(false);
+            }
+        } else {
+            /* couldn't get num_processors - be conservative */
+            opal_progress_set_yield_when_idle(true);
+        }
     } else {
+        /* yep, they specified it - so set idle accordingly */
         opal_progress_set_yield_when_idle(value == 0 ? false : true);
     }
     param = mca_base_param_find("mpi", NULL, "event_tick_rate");
