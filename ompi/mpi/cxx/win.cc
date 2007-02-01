@@ -74,7 +74,7 @@ MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
 {
   int keyval;
   // use a dummy attr_fn to create the c++ key pair
-  MPI::Win::Delete_attr_function* dummy_win_delete_attr_fn;
+  MPI::Win::Delete_attr_function* dummy_win_delete_attr_fn = NULL;
   (void) MPI_Win_create_keyval(ompi_mpi_cxx_win_copy_attr_intercept,
                                win_delete_attr_fn,
                                &keyval, extra_state);
@@ -93,7 +93,7 @@ MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn,
 {
   int keyval;
   // use a dummy attr_fn to create the c++ key pair
-  MPI::Win::Copy_attr_function* dummy_win_copy_attr_fn;
+  MPI::Win::Copy_attr_function* dummy_win_copy_attr_fn = NULL;
   (void) MPI_Win_create_keyval(win_copy_attr_fn,
                                ompi_mpi_cxx_win_delete_attr_intercept,
                                &keyval, extra_state);
