@@ -115,6 +115,7 @@ orte_pls_base_module_t orte_pls_tm_module = {
     pls_tm_terminate_proc,
     pls_tm_signal_job,
     pls_tm_signal_proc,
+    pls_tm_cancel_operation,
     pls_tm_finalize
 };
 
