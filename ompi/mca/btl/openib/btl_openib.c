@@ -98,7 +98,7 @@ static void show_init_error(const char *file, int line,
         } else if (limit.rlim_cur == RLIM_INFINITY) {
             asprintf(&str_limit, "unlimited");
         } else {
-            asprintf(&str_limit, "%d", limit.rlim_cur);
+            asprintf(&str_limit, "%ld", (long)limit.rlim_cur);
         }
 
         opal_show_help("help-mpi-btl-openib.txt", "init-fail-no-mem",
