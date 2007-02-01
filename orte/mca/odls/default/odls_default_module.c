@@ -760,10 +760,10 @@ static int odls_default_fork_local_proc(
          */
         if (oversubscribed) {
             param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(param, "1", true, &environ_copy);
+            opal_setenv(param, "1", false, &environ_copy);
        } else {
             param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(param, "0", true, &environ_copy);
+            opal_setenv(param, "0", false, &environ_copy);
         }
         free(param);
         
@@ -771,7 +771,7 @@ static int odls_default_fork_local_proc(
             param = mca_base_param_environ_variable("mpi", NULL,
                                                     "paffinity_processor");
             asprintf(&param2, "%lu", (unsigned long) processor);
-            opal_setenv(param, param2, true, &environ_copy);
+            opal_setenv(param, param2, false, &environ_copy);
             free(param);
             free(param2);
         } else {
