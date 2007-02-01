@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -678,6 +679,8 @@ OMPI_DECLSPEC extern MPI_Fint *MPI_F_STATUSES_IGNORE;
 #define MPI_LONG_LONG (&ompi_mpi_long_long_int)
 #define MPI_UNSIGNED_LONG_LONG (&ompi_mpi_unsigned_long_long)
 #endif  /* HAVE_LONG_LONG */
+#define MPI_2COMPLEX (&ompi_mpi_2cplex)
+#define MPI_2DOUBLE_COMPLEX (&ompi_mpi_2dblcplex)
 
 /* Fortran datatype bindings */
 #define MPI_CHARACTER (&ompi_mpi_character)

@@ -558,6 +558,8 @@ int32_t ompi_ddt_init( void )
     MOOG(2real);
     MOOG(2dblprec);
     MOOG(2integer);
+    MOOG(2cplex);
+    MOOG(2dblcplex);
 
     /* Now the C types */
 
