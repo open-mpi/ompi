@@ -603,12 +603,12 @@ void ompi_ddt_dump_stack( const dt_stack_t* pStack, int stack_pos,
     opal_output( 0, "\nStack %p stack_pos %d name %s\n", (void*)pStack, stack_pos, name );
     for( ; stack_pos >= 0; stack_pos-- ) {
         opal_output( 0, "%d: pos %d count %d disp %ld ", stack_pos, pStack[stack_pos].index,
-                     pStack[stack_pos].count, pStack[stack_pos].disp );
+                     (int)pStack[stack_pos].count, (long)pStack[stack_pos].disp );
         if( pStack->index != -1 )
-            opal_output( 0, "\t[desc count %d disp %ld extent %d]\n",
+            opal_output( 0, "\t[desc count %d disp %ld extent %ld]\n",
                          pDesc[pStack[stack_pos].index].elem.count,
-                         pDesc[pStack[stack_pos].index].elem.disp,
-                         pDesc[pStack[stack_pos].index].elem.extent );
+                         (long)pDesc[pStack[stack_pos].index].elem.disp,
+                         (long)pDesc[pStack[stack_pos].index].elem.extent );
         else
             opal_output( 0, "\n" );
     }
