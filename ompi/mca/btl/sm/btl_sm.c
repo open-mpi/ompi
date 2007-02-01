@@ -163,6 +163,7 @@ int mca_btl_sm_add_procs_same_base_addr(
     ptrdiff_t diff;
     volatile char **tmp_ptr;
     volatile int *tmp_int_ptr;
+    bool have_connected_peer = false;
 
     /* initializion */
     for( i = 0 ; i < nprocs ; i++ ) {
@@ -201,20 +202,24 @@ int mca_btl_sm_add_procs_same_base_addr(
 #endif
         struct mca_btl_base_endpoint_t *peer;
 
-        /* check to see if this is me */
-        if( my_proc == procs[proc] ) {
-            mca_btl_sm_component.my_smp_rank = n_local_procs;
-        }
-
         /* check to see if this proc can be reached via shmem (i.e.,
            if they're on my local host and in my job) */
-        else if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
+        if (procs[proc]->proc_name.jobid != my_proc->proc_name.jobid ||
                  0 == (procs[proc]->proc_flags & OMPI_PROC_FLAG_LOCAL)) {
             continue;
         }
 
         /* If we got here, the proc is reachable via sm.  So
            initialize the peers information */
+
+        /* check to see if this is me */
+        if( my_proc == procs[proc] ) {
+            mca_btl_sm_component.my_smp_rank = n_local_procs;
+        } else {
+            /* we have someone to talk to */
+            have_connected_peer = true;
+        }
+
         peer = peers[proc] = (struct mca_btl_base_endpoint_t*)malloc(sizeof(struct mca_btl_base_endpoint_t));
         if( NULL == peer ){
             return_code=OMPI_ERR_OUT_OF_RESOURCE;
@@ -236,8 +241,8 @@ int mca_btl_sm_add_procs_same_base_addr(
         mca_btl_sm_component.sm_proc_connect[proc]=SM_CONNECTED;
     }
 
-    /* There is always at least a local proc (myself). */
-    if( n_local_procs == 1) {
+    /* jump out if there's not someone we can talk to */
+    if (!have_connected_peer) {
         return_code = OMPI_SUCCESS;
         goto CLEANUP;
     }
