@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Allreduce 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Allreduce 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
 \fBMPI_Allreduce\fP \- Combines values from all processes and distributes the result back to all processes.
 
@@ -107,7 +107,7 @@ CALL MPI_REDUCE(sum, c, n, MPI_REAL, MPI_SUM, 0, comm, ierr)
 RETURN
 .fi
 .SH USE OF IN-PLACE OPTION
-When the communicator is an intracommunicator, you can perform an all-reduce operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of both \fIsendbuf\fR and \fIrecvbuf\fR. 
+When the communicator is an intracommunicator, you can perform an all-reduce operation in-place (the output buffer is used as the input buffer).  Use the variable MPI_IN_PLACE as the value of \fIsendbuf\fR at all processes. 
 .sp
 Note that MPI_IN_PLACE is a special kind of value; it has the same restrictions on its use as MPI_BOTTOM.
 .sp
