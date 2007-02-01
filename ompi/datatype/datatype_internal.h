@@ -264,8 +264,8 @@ OMPI_DECLSPEC int ompi_ddt_safeguard_pointer_debug_breakpoint( const void* actua
             ((PDATA)->ub - (PDATA)->lb) * ((COUNT) - 1);                \
         if( ((ACTPTR) < __lower_bound) || ((ACTPTR) >= __upper_bound) ) { \
             ompi_ddt_safeguard_pointer_debug_breakpoint( (ACTPTR), (LENGTH), (INITPTR), (PDATA), (COUNT) ); \
-            opal_output( 0, "%s:%d\n\tPointer %p size %d is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
-                         __FILE__, __LINE__, (ACTPTR), (LENGTH), __lower_bound, __upper_bound, \
+            opal_output( 0, "%s:%d\n\tPointer %p size %lu is outside [%p,%p] for\n\tbase ptr %p count %d and data \n", \
+                         __FILE__, __LINE__, (ACTPTR), (unsigned long)(LENGTH), __lower_bound, __upper_bound, \
                          (INITPTR), (COUNT) );                          \
             ompi_ddt_dump( (PDATA) );                                   \
         }                                                               \
