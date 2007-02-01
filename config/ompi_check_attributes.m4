@@ -47,6 +47,7 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
     ac_cv___attribute__deprecated=0
     ac_cv___attribute__format=0
     ac_cv___attribute__malloc=0
+    ac_cv___attribute__may_alias=0
     ac_cv___attribute__nonnull=0
     ac_cv___attribute__noreturn=0
     ac_cv___attribute__pure=0
