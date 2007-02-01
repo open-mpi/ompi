@@ -434,6 +434,7 @@
       integer MPI_COMPLEX, MPI_COMPLEX8, MPI_COMPLEX16, MPI_COMPLEX32
       integer MPI_DOUBLE_COMPLEX
       integer MPI_2REAL, MPI_2DOUBLE_PRECISION, MPI_2INTEGER
+      integer MPI_2COMPLEX, MPI_2DOUBLE_COMPLEX
       
       parameter (MPI_BYTE=1)
       parameter (MPI_PACKED=2)
@@ -460,6 +461,8 @@
       parameter (MPI_2REAL=23)
       parameter (MPI_2DOUBLE_PRECISION=24)
       parameter (MPI_2INTEGER=25)
+      parameter (MPI_2COMPLEX=26)
+      parameter (MPI_2DOUBLE_COMPLEX=27)
       
       integer MPI_MAX, MPI_MIN, MPI_SUM, MPI_PROD, MPI_LAND
       integer MPI_BAND, MPI_LOR, MPI_BOR, MPI_LXOR, MPI_BXOR
