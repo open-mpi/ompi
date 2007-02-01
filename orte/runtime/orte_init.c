@@ -9,6 +9,7 @@
  *                         University of Stuttgart.  All rights reserved.
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
+ * Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
  * $COPYRIGHT$
  * 
  * Additional copyrights may follow
@@ -22,6 +23,7 @@
 
 #include "orte/orte_constants.h"
 #include "orte/mca/errmgr/errmgr.h"
+#include "orte/runtime/params.h"
 
 #include "opal/runtime/opal.h"
 #include "orte/runtime/runtime.h"
@@ -33,12 +35,13 @@
  * @retval ORTE_ERROR Upon failure.
  */
 
-/* globals used by RTE */
-int orte_debug_flag=(int)false;
-
 int orte_init(bool infrastructure)
 {
     int rc;
+
+    if (orte_initialized) {
+        return ORTE_SUCCESS;
+    }
 
     if (ORTE_SUCCESS != (rc = opal_init())) {
         ORTE_ERROR_LOG(rc);
@@ -49,9 +52,6 @@ int orte_init(bool infrastructure)
         ORTE_ERROR_LOG(rc);
         return rc;
     }
-
-    /* Since we are now finished with init, change the state to running */
-    orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
 
     return ORTE_SUCCESS;
 }

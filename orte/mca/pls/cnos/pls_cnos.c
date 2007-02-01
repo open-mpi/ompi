@@ -26,6 +26,10 @@
 #ifdef HAVE_SIGNAL_H
 #include <signal.h>
 #endif
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
+
 #ifdef HAVE_CNOS_PM_BARRIER
 #include <catamount/cnos_mpi_os.h>
 #endif
@@ -38,12 +42,13 @@
 
 
 static int orte_pls_cnos_launch_job(orte_jobid_t jobid);
-static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs);
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs);
+static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
+static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs);
 static int orte_pls_cnos_terminate_proc(const orte_process_name_t* proc_name);
 static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_list_t *attrs);
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal);
 static int orte_pls_cnos_finalize(void);
+static int orte_pls_cnos_cancel_operation(void);
 
 
 orte_pls_base_module_t orte_pls_cnos_module = {
@@ -53,6 +58,7 @@ orte_pls_base_module_t orte_pls_cnos_module = {
     orte_pls_cnos_terminate_proc,
     orte_pls_cnos_signal_job,
     orte_pls_cnos_signal_proc,
+    orte_pls_cnos_cancel_operation,
     orte_pls_cnos_finalize
 };
 
@@ -68,7 +74,7 @@ static int orte_pls_cnos_launch_job(orte_jobid_t jobid)
 extern int killrank(rank_t RANK, int SIG);
 #endif
 
-static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
+static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
 
@@ -85,7 +91,7 @@ static int orte_pls_cnos_terminate_job(orte_jobid_t jobid, opal_list_t *attrs)
 }
 
 
-static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, opal_list_t *attrs)
+static int orte_pls_cnos_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t *attrs)
 {
     orte_jobid_t my_jobid = ORTE_PROC_MY_NAME->jobid;
     
@@ -127,6 +133,11 @@ static int orte_pls_cnos_signal_job(orte_jobid_t jobid, int32_t signal, opal_lis
 }
 
 static int orte_pls_cnos_signal_proc(const orte_process_name_t* proc_name, int32_t signal)
+{
+    return ORTE_ERR_NOT_SUPPORTED;
+}
+
+int orte_pls_rsh_cancel_operation(void)
 {
     return ORTE_ERR_NOT_SUPPORTED;
 }

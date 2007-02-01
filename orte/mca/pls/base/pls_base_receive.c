@@ -99,6 +99,8 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
     int32_t signal;
     opal_list_t attrs;
     opal_list_item_t *item;
+    struct timeval timeout;
+    int32_t secs, microsecs;
     int rc;
 
     count = 1;
@@ -127,12 +129,14 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             break;
             
         case ORTE_PLS_TERMINATE_JOB_CMD:
+            /* get the jobid to be terminated */
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
             
+            /* get any attributes */
             OBJ_CONSTRUCT(&attrs, opal_list_t);
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
@@ -140,22 +144,39 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
+            /* get the timeout - packed as two separate int32's */
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &secs, &count, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &microsecs, &count, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            timeout.tv_sec = secs;
+            timeout.tv_usec = microsecs;
                 
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &attrs))) {
+            /* issue the command */
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_job(job, &timeout, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
             
+            /* cleanup attribute list */
             while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
             OBJ_DESTRUCT(&attrs);
             break;
             
         case ORTE_PLS_TERMINATE_ORTEDS_CMD:
+            /* get the jobid whose daemons are to be terminated */
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &job, &count, ORTE_JOBID))) {
                 ORTE_ERROR_LOG(rc);
                 goto SEND_ANSWER;
             }
                 
+            /* get any attributes */
             OBJ_CONSTRUCT(&attrs, opal_list_t);
             count = 1;
             if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &attrs, &count, ORTE_ATTR_LIST))) {
@@ -163,10 +184,26 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
                 goto SEND_ANSWER;
             }
                 
-            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job, &attrs))) {
+            /* get the timeout - packed as two separate int32's */
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &secs, &count, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            count = 1;
+            if (ORTE_SUCCESS != (rc = orte_dss.unpack(buffer, &microsecs, &count, ORTE_INT32))) {
+                ORTE_ERROR_LOG(rc);
+                goto SEND_ANSWER;
+            }
+            timeout.tv_sec = secs;
+            timeout.tv_usec = microsecs;
+            
+            /* issue the command */
+            if (ORTE_SUCCESS != (rc = orte_pls.terminate_orteds(job, &timeout, &attrs))) {
                 ORTE_ERROR_LOG(rc);
             }
                 
+            /* cleanup attribute list */
             while (NULL != (item = opal_list_remove_first(&attrs))) OBJ_RELEASE(item);
             OBJ_DESTRUCT(&attrs);
             break;
@@ -225,6 +262,13 @@ void orte_pls_base_recv(int status, orte_process_name_t* sender,
             }
                 
             if (ORTE_SUCCESS != (rc = orte_pls.signal_proc(name, signal))) {
+                ORTE_ERROR_LOG(rc);
+            }
+            break;
+            
+        case ORTE_PLS_CANCEL_OPERATION_CMD:
+            /* issue the command */
+            if (ORTE_SUCCESS != (rc = orte_pls.cancel_operation())) {
                 ORTE_ERROR_LOG(rc);
             }
             break;

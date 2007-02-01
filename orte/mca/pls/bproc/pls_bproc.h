@@ -42,6 +42,9 @@
 #include "orte/orte_constants.h"
 
 #include <sys/bproc.h>
+#ifdef HAVE_SYS_TIME_H
+#include <sys/time.h>
+#endif
 
 #include "opal/threads/condition.h"
 
@@ -72,11 +75,12 @@ int orte_pls_bproc_finalize(void);
  * Interface
  */
 int orte_pls_bproc_launch(orte_jobid_t);
-int orte_pls_bproc_terminate_job(orte_jobid_t, opal_list_t*);
+int orte_pls_bproc_terminate_job(orte_jobid_t, struct timeval *timeout, opal_list_t*);
 int orte_pls_bproc_terminate_proc(const orte_process_name_t* proc_name);
-int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, opal_list_t*);
+int orte_pls_bproc_terminate_orteds(orte_jobid_t jobid, struct timeval *timeout, opal_list_t*);
 int orte_pls_bproc_signal_job(orte_jobid_t, int32_t, opal_list_t*);
 int orte_pls_bproc_signal_proc(const orte_process_name_t* proc_name, int32_t);
+int orte_pls_bproc_cancel_operation(void);
 
 /* Utility routine to get/set process pid */
 ORTE_DECLSPEC int orte_pls_bproc_set_proc_pid(const orte_process_name_t*, pid_t, int);

@@ -25,7 +25,7 @@
 #include "opal/util/show_help.h"
 
 #include "orte/mca/errmgr/errmgr.h"
-
+#include "orte/runtime/params.h"
 #include "orte/mca/rml/rml.h"
 #include "orte/mca/ns/ns.h"
 #include "orte/mca/gpr/gpr.h"
@@ -37,6 +37,10 @@ int orte_init_stage2(void)
 {
     int ret;
     char *error_str = NULL;
+
+    if (orte_initialized) {
+        return ORTE_SUCCESS;
+    }
 
     /* 
      * Initialize the selected modules now that all components/name are available.
@@ -67,7 +71,11 @@ int orte_init_stage2(void)
         error_str = "orte_iof_base_select";
         goto return_error;
     }
+    /* Since we are now finished with init, change the state to running */
+    orte_universe_info.state = ORTE_UNIVERSE_STATE_RUNNING;
+
      /* All done */
+    orte_initialized = true;
     return ORTE_SUCCESS; 
 
 return_error:
