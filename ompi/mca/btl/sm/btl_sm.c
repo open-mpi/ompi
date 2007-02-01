@@ -338,8 +338,8 @@ int mca_btl_sm_add_procs_same_base_addr(
                         mca_btl_sm_component.sm_resouce_ctl_file,
                         sizeof(mca_btl_sm_module_resource_t), 0))) 
         {
-            opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %ld \n",
-                    size);
+            opal_output(0, "mca_btl_sm_add_procs: unable to create shared memory BTL coordinating strucure :: size %lu \n",
+                    (unsigned long)size);
             return_code=OMPI_ERROR;
             goto CLEANUP;
         }

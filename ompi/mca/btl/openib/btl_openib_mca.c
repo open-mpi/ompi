@@ -375,6 +375,9 @@ int btl_openib_register_mca_params(void)
                   "of network (must be >= 1)", 
                   800, &ival, REGINT_GE_ONE));
     mca_btl_openib_module.super.btl_bandwidth = (uint32_t) ival;
+    CHECK(reg_int("latency", "Approximate latency of the device (must be >= 1)", 
+                  10, &ival, REGINT_GE_ONE));
+    mca_btl_openib_module.super.btl_latency = (uint32_t) ival;
     
     return ret;
 }
