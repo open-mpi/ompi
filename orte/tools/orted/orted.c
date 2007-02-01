@@ -183,10 +183,6 @@ opal_cmd_line_init_t orte_cmd_line_opts[] = {
       &orted_globals.uri_pipe, OPAL_CMD_LINE_TYPE_INT,
       "Report this process' uri on indicated pipe"},
 
-    { NULL, NULL, NULL, '\0', NULL, "mpi-call-yield", 1,
-      &orted_globals.mpi_call_yield, OPAL_CMD_LINE_TYPE_INT,
-      "Have MPI (or similar) applications call yield when idle" },
-
     /* End of list */
     { NULL, NULL, NULL, '\0', NULL, NULL, 0,
       NULL, OPAL_CMD_LINE_TYPE_NULL, NULL }
@@ -407,11 +403,8 @@ int main(int argc, char *argv[])
 
     /* check to see if I'm a bootproxy */
     if (orted_globals.bootproxy) { /* perform bootproxy-specific things */
-        if (orted_globals.mpi_call_yield > 0) {
-            char *var;
-            var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
-            opal_setenv(var, "1", true, &environ);
-        }
+        /* a daemon should *always* yield the processor when idle */
+        opal_progress_set_yield_when_idle(true);
 
         /* attach a subscription to the orted standard trigger so I can get
          * information on the processes I am to locally launch as soon as all

@@ -48,7 +48,6 @@ typedef struct {
     opal_condition_t condition;
     bool exit_condition;
     bool spin;
-    int mpi_call_yield;
     int reap;
 } orted_globals_t;
 

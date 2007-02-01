@@ -85,7 +85,7 @@ int ompi_mpi_register_params(void)
        exactly/under-subscribed, or 1 when oversubscribed */
     mca_base_param_reg_int_name("mpi", "yield_when_idle", 
                                 "Yield the processor when waiting for MPI communication (for MPI processes, will default to 1 when oversubscribing nodes)",
-                                false, false, 0, NULL);
+                                false, false, -1, NULL);
     mca_base_param_reg_int_name("mpi", "event_tick_rate", 
                                 "How often to progress TCP communications (0 = never, otherwise specified in microseconds)",
                                 false, false, -1, NULL);
