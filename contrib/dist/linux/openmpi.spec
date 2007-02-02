@@ -9,7 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
-# Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 # 
 # Additional copyrights may follow
@@ -155,7 +155,7 @@
 Summary: A powerful implementaion of MPI
 Name: %{?_name:%{_name}}%{!?_name:openmpi}
 Version: $VERSION
-Release: 2
+Release: 1
 License: BSD
 Group: Development/Libraries
 Source: openmpi-%{version}.tar.$EXTENSION
@@ -276,9 +276,13 @@ rm -rf $RPM_BUILD_ROOT
 # compiler, so search for it in a few places.
 
 fortify_source=1
-if test "$CC" != "" -a "`basename $CC`" != "gcc"; then
-    fortify_source=0
-else
+if test "$CC" != ""; then
+    if test "`basename $CC`" != "gcc"; then
+        fortify_source=0
+    fi
+fi
+
+if test "$fortify_source" = "1"; then
     compiler="`echo %{configure_options} | sed -e 's@.* CC=\([^ ]*\).*@\1@'`"
     # If that didn't find it, try for CC at the beginning of the line
     if test "$compiler" = "%{configure_options}"; then
@@ -287,8 +291,10 @@ else
 
     # Now that we *might* have the compiler name, do a best-faith
     # effort to see if it's gcc.  Blah!
-    if test "$compiler" != "" -a "`basename $compiler`" != "gcc"; then
-        fortify_source=0
+    if test "$compiler" != ""; then
+        if test "`basename $compiler`" != "gcc"; then
+            fortify_source=0
+        fi
     fi
 fi
 
