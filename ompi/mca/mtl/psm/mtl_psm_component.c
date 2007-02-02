@@ -104,12 +104,23 @@ ompi_mtl_psm_component_init(bool enable_progress_threads,
 	return NULL;
     }
 
+    /* Only allow for shm and ipath devices in 2.0 and earlier releases 
+     * (unless the user overrides the setting).
+     */
+    setenv("PSM_DEVICES", "shm,ipath", 0);
+
     err = psm_init(&verno_major, &verno_minor);
     if (err) {
         opal_output(0, "Error in psm_init (error %s)\n", 
 		    psm_error_get_string(err));
         return NULL;
     }
+
+    /*
+     * Enable 'self' device only in a post-2.0 release(s)
+     */
+    if (verno_major == 0x1 && verno_minor >= 0x04)
+	setenv("PSM_DEVICES", "self,shm,ipath", 0);
         
     ompi_mtl_psm_module_init();
     
