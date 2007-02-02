@@ -104,6 +104,7 @@ orte_pls_base_module_t orte_pls_bproc_module = {
     orte_pls_bproc_terminate_proc,
     orte_pls_bproc_signal_job,
     orte_pls_bproc_signal_proc,
+    orte_pls_bproc_cancel_operation,
     orte_pls_bproc_finalize
 };
 
