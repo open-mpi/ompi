@@ -390,11 +390,10 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
       segcount--;
       lastsegcount = count - (size - 1) * segcount;
    }
-   realsegsize = true_extent + (segcount - 1) * extent;
-   maxsegcount = (segcount > lastsegcount)? segcount:lastsegcount;
+   realsegsize = segcount * extent;
+   maxsegcount = (segcount > lastsegcount)? segcount : lastsegcount;
    maxrealsegsize = true_extent + (maxsegcount - 1) * extent;
 
-  
    inbuf[0] = (char*)malloc(maxrealsegsize);
    if (NULL == inbuf[0]) { ret = -1; line = __LINE__; goto error_hndl; }
    if (size > 2) {
@@ -430,11 +429,11 @@ ompi_coll_tuned_allreduce_intra_ring(void *sbuf, void *rbuf, int count,
 
    inbi = 0;
    tmpsend = ((char*)rbuf) + rank * realsegsize;
-   /* Initialize first receive from left neighbor */
+   /* Initialize first receive from the neighbor on the left */
    ret = MCA_PML_CALL(irecv(inbuf[inbi], maxsegcount, dtype, recvfrom,
                             MCA_COLL_BASE_TAG_ALLREDUCE, comm, &reqs[inbi]));
    if (MPI_SUCCESS != ret) { line = __LINE__; goto error_hndl; }
-   /* Send first block to right neighbor */
+   /* Send first block to the neighbor on the right */
    blockcount = segcount;
    if ((size - 1) == rank) { blockcount = lastsegcount; }
    ret = MCA_PML_CALL(send(tmpsend, blockcount, dtype, sendto,
