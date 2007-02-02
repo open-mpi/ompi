@@ -187,10 +187,10 @@ int mca_pml_ob1_component_fini(void)
 int mca_pml_ob1_dump(struct ompi_communicator_t* comm, int verbose)
 {
     struct mca_pml_comm_t* pml_comm = comm->c_pml_comm;
-    size_t i;
+    int i;
 
     /* iterate through all procs on communicator */
-    for(i=0; i<pml_comm->num_procs; i++) {
+    for( i = 0; i < (int)pml_comm->num_procs; i++ ) {
         mca_pml_ob1_comm_proc_t* proc = &pml_comm->procs[i];
         mca_bml_base_endpoint_t* ep = (mca_bml_base_endpoint_t*)proc->ompi_proc->proc_bml;
         size_t n;
