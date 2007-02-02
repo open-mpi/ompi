@@ -291,9 +291,9 @@ ompi_unpack_partial_datatype( ompi_convertor_t* pConvertor, dt_elem_desc_t* pEle
     uint32_t i, length, count_desc = 1;
     size_t data_length = ompi_ddt_basicDatatypes[pElem->elem.common.type]->size;
 
-    DO_DEBUG( opal_output( 0, "unpack partial data start %d end %d data_length %lu user %p\n"
+    DO_DEBUG( opal_output( 0, "unpack partial data start %lu end %lu data_length %lu user %p\n"
                            "\tbConverted %lu total_length %lu count %d\n",
-                           start_position, end_position, (unsigned long)data_length, *user_buffer,
+                           (unsigned long)start_position, (unsigned long)end_position, (unsigned long)data_length, *user_buffer,
                            (unsigned long)pConvertor->bConverted, (unsigned long)pConvertor->local_size, pConvertor->count ); );
 
     /* Find a byte that is not used in the partial buffer */

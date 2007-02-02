@@ -135,7 +135,7 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
                             mca_btl_mx_endpoint_t* module_endpoint )
 {
     mca_btl_mx_addr_t  *mx_peers;
-    int rc, i;
+    int rc;
     size_t size;
 
     /* query for the peer address info */
@@ -160,8 +160,11 @@ int mca_btl_mx_proc_insert( mca_btl_mx_proc_t* module_proc,
     }
 
 #if OMPI_ENABLE_HETEROGENEOUS_SUPPORT
-    for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
-        BTL_MX_ADDR_NTOH(mx_peers[i]);
+    {
+        int i;
+        for (i = 0 ; i < module_proc->mx_peers_count ; ++i) {
+            BTL_MX_ADDR_NTOH(mx_peers[i]);
+        }
     }
 #endif
 
