@@ -58,7 +58,7 @@ typedef struct mca_mtl_psm_module_t mca_mtl_psm_module_t;
 
 extern mca_mtl_psm_module_t ompi_mtl_psm;
 
-struct mca_mtl_psm_component_t{ 
+struct mca_mtl_psm_component_t { 
     mca_mtl_base_component_1_0_0_t          super;  /**< base MTL component */ 
 };
 typedef struct mca_mtl_psm_component_t mca_mtl_psm_component_t;
@@ -74,26 +74,14 @@ extern mca_mtl_psm_component_t mca_mtl_psm_component;
 
 #define PSM_MAKE_TAGSEL(user_rank, user_tag, user_ctxt, tag, tagsel)		\
 	do {									\
-	    if ((user_tag) == MPI_ANY_TAG) {					\
-		if ((user_rank) == MPI_ANY_SOURCE) {				\
-		    (tagsel) = PSM_MAKE_MQTAG(0xffff,0,0);			\
-		    (tag) = PSM_MAKE_MQTAG((user_ctxt),0,0);			\
-		}								\
-		else {								\
-		    (tagsel) = PSM_MAKE_MQTAG(0xffff,0xffff,0);			\
-		    (tag) = PSM_MAKE_MQTAG((user_ctxt),(user_rank),0);		\
-		}								\
+	    (tagsel) = 0xffffffffffffffffULL;					\
+	    (tag)    = PSM_MAKE_MQTAG((user_ctxt),(user_rank),(user_tag));	\
+	    if ((user_tag) == MPI_ANY_TAG) {  					\
+		(tagsel) &= ~0x7fffffffULL;					\
+		(tag) &= ~0xffffffffULL;					\
 	    }									\
-	    else {								\
-		if ((user_rank) == MPI_ANY_SOURCE) {				\
-		    (tagsel) = PSM_MAKE_MQTAG(0xffff,0,0xffffffff);		\
-		    (tag) = PSM_MAKE_MQTAG((user_ctxt),0,(user_tag));		\
-		}								\
-		else {								\
-		    (tagsel) = PSM_MAKE_MQTAG(0xffff,0xffff,0xffffffff);	\
-		    (tag) = PSM_MAKE_MQTAG((user_ctxt),(user_rank),(user_tag));	\
-		}								\
-	    }									\
+	    if ((user_rank) == MPI_ANY_SOURCE)					\
+		(tagsel) &= ~0xffff00000000ULL;					\
 	} while (0)
 
 #if defined(c_plusplus) || defined(__cplusplus)

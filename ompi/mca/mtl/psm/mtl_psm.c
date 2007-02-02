@@ -24,6 +24,7 @@
 #include "opal/class/opal_list.h"
 #include "ompi/mca/pml/base/pml_base_module_exchange.h"
 #include "ompi/mca/mtl/base/mtl_base_datatype.h"
+#include "ompi/proc/proc.h"
 
 #include "mtl_psm.h"
 #include "mtl_psm_types.h"
@@ -88,6 +89,7 @@ int ompi_mtl_psm_module_init() {
     char *generated_key;
     
     generated_key = getenv("OMPI_MCA_orte_precondition_transports");
+    memset(uu, 0, sizeof(psm_uuid_t));
     
     if (!generated_key || (strlen(generated_key) != 33) ||
         sscanf(generated_key, "%016x-%016x", &uu[0], &uu[1]) != 2)
@@ -99,7 +101,6 @@ int ompi_mtl_psm_module_init() {
         return OMPI_ERROR;
     
     }
-
 
     /* Handle our own errors for opening endpoints */
     psm_error_register_handler(ompi_mtl_psm.ep, ompi_mtl_psm_errhandler);
@@ -237,12 +238,6 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	if (rc != OMPI_SUCCESS || size != sizeof(psm_epid_t))
 	    return OMPI_ERROR;
 	epids_in[i] = *epid;
-#if 0
-	printf("... connecting to epid=%llu, lid=%d,port=%d\n",
-		(unsigned long long) epids_in[i],
-		(int) psm_epid_nid(epids_in[i]),
-		(int) psm_epid_port(epids_in[i]));
-#endif
     }
 
     timeout_in_secs = min(180, 0.5 * nprocs);
@@ -264,7 +259,6 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 	if (errstr == NULL) {
 	    opal_output(0, "PSM returned unhandled/unknown connect error: %s\n",
 			psm_error_get_string(err));
-	    return OMPI_ERROR;
 	}
 	for (i = 0; i < (int) nprocs; i++) {
 	    psm_error_t thiserr = errs_out[i];
@@ -280,19 +274,24 @@ ompi_mtl_psm_add_procs(struct mca_mtl_base_module_t *mtl,
 		opal_output(0, "\n");
 	    }
 	}
-    }
 
-    /* Default error handling is enabled, errors will not be returned to user.
-     * PSM prints the error and the offending endpoint's hostname and exits
-     * with -1 */
-    psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_DEFAULT);
+	rc = OMPI_ERROR;
+    }
+    else {
+	/* Default error handling is enabled, errors will not be returned to
+	 * user.  PSM prints the error and the offending endpoint's hostname
+	 * and exits with -1 */
+	psm_error_register_handler(ompi_mtl_psm.ep, PSM_ERRHANDLER_DEFAULT);
 		
-    /* Fill in endpoint data */
-    for (i = 0; i < (int) nprocs; i++) { 
-	mtl_peer_data[i] =
-	    (mca_mtl_psm_endpoint_t *) OBJ_NEW(mca_mtl_psm_endpoint_t);
-	mtl_peer_data[i]->peer_epid = epids_in[i];
-	mtl_peer_data[i]->peer_addr = epaddrs_out[i];
+	/* Fill in endpoint data */
+	for (i = 0; i < (int) nprocs; i++) { 
+	    mtl_peer_data[i] =
+		(mca_mtl_psm_endpoint_t *) OBJ_NEW(mca_mtl_psm_endpoint_t);
+	    mtl_peer_data[i]->peer_epid = epids_in[i];
+	    mtl_peer_data[i]->peer_addr = epaddrs_out[i];
+	}
+
+	rc = OMPI_SUCCESS;
     }
     
 bail:
