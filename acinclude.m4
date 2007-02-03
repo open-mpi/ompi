@@ -13,6 +13,7 @@ dnl                         All rights reserved.
 dnl Copyright (c) 2006      Cisco Systems, Inc.
 dnl Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 dnl                         reserved. 
+dnl Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
 dnl $COPYRIGHT$
 dnl 
 dnl Additional copyrights may follow
@@ -114,3 +115,8 @@ m4_include(config/mca_no_configure_components.m4)
 # the list of all component configure.m4 macros.
 #
 m4_include(config/mca_m4_config_include.m4)
+
+#
+# Check for ps commands and arguments
+#
+m4_include(config/ompi_check_ps.m4)

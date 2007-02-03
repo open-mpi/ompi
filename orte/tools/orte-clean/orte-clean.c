@@ -43,6 +43,10 @@
 #include <string.h>
 #endif  /* HAVE_STRING_H */
 #include <sys/types.h>
+#ifdef HAVE_DIRENT_H
+#include <dirent.h>
+#endif  /* HAVE_DIRENT_H */
+#include <signal.h>
 
 #include "orte/orte_constants.h"
 
@@ -72,8 +76,9 @@
  ******************/
 static int orte_clean_init(void);
 static int parse_args(int argc, char *argv[]);
-static int orte_clean_check_universe(orte_universe_t *universe);
-static int orte_clean_universe(orte_universe_t *universe);
+#if !defined(__WINDOWS__)
+static void kill_procs(void);
+#endif  /* !defined(__WINDOWS__) */
 
 /*****************************************
  * Global Vars for Command line Arguments
@@ -96,7 +101,7 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       'v', NULL, "verbose", 
       0,
       &orte_clean_globals.verbose, OPAL_CMD_LINE_TYPE_BOOL,
-      "Be Verbose" },
+      "Generate verbose output" },
 
     /* End of list */
     { NULL, NULL, NULL, 
@@ -106,12 +111,16 @@ opal_cmd_line_init_t cmd_line_opts[] = {
       NULL }
 };
 
+/*
+ * This utility will do a brute force clean of a node.  It will
+ * attempt to clean up any files in the user's session directory.
+ * It will also look for any orted and orterun processes that are
+ * not part of this job, and kill them off.
+*/
 int
 main(int argc, char *argv[])
 {
     int ret, exit_status = ORTE_SUCCESS;
-    opal_list_item_t* item = NULL;
-    opal_list_t universe_search_result;
 
     /***************
      * Initialize
@@ -119,81 +128,27 @@ main(int argc, char *argv[])
     if (ORTE_SUCCESS != (ret = parse_args(argc, argv))) {
         return ret;
     }
-
-    OBJ_CONSTRUCT(&universe_search_result, opal_list_t);
-
     if (ORTE_SUCCESS != (ret = orte_clean_init())) {
         exit_status = ret;
         goto cleanup;
     }
-
     /*
-     * Get the list of universes on this machine
+     * Clean out all /tmp directories except for our own.
      */
-    if( orte_clean_globals.verbose ) {
-        printf("orte_clean: Acquiring universe list...\n");
-    }
-    if (ORTE_SUCCESS != (ret = orte_universe_search(&universe_search_result, true, false) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    /*
-     * For each universe in the listing
-     */
-    for(item  = opal_list_get_first(&universe_search_result);
-        item != opal_list_get_end(&universe_search_result);
-        item  = opal_list_get_next(item) ) {
-        orte_universe_t *search_result;
-        search_result = (orte_universe_t *) item;
-
-        /*
-         * Avoid cleaning our own universe.
-         */
-        if( (0 == strcmp(search_result->name, orte_universe_info.name)) &&
-            (strlen(search_result->name) == strlen(orte_universe_info.name)) ) {
-            continue;
-        }
-        /*
-         * Try to connect to the universe
-         */
-        if( orte_clean_globals.verbose ) {
-            printf("orte_clean: Connecting to universe: %s\n", search_result->name);
-        }
-        if( ORTE_SUCCESS == (ret = orte_clean_check_universe(search_result)) ) {
-            /*
-             * The universe was able to be contacted, so let it be
-             */
-            continue;
-        }
-        
-        /*
-         * If unable to connect to the universe,
-         * clean it up!
-         */
-        if( orte_clean_globals.verbose ) {
-            printf("orte_clean: Cleaning the session directory for universe: %s\n", search_result->name);
-        }
-        if( ORTE_SUCCESS != (ret = orte_clean_universe(search_result)) ){
-            exit_status = ret;
-            goto cleanup;
-        }
-    }
-
-    /***************
-     * Cleanup
-     ***************/
- cleanup:
-    while (NULL != (item = opal_list_remove_first(&universe_search_result))) {
-        OBJ_RELEASE(item);
-    }
+    orte_universe_clean_directories(orte_universe_info.name, orte_clean_globals.verbose);
+#if !defined(__WINDOWS__)
+    kill_procs();
+#endif  /* !defined(__WINDOWS__) */
 
     orte_finalize();
     opal_finalize();
-
+ cleanup:
     return exit_status;
 }
-
+/*
+ * Parse the command line arguments using the functions command
+ * line utility functions.
+ */
 static int parse_args(int argc, char *argv[]) {
     int i, ret, len;
     opal_cmd_line_t cmd_line;
@@ -207,10 +162,12 @@ static int parse_args(int argc, char *argv[]) {
        by value.  So do a memcpy here instead. */
     memcpy(&orte_clean_globals, &tmp, sizeof(tmp));
     
+    /*
+     * Initialize list of available command line options.
+     */
     opal_cmd_line_create(&cmd_line, cmd_line_opts);
     
     mca_base_open();
-    mca_base_cmd_line_setup(&cmd_line);
     ret = opal_cmd_line_parse(&cmd_line, true, argc, argv);
     
     /** 
@@ -238,11 +195,13 @@ static int parse_args(int argc, char *argv[]) {
         orte_clean_globals.help) {
         char *args = NULL;
         args = opal_cmd_line_get_usage_msg(&cmd_line);
-        opal_show_help("help-orte-ps.txt", "usage", true,
+        opal_show_help("help-orte-clean.txt", "usage", true,
                        args);
         free(args);
         return ORTE_ERROR;
     }
+
+    OBJ_DESTRUCT(&cmd_line);
 
     return ORTE_SUCCESS;
 }
@@ -299,85 +258,143 @@ static int orte_clean_init(void) {
     return exit_status;
 }
 
-static int orte_clean_universe(orte_universe_t *universe) {
-    int ret, exit_status = ORTE_SUCCESS;
-    char *fulldirpath = NULL;
-    char *prefix = NULL;
-    char *frontend = NULL;
-    char *command = NULL;
-    char *session_dir = NULL;
-
-    if( ORTE_SUCCESS != (ret = orte_session_dir_get_name(&fulldirpath,
-                                                         &prefix,
-                                                         &frontend,
-                                                         universe->uid,
-                                                         universe->host,
-                                                         NULL, /* batch ID -- Not used */
-                                                         universe->name,
-                                                         NULL, /* jobid */
-                                                         NULL  /* vpid */
-                                                         ) ) ) {
-        exit_status = ret;
-        goto cleanup;
-    }
-
-    opal_os_dirpath_destroy( fulldirpath, true, NULL );
-
-    /********************
-     * If the session directory is empty, then remove that too
-     ********************/
-    session_dir = opal_os_path( false, prefix, frontend, NULL );
-    opal_os_dirpath_destroy(session_dir, false, NULL );
-
-    /********************
-     * Need to check
-     *  - openmpi-sessions-UID@gethostbyname()_0
-     *  - openmpi-sessions-UID@localhost_0
-     *  - remote nodes...
-     ********************/
-
- cleanup:
-    if( NULL != fulldirpath)
-        free(fulldirpath);
-    if( NULL != prefix)
-        free(prefix);
-    if( NULL != frontend)
-        free(frontend);
-    if( NULL != command)
-        free(command);
-
-    return exit_status;
-}
-
-static int orte_clean_check_universe(orte_universe_t *universe)
-{
-    int ret, exit_status = ORTE_SUCCESS;
-    struct timeval ping_wait = {2, 0};
+#if !defined(__WINDOWS__)
+/*
+ * This function makes a call to "ps" to find out the processes that 
+ * are running on this node.  It then attempts to kill off any orteds
+ * and orteruns that are not related to this job.
+ */
+static
+void kill_procs(void) {
+    int ortedpid, orunpid;
+    char procname[MAXPATHLEN]; /* only really need 8, but being safe */
+    char pidstr[MAXPATHLEN];   /* only really need 8, but being safe */
+    char user[MAXPATHLEN];
+    int procpid;
+    FILE *psfile;
+    bool kill_orteruns = false;
 
     /*
-     * Make sure session directory still exists
+     * This is the command that is used to get the information about
+     * all the processes that are running.  The output looks like the
+     * following:
+     * COMMAND    PID     USER
+     * tcsh     12556    rolfv
+     * ps       14424    rolfv
+     * etc.
+     * Currently, we do not make use of the USER field, but we may later
+     * on so we grab it also.
      */
-    if (ORTE_SUCCESS != (ret = orte_session_dir(false,
-                                                orte_process_info.tmpdir_base,
-                                                universe->uid,
-                                                universe->host,
-                                                NULL, /* Batch ID -- Not used */
-                                                universe->name,
-                                                NULL, /* Jobid */
-                                                NULL  /* VPID  */
-                                                )) ) {
-        exit_status = ORTE_ERR_NOT_FOUND;
-        goto cleanup;
-    }
-    
+
     /*
-     * Contact the HNP to see if it is still around
+     * The configure determines if there is a valid ps command for us to
+     * use.  If it is set to unknown, then we skip this section.
      */
-    if( ORTE_SUCCESS != (ret = orte_rml.ping(universe->seed_uri, &ping_wait)) ) {
-        exit_status = ORTE_ERR_CONNECTION_FAILED;
-        goto cleanup;
+    char command[] = ORTE_CLEAN_PS_CMD;
+    if (!(strcmp("unknown", command))) {
+	return;
     }
-    
- cleanup:
-    return exit_status;
+
+    /*
+     * Try to get the pid of our orterun process from our universe name.
+     * This works in the case where one is using the default universe name
+     * which appends the pid after the 'default-universe-' string.  In
+     * this way, we avoid killing our own mpirun process.  Note that if
+     * we cannot determine our orterun pid, then we skip killing the
+     * orterun processes to avoid odd behavior for the user.
+     */
+    if (!(strncmp(ORTE_DEFAULT_UNIVERSE, orte_universe_info.name, 
+                  sizeof(ORTE_DEFAULT_UNIVERSE)-1))) {
+        char *tptr;
+
+        /* 
+         * Set a pointer to the pid part of the name.  The pointer
+	 * is adjusted by the name along with one extra to remove the
+         * dash before the pid.  Then convert to a pid.  If the strtol()
+         * returns zero, then we got an error on the conversion and we
+         * will skip killing the orteruns.  
+         */
+        tptr = orte_universe_info.name + sizeof(ORTE_DEFAULT_UNIVERSE);
+	if (0 != (orunpid = (int)strtol(tptr, (char **)NULL, 10))) {
+	    kill_orteruns = true;
+	}
+    }
+
+    /*
+     * Get our parent pid which is the pid of the orted.
+     */
+    ortedpid = getppid();
+
+    /*
+     * There is a race condition here.  The problem is that we are looking
+     * for any processes named orted.  However, one may erroneously find more
+     * orteds then there really are because the orted is doing a series of
+     * fork/execs. If we run with more than one orte-clean on a node, then
+     * one of the orte-cleans may catch the other one while it has forked,
+     * but not exec'ed.  It will therefore kill an orte-clean.  Now one
+     * can argue it is silly to run more than one orte-clean on a node, and
+     * this is true.  We will have to figure out how to prevent this.  For
+     * now, we use a big hammer and just sleep a second to decrease the
+     * probability.
+     */
+    sleep(1);
+
+    psfile = popen(command, "r");
+    /*
+     * Read the first line of the output.  We just throw it away
+     * as it is the header consisting of the words COMMAND, PID and
+     * USER.
+     */
+    if ((fscanf(psfile, "%s%s%s", procname, pidstr, user)) == EOF) {
+        return;
+    } 
+        
+    while ((fscanf(psfile, "%s%s%s", procname, pidstr, user)) != EOF) {
+
+        procpid = atoi(pidstr);
+
+        /*
+         * Look for any orteds that are not our parent and attempt to
+         * kill them.  We currently do not worry whether we are the
+         * owner or not.  If we are not, we will just fail to send
+         * the signal and that is OK.  This also allows a root process
+         * to kill all orteds.
+         */
+        if (!strcmp("orted", procname)) {
+            if (procpid != ortedpid) {
+                if (orte_clean_globals.verbose) {
+                    opal_output(0, "orte-clean: found potential rogue orted process"
+                                " (pid=%d,user=%s), sending SIGKILL...\n", 
+                                procpid, user);
+                }
+                /*
+                 * We ignore the return code here as we do not really
+                 * care whether this worked or not.
+                 */
+                (void)kill(procpid, SIGKILL);
+            }
+        }
+
+        /*
+         * Now check for any orteruns.
+         */
+        if (kill_orteruns) {
+            if (!strcmp("orterun", procname)) {
+                if (procpid != orunpid) {
+                    if (orte_clean_globals.verbose) {
+                        opal_output(0, "orte-clean: found potential rogue orterun process"
+                                    " (pid=%d,user=%s), sending SIGKILL...\n", 
+                                    procpid, user);
+                    }
+                    /*
+                     * We ignore the return code here as we do not really
+                     * care whether this worked or not.
+                     */
+                    (void)kill(procpid, SIGKILL);
+                }
+            }
+        }
+    }
+    return;
 }
+#endif  /* !defined(__WINDOWS__) */

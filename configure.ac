@@ -11,7 +11,7 @@
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
 # Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
-# Copyright (c) 2006      Sun Microsystems, Inc.  All rights reserved.
+# Copyright (c) 2006-2007 Sun Microsystems, Inc.  All rights reserved.
 # Copyright (c) 2006      Los Alamos National Security, LLC.  All rights
 #                         reserved. 
 # $COPYRIGHT$
@@ -880,6 +880,11 @@ if test -z "$LEX" -o -n "`echo $LEX | grep missing`" -o \
         AC_MSG_ERROR([Cannot continue])
     fi
 fi
+
+#
+# Look for ps command and arguments for orte-clean
+#
+OMPI_PS_FLAVOR_CHECK
 
 #
 # File system case sensitivity

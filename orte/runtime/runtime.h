@@ -184,6 +184,14 @@ ORTE_DECLSPEC   int ompi_rte_init_io(void);
      */
 ORTE_DECLSPEC   int orte_setup_hnp(char *target_cluster, char *headnode, char *username);
 
+    /**
+     * Clean out all directories in a session directory except for the one
+     * handed in.
+     * @param my_universe Name of universe to not remove
+     * @param verbose Print out information as directories are removed
+     */
+ORTE_DECLSPEC   void orte_universe_clean_directories(char *my_universe, int verbose);
+
 #if defined(c_plusplus) || defined(__cplusplus)
 }
 #endif
