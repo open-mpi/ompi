@@ -126,11 +126,14 @@ ompi_mtl_mx_component_init(bool enable_progress_threads,
     /* initialize the mx library */
     mx_return = mx_init(); 
     
-    if(mx_return!=MX_SUCCESS) { 
-        opal_output(ompi_mtl_base_output,
-                    "Error in mx_init (error %s)\n",
-                    mx_strerror(mx_return));
-        return NULL;
+    if(MX_SUCCESS != mx_return){
+        if(MX_ALREADY_INITIALIZED  != mx_return) {
+            opal_output(ompi_mtl_base_output,
+                        "Error in mx_init (error %s)\n",
+                        mx_strerror(mx_return));
+        } else { 
+            return NULL;
+        }
     }
         
     ret = ompi_mtl_mx_module_init();

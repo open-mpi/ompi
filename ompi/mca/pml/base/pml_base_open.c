@@ -69,7 +69,7 @@ mca_pml_base_module_t mca_pml = {
 
 opal_list_t mca_pml_base_components_available;
 mca_pml_base_component_t mca_pml_base_selected_component;
-char *mca_pml_base_pml;
+ompi_pointer_array_t mca_pml_base_pml;
 
 /**
  * Function for finding and opening either all MCA components, or the one
@@ -77,7 +77,7 @@ char *mca_pml_base_pml;
  */
 int mca_pml_base_open(void)
 {
-    char* default_pml;
+    char* default_pml = NULL;
 
     /* Open up all available components */
 
@@ -95,26 +95,32 @@ int mca_pml_base_open(void)
 
     /**
      * Right now our selection of BTLs is completely broken. If we have
-     * multiple PMLs we will open all BTLs several times, leading to
+     * multiple PMLs that use BTLs than we will open all BTLs several times, leading to
      * undefined behaviors. The simplest solution, at least until we
-     * figure out the correct way to do it, is to force a default value
-     * in the mca_pml_base_pml global.
+     * figure out the correct way to do it, is to force a default PML that 
+     * uses BTLs and any other PMLs that do not in the mca_pml_base_pml array.
      */
+
+    OBJ_CONSTRUCT(&mca_pml_base_pml, ompi_pointer_array_t);
+    
 #if MCA_pml_DIRECT_CALL
-    default_pml = stringify(MCA_pml_DIRECT_CALL_COMPONENT);
+    ompi_pointer_array_add(&mca_pml_base_pml, 
+                           stringify(MCA_pml_DIRECT_CALL_COMPONENT));
 #else
-    default_pml = "ob1";
+    
+
+    mca_base_param_reg_string_name("pml", NULL, 
+                                   "Specify a specific PML to use", 
+                                   false, false, "", &default_pml);
+    
+    if(0 == strlen(default_pml)){ 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup("ob1")); 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup("cm"));
+    } else { 
+        ompi_pointer_array_add(&mca_pml_base_pml, strdup(default_pml));
+    }
 #endif
 
-    mca_base_param_lookup_string(
-        mca_base_param_register_string("pml",
-                                       NULL,
-                                       NULL,
-                                       NULL,
-                                       default_pml),
-        &mca_pml_base_pml);
-    if( NULL == mca_pml_base_pml )
-        mca_pml_base_pml = default_pml;
-
     return OMPI_SUCCESS;
+
 }

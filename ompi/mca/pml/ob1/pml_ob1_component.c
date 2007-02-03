@@ -219,6 +219,13 @@ mca_pml_base_module_t* mca_pml_ob1_component_init(int* priority,
                                                   bool enable_progress_threads,
                                                   bool enable_mpi_threads)
 {
+    opal_output_verbose( 10, 0, 
+                         "in ob1, my priority is %d\n", mca_pml_ob1.priority);
+    
+    if((*priority) > mca_pml_ob1.priority) { 
+        *priority = mca_pml_ob1.priority;
+        return NULL;
+    }
     *priority = mca_pml_ob1.priority;
 
     /* buffered send */
