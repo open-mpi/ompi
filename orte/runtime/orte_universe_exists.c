@@ -364,3 +364,203 @@ int orte_universe_exists(orte_universe_t *univ)
 
     return orte_universe_check_connect(univ);
 }
+
+void
+orte_universe_clean_directories(char *my_universe, int verbose) {
+    char *session_dir = NULL;
+#if !defined(__WINDOWS__)
+    DIR *cur_dirp = NULL;
+    struct dirent * dir_entry;
+#else
+    HANDLE hFind = INVALID_HANDLE_VALUE;
+    WIN32_FIND_DATA file_data;
+#endif  /* __WINDOWS__ */
+    char *fulldirpath = NULL;
+    char *prefix = NULL;
+    char *frontend = NULL;
+
+    /*
+     * Compute the full pathname to the session directory.
+     */
+    if (ORTE_SUCCESS != orte_session_dir_get_name(&fulldirpath,
+                                                  &prefix,
+                                                  &frontend,
+                                                  orte_system_info.user,
+                                                  orte_system_info.nodename,
+                                                  NULL, /* batch ID -- Not used */
+                                                  NULL, /* Universe Name -- NONE */
+                                                  NULL, /* jobid */
+                                                  NULL  /* vpid */
+                                                  )) {
+        goto cleanup;
+    }
+
+#if !defined(__WINDOWS__)
+    session_dir = opal_os_path(false, prefix, frontend, NULL);
+
+    /*
+     * Free up the various strings as these are allocated within
+     * the previous function.
+     */ 
+    if (NULL != fulldirpath) {
+        free(fulldirpath);
+        fulldirpath = NULL;
+    }    
+    if (NULL != prefix) {
+        free(prefix);
+        prefix = NULL;
+    }    
+    if (NULL != frontend) {
+        free(frontend);
+        frontend = NULL;
+    }
+
+    /*
+     * Check to make sure we have access to this directory
+     */
+    if (ORTE_SUCCESS != opal_os_dirpath_access(session_dir, 0)) {
+        goto cleanup;
+    }
+
+    /*
+     * Open up the base directory so we can get a listing
+     */
+    if (NULL == (cur_dirp = opendir(session_dir))) {
+        goto cleanup;
+    }
+    /*
+     * For each directory/universe
+     */
+    while (NULL != (dir_entry = readdir(cur_dirp))) {
+
+        /*
+         * Skip non-universe directories
+         */
+        if (0 == strncmp(dir_entry->d_name, ".", strlen(".")) ||
+            0 == strncmp(dir_entry->d_name, ".", strlen(".."))) {
+            continue;
+        }
+
+        /*
+         * Skip my own universe.  Let normal cleanup take care of that.
+         */
+        if ((0 == strcmp(dir_entry->d_name, my_universe)) &&
+            (strlen(dir_entry->d_name) == strlen(my_universe))) {
+            if (verbose) {
+                opal_output(0, "orte-clean: skipping ourselves, name=%s\n",
+                            orte_universe_info.name);
+            }
+            continue;
+        }
+
+        if (ORTE_SUCCESS != orte_session_dir_get_name(&fulldirpath,
+                                                      &prefix,
+                                                      &frontend,
+                                                      orte_system_info.user,
+                                                      orte_system_info.nodename,
+                                                      NULL, /* batch ID -- Not used */
+                                                      dir_entry->d_name,
+                                                      NULL, /* jobid */
+                                                      NULL  /* vpid */
+                                                      )) {
+            continue;
+        }
+
+        if (verbose) {
+            opal_output(0, "orte-clean: removing directory %s\n", fulldirpath);
+        }
+        opal_os_dirpath_destroy(fulldirpath, true, NULL);
+        
+        /*
+         * The orte_session_dir_get_name handles the freeing of the
+         * fulldirpath each time it is called.  The prefix gets reused.
+         * So, there is no need to free them on each call.  
+         */
+        if (NULL != frontend) {
+            free(frontend);
+        }
+    }
+#else
+    /*
+     * Open up the base directory so we can get a listing.
+     *
+     * On Windows if we want to parse the content of a directory the filename
+     * should end with the "*". Otherwise we will only open the directory
+     * structure (and not the content).
+     */
+    frontend_abs = opal_os_path(false, prefix, frontend, "*", NULL);
+    hFind = FindFirstFile (frontend_abs, &file_data);
+    if (INVALID_HANDLE_VALUE == hFind) {
+        goto cleanup;
+    }
+
+    do {
+        /*
+         * Skip non-universe directories
+         */
+        if (0 == strncmp(dir_entry->d_name, ".", strlen(".")) ||
+            0 == strncmp(dir_entry->d_name, ".", strlen(".."))) {
+            continue;
+        }
+
+        if ((0 == strcmp(dir_entry->d_name, my_universe)) &&
+            (strlen(dir_entry->d_name) == strlen(my_universe))) {
+            if (verbose) {
+                opal_output(0, "orte-clean: skipping ourseleves, name=%s\n",
+                            orte_universe_info.name);
+            }
+            continue;
+        }
+
+        if (ORTE_SUCCESS != orte_session_dir_get_name(&fulldirpath,
+                                                      &prefix,
+                                                      &frontend,
+                                                      orte_system_info.user,
+                                                      orte_system_info.nodename,
+                                                      NULL, /* batch ID -- Not used */
+                                                      dir_entry->d_name,
+                                                      NULL, /* jobid */
+                                                      NULL  /* vpid */
+                                                      )) {
+            continue;
+        }
+
+        if (verbose) {
+            opal_output(0, "orte-clean: removing directory %s\n", fulldirpath);
+        }
+        opal_os_dirpath_destroy(fulldirpath, true, NULL);
+        
+        /*
+         * The orte_session_dir_get_name handles the freeing of the
+         * fulldirpath each time it is called.  The prefix gets reused.
+         * So, there is no need to free them on each call.  
+         */
+        if (NULL != frontend)
+            free(frontend);
+
+    } while (0 != FindNextFile(hFind, &file_data));
+#endif  /* !defined(__WINDOWS__) */
+
+#if !defined(__WINDOWS__)
+    if (NULL != cur_dirp) {
+        closedir(cur_dirp);
+    }
+#else
+    FindClose(hFind);
+#endif  /* __WINDOWS__ */
+
+    if(NULL != fulldirpath) {
+        free(fulldirpath);
+    }
+    if(NULL != prefix) {
+        free(prefix);
+    }
+
+    /*
+     * If the session directory is empty, then remove that too
+     */
+    opal_os_dirpath_destroy(session_dir, false, NULL);
+    free(session_dir);
+ cleanup:
+    return;
+}
