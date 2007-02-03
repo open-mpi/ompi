@@ -61,7 +61,7 @@ mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
 static int free_list_num = 0;
 static int free_list_max = 0;
 static int free_list_inc = 0;
-static int default_priority = 0;
+static int default_priority = 2;
 
 static int
 mca_pml_cm_component_open(void)
@@ -100,7 +100,7 @@ mca_pml_cm_component_open(void)
                            "CM PML selection priority",
                            false,
                            false,
-                           1,
+                           2,
                            &default_priority);
 
     return OMPI_SUCCESS;
@@ -120,13 +120,20 @@ mca_pml_cm_component_init(int* priority,
                           bool enable_mpi_threads)
 {
     int ret;
-
+    if((*priority) > default_priority) { 
+        *priority = default_priority;
+        return NULL;
+    }
     *priority = default_priority;
-
+    opal_output_verbose( 10, 0, 
+                         "in cm pml priority is %d\n", *priority);
     /* find a useable MTL */
     ret = ompi_mtl_base_select(enable_progress_threads, enable_mpi_threads);
-    if (OMPI_SUCCESS != ret) return NULL;
-
+    if (OMPI_SUCCESS != ret) { 
+        *priority = -1;
+        return NULL;
+    }
+    
     /* update our tag / context id max values based on MTL
        information */
     ompi_pml_cm.super.pml_max_contextid = ompi_mtl->mtl_max_contextid;

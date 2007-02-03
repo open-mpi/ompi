@@ -47,14 +47,15 @@ typedef struct opened_component_t {
 int mca_pml_base_select(bool enable_progress_threads,
                         bool enable_mpi_threads)
 {
-    int priority = 0, best_priority = 0;
+    int i, priority = 0, best_priority = 0;
+    bool skip_pml = false;
     opal_list_item_t *item = NULL;
     mca_base_component_list_item_t *cli = NULL;
     mca_pml_base_component_t *component = NULL, *best_component = NULL;
     mca_pml_base_module_t *module = NULL, *best_module = NULL;
     opal_list_t opened;
     opened_component_t *om = NULL;
-
+    
     /* Traverse the list of available components; call their init
        functions. */
 
@@ -67,16 +68,22 @@ int mca_pml_base_select(bool enable_progress_threads,
          item = opal_list_get_next(item) ) {
         cli = (mca_base_component_list_item_t *) item;
         component = (mca_pml_base_component_t *) cli->cli_component;
-
+        skip_pml = false;
         /* if there is an include list - item must be in the list to be included */
-        if( (NULL != mca_pml_base_pml) &&
-            (strcmp(component->pmlm_version.mca_component_name, mca_pml_base_pml) != 0) ) {
-            opal_output_verbose( 10, mca_pml_base_output,
-                                 "select: component %s not in the include list",
-                                 component->pmlm_version.mca_component_name );
+        for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
+            if((strcmp(component->pmlm_version.mca_component_name, 
+                       (char *) ompi_pointer_array_get_item(&mca_pml_base_pml, i)) != 0)) {
+                opal_output_verbose( 10, mca_pml_base_output,
+                                     "select: component %s not in the include list",
+                                     component->pmlm_version.mca_component_name );
+                skip_pml = true;
+            } else { 
+                skip_pml = false;
+            }
+        }
+        if(skip_pml) { 
             continue;
         }
-
         if (NULL == component->pmlm_init) {
             opal_output_verbose( 10, mca_pml_base_output,
                                  "select: no init function; ignoring component %s",
@@ -87,6 +94,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                              "select: initializing %s component %s",
                              component->pmlm_version.mca_type_name,
                              component->pmlm_version.mca_component_name );
+        priority = best_priority;
         module = component->pmlm_init(&priority, enable_progress_threads,
                                       enable_mpi_threads);
         if (NULL == module) {
@@ -113,16 +121,21 @@ int mca_pml_base_select(bool enable_progress_threads,
     }
 
     /* Finished querying all components.  Check for the bozo case. */
-
+    
     if( NULL == best_component ) {
         opal_show_help("help-mca-base.txt", "find-available:none-found", true, "pml");
-        if( NULL !=  mca_pml_base_pml ) {
-            orte_errmgr.error_detected(1, "PML %s cannot be selected", mca_pml_base_pml, NULL);
-        } else {
+        for( i = 0; i < ompi_pointer_array_get_size(&mca_pml_base_pml); i++) { 
+            orte_errmgr.error_detected(1, "PML %s cannot be selected", (char*)  ompi_pointer_array_get_item(&mca_pml_base_pml, i), NULL);
+        }
+        if(0 == i) { 
             orte_errmgr.error_detected(2, "No pml component available.  This shouldn't happen.", NULL);
         }
     } 
-
+    
+    opal_output_verbose( 10, mca_pml_base_output,
+                         "selected %s best priority %d\n", 
+                         best_component->pmlm_version.mca_component_name, best_priority);
+    
     /* Finalize all non-selected components */
 
     for (item = opal_list_remove_first(&opened);
