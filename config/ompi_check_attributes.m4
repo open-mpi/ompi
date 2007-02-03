@@ -1,6 +1,6 @@
 # -*- shell-script -*-
 #
-# Copyright (c) 2004-2005 The Trustees of Indiana University and Indiana
+# Copyright (c) 2004-2007 The Trustees of Indiana University and Indiana
 #                         University Research and Technology
 #                         Corporation.  All rights reserved.
 # Copyright (c) 2004-2005 The University of Tennessee and The University
@@ -29,9 +29,25 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         };
       ],
       [],
-      [ac_cv___attribute__=1 ac_cv___attribute__msg=yes],
-      [ac_cv___attribute__=0 ac_cv___attribute__msg=no],
-    )])
+      [ac_cv___attribute__=1],
+      [ac_cv___attribute__=0],
+    )
+
+    if test "$ac_cv___attribute__" = "1" ; then
+        AC_TRY_COMPILE(
+          [#include <stdlib.h>
+           /* Check for the longest available __attribute__ (since gcc-2.3) */
+           struct foo {
+               char a;
+               int x[2] __attribute__ ((packed));
+            };
+          ],
+          [],
+          [ac_cv___attribute__=1 ac_cv___attribute__msg=yes],
+          [ac_cv___attribute__=0 ac_cv___attribute__msg=no],
+        )
+    fi
+    ])
   AC_DEFINE_UNQUOTED(OMPI_HAVE_ATTRIBUTE, [$ac_cv___attribute__],
                      [Whether your compiler has __attribute__ or not])
   AC_MSG_RESULT($ac_cv___attribute__msg)
@@ -59,15 +75,33 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
     ac_cv___attribute__weak_alias=0
   else
 
+#
+# All attributes may be specified in Header files -- requiring them to be
+# compilable with both the selected C- and the C++ compilers.
+#
+
     AC_MSG_CHECKING([for __attribute__ ((aligned))])
     AC_CACHE_VAL(ac_cv___attribute__aligned, [
       AC_TRY_COMPILE(
         [#include <stdlib.h>
-         struct foo { char text[4] }  __attribute__ ((aligned(8))); ],
+         struct foo { char text[4]; }  __attribute__ ((aligned(8))); ],
         [],
-        [ac_cv___attribute__aligned=1 ac_cv___attribute__aligned_msg=yes],
-        [ac_cv___attribute__aligned=0 ac_cv___attribute__aligned_msg=no]
-      )])
+        [ac_cv___attribute__aligned=1], [ac_cv___attribute__aligned=0]
+      )
+
+      if test "$ac_cv___attribute__aligned" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             // No need to declare extern "C"
+             struct foo { char text[4]; }  __attribute__ ((aligned(8))); ],
+            [],
+            [ac_cv___attribute__aligned=1 ac_cv___attribute__aligned_msg=yes], [ac_cv___attribute__aligned=0 ac_cv___attribute__aligned_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+
+      ])
     AC_MSG_RESULT($ac_cv___attribute__aligned_msg)
 
 
@@ -77,9 +111,25 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [#include <stdlib.h>
           int foo (int arg) __attribute__ ((always_inline));],
         [],
-        [ac_cv___attribute__always_inline=1 ac_cv___attribute__always_inline_msg=yes],
-        [ac_cv___attribute__always_inline=0 ac_cv___attribute__always_inline_msg=no]
-      )])
+        [ac_cv___attribute__always_inline=1],
+        [ac_cv___attribute__always_inline=0]
+      )
+
+      if test "$ac_cv___attribute__always_inline" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int foo (int arg) __attribute__ ((always_inline));
+             }
+            ],
+            [],
+            [ac_cv___attribute__always_inline=1 ac_cv___attribute__always_inline_msg=yes],
+            [ac_cv___attribute__always_inline=0 ac_cv___attribute__always_inline_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__always_inline_msg)
 
 
@@ -90,9 +140,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int foo(int arg1, int arg2) __attribute__ ((const));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }],
         [],
-        [ac_cv___attribute__const=1 ac_cv___attribute__const_msg=yes],
-        [ac_cv___attribute__const=0 ac_cv___attribute__const_msg=no]
-      )])
+        [ac_cv___attribute__const=1],
+        [ac_cv___attribute__const=0]
+      )
+
+      if test "$ac_cv___attribute__const" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int foo(int arg1, int arg2) __attribute__ ((const));
+               int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+             }
+            ],
+            [],
+            [ac_cv___attribute__const=1 ac_cv___attribute__const_msg=yes],
+            [ac_cv___attribute__const=0 ac_cv___attribute__const_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__const_msg)
 
 
@@ -103,9 +170,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int foo(int arg1, int arg2) __attribute__ ((deprecated));
          int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }],
         [],
-        [ac_cv___attribute__deprecated=1 ac_cv___attribute__deprecated_msg=yes],
-        [ac_cv___attribute__deprecated=0 ac_cv___attribute__deprecated_msg=no]
-      )])
+        [ac_cv___attribute__deprecated=1],
+        [ac_cv___attribute__deprecated=0]
+      )
+
+      if test "$ac_cv___attribute__deprecated" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int foo(int arg1, int arg2) __attribute__ ((deprecated));
+               int foo(int arg1, int arg2) { return arg1 * arg2 + arg1; }
+             }
+            ],
+            [],
+            [ac_cv___attribute__deprecated=1 ac_cv___attribute__deprecated_msg=yes],
+            [ac_cv___attribute__deprecated=0 ac_cv___attribute__deprecated_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__deprecated_msg)
 
 
@@ -115,9 +199,25 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [#include <stdlib.h>
          int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));],
         [],
-        [ac_cv___attribute__format=1 ac_cv___attribute__format_msg=yes],
-        [ac_cv___attribute__format=0 ac_cv___attribute__format_msg=no]
-      )])
+        [ac_cv___attribute__format=1],
+        [ac_cv___attribute__format=0]
+      )
+
+      if test "$ac_cv___attribute__format" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int this_printf (void *my_object, const char *my_format, ...) __attribute__ ((format (printf, 2, 3)));
+             }
+            ],
+            [],
+            [ac_cv___attribute__format=1 ac_cv___attribute__format_msg=yes],
+            [ac_cv___attribute__format=0 ac_cv___attribute__format_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__format_msg)
 
 
@@ -126,11 +226,28 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
       AC_TRY_COMPILE(
         [#include <stdlib.h>
          int * foo(int arg1) __attribute__ ((malloc));
-         int * foo(int arg1) { return malloc(arg1); }],
+         int * foo(int arg1) { return (int*) malloc(arg1); }],
         [],
-        [ac_cv___attribute__malloc=1 ac_cv___attribute__malloc_msg=yes],
-        [ac_cv___attribute__malloc=0 ac_cv___attribute__malloc_msg=no]
-      )])
+        [ac_cv___attribute__malloc=1],
+        [ac_cv___attribute__malloc=0]
+      )
+
+      if test "$ac_cv___attribute__malloc" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int * foo(int arg1) __attribute__ ((malloc));
+               int * foo(int arg1) { return (int*) malloc(arg1); }
+             }
+            ],
+            [],
+            [ac_cv___attribute__malloc=1 ac_cv___attribute__malloc_msg=yes],
+            [ac_cv___attribute__malloc=0 ac_cv___attribute__malloc_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__malloc_msg)
 
 
@@ -140,9 +257,23 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [#include <stdlib.h>
          int * arg __attribute__ ((may_alias));],
         [],
-        [ac_cv___attribute__may_alias=1 ac_cv___attribute__may_alias_msg=yes],
-        [ac_cv___attribute__may_alias=0 ac_cv___attribute__may_alias_msg=no]
-      )])
+        [ac_cv___attribute__may_alias=1],
+        [ac_cv___attribute__may_alias=0]
+      )
+
+      if test "$ac_cv___attribute__may_alias" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             // No need to declare extern "C"
+             int * arg __attribute__ ((may_alias));],
+            [],
+            [ac_cv___attribute__may_alias=1 ac_cv___attribute__may_alias_msg=yes],
+            [ac_cv___attribute__may_alias=0 ac_cv___attribute__may_alias_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__may_alias_msg)
 
 
@@ -156,9 +287,29 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int value=1;
          value = square (&value);
         ],
-        [ac_cv___attribute__nonnull=1 ac_cv___attribute__nonnull_msg=yes],
-        [ac_cv___attribute__nonnull=0 ac_cv___attribute__nonnull_msg=no]
-      )])
+        [ac_cv___attribute__nonnull=1],
+        [ac_cv___attribute__nonnull=0]
+      )
+
+      if test "$ac_cv___attribute__nonnull" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int square(int *arg) __attribute__ ((nonnull));
+               int square(int *arg) { return *arg; }
+             }
+            ],
+            [
+             int value=1;
+             value = square (&value);
+            ],
+            [ac_cv___attribute__nonnull=1 ac_cv___attribute__nonnull_msg=yes],
+            [ac_cv___attribute__nonnull=0 ac_cv___attribute__nonnull_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__nonnull_msg)
 
 
@@ -169,9 +320,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int fatal(int arg1) __attribute__ ((noreturn));
          int fatal(int arg1) { exit(arg1); }],
         [],
-        [ac_cv___attribute__noreturn=1 ac_cv___attribute__noreturn_msg=yes],
-        [ac_cv___attribute__noreturn=0 ac_cv___attribute__noreturn_msg=no]
-      )])
+        [ac_cv___attribute__noreturn=1],
+        [ac_cv___attribute__noreturn=0]
+      )
+
+      if test "$ac_cv___attribute__noreturn" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int fatal(int arg1) __attribute__ ((noreturn));
+               int fatal(int arg1) { exit(arg1); }
+             }
+            ],
+            [],
+            [ac_cv___attribute__noreturn=1 ac_cv___attribute__noreturn_msg=yes],
+            [ac_cv___attribute__noreturn=0 ac_cv___attribute__noreturn_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__noreturn_msg)
 
 
@@ -184,9 +352,27 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
              int x[2] __attribute__ ((packed));
          };],
         [],
-        [ac_cv___attribute__packed=1 ac_cv___attribute__packed_msg=yes],
-        [ac_cv___attribute__packed=0 ac_cv___attribute__packed_msg=no]
-      )])
+        [ac_cv___attribute__packed=1],
+        [ac_cv___attribute__packed=0]
+      )
+
+      if test "$ac_cv___attribute__packed" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             // No need to declare extern "C"
+             struct foo {
+                 char a;
+                 int x[2] __attribute__ ((packed));
+             };
+            ],
+            [],
+            [ac_cv___attribute__packed=1 ac_cv___attribute__packed_msg=yes],
+            [ac_cv___attribute__packed=0 ac_cv___attribute__packed_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__packed_msg)
 
 
@@ -197,9 +383,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int square(int arg) __attribute__ ((pure));
          int square(int arg) { return arg * arg; }],
         [],
-        [ac_cv___attribute__pure=1 ac_cv___attribute__pure_msg=yes],
-        [ac_cv___attribute__pure=0 ac_cv___attribute__pure_msg=no]
-      )])
+        [ac_cv___attribute__pure=1],
+        [ac_cv___attribute__pure=0]
+      )
+
+      if test "$ac_cv___attribute__pure" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int square(int arg) __attribute__ ((pure));
+               int square(int arg) { return arg * arg; }
+             }
+            ],
+            [],
+            [ac_cv___attribute__pure=1 ac_cv___attribute__pure_msg=yes],
+            [ac_cv___attribute__pure=0 ac_cv___attribute__pure_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__pure_msg)
 
 
@@ -209,9 +412,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [#include <stdlib.h>
          int my_execlp(const char * file, const char *arg, ...) __attribute__ ((sentinel));],
         [],
-        [ac_cv___attribute__sentinel=1 ac_cv___attribute__sentinel_msg=yes],
-        [ac_cv___attribute__sentinel=0 ac_cv___attribute__sentinel_msg=no]
-      )])
+        [ac_cv___attribute__sentinel=1],
+        [ac_cv___attribute__sentinel=0]
+      )
+
+      if test "$ac_cv___attribute__sentinel" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int my_execlp(const char * file, const char *arg, ...) __attribute__ ((sentinel));
+             }
+            ],
+            [],
+            [ac_cv___attribute__sentinel=1 ac_cv___attribute__sentinel_msg=yes],
+            [ac_cv___attribute__sentinel=0 ac_cv___attribute__sentinel_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
+
     AC_MSG_RESULT($ac_cv___attribute__sentinel_msg)
 
 
@@ -222,9 +442,26 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int square(int arg1 __attribute__ ((unused)), int arg2);
          int square(int arg1, int arg2) { return arg2; }],
         [],
-        [ac_cv___attribute__unused=1 ac_cv___attribute__unused_msg=yes],
-        [ac_cv___attribute__unused=0 ac_cv___attribute__unused_msg=no]
-      )])
+        [ac_cv___attribute__unused=1],
+        [ac_cv___attribute__unused=0]
+      )
+
+      if test "$ac_cv___attribute__unused" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int square(int arg1 __attribute__ ((unused)), int arg2);
+               int square(int arg1, int arg2) { return arg2; }
+             }
+            ],
+            [],
+            [ac_cv___attribute__unused=1 ac_cv___attribute__unused_msg=yes],
+            [ac_cv___attribute__unused=0 ac_cv___attribute__unused_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__unused_msg)
 
 
@@ -234,9 +471,25 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
         [#include <stdlib.h>
          int square(int arg1) __attribute__ ((visibility("hidden")));],
         [],
-        [ac_cv___attribute__visibility=1 ac_cv___attribute__visibility_msg=yes],
-        [ac_cv___attribute__visibility=0 ac_cv___attribute__visibility_msg=no]
-      )])
+        [ac_cv___attribute__visibility=1],
+        [ac_cv___attribute__visibility=0]
+      )
+
+      if test "$ac_cv___attribute__visibility" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int square(int arg1) __attribute__ ((visibility("hidden")));
+             }
+            ],
+            [],
+            [ac_cv___attribute__visibility=1 ac_cv___attribute__visibility_msg=yes],
+            [ac_cv___attribute__visibility=0 ac_cv___attribute__visibility_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__visibility_msg)
 
 
@@ -248,9 +501,27 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
          int foo(int arg) { return arg + 3; }
          int foo2(int arg) { return foo (arg); } ],
         [],
-        [ac_cv___attribute__warn_unused_result=1 ac_cv___attribute__warn_unused_result_msg=yes],
-        [ac_cv___attribute__warn_unused_result=0 ac_cv___attribute__warn_unused_result_msg=no]
-      )])
+        [ac_cv___attribute__warn_unused_result=1],
+        [ac_cv___attribute__warn_unused_result=0]
+      )
+
+      if test "$ac_cv___attribute__warn_unused_result" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int foo(int arg) __attribute__ ((warn_unused_result));
+               int foo(int arg) { return arg + 3; }
+               int foo2(int arg) { return foo (arg); }
+             }
+            ],
+            [],
+            [ac_cv___attribute__warn_unused_result=1 ac_cv___attribute__warn_unused_result_msg=yes],
+            [ac_cv___attribute__warn_unused_result=0 ac_cv___attribute__warn_unused_result_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__warn_unused_result_msg)
 
 
@@ -258,12 +529,29 @@ AC_DEFUN([OMPI_CHECK____ATTRIBUTE__], [
     AC_CACHE_VAL(ac_cv___attribute__weak_alias, [
       AC_TRY_COMPILE(
         [#include <stdlib.h>
-         int foo(int arg) { return arg + 3; }
-         int foo2(int) __attribute__ ((weak, alias("foo")));],
+           int foo(int arg);
+           int foo(int arg) { return arg + 3; }
+           int foo2(int arg) __attribute__ ((weak, alias("foo")));],
         [],
-        [ac_cv___attribute__weak_alias=1 ac_cv___attribute__weak_alias_msg=yes],
-        [ac_cv___attribute__weak_alias=0 ac_cv___attribute__weak_alias_msg=no]
-      )])
+        [ac_cv___attribute__weak_alias=1],
+        [ac_cv___attribute__weak_alias=0]
+      )
+
+      if test "$ac_cv___attribute__weak_alias" = "1" ; then
+          AC_LANG_PUSH(C++)
+          AC_TRY_COMPILE(
+            [#include <stdlib.h>
+             extern "C" {
+               int foo(int arg) { return arg + 3; }
+               int foo2(int) __attribute__ ((weak, alias("foo")));
+             }],
+            [],
+            [ac_cv___attribute__weak_alias=1 ac_cv___attribute__weak_alias_msg=yes],
+            [ac_cv___attribute__weak_alias=0 ac_cv___attribute__weak_alias_msg=no]
+          )
+          AC_LANG_POP(C++)
+      fi
+      ])
     AC_MSG_RESULT($ac_cv___attribute__weak_alias_msg)
 
   fi
