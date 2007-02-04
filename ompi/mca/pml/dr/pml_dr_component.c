@@ -86,7 +86,7 @@ int mca_pml_dr_component_open(void)
     mca_pml_dr.free_list_inc =
         mca_pml_dr_param_register_int("free_list_inc", 64);
     mca_pml_dr.priority =
-        mca_pml_dr_param_register_int("priority", 1);
+        mca_pml_dr_param_register_int("priority", 10);
     mca_pml_dr.eager_limit =
         mca_pml_dr_param_register_int("eager_limit", 128 * 1024);
     mca_pml_dr.send_pipeline_depth =
