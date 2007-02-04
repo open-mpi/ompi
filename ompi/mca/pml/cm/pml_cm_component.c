@@ -61,7 +61,7 @@ mca_pml_base_component_1_0_0_t mca_pml_cm_component = {
 static int free_list_num = 0;
 static int free_list_max = 0;
 static int free_list_inc = 0;
-static int default_priority = 2;
+static int default_priority = 30;
 
 static int
 mca_pml_cm_component_open(void)
@@ -100,7 +100,7 @@ mca_pml_cm_component_open(void)
                            "CM PML selection priority",
                            false,
                            false,
-                           2,
+                           30,
                            &default_priority);
 
     return OMPI_SUCCESS;
