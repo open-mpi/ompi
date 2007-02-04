@@ -1,4 +1,4 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2006, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
 .TH MPI_File_preallocate 3OpenMPI "September 2006" "Open MPI 1.2" " "
 .SH NAME
@@ -65,7 +65,7 @@ and gives the length of the declared integer in bytes.
 .ft R
 When using the collective routine MPI_File_set_size on a UNIX file, if the size that is set is smaller than the current file size, the file is truncated at the position defined by size. If the size is set to be larger than the current file size, the file size becomes the set size. When the file size is increased this way with MPI_File_set_size, new regions are created in the file with displacements between the old file size and the larger, newly set file size. 
 .sp
-MPI I/O does not necessarily allocate file space for such new regions. You may reserve file space either by using MPI_File_preallocate or by performing a read or write to certain bytes. 
+Sun MPI I/O does not necessarily allocate file space for such new regions. You may reserve file space either by using MPI_File_preallocate or by performing a read or write to certain bytes. 
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.

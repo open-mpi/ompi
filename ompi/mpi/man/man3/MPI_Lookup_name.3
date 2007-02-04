@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Lookup_name 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Lookup_name 3OpenMPI "March 2007" "Open MPI 1.2" " "
 
 .SH NAME
 .nf
@@ -35,7 +35,7 @@ service_name
 A service name (string).
 .TP 1.4i
 info
-Implementation-specific information (handle).
+Options to the name service functions (handle). No options currently supported.
 
 .SH OUTPUT PARAMETERS
 .ft R
@@ -77,6 +77,7 @@ See the MPI man page for a full list of MPI error codes.
 .ft R
 .nf
 MPI_Publish_name
+MPI_Open_port
 
 ' @(#)MPI_Lookup_name.3 1.7 06/03/09
 

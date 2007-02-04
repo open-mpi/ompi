@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Comm_connect 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Comm_connect 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
 \fBMPI_Comm_connect \fP \- Establishes communication with a server. 
 
@@ -32,7 +32,7 @@ port_name
 Port name (string, used only on \fIroot\fP).
 .TP 1i
 info
-Recognized \fIinfo\fP keys are provided in the SUPPORTED INFO KEYS section (an optional parameter to give to connect) (handle, used only on \fIroot\fP). 
+Options given by root for the connect (handle, used only on root). No options currently supported. 
 .TP 1i
 root
 Rank in \fIcomm\fP of root node (integer).
@@ -51,17 +51,14 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Comm_connect establishes communication with a server specified by \fIport_name\fP. It is collective over the calling communicator and returns an intercommunicator in which the remote group participated in an MPI_Comm_accept.
+MPI_Comm_connect establishes communication with a server specified by \fIport_name\fP. It is collective over the calling communicator and returns an intercommunicator in which the remote group participated in an MPI_Comm_accept. The MPI_Comm_connect call must only be called after the MPI_Comm_accept call has been made by the MPI job acting as the server.
 .sp
 If the named port does not exist (or has been closed), MPI_Comm_connect raises an error of class MPI_ERR_PORT. 
 .sp
 MPI provides no guarantee of fairness in servicing connection attempts. That is, connection attempts are not necessarily satisfied in the order in which they were initiated, and competition from other connection attempts may prevent a particular connection attempt from being satisfied. 
 
 The \fIport_name\fP parameter is the address of the server. It must be the same as the name returned by MPI_Open_port on the server. 
-
-
-.SH SUPPORTED INFO KEYS
-None. 
+ 
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
@@ -71,5 +68,9 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 .sp
 See the MPI man page for a full list of MPI error codes. 
 
+.SH SEE ALSO
+MPI_Comm_accept
+MPI_Open_port
+.br
 
-
+' @(#)MPI_Comm_connect.3 1.20 06/03/09

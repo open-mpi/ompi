@@ -1,6 +1,6 @@
-.\"Copyright 2006, Sun Microsystems, Inc. All rights reserved. Use is subject to license terms.
+.\"Copyright 2007, Sun Microsystems, Inc.
 .\" Copyright (c) 1996 Thinking Machines Corporation
-.TH MPI_Comm_accept 3OpenMPI "September 2006" "Open MPI 1.2" " "
+.TH MPI_Comm_accept 3OpenMPI "March 2007" "Open MPI 1.2" " "
 .SH NAME
 \fBMPI_Comm_accept \fP \- Establishes communication with a client. 
 
@@ -31,7 +31,7 @@ port_name
 Port name (string, used only on \fIroot\fP).
 .TP 1i
 info
-Options given by root for the accept (handle, used only on \fIroot\fP). See the SUPPORTED INFO KEYS section, below. 
+Options given by root for the accept (handle, used only on root). No options currently supported. 
 .TP 1i
 root
 Rank in \fIcomm\fP of root node (integer).
@@ -50,12 +50,10 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Comm_accept establishes communication with a client. It is collective over the calling communicator. It returns an intercommunicator that allows communication with the client.
+MPI_Comm_accept establishes communication with a client. It is collective over the calling communicator. It returns an intercommunicator that allows communication with the client, after the client has connected with the MPI_Comm_accept function using the MPI_Comm_connect function.
 .sp
 The \fIport_name\fP must have been established through a call to MPI_Open_port on the root.
 
-.SH SUPPORTED INFO KEYS
-None. 
 
 .SH ERRORS
 Almost all MPI routines return an error value; C routines as the value of the function and Fortran routines in the last argument. C++ functions do not return errors. If the default error handler is set to MPI::ERRORS_THROW_EXCEPTIONS, then on error the C++ exception mechanism will be used to throw an MPI:Exception object.
@@ -65,4 +63,9 @@ called. By default, this error handler aborts the MPI job, except for I/O functi
 .sp
 See the MPI man page for a full list of MPI error codes. 
 
+.SH SEE ALSO
+MPI_Comm_connect
+MPI_Open_port
+.br
 
+' @(#)MPI_Comm_accept.3 1.20 06/03/09
