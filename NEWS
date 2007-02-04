@@ -93,10 +93,13 @@ version 1.0.
 - Properly check for local host only addresses properly, looking 
   for 127.0.0.0/8, rather than just 127.0.0.1.
 
-
-1.1.3 (expected)
+1.1.4
 -----
 
+- Fixed 64-bit alignment issues with TCP interface detection on
+  intel-based OS X machines.
+- Adjusted TCP interface selection to automatically ignore Linux
+  channel-bonded slave interfaces.
 - Fixed the type of the first parameter to the MPI F90 binding for
   MPI_INITIALIZED.  Thanks to Tim Campbell for pointing out the
   problem.
@@ -114,6 +117,10 @@ version 1.0.
   bringing this to our attention.
 - Fix possible segmentation fault during shutdown when using the
   MX BTL.
+
+1.1.3
+-----
+
 - Remove the "hierarch" coll component; it was not intended to be
   included in stable releases yet.
 - Fix a race condition with stdout/stderr not appearing properly from
