@@ -99,6 +99,15 @@ opal_progress_init(void)
     }
 #endif
 
+    OPAL_OUTPUT((debug_output, "progress: initialized event flag to: %x",
+                 opal_progress_event_flag));                 
+    OPAL_OUTPUT((debug_output, "progress: initialized yield_when_idle to: %s",
+                 call_yield == 0 ? "false" : "true"));
+    OPAL_OUTPUT((debug_output, "progress: initialized num users to: %d",
+                 num_event_users));
+    OPAL_OUTPUT((debug_output, "progress: initialized poll rate to: %ld",
+                 (long) event_progress_delta));
+
     return OPAL_SUCCESS;
 }
 
@@ -214,6 +223,9 @@ opal_progress_set_event_flag(int flag)
 {
     int tmp = opal_progress_event_flag;
     opal_progress_event_flag = flag;
+
+    OPAL_OUTPUT((debug_output, "progress: set_event_flag setting to %d", flag));
+
     return tmp;
 }
 
@@ -224,7 +236,7 @@ opal_progress_event_users_increment(void)
     int32_t val;
     val = opal_atomic_add_32(&num_event_users, 1);
 
-    OPAL_OUTPUT((debug_output, "event_users_increment setting count to %d", val));
+    OPAL_OUTPUT((debug_output, "progress: event_users_increment setting count to %d", val));
 
 #if OPAL_PROGRESS_USE_TIMERS
     /* force an update next round (we'll be past the delta) */
@@ -242,7 +254,7 @@ opal_progress_event_users_decrement(void)
     int32_t val;
     val = opal_atomic_sub_32(&num_event_users, 1);
 
-    OPAL_OUTPUT((debug_output, "event_users_decrement setting count to %d", val));
+    OPAL_OUTPUT((debug_output, "progress: event_users_decrement setting count to %d", val));
 
 #if !OPAL_PROGRESS_USE_TIMERS
    /* start now in delaying if it's easy */
@@ -259,7 +271,7 @@ opal_progress_set_yield_when_idle(bool yieldopt)
     bool tmp = (call_yield == 0) ? false : true;
     call_yield = (yieldopt) ? 1 : 0;
 
-    OPAL_OUTPUT((debug_output, "progress_set_yield_when_idle to %d", call_yield));
+    OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %d", call_yield));
 
     return tmp;
 }
@@ -268,7 +280,7 @@ opal_progress_set_yield_when_idle(bool yieldopt)
 void
 opal_progress_set_event_poll_rate(int polltime)
 {
-    OPAL_OUTPUT((debug_output, "progress_set_event_poll_rate(%d)", polltime));
+    OPAL_OUTPUT((debug_output, "progress: progress_set_event_poll_rate(%d)", polltime));
 
 #if OPAL_PROGRESS_USE_TIMERS
     event_progress_delta = 0;
