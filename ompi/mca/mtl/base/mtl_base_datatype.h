@@ -63,8 +63,6 @@ ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
                            size_t *buffer_len,
                            bool *free_on_error)
 {
-    ptrdiff_t lb;
-
     ompi_convertor_get_packed_size(convertor, buffer_len);
     *free_on_error = false;
     if( 0 == *buffer_len ) {
@@ -76,8 +74,7 @@ ompi_mtl_datatype_recv_buf(struct ompi_convertor_t *convertor,
         *buffer = malloc(*buffer_len);
         *free_on_error = true;
     } else {
-        ompi_ddt_type_lb(convertor->pDesc, &lb);
-        *buffer = convertor->pBaseBuf + lb + 
+        *buffer = convertor->pBaseBuf + 
             convertor->use_desc->desc[convertor->use_desc->used].end_loop.first_elem_disp;;
     }
     return OMPI_SUCCESS;
