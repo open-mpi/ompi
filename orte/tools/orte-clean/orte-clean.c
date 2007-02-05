@@ -269,13 +269,14 @@ static int orte_clean_init(void) {
  */
 static
 void kill_procs(void) {
-    int ortedpid, orunpid;
+    int ortedpid;
     char procname[MAXPATHLEN]; /* only really need 8, but being safe */
     char pidstr[MAXPATHLEN];   /* only really need 8, but being safe */
     char user[MAXPATHLEN];
     int procpid;
     FILE *psfile;
     bool kill_orteruns = false;
+    int orunpid = 0;
 
     /*
      * This is the command that is used to get the information about
