@@ -153,7 +153,7 @@ int mca_pml_base_select(bool enable_progress_threads,
                 om->om_component->pmlm_finalize();
                 opal_output_verbose(10, mca_pml_base_output, 
                                     "select: component %s not selected / finalized",
-                                    component->pmlm_version.mca_component_name);
+                                    om->om_component->pmlm_version.mca_component_name);
             }
         }
         OBJ_DESTRUCT( om );
