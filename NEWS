@@ -27,6 +27,7 @@ version 1.0.
 1.1.5
 -----
 
+- Fix a problem with argument checking in MPI_TYPE_CREATE_SUBARRAY.
 - Fix a problem with compiling the XGrid components with non-gcc
   compilers.
 
