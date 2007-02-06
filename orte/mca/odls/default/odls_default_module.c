@@ -74,7 +74,7 @@
 #include "opal/util/basename.h"
 #include "opal/util/opal_environ.h"
 #include "opal/mca/base/mca_base_param.h"
-#include "opal/mca/paffinity/base/base.h"
+#include "opal/util/num_procs.h"
 
 #include "orte/dss/dss.h"
 #include "orte/util/sys_info.h"
@@ -119,15 +119,17 @@ int orte_odls_default_subscribe_launch_data(orte_jobid_t job, orte_gpr_notify_cb
     char *glob_keys[] = {
         ORTE_JOB_APP_CONTEXT_KEY,
         ORTE_JOB_VPID_START_KEY,
-        ORTE_JOB_VPID_RANGE_KEY
+        ORTE_JOB_VPID_RANGE_KEY,
+        ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY
     };
-    int num_glob_keys = 3;
+    int num_glob_keys = 4;
     char* keys[] = {
         ORTE_PROC_NAME_KEY,
         ORTE_PROC_APP_CONTEXT_KEY,
-        ORTE_NODE_NAME_KEY
+        ORTE_NODE_NAME_KEY,
+        ORTE_NODE_OVERSUBSCRIBED_KEY
     };
-    int num_keys = 3;
+    int num_keys = 4;
     int i, rc;
     
     /* get the job segment name */
@@ -296,9 +298,7 @@ int orte_odls_default_get_add_procs_data(orte_gpr_notify_data_t **data,
              item = opal_list_get_next(item)) {
             proc = (orte_mapped_proc_t*)item;
             
-            /* cannot have tokens as we use that as a flag to indicate these
-             * values did not come from the globals container
-             */
+            /* must not have any tokens so that launch_procs can process it correctly */
             if (ORTE_SUCCESS != (rc = orte_gpr.create_value(&value, 0, segment, 3, 0))) {
                 ORTE_ERROR_LOG(rc);
                 OBJ_RELEASE(ndat);
@@ -630,6 +630,9 @@ static int odls_default_fork_local_proc(
     orte_odls_child_t *child,
     orte_vpid_t vpid_start,
     orte_vpid_t vpid_range,
+    bool want_processor,
+    size_t processor,
+    bool oversubscribed,
     char **base_environ)
 {
     pid_t pid;
@@ -747,6 +750,36 @@ static int odls_default_fork_local_proc(
         opal_unsetenv(param, &environ_copy);
         free(param);
 
+        /* setup yield schedule and processor affinity
+         * We default here to always setting the affinity processor if we want
+         * it. The processor affinity system then determines
+         * if processor affinity is enabled/requested - if so, it then uses
+         * this value to select the process to which the proc is "assigned".
+         * Otherwise, the paffinity subsystem just ignores this value anyway
+         */
+        if (oversubscribed) {
+            param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+            opal_setenv(param, "1", false, &environ_copy);
+       } else {
+            param = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+            opal_setenv(param, "0", false, &environ_copy);
+        }
+        free(param);
+        
+        if (want_processor) {
+            param = mca_base_param_environ_variable("mpi", NULL,
+                                                    "paffinity_processor");
+            asprintf(&param2, "%lu", (unsigned long) processor);
+            opal_setenv(param, param2, false, &environ_copy);
+            free(param);
+            free(param2);
+        } else {
+            param = mca_base_param_environ_variable("mpi", NULL,
+                                                    "paffinity_processor");
+            opal_unsetenv(param, &environ_copy);
+            free(param);
+        }
+        
         /* setup universe info */
         if (NULL != orte_universe_info.name) {
             param = mca_base_param_environ_variable("universe", NULL, NULL);
@@ -902,6 +935,8 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
     opal_list_t app_context_list;
     orte_odls_child_t *child;
     odls_default_app_context_t *app_item;
+    int num_processors;
+    bool oversubscribed=false, want_processor, *bptr, override_oversubscribed=false;
     opal_list_item_t *item, *item2;
 
     /* parse the returned data to create the required structures
@@ -981,7 +1016,16 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                         app_item->app_context = app;
                         opal_list_append(&app_context_list, &app_item->super);
                         kval->value->data = NULL;  /* protect the data storage from later release */
-                   }
+                    }
+                    if (strcmp(kval->key, ORTE_JOB_OVERSUBSCRIBE_OVERRIDE_KEY) == 0) {
+                        /* this can only occur once, so just store it */
+                        if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bptr, kval->value, ORTE_BOOL))) {
+                            ORTE_ERROR_LOG(rc);
+                            return rc;
+                        }
+                        override_oversubscribed = *bptr;
+                        continue;
+                    }
                 } /* end for loop to process global data */
             } else {
                 /* this must have come from one of the process containers, so it must
@@ -1020,6 +1064,14 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
                                     child->app_idx = *sptr;  /* save the index into the app_context objects */
                                     continue;
                                 }
+                                if(strcmp(kval->key, ORTE_NODE_OVERSUBSCRIBED_KEY) == 0) {
+                                    if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&bptr, kval->value, ORTE_BOOL))) {
+                                        ORTE_ERROR_LOG(rc);
+                                        return rc;
+                                    }
+                                    oversubscribed = *bptr;
+                                    continue;
+                                }
                             } /* kv2 */
                             /* protect operation on the global list of children */
                             OPAL_THREAD_LOCK(&orte_odls_default.mutex);
@@ -1033,6 +1085,55 @@ int orte_odls_default_launch_local_procs(orte_gpr_notify_data_t *data, char **ba
             }
         } /* for j */
     }
+
+    /* setup for processor affinity. If there are enough physical processors on this node, then
+     * we indicate which processor each process should be assigned to, IFF the user has requested
+     * processor affinity be used - the paffinity subsystem will make that final determination. All
+     * we do here is indicate that we should do the definitions just in case paffinity is active
+     */
+    if (OPAL_SUCCESS != opal_get_num_processors(&num_processors)) {
+        /* if we cannot find the number of local processors, then default to conservative
+         * settings
+         */
+        want_processor = false;  /* default to not being a hog */
+        opal_output(orte_odls_globals.output,
+                    "odls: could not get number of processors - using conservative settings");
+    } else {
+        opal_output(orte_odls_globals.output,
+                    "odls: got %ld processors", (long)num_processors);
+        
+        /* only do this if we can actually get info on the number of processors */
+        if (opal_list_get_size(&orte_odls_default.children) > (size_t)num_processors) {
+            want_processor = false;
+        } else {
+            want_processor = true;
+        }
+        
+        /* now let's deal with the oversubscribed flag - and the use-case where a hostfile or some
+        * other non-guaranteed-accurate method was used to inform us about our allocation. Since
+        * the information on the number of slots on this node could have been incorrect, we need
+        * to check it against the local number of processors to ensure we don't overload them
+        */
+        if (override_oversubscribed) {
+            opal_output(orte_odls_globals.output, "odls: overriding oversubscription");
+            if (opal_list_get_size(&orte_odls_default.children) > (size_t)num_processors) {
+                /* if the #procs > #processors, declare us oversubscribed regardless
+                * of what the mapper claimed - the user may have told us something
+                * incorrect
+                */
+                oversubscribed = true;
+            } else {
+                /* likewise, if there are more processors here than we were told,
+                * declare us to not be oversubscribed so we can be aggressive. This
+                * covers the case where the user didn't tell us anything about the
+                * number of available slots, so we defaulted to a value of 1
+                */
+                oversubscribed = false;
+            }
+        }
+    }
+    opal_output(orte_odls_globals.output, "odls: oversubscribed set to %s want_processor set to %s",
+                oversubscribed ? "true" : "false", want_processor ? "true" : "false");
 
     /* okay, now let's launch our local procs using a fork/exec */
     i = 0;
@@ -1087,7 +1188,9 @@ DOFORK:
         OPAL_THREAD_UNLOCK(&orte_odls_default.mutex);
         
         if (ORTE_SUCCESS != (rc = odls_default_fork_local_proc(app, child, start,
-                                                               range, base_environ))) {
+                                                               range, want_processor,
+                                                               i, oversubscribed,
+                                                               base_environ))) {
             ORTE_ERROR_LOG(rc);
             orte_smr.set_proc_state(child->name, ORTE_PROC_STATE_ABORTED, 0);
             opal_condition_signal(&orte_odls_default.cond);
