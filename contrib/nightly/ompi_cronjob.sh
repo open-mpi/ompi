@@ -149,7 +149,7 @@ for MPI_DIR in `cat $SRCDIR/ompi-out-$version.txt` ; do
   dump $f "  export PATH=$MPI_DIR/bin:\$OLD_PATH"
   dump $f "  export LD_LIBRARY_PATH=$MPI_DIR/lib:\$OLD_LD_LIBRARY_PATH"
   dump $f "  rm -fr $HOME/ompi-tmp/openmpi-sessions-*"
-  # Start the orted deamon in a commonly accessible directory (/tmp is local to each node)
+  # Start the orted daemon in a commonly accessible directory (/tmp is local to each node)
   dump $f "  orted --tmpdir $HOME/ompi-tmp --seed --persistent --scope public"
   for j in `cat $SRCDIR/ompi-tests-out-$test_version.txt` ; do
     dump $f "    cd $j/bin"

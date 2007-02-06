@@ -477,7 +477,7 @@ int opal_ifnametoindex(const char* if_name)
 
 
 /*
- *  Attempt to resolve the adddress as either a dotted decimal formated
+ *  Attempt to resolve the adddress as either a dotted decimal formatted
  *  string or a hostname and lookup corresponding interface.
  */
 

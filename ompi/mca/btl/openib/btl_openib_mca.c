@@ -239,7 +239,7 @@ int btl_openib_register_mca_params(void)
 
     /* JMS what is this? */
     CHECK(reg_int("ib_static_rate", "InfiniBand static rate "
-                  "(must be >= 0; defulat: %d)",
+                  "(must be >= 0; default: %d)",
                   0, &ival, REGINT_GE_ZERO));
     mca_btl_openib_component.ib_static_rate = (uint32_t) ival;
 

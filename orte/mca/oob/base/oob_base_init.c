@@ -243,7 +243,7 @@ int mca_oob_set_contact_info(const char* contact_info)
 
 /**
 * Called to request the selected oob components to
-* register their address with the seed deamon.
+* register their address with the seed daemon.
 */
 
 int mca_oob_base_module_init(void)

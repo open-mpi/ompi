@@ -84,9 +84,9 @@ int ompi_common_portals_register_mca(void);
 
 
 /**
- * Initialize compatability code
+ * Initialize compatibility code
  *
- * Initialize Portals compatability code.  A best effort is made to
+ * Initialize Portals compatibility code.  A best effort is made to
  * initialize Portals (with PtlInit() and PtlNIInit(), although this
  * may not be possible if use of the modex is required to setup the
  * network (as is the case with the utcp reference implementation).

@@ -296,7 +296,7 @@ struct mca_btl_base_component_1_0_1_t {
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_1_0_1_t;
 typedef struct mca_btl_base_component_1_0_1_t mca_btl_base_component_t;
 
-/* add the 1_0_0_t typedef for source compatability 
+/* add the 1_0_0_t typedef for source compatibility 
  *   we can do this safely because 1_0_0 components are the same as 
  *  1_0_1 components, the difference is in the btl module. 
  *  Fortunately the only difference in the module is an additional interface

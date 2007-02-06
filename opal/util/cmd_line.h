@@ -35,7 +35,7 @@
  *
  * The "single dash" name is a multi-character name that only
  * requires a single dash.  This only exists to provide backwards
- * compatability for some well-known command line options in prior
+ * compatibility for some well-known command line options in prior
  * MPI implementations (e.g., "mpirun -np 3").  It should be used
  * sparingly.
  *
