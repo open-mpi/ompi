@@ -195,7 +195,7 @@ AC_DEFUN([OMPI_SETUP_CC],[
                                    [ompi_cv_cc_restrict_cflags="yes"],
                                    [ompi_cv_cc_restrict_cflags="no"])])
         if test "$ompi_cv_cc_restrict_cflags" = "yes" ; then
-            add="$RESTRICT_CFLAGS"
+            add=" $RESTRICT_CFLAGS"
         fi
 
         CFLAGS="${CFLAGS_orig}${add}"
