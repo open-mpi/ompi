@@ -51,9 +51,7 @@ int MPI_Type_create_subarray(int ndims,
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_COUNT, FUNC_NAME);
         } else if( (NULL == size_array) || (NULL == subsize_array) || (NULL == start_array) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
-        } else if (NULL == newtype) {
-            return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
-        } else if( !(DT_FLAG_DATA & oldtype ->flags) ) {
+        } else if( (NULL == oldtype) || (MPI_DATATYPE_NULL == oldtype) || (NULL == newtype) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_TYPE, FUNC_NAME);
         } else if( (MPI_ORDER_C != order) && (MPI_ORDER_FORTRAN != order) ) {
             return OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD, MPI_ERR_ARG, FUNC_NAME);
