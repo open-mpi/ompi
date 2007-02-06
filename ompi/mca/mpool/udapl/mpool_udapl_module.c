@@ -139,8 +139,6 @@ int mca_mpool_udapl_register(
 int mca_mpool_udapl_deregister(mca_mpool_base_module_t* mpool, 
                               mca_mpool_base_registration_t* reg)
 {
-    int rc;
-
     if(reg->flags & (MCA_MPOOL_FLAGS_CACHE | MCA_MPOOL_FLAGS_PERSIST)) { 
         mpool->rcache->rcache_delete(mpool->rcache, reg, reg->flags);
         reg->flags = 0;
