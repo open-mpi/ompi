@@ -27,8 +27,12 @@
 int opal_get_num_processors(int *num_procs)
 {
 #ifdef __WINDOWS__
-    /* Need to get the Right code for Windows... */
-    return OPAL_ERR_NOT_IMPLEMENTED;
+    SYSTEM_INFO sys_info;
+
+    GetSystemInfo( &sys_info );
+    *num_procs = sys_info.dwNumberOfProcessors;
+
+    return OPAL_SUCCESS;
 #else
     /* POSIX environments */
 
