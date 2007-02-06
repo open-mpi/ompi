@@ -33,6 +33,8 @@ static int windows_module_get_num_procs(int *num_procs);
 static int windows_module_set(int id);
 static int windows_module_get(int *id);
 
+static SYSTEM_INFO sys_info;
+
 /*
  * Linux paffinity module
  */
@@ -64,7 +66,7 @@ opal_paffinity_windows_component_query(int *query)
 
 static int windows_module_init(void)
 {
-    /* Nothing to do */
+    GetSystemInfo( &sys_info );
 
     return OPAL_SUCCESS;
 }
@@ -72,25 +74,40 @@ static int windows_module_init(void)
 
 static int windows_module_get_num_procs(int *num_procs)
 {
-    *num_procs = 1;
+    *num_procs = sys_info.dwNumberOfProcessors;
     return OPAL_SUCCESS;
 }
 
 static int windows_module_set(int id)
 {
-    int num_procs;
+    HANDLE threadid = GetCurrentThread(void);
+    DWORD process_mask, system_mask;
 
-    windows_module_get_num_procs(&num_procs);
-    if (id >= num_procs || id < 0) {
-        return OPAL_ERR_BAD_PARAM;
+    if( !GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
+        return OPAL_ERR_NOT_FOUND;
     }
 
-    return OPAL_SUCCESS;
+    if( (1 << id) & system_mask ) {
+        process_mask = (1 << id);
+        if( SetThreadAffinityMask( threadid, &process_mask ) )
+            return OPAL_SUCCESS;
+        /* otherwise something went wrong */
+    }
+    /* the specified processor is not enabled system wide */
+    return OPAL_ERR_NOT_FOUND;
 }
 
 
 static int windows_module_get(int *id)
 {
-    return OPAL_SUCCESS;
+    HANDLE threadid = GetCurrentThread(void);
+    DWORD process_mask, system_mask;
+
+    if( GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
+        *id = process_mask;
+        return OPAL_SUCCESS;
+    }
+    *id = 1;
+    return OPAL_ERR_BAD_PARAM;
 }
 
