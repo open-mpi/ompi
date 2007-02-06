@@ -222,7 +222,12 @@ pls_xcpu_setup_env(char ***e)
 
 	free(param);
 	free(var);
-
+#if 0
+	/* FixMe: do this only when we oversubscribe */
+        var = mca_base_param_environ_variable("mpi", NULL, "yield_when_idle");
+        opal_setenv(var, "1", true, e);
+	free(var);
+#endif
 	/* merge in environment */
 	env = opal_environ_merge(*e, environ);
 	opal_argv_free(*e);
