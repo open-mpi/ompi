@@ -79,7 +79,7 @@ int ompi_pointer_array_add(ompi_pointer_array_t *table, void *ptr)
     if (table->number_free == 0) {
         /* need to grow table */
         if (!grow_table(table, 
-						(NULL == table->addr ? TABLE_INIT : table->size * TABLE_GROW), 
+                        (NULL == table->addr ? TABLE_INIT : table->size * TABLE_GROW), 
                         OMPI_FORTRAN_HANDLE_MAX)) {
             OPAL_THREAD_UNLOCK(&(table->lock));
             return OMPI_ERR_OUT_OF_RESOURCE;
@@ -313,7 +313,7 @@ static bool grow_table(ompi_pointer_array_t *table, size_t soft, size_t hard)
         return false;
     }
     
-    /* We've already established (above) that the arithimetic
+    /* We've already established (above) that the arithmetic
        below will be less than OMPI_FORTRAN_HANDLE_MAX */
     
     new_size_int = (int) new_size;
