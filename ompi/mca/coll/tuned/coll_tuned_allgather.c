@@ -249,7 +249,7 @@ int ompi_coll_tuned_allgather_intra_bruck(void *sbuf, int scount,
  *
  *  TODO: Modify the algorithm to work with any number of nodes.
  *        We can modify code to use identical implementation like MPICH-2:
- *        - using recursive-halving algorith, at the end of each step, 
+ *        - using recursive-halving algorithm, at the end of each step, 
  *          determine if there are nodes who did not exchange their data in that
  *          step, and send them appropriate messages.
  */

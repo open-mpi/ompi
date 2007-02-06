@@ -837,7 +837,7 @@ AC_DEFUN([MCA_COMPONENT_BUILD_CHECK],[
         if test -f $component_path/.ompi_ignore ; then
             # If there is an ompi_ignore file, don't build
             # the component.  Note that this decision can be
-            # overriden by the unignore logic below.
+            # overridden by the unignore logic below.
             want_component=0
         fi
         if test -f $component_path/.ompi_unignore ; then

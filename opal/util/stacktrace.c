@@ -51,7 +51,7 @@ static char stacktrace_hostname[64];
  * For Linux/Glibc, it then uses backtrace and backtrace_symbols
  * to figure the current stack and then prints that out to stdout.
  * Where available, the BSD libexecinfo is used to provide Linux/Glibc
- * compatable backtrace and backtrace_symbols functions.
+ * compatible backtrace and backtrace_symbols functions.
  * Yes, printf and malloc are not signal-safe per se, but should be 
  * on Linux?
  *

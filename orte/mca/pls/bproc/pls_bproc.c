@@ -1022,7 +1022,7 @@ cleanup:
  * The main bproc launcher. See pls_bproc.h for a high level overview of how
  * the bproc launching works.
  * Here we:
- * -# Launch the deamons on the backend nodes.
+ * -# Launch the daemons on the backend nodes.
  * -# The daemons setup files for io forwarding then connect back to us to
  *     tells us they are ready for the actual apps.
  * -# Launch the apps on the backend nodes

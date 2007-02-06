@@ -115,7 +115,7 @@ typedef struct ompi_free_list_pos_t {
     unsigned char* last_memory;
     unsigned char* last_item;
 } ompi_free_list_pos_t;
-#define OMPI_FREE_LIST_POS_BEGINING {NULL, NULL}
+#define OMPI_FREE_LIST_POS_BEGINNING {NULL, NULL}
 
 OMPI_DECLSPEC int ompi_free_list_parse( ompi_free_list_t* list,
                                         ompi_free_list_pos_t* position,
