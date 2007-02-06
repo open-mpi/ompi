@@ -24,6 +24,13 @@ This file contains the main features as well as overviews of specific
 bug fixes (and other actions) for each version of Open MPI since
 version 1.0.
 
+1.1.5
+-----
+
+- Fix a problem with compiling the XGrid components with non-gcc
+  compilers.
+
+
 1.1.4
 -----
 
