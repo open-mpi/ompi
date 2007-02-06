@@ -583,7 +583,7 @@ AC_CHECK_HEADERS([alloca.h aio.h arpa/inet.h dirent.h \
     sys/resource.h sys/select.h sys/socket.h sys/sockio.h \
     stdarg.h sys/stat.h sys/statvfs.h sys/time.h sys/tree.h \
     sys/types.h sys/uio.h sys/utsname.h sys/wait.h syslog.h \
-    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h])
+    time.h termios.h ulimit.h unistd.h util.h utmp.h malloc.h sys/sysctl.h])
 
 # Needed to work around Darwin requiring sys/socket.h for
 # net/if.h
@@ -713,7 +713,7 @@ OMPI_CHECK_FUNC_LIB([dirname], [gen])
 # Darwin doesn't need -lm, as it's a symlink to libSystem.dylib
 OMPI_CHECK_FUNC_LIB([ceil], [m])
 
-AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal])
+AC_CHECK_FUNCS([asprintf snprintf vasprintf vsnprintf openpty isatty htonl ntohl htons ntohs getpwuid fork waitpid execve pipe ptsname setsid mmap mallopt tcgetpgrp posix_memalign strsignal sysconf])
 
 #
 # Make sure we can copy va_lists (need check declared, not linkable)
@@ -808,6 +808,18 @@ if test "$MPI_OFFSET_DATATYPE" = "not found"; then
 	AC_MSG_ERROR([Cannot continue])
 fi
 AC_DEFINE_UNQUOTED(OMPI_OFFSET_DATATYPE, $MPI_OFFSET_DATATYPE, [MPI datatype corresponding to MPI_Offset])
+
+# Do we have _SC_NPROCESSORS_ONLN? (only going to pass if we also have
+# <unistd.h> and sysconf(), which is ok) OS X 10.4 has <unistd.h> and
+# sysconf(), but does not have _SC_NPROCESSORS_ONLN.  Doh!
+
+AC_MSG_CHECKING([for _SC_NPROCESSORS_ONLN])
+AC_TRY_COMPILE([#include <unistd.h>],
+    [(void)sysconf(_SC_NPROCESSORS_ONLN);],
+[MSG=yes VALUE=1], [MSG=no VALUE=0])
+AC_DEFINE_UNQUOTED(OPAL_HAVE__SC_NPROCESSORS_ONLN, $VALUE,
+    [Whether we have the _SC_NPROCESSORS_ONLN])
+AC_MSG_RESULT([$MSG])
 
 # all: endian
 
