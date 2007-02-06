@@ -22,12 +22,12 @@
 #include "opal/constants.h"
 #include "opal/mca/paffinity/paffinity.h"
 #include "opal/mca/paffinity/base/base.h"
+#include "opal/util/num_procs.h"
 
 int opal_paffinity_base_get_num_processors(int *num_procs)
 {
     if (!opal_paffinity_base_selected) {
-        *num_procs = -1;
-        return OPAL_ERR_NOT_FOUND;
+        return opal_get_num_processors(num_procs);
     }
     return opal_paffinity_base_module->paff_module_get_num_processors(num_procs);
 }
