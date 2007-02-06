@@ -1066,7 +1066,7 @@ int orte_pls_rsh_launch(orte_jobid_t jobid)
             if (mca_pls_rsh_component.debug) {
                 param = opal_argv_join(exec_argv, ' ');
                 if (NULL != param) {
-                    char* env_array = opal_argv_join( env, " " );
+                    char* env_array = opal_argv_join( env, ' ' );
                     opal_output(0, "pls:rsh: executing: (%s) %s [%s]",
                                 exec_path, param, env_array);
                     free(param); free(env_array);
