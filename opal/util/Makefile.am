@@ -9,6 +9,7 @@
 #                         University of Stuttgart.  All rights reserved.
 # Copyright (c) 2004-2005 The Regents of the University of California.
 #                         All rights reserved.
+# Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 # $COPYRIGHT$
 #
 # Additional copyrights may follow
@@ -39,6 +40,7 @@ headers = \
 	keyval_parse.h \
         malloc.h \
         numtostr.h \
+        num_procs.h \
         opal_environ.h \
         os_dirpath.h \
         os_path.h \
@@ -68,6 +70,7 @@ libopalutil_la_SOURCES = \
 	keyval_parse.c \
         malloc.c \
         numtostr.c \
+        num_procs.c \
         opal_environ.c \
         os_dirpath.c \
         os_path.c \

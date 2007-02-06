@@ -35,6 +35,7 @@
 #include "opal/threads/threads.h"
 #include "opal/util/show_help.h"
 #include "opal/util/stacktrace.h"
+#include "opal/util/num_procs.h"
 #include "opal/runtime/opal.h"
 #include "opal/event/event.h"
 
@@ -679,7 +680,7 @@ int ompi_mpi_init(int argc, char **argv, int requested, int *provided)
          * first, get the number of processors - if we can't then
          * we can't do anything but set conservative values
          */
-        if (OPAL_SUCCESS == opal_paffinity_base_get_num_processors(&num_processors)) {
+        if (OPAL_SUCCESS == opal_get_num_processors(&num_processors)) {
             /* got the num_processors - compare that to the number of
              * local procs in this job to decide if we are oversubscribed
              */
