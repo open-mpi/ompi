@@ -271,7 +271,8 @@ opal_progress_set_yield_when_idle(bool yieldopt)
     bool tmp = (call_yield == 0) ? false : true;
     call_yield = (yieldopt) ? 1 : 0;
 
-    OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %d", call_yield));
+    OPAL_OUTPUT((debug_output, "progress: progress_set_yield_when_idle to %s",
+                                    call_yield == 0 ? "false" : "true"));
 
     return tmp;
 }
