@@ -488,8 +488,8 @@ orte_universe_clean_directories(char *my_universe, int verbose) {
      * should end with the "*". Otherwise we will only open the directory
      * structure (and not the content).
      */
-    frontend_abs = opal_os_path(false, prefix, frontend, "*", NULL);
-    hFind = FindFirstFile (frontend_abs, &file_data);
+    frontend = opal_os_path(false, prefix, frontend, "*", NULL);
+    hFind = FindFirstFile (frontend, &file_data);
     if (INVALID_HANDLE_VALUE == hFind) {
         goto cleanup;
     }
@@ -498,13 +498,14 @@ orte_universe_clean_directories(char *my_universe, int verbose) {
         /*
          * Skip non-universe directories
          */
-        if (0 == strncmp(dir_entry->d_name, ".", strlen(".")) ||
-            0 == strncmp(dir_entry->d_name, ".", strlen(".."))) {
+        /* Skip . and .. */
+        if ((0 == strcmp(file_data.cFileName, ".")) ||
+            (0 == strcmp(file_data.cFileName, "..")) ) {
             continue;
         }
 
-        if ((0 == strcmp(dir_entry->d_name, my_universe)) &&
-            (strlen(dir_entry->d_name) == strlen(my_universe))) {
+        if ((0 == strcmp(file_data.cFileName, my_universe)) &&
+            (strlen(file_data.cFileName) == strlen(my_universe))) {
             if (verbose) {
                 opal_output(0, "orte-clean: skipping ourseleves, name=%s\n",
                             orte_universe_info.name);
@@ -518,7 +519,7 @@ orte_universe_clean_directories(char *my_universe, int verbose) {
                                                       orte_system_info.user,
                                                       orte_system_info.nodename,
                                                       NULL, /* batch ID -- Not used */
-                                                      dir_entry->d_name,
+                                                      file_data.cFileName,
                                                       NULL, /* jobid */
                                                       NULL  /* vpid */
                                                       )) {
