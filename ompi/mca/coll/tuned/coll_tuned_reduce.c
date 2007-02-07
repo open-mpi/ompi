@@ -42,7 +42,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
                                     ompi_coll_tree_t* tree, int count_by_segment )
 {
     char *inbuf[2] = {(char*)NULL, (char*)NULL};
-    char *local_op_buffer, *accumbuf = NULL, *sendtmpbuf;
+    char *local_op_buffer = NULL, *accumbuf = NULL, *sendtmpbuf = NULL;
     ptrdiff_t extent, lower_bound;
     size_t typelng, realsegsize;
     ompi_request_t* reqs[2] = {MPI_REQUEST_NULL, MPI_REQUEST_NULL};
@@ -67,12 +67,13 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
 
     /* non-leaf nodes - wait for children to send me data & forward up (if needed) */
     if( tree->tree_nextsize > 0 ) {
-        /* handle non existant recv buffer (i.e. its NULL.. like basic allreduce uses!) */
+        /* handle non existant recv buffer (i.e. its NULL) and 
+           protect the recv buffer on non-root nodes */
         accumbuf = (char*)recvbuf;
-        if( NULL == accumbuf ) {
+        if( (NULL == accumbuf) || (root != rank) ) {
             accumbuf = (char*)malloc(realsegsize * num_segments);  /* TO BE OPTIMIZED */
 	    if (accumbuf == NULL) { line = __LINE__; ret = -1; goto error_hndl; }
-	}
+	} 
 
         /* Allocate two buffers for incoming segments */
         inbuf[0] = (char*) malloc(realsegsize);
@@ -174,7 +175,7 @@ int ompi_coll_tuned_reduce_generic( void* sendbuf, void* recvbuf, int original_c
         /* clean up */
         if( inbuf[0] != NULL) free(inbuf[0]);
         if( inbuf[1] != NULL) free(inbuf[1]);
-        if( NULL == recvbuf ) free(accumbuf);
+        if( (NULL == recvbuf) || (root != rank) ) free(accumbuf);
     }
 
     /* leaf nodes */
