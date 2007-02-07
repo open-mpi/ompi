@@ -12,7 +12,9 @@
 
 #include "opal_config.h"
 
+#if HAVE_UNISTD_H
 #include <unistd.h>
+#endif  /* HAVE_UNISTD_H */
 
 #include "opal/constants.h"
 #include "opal/util/num_procs.h"
