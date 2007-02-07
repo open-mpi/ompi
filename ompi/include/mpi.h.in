@@ -99,6 +99,11 @@
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
 
+/* Major, minor, and release version of Open MPI */
+#undef OMPI_MAJOR_VERSION
+#undef OMPI_MINOR_VERSION
+#undef OMPI_RELEASE_VERSION
+
 /* A  type that allows us to have sentinel type values that are still
    valid */
 #undef ompi_fortran_bogus_type_t
