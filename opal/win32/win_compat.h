@@ -67,14 +67,13 @@
 
 #include <stdlib.h>
 
-/*#if defined(OMPI_BUILDING) && OMPI_BUILDING */
+#if defined(OMPI_BUILDING) && OMPI_BUILDING
 #include "opal/win32/ompi_uio.h"
 #include "opal/win32/ompi_time.h"
 #include "opal/win32/ompi_utsname.h"
 #include "opal/win32/ompi_util.h"
 #include "opal/win32/ompi_misc.h"
-#include "opal/util/printf.h"
-/*#endif*/
+#endif
 
 #define MAXPATHLEN _MAX_PATH
 #define MAXHOSTNAMELEN _MAX_PATH
@@ -137,10 +136,10 @@ typedef unsigned int uint;
 #define UINT8_MIN  _UI8_MIN
 
 
-/* If we now support __func__ set the HAVE_DECL___FUNC__ */
-#define __func__ __FUNCTION__
-#undef HAVE_DECL___FUNC__
+/* Make sure we let the compiler know that we support __func__ */
+#if !defined(HAVE_DECL___FUNC__)
 #define HAVE_DECL___FUNC__ 1
+#endif
 
 /* Microsoft claim that strdup is deprecated and that we should use _strdup. */
 /*#define strdup _strdup*/
