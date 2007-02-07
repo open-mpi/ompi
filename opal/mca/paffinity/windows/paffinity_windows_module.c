@@ -80,8 +80,8 @@ static int windows_module_get_num_procs(int *num_procs)
 
 static int windows_module_set(int id)
 {
-    HANDLE threadid = GetCurrentThread(void);
-    DWORD process_mask, system_mask;
+    HANDLE threadid = GetCurrentThread();
+    DWORD_PTR process_mask, system_mask;
 
     if( !GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
         return OPAL_ERR_NOT_FOUND;
@@ -89,7 +89,7 @@ static int windows_module_set(int id)
 
     if( (1 << id) & system_mask ) {
         process_mask = (1 << id);
-        if( SetThreadAffinityMask( threadid, &process_mask ) )
+        if( SetThreadAffinityMask( threadid, process_mask ) )
             return OPAL_SUCCESS;
         /* otherwise something went wrong */
     }
@@ -100,8 +100,8 @@ static int windows_module_set(int id)
 
 static int windows_module_get(int *id)
 {
-    HANDLE threadid = GetCurrentThread(void);
-    DWORD process_mask, system_mask;
+    HANDLE threadid = GetCurrentThread();
+    DWORD_PTR process_mask, system_mask;
 
     if( GetProcessAffinityMask( threadid, &process_mask, &system_mask ) ) {
         *id = process_mask;
