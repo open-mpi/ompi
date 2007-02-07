@@ -56,7 +56,7 @@ Fortran only: Error status (integer).
 
 .SH DESCRIPTION
 .ft R
-MPI_Win_create is a one-sided MPI communication collective call executed by all processes in the group of \fIcomm\fP that are in the same node. It returns a window object that can be used by these processes to perform RMA operations. Each process specifies a window of existing memory that it exposes to RMA accesses by the processes in the group of \fIcomm\fP. The window consists of \fIsize\fP bytes, starting at address \fIbase\fP. A process may elect to expose no memory by specifying \fIsize\fP = 0.
+MPI_Win_create is a one-sided MPI communication collective call executed by all processes in the group of \fIcomm\fP. It returns a window object that can be used by these processes to perform RMA operations. Each process specifies a window of existing memory that it exposes to RMA accesses by the processes in the group of \fIcomm\fP. The window consists of \fIsize\fP bytes, starting at address \fIbase\fP. A process may elect to expose no memory by specifying \fIsize\fP = 0.
 .sp
 If the \fIbase\fP value used by MPI_Win_create was allocated by MPI_Alloc_mem, the size of the window can be no larger than the value set by the MPI_ALLOC_MEM function.
 .sp
@@ -77,15 +77,7 @@ Common choices for \fIdisp_unit\fP are 1 (no scaling), and (in C syntax) \fIsize
 .sp
 Use memory allocated by MPI_Alloc_mem to guarantee properly aligned window boundaries (such as word, double-word, cache line, page frame, and so on).
 .sp
-If the base address argument specified in the MPI_Win_create call
-points to a memory region allocated using MPI_Alloc_mem, any permissions
-or effective uid/gid paremeters specified in the info key passed to
-the MPI_Alloc_mem call will overwrite the ones specified in the
-MPI_Win_create call. 
-.sp
-If infokeys are not specified in MPI_Alloc_mem but used in
-MPI_Win_create, then default infokey values are used and not the ones
-specified in MPI_Win_create. 
+ 
 
 
 .SH FORTRAN 77 NOTES
