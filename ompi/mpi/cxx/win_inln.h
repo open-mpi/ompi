@@ -11,6 +11,7 @@
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
 // Copyright (c) 2007      Sun Microsystems, Inc.  All rights reserved.
+// Copyright (c) 2007      Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -181,10 +182,69 @@ MPI::Win::Call_errhandler(int errorcode) const
 }
 
 
+// 1) original Create_keyval that takes the first 2 arguments as C++
+//    functions
+inline int
+MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
+                        MPI::Win::Delete_attr_function* win_delete_attr_fn, 
+                        void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, NULL, 
+                            win_copy_attr_fn, win_delete_attr_fn,
+                            extra_state);
+}
+
+// 2) overload Create_keyval to take the first 2 arguments as C
+//    functions
+inline int
+MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn,
+                        MPI_Win_delete_attr_function* win_delete_attr_fn, 
+                        void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(win_copy_attr_fn, win_delete_attr_fn,
+                            NULL, NULL,
+                            extra_state);
+}
+
+// 3) overload Create_keyval to take the first 2 arguments as C++ & C
+//    functions
+inline int
+MPI::Win::Create_keyval(MPI::Win::Copy_attr_function* win_copy_attr_fn,
+                        MPI_Win_delete_attr_function* win_delete_attr_fn,
+                        void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(NULL, win_delete_attr_fn,
+                            win_copy_attr_fn, NULL,
+                            extra_state);
+}
+
+// 4) overload Create_keyval to take the first 2 arguments as C & C++
+//    functions
+inline int
+MPI::Win::Create_keyval(MPI_Win_copy_attr_function* win_copy_attr_fn,
+                        MPI::Win::Delete_attr_function* win_delete_attr_fn,
+                        void* extra_state)
+{
+    // Back-end function does the heavy lifting
+    return do_create_keyval(win_copy_attr_fn, NULL,
+                            NULL, win_delete_attr_fn,
+                            extra_state);
+}
+
 inline void 
 MPI::Win::Delete_attr(int win_keyval) 
 {
   (void) MPI_Win_delete_attr(mpi_win, win_keyval);
+}
+
+
+inline void 
+MPI::Win::Free_keyval(int& win_keyval)
+{
+  (void) MPI_Win_free_keyval(&win_keyval);
 }
 
 
@@ -215,6 +275,12 @@ MPI::Win::Get_name(char* win_name, int& resultlen) const
   (void) MPI_Win_get_name(mpi_win, win_name, &resultlen);
 }
 
+
+inline void 
+MPI::Win::Set_attr(int win_keyval, const void* attribute_val) 
+{
+  (void) MPI_Win_set_attr(mpi_win, win_keyval, const_cast<void *>(attribute_val));
+}
 
 
 inline void 

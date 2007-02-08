@@ -79,7 +79,8 @@ void mpi_comm_create_keyval_f(ompi_mpi2_fortran_copy_attr_function* comm_copy_at
        to the old MPI-1 INTEGER-parameter functions). */
 
     ret = ompi_attr_create_keyval(COMM_ATTR, copy_fn, del_fn,
-                                  comm_keyval, extra_state, OMPI_KEYVAL_F77);
+                                  comm_keyval, extra_state, OMPI_KEYVAL_F77,
+                                  NULL);
 
     if (MPI_SUCCESS != ret) {
         c_err = OMPI_ERRHANDLER_INVOKE(MPI_COMM_WORLD,

@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -391,12 +391,31 @@ public:
   // Keys and Attributes
   //
 
-//JGS I took the const out because it causes problems when trying to
-//call this function with the predefined NULL_COPY_FN etc.
+  // Need 4 overloaded versions of this function because per the
+  // MPI-2 spec, you can mix-n-match the C predefined functions with
+  // C++ functions.
   static int Create_keyval(Copy_attr_function* comm_copy_attr_fn,
-			   Delete_attr_function* comm_delete_attr_fn,
-			   void* extra_state);
-  
+                           Delete_attr_function* comm_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
+                           MPI_Comm_delete_attr_function* comm_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(Copy_attr_function* comm_copy_attr_fn,
+                           MPI_Comm_delete_attr_function* comm_delete_attr_fn,
+                           void* extra_state);
+  static int Create_keyval(MPI_Comm_copy_attr_function* comm_copy_attr_fn,
+                           Delete_attr_function* comm_delete_attr_fn,
+                           void* extra_state);
+
+protected:  
+  static int do_create_keyval(MPI_Comm_copy_attr_function* c_copy_fn,
+                              MPI_Comm_delete_attr_function* c_delete_fn,
+                              Copy_attr_function* cxx_copy_fn,
+                              Delete_attr_function* cxx_delete_fn,
+                              void* extra_state);
+
+public:
+
   static void Free_keyval(int& comm_keyval);
 
   virtual void Set_attr(int comm_keyval, const void* attribute_val) const;
@@ -428,16 +447,12 @@ public: // JGS hmmm, these used by errhandler_intercept
 
   Errhandler* my_errhandler;
 
-  typedef ::std::pair<Comm*, CommType> comm_pair_t;
-  typedef ::std::map<MPI_Comm, comm_pair_t*> mpi_comm_map_t;
-  static mpi_comm_map_t mpi_comm_map;
-
   typedef ::std::map<MPI_Comm, Comm*> mpi_comm_err_map_t;
   static mpi_comm_err_map_t mpi_comm_err_map;
   
-  typedef ::std::pair<Comm::_MPI2CPP_COPYATTRFN_*, Comm::_MPI2CPP_DELETEATTRFN_*> key_pair_t;
-  typedef ::std::map<int, key_pair_t*> mpi_comm_key_fn_map_t;
-  static mpi_comm_key_fn_map_t mpi_comm_key_fn_map;
+  typedef ::std::pair<Comm::_MPI2CPP_COPYATTRFN_*, Comm::_MPI2CPP_DELETEATTRFN_*> keyval_pair_t;
+  typedef ::std::map<int, keyval_pair_t*> mpi_comm_keyval_fn_map_t;
+  static mpi_comm_keyval_fn_map_t mpi_comm_keyval_fn_map;
   
   void init() {
     my_errhandler = (Errhandler*)0;

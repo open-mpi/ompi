@@ -10,7 +10,7 @@
 //                         University of Stuttgart.  All rights reserved.
 // Copyright (c) 2004-2005 The Regents of the University of California.
 //                         All rights reserved.
-// Copyright (c) 2006      Cisco Systems, Inc.  All rights reserved.
+// Copyright (c) 2006-2007 Cisco Systems, Inc.  All rights reserved.
 // $COPYRIGHT$
 // 
 // Additional copyrights may follow
@@ -84,7 +84,8 @@ enum CommType { eIntracomm, eIntercomm, eCartcomm, eGraphcomm};
 extern "C" int
 ompi_mpi_cxx_comm_copy_attr_intercept(MPI_Comm oldcomm, int keyval, 
                                       void *extra_state, void *attribute_val_in, 
-                                      void *attribute_val_out, int *flag);
+                                      void *attribute_val_out, int *flag,
+                                      MPI_Comm newcomm);
 extern "C" int
 ompi_mpi_cxx_comm_delete_attr_intercept(MPI_Comm comm, int keyval, 
                                         void *attribute_val, void *extra_state);
