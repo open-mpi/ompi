@@ -11,6 +11,7 @@
  * Copyright (c) 2004-2005 The Regents of the University of California.
  *                         All rights reserved.
  * Copyright (c) 2006-2007 Cisco Systems, Inc. All rights reserved.
+ * Copyright (c) 2007      Sun Microsystems, Inc. All rights reserved.
  * $COPYRIGHT$
  *
  * Additional copyrights may follow
@@ -525,7 +526,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
     bool exit_status_set;
     char *keys[] = {
         ORTE_PROC_NAME_KEY,
-        ORTE_PROC_PID_KEY,
+        ORTE_PROC_LOCAL_PID_KEY,
         ORTE_PROC_RANK_KEY,
         ORTE_PROC_EXIT_CODE_KEY,
         ORTE_NODE_NAME_KEY,
@@ -575,7 +576,7 @@ static void dump_aborted_procs(orte_jobid_t jobid)
                 name = *nptr;
                 continue;
             }
-            if(strcmp(keyval->key, ORTE_PROC_PID_KEY) == 0) {
+            if(strcmp(keyval->key, ORTE_PROC_LOCAL_PID_KEY) == 0) {
                 if (ORTE_SUCCESS != (rc = orte_dss.get((void**)&pidptr, keyval->value, ORTE_PID))) {
                     ORTE_ERROR_LOG(rc);
                     continue;
